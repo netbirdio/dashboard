@@ -51,6 +51,8 @@ import AccessControlDirectionCell from "@/modules/access-control/table/AccessCon
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
 import AccessControlProtoPortsCell from "@/modules/access-control/table/AccessControlProtoPortsCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
+import { FirewallGPTButton } from "@/modules/firewall-gpt/FirewallGPTButton";
+import { FirewallGPTModal } from "@/modules/firewall-gpt/FirewallGPTModal";
 
 type Props = {
   policies?: Policy[];
@@ -236,6 +238,8 @@ export default function AccessControlTable({
   const [editModal, setEditModal] = useState(false);
   const [currentRow, setCurrentRow] = useState<Policy>();
   const [currentCellClicked, setCurrentCellClicked] = useState("");
+
+  const [firewallGPTOpen, setFirewallGPTOpen] = useState(false);
 
   const [showTemporaryPolicies, setShowTemporaryPolicies] = useState(false);
 
@@ -447,6 +451,8 @@ export default function AccessControlTable({
 
   return (
     <>
+      <FirewallGPTModal open={firewallGPTOpen} setOpen={setFirewallGPTOpen} />
+
       {editModal && currentRow && (
         <AccessControlUpdateModal
           policy={currentRow}
@@ -550,6 +556,7 @@ export default function AccessControlTable({
               }
               button={
                 <div className={"flex gap-4 items-center justify-center"}>
+                  <FirewallGPTButton onClick={() => setFirewallGPTOpen(true)} />
                   <AccessControlModal>
                     <Button
                       variant={"primary"}
@@ -581,12 +588,14 @@ export default function AccessControlTable({
         rightSide={() => (
           <>
             {policies && policies?.length > 0 && (
-              <div className={"flex items-center ml-auto"}>
+              <div className={"flex ml-auto gap-4 items-center"}>
+                <FirewallGPTButton onClick={() => setFirewallGPTOpen(true)} />
                 <AccessControlModal>
                   <Button
                     variant={"primary"}
                     className={"ml-auto"}
                     disabled={!permission.policies.create}
+                    data-testid="open-add-policy"
                   >
                     <PlusCircle size={16} />
                     Add Policy
@@ -610,8 +619,8 @@ export default function AccessControlTable({
                 table={table}
                 onClick={() => {
                   table.setPageIndex(0);
-                  table.resetColumnFilters();
-                  table.resetGlobalFilter();
+                  table.setColumnFilters([]);
+                  table.setGlobalFilter("");
                 }}
               />
 
@@ -626,7 +635,7 @@ export default function AccessControlTable({
                   }
                 >
                   <Button
-                    className={"h-[44px]"}
+                    className={"h-[42px]"}
                     variant={showTemporaryPolicies ? "tertiary" : "secondary"}
                     onClick={() => {
                       setShowTemporaryPolicies(!showTemporaryPolicies);

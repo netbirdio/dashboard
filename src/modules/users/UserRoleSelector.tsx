@@ -2,7 +2,7 @@ import Button from "@components/Button";
 import { CommandItem } from "@components/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import { Command, CommandGroup, CommandList } from "cmdk";
 import { trim } from "lodash";
 import {
@@ -16,6 +16,7 @@ import {
 import * as React from "react";
 import { useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -27,6 +28,7 @@ interface MultiSelectProps {
   disabled?: boolean;
   popoverWidth?: "auto" | number;
   hideOwner?: boolean;
+  hideBillingAdmin?: boolean;
   currentUser?: User;
   customTrigger?: React.ReactNode;
   side?: "top" | "bottom" | "left" | "right";
@@ -72,6 +74,7 @@ export function UserRoleSelector({
   disabled = false,
   popoverWidth = "auto",
   hideOwner = false,
+  hideBillingAdmin = false,
   currentUser,
   customTrigger,
   side = "bottom",
@@ -119,6 +122,9 @@ export function UserRoleSelector({
 
   const selectedRole = UserRoles.find((role) => role.value === value);
 
+  // Cloud only
+  const { isAccountWithMSPParent } = useMSP();
+
   return (
     <Popover
       open={open}
@@ -137,7 +143,7 @@ export function UserRoleSelector({
             disabled={disabled}
             ref={inputRef}
             className={"w-full group/user-role-selector"}
-            data-cy={"user-role-selector"}
+            data-testid={"user-role-selector"}
           >
             <div className={"w-full flex justify-between items-center gap-2"}>
               {selectedRole && (
@@ -188,15 +194,25 @@ export function UserRoleSelector({
                   {UserRoles.map((item) => {
                     if (!isOwner && item.value === Role.Owner) return null;
                     if (hideOwner && item.value === Role.Owner) return null;
+                    if (hideBillingAdmin && item.value === Role.BillingAdmin)
+                      return null;
 
-                    if (item.value === Role.BillingAdmin && !isNetBirdHosted())
+                    // Cloud only
+                    if (item.value === Role.BillingAdmin && !isNetBirdCloud())
+                      return null;
+                    if (
+                      item.value === Role.BillingAdmin &&
+                      isAccountWithMSPParent
+                    )
+                      return null;
+                    if (item.value === Role.Owner && isAccountWithMSPParent)
                       return null;
 
                     return (
                       <CommandItem
                         key={item.value}
                         value={item.value}
-                        data-cy={"user-role-selector-item"}
+                        data-testid={"user-role-selector-item"}
                         className={"py-1 px-2"}
                         onSelect={() => toggle(item.value)}
                         onClick={(e) => e.preventDefault()}

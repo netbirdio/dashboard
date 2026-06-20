@@ -13,6 +13,7 @@ type SettingCardItemProps = {
   description: React.ReactNode;
   enabled: boolean;
   onClick: () => void;
+  "data-testid"?: string;
   disabled?: boolean;
 };
 
@@ -21,6 +22,7 @@ function SettingCardItem({
   description,
   enabled,
   onClick,
+  "data-testid": dataTestId,
   disabled = false,
 }: Readonly<SettingCardItemProps>) {
   const handleClick = () => {
@@ -40,8 +42,9 @@ function SettingCardItem({
           onClick();
         }
       }}
+      data-testid={dataTestId}
       className={cn(
-        "flex justify-between gap-10 px-6 border-t border-nb-gray-920 first:border-t-0 py-5 transition-colors",
+        "flex justify-between gap-10 px-6 border-t border-nb-gray-920 first:border-t-0 py-5 transition-colors w-full",
         disabled
           ? "opacity-50 cursor-not-allowed"
           : "hover:bg-nb-gray-935 cursor-pointer",
@@ -108,7 +111,9 @@ function SettingCard({ children, className }: Readonly<SettingCardProps>) {
   );
 }
 
-const SettingCardWithItem = SettingCard as React.FC<Readonly<SettingCardProps>> & {
+const SettingCardWithItem = SettingCard as React.FC<
+  Readonly<SettingCardProps>
+> & {
   Item: typeof SettingCardItem;
 };
 SettingCardWithItem.Item = SettingCardItem;

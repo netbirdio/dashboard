@@ -8,6 +8,9 @@ import { cn } from "@utils/helpers";
 import { MenuIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
+import { DistributorTransferAccountModal } from "@/cloud/distributor/DistributorTransferAccountModal";
+import { MSPTenantsSwitcher } from "@/cloud/msp/MSPTenantsSwitcher";
+import { MSPTransferAccountModal } from "@/cloud/msp/MSPTransferAccountModal";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -64,6 +67,9 @@ export default function NavbarWithDropdown() {
           </div>
 
           <div className="flex md:order-2 gap-5 items-center">
+            <MSPTransferAccountModal />
+            <DistributorTransferAccountModal />
+            <MSPTenantsSwitcher />
             <HelpAndSupportButton />
             <UserDropdown />
           </div>
@@ -86,6 +92,7 @@ const ToggleCollapsableNavigationButton = () => {
     !isRestricted && (
       <button
         onClick={toggleNavigation}
+        data-navbar-colappse-toggle
         className={cn(
           "h-10 w-10 hover:text-white flex items-center justify-center text-nb-gray-300 transition-all ml-2",
           "hidden md:block",

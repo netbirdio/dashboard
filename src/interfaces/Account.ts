@@ -8,6 +8,9 @@ export interface Account {
     extra: {
       peer_approval_enabled: boolean;
       user_approval_required: boolean;
+      network_traffic_logs_enabled: boolean;
+      network_traffic_packet_counter_enabled: boolean;
+      network_traffic_logs_groups: string[];
     };
     peer_login_expiration_enabled: boolean;
     peer_expose_enabled?: boolean;

@@ -108,6 +108,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
           <HelpText>Provide a unique name for the network.</HelpText>
           <Input
             tabIndex={0}
+            data-testid="network-name-input"
             placeholder={"e.g., Office Network"}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -119,6 +120,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
             Write a short description to add more context to this network.
           </HelpText>
           <Textarea
+            data-testid="network-description-input"
             placeholder={"e.g., Berlin, Münzstraße 12 "}
             value={description}
             rows={3}
@@ -147,7 +149,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
 
           <Button
             variant={"primary"}
-            data-cy={"submit-route"}
+            data-testid={"submit-network"}
             disabled={!name}
             onClick={network ? updateNetwork : createNetwork}
           >

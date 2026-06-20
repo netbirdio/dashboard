@@ -22,7 +22,7 @@ import {
 } from "@/interfaces/ReverseProxy";
 import Paragraph from "@components/Paragraph";
 import InlineLink from "@components/InlineLink";
-import { isNetBirdHosted } from "@/utils/netbird";
+import { isNetBirdCloud } from "@/utils/netbird";
 
 type Props = {
   open: boolean;
@@ -80,7 +80,7 @@ export const CustomDomainVerificationModal = ({
           </Steps>
           <div className={"flex flex-col gap-6"}>
             {!cnameTarget ? (
-              isNetBirdHosted() ? (
+              isNetBirdCloud() ? (
                 <Callout variant={"warning"}>
                   No proxy clusters are currently connected. Please try again in
                   a few minutes. If the issue persists, check{" "}
@@ -163,7 +163,9 @@ export const CustomDomainVerificationModal = ({
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Verify Later</Button>
+              <Button variant={"secondary"} data-testid={"verify-domain-later"}>
+                Verify Later
+              </Button>
             </ModalClose>
 
             <Button

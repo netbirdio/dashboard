@@ -61,12 +61,95 @@ export NETBIRD_GOOGLE_ANALYTICS_ID=${NETBIRD_GOOGLE_ANALYTICS_ID}
 export NETBIRD_GOOGLE_TAG_MANAGER_ID=${NETBIRD_GOOGLE_TAG_MANAGER_ID}
 export NETBIRD_TOKEN_SOURCE=${NETBIRD_TOKEN_SOURCE:-accessToken}
 export NETBIRD_DRAG_QUERY_PARAMS=${NETBIRD_DRAG_QUERY_PARAMS:-false}
+export NETBIRD_AUTH_SERVICE_URL=${NETBIRD_AUTH_SERVICE_URL}
 export NETBIRD_WASM_PATH=${NETBIRD_WASM_PATH}
+export NETBIRD_CSP=${NETBIRD_CSP}
+export NETBIRD_LICENSED=${NETBIRD_LICENSED:-false}
+export NETBIRD_CLOUD=${NETBIRD_CLOUD:-false}
+export NETBIRD_HUBSPOT_PORTAL_ID=${NETBIRD_HUBSPOT_PORTAL_ID}
+export NETBIRD_HUBSPOT_SIGNUP_FORM_ID=${NETBIRD_HUBSPOT_SIGNUP_FORM_ID}
+export NETBIRD_HUBSPOT_ONBOARDING_FORM_ID=${NETBIRD_HUBSPOT_ONBOARDING_FORM_ID}
+export NETBIRD_HUBSPOT_SURVEY_FORM_ID=${NETBIRD_HUBSPOT_SURVEY_FORM_ID}
+export NETBIRD_ANALYTICS_EXCLUDED_EMAILS=${NETBIRD_ANALYTICS_EXCLUDED_EMAILS}
 
 echo "NetBird latest version: ${NETBIRD_LATEST_VERSION}"
 
+# Build CSP
+FIRST_PARTY_CSP="pkgs.netbird.io"
+FIRST_PARTY_CSP_CONNECT_SRC="wss://*.netbird.io"
+THIRD_PARTY_CSP="*.licdn.com *.linkedin.com *.vector.co *.sibforms.com *.hotjar.com *.hotjar.io *.redditstatic.com pixel-config.reddit.com *.clarity.ms c.bing.com *.microsoft.com googleads.g.doubleclick.net pagead2.googlesyndication.com www.google.com www.googleadservices.com *.google-analytics.com *.googletagmanager.com analytics.google.com *.hubapi.com *.hs-banner.com *.hubspot.com *.hubspot.net js.hs-analytics.com *.hsforms.net *.hscollectedforms.net *.hs-analytics.net *.hsforms.com track.hubspot.com *.hsadspixel.net static.hsappstatic.net"
+THIRD_PARTY_CSP_CONNECT_SRC="https://api.github.com/repos/netbirdio/netbird/releases/latest https://raw.githubusercontent.com/netbirdio/dashboard/ wss://ws.hotjar.com"
+THIRD_PARTY_CSP_SCRIPT_SRC="'sha256-7knV6EIjKUvCpYWE2rCYx8dYV2WCNb2bpTuitFXzBcA=' *.hs-scripts.com"
+
+CSP_DOMAINS=""
+CSP_DOMAINS_CONNECT_SRC=""
+
+if [[ -n "${NETBIRD_CSP}" ]]; then
+    CSP_DOMAINS="$CSP_DOMAINS $NETBIRD_CSP"
+fi
+
+# Add AUTH_AUTHORITY to CSP
+if [[ -n "${AUTH_AUTHORITY}" ]]; then
+    CSP_DOMAINS="$CSP_DOMAINS $AUTH_AUTHORITY"
+fi
+
+# Add AUTH_AUDIENCE to CSP
+if [[ -n "${AUTH_AUDIENCE}" && ("${AUTH_AUDIENCE}" == *"http://"* || "${AUTH_AUDIENCE}" == *"https://"*) ]]; then
+    CSP_DOMAINS="$CSP_DOMAINS $AUTH_AUDIENCE"
+fi
+
+# Add NETBIRD_AUTH_SERVICE_URL to CSP
+if [[ -n "${NETBIRD_AUTH_SERVICE_URL}" ]]; then
+    CSP_DOMAINS="$CSP_DOMAINS $NETBIRD_AUTH_SERVICE_URL"
+fi
+
+# Add NETBIRD_MGMT_API_ENDPOINT to CSP
+if [[ -n "${NETBIRD_MGMT_API_ENDPOINT}" ]]; then
+    MGMT_DOMAIN=$(echo "$NETBIRD_MGMT_API_ENDPOINT" | sed -E 's|https?://||' | cut -d'/' -f1 | cut -d':' -f1)
+    if [[ -n "$MGMT_DOMAIN" ]]; then
+        if [[ "$NETBIRD_MGMT_API_ENDPOINT" == https://* ]]; then
+            CSP_DOMAINS="$CSP_DOMAINS $NETBIRD_MGMT_API_ENDPOINT"
+            CSP_DOMAINS_CONNECT_SRC="$CSP_DOMAINS_CONNECT_SRC wss://$MGMT_DOMAIN"
+        elif [[ "$NETBIRD_MGMT_API_ENDPOINT" == http://* ]]; then
+            CSP_DOMAINS="$CSP_DOMAINS $NETBIRD_MGMT_API_ENDPOINT"
+            CSP_DOMAINS_CONNECT_SRC="$CSP_DOMAINS_CONNECT_SRC ws://$MGMT_DOMAIN"
+        fi
+    fi
+fi
+
+# Add LETSENCRYPT_DOMAIN to CSP
+if [[ -n "${LETSENCRYPT_DOMAIN}" ]]; then
+    if [[ "$LETSENCRYPT_DOMAIN" == *"localhost"* ]]; then
+        CSP_DOMAINS="$CSP_DOMAINS http://$LETSENCRYPT_DOMAIN"
+        CSP_DOMAINS_CONNECT_SRC="$CSP_DOMAINS_CONNECT_SRC ws://$LETSENCRYPT_DOMAIN"
+    else
+        CSP_DOMAINS="$CSP_DOMAINS https://$LETSENCRYPT_DOMAIN"
+        CSP_DOMAINS_CONNECT_SRC="$CSP_DOMAINS_CONNECT_SRC wss://$LETSENCRYPT_DOMAIN"
+    fi
+fi
+
+CSP_CONNECT_SRC="$CSP_DOMAINS $CSP_DOMAINS_CONNECT_SRC $FIRST_PARTY_CSP $FIRST_PARTY_CSP_CONNECT_SRC $THIRD_PARTY_CSP $THIRD_PARTY_CSP_CONNECT_SRC"
+CSP_FRAME_SRC="$CSP_DOMAINS $FIRST_PARTY_CSP $THIRD_PARTY_CSP"
+CSP_SCRIPT_SRC="$CSP_DOMAINS $FIRST_PARTY_CSP $THIRD_PARTY_CSP $THIRD_PARTY_CSP_SCRIPT_SRC"
+
+# Remove duplicates
+CSP_CONNECT_SRC=$(echo $CSP_CONNECT_SRC | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed 's/ $//')
+CSP_FRAME_SRC=$(echo $CSP_FRAME_SRC | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed 's/ $//')
+CSP_SCRIPT_SRC=$(echo $CSP_SCRIPT_SRC | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed 's/ $//')
+
+# Update CSP in nginx config
+CSP_POLICY="default-src 'none'; connect-src 'self' $CSP_CONNECT_SRC; frame-src 'self' $CSP_FRAME_SRC; script-src 'self' 'wasm-unsafe-eval' $CSP_SCRIPT_SRC; font-src 'self'; img-src * data:; manifest-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+CSP_HEADER="add_header Content-Security-Policy \"$CSP_POLICY\" always;"
+
+echo "CSP header: $CSP_HEADER"
+
+# Replace CSP header in nginx config
+sed -i "s|add_header Content-Security-Policy \"[^\"]*\" always;|$CSP_HEADER|g" /etc/nginx/http.d/default.conf || {
+    echo "Failed to replace CSP header"
+}
+
 # replace ENVs in the config
-ENV_STR="\$\$USE_AUTH0 \$\$AUTH_AUDIENCE \$\$AUTH_AUTHORITY \$\$AUTH_CLIENT_ID \$\$AUTH_CLIENT_SECRET \$\$AUTH_SUPPORTED_SCOPES \$\$NETBIRD_MGMT_API_ENDPOINT \$\$NETBIRD_MGMT_GRPC_API_ENDPOINT \$\$NETBIRD_HOTJAR_TRACK_ID \$\$NETBIRD_GOOGLE_ANALYTICS_ID \$\$NETBIRD_GOOGLE_TAG_MANAGER_ID \$\$AUTH_REDIRECT_URI \$\$AUTH_SILENT_REDIRECT_URI \$\$NETBIRD_TOKEN_SOURCE \$\$NETBIRD_DRAG_QUERY_PARAMS \$\$NETBIRD_WASM_PATH"
+ENV_STR="\$\$USE_AUTH0 \$\$AUTH_AUDIENCE \$\$AUTH_AUTHORITY \$\$AUTH_CLIENT_ID \$\$AUTH_CLIENT_SECRET \$\$AUTH_SUPPORTED_SCOPES \$\$NETBIRD_MGMT_API_ENDPOINT \$\$NETBIRD_MGMT_GRPC_API_ENDPOINT \$\$NETBIRD_HOTJAR_TRACK_ID \$\$NETBIRD_GOOGLE_ANALYTICS_ID \$\$NETBIRD_GOOGLE_TAG_MANAGER_ID \$\$AUTH_REDIRECT_URI \$\$AUTH_SILENT_REDIRECT_URI \$\$NETBIRD_TOKEN_SOURCE \$\$NETBIRD_DRAG_QUERY_PARAMS \$\$NETBIRD_AUTH_SERVICE_URL \$\$NETBIRD_WASM_PATH \$\$NETBIRD_LICENSED \$\$NETBIRD_CLOUD \$\$NETBIRD_HUBSPOT_PORTAL_ID \$\$NETBIRD_HUBSPOT_SIGNUP_FORM_ID \$\$NETBIRD_HUBSPOT_ONBOARDING_FORM_ID \$\$NETBIRD_HUBSPOT_SURVEY_FORM_ID \$\$NETBIRD_ANALYTICS_EXCLUDED_EMAILS"
 
 OIDC_TRUSTED_DOMAINS="/usr/share/nginx/html/OidcTrustedDomains.js"
 envsubst "$ENV_STR" < "$OIDC_TRUSTED_DOMAINS".tmpl > "$OIDC_TRUSTED_DOMAINS"

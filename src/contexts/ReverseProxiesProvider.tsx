@@ -26,6 +26,7 @@ import {
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyModal from "@/modules/reverse-proxy/ReverseProxyModal";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
+import { TerminatedProxiesProvider } from "@/cloud/reverse-proxy/TerminatedProxiesProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 
 type ReverseProxiesContextValue = {
@@ -540,6 +541,7 @@ export default function ReverseProxiesProvider({
         isSelfHostedCluster,
       }}
     >
+      <TerminatedProxiesProvider />
       {children}
       {modalOpen && (
         <ReverseProxyModal

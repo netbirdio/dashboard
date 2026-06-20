@@ -26,34 +26,44 @@ export interface RDCleanPathResponse {
 }
 
 export interface CertificateHandler {
-  validateCertificate(certInfo: CertificateInfo, hostname?: string): Promise<boolean>;
+  validateCertificate(
+    certInfo: CertificateInfo,
+    hostname?: string,
+  ): Promise<boolean>;
   handleRDCleanPathResponse(response: RDCleanPathResponse): Promise<boolean>;
 }
 
 export class RDPCertificateHandler implements CertificateHandler {
-  private readonly STORAGE_KEY = 'netbird-rdp-trusted-certs';
+  private readonly STORAGE_KEY = "netbird-rdp-trusted-certs";
   private modalElement: HTMLElement | null = null;
   /**
    * Handle RDCleanPath response containing server certificates
    */
-  async handleRDCleanPathResponse(response: RDCleanPathResponse): Promise<boolean> {
+  async handleRDCleanPathResponse(
+    response: RDCleanPathResponse,
+  ): Promise<boolean> {
     if (!response.ServerCertChain || response.ServerCertChain.length === 0) {
-      console.error('No certificate chain provided - rejecting connection for security');
+      console.error(
+        "No certificate chain provided - rejecting connection for security",
+      );
       return false;
     }
-    const serverAddr = response.ServerAddr || 'unknown';
-    const hostname = serverAddr.split(':')[0];
+    const serverAddr = response.ServerAddr || "unknown";
+    const hostname = serverAddr.split(":")[0];
     const certBytes = response.ServerCertChain[0];
     try {
       // Check if response already has parsed certificate info from Go proxy
       if (response.CertificateInfo) {
-        return await this.validateCertificate(response.CertificateInfo, hostname);
+        return await this.validateCertificate(
+          response.CertificateInfo,
+          hostname,
+        );
       }
       // Fallback to parsing the raw certificate
       const certInfo = await this.parseCertificate(certBytes, hostname);
       return await this.validateCertificate(certInfo, hostname);
     } catch (error) {
-      console.error('Certificate validation error:', error);
+      console.error("Certificate validation error:", error);
       return await this.promptRawCertificateAcceptance(certBytes, hostname);
     }
   }
@@ -61,17 +71,20 @@ export class RDPCertificateHandler implements CertificateHandler {
    * Parse X.509 certificate bytes to extract relevant information
    * Note: For proper X.509 parsing, the Go proxy should provide parsed certificate info
    */
-  async parseCertificate(certBytes: Uint8Array, hostname: string): Promise<CertificateInfo> {
+  async parseCertificate(
+    certBytes: Uint8Array,
+    hostname: string,
+  ): Promise<CertificateInfo> {
     const fingerprint = await this.calculateFingerprint(certBytes);
     // Basic certificate info - actual parsing should be done by Go proxy
     const certInfo: CertificateInfo = {
       raw: certBytes,
       fingerprint: fingerprint,
-      hostname: hostname
+      hostname: hostname,
     };
     // Try to extract basic info from certificate if not provided by proxy
     // This is a fallback - proper X.509 parsing should be done server-side
-    const certString = new TextDecoder('latin1').decode(certBytes);
+    const certString = new TextDecoder("latin1").decode(certBytes);
     const cnMatch = certString.match(/CN=([^,\0]+)/);
     if (cnMatch) {
       certInfo.subject = cnMatch[0];
@@ -91,17 +104,23 @@ export class RDPCertificateHandler implements CertificateHandler {
    * Calculate SHA-256 fingerprint of certificate
    */
   async calculateFingerprint(certBytes: Uint8Array): Promise<string> {
-    const hashBuffer = await crypto.subtle.digest('SHA-256', certBytes as Uint8Array<ArrayBuffer>);
+    const hashBuffer = await crypto.subtle.digest(
+      "SHA-256",
+      certBytes as Uint8Array<ArrayBuffer>,
+    );
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join(':')
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join(":")
       .toUpperCase();
   }
   /**
    * Validate certificate against stored trust database
    */
-  async validateCertificate(certInfo: CertificateInfo, hostname?: string): Promise<boolean> {
+  async validateCertificate(
+    certInfo: CertificateInfo,
+    hostname?: string,
+  ): Promise<boolean> {
     const host = hostname || certInfo.hostname;
     const trustedCerts = this.loadTrustedCerts();
     if (trustedCerts[host]) {
@@ -124,7 +143,7 @@ export class RDPCertificateHandler implements CertificateHandler {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       return stored ? JSON.parse(stored) : {};
     } catch (error) {
-      console.error('Failed to load trusted certificates:', error);
+      console.error("Failed to load trusted certificates:", error);
       return {};
     }
   }
@@ -138,22 +157,31 @@ export class RDPCertificateHandler implements CertificateHandler {
         fingerprint: certInfo.fingerprint,
         hostname: hostname,
         addedAt: new Date().toISOString(),
-        subject: certInfo.subject
+        subject: certInfo.subject,
       };
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(trustedCerts));
     } catch (error) {
-      console.error('Failed to save trusted certificate:', error);
+      console.error("Failed to save trusted certificate:", error);
     }
   }
   /**
    * Prompt user to accept a new certificate
    */
-  private async promptUserAcceptance(hostname: string, certInfo: CertificateInfo): Promise<boolean> {
+  private async promptUserAcceptance(
+    hostname: string,
+    certInfo: CertificateInfo,
+  ): Promise<boolean> {
     return new Promise((resolve) => {
       const modal = this.createCertificateModal(hostname, certInfo, false);
-      const acceptBtn = modal.querySelector('#cert-accept') as HTMLButtonElement;
-      const rejectBtn = modal.querySelector('#cert-reject') as HTMLButtonElement;
-      const rememberCheck = modal.querySelector('#cert-remember') as HTMLInputElement;
+      const acceptBtn = modal.querySelector(
+        "#cert-accept",
+      ) as HTMLButtonElement;
+      const rejectBtn = modal.querySelector(
+        "#cert-reject",
+      ) as HTMLButtonElement;
+      const rememberCheck = modal.querySelector(
+        "#cert-remember",
+      ) as HTMLInputElement;
       acceptBtn.onclick = () => {
         const remember = rememberCheck.checked;
         if (remember) {
@@ -174,19 +202,28 @@ export class RDPCertificateHandler implements CertificateHandler {
   private async promptCertificateChange(
     hostname: string,
     newCert: CertificateInfo,
-    oldCert: TrustedCertificate
+    oldCert: TrustedCertificate,
   ): Promise<boolean> {
     return new Promise((resolve) => {
       const modal = this.createCertificateModal(hostname, newCert, true);
       // Add warning about certificate change
-      const warningDiv = modal.querySelector('.cert-warning') as HTMLElement;
+      const warningDiv = modal.querySelector(".cert-warning") as HTMLElement;
       warningDiv.innerHTML = `
         <strong>⚠️ Certificate has changed!</strong><br>
-        <small>Previous fingerprint: ${oldCert.fingerprint.substring(0, 32)}...</small>
+        <small>Previous fingerprint: ${oldCert.fingerprint.substring(
+          0,
+          32,
+        )}...</small>
       `;
-      const acceptBtn = modal.querySelector('#cert-accept') as HTMLButtonElement;
-      const rejectBtn = modal.querySelector('#cert-reject') as HTMLButtonElement;
-      const rememberCheck = modal.querySelector('#cert-remember') as HTMLInputElement;
+      const acceptBtn = modal.querySelector(
+        "#cert-accept",
+      ) as HTMLButtonElement;
+      const rejectBtn = modal.querySelector(
+        "#cert-reject",
+      ) as HTMLButtonElement;
+      const rememberCheck = modal.querySelector(
+        "#cert-remember",
+      ) as HTMLInputElement;
       acceptBtn.onclick = () => {
         const remember = rememberCheck.checked;
         if (remember) {
@@ -204,25 +241,32 @@ export class RDPCertificateHandler implements CertificateHandler {
   /**
    * Prompt for raw certificate acceptance when parsing fails
    */
-  private async promptRawCertificateAcceptance(certBytes: Uint8Array, hostname: string): Promise<boolean> {
+  private async promptRawCertificateAcceptance(
+    certBytes: Uint8Array,
+    hostname: string,
+  ): Promise<boolean> {
     const fingerprint = await this.calculateFingerprint(certBytes);
     const certInfo: CertificateInfo = {
       raw: certBytes,
       fingerprint: fingerprint,
       hostname: hostname,
-      subject: 'Unable to parse',
-      issuer: 'Unable to parse'
+      subject: "Unable to parse",
+      issuer: "Unable to parse",
     };
     return this.promptUserAcceptance(hostname, certInfo);
   }
   /**
    * Create certificate acceptance modal
    */
-  private createCertificateModal(hostname: string, certInfo: CertificateInfo, isChange: boolean): HTMLElement {
+  private createCertificateModal(
+    hostname: string,
+    certInfo: CertificateInfo,
+    isChange: boolean,
+  ): HTMLElement {
     // Remove any existing modal
     this.closeModal();
-    const modal = document.createElement('div');
-    modal.className = 'rdp-cert-modal';
+    const modal = document.createElement("div");
+    modal.className = "rdp-cert-modal";
     modal.innerHTML = `
       <div class="rdp-cert-overlay"></div>
       <div class="rdp-cert-dialog">
@@ -231,9 +275,17 @@ export class RDPCertificateHandler implements CertificateHandler {
         <p>The server <strong>${hostname}</strong> is presenting a certificate:</p>
         <div class="cert-details">
           <table>
-            <tr><td><strong>Subject:</strong></td><td>${certInfo.subject || 'Unknown'}</td></tr>
-            <tr><td><strong>Issuer:</strong></td><td>${certInfo.issuer || 'Unknown'}</td></tr>
-            ${certInfo.serialNumber ? `<tr><td><strong>Serial:</strong></td><td style="font-family: monospace; font-size: 0.9em;">${certInfo.serialNumber}</td></tr>` : ''}
+            <tr><td><strong>Subject:</strong></td><td>${
+              certInfo.subject || "Unknown"
+            }</td></tr>
+            <tr><td><strong>Issuer:</strong></td><td>${
+              certInfo.issuer || "Unknown"
+            }</td></tr>
+            ${
+              certInfo.serialNumber
+                ? `<tr><td><strong>Serial:</strong></td><td style="font-family: monospace; font-size: 0.9em;">${certInfo.serialNumber}</td></tr>`
+                : ""
+            }
             <tr><td><strong>SHA-256:</strong></td><td style="font-family: monospace; font-size: 0.9em;">
               ${certInfo.fingerprint}</td></tr>
           </table>
@@ -252,9 +304,9 @@ export class RDPCertificateHandler implements CertificateHandler {
       </div>
     `;
     // Add styles if not already present
-    if (!document.querySelector('#rdp-cert-styles')) {
-      const styles = document.createElement('style');
-      styles.id = 'rdp-cert-styles';
+    if (!document.querySelector("#rdp-cert-styles")) {
+      const styles = document.createElement("style");
+      styles.id = "rdp-cert-styles";
       styles.textContent = this.getModalStyles();
       document.head.appendChild(styles);
     }
@@ -376,7 +428,7 @@ export class RDPCertificateHandler implements CertificateHandler {
    */
   clearTrustedCerts(): void {
     localStorage.removeItem(this.STORAGE_KEY);
-    console.log('Cleared all trusted RDP certificates');
+    console.log("Cleared all trusted RDP certificates");
   }
   /**
    * Get list of trusted certificates
@@ -392,6 +444,6 @@ declare global {
     RDPCertificateHandler: typeof RDPCertificateHandler;
   }
 }
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.RDPCertificateHandler = RDPCertificateHandler;
 }

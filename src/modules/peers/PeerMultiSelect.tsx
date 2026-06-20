@@ -18,6 +18,8 @@ import {
   Loader2,
   MonitorSmartphoneIcon,
   RedoDot,
+  ShieldCheck,
+  ShieldOff,
   Trash2,
 } from "lucide-react";
 import * as React from "react";
@@ -26,9 +28,14 @@ import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePeers } from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import {
+  useBypass,
+  useBypassedPeers,
+} from "@/cloud/edr/useBypass";
 import { Group, GroupPeer } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 
 type Props = {
   selectedPeers?: RowSelectionState;
@@ -238,6 +245,77 @@ const PeerGroupMassAssignmentContent = ({
     });
   };
 
+  // Bypass compliance hooks
+  const { bypassCompliance, revokeBypass, canBypass } = useBypass();
+  const { isBypassed } = useBypassedPeers();
+  const { isAnyIntegrationEnabled } = useIntegrations();
+
+  // Count selected peers that need bypass (approval_required and not bypassed)
+  const selectedPeerIDs = Object.keys(selectedPeers);
+  const peersNeedingBypass = useMemo(() => {
+    return selectedPeerIDs.filter((id) => {
+      const peer = peers?.find((p) => p.id === id);
+      return peer?.approval_required && !peer?.force_approved;
+    });
+  }, [selectedPeerIDs, peers]);
+
+  // Count selected peers that are bypassed
+  const bypassedSelectedPeers = useMemo(() => {
+    return selectedPeerIDs.filter((id) => isBypassed(id));
+  }, [selectedPeerIDs, isBypassed]);
+
+  const batchBypassCompliance = async () => {
+    if (peersNeedingBypass.length === 0) return;
+
+    const choice = await confirm({
+      title: `Bypass compliance for ${peersNeedingBypass.length} ${peersNeedingBypass.length > 1 ? "peers" : "peer"}?`,
+      description:
+        "This will override compliance checks and grant network access to these peers. The bypass will be automatically removed if devices become compliant.",
+      confirmText: "Bypass Compliance",
+      cancelText: "Cancel",
+      type: "warning",
+    });
+    if (!choice) return;
+
+    notify({
+      title: "Bypass Compliance",
+      description: "Compliance was successfully bypassed for selected peers",
+      promise: Promise.all(
+        peersNeedingBypass.map((id) => bypassCompliance(id)),
+      ).then(() => {
+        mutate("/peers");
+        mutate("/peers/edr/bypassed");
+      }),
+      loadingMessage: "Bypassing compliance for selected peers...",
+    });
+  };
+
+  const batchRevokeBypass = async () => {
+    if (bypassedSelectedPeers.length === 0) return;
+
+    const choice = await confirm({
+      title: `Revoke compliance bypass for ${bypassedSelectedPeers.length} ${bypassedSelectedPeers.length > 1 ? "peers" : "peer"}?`,
+      description:
+        "These peers will return to normal compliance validation. If they are non-compliant, they will lose network access.",
+      confirmText: "Revoke",
+      cancelText: "Cancel",
+      type: "danger",
+    });
+    if (!choice) return;
+
+    notify({
+      title: "Revoke Compliance Bypass",
+      description: "Compliance bypass was successfully revoked",
+      promise: Promise.all(
+        bypassedSelectedPeers.map((id) => revokeBypass(id)),
+      ).then(() => {
+        mutate("/peers");
+        mutate("/peers/edr/bypassed");
+      }),
+      loadingMessage: "Revoking compliance bypass...",
+    });
+  };
+
   return (
     <div className={"fixed -bottom-16 z-50 w-full left-0 pointer-events-none"}>
       <motion.div
@@ -397,6 +475,48 @@ const PeerGroupMassAssignmentContent = ({
                           <FolderGit2 size={16} className={"shrink-0"} />
                         </Button>
                       </FullTooltip>
+                      {isAnyIntegrationEnabled &&
+                        peersNeedingBypass.length > 0 && (
+                          <FullTooltip
+                            content={
+                              <span className={"text-xs"}>
+                                Bypass Compliance ({peersNeedingBypass.length}
+                                )
+                              </span>
+                            }
+                          >
+                            <Button
+                              variant={"default-outline"}
+                              size={"xs"}
+                              className={"!h-9 !w-9"}
+                              onClick={batchBypassCompliance}
+                              disabled={!canBypass}
+                            >
+                              <ShieldCheck size={16} className={"shrink-0"} />
+                            </Button>
+                          </FullTooltip>
+                        )}
+                      {isAnyIntegrationEnabled &&
+                        bypassedSelectedPeers.length > 0 && (
+                          <FullTooltip
+                            content={
+                              <span className={"text-xs"}>
+                                Revoke Compliance Bypass (
+                                {bypassedSelectedPeers.length})
+                              </span>
+                            }
+                          >
+                            <Button
+                              variant={"default-outline"}
+                              size={"xs"}
+                              className={"!h-9 !w-9"}
+                              onClick={batchRevokeBypass}
+                              disabled={!canBypass}
+                            >
+                              <ShieldOff size={16} className={"shrink-0"} />
+                            </Button>
+                          </FullTooltip>
+                        )}
                       <FullTooltip
                         content={<span className={"text-xs"}>Delete All</span>}
                       >

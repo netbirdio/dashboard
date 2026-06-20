@@ -36,7 +36,7 @@ import {
   Table,
 } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import dayjs from "dayjs";
 import { ExternalLinkIcon, Link2, MailPlus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -135,7 +135,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     id: "group_names_filter",
     accessorFn: (row) =>
-      ((row as User & { _group_names?: string[] })._group_names) ?? [],
+      (row as User & { _group_names?: string[] })._group_names ?? [],
     filterFn: "arrIncludesSome",
   },
   {
@@ -179,7 +179,7 @@ export default function UsersTable({
   const path = usePathname();
   const account = useAccount();
 
-  const isCloud = isNetBirdHosted();
+  const isCloud = isNetBirdCloud();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
   const showInvitesToggle = !isCloud && embeddedIdpEnabled;
 
@@ -319,8 +319,7 @@ export default function UsersTable({
   const columnIds = new Set<string>();
   for (const c of columns) {
     const id =
-      (c as { id?: string }).id ??
-      (c as { accessorKey?: string }).accessorKey;
+      (c as { id?: string }).id ?? (c as { accessorKey?: string }).accessorKey;
     if (id) columnIds.add(String(id));
   }
   const activeFilterDefs = filterDefs.filter((f) => columnIds.has(f.id));
@@ -475,7 +474,7 @@ export const InviteUserButton = ({
 
   // On cloud: always show "Invite User"
   // On self-hosted: only show when embedded_idp_enabled is true
-  const isCloud = isNetBirdHosted();
+  const isCloud = isNetBirdCloud();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
   const localAuthDisabled = account?.settings.local_auth_disabled;
 
@@ -484,11 +483,7 @@ export const InviteUserButton = ({
   const isDisabled = !permission.users.create || localAuthDisabled;
 
   const button = (
-    <Button
-      variant={"primary"}
-      className={className}
-      disabled={isDisabled}
-    >
+    <Button variant={"primary"} className={className} disabled={isDisabled}>
       <MailPlus size={16} />
       {isCloud ? "Invite User" : "Add User"}
     </Button>
@@ -506,7 +501,9 @@ export const InviteUserButton = ({
             </p>
             <div className={"text-xs mt-1.5"}>
               <InlineLink
-                href={"https://docs.netbird.io/selfhosted/identity-providers/disable-local-authentication"}
+                href={
+                  "https://docs.netbird.io/selfhosted/identity-providers/disable-local-authentication"
+                }
                 target={"_blank"}
                 className={"flex gap-1 items-center"}
               >
@@ -524,4 +521,3 @@ export const InviteUserButton = ({
 
   return <UserInviteModal groups={groups}>{button}</UserInviteModal>;
 };
-

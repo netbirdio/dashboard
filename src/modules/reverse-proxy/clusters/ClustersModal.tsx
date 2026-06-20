@@ -28,7 +28,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useApiCall } from "@/utils/api";
 import { cn, validator } from "@utils/helpers";
-import { GRPC_API_ORIGIN, isNetBirdHosted } from "@/utils/netbird";
+import { GRPC_API_ORIGIN, isNetBirdCloud } from "@/utils/netbird";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import {
   REVERSE_PROXY_CLUSTERS_DOCS_LINK,
@@ -46,7 +46,6 @@ type DeployMethod = "docker" | "compose" | "kubernetes";
 
 const escapeRegExp = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
 
 const renderHighlightedCommand = (command: string, highlights: string[]) => {
   const valid = highlights.filter((h) => h && h.trim().length > 0);
@@ -97,7 +96,7 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
     return "";
   }, [domain]);
 
-  const managementUrl = isNetBirdHosted()
+  const managementUrl = isNetBirdCloud()
     ? "https://api.netbird.io"
     : GRPC_API_ORIGIN || "";
 
@@ -204,7 +203,11 @@ spec:
       targetPort: 443`;
 
   const deployment = {
-    docker: { label: "Docker", title: "Run the Proxy with Docker", command: dockerCommand },
+    docker: {
+      label: "Docker",
+      title: "Run the Proxy with Docker",
+      command: dockerCommand,
+    },
     compose: {
       label: "Docker Compose",
       title: "Run the Proxy with Docker Compose",
@@ -391,7 +394,7 @@ spec:
                 </div>
               </div>
 
-              {!isNetBirdHosted() && (
+              {!isNetBirdCloud() && (
                 <Callout variant={"warning"}>
                   For self-hosted deployments, make sure the proxy service
                   routes are configured on your NetBird management server before
@@ -401,7 +404,7 @@ spec:
                     target={"_blank"}
                     className={"block mt-1"}
                   >
-                     Required routing endpoints
+                    Required routing endpoints
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </Callout>

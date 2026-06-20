@@ -10,10 +10,12 @@ import useFetchApi from "@utils/api";
 import { ExternalLinkIcon, User2 } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
+import { AccountMfaCard } from "@/cloud/mfa/AccountMFACard";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
+import { IdentityProviderCard } from "@/modules/integrations/idp-sync/IdentityProviderCard";
 
 const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 
@@ -58,6 +60,12 @@ export default function TeamUsers() {
       </div>
       <RestrictedAccess page={"Users"} hasAccess={permission.users.read}>
         <Suspense fallback={<SkeletonTable />}>
+          {permission.settings.read && (
+            <div className={"flex flex-wrap gap-4 p-default pb-6"}>
+              {permission?.idp?.read && <IdentityProviderCard />}
+              <AccountMfaCard />
+            </div>
+          )}
           <UsersTable
             users={users}
             isLoading={isLoading || isGroupsLoading}

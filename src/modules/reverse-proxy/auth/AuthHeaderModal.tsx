@@ -275,7 +275,7 @@ export default function AuthHeaderModal({
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" onClick={handleRemoveAll}>
+                <Button variant="danger-text" data-testid="remove-headers" onClick={handleRemoveAll}>
                   Remove All
                 </Button>
                 <div className="flex gap-3">
@@ -302,6 +302,7 @@ export default function AuthHeaderModal({
                     variant="primary"
                     onClick={handleSave}
                     disabled={!canSave}
+                    data-testid="submit-headers"
                   >
                     Add Headers
                   </Button>
@@ -382,11 +383,13 @@ function HeaderItemRow({
           </div>
         ) : (
           <>
-            <SelectDropdown
-              value={item.type}
-              onChange={handleHeaderTypeChange}
-              options={HEADER_TYPE_OPTIONS}
-            />
+            <div data-testid={"header-type-select"}>
+              <SelectDropdown
+                value={item.type}
+                onChange={handleHeaderTypeChange}
+                options={HEADER_TYPE_OPTIONS}
+              />
+            </div>
 
             {item.type === "basic" && (
               <div className="flex flex-col gap-2">
@@ -396,6 +399,7 @@ function HeaderItemRow({
                   maxWidthClass="w-full"
                   value={item.username}
                   onChange={(e) => onChange({ username: e.target.value })}
+                  data-testid="header-basic-username"
                   {...INPUT_PROPS}
                 />
                 <Input
@@ -406,6 +410,7 @@ function HeaderItemRow({
                   onChange={(e) => onChange({ password: e.target.value })}
                   type="password"
                   showPasswordToggle
+                  data-testid="header-basic-password"
                   {...INPUT_PROPS}
                 />
               </div>

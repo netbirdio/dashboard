@@ -267,7 +267,7 @@ export function AccessControlModalContent({
           <div className={"px-8 flex-col flex gap-6"}>
             <div
               className={"flex justify-between items-center gap-10"}
-              data-cy={"protocol-wrapper"}
+              data-testid={"protocol-wrapper"}
             >
               <div className={"w-full"}>
                 <Label>Protocol</Label>
@@ -288,13 +288,13 @@ export function AccessControlModalContent({
                 <SelectTrigger className="w-[280px]">
                   <div
                     className={"flex items-center gap-3"}
-                    data-cy={"protocol-select-button"}
+                    data-testid={"protocol-select-button"}
                   >
                     <Share2 size={15} className={"text-nb-gray-300"} />
                     <SelectValue placeholder="Select protocol..." />
                   </div>
                 </SelectTrigger>
-                <SelectContent data-cy={"protocol-selection"}>
+                <SelectContent data-testid={"protocol-selection"}>
                   <SelectItem value="all">ALL</SelectItem>
                   <SelectItem value="tcp">TCP</SelectItem>
                   <SelectItem value="udp">UDP</SelectItem>
@@ -338,7 +338,7 @@ export function AccessControlModalContent({
                   />
                 </Label>
                 <PeerGroupSelector
-                  dataCy={"source-group-selector"}
+                  data-testid={"source-group-selector"}
                   popoverWidth={500}
                   placeholder={"Select source(s)..."}
                   showRoutes={protocol !== "netbird-ssh"}
@@ -381,7 +381,7 @@ export function AccessControlModalContent({
                   />
                 </Label>
                 <PeerGroupSelector
-                  dataCy={"destination-group-selector"}
+                  data-testid={"destination-group-selector"}
                   popoverWidth={500}
                   placeholder={"Select destination(s)..."}
                   showRoutes={true}
@@ -529,7 +529,7 @@ export function AccessControlModalContent({
                 autoFocus={true}
                 tabIndex={0}
                 value={name}
-                data-cy={"policy-name"}
+                data-testid={"policy-name"}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={"e.g., Devs to Servers"}
                 disabled={
@@ -544,7 +544,7 @@ export function AccessControlModalContent({
               </HelpText>
               <Textarea
                 value={description}
-                data-cy={"policy-description"}
+                data-testid={"policy-description"}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={
                   "e.g., Devs are allowed to access servers and servers are allowed to access Devs."
@@ -584,6 +584,7 @@ export function AccessControlModalContent({
                     variant={"primary"}
                     onClick={() => setTab("posture_checks")}
                     disabled={!canContinueToPostureChecks}
+                    data-testid="policy-continue"
                   >
                     Continue
                   </Button>
@@ -602,6 +603,7 @@ export function AccessControlModalContent({
                     variant={"primary"}
                     onClick={() => setTab("general")}
                     disabled={!canContinueToPostureChecks}
+                    data-testid="policy-continue"
                   >
                     Continue
                   </Button>
@@ -627,7 +629,7 @@ export function AccessControlModalContent({
                         close();
                       }
                     }}
-                    data-cy={"submit-policy"}
+                    data-testid={"submit-policy"}
                   >
                     <PlusCircle size={16} />
                     Add Policy

@@ -17,11 +17,11 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { cn, validator } from "@utils/helpers";
 import {
+  AlertTriangle,
   ClockFadingIcon,
   ExternalLinkIcon,
   FlaskConicalIcon,
   MonitorSmartphoneIcon,
-  AlertTriangle,
   RefreshCcw,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
@@ -225,7 +225,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             variant={"primary"}
             disabled={isSaveButtonDisabled}
             onClick={saveChanges}
-            data-cy={"save-clients-settings"}
+            data-testid={"save-clients-settings"}
           >
             Save Changes
           </Button>
@@ -244,9 +244,9 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               />
             </Label>
             <HelpText>
-              Configure how NetBird clients receive update notifications.
-              When enabled, users will be prompted to install the selected
-              version. This requires at least NetBird{" "}
+              Configure how NetBird clients receive update notifications. When
+              enabled, users will be prompted to install the selected version.
+              This requires at least NetBird{" "}
               <span className={"text-white font-medium"}>v0.61.0</span>.{" "}
               <InlineLink
                 href={"https://docs.netbird.io/manage/peers/auto-update"}
@@ -261,6 +261,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                 value={autoUpdateMethod}
                 onChange={handleUpdateMethodChange}
                 options={latestOrCustomVersion}
+                data-testid="auto-update-method"
               />
               <Input
                 value={autoUpdateCustomVersion}
@@ -269,6 +270,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                 error={versionError}
                 errorTooltip={true}
                 disabled={autoUpdateMethod !== "custom"}
+                data-testid="auto-update-version-input"
                 onChange={(v) => {
                   setAutoUpdateCustomVersion(v.target.value);
                 }}
@@ -278,6 +280,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               className={"mt-4"}
               value={autoUpdateAlways}
               onChange={setAutoUpdateAlways}
+              data-testid="force-auto-updates"
               label={
                 <>
                   <AlertTriangle size={15} className={"text-yellow-400"} />
@@ -335,6 +338,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               className={"mt-2"}
               value={peerExposeEnabled}
               onChange={setPeerExposeEnabled}
+              data-testid="peer-expose"
               label={"Enable Peer Expose"}
               helpText={
                 "When enabled, peers can expose local HTTP services accessible via a public URL."
@@ -360,6 +364,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                   values={peerExposeGroups}
                   onChange={setPeerExposeGroups}
                   placeholder="Select peer groups..."
+                  data-testid="peer-expose-groups-selector"
                 />
               </div>
             </div>
@@ -387,6 +392,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               className={"mt-2"}
               value={lazyConnection}
               onChange={toggleLazyConnection}
+              data-testid="lazy-connections"
               label={
                 <>
                   <ClockFadingIcon size={15} />

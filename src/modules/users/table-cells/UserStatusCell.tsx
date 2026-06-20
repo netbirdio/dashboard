@@ -1,7 +1,7 @@
 import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import { cn } from "@utils/helpers";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import { ExternalLinkIcon, HelpCircle } from "lucide-react";
 import React from "react";
 import { User } from "@/interfaces/User";
@@ -16,8 +16,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
   const status = user.status;
   const isPendingApproval = user.pending_approval;
   const isLocalAuthDisabled =
-    account?.settings?.local_auth_disabled === true &&
-    user.idp_id === "local";
+    account?.settings?.local_auth_disabled === true && user.idp_id === "local";
 
   const getStatusDisplay = () => {
     if (isLocalAuthDisabled) {
@@ -38,13 +37,13 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
     return { text: status || "Unknown", color: "bg-gray-400" };
   };
 
-  const isInvitedOnCloud = status === "invited" && isNetBirdHosted();
+  const isInvitedOnCloud = status === "invited" && isNetBirdCloud();
 
   const tooltipContent = isLocalAuthDisabled ? (
     <div className={"max-w-xs text-xs flex flex-col gap-2"}>
       <div>
-        Local authentication is disabled. This user can no longer log in.
-        Use your IdP for authentication.
+        Local authentication is disabled. This user can no longer log in. Use
+        your IdP for authentication.
       </div>
       <div>
         <InlineLink
@@ -73,8 +72,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
           {"'User Approval Required'"}
         </span>{" "}
         in{" "}
-        <InlineLink href={"/settings?tab=authentication"}>Settings</InlineLink>
-        .
+        <InlineLink href={"/settings?tab=authentication"}>Settings</InlineLink>.
       </div>
       <div>
         <InlineLink
@@ -101,7 +99,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
       >
         <div
           className={cn("flex gap-2.5 items-center text-nb-gray-300 text-sm")}
-          data-cy={"user-status-cell"}
+          data-testid={"user-status-cell"}
         >
           <span className={cn("h-2 w-2 rounded-full", color)}></span>
           {text}

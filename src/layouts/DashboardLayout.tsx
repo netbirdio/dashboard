@@ -5,24 +5,28 @@ import { useOidcUser } from "@axa-fr/react-oidc";
 import Button from "@components/Button";
 import { UserAvatar } from "@components/ui/UserAvatar";
 import { cn } from "@utils/helpers";
-import { isNetBirdHosted } from "@utils/netbird";
 import { useIsSm, useIsXs } from "@utils/responsive";
 import { AnimatePresence, motion } from "framer-motion";
 import { XIcon } from "lucide-react";
 import React from "react";
+import { NetBirdCloudProvider } from "@/cloud/contexts/NetBirdCloudProvider";
+import DistributorProvider from "@/cloud/distributor/contexts/DistributorProvider";
+import MSPProvider from "@/cloud/msp/contexts/MSPProvider";
 import AnnouncementProvider, {
   useAnnouncement,
 } from "@/contexts/AnnouncementProvider";
 import ApplicationProvider, {
   useApplicationContext,
 } from "@/contexts/ApplicationProvider";
+import BillingProvider from "@/contexts/BillingProvider";
 import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
-import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
 import Header, { headerHeight } from "./Header";
+import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
+import { isNetBirdCloud } from "@utils/netbird";
 
 export default function DashboardLayout({
   children,
@@ -31,16 +35,23 @@ export default function DashboardLayout({
 }>) {
   return (
     <ApplicationProvider>
-      <UsersProvider>
-        <AnnouncementProvider>
-          <GroupsProvider>
-            <CountryProvider>
-              {!isNetBirdHosted() && <OnboardingProvider />}
-              <DashboardPageContent>{children}</DashboardPageContent>
-            </CountryProvider>
-          </GroupsProvider>
-        </AnnouncementProvider>
-      </UsersProvider>
+      <DistributorProvider>
+        <MSPProvider>
+          <UsersProvider>
+            <AnnouncementProvider>
+              <BillingProvider>
+                <GroupsProvider>
+                  <CountryProvider>
+                    <NetBirdCloudProvider />
+                    {!isNetBirdCloud() && <OnboardingProvider />}
+                    <DashboardPageContent>{children}</DashboardPageContent>
+                  </CountryProvider>
+                </GroupsProvider>
+              </BillingProvider>
+            </AnnouncementProvider>
+          </UsersProvider>
+        </MSPProvider>
+      </DistributorProvider>
     </ApplicationProvider>
   );
 }

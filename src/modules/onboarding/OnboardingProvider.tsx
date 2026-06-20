@@ -1,6 +1,6 @@
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
+import { isLocalDev, isNetBirdCloud } from "@utils/netbird";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
@@ -66,8 +66,9 @@ export const OnboardingProvider = ({
 
   const showOnboarding = useMemo(() => {
     if (process.env.APP_ENV === "test") return false;
+    if (!isNetBirdCloud()) return false;
     if (!account) return false;
-    const isSignupFormPending = isNetBirdHosted()
+    const isSignupFormPending = isNetBirdCloud()
       ? !!account?.onboarding?.signup_form_pending
       : false;
     const show =
@@ -145,7 +146,7 @@ export const OnboardingProvider = ({
     });
   };
 
-  const formSubmitted = isNetBirdHosted()
+  const formSubmitted = isNetBirdCloud()
     ? !account?.onboarding?.signup_form_pending
     : true;
 

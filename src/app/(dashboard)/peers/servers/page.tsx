@@ -8,6 +8,9 @@ import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense, useMemo } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { useBypassedPeers } from "@/cloud/edr/useBypass";
+import useDistributorRedirect from "@/cloud/distributor/useDistributorRedirect";
+import FullScreenLoading from "@components/ui/FullScreenLoading";
 import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
@@ -18,6 +21,8 @@ const PeersTable = lazy(() => import("@/modules/peers/PeersTable"));
 
 export default function ServersPage() {
   const { isRestricted } = usePermissions();
+  const { isLoading: isDistributorRedirecting } = useDistributorRedirect();
+  if (isDistributorRedirecting) return <FullScreenLoading />;
 
   return (
     <PageContainer>
@@ -35,6 +40,7 @@ export default function ServersPage() {
 function ServersView() {
   const { peers, isLoading: isPeersLoading } = usePeers();
   const { users, isLoading: isUsersLoading } = useUsers();
+  const { isBypassed } = useBypassedPeers();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
@@ -48,8 +54,9 @@ function ServersView() {
     return peers.map((peer) => ({
       ...peer,
       user: users.find((u) => u.id === peer.user_id),
+      force_approved: peer.id ? isBypassed(peer.id) : false,
     }));
-  }, [peers, users]);
+  }, [peers, users, isBypassed]);
 
   return (
     <>

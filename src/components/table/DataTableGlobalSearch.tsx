@@ -59,6 +59,7 @@ export default function DataTableGlobalSearch({
   return (
     <Input
       {...props}
+      data-testid="table-search-input"
       ref={ref}
       onFocus={(e) => {
         if (onClick) {

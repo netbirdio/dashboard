@@ -196,7 +196,7 @@ export function DNSRecordModalContent({
             >
               <SelectTrigger
                 className="w-full pl-4"
-                data-cy={"dns-record-type-select"}
+                data-testid={"dns-record-type-select"}
               >
                 <SelectValue placeholder="Select type..." />
               </SelectTrigger>
@@ -225,6 +225,7 @@ export function DNSRecordModalContent({
               className={"rounded-r-none"}
               maxWidthClass={"w-full"}
               onChange={(e) => setDomain(e.target.value)}
+              data-testid="dns-record-hostname-input"
             />
             <div
               className={
@@ -249,6 +250,7 @@ export function DNSRecordModalContent({
                 value={recordValue}
                 maxWidthClass={"w-full"}
                 onChange={(e) => setRecordValue(e.target.value)}
+                data-testid="dns-record-content-input"
               />
             </div>
           )}
@@ -265,6 +267,7 @@ export function DNSRecordModalContent({
                 value={recordValue}
                 maxWidthClass={"w-full"}
                 onChange={(e) => setRecordValue(e.target.value)}
+                data-testid="dns-record-content-input"
               />
             </div>
           )}
@@ -281,6 +284,7 @@ export function DNSRecordModalContent({
                 value={recordValue}
                 maxWidthClass={"w-full"}
                 onChange={(e) => setRecordValue(e.target.value)}
+                data-testid="dns-record-content-input"
               />
             </div>
           )}
@@ -291,7 +295,7 @@ export function DNSRecordModalContent({
               <Select value={ttl} onValueChange={(v) => setTtl(v)}>
                 <SelectTrigger
                   className="w-full"
-                  data-cy={"dns-record-ttl-select"}
+                  data-testid={"dns-record-ttl-select"}
                 >
                   <div className={"flex items-center gap-2"}>
                     <ClockIcon size={14} className={"text-nb-gray-300"} />
@@ -336,6 +340,7 @@ export function DNSRecordModalContent({
               variant={"primary"}
               onClick={handleAddRecord}
               disabled={!canUpdateOrCreate}
+              data-testid="submit-dns-record"
             >
               {record ? "Save Changes" : "Add Record"}
             </Button>

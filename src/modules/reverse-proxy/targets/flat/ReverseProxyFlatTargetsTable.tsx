@@ -266,8 +266,8 @@ export const ReverseProxyFlatTargetsTable = ({
             table={table}
             onClick={() => {
               table.setPageIndex(0);
-              table.resetColumnFilters();
-              table.resetGlobalFilter();
+              table.setColumnFilters([]);
+              table.setGlobalFilter("");
               removeResourceParam();
             }}
           />

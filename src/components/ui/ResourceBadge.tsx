@@ -33,7 +33,7 @@ export default function ResourceBadge({
     <Badge
       key={key}
       useHover={true}
-      data-cy={"resource-badge"}
+      data-testid={"resource-badge"}
       variant={"gray-ghost"}
       className={cn(
         "transition-all group whitespace-nowrap",

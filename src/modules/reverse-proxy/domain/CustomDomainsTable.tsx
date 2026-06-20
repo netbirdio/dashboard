@@ -204,6 +204,7 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
                 className={""}
                 onClick={() => setAddModalOpen(true)}
                 disabled={!permission?.services?.create}
+                data-testid={"add-custom-domain"}
               >
                 <PlusCircle size={16} />
                 Add Domain
@@ -228,6 +229,7 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
                 className={"ml-auto"}
                 onClick={() => setAddModalOpen(true)}
                 disabled={!permission?.services?.create}
+                data-testid={"add-custom-domain"}
               >
                 <PlusCircle size={16} />
                 Add Domain
@@ -354,6 +356,7 @@ function CustomDomainActionCell({ domain }: Readonly<CellProps>) {
         size={"sm"}
         onClick={() => deleteDomain(domain)}
         disabled={!permission?.services?.delete}
+        data-testid={"delete-custom-domain"}
       >
         <Trash2 size={16} />
         Delete

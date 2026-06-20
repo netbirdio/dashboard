@@ -31,7 +31,7 @@ export const DNSZonesNameCell = ({ zone }: Props) => {
         active={zone.enabled}
         inactiveDot={"gray"}
         text={zone.domain}
-        dataCy={zone.id}
+        data-testid={zone.id}
       />
     </div>
   );
