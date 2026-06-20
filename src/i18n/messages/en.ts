@@ -587,7 +587,9 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     permissions: "Permissions",
     networksTab: "Networks",
     clients: "Clients",
-    dangerZone: "Danger zone"
+    dangerZone: "Danger zone",
+    languageDescription: "Choose your preferred display language for the dashboard.",
+    currentLanguage: "Current language"
   },
   reverseProxy: {
     title: "Reverse Proxy",

@@ -587,7 +587,9 @@ disable2FA: "禁用两步验证",
     permissions: "权限",
     networksTab: "网络",
     clients: "客户端",
-    dangerZone: "危险区域"
+    dangerZone: "危险区域",
+    languageDescription: "选择仪表板的显示语言。",
+    currentLanguage: "当前语言"
   },
   reverseProxy: {
     title: "反向代理",

@@ -7,6 +7,7 @@ import {
 	FingerprintIcon,
 	FolderGit2Icon,
 	KeyRound,
+	LanguagesIcon,
 	LockIcon,
 	MonitorSmartphoneIcon,
 	NetworkIcon,
@@ -23,6 +24,7 @@ import AuthenticationTab from "@/modules/settings/AuthenticationTab";
 import ClientSettingsTab from "@/modules/settings/ClientSettingsTab";
 import DangerZoneTab from "@/modules/settings/DangerZoneTab";
 import IdentityProvidersTab from "@/modules/settings/IdentityProvidersTab";
+import LanguageTab from "@/modules/settings/LanguageTab";
 import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
 import SetupKeysTab from "@/modules/settings/SetupKeysTab";
@@ -88,6 +90,10 @@ export default function NetBirdSettings() {
 								<MonitorSmartphoneIcon size={14} />
 								{t("clients")}
 							</VerticalTabs.Trigger>
+							<VerticalTabs.Trigger value="language">
+								<LanguagesIcon size={14} />
+								{t("language")}
+							</VerticalTabs.Trigger>
 						</>
 					)}
 
@@ -106,6 +112,7 @@ export default function NetBirdSettings() {
 						{account && <GroupsSettings account={account} />}
 						{account && <NetworkSettingsTab account={account} />}
 						{account && <ClientSettingsTab account={account} />}
+						<LanguageTab />
 						{account && <DangerZoneTab account={account} />}
 					</div>
 				</RestrictedAccess>
