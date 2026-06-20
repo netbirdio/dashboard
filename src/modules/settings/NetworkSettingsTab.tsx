@@ -229,14 +229,14 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 						>
 							<div className={"min-w-[330px]"}>
 								<Label>{t("dnsDomain")}</Label>
-								<HelpText>
-									{t("dnsDomainHelp")}
-								</HelpText>
+								<HelpText>{t("dnsDomainHelp")}</HelpText>
 							</div>
 							<div className={"w-full"}>
 								<Input
 									placeholder={
-										isNetBirdHosted() ? t("dnsDomainHostedPlaceholder") : t("dnsDomainSelfhostedPlaceholder")
+										isNetBirdHosted()
+											? t("dnsDomainHostedPlaceholder")
+											: t("dnsDomainSelfhostedPlaceholder")
 									}
 									errorTooltip={true}
 									errorTooltipPosition={"top"}
@@ -257,9 +257,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 						>
 							<div className={"min-w-[330px]"}>
 								<Label>{t("networkRange")}</Label>
-								<HelpText>
-									{t("networkRangeHelp")}
-								</HelpText>
+								<HelpText>{t("networkRangeHelp")}</HelpText>
 							</div>
 							<div className={"w-full"}>
 								<Input
@@ -283,9 +281,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 						>
 							<div className={"min-w-[330px]"}>
 								<Label>{t("ipv6NetworkRange")}</Label>
-								<HelpText>
-									{t("ipv6NetworkRangeHelp")}
-								</HelpText>
+								<HelpText>{t("ipv6NetworkRangeHelp")}</HelpText>
 							</div>
 							<div className={"w-full"}>
 								<Input
@@ -303,9 +299,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 
 					<div>
 						<Label>{t("ipv6EnabledGroups")}</Label>
-						<HelpText>
-							{t("ipv6EnabledGroupsHelp")}
-						</HelpText>
+						<HelpText>{t("ipv6EnabledGroupsHelp")}</HelpText>
 						<PeerGroupSelector
 							values={ipv6EnabledGroups}
 							onChange={setIpv6EnabledGroups}

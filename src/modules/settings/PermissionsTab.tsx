@@ -87,9 +87,7 @@ export default function PermissionsTab({ account }: Props) {
 								{t("restrictDashboard")}
 							</>
 						}
-						helpText={
-							t("restrictDashboardHelp")
-						}
+						helpText={t("restrictDashboardHelp")}
 						disabled={!permission.settings.update}
 					/>
 				</div>

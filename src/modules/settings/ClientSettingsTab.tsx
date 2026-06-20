@@ -283,9 +283,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 									{t("forceAutomaticUpdates")}
 								</>
 							}
-							helpText={
-								t("forceAutomaticUpdatesHelp")
-							}
+							helpText={t("forceAutomaticUpdatesHelp")}
 							disabled={
 								!permission.settings.update || autoUpdateMethod === "disabled"
 							}
@@ -331,9 +329,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 							value={peerExposeEnabled}
 							onChange={setPeerExposeEnabled}
 							label={t("enablePeerExpose")}
-							helpText={
-								t("enablePeerExposeHelp")
-							}
+							helpText={t("enablePeerExposeHelp")}
 							disabled={!permission.settings.update}
 						/>
 
@@ -347,9 +343,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 						>
 							<div className={"mt-2"}>
 								<Label>{t("allowedPeerGroups")}</Label>
-								<HelpText>
-									{t("allowedPeerGroupsHelp")}
-								</HelpText>
+								<HelpText>{t("allowedPeerGroupsHelp")}</HelpText>
 								<PeerGroupSelector
 									values={peerExposeGroups}
 									onChange={setPeerExposeGroups}

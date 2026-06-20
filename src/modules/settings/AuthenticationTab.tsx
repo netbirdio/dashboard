@@ -218,11 +218,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 									{t("userApprovalRequired")}
 								</>
 							}
-							helpText={
-								<>
-									{t("userApprovalHelp")}
-								</>
-							}
+							helpText={<>{t("userApprovalHelp")}</>}
 							disabled={!permission.settings.update}
 						/>
 					</div>
@@ -246,11 +242,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 										/>
 									</>
 								}
-								helpText={
-									<>
-										{t("localMfaHelp")}
-									</>
-								}
+								helpText={<>{t("localMfaHelp")}</>}
 								disabled={!permission.settings.update}
 							/>
 						</div>
@@ -270,11 +262,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 									{t("peerSessionExpiration")}
 								</>
 							}
-							helpText={
-								<>
-									{t("peerSessionExpirationHelp")}
-								</>
-							}
+							helpText={<>{t("peerSessionExpirationHelp")}</>}
 							disabled={!permission.settings.update}
 						/>
 
@@ -289,9 +277,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 							<div className={cn("flex justify-between gap-10 mt-2")}>
 								<div className={"w-full"}>
 									<Label>{t("sessionExpiration")}</Label>
-									<HelpText>
-										{t("sessionExpirationHelp")}
-									</HelpText>
+									<HelpText>{t("sessionExpirationHelp")}</HelpText>
 								</div>
 								<div className={"w-full flex gap-3"}>
 									<Input
@@ -342,11 +328,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 								dataCy={"peer-inactivity-expiration"}
 								label={t("requireLoginAfterDisconnect")}
 								disabled={!permission.settings.update}
-								helpText={
-									<>
-										{t("requireLoginHelp")}
-									</>
-								}
+								helpText={<>{t("requireLoginHelp")}</>}
 							/>
 						</div>
 					</div>

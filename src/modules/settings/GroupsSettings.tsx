@@ -172,9 +172,7 @@ export default function GroupsSettings({ account }: Props) {
 								{t("enableGroupPropagation")}
 							</>
 						}
-						helpText={
-							t("groupPropagationHelp")
-						}
+						helpText={t("groupPropagationHelp")}
 						disabled={!permission.settings.update}
 					/>
 					{(!isNetBirdHosted() || isLocalDev()) && (
@@ -187,9 +185,7 @@ export default function GroupsSettings({ account }: Props) {
 									{t("enableJwtGroupSync")}
 								</>
 							}
-							helpText={
-								t("jwtGroupSyncHelp")
-							}
+							helpText={t("jwtGroupSyncHelp")}
 							disabled={!permission.settings.update}
 						/>
 					)}
@@ -213,9 +209,7 @@ export default function GroupsSettings({ account }: Props) {
 									>
 										<div>
 											<Label>{t("jwtClaim")}</Label>
-											<HelpText>
-												{t("jwtClaimHelp")}
-											</HelpText>
+											<HelpText>{t("jwtClaimHelp")}</HelpText>
 											<Input
 												customPrefix={
 													<Braces size={16} className={"text-nb-gray-300"} />
@@ -234,9 +228,7 @@ export default function GroupsSettings({ account }: Props) {
 										</div>
 										<div>
 											<Label>{t("jwtAllowGroups")}</Label>
-											<HelpText>
-												{t("jwtAllowGroupsHelp")}
-											</HelpText>
+											<HelpText>{t("jwtAllowGroupsHelp")}</HelpText>
 											<div>
 												{jwtAllowGroups.length > 0 && (
 													<div className="flex flex-wrap gap-2 mb-3">

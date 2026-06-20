@@ -207,9 +207,7 @@ export default function IdentityProvidersTab() {
 				<div className={"flex items-start justify-between"}>
 					<div>
 						<h1>{t("identityProviders")}</h1>
-						<Paragraph>
-							{t("configureIdpDescription")}
-						</Paragraph>
+						<Paragraph>{t("configureIdpDescription")}</Paragraph>
 					</div>
 				</div>
 			</div>
