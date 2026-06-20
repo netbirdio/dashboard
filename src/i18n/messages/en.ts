@@ -603,7 +603,15 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     clients: "Clients",
     dangerZone: "Danger zone",
     languageDescription: "Choose your preferred display language for the dashboard.",
-    currentLanguage: "Current language"
+    currentLanguage: "Current language",
+    delete: "Delete",
+    deleteAccountTitle: "Delete NetBird account",
+    deleteAccountConfirm: "Are you sure you want to delete your NetBird account? This action cannot be undone.",
+    deleteAccountSuccess: "NetBird account was successfully deleted.",
+    deleteAccountLoading: "Deleting the account...",
+    deleteAccountCardTitle: "Delete NetBird account",
+    deleteAccountWarning: "Before proceeding to delete your Netbird account, please be aware that this action is irreversible. Once your account is deleted, you will permanently lose access to all associated data, including your peers, users, groups, policies, and routes.",
+    deleteAccountButton: "Delete Account"
   },
   reverseProxy: {
     title: "Reverse Proxy",

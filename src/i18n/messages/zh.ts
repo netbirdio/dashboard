@@ -603,7 +603,15 @@ disable2FA: "禁用两步验证",
     clients: "客户端",
     dangerZone: "危险区域",
     languageDescription: "选择仪表板的显示语言。",
-    currentLanguage: "当前语言"
+    currentLanguage: "当前语言",
+    delete: "删除",
+    deleteAccountTitle: "删除 NetBird 账户",
+    deleteAccountConfirm: "确定要删除您的 NetBird 账户吗？此操作无法撤销。",
+    deleteAccountSuccess: "NetBird 账户已成功删除。",
+    deleteAccountLoading: "正在删除账户...",
+    deleteAccountCardTitle: "删除 NetBird 账户",
+    deleteAccountWarning: "在继续删除 NetBird 账户之前，请注意此操作不可撤销。一旦您的账户被删除，您将永久失去对所有关联数据的访问权限，包括您的节点、用户、组、策略和路由。",
+    deleteAccountButton: "删除账户"
   },
   reverseProxy: {
     title: "反向代理",

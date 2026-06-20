@@ -42,21 +42,20 @@ export default function DangerZoneTab({ account }: Props) {
 				.catch((error) => reject(error));
 		});
 
-		notify({
-			title: "Delete NetBird account",
-			description: "NetBird account was successfully deleted.",
+			notify({
+			title: t("deleteAccountTitle"),
+			description: t("deleteAccountSuccess"),
 			promise: deletePromise,
-			loadingMessage: "Deleting the account...",
+			loadingMessage: t("deleteAccountLoading"),
 		});
 	};
 
-	const handleConfirm = async () => {
+			const handleConfirm = async () => {
 		const choice = await confirm({
-			title: "Delete NetBird account",
-			description:
-				"Are you sure you want to delete your NetBird account? This action cannot be undone.",
-			confirmText: "Delete",
-			cancelText: "Cancel",
+			title: t("deleteAccountTitle"),
+			description: t("deleteAccountConfirm"),
+			confirmText: t("delete"),
+			cancelText: t("cancel"),
 			type: "danger",
 		});
 		if (!choice) return;
@@ -88,18 +87,15 @@ export default function DangerZoneTab({ account }: Props) {
 					>
 						<div className={"px-8 py-6"}>
 							<p className={"text-xl font-medium mb-2 !text-red-50"}>
-								Delete NetBird account
-							</p>
-							<p className={"!text-red-50/80"}>
-								Before proceeding to delete your Netbird account, please be
-								aware that this action is irreversible. Once your account is
-								deleted, you will permanently lose access to all associated
-								data, including your peers, users, groups, policies, and routes.
-							</p>
-							<div className={"mt-6"}>
-								<Button variant={"danger"} onClick={handleConfirm} size={"xs"}>
-									Delete Account
-								</Button>
+							{t("deleteAccountCardTitle")}
+						</p>
+						<p className={"!text-red-50/80"}>
+							{t("deleteAccountWarning")}
+						</p>
+						<div className={"mt-6"}>
+							<Button variant={"danger"} onClick={handleConfirm} size={"xs"}>
+								{t("deleteAccountButton")}
+							</Button>
 							</div>
 						</div>
 					</Card>
