@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import ButtonGroup from "@components/ButtonGroup";
 import { Checkbox } from "@components/Checkbox";
 import FullTooltip from "@components/FullTooltip";
 import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
@@ -30,6 +31,7 @@ import {
   TableFiltersButton,
 } from "@components/table/TableFilters";
 import AddPeerButton from "@components/ui/AddPeerButton";
+import NoResults from "@components/ui/NoResults";
 import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import {
   ColumnDef,
@@ -37,10 +39,15 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import { trim, uniqBy } from "lodash";
-import { MonitorDotIcon } from "lucide-react";
+import {
+  MonitorDotIcon,
+  MonitorSmartphoneIcon,
+  ServerIcon,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import PeerIcon from "@/assets/icons/PeerIcon";
 import PeerProvider from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -58,7 +65,12 @@ import PeerNameCell from "@/modules/peers/PeerNameCell";
 import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 import PeerStatusCell from "@/modules/peers/PeerStatusCell";
 import PeerVersionCell from "@/modules/peers/PeerVersionCell";
-import { removeAllSpaces } from "@utils/helpers";
+import {
+  matchesPeerTableKind,
+  PEERS_TABLE_KIND_LABELS,
+  PeersTableKind,
+} from "@/modules/peers/peerKind";
+import { cn, removeAllSpaces } from "@utils/helpers";
 
 // Stable key per OS family for the filter column. Mirrors the icon
 // selection in PeerOSCell so the chip label and the displayed OS icon
@@ -79,7 +91,9 @@ function peerOsKey(os: string | undefined): string {
   }
 }
 
-const PeersTableColumns: ColumnDef<Peer>[] = [
+const getPeersTableColumns = (
+  showPeerKindIcons: boolean,
+): ColumnDef<Peer>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -111,7 +125,9 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
     sortingFn: "text",
-    cell: ({ row }) => <PeerNameCell peer={row.original} />,
+    cell: ({ row }) => (
+      <PeerNameCell peer={row.original} showPeerKindIcon={showPeerKindIcons} />
+    ),
   },
   {
     id: "approval_required",
@@ -257,22 +273,17 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
 ];
 
-export type PeersTableKind = "users" | "servers";
+const DEFAULT_ENABLED_KINDS: Record<PeersTableKind, boolean> = {
+  users: true,
+  servers: true,
+};
 
 type Props = {
   peers?: Peer[];
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
   kind?: PeersTableKind;
-};
-
-// Peers split into two kinds:
-//   users   – owner is a real (non-service) user, typically added via SSO
-//   servers – no owner, or owner is a service user, typically enrolled via setup key
-const matchesKind = (peer: Peer, kind?: PeersTableKind) => {
-  if (!kind) return true;
-  const hasRealUser = !!peer.user && !peer.user.is_service_user;
-  return kind === "users" ? hasRealUser : !hasRealUser;
+  showKindFilters?: boolean;
 };
 
 export default function PeersTable({
@@ -280,6 +291,7 @@ export default function PeersTable({
   isLoading,
   headingTarget,
   kind,
+  showKindFilters = false,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
@@ -299,10 +311,30 @@ export default function PeersTable({
       },
     ],
   );
+  const [enabledKinds, setEnabledKinds] = useLocalStorage<
+    Record<PeersTableKind, boolean>
+  >(
+    "netbird-peer-kind-filters",
+    DEFAULT_ENABLED_KINDS,
+    showKindFilters && !kind,
+  );
+  const currentEnabledKinds = useMemo(
+    () => ({ ...DEFAULT_ENABLED_KINDS, ...enabledKinds }),
+    [enabledKinds],
+  );
 
   const kindFilteredPeers = useMemo(
-    () => peers?.filter((p) => matchesKind(p, kind)),
-    [peers, kind],
+    () =>
+      peers?.filter((peer) => {
+        if (kind) return matchesPeerTableKind(peer, kind);
+        if (!showKindFilters) return true;
+
+        const peerKind = matchesPeerTableKind(peer, "users")
+          ? "users"
+          : "servers";
+        return currentEnabledKinds[peerKind];
+      }),
+    [peers, kind, showKindFilters, currentEnabledKinds],
   );
 
   const pendingApprovalCount =
@@ -330,6 +362,32 @@ export default function PeersTable({
     return Array.from(map.values());
   }, [kindFilteredPeers]);
 
+  const selectedKindCount =
+    Object.values(currentEnabledKinds).filter(Boolean).length;
+  const headingCountLabel =
+    showKindFilters && !kind
+      ? currentEnabledKinds.servers && !currentEnabledKinds.users
+        ? "Server "
+        : currentEnabledKinds.users && !currentEnabledKinds.servers
+        ? "Device "
+        : ""
+      : "";
+  const showPeerKindIcons =
+    showKindFilters &&
+    !kind &&
+    currentEnabledKinds.servers &&
+    currentEnabledKinds.users;
+  const peersTableColumns = useMemo(
+    () => getPeersTableColumns(showPeerKindIcons),
+    [showPeerKindIcons],
+  );
+  const hasPeerKindFilterResult =
+    showKindFilters &&
+    !kind &&
+    !!peers &&
+    peers.length > 0 &&
+    (kindFilteredPeers?.length ?? 0) === 0;
+
   const { isUser } = useLoggedInUser();
 
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
@@ -338,6 +396,17 @@ export default function PeersTable({
     if (Object.keys(selectedRows).length > 0) {
       setSelectedRows({});
     }
+  };
+
+  const toggleKind = (peerKind: PeersTableKind) => {
+    setEnabledKinds((current) => {
+      const normalized = { ...DEFAULT_ENABLED_KINDS, ...current };
+      return {
+        ...normalized,
+        [peerKind]: !normalized[peerKind],
+      };
+    });
+    resetSelectedRows();
   };
 
   const [showBrowserPeers, setShowBrowserPeers] = useState(false);
@@ -432,7 +501,11 @@ export default function PeersTable({
         formatChip: (v) => formatGroupsChip(v as string[] | undefined),
       });
     }
-    if (kind === "users" && !isUser && tableUsers.length > 0) {
+    if (
+      (kind === "users" || showKindFilters) &&
+      !isUser &&
+      tableUsers.length > 0
+    ) {
       defs.push({
         id: "user_email",
         label: "Users",
@@ -448,7 +521,7 @@ export default function PeersTable({
       });
     }
     return defs;
-  }, [isUser, kind, osOptions, tableGroups, tableUsers]);
+  }, [isUser, kind, osOptions, showKindFilters, tableGroups, tableUsers]);
 
   return (
     <>
@@ -458,6 +531,7 @@ export default function PeersTable({
       />
       <DataTable
         headingTarget={headingTarget}
+        headingCountLabel={headingCountLabel}
         rowSelection={selectedRows}
         setRowSelection={setSelectedRows}
         useRowId={true}
@@ -466,7 +540,7 @@ export default function PeersTable({
         setSorting={setSorting}
         initialPageSize={25}
         showResetFilterButton={false}
-        columns={PeersTableColumns}
+        columns={peersTableColumns}
         data={showBrowserPeers ? browserPeers : regularPeers}
         searchPlaceholder={"Search by name, IP, owner or group..."}
         columnVisibility={{
@@ -487,15 +561,34 @@ export default function PeersTable({
         }}
         isLoading={isLoading}
         getStartedCard={
-          <NoPeersGettingStarted
-            showBackground={true}
-            isUserDevice={kind ? kind === "users" : undefined}
-          />
+          hasPeerKindFilterResult ? (
+            <NoResults
+              className={"py-4"}
+              title={
+                selectedKindCount === 0
+                  ? "No peer types selected"
+                  : "No peers match this view"
+              }
+              description={
+                selectedKindCount === 0
+                  ? "Turn on Devices or Servers to show peers."
+                  : "Try another peer type."
+              }
+              icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
+            />
+          ) : (
+            <NoPeersGettingStarted
+              showBackground={true}
+              isUserDevice={kind ? kind === "users" : undefined}
+            />
+          )
         }
         rightSide={() => (
           <>
             {peers && peers.length > 0 && (
-              <AddPeerButton isUserDevice={kind === "users"} />
+              <AddPeerButton
+                isUserDevice={kind ? kind === "users" : undefined}
+              />
             )}
           </>
         )}
@@ -505,6 +598,45 @@ export default function PeersTable({
       >
         {(table) => (
           <>
+            {showKindFilters && !kind && (
+              <ButtonGroup disabled={peers?.length == 0}>
+                {(["servers", "users"] as PeersTableKind[]).map((peerKind) => (
+                  <ButtonGroup.Button
+                    key={peerKind}
+                    aria-pressed={currentEnabledKinds[peerKind]}
+                    className={cn(
+                      currentEnabledKinds[peerKind]
+                        ? "!bg-gray-100 !text-gray-900 dark:!bg-nb-gray-900/70 dark:!text-nb-gray-100 dark:!border-nb-gray-800 dark:hover:!bg-nb-gray-900"
+                        : "dark:!bg-nb-gray-920 dark:!text-nb-gray-500 dark:hover:!text-nb-gray-200",
+                    )}
+                    disabled={peers?.length == 0}
+                    onClick={() => {
+                      table.setPageIndex(0);
+                      toggleKind(peerKind);
+                    }}
+                    variant={"secondary"}
+                  >
+                    {peerKind === "servers" ? (
+                      <ServerIcon
+                        size={15}
+                        strokeWidth={1.8}
+                        className={"shrink-0"}
+                        aria-hidden={true}
+                      />
+                    ) : (
+                      <MonitorSmartphoneIcon
+                        size={15}
+                        strokeWidth={1.8}
+                        className={"shrink-0"}
+                        aria-hidden={true}
+                      />
+                    )}
+                    {PEERS_TABLE_KIND_LABELS[peerKind]}
+                  </ButtonGroup.Button>
+                ))}
+              </ButtonGroup>
+            )}
+
             <TableFiltersButton
               table={table}
               filters={filterDefs}
@@ -517,6 +649,7 @@ export default function PeersTable({
                 table.setPageIndex(0);
                 table.resetColumnFilters();
                 table.resetGlobalFilter();
+                setEnabledKinds(DEFAULT_ENABLED_KINDS);
                 resetSelectedRows();
               }}
             />

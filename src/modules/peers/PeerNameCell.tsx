@@ -1,4 +1,6 @@
+import FullTooltip from "@components/FullTooltip";
 import { cn } from "@utils/helpers";
+import { MonitorSmartphoneIcon, ServerIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
@@ -9,16 +11,26 @@ import { ExitNodePeerIndicator } from "@/modules/exit-node/ExitNodePeerIndicator
 import { EphemeralPeerIndicator } from "@/modules/peer/EphemeralPeerIndicator";
 import { ExpirationDisabledIndicator } from "@/modules/peer/ExpirationDisabledIndicator";
 import { usePeerIssueIcon } from "@/modules/peer/PeerIssueIcon";
+import {
+  getEffectivePeerKind,
+  PEER_KIND_LABELS,
+} from "@/modules/peers/peerKind";
 
 type Props = {
   peer: Peer;
   linkToPeer?: boolean;
+  showPeerKindIcon?: boolean;
 };
-export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
+export default function PeerNameCell({
+  peer,
+  linkToPeer = true,
+  showPeerKindIcon = false,
+}: Props) {
   const { users } = useUsers();
   const router = useRouter();
   const { isOwnerOrAdmin } = useLoggedInUser();
   const issueIcon = usePeerIssueIcon(peer);
+  const peerKind = getEffectivePeerKind(peer);
 
   const userOfPeer = useMemo(() => {
     return users?.find((user) => user.id === peer.user_id);
@@ -47,6 +59,14 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
         <ActiveInactiveRow
           active={peer.connected}
           text={peer.name}
+          textPrefix={
+            showPeerKindIcon && (
+              <PeerKindIndicator
+                kind={peerKind}
+                label={PEER_KIND_LABELS[peerKind]}
+              />
+            )
+          }
           additionalInfo={
             isOwnerOrAdmin && (
               <>
@@ -73,5 +93,32 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
         )}
       </div>
     </div>
+  );
+}
+
+function PeerKindIndicator({
+  kind,
+  label,
+}: {
+  kind: "device" | "server";
+  label: string;
+}) {
+  const Icon = kind === "server" ? ServerIcon : MonitorSmartphoneIcon;
+
+  return (
+    <FullTooltip
+      content={<div className={"text-xs"}>{label}</div>}
+      interactive={false}
+      sideOffset={6}
+    >
+      <span
+        className={
+          "inline-flex h-4 w-4 shrink-0 items-center justify-center text-nb-gray-400 dark:text-nb-gray-500"
+        }
+        aria-label={label}
+      >
+        <Icon size={15} strokeWidth={1.8} />
+      </span>
+    </FullTooltip>
   );
 }

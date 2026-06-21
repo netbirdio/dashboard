@@ -11,6 +11,7 @@ import { Group, GroupPeer } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
 import { PeerSSHInstructions } from "@/modules/peer/PeerSSHInstructions";
+import type { PeerKind } from "@/modules/peers/peerKind";
 
 type Props = {
   children: React.ReactNode;
@@ -31,6 +32,7 @@ const PeerContext = React.createContext(
       approval_required?: boolean;
       ip?: string;
       ipv6?: string;
+      kind?: PeerKind;
     }) => Promise<Peer>;
     toggleSSH: (newState: boolean) => Promise<void>;
     setSSHInstructionsModal: (open: boolean) => void;
@@ -46,8 +48,7 @@ export default function PeerProvider({
 }: Props) {
   const { user, isLoading: isUserLoading } = usePeerUser(peer);
   const { peerGroups, isLoading: isGroupsLoading } = usePeerGroups(peer);
-  const isLoading =
-    isGroupsLoading || (peer.user_id ? isUserLoading : false);
+  const isLoading = isGroupsLoading || (peer.user_id ? isUserLoading : false);
   const peerRequest = useApiCall<Peer>("/peers", true);
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
@@ -84,29 +85,43 @@ export default function PeerProvider({
     approval_required?: boolean;
     ip?: string;
     ipv6?: string;
+    kind?: PeerKind;
   }) => {
-    return peerRequest.put(
-      {
-        peerId: peer?.id,
-        name: props.name != undefined ? props.name : peer.name,
-        ssh_enabled: props.ssh != undefined ? props.ssh : peer.ssh_enabled,
-        login_expiration_enabled:
-          props.loginExpiration != undefined
-            ? props.loginExpiration
-            : peer.login_expiration_enabled,
-        inactivity_expiration_enabled:
-          props?.inactivityExpiration == undefined
-            ? undefined
-            : props.inactivityExpiration,
-        approval_required:
-          props?.approval_required == undefined
-            ? undefined
-            : props.approval_required,
-        ip: props.ip != undefined ? props.ip : undefined,
-        ipv6: props.ipv6 != undefined ? props.ipv6 : undefined,
-      },
-      `/${peer.id}`,
-    );
+    const payload: {
+      peerId?: string;
+      name: string;
+      ssh_enabled: boolean;
+      login_expiration_enabled: boolean;
+      inactivity_expiration_enabled?: boolean;
+      approval_required?: boolean;
+      ip?: string;
+      ipv6?: string;
+      kind?: PeerKind;
+    } = {
+      peerId: peer?.id,
+      name: props.name != undefined ? props.name : peer.name,
+      ssh_enabled: props.ssh != undefined ? props.ssh : peer.ssh_enabled,
+      login_expiration_enabled:
+        props.loginExpiration != undefined
+          ? props.loginExpiration
+          : peer.login_expiration_enabled,
+      inactivity_expiration_enabled:
+        props?.inactivityExpiration == undefined
+          ? undefined
+          : props.inactivityExpiration,
+      approval_required:
+        props?.approval_required == undefined
+          ? undefined
+          : props.approval_required,
+      ip: props.ip != undefined ? props.ip : undefined,
+      ipv6: props.ipv6 != undefined ? props.ipv6 : undefined,
+    };
+
+    if (props.kind !== undefined) {
+      payload.kind = props.kind;
+    }
+
+    return peerRequest.put(payload, `/${peer.id}`);
   };
 
   const toggleSSH = async (enable: boolean) => {
