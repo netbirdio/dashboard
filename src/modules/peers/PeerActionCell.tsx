@@ -15,6 +15,8 @@ import {
   ExternalLinkIcon,
   MonitorIcon,
   MoreVertical,
+  ShieldCheck,
+  ShieldOff,
   TerminalSquare,
   TimerResetIcon,
   Trash2,
@@ -22,10 +24,12 @@ import {
 import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
+import { useBypass, useBypassedPeers } from "@/cloud/edr/useBypass";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { ExitNodeDropdownButton } from "@/modules/exit-node/ExitNodeDropdownButton";
+import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
 import InlineLink from "@components/InlineLink";
@@ -39,14 +43,15 @@ export default function PeerActionCell() {
   const { permission } = usePermissions();
   const { confirm } = useDialog();
 
-  const showSSHButton = useMemo(() => {
-    const isClientSSHEnabled = peer?.local_flags?.server_ssh_allowed;
-    const isDashboardSSHEnabled = peer?.ssh_enabled;
-    if (isDashboardSSHEnabled) return true;
-    return !isClientSSHEnabled;
-  }, [peer]);
-
-  const showApprove = peer.approval_required && permission.peers.update;
+  // Approval / EDR-bypass state. We pull this directly so the action
+  // menu can offer Approve / Bypass / Revoke without the inline badges
+  // that used to live in PeerStatusCell.
+  const { isAnyIntegrationEnabled, activeIntegrationName } = useIntegrations();
+  const { bypassCompliance, revokeBypass, canBypass } = useBypass();
+  const { isBypassed: checkBypassed } = useBypassedPeers();
+  const isBypassed = peer.id ? checkBypassed(peer.id) : false;
+  const canApprove = permission.peers.update;
+  const needsApproval = peer.approval_required;
 
   const approvePeer = async () => {
     const choice = await confirm({
@@ -72,6 +77,61 @@ export default function PeerActionCell() {
       loadingMessage: "Approving peer...",
     });
   };
+
+  const handleBypassCompliance = async () => {
+    const choice = await confirm({
+      title: `Bypass compliance for '${peer.name}'?`,
+      description:
+        "This will override the compliance check and allow this peer to connect. " +
+        "The bypass will be automatically removed if the device becomes compliant.",
+      confirmText: "Bypass Compliance",
+      cancelText: "Cancel",
+      type: "warning",
+    });
+    if (!choice || !peer.id) return;
+    notify({
+      title: `Compliance bypassed for ${peer.name}`,
+      description: `This peer can now connect to other peers.`,
+      promise: bypassCompliance(peer.id),
+      loadingMessage: "Bypassing compliance...",
+    });
+  };
+
+  const handleRevokeBypass = async () => {
+    const choice = await confirm({
+      title: `Revoke compliance bypass for '${peer.name}'?`,
+      description:
+        "This peer will be subject to normal compliance validation. " +
+        "If still non-compliant, it will lose network access.",
+      confirmText: "Revoke",
+      cancelText: "Cancel",
+      type: "warning",
+    });
+    if (!choice || !peer.id) return;
+    notify({
+      title: `Compliance bypass revoked`,
+      description: `Peer ${peer.name} is now subject to normal compliance validation.`,
+      promise: revokeBypass(peer.id),
+      loadingMessage: "Revoking compliance bypass...",
+    });
+  };
+
+  // Which approval items to show:
+  //   • Approve  — pending approval AND no EDR integration is on
+  //   • Bypass   — pending approval AND EDR is on AND user can bypass
+  //   • Revoke   — currently bypassed AND user can revoke
+  const showApprove = needsApproval && !isAnyIntegrationEnabled && canApprove;
+  const showBypass =
+    needsApproval && isAnyIntegrationEnabled && canBypass && !isBypassed;
+  const showRevokeBypass = isBypassed && canBypass;
+  const showApprovalGroup = showApprove || showBypass || showRevokeBypass;
+
+  const showSSHButton = useMemo(() => {
+    const isClientSSHEnabled = peer?.local_flags?.server_ssh_allowed;
+    const isDashboardSSHEnabled = peer?.ssh_enabled;
+    if (isDashboardSSHEnabled) return true;
+    return !isClientSSHEnabled;
+  }, [peer]);
 
   // The Connect column previously hosted SSH / RDP entry points. We
   // fold those into the action menu — gated on a non-mobile, online
@@ -154,15 +214,44 @@ export default function PeerActionCell() {
             </div>
           </DropdownMenuItem>
 
-          {showApprove && (
+          {showApprovalGroup && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={approvePeer}>
-                <div className={"flex gap-3 items-center"}>
-                  <CheckCircle2 size={14} className={"shrink-0"} />
-                  Approve
-                </div>
-              </DropdownMenuItem>
+              {showApprove && (
+                <DropdownMenuItem onClick={approvePeer}>
+                  <div className={"flex gap-3 items-center"}>
+                    <CheckCircle2 size={14} className={"shrink-0"} />
+                    Approve
+                  </div>
+                </DropdownMenuItem>
+              )}
+              {showBypass && (
+                <FullTooltip
+                  className={"w-full block"}
+                  content={
+                    <div className={"text-xs max-w-xs"}>
+                      Bypass {activeIntegrationName} compliance check and
+                      allow this peer to connect. The bypass is automatically
+                      removed when the device becomes compliant.
+                    </div>
+                  }
+                >
+                  <DropdownMenuItem onClick={handleBypassCompliance}>
+                    <div className={"flex gap-3 items-center w-full"}>
+                      <ShieldCheck size={14} className={"shrink-0"} />
+                      Bypass Compliance
+                    </div>
+                  </DropdownMenuItem>
+                </FullTooltip>
+              )}
+              {showRevokeBypass && (
+                <DropdownMenuItem onClick={handleRevokeBypass}>
+                  <div className={"flex gap-3 items-center"}>
+                    <ShieldOff size={14} className={"shrink-0"} />
+                    Revoke Bypass
+                  </div>
+                </DropdownMenuItem>
+              )}
             </>
           )}
 

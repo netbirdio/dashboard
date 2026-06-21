@@ -152,6 +152,7 @@ export default function ReverseProxyTargetCustomHeaders({
                 maxWidthClass="flex-1"
                 error={headerErrors[index]?.name}
                 errorTooltip
+                data-testid={`custom-header-name-${index}`}
               />
               <Input
                 placeholder="Value, e.g., Bearer eyJhbGci..."
@@ -163,6 +164,7 @@ export default function ReverseProxyTargetCustomHeaders({
                 maxWidthClass="flex-1"
                 error={headerErrors[index]?.value}
                 errorTooltip
+                data-testid={`custom-header-value-${index}`}
               />
               <Button
                 variant="default-outline"
@@ -176,7 +178,13 @@ export default function ReverseProxyTargetCustomHeaders({
           ))}
         </div>
       )}
-      <Button variant="dotted" className="w-full" size="sm" onClick={addHeader}>
+      <Button
+        variant="dotted"
+        className="w-full"
+        size="sm"
+        onClick={addHeader}
+        data-testid={"add-custom-header"}
+      >
         <PlusIcon size={14} />
         Add Header
       </Button>

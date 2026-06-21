@@ -49,6 +49,10 @@ import { toASCII } from "punycode";
 import React, { useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
+import {
+  TrafficEventsPeerTabContent,
+  TrafficEventsPeerTabTrigger,
+} from "@/cloud/traffic-events/TrafficEventsPeerTabContent";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
@@ -361,7 +365,7 @@ const PeerOverviewTabs = () => {
           </TabsTrigger>
         )}
 
-        {peer?.id && permission.peers.read && (
+        {peer?.id && (
           <TabsTrigger value={"accessible-peers"}>
             <MonitorSmartphoneIcon size={16} />
             Accessible Peers
@@ -384,6 +388,8 @@ const PeerOverviewTabs = () => {
             Remote Jobs
           </TabsTrigger>
         )}
+
+        {permission.events.read && <TrafficEventsPeerTabTrigger />}
       </TabsList>
 
       <TabsContent value={"overview"} className={"pb-8"}>
@@ -396,7 +402,7 @@ const PeerOverviewTabs = () => {
         </TabsContent>
       )}
 
-      {peer?.id && permission.peers.read && (
+      {peer?.id && (
         <TabsContent value={"accessible-peers"} className={"pb-8"}>
           <AccessiblePeersSection peerID={peer.id} />
         </TabsContent>
@@ -419,6 +425,12 @@ const PeerOverviewTabs = () => {
       {peer.id && permission.peers.delete && (
         <TabsContent value={"peer-job"} className={"pb-8"}>
           <PeerRemoteJobsSection peerID={peer.id} />
+        </TabsContent>
+      )}
+
+      {permission.events.read && (
+        <TabsContent value={"traffic-events"} className={"pb-8"}>
+          <TrafficEventsPeerTabContent />
         </TabsContent>
       )}
     </Tabs>

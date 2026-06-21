@@ -300,6 +300,7 @@ export default function ReverseProxyTargetModal({
                 </div>
                 <Input
                   placeholder="/"
+                  data-testid="target-location-input"
                   value={targetPath}
                   className={cn("rounded-l-none")}
                   maxWidthClass="w-full"
@@ -420,6 +421,7 @@ export default function ReverseProxyTargetModal({
                         ]}
                         className="!rounded-r-none !border-r-0"
                         disabled={!hasTarget}
+                        data-testid="target-protocol-select"
                       />
                     </div>
                     <div className="flex-1">
@@ -445,6 +447,7 @@ export default function ReverseProxyTargetModal({
                     <Input
                       ref={portInputRef}
                       type="number"
+                      data-testid="target-port-input"
                       className={"rounded-l-none"}
                       value={targetPort === 0 ? "" : targetPort}
                       onChange={(e) =>
@@ -489,6 +492,7 @@ export default function ReverseProxyTargetModal({
                   className={
                     "text-[0.8rem] tracking-wider text-nb-gray-200 py-4 my-0 leading-none gap-2 flex items-center"
                   }
+                  data-testid={"target-optional-settings"}
                 >
                   <span className={"relative top-[1px]"}>
                     Optional Settings
@@ -518,6 +522,7 @@ export default function ReverseProxyTargetModal({
                         maxWidthClass="w-[180px]"
                         errorTooltip={true}
                         error={errors.timeout}
+                        data-testid={"target-timeout-input"}
                       />
                     </div>
 
@@ -573,6 +578,7 @@ export default function ReverseProxyTargetModal({
               </Button>
               <Button
                 variant="primary"
+                data-testid="submit-target"
                 onClick={handleSave}
                 disabled={!canAddTarget || errors.options}
               >

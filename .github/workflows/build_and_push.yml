@@ -7,17 +7,24 @@ on:
       - "**"
   pull_request:
 
+# Cancel in-progress runs on the same ref (PR or branch) when a new commit
+# arrives, so we don't waste CI building superseded commits.
+concurrency:
+  group: build-and-push-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
-  IMAGE_NAME: netbirdio/dashboard
+  DOCKERHUB_IMAGE: netbirdio/dashboard
+  GHCR_IMAGE: ghcr.io/netbirdio/dashboard-cloud
 
 jobs:
   build_n_push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
 
       - name: setup-node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'npm'
@@ -69,25 +76,43 @@ jobs:
           NEXT_PUBLIC_DASHBOARD_VERSION: ${{ steps.version.outputs.version }}
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
       -
         name: Docker meta
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME }}
-      -
-        name: Login to DockerHub
-        uses: docker/login-action@v2
+          images: |
+            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ env.GHCR_IMAGE }}
+          flavor: |
+            latest=false
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=tag
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=ref,event=pr
+            type=sha
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.NB_DOCKER_USER }}
           password: ${{ secrets.NB_DOCKER_TOKEN }}
-      -
-        name: Docker build and push
-        uses: docker/build-push-action@v3
+
+      - name: Log in to the GitHub Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/Dockerfile
@@ -95,3 +120,7 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - run: |
+          echo '### Pushed tags' >> $GITHUB_STEP_SUMMARY
+          echo '${{ steps.meta.outputs.tags }}' >> $GITHUB_STEP_SUMMARY

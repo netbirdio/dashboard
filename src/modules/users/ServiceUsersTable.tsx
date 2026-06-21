@@ -210,7 +210,7 @@ export default function ServiceUsersTable({
                   <Button
                     variant={"primary"}
                     className={""}
-                    data-cy={"open-service-user-modal"}
+                    data-testid={"open-service-user-modal"}
                     disabled={!permission.users.create}
                   >
                     <PlusCircle size={16} />
@@ -243,7 +243,7 @@ export default function ServiceUsersTable({
               <Button
                 variant={"primary"}
                 className={"ml-auto"}
-                data-cy={"open-service-user-modal"}
+                data-testid={"open-service-user-modal"}
                 disabled={!permission.users.create}
               >
                 <PlusCircle size={16} />

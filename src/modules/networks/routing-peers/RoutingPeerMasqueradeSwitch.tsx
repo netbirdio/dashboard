@@ -16,12 +16,14 @@ type Props = {
   onChange: (value: boolean) => void;
   disabled?: boolean;
   routingPeerGroupId?: string;
+  "data-testid"?: string;
 };
 export const RoutingPeerMasqueradeSwitch = ({
   disabled = false,
   value,
   onChange,
   routingPeerGroupId,
+  "data-testid": dataTestId,
 }: Props) => {
   return (
     <RoutingPeerMasqueradeTooltip show={disabled}>
@@ -30,6 +32,7 @@ export const RoutingPeerMasqueradeSwitch = ({
           value={value}
           onChange={onChange}
           disabled={disabled}
+          data-testid={dataTestId}
           label={
             <>
               <VenetianMask size={15} />

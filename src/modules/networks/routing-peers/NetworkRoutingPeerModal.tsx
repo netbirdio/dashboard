@@ -241,12 +241,18 @@ function RoutingPeerModalContent({
                 }}
               >
                 <SegmentedTabs.List>
-                  <SegmentedTabs.Trigger value={"peer"}>
+                  <SegmentedTabs.Trigger
+                    value={"peer"}
+                    data-testid="routing-peer-tab-peer"
+                  >
                     <MonitorSmartphoneIcon size={16} />
                     Routing Peers
                   </SegmentedTabs.Trigger>
 
-                  <SegmentedTabs.Trigger value={"group"}>
+                  <SegmentedTabs.Trigger
+                    value={"group"}
+                    data-testid="routing-peer-tab-group"
+                  >
                     <FolderGit2 size={16} />
                     Peer Group
                   </SegmentedTabs.Trigger>
@@ -315,6 +321,7 @@ function RoutingPeerModalContent({
               onChange={setMasquerade}
               disabled={isNonLinuxRoutingPeer}
               routingPeerGroupId={routingPeerGroups?.[0]?.id}
+              data-testid="toggle-masquerade"
             />
 
             <div className={cn("flex justify-between")}>
@@ -330,7 +337,7 @@ function RoutingPeerModalContent({
                 max={9999}
                 maxWidthClass={"max-w-[200px]"}
                 value={metric}
-                data-cy={"metric"}
+                data-testid={"metric"}
                 errorTooltip={true}
                 type={"number"}
                 onChange={(e) => setMetric(e.target.value)}
@@ -369,6 +376,7 @@ function RoutingPeerModalContent({
                 variant={"primary"}
                 onClick={() => setTab("settings")}
                 disabled={!canContinue}
+                data-testid="routing-peer-continue"
               >
                 Continue
               </Button>
@@ -386,6 +394,7 @@ function RoutingPeerModalContent({
                   routingPeer == undefined && routingPeerGroups.length <= 0
                 }
                 onClick={router ? updateRouter : addRouter}
+                data-testid="submit-routing-peer"
               >
                 {router ? (
                   <>Save Changes</>

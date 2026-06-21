@@ -53,7 +53,7 @@ export default function GroupBadge({
     <Badge
       key={group.id ?? group.name}
       useHover={!!onClick || redirectToGroupPage}
-      data-cy={"group-badge"}
+      data-testid={"group-badge"}
       variant={"gray-ghost"}
       className={cn("transition-all group whitespace-nowrap", className)}
       onClick={(e) => {

@@ -249,6 +249,7 @@ const AddNetworkButton = () => {
       variant={"primary"}
       onClick={openCreateNetworkModal}
       disabled={!permission.networks.create}
+      data-testid={"add-network"}
     >
       <PlusCircle size={16} />
       Add Network

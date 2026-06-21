@@ -188,6 +188,7 @@ export default function IdentityProviderModal({
                     setName(defaultNames[newType]);
                   }
                 }}
+                disabled={isEditing}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select provider type..." />

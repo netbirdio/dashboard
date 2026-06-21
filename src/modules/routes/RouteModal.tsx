@@ -487,6 +487,7 @@ export function RouteModalContent({
                     variant={routeType == "domains" ? "tertiary" : "secondary"}
                     onClick={() => setRouteTyp("domains")}
                     className={"w-full"}
+                    data-testid="route-type-domains"
                   >
                     <GlobeIcon size={16} />
                     Domains
@@ -507,7 +508,7 @@ export function RouteModalContent({
                   customPrefix={<NetworkIcon size={16} />}
                   placeholder={"e.g., 172.16.0.1, 172.16.0.0/16, 2001:db8::1 or 2001:db8::/64"}
                   value={networkRange}
-                  data-cy={"network-range"}
+                  data-testid={"network-range"}
                   className={"font-mono !text-[13px]"}
                   error={cidrError}
                   onChange={(e) => setNetworkRange(e.target.value)}
@@ -531,7 +532,7 @@ export function RouteModalContent({
                             <InputDomain
                               key={domain.id}
                               value={domain}
-                              data-cy={`domain-input-${i}`}
+                              data-testid={`domain-input-${i}`}
                               onChange={(d) =>
                                 setDomainRoutes({
                                   type: "UPDATE",
@@ -557,7 +558,7 @@ export function RouteModalContent({
                     className={"w-full"}
                     size={"sm"}
                     disabled={domainRoutes.length === 32}
-                    data-cy={"add-domain"}
+                    data-testid={"add-domain"}
                     onClick={() => setDomainRoutes({ type: "ADD" })}
                   >
                     <PlusIcon size={14} />
@@ -615,12 +616,19 @@ export function RouteModalContent({
                 }}
               >
                 <SegmentedTabs.List>
-                  <SegmentedTabs.Trigger value={"routing-peer"}>
+                  <SegmentedTabs.Trigger
+                    value={"routing-peer"}
+                    data-testid="route-tab-routing-peer"
+                  >
                     <MonitorSmartphoneIcon size={16} />
                     Routing Peer
                   </SegmentedTabs.Trigger>
 
-                  <SegmentedTabs.Trigger value={"peer-group"} disabled={!!peer}>
+                  <SegmentedTabs.Trigger
+                    value={"peer-group"}
+                    disabled={!!peer}
+                    data-testid="route-tab-peer-group"
+                  >
                     <FolderGit2 size={16} />
                     Peer Group
                   </SegmentedTabs.Trigger>
@@ -645,6 +653,7 @@ export function RouteModalContent({
                       {exitNode ? " exit nodes." : " routing peers."}
                     </HelpText>
                     <PeerGroupSelector
+                      data-testid={"routing-peer-groups-selector"}
                       max={1}
                       onChange={setRoutingPeerGroups}
                       values={routingPeerGroups}
@@ -666,7 +675,11 @@ export function RouteModalContent({
                     : `Route all internet traffic through the peer(s) for the following groups`
                   : "Advertise this route to peers that belong to the following groups"}
               </HelpText>
-              <PeerGroupSelector onChange={setGroups} values={groups} />
+              <PeerGroupSelector
+                data-testid={"distribution-groups-selector"}
+                onChange={setGroups}
+                values={groups}
+              />
             </div>
             <div>
               <Label>Access Control Groups (optional)</Label>
@@ -675,7 +688,7 @@ export function RouteModalContent({
                 these groups as a destination when creating access policies.
               </HelpText>
               <PeerGroupSelector
-                dataCy={"access-control-groups-selector"}
+                data-testid={"access-control-groups-selector"}
                 onChange={setAccessControlGroups}
                 values={accessControlGroups}
               />
@@ -692,7 +705,7 @@ export function RouteModalContent({
               <Input
                 error={networkIdentifierError}
                 autoFocus={true}
-                data-cy={"network-identifier"}
+                data-testid={"network-identifier"}
                 tabIndex={0}
                 ref={nameRef}
                 placeholder={"e.g., aws-eu-central-1-vpc"}
@@ -706,7 +719,7 @@ export function RouteModalContent({
                 Write a short description to add more context to this route.
               </HelpText>
               <Textarea
-                data-cy={"description"}
+                data-testid={"description"}
                 placeholder={
                   "e.g., Route to access all devices in the AWS VPC, located in Frankfurt."
                 }
@@ -770,7 +783,7 @@ export function RouteModalContent({
                 maxWidthClass={"max-w-[200px]"}
                 value={metric}
                 error={metricError}
-                data-cy={"metric"}
+                data-testid={"metric"}
                 errorTooltip={true}
                 type={"number"}
                 onChange={(e) => setMetric(e.target.value)}
@@ -836,6 +849,7 @@ export function RouteModalContent({
               variant={"primary"}
               onClick={() => setTab("access-control")}
               disabled={!isNetworkEntered}
+              data-testid="route-continue"
             >
               Continue
             </Button>
@@ -845,6 +859,7 @@ export function RouteModalContent({
               variant={"primary"}
               onClick={() => setTab("general")}
               disabled={!isGroupsEntered}
+              data-testid="route-continue"
             >
               Continue
             </Button>
@@ -854,6 +869,7 @@ export function RouteModalContent({
               variant={"primary"}
               onClick={() => setTab("settings")}
               disabled={!isNameEntered || !isNetworkEntered}
+              data-testid="route-continue"
             >
               Continue
             </Button>
@@ -862,7 +878,7 @@ export function RouteModalContent({
             <Button
               variant={"primary"}
               disabled={!canCreateOrSave}
-              data-cy={"submit-route"}
+              data-testid={"submit-route"}
               onClick={createRouteHandler}
             >
               <PlusCircle size={16} />

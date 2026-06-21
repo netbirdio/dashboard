@@ -2,6 +2,7 @@ import { cn } from "@utils/helpers";
 import {
   ArrowLeftRight,
   Blocks,
+  BoxIcon,
   Cog,
   CreditCardIcon,
   FingerprintIcon,
@@ -54,6 +55,7 @@ const ActivityTypeMappings = {
   resource: Layers3Icon,
   network: NetworkIcon,
   identityprovider: FingerprintIcon,
+  reseller: BoxIcon,
   service: ReverseProxyIcon,
 } as const;
 

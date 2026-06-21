@@ -290,6 +290,7 @@ export default function NameserverGroupTable({
                         variant={"primary"}
                         className={""}
                         disabled={!permission.nameservers.create}
+                        data-testid="open-add-nameserver"
                       >
                         <PlusCircle size={16} />
                         Add Nameserver
@@ -323,6 +324,7 @@ export default function NameserverGroupTable({
                   variant={"primary"}
                   className={"ml-auto"}
                   disabled={!permission.nameservers.create}
+                  data-testid="open-add-nameserver"
                 >
                   <PlusCircle size={16} />
                   Add Nameserver

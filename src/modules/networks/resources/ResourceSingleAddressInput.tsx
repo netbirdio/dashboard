@@ -74,6 +74,7 @@ export const ResourceSingleAddressInput = ({
       <HelpText>{description}</HelpText>
       <Input
         autoFocus={autoFocus}
+        data-testid="resource-address-input"
         customPrefix={PrefixIcon}
         error={error}
         placeholder={placeholder}

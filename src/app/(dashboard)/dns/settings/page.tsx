@@ -123,7 +123,7 @@ const SettingDisabledManagementGroups = ({
           Peers in these groups will require manual domain name resolution
         </HelpText>
         <PeerGroupSelector
-          dataCy={"dns-groups-selector"}
+          data-testid={"dns-groups-selector"}
           onChange={setSelectedGroups}
           values={selectedGroups}
           disabled={!permission.dns.update}
@@ -139,7 +139,7 @@ const SettingDisabledManagementGroups = ({
           size={"sm"}
           onClick={saveSettings}
           disabled={!hasChanges || !permission.dns.update}
-          data-cy={"save-changes"}
+          data-testid={"save-changes"}
         >
           Save Changes
         </Button>

@@ -133,8 +133,7 @@ export const RDPCredentialsModal = ({
             <Label>Username & Password</Label>
             <HelpText>
               Enter the credentials required to authenticate with the remote
-              host. For domain accounts, use DOMAIN\username or username@domain
-              format.
+              host. For domain accounts, use DOMAIN\username or username@domain format.
             </HelpText>
             <div className={"flex flex-col gap-2 w-full"}>
               <Input

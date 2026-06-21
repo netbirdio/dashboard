@@ -11,12 +11,13 @@ import { useHasChanges } from "@hooks/useHasChanges";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { validator } from "@utils/helpers";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import cidr from "ip-cidr";
 import { ExternalLinkIcon, GlobeIcon, NetworkIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
+import { TrafficEventSetting } from "@/cloud/traffic-events/TrafficEventSetting";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -66,8 +67,8 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 
   const toggleNetworkDNSSetting = async (toggle: boolean) => {
     notify({
-      title: "DNS Wildcard Routing",
-      description: `DNS Wildcard Routing successfully ${
+      title: "Routing Peer DNS Resolution",
+      description: `Routing Peer DNS Resolution successfully ${
         toggle ? "enabled" : "disabled"
       }.`,
       promise: saveRequest
@@ -82,7 +83,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
           setRoutingPeerDNSSetting(toggle);
           mutate("/accounts");
         }),
-      loadingMessage: "Updating DNS wildcard setting...",
+      loadingMessage: "Updating routing peer DNS resolution setting...",
     });
   };
 
@@ -213,6 +214,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
               !!networkRangeV6Error
             }
             onClick={saveChanges}
+            data-testid="save-network-settings"
           >
             Save Changes
           </Button>
@@ -229,14 +231,13 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
                 <Label>DNS Domain</Label>
                 <HelpText>
                   Specify a custom peer DNS domain for your network. This should
-                  not point to a domain that is already in use elsewhere, to
-                  avoid overriding DNS results.
+                  not point to a valid domain to avoid overriding DNS results.
                 </HelpText>
               </div>
               <div className={"w-full"}>
                 <Input
                   placeholder={
-                    isNetBirdHosted() ? "netbird.cloud" : "netbird.selfhosted"
+                    isNetBirdCloud() ? "netbird.cloud" : "netbird.selfhosted"
                   }
                   errorTooltip={true}
                   errorTooltipPosition={"top"}
@@ -244,6 +245,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
                   value={customDNSDomain}
                   disabled={!permission.settings.update}
                   onChange={(e) => setCustomDNSDomain(e.target.value)}
+                  data-testid="dns-domain-input"
                 />
               </div>
             </div>
@@ -271,6 +273,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
                   value={networkRange}
                   disabled={!permission.settings.update}
                   onChange={(e) => setNetworkRange(e.target.value)}
+                  data-testid="network-range-input"
                 />
               </div>
             </div>
@@ -298,6 +301,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
                   value={networkRangeV6}
                   disabled={!permission.settings.update}
                   onChange={(e) => setNetworkRangeV6(e.target.value)}
+                  data-testid="network-range-v6-input"
                 />
               </div>
             </div>
@@ -316,6 +320,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
               placeholder="Select groups to enable IPv6..."
               showResourceCounter={false}
               disabled={!permission.settings.update}
+              data-testid="ipv6-enabled-groups-selector"
             />
           </div>
 
@@ -324,17 +329,18 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
           <FancyToggleSwitch
             value={routingPeerDNSSetting}
             onChange={toggleNetworkDNSSetting}
+            data-testid="dns-wildcard-routing"
             label={
               <>
                 <GlobeIcon size={15} />
-                Enable DNS Wildcard Routing
+                Enable Routing Peer DNS Resolution
               </>
             }
             helpText={
               <>
-                Allow routing using DNS wildcards. This requires NetBird client
-                v0.35 or higher. Changes will only take effect after restarting
-                the clients.{" "}
+                Resolves DNS for routed domains on the routing peer instead of
+                on the client. Requires NetBird client v0.35 or higher. Changes
+                will only take effect after restarting the clients.{" "}
                 <InlineLink
                   href={
                     "https://docs.netbird.io/how-to/accessing-entire-domains-within-networks#enabling-dns-wildcard-routing"
@@ -349,6 +355,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
             }
             disabled={!permission.settings.update}
           />
+          {account && <TrafficEventSetting account={account} />}
         </div>
       </div>
     </Tabs.Content>

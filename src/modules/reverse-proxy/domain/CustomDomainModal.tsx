@@ -23,7 +23,7 @@ import {
 } from "@/interfaces/ReverseProxy";
 import HelpText from "@components/HelpText";
 import Separator from "@components/Separator";
-import { isNetBirdHosted } from "@/utils/netbird";
+import { isNetBirdCloud } from "@/utils/netbird";
 import {
   SelectDropdown,
   SelectOption,
@@ -100,7 +100,7 @@ export const CustomDomainModal = ({
 
         <div className={"px-8 flex flex-col gap-6 pt-6 pb-8"}>
           {availableClusters.length === 0 ? (
-            isNetBirdHosted() ? (
+            isNetBirdCloud() ? (
               <Callout variant={"warning"}>
                 No proxy clusters are currently connected. Please try again in a
                 few minutes. If the issue persists, check{" "}
@@ -144,10 +144,11 @@ export const CustomDomainModal = ({
                   }}
                   placeholder="e.g., company.com"
                   error={error || undefined}
+                  data-testid={"custom-domain-input"}
                 />
               </div>
 
-              <div>
+              <div data-testid={"custom-domain-cluster-selector"}>
                 <Label>Target Proxy Cluster</Label>
                 <HelpText>
                   Select the cluster your CNAME record should point to
@@ -185,6 +186,7 @@ export const CustomDomainModal = ({
               variant={"primary"}
               onClick={addDomain}
               disabled={!canSubmit}
+              data-testid={"submit-custom-domain"}
             >
               Add Domain
             </Button>

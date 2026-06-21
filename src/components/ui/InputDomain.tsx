@@ -82,7 +82,7 @@ export default function InputDomain({
           customPrefix={<GlobeIcon size={15} />}
           placeholder={"e.g., example.com"}
           maxWidthClass={"w-full"}
-          data-cy={"domain-input"}
+          data-testid={"domain-input"}
           value={name}
           error={domainError}
           onChange={handleNameChange}
@@ -96,6 +96,7 @@ export default function InputDomain({
           variant={"default-outline"}
           onClick={onRemove}
           disabled={disabled}
+          data-testid="domain-input-remove"
         >
           <MinusCircleIcon size={15} />
         </Button>

@@ -75,6 +75,7 @@ export function NameserverTemplateModalContent({
               "A free, global DNS resolution service by Google that implements a number of security, performance, and compliance improvements."
             }
             href={"https://developers.google.com/speed/public-dns"}
+            data-testid="nameserver-preset-google"
           />
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Cloudflare)}
@@ -84,6 +85,7 @@ export function NameserverTemplateModalContent({
               "Enterprise-grade DNS service that offers the fastest response time, unparalleled redundancy, and advanced security with built-in DDoS mitigation and DNSSEC."
             }
             href={"https://www.cloudflare.com/learning/dns/what-is-1.1.1.1/"}
+            data-testid="nameserver-preset-cloudflare"
           />
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Quad9)}
@@ -93,6 +95,7 @@ export function NameserverTemplateModalContent({
               "The Quad9 DNS service is operated by the Swiss-based Quad9 Foundation, whose mission is to provide a safer and more robust Internet for everyone."
             }
             href={"https://quad9.net/"}
+            data-testid="nameserver-preset-quad9"
           />
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Default)}
@@ -101,6 +104,7 @@ export function NameserverTemplateModalContent({
             description={
               "Use custom nameservers to resolve domains in your network. You can either use a public DNS or your own nameservers."
             }
+            data-testid="nameserver-preset-custom"
           />
         </div>
       </div>
@@ -116,6 +120,7 @@ function NameserverTemplate({
   onClick,
   href,
   hrefTitle,
+  "data-testid": dataTestId,
 }: Readonly<{
   src?: StaticImageData;
   icon?: React.ReactNode;
@@ -124,6 +129,7 @@ function NameserverTemplate({
   onClick?: () => void;
   href?: string;
   hrefTitle?: string;
+  "data-testid"?: string;
 }>) {
   return (
     <button
@@ -131,6 +137,7 @@ function NameserverTemplate({
         "bg-nb-gray-930/90 h-full hover:bg-nb-gray-900 border transition-all cursor-pointer border-nb-gray-900 hover:border-nb-gray-800 flex items-center rounded-lg overflow-hidden"
       }
       onClick={onClick}
+      data-testid={dataTestId}
     >
       <div
         className={cn(

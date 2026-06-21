@@ -36,9 +36,14 @@ yarn-error.log*
 next-env.d.ts
 
 # config
-.local-config.json
+.local*config*.json
 .test-config.json
-cypress.env.json
+e2e/playwright.env.json
+e2e/fixtures/auth/*.json
+e2e/test-results/
+e2e/playwright-report/
+/test-results/
+/playwright-report/
 .configs/.local-config.zitadel.json
 .configs/.staging-config.json
 .configs/.temp-config.json

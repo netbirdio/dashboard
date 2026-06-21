@@ -9,7 +9,7 @@ import * as React from "react";
 import { useMemo } from "react";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { ReverseProxyDomainType } from "@/interfaces/ReverseProxy";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import TruncatedText from "@components/ui/TruncatedText";
 
 interface DomainSelectorProps {
@@ -17,6 +17,7 @@ interface DomainSelectorProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   className?: string;
+  "data-testid"?: string;
 }
 
 export function CustomDomainSelector({
@@ -24,6 +25,7 @@ export function CustomDomainSelector({
   onChange,
   disabled = false,
   className,
+  "data-testid": dataTestId,
 }: DomainSelectorProps) {
   const router = useRouter();
   const { domains, isSelfHostedCluster } = useReverseProxies();
@@ -48,7 +50,7 @@ export function CustomDomainSelector({
               </div>
               {isAccountCluster ? (
                 <SmallBadge text="Account" variant="sky" size="md" />
-              ) : isNetBirdHosted() ? (
+              ) : isNetBirdCloud() ? (
                 <SmallBadge text="Free" variant="green" size="md" />
               ) : (
                 <SmallBadge text="Shared" variant="green" size="md" />
@@ -110,6 +112,7 @@ export function CustomDomainSelector({
       disabled={disabled}
       placeholder="Select domain..."
       className={className}
+      data-testid={dataTestId}
     />
   );
 }

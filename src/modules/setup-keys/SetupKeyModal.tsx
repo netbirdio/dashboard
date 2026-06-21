@@ -122,8 +122,8 @@ export default function SetupKeyModal({
 
           <div
             className={"px-8 pb-6"}
-            data-cy={"setup-key-copy-input"}
-            data-cy-setup-key-value={setupKey?.key || ""}
+            data-testid={"setup-key-copy-input"}
+            data-testid-setup-key-value={setupKey?.key || ""}
           >
             <Code message={copyMessage}>
               <Code.Line>
@@ -138,7 +138,7 @@ export default function SetupKeyModal({
                   variant={"secondary"}
                   className={"w-full"}
                   tabIndex={-1}
-                  data-cy={"setup-key-close"}
+                  data-testid={"setup-key-close"}
                 >
                   Close
                 </Button>
@@ -242,7 +242,7 @@ export function SetupKeyModalContent({
           <Input
             placeholder={"e.g., AWS Servers"}
             value={name}
-            data-cy={"setup-key-name"}
+            data-testid={"setup-key-name"}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
@@ -277,7 +277,7 @@ export function SetupKeyModalContent({
             disabled={!reusable}
             value={usageLimit}
             type={"number"}
-            data-cy={"setup-key-usage-limit"}
+            data-testid={"setup-key-usage-limit"}
             onChange={(e) => setUsageLimit(e.target.value)}
             placeholder={usageLimitPlaceholder}
             customPrefix={
@@ -304,7 +304,7 @@ export function SetupKeyModalContent({
             value={expiresIn}
             errorTooltip={true}
             type={"number"}
-            data-cy={"setup-key-expire-in-days"}
+            data-testid={"setup-key-expire-in-days"}
             onChange={(e) => setExpiresIn(e.target.value)}
             customPrefix={
               <AlarmClock size={16} className={"text-nb-gray-300"} />
@@ -387,7 +387,7 @@ export function SetupKeyModalContent({
             variant={"primary"}
             onClick={submit}
             disabled={isDisabled}
-            data-cy={"create-setup-key"}
+            data-testid={"create-setup-key"}
           >
             <PlusCircle size={16} />
             Create Setup Key

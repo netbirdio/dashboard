@@ -326,6 +326,7 @@ export default function NetworkRoutesTable({
                     className={""}
                     onClick={() => setRouteModal(true)}
                     disabled={!permission.routes.create}
+                    data-testid="open-add-route"
                   >
                     <PlusCircle size={16} />
                     Add Route
@@ -359,6 +360,7 @@ export default function NetworkRoutesTable({
                   className={""}
                   onClick={() => setRouteModal(true)}
                   disabled={!permission.routes.create}
+                  data-testid="open-add-route"
                 >
                   <PlusCircle size={16} />
                   Add Route
