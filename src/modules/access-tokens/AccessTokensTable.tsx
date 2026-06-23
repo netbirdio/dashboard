@@ -23,48 +23,54 @@ type Props = {
   user: User;
 };
 
-export function AccessTokensTableColumns(t: ReturnType<typeof useTranslations>): ColumnDef<AccessToken>[] {
+export function AccessTokensTableColumns(
+  t: ReturnType<typeof useTranslations>,
+): ColumnDef<AccessToken>[] {
   return [
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>{t("name")}</DataTableHeader>;
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("name")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => {
+        const isValid = dayjs(row.original.expiration_date).isAfter(dayjs());
+        return <SetupKeyNameCell name={row.original.name} valid={isValid} />;
+      },
     },
-    sortingFn: "text",
-    cell: ({ row }) => {
-      const isValid = dayjs(row.original.expiration_date).isAfter(dayjs());
-      return <SetupKeyNameCell name={row.original.name} valid={isValid} />;
+    {
+      accessorKey: "expiration_date",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader column={column}>{t("expires")}</DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <ExpirationDateRow date={row.original.expiration_date} />
+      ),
     },
-  },
-  {
-    accessorKey: "expiration_date",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>{t("expires")}</DataTableHeader>;
+    {
+      accessorKey: "last_used",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader column={column}>{t("lastUsed")}</DataTableHeader>
+        );
+      },
+      sortingFn: "datetime",
+      cell: ({ row }) => {
+        return typeof row.original.last_used === "undefined" ? (
+          <EmptyRow />
+        ) : (
+          <LastTimeRow date={row.original.last_used} text={t("lastUsedOn")} />
+        );
+      },
     },
-    cell: ({ row }) => (
-      <ExpirationDateRow date={row.original.expiration_date} />
-    ),
-  },
-  {
-    accessorKey: "last_used",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>{t("lastUsed")}</DataTableHeader>;
+    {
+      accessorKey: "id",
+      header: "",
+      cell: ({ row }) => <AccessTokenActionCell access_token={row.original} />,
     },
-    sortingFn: "datetime",
-    cell: ({ row }) => {
-      return typeof row.original.last_used === "undefined" ? (
-        <EmptyRow />
-      ) : (
-        <LastTimeRow date={row.original.last_used} text={t("lastUsedOn")} />
-      );
-    },
-  },
-  {
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => <AccessTokenActionCell access_token={row.original} />,
-  },
-];
+  ];
 }
 
 export default function AccessTokensTable({ user }: Readonly<Props>) {
@@ -92,7 +98,7 @@ export default function AccessTokensTable({ user }: Readonly<Props>) {
       <Card className={"mt-5 w-full"}>
         {tokens && tokens.length > 0 ? (
           <DataTable
-            text={"Access Tokens"}
+            text={t("accessTokens")}
             tableClassName={"mt-0"}
             minimal={true}
             showSearchAndFilters={false}
@@ -106,10 +112,8 @@ export default function AccessTokensTable({ user }: Readonly<Props>) {
           <div className={"bg-nb-gray-950 overflow-hidden"}>
             <NoResults
               className={"py-3"}
-              title={"No access tokens"}
-              description={
-                "You don't have any access tokens yet. You can add a token to access the NetBird API."
-              }
+              title={t("noAccessTokens")}
+              description={t("noAccessTokensDesc")}
               icon={<IconApi size={20} className={"fill-nb-gray-300"} />}
             />
           </div>

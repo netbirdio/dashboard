@@ -2,7 +2,8 @@ export default {
   common: {
     loading: "Loading...",
     restrictedAccessHeading: "You don't have access to",
-    restrictedAccessDescription: "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.",
+    restrictedAccessDescription:
+      "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.",
     error: "Error",
     success: "Success",
     cancel: "Cancel",
@@ -54,7 +55,7 @@ export default {
     selectCityOptional: "Select city (optional)...",
     searchCity: "Search city...",
     selectCountry: "Select country...",
-searchCountry: "Search country...",
+    searchCountry: "Search country...",
     learnMore: "Learn more",
     selectAll: "Select all",
     selectRow: "Select row",
@@ -81,6 +82,10 @@ searchCountry: "Search country...",
     blockUser: "Block User",
     removePeersFromGroup: "Remove Peers from Group",
     routingPeer: "Routing Peer",
+    newNetworkRoute: "New Network Route",
+    existingNetwork: "Existing Network",
+    debugBundle: "Debug Bundle",
+    metricPriority: "Lower metrics have higher priority.",
     peerGroup: "Peer Group",
     expires: "Expires",
     distributionGroups: "Distribution Groups",
@@ -91,7 +96,24 @@ searchCountry: "Search country...",
     addNewRoutingPeer: "Add New Routing Peer",
     routingPeerHelp: "Assign a single peer as a routing peer for the",
     exitNode: "exit node",
-    networkRoute: "network route"
+    networkRoute: "network route",
+    addRoute: "Add Route",
+    newNetworkRouteDesc: "Create a new network route with this peer",
+    existingNetworkDesc: "Add this peer to an existing network",
+    networkRoutes: "Network Routes",
+    noNetworkRoutes: "This peer has no network routes",
+    noNetworkRoutesDesc:
+      "You don't have any assigned network routes yet. You can add this peer to an existing network or create a new network route.",
+    runRemoteJob: "Run Remote Job",
+    peerOfflineRemoteJob:
+      "Peer <bold>{name}</bold> is currently offline. Please connect the peer to run remote jobs.",
+    debugBundleDesc: "Collect debug information for troubleshooting",
+    accessTokens: "Access Tokens",
+    noAccessTokens: "No access tokens",
+    noAccessTokensDesc:
+      "You don't have any access tokens yet. You can add a token to access the NetBird API.",
+    disable: "Disable",
+    network: "Network",
   },
   navigation: {
     controlCenter: "Control Center",
@@ -121,12 +143,13 @@ searchCountry: "Search country...",
     auditEvents: "Audit Events",
     settings: "Settings",
     documentation: "Documentation",
-    helpAndSupport: "Help and Support"
+    helpAndSupport: "Help and Support",
   },
   table: {
     search: "Search...",
     noResults: "No results",
-    noResultsDescription: "We couldn't find any results. Please try a different search term or change your filters.",
+    noResultsDescription:
+      "We couldn't find any results. Please try a different search term or change your filters.",
     rowsPerPage: "Rows per page",
     previous: "Previous",
     next: "Next",
@@ -142,7 +165,7 @@ searchCountry: "Search country...",
     cancel: "Cancel",
     rows: "rows",
     selectAll: "Select all",
-    selectRow: "Select row"
+    selectRow: "Select row",
   },
   auth: {
     login: "Login",
@@ -160,14 +183,15 @@ searchCountry: "Search country...",
     accountBlocked: "Account Blocked",
     accountPending: "Account Pending",
     sessionExpired: "Session Expired",
-    sessionExpiredDescription: "It looks like your login session is no longer active or has expired. Please login again to continue using the app.",
+    sessionExpiredDescription:
+      "It looks like your login session is no longer active or has expired. Please login again to continue using the app.",
     loginRequired: "Login Required",
     unauthorized: "Unauthorized",
     forbidden: "Forbidden",
     accessDenied: "Access Denied",
     tooManyRequests: "Too Many Requests",
     tryAgainLater: "Please try again later",
-    contactAdmin: "Please contact your administrator"
+    contactAdmin: "Please contact your administrator",
   },
   errors: {
     generic: "An error occurred",
@@ -178,7 +202,7 @@ searchCountry: "Search country...",
     validationError: "Validation error",
     permissionDenied: "Permission denied",
     resourceNotFound: "Resource not found",
-    serviceUnavailable: "Service unavailable"
+    serviceUnavailable: "Service unavailable",
   },
   peers: {
     title: "Peers",
@@ -213,34 +237,58 @@ searchCountry: "Search country...",
     confirmApprove: "Approve peer '{name}'?",
     confirmApproveDescription: "Are you sure you want to approve this peer?",
     approveSuccess: "Peer {name} approved",
-    approveSuccessDescription: "This peer was approved and can now connect to other peers.",
+    approveSuccessDescription:
+      "This peer was approved and can now connect to other peers.",
     approveLoading: "Approving peer...",
     approved: "Approved",
     pending: "Pending",
     pendingApprovals: "Pending Approvals",
     noPeers: "No peers available",
     noAccessiblePeersTitle: "This peer has no accessible peers",
-    noAccessiblePeersDescription: "Add more peers to your network or check your access control policies.",
+    noAccessiblePeersDescription:
+      "Add more peers to your network or check your access control policies.",
     searchPlaceholder: "Search by name, IP, owner or group...",
     selectPeer: "Select a peer...",
     noPeersAvailable: "No peers available to select.",
     noPeersMatching: "No peers matching your search.",
-    updateRequired: "Please update NetBird to at least v0.36.6 or later to use this peer as a routing peer.",
+    updateRequired:
+      "Please update NetBird to at least v0.36.6 or later to use this peer as a routing peer.",
     serialNumber: "Serial number",
     loginExpiration: "Session Expiration",
     enableLoginExpiration: "Enable Session Expiration",
     disableLoginExpiration: "Disable Session Expiration",
     loginExpirationUpdated: "Session expiration is {state}",
-    loginExpirationUpdateDescription: "Session expiration for peer {name} was successfully {state}.",
+    loginExpirationUpdateDescription:
+      "Session expiration for peer {name} was successfully {state}.",
     loginExpirationUpdating: "Updating session expiration...",
     enableSSH: "Enable SSH Access",
     disableSSH: "Disable SSH Access",
     disableSSHConfirmation: "Disable SSH Access?",
-    disableSSHDescription: "Starting from NetBird v0.61.0, once SSH access is disabled, you cannot re-enable it again from the dashboard. You'll need to create an explicit access control policy and update your NetBird client to restore SSH functionality.",
+    disableSSHDescription:
+      "Starting from NetBird v0.61.0, once SSH access is disabled, you cannot re-enable it again from the dashboard. You'll need to create an explicit access control policy and update your NetBird client to restore SSH functionality.",
     sshLearnMore: "Learn more",
-    browserPeerTooltip: "Show temporary peers created by the NetBird browser client. These peers are ephemeral and will be deleted automatically after a short period of time.",
-    connectTooltipOffline: "Connecting via SSH or RDP is only available when the peer is online.",
-    expirationDisabledTooltip: "Expiration is disabled for all peers added with an setup-key.",
+    cancel: "Cancel",
+    changesTakeEffect: "Changes will take effect after the next peer update.",
+    sshAccess: "SSH Access",
+    sshAccessHelp:
+      "Enable the SSH server on this peer to access the machine via a secure shell.",
+    sshSetupHelp:
+      "Set up SSH and create an explicit access control policy defining which users can access specific local usernames of this machine via SSH.",
+    sshOldVersionWarning:
+      "You have SSH access configured but your client runs on an older NetBird version. Please update your NetBird client to v.0.61.0+ in order to allow SSH connections.",
+    sshServerNotEnabled:
+      "You have an SSH access policy configured, but the SSH server isn't enabled on this client. Enable the SSH server to allow SSH connections.",
+    sshNeedsPolicy:
+      "Your SSH server is enabled, but starting from NetBird v0.61.0, SSH requires an explicit access control policy. Please create an SSH access control policy in order to allow SSH connections.",
+    createSSHPolicy: "Create SSH Policy",
+    activePoliciesCount:
+      "{count, plural, one {# Active Policy} other {# Active Policies}}",
+    browserPeerTooltip:
+      "Show temporary peers created by the NetBird browser client. These peers are ephemeral and will be deleted automatically after a short period of time.",
+    connectTooltipOffline:
+      "Connecting via SSH or RDP is only available when the peer is online.",
+    expirationDisabledTooltip:
+      "Expiration is disabled for all peers added with an setup-key.",
     justNow: "just now",
     at: "at",
     searchByNameIpOwnerOrGroup: "Search by name, IP, owner or group...",
@@ -248,7 +296,8 @@ searchCountry: "Search country...",
     assignGroups: "Assign Groups",
     deleteAll: "Delete All",
     deleteAllConfirm: "Delete '{count}' {peerWord}?",
-    deleteAllConfirmDescription: "Are you sure you want to delete these peers? This action cannot be undone.",
+    deleteAllConfirmDescription:
+      "Are you sure you want to delete these peers? This action cannot be undone.",
     deleteAllConfirmText: "Delete All",
     peersDeleted: "Peers were successfully deleted",
     peersDeleting: "Deleting the selected peers...",
@@ -256,17 +305,21 @@ searchCountry: "Search country...",
     groupsAssigning: "Updating the groups of the selected peers...",
     assigningGroups: "Assigning groups...",
     groupsAssignedSuccess: "Groups successfully assigned",
-    assignGroupsDescription: "Assign the following groups to the selected peers. Previously assigned groups will be kept unless you choose to overwrite them.",
+    assignGroupsDescription:
+      "Assign the following groups to the selected peers. Previously assigned groups will be kept unless you choose to overwrite them.",
     overwriteGroups: "Overwrite Existing Groups",
-    overwriteGroupsHelp: "Overwrite the existing groups of the peers with the selected ones. Previously assigned groups will be removed.",
+    overwriteGroupsHelp:
+      "Overwrite the existing groups of the peers with the selected ones. Previously assigned groups will be removed.",
     overwrite: "Overwrite",
     overwriteGroupsConfirm: "Overwrite existing groups?",
-    overwriteGroupsConfirmDescription: "Are you sure you want to overwrite the existing groups of your {count} selected peer(s)? This action cannot be undone.",
+    overwriteGroupsConfirmDescription:
+      "Are you sure you want to overwrite the existing groups of your {count} selected peer(s)? This action cannot be undone.",
     addGroups: "Add Groups",
     assignedGroups: "Assigned Groups",
     groupsSaved: "Groups of the peer were successfully saved",
     groupsSaving: "Saving the groups of the peer...",
-    assignedGroupsDescription: "Use groups to control what this peer can access",
+    assignedGroupsDescription:
+      "Use groups to control what this peer can access",
     peerWord: "peer",
     peersWord: "peers",
     createPeer: "Create Peer",
@@ -280,10 +333,11 @@ searchCountry: "Search country...",
       windows: "Windows",
       macos: "macOS",
       android: "Android",
-      ios: "iOS"
+      ios: "iOS",
     },
     updateAvailable: "Update available",
-    updateDescription: "A new version of Netbird is available. Please update your client to get the latest features and bug fixes.",
+    updateDescription:
+      "A new version of Netbird is available. Please update your client to get the latest features and bug fixes.",
     downloadChangelog: "Download & Changelog",
     dnsLabelCopied: "DNS label has been copied to your clipboard",
     ipCopied: "IP address has been copied to your clipboard",
@@ -298,7 +352,8 @@ searchCountry: "Search country...",
     domain: "Domain",
     region: "Region",
     regionCopied: "Region has been copied to your clipboard",
-    peerNotFoundDescription: "The peer you are attempting to access cannot be found. It may have been deleted, or you may not have permission to view it. Please verify the URL or return to the dashboard.",
+    peerNotFoundDescription:
+      "The peer you are attempting to access cannot be found. It may have been deleted, or you may not have permission to view it. Please verify the URL or return to the dashboard.",
     tabOverview: "Overview",
     tabNetworkRoutes: "Network Routes",
     tabAccessiblePeers: "Accessible Peers",
@@ -308,6 +363,15 @@ searchCountry: "Search country...",
     assignGroups: "Assign Groups",
     peerSaved: "Peer was successfully saved",
     peerSaving: "Saving the peer...",
+    editPeerIPAddress: "Edit Peer IP Address",
+    updatePeerIPDescription: "Update the NetBird IP address for this peer.",
+    editPeerIPPlaceholder: "e.g., 100.64.0.15",
+    editPeerIPErrorMessage: "Please enter a valid IP, e.g., 100.64.0.15",
+    editPeerIPv6Address: "Edit Peer IPv6 Address",
+    updatePeerIPv6Description: "Update the NetBird IPv6 address for this peer.",
+    editPeerIPv6Placeholder: "e.g., fd00:1234::1",
+    editPeerIPv6ErrorMessage:
+      "Please enter a valid IPv6 address, e.g., fd00:1234::1",
     remoteAccess: "Remote Access",
     remoteAccessDescription: "Connect directly to this peer via SSH or RDP.",
     domainName: "Domain Name",
@@ -321,40 +385,55 @@ searchCountry: "Search country...",
     peerIpv6Updated: "NetBird Peer IPv6 was successfully updated",
     peerIpv6Updating: "Updating peer IPv6...",
     noServicesForPeer: "This peer has no services",
-    addServicesDescription: "Add your services to this peer and securely expose them through NetBird's reverse proxy",
+    addServicesDescription:
+      "Add your services to this peer and securely expose them through NetBird's reverse proxy",
     editPeerName: "Edit Peer Name",
     editPeerNameDescription: "Set an easily identifiable name for your peer.",
     peerNamePlaceholder: "e.g., AWS Servers",
     domainNamePreview: "Domain Name Preview",
-    domainNamePreviewHelp: "If the domain name already exists, we add an increment number suffix to it.",
-    userDevicesDescription: "Laptops, phones and other personal devices with a user behind them, typically added when the user signs in with SSO.",
+    domainNamePreviewHelp:
+      "If the domain name already exists, we add an increment number suffix to it.",
+    userDevicesDescription:
+      "Laptops, phones and other personal devices with a user behind them, typically added when the user signs in with SSO.",
     learnMore: "Learn more",
     addNewDeviceTitle: "Add new device to your network",
-    addNewDeviceDescription: "To get started, install NetBird and log in using your email account. After that you should be connected. If you have further questions check out our",
+    addNewDeviceDescription:
+      "To get started, install NetBird and log in using your email account. After that you should be connected. If you have further questions check out our",
     installationGuide: "Installation Guide",
-    serversDescription: "Servers, VMs, autonomous agents and other unattended machines with no user behind them, typically enrolled with a setup key.",
-addNewServerTitle: "Add new server to your network",
-    addNewServerDescription: "To get started, install NetBird on the server and enroll it using a setup key. If you have further questions check out our",
-saveGroups: "Save Groups",
+    serversDescription:
+      "Servers, VMs, autonomous agents and other unattended machines with no user behind them, typically enrolled with a setup key.",
+    addNewServerTitle: "Add new server to your network",
+    addNewServerDescription:
+      "To get started, install NetBird on the server and enroll it using a setup key. If you have further questions check out our",
+    saveGroups: "Save Groups",
     sessionExpiration: "Session Expiration",
-    sessionExpirationDescription: "Enable to require SSO login peers to re-authenticate when their session expires after a certain period of time.",
-    inactivityExpirationDescription: "Enable to require authentication after users disconnect from management for 10 minutes.",
-    setupKeyPeerExpirationDisabled: "This setting is disabled for all peers added with an setup-key.",
-    noPermissionToUpdateSetting: "You don't have the required permissions to update this setting.",
-    globalSettingDisabled: "Global setting {setting} is currently disabled. Enable the global setting to be able to toggle it individually per peer.",
+    sessionExpirationDescription:
+      "Enable to require SSO login peers to re-authenticate when their session expires after a certain period of time.",
+    inactivityExpirationDescription:
+      "Enable to require authentication after users disconnect from management for 10 minutes.",
+    setupKeyPeerExpirationDisabled:
+      "This setting is disabled for all peers added with an setup-key.",
+    noPermissionToUpdateSetting:
+      "You don't have the required permissions to update this setting.",
+    globalSettingDisabled:
+      "Global setting {setting} is currently disabled. Enable the global setting to be able to toggle it individually per peer.",
     goToSettings: "Go to Settings",
     expirationUpdateSuccess: "Expiration was successfully updated",
     expirationUpdating: "Updating setting...",
     peerSessionExpiration: "Peer Session Expiration",
     requireLoginAfterDisconnect: "Require login after disconnect",
     getStarted: "Get Started with NetBird",
-    getStartedDescription: "It looks like you don't have any connected machines.\nGet started by adding one to your network.",
+    getStartedDescription:
+      "It looks like you don't have any connected machines.\nGet started by adding one to your network.",
     learnMoreInOur: "Learn more in our",
     gettingStartedGuide: "Getting Started Guide",
     userPeersDescription: "View all peers registered by this user.",
-    accessiblePeersDesc: "This peer can connect to the following peers within the NetBird network.",
-    networkRoutesDesc: "Access other networks without installing NetBird on every resource.",
-    remoteJobsDesc: "Remotely trigger actions such as debug bundles or other tasks on this peer, without requiring CLI access."
+    accessiblePeersDesc:
+      "This peer can connect to the following peers within the NetBird network.",
+    networkRoutesDesc:
+      "Access other networks without installing NetBird on every resource.",
+    remoteJobsDesc:
+      "Remotely trigger actions such as debug bundles or other tasks on this peer, without requiring CLI access.",
   },
   policies: {
     title: "Policies",
@@ -404,50 +483,66 @@ saveGroups: "Save Groups",
     portsPlaceholder: "e.g. 443",
     addPolicy: "Add Policy",
     createNewPolicy: "Create New Policy",
-    createNewPolicyDescription: "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports.",
+    createNewPolicyDescription:
+      "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports.",
     noPoliciesForGroup: "This group is not used within any policies yet",
-    noPoliciesForGroupDescription: "Assign this group as either a source or destination inside a policy to see them listed here.",
-    temporaryPoliciesTooltip: "Show temporary policies created by the NetBird browser client. These policies are ephemeral and will be deleted automatically after a short period of time.",
+    noPoliciesForGroupDescription:
+      "Assign this group as either a source or destination inside a policy to see them listed here.",
+    temporaryPoliciesTooltip:
+      "Show temporary policies created by the NetBird browser client. These policies are ephemeral and will be deleted automatically after a short period of time.",
     learnMoreAbout: "Learn more about",
-accessControls: "Access Controls",
+    accessControls: "Access Controls",
     policyActions: "Policy actions",
     policyEnabledSuccess: "The rule was successfully enabled",
     policyDisabledSuccess: "The rule was successfully disabled",
     confirmDeleteTitle: "Delete '{name}'?",
-    confirmDeleteDescription: "Are you sure you want to delete this access control policy? This action cannot be undone.",
+    confirmDeleteDescription:
+      "Are you sure you want to delete this access control policy? This action cannot be undone.",
     updatePolicy: "Update Access Control Policy",
-    modalDescription: "Use this policy to restrict access to groups of resources.",
+    modalDescription:
+      "Use this policy to restrict access to groups of resources.",
     tabPolicy: "Policy",
     tabNameDescription: "Name & Description",
-    protocolHelp: "Allow only specified network protocols. To change traffic direction and ports, select TCP or UDP protocol.",
+    protocolHelp:
+      "Allow only specified network protocols. To change traffic direction and ports, select TCP or UDP protocol.",
     selectProtocol: "Select protocol...",
-    netbirdSshHelp: "Select NetBird SSH for SSH-specific policies with fine-grained access control, or use TCP with port 22 for basic network-level SSH access",
-    sourceHelp: "Typically a group of user devices (e.g., Developers, Marketing) or individual devices in peer-to-peer connections that will access the destination.",
+    netbirdSshHelp:
+      "Select NetBird SSH for SSH-specific policies with fine-grained access control, or use TCP with port 22 for basic network-level SSH access",
+    sourceHelp:
+      "Typically a group of user devices (e.g., Developers, Marketing) or individual devices in peer-to-peer connections that will access the destination.",
     selectSource: "Select source(s)...",
-    destinationHelp: "Typically a group of peers or resources (e.g., Servers, Databases, Internal Services) that will be accessed by the source. Can also be an individual peer or resource.",
+    destinationHelp:
+      "Typically a group of peers or resources (e.g., Servers, Databases, Internal Services) that will be accessed by the source. Can also be an individual peer or resource.",
     selectDestination: "Select destination(s)...",
-    resourcesBidirectionalWarning: "Some destination groups contain resources. Resources only support incoming traffic and cannot initiate connections.",
-    sshResourceWarning: "SSH access only works on peers, not on routed resources. Please ensure your destination groups contain peers for SSH connectivity.",
+    resourcesBidirectionalWarning:
+      "Some destination groups contain resources. Resources only support incoming traffic and cannot initiate connections.",
+    sshResourceWarning:
+      "SSH access only works on peers, not on routed resources. Please ensure your destination groups contain peers for SSH connectivity.",
     sshAccess: "SSH Access",
-    sshAccessHelp: "Select 'Full Access' to allow SSH as any local user, or 'Limited Access' to specify which local users each group is allowed to use.",
+    sshAccessHelp:
+      "Select 'Full Access' to allow SSH as any local user, or 'Limited Access' to specify which local users each group is allowed to use.",
     ports: "Ports",
-    portsHelp: "Allow network traffic and access only to specified ports. Select ports or port ranges between 1 and 65535.",
+    portsHelp:
+      "Allow network traffic and access only to specified ports. Select ports or port ranges between 1 and 65535.",
     enablePolicy: "Enable Policy",
     enablePolicyHelp: "Use this switch to enable or disable the policy.",
     ruleName: "Name of the Rule",
     ruleNameHelp: "Set an easily identifiable name for your policy.",
     ruleNamePlaceholder: "e.g., Devs to Servers",
     policyDescriptionLabel: "Description (optional)",
-    policyDescriptionHelp: "Write a short description to add more context to this policy.",
-policyDescriptionPlaceholder: "e.g., Devs are allowed to access servers and servers are allowed to access Devs.",
-    accessControlDescription: "Create rules to manage access in your network and define what peers can connect.",
+    policyDescriptionHelp:
+      "Write a short description to add more context to this policy.",
+    policyDescriptionPlaceholder:
+      "e.g., Devs are allowed to access servers and servers are allowed to access Devs.",
+    accessControlDescription:
+      "Create rules to manage access in your network and define what peers can connect.",
     policyCreated: "Policy '{name}' successfully created",
     policyUpdated: "Policy '{name}' successfully updated",
     policyDeleted: "Policy '{name}' successfully deleted",
     policyEnableLoading: "Enabling policy...",
     policyDisableLoading: "Disabling policy...",
     policySaveLoading: "Saving policy...",
-    policyDeleteLoading: "Deleting policy..."
+    policyDeleteLoading: "Deleting policy...",
   },
   groups: {
     title: "Groups",
@@ -457,7 +552,8 @@ policyDescriptionPlaceholder: "e.g., Devs are allowed to access servers and serv
     policies: "Policies",
     resources: "Resources",
     create: "Create Group",
-    createDescription: "Create a group to manage and organize access in your network",
+    createDescription:
+      "Create a group to manage and organize access in your network",
     createSuccess: "Group '{name}' successfully created",
     creating: "Creating group...",
     nameHelp: "Set an easily identifiable name for your group",
@@ -480,7 +576,8 @@ policyDescriptionPlaceholder: "e.g., Devs are allowed to access servers and serv
     assignedResources: "Assigned Resources",
     assignPeersDescription: "Use peers to control what this group can access",
     assignUsersDescription: "Use users to control what this group can access",
-    assignResourcesDescription: "Use resources to control what this group can access",
+    assignResourcesDescription:
+      "Use resources to control what this group can access",
     addPeerToGroupTitle: "Add Peers to Group",
     addUserToGroupTitle: "Add Users to Group",
     addResourcesToGroupTitle: "Add Resources to Group",
@@ -491,16 +588,18 @@ policyDescriptionPlaceholder: "e.g., Devs are allowed to access servers and serv
     unused: "Unused",
     usage: "Usage",
     inUse: "In Use",
-nameservers: "Nameservers",
+    nameservers: "Nameservers",
     zones: "Zones",
     routes: "Routes",
     setupKeys: "Setup Keys",
-viewDetails: "View Details",
+    viewDetails: "View Details",
     rename: "Rename",
-    groupsDescription: "Organize peers, users and resources into groups to manage access.",
+    groupsDescription:
+      "Organize peers, users and resources into groups to manage access.",
     allGroups: "All Groups",
     nGroups: "{n} Group(s)",
-    noGroupsMatching: "There are no groups matching your search. Try another search term.",
+    noGroupsMatching:
+      "There are no groups matching your search. Try another search term.",
     noGroupsAvailable: "Seems like you don't have any groups.",
     nPeers: "{n} Peer(s)",
     nResources: "{n} Resource(s)",
@@ -508,7 +607,7 @@ viewDetails: "View Details",
     renameDisabledIdP: "This group is issued by an IdP and cannot be renamed.",
     deleteDisabledIdP: "This group is issued by an IdP and cannot be deleted.",
     deleteDisabledInUse: "Remove dependencies to this group to delete it.",
-    assignedGroups: "Assigned Groups"
+    assignedGroups: "Assigned Groups",
   },
   users: {
     title: "Users",
@@ -550,7 +649,8 @@ viewDetails: "View Details",
     selectRole: "Select role...",
     userRole: "User Role",
     userRoleHelp: "Set a role for the user to assign access permissions.",
-    autoSSODescription: "This user will be added automatically via SSO when they first sign in.",
+    autoSSODescription:
+      "This user will be added automatically via SSO when they first sign in.",
     inviteSuccess: "User {email} has been invited",
     inviting: "Inviting user...",
     userBlocked: "User {name} has been blocked",
@@ -565,7 +665,7 @@ viewDetails: "View Details",
     approving: "Approving user...",
     userRejected: "User {name} has been rejected",
     rejecting: "Rejecting user...",
-copyUserId: "Copy User ID",
+    copyUserId: "Copy User ID",
     copyUserIdSuccess: "User ID copied to clipboard",
     networkAdmin: "Network Admin",
     billingAdmin: "Billing Admin",
@@ -574,13 +674,16 @@ copyUserId: "Copy User ID",
     lastLoginOn: "Last login on",
     showInvites: "Show Invites",
     addNewUsers: "Add New Users",
-    addNewUsersDescription: "It looks like you don't have any users yet. Get started by inviting users to your account.",
+    addNewUsersDescription:
+      "It looks like you don't have any users yet. Get started by inviting users to your account.",
     addUser: "Add User",
-localAuthDisabled: "Local authentication is disabled. Use your IdP for authentication.",
+    localAuthDisabled:
+      "Local authentication is disabled. Use your IdP for authentication.",
     team: "Team",
-    usersPageDescription: "Manage users and their permissions. Same-domain email users are added automatically on first sign-in.",
+    usersPageDescription:
+      "Manage users and their permissions. Same-domain email users are added automatically on first sign-in.",
     expiresIn: "Expires in",
-    expiresInHelp: "Days until the invite expires."
+    expiresInHelp: "Days until the invite expires.",
   },
   serviceUsers: {
     title: "Service Users",
@@ -602,22 +705,25 @@ localAuthDisabled: "Local authentication is disabled. Use your IdP for authentic
     serviceUserNameHelp: "Set a descriptive name for this service user",
     copyUserId: "Copy User ID",
     autoGroups: "Auto Assign Groups",
-    autoGroupsDescription: "Automatically assign these groups to peers that use this service user",
+    autoGroupsDescription:
+      "Automatically assign these groups to peers that use this service user",
     copySuccess: "Copied to clipboard",
     userCreated: "Service user '{name}' successfully created",
     userUpdated: "Service user '{name}' successfully updated",
     userDeleted: "Service user '{name}' successfully deleted",
     createLoading: "Creating service user...",
     updateLoading: "Updating service user...",
-deleteLoading: "Deleting service user...",
-serviceUsersDescription: "Use service users to create API tokens and avoid losing automated access.",
-    serviceUsersEmptyDescription: "It looks like you don't have any service users. Get started by creating a service user.",
+    deleteLoading: "Deleting service user...",
+    serviceUsersDescription:
+      "Use service users to create API tokens and avoid losing automated access.",
+    serviceUsersEmptyDescription:
+      "It looks like you don't have any service users. Get started by creating a service user.",
     blocked: "Blocked",
     accessTokens: "Access Tokens",
     accessTokensDescription: "Access tokens give access to NetBird API.",
     tokenName: "Name",
     tokenNameHelp: "Set an easily identifiable name for your token",
-    tokenExpiresIn: "Expires in"
+    tokenExpiresIn: "Expires in",
   },
   settings: {
     title: "Settings",
@@ -652,15 +758,18 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     networksTab: "Networks",
     clients: "Clients",
     dangerZone: "Danger zone",
-    languageDescription: "Choose your preferred display language for the dashboard.",
+    languageDescription:
+      "Choose your preferred display language for the dashboard.",
     currentLanguage: "Current language",
     delete: "Delete",
     deleteAccountTitle: "Delete NetBird account",
-    deleteAccountConfirm: "Are you sure you want to delete your NetBird account? This action cannot be undone.",
+    deleteAccountConfirm:
+      "Are you sure you want to delete your NetBird account? This action cannot be undone.",
     deleteAccountSuccess: "NetBird account was successfully deleted.",
     deleteAccountLoading: "Deleting the account...",
     deleteAccountCardTitle: "Delete NetBird account",
-    deleteAccountWarning: "Before proceeding to delete your Netbird account, please be aware that this action is irreversible. Once your account is deleted, you will permanently lose access to all associated data, including your peers, users, groups, policies, and routes.",
+    deleteAccountWarning:
+      "Before proceeding to delete your Netbird account, please be aware that this action is irreversible. Once your account is deleted, you will permanently lose access to all associated data, including your peers, users, groups, policies, and routes.",
     deleteAccountButton: "Delete Account",
     endpointUrls: "Endpoint URLs",
     endpointUrlsHelp: "Add these to your identity provider configuration",
@@ -675,65 +784,92 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     beta: "Beta",
     selectInterval: "Select interval...",
     userApprovalRequired: "User Approval Required",
-    userApprovalHelp: "Require manual approval for new users joining via domain matching. Users will be blocked until approved.",
+    userApprovalHelp:
+      "Require manual approval for new users joining via domain matching. Users will be blocked until approved.",
     enableLocalMFA: "Enable Local MFA",
-    localMfaHelp: "Require multi-factor authentication for users authenticating with local credentials.",
+    localMfaHelp:
+      "Require multi-factor authentication for users authenticating with local credentials.",
     peerSessionExpiration: "Peer Session Expiration",
-    peerSessionExpirationHelp: "Request periodic re-authentication of peers registered with SSO.",
+    peerSessionExpirationHelp:
+      "Request periodic re-authentication of peers registered with SSO.",
     sessionExpiration: "Session Expiration",
-    sessionExpirationHelp: "Time after which every peer added with SSO login will require re-authentication.",
+    sessionExpirationHelp:
+      "Time after which every peer added with SSO login will require re-authentication.",
     requireLoginAfterDisconnect: "Require login after disconnect",
-    requireLoginHelp: "Enable to require authentication after users disconnect from management for 10 minutes.",
+    requireLoginHelp:
+      "Enable to require authentication after users disconnect from management for 10 minutes.",
     automaticUpdates: "Automatic Updates",
-    automaticUpdatesHelp: "Configure how NetBird clients receive update notifications. When enabled, users will be prompted to install the selected version. This requires at least NetBird v0.61.0.",
+    automaticUpdatesHelp:
+      "Configure how NetBird clients receive update notifications. When enabled, users will be prompted to install the selected version. This requires at least NetBird v0.61.0.",
     versionCustomPrefix: "Version",
     versionCustomPlaceholder: "e.g., 0.52.2",
     forceAutomaticUpdates: "Force Automatic Updates",
-    forceAutomaticUpdatesHelp: "When enabled, updates are installed automatically in the background without user interaction.",
-    automaticUpdatesWarning: "Enabling automatic updates will restart the NetBird client during updates, which can temporarily disrupt active connections. Use with caution in production environments.",
+    forceAutomaticUpdatesHelp:
+      "When enabled, updates are installed automatically in the background without user interaction.",
+    automaticUpdatesWarning:
+      "Enabling automatic updates will restart the NetBird client during updates, which can temporarily disrupt active connections. Use with caution in production environments.",
     exposeServicesFromCli: "Expose Services from CLI",
-    exposeServicesFromCliHelp: "Allow peers to expose local services through the NetBird reverse proxy using the CLI. This requires at least NetBird v0.66.0.",
+    exposeServicesFromCliHelp:
+      "Allow peers to expose local services through the NetBird reverse proxy using the CLI. This requires at least NetBird v0.66.0.",
     enablePeerExpose: "Enable Peer Expose",
-    enablePeerExposeHelp: "When enabled, peers can expose local HTTP services accessible via a public URL.",
+    enablePeerExposeHelp:
+      "When enabled, peers can expose local HTTP services accessible via a public URL.",
     allowedPeerGroups: "Allowed peer groups",
-    allowedPeerGroupsHelp: "Select which peer groups are allowed to expose services. At least one group is required.",
+    allowedPeerGroupsHelp:
+      "Select which peer groups are allowed to expose services. At least one group is required.",
     selectPeerGroups: "Select peer groups...",
     experimental: "Experimental",
-    experimentalHelp: "Lazy connections are an experimental feature. Functionality and behavior may evolve. Instead of maintaining always-on connections, NetBird activates them on-demand based on activity or signaling.",
+    experimentalHelp:
+      "Lazy connections are an experimental feature. Functionality and behavior may evolve. Instead of maintaining always-on connections, NetBird activates them on-demand based on activity or signaling.",
     enableLazyConnections: "Enable Lazy Connections",
-    enableLazyConnectionsHelp: "Lazy connections activate on-demand based on activity or signaling instead of maintaining always-on connections.",
+    enableLazyConnectionsHelp:
+      "Lazy connections activate on-demand based on activity or signaling instead of maintaining always-on connections.",
     enableGroupPropagation: "Enable user group propagation",
-    groupPropagationHelp: "Allow group propagation from user's auto-groups to peers, sharing membership information.",
+    groupPropagationHelp:
+      "Allow group propagation from user's auto-groups to peers, sharing membership information.",
     enableJwtGroupSync: "Enable JWT group sync",
-    jwtGroupSyncHelp: "Extract & sync groups from JWT claims with user's auto-groups, auto-creating groups from tokens.",
+    jwtGroupSyncHelp:
+      "Extract & sync groups from JWT claims with user's auto-groups, auto-creating groups from tokens.",
     jwtClaim: "JWT claim",
-    jwtClaimHelp: "Specify the JWT claim for extracting group names, e.g., roles or groups, to add to account groups (this claim should contain a list of group names).",
+    jwtClaimHelp:
+      "Specify the JWT claim for extracting group names, e.g., roles or groups, to add to account groups (this claim should contain a list of group names).",
     jwtClaimPlaceholder: "e.g., roles",
     jwtAllowGroups: "JWT allow groups",
-    jwtAllowGroupsHelp: "Limit access to NetBird for the specified group names, e.g., NetBird users. To use the groups, you need to configure them first in your IdP.",
+    jwtAllowGroupsHelp:
+      "Limit access to NetBird for the specified group names, e.g., NetBird users. To use the groups, you need to configure them first in your IdP.",
     addGroupPlaceholder: "Add a group and press Enter",
-    jwtGroupAccessWarning: "To prevent losing access, ensure you are part of this group.",
+    jwtGroupAccessWarning:
+      "To prevent losing access, ensure you are part of this group.",
     dnsDomain: "DNS Domain",
-    dnsDomainHelp: "Specify a custom peer DNS domain for your network. This should not point to a domain that is already in use elsewhere, to avoid overriding DNS results.",
+    dnsDomainHelp:
+      "Specify a custom peer DNS domain for your network. This should not point to a domain that is already in use elsewhere, to avoid overriding DNS results.",
     dnsDomainHostedPlaceholder: "netbird.cloud",
     dnsDomainSelfhostedPlaceholder: "netbird.selfhosted",
     networkRange: "Network Range",
-    networkRangeHelp: "Specify a custom IPv4 range for your network in CIDR format. All peer IPs will be re-allocated when changed.",
+    networkRangeHelp:
+      "Specify a custom IPv4 range for your network in CIDR format. All peer IPs will be re-allocated when changed.",
     networkRangePlaceholder: "e.g. 100.64.0.0/16",
     ipv6NetworkRange: "IPv6 Network Range",
-    ipv6NetworkRangeHelp: "Specify a custom IPv6 range for your network in CIDR format. All peer IPv6 addresses will be re-allocated when changed.",
+    ipv6NetworkRangeHelp:
+      "Specify a custom IPv6 range for your network in CIDR format. All peer IPv6 addresses will be re-allocated when changed.",
     ipv6NetworkRangePlaceholder: "e.g. fd00:1234:5678::/64",
     ipv6EnabledGroups: "IPv6 Enabled Groups",
-    ipv6EnabledGroupsHelp: "Peers in the selected groups will receive IPv6 overlay addresses (dual-stack). Remove all groups to disable IPv6. Changes apply on save and will restart affected clients.",
+    ipv6EnabledGroupsHelp:
+      "Peers in the selected groups will receive IPv6 overlay addresses (dual-stack). Remove all groups to disable IPv6. Changes apply on save and will restart affected clients.",
     selectIpv6Groups: "Select groups to enable IPv6...",
     ipv6PrefixLengthError: "Prefix length must be between /48 and /112",
-    ipv6FormatError: "Please enter a valid IPv6 CIDR range, e.g. fd00:1234::/64",
+    ipv6FormatError:
+      "Please enter a valid IPv6 CIDR range, e.g. fd00:1234::/64",
     enableDnsWildcardRouting: "Enable DNS Wildcard Routing",
-    dnsWildcardRoutingHelp: "Allow routing using DNS wildcards. This requires NetBird client v0.35 or higher. Changes will only take effect after restarting the clients.",
-    configureIdpDescription: "Configure identity providers for user authentication in your network.",
-    setupKeysDescription: "Setup keys are pre-authentication keys that allow to register new machines in your network.",
+    dnsWildcardRoutingHelp:
+      "Allow routing using DNS wildcards. This requires NetBird client v0.35 or higher. Changes will only take effect after restarting the clients.",
+    configureIdpDescription:
+      "Configure identity providers for user authentication in your network.",
+    setupKeysDescription:
+      "Setup keys are pre-authentication keys that allow to register new machines in your network.",
     restrictDashboard: "Restrict dashboard for regular users",
-    restrictDashboardHelp: "Access to the dashboard will be limited and regular users will not be able to view any peers.",
+    restrictDashboardHelp:
+      "Access to the dashboard will be limited and regular users will not be able to view any peers.",
     name: "Name",
     type: "Type",
     idpProviderType: "Provider Type",
@@ -743,7 +879,7 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     idpClientId: "Client ID",
     idpClientSecret: "Client Secret",
     idpIssuerUrl: "Issuer URL",
-    idpIssuerUrlHelp: "The OIDC issuer URL for this provider"
+    idpIssuerUrlHelp: "The OIDC issuer URL for this provider",
   },
   reverseProxy: {
     title: "Reverse Proxy",
@@ -786,9 +922,12 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     clusterDescription: "Description",
     accessLogsDescription: "View access logs for your reverse proxy services",
     noAccessLogs: "No access logs available",
-    servicesDescription: "Expose services securely through NetBird's reverse proxy.",
-    betaNoticeCloud: "NetBird's Reverse Proxy is currently in beta and available at no cost during this period. Features, functionality, and pricing are subject to change upon release.",
-    betaNoticeSelfHosted: "NetBird's Reverse Proxy is currently in beta. Features, functionality, and pricing are subject to change upon release.",
+    servicesDescription:
+      "Expose services securely through NetBird's reverse proxy.",
+    betaNoticeCloud:
+      "NetBird's Reverse Proxy is currently in beta and available at no cost during this period. Features, functionality, and pricing are subject to change upon release.",
+    betaNoticeSelfHosted:
+      "NetBird's Reverse Proxy is currently in beta. Features, functionality, and pricing are subject to change upon release.",
     saveChanges: "Save Changes",
     addServiceBtn: "Add Service",
     editServiceBtn: "Edit Service",
@@ -800,44 +939,59 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     accessControl: "Access Control",
     advancedSettings: "Advanced Settings",
     netBirdOnlyAccess: "NetBird-Only Access",
-    netBirdOnlyAccessDescription: "Reachable only from connected peers in the selected NetBird groups.",
-    netBirdOnlyAccessTooltip: "NetBird-Only Access requires a proxy cluster with at least one connected embedded proxy (netbird proxy). The selected cluster doesn't have one. Connect an embedded proxy to this cluster to enable this option.",
+    netBirdOnlyAccessDescription:
+      "Reachable only from connected peers in the selected NetBird groups.",
+    netBirdOnlyAccessTooltip:
+      "NetBird-Only Access requires a proxy cluster with at least one connected embedded proxy (netbird proxy). The selected cluster doesn't have one. Connect an embedded proxy to this cluster to enable this option.",
     sso: "SSO (Single Sign-On)",
-    ssoDescription: "Require users to authenticate via SSO to access this service.",
+    ssoDescription:
+      "Require users to authenticate via SSO to access this service.",
     password: "Password",
     passwordDescription: "Require a password to access this service.",
     pinCode: "PIN Code",
     pinCodeDescription: "Require a numeric PIN code to access this service.",
     httpHeaders: "HTTP Headers",
-    httpHeadersDescription: "Require specific HTTP headers to access this service.",
-    netBirdOnlyServiceNotice: "This service is accessible via NetBird only. An allow rule for the NetBird network range is applied by default. Any rules you add here are layered on top.",
+    httpHeadersDescription:
+      "Require specific HTTP headers to access this service.",
+    netBirdOnlyServiceNotice:
+      "This service is accessible via NetBird only. An allow rule for the NetBird network range is applied by default. Any rules you add here are layered on top.",
     preserveClientSourceIp: "Preserve Client Source IP",
-    preserveClientSourceIpHelp: "Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2.",
+    preserveClientSourceIpHelp:
+      "Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2.",
     sessionIdleTimeout: "Session Idle Timeout",
-    sessionIdleTimeoutHelp: "Close the UDP session after this period of inactivity. Leave this field empty for no timeout.",
+    sessionIdleTimeoutHelp:
+      "Close the UDP session after this period of inactivity. Leave this field empty for no timeout.",
     connectionTimeout: "Connection Timeout",
-    connectionTimeoutHelp: "Timeout for establishing backend connections. Leave this field empty for no timeout.",
+    connectionTimeoutHelp:
+      "Timeout for establishing backend connections. Leave this field empty for no timeout.",
     timeoutPlaceholder: "e.g. 10s, 30s, 1m",
     passHostHeader: "Pass Host Header",
-    passHostHeaderHelp: "Forward the original Host header to the backend instead of rewriting it to the target address.",
+    passHostHeaderHelp:
+      "Forward the original Host header to the backend instead of rewriting it to the target address.",
     rewriteRedirects: "Rewrite Redirects",
-    rewriteRedirectsHelp: "Rewrite Location headers in backend responses to use the public domain instead of the internal backend address.",
+    rewriteRedirectsHelp:
+      "Rewrite Location headers in backend responses to use the public domain instead of the internal backend address.",
     directUpstream: "Direct Upstream",
-    directUpstreamHelp: "Dial the upstream target from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a WireGuard connection.",
-    directUpstreamHelpCluster: "Required and locked on for proxy-cluster targets: the cluster has no WireGuard endpoint to fall back to.",
-    directUpstreamTooltip: "Direct Upstream is only configurable on clusters with at least one connected embedded proxy (netbird proxy). The selected cluster doesn't have one.",
+    directUpstreamHelp:
+      "Dial the upstream target from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a WireGuard connection.",
+    directUpstreamHelpCluster:
+      "Required and locked on for proxy-cluster targets: the cluster has no WireGuard endpoint to fall back to.",
+    directUpstreamTooltip:
+      "Direct Upstream is only configurable on clusters with at least one connected embedded proxy (netbird proxy). The selected cluster doesn't have one.",
     learnMoreServices: "Services",
     learnMoreAuthentication: "Authentication",
     learnMoreAccessControl: "Access Control",
     learnMoreSettings: "Settings",
     noProtectionTitle: "No Protection Configured",
-    noProtectionDescription: "This service has no authentication or access control rules configured. It will be publicly accessible to everyone on the internet. Are you sure you want to continue?",
+    noProtectionDescription:
+      "This service has no authentication or access control rules configured. It will be publicly accessible to everyone on the internet. Are you sure you want to continue?",
     httpsService: "HTTPS Service",
     tlsPassthrough: "TLS Passthrough",
     tcpService: "TCP Service",
     udpService: "UDP Service",
     forwardTrafficDesc: "Forward traffic directly to your backend service.",
-    exposeServicesDesc: "Expose services securely through NetBird's reverse proxy."
+    exposeServicesDesc:
+      "Expose services securely through NetBird's reverse proxy.",
   },
   dns: {
     title: "DNS",
@@ -867,11 +1021,13 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     dnsSettings: "DNS Settings",
     dnsSettingsDescription: "Manage your account's DNS settings.",
     disabledManagementGroup: "Disable DNS management for these groups",
-    disabledManagementGroupHelp: "Peers in these groups will require manual domain name resolution",
+    disabledManagementGroupHelp:
+      "Peers in these groups will require manual domain name resolution",
     settingsSaved: "Settings saved successfully.",
     settingsSaving: "Saving the settings...",
     saveChanges: "Save Changes",
-    nameserversDescription: "Add nameservers for domain name resolution in your NetBird network.",
+    nameserversDescription:
+      "Add nameservers for domain name resolution in your NetBird network.",
     zonesDescription: "Configure DNS zones for your network.",
     tabNameserver: "Nameserver",
     tabDomains: "Domains",
@@ -881,25 +1037,35 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     matchDomains: "Match Domains",
     enableNameserver: "Enable Nameserver",
     enableSearchDomainsNS: "Mark match domains as search domains",
-    nameserverModalDescription: "Use a nameserver to resolve domains in your network",
+    nameserverModalDescription:
+      "Use a nameserver to resolve domains in your network",
     DNSName: "DNS Name",
     enterNameserverName: "Enter a name for this nameserver.",
     nameserverNameInputPlaceholder: "e.g., Public DNS",
     descriptionOptional: "Description (optional)",
-    writeDescription: "Write a short description to add more context to this nameserver.",
-    descriptionPlaceholder: "e.g., Berlin office resolver for remote developers",
-    advertiseToGroups: "Advertise this nameserver to peers that belong to the following groups",
-    enableDisableNameserver: "Use this switch to enable or disable the nameserver.",
-    addDomainHelp: "Add domain if you want to have a specific one resolved by this nameserver.",
+    writeDescription:
+      "Write a short description to add more context to this nameserver.",
+    descriptionPlaceholder:
+      "e.g., Berlin office resolver for remote developers",
+    advertiseToGroups:
+      "Advertise this nameserver to peers that belong to the following groups",
+    enableDisableNameserver:
+      "Use this switch to enable or disable the nameserver.",
+    addDomainHelp:
+      "Add domain if you want to have a specific one resolved by this nameserver.",
     searchDomainHelp: "E.g., 'peer.example.com' will be accessible with 'peer'",
-    updateZoneDescription: "Use a zone to control domain name resolution for your network.",
+    updateZoneDescription:
+      "Use a zone to control domain name resolution for your network.",
     domainLabel: "Domain",
-    domainHelp: "Enter a domain for this zone (e.g., company.internal, intra.example.com)",
+    domainHelp:
+      "Enter a domain for this zone (e.g., company.internal, intra.example.com)",
     domainPlaceholder: "e.g., company.internal",
     distributionGroupsLabel: "Distribution Groups",
-    zoneGroupsHelp: "Advertise this zone and its records to peers that belong to the following groups",
+    zoneGroupsHelp:
+      "Advertise this zone and its records to peers that belong to the following groups",
     enableSearchDomains: "Enable Search Domains",
-    searchDomainHelpZone: "E.g., 'server.company.internal' will be accessible with 'server'",
+    searchDomainHelpZone:
+      "E.g., 'server.company.internal' will be accessible with 'server'",
     enableDNSZone: "Enable DNS Zone",
     enableDisableDNSZone: "Use this switch to enable or disable the dns zone.",
     addDNSZone: "Add DNS Zone",
@@ -911,7 +1077,8 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     selectType: "Select type...",
     selectTTL: "Select TTL...",
     hostname: "Hostname",
-    hostnameHelp: "Enter a subdomain, wildcard or leave empty to use the primary domain.",
+    hostnameHelp:
+      "Enter a subdomain, wildcard or leave empty to use the primary domain.",
     hostnamePlaceholder: "E.g., dev, * or leave empty for primary domain",
     ipv4Address: "IPv4 Address",
     ipv6Address: "IPv6 Address",
@@ -926,12 +1093,13 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     dnsZones: "DNS Zones",
     dns: "DNS",
     recordTypeAAAA: "AAAA",
-    recordTypeCNAME: "CNAME"
+    recordTypeCNAME: "CNAME",
   },
   networks: {
     title: "Networks",
     description: "Manage networks and routing for your organization",
-    pageDescription: "Access internal resources in LANs and VPCs without installing NetBird on every machine.",
+    pageDescription:
+      "Access internal resources in LANs and VPCs without installing NetBird on every machine.",
     networkName: "Network Name",
     networkNamePlaceholder: "e.g., Engineering Network",
     createNetwork: "Create Network",
@@ -944,7 +1112,8 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     resources: "Resources",
     policies: "Policies",
     routingPeers: "Routing Peers",
-    activePoliciesCount: "{count, plural, one {# Active Policy} other {# Active Policies}}",
+    activePoliciesCount:
+      "{count, plural, one {# Active Policy} other {# Active Policies}}",
     noActivePolicies: "No Active Policies",
     goToPolicies: "Go to Policies",
     createResource: "Create Resource",
@@ -958,10 +1127,14 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     addRoutingPeer: "Add Routing Peer",
     removeRoutingPeer: "Remove Routing Peer",
     networkRoutes: "Network Routes",
-    routesDescription: "Access other networks like LANs and VPCs without installing NetBird on every resource.",
+    routesDescription:
+      "Access other networks like LANs and VPCs without installing NetBird on every resource.",
     learnMoreAbout: "Learn more about",
-    newNetworksRecommendation: "We recommend using the new Networks concept to easier visualise and manage access to your resources.",
+    newNetworksRecommendation:
+      "We recommend using the new Networks concept to easier visualise and manage access to your resources.",
     goToNetworks: "Go to Networks",
+    active: "Active",
+    network: "Network",
     createRoute: "Create Route",
     editRoute: "Edit Route",
     deleteRoute: "Delete Route",
@@ -977,7 +1150,8 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     networkNameHelp: "Provide a unique name for the network.",
     networkNameModalPlaceholder: "e.g., Office Network",
     networkDescriptionLabel: "Description (optional)",
-    networkDescriptionHelp: "Write a short description to add more context to this network.",
+    networkDescriptionHelp:
+      "Write a short description to add more context to this network.",
     networkDescriptionPlaceholder: "e.g., Berlin, Münzstraße 12",
     addResource: "Add Resource",
     editResourceBtn: "Edit Resource",
@@ -985,36 +1159,43 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     resourceNameHelp: "Set an easily identifiable name for your resource",
     resourceNamePlaceholder: "e.g., Postgres Database",
     resourceDescriptionLabel: "Description",
-    resourceDescriptionHelp: "Write a short description to add more context to this resource.",
+    resourceDescriptionHelp:
+      "Write a short description to add more context to this resource.",
     resourceDescriptionPlaceholder: "e.g., Production, Development",
     resourceGroupsLabel: "Resource Groups",
-    resourceGroupsHelp: "Add this resource to a group (e.g., Databases, Web Servers) and reference the group in access policies to simplify management.",
+    resourceGroupsHelp:
+      "Add this resource to a group (e.g., Databases, Web Servers) and reference the group in access policies to simplify management.",
     resourceGroupsPlaceholder: "Add or select resource group(s)...",
     accessControl: "Access Control",
     resourceTab: "Resource",
     optionalSettings: "Optional Settings",
     accessControlPolicies: "Access Control Policies",
-    accessControlPoliciesHelp: "Define which source groups are allowed to access this resource. You can also restrict access to specific protocols and ports. Without policies access to this resource will not be possible.",
+    accessControlPoliciesHelp:
+      "Define which source groups are allowed to access this resource. You can also restrict access to specific protocols and ports. Without policies access to this resource will not be possible.",
     routeType: "Route Type",
-    routeTypeHelp: "Select your route type to add either a network range or a list of domains.",
+    routeTypeHelp:
+      "Select your route type to add either a network range or a list of domains.",
     routeTypeNetworkRange: "Network Range",
     routeTypeDomains: "Domains",
     networkRange: "Network Range",
     networkRangeHelp: "Add a private IPv4 or IPv6 address or range",
-    networkRangePlaceholder: "e.g., 172.16.0.1, 172.16.0.0/16, 2001:db8::1 or 2001:db8::/64",
+    networkRangePlaceholder:
+      "e.g., 172.16.0.1, 172.16.0.0/16, 2001:db8::1 or 2001:db8::/64",
     domains: "Domains",
     distributionGroups: "Distribution Groups",
     networkIdentifier: "Network Identifier",
     metric: "Metric",
-    metricHelp: "Set a metric value to prioritize routes. Lower values take precedence.",
+    metricHelp:
+      "Set a metric value to prioritize routes. Lower values take precedence.",
     metricPlaceholder: "Enter metric value (1-9999)",
     additionalSettings: "Additional Settings",
     accessControlGroups: "Access Control Groups",
-    autoApply: "Auto Apply"
+    autoApply: "Auto Apply",
   },
   postureChecks: {
     title: "Posture Checks",
-    description: "Define posture checks to ensure peers meet security requirements",
+    description:
+      "Define posture checks to ensure peers meet security requirements",
     descriptionOptional: "Description (optional)",
     createPostureCheck: "Create Posture Check",
     editPostureCheck: "Edit Posture Check",
@@ -1037,46 +1218,61 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     country: "Country",
     selectCountry: "Select country...",
     networkRange: "Network Range",
-    pageDescription: "Define posture checks to ensure peers meet security requirements.",
+    pageDescription:
+      "Define posture checks to ensure peers meet security requirements.",
     saveChanges: "Save Changes",
     updatePostureCheck: "Update Posture Check",
     nameAndDescription: "Name & Description",
     postureCheckName: "Name of the Posture Check",
-    postureCheckNameHelp: "Set an easily identifiable name for your posture check.",
+    postureCheckNameHelp:
+      "Set an easily identifiable name for your posture check.",
     postureCheckNamePlaceholder: "e.g., NetBird Version > 0.25.0",
-    postureCheckDescriptionHelp: "Write a short description to add more context to this policy.",
-    postureCheckDescriptionPlaceholder: "e.g., Check if the NetBird version is bigger than 0.25.0",
+    postureCheckDescriptionHelp:
+      "Write a short description to add more context to this policy.",
+    postureCheckDescriptionPlaceholder:
+      "e.g., Check if the NetBird version is bigger than 0.25.0",
     netBirdClientVersion: "NetBird Client Version",
-    netBirdClientVersionHelp: "Restrict access to peers with a specific NetBird client version.",
+    netBirdClientVersionHelp:
+      "Restrict access to peers with a specific NetBird client version.",
     netBirdClientVersionCheck: "Client Version Check",
     minimumRequiredVersion: "Minimum required version",
-    minimumRequiredVersionHelp: "Only peers with the minimum specified NetBird client version will have access to the network.",
+    minimumRequiredVersionHelp:
+      "Only peers with the minimum specified NetBird client version will have access to the network.",
     minimumRequiredVersionPlaceholder: "e.g., 0.25.0",
-    minimumRequiredVersionError: "Please enter a valid version, e.g., 0.2, 0.2.0, 0.2.0-alpha.1",
+    minimumRequiredVersionError:
+      "Please enter a valid version, e.g., 0.2, 0.2.0, 0.2.0-alpha.1",
     countryAndRegion: "Country & Region",
-    countryAndRegionHelp: "Restrict access in your network based on country or region.",
+    countryAndRegionHelp:
+      "Restrict access in your network based on country or region.",
     countryAndRegionCheck: "Country & Region Check",
-    geoLite2License: "This check includes GeoLite2 data created by MaxMind, available from",
+    geoLite2License:
+      "This check includes GeoLite2 data created by MaxMind, available from",
     allowOrBlockLocation: "Allow or Block Location",
-    chooseAllowOrBlock: "Choose whether you want to allow or block access from specific countries or regions",
+    chooseAllowOrBlock:
+      "Choose whether you want to allow or block access from specific countries or regions",
     addLocation: "Add Location",
     learnMoreAbout: "Learn more about",
-    operatingSystemHelp: "Restrict access in your network based on the operating system.",
+    operatingSystemHelp:
+      "Restrict access in your network based on the operating system.",
     operatingSystemCheck: "Operating System Check",
     allVersions: "All versions",
     equalOrGreaterThan: "Equal or greater than",
     allowOrBlock: "Allow or Block",
-    allowOrBlockOSHelp: "Choose whether you want to allow or block the operating system.",
+    allowOrBlockOSHelp:
+      "Choose whether you want to allow or block the operating system.",
     selectVersion: "Select version...",
     versionPlaceholder: "e.g., 6.0.0",
     useCustomVersion: "Use custom version number",
-    useCustomVersionHelp: "Use a custom version number if you need more control.",
+    useCustomVersionHelp:
+      "Use a custom version number if you need more control.",
     kernelVersion: "Kernel Version",
     process: "Process",
-    processHelp: "Restrict access in your network based on running processes of a peer.",
+    processHelp:
+      "Restrict access in your network based on running processes of a peer.",
     processCheck: "Process Check",
     processes: "Processes",
-    processesHelp: "Add the path of an executable file of the process. You can define a path for Linux, macOS and Windows. Peers will only be allowed to connect if the process is running on their system.",
+    processesHelp:
+      "Add the path of an executable file of the process. You can define a path for Linux, macOS and Windows. Peers will only be allowed to connect if the process is running on their system.",
     addProcess: "Add Process",
     linuxPathPlaceholder: "/usr/local/bin/netbird",
     macPathPlaceholder: "/Applications/NetBird.app/Contents/MacOS/netbird",
@@ -1084,17 +1280,20 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     validMacPath: "Please enter a valid macOS file path",
     validUnixPath: "Please enter a valid Unix file path",
     validWindowsPath: "Please enter a valid Windows file path",
-    peerNetworkRangeHelp: "Restrict access by allowing or blocking peer network ranges.",
+    peerNetworkRangeHelp:
+      "Restrict access by allowing or blocking peer network ranges.",
     peerNetworkRangeCheck: "Peer Network Range Check",
     allowOrBlockRanges: "Allow or Block Ranges",
-    allowOrBlockRangesHelp: "Choose whether you want to allow or block specific peer network ranges",
+    allowOrBlockRangesHelp:
+      "Choose whether you want to allow or block specific peer network ranges",
     addNetworkRange: "Add Network Range",
     validCidr: "Please enter a valid CIDR, e.g., 192.168.1.0/24",
     cidrPlaceholder: "e.g., 172.16.0.0/16",
     noChecks: "You haven't added any posture checks yet",
-    noChecksDescription: "Add various posture checks to further restrict access in your network. E.g., only clients with a specific NetBird client version, operating system or location are allowed to connect.",
+    noChecksDescription:
+      "Add various posture checks to further restrict access in your network. E.g., only clients with a specific NetBird client version, operating system or location are allowed to connect.",
     browseChecks: "Browse Checks",
-    newPostureCheck: "New Posture Check"
+    newPostureCheck: "New Posture Check",
   },
   setupKeys: {
     title: "Setup Keys",
@@ -1121,7 +1320,8 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     copyKey: "Copy Key",
     keyCopied: "Setup key copied to clipboard",
     key: "Key",
-    copyWarning: "This is the only time the key will be shown. Copy it now and store it in a safe place.",
+    copyWarning:
+      "This is the only time the key will be shown. Copy it now and store it in a safe place.",
     created: "Setup key '{name}' successfully created",
     updated: "Setup key '{name}' successfully updated",
     deleted: "Setup key '{name}' successfully deleted",
@@ -1135,13 +1335,27 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     expiresIn: "Expires in",
     expiresInHelp: "Days until the key expires.",
     expiresInHelpEmpty: "Leave empty for no expiration.",
-    expiresInSuffix: "Day(s)"
+    expiresInSuffix: "Day(s)",
+    all: "All",
+    oneOff: "One-off",
+    reusable: "Reusable",
+    status: "Status",
+    groupNotUsedTitle: "This group is not used within any setup keys yet",
+    groupNotUsedDescription:
+      "Assign this group when creating a new setup key to see them listed here.",
+    getStartedDescription:
+      "Add a setup key to register new machines in your network. The key links machines to your account during initial setup.",
+    learnMore: "Learn more about",
+    groups: "Groups",
+    usage: "Usage",
+    lastUsedOn: "Last used on",
   },
   activity: {
     title: "Activity",
     description: "View audit events and activity logs",
     auditEvents: "Audit Events",
-    auditEventsDescription: "Audit configuration changes, access policy updates, and peer registration and login events across your network.",
+    auditEventsDescription:
+      "Audit configuration changes, access policy updates, and peer registration and login events across your network.",
     noEvents: "No events available",
     searchPlaceholder: "Search events...",
     searchByAuditNameUserPeerMeta: "Search by audit name, user, peer, meta...",
@@ -1151,7 +1365,7 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     timestamp: "Timestamp",
     ipAddress: "IP Address",
     details: "Details",
-    code: "Code"
+    code: "Code",
   },
   controlCenter: {
     title: "Control Center",
@@ -1162,10 +1376,10 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     totalGroups: "Total Groups",
     totalUsers: "Total Users",
     totalNetworks: "Total Networks",
-    networkOverview: "Network Overview"
+    networkOverview: "Network Overview",
   },
   onboarding: {
     title: "Get started with NetBird",
-    addResource: "Add your first resource"
-  }
+    addResource: "Add your first resource",
+  },
 };

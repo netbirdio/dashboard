@@ -25,7 +25,7 @@ import { Group } from "@/interfaces/Group";
 import { orderBy } from "lodash";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import Badge from "@components/Badge";
-import { cn, singularize } from "@utils/helpers";
+import { cn } from "@utils/helpers";
 import { Modal } from "@components/modal/Modal";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
@@ -37,6 +37,7 @@ import { isNetbirdSSHProtocolSupported } from "@utils/version";
 
 export const PeerSSHToggle = () => {
   const t = useTranslations("peers");
+  const tc = useTranslations("common");
   const { permission } = usePermissions();
   const { peer, toggleSSH, setSSHInstructionsModal } = usePeer();
   const { data: policies } = useFetchApi<Policy[]>(
@@ -82,25 +83,22 @@ export const PeerSSHToggle = () => {
 
   const disableDashboardSSH = async () => {
     const choice = await confirm({
-      title: `Disable SSH Access?`,
+      title: t("disableSSHConfirmation"),
       description: (
         <div>
-          Starting from NetBird v0.61.0, once SSH access is disabled, you cannot
-          re-enable it again from the dashboard. You&apos;ll need to create an
-          explicit access control policy and update your NetBird client to
-          restore SSH functionality.{" "}
+          {t("disableSSHDescription")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/manage/peers/ssh"}
             target={"_blank"}
             onClick={(e) => e.stopPropagation()}
           >
-            Learn more
+            {t("sshLearnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </div>
       ),
-      confirmText: "Disable",
-      cancelText: "Cancel",
+      confirmText: tc("disable"),
+      cancelText: tc("cancel"),
       type: "warning",
       maxWidthClass: "max-w-xl",
     });
@@ -114,9 +112,7 @@ export const PeerSSHToggle = () => {
         content={
           <div className={"flex gap-2 items-center !text-nb-gray-300 text-xs"}>
             <LockIcon size={14} />
-            <span>
-              {`You don't have the required permissions to update this setting.`}
-            </span>
+            <span>{t("noPermissionToUpdateSetting")}</span>
           </div>
         }
         interactive={false}
@@ -135,9 +131,7 @@ export const PeerSSHToggle = () => {
               {t("sshAccess")}
             </>
           }
-          helpText={
-            "Enable the SSH server on this peer to access the machine via an secure shell."
-          }
+          helpText={t("sshAccessHelp")}
         />
       </FullTooltip>
       <PeerSSHPolicyInfo peer={peer} />
@@ -148,10 +142,7 @@ export const PeerSSHToggle = () => {
         <Label>{t("sshAccess")}</Label>
       </div>
 
-      <HelpText>
-        Set up SSH and create an explicit access control policy defining which
-        users can access specific local usernames of this machine via SSH.
-      </HelpText>
+      <HelpText>{t("sshSetupHelp")}</HelpText>
 
       {!isNetbirdSSHProtocolSupported(peer.version) &&
         enabledPolicies?.length > 0 &&
@@ -166,9 +157,7 @@ export const PeerSSHToggle = () => {
             }
             className="my-3"
           >
-            You have SSH access configured but your client runs on an older
-            NetBird version. Please update your NetBird client to v.0.61.0+ in
-            order to allow SSH connections.
+            {t("sshOldVersionWarning")}
           </Callout>
         )}
 
@@ -183,9 +172,7 @@ export const PeerSSHToggle = () => {
           }
           className="my-3"
         >
-          You have an SSH access policy configured, but the SSH server
-          isn&apos;t enabled on this client. Enable the SSH server to allow SSH
-          connections.
+          {t("sshServerNotEnabled")}
         </Callout>
       )}
 
@@ -200,9 +187,7 @@ export const PeerSSHToggle = () => {
           }
           className="my-3"
         >
-          Your SSH server is enabled, but starting from NetBird v0.61.0, SSH
-          requires an explicit access control policy. Please create an SSH
-          access control policy in order to allow SSH connections.
+          {t("sshNeedsPolicy")}
         </Callout>
       )}
 
@@ -214,7 +199,7 @@ export const PeerSSHToggle = () => {
             disabled={!permission?.policies.create}
           >
             <CirclePlusIcon size={14} />
-            Create SSH Policy
+            {t("createSSHPolicy")}
           </Button>
         ) : (
           <Button
@@ -300,11 +285,9 @@ export const PeerSSHToggle = () => {
               />
               <div>
                 <span className={"font-medium text-xs"}>
-                  {singularize(
-                    "Active Policies",
-                    enabledPolicies?.length,
-                    true,
-                  )}
+                  {t("activePoliciesCount", {
+                    count: enabledPolicies?.length,
+                  })}
                 </span>
               </div>
             </Badge>
