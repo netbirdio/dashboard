@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronRight, GlobeIcon, Loader2, MailIcon } from "lucide-react";
 import { cn } from "@utils/helpers";
@@ -17,36 +18,39 @@ type NotificationChannelListItemProps = {
   disabled?: boolean;
 };
 
-const channelMeta: Record<
+const channelMeta = (
+  t: ReturnType<typeof useTranslations>,
+): Record<
   NotificationChannelType,
   { name: string; icon: React.ReactNode }
-> = {
-  [NotificationChannelType.Email]: { name: "Email", icon: <MailIcon size={16} /> },
-  [NotificationChannelType.Webhook]: { name: "Webhook", icon: <GlobeIcon size={16} /> },
-  [NotificationChannelType.Slack]: { name: "Slack", icon: <SlackIcon size={16} /> },
-};
+> => ({
+  [NotificationChannelType.Email]: { name: t("email"), icon: <MailIcon size={16} /> },
+  [NotificationChannelType.Webhook]: { name: t("webhook"), icon: <GlobeIcon size={16} /> },
+  [NotificationChannelType.Slack]: { name: t("slack"), icon: <SlackIcon size={16} /> },
+});
 
 const getChannelDescription = (
   type: NotificationChannelType,
-  channel?: NotificationChannel,
+  channel: NotificationChannel | undefined,
+  t: ReturnType<typeof useTranslations>,
 ) => {
-  if (!channel) return "Disabled";
-  if (!channel.enabled) return "Disabled";
+  if (!channel) return t("disabled");
+  if (!channel.enabled) return t("disabled");
 
   const totalTypes = ALL_NOTIFICATION_EVENT_TYPES.length;
   const activeTypes = channel.event_types.length;
   const notificationLabel =
     activeTypes === totalTypes
-      ? "All Notifications"
-      : `${activeTypes} of ${totalTypes} Notifications`;
+      ? t("allNotifications")
+      : t("notificationsCount", { active: activeTypes, total: totalTypes });
 
   if (type === NotificationChannelType.Email) {
     const emails = (channel.target as NotificationEmailChannel)?.emails ?? [];
-    return `Enabled · ${notificationLabel} · ${emails.length} Recipient${
-      emails.length !== 1 ? "s" : ""
+    return `${t("enabled")} · ${notificationLabel} · ${emails.length} ${
+      emails.length !== 1 ? t("recipients") : t("recipient")
     }`;
   }
-  return `Enabled · ${notificationLabel}`;
+  return `${t("enabled")} · ${notificationLabel}`;
 };
 
 export const NotificationChannelListItem = ({
@@ -59,9 +63,10 @@ export const NotificationChannelListItem = ({
   const [isCreating, setIsCreating] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const meta = channelMeta[type];
+  const t = useTranslations("notifications");
+  const meta = channelMeta(t)[type];
   const active = channel?.enabled ?? false;
-  const description = getChannelDescription(type, channel);
+  const description = getChannelDescription(type, channel, t);
 
   useEffect(() => {
     return () => clearTimeout(timerRef.current);
