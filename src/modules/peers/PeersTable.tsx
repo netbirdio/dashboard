@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Button from "@components/Button";
 import { Checkbox } from "@components/Checkbox";
 import FullTooltip from "@components/FullTooltip";
@@ -81,7 +82,8 @@ function peerOsKey(os: string | undefined): string {
   }
 }
 
-const PeersTableColumns: ColumnDef<Peer>[] = [
+function PeersTableColumns(t: ReturnType<typeof useTranslations>): ColumnDef<Peer>[] {
+  return [
   {
     id: "select",
     header: ({ table }) => (
@@ -89,7 +91,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={t("selectAll")}
         />
       </div>
     ),
@@ -99,7 +101,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
           checked={row.getIsSelected()}
           variant={"tableCell"}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label={t("selectRow")}
         />
       </div>
     ),
@@ -110,7 +112,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     id: "name",
     accessorFn: (peer) => `${peer?.name}${peer?.dns_label}`,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("name")}</DataTableHeader>;
     },
     sortingFn: "text",
     cell: ({ row }) => <PeerNameCell peer={row.original} />,
@@ -137,18 +139,18 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     id: "user_name",
-    accessorFn: (peer) => (peer.user ? peer.user?.name : "Unknown"),
+    accessorFn: (peer) => (peer.user ? peer.user?.name : t("unknown")),
   },
   {
     id: "user_email",
-    accessorFn: (peer) => (peer.user ? peer.user?.email : "Unknown"),
+    accessorFn: (peer) => (peer.user ? peer.user?.email : t("unknown")),
     filterFn: "equalsString",
   },
   {
     id: "dns_label",
     accessorKey: "dns_label",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Address</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("address")}</DataTableHeader>;
     },
     cell: ({ row }) => <PeerAddressCell peer={row.original} />,
   },
@@ -167,7 +169,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     accessorFn: (peer) => peer.groups?.length,
     id: "groups",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("groups")}</DataTableHeader>;
     },
     cell: ({ row }) => (
       <PeerProvider peer={row.original}>
@@ -197,7 +199,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     id: "os",
     accessorFn: (peer) => removeAllSpaces(peer?.os),
     header: ({ column }) => {
-      return <DataTableHeader column={column}>OS</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("os")}</DataTableHeader>;
     },
     cell: ({ row }) => (
       <PeerOSCell os={row.original.os} serial={row.original.serial_number} />
@@ -211,7 +213,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "serial",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Serial number</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("serialNumber")}</DataTableHeader>;
     },
     accessorFn: (peer) => peer.serial_number,
     sortingFn: "text",
@@ -219,7 +221,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "version",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Version</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("version")}</DataTableHeader>;
     },
     cell: ({ row }) => (
       <PeerVersionCell
@@ -263,6 +265,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     accessorFn: (row) => row.ipv6,
   },
 ];
+}
 
 export type PeersTableKind = "users" | "servers";
 
@@ -288,6 +291,7 @@ export default function PeersTable({
   headingTarget,
   kind,
 }: Readonly<Props>) {
+  const t = useTranslations("peers");
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
   const path = usePathname();
@@ -368,6 +372,8 @@ export default function PeersTable({
     },
     [kindFilteredPeers],
   );
+
+  const columns = useMemo(() => PeersTableColumns(t), [t]);
 
   const browserPeers = useMemo(() => {
     return withBrowserPeers(true);
@@ -473,14 +479,14 @@ export default function PeersTable({
         rowSelection={selectedRows}
         setRowSelection={setSelectedRows}
         useRowId={true}
-        text={"Peers"}
+        text={t("title")}
         sorting={sorting}
         setSorting={setSorting}
         initialPageSize={25}
         showResetFilterButton={false}
-        columns={PeersTableColumns}
+        columns={columns}
         data={showBrowserPeers ? browserPeers : regularPeers}
-        searchPlaceholder={"Search by name, IP, owner or group..."}
+        searchPlaceholder={t("searchPlaceholder")}
         columnVisibility={{
           select: permission.groups.read,
           connected: false,
