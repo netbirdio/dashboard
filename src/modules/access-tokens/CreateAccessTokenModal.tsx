@@ -134,7 +134,8 @@ export function AccessTokenModalContent({
   onSuccess,
   user,
 }: Readonly<ModalProps>) {
-  const t = useTranslations("common");
+  const t = useTranslations("serviceUsers");
+  const tCommon = useTranslations("common");
   const tokenRequest = useApiCall<AccessToken>(`/users/${user.id}/tokens`);
   const { mutate } = useSWRConfig();
 
@@ -177,8 +178,8 @@ export function AccessTokenModalContent({
 
       <div className={"px-8 py-6 flex flex-col gap-8"}>
         <div>
-          <Label>Name</Label>
-          <HelpText>Set an easily identifiable name for your token</HelpText>
+          <Label>{t("tokenName")}</Label>
+          <HelpText>{t("tokenNameHelp")}</HelpText>
           <Input
             data-testid={"access-token-name"}
             placeholder={"e.g., Infra token"}
@@ -189,7 +190,7 @@ export function AccessTokenModalContent({
 
         <div className={"flex justify-between"}>
           <div>
-            <Label>Expires in</Label>
+            <Label>{t("tokenExpiresIn")}</Label>
             <HelpText>Should be between 1 and 365 days.</HelpText>
           </div>
           <Input
@@ -224,7 +225,7 @@ export function AccessTokenModalContent({
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>{t("cancel")}</Button>
+            <Button variant={"secondary"}>{tCommon("cancel")}</Button>
           </ModalClose>
 
           <Button

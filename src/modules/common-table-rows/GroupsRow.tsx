@@ -171,7 +171,12 @@ export function EditGroupsModal({
 						<Button variant={"secondary"}>{tCommon("cancel")}</Button>
 					</ModalClose>
 
-<Button variant={"primary"} onClick={handleSave} disabled={disabled} data-testid="save-groups">
+					<Button
+						variant={"primary"}
+						onClick={handleSave}
+						disabled={disabled}
+						data-testid="save-groups"
+					>
 						{t("saveGroups")}
 					</Button>
 				</div>

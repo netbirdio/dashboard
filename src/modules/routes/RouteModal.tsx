@@ -160,7 +160,8 @@ export function RouteModalContent({
   isFirstExitNode = false,
   distributionGroups,
 }: ModalProps) {
-  const t = useTranslations("common");
+  const t = useTranslations("networks");
+  const tCommon = useTranslations("common");
   const { createRoute } = useRoutes();
   const [tab, setTab] = useState(
     exitNode && peer ? "access-control" : "network",
@@ -365,13 +366,13 @@ export function RouteModalContent({
 
   const networkIdentifierError = useMemo(() => {
     return (networkIdentifier?.length || 0) > 40
-      ? "Network Identifier must be less than 40 characters"
+      ? t("networkIdentifier") + " must be less than 40 characters"
       : "";
   }, [networkIdentifier]);
 
   const metricError = useMemo(() => {
     return parseInt(metric) < 1 || parseInt(metric) > 9999
-      ? "Metric must be between 1 and 9999"
+      ? t("metric") + " must be between 1 and 9999"
       : "";
   }, [metric]);
 
@@ -465,16 +466,15 @@ export function RouteModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Additional Settings
+            {t("additionalSettings")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value={"network"} className={"pb-8"}>
           <div className={"px-8 flex-col flex gap-4"}>
             <div className={cn(exitNode && "hidden")}>
-              <Label>Route Type</Label>
+              <Label>{t("routeType")}</Label>
               <HelpText>
-                Select your route type to add either a network range or a list
-                of domains.
+                {t("routeTypeHelp")}
               </HelpText>
               <div className={"flex justify-between items-center w-full"}>
                 <ButtonGroup className={"w-full"}>
@@ -484,7 +484,7 @@ export function RouteModalContent({
                     className={"w-full"}
                   >
                     <NetworkIcon size={16} />
-                    Network Range
+                    {t("routeTypeNetworkRange")}
                   </ButtonGroup.Button>
                   <ButtonGroup.Button
                     variant={routeType == "domains" ? "tertiary" : "secondary"}
@@ -493,7 +493,7 @@ export function RouteModalContent({
                     data-testid="route-type-domains"
                   >
                     <GlobeIcon size={16} />
-                    Domains
+                    {t("routeTypeDomains")}
                   </ButtonGroup.Button>
                 </ButtonGroup>
               </div>
@@ -504,12 +504,12 @@ export function RouteModalContent({
                   routeType !== "ip-range" && "hidden",
                 )}
               >
-                <Label>Network Range</Label>
-                <HelpText>Add a private IPv4 or IPv6 address or range</HelpText>
+                <Label>{t("networkRange")}</Label>
+                <HelpText>{t("networkRangeHelp")}</HelpText>
                 <Input
                   ref={networkRangeRef}
                   customPrefix={<NetworkIcon size={16} />}
-                  placeholder={"e.g., 172.16.0.1, 172.16.0.0/16, 2001:db8::1 or 2001:db8::/64"}
+                  placeholder={t("networkRangePlaceholder")}
                   value={networkRange}
                   data-testid={"network-range"}
                   className={"font-mono !text-[13px]"}
@@ -521,7 +521,7 @@ export function RouteModalContent({
               <div
                 className={cn("mt-5 mb-3", routeType !== "domains" && "hidden")}
               >
-                <Label>Domains</Label>
+                <Label>{t("domains")}</Label>
                 <HelpText>
                   Add domains that dynamically resolve to one or more IPv4
                   addresses. <br /> A maximum of 32 domains can be added.
@@ -670,7 +670,7 @@ export function RouteModalContent({
         <TabsContent value={"access-control"} className={"pb-8"}>
           <div className={"px-8 flex-col flex gap-6"}>
             <div>
-              <Label>Distribution Groups</Label>
+              <Label>{t("distributionGroups")}</Label>
               <HelpText>
                 {exitNode
                   ? peer
@@ -701,7 +701,7 @@ export function RouteModalContent({
         <TabsContent value={"general"} className={"px-8 pb-6"}>
           <div className={"flex flex-col gap-6"}>
             <div>
-              <Label>Network Identifier</Label>
+              <Label>{t("networkIdentifier")}</Label>
               <HelpText>
                 Add a unique network identifier that is assigned to each device.
               </HelpText>
@@ -774,7 +774,7 @@ export function RouteModalContent({
 
             <div className={cn("flex justify-between")}>
               <div>
-                <Label>Metric</Label>
+                <Label>{t("metric")}</Label>
                 <HelpText className={"max-w-[200px]"}>
                   A lower metric indicates higher priority routes.
                 </HelpText>
@@ -822,7 +822,7 @@ export function RouteModalContent({
         <div className={"flex gap-3 w-full justify-end"}>
           {(tab == "network" || (tab == "access-control" && exitNode)) && (
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>{t("cancel")}</Button>
+              <Button variant={"secondary"}>{tCommon("cancel")}</Button>
             </ModalClose>
           )}
 

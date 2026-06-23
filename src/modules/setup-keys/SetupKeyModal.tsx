@@ -58,7 +58,6 @@ export default function SetupKeyModal({
   showOnlyRoutingPeerOS,
   groups,
 }: Readonly<Props>) {
-  const t = useTranslations("common");
   const [successModal, setSuccessModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const [installModal, setInstallModal] = useState(false);
@@ -172,7 +171,8 @@ export function SetupKeyModalContent({
   predefinedName = "",
   groups,
 }: Readonly<ModalProps>) {
-  const t = useTranslations("common");
+  const t = useTranslations("setupKeys");
+  const tCommon = useTranslations("common");
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const { mutate } = useSWRConfig();
 
@@ -230,8 +230,8 @@ export function SetupKeyModalContent({
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<SetupKeysIcon className={"fill-netbird"} />}
-        title={"Create New Setup Key"}
-        description={"Use this key to register new machines in your network"}
+        title={t("createTitle")}
+        description={t("createDescription")}
         color={"netbird"}
       />
 
@@ -240,10 +240,10 @@ export function SetupKeyModalContent({
       <div className={"px-8 py-6 flex flex-col gap-8"}>
         {/* Name Field */}
         <div>
-          <Label>Name</Label>
-          <HelpText>Set an easily identifiable name for your key</HelpText>
+          <Label>{t("name")}</Label>
+          <HelpText>{t("nameHelp")}</HelpText>
           <Input
-            placeholder={"e.g., AWS Servers"}
+            placeholder={t("namePlaceholder")}
             value={name}
             data-testid={"setup-key-name"}
             onChange={(e) => setName(e.target.value)}
@@ -268,9 +268,9 @@ export function SetupKeyModalContent({
         {/* Usage Limit */}
         <div className={cn("flex justify-between", !reusable && "opacity-50")}>
           <div>
-            <Label>Usage limit</Label>
+            <Label>{t("usageLimit")}</Label>
             <HelpText className={"max-w-[200px]"}>
-              For example, set to 30 if you want to enroll 30 peers
+              {t("usageLimitHelp")}
             </HelpText>
           </div>
 
@@ -286,18 +286,18 @@ export function SetupKeyModalContent({
             customPrefix={
               <MonitorSmartphoneIcon size={16} className={"text-nb-gray-300"} />
             }
-            customSuffix={"Peer(s)"}
+            customSuffix={t("usageLimitSuffix")}
           />
         </div>
 
         {/* Expires in Days */}
         <div className={"flex justify-between"}>
           <div>
-            <Label>Expires in</Label>
+            <Label>{t("expiresIn")}</Label>
             <HelpText>
-              Days until the key expires.
+              {t("expiresInHelp")}
               <br />
-              Leave empty for no expiration.
+              {t("expiresInHelpEmpty")}
             </HelpText>
           </div>
           <Input
@@ -312,7 +312,7 @@ export function SetupKeyModalContent({
             customPrefix={
               <AlarmClock size={16} className={"text-nb-gray-300"} />
             }
-            customSuffix={"Day(s)"}
+            customSuffix={t("expiresInSuffix")}
           />
         </div>
 
@@ -383,7 +383,7 @@ export function SetupKeyModalContent({
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>{t("cancel")}</Button>
+            <Button variant={"secondary"}>{tCommon("cancel")}</Button>
           </ModalClose>
 
           <Button

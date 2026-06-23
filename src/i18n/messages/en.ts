@@ -581,7 +581,10 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     serviceUsersEmptyDescription: "It looks like you don't have any service users. Get started by creating a service user.",
     blocked: "Blocked",
     accessTokens: "Access Tokens",
-    accessTokensDescription: "Access tokens give access to NetBird API."
+    accessTokensDescription: "Access tokens give access to NetBird API.",
+    tokenName: "Name",
+    tokenNameHelp: "Set an easily identifiable name for your token",
+    tokenExpiresIn: "Expires in"
   },
   settings: {
     title: "Settings",
@@ -948,7 +951,21 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     resourceTab: "Resource",
     optionalSettings: "Optional Settings",
     accessControlPolicies: "Access Control Policies",
-    accessControlPoliciesHelp: "Define which source groups are allowed to access this resource. You can also restrict access to specific protocols and ports. Without policies access to this resource will not be possible."
+    accessControlPoliciesHelp: "Define which source groups are allowed to access this resource. You can also restrict access to specific protocols and ports. Without policies access to this resource will not be possible.",
+    routeType: "Route Type",
+    routeTypeHelp: "Select your route type to add either a network range or a list of domains.",
+    routeTypeNetworkRange: "Network Range",
+    routeTypeDomains: "Domains",
+    networkRange: "Network Range",
+    networkRangeHelp: "Add a private IPv4 or IPv6 address or range",
+    networkRangePlaceholder: "e.g., 172.16.0.1, 172.16.0.0/16, 2001:db8::1 or 2001:db8::/64",
+    domains: "Domains",
+    distributionGroups: "Distribution Groups",
+    networkIdentifier: "Network Identifier",
+    metric: "Metric",
+    metricHelp: "Set a metric value to prioritize routes. Lower values take precedence.",
+    metricPlaceholder: "Enter metric value (1-9999)",
+    additionalSettings: "Additional Settings"
   },
   postureChecks: {
     title: "Posture Checks",
@@ -1062,7 +1079,16 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     updated: "Setup key '{name}' successfully updated",
     deleted: "Setup key '{name}' successfully deleted",
     noSetupKeys: "No setup keys available",
-    searchPlaceholder: "Search setup keys..."
+    searchPlaceholder: "Search setup keys...",
+    createTitle: "Create New Setup Key",
+    createDescription: "Use this key to register new machines in your network",
+    nameHelp: "Set an easily identifiable name for your key",
+    usageLimitHelp: "For example, set to 30 if you want to enroll 30 peers",
+    usageLimitSuffix: "Peer(s)",
+    expiresIn: "Expires in",
+    expiresInHelp: "Days until the key expires.",
+    expiresInHelpEmpty: "Leave empty for no expiration.",
+    expiresInSuffix: "Day(s)"
   },
   activity: {
     title: "Activity",

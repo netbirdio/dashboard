@@ -21,7 +21,7 @@ export const PeerRemoteJobsSection = ({ peerID }: Props) => {
 	const tCommon = useTranslations("common");
 	const { data: jobs, isLoading } = useFetchApi<Job[]>(`/peers/${peerID}/jobs`);
 
-return (
+	return (
 		<div className="pb-10 px-8">
 			<div className="">
 				<div className="flex justify-between items-center mb-5">
