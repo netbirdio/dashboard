@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
 import { Input } from "@components/Input";
@@ -58,6 +59,7 @@ export function PeerEditIPModal({
   currentIP,
   version,
 }: Readonly<PeerEditIPModalProps>) {
+  const t = useTranslations("peers");
   const { title, description, placeholder, errorMessage, validate } =
     config[version];
   const [ip, setIP] = useState(currentIP);
@@ -90,14 +92,14 @@ export function PeerEditIPModal({
               />
             </div>
 
-            <Callout>Changes take effect when the peer reconnects.</Callout>
+            <Callout>{t("changesTakeEffect")}</Callout>
           </div>
 
           <ModalFooter className={"items-center"} separator={false}>
             <div className={"flex gap-3 w-full justify-end"}>
               <ModalClose asChild={true}>
                 <Button variant={"secondary"} className={"w-full"}>
-                  Cancel
+                  {t("cancel")}
                 </Button>
               </ModalClose>
 

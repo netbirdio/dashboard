@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import FullTooltip from "@components/FullTooltip";
 import {
@@ -35,6 +36,7 @@ import InlineLink from "@components/InlineLink";
 import { isNetbirdSSHProtocolSupported } from "@utils/version";
 
 export const PeerSSHToggle = () => {
+  const t = useTranslations("peers");
   const { permission } = usePermissions();
   const { peer, toggleSSH, setSSHInstructionsModal } = usePeer();
   const { data: policies } = useFetchApi<Policy[]>(
@@ -130,7 +132,7 @@ export const PeerSSHToggle = () => {
           label={
             <>
               <TerminalSquare size={16} />
-              SSH Access
+              {t("sshAccess")}
             </>
           }
           helpText={
@@ -143,7 +145,7 @@ export const PeerSSHToggle = () => {
   ) : (
     <div>
       <div className={"flex gap-2 items-center w-full"}>
-        <Label>SSH Access</Label>
+        <Label>{t("sshAccess")}</Label>
       </div>
 
       <HelpText>
@@ -219,7 +221,7 @@ export const PeerSSHToggle = () => {
             variant={"secondary"}
             onClick={() => setSSHInstructionsModal(true)}
           >
-            Enable SSH Access <ArrowUpRightIcon size={14} />
+            {t("enableSSH")} <ArrowUpRightIcon size={14} />
           </Button>
         )}
 
