@@ -3,103 +3,36 @@ import { iconProperties, IconProps } from "@/assets/icons/IconProperties";
 export default function LoadingIcon(props: IconProps) {
   return (
     <svg
-      width="135"
-      height="140"
-      viewBox="0 0 135 140"
+      viewBox="0 0 919 669"
+      fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      fillOpacity="0.8"
       {...iconProperties(props)}
     >
-      <rect y="10" width="15" height="120" rx="6">
-        <animate
-          attributeName="height"
-          begin="0.5s"
-          dur="1s"
-          values="120;110;100;90;80;70;60;50;40;140;120"
-          calcMode="linear"
-          repeatCount="indefinite"
+      <style>{`
+        @keyframes nb-loader-pulse {
+          0%, 100% { transform: scale(0.85); opacity: 0.35; }
+          50%      { transform: scale(1);    opacity: 1;    }
+        }
+        .nb-loader-bird {
+          animation: nb-loader-pulse 1.75s ease-in-out infinite;
+          transform-origin: 50% 50%;
+          transform-box: fill-box;
+        }
+      `}</style>
+      <g className={"nb-loader-bird"}>
+        <path
+          d="M653.25 0C542.297 10.255 487.216 74.132 466.346 106.359L456.959 122.609C456.311 123.963 455.886 124.865 455.886 124.865L455.774 124.685L142.056 668.021H533.256L918.947 0H653.25Z"
+          fill="#F68330"
         />
-        <animate
-          attributeName="y"
-          begin="0.5s"
-          dur="1s"
-          values="10;15;20;25;30;35;40;45;50;0;10"
-          calcMode="linear"
-          repeatCount="indefinite"
+        <path
+          d="M533.256 668.02L0 102.296C0 102.296 603.149 -59.6172 661.827 445.893L533.256 668.02Z"
+          fill="#F68330"
         />
-      </rect>
-      <rect x="30" y="10" width="15" height="120" rx="6">
-        <animate
-          attributeName="height"
-          begin="0.25s"
-          dur="1s"
-          values="120;110;100;90;80;70;60;50;40;140;120"
-          calcMode="linear"
-          repeatCount="indefinite"
+        <path
+          d="M454.3 127.229L290.658 410.664L533.256 668.02L661.757 445.475C641.46 271.63 556.721 176.843 454.3 127.229Z"
+          fill="#F35E32"
         />
-        <animate
-          attributeName="y"
-          begin="0.25s"
-          dur="1s"
-          values="10;15;20;25;30;35;40;45;50;0;10"
-          calcMode="linear"
-          repeatCount="indefinite"
-        />
-      </rect>
-      <rect x="60" width="15" height="140" rx="6">
-        <animate
-          attributeName="height"
-          begin="0s"
-          dur="1s"
-          values="120;110;100;90;80;70;60;50;40;140;120"
-          calcMode="linear"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="y"
-          begin="0s"
-          dur="1s"
-          values="10;15;20;25;30;35;40;45;50;0;10"
-          calcMode="linear"
-          repeatCount="indefinite"
-        />
-      </rect>
-      <rect x="90" y="10" width="15" height="120" rx="6">
-        <animate
-          attributeName="height"
-          begin="0.25s"
-          dur="1s"
-          values="120;110;100;90;80;70;60;50;40;140;120"
-          calcMode="linear"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="y"
-          begin="0.25s"
-          dur="1s"
-          values="10;15;20;25;30;35;40;45;50;0;10"
-          calcMode="linear"
-          repeatCount="indefinite"
-        />
-      </rect>
-      <rect x="120" y="10" width="15" height="120" rx="6">
-        <animate
-          attributeName="height"
-          begin="0.5s"
-          dur="1s"
-          values="120;110;100;90;80;70;60;50;40;140;120"
-          calcMode="linear"
-          repeatCount="indefinite"
-        />
-        <animate
-          attributeName="y"
-          begin="0.5s"
-          dur="1s"
-          values="10;15;20;25;30;35;40;45;50;0;10"
-          calcMode="linear"
-          repeatCount="indefinite"
-        />
-      </rect>
+      </g>
     </svg>
   );
 }
