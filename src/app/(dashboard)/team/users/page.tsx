@@ -7,6 +7,7 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
+import { isNetBirdCloud } from "@utils/netbird";
 import { ExternalLinkIcon, User2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { lazy, Suspense } from "react";
@@ -29,6 +30,7 @@ export default function TeamUsers() {
 	const { ref: headingRef, portalTarget } =
 		usePortalElement<HTMLHeadingElement>();
 
+
 	return (
 		<PageContainer>
 			<div className={"p-default py-6"}>
@@ -47,7 +49,7 @@ export default function TeamUsers() {
 				</Breadcrumbs>
 				<h1 ref={headingRef}>{t("title")}</h1>
 				<Paragraph>
-					{t("usersPageDescription")}{" "}
+					{t("usersPageDescription")} {" "}
 					<InlineLink
 						href={"https://docs.netbird.io/how-to/add-users-to-your-network"}
 						target={"_blank"}
@@ -59,6 +61,14 @@ export default function TeamUsers() {
 			</div>
 			<RestrictedAccess page={t("title")} hasAccess={permission.users.read}>
 				<Suspense fallback={<SkeletonTable />}>
+					{permission.settings.read && (
+						<div className={"flex flex-wrap gap-4 p-default pb-6"}>
+							{(permission?.idp?.read || !isNetBirdCloud()) && (
+								<IdentityProviderCard />
+							)}
+							<AccountMfaCard />
+						</div>
+					)}
 					<UsersTable
 						users={users}
 						isLoading={isLoading || isGroupsLoading}

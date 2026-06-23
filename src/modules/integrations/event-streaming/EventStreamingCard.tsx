@@ -10,6 +10,7 @@ import firehoseLogo from "@/assets/integrations/firehose.png";
 import genericHttpLogo from "@/assets/integrations/generic-http.png";
 import s3Logo from "@/assets/integrations/s3.svg";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useIsLicensed } from "@/hooks/useIsLicensed";
 import { EventStream } from "@/interfaces/EventStream";
 
 type Platform = "datadog" | "s3" | "firehose" | "generic_http";
@@ -22,12 +23,15 @@ const platformImages: { [key in Platform]?: StaticImageData } = {
 
 export const EventStreamingCard = () => {
   const { permission } = usePermissions();
+  // Event Streaming is a licensed feature; the endpoint is not served on
+  // open-source deployments, so skip the call there entirely.
+  const { isLicensed } = useIsLicensed();
 
   const { data: eventStreamIntegrations } = useFetchApi<EventStream[]>(
     "/integrations/event-streaming",
     false,
     false,
-    permission?.event_streaming?.read,
+    !!permission?.event_streaming?.read && isLicensed,
   );
   const activeSettings = eventStreamIntegrations?.find(
     (integration) => integration.enabled,

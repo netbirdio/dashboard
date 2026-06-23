@@ -1,6 +1,7 @@
 import useFetchApi, { useApiCall } from "@utils/api";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useIsLicensed } from "@/hooks/useIsLicensed";
 
 export interface BypassResponse {
   peer_id: string;
@@ -9,9 +10,14 @@ export interface BypassResponse {
 const BYPASSED_PATH = "/peers/edr/bypassed";
 
 export const useBypassedPeers = () => {
+  // EDR bypass is a licensed feature; the endpoint is not served on
+  // open-source deployments, so skip the call there entirely.
+  const { isLicensed } = useIsLicensed();
   const { data, isLoading, mutate } = useFetchApi<BypassResponse[]>(
     BYPASSED_PATH,
     true,
+    true,
+    isLicensed,
   );
 
   // The endpoint can resolve to a non-array (e.g. an error body) on
