@@ -252,9 +252,9 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
 						)}
 						<div className={"flex items-start"}>
 							<div className={"w-2/3"}>
-								<Label>User Role</Label>
+								<Label>{t("userRole")}</Label>
 								<HelpText>
-									Set a role for the user to assign access permissions.
+									{t("userRoleHelp")}
 								</HelpText>
 							</div>
 							<div className={"w-1/3"}>

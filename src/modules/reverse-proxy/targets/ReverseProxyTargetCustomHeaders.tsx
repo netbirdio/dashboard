@@ -135,9 +135,7 @@ export default function ReverseProxyTargetCustomHeaders({
 	return (
 		<div>
 			<Label>{t("customHeaders")}</Label>
-			<HelpText>
-				{t("customHeadersHelp")}
-			</HelpText>
+			<HelpText>{t("customHeadersHelp")}</HelpText>
 			{headerEntries.length > 0 && (
 				<div className="flex flex-col gap-2 mb-3">
 					{headerEntries.map((entry, index) => (

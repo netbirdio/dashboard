@@ -20,6 +20,7 @@ import { AlarmClock, CopyIcon, MailIcon, User2 } from "lucide-react";
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "next-intl";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import Avatar1 from "@/assets/avatars/009.jpg";
 import Avatar2 from "@/assets/avatars/030.jpg";
@@ -198,6 +199,7 @@ export function UserInviteModalContent({
   onInviteCreated,
   groups = [],
 }: Readonly<ModalProps>) {
+  const t = useTranslations("users");
   const userRequest = useApiCall<User>("/users");
   const inviteRequest = useApiCall<UserInvite>("/users/invites");
   const { mutate } = useSWRConfig();
@@ -384,8 +386,8 @@ export function UserInviteModalContent({
           {!isCloud && mode === "invite" && (
             <div className={"flex justify-between mt-3"}>
               <div>
-                <Label>Expires in</Label>
-                <HelpText>Days until the invite expires.</HelpText>
+                <Label>{t("expiresIn")}</Label>
+                <HelpText>{t("expiresInHelp")}</HelpText>
               </div>
               <Input
                 maxWidthClass={"max-w-[200px]"}

@@ -221,7 +221,9 @@ function UsersTableColumns(t: (key: string) => string): ColumnDef<any>[] {
 		{
 			accessorKey: "last_login",
 			header: ({ column }) => {
-				return <DataTableHeader column={column}>{t("lastLogin")}</DataTableHeader>;
+				return (
+					<DataTableHeader column={column}>{t("lastLogin")}</DataTableHeader>
+				);
 			},
 			sortingFn: "text",
 			cell: ({ row }) => (
