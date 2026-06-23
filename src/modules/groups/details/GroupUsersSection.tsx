@@ -85,7 +85,7 @@ export function GroupUsersTableColumns(
 		{
 			accessorKey: "is_blocked",
 			header: ({ column }) => {
-				return <DataTableHeader column={column}>Block User</DataTableHeader>;
+				return <DataTableHeader column={column}>{t("blockUser")}</DataTableHeader>;
 			},
 			sortingFn: "text",
 			cell: ({ row }) => <UserBlockCell user={row.original} />,
@@ -93,7 +93,7 @@ export function GroupUsersTableColumns(
 		{
 			accessorKey: "last_login",
 			header: ({ column }) => {
-				return <DataTableHeader column={column}>Last Login</DataTableHeader>;
+				return <DataTableHeader column={column}>{t("lastLogin")}</DataTableHeader>;
 			},
 			sortingFn: "text",
 			cell: ({ row }) => (

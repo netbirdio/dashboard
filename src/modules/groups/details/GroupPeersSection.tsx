@@ -87,7 +87,7 @@ function GroupPeersTableColumns(t: (key: string) => string): ColumnDef<Peer>[] {
 		{
 			accessorKey: "last_seen",
 			header: ({ column }) => {
-				return <DataTableHeader column={column}>Last seen</DataTableHeader>;
+				return <DataTableHeader column={column}>{t("lastSeen")}</DataTableHeader>;
 			},
 			sortingFn: "datetime",
 			cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
@@ -164,7 +164,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
 								<>
 									<FullTooltip
 										content={
-											<span className={"text-xs"}>Remove Peers from Group</span>
+											<span className={"text-xs"}>{t("removePeersFromGroup")}</span>
 										}
 									>
 										<Button

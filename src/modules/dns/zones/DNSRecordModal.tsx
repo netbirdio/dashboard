@@ -206,8 +206,8 @@ export function DNSRecordModalContent({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="A">A</SelectItem>
-                <SelectItem value="AAAA">AAAA</SelectItem>
-                <SelectItem value="CNAME">CNAME</SelectItem>
+                <SelectItem value="AAAA">{t("recordTypeAAAA")}</SelectItem>
+                <SelectItem value="CNAME">{t("recordTypeCNAME")}</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -255,7 +255,7 @@ export const ReverseProxyAccessControlRules = ({
 			)}
 
 			<div>
-				<Label>Access Control Rules</Label>
+				<Label>{t("accessControlRules")}</Label>
 				<HelpText>
 					Define rules to allow or block traffic based on country, IP address,
 					or CIDR block.

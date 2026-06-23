@@ -134,11 +134,9 @@ export default function ReverseProxyTargetCustomHeaders({
 	const t = useTranslations("common");
 	return (
 		<div>
-			<Label>Custom Headers</Label>
+			<Label>{t("customHeaders")}</Label>
 			<HelpText>
-				Add additional headers to include when forwarding requests.
-				<br />
-				Hop-by-hop headers like Host or Connection are not allowed.
+				{t("customHeadersHelp")}
 			</HelpText>
 			{headerEntries.length > 0 && (
 				<div className="flex flex-col gap-2 mb-3">

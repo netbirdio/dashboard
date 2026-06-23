@@ -72,7 +72,21 @@ export default {
     newPassword: "新密码",
     confirmNewPassword: "确认新密码",
     logFileCount: "日志文件数",
-    duration: "持续时间"
+    duration: "持续时间",
+    blockUser: "阻止用户",
+    removePeersFromGroup: "从组中移除节点",
+    routingPeer: "路由节点",
+    peerGroup: "节点组",
+    distributionGroups: "分发组",
+    networkIdentifier: "网络标识符",
+    accessControlRules: "访问控制规则",
+    customHeaders: "自定义标头",
+    metric: "度量值",
+    addNewRoutingPeer: "添加新的路由节点",
+    routingPeerHelp: "指定单个节点作为路由节点",
+    exitNode: "出口节点",
+    networkRoute: "网络路由",
+    customHeadersHelp: "添加额外的标头以包含在转发请求中。\nHop-by-hop 标头如 Host 或 Connection 不被允许。"
   },
   navigation: {
     controlCenter: "控制中心",
@@ -898,7 +912,9 @@ disable2FA: "禁用两步验证",
     learnMoreAbout: "了解更多关于",
     dnsRecords: "DNS 记录",
     dnsZones: "DNS 区域",
-    dns: "DNS"
+    dns: "DNS",
+    recordTypeAAAA: "AAAA",
+    recordTypeCNAME: "CNAME"
   },
   networks: {
     title: "网络",

@@ -382,10 +382,9 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
           <div className={"px-8 flex-col flex gap-6"}>
             {route.peer ? (
               <div>
-                <Label>Routing Peer</Label>
+                <Label>{t("routingPeer")}</Label>
                 <HelpText>
-                  Assign a single peer as a routing peer for the
-                  {isExitNode ? " exit node." : " network route."}
+                  {t("routingPeerHelp")}
                 </HelpText>
                 <PeerSelector
                   onChange={setRoutingPeer}
@@ -395,7 +394,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
               </div>
             ) : (
               <div>
-                <Label>Peer Group</Label>
+                <Label>{t("peerGroup")}</Label>
                 <HelpText>
                   Assign a peer group with machines to be used as
                   {isExitNode ? " exit nodes." : " routing peers."}
@@ -409,7 +408,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
             )}
 
             <div>
-              <Label>Distribution Groups</Label>
+              <Label>{t("distributionGroups")}</Label>
               <HelpText>
                 Advertise this route to peers that belong to the following
                 groups
@@ -487,7 +486,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
             )}
             <div className={cn("flex justify-between")}>
               <div>
-                <Label>Metric</Label>
+                <Label>{t("metric")}</Label>
                 <HelpText className={"max-w-[200px]"}>
                   A lower metric indicates a higher priority route.
                 </HelpText>

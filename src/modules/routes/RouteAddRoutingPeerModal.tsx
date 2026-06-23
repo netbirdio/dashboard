@@ -167,7 +167,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
     <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-netbird"} />}
-        title={"Add New Routing Peer"}
+        title={t("addNewRoutingPeer")}
         description={
           "When you add multiple routing peers, NetBird enables high availability for this network."
         }
@@ -178,7 +178,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
 
       <div className={"flex flex-col gap-6 px-8 py-6"}>
         <div>
-          <Label>Network Identifier</Label>
+          <Label>{t("networkIdentifier")}</Label>
           <HelpText>
             Network name and CIDR that you are adding the route to.
           </HelpText>
@@ -189,7 +189,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
           />
         </div>
         <div>
-          <Label>Routing Peer</Label>
+          <Label>{t("routingPeer")}</Label>
           <HelpText>
             Assign a single peer as a routing peer for the network route.
           </HelpText>
@@ -201,7 +201,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
           />
         </div>
         <div>
-          <Label>Distribution Groups</Label>
+          <Label>{t("distributionGroups")}</Label>
           <HelpText>
             Advertise this route to peers that belong to the following groups
           </HelpText>

@@ -72,7 +72,20 @@ searchCountry: "Search country...",
     newPassword: "New Password",
     confirmNewPassword: "Confirm New Password",
     logFileCount: "Log File Count",
-    duration: "Duration"
+    duration: "Duration",
+    blockUser: "Block User",
+    removePeersFromGroup: "Remove Peers from Group",
+    routingPeer: "Routing Peer",
+    peerGroup: "Peer Group",
+    distributionGroups: "Distribution Groups",
+    networkIdentifier: "Network Identifier",
+    accessControlRules: "Access Control Rules",
+    customHeaders: "Custom Headers",
+    metric: "Metric",
+    addNewRoutingPeer: "Add New Routing Peer",
+    routingPeerHelp: "Assign a single peer as a routing peer for the",
+    exitNode: "exit node",
+    networkRoute: "network route"
   },
   navigation: {
     controlCenter: "Control Center",
@@ -898,7 +911,9 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     learnMoreAbout: "Learn more about",
     dnsRecords: "DNS Records",
     dnsZones: "DNS Zones",
-    dns: "DNS"
+    dns: "DNS",
+    recordTypeAAAA: "AAAA",
+    recordTypeCNAME: "CNAME"
   },
   networks: {
     title: "Networks",
