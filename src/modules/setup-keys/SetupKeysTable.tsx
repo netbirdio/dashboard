@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Button from "@components/Button";
 import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
@@ -43,11 +44,12 @@ import SetupKeyModal from "@/modules/setup-keys/SetupKeyModal";
 import SetupKeyNameCell from "@/modules/setup-keys/SetupKeyNameCell";
 import SetupKeyUsageCell from "@/modules/setup-keys/SetupKeyUsageCell";
 
-export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
+export function SetupKeysTableColumns(t: ReturnType<typeof useTranslations>): ColumnDef<SetupKey>[] {
+  return [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name & Key</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("nameAndKey")}</DataTableHeader>;
     },
     sortingFn: "text",
     cell: ({ row }) => (
@@ -68,7 +70,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
   {
     accessorKey: "usage_limit",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Usage</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("usage")}</DataTableHeader>;
     },
     cell: ({ row }) => (
       <SetupKeyUsageCell
@@ -86,7 +88,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
   {
     accessorKey: "last_used",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last used</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("lastUsed")}</DataTableHeader>;
     },
     sortingFn: "datetime",
     cell: ({ row }) => (
@@ -107,7 +109,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
     accessorFn: (item) => item.auto_groups?.length,
     id: "groups",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("groups")}</DataTableHeader>;
     },
     cell: ({ row }) => <SetupKeyGroupsCell setupKey={row.original} />,
   },
@@ -115,7 +117,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
   {
     accessorKey: "expires",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Expires</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("expires")}</DataTableHeader>;
     },
     cell: ({ row }) => {
       let expires = dayjs(row.original.expires);
@@ -135,6 +137,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
     },
   },
 ];
+}
 
 type Props = {
   setupKeys?: SetupKey[];
@@ -152,6 +155,7 @@ export default function SetupKeysTable({
   groups,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
+  const t = useTranslations("setupKeys");
   const path = usePathname();
   const { permission } = usePermissions();
 
@@ -274,7 +278,7 @@ export default function SetupKeysTable({
         setSorting={setSorting}
         initialPageSize={25}
         showResetFilterButton={false}
-        columns={SetupKeysTableColumns}
+        columns={SetupKeysTableColumns(t)}
         data={setupKeys}
         searchPlaceholder={"Search by name, type or group..."}
         columnVisibility={{

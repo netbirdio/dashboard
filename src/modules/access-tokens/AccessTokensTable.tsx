@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
@@ -22,11 +23,12 @@ type Props = {
   user: User;
 };
 
-export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
+export function AccessTokensTableColumns(t: ReturnType<typeof useTranslations>): ColumnDef<AccessToken>[] {
+  return [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("name")}</DataTableHeader>;
     },
     sortingFn: "text",
     cell: ({ row }) => {
@@ -37,7 +39,7 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
   {
     accessorKey: "expiration_date",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Expires</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("expires")}</DataTableHeader>;
     },
     cell: ({ row }) => (
       <ExpirationDateRow date={row.original.expiration_date} />
@@ -46,14 +48,14 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
   {
     accessorKey: "last_used",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last used</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("lastUsed")}</DataTableHeader>;
     },
     sortingFn: "datetime",
     cell: ({ row }) => {
       return typeof row.original.last_used === "undefined" ? (
         <EmptyRow />
       ) : (
-        <LastTimeRow date={row.original.last_used} text={"Last used on"} />
+        <LastTimeRow date={row.original.last_used} text={t("lastUsedOn")} />
       );
     },
   },
@@ -63,8 +65,10 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
     cell: ({ row }) => <AccessTokenActionCell access_token={row.original} />,
   },
 ];
+}
 
 export default function AccessTokensTable({ user }: Readonly<Props>) {
+  const t = useTranslations("common");
   const { data: tokens } = useFetchApi<AccessToken[]>(
     `/users/${user.id}/tokens`,
     true,
@@ -95,7 +99,7 @@ export default function AccessTokensTable({ user }: Readonly<Props>) {
             inset={false}
             sorting={sorting}
             setSorting={setSorting}
-            columns={AccessTokensTableColumns}
+            columns={AccessTokensTableColumns(t)}
             data={tokens}
           />
         ) : (
