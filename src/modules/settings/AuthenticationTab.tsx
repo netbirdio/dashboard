@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
@@ -47,6 +48,7 @@ type Props = {
 };
 
 export default function AuthenticationTab({ account }: Readonly<Props>) {
+  const t = useTranslations("settings");
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -332,13 +334,12 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
               label={
                 <>
                   <TimerResetIcon size={15} />
-                  Peer Session Expiration
+                  {t("peerSessionExpiration")}
                 </>
               }
               helpText={
                 <>
-                  Request periodic re-authentication of peers <br />
-                  registered with SSO.
+                {t("peerSessionExpirationHelp")}
                 </>
               }
               disabled={!permission.settings.update}
@@ -354,10 +355,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             >
               <div className={cn("flex justify-between gap-10 mt-2")}>
                 <div className={"w-full"}>
-                  <Label>Session Expiration</Label>
+                  <Label>{t("sessionExpiration")}</Label>
                   <HelpText>
-                    Time after which every peer added with SSO login will
-                    require re-authentication.
+                    {t("sessionExpirationHelp")}
                   </HelpText>
                 </div>
                 <div className={"w-full flex gap-3"}>
@@ -396,8 +396,8 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                     <SelectContent
                       data-testid={"peer-login-expiration-select-content"}
                     >
-                      <SelectItem value="days">Days</SelectItem>
-                      <SelectItem value="hours">Hours</SelectItem>
+                      <SelectItem value="days">{t("days")}</SelectItem>
+                      <SelectItem value="hours">{t("hours")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -407,12 +407,11 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                 value={peerInactivityExpirationEnabled}
                 onChange={setPeerInactivityExpirationEnabled}
                 data-testid={"peer-inactivity-expiration"}
-                label={<>Require login after disconnect</>}
+                label={<>{t("requireLoginAfterDisconnect")}</>}
                 disabled={!permission.settings.update}
                 helpText={
                   <>
-                    Enable to require authentication after users disconnect from
-                    management for 10 minutes.
+                    {t("requireLoginHelp")}
                   </>
                 }
               />
