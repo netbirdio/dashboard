@@ -942,6 +942,8 @@ export default {
     udpService: "UDP 服务",
     forwardTrafficDesc: "将流量直接转发到您的后端服务。",
     exposeServicesDesc: "通过 NetBird 的反向代理安全地暴露服务。",
+    terminatedService: "此服务已被 NetBird 团队终止，因为它违反了服务条款。如有问题，请联系",
+    terminated: "已终止",
   },
   dns: {
     title: "DNS",

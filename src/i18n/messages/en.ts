@@ -986,6 +986,8 @@ export default {
     forwardTrafficDesc: "Forward traffic directly to your backend service.",
     exposeServicesDesc:
       "Expose services securely through NetBird's reverse proxy.",
+    terminatedService: "This service has been terminated by the NetBird team as it violates the Terms of Service. For questions, please contact",
+    terminated: "Terminated",
   },
   dns: {
     title: "DNS",
