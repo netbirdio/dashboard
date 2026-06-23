@@ -1002,7 +1002,9 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     metric: "Metric",
     metricHelp: "Set a metric value to prioritize routes. Lower values take precedence.",
     metricPlaceholder: "Enter metric value (1-9999)",
-    additionalSettings: "Additional Settings"
+    additionalSettings: "Additional Settings",
+    accessControlGroups: "Access Control Groups",
+    autoApply: "Auto Apply"
   },
   postureChecks: {
     title: "Posture Checks",

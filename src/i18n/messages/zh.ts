@@ -1003,7 +1003,9 @@ disable2FA: "禁用两步验证",
     metric: "度量值",
     metricHelp: "设置度量值以优先选择路由。数值越低的优先级越高。",
     metricPlaceholder: "输入度量值 (1-9999)",
-    additionalSettings: "其他设置"
+    additionalSettings: "其他设置",
+    accessControlGroups: "访问控制组",
+    autoApply: "自动应用"
   },
   postureChecks: {
     title: "姿态检查",
