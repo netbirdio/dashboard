@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import FullTooltip from "@components/FullTooltip";
@@ -42,6 +43,7 @@ type Props = {
   onCanceled?: () => void;
 };
 export const PeerMultiSelect = ({ selectedPeers = {}, onCanceled }: Props) => {
+  const t = useTranslations("peers");
   return (
     <AnimatePresence>
       {Object.keys(selectedPeers).length > 0 && (
@@ -377,13 +379,13 @@ const PeerGroupMassAssignmentContent = ({
                       {isLoading && (
                         <>
                           <Loader2 size={14} className={"animate-spin"} />
-                          <span>Assigning groups...</span>
+                          <span>{t("assigningGroups")}</span>
                         </>
                       )}
                       {!isLoading && isSuccess && (
                         <>
                           <CheckCircle size={14} className={"text-green-400"} />
-                          <span>Groups successfully assigned</span>
+                          <span>{t("groupsSuccessfullyAssigned")}</span>
                         </>
                       )}
                     </motion.span>
@@ -391,7 +393,7 @@ const PeerGroupMassAssignmentContent = ({
                 )}
               </AnimatePresence>
               <div>
-                <Label>Assign Groups</Label>
+                <Label>{t("assignGroups")}</Label>
                 <HelpText>
                   Assign the following groups to the selected peers. Previously
                   assigned groups will be kept unless you choose to overwrite
@@ -458,7 +460,7 @@ const PeerGroupMassAssignmentContent = ({
                     <>
                       <FullTooltip
                         content={
-                          <span className={"text-xs"}>Assign Groups</span>
+                          <span className={"text-xs"}>{t("assignGroups")}</span>
                         }
                       >
                         <Button
