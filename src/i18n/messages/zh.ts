@@ -60,6 +60,7 @@ export default {
     selectAll: "全选",
     selectRow: "选择行",
     selectLanguage: "选择语言",
+    language: "语言",
     configurePolicies: "配置策略",
     configureAccessControl: "配置访问控制",
     configureAuthentication: "配置认证",
@@ -113,6 +114,8 @@ export default {
     network: "网络",
     customHeadersHelp:
       "添加额外的标头以包含在转发请求中。\nHop-by-hop 标头如 Host 或 Connection 不被允许。",
+    goBack: "返回",
+    tryAgain: "重试",
   },
   navigation: {
     controlCenter: "控制中心",
@@ -143,10 +146,13 @@ export default {
     settings: "设置",
     documentation: "文档",
     helpAndSupport: "帮助和支持",
+    integrations: "集成",
+    trafficEvents: "流量事件",
   },
   table: {
     search: "搜索...",
     noResults: "无结果",
+    noResultsCardTitle: "未找到任何结果",
     noResultsDescription: "未找到任何结果。请尝试不同的搜索词或更改筛选条件。",
     rowsPerPage: "每页行数",
     previous: "上一页",
@@ -201,6 +207,22 @@ export default {
     permissionDenied: "权限被拒绝",
     resourceNotFound: "资源未找到",
     serviceUnavailable: "服务不可用",
+    userAccountBlocked: "用户账户已被阻止",
+    userApprovalPending: "用户待审批",
+    accessError: "访问错误",
+    accessBlockedDescription:
+      "您的访问已被 NetBird 账户管理员阻止，可能是由于新用户审批要求或安全策略。请联系您的管理员以恢复访问。",
+    pendingApprovalDescription:
+      "您的账户正在等待管理员审批。请在访问仪表板前等待审批。",
+    accessGenericDescription:
+      "尝试访问仪表板时发生错误。请重试或联系您的管理员。",
+    contactAdminDescription:
+      "如果您认为这是一个错误，请联系您的管理员。",
+  },
+  pageNotFound: {
+    title: "请求的页面不存在",
+    description:
+      "您尝试访问的页面无法找到。请验证 URL 或返回仪表板继续浏览。",
   },
   peers: {
     title: "节点",
@@ -257,6 +279,9 @@ export default {
     loginExpirationUpdated: "会话过期已{state}",
     loginExpirationUpdateDescription: "节点 {name} 的会话过期已成功{state}。",
     loginExpirationUpdating: "正在更新会话过期...",
+    loginRequired: "需要登录",
+    loginExpiredTooltip:
+      "此节点已离线，由于其登录已过期，需要重新认证。",
     enableSSH: "启用 SSH 访问",
     disableSSH: "禁用 SSH 访问",
     disableSSHConfirmation: "禁用 SSH 访问？",
@@ -655,6 +680,15 @@ export default {
       "管理用户及其权限。同域名电子邮件用户在首次登录时会自动添加。",
     expiresIn: "过期时间",
     expiresInHelp: "邀请过期前的天数。",
+  },
+  userDropdown: {
+    profileSettings: "个人资料设置",
+    plansAndBilling: "套餐与账单",
+  },
+  theme: {
+    light: "浅色",
+    dark: "深色",
+    system: "跟随系统",
   },
   serviceUsers: {
     title: "服务用户",
@@ -1072,6 +1106,8 @@ export default {
     newNetworksRecommendation:
       "我们建议使用新的网络概念来更轻松地可视化和管理对资源的访问。",
     goToNetworks: "前往网络",
+    active: "活跃",
+    network: "网络",
     createRoute: "创建路由",
     editRoute: "编辑路由",
     deleteRoute: "删除路由",

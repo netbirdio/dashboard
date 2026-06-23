@@ -3,6 +3,7 @@ import Card from "@components/Card";
 import Paragraph from "@components/Paragraph";
 import SquareIcon from "@components/SquareIcon";
 import { CircleAlertIcon, Undo2Icon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import Skeleton from "react-loading-skeleton";
@@ -12,11 +13,13 @@ type Props = {
   title?: string;
   description?: string;
 };
-export const PageNotFound = ({
-  title = "The requested page was not found",
-  description = "The page you are attempting to access cannot be found. Please verify the URL or return to the dashboard to continue browsing.",
-}: Props) => {
+export const PageNotFound = ({ title, description }: Props) => {
+  const t = useTranslations("pageNotFound");
+  const tCommon = useTranslations("common");
   const router = useRouter();
+
+  const displayTitle = title || t("title");
+  const displayDescription = description || t("description");
 
   return (
     <PageContainer>
@@ -66,10 +69,10 @@ export const PageNotFound = ({
                             "text-3xl font-medium mx-auto mt-3 capitalize"
                           }
                         >
-                          {title}
+                          {displayTitle}
                         </h1>
                         <Paragraph className={"justify-center my-3 max-w-xl"}>
-                          {description}
+                          {displayDescription}
                         </Paragraph>
                         <Button
                           variant={"secondary"}
@@ -77,7 +80,7 @@ export const PageNotFound = ({
                           onClick={() => router.back()}
                         >
                           <Undo2Icon size={15} className={"shrink-0"} />
-                          Go Back
+                          {tCommon("goBack")}
                         </Button>
                       </div>
                     </div>

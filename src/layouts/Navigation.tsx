@@ -251,7 +251,7 @@ label={t('team')}
                 <MSPNavigationItem />
                 <SidebarItem
                   icon={<IntegrationIcon />}
-                  label="Integrations"
+                  label={t("integrations")}
                   href={"/integrations"}
                   exactPathMatch={true}
                   visible={
@@ -315,7 +315,7 @@ label={t('activity')}
         visible={permission.events.read}
       />
       <SidebarItem
-        label="Traffic Events"
+        label={t("trafficEvents")}
         isChild
         href={"/events/traffic"}
         exactPathMatch={true}

@@ -12,6 +12,7 @@ import {
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { UserAvatar } from "@components/ui/UserAvatar";
 import { CreditCardIcon, KeyRound, LogOutIcon, User2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -25,6 +26,9 @@ import { isNetBirdCloud } from "@utils/netbird";
 import { Modal } from "@components/modal/Modal";
 
 export default function UserDropdown() {
+  const t = useTranslations("userDropdown");
+  const tCommon = useTranslations("common");
+  const tSettings = useTranslations("settings");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [changePasswordModal, setChangePasswordModal] = useState(false);
   const { user } = useApplicationContext();
@@ -106,7 +110,7 @@ export default function UserDropdown() {
             >
               <div className={"flex gap-3 items-center"}>
                 <KeyRound size={14} />
-                Change Password
+                {tSettings("changePassword")}
               </div>
             </DropdownMenuItem>
           )}
@@ -114,7 +118,7 @@ export default function UserDropdown() {
           <DropdownMenuItem onClick={logout}>
             <div className={"flex gap-3 items-center"}>
               <LogOutIcon size={14} />
-              Log out
+              {tCommon("logout")}
             </div>
             <DropdownMenuShortcut>
               {isMac ? "⇧⌘L" : "⇧ ⊞ L"}
@@ -127,6 +131,7 @@ export default function UserDropdown() {
 }
 
 const ProfileSettingsDropdownItem = ({ onClick }: { onClick: () => void }) => {
+  const t = useTranslations("userDropdown");
   const { isMSPInTenantContext } = useMSP();
   const { permission } = usePermissions();
 
@@ -137,13 +142,14 @@ const ProfileSettingsDropdownItem = ({ onClick }: { onClick: () => void }) => {
     <DropdownMenuItem onClick={onClick}>
       <div className={"flex gap-3 items-center"}>
         <User2 size={14} />
-        Profile Settings
+        {t("profileSettings")}
       </div>
     </DropdownMenuItem>
   );
 };
 
 const PlansAndBillingDropdownItem = ({ onClick }: { onClick: () => void }) => {
+  const t = useTranslations("userDropdown");
   const { permission } = usePermissions();
 
   const { isAccountWithMSPParent } = useMSP();
@@ -154,7 +160,7 @@ const PlansAndBillingDropdownItem = ({ onClick }: { onClick: () => void }) => {
       <DropdownMenuItem onClick={onClick}>
         <div className={"flex gap-3 items-center"}>
           <CreditCardIcon size={14} />
-          Plans & Billing
+          {t("plansAndBilling")}
         </div>
       </DropdownMenuItem>
     )

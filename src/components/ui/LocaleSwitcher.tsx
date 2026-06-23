@@ -70,7 +70,7 @@ export default function LocaleSwitcher() {
       <DropdownMenuContent className="w-48" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="text-sm font-normal leading-none text-nb-gray-200 py-1 px-1">
-            Language
+            {t("language")}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

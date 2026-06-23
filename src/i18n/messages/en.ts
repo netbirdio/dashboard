@@ -60,6 +60,7 @@ export default {
     selectAll: "Select all",
     selectRow: "Select row",
     selectLanguage: "Select language",
+    language: "Language",
     configurePolicies: "Configure policies",
     configureAccessControl: "Configure access control",
     configureAuthentication: "Configure authentication",
@@ -89,6 +90,8 @@ export default {
     networkIdentifier: "Network Identifier",
     accessControlRules: "Access Control Rules",
     customHeaders: "Custom Headers",
+    customHeadersHelp:
+      "Add extra headers to include in forwarded requests.\nHop-by-hop headers such as Host or Connection are not allowed.",
     metric: "Metric",
     addNewRoutingPeer: "Add New Routing Peer",
     routingPeerHelp: "Assign a single peer as a routing peer for the",
@@ -111,6 +114,8 @@ export default {
       "You don't have any access tokens yet. You can add a token to access the NetBird API.",
     disable: "Disable",
     network: "Network",
+    goBack: "Go Back",
+    tryAgain: "Try Again",
   },
   navigation: {
     controlCenter: "Control Center",
@@ -141,10 +146,13 @@ export default {
     settings: "Settings",
     documentation: "Documentation",
     helpAndSupport: "Help and Support",
+    integrations: "Integrations",
+    trafficEvents: "Traffic Events",
   },
   table: {
     search: "Search...",
     noResults: "No results",
+    noResultsCardTitle: "Could not find any results",
     noResultsDescription:
       "We couldn't find any results. Please try a different search term or change your filters.",
     rowsPerPage: "Rows per page",
@@ -200,6 +208,22 @@ export default {
     permissionDenied: "Permission denied",
     resourceNotFound: "Resource not found",
     serviceUnavailable: "Service unavailable",
+    userAccountBlocked: "User Account Blocked",
+    userApprovalPending: "User Approval Pending",
+    accessError: "Access Error",
+    accessBlockedDescription:
+      "Your access has been blocked by the NetBird account administrator, possibly due to new user approval requirements or security policies. Please contact your administrator to regain access.",
+    pendingApprovalDescription:
+      "Your account is pending approval from an administrator. Please wait for approval before accessing the dashboard.",
+    accessGenericDescription:
+      "An error occurred while trying to access the dashboard. Please try again or contact your administrator.",
+    contactAdminDescription:
+      "If you believe this is an error, please contact your administrator.",
+  },
+  pageNotFound: {
+    title: "The requested page was not found",
+    description:
+      "The page you are attempting to access cannot be found. Please verify the URL or return to the dashboard to continue browsing.",
   },
   peers: {
     title: "Peers",
@@ -258,6 +282,9 @@ export default {
     loginExpirationUpdateDescription:
       "Session expiration for peer {name} was successfully {state}.",
     loginExpirationUpdating: "Updating session expiration...",
+    loginRequired: "Login required",
+    loginExpiredTooltip:
+      "This peer is offline and needs to be re-authenticated because its login has expired.",
     enableSSH: "Enable SSH Access",
     disableSSH: "Disable SSH Access",
     disableSSHConfirmation: "Disable SSH Access?",
@@ -678,6 +705,15 @@ export default {
       "Manage users and their permissions. Same-domain email users are added automatically on first sign-in.",
     expiresIn: "Expires in",
     expiresInHelp: "Days until the invite expires.",
+  },
+  userDropdown: {
+    profileSettings: "Profile Settings",
+    plansAndBilling: "Plans & Billing",
+  },
+  theme: {
+    light: "Light",
+    dark: "Dark",
+    system: "System",
   },
   serviceUsers: {
     title: "Service Users",
