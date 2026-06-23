@@ -122,13 +122,13 @@ const SettingDisabledManagementGroups = ({
 		});
 	};
 
-	return (
+return (
 		<Card className={"mt-8 max-w-xl"}>
 			<div className={"px-8 py-8"}>
 				<Label>{t("disabledManagementGroup")}</Label>
 				<HelpText>{t("disabledManagementGroupHelp")}</HelpText>
 				<PeerGroupSelector
-					dataCy={"dns-groups-selector"}
+					data-testid={"dns-groups-selector"}
 					onChange={setSelectedGroups}
 					values={selectedGroups}
 					disabled={!permission.dns.update}
@@ -144,7 +144,7 @@ const SettingDisabledManagementGroups = ({
 					size={"sm"}
 					onClick={saveSettings}
 					disabled={!hasChanges || !permission.dns.update}
-					data-cy={"save-changes"}
+					data-testid={"save-changes"}
 				>
 					{t("saveChanges")}
 				</Button>

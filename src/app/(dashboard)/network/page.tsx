@@ -150,11 +150,14 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
             className={"pb-0 mb-0"}
           >
             <TabsList justify={"start"} className={"px-8"}>
-              <TabsTrigger value={"resources"}>
+              <TabsTrigger value={"resources"} data-testid="network-tab-resources">
                 <Layers3Icon size={14} />
                 {singularize(t("resources"), network?.resources?.length)}
               </TabsTrigger>
-              <TabsTrigger value={"routing-peers"}>
+              <TabsTrigger
+                value={"routing-peers"}
+                data-testid="network-tab-routing-peers"
+              >
                 <PeerIcon
                   size={12}
                   className={
@@ -163,7 +166,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
                 />
                 {singularize(t("routingPeers"), network?.routing_peers_count)}
               </TabsTrigger>
-              <TabsTrigger value={"services"}>
+              <TabsTrigger value={"services"} data-testid="network-tab-services">
                 <ReverseProxyIcon
                   size={16}
                   className={
@@ -217,7 +220,7 @@ function NetworkActions() {
           e.preventDefault();
         }}
       >
-        <Button variant={"secondary"} className={"!px-3"}>
+        <Button variant={"secondary"} className={"!px-3"} data-testid="network-detail-actions">
           <MoreVertical size={16} className={"shrink-0"} />
         </Button>
       </DropdownMenuTrigger>
@@ -225,6 +228,7 @@ function NetworkActions() {
         <DropdownMenuItem
           onClick={() => openEditNetworkModal(network)}
           disabled={!permission.networks.update}
+          data-testid="rename-network"
         >
           <div className={"flex gap-3 items-center"}>
             <PencilLineIcon size={14} className={"shrink-0"} />

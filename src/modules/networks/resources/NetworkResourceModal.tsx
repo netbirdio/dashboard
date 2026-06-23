@@ -260,7 +260,8 @@ export function ResourceModalContent({
                 ref={nameRef}
                 autoFocus={true}
                 tabIndex={0}
-                placeholder={t("resourceNamePlaceholder")}
+data-testid="resource-name-input"
+				placeholder={t("resourceNamePlaceholder")}
                 value={name}
                 error={nameError}
                 onChange={(e) => setName(e.target.value)}
@@ -309,6 +310,7 @@ export function ResourceModalContent({
                   className={
                     "text-[0.8rem] tracking-wider text-nb-gray-200 py-4  my-0 leading-none gap-2 flex items-center"
                   }
+                  data-testid="resource-optional-settings"
                 >
                   <span className={"relative top-[1px]"}>
                     {t("optionalSettings")}
@@ -323,6 +325,7 @@ export function ResourceModalContent({
                         placeholder={t("resourceDescriptionPlaceholder")}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
+                        data-testid="resource-description-input"
                       />
                     </div>
                     <div>
@@ -411,6 +414,7 @@ export function ResourceModalContent({
                   </ModalClose>
                   <Button
                     variant={"primary"}
+                    data-testid="resource-continue"
                     onClick={() => setTab("access-control")}
                     disabled={!canCreate}
                   >
@@ -429,7 +433,7 @@ export function ResourceModalContent({
                   </Button>
                   <Button
                     variant={"primary"}
-                    data-cy={"submit-route"}
+                    data-testid={"submit-resource"}
                     onClick={createResource}
                     disabled={!canCreate}
                   >
@@ -446,7 +450,7 @@ export function ResourceModalContent({
               </ModalClose>
               <Button
                 variant={"primary"}
-                data-cy={"submit-route"}
+                data-testid={"submit-route"}
                 onClick={updateResource}
                 disabled={!canCreate}
               >

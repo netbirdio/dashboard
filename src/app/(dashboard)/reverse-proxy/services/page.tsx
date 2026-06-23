@@ -1,13 +1,11 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
-import { Callout } from "@components/Callout";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
-import { isNetBirdHosted } from "@utils/netbird";
 import { ExternalLinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { lazy, Suspense } from "react";
@@ -16,6 +14,8 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
 import { REVERSE_PROXY_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
+import { Callout } from "@components/Callout";
+import { isNetBirdCloud } from "@utils/netbird";
 
 const ReverseProxyTable = lazy(
 	() => import("@/modules/reverse-proxy/table/ReverseProxyTable"),
@@ -53,7 +53,7 @@ export default function ReverseProxyServicesPage() {
 					</InlineLink>
 				</Paragraph>
 
-				{isNetBirdHosted() ? (
+{isNetBirdCloud() ? (
 					<Callout className={"max-w-xl mt-5"} variant={"info"}>
 						{t("betaNoticeCloud")}
 					</Callout>

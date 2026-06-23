@@ -103,7 +103,7 @@ export default function CreateAccessTokenModal({
                   variant={"secondary"}
                   className={"w-full"}
                   tabIndex={-1}
-                  data-cy={"access-token-copy-close"}
+                  data-testid={"access-token-copy-close"}
                 >
                   Close
                 </Button>
@@ -180,7 +180,7 @@ export function AccessTokenModalContent({
           <Label>Name</Label>
           <HelpText>Set an easily identifiable name for your token</HelpText>
           <Input
-            data-cy={"access-token-name"}
+            data-testid={"access-token-name"}
             placeholder={"e.g., Infra token"}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -195,7 +195,7 @@ export function AccessTokenModalContent({
           <Input
             maxWidthClass={"max-w-[200px]"}
             placeholder={"30"}
-            data-cy={"access-token-expires-in"}
+            data-testid={"access-token-expires-in"}
             min={1}
             max={365}
             value={expiresIn}
@@ -231,7 +231,7 @@ export function AccessTokenModalContent({
             variant={"primary"}
             onClick={submit}
             disabled={isDisabled}
-            data-cy={"create-access-token"}
+            data-testid={"create-access-token"}
           >
             <PlusCircle size={16} />
             Create Token

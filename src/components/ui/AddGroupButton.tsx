@@ -54,6 +54,7 @@ export const AddGroupButton = () => {
             variant={"primary"}
             size={"sm"}
             className={"ml-auto h-[42px]"}
+            data-testid="open-create-group"
           >
             <PlusCircle size={16} />
             {t('create')}
@@ -75,6 +76,7 @@ export const AddGroupButton = () => {
               </HelpText>
               <Input
                 tabIndex={0}
+data-testid="group-name-input"
                 placeholder={t('namePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -101,7 +103,7 @@ export const AddGroupButton = () => {
 
               <Button
                 variant={"primary"}
-                data-cy={"submit-route"}
+                data-testid={"create-group"}
                 disabled={!name}
                 onClick={createGroup}
               >

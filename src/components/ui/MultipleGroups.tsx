@@ -73,7 +73,7 @@ export default function MultipleGroups({
         <HoverCardTrigger>
           <div
             className={cn("inline-flex items-center gap-2 z-0", className)}
-            data-cy={"multiple-groups"}
+            data-testid={"multiple-groups"}
             onClick={onClick}
           >
             {countOnly && orderedGroups.length > countThreshold ? (

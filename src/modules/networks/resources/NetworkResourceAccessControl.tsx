@@ -257,16 +257,16 @@ export default function NetworkResourceAccessControl({
 					</div>
 				)}
 
-				<Button
-					variant="dotted"
-					className={"w-full mt-1"}
-					size="sm"
-					onClick={openAddPolicy}
-				>
-					<PlusIcon size={14} />
-					Add Policy
-				</Button>
-			</div>
+<Button
+						variant="dotted"
+						className={"w-full mt-1"}
+						size="sm"
+						onClick={openAddPolicy}
+						data-testid="add-policy"
+					>
+						<PlusIcon size={14} />
+						{tCommon("addPolicy")}
+					</Button>
 
 			<Modal
 				open={policyModalOpen}

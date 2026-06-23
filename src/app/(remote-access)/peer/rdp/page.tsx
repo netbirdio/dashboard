@@ -84,9 +84,7 @@ function RDPSession({ peer }: Props) {
       try {
         setCredentials(rdpCredentials);
         setIsNetBirdConnecting(true);
-        await client.connectTemporary(peer.id, [
-          `tcp/${rdpCredentials.port}`,
-        ]);
+        await client.connectTemporary(peer.id, [`tcp/${rdpCredentials.port}`]);
         setIsNetBirdConnecting(false);
       } catch (error) {
         sendErrorNotification(

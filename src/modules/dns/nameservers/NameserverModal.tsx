@@ -264,7 +264,7 @@ export function NameserverModalContent({
 
       <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
         <TabsList justify={"start"} className={"px-8"}>
-          <TabsTrigger value={"nameserver"}>
+          <TabsTrigger value={"nameserver"} data-testid="nameserver-tab-nameserver">
             <ServerIcon
               size={16}
               className={
@@ -273,7 +273,11 @@ export function NameserverModalContent({
             />
             {t("tabNameserver")}
           </TabsTrigger>
-          <TabsTrigger value={"domains"} disabled={!canContinueToDomains}>
+          <TabsTrigger
+            value={"domains"}
+            disabled={!canContinueToDomains}
+            data-testid="nameserver-tab-domains"
+          >
             <GlobeIcon
               size={16}
               className={
@@ -282,7 +286,11 @@ export function NameserverModalContent({
             />
             {t("tabDomains")}
           </TabsTrigger>
-          <TabsTrigger value={"general"} disabled={!canContinueToGeneral}>
+          <TabsTrigger
+            value={"general"}
+            disabled={!canContinueToGeneral}
+            data-testid="nameserver-tab-general"
+          >
             <Text
               size={16}
               className={
@@ -327,6 +335,7 @@ export function NameserverModalContent({
                 className={"w-full"}
                 size={"sm"}
                 onClick={() => setNameservers({ type: "ADD" })}
+                data-testid="add-nameserver-row"
               >
                 <PlusIcon size={14} />
                 {t("createNameserver")}
@@ -342,12 +351,14 @@ export function NameserverModalContent({
                 onChange={setGroups}
                 values={groups}
                 disabled={!canAction}
+                data-testid="nameserver-groups-selector"
               />
             </div>
 
             <FancyToggleSwitch
               value={enabled}
               onChange={setEnabled}
+              data-testid="nameserver-enabled"
               label={
                 <>
                   <Power size={15} />
@@ -400,6 +411,7 @@ export function NameserverModalContent({
                   size={"sm"}
                   onClick={() => setDomains({ type: "ADD" })}
                   disabled={!canAction}
+                  data-testid="add-match-domain"
                 >
                   <PlusIcon size={14} />
                   {t("addDomain")}
@@ -414,6 +426,7 @@ export function NameserverModalContent({
               <FancyToggleSwitch
                 value={matchDomains}
                 onChange={setMatchDomains}
+                data-testid="nameserver-mark-search-domains"
                 label={
                   <>
                     <Scan size={15} />
@@ -439,6 +452,7 @@ export function NameserverModalContent({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={!canAction}
+                data-testid="nameserver-name-input"
               />
             </div>
             <div>
@@ -452,6 +466,7 @@ export function NameserverModalContent({
                 rows={3}
                 disabled={!canAction}
                 onChange={(e) => setDescription(e.target.value)}
+                data-testid="nameserver-description-input"
               />
             </div>
           </div>
@@ -494,6 +509,7 @@ export function NameserverModalContent({
                   variant={"primary"}
                   onClick={() => setTab("domains")}
                   disabled={!canContinueToDomains}
+                  data-testid="nameserver-continue"
                 >
                   {tCommon("next")}
                 </Button>
@@ -504,6 +520,7 @@ export function NameserverModalContent({
                   variant={"primary"}
                   onClick={() => setTab("general")}
                   disabled={!canContinueToGeneral}
+                  data-testid="nameserver-continue"
                 >
                   {tCommon("next")}
                 </Button>
@@ -522,6 +539,7 @@ export function NameserverModalContent({
                     variant={"primary"}
                     disabled={!canSubmit || !canAction}
                     onClick={submit}
+                    data-testid="submit-nameserver"
                   >
                     <PlusCircle size={16} />
                     {t("createNameserver")}
@@ -538,6 +556,7 @@ export function NameserverModalContent({
                 variant={"primary"}
                 disabled={!canSubmit || !canAction}
                 onClick={submit}
+                data-testid="submit-nameserver"
               >
                 {t("saveChanges")}
               </Button>
@@ -605,6 +624,7 @@ function NameserverInput({
           error={cidrError}
           onChange={handleIPChange}
           disabled={disabled}
+          data-testid="nameserver-ip-input"
         />
       </div>
 
@@ -616,12 +636,14 @@ function NameserverInput({
         type={"number"}
         onChange={handlePortChange}
         disabled={disabled}
+        data-testid="nameserver-port-input"
       />
       <Button
         className={"h-[42px]"}
         variant={"default-outline"}
         onClick={onRemove}
         disabled={disabled}
+        data-testid="nameserver-remove-row"
       >
         <MinusCircleIcon size={15} />
       </Button>

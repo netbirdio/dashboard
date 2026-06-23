@@ -4,10 +4,7 @@ import "@xyflow/react/dist/style.css";
 import Button from "@components/Button";
 import InlineLink from "@components/InlineLink";
 import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
-import {
-  SelectDropdown,
-  SelectOption,
-} from "@components/select/SelectDropdown";
+import { SelectDropdown, SelectOption } from "@components/select/SelectDropdown";
 import SquareIcon from "@components/SquareIcon";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { SmallBadge } from "@components/ui/SmallBadge";
@@ -22,16 +19,10 @@ import {
   ReactFlowProvider,
   useEdgesState,
   useNodesState,
-  useReactFlow,
+  useReactFlow
 } from "@xyflow/react";
 import { forEach, orderBy, sortBy } from "lodash";
-import {
-  ArrowLeftIcon,
-  ExternalLinkIcon,
-  LayoutGridIcon,
-  MessageSquareShareIcon,
-  NetworkIcon,
-} from "lucide-react";
+import { ArrowLeftIcon, ExternalLinkIcon, LayoutGridIcon, MessageSquareShareIcon, NetworkIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
@@ -53,13 +44,13 @@ import { EDGE_TYPES } from "@/modules/control-center/utils/edges";
 import {
   getFirstGroup,
   getPolicyProtocolAndPortText,
-  getResourcePolicyByGroups,
+  getResourcePolicyByGroups
 } from "@/modules/control-center/utils/helpers";
 import {
   applyD3ForceLayout,
   applyD3HierarchicalLayout,
   DEFAULT_MAX_ZOOM,
-  DEFAULT_MIN_ZOOM,
+  DEFAULT_MIN_ZOOM
 } from "@/modules/control-center/utils/layouts";
 import { NODE_TYPES } from "@/modules/control-center/utils/nodes";
 

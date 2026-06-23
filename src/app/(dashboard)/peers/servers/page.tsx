@@ -9,6 +9,9 @@ import { ExternalLinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { lazy, Suspense, useMemo } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { useBypassedPeers } from "@/cloud/edr/useBypass";
+import useDistributorRedirect from "@/cloud/distributor/useDistributorRedirect";
+import FullScreenLoading from "@components/ui/FullScreenLoading";
 import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
@@ -18,7 +21,9 @@ import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
 const PeersTable = lazy(() => import("@/modules/peers/PeersTable"));
 
 export default function ServersPage() {
-	const { isRestricted } = usePermissions();
+const { isRestricted } = usePermissions();
+	const { isLoading: isDistributorRedirecting } = useDistributorRedirect();
+	if (isDistributorRedirecting) return <FullScreenLoading />;
 
 	return (
 		<PageContainer>
@@ -34,9 +39,10 @@ export default function ServersPage() {
 }
 
 function ServersView() {
-	const t = useTranslations("peers");
+const t = useTranslations("peers");
 	const { peers, isLoading: isPeersLoading } = usePeers();
 	const { users, isLoading: isUsersLoading } = useUsers();
+	const { isBypassed } = useBypassedPeers();
 	const { ref: headingRef, portalTarget } =
 		usePortalElement<HTMLHeadingElement>();
 
@@ -50,10 +56,10 @@ function ServersView() {
 		return peers.map((peer) => ({
 			...peer,
 			user: users.find((u) => u.id === peer.user_id),
+			force_approved: peer.id ? isBypassed(peer.id) : false,
 		}));
-	}, [peers, users]);
-
-	return (
+	}, [peers, users, isBypassed]);
+return (
 		<>
 			<div className={"p-default py-6"}>
 				<Breadcrumbs>

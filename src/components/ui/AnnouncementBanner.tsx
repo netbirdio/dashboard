@@ -2,7 +2,7 @@ import InlineLink from "@components/InlineLink";
 import { cn } from "@utils/helpers";
 import { cva, VariantProps } from "class-variance-authority";
 import { ArrowRightIcon, XIcon } from "lucide-react";
-import * as React from "react";
+import { useEffect, useRef } from "react";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 
 const variants = cva(
@@ -36,22 +36,38 @@ const variants = cva(
 export type AnnouncementVariant = VariantProps<typeof variants>;
 
 export const AnnouncementBanner = () => {
-  const { bannerHeight, closeAnnouncement, announcements } = useAnnouncement();
+  const { closeAnnouncement, announcements, setBannerHeight } =
+    useAnnouncement();
   const announcement = announcements?.find((a) => a.isOpen);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !announcement) {
+      setBannerHeight(0);
+      return;
+    }
+    const measure = () =>
+      setBannerHeight(Math.ceil(el.getBoundingClientRect().height));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [announcement, setBannerHeight]);
 
   return announcement ? (
     <div
+      ref={ref}
       className={cn(
-        "flex items-center justify-center text-sm px-8 font-light",
+        "flex items-center justify-center text-left text-sm py-2 pl-4 pr-12 md:px-8 font-light",
         variants({ variant: announcement.variant }),
       )}
-      style={{ height: bannerHeight }}
     >
-      <div className={"flex items-center gap-2"}>
+      <div className={"flex items-center gap-2 leading-tight"}>
         {announcement.tag && (
           <div
             className={cn(
-              "bg-nb-gray-200/10 backdrop-blur text-nb-gray-100 font-medium tracking-wide uppercase text-[10px] py-2.5 px-2 rounded-md leading-[0]",
+              "shrink-0 bg-nb-gray-200/10 backdrop-blur text-nb-gray-100 font-medium tracking-wide uppercase text-[10px] py-2.5 px-2 rounded-md leading-[0]",
               variants({ tagBadge: announcement.variant }),
             )}
           >
@@ -59,13 +75,13 @@ export const AnnouncementBanner = () => {
           </div>
         )}
         <div>
-          {announcement.text}
+          <span className={"mr-2"}>{announcement.text}</span>
           {announcement.link && (
             <InlineLink
               href={announcement.link || "#"}
               target={announcement.isExternal ? "_blank" : undefined}
               className={cn(
-                "ml-2 !text-sm",
+                "!text-sm",
                 variants({ inlineLink: announcement.variant }),
               )}
             >

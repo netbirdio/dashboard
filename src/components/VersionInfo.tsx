@@ -6,7 +6,7 @@ import { ArrowUpCircle } from "lucide-react";
 import * as React from "react";
 import Skeleton from "react-loading-skeleton";
 import useFetchApi from "@utils/api";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { VersionInfo as VersionInfoType } from "@/interfaces/Instance";
 
@@ -46,7 +46,7 @@ export const NavigationVersionInfo = () => {
   const { isNavigationCollapsed, mobileNavOpen } = useApplicationContext();
 
   // Only show for self-hosted, not cloud
-  if (isNetBirdHosted()) return null;
+  if (isNetBirdCloud()) return null;
 
   return (
     <div

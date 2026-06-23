@@ -7,7 +7,7 @@ import { DialogContent, DialogTitle } from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect, useMemo, useReducer, useState } from "react";
@@ -30,6 +30,7 @@ import { OnboardingExplainDefaultPolicy } from "@/modules/onboarding/p2p/Onboard
 import { OnboardingFirstDevice } from "@/modules/onboarding/p2p/OnboardingFirstDevice";
 import { OnboardingSecondDevice } from "@/modules/onboarding/p2p/OnboardingSecondDevice";
 import { OnboardingTestP2P } from "@/modules/onboarding/p2p/OnboardingTestP2P";
+import { OnboardingDemoCall } from "@/modules/onboarding/OnboardingDemoCall";
 
 export interface OnboardingState {
   intent: Intent;
@@ -110,6 +111,7 @@ export const Onboarding = ({
 
   const [onboarding, dispatch] = useReducer(onboardingReducer, initial);
   const { step, intent } = onboarding;
+  const [demoCallModal, setDemoCallModal] = useState(false);
 
   const [resource, setResource] = useState<NetworkResource>();
   const [firstRoutingPeer, setFirstRoutingPeer] = useState<Peer>();
@@ -356,8 +358,8 @@ export const Onboarding = ({
                 >
                   {isOnboardingPending && (
                     <Stepper
-                      step={isNetBirdHosted() ? step : step - 1}
-                      maxSteps={isNetBirdHosted() ? maxSteps : maxSteps - 1}
+                      step={isNetBirdCloud() ? step : step - 1}
+                      maxSteps={isNetBirdCloud() ? maxSteps : maxSteps - 1}
                     />
                   )}
 
@@ -393,9 +395,22 @@ export const Onboarding = ({
                             payload: new Date().toISOString(),
                           });
                         }
+
+                        const companySize = fields?.find(
+                          (f) => f.name === "planned_users",
+                        );
+                        if (Number(companySize?.value) >= 50) {
+                          setDemoCallModal(true);
+                        }
                       }}
                     />
                   )}
+
+                  <OnboardingDemoCall
+                    open={demoCallModal}
+                    onOpenChange={setDemoCallModal}
+                  />
+
                   {step === 2 && (
                     <OnboardingIntent
                       useCases={useCases}

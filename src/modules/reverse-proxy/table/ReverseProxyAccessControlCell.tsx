@@ -107,23 +107,21 @@ export default function ReverseProxyAccessControlCell({
       });
     }
 
-    const isHostCidr = (c: string) =>
-      c.includes(":") ? c.endsWith("/128") : c.endsWith("/32");
     const allowedIps =
-      restrictions?.allowed_cidrs?.filter(isHostCidr) ?? [];
+      restrictions?.allowed_cidrs?.filter((c) => c.endsWith("/32")) ?? [];
     const allowedCidrs =
-      restrictions?.allowed_cidrs?.filter((c) => !isHostCidr(c)) ?? [];
+      restrictions?.allowed_cidrs?.filter((c) => !c.endsWith("/32")) ?? [];
     const blockedIps =
-      restrictions?.blocked_cidrs?.filter(isHostCidr) ?? [];
+      restrictions?.blocked_cidrs?.filter((c) => c.endsWith("/32")) ?? [];
     const blockedCidrs =
-      restrictions?.blocked_cidrs?.filter((c) => !isHostCidr(c)) ?? [];
+      restrictions?.blocked_cidrs?.filter((c) => !c.endsWith("/32")) ?? [];
 
     if (allowedIps.length) {
       entries.push({
         key: "allowed-ips",
         label: allowedIps.length === 1 ? "Allowed IP" : "Allowed IPs",
         Icon: WorkflowIcon,
-        value: allowedIps.map((c) => c.replace(/\/(32|128)$/, "")).join(", "),
+        value: allowedIps.map((c) => c.replace(/\/32$/, "")).join(", "),
       });
     }
 
@@ -141,7 +139,7 @@ export default function ReverseProxyAccessControlCell({
         key: "blocked-ips",
         label: blockedIps.length === 1 ? "Blocked IP" : "Blocked IPs",
         Icon: WorkflowIcon,
-        value: blockedIps.map((c) => c.replace(/\/(32|128)$/, "")).join(", "),
+        value: blockedIps.map((c) => c.replace(/\/32$/, "")).join(", "),
         blocked: true,
       });
     }
@@ -176,6 +174,7 @@ export default function ReverseProxyAccessControlCell({
   return (
     <div
       className={"flex"}
+      data-access-control-cell
       onClick={(e) => {
         e.stopPropagation();
         if (permission?.services?.update) {

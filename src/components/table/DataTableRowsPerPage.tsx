@@ -30,7 +30,7 @@ export function DataTableRowsPerPage<TData>({
             role="combobox"
             aria-expanded={open}
             disabled={disabled}
-            data-cy={"rows-per-page"}
+            data-testid={"rows-per-page"}
             className="w-[200px] justify-between"
           >
             <RowsIcon size={15} className={"text-nb-gray-300 shrink-0"} />
@@ -50,7 +50,7 @@ export function DataTableRowsPerPage<TData>({
                 <CommandItem
                   key={val}
                   value={val.toString()}
-                  data-cy={`rows-per-page-value`}
+                  data-testid={`rows-per-page-value`}
                   onSelect={(currentValue) => {
                     table.setPageSize(Number(currentValue));
                     setOpen(false);

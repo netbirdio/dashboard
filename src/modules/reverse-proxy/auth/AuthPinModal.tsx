@@ -70,7 +70,7 @@ export default function AuthPinModal({
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" onClick={handleRemove}>
+                <Button variant="danger-text" data-testid="remove-pin" onClick={handleRemove}>
                   Remove
                 </Button>
                 <div className="flex gap-3">
@@ -97,6 +97,7 @@ export default function AuthPinModal({
                     variant="primary"
                     onClick={handleSave}
                     disabled={pin.length !== 6}
+                    data-testid="submit-pin"
                   >
                     Add PIN
                   </Button>

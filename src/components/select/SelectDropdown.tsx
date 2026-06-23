@@ -51,6 +51,7 @@ interface SelectDropdownProps {
   iconSize?: number;
   truncate?: boolean;
   compact?: boolean;
+  "data-testid"?: string;
 }
 
 export function SelectDropdown({
@@ -74,6 +75,7 @@ export function SelectDropdown({
   iconSize = 14,
   truncate = false,
   compact = false,
+  "data-testid": dataTestId,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -170,6 +172,7 @@ export function SelectDropdown({
             disabled={disabled || isLoading}
             ref={inputRef}
             className={cn("w-full focus:outline-none", className)}
+            data-testid={dataTestId}
           >
             <div className={"w-full flex justify-between items-center gap-2"}>
               {isLoading && <Loading />}

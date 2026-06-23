@@ -1,8 +1,8 @@
 [
   {
-    "tag": "New",
-    "text": "IPv6 Overlay Addressing - Peers can now receive both IPv4 and IPv6 overlay addresses, with full DNS and routing support.",
-    "link": "https://netbird.io/knowledge-hub/ipv6-overlay-addressing",
+    "tag": "Preview",
+    "text": "The new NetBird desktop app is here - now available as a 0.75 release candidate.",
+    "link": "https://github.com/netbirdio/netbird/discussions/6483",
     "linkText": "Learn more",
     "variant": "important",
     "isExternal": true,

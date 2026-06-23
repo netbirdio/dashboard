@@ -41,7 +41,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { notify } from "@components/Notification";
 import { MoreVertical, RefreshCw } from "lucide-react";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import dayjs from "dayjs";
 import {
   Cog,
@@ -80,7 +80,7 @@ function InviteNameCell({ invite }: { invite: UserInvite }) {
   return (
     <div
       className={cn("flex gap-4 px-2 py-1 items-center")}
-      data-cy={"invite-name-cell"}
+      data-testid={"invite-name-cell"}
     >
       <div
         className={
@@ -427,7 +427,7 @@ export const InvitesTableColumns: ColumnDef<UserInvite>[] = [
   {
     id: "group_names_filter",
     accessorFn: (row) =>
-      ((row as UserInvite & { _group_names?: string[] })._group_names) ?? [],
+      (row as UserInvite & { _group_names?: string[] })._group_names ?? [],
     filterFn: "arrIncludesSome",
   },
   {
@@ -664,7 +664,7 @@ export const InviteUserButton = ({
 
   // On cloud: always show "Invite User"
   // On self-hosted: only show when embedded_idp_enabled is true
-  const isCloud = isNetBirdHosted();
+  const isCloud = isNetBirdCloud();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
 
   if (!isCloud && !embeddedIdpEnabled) return null;

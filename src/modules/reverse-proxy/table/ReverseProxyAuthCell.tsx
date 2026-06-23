@@ -139,16 +139,12 @@ export default function ReverseProxyAuthCell({
   const showAuthHover = authCount > 0;
 
   return (
-    <div
-      className={"flex"}
-      data-auth-cell
-      onClick={(e) => {
-        e.stopPropagation();
-        if (permission?.services?.update) {
-          openModal({ proxy: reverseProxy, initialTab: "auth" });
-        }
-      }}
-    >
+    <div className={"flex"} data-auth-cell onClick={(e) => {
+      e.stopPropagation();
+      if (permission?.services?.update) {
+        openModal({ proxy: reverseProxy, initialTab: "auth" });
+      }
+    }}>
       <div className={"flex items-center"}>
         <HoverCard openDelay={200} closeDelay={100}>
           <HoverCardTrigger asChild={true}>{authBadge}</HoverCardTrigger>
@@ -198,15 +194,7 @@ export default function ReverseProxyAuthCell({
                       label={HEADER_AUTH_METHOD.hoverLabel}
                       value={
                         <div className={"text-green-500"}>
-                          {
-                            (auth?.header_auths ?? []).filter((h) => h.enabled)
-                              .length
-                          }{" "}
-                          Header
-                          {(auth?.header_auths ?? []).filter((h) => h.enabled)
-                            .length !== 1
-                            ? "s"
-                            : ""}
+                          {(auth?.header_auths ?? []).filter((h) => h.enabled).length} Header{(auth?.header_auths ?? []).filter((h) => h.enabled).length !== 1 ? "s" : ""}
                         </div>
                       }
                     />

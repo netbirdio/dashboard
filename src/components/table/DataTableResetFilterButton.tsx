@@ -41,6 +41,7 @@ export default function DataTableResetFilterButton<TData>({
             className={"h-[42px]"}
             variant={"secondary"}
             onClick={onClick}
+            data-testid={"reset-filters-and-search"}
           >
             <FilterX size={16} />
           </Button>

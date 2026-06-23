@@ -48,6 +48,7 @@ type Props = {
   setupKey?: string;
   showOnlyRoutingPeerOS?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   // Tri-state audience selector:
   //   true      – user device (laptop/phone): mobile shown, Docker hidden.
   //   false     – server: mobile hidden, Docker shown, key-generation UI.
@@ -62,10 +63,19 @@ export default function SetupModal({
   setupKey,
   showOnlyRoutingPeerOS = false,
   className,
+  style,
   isUserDevice,
 }: Readonly<Props>) {
   return (
-    <ModalContent showClose={showClose} className={className}>
+    <ModalContent
+      showClose={showClose}
+      className={cn(
+        "outline-none focus:outline-none focus-visible:outline-none",
+        className,
+      )}
+      style={style}
+      data-testid={"setup-netbird-modal"}
+    >
       <SetupModalContent
         user={user}
         setupKey={setupKey}

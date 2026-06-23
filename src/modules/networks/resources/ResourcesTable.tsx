@@ -336,6 +336,7 @@ export default function ResourcesTable({
                 className={"ml-auto mr-4"}
                 onClick={() => network && openResourceModal(network)}
                 disabled={!permission.networks.update}
+                data-testid={"add-resource"}
               >
                 <IconCirclePlus size={16} />
                 Add
@@ -355,8 +356,8 @@ export default function ResourcesTable({
             table={table}
             onClick={() => {
               table.setPageIndex(0);
-              table.resetColumnFilters();
-              table.resetGlobalFilter();
+              table.setColumnFilters([]);
+              table.setGlobalFilter("");
               removeResourceParam();
             }}
           />

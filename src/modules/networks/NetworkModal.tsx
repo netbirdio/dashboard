@@ -111,7 +111,8 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
           <HelpText>{t("networkNameHelp")}</HelpText>
           <Input
             tabIndex={0}
-            placeholder={t("networkNameModalPlaceholder")}
+data-testid="network-name-input"
+			placeholder={t("networkNameModalPlaceholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -120,7 +121,8 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
           <Label>{t("networkDescriptionLabel")}</Label>
           <HelpText>{t("networkDescriptionHelp")}</HelpText>
           <Textarea
-            placeholder={t("networkDescriptionPlaceholder")}
+data-testid="network-description-input"
+			placeholder={t("networkDescriptionPlaceholder")}
             value={description}
             rows={3}
             onChange={(e) => setDescription(e.target.value)}
@@ -148,7 +150,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
 
           <Button
             variant={"primary"}
-            data-cy={"submit-route"}
+            data-testid={"submit-network"}
             disabled={!name}
             onClick={network ? updateNetwork : createNetwork}
           >

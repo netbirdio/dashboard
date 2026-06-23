@@ -2,19 +2,24 @@
 
 import { ScrollArea } from "@components/ScrollArea";
 import { cn } from "@utils/helpers";
+import { isNetBirdCloud } from "@utils/netbird";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
+import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
+import { DistributorNavigation } from "@/cloud/distributor/DistributorNavigation";
+import { MSPNavigationItem } from "@/cloud/msp/MSPNavigationItem";
 import SidebarItem from "@/components/SidebarItem";
 import { NavigationVersionInfo } from "@/components/VersionInfo";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { headerHeight } from "@/layouts/Header";
+import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import * as React from "react";
@@ -104,9 +109,11 @@ export default function Navigation({
                   />
                 </SidebarItem>
 
+                <DistributorNavigation />
                 <SidebarItem
                   icon={<AccessControlIcon />}
-                  label={t('accessControl')}
+label={t('accessControl')}
+                  href={"/access-control"}
                   collapsible
                   visible={permission.policies.read}
                 >
@@ -185,7 +192,8 @@ export default function Navigation({
 
                 <SidebarItem
                   icon={<DNSIcon />}
-                  label={t('dns')}
+label={t('dns')}
+                  href={"/dns"}
                   collapsible
                   exactPathMatch={true}
                   visible={permission.dns.read || permission.nameservers.read}
@@ -211,7 +219,8 @@ export default function Navigation({
                 </SidebarItem>
                 <SidebarItem
                   icon={<TeamIcon />}
-                  label={t('team')}
+label={t('team')}
+                  href={"/team"}
                   collapsible
                   visible={permission.users.read}
                 >
@@ -239,6 +248,19 @@ export default function Navigation({
                   exactPathMatch={true}
                   visible={permission.settings.read}
                 />
+                <MSPNavigationItem />
+                <SidebarItem
+                  icon={<IntegrationIcon />}
+                  label="Integrations"
+                  href={"/integrations"}
+                  exactPathMatch={true}
+                  visible={
+                    permission?.edr?.read ||
+                    permission?.idp?.read ||
+                    permission?.event_streaming?.read ||
+                    (!isNetBirdCloud() && (permission?.settings?.read ?? false))
+                  }
+                />
                 <SidebarItem
                   icon={<DocsIcon />}
                   href={"https://docs.netbird.io/"}
@@ -248,6 +270,7 @@ export default function Navigation({
                 />
               </SidebarItemGroup>
             </div>
+            <NavigationUsageInfo />
             <NavigationVersionInfo />
           </div>
         </ScrollArea>
@@ -279,7 +302,8 @@ const ActivityNavigationItem = () => {
   return (
     <SidebarItem
       icon={<ActivityIcon />}
-      label={t('activity')}
+label={t('activity')}
+      href={"/events"}
       collapsible
       visible={permission.events.read}
     >
@@ -287,6 +311,13 @@ const ActivityNavigationItem = () => {
         label={t('auditEvents')}
         href={"/events/audit"}
         isChild
+        exactPathMatch={true}
+        visible={permission.events.read}
+      />
+      <SidebarItem
+        label="Traffic Events"
+        isChild
+        href={"/events/traffic"}
         exactPathMatch={true}
         visible={permission.events.read}
       />

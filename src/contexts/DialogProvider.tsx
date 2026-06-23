@@ -79,7 +79,11 @@ export default function DialogProvider({ children }: Props) {
                 dialogOptions.description ||
                 "Are you sure you want to continue? This action cannot be undone."
               }
-              icon={dialogOptions.hideIcon ? "" : dialogTypes[dialogOptions.type || "default"]}
+              icon={
+                dialogOptions.hideIcon
+                  ? ""
+                  : dialogTypes[dialogOptions.type || "default"]
+              }
               color={
                 dialogOptions.type == "default"
                   ? "blue"
@@ -104,7 +108,7 @@ export default function DialogProvider({ children }: Props) {
                   className={"w-full"}
                   size={"sm"}
                   tabIndex={-1}
-                  data-cy={"confirmation.cancel"}
+                  data-testid={"confirmation.cancel"}
                   onClick={() => fn.current && fn.current(false)}
                 >
                   {dialogOptions.cancelText || "Cancel"}
@@ -120,7 +124,7 @@ export default function DialogProvider({ children }: Props) {
                 }
                 className={"w-full"}
                 size={"sm"}
-                data-cy={"confirmation.confirm"}
+                data-testid={"confirmation.confirm"}
                 onClick={() => fn.current && fn.current(true)}
               >
                 {dialogOptions.confirmText || "Confirm"}
