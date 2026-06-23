@@ -253,9 +253,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
 						<div className={"flex items-start"}>
 							<div className={"w-2/3"}>
 								<Label>{t("userRole")}</Label>
-								<HelpText>
-									{t("userRoleHelp")}
-								</HelpText>
+								<HelpText>{t("userRoleHelp")}</HelpText>
 							</div>
 							<div className={"w-1/3"}>
 								<UserRoleSelector
