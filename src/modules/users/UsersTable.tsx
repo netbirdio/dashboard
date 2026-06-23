@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Button from "@components/Button";
 import Card from "@components/Card";
 import FullTooltip from "@components/FullTooltip";
@@ -59,11 +60,12 @@ import UserInviteModal from "@/modules/users/UserInviteModal";
 import UserInvitesTable from "@/modules/users/UserInvitesTable";
 import { useAccount } from "@/modules/account/useAccount";
 
-export const UsersTableColumns: ColumnDef<User>[] = [
+export function UsersTableColumns(t: ReturnType<typeof useTranslations>): ColumnDef<User>[] {
+  return [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("name")}</DataTableHeader>;
     },
     accessorFn: (row) => row.name + " " + row.email,
     sortingFn: "text",
@@ -76,7 +78,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "role",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Role</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("role")}</DataTableHeader>;
     },
     sortingFn: "text",
     cell: ({ row }) => <UserRoleCell user={row.original} />,
@@ -93,7 +95,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
       return row.status ?? "";
     },
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("status")}</DataTableHeader>;
     },
     sortingFn: "text",
     cell: ({ row }) => <UserStatusCell user={row.original} />,
@@ -102,7 +104,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "auto_groups",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("groups")}</DataTableHeader>;
     },
     sortingFn: "text",
     cell: ({ row }) => <UserGroupCell user={row.original} />,
@@ -111,7 +113,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "last_login",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last Login</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("lastLogin")}</DataTableHeader>;
     },
     sortingFn: "text",
     cell: ({ row }) => (
@@ -145,6 +147,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
     cell: ({ row }) => <UserActionCell user={row.original} />,
   },
 ];
+}
 
 type Props = {
   users?: User[];
@@ -167,12 +170,14 @@ export default function UsersTable({
   minimal,
   rightSide,
   getStartedCard,
-  columns = UsersTableColumns,
+  columns: externalColumns,
   selectedRows,
   setSelectedRows,
   onRowClick,
   keepStateInLocalStorage = true,
 }: Readonly<Props>) {
+  const t = useTranslations("users");
+  const columns = externalColumns || UsersTableColumns(t);
   useFetchApi("/groups");
   const { groups } = useGroups();
   const { mutate } = useSWRConfig();
