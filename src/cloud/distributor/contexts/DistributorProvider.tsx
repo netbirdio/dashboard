@@ -1,4 +1,5 @@
 import useFetchApi from "@utils/api";
+import { isNetBirdCloud } from "@utils/netbird";
 import React, { useEffect, useMemo } from "react";
 import { Distributor } from "@/cloud/distributor/interfaces/Distributor";
 
@@ -41,11 +42,18 @@ const DistributorContext = React.createContext(
 );
 
 export default function DistributorProvider({ children }: Readonly<Props>) {
+  // Distributor (reseller) data lives behind an MSP endpoint that only NetBird
+  // Cloud serves. Skip the call on self-hosted deployments.
   const {
     data: distributorInfo,
     isLoading: isDistributorInfoLoading,
     error,
-  } = useFetchApi<Distributor>("/integrations/msp/reseller", true);
+  } = useFetchApi<Distributor>(
+    "/integrations/msp/reseller",
+    true,
+    true,
+    isNetBirdCloud(),
+  );
 
   const isActive = useMemo(() => {
     try {
