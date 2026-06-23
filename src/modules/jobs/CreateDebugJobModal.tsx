@@ -95,7 +95,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
         {/* Log File Count */}
         <div className="flex justify-between gap-6">
           <div className={"max-w-[300px]"}>
-            <Label>Log File Count</Label>
+            <Label>{t("logFileCount")}</Label>
             <HelpText>
               Sets the limit for how many individual log files will be included
               in the debug bundle.
@@ -138,7 +138,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
           {bundleForTimeEnabled && (
             <div className="flex justify-between gap-6 mt-6 mb-3">
               <div className={"max-w-[300px]"}>
-                <Label>Duration</Label>
+                <Label>{t("duration")}</Label>
                 <HelpText>
                   Time period for which logs should be collected before creating
                   the debug bundle.

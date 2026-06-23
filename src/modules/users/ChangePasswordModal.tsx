@@ -124,7 +124,7 @@ export function ChangePasswordModalContent({
 
       <form className={"px-8 py-6 flex flex-col gap-6"} onSubmit={changePassword}>
         <div>
-          <Label>Current Password</Label>
+          <Label>{t("currentPassword")}</Label>
           <HelpText>Enter your current password to verify your identity.</HelpText>
           <Input
             type="password"
@@ -141,7 +141,7 @@ export function ChangePasswordModalContent({
         </div>
 
         <div>
-          <Label>New Password</Label>
+          <Label>{t("newPassword")}</Label>
           <HelpText>
             Enter your new password. Must be at least 8 characters.
           </HelpText>
@@ -160,7 +160,7 @@ export function ChangePasswordModalContent({
         </div>
 
         <div>
-          <Label>Confirm New Password</Label>
+          <Label>{t("confirmNewPassword")}</Label>
           <HelpText>Re-enter your new password to confirm.</HelpText>
           <Input
             type="password"

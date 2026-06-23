@@ -65,7 +65,14 @@ searchCountry: "Search country...",
     removeRule: "Remove rule",
     removeHeader: "Remove header",
     publicListenPort: "Public listen port",
-    destinationPort: "Destination port"
+    destinationPort: "Destination port",
+    settings: "Settings",
+    allowSSH: "Allow SSH",
+    currentPassword: "Current Password",
+    newPassword: "New Password",
+    confirmNewPassword: "Confirm New Password",
+    logFileCount: "Log File Count",
+    duration: "Duration"
   },
   navigation: {
     controlCenter: "Control Center",
@@ -702,7 +709,15 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     restrictDashboard: "Restrict dashboard for regular users",
     restrictDashboardHelp: "Access to the dashboard will be limited and regular users will not be able to view any peers.",
     name: "Name",
-    type: "Type"
+    type: "Type",
+    idpProviderType: "Provider Type",
+    idpProviderTypeHelp: "Select the type of identity provider",
+    idpName: "Name",
+    idpNameHelp: "A friendly name to identify this provider",
+    idpClientId: "Client ID",
+    idpClientSecret: "Client Secret",
+    idpIssuerUrl: "Issuer URL",
+    idpIssuerUrlHelp: "The OIDC issuer URL for this provider"
   },
   reverseProxy: {
     title: "Reverse Proxy",

@@ -187,8 +187,8 @@ export default function IdentityProviderModal({
 
 					<div className={"px-8 py-6 flex flex-col gap-6"}>
 						<div>
-							<Label>Provider Type</Label>
-							<HelpText>Select the type of identity provider</HelpText>
+							<Label>{t("idpProviderType")}</Label>
+							<HelpText>{t("idpProviderTypeHelp")}</HelpText>
 							<Select
 								value={type}
 								onValueChange={(v) => {
@@ -216,8 +216,8 @@ export default function IdentityProviderModal({
 						</div>
 
 						<div>
-							<Label>Name</Label>
-							<HelpText>A friendly name to identify this provider</HelpText>
+							<Label>{t("idpName")}</Label>
+							<HelpText>{t("idpNameHelp")}</HelpText>
 							<Input
 								placeholder={"e.g., Corporate SSO"}
 								value={name}
@@ -230,8 +230,8 @@ export default function IdentityProviderModal({
 
 						{requiresIssuer && (
 							<div>
-								<Label>Issuer URL</Label>
-								<HelpText>The OIDC issuer URL for this provider</HelpText>
+								<Label>{t("idpIssuerUrl")}</Label>
+								<HelpText>{t("idpIssuerUrlHelp")}</HelpText>
 								<Input
 									placeholder={issuerHints[type] ?? "https://login.example.com"}
 									value={issuer}
@@ -244,7 +244,7 @@ export default function IdentityProviderModal({
 						)}
 
 						<div>
-							<Label>Client ID</Label>
+							<Label>{t("idpClientId")}</Label>
 							<HelpText>The OAuth2 confidential client ID</HelpText>
 							<Input
 								placeholder={"Enter client ID"}
@@ -255,7 +255,7 @@ export default function IdentityProviderModal({
 						</div>
 
 						<div>
-							<Label>Client Secret</Label>
+							<Label>{t("idpClientSecret")}</Label>
 							<HelpText>
 								{isEditing
 									? clientIdChanged

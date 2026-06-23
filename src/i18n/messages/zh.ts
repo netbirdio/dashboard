@@ -65,7 +65,14 @@ export default {
     removeRule: "移除规则",
     removeHeader: "移除标头",
     publicListenPort: "公共监听端口",
-    destinationPort: "目标端口"
+    destinationPort: "目标端口",
+    settings: "设置",
+    allowSSH: "允许 SSH",
+    currentPassword: "当前密码",
+    newPassword: "新密码",
+    confirmNewPassword: "确认新密码",
+    logFileCount: "日志文件数",
+    duration: "持续时间"
   },
   navigation: {
     controlCenter: "控制中心",
@@ -702,7 +709,15 @@ disable2FA: "禁用两步验证",
     restrictDashboard: "限制普通用户访问仪表板",
     restrictDashboardHelp: "对仪表板的访问将受到限制，普通用户将无法查看任何节点。",
     name: "名称",
-    type: "类型"
+    type: "类型",
+    idpProviderType: "提供商类型",
+    idpProviderTypeHelp: "选择身份提供商的类型",
+    idpName: "名称",
+    idpNameHelp: "为此提供商设置一个友好的名称",
+    idpClientId: "客户端 ID",
+    idpClientSecret: "客户端密钥",
+    idpIssuerUrl: "Issuer URL",
+    idpIssuerUrlHelp: "此提供商的 OIDC issuer URL"
   },
   reverseProxy: {
     title: "反向代理",
