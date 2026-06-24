@@ -19,6 +19,7 @@ type Props = {
 
 export const UserPeersSection = ({ user }: Props) => {
 	const t = useTranslations("peers");
+	const tUsers = useTranslations("users");
 	const { ref: headingRef, portalTarget } =
 		usePortalElement<HTMLHeadingElement>();
 
@@ -60,10 +61,8 @@ export const UserPeersSection = ({ user }: Props) => {
 						getStartedCard={
 							<NoResults
 								className={"py-4"}
-								title={"This user has no registered peers"}
-								description={
-									"Install NetBird and sign in as this user to register peers."
-								}
+								title={tUsers("noRegisteredPeers")}
+								description={tUsers("noRegisteredPeersDesc")}
 								icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
 							/>
 						}

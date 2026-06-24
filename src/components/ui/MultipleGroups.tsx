@@ -41,8 +41,8 @@ type Props = {
 
 export default function MultipleGroups({
   groups,
-  label = "Assigned Groups",
-  description = "Use groups to control what this peer can access",
+  label,
+  description,
   onClick,
   className,
   showResources = false,
@@ -53,7 +53,11 @@ export default function MultipleGroups({
   countThreshold = 1,
 }: Readonly<Props>) {
   const tGroups = useTranslations("groups");
+  const tCommon = useTranslations("common");
   const { permission } = usePermissions();
+
+  const resolvedLabel = label ?? tCommon("assignedGroups");
+  const resolvedDescription = description ?? tCommon("assignedGroupsDescription");
 
   if (!groups || groups?.length === 0) return <EmptyRow />;
   const orderedGroups = [...groups].sort((a, b) => {
@@ -139,7 +143,7 @@ export default function MultipleGroups({
             onClick={(e) => e.stopPropagation()}
           >
             <div className={"text-sm font-medium text-left px-5 pt-3"}>
-              {label}
+              {resolvedLabel}
             </div>
             <ScrollArea
               className={

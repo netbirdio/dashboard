@@ -3,6 +3,7 @@ import { Input } from "@components/Input";
 import { validator } from "@utils/helpers";
 import { uniqueId } from "lodash";
 import { GlobeIcon, MinusCircleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Domain } from "@/interfaces/Domain";
@@ -47,6 +48,7 @@ export default function InputDomain({
   allowWildcard = true,
   showRemoveButton = true,
 }: Readonly<Props>) {
+  const t = useTranslations("common");
   const [name, setName] = useState(value?.name || "");
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +66,7 @@ export default function InputDomain({
       preventLeadingAndTrailingDots,
     });
     if (!valid) {
-      return "Please enter a valid domain, e.g. example.com or intra.example.com";
+      return t("validDomainError");
     }
   }, [name]);
 
@@ -80,7 +82,7 @@ export default function InputDomain({
       <div className={"w-full"}>
         <Input
           customPrefix={<GlobeIcon size={15} />}
-          placeholder={"e.g., example.com"}
+          placeholder={t("domainPlaceholder")}
           maxWidthClass={"w-full"}
           data-testid={"domain-input"}
           value={name}

@@ -48,12 +48,13 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
 	const [name, setName] = useState("");
 	const [role, setRole] = useState("user");
 
-	const t = useTranslations("common");
+	const t = useTranslations("serviceUsers");
+	const tCommon = useTranslations("common");
 
 	const create = async () => {
 		notify({
-			title: "Service user created",
-			description: `${name} was successfully created.`,
+			title: t("userCreatedNotify"),
+			description: t("userCreatedDesc", { name }),
 			promise: userRequest
 				.post({
 					name,
@@ -65,7 +66,7 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
 					onSuccess && onSuccess();
 					mutate("/users?service_user=true");
 				}),
-			loadingMessage: "Creating service user...",
+			loadingMessage: t("creatingServiceUserNotify"),
 		});
 	};
 
@@ -77,10 +78,8 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
 		<ModalContent maxWidthClass={"max-w-lg"}>
 			<ModalHeader
 				icon={<IconSettings2 />}
-				title={"Create Service User"}
-				description={
-					"Service users are non-login users that are not associated with any specific person."
-				}
+				title={t("createServiceUserTitle")}
+				description={t("serviceUserCreateDesc")}
 				color={"netbird"}
 			/>
 
@@ -95,7 +94,7 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
 									<User2 size={16} className={"text-nb-gray-300"} />
 								</div>
 							}
-							placeholder={"John Doe"}
+							placeholder={t("serviceUserNamePlaceholder")}
 							value={name}
 							data-cy={"service-user-name"}
 							onChange={(e) => setName(e.target.value)}
@@ -114,19 +113,19 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
 			<ModalFooter className={"items-center"}>
 				<div className={"w-full"}>
 					<Paragraph className={"text-sm mt-auto"}>
-						Learn more about
+						{t("learnMoreAbout")}
 						<InlineLink
 							href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
 							target={"_blank"}
 						>
-							Service Users
+							{t("title")}
 							<ExternalLinkIcon size={12} />
 						</InlineLink>
 					</Paragraph>
 				</div>
 				<div className={"flex gap-3 w-full justify-end"}>
 					<ModalClose asChild={true}>
-						<Button variant={"secondary"}>{t("cancel")}</Button>
+						<Button variant={"secondary"}>{tCommon("cancel")}</Button>
 					</ModalClose>
 
 					<Button
@@ -136,7 +135,7 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
 						data-cy={"create-service-user"}
 					>
 						<PlusCircle size={16} />
-						Create Service User
+						{t("create")}
 					</Button>
 				</div>
 			</ModalFooter>

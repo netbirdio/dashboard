@@ -2,6 +2,7 @@ import InlineLink from "@components/InlineLink";
 import { cn } from "@utils/helpers";
 import { cva, VariantProps } from "class-variance-authority";
 import { ArrowRightIcon, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 
@@ -36,6 +37,7 @@ const variants = cva(
 export type AnnouncementVariant = VariantProps<typeof variants>;
 
 export const AnnouncementBanner = () => {
+  const t = useTranslations("common");
   const { closeAnnouncement, announcements, setBannerHeight } =
     useAnnouncement();
   const announcement = announcements?.find((a) => a.isOpen);
@@ -85,7 +87,7 @@ export const AnnouncementBanner = () => {
                 variants({ inlineLink: announcement.variant }),
               )}
             >
-              {announcement.linkText || "Learn more"}
+              {announcement.linkText || t("learnMore")}
               <ArrowRightIcon size={14} />
             </InlineLink>
           )}

@@ -116,6 +116,19 @@ export default {
     network: "Network",
     goBack: "Go Back",
     tryAgain: "Try Again",
+    installNetBird: "Install NetBird",
+    new: "NEW",
+    peers: "Peers",
+    resources: "Resources",
+    assignedGroups: "Assigned Groups",
+    assignedGroupsDescription: "Use groups to control what this peer can access",
+    routeCount: "{count, plural, one {# Route} other {# Routes}}",
+    domainCount: "{count, plural, one {# Domain} other {# Domains}}",
+    allDomains: "All",
+    validDomainError: "Please enter a valid domain, e.g. example.com or intra.example.com",
+    domainPlaceholder: "e.g., example.com",
+    peerCount: "{count, plural, =0 {0 Peers} one {# Peer} other {# Peers}}",
+    resourceCount: "{count, plural, =0 {0 Resources} one {# Resource} other {# Resources}}",
   },
   navigation: {
     controlCenter: "Control Center",
@@ -148,6 +161,10 @@ export default {
     helpAndSupport: "Help and Support",
     integrations: "Integrations",
     trafficEvents: "Traffic Events",
+    troubleshooting: "Troubleshooting",
+    forum: "NetBird Forum",
+    slack: "NetBird Slack",
+    feedback: "Feedback",
   },
   table: {
     search: "Search...",
@@ -705,6 +722,154 @@ export default {
       "Manage users and their permissions. Same-domain email users are added automatically on first sign-in.",
     expiresIn: "Expires in",
     expiresInHelp: "Days until the invite expires.",
+    // Shared labels
+    groups: "Groups",
+    learnMoreAbout: "Learn more about",
+    // UsersTable
+    searchByNameEmailOrRole: "Search by name, email or role...",
+    // UserInviteModal
+    userCreatedSuccess: "User created successfully!",
+    inviteLinkCreated: "Invite link created!",
+    passwordCopyWarning:
+      "This password will not be shown again, so be sure to copy it and store in a secure location.",
+    inviteLinkShareInfo:
+      "Share this link with the user. They will be able to set their own password.",
+    passwordCopied: "Password was copied to your clipboard!",
+    inviteLinkCopied: "Invite link was copied to your clipboard!",
+    expiresOn: "Expires on",
+    copyAndClose: "Copy & Close",
+    createUserTitle: "Create User",
+    inviteUserTitle: "Invite User",
+    createUserDescription:
+      "Create a NetBird user account with email and password.",
+    inviteUserDescription2:
+      "Invite a user to your network and set their permissions.",
+    generateInviteLinkDesc:
+      "Generate an invite link that the user can use to set their own password.",
+    sendInvitation: "Send Invitation",
+    createInviteLink: "Create Invite Link",
+    inviteUserTab: "Invite User",
+    createUserTab: "Create User",
+    autoAssignedGroups: "Auto-assigned Groups",
+    autoAssignedGroupsHelp:
+      "Groups will be assigned to peers added by this user.",
+    dayUnit: "Day(s)",
+    createUserNotify: "Create User",
+    creatingUserFor: "Creating user account for {name}...",
+    creatingUserNotify: "Creating user...",
+    createInviteNotify: "Create Invite",
+    creatingInviteFor: "Creating invite link for {name}...",
+    creatingInviteNotify: "Creating invite...",
+    // UserStatusCell
+    statusDisabled: "Disabled",
+    localAuthDisabledTooltip:
+      "Local authentication is disabled. This user can no longer log in. Use your IdP for authentication.",
+    invitedTooltip:
+      "This user was invited but has not accepted the invitation yet. Use the Resend button to send another invitation email.",
+    pendingApprovalTooltip:
+      "This user needs admin approval before joining your organization. To disable approvals, turn off",
+    userApprovalRequiredLabel: "'User Approval Required'",
+    inSettings: "in Settings",
+    // UserNameCell
+    you: "You",
+    // UserActionCell
+    userDeletedNotify: "'{name}' deleted",
+    userDeletedDesc: "User was successfully deleted.",
+    deletingUser: "Deleting the user...",
+    userApprovedNotify: "'{name}' approved",
+    userApprovedDesc: "User was successfully approved.",
+    approvingUser: "Approving the user...",
+    rejectUserTitle: "Reject '{name}'?",
+    rejectUserDesc:
+      "Rejecting this user will remove them from the account permanently. This action cannot be undone.",
+    rejectButton: "Reject",
+    userRejectedNotify: "'{name}' rejected",
+    userRejectedDesc: "User was successfully rejected and removed.",
+    rejectingUser: "Rejecting the user...",
+    deleteUserTitle: "Delete '{name}'?",
+    deleteUserDesc:
+      "Deleting this user will remove their devices and remove dashboard access. This action cannot be undone.",
+    blockUserTitle: "Block '{name}'?",
+    blockUserDesc:
+      "This action will immediately revoke the user's access and disconnect all of their active peers.",
+    blockButton: "Block",
+    userBlockedNotify: "User blocked",
+    userUnblockedNotify: "User unblocked",
+    blockedSuccess: "{name} was successfully blocked.",
+    unblockedSuccess: "{name} was successfully unblocked.",
+    blockingUser: "Blocking the user...",
+    unblockingUser: "Unblocking the user...",
+    // UserGroupCell
+    groupsSaved: "Groups of the user were successfully saved",
+    updatingGroups: "Updating groups...",
+    // UserResendInviteButton
+    resendInviteNotify: "Resend Invite",
+    resendingInviteTo: "The invitation is being sent to {email}",
+    sendingInvitation: "Sending invitation...",
+    sending: "Sending...",
+    resendButton: "Resend",
+    // PendingApprovalFilter
+    pendingApproval: "Pending Approval",
+    // HorizontalUsersStack
+    allUsers: "All Users",
+    userCount: "{count, plural, one {# User} other {# Users}}",
+    system: "System",
+    // UserRoleSelector
+    transferOwnership: "Transfer Ownership?",
+    transferOwnershipPrefix: "This action will transfer the",
+    transferOwnershipTo: "role to",
+    transferOwnershipThisUser: "this user",
+    transferOwnershipSuffix1: "and leave you with the",
+    transferOwnershipSuffix2:
+      "role. This action can only be undone if the new owner transfers the role back to you.",
+    // ChangePasswordModal
+    changePasswordTitle: "Change Password",
+    updateAccountPassword: "Update your account password.",
+    enterCurrentPasswordHelp:
+      "Enter your current password to verify your identity.",
+    enterCurrentPasswordPlaceholder: "Enter current password",
+    enterNewPasswordHelp:
+      "Enter your new password. Must be at least 8 characters.",
+    enterNewPasswordPlaceholder: "Enter new password",
+    reenterNewPasswordHelp: "Re-enter your new password to confirm.",
+    confirmNewPasswordPlaceholder: "Confirm new password",
+    passwordMinLength: "Password must be at least 8 characters",
+    passwordsDoNotMatch: "Passwords do not match",
+    passwordChanged: "Your password has been successfully changed.",
+    changingPassword: "Changing password...",
+    changePasswordButton: "Change Password",
+    // UserPeersSection
+    noRegisteredPeers: "This user has no registered peers",
+    noRegisteredPeersDesc:
+      "Install NetBird and sign in as this user to register peers.",
+    // UserInvitesTable
+    invites: "Invites",
+    searchByNameOrEmail: "Search by name or email...",
+    noPendingInvites: "No Pending Invites",
+    noPendingInvitesDesc:
+      "There are no pending invites. Create an invite to add users to your network.",
+    showUsers: "Show Users",
+    valid: "Valid",
+    expired: "Expired",
+    regenerateInvite: "Regenerate Invite",
+    regeneratingInviteFor: "Regenerating invite link for {name}...",
+    regenerating: "Regenerating...",
+    inviteDeletedNotify: "'{name}' deleted",
+    inviteDeletedDesc: "Invite was successfully deleted.",
+    deletingInvite: "Deleting the invite...",
+    deleteInviteTitle: "Delete invite for '{name}'?",
+    deleteInviteDesc:
+      "Deleting this invite will revoke the invite link. The user will no longer be able to join using this invite.",
+    inviteLinkRegenerated: "Invite link regenerated!",
+    inviteLinkRegenShareInfo:
+      "Share this link with the user. They will be able to set their own password.",
+    inviteActions: "Invite actions",
+    regenerateButton: "Regenerate",
+    expires: "Expires",
+    // Add
+    namePlaceholder: "e.g., John Doe",
+    emailPlaceholder: "e.g., hello@netbird.io",
+    userActions: "User actions",
   },
   userDropdown: {
     profileSettings: "Profile Settings",
@@ -754,6 +919,12 @@ export default {
     tokenName: "Name",
     tokenNameHelp: "Set an easily identifiable name for your token",
     tokenExpiresIn: "Expires in",
+    userCreatedNotify: "Service user created",
+    userCreatedDesc: "{name} was successfully created.",
+    creatingServiceUserNotify: "Creating service user...",
+    createServiceUserTitle: "Create Service User",
+    serviceUserCreateDesc:
+      "Service users are non-login users that are not associated with any specific person.",
   },
   settings: {
     title: "Settings",
@@ -1581,5 +1752,77 @@ export default {
   onboarding: {
     title: "Get started with NetBird",
     addResource: "Add your first resource",
+  },
+  setupModal: {
+    generateSetupKey: "Generate a setup key",
+    setupKeyHelpTooltip:
+      "A setup key is a one-time, pre-authentication token used to enroll an unattended machine with NetBird. Pass it to <code>netbird up</code> via <code>--setup-key</code> and the peer registers without an interactive login.",
+    learnMore: "Learn more",
+    defaultUserName: "there",
+    helloMessage: "Hello {name}! 👋",
+    timeToAddFirstDevice: "It's time to add your first device.",
+    installNetBirdWithSetupKey: "Install NetBird with Setup Key",
+    installNetBird: "Install NetBird",
+    getStartedWithSetupKey:
+      "To get started, install and run NetBird with the setup key as a parameter.",
+    getStartedWithEmail:
+      "To get started, install NetBird and log in with your email account.",
+    footerDescription:
+      "After that you should be connected. Add more devices to your network or manage your existing devices in the admin panel. If you have further questions check out our",
+    installationGuide: "Installation Guide",
+    setupKeyOnceMessage:
+      "This setup key can be used only once within the next 24 hours.",
+    setupKeyExpiredMessage: "When expired, the same key can not be used again.",
+    setupKeyCreated: "Setup Key Created",
+    setupKeyCreatedDescription:
+      "A one-off setup key was generated for this install.",
+    generatingSetupKey: "Generating setup key...",
+    setupKeyCopied: "Setup Key Copied",
+    setupKeyCopiedDescription: "Successfully copied to clipboard.",
+    generateKey: "Generate Key",
+    setupKey: "Setup Key",
+    setupKeyExpiryMessage:
+      "This setup key can be used only once and expires in 24 hours.",
+    downloadNetBird: "Download NetBird",
+    runNetBird: "Run NetBird",
+    andLogInBrowser: "and log in the browser",
+    installWithCli: "Install with Command-line",
+    installManuallyOnUbuntu: "Install manually on Ubuntu",
+    addRepository: "Add our repository",
+    installOnMacos: "Install on macOS",
+    downloadMacInstaller: "Download and run macOS Installer",
+    managementUrlInstruction:
+      "Click on \"Settings\" then \"Advanced Settings\" from the NetBird icon in your system tray and enter the following \"Management URL\"",
+    openTerminalAndRun: "Open Terminal and run NetBird",
+    clickConnectTray:
+      "Click on \"Connect\" from the NetBird icon in your system tray",
+    signUpWithEmail: "Sign up using your email address",
+    installWithTerminal: "Install manually with Terminal",
+    installWithHomebrew: "Install manually with HomeBrew",
+    downloadHomebrew: "Download and install HomeBrew",
+    homebrewGuide: "HomeBrew Installation Guide",
+    startDaemon: "Start NetBird daemon",
+    installOnWindows: "Install on Windows",
+    downloadWindowsInstaller: "Download and run Windows Installer",
+    selectArchitecture: "Select architecture",
+    openCmdAndRun: "Open Command-line and run NetBird",
+    installOnUbuntuDocker: "Install on Ubuntu",
+    installDocker: "Install Docker",
+    dockerGuide: "Official Docker Installation Guide",
+    runNetBirdContainer: "Run NetBird container",
+    readDocumentation: "Read our documentation",
+    runningInDocker: "Running NetBird in Docker",
+    installOnAndroid: "Install on Android",
+    downloadFromGooglePlay:
+      "Download and install the application from Google Play Store:",
+    googlePlayAlt: "Download NetBird from Google Play",
+    changeServer:
+      "Click on \"Change Server\" and enter the following \"Server\"",
+    clickConnectButton:
+      "Click on the \"Connect\" button in the middle of the screen",
+    installOnIos: "Install on iOS",
+    downloadFromAppStore:
+      "Download and install the application on the App Store:",
+    appStoreAlt: "Download NetBird on the App Store",
   },
 };

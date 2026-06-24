@@ -123,7 +123,7 @@ export function UsersTableColumns(
 			cell: ({ row }) => (
 				<LastTimeRow
 					date={dayjs(row.original.last_login).toDate()}
-					text={"Last login on"}
+					text={t("lastLoginOn")}
 				/>
 			),
 		},
@@ -181,6 +181,7 @@ export default function UsersTable({
 	keepStateInLocalStorage = true,
 }: Readonly<Props>) {
 	const t = useTranslations("users");
+	const tCommon = useTranslations("common");
 	const columns = externalColumns || UsersTableColumns(t);
 	useFetchApi("/groups");
 	const { groups } = useGroups();
@@ -243,32 +244,32 @@ export default function UsersTable({
 
 	const statusOptions = useMemo<RadioOption<string | undefined>[]>(
 		() => [
-			{ value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-			{ value: "active", label: "Active", dotClass: "bg-green-500" },
-			{ value: "pending", label: "Pending", dotClass: "bg-netbird" },
-			{ value: "invited", label: "Invited", dotClass: "bg-yellow-400" },
-			{ value: "blocked", label: "Blocked", dotClass: "bg-red-500" },
+			{ value: undefined, label: tCommon("all"), dotClass: "bg-nb-gray-500" },
+			{ value: "active", label: t("active"), dotClass: "bg-green-500" },
+			{ value: "pending", label: t("pending"), dotClass: "bg-netbird" },
+			{ value: "invited", label: t("invited"), dotClass: "bg-yellow-400" },
+			{ value: "blocked", label: t("blocked"), dotClass: "bg-red-500" },
 		],
-		[],
+		[t, tCommon],
 	);
 
 	const roleOptions = useMemo<CheckboxOption<string>[]>(
 		() => [
-			{ value: "owner", label: "Owner" },
-			{ value: "admin", label: "Admin" },
-			{ value: "user", label: "User" },
-			{ value: "network_admin", label: "Network Admin" },
-			{ value: "billing_admin", label: "Billing Admin" },
-			{ value: "auditor", label: "Auditor" },
+			{ value: "owner", label: t("owner") },
+			{ value: "admin", label: t("admin") },
+			{ value: "user", label: t("user") },
+			{ value: "network_admin", label: t("networkAdmin") },
+			{ value: "billing_admin", label: t("billingAdmin") },
+			{ value: "auditor", label: t("auditor") },
 		],
-		[],
+		[t],
 	);
 
 	const filterDefs = useMemo<TableFilterDef[]>(
 		() => [
 			{
 				id: "status",
-				label: "Status",
+				label: t("status"),
 				renderPicker: (p) => (
 					<RadioPicker
 						value={p.value as string | undefined}
@@ -282,7 +283,7 @@ export default function UsersTable({
 			},
 			{
 				id: "role_filter",
-				label: "Role",
+				label: t("role"),
 				renderPicker: (p) => (
 					<CheckboxListPicker
 						value={p.value as string[] | undefined}
@@ -296,7 +297,7 @@ export default function UsersTable({
 			},
 			{
 				id: "group_names_filter",
-				label: "Groups",
+				label: t("groups"),
 				renderPicker: (p) => (
 					<GroupsPicker
 						value={p.value as string[] | undefined}
@@ -338,7 +339,7 @@ export default function UsersTable({
 			headingTarget={headingTarget}
 			isLoading={isLoading}
 			keepStateInLocalStorage={keepStateInLocalStorage}
-			text={"Users"}
+			text={t("title")}
 			sorting={sorting}
 			setSorting={setSorting}
 			columns={columns}
@@ -368,7 +369,7 @@ export default function UsersTable({
 						}
 					: onRowClick
 			}
-			searchPlaceholder={"Search by name, email or role..."}
+			searchPlaceholder={t("searchByNameEmailOrRole")}
 			getStartedCard={
 				!getStartedCard ? (
 					<GetStartedTest
@@ -379,10 +380,8 @@ export default function UsersTable({
 								size={"large"}
 							/>
 						}
-						title={"Add New Users"}
-						description={
-							"It looks like you don't have any users yet. Get started by inviting users to your account."
-						}
+						title={t("addNewUsers")}
+						description={t("addNewUsersDescription")}
 						button={
 							<div className={"flex flex-col items-center justify-center"}>
 								<InviteUserButton show={true} />
@@ -390,14 +389,14 @@ export default function UsersTable({
 						}
 						learnMore={
 							<>
-								Learn more about
+								{t("learnMoreAbout")}
 								<InlineLink
 									href={
 										"https://docs.netbird.io/how-to/add-users-to-your-network"
 									}
 									target={"_blank"}
 								>
-									Users
+									{t("title")}
 									<ExternalLinkIcon size={12} />
 								</InlineLink>
 							</>
@@ -454,7 +453,7 @@ export default function UsersTable({
 								onClick={() => setShowInvites(true)}
 							>
 								<Link2 size={14} />
-								Show Invites
+								{t("showInvites")}
 								<NotificationCountBadge count={validInvitesCount} />
 							</Button>
 						)}
@@ -476,6 +475,8 @@ export const InviteUserButton = ({
 	className,
 	groups,
 }: InviteUserButtonProps) => {
+	const t = useTranslations("users");
+	const tCommon = useTranslations("common");
 	const { permission } = usePermissions();
 	const account = useAccount();
 
@@ -494,7 +495,7 @@ export const InviteUserButton = ({
 	const button = (
 		<Button variant={"primary"} className={className} disabled={isDisabled}>
 			<MailPlus size={16} />
-			{isCloud ? "Invite User" : "Add User"}
+			{isCloud ? t("inviteUser") : t("addUser")}
 		</Button>
 	);
 
@@ -506,7 +507,7 @@ export const InviteUserButton = ({
 				content={
 					<div className={"flex flex-col"}>
 						<p className={"max-w-[200px] text-xs"}>
-							Local authentication is disabled. Use your IdP for authentication.
+							{t("localAuthDisabled")}
 						</p>
 						<div className={"text-xs mt-1.5"}>
 							<InlineLink
@@ -516,7 +517,7 @@ export const InviteUserButton = ({
 								target={"_blank"}
 								className={"flex gap-1 items-center"}
 							>
-								Learn more
+								{tCommon("learnMore")}
 								<ExternalLinkIcon size={12} />
 							</InlineLink>
 						</div>

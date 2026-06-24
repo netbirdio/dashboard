@@ -133,15 +133,17 @@ export default function ServiceUsersTable({
 		[],
 	);
 
+	const tUsers = useTranslations("users");
+
 	const roleOptions = useMemo<CheckboxOption<string>[]>(
 		() => [
 			{ value: "admin", label: tCommon("admin" as any) || "Admin" },
 			{ value: "user", label: tCommon("user" as any) || "User" },
-			{ value: "network_admin", label: "Network Admin" },
-			{ value: "billing_admin", label: "Billing Admin" },
-			{ value: "auditor", label: "Auditor" },
+			{ value: "network_admin", label: tUsers("networkAdmin") },
+			{ value: "billing_admin", label: tUsers("billingAdmin") },
+			{ value: "auditor", label: tUsers("auditor") },
 		],
-		[],
+		[tCommon, tUsers],
 	);
 
 	const filterDefs = useMemo<TableFilterDef[]>(
@@ -162,7 +164,7 @@ export default function ServiceUsersTable({
 			},
 			{
 				id: "role_filter",
-				label: tCommon("role" as any) || "Role",
+				label: tUsers("role"),
 				renderPicker: (p) => (
 					<CheckboxListPicker
 						value={p.value as string[] | undefined}
