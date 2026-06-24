@@ -40,7 +40,6 @@ type Props = {
 	onCanceled?: () => void;
 };
 export const PeerMultiSelect = ({ selectedPeers = {}, onCanceled }: Props) => {
-	const t = useTranslations("peers");
 	return (
 		<AnimatePresence>
 			{Object.keys(selectedPeers).length > 0 && (
@@ -57,6 +56,7 @@ const PeerGroupMassAssignmentContent = ({
 	selectedPeers = {},
 	onCanceled,
 }: Props) => {
+	const t = useTranslations("peers");
 	const { mutate } = useSWRConfig();
 	const { confirm } = useDialog();
 	const { permission } = usePermissions();

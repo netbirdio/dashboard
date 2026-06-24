@@ -22,7 +22,7 @@ export const UserResendInviteButton = ({ user }: Props) => {
     setIsLoading(true);
     notify({
       title: t("resendInviteNotify"),
-      description: t("resendingInviteTo", { email: user.email }),
+      description: t("resendingInviteTo", { email: user.email || "" }),
       promise: userRequest
         .post("", `/${user.id}/invite`)
         .finally(() => setIsLoading(false)),

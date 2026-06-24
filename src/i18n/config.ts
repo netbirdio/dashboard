@@ -25,10 +25,16 @@ export type Locale = (typeof locales)[number];
 /** Locale used when no preference is stored or detectable. */
 export const defaultLocale: Locale = "en";
 
+/** Human-readable label for each locale, shown in selectors and switchers. */
+export const LOCALE_LABELS: Record<Locale, string> = {
+  en: "English",
+  zh: "中文",
+};
+
 /** Message catalog keyed by locale. */
 export const messages: Record<Locale, typeof en> = {
   en,
-  zh: zh as unknown as typeof en,
+  zh,
 };
 
 /** Cookie name used to persist the user's locale choice. */

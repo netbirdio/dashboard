@@ -65,8 +65,8 @@ type Props = {
 };
 
 function createAccessControlTableColumns(
-  t: (key: string, params?: Record<string, unknown>) => string,
-  tCommon: (key: string) => string,
+  t: ReturnType<typeof useTranslations<"policies">>,
+  tCommon: ReturnType<typeof useTranslations<"common">>,
 ): ColumnDef<Policy>[] {
   return [
     {

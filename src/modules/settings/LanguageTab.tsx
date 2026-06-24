@@ -12,13 +12,7 @@ import { LanguagesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { useLocale } from "@/contexts/LocaleProvider";
-import { locales, type Locale } from "@/i18n/config";
-
-/** Human-readable label for each locale, shown in the selector. */
-const LOCALE_LABELS: Record<Locale, string> = {
-  en: "English",
-  zh: "中文",
-};
+import { locales, type Locale, LOCALE_LABELS } from "@/i18n/config";
 
 const options: SelectOption[] = locales.map((locale) => ({
   value: locale,

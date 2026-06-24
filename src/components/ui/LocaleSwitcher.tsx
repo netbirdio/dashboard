@@ -14,14 +14,8 @@ import { cn } from "@utils/helpers";
 import { CheckIcon, GlobeIcon } from "lucide-react";
 import { useState } from "react";
 import { useLocale } from "@/contexts/LocaleProvider";
-import { locales, type Locale } from "@/i18n/config";
+import { locales, type Locale, LOCALE_LABELS } from "@/i18n/config";
 import { useTranslations } from "next-intl";
-
-/** Human-readable label for each locale, shown in the switcher. */
-const LOCALE_LABELS: Record<Locale, string> = {
-  en: "English",
-  zh: "中文",
-};
 
 /**
  * Header control that switches the active locale. Writes the choice to the

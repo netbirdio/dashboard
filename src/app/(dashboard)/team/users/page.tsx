@@ -10,12 +10,14 @@ import useFetchApi from "@utils/api";
 import { isNetBirdCloud } from "@utils/netbird";
 import { ExternalLinkIcon, User2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { lazy, Suspense } from "react";
+import { lazy, Suspense } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
+import { AccountMfaCard } from "@/cloud/mfa/AccountMFACard";
+import { IdentityProviderCard } from "@/modules/integrations/idp-sync/IdentityProviderCard";
 
 const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 

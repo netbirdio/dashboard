@@ -864,10 +864,7 @@ export default function ActivityDescription({ event }: Props) {
           ip: m?.ip,
           platform: m?.platform,
           original_reason: m?.original_reason
-            ? t.rich("desc_compliance_original_reason", {
-                reason: m?.original_reason,
-                Value: (chunks) => <Value>{chunks}</Value>,
-              })
+            ? ` (original non-compliant reason: ${m.original_reason})`
             : "",
           Value: (chunks) => <Value>{chunks}</Value>,
         })}
