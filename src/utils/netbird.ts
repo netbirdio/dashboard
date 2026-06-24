@@ -58,6 +58,20 @@ export const hasLicensedFlag = () => {
   return config.licensed || isNetBirdCloud();
 };
 
+// isAgentNetworkOnly returns true for the dedicated Agent Network surface:
+// the regular UI (network routing, DNS, reverse proxy, activity) is hidden and
+// the Agent Network menu shows without a Beta badge.
+export const isAgentNetworkOnly = () => {
+  return config.agentNetworkOnly;
+};
+
+// isAgentNetworkEnabled returns true when the Agent Network product surface
+// (Providers, Policies, Usage & Logs) is available — in either the dedicated
+// "only" mode or alongside the regular UI (where it carries a Beta badge).
+export const isAgentNetworkEnabled = () => {
+  return config.agentNetworkEnabled || config.agentNetworkOnly;
+};
+
 export const isAuth0 = () => {
   return config.auth0Auth;
 };

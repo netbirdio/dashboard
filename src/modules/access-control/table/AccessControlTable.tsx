@@ -51,7 +51,6 @@ import AccessControlDirectionCell from "@/modules/access-control/table/AccessCon
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
 import AccessControlProtoPortsCell from "@/modules/access-control/table/AccessControlProtoPortsCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
-import { FirewallGPTButton } from "@/modules/firewall-gpt/FirewallGPTButton";
 import { FirewallGPTModal } from "@/modules/firewall-gpt/FirewallGPTModal";
 
 type Props = {
@@ -556,7 +555,6 @@ export default function AccessControlTable({
               }
               button={
                 <div className={"flex gap-4 items-center justify-center"}>
-                  <FirewallGPTButton onClick={() => setFirewallGPTOpen(true)} />
                   <AccessControlModal>
                     <Button
                       variant={"primary"}
@@ -589,7 +587,6 @@ export default function AccessControlTable({
           <>
             {policies && policies?.length > 0 && (
               <div className={"flex ml-auto gap-4 items-center"}>
-                <FirewallGPTButton onClick={() => setFirewallGPTOpen(true)} />
                 <AccessControlModal>
                   <Button
                     variant={"primary"}
