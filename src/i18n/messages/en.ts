@@ -98,6 +98,7 @@ export default {
     exitNode: "exit node",
     networkRoute: "network route",
     addRoute: "Add Route",
+    addPolicy: "Add Policy",
     newNetworkRouteDesc: "Create a new network route with this peer",
     existingNetworkDesc: "Add this peer to an existing network",
     networkRoutes: "Network Routes",
@@ -600,6 +601,41 @@ export default {
     policyDisableLoading: "Disabling policy...",
     policySaveLoading: "Saving policy...",
     policyDeleteLoading: "Deleting policy...",
+
+    // SSH Access Type
+    sshFullAccess: "Full Access",
+    sshLimitedAccess: "Limited Access",
+    sshAccessPlaceholder: "Select ssh access type...",
+
+    // SSH Authorized Groups
+    sshNoSourceGroups: "You have not added any source groups yet. Please add source groups in order to specify which user group has access to which system users on the destination machines.",
+
+    // SSH Username Selector
+    sshAllLocalUsers: "All Local Users",
+    sshUsernamePlaceholder: "E.g., root, ec2-user, ubuntu",
+    sshAddUsernameByPressing: "Add username by pressing '{key}'",
+
+    // AccessControlProtoPortsCell
+    nPorts: "{count} Ports",
+    netbirdSshTooltip: "NETBIRD-SSH",
+
+    // AccessControlPostureCheckCell
+    addPostureCheck: "Add Posture Check",
+    postureCheckCount: "{count} Posture Check(s)",
+
+    // useAccessControl notification
+    createPolicyTitle: "Create Access Control Policy",
+    createPolicySuccess: "Policy was created successfully.",
+    createPolicyLoading: "Creating your policy...",
+    policySaveSuccess: "The policy was successfully saved",
+
+    // AccessControlTable
+    tableHeading: "Access Control Policies",
+    searchByNameAndDescription: "Search by name and description...",
+    filterPort: "Port",
+    filterPostureChecks: "Posture Checks",
+    filterWith: "With",
+    filterWithout: "Without",
   },
   groups: {
     title: "Groups",
@@ -1316,6 +1352,94 @@ export default {
     dns: "DNS",
     recordTypeAAAA: "AAAA",
     recordTypeCNAME: "CNAME",
+    // Nameserver templates
+    customDNS: "Custom DNS",
+    customDNSDescription:
+      "Use custom nameservers to resolve domains in your network. You can either use a public DNS or your own nameservers.",
+    // NameserverModal - notifications
+    updateNameserverNotify: "Update Nameserver",
+    nameserverUpdatedSuccess: "Nameserver was updated successfully.",
+    updatingNameserver: "Updating your nameserver...",
+    nameserverCreatedSuccess: "Nameserver was created successfully.",
+    creatingNameserver: "Creating your nameserver...",
+    // NameserverModal - validation
+    nameLengthError: "Name should be less than 40 characters",
+    validIPError: "Please enter a valid IP, e.g., 192.168.1.0",
+    ipPlaceholder: "e.g., 172.16.0.0",
+    // NameserverActionCell
+    nameserverToggleSuccess: "Nameserver was successfully {status}.",
+    nameserverToggleLoading: "Updating your nameserver...",
+    nameserverDeletedSuccess: "The nameserver was successfully removed.",
+    deletingNameserver: "Deleting the nameserver...",
+    confirmDeleteNameserverTitle: "Delete '{name}'?",
+    confirmDeleteZoneTitle: "Delete zone '{name}'?",
+    nameserverActionsAria: "Nameserver actions",
+    enable: "Enable",
+    disable: "Disable",
+    port: "Port",
+    // NameserverGroupTable
+    searchNameserverPlaceholder: "Search by name, domains or nameservers...",
+    noNameserversGroupTitle: "This group is not used within any nameservers yet",
+    noNameserversGroupDesc: "Assign this group as a distribution group in your nameservers to see them listed here.",
+    noNameserversGetStartedDesc: "It looks like you don't have any nameservers. Get started by adding one to your network. Select a predefined or add your custom nameservers.",
+    // NameserverNameserversCell
+    serverCount: "{count} Servers",
+    // DNSZonesProvider - Zone notifications
+    notifyZoneAddedTitle: "DNS Zone '{name}'",
+    notifyZoneAddedDesc: "DNS Zone was added successfully.",
+    notifyZoneAddedLoading: "Adding DNS Zone...",
+    notifyZoneUpdatedTitle: "DNS Zone '{name}'",
+    notifyZoneUpdatedDesc: "DNS Zone was updated successfully.",
+    notifyZoneUpdatedLoading: "Updating DNS Zone...",
+    notifyZoneDeletedTitle: "DNS Zone '{name}'",
+    notifyZoneDeletedDesc: "DNS Zone was deleted successfully.",
+    notifyZoneDeletedLoading: "Deleting DNS Zone...",
+    // DNSZonesProvider - Record notifications
+    notifyRecordAddedTitle: "{type} Record '{name}'",
+    notifyRecordAddedDesc: "DNS Record was added successfully.",
+    notifyRecordAddedLoading: "Adding DNS Record...",
+    notifyRecordUpdatedTitle: "{type} Record '{name}'",
+    notifyRecordUpdatedDesc: "DNS Record was updated successfully.",
+    notifyRecordUpdatedLoading: "Updating DNS Record...",
+    notifyRecordDeletedTitle: "{type} Record '{name}'",
+    notifyRecordDeletedDesc: "DNS Record was deleted successfully.",
+    notifyRecordDeletedLoading: "Deleting DNS Record...",
+    // DNSZonesProvider - Confirm/Ask dialogs
+    confirmDeleteZoneDesc: "Are you sure you want to delete this zone? This action cannot be undone.",
+    confirmDeleteRecordTitle: "Delete record '{name}'?",
+    confirmDeleteRecordDesc: "Are you sure you want to delete this record? This action cannot be undone.",
+    askForRecordTitle: "Add new record to '{name}'?",
+    askForRecordDesc: "Add either an A, AAAA or a CNAME record to control domain name resolution for your network.",
+    askForRecordCancel: "Later",
+    // DNSZoneModal
+    validDomainErrorZone: "Please enter a valid domain, e.g. internal, company.internal or intra.example.com",
+    // DNSRecordModal
+    validIPv4Error: "Please enter a valid IPv4 address, e.g. 192.168.1.1",
+    validIPv6Error: "Please enter a valid IPv6 address, e.g. 2001:0db8:85a3::8a2e:0370:7334",
+    validCnameError: "Please enter a valid domain, e.g. example.com or server.example.com",
+    updateRecordDesc: "Update record of '{zone}' zone",
+    addRecordDesc: "Add new record to the '{zone}' zone",
+    ipv4Placeholder: "192.168.1.1",
+    ipv6Placeholder: "2001:0db8:85a3::8a2e:0370:7334",
+    cnamePlaceholder: "e.g., example.com or intra.example.com",
+    // TTL plural units
+    hours: "Hours",
+    days: "Days",
+    // DNSZonesTable
+    zoneColumn: "Zone",
+    recordsColumn: "Records",
+    searchDomainColumn: "Search Domain",
+    searchZonePlaceholder: "Search by domain, ip, content or group...",
+    noZonesGroupTitle: "This group is not used within any zones yet",
+    noZonesGroupDesc: "Assign this group as a distribution group in your zones to see them listed here.",
+    noZonesGetStartedDesc: "It looks like you don't have any zones. Control domain name resolution for your network by adding a zone.",
+    addZone: "Add Zone",
+    // DNSZonesActionCell
+    zoneActionsAria: "Zone actions",
+    // DNSZonesRecordsCell
+    addRecordBtn: "Add",
+    // DNSRecordsTable
+    contentColumn: "Content",
   },
   networks: {
     title: "Networks",
@@ -1413,6 +1537,190 @@ export default {
     additionalSettings: "Additional Settings",
     accessControlGroups: "Access Control Groups",
     autoApply: "Auto Apply",
+
+    // NetworkProvider.tsx
+    confirmDeleteNetworkTitle: "Delete network '{name}'?",
+    confirmDeleteNetworkDesc:
+      "Every resource and routing peers will be removed from this network. This action cannot be undone.",
+    networkDeleted: "Network deleted successfully.",
+    networkDeleting: "Deleting network...",
+    confirmDeleteResourceTitle: "Delete resource '{name}'?",
+    confirmDeleteResourceDesc:
+      "Are you sure you want to delete this resource? This action cannot be undone.",
+    resourceDeleted: "Resource deleted successfully.",
+    resourceDeleting: "Deleting resource...",
+    confirmRemoveRouterTitle: "Remove this router?",
+    confirmRemoveRouterDesc:
+      "Are you sure you want to remove this router?",
+    routerRemoved: "Router deleted successfully.",
+    routerRemoving: "Deleting router...",
+    confirmAddRoutingPeerTitle: "Add Routing Peer to '{name}'?",
+    confirmAddRoutingPeerDesc:
+      "Without a routing peer, the resources inside this network will not be accessible by any peers.",
+    later: "Later",
+    confirmAddResourceTitle: "Add Resource to '{name}'?",
+    confirmAddResourceDesc:
+      "Peers will be able to access your network resources once you add them.",
+    multiResourceTitle:
+      "This policy is used by multiple resources",
+    multiResourceDesc:
+      "This policy uses one or many resource group(s) as destinations. {action} this policy will also affect following resources:",
+    deletePolicyDesc:
+      "Are you sure you want to delete this policy? This action cannot be undone.",
+    remainingMore: "+ {count} more",
+
+    // NetworkRangeCell.tsx
+    exitNode: "Exit Node",
+
+    // NetworkActionCell.tsx + network/page.tsx
+    viewDetails: "View Details",
+    renameNetwork: "Rename",
+
+    // PolicyCell.tsx
+    accessPolicies: "Access Policie(s)",
+
+    // NetworkRoutingPeerCell.tsx + network/page.tsx
+    highAvailabilityInactiveText:
+      "High availability is currently {status} for this network.",
+    highAvailabilityActiveText:
+      "High availability is {status} for this network.",
+    highAvailabilityHelpActive:
+      "You can add more routing peers to increase the availability of this network.",
+    highAvailabilityHelpInactive:
+      "Go ahead and add more routing peers or groups with routing peers to enable high availability for this network.",
+    highAvailability: "High Availability",
+    peerCount: "{count} Peer(s)",
+
+    // ResourcesTable.tsx
+    address: "Address",
+    searchResources: "Search by name, address or group...",
+    exposed: "Exposed",
+    notExposed: "Not Exposed",
+    noAssignedResources: "This group has no assigned resources",
+    noAssignedResourcesDesc:
+      "Assign this group to your resources inside your networks to see them listed here.",
+    noNetworkResources: "This network has no resources",
+    noNetworkResourcesDesc:
+      "Add resources to this network to control what peers can access. Resources can be anything from a single IP, a subnet, or a domain.",
+
+    // ResourcesTabContent.tsx
+    resourcesTabDescription:
+      "Add resources to this network to control what peers can access. <link>Learn more</link>",
+
+    // ResourceActionCell.tsx
+    resourceEdit: "Edit",
+    resourceEnable: "Enable",
+    resourceDisable: "Disable",
+    resourceDelete: "Delete",
+
+    // ResourceAddressCell.tsx
+    addressCopied: "{address} has been copied to your clipboard",
+
+    // ResourceEnabledCell.tsx
+    updateResource: "Update Resource",
+    resourceNowEnabled: "'{name}' is now enabled",
+    resourceNowDisabled: "'{name}' is now disabled",
+    updatingResource: "Updating resource...",
+
+    // ResourceExposeServiceCell.tsx
+    expose: "Expose",
+
+    // ResourceSingleAddressInput.tsx
+    addressLabel: "Address",
+    addressDescription:
+      "Enter a single IP address, CIDR block or domain name",
+    addressPlaceholder: "Address (IP, CIDR or Domain)",
+    domainError:
+      "Please enter a valid domain, e.g. service.internal, example.com or *.example.com",
+    ipCidrError:
+      "Please enter a valid IP or CIDR, e.g., 10.0.0.21, 192.168.1.0/24, 2001:db8::1 or 2001:db8::/64",
+    ipAddressTooltip:
+      "A single host address, e.g., 10.0.0.1 or 192.168.1.5. Use this to give access to a specific machine or service.",
+    cidrBlockTooltip:
+      "To give access to an entire subnet, use a CIDR block. For example, 10.0.0.0/24 or 192.168.1.0/24.",
+    domainNameTooltip:
+      "A DNS domain name, e.g., service.internal, example.com or *.example.com to match all subdomains.",
+
+    // ResourceTypeCell.tsx
+    singleIP: "Single IP",
+    ipRange: "IP Range",
+
+    // NetworkRoutingPeersTabContent.tsx
+    routingPeersTabDescription:
+      "Add routing peers to this network to access resources inside this network. <link>Learn more</link>",
+
+    // NetworkRoutingPeersTable.tsx
+    peer: "Peer",
+    searchRoutingPeers: "Search by peer name, group name...",
+    noRoutingPeers: "This network has no routing peers",
+    noRoutingPeersDesc:
+      "Add routing peers to this network to access resources inside this network.",
+
+    // RoutingPeersActionCell.tsx
+    routerEdit: "Edit",
+    routerEnable: "Enable",
+    routerDisable: "Disable",
+    remove: "Remove",
+    networkRoutingPeer: "Network Routing Peer",
+
+    // RoutingPeerMasqueradeSwitch.tsx
+    masquerade: "Masquerade",
+    masqueradeHelp:
+      "Allow access to your private networks without configuring routes on your local routers or other devices.",
+    masqueradeTooltip:
+      "Masquerade needs to be enabled for non-Linux routing peers.",
+    masqueradeEnabled: "Masquerade is now enabled",
+    masqueradeDisabled: "Masquerade is now disabled",
+    updatingMasquerade: "Updating masquerade...",
+    masqueradeNonLinuxWarning:
+      "Group <important>{groupName}</important> contains at least one non-Linux peer. Disabled Masquerade will have no effect on non-Linux routing peers.",
+
+    // NetworkRoutesDeprecationInfo.tsx
+    routesDeprecationInfo:
+      "Network Routes will be deprecated and replaced with Networks.",
+
+    // NetworkModal.tsx
+    modalAccessDescription:
+      "Access internal resources in LANs and VPC by adding a network.",
+    networkCreated: "Network created successfully.",
+    networkCreating: "Creating network...",
+    networkUpdated: "Network updated successfully.",
+    networkUpdating: "Updating network...",
+
+    // NetworkResourceModal.tsx
+    resourceCreated: "Resource Created",
+    resourceCreatedDesc:
+      'The resource "{name}" has been created successfully.',
+    resourceCreating: "Creating resource...",
+    resourceUpdated: "Resource Updated",
+    resourceUpdatedDesc:
+      'Resource "{name}" has been updated successfully.',
+    resourceUpdating: "Updating resource...",
+    nameAlreadyExists:
+      "A resource with this name already exists. Please use another name.",
+    noPoliciesConfirmTitle:
+      "No Access Control Policies Configured",
+    noPoliciesConfirmDesc:
+      "Without access control policies, this resource will not be accessible by any peers. You can also create policies later. Are you sure you want to continue?",
+    resourceAddNewDesc: 'Add new resource to "{networkName}"',
+    resourceGroupsLearnMore:
+      "Learn more about <link>Resources</link>",
+
+    // NetworkResourceAccessControl.tsx
+    editPolicy: "Edit Policy",
+    deletePolicy: "Delete Policy",
+
+    // ResourceGroupModal.tsx
+    resourceGroupsModalTitle: "Resource Groups",
+    resourceGroupsModalDesc:
+      "Add this resource to a group (e.g., Databases, Web Servers) and reference the group in access policies to simplify management.",
+    saveGroups: "Save Groups",
+    groupUpdated: "'{name}' groups updated",
+    updatingGroups: "Updating resource groups...",
+
+    // ResourcesTable column headers
+    resourceColumn: "Resource",
+    policiesColumn: "Policies",
   },
   postureChecks: {
     title: "Posture Checks",
@@ -2061,6 +2369,174 @@ export default {
     logout: "Logout",
     subscribeTo: "Subscribe to",
     downgradeTo: "Downgrade to",
+  },
+  routes: {
+    // Table columns
+    colName: "Name",
+    colMetric: "Metric",
+    colDistributionGroups: "Distribution Groups",
+    colAccessControlGroups: "Access Control Groups",
+    colAutoApply: "Auto Apply",
+    tableTitle: "Network Routes",
+
+    // Create route modal - header
+    setupExitNode: "Set Up Exit Node",
+    addExitNode: "Add Exit Node",
+    createNewRoute: "Create New Route",
+    routeAllThroughPeer: "Route all traffic through the peer '{name}'",
+    routeAllInternet: "Route all internet traffic through a peer",
+    createDescription: "Access LANs and VPC by adding a network route.",
+
+    // Create route modal - create policy prompt
+    createPolicyConfirm:
+      "Do you want to create a new access control policy for the route '{name}'?",
+    createPolicyDescription:
+      "You have one or more access control groups added to this route. These groups allow you to limit access to this route by using them in access policies.",
+    createPolicyConfirmText: "Create Policy",
+    createPolicyCancelText: "Later",
+
+    // Tabs
+    tabRoute: "Route",
+    tabGroups: "Groups",
+    tabNameDescription: "Name & Description",
+    tabSettings: "Settings",
+
+    // Domains section
+    addDomainsHelp:
+      "Add domains that dynamically resolve to one or more IPv4 addresses. <br /> A maximum of 32 domains can be added.",
+    addDomain: "Add Domain",
+    keepRoutesTooltip:
+      "DNS records for load-balanced systems often change. Keeping resolved addresses ensures ongoing connections to active resources remain uninterrupted.",
+    keepRoutes: "Keep Routes",
+    keepRoutesHelp:
+      "Retain previously resolved routes after IP address updates to maintain stable connections.",
+
+    // Routing peer section
+    assignSinglePeer:
+      "Assign a single peer as a routing peer for the {type}",
+    assignPeerGroup:
+      "Assign a peer group with machines to be used as {type}",
+    exitNode: "exit node",
+    exitNodes: "exit nodes",
+    networkRoute: "network route",
+    routingPeers: "routing peers",
+
+    // Distribution groups help
+    routeAllTrafficPeer:
+      "Route all internet traffic through this peer for the following groups",
+    routeAllTrafficPeers:
+      "Route all internet traffic through the peer(s) for the following groups",
+    advertiseRouteToGroups:
+      "Advertise this route to peers that belong to the following groups",
+
+    // Access control groups
+    accessControlGroupsOptional: "Access Control Groups (optional)",
+    accessControlGroupsHelpCreate:
+      "These groups allow you to limit access to this route. Simply use these groups as a destination when creating access policies.",
+    accessControlGroupsHelpUpdate:
+      "These groups offer a more granular control of internal services in your network. They can be used in access control policies to limit and control access of this route.",
+
+    // General / Name & Description
+    networkIdentifierHelp:
+      "Add a unique network identifier that is assigned to each device.",
+    networkIdentifierPlaceholder: "e.g., aws-eu-central-1-vpc",
+    descriptionHelp:
+      "Write a short description to add more context to this route.",
+    descriptionPlaceholder:
+      "e.g., Route to access all devices in the AWS VPC, located in Frankfurt.",
+
+    // Settings
+    enableRoute: "Enable Route",
+    enableRouteHelp:
+      "Use this switch to enable or disable the route.",
+    autoApplyRoute: "Auto Apply Route",
+    autoApplyRouteHelp:
+      "Automatically apply this exit node to your distribution groups. This requires NetBird client v0.55.0 or higher.",
+    metricHelp: "A lower metric indicates higher priority routes.",
+
+    // Footer links
+    learnMore: "Learn more about",
+    continueBtn: "Continue",
+    addRouteBtn: "Add Route",
+    addExitNodeBtn: "Add Exit Node",
+
+    // Update modal
+    updateTitle: "Update {name}",
+    updateTabDescription: "Description",
+    metricError: "Metric must be between 1 and 9999",
+    saveChanges: "Save Changes",
+
+    // Action cell
+    deleteRouteNotify: "Delete Route",
+    routeRemoved: "Route was successfully removed",
+    deletingRoute: "Deleting the route...",
+    deleteDialogTitle: "Delete '{name}'?",
+    deleteDialogDescription:
+      "Are you sure you want to delete this route? This action cannot be undone.",
+    deleteDialogConfirm: "Delete",
+    routeEnabledSuccess: "The network route was successfully enabled",
+    routeDisabledSuccess: "The network route was successfully disabled",
+    routeActionsLabel: "Route actions",
+    actionEdit: "Edit",
+    actionDisable: "Disable",
+    actionEnable: "Enable",
+    actionDelete: "Delete",
+
+    // Auto apply cell
+    autoApplyEnabled: "Auto Apply was enabled for the route",
+    autoApplyDisabled: "Auto Apply was disabled for the route",
+
+    // Add routing peer modal
+    addRoutingPeerDescription:
+      "When you add multiple routing peers, NetBird enables high availability for this network.",
+    routeSelectorHelp:
+      "Network name and CIDR that you are adding the route to.",
+    assignSinglePeerRoute:
+      "Assign a single peer as a routing peer for the network route.",
+    peerAddedToRoute: "Peer was successfully added to the route",
+
+    // NetworkRoutesTable column headers
+    colNetwork: "Network",
+    colType: "Type",
+    colHighAvailability: "High Availability",
+    filterStatus: "Status",
+    searchRoutes: "Search by network, range, name or groups...",
+    groupNoRoutesTitle:
+      "This group is not used within any network routes yet",
+    groupNoRoutesDescription:
+      "Assign this group when creating a new route to see them listed here.",
+    getStartedDescription:
+      "It looks like you don't have any routes. Access LANs and VPC by adding a network route.",
+
+    // High availability cell
+    haDisabled:
+      "High availability is currently disabled for this route.",
+    haEnabled:
+      "High availability is enabled for this route.",
+    haAddMorePeersTooltip:
+      "Go ahead and add more routing peers to enable high availability for this network route.",
+    haIncreasePeersTooltip:
+      "You can add more peers to increase the availability of this network route.",
+    haAddToGroupTooltip:
+      "To configure, you must add more peers to a group in this route. You can do it in the Peers menu.",
+    haAddFromPeersTooltip:
+      "You can add more peers to a group in this route by going to the peers page.",
+    haPeerCount: "{count} Peer(s)",
+    haDisabledBadge: "Disabled",
+    goToPeers: "Go to Peers",
+    addPeer: "Add Peer",
+
+    // GroupedRouteActionCell
+    deleteNetworkNotify: "Delete Network",
+    networkRemoved: "Network was successfully removed",
+    deletingNetwork: "Deleting the network...",
+    deleteNetworkConfirmTitle: "Delete network '{name}'?",
+    deleteNetworkConfirmDescription:
+      "Are you sure you want to delete this network? All routes inside this network will be deleted. This action cannot be undone.",
+
+    // Badge labels
+    exitNodeLabel: "Exit Node",
+    routingPeersBadge: "Routing Peers",
   },
   onboarding: {
     title: "Get started with NetBird",

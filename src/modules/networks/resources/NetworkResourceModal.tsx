@@ -153,16 +153,16 @@ export function ResourceModalContent({
   const nameError = useMemo(() => {
     if (name === "") return "";
     if (resourceExists(name, resource?.id))
-      return "A resource with this name already exists. Please use another name.";
+      return t("nameAlreadyExists");
     return "";
-  }, [name, resourceExists, resource?.id]);
+  }, [name, resourceExists, resource?.id, t]);
 
   const confirmMissingPolicies = async () => {
     if (allResourcePolicies.length > 0) return true;
     return confirm({
-      title: "No Access Control Policies Configured",
+      title: t("noPoliciesConfirmTitle"),
       description:
-        "Without access control policies, this resource will not be accessible by any peers. You can also create policies later. Are you sure you want to continue?",
+        t("noPoliciesConfirmDesc"),
       type: "warning",
       confirmText: resource ? t("saveChanges") : t("addResource"),
       cancelText: tCommon("cancel"),
@@ -185,9 +185,9 @@ export function ResourceModalContent({
     });
 
     notify({
-      title: "Resource Created",
-      description: `The resource "${name}" has been created successfully.`,
-      loadingMessage: "Creating resource...",
+      title: t("resourceCreated"),
+      description: t("resourceCreatedDesc", { name }),
+      loadingMessage: t("resourceCreating"),
       promise,
     });
 
@@ -208,9 +208,9 @@ export function ResourceModalContent({
       onUpdated?.(r);
     });
     notify({
-      title: "Resource Updated",
-      description: `Resource "${name}" has been updated successfully.`,
-      loadingMessage: "Updating resource...",
+      title: t("resourceUpdated"),
+      description: t("resourceUpdatedDesc", { name }),
+      loadingMessage: t("resourceUpdating"),
       promise,
     });
   };
@@ -231,7 +231,7 @@ export function ResourceModalContent({
         description={
           resource
             ? `${resource.name}`
-            : `Add new resource to "${network?.name}"`
+            : t("resourceAddNewDesc", { networkName: network?.name })
         }
         color={"yellow"}
       />
@@ -394,14 +394,17 @@ data-testid="resource-name-input"
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
-            <InlineLink
-              href={"https://docs.netbird.io/how-to/networks#resources"}
-              target={"_blank"}
-            >
-              Resources
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            {t.rich("resourceGroupsLearnMore", {
+              link: (chunks) => (
+                <InlineLink
+                  href={"https://docs.netbird.io/how-to/networks#resources"}
+                  target={"_blank"}
+                >
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+            })}
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>

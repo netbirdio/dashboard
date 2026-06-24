@@ -96,6 +96,7 @@ export default {
     exitNode: "出口节点",
     networkRoute: "网络路由",
     addRoute: "添加路由",
+    addPolicy: "添加策略",
     newNetworkRouteDesc: "使用此节点创建新的网络路由",
     existingNetworkDesc: "将此节点添加到现有网络",
     networkRoutes: "网络路由",
@@ -580,6 +581,41 @@ export default {
     policyDisableLoading: "正在禁用策略...",
     policySaveLoading: "正在保存策略...",
     policyDeleteLoading: "正在删除策略...",
+
+    // SSH 访问类型
+    sshFullAccess: "完全访问",
+    sshLimitedAccess: "受限访问",
+    sshAccessPlaceholder: "选择 SSH 访问类型...",
+
+    // SSH 授权组
+    sshNoSourceGroups: "您尚未添加任何源组。请添加源组以指定哪些用户组可以访问目标机器上的哪些系统用户。",
+
+    // SSH 用户名选择器
+    sshAllLocalUsers: "所有本地用户",
+    sshUsernamePlaceholder: "例如：root、ec2-user、ubuntu",
+    sshAddUsernameByPressing: "按 '{key}' 键添加用户名",
+
+    // 协议端口单元格
+    nPorts: "{count} 个端口",
+    netbirdSshTooltip: "NETBIRD-SSH",
+
+    // 姿态检查单元格
+    addPostureCheck: "添加姿态检查",
+    postureCheckCount: "{count} 个姿态检查",
+
+    // useAccessControl 通知
+    createPolicyTitle: "创建访问控制策略",
+    createPolicySuccess: "策略创建成功。",
+    createPolicyLoading: "正在创建策略...",
+    policySaveSuccess: "策略已成功保存",
+
+    // AccessControlTable
+    tableHeading: "访问控制策略",
+    searchByNameAndDescription: "按名称和描述搜索...",
+    filterPort: "端口",
+    filterPostureChecks: "姿态检查",
+    filterWith: "包含",
+    filterWithout: "不包含",
   },
   groups: {
     title: "组",
@@ -1242,6 +1278,94 @@ export default {
     dns: "DNS",
     recordTypeAAAA: "AAAA",
     recordTypeCNAME: "CNAME",
+    // Nameserver templates
+    customDNS: "自定义 DNS",
+    customDNSDescription:
+      "使用自定义名称服务器解析网络中的域名。您可以使用公共 DNS 或自己的名称服务器。",
+    // NameserverModal - notifications
+    updateNameserverNotify: "更新名称服务器",
+    nameserverUpdatedSuccess: "名称服务器更新成功。",
+    updatingNameserver: "正在更新名称服务器...",
+    nameserverCreatedSuccess: "名称服务器创建成功。",
+    creatingNameserver: "正在创建名称服务器...",
+    // NameserverModal - validation
+    nameLengthError: "名称不能超过 40 个字符",
+    validIPError: "请输入有效的 IP 地址，例如 192.168.1.0",
+    ipPlaceholder: "例如：172.16.0.0",
+    // NameserverActionCell
+    nameserverToggleSuccess: "名称服务器已成功{status}。",
+    nameserverToggleLoading: "正在更新名称服务器...",
+    nameserverDeletedSuccess: "名称服务器已成功移除。",
+    deletingNameserver: "正在删除名称服务器...",
+    confirmDeleteNameserverTitle: "删除 '{name}'？",
+    confirmDeleteZoneTitle: "删除区域 '{name}'？",
+    nameserverActionsAria: "名称服务器操作",
+    enable: "启用",
+    disable: "禁用",
+    port: "端口",
+    // NameserverGroupTable
+    searchNameserverPlaceholder: "按名称、域名或名称服务器搜索...",
+    noNameserversGroupTitle: "此组尚未在任何名称服务器中使用",
+    noNameserversGroupDesc: "将此组分配为名称服务器中的分发组，即可在此处查看。",
+    noNameserversGetStartedDesc: "看起来您还没有任何名称服务器。添加一个到您的网络即可开始使用。选择预定义的或添加自定义名称服务器。",
+    // NameserverNameserversCell
+    serverCount: "{count} 个服务器",
+    // DNSZonesProvider - Zone notifications
+    notifyZoneAddedTitle: "DNS 区域 '{name}'",
+    notifyZoneAddedDesc: "DNS 区域添加成功。",
+    notifyZoneAddedLoading: "正在添加 DNS 区域...",
+    notifyZoneUpdatedTitle: "DNS 区域 '{name}'",
+    notifyZoneUpdatedDesc: "DNS 区域更新成功。",
+    notifyZoneUpdatedLoading: "正在更新 DNS 区域...",
+    notifyZoneDeletedTitle: "DNS 区域 '{name}'",
+    notifyZoneDeletedDesc: "DNS 区域删除成功。",
+    notifyZoneDeletedLoading: "正在删除 DNS 区域...",
+    // DNSZonesProvider - Record notifications
+    notifyRecordAddedTitle: "{type} 记录 '{name}'",
+    notifyRecordAddedDesc: "DNS 记录添加成功。",
+    notifyRecordAddedLoading: "正在添加 DNS 记录...",
+    notifyRecordUpdatedTitle: "{type} 记录 '{name}'",
+    notifyRecordUpdatedDesc: "DNS 记录更新成功。",
+    notifyRecordUpdatedLoading: "正在更新 DNS 记录...",
+    notifyRecordDeletedTitle: "{type} 记录 '{name}'",
+    notifyRecordDeletedDesc: "DNS 记录删除成功。",
+    notifyRecordDeletedLoading: "正在删除 DNS 记录...",
+    // DNSZonesProvider - Confirm/Ask dialogs
+    confirmDeleteZoneDesc: "确定要删除此区域吗？此操作无法撤销。",
+    confirmDeleteRecordTitle: "删除记录 '{name}'？",
+    confirmDeleteRecordDesc: "确定要删除此记录吗？此操作无法撤销。",
+    askForRecordTitle: "向 '{name}' 添加新记录？",
+    askForRecordDesc: "添加 A、AAAA 或 CNAME 记录以控制网络的域名解析。",
+    askForRecordCancel: "稍后",
+    // DNSZoneModal
+    validDomainErrorZone: "请输入有效域名，例如 internal, company.internal 或 intra.example.com",
+    // DNSRecordModal
+    validIPv4Error: "请输入有效的 IPv4 地址，例如 192.168.1.1",
+    validIPv6Error: "请输入有效的 IPv6 地址，例如 2001:0db8:85a3::8a2e:0370:7334",
+    validCnameError: "请输入有效域名，例如 example.com 或 server.example.com",
+    updateRecordDesc: "更新 '{zone}' 区域的记录",
+    addRecordDesc: "向 '{zone}' 区域添加新记录",
+    ipv4Placeholder: "192.168.1.1",
+    ipv6Placeholder: "2001:0db8:85a3::8a2e:0370:7334",
+    cnamePlaceholder: "例如：example.com 或 intra.example.com",
+    // TTL plural units
+    hours: "小时",
+    days: "天",
+    // DNSZonesTable
+    zoneColumn: "区域",
+    recordsColumn: "记录",
+    searchDomainColumn: "搜索域名",
+    searchZonePlaceholder: "按域名、IP、内容或组搜索...",
+    noZonesGroupTitle: "此组尚未在任何区域中使用",
+    noZonesGroupDesc: "将此组分配为区域中的分发组，即可在此处查看。",
+    noZonesGetStartedDesc: "看起来您还没有任何区域。添加一个区域来控制网络的域名解析。",
+    addZone: "添加区域",
+    // DNSZonesActionCell
+    zoneActionsAria: "区域操作",
+    // DNSZonesRecordsCell
+    addRecordBtn: "添加",
+    // DNSRecordsTable
+    contentColumn: "内容",
   },
   networks: {
     title: "网络",
@@ -1334,6 +1458,189 @@ export default {
     additionalSettings: "其他设置",
     accessControlGroups: "访问控制组",
     autoApply: "自动应用",
+
+    // NetworkProvider.tsx
+    confirmDeleteNetworkTitle: "删除网络「{name}」？",
+    confirmDeleteNetworkDesc:
+      "所有资源和路由节点都将从该网络中移除。此操作无法撤销。",
+    networkDeleted: "网络已成功删除。",
+    networkDeleting: "正在删除网络...",
+    confirmDeleteResourceTitle: "删除资源「{name}」？",
+    confirmDeleteResourceDesc:
+      "确定要删除此资源吗？此操作无法撤销。",
+    resourceDeleted: "资源已成功删除。",
+    resourceDeleting: "正在删除资源...",
+    confirmRemoveRouterTitle: "移除此路由节点？",
+    confirmRemoveRouterDesc:
+      "确定要移除此路由节点吗？",
+    routerRemoved: "路由节点已成功删除。",
+    routerRemoving: "正在删除路由节点...",
+    confirmAddRoutingPeerTitle: "为「{name}」添加路由节点？",
+    confirmAddRoutingPeerDesc:
+      "如果没有路由节点，此网络内的资源将无法被任何节点访问。",
+    later: "稍后",
+    confirmAddResourceTitle: "为「{name}」添加资源？",
+    confirmAddResourceDesc:
+      "添加资源后，节点即可访问您的网络资源。",
+    multiResourceTitle:
+      "此策略被多个资源使用",
+    multiResourceDesc:
+      "此策略将一个或多个资源组作为目标。{action}此策略也将影响以下资源：",
+    deletePolicyDesc:
+      "确定要删除此策略吗？此操作无法撤销。",
+    remainingMore: "+ 其余 {count} 个",
+
+    // NetworkRangeCell.tsx
+    exitNode: "出口节点",
+
+    // NetworkActionCell.tsx + network/page.tsx
+    viewDetails: "查看详情",
+    renameNetwork: "重命名",
+
+    // PolicyCell.tsx
+    accessPolicies: "个访问策略",
+
+    // NetworkRoutingPeerCell.tsx + network/page.tsx
+    highAvailabilityInactiveText:
+      "此网络的高可用性当前{status}。",
+    highAvailabilityActiveText:
+      "此网络的高可用性{status}。",
+    highAvailabilityHelpActive:
+      "您可以添加更多路由节点来提高此网络的可用性。",
+    highAvailabilityHelpInactive:
+      "请添加更多路由节点或包含路由节点的组，以启用此网络的高可用性。",
+    highAvailability: "高可用性",
+    peerCount: "{count} 个节点",
+
+    // ResourcesTable.tsx
+    address: "地址",
+    searchResources: "按名称、地址或组搜索...",
+    exposed: "已暴露",
+    notExposed: "未暴露",
+    noAssignedResources: "此组没有已分配的资源",
+    noAssignedResourcesDesc:
+      "将此组分配给网络中的资源，即可在此处查看。",
+    noNetworkResources: "此网络没有资源",
+    noNetworkResourcesDesc:
+      "向此网络添加资源以控制节点可访问的内容。资源可以是单个 IP、子网或域名。",
+
+    // ResourcesTabContent.tsx
+    resourcesTabDescription:
+      "向此网络添加资源以控制节点可访问的内容。<link>了解更多</link>",
+
+    // ResourceActionCell.tsx
+    resourceEdit: "编辑",
+    resourceEnable: "启用",
+    resourceDisable: "禁用",
+    resourceDelete: "删除",
+
+    // ResourceAddressCell.tsx
+    addressCopied: "{address} 已复制到剪贴板",
+
+    // ResourceEnabledCell.tsx
+    updateResource: "更新资源",
+    resourceNowEnabled: "「{name}」已启用",
+    resourceNowDisabled: "「{name}」已禁用",
+    updatingResource: "正在更新资源...",
+
+    // ResourceExposeServiceCell.tsx
+    expose: "暴露",
+
+    // ResourceSingleAddressInput.tsx
+    addressLabel: "地址",
+    addressDescription: "输入单个 IP 地址、CIDR 块或域名",
+    addressPlaceholder: "地址（IP、CIDR 或域名）",
+    domainError:
+      "请输入有效域名，例如 service.internal、example.com 或 *.example.com",
+    ipCidrError:
+      "请输入有效的 IP 或 CIDR，例如 10.0.0.21、192.168.1.0/24、2001:db8::1 或 2001:db8::/64",
+    ipAddressTooltip:
+      "单个主机地址，例如 10.0.0.1 或 192.168.1.5。用于授予对特定机器或服务的访问权限。",
+    cidrBlockTooltip:
+      "若要授予对整个子网的访问权限，请使用 CIDR 块。例如 10.0.0.0/24 或 192.168.1.0/24。",
+    domainNameTooltip:
+      "DNS 域名，例如 service.internal、example.com 或 *.example.com（匹配所有子域名）。",
+
+    // ResourceTypeCell.tsx
+    singleIP: "单个 IP",
+    ipRange: "IP 范围",
+
+    // NetworkRoutingPeersTabContent.tsx
+    routingPeersTabDescription:
+      "向此网络添加路由节点以访问此网络内的资源。<link>了解更多</link>",
+
+    // NetworkRoutingPeersTable.tsx
+    peer: "节点",
+    searchRoutingPeers: "按节点名称或组名称搜索...",
+    noRoutingPeers: "此网络没有路由节点",
+    noRoutingPeersDesc:
+      "向此网络添加路由节点以访问此网络内的资源。",
+
+    // RoutingPeersActionCell.tsx
+    routerEdit: "编辑",
+    routerEnable: "启用",
+    routerDisable: "禁用",
+    remove: "移除",
+    networkRoutingPeer: "网络路由节点",
+
+    // RoutingPeerMasqueradeSwitch.tsx
+    masquerade: "Masquerade",
+    masqueradeHelp:
+      "允许访问您的私有网络，无需在本地路由器或其他设备上配置路由。",
+    masqueradeTooltip:
+      "非 Linux 路由节点需要启用 Masquerade。",
+    masqueradeEnabled: "Masquerade 已启用",
+    masqueradeDisabled: "Masquerade 已禁用",
+    updatingMasquerade: "正在更新 Masquerade...",
+    masqueradeNonLinuxWarning:
+      "组 <important>{groupName}</important> 包含至少一个非 Linux 节点。禁用的 Masquerade 对非 Linux 路由节点无效。",
+
+    // NetworkRoutesDeprecationInfo.tsx
+    routesDeprecationInfo:
+      "网络路由将被弃用，并由网络功能替代。",
+
+    // NetworkModal.tsx
+    modalAccessDescription:
+      "通过添加网络来访问局域网和 VPC 中的内部资源。",
+    networkCreated: "网络创建成功。",
+    networkCreating: "正在创建网络...",
+    networkUpdated: "网络更新成功。",
+    networkUpdating: "正在更新网络...",
+
+    // NetworkResourceModal.tsx
+    resourceCreated: "资源已创建",
+    resourceCreatedDesc:
+      "资源「{name}」已成功创建。",
+    resourceCreating: "正在创建资源...",
+    resourceUpdated: "资源已更新",
+    resourceUpdatedDesc:
+      "资源「{name}」已成功更新。",
+    resourceUpdating: "正在更新资源...",
+    nameAlreadyExists:
+      "此名称的资源已存在，请使用其他名称。",
+    noPoliciesConfirmTitle:
+      "未配置访问控制策略",
+    noPoliciesConfirmDesc:
+      "如果没有访问控制策略，此资源将无法被任何节点访问。您也可以稍后创建策略。确定要继续吗？",
+    resourceAddNewDesc: '向"{networkName}"添加新资源',
+    resourceGroupsLearnMore:
+      "了解关于<link>资源</link>的更多信息",
+
+    // NetworkResourceAccessControl.tsx
+    editPolicy: "编辑策略",
+    deletePolicy: "删除策略",
+
+    // ResourceGroupModal.tsx
+    resourceGroupsModalTitle: "资源组",
+    resourceGroupsModalDesc:
+      "将此资源添加到组（例如数据库、Web 服务器）中，并在访问策略中引用该组以简化管理。",
+    saveGroups: "保存组",
+    groupUpdated: "「{name}」的组已更新",
+    updatingGroups: "正在更新资源组...",
+
+    // ResourcesTable column headers
+    resourceColumn: "资源",
+    policiesColumn: "策略",
   },
   postureChecks: {
     title: "姿态检查",
@@ -1968,6 +2275,172 @@ export default {
     subscribeTo: "订阅",
     downgradeTo: "降级到",
   },
+  routes: {
+    // Table columns
+    colName: "名称",
+    colMetric: "度量值",
+    colDistributionGroups: "分发组",
+    colAccessControlGroups: "访问控制组",
+    colAutoApply: "自动应用",
+    tableTitle: "网络路由",
+
+    // Create route modal - header
+    setupExitNode: "设置出口节点",
+    addExitNode: "添加出口节点",
+    createNewRoute: "创建新路由",
+    routeAllThroughPeer: "通过节点 '{name}' 路由所有流量",
+    routeAllInternet: "通过一个节点路由所有互联网流量",
+    createDescription: "添加网络路由以访问局域网和 VPC。",
+
+    // Create route modal - create policy prompt
+    createPolicyConfirm:
+      "是否要为路由 '{name}' 创建新的访问控制策略？",
+    createPolicyDescription:
+      "您已为此路由添加了一个或多个访问控制组。这些组允许您通过在访问策略中使用它们来限制对此路由的访问。",
+    createPolicyConfirmText: "创建策略",
+    createPolicyCancelText: "稍后",
+
+    // Tabs
+    tabRoute: "路由",
+    tabGroups: "组",
+    tabNameDescription: "名称与描述",
+    tabSettings: "设置",
+
+    // Domains section
+    addDomainsHelp:
+      "添加动态解析为一个或多个 IPv4 地址的域名。最多可添加 32 个域名。",
+    addDomain: "添加域名",
+    keepRoutesTooltip:
+      "负载均衡系统的 DNS 记录经常变化。保留已解析的地址可确保与活跃资源的持续连接不受中断。",
+    keepRoutes: "保留路由",
+    keepRoutesHelp:
+      "在 IP 地址更新后保留之前已解析的路由，以维持稳定的连接。",
+
+    // Routing peer section
+    assignSinglePeer:
+      "指定单个节点作为{type}的路由节点",
+    assignPeerGroup:
+      "指定一个节点组作为{type}",
+    exitNode: "出口节点",
+    exitNodes: "出口节点",
+    networkRoute: "网络路由",
+    routingPeers: "路由节点",
+
+    // Distribution groups help
+    routeAllTrafficPeer:
+      "通过此节点为以下组路由所有互联网流量",
+    routeAllTrafficPeers:
+      "通过节点为以下组路由所有互联网流量",
+    advertiseRouteToGroups:
+      "将此路由广播给属于以下组的节点",
+
+    // Access control groups
+    accessControlGroupsOptional: "访问控制组（可选）",
+    accessControlGroupsHelpCreate:
+      "这些组允许您限制对此路由的访问。在创建访问策略时，只需将这些组用作目标即可。",
+    accessControlGroupsHelpUpdate:
+      "这些组可对网络中的内部服务进行更精细的控制。它们可在访问控制策略中用于限制和控制对此路由的访问。",
+
+    // General / Name & Description
+    networkIdentifierHelp:
+      "添加将分配给每个设备的唯一网络标识符。",
+    networkIdentifierPlaceholder: "例如：aws-eu-central-1-vpc",
+    descriptionHelp:
+      "写一个简短的描述为此路由添加更多上下文。",
+    descriptionPlaceholder:
+      "例如：用于访问 AWS VPC 中所有设备（位于法兰克福）的路由。",
+
+    // Settings
+    enableRoute: "启用路由",
+    enableRouteHelp:
+      "使用此开关启用或禁用路由。",
+    autoApplyRoute: "自动应用路由",
+    autoApplyRouteHelp:
+      "自动将出口节点应用于您的分发组。这需要 NetBird 客户端 v0.55.0 或更高版本。",
+    metricHelp: "较低的度量值表示更高优先级的路由。",
+
+    // Footer links
+    learnMore: "了解更多关于",
+    continueBtn: "继续",
+    addRouteBtn: "添加路由",
+    addExitNodeBtn: "添加出口节点",
+
+    // Update modal
+    updateTitle: "更新 {name}",
+    updateTabDescription: "描述",
+    metricError: "度量值必须在 1 到 9999 之间",
+    saveChanges: "保存更改",
+
+    // Action cell
+    deleteRouteNotify: "删除路由",
+    routeRemoved: "路由已成功移除",
+    deletingRoute: "正在删除路由...",
+    deleteDialogTitle: "删除 '{name}'？",
+    deleteDialogDescription:
+      "确定要删除此路由吗？此操作无法撤销。",
+    deleteDialogConfirm: "删除",
+    routeEnabledSuccess: "网络路由已成功启用",
+    routeDisabledSuccess: "网络路由已成功禁用",
+    routeActionsLabel: "路由操作",
+    actionEdit: "编辑",
+    actionDisable: "禁用",
+    actionEnable: "启用",
+    actionDelete: "删除",
+
+    // Auto apply cell
+    autoApplyEnabled: "路由已启用自动应用",
+    autoApplyDisabled: "路由已禁用自动应用",
+
+    // Add routing peer modal
+    addRoutingPeerDescription:
+      "添加多个路由节点后，NetBird 可实现此网络的高可用性。",
+    routeSelectorHelp:
+      "您要添加路由的网络名称和 CIDR。",
+    assignSinglePeerRoute:
+      "指定单个节点作为网络路由的路由节点。",
+    peerAddedToRoute: "节点已成功添加到路由",
+
+    // NetworkRoutesTable column headers
+    colNetwork: "网络",
+    colType: "类型",
+    colHighAvailability: "高可用性",
+    filterStatus: "状态",
+    searchRoutes: "按网络、范围、名称或组搜索...",
+    groupNoRoutesTitle:
+      "此组尚未在任何网络路由中使用",
+    groupNoRoutesDescription:
+      "创建新路由时分配此组，即可在此处看到它们。",
+    getStartedDescription:
+      "看起来您还没有任何路由。添加网络路由以访问局域网和 VPC。",
+
+    // High availability cell
+    haDisabled: "此路由的高可用性当前已禁用。",
+    haEnabled: "此路由的高可用性已启用。",
+    haAddMorePeersTooltip:
+      "添加更多路由节点以启用此网络路由的高可用性。",
+    haIncreasePeersTooltip:
+      "您可以添加更多节点以提高此网络路由的可用性。",
+    haAddToGroupTooltip:
+      "要配置，您必须在此路由的组中添加更多节点。可以在节点菜单中操作。",
+    haAddFromPeersTooltip:
+      "您可以通过前往节点页面，在此路由的组中添加更多节点。",
+    haPeerCount: "{count} 个节点",
+    haDisabledBadge: "已禁用",
+    goToPeers: "前往节点",
+    addPeer: "添加节点",
+
+    // GroupedRouteActionCell
+    deleteNetworkNotify: "删除网络",
+    networkRemoved: "网络已成功移除",
+    deletingNetwork: "正在删除网络...",
+    deleteNetworkConfirmTitle: "删除网络 '{name}'？",
+    deleteNetworkConfirmDescription:
+      "确定要删除此网络吗？此网络中的所有路由都将被删除。此操作无法撤销。",
+
+    // Badge labels
+    exitNodeLabel: "出口节点",
+    routingPeersBadge: "路由节点",
+  },
   onboarding: {
     title: "开始使用 NetBird",
     addResource: "添加您的第一个资源",
@@ -2009,9 +2482,9 @@ export default {
     installOnMacos: "在 macOS 上安装",
     downloadMacInstaller: "下载并运行 macOS 安装程序",
     managementUrlInstruction:
-      "点击系统托盘中 NetBird 图标的"设置"然后"高级设置"，并输入以下"管理 URL"",
+      "点击系统托盘中 NetBird 图标的\"设置\"然后\"高级设置\"，并输入以下\"管理 URL\"",
     openTerminalAndRun: "打开终端并运行 NetBird",
-    clickConnectTray: "点击系统托盘中 NetBird 图标的"连接"",
+    clickConnectTray: "点击系统托盘中 NetBird 图标的\"连接\"",
     signUpWithEmail: "使用您的电子邮件地址注册",
     installWithTerminal: "通过终端手动安装",
     installWithHomebrew: "通过 HomeBrew 手动安装",
@@ -2031,8 +2504,8 @@ export default {
     installOnAndroid: "在 Android 上安装",
     downloadFromGooglePlay: "从 Google Play 商店下载并安装应用：",
     googlePlayAlt: "从 Google Play 下载 NetBird",
-    changeServer: "点击"更改服务器"并输入以下"服务器"",
-    clickConnectButton: "点击屏幕中央的"连接"按钮",
+    changeServer: "点击\"更改服务器\"并输入以下\"服务器\"",
+    clickConnectButton: "点击屏幕中央的\"连接\"按钮",
     installOnIos: "在 iOS 上安装",
     downloadFromAppStore: "从 App Store 下载并安装应用：",
     appStoreAlt: "从 App Store 下载 NetBird",

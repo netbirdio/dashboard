@@ -1,7 +1,10 @@
+"use client";
+
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import React, { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import RouteAccessControlGroups from "@/modules/routes/RouteAccessControlGroups";
@@ -14,88 +17,94 @@ import RoutePeerCell from "@/modules/routes/RoutePeerCell";
 type Props = {
   row: GroupedRoute;
 };
-export const RouteTableColumns: ColumnDef<Route>[] = [
-  {
-    accessorKey: "network_id",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+
+function RouteTableColumns(
+  t: ReturnType<typeof useTranslations>,
+): ColumnDef<Route>[] {
+  return [
+    {
+      accessorKey: "network_id",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("colName")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <RoutePeerCell route={row.original} />,
     },
-    sortingFn: "text",
-    cell: ({ row }) => <RoutePeerCell route={row.original} />,
-  },
-  {
-    accessorKey: "description",
-    sortingFn: "text",
-  },
-  {
-    accessorKey: "domain_search",
-    sortingFn: "text",
-  },
-  {
-    accessorKey: "network",
-  },
-  {
-    id: "domains",
-    accessorFn: (row) => {
-      return row.domains?.map((name) => name).join(", ");
+    {
+      accessorKey: "description",
+      sortingFn: "text",
     },
-  },
-  {
-    accessorKey: "metric",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Metric</DataTableHeader>;
+    {
+      accessorKey: "domain_search",
+      sortingFn: "text",
     },
-    cell: ({ row }) => <RouteMetricCell metric={row.original.metric} />,
-    sortingFn: "alphanumeric",
-  },
-  {
-    id: "enabled",
-    accessorKey: "enabled",
-    sortingFn: "basic",
-  },
-  {
-    id: "groups",
-    accessorFn: (r) => r.groups?.length,
-    header: ({ column }) => {
-      return (
-        <DataTableHeader column={column}>Distribution Groups</DataTableHeader>
-      );
+    {
+      accessorKey: "network",
     },
-    cell: ({ row }) => <RouteDistributionGroupsCell route={row.original} />,
-  },
-  {
-    id: "access_control_groups",
-    accessorFn: (r) => r?.access_control_groups?.length,
-    header: ({ column }) => {
-      return (
-        <DataTableHeader column={column}>Access Control Groups</DataTableHeader>
-      );
+    {
+      id: "domains",
+      accessorFn: (row) => {
+        return row.domains?.map((name) => name).join(", ");
+      },
     },
-    cell: ({ row }) => <RouteAccessControlGroups route={row.original} />,
-  },
-  {
-    id: "skipAutoApply",
-    accessorKey: "skip_auto_apply",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Auto Apply</DataTableHeader>;
+    {
+      accessorKey: "metric",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("colMetric")}</DataTableHeader>;
+      },
+      cell: ({ row }) => <RouteMetricCell metric={row.original.metric} />,
+      sortingFn: "alphanumeric",
     },
-    cell: ({ row }) => <RouteAutoApplyCell route={row.original} />,
-    sortingFn: "basic",
-  },
-  {
-    id: "group_names",
-    accessorFn: (row) => {
-      return row.group_names?.map((name) => name).join(", ");
+    {
+      id: "enabled",
+      accessorKey: "enabled",
+      sortingFn: "basic",
     },
-  },
-  {
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => <RouteActionCell route={row.original} />,
-  },
-];
+    {
+      id: "groups",
+      accessorFn: (r) => r.groups?.length,
+      header: ({ column }) => {
+        return (
+          <DataTableHeader column={column}>{t("colDistributionGroups")}</DataTableHeader>
+        );
+      },
+      cell: ({ row }) => <RouteDistributionGroupsCell route={row.original} />,
+    },
+    {
+      id: "access_control_groups",
+      accessorFn: (r) => r?.access_control_groups?.length,
+      header: ({ column }) => {
+        return (
+          <DataTableHeader column={column}>{t("colAccessControlGroups")}</DataTableHeader>
+        );
+      },
+      cell: ({ row }) => <RouteAccessControlGroups route={row.original} />,
+    },
+    {
+      id: "skipAutoApply",
+      accessorKey: "skip_auto_apply",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("colAutoApply")}</DataTableHeader>;
+      },
+      cell: ({ row }) => <RouteAutoApplyCell route={row.original} />,
+      sortingFn: "basic",
+    },
+    {
+      id: "group_names",
+      accessorFn: (row) => {
+        return row.group_names?.map((name) => name).join(", ");
+      },
+    },
+    {
+      accessorKey: "id",
+      header: "",
+      cell: ({ row }) => <RouteActionCell route={row.original} />,
+    },
+  ];
+}
 
 export default function RouteTable({ row }: Props) {
+  const t = useTranslations("routes");
   const { groups } = useGroups();
 
   // Default sorting state of the table
@@ -144,7 +153,7 @@ export default function RouteTable({ row }: Props) {
         showSearchAndFilters={false}
         className={"bg-nb-gray-960 py-2"}
         inset={true}
-        text={"Network Routes"}
+        text={t("tableTitle")}
         manualPagination={true}
         sorting={sorting}
         columnVisibility={{
@@ -158,7 +167,7 @@ export default function RouteTable({ row }: Props) {
         }}
         rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
         setSorting={setSorting}
-        columns={RouteTableColumns}
+        columns={RouteTableColumns(t)}
         data={data}
       />
     </>

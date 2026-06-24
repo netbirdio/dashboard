@@ -59,6 +59,7 @@ export default function RouteUpdateModal({
 	cell,
 }: Props) {
 	const t = useTranslations("common");
+		const tr = useTranslations("routes");
 	return (
 		<>
 			<Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
@@ -82,6 +83,7 @@ type ModalProps = {
 
 function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 	const t = useTranslations("common");
+		const tr = useTranslations("routes");
 	const { updateRoute } = useRoutes();
 	const { peers } = usePeers();
 	const { groups: allGroups } = useGroups();
@@ -289,7 +291,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 
 	const metricError = useMemo(() => {
 		return parseInt(metric.toString()) < 1 || parseInt(metric.toString()) > 9999
-			? "Metric must be between 1 and 9999"
+			? tr("metricError")
 			: "";
 	}, [metric]);
 
@@ -329,7 +331,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 		<ModalContent maxWidthClass={"max-w-2xl"}>
 			<ModalHeader
 				icon={<NetworkRoutesIcon className={"fill-netbird"} />}
-				title={"Update " + route.network_id}
+				title={tr("updateTitle", { name: route.network_id })}
 				description={routeInfo}
 				color={"netbird"}
 				truncate={true}
@@ -355,7 +357,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 								"text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
 							}
 						/>
-						Route
+						{tr("tabRoute")}
 					</TabsTrigger>
 					<TabsTrigger
 						value={"general"}
@@ -367,7 +369,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 								"text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
 							}
 						/>
-						Description
+						{tr("updateTabDescription")}
 					</TabsTrigger>
 					<TabsTrigger value={"settings"}>
 						<Settings2
@@ -376,7 +378,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 								"text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
 							}
 						/>
-						Settings
+						{tr("tabSettings")}
 					</TabsTrigger>
 				</TabsList>
 
@@ -396,8 +398,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 							<div>
 								<Label>{t("peerGroup")}</Label>
 								<HelpText>
-									Assign a peer group with machines to be used as
-									{isExitNode ? " exit nodes." : " routing peers."}
+									{tr("assignPeerGroup", { type: isExitNode ? tr("exitNodes") + "." : tr("routingPeers") + "." })}
 								</HelpText>
 								<PeerGroupSelector
 									max={1}
@@ -417,7 +418,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 						</div>
 
 						<div>
-							<Label>Access Control Groups (optional)</Label>
+							<Label>{tr("accessControlGroupsOptional")}</Label>
 							<HelpText>
 								These groups offer a more granular control of internal services
 								in your network. They can be used in access control policies to
@@ -433,13 +434,13 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 				<TabsContent value={"general"} className={"px-8 pb-6"}>
 					<div className={"flex flex-col gap-6"}>
 						<div>
-							<Label>Description (optional)</Label>
+							<Label>{t("description")}</Label>
 							<HelpText>
-								Write a short description to add more context to this route.
+								{tr("descriptionHelp")}
 							</HelpText>
 							<Textarea
 								placeholder={
-									"e.g., Route to access all devices in the AWS VPC, located in Frankfurt."
+									tr("descriptionPlaceholder")
 								}
 								value={description}
 								rows={3}
@@ -456,10 +457,10 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 							label={
 								<>
 									<Power size={15} />
-									Enable Route
+									{tr("enableRoute")}
 								</>
 							}
-							helpText={"Use this switch to enable or disable the route."}
+							helpText={tr("enableRouteHelp")}
 						/>
 
 						{isExitNode && (
@@ -469,11 +470,11 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 								label={
 									<>
 										<IconDirectionSign size={15} />
-										Auto Apply Route
+										{tr("autoApplyRoute")}
 									</>
 								}
 								helpText={
-									"Automatically apply this exit node to your distribution groups. This requires NetBird client v0.55.0 or higher."
+									tr("autoApplyRouteHelp")
 								}
 							/>
 						)}
@@ -490,7 +491,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 							<div>
 								<Label>{t("metric")}</Label>
 								<HelpText className={"max-w-[200px]"}>
-									A lower metric indicates a higher priority route.
+									{tr("metricHelp")}
 								</HelpText>
 							</div>
 
@@ -518,14 +519,14 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 			<ModalFooter className={"items-center"}>
 				<div className={"w-full"}>
 					<Paragraph className={"text-sm mt-auto"}>
-						Learn more about
+						{tr("learnMore")}
 						<InlineLink
 							href={
 								"https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
 							}
 							target={"_blank"}
 						>
-							Network Routes
+							{tr("tableTitle")}
 							<ExternalLinkIcon size={12} />
 						</InlineLink>
 					</Paragraph>
@@ -540,7 +541,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
 						disabled={isDisabled}
 						onClick={updateRouteHandler}
 					>
-						Save Changes
+						{tr("saveChanges")}
 					</Button>
 				</div>
 			</ModalFooter>

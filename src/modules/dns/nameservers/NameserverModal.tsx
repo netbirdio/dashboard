@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
@@ -113,9 +115,9 @@ export function NameserverModalContent({
 
   const update = async (groupIds: string[]) => {
     notify({
-      title: "Update Nameserver",
-      description: "Nameserver was updated successfully.",
-      loadingMessage: "Updating your nameserver...",
+      title: t("updateNameserverNotify"),
+      description: t("nameserverUpdatedSuccess"),
+      loadingMessage: t("updatingNameserver"),
       promise: nsRequest
         .put(
           {
@@ -139,9 +141,9 @@ export function NameserverModalContent({
 
   const create = async (groupIds: string[]) => {
     notify({
-      title: "Create Nameserver",
-      description: "Nameserver was created successfully.",
-      loadingMessage: "Creating your nameserver...",
+      title: t("createNameserver"),
+      description: t("nameserverCreatedSuccess"),
+      loadingMessage: t("creatingNameserver"),
       promise: nsRequest
         .post({
           name: name,
@@ -223,7 +225,7 @@ export function NameserverModalContent({
   }, [domains]);
 
   const nameLengthError = useMemo(() => {
-    if (name.length > 40) return "Name should be less than 40 characters";
+    if (name.length > 40) return t("nameLengthError");
     return "";
   }, [name]);
 
@@ -581,6 +583,7 @@ function NameserverInput({
   onError?: (error: boolean) => void;
   disabled?: boolean;
 }>) {
+  const t = useTranslations("dns");
   const [ip, setIP] = useState(value.ip);
   const [port, setPort] = useState<string>(value.port.toString());
 
@@ -601,7 +604,7 @@ function NameserverInput({
     const validCIDR = cidr.isValidAddress(ip);
     if (!validCIDR) {
       onError && onError(true);
-      return "Please enter a valid IP, e.g., 192.168.1.0";
+      return t("validIPError");
     }
     onError && onError(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -617,7 +620,7 @@ function NameserverInput({
       <div className={"w-full"}>
         <Input
           customPrefix={"IP"}
-          placeholder={"e.g., 172.16.0.0"}
+          placeholder={t("ipPlaceholder")}
           maxWidthClass={"w-full"}
           value={ip}
           className={"font-mono !text-[13px]"}
@@ -630,7 +633,7 @@ function NameserverInput({
 
       <Input
         maxWidthClass={"min-w-[150px] max-w-[150px]"}
-        customPrefix={"Port"}
+        customPrefix={t("port")}
         placeholder={"53"}
         value={port}
         type={"number"}

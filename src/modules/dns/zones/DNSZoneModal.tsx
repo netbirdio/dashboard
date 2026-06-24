@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
@@ -88,6 +90,8 @@ export function DNSZoneModalContent({
     initial: initialDistributionGroups ?? zone?.distribution_groups ?? [],
   });
 
+  const t = useTranslations("dns");
+
   const domainError = useMemo(() => {
     if (domain == "") return "";
     const valid = validator.isValidDomain(domain, {
@@ -96,9 +100,9 @@ export function DNSZoneModalContent({
       preventLeadingAndTrailingDots: true,
     });
     if (!valid) {
-      return "Please enter a valid domain, e.g. internal, company.internal or intra.example.com";
+      return t("validDomainErrorZone");
     }
-  }, [domain]);
+  }, [domain, t]);
 
   const handleOnSubmit = async () => {
     return saveGroups().then((distributionGroups) => {
@@ -127,7 +131,6 @@ export function DNSZoneModalContent({
 
   const canUpdateOrCreate = !domainError && groups?.length > 0 && domain !== "";
 
-  const t = useTranslations("dns");
   const tCommon = useTranslations("common");
 
   return (

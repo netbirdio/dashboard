@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import {
   Modal,
@@ -56,7 +58,8 @@ const ResourceGroupModalContent = ({
   network,
   onUpdated,
 }: ModalProps) => {
-  const t = useTranslations("common");
+  const t = useTranslations("networks");
+  const tCommon = useTranslations("common");
   const update = useApiCall<NetworkResource>(
     `/networks/${network?.id}/resources/${resource?.id}`,
   ).put;
@@ -69,9 +72,9 @@ const ResourceGroupModalContent = ({
   const updateResource = async () => {
     const savedGroups = await saveGroups();
     notify({
-      title: "Update Resource",
-      description: `'${resource?.name}' groups updated`,
-      loadingMessage: "Updating resource groups...",
+      title: t("updateResource"),
+      description: t("groupUpdated", { name: resource?.name || "" }),
+      loadingMessage: t("updatingGroups"),
       promise: update({
         ...resource,
         groups: savedGroups.map((g) => g.id),
@@ -84,10 +87,8 @@ const ResourceGroupModalContent = ({
   return (
     <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
-        title={"Resource Groups"}
-        description={
-          "Add this resource to a group (e.g., Databases, Web Servers) and reference the group in access policies to simplify management."
-        }
+        title={t("resourceGroupsModalTitle")}
+        description={t("resourceGroupsModalDesc")}
         icon={<FolderGit2 size={18} />}
       />
 
@@ -99,7 +100,7 @@ const ResourceGroupModalContent = ({
             onChange={setGroups}
             values={groups}
             showPeerCounter={false}
-            placeholder={"Add or select resource group(s)..."}
+            placeholder={t("resourceGroupsPlaceholder")}
             policies={policies}
           />
         </div>
@@ -112,7 +113,7 @@ const ResourceGroupModalContent = ({
           </ModalClose>
 
           <Button variant={"primary"} onClick={updateResource}>
-            Save Groups
+            {t("saveGroups")}
           </Button>
         </div>
       </ModalFooter>

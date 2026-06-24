@@ -73,8 +73,8 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
   const updateNetwork = async () => {
     notify({
       title: name,
-      description: "Network updated successfully.",
-      loadingMessage: "Updating network...",
+      description: t("networkUpdated"),
+      loadingMessage: t("networkUpdating"),
       promise: update({ name, description }, `/${network?.id}`).then((n) => {
         onUpdated?.(n);
       }),
@@ -84,8 +84,8 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
   const createNetwork = async () => {
     notify({
       title: name,
-      description: "Network created successfully.",
-      loadingMessage: "Creating network...",
+      description: t("networkCreated"),
+      loadingMessage: t("networkCreating"),
       promise: create({ name, description }).then((n) => {
         onCreated?.(n);
       }),
@@ -100,7 +100,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
         description={
           network
             ? network.name
-            : "Access internal resources in LANs and VPC by adding a network."
+            : t("modalAccessDescription")
         }
         color={"netbird"}
       />
@@ -133,12 +133,12 @@ data-testid="network-description-input"
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("learnMoreAbout")}
             <InlineLink
               href={"https://docs.netbird.io/how-to/networks"}
               target={"_blank"}
             >
-              Networks
+              {t("title")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>

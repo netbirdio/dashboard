@@ -61,6 +61,7 @@ type ModalProps = {
 
 function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
 	const t = useTranslations("common");
+	const tr = useTranslations("routes");
 	const { createRoute } = useRoutes();
 
 	const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(
@@ -149,7 +150,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
 				access_control_groups: accessControlGroupIds || undefined,
 			},
 			onSuccess,
-			"Peer was successfully added to the route",
+			tr("peerAddedToRoute"),
 		);
 	};
 
@@ -168,9 +169,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
 			<ModalHeader
 				icon={<NetworkRoutesIcon className={"fill-netbird"} />}
 				title={t("addNewRoutingPeer")}
-				description={
-					"When you add multiple routing peers, NetBird enables high availability for this network."
-				}
+				description={tr("addRoutingPeerDescription")}
 				color={"netbird"}
 			/>
 
@@ -180,7 +179,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
 				<div>
 					<Label>{t("networkIdentifier")}</Label>
 					<HelpText>
-						Network name and CIDR that you are adding the route to.
+						{tr("routeSelectorHelp")}
 					</HelpText>
 					<NetworkRouteSelector
 						disabled={groupedRoute != undefined}
@@ -191,7 +190,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
 				<div>
 					<Label>{t("routingPeer")}</Label>
 					<HelpText>
-						Assign a single peer as a routing peer for the network route.
+						{tr("assignSinglePeerRoute")}
 					</HelpText>
 					<PeerSelector
 						onChange={setRoutingPeer}
@@ -203,16 +202,14 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
 				<div>
 					<Label>{t("distributionGroups")}</Label>
 					<HelpText>
-						Advertise this route to peers that belong to the following groups
+						{tr("advertiseRouteToGroups")}
 					</HelpText>
 					<PeerGroupSelector onChange={setGroups} values={groups} />
 				</div>
 				<div>
-					<Label>Access Control Groups (optional)</Label>
+					<Label>{tr("accessControlGroupsOptional")}</Label>
 					<HelpText>
-						These groups offer a more granular control of internal services in
-						your network. They can be used in access control policies to limit
-						and control access of this route.
+						{tr("accessControlGroupsHelpUpdate")}
 					</HelpText>
 					<PeerGroupSelector
 						onChange={setAccessControlGroups}
@@ -223,14 +220,14 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
 			<ModalFooter className={"items-center"}>
 				<div className={"w-full"}>
 					<Paragraph className={"text-sm mt-auto"}>
-						Learn more about
+						{tr("learnMore")}
 						<InlineLink
 							href={
 								"https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
 							}
 							target={"_blank"}
 						>
-							Network Routes
+							{tr("tableTitle")}
 							<ExternalLinkIcon size={12} />
 						</InlineLink>
 					</Paragraph>
@@ -246,7 +243,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
 						onClick={createRouteHandler}
 					>
 						<PlusCircle size={16} />
-						Add Route
+						{tr("addRouteBtn")}
 					</Button>
 				</div>
 			</ModalFooter>

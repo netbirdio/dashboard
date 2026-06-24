@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import HelpText from "@components/HelpText";
 import { Label } from "@components/Label";
@@ -49,6 +51,7 @@ export default function NetworkResourceAccessControl({
 	hasResourceGroups = false,
 }: Readonly<Props>) {
 	const t = useTranslations("networks");
+	const tCommon = useTranslations("common");
 	const { network, confirmMultiResourceAction } = useNetworksContext();
 	const { openEditPolicyModal, deletePolicy } = usePolicies();
 	const [policyModalOpen, setPolicyModalOpen] = useState(false);
@@ -140,13 +143,13 @@ export default function NetworkResourceAccessControl({
 							<thead>
 								<tr>
 									<th className="py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium">
-										Name
+										{t("resourceNameLabel")}
 									</th>
 									<th className="py-2 pl-5 pr-2 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium">
-										Source Groups
+										{t("resourceGroupsLabel")}
 									</th>
 									<th className="py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium">
-										Protocol & Ports
+										{tCommon("configurePolicies")}
 									</th>
 									<th className="py-2 pr-4 pl-2" />
 								</tr>
@@ -233,7 +236,7 @@ export default function NetworkResourceAccessControl({
 															>
 																<div className="flex gap-3 items-center">
 																	<Edit2 size={14} className="shrink-0" />
-																	Edit Policy
+																	{t("editPolicy")}
 																</div>
 															</DropdownMenuItem>
 															<DropdownMenuItem
@@ -242,7 +245,7 @@ export default function NetworkResourceAccessControl({
 															>
 																<div className="flex gap-3 items-center">
 																	<Trash2 size={14} className="shrink-0" />
-																	Delete Policy
+																	{t("deletePolicy")}
 																</div>
 															</DropdownMenuItem>
 														</DropdownMenuContent>
@@ -257,16 +260,16 @@ export default function NetworkResourceAccessControl({
 					</div>
 				)}
 
-<Button
-						variant="dotted"
-						className={"w-full mt-1"}
-						size="sm"
-						onClick={openAddPolicy}
-						data-testid="add-policy"
-					>
-						<PlusIcon size={14} />
-						{tCommon("addPolicy")}
-					</Button>
+	<Button
+					variant="dotted"
+					className={"w-full mt-1"}
+					size="sm"
+					onClick={openAddPolicy}
+					data-testid="add-policy"
+				>
+					<PlusIcon size={14} />
+					{tCommon("addPolicy")}
+				</Button>
 
 			<Modal
 				open={policyModalOpen}
@@ -301,6 +304,7 @@ export default function NetworkResourceAccessControl({
 					}}
 				/>
 			</Modal>
+		</div>
 		</div>
 	);
 }

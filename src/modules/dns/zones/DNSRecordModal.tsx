@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
@@ -108,7 +110,7 @@ export function DNSRecordModalContent({
 			allowOnlyTld: true,
 		});
 		if (!valid) {
-			return "Please enter a valid domain, e.g. example.com or intra.example.com";
+			return tCommon("validDomainError");
 		}
 	}, [domain]);
 
@@ -116,7 +118,7 @@ export function DNSRecordModalContent({
 		if (recordValue === "" || type !== "A") return "";
 		const valid = Address4.isValid(recordValue);
 		if (!valid) {
-			return "Please enter a valid IPv4 address, e.g. 192.168.1.1";
+			return t("validIPv4Error");
 		}
 	}, [recordValue, type]);
 
@@ -124,7 +126,7 @@ export function DNSRecordModalContent({
 		if (recordValue === "" || type !== "AAAA") return "";
 		const valid = Address6.isValid(recordValue);
 		if (!valid) {
-			return "Please enter a valid IPv6 address, e.g. 2001:0db8:85a3::8a2e:0370:7334";
+			return t("validIPv6Error");
 		}
 	}, [recordValue, type]);
 
@@ -135,7 +137,7 @@ export function DNSRecordModalContent({
 			allowOnlyTld: false,
 		});
 		if (!valid) {
-			return "Please enter a valid domain, e.g. example.com or server.example.com";
+			return t("validCnameError");
 		}
 	}, [recordValue, type]);
 
@@ -176,8 +178,8 @@ export function DNSRecordModalContent({
 				title={record ? t("updateDNSRecord") : t("addDNSRecord")}
 				description={
 					record
-						? `Update record of '${zone.domain}' zone`
-						: `Add new record to the '${zone.domain}' zone`
+						? t("updateRecordDesc", { zone: zone.domain })
+						: t("addRecordDesc", { zone: zone.domain })
 				}
 				icon={<GlobeIcon size={16} />}
 			/>
@@ -242,7 +244,7 @@ export function DNSRecordModalContent({
 							<Label>{t("ipv4Address")}</Label>
 							<Input
 								className={"mt-1.5 font-mono text-[0.82rem]"}
-								placeholder={"192.168.1.1"}
+								placeholder={t("ipv4Placeholder")}
 								errorTooltip={false}
 								errorTooltipPosition={"top"}
 								error={ipv4Error}
@@ -259,7 +261,7 @@ export function DNSRecordModalContent({
 							<Label>{t("ipv6Address")}</Label>
 							<Input
 								className={"mt-1.5 font-mono text-[0.82rem]"}
-								placeholder={"2001:0db8:85a3::8a2e:0370:7334"}
+								placeholder={t("ipv6Placeholder")}
 								errorTooltip={false}
 								errorTooltipPosition={"top"}
 								error={ipv6Error}
@@ -276,7 +278,7 @@ export function DNSRecordModalContent({
 							<Label>{t("targetDomain")}</Label>
 							<Input
 								className={"mt-1.5"}
-								placeholder={"e.g., example.com or intra.example.com"}
+								placeholder={t("cnamePlaceholder")}
 								errorTooltip={false}
 								errorTooltipPosition={"top"}
 								error={cnameError}
@@ -302,16 +304,16 @@ export function DNSRecordModalContent({
 									</div>
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="60">{getTTLLabel(60)}</SelectItem>
-									<SelectItem value="120">{getTTLLabel(120)}</SelectItem>
-									<SelectItem value="300">{getTTLLabel(300)}</SelectItem>
-									<SelectItem value="600">{getTTLLabel(600)}</SelectItem>
-									<SelectItem value="900">{getTTLLabel(900)}</SelectItem>
-									<SelectItem value="1800">{getTTLLabel(1800)}</SelectItem>
-									<SelectItem value="3600">{getTTLLabel(3600)}</SelectItem>
-									<SelectItem value="7200">{getTTLLabel(7200)}</SelectItem>
-									<SelectItem value="43200">{getTTLLabel(43200)}</SelectItem>
-									<SelectItem value="86400">{getTTLLabel(86400)}</SelectItem>
+									<SelectItem value="60">{getTTLLabel(60, t)}</SelectItem>
+									<SelectItem value="120">{getTTLLabel(120, t)}</SelectItem>
+									<SelectItem value="300">{getTTLLabel(300, t)}</SelectItem>
+									<SelectItem value="600">{getTTLLabel(600, t)}</SelectItem>
+									<SelectItem value="900">{getTTLLabel(900, t)}</SelectItem>
+									<SelectItem value="1800">{getTTLLabel(1800, t)}</SelectItem>
+									<SelectItem value="3600">{getTTLLabel(3600, t)}</SelectItem>
+									<SelectItem value="7200">{getTTLLabel(7200, t)}</SelectItem>
+									<SelectItem value="43200">{getTTLLabel(43200, t)}</SelectItem>
+									<SelectItem value="86400">{getTTLLabel(86400, t)}</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -350,16 +352,22 @@ export function DNSRecordModalContent({
 	);
 }
 
-export const getTTLLabel = (seconds: number): string => {
-	if (seconds < 60) return `${seconds} Sec.`;
+export const getTTLLabel = (seconds: number, t?: (key: string, values?: any) => string): string => {
+	const s = t ? t("sec") : "Sec.";
+	const m = t ? t("min") : "Min.";
+	const h = t ? t("hour") : "Hour";
+	const hs = t ? t("hours") : "Hours";
+	const d = t ? t("day") : "Day";
+	const ds = t ? t("days") : "Days";
+	if (seconds < 60) return `${seconds} ${s}`;
 	if (seconds < 3600) {
 		const minutes = seconds / 60;
-		return minutes === 1 ? "1 Min." : `${minutes} Min.`;
+		return `${minutes} ${m}`;
 	}
 	if (seconds < 86400) {
 		const hours = seconds / 3600;
-		return hours === 1 ? "1 Hour" : `${hours} Hours`;
+		return `${hours} ${hs}`;
 	}
 	const days = seconds / 86400;
-	return days === 1 ? "1 Day" : `${days} Days`;
+	return `${days} ${ds}`;
 };

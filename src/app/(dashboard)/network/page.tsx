@@ -205,6 +205,8 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
 }
 
 function NetworkActions() {
+  const t = useTranslations("networks");
+  const tCommon = useTranslations("common");
   const { permission } = usePermissions();
   const { deleteNetwork, openEditNetworkModal, network } = useNetworksContext();
   const router = useRouter();
@@ -232,7 +234,7 @@ function NetworkActions() {
         >
           <div className={"flex gap-3 items-center"}>
             <PencilLineIcon size={14} className={"shrink-0"} />
-            Rename
+            {t("renameNetwork")}
           </div>
         </DropdownMenuItem>
 
@@ -247,7 +249,7 @@ function NetworkActions() {
         >
           <div className={"flex gap-3 items-center"}>
             <Trash2 size={14} className={"shrink-0"} />
-            Delete
+            {tCommon("delete")}
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -265,27 +267,19 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
   const disabledText = useMemo(
     () => (
       <>
-        High availability is currently{" "}
-        <span className={"text-yellow-400 font-medium"}>
-          {tCommon("inactive")}
-        </span>{" "}
-        for this network.
+        {t("highAvailabilityInactiveText", { status: tCommon("inactive") })}
       </>
     ),
-    [tCommon],
+    [t, tCommon],
   );
 
   const enabledText = useMemo(
     () => (
       <>
-        High availability is{" "}
-        <span className={"text-green-500 font-medium"}>
-          {tCommon("active")}
-        </span>{" "}
-        for this network.
+        {t("highAvailabilityActiveText", { status: tCommon("active") })}
       </>
     ),
-    [tCommon],
+    [t, tCommon],
   );
 
   const policyCount = network.policies?.length ?? 0;
@@ -298,7 +292,7 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
           label={
             <>
               <ServerIcon size={16} />
-              High Availability
+              {t("highAvailability")}
             </>
           }
           value={
@@ -309,13 +303,11 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
                   {isHighlyAvailable ? enabledText : disabledText}
                   {isHighlyAvailable ? (
                     <div className={"inline-flex mt-2"}>
-                      You can add more routing peers to increase the
-                      availability of this network.
+                      {t("highAvailabilityHelpActive")}
                     </div>
                   ) : (
                     <div className={"inline-flex mt-2"}>
-                      Go ahead and add more routing peers or groups with routing
-                      peers to enable high availability for this network.
+                      {t("highAvailabilityHelpInactive")}
                     </div>
                   )}
                 </div>
