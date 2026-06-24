@@ -144,7 +144,7 @@ export default function ActivityTable({
             events={events ?? []}
           />
         ),
-        formatChip: (v) => formatActivityTypeChip(v as string[] | undefined),
+        formatChip: (v) => formatActivityTypeChip(v as string[] | undefined, t),
       },
       {
         id: "initiator_email",

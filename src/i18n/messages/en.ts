@@ -472,6 +472,25 @@ export default {
       "Access other networks without installing NetBird on every resource.",
     remoteJobsDesc:
       "Remotely trigger actions such as debug bundles or other tasks on this peer, without requiring CLI access.",
+    revoke: "Revoke",
+    bypassCompliance: "Bypass Compliance",
+    bypassComplianceConfirmTitle: "Bypass compliance for '{name}'?",
+    bypassComplianceConfirmDescription:
+      "This will override the compliance check and allow this peer to connect. The bypass will be automatically removed if the device becomes compliant.",
+    bypassComplianceSuccess: "Compliance bypassed for {name}",
+    bypassComplianceSuccessDescription:
+      "This peer can now connect to other peers.",
+    bypassComplianceLoading: "Bypassing compliance...",
+    revokeBypass: "Revoke Bypass",
+    revokeBypassConfirmTitle: "Revoke compliance bypass for '{name}'?",
+    revokeBypassConfirmDescription:
+      "This peer will be subject to normal compliance validation. If still non-compliant, it will lose network access.",
+    revokeBypassSuccess: "Compliance bypass revoked",
+    revokeBypassSuccessDescription:
+      "Peer {name} is now subject to normal compliance validation.",
+    revokeBypassLoading: "Revoking compliance bypass...",
+    bypassTooltip:
+      "Bypass {integrationName} compliance check and allow this peer to connect. The bypass is automatically removed when the device becomes compliant.",
   },
   policies: {
     title: "Policies",
@@ -1552,6 +1571,25 @@ export default {
     groups: "Groups",
     usage: "Usage",
     lastUsedOn: "Last used on",
+    // SetupKeyActionCell
+    revoke: "Revoke",
+    openActionsMenu: "Open actions menu",
+    revokeConfirmTitle: "Revoke '{name}'?",
+    revokeConfirmDescription:
+      "Are you sure you want to revoke the setup key? This action cannot be undone.",
+    revokeSuccessDescription: "Setup key was successfully revoked",
+    revokeLoading: "Revoking the setup key...",
+    deleteConfirmTitle: "Delete '{name}'?",
+    deleteConfirmDescription:
+      "Are you sure you want to delete the setup key? This action cannot be undone.",
+    deleteSuccessDescription: "Setup key was successfully deleted",
+    deleteLoading: "Deleting the setup key...",
+    // SetupKeyGroupsCell
+    autoAssignedGroups: "Auto-assigned Groups",
+    autoAssignedGroupsDescription:
+      "These groups will be automatically assigned to peers enrolled with this key",
+    groupsSavedDescription: "Groups of the setup key were successfully saved",
+    groupsSaving: "Saving the groups of the setup key...",
   },
   activity: {
     title: "Activity",
@@ -1569,6 +1607,281 @@ export default {
     ipAddress: "IP Address",
     details: "Details",
     code: "Code",
+
+    // UI strings used across activity components
+    allEventTypes: "All Event Types",
+    allUsers: "All Users",
+    includeAllUsers: "Include all users",
+    searchEvent: "Search event...",
+    searchUser: "Search user...",
+    noUsersAvailable: "No users available to select.",
+    noUsersMatching: "There are no users matching your search.",
+    system: "System",
+    external: "External",
+    serviceUser: "Service User",
+    typeCount: "{count} types",
+    eventCount: "{count} Event(s)",
+    activityCode: "Activity Code",
+    meta: "Meta",
+    from: "from",
+    unknown: "Unknown",
+
+    // Activity event descriptions (used by ActivityDescription.tsx)
+
+    // Setup Key
+    desc_setupkey_revoke:
+      "Setup-Key <Value>{name}</Value> with key <Value>{key}</Value> was revoked",
+    desc_setupkey_delete:
+      "Setup-Key <Value>{name}</Value> with key <Value>{key}</Value> was deleted",
+    desc_setupkey_add:
+      "Setup-Key <Value>{name}</Value> with key <Value>{key}</Value> was created",
+    desc_peer_setupkey_add:
+      "Peer <Value>{name}</Value> from <peerConnectionInfo></peerConnectionInfo> was added with the NetBird IP <Value>{ip}</Value> using the setup key <Value>{setup_key_name}</Value>",
+    desc_setupkey_group_delete:
+      "Group <Value>{group}</Value> was removed from the <Value>{setupkey}</Value> setup key",
+    desc_setupkey_group_add:
+      "Group <Value>{group}</Value> was added to the <Value>{setupkey}</Value> setup key",
+
+    // Dashboard
+    desc_dashboard_login:
+      "<Value>{username}</Value> logged in to the dashboard",
+
+    // Policy
+    desc_policy_update: "Policy <Value>{name}</Value> has been updated",
+    desc_policy_delete: "Policy <Value>{name}</Value> was deleted",
+    desc_policy_add: "Policy <Value>{name}</Value> was created",
+
+    // Route
+    desc_route_delete_domains:
+      "Route <Value>{name}</Value> with the domain(s) <Value>{domains}</Value> was deleted",
+    desc_route_delete_range:
+      "Route <Value>{name}</Value> with the range <Value>{network_range}</Value> was deleted",
+    desc_route_update_domains:
+      "Route <Value>{name}</Value> with the domain(s) <Value>{domains}</Value> was updated",
+    desc_route_update_range:
+      "Route <Value>{name}</Value> with the range <Value>{network_range}</Value> was updated",
+    desc_route_add_domains:
+      "Route <Value>{name}</Value> with the domain(s) <Value>{domains}</Value> was created",
+    desc_route_add_range:
+      "Route <Value>{name}</Value> with the range <Value>{network_range}</Value> was created",
+
+    // User / Peer
+    desc_user_peer_delete:
+      "Peer <Value>{name}</Value> from <peerConnectionInfo></peerConnectionInfo> with NetBird IP <Value>{ip}</Value> was deleted",
+    desc_user_peer_add:
+      "Peer <Value>{name}</Value> from <peerConnectionInfo></peerConnectionInfo> was added with the NetBird IP <Value>{ip}</Value>",
+    desc_user_peer_update:
+      "Peer <Value>{name}</Value> from <peerConnectionInfo></peerConnectionInfo> with NetBird IP <Value>{ip}</Value> was updated",
+    desc_user_join: "User <Value>{username}</Value> joined NetBird",
+    desc_user_invite:
+      "<Value>{username}</Value> <Value>{email}</Value> was invited.",
+    desc_user_create:
+      "<Value>{username}</Value> <Value>{email}</Value> was created by <Value>{initiator}</Value>",
+    desc_user_group_add:
+      "Group <Value>{group}</Value> was added to user <Value>{username}</Value>",
+    desc_user_block:
+      "User <Value>{username}</Value> <Value>{email}</Value> was blocked",
+    desc_user_unblock:
+      "User <Value>{username}</Value> <Value>{email}</Value> was unblocked",
+    desc_user_delete:
+      "User <Value>{username}</Value> <Value>{email}</Value> was deleted",
+    desc_user_group_delete:
+      "Group <Value>{group}</Value> was removed from user <Value>{username}</Value> <Value>{email}</Value>",
+    desc_user_role_update:
+      "Role <Value>{role}</Value> was updated of user <Value>{username}</Value> <Value>{email}</Value>",
+    desc_user_approve:
+      "User <Value>{username}</Value> <Value>{email}</Value> was approved",
+    desc_user_reject:
+      "User <Value>{username}</Value> <Value>{email}</Value> was rejected",
+    desc_user_password_change:
+      "Password was changed for user <Value>{username}</Value> <Value>{email}</Value>",
+
+    // Invite Link
+    desc_user_invite_link_create:
+      "Invite link was created for <Value>{username}</Value> <Value>{email}</Value>",
+    desc_user_invite_link_accept:
+      "Invite link was accepted by <Value>{username}</Value> <Value>{email}</Value>",
+    desc_user_invite_link_regenerate:
+      "Invite link was regenerated for <Value>{username}</Value> <Value>{email}</Value>",
+    desc_user_invite_link_delete:
+      "Invite link was deleted for <Value>{username}</Value> <Value>{email}</Value>",
+
+    // Service User
+    desc_service_user_create: "Service user <Value>{name}</Value> was created",
+    desc_service_user_delete: "Service user <Value>{name}</Value> was deleted",
+
+    // Peer
+    desc_peer_group_delete:
+      "Group <Value>{group}</Value> was removed from the peer with the NetBird IP <Value>{peer_ip}</Value>",
+    desc_peer_group_add:
+      "Group <Value>{group}</Value> was added to the peer with the NetBird IP <Value>{peer_ip}</Value>",
+    desc_peer_login_expire:
+      "Login of the peer <Value>{name}</Value> is expired",
+    desc_peer_ssh_disable:
+      "SSH Server of peer <Value>{name}</Value> was disabled",
+    desc_peer_ssh_enable:
+      "SSH Server of peer <Value>{name}</Value> was enabled",
+    desc_peer_login_expiration_disable:
+      "Login expiration of peer <Value>{name}</Value> was disabled",
+    desc_peer_login_expiration_enable:
+      "Login expiration of peer <Value>{name}</Value> was enabled",
+    desc_peer_rename:
+      "Peer with the NetBird IP <Value>{ip}</Value> was renamed to <Value>{name}</Value>",
+    desc_peer_approve:
+      "Peer with the NetBird IP <Value>{ip}</Value> was approved",
+    desc_peer_ip_update:
+      "Peer <Value>{name}</Value> IP address was updated from <Value>{old_ip}</Value> to <Value>{ip}</Value>",
+    desc_peer_user_add:
+      "Peer <Value>{name}</Value> from <peerConnectionInfo></peerConnectionInfo> was added with the NetBird IP <Value>{ip}</Value>",
+
+    // Group
+    desc_group_add: "Group <Value>{name}</Value> was created",
+    desc_group_delete: "Group <Value>{name}</Value> was deleted",
+    desc_group_update:
+      "Group <Value>{old_name}</Value> was renamed to <Value>{new_name}</Value>",
+
+    // Account
+    desc_account_create: "<Value>{initiator}</Value> created an account",
+    desc_account_setting_peer_login_expiration_update:
+      "Global login expiration was updated",
+    desc_account_setting_peer_login_expiration_enable:
+      "Global login expiration was enabled",
+    desc_account_setting_peer_login_expiration_disable:
+      "Global login expiration was disabled",
+    desc_account_network_range_update:
+      "Account network range was updated from <Value>{old_network_range}</Value> to <Value>{new_network_range}</Value>",
+
+    // Nameserver
+    desc_nameserver_group_add: "Nameserver <Value>{name}</Value> was added",
+    desc_nameserver_group_delete: "Nameserver <Value>{name}</Value> was deleted",
+    desc_nameserver_group_update: "Nameserver <Value>{name}</Value> was updated",
+
+    // Personal Access Token
+    desc_personal_access_token_create:
+      "Access token <Value>{name}</Value> for user <Value>{username}</Value> was created",
+    desc_personal_access_token_delete:
+      "Access token <Value>{name}</Value> for user <Value>{username}</Value> was deleted",
+
+    // Integration
+    desc_integration_create_platform:
+      "<Value>{platform}</Value> integration created",
+    desc_integration_create: "Integration created",
+    desc_integration_delete_platform:
+      "<Value>{platform}</Value> integration deleted",
+    desc_integration_delete: "Integration deleted",
+    desc_integration_update_platform:
+      "<Value>{platform}</Value> integration updated",
+    desc_integration_update: "Integration updated",
+
+    // DNS
+    desc_dns_setting_disabled_management_group_add:
+      "Group <Value>{group}</Value> was added to disabled DNS group setting",
+    desc_dns_setting_disabled_management_group_delete:
+      "Group <Value>{group}</Value> was removed from disabled DNS group setting",
+
+    // Posture Checks
+    desc_posture_check_updated:
+      "Posture check <Value>{name}</Value> was updated",
+    desc_posture_check_created:
+      "Posture check <Value>{name}</Value> was created",
+    desc_posture_check_deleted:
+      "Posture check <Value>{name}</Value> was deleted",
+    desc_transferred_owner_role: "Owner role was transferred",
+
+    // EDR / Integrated Validator
+    desc_integrated_validator_api_created:
+      "<Value>{platform}</Value> integration created",
+    desc_integrated_validator_api_updated:
+      "<Value>{platform}</Value> integration updated",
+    desc_integrated_validator_api_deleted:
+      "<Value>{platform}</Value> integration deleted",
+    desc_integrated_validator_host_check_approved:
+      "Peer approved by <Value>{platform}</Value> integration",
+    desc_integrated_validator_host_check_denied:
+      "Peer rejected by <Value>{platform}</Value> integration",
+    desc_integrated_validator_peer_compliance_bypassed:
+      "Peer <Value>{name}</Value> with the NetBird IP <Value>{ip}</Value> compliance bypassed for <Value>{platform}</Value> integration{original_reason}",
+    desc_integrated_validator_peer_compliance_bypass_revoked:
+      "Peer <Value>{name}</Value> with the NetBird IP <Value>{ip}</Value> compliance bypass revoked for <Value>{platform}</Value> integration",
+    desc_compliance_original_reason:
+      " (original non-compliant reason: <Value>{reason}</Value>)",
+
+    // Resource
+    desc_resource_group_add:
+      "Group <Value>{resource_name}</Value> added to resource <Value>{name}</Value>",
+    desc_resource_group_delete:
+      "Group <Value>{resource_name}</Value> removed from resource <Value>{name}</Value>",
+
+    // Reverse Proxy (peer expose)
+    desc_service_peer_expose:
+      "Peer <Value>{peer_name}</Value> exposed service <Value>{domain}</Value> with auth <Value>{auth}</Value>",
+    desc_service_peer_unexpose:
+      "Peer <Value>{peer_name}</Value> unexposed service <Value>{domain}</Value>",
+    desc_service_peer_expose_expire:
+      "Service <Value>{domain}</Value> exposed by peer <Value>{peer_name}</Value> was removed due to renewal expiration",
+
+    // Networks
+    desc_network_resource_create:
+      "Resource <Value>{name}</Value> created for network <Value>{network_name}</Value>",
+    desc_network_resource_update:
+      "Resource <Value>{name}</Value> updated for network <Value>{network_name}</Value>",
+    desc_network_resource_delete:
+      "Resource <Value>{name}</Value> deleted from network <Value>{network_name}</Value>",
+    desc_network_router_create:
+      "Routing peer created for network <Value>{network_name}</Value>",
+    desc_network_router_delete:
+      "Routing peer deleted from network <Value>{network_name}</Value>",
+    desc_network_router_update:
+      "Routing peer updated from network <Value>{network_name}</Value>",
+    desc_network_create:
+      "Network with name <Value>{name}</Value> created",
+    desc_network_delete:
+      "Network with name <Value>{name}</Value> deleted",
+    desc_network_update:
+      "Network with name <Value>{name}</Value> updated",
+
+    // Jobs
+    desc_peer_job_create:
+      "Remote job <Value>{job_type}</Value> created for peer <Value>{for_peer_name}</Value>",
+
+    // Flow Settings
+    desc_account_settings_extra_flow_group_remove:
+      "Limit traffic event group <Value>{group_name}</Value> removed",
+    desc_account_settings_extra_flow_group_add:
+      "Limit traffic event group <Value>{group_name}</Value> added",
+
+    // Identity Provider
+    desc_identityprovider_create:
+      "Identity provider <Value>{name}</Value> was created",
+    desc_identityprovider_update:
+      "Identity provider <Value>{name}</Value> was updated",
+    desc_identityprovider_delete:
+      "Identity provider <Value>{name}</Value> was deleted",
+
+    // Service (proxy cluster)
+    desc_service_create:
+      "Service <Value>{domain}</Value> in cluster <Value>{proxy_cluster}</Value> was created with authentication <Value>{auth}</Value>",
+    desc_service_update:
+      "Service <Value>{domain}</Value> in cluster <Value>{proxy_cluster}</Value> was updated with authentication <Value>{auth}</Value>",
+    desc_service_delete:
+      "Service <Value>{domain}</Value> in cluster <Value>{proxy_cluster}</Value> was deleted",
+
+    // Reseller / Distributor
+    desc_reseller_msp_created:
+      "Customer <Value>{msp_name}</Value> with domain <Value>{msp_domain}</Value> was created",
+    desc_reseller_activated: "Distributor account was activated",
+    desc_reseller_msp_deleted:
+      "Customer <Value>{msp_name}</Value> with domain <Value>{msp_domain}</Value> was deleted",
+    desc_reseller_msp_unlinked:
+      "Customer <Value>{msp_name}</Value> with domain <Value>{msp_domain}</Value> was unlinked",
+    desc_reseller_msp_invite_requested:
+      "Invite requested for customer <Value>{msp_name}</Value> with domain <Value>{msp_domain}</Value>",
+    desc_reseller_msp_invite_accepted:
+      "Invite accepted by customer <Value>{msp_name}</Value> with domain <Value>{msp_domain}</Value>",
+    desc_reseller_msp_invite_declined:
+      "Invite declined by customer <Value>{msp_name}</Value> with domain <Value>{msp_domain}</Value>",
+    desc_reseller_msp_updated:
+      "Customer <Value>{msp_name}</Value> with domain <Value>{msp_domain}</Value> was updated",
   },
   controlCenter: {
     title: "Control Center",

@@ -456,6 +456,24 @@ export default {
     networkRoutesDesc: "无需在每个资源上安装 NetBird 即可访问其他网络。",
     remoteJobsDesc:
       "远程触发此节点上的操作，如调试包或其他任务，无需 CLI 访问。",
+    revoke: "撤销",
+    bypassCompliance: "绕过合规检查",
+    bypassComplianceConfirmTitle: "绕过节点 '{name}' 的合规检查？",
+    bypassComplianceConfirmDescription:
+      "此操作将覆盖合规检查，允许此节点进行连接。当设备恢复合规时，绕过将自动移除。",
+    bypassComplianceSuccess: "已为 {name} 绕过合规检查",
+    bypassComplianceSuccessDescription: "此节点现在可以连接到其他节点。",
+    bypassComplianceLoading: "正在绕过合规检查...",
+    revokeBypass: "撤销绕过",
+    revokeBypassConfirmTitle: "撤销节点 '{name}' 的合规绕过？",
+    revokeBypassConfirmDescription:
+      "此节点将接受正常的合规验证。如果仍然不合规，它将失去网络访问权限。",
+    revokeBypassSuccess: "合规绕过已撤销",
+    revokeBypassSuccessDescription:
+      "节点 {name} 现在接受正常的合规验证。",
+    revokeBypassLoading: "正在撤销合规绕过...",
+    bypassTooltip:
+      "绕过 {integrationName} 合规检查并允许此节点连接。当设备恢复合规时，绕过将自动移除。",
   },
   policies: {
     title: "策略",
@@ -1459,6 +1477,25 @@ export default {
     groups: "组",
     usage: "使用情况",
     lastUsedOn: "上次使用于",
+    // SetupKeyActionCell
+    revoke: "撤销",
+    openActionsMenu: "打开操作菜单",
+    revokeConfirmTitle: "撤销安装密钥「{name}」？",
+    revokeConfirmDescription:
+      "确定要撤销此安装密钥吗？此操作无法撤销。",
+    revokeSuccessDescription: "安装密钥已成功撤销",
+    revokeLoading: "正在撤销安装密钥...",
+    deleteConfirmTitle: "删除安装密钥「{name}」？",
+    deleteConfirmDescription:
+      "确定要删除此安装密钥吗？此操作无法撤销。",
+    deleteSuccessDescription: "安装密钥已成功删除",
+    deleteLoading: "正在删除安装密钥...",
+    // SetupKeyGroupsCell
+    autoAssignedGroups: "自动分配的组",
+    autoAssignedGroupsDescription:
+      "使用此密钥注册的节点将自动分配这些组",
+    groupsSavedDescription: "安装密钥的组已成功保存",
+    groupsSaving: "正在保存安装密钥的组...",
   },
   activity: {
     title: "活动",
@@ -1476,6 +1513,281 @@ export default {
     ipAddress: "IP 地址",
     details: "详情",
     code: "代码",
+
+    // UI strings used across activity components
+    allEventTypes: "所有事件类型",
+    allUsers: "所有用户",
+    includeAllUsers: "包含所有用户",
+    searchEvent: "搜索事件...",
+    searchUser: "搜索用户...",
+    noUsersAvailable: "没有可选择的用户。",
+    noUsersMatching: "没有符合条件的用户。",
+    system: "系统",
+    external: "外部",
+    serviceUser: "服务用户",
+    typeCount: "{count} 种类型",
+    eventCount: "{count} 个事件",
+    activityCode: "活动代码",
+    meta: "元数据",
+    from: "来自",
+    unknown: "未知",
+
+    // Activity event descriptions (used by ActivityDescription.tsx)
+
+    // Setup Key
+    desc_setupkey_revoke:
+      "安装密钥 <Value>{name}</Value>（密钥：<Value>{key}</Value>）已被撤销",
+    desc_setupkey_delete:
+      "安装密钥 <Value>{name}</Value>（密钥：<Value>{key}</Value>）已被删除",
+    desc_setupkey_add:
+      "安装密钥 <Value>{name}</Value>（密钥：<Value>{key}</Value>）已创建",
+    desc_peer_setupkey_add:
+      "节点 <Value>{name}</Value><peerConnectionInfo></peerConnectionInfo>已通过 NetBird IP <Value>{ip}</Value> 添加，使用安装密钥 <Value>{setup_key_name}</Value>",
+    desc_setupkey_group_delete:
+      "组 <Value>{group}</Value> 已从安装密钥 <Value>{setupkey}</Value> 中移除",
+    desc_setupkey_group_add:
+      "组 <Value>{group}</Value> 已添加到安装密钥 <Value>{setupkey}</Value>",
+
+    // Dashboard
+    desc_dashboard_login:
+      "<Value>{username}</Value> 登录到仪表板",
+
+    // Policy
+    desc_policy_update: "策略 <Value>{name}</Value> 已更新",
+    desc_policy_delete: "策略 <Value>{name}</Value> 已被删除",
+    desc_policy_add: "策略 <Value>{name}</Value> 已创建",
+
+    // Route
+    desc_route_delete_domains:
+      "路由 <Value>{name}</Value>（域名：<Value>{domains}</Value>）已被删除",
+    desc_route_delete_range:
+      "路由 <Value>{name}</Value>（范围：<Value>{network_range}</Value>）已被删除",
+    desc_route_update_domains:
+      "路由 <Value>{name}</Value>（域名：<Value>{domains}</Value>）已更新",
+    desc_route_update_range:
+      "路由 <Value>{name}</Value>（范围：<Value>{network_range}</Value>）已更新",
+    desc_route_add_domains:
+      "路由 <Value>{name}</Value>（域名：<Value>{domains}</Value>）已创建",
+    desc_route_add_range:
+      "路由 <Value>{name}</Value>（范围：<Value>{network_range}</Value>）已创建",
+
+    // User / Peer
+    desc_user_peer_delete:
+      "节点 <Value>{name}</Value><peerConnectionInfo></peerConnectionInfo>（NetBird IP：<Value>{ip}</Value>）已被删除",
+    desc_user_peer_add:
+      "节点 <Value>{name}</Value><peerConnectionInfo></peerConnectionInfo>已通过 NetBird IP <Value>{ip}</Value> 添加",
+    desc_user_peer_update:
+      "节点 <Value>{name}</Value><peerConnectionInfo></peerConnectionInfo>（NetBird IP：<Value>{ip}</Value>）已更新",
+    desc_user_join: "用户 <Value>{username}</Value> 加入了 NetBird",
+    desc_user_invite:
+      "<Value>{username}</Value> <Value>{email}</Value> 已被邀请。",
+    desc_user_create:
+      "<Value>{username}</Value> <Value>{email}</Value> 已由 <Value>{initiator}</Value> 创建",
+    desc_user_group_add:
+      "组 <Value>{group}</Value> 已添加到用户 <Value>{username}</Value>",
+    desc_user_block:
+      "用户 <Value>{username}</Value> <Value>{email}</Value> 已被阻止",
+    desc_user_unblock:
+      "用户 <Value>{username}</Value> <Value>{email}</Value> 已解除阻止",
+    desc_user_delete:
+      "用户 <Value>{username}</Value> <Value>{email}</Value> 已被删除",
+    desc_user_group_delete:
+      "组 <Value>{group}</Value> 已从用户 <Value>{username}</Value> <Value>{email}</Value> 中移除",
+    desc_user_role_update:
+      "用户 <Value>{username}</Value> <Value>{email}</Value> 的角色已更新为 <Value>{role}</Value>",
+    desc_user_approve:
+      "用户 <Value>{username}</Value> <Value>{email}</Value> 已获批准",
+    desc_user_reject:
+      "用户 <Value>{username}</Value> <Value>{email}</Value> 已被拒绝",
+    desc_user_password_change:
+      "用户 <Value>{username}</Value> <Value>{email}</Value> 的密码已更改",
+
+    // Invite Link
+    desc_user_invite_link_create:
+      "已为 <Value>{username}</Value> <Value>{email}</Value> 创建邀请链接",
+    desc_user_invite_link_accept:
+      "邀请链接已被 <Value>{username}</Value> <Value>{email}</Value> 接受",
+    desc_user_invite_link_regenerate:
+      "已为 <Value>{username}</Value> <Value>{email}</Value> 重新生成邀请链接",
+    desc_user_invite_link_delete:
+      "已删除 <Value>{username}</Value> <Value>{email}</Value> 的邀请链接",
+
+    // Service User
+    desc_service_user_create: "服务用户 <Value>{name}</Value> 已创建",
+    desc_service_user_delete: "服务用户 <Value>{name}</Value> 已被删除",
+
+    // Peer
+    desc_peer_group_delete:
+      "组 <Value>{group}</Value> 已从 NetBird IP 为 <Value>{peer_ip}</Value> 的节点中移除",
+    desc_peer_group_add:
+      "组 <Value>{group}</Value> 已添加到 NetBird IP 为 <Value>{peer_ip}</Value> 的节点",
+    desc_peer_login_expire:
+      "节点 <Value>{name}</Value> 的登录已过期",
+    desc_peer_ssh_disable:
+      "节点 <Value>{name}</Value> 的 SSH 服务器已禁用",
+    desc_peer_ssh_enable:
+      "节点 <Value>{name}</Value> 的 SSH 服务器已启用",
+    desc_peer_login_expiration_disable:
+      "节点 <Value>{name}</Value> 的登录过期已禁用",
+    desc_peer_login_expiration_enable:
+      "节点 <Value>{name}</Value> 的登录过期已启用",
+    desc_peer_rename:
+      "NetBird IP 为 <Value>{ip}</Value> 的节点已重命名为 <Value>{name}</Value>",
+    desc_peer_approve:
+      "NetBird IP 为 <Value>{ip}</Value> 的节点已获批准",
+    desc_peer_ip_update:
+      "节点 <Value>{name}</Value> 的 IP 地址已从 <Value>{old_ip}</Value> 更新为 <Value>{ip}</Value>",
+    desc_peer_user_add:
+      "节点 <Value>{name}</Value><peerConnectionInfo></peerConnectionInfo>已通过 NetBird IP <Value>{ip}</Value> 添加",
+
+    // Group
+    desc_group_add: "组 <Value>{name}</Value> 已创建",
+    desc_group_delete: "组 <Value>{name}</Value> 已被删除",
+    desc_group_update:
+      "组 <Value>{old_name}</Value> 已重命名为 <Value>{new_name}</Value>",
+
+    // Account
+    desc_account_create: "<Value>{initiator}</Value> 创建了账户",
+    desc_account_setting_peer_login_expiration_update:
+      "全局登录过期已更新",
+    desc_account_setting_peer_login_expiration_enable:
+      "全局登录过期已启用",
+    desc_account_setting_peer_login_expiration_disable:
+      "全局登录过期已禁用",
+    desc_account_network_range_update:
+      "账户网络范围已从 <Value>{old_network_range}</Value> 更新为 <Value>{new_network_range}</Value>",
+
+    // Nameserver
+    desc_nameserver_group_add: "名称服务器 <Value>{name}</Value> 已添加",
+    desc_nameserver_group_delete: "名称服务器 <Value>{name}</Value> 已被删除",
+    desc_nameserver_group_update: "名称服务器 <Value>{name}</Value> 已更新",
+
+    // Personal Access Token
+    desc_personal_access_token_create:
+      "用户 <Value>{username}</Value> 的访问令牌 <Value>{name}</Value> 已创建",
+    desc_personal_access_token_delete:
+      "用户 <Value>{username}</Value> 的访问令牌 <Value>{name}</Value> 已被删除",
+
+    // Integration
+    desc_integration_create_platform:
+      "<Value>{platform}</Value> 集成已创建",
+    desc_integration_create: "集成已创建",
+    desc_integration_delete_platform:
+      "<Value>{platform}</Value> 集成已被删除",
+    desc_integration_delete: "集成已被删除",
+    desc_integration_update_platform:
+      "<Value>{platform}</Value> 集成已更新",
+    desc_integration_update: "集成已更新",
+
+    // DNS
+    desc_dns_setting_disabled_management_group_add:
+      "组 <Value>{group}</Value> 已添加到禁用的 DNS 组设置",
+    desc_dns_setting_disabled_management_group_delete:
+      "组 <Value>{group}</Value> 已从禁用的 DNS 组设置中移除",
+
+    // Posture Checks
+    desc_posture_check_updated:
+      "姿态检查 <Value>{name}</Value> 已更新",
+    desc_posture_check_created:
+      "姿态检查 <Value>{name}</Value> 已创建",
+    desc_posture_check_deleted:
+      "姿态检查 <Value>{name}</Value> 已被删除",
+    desc_transferred_owner_role: "所有者角色已转让",
+
+    // EDR / Integrated Validator
+    desc_integrated_validator_api_created:
+      "<Value>{platform}</Value> 集成已创建",
+    desc_integrated_validator_api_updated:
+      "<Value>{platform}</Value> 集成已更新",
+    desc_integrated_validator_api_deleted:
+      "<Value>{platform}</Value> 集成已被删除",
+    desc_integrated_validator_host_check_approved:
+      "节点已通过 <Value>{platform}</Value> 集成批准",
+    desc_integrated_validator_host_check_denied:
+      "节点已被 <Value>{platform}</Value> 集成拒绝",
+    desc_integrated_validator_peer_compliance_bypassed:
+      "NetBird IP 为 <Value>{ip}</Value> 的节点 <Value>{name}</Value> 已绕过 <Value>{platform}</Value> 的合规检查{original_reason}",
+    desc_integrated_validator_peer_compliance_bypass_revoked:
+      "NetBird IP 为 <Value>{ip}</Value> 的节点 <Value>{name}</Value> 的合规绕过已对 <Value>{platform}</Value> 撤销",
+    desc_compliance_original_reason:
+      "（原始不合规原因：<Value>{reason}</Value>）",
+
+    // Resource
+    desc_resource_group_add:
+      "组 <Value>{resource_name}</Value> 已添加到资源 <Value>{name}</Value>",
+    desc_resource_group_delete:
+      "组 <Value>{resource_name}</Value> 已从资源 <Value>{name}</Value> 中移除",
+
+    // Reverse Proxy (peer expose)
+    desc_service_peer_expose:
+      "节点 <Value>{peer_name}</Value> 暴露了服务 <Value>{domain}</Value>，认证状态：<Value>{auth}</Value>",
+    desc_service_peer_unexpose:
+      "节点 <Value>{peer_name}</Value> 取消了服务 <Value>{domain}</Value> 的暴露",
+    desc_service_peer_expose_expire:
+      "节点 <Value>{peer_name}</Value> 暴露的服务 <Value>{domain}</Value> 因续期过期已被移除",
+
+    // Networks
+    desc_network_resource_create:
+      "资源 <Value>{name}</Value> 已为网络 <Value>{network_name}</Value> 创建",
+    desc_network_resource_update:
+      "资源 <Value>{name}</Value> 已为网络 <Value>{network_name}</Value> 更新",
+    desc_network_resource_delete:
+      "资源 <Value>{name}</Value> 已从网络 <Value>{network_name}</Value> 中删除",
+    desc_network_router_create:
+      "已为网络 <Value>{network_name}</Value> 创建路由节点",
+    desc_network_router_delete:
+      "已从网络 <Value>{network_name}</Value> 中删除路由节点",
+    desc_network_router_update:
+      "已更新网络 <Value>{network_name}</Value> 的路由节点",
+    desc_network_create:
+      "名为 <Value>{name}</Value> 的网络已创建",
+    desc_network_delete:
+      "名为 <Value>{name}</Value> 的网络已被删除",
+    desc_network_update:
+      "名为 <Value>{name}</Value> 的网络已更新",
+
+    // Jobs
+    desc_peer_job_create:
+      "已为节点 <Value>{for_peer_name}</Value> 创建远程任务 <Value>{job_type}</Value>",
+
+    // Flow Settings
+    desc_account_settings_extra_flow_group_remove:
+      "流量事件限制组 <Value>{group_name}</Value> 已移除",
+    desc_account_settings_extra_flow_group_add:
+      "流量事件限制组 <Value>{group_name}</Value> 已添加",
+
+    // Identity Provider
+    desc_identityprovider_create:
+      "身份提供者 <Value>{name}</Value> 已创建",
+    desc_identityprovider_update:
+      "身份提供者 <Value>{name}</Value> 已更新",
+    desc_identityprovider_delete:
+      "身份提供者 <Value>{name}</Value> 已被删除",
+
+    // Service (proxy cluster)
+    desc_service_create:
+      "集群 <Value>{proxy_cluster}</Value> 中的服务 <Value>{domain}</Value> 已创建，认证方式：<Value>{auth}</Value>",
+    desc_service_update:
+      "集群 <Value>{proxy_cluster}</Value> 中的服务 <Value>{domain}</Value> 已更新，认证方式：<Value>{auth}</Value>",
+    desc_service_delete:
+      "集群 <Value>{proxy_cluster}</Value> 中的服务 <Value>{domain}</Value> 已被删除",
+
+    // Reseller / Distributor
+    desc_reseller_msp_created:
+      "客户 <Value>{msp_name}</Value>（域名：<Value>{msp_domain}</Value>）已创建",
+    desc_reseller_activated: "分销商账户已激活",
+    desc_reseller_msp_deleted:
+      "客户 <Value>{msp_name}</Value>（域名：<Value>{msp_domain}</Value>）已被删除",
+    desc_reseller_msp_unlinked:
+      "客户 <Value>{msp_name}</Value>（域名：<Value>{msp_domain}</Value>）已取消关联",
+    desc_reseller_msp_invite_requested:
+      "已为客户 <Value>{msp_name}</Value>（域名：<Value>{msp_domain}</Value>）请求邀请",
+    desc_reseller_msp_invite_accepted:
+      "客户 <Value>{msp_name}</Value>（域名：<Value>{msp_domain}</Value>）已接受邀请",
+    desc_reseller_msp_invite_declined:
+      "客户 <Value>{msp_name}</Value>（域名：<Value>{msp_domain}</Value>）已拒绝邀请",
+    desc_reseller_msp_updated:
+      "客户 <Value>{msp_name}</Value>（域名：<Value>{msp_domain}</Value>）已更新",
   },
   controlCenter: {
     title: "控制中心",
