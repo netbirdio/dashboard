@@ -17,7 +17,7 @@ import { OnboardingAgentEnd } from "@/modules/onboarding/agent-network/Onboardin
 import { OnboardingAgentPolicy } from "@/modules/onboarding/agent-network/OnboardingAgentPolicy";
 import { OnboardingAgentProvider } from "@/modules/onboarding/agent-network/OnboardingAgentProvider";
 import { OnboardingAgentWelcome } from "@/modules/onboarding/agent-network/OnboardingAgentWelcome";
-import { useEnsureUsersGroup } from "@/modules/onboarding/agent-network/useEnsureUsersGroup";
+import { useAgentNetworkFirstRunSetup } from "@/modules/onboarding/agent-network/useAgentNetworkFirstRunSetup";
 
 // Step indices for the Agent Network onboarding. Kept as a flat sequence
 // (no intent branching like the regular onboarding) since there's a single
@@ -57,9 +57,10 @@ export const AgentNetworkOnboarding = ({
   const { mutate } = useSWRConfig();
   const deviceConnected = (peers?.length ?? 0) > 0;
 
-  // Seed a "Users" source group (with the current user in it) up front so the
-  // policy step has something to select — a fresh install has no usable groups.
-  useEnsureUsersGroup(true);
+  // First-run prep: seed a "Users" source group (with the current user in it)
+  // so the policy step has something to select, and remove the permissive
+  // "Default" Access Control policy that doesn't belong in Agent Network.
+  useAgentNetworkFirstRunSetup(true);
 
   // Advance/retreat and persist the new step so a refresh mid-onboarding
   // resumes in place. We persist here rather than in an effect so the
