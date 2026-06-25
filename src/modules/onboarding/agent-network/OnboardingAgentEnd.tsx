@@ -21,9 +21,8 @@ export const OnboardingAgentEnd = ({ onFinish }: Props) => {
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`Run your agent as usual, or send a quick test request using a model
-          your provider allows. Then open Usage & Logs to confirm the call was
-          recorded with the caller identity, model, tokens, and cost.`}
+          {`Run your agent or send a test request with an allowed model. Open
+          Usage & Logs to confirm caller identity, model, tokens, and cost.`}
         </div>
       </div>
 

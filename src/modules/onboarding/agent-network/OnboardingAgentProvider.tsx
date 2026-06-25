@@ -29,9 +29,9 @@ export const OnboardingAgentProvider = ({ onBack, onNext }: Props) => {
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`A provider is an upstream LLM service NetBird routes requests to —
-          OpenAI, Anthropic, an AI gateway, or a self-hosted model. NetBird
-          stores the API key server-side and returns a tunnel-only endpoint.`}
+          {`A provider is an upstream LLM service NetBird routes to, such as
+          OpenAI, Anthropic, an AI gateway, or a self hosted model. NetBird
+          stores the API key and returns a tunnel only endpoint.`}
         </div>
       </div>
 

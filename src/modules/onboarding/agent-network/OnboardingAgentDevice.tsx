@@ -40,9 +40,9 @@ export const OnboardingAgentDevice = ({
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`Agent network endpoints are private and reachable only over the
-          NetBird overlay. Install the NetBird client, sign in, and your device
-          joins the network — keeping access keyless and encrypted.`}
+          {`Agent Network endpoints are private and reachable only over the
+          NetBird overlay. Install the client and sign in to join the network
+          with keyless, encrypted access.`}
         </div>
       </div>
 

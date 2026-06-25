@@ -27,10 +27,9 @@ export const OnboardingAgentPolicy = ({ onBack, onNext }: Props) => {
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`By default Agent Network denies every request. A policy connects a
-          source group — your users or agent devices — to one or more
-          providers, and is where you attach optional token and budget limits
-          and guardrails.`}
+          {`By default Agent Network denies every request. Policies connect source
+          groups, your users or agent devices, to providers, with optional token
+          and budget limits and guardrails.`}
         </div>
       </div>
 
