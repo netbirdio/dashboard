@@ -36,7 +36,7 @@ export const OnboardingAgentWelcome = ({ onNext }: Props) => {
           icon={<KeyRoundIcon size={16} />}
           title={"Keyless access over the tunnel"}
           description={
-            "Agents reach LLM providers and internal resources over an encrypted WireGuard tunnel. Provider keys stay on the server, with no secrets on the client."
+            "Agents access LLM providers and internal resources through encrypted WireGuard tunnel, without exposing API keys on the client."
           }
         />
         <Highlight
