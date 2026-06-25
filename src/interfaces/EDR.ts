@@ -18,6 +18,18 @@ export interface IntuneIntegration {
   enabled: boolean;
 }
 
+export interface WorkspaceOneIntegration {
+  api_url: string;
+  token_url: string;
+  client_id: string;
+  client_secret?: string;
+  api_key?: string;
+  last_synced_interval: number;
+  last_synced_at?: string;
+  groups: string[] | Group[];
+  enabled: boolean;
+}
+
 export interface SentinelOneIntegration {
   api_token: string;
   api_url: string;

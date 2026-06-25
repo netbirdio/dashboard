@@ -7,6 +7,7 @@ import {
   HuntressIntegration,
   IntuneIntegration,
   SentinelOneIntegration,
+  WorkspaceOneIntegration,
 } from "@/interfaces/EDR";
 
 export const useIntegrations = () => {
@@ -52,18 +53,28 @@ export const useIntegrations = () => {
       permission?.edr?.read,
     );
 
+  const { data: workspaceOne, isLoading: isWorkspaceOneLoading } =
+    useFetchApi<WorkspaceOneIntegration>(
+      "/integrations/edr/workspaceone",
+      false,
+      false,
+      permission?.edr?.read,
+    );
+
   const isCrowdstrikeEnabled = !!crowdstrike?.enabled;
   const isIntuneEnabled = !!intune?.enabled;
   const isSentinelOneEnabled = !!sentinelOne?.enabled;
   const isHuntressEnabled = !!huntress?.enabled;
   const isFleetDMEnabled = !!fleetdm?.enabled;
+  const isWorkspaceOneEnabled = !!workspaceOne?.enabled;
 
   const isAnyIntegrationEnabled =
     isCrowdstrikeEnabled ||
     isIntuneEnabled ||
     isSentinelOneEnabled ||
     isHuntressEnabled ||
-    isFleetDMEnabled;
+    isFleetDMEnabled ||
+    isWorkspaceOneEnabled;
 
   const activeIntegrationName = useMemo(() => {
     if (isCrowdstrikeEnabled) return "CrowdStrike";
@@ -71,6 +82,7 @@ export const useIntegrations = () => {
     if (isSentinelOneEnabled) return "SentinelOne";
     if (isHuntressEnabled) return "Huntress";
     if (isFleetDMEnabled) return "FleetDM";
+    if (isWorkspaceOneEnabled) return "Workspace ONE";
     return "";
   }, [
     isCrowdstrikeEnabled,
@@ -78,6 +90,7 @@ export const useIntegrations = () => {
     isSentinelOneEnabled,
     isHuntressEnabled,
     isFleetDMEnabled,
+    isWorkspaceOneEnabled,
   ]);
 
   return {
@@ -100,6 +113,10 @@ export const useIntegrations = () => {
     fleetdm,
     isFleetDMLoading,
     isFleetDMEnabled,
+
+    workspaceOne,
+    isWorkspaceOneLoading,
+    isWorkspaceOneEnabled,
 
     isAnyIntegrationEnabled,
     activeIntegrationName,

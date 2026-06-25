@@ -14,6 +14,7 @@ import { useIntegrations } from "../idp-sync/useIntegrations";
 import { Intune } from "./intune/Intune";
 import { FleetDM } from "@/modules/integrations/edr/fleetdm/FleetDM";
 import { Huntress } from "@/modules/integrations/edr/huntress/Huntress";
+import { WorkspaceOne } from "@/modules/integrations/edr/workspace-one/WorkspaceOne";
 
 type Props = {
   account: Account;
@@ -67,6 +68,7 @@ export default function EDRTab({ account }: Props) {
             <SentinelOne account={account} />
             <Huntress account={account} />
             <FleetDM account={account} />
+            <WorkspaceOne account={account} />
           </div>
         </LockedFeatureOverlay>
       </div>
