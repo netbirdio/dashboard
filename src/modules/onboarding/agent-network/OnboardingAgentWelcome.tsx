@@ -4,7 +4,6 @@ import {
   ArrowRightIcon,
   BotIcon,
   KeyRoundIcon,
-  ServerIcon,
   ShieldCheckIcon,
 } from "lucide-react";
 import * as React from "react";
@@ -35,9 +34,9 @@ export const OnboardingAgentWelcome = ({ onNext }: Props) => {
       <div className={"mt-4 flex flex-col gap-4"}>
         <Highlight
           icon={<KeyRoundIcon size={16} />}
-          title={"Keyless for your agents"}
+          title={"Keyless access over the tunnel"}
           description={
-            "Provider API keys live on the server. Agents authenticate over an encrypted WireGuard tunnel — no secrets on the client."
+            "Agents reach LLM providers and internal resources over an encrypted WireGuard tunnel. Provider keys stay on the server, with no secrets on the client."
           }
         />
         <Highlight
@@ -48,17 +47,10 @@ export const OnboardingAgentWelcome = ({ onNext }: Props) => {
           }
         />
         <Highlight
-          icon={<ServerIcon size={16} />}
-          title={"Access to internal resources"}
-          description={
-            "Agents reach internal databases, APIs, and self-hosted models directly over an encrypted peer-to-peer tunnel."
-          }
-        />
-        <Highlight
           icon={<BotIcon size={16} />}
           title={"Per-identity usage & logs"}
           description={
-            "See who called which model, how many tokens it cost, and whether it was allowed — all attributed to the real caller."
+            "See who called which model, how many tokens it cost, and whether it was allowed. All attributed to the real caller."
           }
         />
       </div>
