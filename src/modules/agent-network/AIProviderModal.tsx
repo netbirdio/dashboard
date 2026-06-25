@@ -99,7 +99,7 @@ function upstreamUrlPlaceholder(providerId: AIProviderId): string {
     case "cloudflare_ai_gateway":
       return "https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/openai";
     case "vercel_ai_gateway":
-      return "https://ai-gateway.vercel.sh/v1";
+      return "https://ai-gateway.vercel.sh";
     case "openrouter":
       return "https://openrouter.ai/api/v1";
     case "litellm_proxy":
