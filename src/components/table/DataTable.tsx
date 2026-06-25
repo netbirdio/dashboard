@@ -1,5 +1,6 @@
 "use client";
 import { TableContentSkeleton } from "@components/skeletons/SkeletonTable";
+import { DataTableInstanceProvider } from "@components/table/DataTableContext";
 import DataTableGlobalSearch from "@components/table/DataTableGlobalSearch";
 import { DataTableHeadingPortal } from "@components/table/DataTableHeadingPortal";
 import { DataTablePagination } from "@components/table/DataTablePagination";
@@ -440,6 +441,7 @@ export function DataTable<TData, TValue>({
   }, [manualColumnFiltering, externalColumnFilters, table]);
 
   return (
+    <DataTableInstanceProvider table={table}>
     <div className={cn("relative table-fixed-scroll", className)}>
       {showSearchAndFilters && (
         <div className={cn("flex gap-x-4 gap-y-6", !minimal && "p-default")}>
@@ -648,5 +650,6 @@ export function DataTable<TData, TValue>({
         hasActiveFilters={hasServerSideFilters}
       />
     </div>
+    </DataTableInstanceProvider>
   );
 }
