@@ -1,6 +1,6 @@
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { isLocalDev, isNetBirdCloud } from "@utils/netbird";
+import { isAgentNetworkOnly, isLocalDev, isNetBirdCloud } from "@utils/netbird";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
@@ -10,6 +10,7 @@ import { Account } from "@/interfaces/Account";
 import { Network } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { useAccount } from "@/modules/account/useAccount";
+import { AgentNetworkOnboarding } from "@/modules/onboarding/agent-network/AgentNetworkOnboarding";
 import {
   Intent,
   Onboarding,
@@ -66,8 +67,14 @@ export const OnboardingProvider = ({
 
   const showOnboarding = useMemo(() => {
     if (process.env.APP_ENV === "test") return false;
-    if (!isNetBirdCloud()) return false;
     if (!account) return false;
+    // Agent Network-only deployments run a dedicated onboarding flow (no
+    // HubSpot signup survey) gated purely on the backend's first-run flag,
+    // which is set on every new account regardless of cloud vs self-hosted.
+    if (isAgentNetworkOnly()) {
+      return isOwner && !!account?.onboarding?.onboarding_flow_pending;
+    }
+    if (!isNetBirdCloud()) return false;
     const isSignupFormPending = isNetBirdCloud()
       ? !!account?.onboarding?.signup_form_pending
       : false;
@@ -123,6 +130,31 @@ export const OnboardingProvider = ({
     }
   };
 
+  const onFinishAgentNetwork = async () => {
+    await updateAccountMeta({
+      onboarding_flow_pending: false,
+    });
+    trackEventV2(
+      "Onboarding",
+      "Finished Agent Network Onboarding",
+      account?.id,
+      loggedInUser?.id,
+    );
+    router.push("/agent-network/usage");
+  };
+
+  const onSkipAgentNetwork = async (step: number) => {
+    await updateAccountMeta({
+      onboarding_flow_pending: false,
+    });
+    trackEventV2(
+      "Onboarding",
+      `Skipped Agent Network Onboarding (Step ${step})`,
+      account?.id,
+      loggedInUser?.id,
+    );
+  };
+
   const onTroubleshootingClick = (intent: Intent) => {
     trackEventV2(
       "Onboarding",
@@ -149,6 +181,17 @@ export const OnboardingProvider = ({
   const formSubmitted = isNetBirdCloud()
     ? !account?.onboarding?.signup_form_pending
     : true;
+
+  if (showOnboarding && isAgentNetworkOnly()) {
+    return (
+      <AgentNetworkOnboarding
+        initialStep={onboarding.step}
+        onStepChange={(step) => setOnboarding((prev) => ({ ...prev, step }))}
+        onSkip={onSkipAgentNetwork}
+        onFinish={onFinishAgentNetwork}
+      />
+    );
+  }
 
   return (
     <>

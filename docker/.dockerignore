@@ -1,0 +1,12 @@
+# The image only needs the pre-built static export (out/) and the docker/
+# config files. Keep the build context small by dropping everything heavy and
+# irrelevant — without this, `docker build .` ships node_modules and .next.
+node_modules
+.next
+.git
+.github
+e2e
+src
+public
+*.tar.gz
+*.tar
