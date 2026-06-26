@@ -42,7 +42,7 @@ export default function RouteActionCell({ route }: Props) {
 
   const handleRevoke = async () => {
     notify({
-      title: t("deleteRouteNotify") + " " + route.network_id,
+      title: t("deleteRouteNotify", { network_id: route.network_id }),
       description: t("routeRemoved"),
       promise: routeRequest.del("", `/${route.id}`).then(() => {
         mutate("/routes");

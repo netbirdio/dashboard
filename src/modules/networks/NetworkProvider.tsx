@@ -296,7 +296,7 @@ export const NetworkProvider = ({
     if (!choice) return;
 
     notify({
-      title: t("remove") + " " + network.name,
+      title: t("removeRouter", { name: network.name }),
       description: t("routerRemoved"),
       loadingMessage: t("routerRemoving"),
       promise: deleteCall({}, `/${network.id}/routers/${router.id}`).then(

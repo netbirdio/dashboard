@@ -371,13 +371,13 @@ export function RouteModalContent({
 
 	const networkIdentifierError = useMemo(() => {
 		return (networkIdentifier?.length || 0) > 40
-			? t("networkIdentifier") + " must be less than 40 characters"
+			? t("networkIdentifierLengthError")
 			: "";
 	}, [networkIdentifier]);
 
 	const metricError = useMemo(() => {
 		return parseInt(metric) < 1 || parseInt(metric) > 9999
-			? t("metric") + " must be between 1 and 9999"
+			? t("metricError")
 			: "";
 	}, [metric]);
 

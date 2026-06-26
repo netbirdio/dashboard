@@ -31,7 +31,7 @@ export default function GroupedRouteActionCell({ groupedRoute }: Props) {
     });
 
     notify({
-      title: t("deleteNetworkNotify") + " " + groupedRoute.network_id,
+      title: t("deleteNetworkNotify", { network_id: groupedRoute.network_id }),
       description: t("networkRemoved"),
       promise: Promise.all(batch).then(() => {
         mutate("/routes");
