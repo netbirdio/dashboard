@@ -64,7 +64,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import type { Group } from "@/interfaces/Group";
-import type { Peer } from "@/interfaces/Peer";
+import { type Peer, peerMacAddresses } from "@/interfaces/Peer";
 import type { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -675,6 +675,24 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
                 </>
               }
               value={peer.serial_number}
+            />
+          )}
+
+          {peerMacAddresses(peer).length > 0 && (
+            <Card.ListItem
+              copy
+              copyText={"MAC Address"}
+              label={
+                <>
+                  <NetworkIcon size={16} className={"shrink-0"} />
+                  MAC Address
+                </>
+              }
+              className={
+                peerMacAddresses(peer).length > 1 ? "items-start" : ""
+              }
+              value={peerMacAddresses(peer)[0]}
+              extraText={peerMacAddresses(peer).slice(1)}
             />
           )}
 
