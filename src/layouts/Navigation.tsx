@@ -93,24 +93,8 @@ export default function Navigation({
                   icon={<PeerIcon />}
                   label="Peers"
                   href={"/peers"}
-                  collapsible
                   visible={!isRestricted}
-                >
-                  <SidebarItem
-                    label="User Devices"
-                    isChild
-                    href={"/peers/users"}
-                    exactPathMatch={true}
-                    visible={!isRestricted}
-                  />
-                  <SidebarItem
-                    label="Servers"
-                    isChild
-                    href={"/peers/servers"}
-                    exactPathMatch={true}
-                    visible={!isRestricted}
-                  />
-                </SidebarItem>
+                />
 
                 <DistributorNavigation />
                 <SidebarItem
