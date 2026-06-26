@@ -65,6 +65,15 @@ export const isAgentNetworkOnly = () => {
   return config.agentNetworkOnly;
 };
 
+// pkgsDownloadUrl builds a NetBird client installer download link on
+// pkgs.netbird.io. In Agent Network-only mode the client ships from the
+// release-candidate channel, so the link gets a "/rc" suffix that
+// pkgs.netbird.io 302-redirects to the latest RC GitHub asset (e.g.
+// "windows/x64" -> "windows/x64/rc"). `path` is the platform path without a
+// leading slash, e.g. "windows/x64" or "macos/universal".
+export const pkgsDownloadUrl = (path: string) =>
+  `https://pkgs.netbird.io/${path}${isAgentNetworkOnly() ? "/rc" : ""}`;
+
 // isAgentNetworkEnabled returns true when the Agent Network product surface
 // (Providers, Policies, Usage & Logs) is available — in either the dedicated
 // "only" mode or alongside the regular UI (where it carries a Beta badge).

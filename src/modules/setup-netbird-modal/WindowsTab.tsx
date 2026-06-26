@@ -3,7 +3,7 @@ import Code from "@components/Code";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import Steps from "@components/Steps";
 import TabsContentPadding, { TabsContent } from "@components/Tabs";
-import { GRPC_API_ORIGIN } from "@utils/netbird";
+import { GRPC_API_ORIGIN, pkgsDownloadUrl } from "@utils/netbird";
 import { DownloadIcon, PackageOpenIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
@@ -28,9 +28,7 @@ export default function WindowsTab({
   showSetupKeyInfo,
   hostname,
 }: Readonly<Props>) {
-  const [windowsUrl, setWindowsUrl] = useState(
-    "https://pkgs.netbird.io/windows/x64",
-  );
+  const [windowsUrl, setWindowsUrl] = useState(pkgsDownloadUrl("windows/x64"));
   // The CLI-run branch is required for the server flow (setupKeyContent
   // present) even before a key is generated — the placeholder keeps the
   // command shape consistent. Otherwise we fall back to the existing
@@ -58,19 +56,19 @@ export default function WindowsTab({
                 options={[
                   {
                     label: "64-Bit",
-                    value: "https://pkgs.netbird.io/windows/x64",
+                    value: pkgsDownloadUrl("windows/x64"),
                   },
                   {
                     label: "ARM64",
-                    value: "https://pkgs.netbird.io/windows/arm64",
+                    value: pkgsDownloadUrl("windows/arm64"),
                   },
                   {
                     label: "64-Bit (MSI)",
-                    value: "https://pkgs.netbird.io/windows/msi/x64",
+                    value: pkgsDownloadUrl("windows/msi/x64"),
                   },
                   {
                     label: "ARM64 (MSI)",
-                    value: "https://pkgs.netbird.io/windows/msi/arm64",
+                    value: pkgsDownloadUrl("windows/msi/arm64"),
                   },
                 ]}
               />
