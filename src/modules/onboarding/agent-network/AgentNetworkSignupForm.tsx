@@ -17,7 +17,7 @@ import {
   UserIcon,
   UsersIcon,
 } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { HubspotFormField } from "@/contexts/AnalyticsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import {
@@ -30,15 +30,10 @@ type Props = {
 };
 
 // Agent-Network-specific use cases. Unlike the cloud survey (VPN use cases),
-// these describe what an operator wants Agent Network to do. The `value` is the
-// label and the string sent to HubSpot's `use_case` field.
-const USE_CASES: { value: string; icon: React.ReactNode }[] = [
-  { value: "Employee access to LLMs", icon: <UsersIcon size={16} /> },
-  { value: "Autonomous agent access", icon: <BotIcon size={16} /> },
-  { value: "Token & budget limits", icon: <GaugeIcon size={16} /> },
-  { value: "Usage & cost attribution", icon: <CoinsIcon size={16} /> },
-  { value: "Audit & access logging for AI", icon: <ScrollTextIcon size={16} /> },
-];
+// these describe what an operator wants Agent Network to do. `key` is a stable
+// selection id (so toggling Business/Personal keeps the choice); `label` is the
+// display text and the string sent to HubSpot's `use_case` field. The first
+// entry's label depends on Business vs Personal — see useCases below.
 
 // AgentNetworkSignupForm is the self-hosted Agent Network signup form. It runs
 // as the first step of the Agent Network onboarding (like the cloud survey is
@@ -55,14 +50,9 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
     ? `Welcome to NetBird, ${name}!`
     : "Welcome to NetBird!";
 
-  const defaultEmail = loggedInUser?.email || user?.email || "";
-  const [email, setEmail] = useState(defaultEmail);
-  // Prefill the email once the user/profile resolves (OIDC can lag the first
-  // render), without clobbering an edit the operator already made.
-  useEffect(() => {
-    if (!email && defaultEmail) setEmail(defaultEmail);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultEmail]);
+  // The email is already known from the authenticated user, so it's submitted
+  // with the form silently — no field to fill or correct.
+  const email = loggedInUser?.email || user?.email || "";
 
   const [personalOrBusiness, setPersonalOrBusiness] = useState("business");
   const isBusiness = personalOrBusiness === "business";
@@ -73,20 +63,36 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
   const [otherUseCase, setOtherUseCase] = useState("");
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const toggle = (value: string) =>
-    setSelected((prev) => ({ ...prev, [value]: !prev[value] }));
+  const useCases = useMemo(
+    () => [
+      {
+        key: "llm_access",
+        // The audience word flips with the Business/Personal toggle.
+        label: isBusiness
+          ? "Employee access to LLMs"
+          : "Personal access to LLMs",
+        icon: <UsersIcon size={16} />,
+      },
+      { key: "agent_access", label: "Autonomous agent access", icon: <BotIcon size={16} /> },
+      { key: "token_budget_limits", label: "Token & budget limits", icon: <GaugeIcon size={16} /> },
+      { key: "usage_cost_attribution", label: "Usage & cost attribution", icon: <CoinsIcon size={16} /> },
+      { key: "audit_access_logging", label: "Audit & access logging for AI", icon: <ScrollTextIcon size={16} /> },
+    ],
+    [isBusiness],
+  );
+
+  const toggle = (key: string) =>
+    setSelected((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const getUseCases = () => {
-    const picked = USE_CASES.filter((u) => selected[u.value]).map(
-      (u) => u.value,
-    );
+    const picked = useCases.filter((u) => selected[u.key]).map((u) => u.label);
     if (other && otherUseCase) picked.push(otherUseCase);
     return picked.join(", ");
   };
 
   const hasSelectedUseCase = useMemo(
-    () => USE_CASES.some((u) => selected[u.value]) || (other && otherUseCase !== ""),
-    [selected, other, otherUseCase],
+    () => useCases.some((u) => selected[u.key]) || (other && otherUseCase !== ""),
+    [useCases, selected, other, otherUseCase],
   );
 
   const randomizedOptions = useMemo(
@@ -95,9 +101,9 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
   );
 
   const canSubmit = useMemo(() => {
-    const base = email !== "" && hasSelectedUseCase && referralSource !== "";
+    const base = hasSelectedUseCase && referralSource !== "";
     return isBusiness ? base && companySize !== "" : base;
-  }, [email, hasSelectedUseCase, referralSource, isBusiness, companySize]);
+  }, [hasSelectedUseCase, referralSource, isBusiness, companySize]);
 
   const submitForm = () => {
     let fields: HubspotFormField[] = [];
@@ -151,23 +157,10 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
             </SegmentedTabs.List>
           </SegmentedTabs>
 
-          <div className={"flex w-full flex-col gap-2"}>
-            <Label>
-              Email
-              <RequiredAsterisk />
-            </Label>
-            <Input
-              type={"email"}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={"you@company.com"}
-            />
-          </div>
-
           {isBusiness && (
             <div className={"flex w-full flex-col gap-2"}>
               <Label>
-                How many people in your company will use NetBird?
+                How many people will use Agent Network?
                 <RequiredAsterisk />
               </Label>
               <ButtonGroup>
@@ -189,7 +182,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
 
           <div className={"flex w-full flex-col gap-2"}>
             <Label>
-              How did you hear about NetBird?
+              How did you hear about Agent Network?
               <RequiredAsterisk />
             </Label>
             <SelectDropdown
@@ -214,14 +207,14 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
             </div>
 
             <div className={"flex flex-col gap-3"}>
-              {USE_CASES.map((u) => (
+              {useCases.map((u) => (
                 <SignupCheckbox
-                  key={u.value}
-                  value={!!selected[u.value]}
-                  setValue={() => toggle(u.value)}
+                  key={u.key}
+                  value={!!selected[u.key]}
+                  setValue={() => toggle(u.key)}
                 >
                   {u.icon}
-                  {u.value}
+                  {u.label}
                 </SignupCheckbox>
               ))}
 
