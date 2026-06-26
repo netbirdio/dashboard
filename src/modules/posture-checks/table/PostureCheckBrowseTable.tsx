@@ -22,6 +22,7 @@ type Props = {
 
 export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
 	const t = useTranslations("common");
+	const tPosture = useTranslations("postureChecks");
 
 	const { data: postureChecks, isLoading } =
 		useFetchApi<PostureCheck[]>("/posture-checks");
@@ -45,11 +46,11 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
 				setRowSelection={setSelectedRows}
 				isLoading={isLoading}
 				keepStateInLocalStorage={false}
-				text={"Posture Check"}
+				text={tPosture("postureCheck")}
 				sorting={sorting}
 				wrapperClassName={""}
 				setSorting={setSorting}
-				columns={PostureChecksColumns(t)}
+				columns={PostureChecksColumns(t, tPosture)}
 				showHeader={true}
 				columnVisibility={{
 					description: false,
@@ -57,7 +58,7 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
 				tableClassName={"mt-6 !border-0"}
 				rowClassName={"!border-b-0 px-10"}
 				data={postureChecks}
-				searchPlaceholder={"Search by name and description..."}
+				searchPlaceholder={tPosture("searchByNameAndDescription")}
 				onRowClick={(row) => row.toggleSelected()}
 				rightSide={(table) => (
 					<>
@@ -72,7 +73,9 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
 								}
 								disabled={table.getSelectedRowModel().rows.length <= 0}
 							>
-								Add Posture Checks ({table.getSelectedRowModel().rows.length})
+								{tPosture("addPostureChecks", {
+									count: table.getSelectedRowModel().rows.length,
+								})}
 							</Button>
 						)}
 					</>
@@ -95,6 +98,7 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
 
 export function PostureChecksColumns(
 	t: (key: string) => string,
+	tPosture: (key: string) => string,
 ): ColumnDef<PostureCheck>[] {
 	return [
 		{
@@ -124,7 +128,7 @@ export function PostureChecksColumns(
 		{
 			accessorKey: "name",
 			header: ({ column }) => {
-				return <DataTableHeader column={column}>Name</DataTableHeader>;
+				return <DataTableHeader column={column}>{tPosture("name")}</DataTableHeader>;
 			},
 			cell: ({ row }) => (
 				<PostureCheckNameCell small={true} check={row.original} />
@@ -133,7 +137,7 @@ export function PostureChecksColumns(
 		{
 			accessorKey: "id",
 			header: ({ column }) => {
-				return <DataTableHeader column={column}>Checks</DataTableHeader>;
+				return <DataTableHeader column={column}>{tPosture("checks")}</DataTableHeader>;
 			},
 			cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
 		},
