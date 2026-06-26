@@ -137,8 +137,8 @@ export default function ServiceUsersTable({
 
 	const roleOptions = useMemo<CheckboxOption<string>[]>(
 		() => [
-			{ value: "admin", label: tCommon("admin" as any) || "Admin" },
-			{ value: "user", label: tCommon("user" as any) || "User" },
+			{ value: "admin", label: tUsers("admin") },
+			{ value: "user", label: tUsers("user") },
 			{ value: "network_admin", label: tUsers("networkAdmin") },
 			{ value: "billing_admin", label: tUsers("billingAdmin") },
 			{ value: "auditor", label: tUsers("auditor") },
