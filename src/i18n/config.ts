@@ -4,7 +4,6 @@
  * Shared by:
  *  - {@link './request.ts'}      (next-intl plugin, build-time)
  *  - {@link './detection.ts'}    (cookie + browser locale detection)
- *  - {@link './routing.ts'}      (next-intl routing definition)
  *  - {@link '../contexts/LocaleProvider.tsx'} (runtime provider)
  *
  * NOTE: This app uses `output: "export"` (static export), so there is no
