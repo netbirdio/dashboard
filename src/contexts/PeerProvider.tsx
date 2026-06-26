@@ -96,7 +96,7 @@ export default function PeerProvider({
             : peer.login_expiration_enabled,
         inactivity_expiration_enabled:
           props?.inactivityExpiration == undefined
-            ? undefined
+            ? peer.inactivity_expiration_enabled
             : props.inactivityExpiration,
         approval_required:
           props?.approval_required == undefined

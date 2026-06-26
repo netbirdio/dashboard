@@ -93,6 +93,8 @@ fi
 # Add AUTH_AUTHORITY to CSP
 if [[ -n "${AUTH_AUTHORITY}" ]]; then
     CSP_DOMAINS="$CSP_DOMAINS $AUTH_AUTHORITY"
+    AUTH_AUTHORITY_ORIGIN=$(echo "$AUTH_AUTHORITY" | sed -E 's|^(https?://[^/]+).*|\1|')
+    CSP_DOMAINS="$CSP_DOMAINS $AUTH_AUTHORITY_ORIGIN"
 fi
 
 # Add AUTH_AUDIENCE to CSP

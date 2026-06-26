@@ -1,5 +1,6 @@
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import useFetchApi from "@utils/api";
+import { isNetBirdCloud } from "@utils/netbird";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MSP } from "@/cloud/msp/interfaces/MSP";
 import { TenantListItem, TenantStatus } from "@/cloud/msp/interfaces/Tenant";
@@ -35,15 +36,23 @@ const MSPContext = React.createContext(
 );
 
 export default function MSPProvider({ children }: Readonly<Props>) {
+  // MSP is a NetBird Cloud-only feature. Skip the calls on self-hosted
+  // deployments where the endpoints are not served.
+  const isCloud = isNetBirdCloud();
   const {
     data: mspInfo,
     isLoading: isMspInfoLoading,
     error,
-  } = useFetchApi<MSP>("/integrations/msp", true);
+  } = useFetchApi<MSP>("/integrations/msp", true, true, isCloud);
   const { isOwner } = useLoggedInUser();
 
   const { data: tenantListItems, isLoading: isTenantListItemsLoading } =
-    useFetchApi<TenantListItem[]>("/integrations/msp/switcher", true);
+    useFetchApi<TenantListItem[]>(
+      "/integrations/msp/switcher",
+      true,
+      true,
+      isCloud,
+    );
 
   const { globalApiParams, setGlobalApiParams } = useApplicationContext();
   const currentAccountId = globalApiParams?.account;
