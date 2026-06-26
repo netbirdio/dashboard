@@ -7,12 +7,15 @@ import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/firehose.png";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useIsLicensed } from "@/hooks/useIsLicensed";
 import { EventStream } from "@/interfaces/EventStream";
 import FirehoseSetup from "@/modules/integrations/event-streaming/amazon/firehose/FirehoseSetup";
 import { IntegrationCard } from "@/modules/integrations/IntegrationCard";
 
 export default function Firehose() {
   const { permission } = usePermissions();
+  // Event Streaming is a licensed feature; skip the call on open-source.
+  const { isLicensed } = useIsLicensed();
 
   const { mutate } = useSWRConfig();
   const { data: eventStreamIntegrations, isLoading } = useFetchApi<
@@ -21,7 +24,7 @@ export default function Firehose() {
     "/integrations/event-streaming",
     false,
     false,
-    permission.event_streaming.read,
+    permission.event_streaming.read && isLicensed,
   );
 
   const firehoseSettings = eventStreamIntegrations?.find(
