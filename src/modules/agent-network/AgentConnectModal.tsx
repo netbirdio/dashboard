@@ -159,10 +159,17 @@ export function AgentConnectTabs({
       <TabsContent value={"curl"}>
         <div className={contentClassName}>
           <Snippet
+            // Displayed with the JSON pretty-printed (curl accepts multi-line
+            // single-quoted bodies); copyText is the compact one-line command.
             lines={[
               `curl ${openaiBase}/chat/completions \\`,
               `  -H "Content-Type: application/json" \\`,
-              `  -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"What is NetBird Agent Network?"}]}'`,
+              `  -d '{`,
+              `    "model": "gpt-5.5",`,
+              `    "messages": [`,
+              `      { "role": "user", "content": "What is NetBird Agent Network?" }`,
+              `    ]`,
+              `  }'`,
             ]}
             copyText={`curl ${openaiBase}/chat/completions -H "Content-Type: application/json" -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"What is NetBird Agent Network?"}]}'`}
           />
