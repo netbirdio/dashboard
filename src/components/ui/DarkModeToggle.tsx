@@ -9,9 +9,11 @@ import {
 } from "@components/DropdownMenu";
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 export default function DarkModeToggle() {
+  const t = useTranslations("theme");
   const [mounted, setMounted] = useState(false);
   const { setTheme } = useTheme();
 
@@ -42,14 +44,14 @@ export default function DarkModeToggle() {
           disabled={true}
         >
           <SunIcon size={16} />
-          Light
+          {t("light")}
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setTheme("dark")}
           className={"flex gap-2"}
         >
           <MoonIcon size={16} />
-          Dark
+          {t("dark")}
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={true}
@@ -57,7 +59,7 @@ export default function DarkModeToggle() {
           className={"flex gap-2"}
         >
           <MonitorIcon size={16} />
-          System
+          {t("system")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

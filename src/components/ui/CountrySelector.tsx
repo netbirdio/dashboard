@@ -2,6 +2,7 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
+import { useTranslations } from 'next-intl';
 import { createElement, useMemo } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { useCountries } from "@/contexts/CountryProvider";
@@ -14,6 +15,7 @@ type Props = {
   truncate?: boolean;
 };
 export const CountrySelector = ({ value, onChange, iconSize = 20, popoverWidth, truncate }: Props) => {
+  const t = useTranslations('common');
   const { countries, isLoading } = useCountries();
 
   const countryList = useMemo(() => {
@@ -41,8 +43,8 @@ export const CountrySelector = ({ value, onChange, iconSize = 20, popoverWidth, 
       <SelectDropdown
         isLoading={isLoading}
         showSearch={true}
-        placeholder={"Select country..."}
-        searchPlaceholder={"Search country..."}
+        placeholder={t('selectCountry')}
+        searchPlaceholder={t('searchCountry')}
         value={value}
         onChange={onChange}
         iconSize={iconSize}

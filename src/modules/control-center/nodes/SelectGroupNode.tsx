@@ -10,6 +10,7 @@ import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
+import { useTranslations } from "next-intl";
 
 type NodeProps = Node<
   {
@@ -39,18 +40,19 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
   );
 
   const group = groups?.find((g) => g.id === data.currentGroup);
+  const t = useTranslations("groups");
 
   const countLabel = useMemo(() => {
     const peerCount = group?.peers_count || 0;
     const resourceCount = group?.resources_count || 0;
     if (resourceCount === 0) {
-      return `${peerCount} Peer(s)`;
+      return t("nGroups", { n: peerCount });
     }
     if (peerCount === 0) {
-      return `${resourceCount} Resource(s)`;
+      return t("nResources", { n: resourceCount });
     }
-    return `${peerCount} Peer(s), ${resourceCount} Resource(s)`;
-  }, [group]);
+    return `${t("nPeers", { n: peerCount })}, ${t("nResources", { n: resourceCount })}`;
+  }, [group, t]);
 
   return (
     <div
@@ -64,7 +66,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
         onChange={data.onChange}
         options={groupOptions}
         showSearch={true}
-        searchPlaceholder={"Search groups..."}
+        searchPlaceholder={t("searchPlaceholder")}
         popoverWidth={280}
         className={"!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300"}
         size={"xs"}

@@ -4,6 +4,7 @@ import useFetchApi, { useApiCall } from "@utils/api";
 import { merge, orderBy, uniqBy } from "lodash";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "next-intl";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
 import {
@@ -43,6 +44,7 @@ export const useAccessControl = ({
   initialPorts,
   initialDestinationResource,
 }: Props = {}) => {
+  const t = useTranslations("policies");
   const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
 
@@ -320,13 +322,13 @@ export const useAccessControl = ({
           mutate("/policies");
           onSuccess && onSuccess(p);
         },
-        "The policy was successfully saved",
+        t("policySaveSuccess"),
       );
     } else {
       notify({
-        title: "Create Access Control Policy",
-        description: "Policy was created successfully.",
-        loadingMessage: "Creating your policy...",
+        title: t("createPolicyTitle"),
+        description: t("createPolicySuccess"),
+        loadingMessage: t("createPolicyLoading"),
         promise: policyRequest.post(policyObj).then((policy) => {
           mutate("/policies");
           onSuccess && onSuccess(policy);

@@ -4,6 +4,7 @@ import Button from "@components/Button";
 import { NetBirdLogo } from "@components/NetBirdLogo";
 import { AnnouncementBanner } from "@components/ui/AnnouncementBanner";
 import UserDropdown from "@components/ui/UserDropdown";
+import LocaleSwitcher from "@components/ui/LocaleSwitcher";
 import { cn } from "@utils/helpers";
 import { MenuIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -71,6 +72,7 @@ export default function NavbarWithDropdown() {
             <DistributorTransferAccountModal />
             <MSPTenantsSwitcher />
             <HelpAndSupportButton />
+            <LocaleSwitcher />
             <UserDropdown />
           </div>
         </div>

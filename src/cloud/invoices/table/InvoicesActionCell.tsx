@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Button from "@components/Button";
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export default function InvoicesActionCell({ invoice }: Readonly<Props>) {
+  const t = useTranslations("invoices");
   const { isActive: isDistributor } = useDistributor();
   const apiRequestPath = isDistributor
     ? "/integrations/msp/reseller/invoices"
@@ -49,9 +51,9 @@ export default function InvoicesActionCell({ invoice }: Readonly<Props>) {
       });
 
     notify({
-      title: `Download Invoice (CSV)`,
+      title: t("downloadInvoiceCSV"),
       description: `Downloading ${invoice.id}.csv...`,
-      loadingMessage: `Getting invoice for this billing period...`,
+      loadingMessage: t("gettingInvoice"),
       promise,
     });
     return promise;
@@ -60,9 +62,9 @@ export default function InvoicesActionCell({ invoice }: Readonly<Props>) {
   const redirectToStripe = async () => {
     let promise = pdfInvoiceRequest.get(`/${invoice?.id}/pdf`);
     notify({
-      title: `Download Invoice (PDF)`,
-      description: `Redirecting to Stripe to download the invoice...`,
-      loadingMessage: `Getting invoice for this billing period...`,
+      title: t("downloadInvoicePDF"),
+      description: t("redirectingToStripe"),
+      loadingMessage: t("gettingInvoice"),
       promise,
     });
     return promise;
@@ -92,14 +94,14 @@ export default function InvoicesActionCell({ invoice }: Readonly<Props>) {
           >
             <div className={"flex gap-3 items-center justify-center pr-3"}>
               <DownloadIcon size={12} />
-              Download as PDF
+              {t("downloadPDF")}
             </div>
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={downloadCSV}>
             <div className={"flex gap-3 items-center justify-center pr-3"}>
               <DownloadIcon size={12} />
-              Download as CSV
+              {t("downloadCSV")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

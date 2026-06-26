@@ -1,6 +1,7 @@
 import { notify } from "@components/Notification";
 import { ToggleSwitch } from "@components/ToggleSwitch";
 import { useApiCall } from "@utils/api";
+import { useTranslations } from "next-intl";
 import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -12,6 +13,8 @@ type Props = {
   isUserPage?: boolean;
 };
 export default function UserBlockCell({ user, isUserPage = false }: Props) {
+  const t = useTranslations("users");
+  const tCommon = useTranslations("common");
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
@@ -24,24 +27,24 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
   const disabled = user.is_current || user.role === "owner";
 
   const update = async (blocked: boolean) => {
-    const name = user.name || "User";
+    const name = user.name || t("user");
 
     if (blocked) {
       const choice = await confirm({
-        title: `Block '${name}'?`,
-        description:
-          "This action will immediately revoke the user's access and disconnect all of their active peers.",
-        confirmText: "Block",
-        cancelText: "Cancel",
+        title: t("blockUserTitle", { name }),
+        description: t("blockUserDesc"),
+        confirmText: t("blockButton"),
+        cancelText: tCommon("cancel"),
         type: "danger",
       });
       if (!choice) return;
     }
 
     notify({
-      title: blocked ? "User blocked" : "User unblocked",
-      description:
-        name + " was successfully " + (blocked ? "blocked." : "unblocked."),
+      title: blocked ? t("userBlockedNotify") : t("userUnblockedNotify"),
+      description: blocked
+        ? t("blockedSuccess", { name })
+        : t("unblockedSuccess", { name }),
       promise: userRequest
         .put(
           {
@@ -56,8 +59,8 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
           if (isUserPage) mutate(`/users`);
         }),
       loadingMessage: blocked
-        ? "Blocking the user..."
-        : "Unblocking the user...",
+        ? t("blockingUser")
+        : t("unblockingUser"),
     });
   };
 

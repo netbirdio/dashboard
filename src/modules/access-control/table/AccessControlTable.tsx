@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import Card from "@components/Card";
 import FullTooltip from "@components/FullTooltip";
@@ -34,6 +36,7 @@ import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
 import { ClockFadingIcon, ExternalLinkIcon, PlusCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { usePathname, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -61,155 +64,160 @@ type Props = {
   isGroupPage?: boolean;
 };
 
-export const AccessControlTableColumns: ColumnDef<Policy>[] = [
-  {
-    id: "name",
-    accessorFn: (row) => removeAllSpaces(row?.name),
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+function createAccessControlTableColumns(
+  t: ReturnType<typeof useTranslations<"policies">>,
+  tCommon: ReturnType<typeof useTranslations<"common">>,
+): ColumnDef<Policy>[] {
+  return [
+    {
+      id: "name",
+      accessorFn: (row) => removeAllSpaces(row?.name),
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("name")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      filterFn: "fuzzy",
+      cell: ({ cell }) => <AccessControlNameCell policy={cell.row.original} />,
     },
-    sortingFn: "text",
-    filterFn: "fuzzy",
-    cell: ({ cell }) => <AccessControlNameCell policy={cell.row.original} />,
-  },
-  {
-    id: "description",
-    accessorFn: (row) => removeAllSpaces(row?.description),
-    sortingFn: "text",
-    filterFn: "fuzzy",
-  },
-  {
-    id: "enabled",
-    accessorKey: "enabled",
-    accessorFn: (row) => row.enabled,
-    sortingFn: "basic",
-  },
-  {
-    id: "sources",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].sources?.length || 0;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
+    {
+      id: "description",
+      accessorFn: (row) => removeAllSpaces(row?.description),
+      sortingFn: "text",
+      filterFn: "fuzzy",
     },
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Sources</DataTableHeader>;
+    {
+      id: "enabled",
+      accessorKey: "enabled",
+      accessorFn: (row) => row.enabled,
+      sortingFn: "basic",
     },
-    cell: ({ cell }) => <AccessControlSourcesCell policy={cell.row.original} />,
-  },
-  {
-    id: "direction",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].bidirectional || true;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
+    {
+      id: "sources",
+      accessorFn: (row) => {
+        try {
+          return row.rules[0].sources?.length || 0;
+        } catch (e) {
+          console.log(e);
+        }
+        return 0;
+      },
+      sortingFn: "basic",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("sources")}</DataTableHeader>;
+      },
+      cell: ({ cell }) => <AccessControlSourcesCell policy={cell.row.original} />,
     },
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Direction</DataTableHeader>;
+    {
+      id: "direction",
+      accessorFn: (row) => {
+        try {
+          return row.rules[0].bidirectional || true;
+        } catch (e) {
+          console.log(e);
+        }
+        return 0;
+      },
+      sortingFn: "basic",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("direction")}</DataTableHeader>;
+      },
+      cell: ({ cell }) => (
+        <AccessControlDirectionCell policy={cell.row.original} />
+      ),
     },
-    cell: ({ cell }) => (
-      <AccessControlDirectionCell policy={cell.row.original} />
-    ),
-  },
-  {
-    id: "destinations",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].destinations?.length || 0;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
+    {
+      id: "destinations",
+      accessorFn: (row) => {
+        try {
+          return row.rules[0].destinations?.length || 0;
+        } catch (e) {
+          console.log(e);
+        }
+        return 0;
+      },
+      sortingFn: "basic",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("destinations")}</DataTableHeader>;
+      },
+      cell: ({ cell }) => (
+        <AccessControlDestinationsCell policy={cell.row.original} />
+      ),
     },
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Destinations</DataTableHeader>;
-    },
-    cell: ({ cell }) => (
-      <AccessControlDestinationsCell policy={cell.row.original} />
-    ),
-  },
 
-  {
-    id: "proto_ports",
-    accessorFn: (row) => row.rules?.[0]?.protocol || "",
-    sortingFn: "text",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Proto & Ports</DataTableHeader>;
+    {
+      id: "proto_ports",
+      accessorFn: (row) => row.rules?.[0]?.protocol || "",
+      sortingFn: "text",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("protoPorts")}</DataTableHeader>;
+      },
+      cell: ({ cell }) => (
+        <AccessControlProtoPortsCell policy={cell.row.original} />
+      ),
     },
-    cell: ({ cell }) => (
-      <AccessControlProtoPortsCell policy={cell.row.original} />
-    ),
-  },
-  {
-    id: "id",
-    accessorKey: "id",
-    filterFn: "exactMatch",
-  },
-  // Hidden filter columns powering the consolidated Filters UI.
-  {
-    id: "source_group_names",
-    accessorFn: (row) => {
-      const sources = row.rules?.[0]?.sources;
-      if (!sources) return [];
-      return (sources as { name?: string }[])
-        .map((s) => s?.name)
-        .filter((n): n is string => !!n);
+    {
+      id: "id",
+      accessorKey: "id",
+      filterFn: "exactMatch",
     },
-    filterFn: "arrIncludesSome",
-  },
-  {
-    id: "destination_group_names",
-    accessorFn: (row) => {
-      const destinations = row.rules?.[0]?.destinations;
-      if (!destinations) return [];
-      return (destinations as { name?: string }[])
-        .map((d) => d?.name)
-        .filter((n): n is string => !!n);
+    // Hidden filter columns powering the consolidated Filters UI.
+    {
+      id: "source_group_names",
+      accessorFn: (row) => {
+        const sources = row.rules?.[0]?.sources;
+        if (!sources) return [];
+        return (sources as { name?: string }[])
+          .map((s) => s?.name)
+          .filter((n): n is string => !!n);
+      },
+      filterFn: "arrIncludesSome",
     },
-    filterFn: "arrIncludesSome",
-  },
-  {
-    id: "protocol_filter",
-    accessorFn: (row) => [row.rules?.[0]?.protocol || "all"],
-    filterFn: "arrIncludesSome",
-  },
-  {
-    id: "ports_filter",
-    accessorFn: (row) => {
-      const rule = row.rules?.[0];
-      const ports = rule?.ports || [];
-      const ranges = (rule?.port_ranges || []).map(
-        (r) => `${r.start}-${r.end}`,
-      );
-      return [...ports, ...ranges].join(" ");
+    {
+      id: "destination_group_names",
+      accessorFn: (row) => {
+        const destinations = row.rules?.[0]?.destinations;
+        if (!destinations) return [];
+        return (destinations as { name?: string }[])
+          .map((d) => d?.name)
+          .filter((n): n is string => !!n);
+      },
+      filterFn: "arrIncludesSome",
     },
-    filterFn: "includesString",
-  },
-  {
-    id: "has_posture_checks",
-    accessorFn: (row) =>
-      (row.source_posture_checks?.length ?? 0) > 0 ? "with" : "without",
-    filterFn: "equalsString",
-  },
-  {
-    id: "direction_filter",
-    accessorFn: (row) => !!row.rules?.[0]?.bidirectional,
-  },
-  {
-    id: "actions",
-    accessorKey: "id",
-    header: "",
-    cell: ({ cell }) => <AccessControlActionCell policy={cell.row.original} />,
-  },
-];
+    {
+      id: "protocol_filter",
+      accessorFn: (row) => [row.rules?.[0]?.protocol || "all"],
+      filterFn: "arrIncludesSome",
+    },
+    {
+      id: "ports_filter",
+      accessorFn: (row) => {
+        const rule = row.rules?.[0];
+        const ports = rule?.ports || [];
+        const ranges = (rule?.port_ranges || []).map(
+          (r) => `${r.start}-${r.end}`,
+        );
+        return [...ports, ...ranges].join(" ");
+      },
+      filterFn: "includesString",
+    },
+    {
+      id: "has_posture_checks",
+      accessorFn: (row) =>
+        (row.source_posture_checks?.length ?? 0) > 0 ? "with" : "without",
+      filterFn: "equalsString",
+    },
+    {
+      id: "direction_filter",
+      accessorFn: (row) => !!row.rules?.[0]?.bidirectional,
+    },
+    {
+      id: "actions",
+      accessorKey: "id",
+      header: "",
+      cell: ({ cell }) => <AccessControlActionCell policy={cell.row.original} />,
+    },
+  ];
+}
 
 export default function AccessControlTable({
   policies,
@@ -241,6 +249,8 @@ export default function AccessControlTable({
 
   const [firewallGPTOpen, setFirewallGPTOpen] = useState(false);
 
+  const t = useTranslations("policies");
+  const tCommon = useTranslations("common");
   const [showTemporaryPolicies, setShowTemporaryPolicies] = useState(false);
 
   const withTemporaryPolicies = useCallback(
@@ -280,37 +290,37 @@ export default function AccessControlTable({
   // Inactive ButtonGroup. Routed through the consolidated Filters UI.
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Enabled", dotClass: "bg-green-500" },
-      { value: false, label: "Disabled", dotClass: "bg-nb-gray-700" },
+      { value: undefined, label: tCommon("all"), dotClass: "bg-nb-gray-500" },
+      { value: true, label: tCommon("enabled"), dotClass: "bg-green-500" },
+      { value: false, label: tCommon("disabled"), dotClass: "bg-nb-gray-700" },
     ],
     [],
   );
 
   const protocolOptions = useMemo<CheckboxOption<string>[]>(
     () => [
-      { value: "tcp", label: "TCP" },
-      { value: "udp", label: "UDP" },
-      { value: "icmp", label: "ICMP" },
-      { value: "netbird-ssh", label: "NetBird SSH" },
+      { value: "tcp", label: t("tcp") },
+      { value: "udp", label: t("udp") },
+      { value: "icmp", label: t("icmp") },
+      { value: "netbird-ssh", label: t("netbirdSsh") },
     ],
     [],
   );
 
   const postureOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
-      { value: "with", label: "With" },
-      { value: "without", label: "Without" },
+      { value: undefined, label: tCommon("all") },
+      { value: "with", label: t("filterWith") },
+      { value: "without", label: t("filterWithout") },
     ],
     [],
   );
 
   const directionOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
-      { value: true, label: "Bidirectional" },
-      { value: false, label: "One-way" },
+      { value: undefined, label: tCommon("all") },
+      { value: true, label: t("bidirectional") },
+      { value: false, label: t("oneWay") },
     ],
     [],
   );
@@ -342,7 +352,7 @@ export default function AccessControlTable({
     () => [
       {
         id: "enabled",
-        label: "Status",
+        label: tCommon("status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -356,7 +366,7 @@ export default function AccessControlTable({
       },
       {
         id: "source_group_names",
-        label: "Sources",
+        label: t("sources"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -369,7 +379,7 @@ export default function AccessControlTable({
       },
       {
         id: "destination_group_names",
-        label: "Destinations",
+        label: t("destinations"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -382,7 +392,7 @@ export default function AccessControlTable({
       },
       {
         id: "direction_filter",
-        label: "Direction",
+        label: t("direction"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -396,7 +406,7 @@ export default function AccessControlTable({
       },
       {
         id: "protocol_filter",
-        label: "Protocol",
+        label: t("protocol"),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -409,25 +419,25 @@ export default function AccessControlTable({
           formatCheckboxChip(
             v as string[] | undefined,
             protocolOptions,
-            "protocols",
+            t("protocols"),
           ),
       },
       {
         id: "ports_filter",
-        label: "Port",
+        label: t("filterPort"),
         renderPicker: (p) => (
           <TextInputPicker
             value={p.value as string | undefined}
             onChange={p.onChange}
             close={p.close}
-            placeholder={"e.g. 443"}
+            placeholder={t("portsPlaceholder")}
           />
         ),
         formatChip: (v) => formatTextChip(v as string | undefined),
       },
       {
         id: "has_posture_checks",
-        label: "Posture Checks",
+        label: t("filterPostureChecks"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -446,6 +456,8 @@ export default function AccessControlTable({
       postureOptions,
       directionOptions,
       tableGroups,
+      t,
+      tCommon,
     ],
   );
 
@@ -482,12 +494,12 @@ export default function AccessControlTable({
               ]
             : undefined
         }
-        text={"Access Control Policies"}
+        text={t("tableHeading")}
         sorting={sorting}
         setSorting={setSorting}
         initialPageSize={25}
         showResetFilterButton={false}
-        columns={AccessControlTableColumns}
+        columns={createAccessControlTableColumns(t, tCommon)}
         aboveTable={(table) => (
           <TableFilterChips table={table} filters={filterDefs} />
         )}
@@ -510,15 +522,13 @@ export default function AccessControlTable({
           setEditModal(true);
           setCurrentCellClicked(cell);
         }}
-        searchPlaceholder={"Search by name and description..."}
+        searchPlaceholder={t("searchByNameAndDescription")}
         getStartedCard={
           isGroupPage ? (
             <NoResults
               className={"py-4"}
-              title={"This group is not used within any policies yet"}
-              description={
-                "Assign this group as either a source or destination inside a policy to see them listed here."
-              }
+              title={t("noPoliciesForGroup")}
+              description={t("noPoliciesForGroupDescription")}
               icon={
                 <AccessControlIcon size={20} className={"fill-nb-gray-300"} />
               }
@@ -531,7 +541,7 @@ export default function AccessControlTable({
                     disabled={!permission.policies.create}
                   >
                     <PlusCircle size={16} />
-                    Add Policy
+                    {t("addPolicy")}
                   </Button>
                 </AccessControlModal>
               </div>
@@ -550,10 +560,8 @@ export default function AccessControlTable({
                   size={"large"}
                 />
               }
-              title={"Create New Policy"}
-              description={
-                "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports."
-              }
+              title={t("createNewPolicy")}
+              description={t("createNewPolicyDescription")}
               button={
                 <div className={"flex gap-4 items-center justify-center"}>
                   <FirewallGPTButton onClick={() => setFirewallGPTOpen(true)} />
@@ -563,21 +571,21 @@ export default function AccessControlTable({
                       disabled={!permission.policies.create}
                     >
                       <PlusCircle size={16} />
-                      Add Policy
+                      {t("addPolicy")}
                     </Button>
                   </AccessControlModal>
                 </div>
               }
               learnMore={
                 <>
-                  Learn more about
+                  {t("learnMoreAbout")}
                   <InlineLink
                     href={
                       "https://docs.netbird.io/how-to/manage-network-access"
                     }
                     target={"_blank"}
                   >
-                    Access Controls
+                    {t("accessControls")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -598,7 +606,7 @@ export default function AccessControlTable({
                     data-testid="open-add-policy"
                   >
                     <PlusCircle size={16} />
-                    Add Policy
+                    {t("addPolicy")}
                   </Button>
                 </AccessControlModal>
               </div>
@@ -628,9 +636,7 @@ export default function AccessControlTable({
                 <FullTooltip
                   content={
                     <div className={"max-w-sm text-xs"}>
-                      Show temporary policies created by the NetBird browser
-                      client. These policies are ephemeral and will be deleted
-                      automatically after a short period of time.
+                      {t("temporaryPoliciesTooltip")}
                     </div>
                   }
                 >

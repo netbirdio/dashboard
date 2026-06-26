@@ -1,5 +1,8 @@
+"use client";
+
 import { notify } from "@components/Notification";
 import { ToggleSwitch } from "@components/ToggleSwitch";
+import { useTranslations } from "next-intl";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import useFetchApi, { useApiCall } from "@utils/api";
 import * as React from "react";
@@ -16,6 +19,7 @@ type Props = {
   router: NetworkRouter;
 };
 export const RoutingPeersMasqueradeCell = ({ router }: Props) => {
+  const t = useTranslations("networks");
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const { network } = useNetworksContext();
@@ -40,9 +44,9 @@ export const RoutingPeersMasqueradeCell = ({ router }: Props) => {
 
   const toggle = async (enabled: boolean) => {
     notify({
-      title: "Network Routing Peer",
-      description: `Masquerade is now ${enabled ? "enabled" : "disabled"}`,
-      loadingMessage: "Updating masquerade...",
+      title: t("networkRoutingPeer"),
+      description: enabled ? t("masqueradeEnabled") : t("masqueradeDisabled"),
+      loadingMessage: t("updatingMasquerade"),
       promise: update({
         ...router,
         masquerade: enabled,

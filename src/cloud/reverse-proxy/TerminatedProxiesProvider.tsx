@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Badge from "@components/Badge";
@@ -46,25 +47,26 @@ function enableElement(el: HTMLElement) {
   el.removeEventListener("click", blockEvent, true);
 }
 
-const terminatedBadge = (
-  <FullTooltip
-    content={
-      <div className={"text-xs max-w-xs"}>
-        This service has been terminated by the NetBird team as it violates the
-        Terms of Service. For questions, please contact{" "}
-        <InlineLink href="mailto:support@netbird.io?subject=Request%20for%20Assistance%3A%20Terminated%20Service">
-          support@netbird.io
-        </InlineLink>
-      </div>
-    }
-    interactive={true}
-  >
-    <Badge variant={"red"}>
-      <AlertTriangle size={12} />
-      Terminated
-    </Badge>
-  </FullTooltip>
-);
+function TerminatedBadge({ t }: { t: (key: string) => string }) {
+  return (
+    <FullTooltip
+      content={
+        <div className={"text-xs max-w-xs"}>
+          {t("terminatedService")}{" "}
+          <InlineLink href="mailto:support@netbird.io?subject=Request%20for%20Assistance%3A%20Terminated%20Service">
+            support@netbird.io
+          </InlineLink>
+        </div>
+      }
+      interactive={true}
+    >
+      <Badge variant={"red"}>
+        <AlertTriangle size={12} />
+        {t("terminated")}
+      </Badge>
+    </FullTooltip>
+  );
+}
 
 function findAndDisableAll(proxyId: string) {
   const disabled: HTMLElement[] = [];
@@ -126,6 +128,7 @@ function findAndDisableAll(proxyId: string) {
 }
 
 function TerminatedPortal({ proxyId }: { proxyId: string }) {
+  const t = useTranslations("reverseProxy");
   const [statusTargets, setStatusTargets] = useState<Element[]>([]);
 
   useEffect(() => {
@@ -178,6 +181,6 @@ function TerminatedPortal({ proxyId }: { proxyId: string }) {
   if (statusTargets.length === 0) return null;
 
   return statusTargets.map((target, i) =>
-    createPortal(terminatedBadge, target, `${proxyId}-${i}`),
+    createPortal(<TerminatedBadge t={t} />, target, `${proxyId}-${i}`),
   );
 }

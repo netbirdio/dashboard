@@ -7,6 +7,7 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { lazy, Suspense } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -17,63 +18,62 @@ import { Callout } from "@components/Callout";
 import { isNetBirdCloud } from "@utils/netbird";
 
 const ReverseProxyTable = lazy(
-  () => import("@/modules/reverse-proxy/table/ReverseProxyTable"),
+	() => import("@/modules/reverse-proxy/table/ReverseProxyTable"),
 );
 
 export default function ReverseProxyServicesPage() {
-  const { permission } = usePermissions();
+	const t = useTranslations("reverseProxy");
+	const tCommon = useTranslations("common");
+	const { permission } = usePermissions();
 
-  const { ref: headingRef, portalTarget } =
-    usePortalElement<HTMLHeadingElement>();
+	const { ref: headingRef, portalTarget } =
+		usePortalElement<HTMLHeadingElement>();
 
-  return (
-    <PageContainer>
-      <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/reverse-proxy/services"}
-            label={"Reverse Proxy"}
-            icon={<ReverseProxyIcon size={16} />}
-          />
-          <Breadcrumbs.Item
-            href={"/reverse-proxy/services"}
-            label={"Services"}
-            active={true}
-          />
-        </Breadcrumbs>
-        <h1 ref={headingRef}>Services</h1>
-        <Paragraph>
-          Expose services securely through NetBird&apos;s reverse proxy.{" "}
-          <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
-            Learn more
-            <ExternalLinkIcon size={12} />
-          </InlineLink>
-        </Paragraph>
+	return (
+		<PageContainer>
+			<div className={"p-default py-6"}>
+				<Breadcrumbs>
+					<Breadcrumbs.Item
+						href={"/reverse-proxy/services"}
+						label={t("title")}
+						icon={<ReverseProxyIcon size={16} />}
+					/>
+					<Breadcrumbs.Item
+						href={"/reverse-proxy/services"}
+						label={t("services")}
+						active={true}
+					/>
+				</Breadcrumbs>
+				<h1 ref={headingRef}>{t("services")}</h1>
+				<Paragraph>
+					{t("servicesDescription")}{" "}
+					<InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
+						{tCommon("learnMore")}
+						<ExternalLinkIcon size={12} />
+					</InlineLink>
+				</Paragraph>
 
-        {isNetBirdCloud() ? (
-          <Callout className={"max-w-xl mt-5"} variant={"info"}>
-            NetBird&apos;s Reverse Proxy is currently in beta and available at
-            no cost during this period. Features, functionality, and pricing are
-            subject to change upon release.
-          </Callout>
-        ) : (
-          <Callout className={"max-w-xl mt-5"} variant={"info"}>
-            NetBird&apos;s Reverse Proxy is currently in beta. <br /> Features
-            and functionality are subject to change upon release.
-          </Callout>
-        )}
-      </div>
+{isNetBirdCloud() ? (
+					<Callout className={"max-w-xl mt-5"} variant={"info"}>
+						{t("betaNoticeCloud")}
+					</Callout>
+				) : (
+					<Callout className={"max-w-xl mt-5"} variant={"info"}>
+						{t("betaNoticeSelfHosted")}
+					</Callout>
+				)}
 
-      <RestrictedAccess
-        page={"Services"}
-        hasAccess={permission?.services?.read}
-      >
-        <ReverseProxiesProvider>
-          <Suspense fallback={<SkeletonTable />}>
-            <ReverseProxyTable headingTarget={portalTarget} />
-          </Suspense>
-        </ReverseProxiesProvider>
-      </RestrictedAccess>
-    </PageContainer>
-  );
+				<RestrictedAccess
+					page={t("services")}
+					hasAccess={permission.services?.read}
+				>
+					<Suspense fallback={<SkeletonTable />}>
+						<ReverseProxiesProvider>
+							<ReverseProxyTable headingTarget={portalTarget} />
+						</ReverseProxiesProvider>
+					</Suspense>
+				</RestrictedAccess>
+			</div>
+		</PageContainer>
+	);
 }
