@@ -66,9 +66,7 @@ export const OnboardingIntent = ({ onSelect, useCases, isBusiness }: Props) => {
 						"text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
 					}
 				>
-					NetBird provides the flexibility of both a peer-to-peer overlay
-					network and a remote network access solution. Choose what fits your
-					needs, you can always combine both.
+					{t("description")}
 				</div>
 				<div
 					className={cn(
@@ -77,22 +75,22 @@ export const OnboardingIntent = ({ onSelect, useCases, isBusiness }: Props) => {
 					)}
 				>
 					<IntentCard
-						title={"Peer-to-Peer Network"}
+						title={t("p2pTitle")}
 						description={
 							isBusiness
-								? "Install NetBird on two or more devices to create secure, direct WireGuard connections, like laptop to server or server to database. Add at least two machines to get started."
-								: "Install NetBird on two or more devices in your homelab, such as your laptop, NAS, or Raspberry Pi, to create secure, direct WireGuard connections."
+								? t("p2pDescription_business")
+								: t("p2pDescription_personal")
 						}
 						recommended={isP2PRecommended}
 						icon={<PeerIcon size={18} className={"fill-netbird"} />}
 						onClick={() => onSelect(Intent.P2P)}
 					/>
 					<IntentCard
-						title={"Remote Network Access"}
+						title={t("remoteAccessTitle")}
 						description={
 							isBusiness
-								? "Enable employee remote access to VMs, Kubernetes clusters, and cloud or on-prem resources without installing NetBird on every machine."
-								: "Securely access your homelab remotely from anywhere without installing NetBird on every device."
+								? t("remoteAccessDescription_business")
+								: t("remoteAccessDescription_personal")
 						}
 						recommended={isNetworksRecommended}
 						icon={<NetworkRoutesIcon size={18} className={"fill-netbird"} />}
@@ -119,6 +117,7 @@ const IntentCard = ({
 	onClick,
 	recommended,
 }: IntentCardProps) => {
+	const t = useTranslations("onboarding");
 	return (
 		<button
 			className={
@@ -143,27 +142,26 @@ const IntentCard = ({
 							}
 						>
 							{title}
-							{recommended && (
-								<FullTooltip
-									content={
-										<div className={"text-xs max-w-xs"}>
-											Based on your previous choices, we recommend starting with{" "}
-											{title}. You can always combine both options later.
-										</div>
-									}
-								>
-									<span
-										className={cn(
-											"relative",
-											"inline-flex text-[0.7rem] font-light bg-netbird/10 border border-netbird-400/30 text-netbird-400 rounded-full px-2 py-1 pb-0.5 leading-none",
-											"hover:bg-netbird/20 cursor-help transition-all self-center",
-										)}
+								{recommended && (
+									<FullTooltip
+										content={
+											<div className={"text-xs max-w-xs"}>
+												{t("recommendedTooltip", { title })}
+											</div>
+										}
 									>
-										Recommended
-										<HelpCircle size={10} className={"ml-1"} />
-									</span>
-								</FullTooltip>
-							)}
+										<span
+											className={cn(
+												"relative",
+												"inline-flex text-[0.7rem] font-light bg-netbird/10 border border-netbird-400/30 text-netbird-400 rounded-full px-2 py-1 pb-0.5 leading-none",
+												"hover:bg-netbird/20 cursor-help transition-all self-center",
+											)}
+										>
+											{t("recommended")}
+											<HelpCircle size={10} className={"ml-1"} />
+										</span>
+									</FullTooltip>
+								)}
 						</h2>
 						<p className={"!text-nb-gray-300 text-[.85rem]"}>{description}</p>
 					</div>
