@@ -1552,6 +1552,7 @@ export default {
     confirmRemoveRouterTitle: "Remove this router?",
     confirmRemoveRouterDesc:
       "Are you sure you want to remove this router?",
+    removeRouter: "Remove {name}",
     routerRemoved: "Router deleted successfully.",
     routerRemoving: "Deleting router...",
     confirmAddRoutingPeerTitle: "Add Routing Peer to '{name}'?",
@@ -1739,6 +1740,7 @@ export default {
     removeCheck: "Remove Check",
     noPostureChecks: "No posture checks available",
     searchPlaceholder: "Search posture checks...",
+    searchByNameAndDescription: "Search by name and description...",
     operatingSystem: "Operating System",
     geoLocation: "Geo Location",
     peerNetworkRange: "Peer Network Range",
@@ -1824,6 +1826,23 @@ export default {
       "Add various posture checks to further restrict access in your network. E.g., only clients with a specific NetBird client version, operating system or location are allowed to connect.",
     browseChecks: "Browse Checks",
     newPostureCheck: "New Posture Check",
+    postureCheck: "Posture Check",
+    addPostureChecks: "Add Posture Checks ({count, number})",
+    usePostureChecks:
+      "Use posture checks to further restrict access in your network.",
+    removePostureCheck: "Remove Posture Check",
+    confirmDeleteTitle: "Delete '{name}'?",
+    confirmDeleteDescription:
+      "Are you sure you want to delete this posture check? This action cannot be undone.",
+    assignedToPolicyCannotDelete:
+      "This posture check is assigned to a policy and cannot be deleted. Please remove the posture check from all policies before deleting it.",
+    postureCheckDeleted: "Posture check was successfully deleted",
+    deletingPostureCheck: "Deleting posture check...",
+    disableThisCheck: "Disable this check?",
+    disableCheckConfirm:
+      "Are you sure you want to disable this check? All settings of this check will be lost.",
+    on: "On",
+    off: "Off",
   },
   setupKeys: {
     title: "Setup Keys",
@@ -2464,10 +2483,12 @@ export default {
     updateTitle: "Update {name}",
     updateTabDescription: "Description",
     metricError: "Metric must be between 1 and 9999",
+    networkIdentifierLengthError:
+      "Network identifier must be less than 40 characters",
     saveChanges: "Save Changes",
 
     // Action cell
-    deleteRouteNotify: "Delete Route",
+    deleteRouteNotify: "Delete Route {network_id}",
     routeRemoved: "Route was successfully removed",
     deletingRoute: "Deleting the route...",
     deleteDialogTitle: "Delete '{name}'?",
@@ -2541,6 +2562,83 @@ export default {
   onboarding: {
     title: "Get started with NetBird",
     addResource: "Add your first resource",
+    description:
+      "NetBird provides the flexibility of both a peer-to-peer overlay network and a remote network access solution. Choose what fits your needs, you can always combine both.",
+    p2pTitle: "Peer-to-Peer Network",
+    p2pDescription_business:
+      "Install NetBird on two or more devices to create secure, direct WireGuard connections, like laptop to server or server to database. Add at least two machines to get started.",
+    p2pDescription_personal:
+      "Install NetBird on two or more devices in your homelab, such as your laptop, NAS, or Raspberry Pi, to create secure, direct WireGuard connections.",
+    remoteAccessTitle: "Remote Network Access",
+    remoteAccessDescription_business:
+      "Enable employee remote access to VMs, Kubernetes clusters, and cloud or on-prem resources without installing NetBird on every machine.",
+    remoteAccessDescription_personal:
+      "Securely access your homelab remotely from anywhere without installing NetBird on every device.",
+    recommended: "Recommended",
+    recommendedTooltip:
+      "Based on your previous choices, we recommend starting with {title}. You can always combine both options later.",
+    congratulationsName: "Congratulations, {name}!",
+    congratulations: "Congratulations!",
+    completedOnboarding: "You’ve completed the onboarding.",
+    whatsNext:
+      "What’s next? Check out these guides to get the most out of NetBird. To learn more, explore the dashboard, visit our documentation, or browse our YouTube channel.",
+    goToDashboard: "Go to Dashboard",
+    videoAccessControlTitle: "Access Control in Under 5 Minutes",
+    videoAccessControlDescription:
+      "Learn how to manage access for your network resources effectively. Whether you want to restrict access to specific machines or allow certain users to connect.",
+    videoIdPTitle: "Provision Users & Groups From Your IdP",
+    videoIdPDescription:
+      "Learn how to provision users and groups from your identity provider, such as Okta, Azure AD, or Google Workspace, to manage access control in NetBird and automate onboarding and offboarding processes.",
+    videoHowNetBirdWorksTitle: "How NetBird Works",
+    videoHowNetBirdWorksDescription:
+      "Learn more about how NetBird works, its architecture, and how it can help you build secure networks.",
+
+    // OnboardingDemoCall.tsx experiment variants
+    demoCall: {
+      duration: "The call usually takes around {duration, number} minutes",
+      v1: {
+        title: "Book a Technical Overview (Not a Sales Call)",
+        desc: "You’ll meet with a solutions engineer who will walk through how NetBird works, answer your implementation questions - no slides, no hard sell.",
+        feature1: "Live walkthrough of setup and architecture",
+        feature2: "Implementation of use case, for your stack",
+        feature3: "Best practices and general overview",
+        cta: "Book Now",
+        cancel: "No Thanks",
+      },
+      v2: {
+        title: "Talk to our Solutions Engineer",
+        desc: "Get a 30-min technical overview. We’ll go over your specific use-case and answer any technical questions you might have. <br/> We’re offering this as a technical onboard support for you. <br/> This is NOT a sales call.",
+        cta: "Book Now",
+        cancel: "No Thanks",
+      },
+      v3: {
+        title: "Book a Technical Overview (Not a Sales Call)",
+        desc: "Get a 30-min technical overview. We’ll go over your specific use-case and answer any technical questions you might have. <br/> We’re offering this as a technical onboard support for you. <br/> This is NOT a sales call.",
+        cta: "Book Now",
+        cancel: "No Thanks",
+      },
+      v4: {
+        title: "Book a Technical Overview",
+        desc: "You’ll meet with a solutions engineer who will walk through how NetBird works, answer your implementation questions - no slides, no hard sell.",
+        feature1: "Live walkthrough of setup and architecture",
+        feature2: "Implementation of use case, for your stack",
+        feature3: "Best practices and general overview",
+        cta: "Book Now",
+        cancel: "No Thanks",
+      },
+      v5: {
+        title: "Talk to our Solutions Engineer",
+        desc: "Get a 30-min technical overview. We’ll go over your specific use-case and answer any technical questions you might have. <br/> We’re offering this as a technical onboard support for you.",
+        cta: "Book Now",
+        cancel: "No Thanks",
+      },
+      v6: {
+        title: "Book a Technical Overview",
+        desc: "Get a 30-min technical overview. We’ll go over your specific use-case and answer any technical questions you might have. <br/> We’re offering this as a technical onboard support for you.",
+        cta: "Book Now",
+        cancel: "No Thanks",
+      },
+    },
   },
   setupModal: {
     generateSetupKey: "Generate a setup key",

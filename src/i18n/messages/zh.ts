@@ -1473,6 +1473,7 @@ export default {
     confirmRemoveRouterTitle: "移除此路由节点？",
     confirmRemoveRouterDesc:
       "确定要移除此路由节点吗？",
+    removeRouter: "移除 {name}",
     routerRemoved: "路由节点已成功删除。",
     routerRemoving: "正在删除路由节点...",
     confirmAddRoutingPeerTitle: "为「{name}」添加路由节点？",
@@ -1658,6 +1659,7 @@ export default {
     removeCheck: "删除检查",
     noPostureChecks: "暂无姿态检查",
     searchPlaceholder: "搜索姿态检查...",
+    searchByNameAndDescription: "按名称和描述搜索...",
     operatingSystem: "操作系统",
     geoLocation: "地理位置",
     peerNetworkRange: "节点网络范围",
@@ -1730,6 +1732,23 @@ export default {
       "添加各种态势检查以进一步限制网络中的访问。例如，仅允许具有特定 NetBird 客户端版本、操作系统或位置的客户端连接。",
     browseChecks: "浏览检查",
     newPostureCheck: "新建态势检查",
+    postureCheck: "态势检查",
+    addPostureChecks: "添加态势检查（{count, number}）",
+    usePostureChecks:
+      "使用态势检查进一步限制网络中的访问。",
+    removePostureCheck: "移除态势检查",
+    confirmDeleteTitle: "删除「{name}」？",
+    confirmDeleteDescription:
+      "确定要删除此态势检查吗？此操作无法撤销。",
+    assignedToPolicyCannotDelete:
+      "此态势检查已分配给策略，无法删除。请先从所有策略中移除该态势检查后再删除。",
+    postureCheckDeleted: "态势检查已成功删除",
+    deletingPostureCheck: "正在删除态势检查...",
+    disableThisCheck: "禁用此检查？",
+    disableCheckConfirm:
+      "确定要禁用此检查吗？该检查的所有设置都将丢失。",
+    on: "开启",
+    off: "关闭",
   },
   setupKeys: {
     title: "安装密钥",
@@ -2369,10 +2388,11 @@ export default {
     updateTitle: "更新 {name}",
     updateTabDescription: "描述",
     metricError: "度量值必须在 1 到 9999 之间",
+    networkIdentifierLengthError: "网络标识符必须少于 40 个字符",
     saveChanges: "保存更改",
 
     // Action cell
-    deleteRouteNotify: "删除路由",
+    deleteRouteNotify: "删除路由 {network_id}",
     routeRemoved: "路由已成功移除",
     deletingRoute: "正在删除路由...",
     deleteDialogTitle: "删除 '{name}'？",
@@ -2430,7 +2450,7 @@ export default {
     addPeer: "添加节点",
 
     // GroupedRouteActionCell
-    deleteNetworkNotify: "删除网络",
+    deleteNetworkNotify: "删除网络 {network_id}",
     networkRemoved: "网络已成功移除",
     deletingNetwork: "正在删除网络...",
     deleteNetworkConfirmTitle: "删除网络 '{name}'？",
@@ -2444,6 +2464,83 @@ export default {
   onboarding: {
     title: "开始使用 NetBird",
     addResource: "添加您的第一个资源",
+    description:
+      "NetBird 同时提供点对点覆盖网络和远程网络访问解决方案。选择适合您需求的方案，您也可以随时结合两者。",
+    p2pTitle: "点对点网络",
+    p2pDescription_business:
+      "在两台或更多设备上安装 NetBird，以创建安全的 WireGuard 直连，例如笔记本到服务器或服务器到数据库。请至少添加两台机器以开始。",
+    p2pDescription_personal:
+      "在您的 homelab 中的两台或更多设备上安装 NetBird，例如笔记本、NAS 或树莓派，以创建安全的 WireGuard 直连。",
+    remoteAccessTitle: "远程网络访问",
+    remoteAccessDescription_business:
+      "让员工无需在每台机器上安装 NetBird，即可远程访问 VM、Kubernetes 集群以及云端或本地资源。",
+    remoteAccessDescription_personal:
+      "随时随地安全远程访问您的 homelab，无需在每台设备上安装 NetBird。",
+    recommended: "推荐",
+    recommendedTooltip:
+      "根据您之前的选择，我们建议您从 {title} 开始。您稍后也可以随时结合两种方案。",
+    congratulationsName: "恭喜您，{name}！",
+    congratulations: "恭喜您！",
+    completedOnboarding: "您已完成 onboarding。",
+    whatsNext:
+      "接下来做什么？查看这些指南以充分利用 NetBird。想了解更多，请浏览仪表板、访问我们的文档或查看我们的 YouTube 频道。",
+    goToDashboard: "进入仪表板",
+    videoAccessControlTitle: "5 分钟了解访问控制",
+    videoAccessControlDescription:
+      "了解如何有效管理网络资源的访问权限。无论是想限制特定机器的访问，还是允许特定用户连接。",
+    videoIdPTitle: "从您的 IdP 同步用户与组",
+    videoIdPDescription:
+      "了解如何从 Okta、Azure AD 或 Google Workspace 等身份提供者同步用户和组，以在 NetBird 中管理访问控制并自动化入职和离职流程。",
+    videoHowNetBirdWorksTitle: "NetBird 工作原理",
+    videoHowNetBirdWorksDescription:
+      "了解更多关于 NetBird 的工作原理、架构以及它如何帮助您构建安全网络。",
+
+    // OnboardingDemoCall.tsx experiment variants
+    demoCall: {
+      duration: "通话通常持续约 {duration, number} 分钟",
+      v1: {
+        title: "预约技术概览（非销售电话）",
+        desc: "您将与解决方案工程师会面，了解 NetBird 的工作原理，解答您的实施问题——无幻灯片，无硬性推销。",
+        feature1: "实时演练设置与架构",
+        feature2: "根据您的技术栈实现用例",
+        feature3: "最佳实践与总体概览",
+        cta: "立即预约",
+        cancel: "不用了",
+      },
+      v2: {
+        title: "与我们的解决方案工程师交流",
+        desc: "获取 30 分钟技术概览。我们将针对您的具体用例进行介绍，并解答任何技术问题。<br/>我们为您提供技术上线支持。<br/>这不是销售电话。",
+        cta: "立即预约",
+        cancel: "不用了",
+      },
+      v3: {
+        title: "预约技术概览（非销售电话）",
+        desc: "获取 30 分钟技术概览。我们将针对您的具体用例进行介绍，并解答任何技术问题。<br/>我们为您提供技术上线支持。<br/>这不是销售电话。",
+        cta: "立即预约",
+        cancel: "不用了",
+      },
+      v4: {
+        title: "预约技术概览",
+        desc: "您将与解决方案工程师会面，了解 NetBird 的工作原理，解答您的实施问题——无幻灯片，无硬性推销。",
+        feature1: "实时演练设置与架构",
+        feature2: "根据您的技术栈实现用例",
+        feature3: "最佳实践与总体概览",
+        cta: "立即预约",
+        cancel: "不用了",
+      },
+      v5: {
+        title: "与我们的解决方案工程师交流",
+        desc: "获取 30 分钟技术概览。我们将针对您的具体用例进行介绍，并解答任何技术问题。<br/>我们为您提供技术上线支持。",
+        cta: "立即预约",
+        cancel: "不用了",
+      },
+      v6: {
+        title: "预约技术概览",
+        desc: "获取 30 分钟技术概览。我们将针对您的具体用例进行介绍，并解答任何技术问题。<br/>我们为您提供技术上线支持。",
+        cta: "立即预约",
+        cancel: "不用了",
+      },
+    },
   },
   setupModal: {
     generateSetupKey: "生成安装密钥",
