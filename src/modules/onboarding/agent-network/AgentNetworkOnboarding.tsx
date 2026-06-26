@@ -26,8 +26,8 @@ const STEP = {
   WELCOME: 1,
   DEVICE: 2,
   PROVIDER: 3,
-  CONFIGURE: 4,
-  POLICY: 5,
+  POLICY: 4,
+  CONFIGURE: 5,
   END: 6,
 } as const;
 
@@ -121,14 +121,14 @@ export const AgentNetworkOnboarding = ({
                     {step === STEP.PROVIDER && (
                       <OnboardingAgentProvider onBack={goBack} onNext={goNext} />
                     )}
+                    {step === STEP.POLICY && (
+                      <OnboardingAgentPolicy onBack={goBack} onNext={goNext} />
+                    )}
                     {step === STEP.CONFIGURE && (
                       <OnboardingAgentConfigure
                         onBack={goBack}
                         onNext={goNext}
                       />
-                    )}
-                    {step === STEP.POLICY && (
-                      <OnboardingAgentPolicy onBack={goBack} onNext={goNext} />
                     )}
                     {step === STEP.END && (
                       <OnboardingAgentEnd onFinish={onFinish} />

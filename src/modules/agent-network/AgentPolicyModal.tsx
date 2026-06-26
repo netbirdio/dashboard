@@ -215,7 +215,7 @@ function AgentPolicyModalContent({
         icon={<AccessControlIcon className={"fill-netbird"} />}
         title={policy ? "Update Agent Policy" : "Create Agent Policy"}
         description={
-          "Govern which user groups can call which AI providers and under what guardrails."
+          "Govern which groups can call which AI providers and under what guardrails."
         }
         color={"netbird"}
       />

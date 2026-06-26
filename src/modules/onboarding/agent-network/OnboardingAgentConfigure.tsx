@@ -1,8 +1,7 @@
 import Button from "@components/Button";
-import { ArrowRightIcon, PlugIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import * as React from "react";
-import { useState } from "react";
-import AgentConnectModal from "@/modules/agent-network/AgentConnectModal";
+import { AgentConnectTabs } from "@/modules/agent-network/AgentConnectModal";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
 type Props = {
@@ -11,11 +10,16 @@ type Props = {
 };
 
 // OnboardingAgentConfigure covers the quickstart's "Configure Your Agent"
-// step. It reuses AgentConnectModal, which renders the per-tool snippets
-// (Claude Code, Codex, OpenAI SDK, cURL) with the endpoint pre-filled.
+// step. The per-tool snippets (Claude Code, Codex, OpenAI SDK, cURL) are shown
+// inline via AgentConnectTabs, with the endpoint pre-filled.
 export const OnboardingAgentConfigure = ({ onBack, onNext }: Props) => {
-  const { settings } = useAIProviders();
-  const [open, setOpen] = useState(false);
+  const { settings, providers } = useAIProviders();
+
+  // Open the tab that matches the connected provider: Anthropic speaks the
+  // Claude Code config, everything else is OpenAI-shaped so default to cURL.
+  const defaultTab = providers.some((p) => p.providerId === "anthropic_api")
+    ? "claude-code"
+    : "curl";
 
   return (
     <div className={"relative flex flex-col h-full gap-4"}>
@@ -32,16 +36,23 @@ export const OnboardingAgentConfigure = ({ onBack, onNext }: Props) => {
         </div>
       </div>
 
-      <div className={"mt-4 flex items-center justify-center"}>
-        <Button
-          variant={"secondary"}
-          disabled={!settings}
-          onClick={() => setOpen(true)}
+      {settings ? (
+        <AgentConnectTabs
+          endpoint={settings.endpoint}
+          listClassName={"px-0"}
+          contentClassName={"px-0 py-2"}
+          defaultTab={defaultTab}
+        />
+      ) : (
+        <div
+          className={
+            "mt-2 text-center text-sm text-nb-gray-400 font-light sm:px-4"
+          }
         >
-          <PlugIcon size={16} />
-          Show Agent Config
-        </Button>
-      </div>
+          Connect a provider to generate your endpoint, then your agent config
+          appears here.
+        </div>
+      )}
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         <Button variant={"secondary"} onClick={onBack}>
@@ -52,14 +63,6 @@ export const OnboardingAgentConfigure = ({ onBack, onNext }: Props) => {
           <ArrowRightIcon size={16} />
         </Button>
       </div>
-
-      {settings && (
-        <AgentConnectModal
-          open={open}
-          onOpenChange={setOpen}
-          endpoint={settings.endpoint}
-        />
-      )}
     </div>
   );
 };

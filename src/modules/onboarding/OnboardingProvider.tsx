@@ -140,7 +140,7 @@ export const OnboardingProvider = ({
       account?.id,
       loggedInUser?.id,
     );
-    router.push("/agent-network/usage");
+    router.push("/agent-network/usage?tab=access-logs");
   };
 
   const onSkipAgentNetwork = async (step: number) => {

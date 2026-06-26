@@ -28,7 +28,7 @@ export const OnboardingAgentEnd = ({ onFinish }: Props) => {
 
       <div className={"mt-4 flex items-center justify-center"}>
         <Button variant={"secondaryLighter"} onClick={onFinish}>
-          Go to Agent Network
+          Go to Access Logs
           <ArrowRightIcon size={16} />
         </Button>
       </div>
