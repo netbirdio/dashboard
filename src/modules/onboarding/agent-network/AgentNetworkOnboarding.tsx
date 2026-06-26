@@ -9,8 +9,10 @@ import { cn } from "@utils/helpers";
 import * as React from "react";
 import { useEffect, useReducer } from "react";
 import { useSWRConfig } from "swr";
+import { HubspotFormField } from "@/contexts/AnalyticsProvider";
 import type { Peer } from "@/interfaces/Peer";
 import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
+import { AgentNetworkSignupForm } from "@/modules/onboarding/agent-network/AgentNetworkSignupForm";
 import { OnboardingAgentConfigure } from "@/modules/onboarding/agent-network/OnboardingAgentConfigure";
 import { OnboardingAgentDevice } from "@/modules/onboarding/agent-network/OnboardingAgentDevice";
 import { OnboardingAgentEnd } from "@/modules/onboarding/agent-network/OnboardingAgentEnd";
@@ -23,12 +25,13 @@ import { useAgentNetworkFirstRunSetup } from "@/modules/onboarding/agent-network
 // (no intent branching like the regular onboarding) since there's a single
 // path that mirrors the agent-network quickstart guide.
 const STEP = {
-  WELCOME: 1,
-  DEVICE: 2,
-  PROVIDER: 3,
-  POLICY: 4,
-  CONFIGURE: 5,
-  END: 6,
+  SIGNUP: 1,
+  WELCOME: 2,
+  DEVICE: 3,
+  PROVIDER: 4,
+  POLICY: 5,
+  CONFIGURE: 6,
+  END: 7,
 } as const;
 
 const MAX_STEPS = STEP.END;
@@ -38,6 +41,10 @@ type Props = {
   // onStepChange syncs the current step back to localStorage (handled by
   // OnboardingProvider) so a refresh resumes where the operator left off.
   onStepChange: (step: number) => void;
+  // signupPending mirrors the account's signup_form_pending flag. When true the
+  // flow opens on the signup step (step 1); when false that step is skipped.
+  signupPending: boolean;
+  onSignupSubmit: (fields: HubspotFormField[]) => void;
   onSkip: (step: number) => void;
   onFinish: () => void;
 };
@@ -45,12 +52,18 @@ type Props = {
 export const AgentNetworkOnboarding = ({
   initialStep,
   onStepChange,
+  signupPending,
+  onSignupSubmit,
   onSkip,
   onFinish,
 }: Props) => {
   const [step, dispatch] = useReducer(
     (_: number, next: number) => next,
-    initialStep >= 1 && initialStep <= MAX_STEPS ? initialStep : STEP.WELCOME,
+    // Start on the signup step while it's pending; otherwise resume the stored
+    // step but never land back on signup once it's done.
+    signupPending
+      ? STEP.SIGNUP
+      : Math.min(Math.max(initialStep, STEP.WELCOME), MAX_STEPS),
   );
 
   const { data: peers } = useFetchApi<Peer[]>("/peers");
@@ -71,6 +84,13 @@ export const AgentNetworkOnboarding = ({
   };
   const goNext = () => goTo(Math.min(step + 1, MAX_STEPS));
   const goBack = () => goTo(Math.max(step - 1, STEP.WELCOME));
+
+  // If signup is no longer pending (already submitted), don't sit on the
+  // signup step — mirrors the cloud onboarding's "skip survey if submitted".
+  useEffect(() => {
+    if (!signupPending && step === STEP.SIGNUP) goTo(STEP.WELCOME);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signupPending, step]);
 
   // Poll for peers while waiting on the device step, in case window focus
   // doesn't trigger a refresh when the operator connects their client.
@@ -104,10 +124,24 @@ export const AgentNetworkOnboarding = ({
               <NetBirdLogo size={"large"} mobile={false} />
 
               <div className={"w-full flex flex-col items-center pb-10 mt-8 sm:mt-10"}>
-                <Card className={cn("w-full", step === STEP.END && "max-w-2xl")}>
+                <Card
+                  className={cn(
+                    "w-full",
+                    step === STEP.SIGNUP && "max-w-lg",
+                    step === STEP.END && "max-w-2xl",
+                  )}
+                >
                   <Stepper step={step} maxSteps={MAX_STEPS} />
 
                   <AIProvidersProvider>
+                    {step === STEP.SIGNUP && (
+                      <AgentNetworkSignupForm
+                        onSubmit={(fields) => {
+                          onSignupSubmit(fields);
+                          goNext();
+                        }}
+                      />
+                    )}
                     {step === STEP.WELCOME && (
                       <OnboardingAgentWelcome onNext={goNext} />
                     )}
@@ -136,7 +170,7 @@ export const AgentNetworkOnboarding = ({
                   </AIProvidersProvider>
                 </Card>
 
-                {step !== STEP.END && (
+                {step !== STEP.SIGNUP && step !== STEP.END && (
                   <span
                     className={
                       "text-sm text-nb-gray-400 font-light pt-10 text-center px-4"

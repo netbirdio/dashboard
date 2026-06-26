@@ -4,6 +4,7 @@ import { isAgentNetworkOnly, isLocalDev, isNetBirdCloud } from "@utils/netbird";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
+import { submitHubspotForm } from "@/cloud/analytics/Hubspot";
 import { HubspotFormField, useAnalytics } from "@/contexts/AnalyticsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Account } from "@/interfaces/Account";
@@ -68,11 +69,17 @@ export const OnboardingProvider = ({
   const showOnboarding = useMemo(() => {
     if (process.env.APP_ENV === "test") return false;
     if (!account) return false;
-    // Agent Network-only deployments run a dedicated onboarding flow (no
-    // HubSpot signup survey) gated purely on the backend's first-run flag,
-    // which is set on every new account regardless of cloud vs self-hosted.
+    // Agent Network-only deployments run a dedicated onboarding flow. The
+    // signup form is its first step (self-hosted only — the cloud survey relies
+    // on a JWT domain claim self-hosted IdPs don't emit), so the flow shows
+    // while either the signup form or the onboarding flow is still pending.
     if (isAgentNetworkOnly()) {
-      return isOwner && !!account?.onboarding?.onboarding_flow_pending;
+      const signupPending =
+        !isNetBirdCloud() && !!account?.onboarding?.signup_form_pending;
+      return (
+        isOwner &&
+        (signupPending || !!account?.onboarding?.onboarding_flow_pending)
+      );
     }
     if (!isNetBirdCloud()) return false;
     const isSignupFormPending = isNetBirdCloud()
@@ -82,6 +89,11 @@ export const OnboardingProvider = ({
       !!account?.onboarding?.onboarding_flow_pending || isSignupFormPending;
     return isOwner && show;
   }, [account, isOwner]);
+
+  // Self-hosted only: the cloud survey relies on a JWT domain claim self-hosted
+  // IdPs don't emit, so the agent-network flow uses its own signup step.
+  const agentSignupPending =
+    !isNetBirdCloud() && !!account?.onboarding?.signup_form_pending;
 
   const updateAccountMeta = async (meta: Partial<Account["onboarding"]>) => {
     if (!account) return;
@@ -143,6 +155,31 @@ export const OnboardingProvider = ({
     router.push("/agent-network/usage?tab=access-logs");
   };
 
+  const onSubmitAgentSignup = async (fields: HubspotFormField[]) => {
+    await updateAccountMeta({
+      signup_form_pending: false,
+    });
+    trackEventV2(
+      "Onboarding",
+      "Submitted Agent Network Signup",
+      account?.id,
+      loggedInUser?.id,
+    );
+    if (isLocalDev()) return;
+    try {
+      await submitHubspotForm({
+        // Dedicated HubSpot form for the self-hosted Agent Network signup, and
+        // NetBird's portal id — hardcoded so the submission works without the
+        // operator configuring NETBIRD_HUBSPOT_PORTAL_ID on their deployment.
+        id: "f387844f-8752-489e-a7b3-4ded545a2f2f",
+        portalId: "144571599",
+        fields,
+        hubspotQueryId: hsId,
+        gaId,
+      });
+    } catch (e) {}
+  };
+
   const onSkipAgentNetwork = async (step: number) => {
     await updateAccountMeta({
       onboarding_flow_pending: false,
@@ -187,6 +224,8 @@ export const OnboardingProvider = ({
       <AgentNetworkOnboarding
         initialStep={onboarding.step}
         onStepChange={(step) => setOnboarding((prev) => ({ ...prev, step }))}
+        signupPending={agentSignupPending}
+        onSignupSubmit={onSubmitAgentSignup}
         onSkip={onSkipAgentNetwork}
         onFinish={onFinishAgentNetwork}
       />
