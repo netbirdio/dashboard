@@ -100,30 +100,28 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
     [],
   );
 
+  // Block submission until identity has resolved — otherwise submitForm would
+  // hand the parent an empty payload and clear the pending signup state.
+  const hasIdentity = !!(loggedInUser || user);
+
   const canSubmit = useMemo(() => {
+    if (!hasIdentity) return false;
     const base = hasSelectedUseCase && referralSource !== "";
     return isBusiness ? base && companySize !== "" : base;
-  }, [hasSelectedUseCase, referralSource, isBusiness, companySize]);
+  }, [hasIdentity, hasSelectedUseCase, referralSource, isBusiness, companySize]);
 
   const submitForm = () => {
-    let fields: HubspotFormField[] = [];
-    try {
-      if (loggedInUser || user) {
-        fields = [
-          { name: "email", value: email },
-          { name: "is_company", value: isBusiness ? "Business" : "Personal" },
-          { name: "use_case", value: getUseCases() },
-          {
-            name: "how_did_you_hear_about_us",
-            value: referralSource || "Other",
-          },
-          { name: "account_category", value: isBusiness ? "business" : "personal" },
-        ];
-        if (isBusiness && companySize !== "") {
-          fields.push({ name: "planned_users", value: companySize });
-        }
-      }
-    } catch (e) {}
+    if (!hasIdentity) return;
+    const fields: HubspotFormField[] = [
+      { name: "email", value: email },
+      { name: "is_company", value: isBusiness ? "Business" : "Personal" },
+      { name: "use_case", value: getUseCases() },
+      { name: "how_did_you_hear_about_us", value: referralSource || "Other" },
+      { name: "account_category", value: isBusiness ? "business" : "personal" },
+    ];
+    if (isBusiness && companySize !== "") {
+      fields.push({ name: "planned_users", value: companySize });
+    }
     onSubmit(fields);
   };
 
