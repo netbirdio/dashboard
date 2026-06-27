@@ -144,7 +144,7 @@ export default function AgentAccessLogTable({
   // request.
   const providerByConfigId = useMemo(() => {
     const map = new Map<string, AIProvider>();
-    providers.forEach((p) => map.set(p.id, p));
+    (providers ?? []).forEach((p) => map.set(p.id, p));
     return map;
   }, [providers]);
 

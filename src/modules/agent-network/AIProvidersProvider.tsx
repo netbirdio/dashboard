@@ -468,9 +468,12 @@ type AIProvidersContextValue = {
   ) => Promise<void>;
   toggleBudgetRule: (id: string) => Promise<void>;
   deleteBudgetRule: (id: string) => Promise<void>;
+  // Resolves to true on a confirmed save, false when the update failed (errors
+  // are handled/notified internally) so callers can avoid clearing dirty state
+  // on failure.
   updateAgentNetworkSettings: (
     updates: AgentNetworkSettingsUpdate,
-  ) => Promise<void>;
+  ) => Promise<boolean>;
 };
 
 const AIProvidersContext = createContext<AIProvidersContextValue | null>(null);
@@ -926,11 +929,13 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           title: "Account controls updated",
           description: "Settings saved.",
         });
+        return true;
       } catch (err) {
         notify({
           title: "Failed to update account controls",
           description: err instanceof Error ? err.message : String(err),
         });
+        return false;
       }
     },
     [settingsApi, mutateSettings],

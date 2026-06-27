@@ -51,8 +51,10 @@ export default function UsageAndLogsPage() {
   );
 
   // Keep the tab in sync when the ?tab= query changes (deep links / back-forward).
+  // Also reset to the default when ?tab= is removed or invalid, so navigating
+  // back to the bare URL doesn't leave the previous tab selected.
   useEffect(() => {
-    if (queryTab && VALID_TABS.has(queryTab)) setTab(queryTab);
+    setTab(VALID_TABS.has(queryTab) ? queryTab : TAB_USAGE);
   }, [queryTab]);
 
   // Reflect the active tab in the URL so it's shareable, like Settings.

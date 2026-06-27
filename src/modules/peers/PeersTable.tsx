@@ -271,9 +271,11 @@ type Props = {
   peers?: Peer[];
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
-  // The kind the table opens on; an in-toolbar switch lets the operator flip
-  // between User Devices and Servers afterwards.
-  defaultKind?: PeersTableKind;
+  // The active subset, URL-backed by the page so it survives remounts (e.g.
+  // SWR revalidate-on-focus). undefined = show all; the in-toolbar switch
+  // flips it via onKindChange.
+  kind?: PeersTableKind;
+  onKindChange?: (kind: PeersTableKind | undefined) => void;
 };
 
 // Peers split into two kinds:
@@ -289,14 +291,11 @@ export default function PeersTable({
   peers,
   isLoading,
   headingTarget,
-  defaultKind,
+  kind,
+  onKindChange,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
-  // The toolbar switch drives which subset (User Devices / Servers) is shown.
-  // undefined = no selection = show all peers; clicking the active option
-  // again clears it back to "all".
-  const [kind, setKind] = useState<PeersTableKind | undefined>(defaultKind);
   const path = usePathname();
 
   // Default sorting state of the table
@@ -358,6 +357,12 @@ export default function PeersTable({
       setSelectedRows({});
     }
   };
+
+  // Clear any selection carried over from the previous subset so hidden peers
+  // aren't acted on by bulk actions when the kind changes.
+  useEffect(() => {
+    setSelectedRows({});
+  }, [kind]);
 
   const [showBrowserPeers, setShowBrowserPeers] = useState(false);
 
@@ -535,6 +540,29 @@ export default function PeersTable({
               disabled={peers?.length == 0}
             />
 
+            <ButtonGroup disabled={isLoading}>
+              <ButtonGroup.Button
+                className={"h-[42px]"}
+                variant={kind === "users" ? "tertiary" : "secondary"}
+                onClick={() =>
+                  onKindChange?.(kind === "users" ? undefined : "users")
+                }
+              >
+                User Devices
+              </ButtonGroup.Button>
+              <ButtonGroup.Button
+                // Drop the left border so it doesn't stack with the first
+                // button's right border into a doubled divider.
+                className={"h-[42px] !border-l-0"}
+                variant={kind === "servers" ? "tertiary" : "secondary"}
+                onClick={() =>
+                  onKindChange?.(kind === "servers" ? undefined : "servers")
+                }
+              >
+                Servers
+              </ButtonGroup.Button>
+            </ButtonGroup>
+
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
@@ -700,29 +728,6 @@ export default function PeersTable({
                 mutate("/peers").then();
               }}
             />
-
-            <ButtonGroup disabled={isLoading}>
-              <ButtonGroup.Button
-                className={"h-[42px]"}
-                variant={kind === "users" ? "tertiary" : "secondary"}
-                onClick={() =>
-                  setKind((prev) => (prev === "users" ? undefined : "users"))
-                }
-              >
-                User Devices
-              </ButtonGroup.Button>
-              <ButtonGroup.Button
-                // Drop the left border so it doesn't stack with the first
-                // button's right border into a doubled divider.
-                className={"h-[42px] !border-l-0"}
-                variant={kind === "servers" ? "tertiary" : "secondary"}
-                onClick={() =>
-                  setKind((prev) => (prev === "servers" ? undefined : "servers"))
-                }
-              >
-                Servers
-              </ButtonGroup.Button>
-            </ButtonGroup>
           </>
         )}
       </DataTable>

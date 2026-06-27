@@ -59,7 +59,7 @@ export default function AgentAccountControlsCard() {
   ]);
 
   const onSave = async () => {
-    await updateAgentNetworkSettings({
+    const saved = await updateAgentNetworkSettings({
       enableLogCollection,
       enablePromptCollection,
       // PII redaction is managed at the policy guardrail level; preserve the
@@ -67,7 +67,11 @@ export default function AgentAccountControlsCard() {
       redactPii: settings?.redactPii ?? false,
       accessLogRetentionDays: Number(retentionDays),
     });
-    updateRef([enableLogCollection, enablePromptCollection, retentionDays]);
+    // Only clear the dirty state on a confirmed save, so a failed update keeps
+    // the unsaved-changes indicator.
+    if (saved) {
+      updateRef([enableLogCollection, enablePromptCollection, retentionDays]);
+    }
   };
 
   if (settingsLoading && !settings) {

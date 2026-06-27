@@ -198,35 +198,46 @@ export default function Navigation({
                   href={"/agent-network/providers"}
                   collapsible
                   exactPathMatch={false}
-                  visible={isAgentNetworkEnabled()}
+                  // Parent is visible when at least one child is permitted. All
+                  // Agent Network pages guard on services.read, so the section
+                  // tracks that (plus the feature flag).
+                  visible={isAgentNetworkEnabled() && permission?.services?.read}
                 >
                   <SidebarItem
                     label="Providers"
                     isChild
                     href={"/agent-network/providers"}
                     exactPathMatch={true}
-                    visible={isAgentNetworkEnabled()}
+                    visible={
+                      isAgentNetworkEnabled() && permission?.services?.read
+                    }
                   />
                   <SidebarItem
                     label="Policies"
                     isChild
                     href={"/agent-network/policies"}
                     exactPathMatch={true}
-                    visible={isAgentNetworkEnabled()}
+                    visible={
+                      isAgentNetworkEnabled() && permission?.services?.read
+                    }
                   />
                   <SidebarItem
                     label="Usage & Logs"
                     isChild
                     href={"/agent-network/usage"}
                     exactPathMatch={true}
-                    visible={isAgentNetworkEnabled()}
+                    visible={
+                      isAgentNetworkEnabled() && permission?.services?.read
+                    }
                   />
                   <SidebarItem
                     label="Configuration"
                     isChild
                     href={"/agent-network/configuration"}
                     exactPathMatch={true}
-                    visible={isAgentNetworkEnabled()}
+                    visible={
+                      isAgentNetworkEnabled() && permission?.services?.read
+                    }
                   />
                 </SidebarItem>
 

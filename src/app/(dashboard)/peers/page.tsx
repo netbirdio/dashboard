@@ -7,7 +7,7 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { lazy, Suspense, useMemo } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import useDistributorRedirect from "@/cloud/distributor/useDistributorRedirect";
@@ -45,16 +45,27 @@ export default function PeersPage() {
 
 function PeersView() {
   const searchParams = useSearchParams();
-  // Honour ?kind= so the redirects from the old /peers/users and
-  // /peers/servers routes open the table on the matching subset. With no
-  // param the switch starts unselected and the table shows all peers.
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // The selected subset is URL-backed (?kind=), so it survives remounts (e.g.
+  // SWR revalidate-on-focus unmounting the page) and is shareable. No param =
+  // unselected = all peers.
   const kindParam = searchParams?.get("kind");
-  const defaultKind: PeersTableKind | undefined =
+  const kind: PeersTableKind | undefined =
     kindParam === "servers"
       ? "servers"
       : kindParam === "users"
         ? "users"
         : undefined;
+
+  const onKindChange = (next: PeersTableKind | undefined) => {
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    if (next) params.set("kind", next);
+    else params.delete("kind");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
 
   const { peers, isLoading: isPeersLoading } = usePeers();
   const { users, isLoading: isUsersLoading } = useUsers();
@@ -104,7 +115,8 @@ function PeersView() {
           isLoading={isLoading}
           peers={peersWithUser}
           headingTarget={portalTarget}
-          defaultKind={defaultKind}
+          kind={kind}
+          onKindChange={onKindChange}
         />
       </Suspense>
     </>

@@ -166,45 +166,48 @@ export default function AgentNetworkProvidersPage() {
 
   return (
     <PageContainer>
-      <AIProvidersProvider>
-        <div className={"p-default py-6"}>
-          <Breadcrumbs>
-            <Breadcrumbs.Item
-              href={"/agent-network/providers"}
-              label={"Agent Network"}
-              icon={<AgentNetworkIcon size={16} />}
-            />
-            <Breadcrumbs.Item
-              href={"/agent-network/providers"}
-              label={"Providers"}
-              active={true}
-            />
-          </Breadcrumbs>
-          <h1 ref={headingRef}>Providers</h1>
-          <Paragraph>
-            Connect AI providers and gateways like LiteLLM, OpenAI, and
-            Anthropic through one keyless endpoint, accessible only via
-            NetBird’s tunnel.
-            <InlineLink
-              href={"https://anet.demo.netbird.io/"}
-              target={"_blank"}
-            >
-              Learn more
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
-          </Paragraph>
-          <div className={"mt-4"}>
-            <EndpointHeader />
+      {/* Gate the whole surface: AIProvidersProvider and EndpointHeader fetch
+          agent-network state, so they must not mount for users without
+          services.read. */}
+      <RestrictedAccess
+        page={"Providers"}
+        hasAccess={permission?.services?.read}
+      >
+        <AIProvidersProvider>
+          <div className={"p-default py-6"}>
+            <Breadcrumbs>
+              <Breadcrumbs.Item
+                href={"/agent-network/providers"}
+                label={"Agent Network"}
+                icon={<AgentNetworkIcon size={16} />}
+              />
+              <Breadcrumbs.Item
+                href={"/agent-network/providers"}
+                label={"Providers"}
+                active={true}
+              />
+            </Breadcrumbs>
+            <h1 ref={headingRef}>Providers</h1>
+            <Paragraph>
+              Connect AI providers and gateways like LiteLLM, OpenAI, and
+              Anthropic through one keyless endpoint, accessible only via
+              NetBird’s tunnel.
+              <InlineLink
+                href={"https://anet.demo.netbird.io/"}
+                target={"_blank"}
+              >
+                Learn more
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
+            </Paragraph>
+            <div className={"mt-4"}>
+              <EndpointHeader />
+            </div>
           </div>
-        </div>
 
-        <RestrictedAccess
-          page={"Providers"}
-          hasAccess={permission?.services?.read}
-        >
           <PageBody headingTarget={portalTarget} />
-        </RestrictedAccess>
-      </AIProvidersProvider>
+        </AIProvidersProvider>
+      </RestrictedAccess>
     </PageContainer>
   );
 }
