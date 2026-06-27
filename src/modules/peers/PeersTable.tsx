@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import ButtonGroup from "@components/ButtonGroup";
 import { Checkbox } from "@components/Checkbox";
 import FullTooltip from "@components/FullTooltip";
 import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
@@ -29,7 +30,7 @@ import {
   TableFilterDef,
   TableFiltersButton,
 } from "@components/table/TableFilters";
-import AddPeerButton from "@components/ui/AddPeerButton";
+import AddPeerDropdown from "@components/ui/AddPeerDropdown";
 import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import {
   ColumnDef,
@@ -270,7 +271,11 @@ type Props = {
   peers?: Peer[];
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  // The active subset, URL-backed by the page so it survives remounts (e.g.
+  // SWR revalidate-on-focus). undefined = show all; the in-toolbar switch
+  // flips it via onKindChange.
   kind?: PeersTableKind;
+  onKindChange?: (kind: PeersTableKind | undefined) => void;
 };
 
 // Peers split into two kinds:
@@ -287,6 +292,7 @@ export default function PeersTable({
   isLoading,
   headingTarget,
   kind,
+  onKindChange,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
@@ -351,6 +357,12 @@ export default function PeersTable({
       setSelectedRows({});
     }
   };
+
+  // Clear any selection carried over from the previous subset so hidden peers
+  // aren't acted on by bulk actions when the kind changes.
+  useEffect(() => {
+    setSelectedRows({});
+  }, [kind]);
 
   const [showBrowserPeers, setShowBrowserPeers] = useState(false);
 
@@ -499,6 +511,12 @@ export default function PeersTable({
           ipv6: false,
         }}
         isLoading={isLoading}
+        // Treat a selected kind as an active filter: when peers exist but the
+        // chosen kind has none, render the table's normal "Could not find any
+        // results" empty state (with column headers) instead of the
+        // "Get Started" card. With no peers at all (kind unselected), the card
+        // still shows.
+        hasServerSideFilters={kind !== undefined && (peers?.length ?? 0) > 0}
         getStartedCard={
           <NoPeersGettingStarted
             showBackground={true}
@@ -507,9 +525,7 @@ export default function PeersTable({
         }
         rightSide={() => (
           <>
-            {peers && peers.length > 0 && (
-              <AddPeerButton isUserDevice={kind === "users"} />
-            )}
+            {peers && peers.length > 0 && <AddPeerDropdown />}
           </>
         )}
         aboveTable={(table) => (
@@ -523,6 +539,29 @@ export default function PeersTable({
               filters={filterDefs}
               disabled={peers?.length == 0}
             />
+
+            <ButtonGroup disabled={isLoading}>
+              <ButtonGroup.Button
+                className={"h-[42px]"}
+                variant={kind === "users" ? "tertiary" : "secondary"}
+                onClick={() =>
+                  onKindChange?.(kind === "users" ? undefined : "users")
+                }
+              >
+                User Devices
+              </ButtonGroup.Button>
+              <ButtonGroup.Button
+                // Drop the left border so it doesn't stack with the first
+                // button's right border into a doubled divider.
+                className={"h-[42px] !border-l-0"}
+                variant={kind === "servers" ? "tertiary" : "secondary"}
+                onClick={() =>
+                  onKindChange?.(kind === "servers" ? undefined : "servers")
+                }
+              >
+                Servers
+              </ButtonGroup.Button>
+            </ButtonGroup>
 
             <DataTableResetFilterButton
               table={table}

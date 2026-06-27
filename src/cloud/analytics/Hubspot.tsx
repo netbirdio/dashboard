@@ -11,7 +11,6 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useAccount } from "@/modules/account/useAccount";
 
 const config = loadConfig();
-const formsApiUrl = `https://api.hsforms.com/submissions/v3/integration/submit/${config.hubspotPortalId}`; // Hubspot v2 Forms API
 
 const detectDeviceType = () => {
   if (typeof navigator === "undefined") {
@@ -142,6 +141,10 @@ type FormProps = {
   onSuccess?: () => void;
   hubspotQueryId?: string;
   gaId?: string;
+  // portalId overrides config.hubspotPortalId for callers that target a fixed
+  // HubSpot portal regardless of the deployment's env (e.g. the self-hosted
+  // Agent Network signup, which always reports to NetBird's portal).
+  portalId?: string;
 };
 
 export const HubspotForm = ({
@@ -175,17 +178,21 @@ export const submitHubspotForm = async ({
   fields,
   hubspotQueryId,
   gaId,
+  portalId,
 }: FormProps) => {
   try {
-    if (!config.hubspotPortalId || !id) return;
+    const resolvedPortalId = portalId || config.hubspotPortalId;
+    if (!resolvedPortalId || !id) return;
 
     // Do not submit forms for excluded accounts, e.g., synthetic test users
     const email = fields?.find((field) => field?.name === "email")?.value;
-    if (email && config.analyticsExcludedEmails.includes(email)) {
+    if (email && config.analyticsExcludedEmails?.includes(email)) {
       return;
     }
 
-    return fetch(formsApiUrl + `/${id}`, {
+    return fetch(
+      `https://api.hsforms.com/submissions/v3/integration/submit/${resolvedPortalId}/${id}`,
+      {
       method: "POST",
       body: JSON.stringify({
         submittedAt: dayjs().valueOf(),

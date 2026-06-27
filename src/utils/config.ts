@@ -21,6 +21,11 @@ interface Config {
   wasmPath: string;
   licensed: boolean;
   cloud: boolean;
+  // agentNetworkOnly: dedicated Agent Network surface — the regular UI
+  // (network routing, DNS, reverse proxy, activity) is hidden, no Beta badge.
+  // agentNetworkEnabled: the regular UI plus the Agent Network menu item (Beta).
+  agentNetworkOnly: boolean;
+  agentNetworkEnabled: boolean;
   hubspotPortalId?: string;
   hubspotSignupFormId?: string;
   hubspotOnboardingFormId?: string;
@@ -80,6 +85,8 @@ const loadConfig = (): Config => {
       configJson?.wasmPath || "https://pkgs.netbird.io/wasm/client/v0.63.0",
     licensed: configJson?.licensed === "true",
     cloud: configJson?.cloud === "true",
+    agentNetworkOnly: configJson?.agentNetworkOnly === "true",
+    agentNetworkEnabled: configJson?.agentNetworkEnabled === "true",
     hubspotPortalId: configJson?.hubspotPortalId || undefined,
     hubspotSignupFormId: configJson?.hubspotSignupFormId || undefined,
     hubspotOnboardingFormId: configJson?.hubspotOnboardingFormId || undefined,
