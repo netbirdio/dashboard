@@ -180,5 +180,6 @@ done
 
 if [[ "$reloaded" != true ]]; then
     echo "Failed to reload nginx after patching CSP header" >&2
+    nginx -t || true
     exit 1
 fi
