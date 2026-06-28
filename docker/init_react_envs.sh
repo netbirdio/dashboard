@@ -162,3 +162,16 @@ for f in $(grep -R -l AUTH_SUPPORTED_SCOPES /usr/share/nginx/html); do
     envsubst "$ENV_STR" < "$f".copy > "$f"
     rm "$f".copy
 done
+
+# Reload nginx so the patched CSP header takes effect.
+# supervisord starts nginx (priority 100) before this script (priority 201) and
+# never reloads it, so without this nginx keeps serving the static default.conf
+# CSP that has no connect-src, breaking OIDC discovery over plain HTTP.
+for i in $(seq 1 10); do
+    if nginx -s reload 2>/dev/null; then
+        echo "Reloaded nginx to apply updated CSP configuration"
+        break
+    fi
+    echo "Waiting for nginx to be ready before reload (attempt $i)..."
+    sleep 1
+done
