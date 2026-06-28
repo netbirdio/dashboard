@@ -518,10 +518,7 @@ export default function PeersTable({
         // still shows.
         hasServerSideFilters={kind !== undefined && (peers?.length ?? 0) > 0}
         getStartedCard={
-          <NoPeersGettingStarted
-            showBackground={true}
-            isUserDevice={kind ? kind === "users" : undefined}
-          />
+          <NoPeersGettingStarted showBackground={true} />
         }
         rightSide={() => (
           <>
