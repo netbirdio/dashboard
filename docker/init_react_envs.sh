@@ -167,11 +167,18 @@ done
 # supervisord starts nginx (priority 100) before this script (priority 201) and
 # never reloads it, so without this nginx keeps serving the static default.conf
 # CSP that has no connect-src, breaking OIDC discovery over plain HTTP.
+reloaded=false
 for i in $(seq 1 10); do
     if nginx -s reload 2>/dev/null; then
         echo "Reloaded nginx to apply updated CSP configuration"
+        reloaded=true
         break
     fi
     echo "Waiting for nginx to be ready before reload (attempt $i)..."
     sleep 1
 done
+
+if [[ "$reloaded" != true ]]; then
+    echo "Failed to reload nginx after patching CSP header" >&2
+    exit 1
+fi
