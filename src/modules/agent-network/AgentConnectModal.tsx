@@ -74,6 +74,9 @@ export function AgentConnectTabs({
     <Tabs key={defaultTab} defaultValue={defaultTab} className={"mt-2"}>
       <TabsList justify={"start"} className={listClassName}>
         <TabsTrigger value={"claude-code"}>Claude Code</TabsTrigger>
+        <TabsTrigger value={"claude-code-vertex"}>
+          Claude Code (Vertex AI)
+        </TabsTrigger>
         <TabsTrigger value={"codex"}>Codex</TabsTrigger>
         <TabsTrigger value={"openai-sdk"}>OpenAI SDK</TabsTrigger>
         <TabsTrigger value={"curl"}>cURL</TabsTrigger>
@@ -116,6 +119,25 @@ export function AgentConnectTabs({
                     `claude`,
                   ]
             }
+          />
+        </div>
+      </TabsContent>
+
+      <TabsContent value={"claude-code-vertex"}>
+        <div className={contentClassName}>
+          <Snippet
+            caption={"Add to ~/.claude/settings.json:"}
+            lines={[
+              `{`,
+              `  "env": {`,
+              `    "CLOUD_ML_REGION": "global",`,
+              `    "ANTHROPIC_VERTEX_PROJECT_ID": "<your-gcp-project-id>",`,
+              `    "CLAUDE_CODE_USE_VERTEX": "1",`,
+              `    "CLAUDE_CODE_SKIP_VERTEX_AUTH": "1",`,
+              `    "ANTHROPIC_VERTEX_BASE_URL": "${baseUrl}/v1"`,
+              `  }`,
+              `}`,
+            ]}
           />
         </div>
       </TabsContent>
