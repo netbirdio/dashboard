@@ -141,8 +141,18 @@ CSP_CONNECT_SRC=$(echo $CSP_CONNECT_SRC | tr ' ' '\n' | sort -u | tr '\n' ' ' | 
 CSP_FRAME_SRC=$(echo $CSP_FRAME_SRC | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed 's/ $//')
 CSP_SCRIPT_SRC=$(echo $CSP_SCRIPT_SRC | tr ' ' '\n' | sort -u | tr '\n' ' ' | sed 's/ $//')
 
+# upgrade-insecure-requests tells the browser to rewrite every http subresource,
+# fetch and WebSocket to https/wss. That is correct for https deployments but breaks
+# plain-http ones (e.g. local or self-hosted over http), where it would rewrite the
+# working http/ws endpoints to unreachable https/wss. Emit it only when the backend
+# is served over https, matching the ws:// vs wss:// scheme logic above.
+CSP_UPGRADE_INSECURE=" upgrade-insecure-requests;"
+if [[ "$NETBIRD_MGMT_API_ENDPOINT" == http://* || "$AUTH_AUTHORITY" == http://* ]]; then
+    CSP_UPGRADE_INSECURE=""
+fi
+
 # Update CSP in nginx config
-CSP_POLICY="default-src 'none'; connect-src 'self' $CSP_CONNECT_SRC; frame-src 'self' $CSP_FRAME_SRC; script-src 'self' 'wasm-unsafe-eval' $CSP_SCRIPT_SRC; font-src 'self'; img-src * data:; manifest-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
+CSP_POLICY="default-src 'none'; connect-src 'self' $CSP_CONNECT_SRC; frame-src 'self' $CSP_FRAME_SRC; script-src 'self' 'wasm-unsafe-eval' $CSP_SCRIPT_SRC; font-src 'self'; img-src * data:; manifest-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'self'; base-uri 'self'; form-action 'self';$CSP_UPGRADE_INSECURE"
 CSP_HEADER="add_header Content-Security-Policy \"$CSP_POLICY\" always;"
 
 echo "CSP header: $CSP_HEADER"
