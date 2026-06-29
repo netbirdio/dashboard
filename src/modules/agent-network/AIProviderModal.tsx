@@ -557,7 +557,7 @@ export default function AIProviderModal({
                       // placeholder hint them what to type instead.
                       setUpstreamUrl(
                         next === "vertex_ai_api"
-                          ? ""
+                          ? "https://aiplatform.googleapis.com"
                           : c.default_host
                           ? `https://${c.default_host}`
                           : "",
