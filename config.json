@@ -18,6 +18,8 @@
   "wasmPath": "$NETBIRD_WASM_PATH",
   "licensed": "$NETBIRD_LICENSED",
   "cloud": "$NETBIRD_CLOUD",
+  "agentNetworkOnly": "$NETBIRD_AGENT_NETWORK_ONLY",
+  "agentNetworkEnabled": "$NETBIRD_AGENT_NETWORK_ENABLED",
   "hubspotPortalId": "$NETBIRD_HUBSPOT_PORTAL_ID",
   "hubspotSignupFormId": "$NETBIRD_HUBSPOT_SIGNUP_FORM_ID",
   "hubspotOnboardingFormId": "$NETBIRD_HUBSPOT_ONBOARDING_FORM_ID",

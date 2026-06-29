@@ -11,7 +11,7 @@ import Code from "@components/Code";
 import Separator from "@components/Separator";
 import Steps from "@components/Steps";
 import TabsContentPadding, { TabsContent } from "@components/Tabs";
-import { GRPC_API_ORIGIN } from "@utils/netbird";
+import { GRPC_API_ORIGIN, pkgsDownloadUrl } from "@utils/netbird";
 import {
   BeerIcon,
   DownloadIcon,
@@ -65,7 +65,7 @@ export default function MacOSTab({
             </div>
             <div className={"flex gap-4 mt-1 flex-wrap"}>
               <Link
-                href={"https://pkgs.netbird.io/macos/universal"}
+                href={pkgsDownloadUrl("macos/universal")}
                 passHref
                 target={"_blank"}
               >

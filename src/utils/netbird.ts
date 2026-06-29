@@ -58,6 +58,29 @@ export const hasLicensedFlag = () => {
   return config.licensed || isNetBirdCloud();
 };
 
+// isAgentNetworkOnly returns true for the dedicated Agent Network surface:
+// the regular UI (network routing, DNS, reverse proxy, activity) is hidden and
+// the Agent Network menu shows without a Beta badge.
+export const isAgentNetworkOnly = () => {
+  return config.agentNetworkOnly;
+};
+
+// pkgsDownloadUrl builds a NetBird client installer download link on
+// pkgs.netbird.io. In Agent Network-only mode the client ships from the
+// release-candidate channel, so the link gets a "/rc" suffix that
+// pkgs.netbird.io 302-redirects to the latest RC GitHub asset (e.g.
+// "windows/x64" -> "windows/x64/rc"). `path` is the platform path without a
+// leading slash, e.g. "windows/x64" or "macos/universal".
+export const pkgsDownloadUrl = (path: string) =>
+  `https://pkgs.netbird.io/${path}${isAgentNetworkOnly() ? "/rc" : ""}`;
+
+// isAgentNetworkEnabled returns true when the Agent Network product surface
+// (Providers, Policies, Usage & Logs) is available — in either the dedicated
+// "only" mode or alongside the regular UI (where it carries a Beta badge).
+export const isAgentNetworkEnabled = () => {
+  return config.agentNetworkEnabled || config.agentNetworkOnly;
+};
+
 export const isAuth0 = () => {
   return config.auth0Auth;
 };

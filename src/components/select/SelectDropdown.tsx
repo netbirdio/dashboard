@@ -28,6 +28,10 @@ export interface SelectOption {
   searchValue?: string;
   className?: string;
   disabled?: boolean;
+  // Optional section label. When any option carries a `group`, the
+  // dropdown renders a header above each group and orders sections by
+  // the first option that names them.
+  group?: string;
 }
 
 interface SelectDropdownProps {
@@ -103,6 +107,25 @@ export function SelectDropdown({
       return value.toLowerCase().includes(debouncedSearch.toLowerCase());
     });
   }, [options, debouncedSearch]);
+
+  // When options carry a `group`, split them into ordered sections so a
+  // header can render above each. Section order follows the first option
+  // that names the group; empty groups (after search) drop out. Returns
+  // null when no option is grouped so the flat render path is used.
+  const groupedItems = React.useMemo(() => {
+    if (!filteredItems.some((item) => item.group)) return null;
+    const order: string[] = [];
+    const byGroup = new Map<string, SelectOption[]>();
+    for (const item of filteredItems) {
+      const group = item.group ?? "";
+      if (!byGroup.has(group)) {
+        byGroup.set(group, []);
+        order.push(group);
+      }
+      byGroup.get(group)?.push(item);
+    }
+    return order.map((group) => ({ group, items: byGroup.get(group) ?? [] }));
+  }, [filteredItems]);
 
   const Loading = () => {
     return (
@@ -237,18 +260,52 @@ export function SelectDropdown({
               }}
             >
               <CommandGroup>
-                <div className={cn("grid grid-cols-1 gap-1 w-full", compact ? "pb-1" : "pb-2")}>
-                  {filteredItems.map((option) => (
-                    <SelectDropdownItem
-                      option={option}
-                      toggle={toggle}
-                      key={option.value}
-                      iconSize={iconSize}
-                      showValue={showValues}
-                      size={size}
-                    />
-                  ))}
-                </div>
+                {groupedItems ? (
+                  groupedItems.map(({ group, items }) => (
+                    <div key={group || "_ungrouped"}>
+                      {group && (
+                        <div
+                          className={cn(
+                            "px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-nb-gray-400",
+                            compact ? "pt-1" : "pt-2",
+                          )}
+                        >
+                          {group}
+                        </div>
+                      )}
+                      <div
+                        className={cn(
+                          "grid grid-cols-1 gap-1 w-full",
+                          compact ? "pb-1" : "pb-2",
+                        )}
+                      >
+                        {items.map((option) => (
+                          <SelectDropdownItem
+                            option={option}
+                            toggle={toggle}
+                            key={option.value}
+                            iconSize={iconSize}
+                            showValue={showValues}
+                            size={size}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className={cn("grid grid-cols-1 gap-1 w-full", compact ? "pb-1" : "pb-2")}>
+                    {filteredItems.map((option) => (
+                      <SelectDropdownItem
+                        option={option}
+                        toggle={toggle}
+                        key={option.value}
+                        iconSize={iconSize}
+                        showValue={showValues}
+                        size={size}
+                      />
+                    ))}
+                  </div>
+                )}
               </CommandGroup>
             </ScrollArea>
           </CommandList>

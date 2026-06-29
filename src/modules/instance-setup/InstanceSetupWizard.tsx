@@ -15,12 +15,14 @@ import { GradientFadedBackground } from "@components/ui/GradientFadedBackground"
 interface FormData {
   email: string;
   password: string;
+  confirmPassword: string;
   name: string;
 }
 
 interface FormErrors {
   email?: string;
   password?: string;
+  confirmPassword?: string;
   name?: string;
   general?: string;
 }
@@ -31,6 +33,7 @@ export default function InstanceSetupWizard() {
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
+    confirmPassword: "",
     name: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -51,6 +54,12 @@ export default function InstanceSetupWizard() {
       newErrors.password = "Password is required";
     } else if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (formData.confirmPassword !== formData.password) {
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     if (!formData.name.trim()) {
@@ -132,6 +141,15 @@ export default function InstanceSetupWizard() {
         setErrors((prev) => ({ ...prev, [field]: undefined }));
       }
     };
+
+  // Surface a mismatch as soon as the operator types in the confirm field,
+  // not just on submit (mirrors the invite-redeem flow).
+  const passwordsMatch = formData.password === formData.confirmPassword;
+  const confirmPasswordError =
+    errors.confirmPassword ??
+    (formData.confirmPassword && !passwordsMatch
+      ? "Passwords do not match"
+      : undefined);
 
   if (isSuccess) {
     return (
@@ -233,6 +251,20 @@ export default function InstanceSetupWizard() {
             <HelpText className={"mt-2"}>
               Must be at least 8 characters
             </HelpText>
+          </div>
+
+          <div>
+            <Label htmlFor={"confirmPassword"}>Confirm Password</Label>
+            <Input
+              type={"password"}
+              id="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleInputChange("confirmPassword")}
+              placeholder="Re-enter your password"
+              disabled={isSubmitting}
+              error={confirmPasswordError}
+              showPasswordToggle={true}
+            />
           </div>
 
           <Button
