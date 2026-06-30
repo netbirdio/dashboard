@@ -68,10 +68,14 @@ const getCombinedFilterId = (
   return `${type || ""}|${direction || ""}|${protocol || ""}`;
 };
 
+// Stable default so callers that omit `filters` don't pass a fresh `{}` on every
+// render, which would churn the sync effect's dependency and loop it.
+const EMPTY_FILTERS: NonNullable<Props["filters"]> = {};
+
 export function TrafficEventsFilter({
   table,
   disabled = false,
-  filters = {},
+  filters = EMPTY_FILTERS,
   onFilterChange,
   closeOnSelect = false,
 }: Readonly<Props>) {
@@ -123,7 +127,10 @@ export function TrafficEventsFilter({
       !filters.direction?.length &&
       !filters.protocol?.length
     ) {
-      setActiveFilterIds([]);
+      // Keep the same array reference when already empty so React's Object.is
+      // bail-out fires; otherwise a fresh `[]` here re-renders and (if `filters`
+      // identity churns) re-triggers this effect, looping indefinitely.
+      setActiveFilterIds((prev) => (prev.length === 0 ? prev : []));
       updateTableFilters([]);
       return;
     }

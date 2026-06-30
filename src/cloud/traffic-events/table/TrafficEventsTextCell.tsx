@@ -2,6 +2,7 @@ import { cn } from "@utils/helpers";
 import * as React from "react";
 import { useMemo } from "react";
 import {
+  getTrafficEventCounts,
   TrafficEvent,
   TrafficEventType,
 } from "@/cloud/traffic-events/interfaces/TrafficEvent";
@@ -24,12 +25,15 @@ export const TrafficEventsTextCell = ({ event }: Props) => {
     return start;
   }, [event]);
 
-  const hasOtherEvents = event.events?.length > 1;
+  const { isAggregated } = getTrafficEventCounts(event);
+  // Show the expand affordance/connector when there are multiple sub-events OR
+  // when this row aggregates several connection attempts into one.
+  const isExpandable = event.events?.length > 1 || isAggregated;
 
   return (
     trafficEvent && (
       <div className={"flex items-start gap-3 py-1.5 relative px-2"}>
-        {hasOtherEvents && (
+        {isExpandable && (
           <div
             className={cn(
               "absolute left-0 top-0 w-[2px]",
@@ -56,7 +60,7 @@ export const TrafficEventsTextCell = ({ event }: Props) => {
         <TrafficEventDescription
           event={event}
           type={trafficEvent?.type}
-          showCaret={event.events.length > 1}
+          showCaret={isExpandable}
         />
       </div>
     )

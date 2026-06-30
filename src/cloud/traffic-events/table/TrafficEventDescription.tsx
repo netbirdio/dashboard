@@ -4,6 +4,7 @@ import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import {
+  getTrafficEventCounts,
   TrafficEvent,
   TrafficEventDirection,
   TrafficEventMachine,
@@ -50,6 +51,18 @@ export const TrafficEventDescription = ({
   }, [event.reporter_id, peers]);
 
   const timestamp = event.events?.find((e) => e.type === type)?.timestamp;
+
+  // For aggregated rows the single timestamp above is misleading, so show the
+  // server-reported aggregation window (window_start -> window_end) instead.
+  const { isAggregated } = getTrafficEventCounts(event);
+  const eventWindow = useMemo(() => {
+    if (!event.window_start || !event.window_end) return undefined;
+    const first = dayjs(event.window_start);
+    const last = dayjs(event.window_end);
+    if (!first.isValid() || !last.isValid()) return undefined;
+    if (first.isSame(last)) return undefined;
+    return { first, last };
+  }, [event.window_start, event.window_end]);
 
   const info = useMemo(() => {
     const isP2P =
@@ -262,7 +275,18 @@ export const TrafficEventDescription = ({
     <div>
       <div className={"flex items-center mb-1.5 gap-2"}>
         <span className={"text-xs text-nb-gray-300 block"}>
-          <span>{dayjs(timestamp).format("MMM D, YYYY [at] h:mm:ss A")}</span>
+          {isAggregated && eventWindow ? (
+            <span>
+              {eventWindow.first.format("MMM D, YYYY [at] h:mm A")} &ndash;{" "}
+              {eventWindow.last.format(
+                eventWindow.first.isSame(eventWindow.last, "day")
+                  ? "h:mm A"
+                  : "MMM D, h:mm A",
+              )}
+            </span>
+          ) : (
+            <span>{dayjs(timestamp).format("MMM D, YYYY [at] h:mm:ss A")}</span>
+          )}
         </span>
       </div>
       <div
