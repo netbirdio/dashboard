@@ -28,8 +28,9 @@ import {
   PlusCircle,
   PlusIcon,
   Sparkles,
+  UploadIcon,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import {
   ReverseProxyDomain,
@@ -100,6 +101,8 @@ function upstreamUrlPlaceholder(providerId: AIProviderId): string {
       return "https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/openai";
     case "vercel_ai_gateway":
       return "https://ai-gateway.vercel.sh";
+    case "vertex_ai_api":
+      return "https://aiplatform.googleapis.com";
     case "openrouter":
       return "https://openrouter.ai/api/v1";
     case "litellm_proxy":
@@ -168,6 +171,25 @@ export default function AIProviderModal({
   const [apiKey, setApiKey] = useState(isEdit ? "••••••••" : "");
   const [bootstrapCluster, setBootstrapCluster] = useState<string>("");
   const [models, setModels] = useState<ProviderModel[]>(provider?.models ?? []);
+
+  // Vertex AI authenticates with a service-account JSON key, not an API key.
+  // We upload the file and store it base64-encoded in apiKey (the server
+  // decodes the base64 JSON); keyFileName tracks the uploaded file for display.
+  const [keyFileName, setKeyFileName] = useState<string | null>(null);
+  const keyFileInputRef = useRef<HTMLInputElement>(null);
+
+  const onJsonKeyUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let binary = "";
+    bytes.forEach((b) => (binary += String.fromCharCode(b)));
+    // The server expects the JSON key prefixed with "keyfile::".
+    setApiKey("keyfile::" + window.btoa(binary));
+    setKeyFileName(file.name);
+    // Clear so picking the same file again still fires onChange.
+    e.target.value = "";
+  };
   // extraValues holds operator-typed values for catalog-declared extra
   // headers (e.g. Portkey's x-portkey-config). Keyed by wire header
   // name. Catalog (catalog.extra_headers) decides which inputs render
@@ -267,6 +289,9 @@ export default function AIProviderModal({
     if (upstreamUrl) return;
     if (!catalog) return;
     if (!catalog.default_host) return;
+    // Vertex's catalog host is templated (<region>-…); skip the prefill so the
+    // clean https://aiplatform.googleapis.com placeholder shows instead.
+    if (catalog.id === "vertex_ai_api") return;
     setUpstreamUrl(`https://${catalog.default_host}`);
   }, [provider, upstreamUrl, catalog]);
 
@@ -519,6 +544,10 @@ export default function AIProviderModal({
                   onChange={(v) => {
                     const next = v as AIProviderId;
                     setProviderId(next);
+                    // The credential differs per provider (API key vs Vertex
+                    // JSON upload), so clear it when switching.
+                    setApiKey("");
+                    setKeyFileName(null);
                     const c = getById(next);
                     if (c) {
                       setName(c.name);
@@ -527,7 +556,11 @@ export default function AIProviderModal({
                       // endpoint). Don't pre-fill "https://" — let the
                       // placeholder hint them what to type instead.
                       setUpstreamUrl(
-                        c.default_host ? `https://${c.default_host}` : "",
+                        next === "vertex_ai_api"
+                          ? "https://aiplatform.googleapis.com"
+                          : c.default_host
+                          ? `https://${c.default_host}`
+                          : "",
                       );
                       setModels([]);
                       // Auto-seed the identity inputs from the
@@ -571,41 +604,89 @@ export default function AIProviderModal({
                 />
               </FormRow>
 
-              <FormRow
-                label={
-                  <>
-                    Provider API key
-                    <HelpTooltip
-                      content={
-                        <>
-                          NetBird injects it as{" "}
-                          <code className={"text-nb-gray-200"}>
-                            {catalog?.auth_header_template}
-                          </code>{" "}
-                          on every upstream request, so agents never see the
-                          key.
-                        </>
-                      }
-                    />
-                  </>
-                }
-                helpText={"The API key issued by the provider."}
-              >
-                <Input
-                  type={"password"}
-                  showPasswordToggle
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  customPrefix={<KeyRound size={14} />}
-                  placeholder={
-                    providerId === "openai_api"
-                      ? "sk-..."
-                      : providerId === "anthropic_api"
-                      ? "sk-ant-..."
-                      : "Paste your API key"
+              {providerId === "vertex_ai_api" ? (
+                <FormRow
+                  label={
+                    <>
+                      Service account JSON key
+                      <HelpTooltip
+                        content={
+                          <>
+                            Upload the Vertex AI service account JSON key.
+                            NetBird base64-encodes it and prefixes it with{" "}
+                            <code className={"text-nb-gray-200"}>keyfile::</code>{" "}
+                            before injecting it on every upstream request, so
+                            agents never see the key.
+                          </>
+                        }
+                      />
+                    </>
                   }
-                />
-              </FormRow>
+                  helpText={"Upload the service account JSON key file."}
+                >
+                  <div className={"flex items-center gap-3"}>
+                    <Button
+                      variant={"secondary"}
+                      onClick={() => keyFileInputRef.current?.click()}
+                    >
+                      <UploadIcon size={14} />
+                      {keyFileName || (isEdit && apiKey === "••••••••")
+                        ? "Replace JSON key"
+                        : "Upload JSON key"}
+                    </Button>
+                    <span className={"text-xs text-nb-gray-300 truncate"}>
+                      {keyFileName
+                        ? keyFileName
+                        : isEdit && apiKey === "••••••••"
+                        ? "A key is already stored"
+                        : "No file selected"}
+                    </span>
+                    <input
+                      ref={keyFileInputRef}
+                      type={"file"}
+                      accept={"application/json,.json"}
+                      className={"hidden"}
+                      onChange={onJsonKeyUpload}
+                    />
+                  </div>
+                </FormRow>
+              ) : (
+                <FormRow
+                  label={
+                    <>
+                      Provider API key
+                      <HelpTooltip
+                        content={
+                          <>
+                            NetBird injects it as{" "}
+                            <code className={"text-nb-gray-200"}>
+                              {catalog?.auth_header_template}
+                            </code>{" "}
+                            on every upstream request, so agents never see the
+                            key.
+                          </>
+                        }
+                      />
+                    </>
+                  }
+                  helpText={"The API key issued by the provider."}
+                >
+                  <Input
+                    type={"password"}
+                    showPasswordToggle
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    customPrefix={<KeyRound size={14} />}
+                    placeholder={
+                      providerId === "openai_api"
+                        ? "sk-..."
+                        : providerId === "anthropic_api"
+                        ? "sk-ant-..."
+                        : "Paste your API key"
+                    }
+                  />
+                </FormRow>
+              )}
               {(catalog?.extra_headers ?? []).map((h) => {
                 const ui = EXTRA_HEADER_UI[h.name] ?? fallbackExtraHeaderUI(h.name);
                 return (
