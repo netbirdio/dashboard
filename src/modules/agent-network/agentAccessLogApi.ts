@@ -9,6 +9,7 @@ import { DateRange } from "react-day-picker";
 import {
   AIAccessLogDecision,
   AIAccessLogEntry,
+  AIAccessLogSession,
   AIProviderId,
 } from "@/modules/agent-network/data/mockData";
 
@@ -47,6 +48,25 @@ export type APIAgentNetworkAccessLogsResponse = {
   page_size: number;
   total_pages: number;
   total_records: number;
+};
+
+// APIAgentNetworkAccessLogSession mirrors the api.AgentNetworkAccessLogSession
+// response — a session-grouped summary plus its nested entries.
+export type APIAgentNetworkAccessLogSession = {
+  session_id?: string;
+  user_id?: string;
+  group_ids?: string[];
+  started_at: string;
+  ended_at: string;
+  request_count: number;
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+  cost_usd: number;
+  providers?: string[];
+  models?: string[];
+  decision: string;
+  entries: APIAgentNetworkAccessLog[];
 };
 
 // APIAgentNetworkUsageBucket mirrors the api.AgentNetworkUsageBucket response —
@@ -177,5 +197,40 @@ export function accessLogFromAgentAPI(
     status: entry.status_code,
     method: entry.method ?? "",
     path: entry.path ?? "",
+  };
+}
+
+// accessLogSessionFromAgentAPI maps a session-grouped API entry to the
+// dashboard's AIAccessLogSession, reusing accessLogFromAgentAPI for the nested
+// entries. The row id mirrors the backend group key (session id, or the
+// singleton request's id when there is no session id).
+export function accessLogSessionFromAgentAPI(
+  session: APIAgentNetworkAccessLogSession,
+  groupNamesByID: Map<string, string>,
+): AIAccessLogSession {
+  const entries = (session.entries ?? []).map((e) =>
+    accessLogFromAgentAPI(e, groupNamesByID),
+  );
+  const sessionId = session.session_id ?? "";
+  const decision: AIAccessLogDecision =
+    session.decision === "deny" ? "deny" : "allow";
+
+  return {
+    id: sessionId || entries[0]?.id || "",
+    sessionId,
+    user: session.user_id ?? "",
+    userId: session.user_id ?? "",
+    userGroups: resolveGroupNames(session.group_ids, groupNamesByID),
+    startedAt: session.started_at,
+    endedAt: session.ended_at,
+    requestCount: session.request_count ?? entries.length,
+    inputTokens: session.input_tokens ?? 0,
+    outputTokens: session.output_tokens ?? 0,
+    totalTokens: session.total_tokens ?? 0,
+    costUsd: session.cost_usd ?? 0,
+    providers: session.providers ?? [],
+    models: session.models ?? [],
+    decision,
+    entries,
   };
 }
