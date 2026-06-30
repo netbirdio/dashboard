@@ -223,8 +223,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value>
-        was blocked
+        <Value>{event.meta.email}</Value> was blocked
       </div>
     );
 
@@ -232,8 +231,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value>
-        was unblocked
+        <Value>{event.meta.email}</Value> was unblocked
       </div>
     );
 
