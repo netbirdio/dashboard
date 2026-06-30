@@ -360,15 +360,13 @@ export default function ActivityDescription({ event }: Props) {
     );
 
   if (event.activity_code == "peer.login.expire") {
-    const reason = m.reason?.toLowerCase();
-
     return (
       <div className={"inline"}>
         Login of the peer <Value>{m.name}</Value> expired
-        {reason && (
+        {m.reason && (
           <>
             {" "}
-            due to <Value>{reason}</Value>
+            due to <Value>{m.reason}</Value>
           </>
         )}
       </div>
