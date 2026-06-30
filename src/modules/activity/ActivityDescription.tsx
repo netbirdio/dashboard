@@ -359,12 +359,21 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
-  if (event.activity_code == "peer.login.expire")
+  if (event.activity_code == "peer.login.expire") {
+    const reason = m.reason?.toLowerCase();
+
     return (
       <div className={"inline"}>
-        Login of the peer <Value>{m.name}</Value> is expired
+        Login of the peer <Value>{m.name}</Value> expired
+        {reason && (
+          <>
+            {" "}
+            due to <Value>{reason}</Value>
+          </>
+        )}
       </div>
     );
+  }
 
   if (event.activity_code == "peer.ssh.disable")
     return (
