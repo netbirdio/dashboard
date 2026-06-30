@@ -129,17 +129,19 @@ export default function useFetchApi<T>(
   const handleErrors = useApiErrorHandling(ignoreError);
   const { globalApiParams } = useApplicationContext();
 
-  const cacheKey = options?.key ? [url, options?.key] : url;
+  const cacheKey = !allowFetch
+    ? null
+    : options?.key
+    ? [url, options?.key]
+    : url;
   const fetchFn = options?.key
     ? async ([url]: [url: string]) => {
-        if (!allowFetch) return;
         return apiRequest<T>(fetch, "GET", url, undefined, {
           ...options,
           globalParams: globalApiParams,
         }).catch((err) => handleErrors(err as ErrorResponse));
       }
     : async (url: string) => {
-        if (!allowFetch) return;
         return apiRequest<T>(fetch, "GET", url, undefined, {
           ...options,
           globalParams: globalApiParams,
