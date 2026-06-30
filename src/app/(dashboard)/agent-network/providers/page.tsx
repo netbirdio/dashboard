@@ -193,7 +193,7 @@ export default function AgentNetworkProvidersPage() {
               Anthropic through one keyless endpoint, accessible only via
               NetBird’s tunnel.
               <InlineLink
-                href={"https://anet.demo.netbird.io/"}
+                href={"https://docs.netbird.io/agent-network/providers"}
                 target={"_blank"}
               >
                 Learn more

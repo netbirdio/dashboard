@@ -5,6 +5,7 @@ import { Modal, ModalContent } from "@components/modal/Modal";
 import Paragraph from "@components/Paragraph";
 import SmallParagraph from "@components/SmallParagraph";
 import SquareIcon from "@components/SquareIcon";
+import { SelectDropdown } from "@components/select/SelectDropdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Plug } from "lucide-react";
 import * as React from "react";
@@ -69,14 +70,16 @@ export function AgentConnectTabs({
   const [claudeMode, setClaudeMode] = React.useState<"config" | "shell">(
     "config",
   );
+  // Which backend the Claude Code config targets — Anthropic API direct, or
+  // via Vertex AI / Bedrock. Switched in-tab instead of separate tabs.
+  const [claudeProvider, setClaudeProvider] = React.useState<
+    "anthropic" | "vertex" | "bedrock"
+  >("anthropic");
 
   return (
     <Tabs key={defaultTab} defaultValue={defaultTab} className={"mt-2"}>
       <TabsList justify={"start"} className={listClassName}>
         <TabsTrigger value={"claude-code"}>Claude Code</TabsTrigger>
-        <TabsTrigger value={"claude-code-vertex"}>
-          Claude Code (Vertex AI)
-        </TabsTrigger>
         <TabsTrigger value={"codex"}>Codex</TabsTrigger>
         <TabsTrigger value={"openai-sdk"}>OpenAI SDK</TabsTrigger>
         <TabsTrigger value={"curl"}>cURL</TabsTrigger>
@@ -84,61 +87,95 @@ export function AgentConnectTabs({
 
       <TabsContent value={"claude-code"}>
         <div className={contentClassName}>
-          <div className={"flex items-center justify-between gap-3 mb-2"}>
-            <SmallParagraph className={"!mb-0"}>
-              {claudeMode === "config"
-                ? "Add to ~/.claude/settings.json:"
-                : "Run in your shell:"}
-            </SmallParagraph>
-            <button
-              type={"button"}
-              onClick={() =>
-                setClaudeMode(claudeMode === "config" ? "shell" : "config")
+          <div className={"mb-3"}>
+            <SelectDropdown
+              value={claudeProvider}
+              onChange={(v) =>
+                setClaudeProvider(v as "anthropic" | "vertex" | "bedrock")
               }
-              className={
-                "shrink-0 mr-2 text-[11px] text-white hover:underline underline-offset-2 cursor-pointer"
-              }
-            >
-              {claudeMode === "config" ? "Shell" : "JSON"}
-            </button>
+              options={[
+                { label: "Anthropic API", value: "anthropic" },
+                { label: "Vertex AI", value: "vertex" },
+                { label: "Bedrock", value: "bedrock" },
+              ]}
+              showValues={false}
+              className={"w-[160px]"}
+            />
           </div>
-          <Snippet
-            lines={
-              claudeMode === "config"
-                ? [
-                    `{`,
-                    `  "apiKeyHelper": "echo '-'",`,
-                    `  "env": {`,
-                    `    "ANTHROPIC_BASE_URL": "${baseUrl}"`,
-                    `  }`,
-                    `}`,
-                  ]
-                : [
-                    `export ANTHROPIC_BASE_URL=${baseUrl}`,
-                    `export ANTHROPIC_API_KEY=none`,
-                    `claude`,
-                  ]
-            }
-          />
-        </div>
-      </TabsContent>
 
-      <TabsContent value={"claude-code-vertex"}>
-        <div className={contentClassName}>
-          <Snippet
-            caption={"Add to ~/.claude/settings.json:"}
-            lines={[
-              `{`,
-              `  "env": {`,
-              `    "CLOUD_ML_REGION": "global",`,
-              `    "ANTHROPIC_VERTEX_PROJECT_ID": "<your-gcp-project-id>",`,
-              `    "CLAUDE_CODE_USE_VERTEX": "1",`,
-              `    "CLAUDE_CODE_SKIP_VERTEX_AUTH": "1",`,
-              `    "ANTHROPIC_VERTEX_BASE_URL": "${baseUrl}/v1"`,
-              `  }`,
-              `}`,
-            ]}
-          />
+          {claudeProvider === "anthropic" && (
+            <>
+              <div className={"flex items-center justify-between gap-3 mb-2"}>
+                <SmallParagraph className={"!mb-0"}>
+                  {claudeMode === "config"
+                    ? "Add to ~/.claude/settings.json:"
+                    : "Run in your shell:"}
+                </SmallParagraph>
+                <button
+                  type={"button"}
+                  onClick={() =>
+                    setClaudeMode(claudeMode === "config" ? "shell" : "config")
+                  }
+                  className={
+                    "shrink-0 mr-2 text-[11px] text-white hover:underline underline-offset-2 cursor-pointer"
+                  }
+                >
+                  {claudeMode === "config" ? "Shell" : "JSON"}
+                </button>
+              </div>
+              <Snippet
+                lines={
+                  claudeMode === "config"
+                    ? [
+                        `{`,
+                        `  "apiKeyHelper": "echo '-'",`,
+                        `  "env": {`,
+                        `    "ANTHROPIC_BASE_URL": "${baseUrl}"`,
+                        `  }`,
+                        `}`,
+                      ]
+                    : [
+                        `export ANTHROPIC_BASE_URL=${baseUrl}`,
+                        `export ANTHROPIC_API_KEY=none`,
+                        `claude`,
+                      ]
+                }
+              />
+            </>
+          )}
+
+          {claudeProvider === "vertex" && (
+            <Snippet
+              caption={"Add to ~/.claude/settings.json:"}
+              lines={[
+                `{`,
+                `  "env": {`,
+                `    "CLOUD_ML_REGION": "global",`,
+                `    "ANTHROPIC_VERTEX_PROJECT_ID": "<your-gcp-project-id>",`,
+                `    "CLAUDE_CODE_USE_VERTEX": "1",`,
+                `    "CLAUDE_CODE_SKIP_VERTEX_AUTH": "1",`,
+                `    "ANTHROPIC_VERTEX_BASE_URL": "${baseUrl}/v1"`,
+                `  }`,
+                `}`,
+              ]}
+            />
+          )}
+
+          {claudeProvider === "bedrock" && (
+            <Snippet
+              caption={"Add to ~/.claude/settings.json:"}
+              lines={[
+                `{`,
+                `  "env": {`,
+                `    "ANTHROPIC_MODEL": "<your-bedrock-model-id>",`,
+                `    "ANTHROPIC_BEDROCK_BASE_URL": "${baseUrl}/bedrock",`,
+                `    "CLAUDE_CODE_USE_BEDROCK": "1",`,
+                `    "CLAUDE_CODE_SKIP_BEDROCK_AUTH": "1"`,
+                `  }`,
+                `}`,
+              ]}
+            />
+          )}
         </div>
       </TabsContent>
 
