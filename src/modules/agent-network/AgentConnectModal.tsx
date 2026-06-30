@@ -167,7 +167,7 @@ export function AgentConnectTabs({
               lines={[
                 `{`,
                 `  "env": {`,
-                `    "ANTHROPIC_MODEL": "eu.anthropic.claude-sonnet-4-5-20250929-v1:0",`,
+                `    "ANTHROPIC_MODEL": "<your-bedrock-model-id>",`,
                 `    "ANTHROPIC_BEDROCK_BASE_URL": "${baseUrl}/bedrock",`,
                 `    "CLAUDE_CODE_USE_BEDROCK": "1",`,
                 `    "CLAUDE_CODE_SKIP_BEDROCK_AUTH": "1"`,
