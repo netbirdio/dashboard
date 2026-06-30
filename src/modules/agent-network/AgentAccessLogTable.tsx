@@ -705,10 +705,7 @@ export default function AgentAccessLogTable({
       )}
       renderExpandedRow={(row) =>
         grouped ? (
-          <SessionEntriesRow
-            session={row as AIAccessLogSession}
-            resolveProvider={resolveProvider}
-          />
+          <SessionEntriesRow session={row as AIAccessLogSession} />
         ) : (
           <AgentAccessLogExpandedRow entry={row as AIAccessLogEntry} />
         )
@@ -1108,9 +1105,31 @@ function SessionProviderCell({
           {primary.name}
           {extra > 0 ? ` +${extra}` : ""}
         </span>
-        <code className={"text-[11px] text-nb-gray-400 font-mono truncate"}>
-          {session.models.length ? session.models.join(", ") : "—"}
-        </code>
+        {session.models.length > 1 ? (
+          <FullTooltip
+            content={
+              <div className={"text-xs flex flex-col gap-0.5"}>
+                {session.models.map((m) => (
+                  <span key={m} className={"font-mono whitespace-nowrap"}>
+                    {m}
+                  </span>
+                ))}
+              </div>
+            }
+          >
+            <code
+              className={
+                "text-[11px] text-nb-gray-400 font-mono truncate cursor-default underline decoration-dashed decoration-nb-gray-600 underline-offset-2"
+              }
+            >
+              {session.models.length} models
+            </code>
+          </FullTooltip>
+        ) : (
+          <code className={"text-[11px] text-nb-gray-400 font-mono truncate"}>
+            {session.models[0] ?? "—"}
+          </code>
+        )}
       </div>
     </div>
   );
@@ -1158,14 +1177,10 @@ function SessionRequestsCell({ session }: { session: AIAccessLogSession }) {
 
 // SessionEntriesRow is the session's expanded content: the session's requests as
 // a compact list, each itself expandable to the full per-request detail
-// (AgentAccessLogExpandedRow) — the second level of disclosure.
-function SessionEntriesRow({
-  session,
-  resolveProvider,
-}: {
-  session: AIAccessLogSession;
-  resolveProvider: ResolveProviderFn;
-}) {
+// (AgentAccessLogExpandedRow) — the second level of disclosure. The provider is
+// omitted (constant across a session); the model is shown in full, and the
+// status carries the request duration plus a reason when it failed.
+function SessionEntriesRow({ session }: { session: AIAccessLogSession }) {
   const [open, setOpen] = useState<string[]>([]);
   const toggle = (id: string) =>
     setOpen((prev) =>
@@ -1187,10 +1202,10 @@ function SessionEntriesRow({
           "rounded-md border border-nb-gray-800 divide-y divide-nb-gray-800/70 overflow-hidden"
         }
       >
-        {session.entries.map((entry) => {
+        {[...session.entries].reverse().map((entry) => {
           const isOpen = open.includes(entry.id);
-          const resolved = resolveProvider(entry);
           const total = (entry.inputTokens ?? 0) + (entry.outputTokens ?? 0);
+          const isError = entry.decision === "deny" || entry.status >= 400;
           return (
             <div key={entry.id}>
               <button
@@ -1200,7 +1215,7 @@ function SessionEntriesRow({
                   toggle(entry.id);
                 }}
                 className={
-                  "w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-nb-gray-900/40 transition-colors"
+                  "w-full flex items-center gap-3 px-3 py-3 text-left hover:bg-nb-gray-900/40 transition-colors"
                 }
               >
                 <ChevronRight
@@ -1219,25 +1234,55 @@ function SessionEntriesRow({
                 </span>
                 <span
                   className={
-                    "text-xs text-nb-gray-300 font-mono truncate flex-1 min-w-0"
+                    "text-xs text-nb-gray-300 font-mono truncate min-w-0 max-w-[420px]"
                   }
                 >
                   {[entry.method, entry.path].filter(Boolean).join(" ") || "—"}
                 </span>
-                <code
+                <div
                   className={
-                    "text-[11px] text-nb-gray-400 font-mono truncate max-w-[160px] hidden md:block"
+                    "flex items-center gap-2 whitespace-nowrap shrink-0"
                   }
                 >
-                  {resolved?.name ?? entry.providerId}
-                  {entry.model ? ` · ${entry.model}` : ""}
+                  <span
+                    className={cn(
+                      "text-xs font-mono tabular-nums",
+                      isError ? "text-red-400" : "text-nb-gray-400",
+                    )}
+                  >
+                    {entry.status}
+                  </span>
+                  <span
+                    className={
+                      "text-xs text-nb-gray-400 font-mono tabular-nums w-[56px]"
+                    }
+                  >
+                    {formatDuration(entry.durationMs)}
+                  </span>
+                </div>
+                {isError && (
+                  <span
+                    className={
+                      "text-[11px] text-red-300 truncate max-w-[180px] shrink-0"
+                    }
+                  >
+                    {formatDenyReason(entry.denyReason) || "Failed"}
+                  </span>
+                )}
+                <div className={"flex-1"} />
+                <code
+                  className={
+                    "text-[11px] text-nb-gray-300 font-mono whitespace-nowrap"
+                  }
+                >
+                  {entry.model || "—"}
                 </code>
                 <span
                   className={
-                    "text-xs text-nb-gray-400 font-mono whitespace-nowrap tabular-nums w-[76px] text-right shrink-0"
+                    "text-xs text-nb-gray-400 font-mono whitespace-nowrap tabular-nums w-[110px] text-right shrink-0"
                   }
                 >
-                  {total.toLocaleString()} tok
+                  {total.toLocaleString()} tokens
                 </span>
                 <span
                   className={
@@ -1246,7 +1291,6 @@ function SessionEntriesRow({
                 >
                   ${entry.costUsd.toFixed(4)}
                 </span>
-                <StatusCell entry={entry} />
               </button>
               {isOpen && (
                 <div className={"border-t border-nb-gray-800/70"}>
