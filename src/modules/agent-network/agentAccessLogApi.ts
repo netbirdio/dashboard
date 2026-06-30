@@ -31,6 +31,7 @@ export type APIAgentNetworkAccessLog = {
   provider?: string;
   model?: string;
   resolved_provider_id?: string;
+  session_id?: string;
   selected_policy_id?: string;
   decision?: string;
   deny_reason?: string;
@@ -153,6 +154,7 @@ export function accessLogFromAgentAPI(
     serviceId: entry.service_id,
     providerId: normalizeProviderId(entry.provider),
     resolvedProviderId: entry.resolved_provider_id ?? "",
+    sessionId: entry.session_id ?? "",
     timestamp: entry.timestamp,
     user: entry.user_id ?? "",
     userId: entry.user_id ?? "",

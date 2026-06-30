@@ -154,6 +154,10 @@ export type AIAccessLogEntry = {
   // (llm.resolved_provider_id metadata). Empty for legacy entries
   // and non-agent-network requests where the router didn't run.
   resolvedProviderId: string;
+  // Provider-side session id grouping related calls. A single user can make
+  // several separate requests that the provider ties to one session
+  // (llm.session_id metadata). Empty when the provider didn't return one.
+  sessionId: string;
   timestamp: string;
   user: string;
   userId: string;
