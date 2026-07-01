@@ -4,6 +4,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { VerticalTabs } from "@components/VerticalTabs";
 import {
   AlertOctagonIcon,
+  ChartNoAxesCombined,
   FingerprintIcon,
   FolderGit2Icon,
   KeyRound,
@@ -27,6 +28,7 @@ import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
 import SetupKeysTab from "@/modules/settings/SetupKeysTab";
 import GroupsSettings from "@/modules/settings/GroupsSettings";
+import MetricsTab from "@/modules/settings/MetricsTab";
 import {
   CloudSettingsTabContent,
   CloudSettingsTabTrigger,
@@ -92,6 +94,10 @@ export default function NetBirdSettings() {
                 <MonitorSmartphoneIcon size={14} />
                 Clients
               </VerticalTabs.Trigger>
+              <VerticalTabs.Trigger value="metrics">
+                <ChartNoAxesCombined size={14} />
+                Metrics
+              </VerticalTabs.Trigger>
             </>
           )}
           <CloudSettingsTabTrigger />
@@ -110,6 +116,7 @@ export default function NetBirdSettings() {
             {account && <GroupsSettings account={account} />}
             {account && <NetworkSettingsTab account={account} />}
             {account && <ClientSettingsTab account={account} />}
+            {account && <MetricsTab account={account} />}
             {account && <DangerZoneTab account={account} />}
             <CloudSettingsTabContent />
           </div>

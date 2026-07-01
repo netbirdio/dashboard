@@ -30,6 +30,7 @@ export interface Account {
     embedded_idp_enabled?: boolean;
     auto_update_version: string;
     auto_update_always: boolean;
+    metrics_push_enabled?: boolean;
     local_auth_disabled?: boolean;
     local_mfa_enabled?: boolean;
     ipv6_enabled_groups?: string[];
