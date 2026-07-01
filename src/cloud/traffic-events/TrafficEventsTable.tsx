@@ -451,9 +451,6 @@ export default function TrafficEventsTable({
       setSorting={setSorting}
       rowClassName={"data-[accordion=opened]:!border-b-transparent"}
       renderExpandedRow={(e) => {
-        // Aggregated rows are a single summary line; they only expand when a
-        // policy is attached (usually ingress), in which case the expanded view
-        // shows the policy. Non-aggregated rows expand when multi-sub-event.
         const { isAggregated } = getTrafficEventCounts(e);
         if (isAggregated) {
           if (!e.policy?.id) return undefined;

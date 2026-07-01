@@ -52,8 +52,6 @@ export const TrafficEventDescription = ({
 
   const timestamp = event.events?.find((e) => e.type === type)?.timestamp;
 
-  // For aggregated rows the single timestamp above is misleading, so show the
-  // server-reported aggregation window (window_start -> window_end) instead.
   const { isAggregated } = getTrafficEventCounts(event);
   const eventWindow = useMemo(() => {
     if (!event.window_start || !event.window_end) return undefined;
@@ -103,22 +101,11 @@ export const TrafficEventDescription = ({
     };
   }, [event]);
 
-  // Aggregated rows carry their meaning in the num_of_* counters, not in
-  // events[] (which is just a single TYPE_UNKNOWN placeholder). Render one or
-  // two sentences from the counters, with zero-count phases omitted, phrased by
-  // direction (which peer reports the flow):
-  //  - EGRESS: the source initiated, so "Peer <source> started N connections
-  //    and ended M connections to Peer <destination>".
-  //  - INGRESS: the destination reports it, so "Peer <destination> accepted N
-  //    connections and ended M connections from Peer <source>".
-  //  - blocked: the destination blocks, but keep source -> destination order:
-  //    "Peer <source> got blocked K times trying to connect to Peer <dest>".
   const aggregatedMessage = () => {
     const { starts, ends, drops } = getTrafficEventCounts(event);
     const connections = (n: number) =>
       `${n.toLocaleString()} ${n === 1 ? "connection" : "connections"}`;
 
-    // Join clauses naturally: "a", "a and b", "a, b and c".
     const joinClauses = (clauses: string[]) =>
       clauses.map((clause, index) => (
         <React.Fragment key={clause}>
@@ -127,7 +114,6 @@ export const TrafficEventDescription = ({
         </React.Fragment>
       ));
 
-    // Ingress: destination reports; egress (and unknown direction): source does.
     const startVerb = info.isInbound ? "accepted" : "started";
     const initiated = [
       starts > 0 && `${startVerb} ${connections(starts)}`,
@@ -150,7 +136,6 @@ export const TrafficEventDescription = ({
       );
     }
     if (drops > 0) {
-      // Destination does the blocking, but keep source -> destination order.
       sentences.push(
         <>
           {info.sourceName} got blocked {drops.toLocaleString()}{" "}

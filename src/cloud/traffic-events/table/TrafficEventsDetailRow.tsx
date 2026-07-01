@@ -14,9 +14,6 @@ type Props = {
 };
 
 export const TrafficEventsDetailRow = ({ event, className }: Props) => {
-  // Skip CONNECTED (drawn as the "start" head) and TYPE_UNKNOWN placeholders.
-  // Aggregated rows carry a single TYPE_UNKNOWN event with no timeline meaning,
-  // so for those the expanded view shows only the policy row below.
   const otherEvents = event.events.filter(
     (e) =>
       e.type !== TrafficEventType.CONNECTED &&
