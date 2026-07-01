@@ -47,6 +47,9 @@ export type APIProvider = {
   // stored here land on the wire.
   identity_header_user_id?: string;
   identity_header_groups?: string;
+  // Skip TLS certificate verification on upstream requests (custom providers
+  // with self-signed certs). Off by default.
+  skip_tls_verification?: boolean;
   enabled: boolean;
   created_at: string;
   updated_at: string;
@@ -63,6 +66,7 @@ export type APIProviderRequest = {
   extra_values?: Record<string, string>;
   identity_header_user_id?: string;
   identity_header_groups?: string;
+  skip_tls_verification?: boolean;
   models: APIProviderModel[];
   enabled?: boolean;
 };
@@ -78,6 +82,8 @@ export type ProviderConnectInput = {
   extraValues?: Record<string, string>;
   identityHeaderUserId?: string;
   identityHeaderGroups?: string;
+  // Skip upstream TLS verification (custom providers with self-signed certs).
+  skipTlsVerification?: boolean;
   models: ProviderModel[];
   enabled?: boolean;
 };
@@ -90,6 +96,7 @@ export type ProviderUpdateInput = {
   extraValues?: Record<string, string>;
   identityHeaderUserId?: string;
   identityHeaderGroups?: string;
+  skipTlsVerification?: boolean;
   models?: ProviderModel[];
   enabled?: boolean;
 };
@@ -151,6 +158,7 @@ function fromAPI(p: APIProvider): AIProvider {
     extraValues: p.extra_values ?? {},
     identityHeaderUserId: p.identity_header_user_id,
     identityHeaderGroups: p.identity_header_groups,
+    skipTlsVerification: p.skip_tls_verification ?? false,
     status: p.enabled ? "active" : "disabled",
     models,
     allowedGroups: [],
@@ -192,6 +200,7 @@ function toCreateRequest(input: ProviderConnectInput): APIProviderRequest {
     extra_values: input.extraValues,
     identity_header_user_id: input.identityHeaderUserId,
     identity_header_groups: input.identityHeaderGroups,
+    skip_tls_verification: input.skipTlsVerification,
     models: toAPIModels(input.models),
     enabled: input.enabled,
   };
@@ -635,6 +644,8 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           updates.identityHeaderUserId ?? existing.identity_header_user_id,
         identity_header_groups:
           updates.identityHeaderGroups ?? existing.identity_header_groups,
+        skip_tls_verification:
+          updates.skipTlsVerification ?? existing.skip_tls_verification,
         models: updates.models
           ? toAPIModels(updates.models)
           : existing.models ?? [],

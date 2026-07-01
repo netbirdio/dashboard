@@ -18,6 +18,7 @@ export type AIProviderId =
   | "cloudflare_ai_gateway"
   | "vercel_ai_gateway"
   | "openrouter"
+  | "vllm"
   | "custom";
 
 export type AIProviderStatus = "active" | "warning" | "disabled";
@@ -60,6 +61,9 @@ export type AIProvider = {
   // the value stored here lands on the wire.
   identityHeaderUserId?: string;
   identityHeaderGroups?: string;
+  // Skip TLS certificate verification on upstream requests — for custom
+  // providers using self-signed certs. Off by default.
+  skipTlsVerification?: boolean;
   status: AIProviderStatus;
   models: ProviderModel[];
   allowedGroups: string[];
