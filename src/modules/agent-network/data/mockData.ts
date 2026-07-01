@@ -60,6 +60,9 @@ export type AIProvider = {
   // the value stored here lands on the wire.
   identityHeaderUserId?: string;
   identityHeaderGroups?: string;
+  // Skip TLS certificate verification on upstream requests — for custom
+  // providers using self-signed certs. Off by default.
+  skipTlsVerification?: boolean;
   status: AIProviderStatus;
   models: ProviderModel[];
   allowedGroups: string[];

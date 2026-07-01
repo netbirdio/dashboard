@@ -2,6 +2,7 @@
 
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink from "@components/InlineLink";
@@ -27,6 +28,7 @@ import {
   MinusCircleIcon,
   PlusCircle,
   PlusIcon,
+  ShieldOffIcon,
   Sparkles,
   UploadIcon,
 } from "lucide-react";
@@ -208,6 +210,9 @@ export default function AIProviderModal({
   const [identityHeaderGroups, setIdentityHeaderGroups] = useState<string>(
     provider?.identityHeaderGroups ?? "",
   );
+  const [skipTlsVerification, setSkipTlsVerification] = useState<boolean>(
+    provider?.skipTlsVerification ?? false,
+  );
 
   const catalog = getById(providerId);
   const customizableHeaderPair =
@@ -327,6 +332,7 @@ export default function AIProviderModal({
       setExtraValues(provider.extraValues ?? {});
       setIdentityHeaderUserId(provider.identityHeaderUserId ?? "");
       setIdentityHeaderGroups(provider.identityHeaderGroups ?? "");
+      setSkipTlsVerification(provider.skipTlsVerification ?? false);
     } else {
       const fallback = getById("openai_api");
       setProviderId("openai_api");
@@ -340,6 +346,7 @@ export default function AIProviderModal({
       setExtraValues({});
       setIdentityHeaderUserId("");
       setIdentityHeaderGroups("");
+      setSkipTlsVerification(false);
     }
   };
 
@@ -390,6 +397,7 @@ export default function AIProviderModal({
         models,
         extraValues: sanitizedExtraValues,
         ...identityOverrides,
+        skipTlsVerification: providerId === "custom" ? skipTlsVerification : false,
         // Only forward the API key when the user actually rotated it
         ...(apiKey && apiKey !== "••••••••" ? { apiKey } : {}),
       });
@@ -404,6 +412,7 @@ export default function AIProviderModal({
       apiKey,
       extraValues: sanitizedExtraValues,
       ...identityOverrides,
+      skipTlsVerification: providerId === "custom" ? skipTlsVerification : false,
       models,
       enabled: true,
     });
@@ -603,6 +612,43 @@ export default function AIProviderModal({
                   placeholder={upstreamUrlPlaceholder(providerId)}
                 />
               </FormRow>
+
+              {providerId === "custom" && (
+                <FancyToggleSwitch
+                  value={skipTlsVerification}
+                  onChange={setSkipTlsVerification}
+                  label={
+                    <>
+                      <ShieldOffIcon size={15} />
+                      Skip TLS Verification
+                      <span onClick={(e) => e.stopPropagation()}>
+                        <HelpTooltip
+                          interactive
+                          content={
+                            <>
+                              Skips certificate validation on requests to this
+                              provider. Useful for quick testing against
+                              endpoints with self-signed certificates. For
+                              production we recommend mounting trusted
+                              certificates on your proxy instances instead.{" "}
+                              <InlineLink
+                                href={
+                                  "https://docs.netbird.io/agent-network/providers/self-signed-certificates"
+                                }
+                                target={"_blank"}
+                              >
+                                Learn more
+                                <ExternalLinkIcon size={12} />
+                              </InlineLink>
+                            </>
+                          }
+                        />
+                      </span>
+                    </>
+                  }
+                  helpText={"Disable upstream TLS certificate validation."}
+                />
+              )}
 
               {providerId === "vertex_ai_api" ? (
                 <FormRow
