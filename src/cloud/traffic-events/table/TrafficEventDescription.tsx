@@ -103,7 +103,67 @@ export const TrafficEventDescription = ({
     };
   }, [event]);
 
+  // Aggregated rows carry their meaning in the num_of_* counters, not in
+  // events[] (which is just a single TYPE_UNKNOWN placeholder). Render one or
+  // two sentences from the counters, with zero-count phases omitted:
+  //  - started/ended: the source initiated, so "Peer <source> started N ...,
+  //    ended M ... to Peer <destination>".
+  //  - blocked: the destination is what blocks, but keep source -> destination
+  //    order and phrase it from the source: "Peer <source> got blocked K times
+  //    trying to connect to Peer <destination>".
+  const aggregatedMessage = () => {
+    const { starts, ends, drops } = getTrafficEventCounts(event);
+    const connections = (n: number) =>
+      `${n.toLocaleString()} ${n === 1 ? "connection" : "connections"}`;
+
+    // Join clauses naturally: "a", "a and b", "a, b and c".
+    const joinClauses = (clauses: string[]) =>
+      clauses.map((clause, index) => (
+        <React.Fragment key={clause}>
+          {index > 0 && (index === clauses.length - 1 ? " and " : ", ")}
+          {clause}
+        </React.Fragment>
+      ));
+
+    const initiated = [
+      starts > 0 && `started ${connections(starts)}`,
+      ends > 0 && `ended ${connections(ends)}`,
+    ].filter(Boolean) as string[];
+
+    const sentences: React.ReactNode[] = [];
+    if (initiated.length > 0) {
+      sentences.push(
+        <>
+          {info.sourceName} {joinClauses(initiated)} to {info.destinationName}
+        </>,
+      );
+    }
+    if (drops > 0) {
+      // Destination does the blocking, but keep source -> destination order.
+      sentences.push(
+        <>
+          {info.sourceName} got blocked {drops.toLocaleString()}{" "}
+          {drops === 1 ? "time" : "times"} trying to connect to{" "}
+          {info.destinationName}
+        </>,
+      );
+    }
+
+    return (
+      <>
+        {sentences.map((sentence, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && ". "}
+            {sentence}
+          </React.Fragment>
+        ))}
+      </>
+    );
+  };
+
   const getMessage = () => {
+    if (isAggregated) return aggregatedMessage();
+
     /**
      * Connection between a peer and a resource
      */

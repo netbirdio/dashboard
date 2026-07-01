@@ -25,10 +25,13 @@ export const TrafficEventsTextCell = ({ event }: Props) => {
     return start;
   }, [event]);
 
-  const { isAggregated } = getTrafficEventCounts(event);
-  // Show the expand affordance/connector when there are multiple sub-events OR
-  // when this row aggregates several connection attempts into one.
-  const isExpandable = event.events?.length > 1 || isAggregated;
+  const { isAggregated, drops } = getTrafficEventCounts(event);
+  // Aggregated rows are a single self-contained summary line — no expansion.
+  // Only genuine multi-sub-event rows keep the expand affordance/connector.
+  const isExpandable = !isAggregated && event.events?.length > 1;
+  // Aggregated rows have no usable events[].type (it's TYPE_UNKNOWN), so color
+  // the dot from the counters: red when anything was blocked, else green.
+  const isAggregatedBlocked = isAggregated && drops > 0;
 
   return (
     trafficEvent && (
@@ -55,6 +58,7 @@ export const TrafficEventsTextCell = ({ event }: Props) => {
             trafficEvent.type === TrafficEventType.STOPPED && "bg-nb-gray-700",
             trafficEvent.type === TrafficEventType.BLOCKED && "bg-red-500",
             trafficEvent.type === TrafficEventType.CONNECTED && "bg-green-500",
+            isAggregated && (isAggregatedBlocked ? "bg-red-500" : "bg-green-500"),
           )}
         ></span>
         <TrafficEventDescription

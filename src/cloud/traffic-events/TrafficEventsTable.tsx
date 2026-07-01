@@ -451,8 +451,10 @@ export default function TrafficEventsTable({
       setSorting={setSorting}
       rowClassName={"data-[accordion=opened]:!border-b-transparent"}
       renderExpandedRow={(e) => {
+        // Aggregated rows are a single summary line with nothing more to show,
+        // so they don't expand. Only genuine multi-sub-event rows do.
         const { isAggregated } = getTrafficEventCounts(e);
-        if (e.events.length < 2 && !isAggregated) return undefined;
+        if (isAggregated || e.events.length < 2) return undefined;
         return <TrafficEventsDetailRow event={e} />;
       }}
       columns={TrafficEventsTableColumns}
