@@ -105,12 +105,14 @@ export const TrafficEventDescription = ({
 
   // Aggregated rows carry their meaning in the num_of_* counters, not in
   // events[] (which is just a single TYPE_UNKNOWN placeholder). Render one or
-  // two sentences from the counters, with zero-count phases omitted:
-  //  - started/ended: the source initiated, so "Peer <source> started N ...,
-  //    ended M ... to Peer <destination>".
-  //  - blocked: the destination is what blocks, but keep source -> destination
-  //    order and phrase it from the source: "Peer <source> got blocked K times
-  //    trying to connect to Peer <destination>".
+  // two sentences from the counters, with zero-count phases omitted, phrased by
+  // direction (which peer reports the flow):
+  //  - EGRESS: the source initiated, so "Peer <source> started N connections
+  //    and ended M connections to Peer <destination>".
+  //  - INGRESS: the destination reports it, so "Peer <destination> accepted N
+  //    connections and ended M connections from Peer <source>".
+  //  - blocked: the destination blocks, but keep source -> destination order:
+  //    "Peer <source> got blocked K times trying to connect to Peer <dest>".
   const aggregatedMessage = () => {
     const { starts, ends, drops } = getTrafficEventCounts(event);
     const connections = (n: number) =>
@@ -125,17 +127,26 @@ export const TrafficEventDescription = ({
         </React.Fragment>
       ));
 
+    // Ingress: destination reports; egress (and unknown direction): source does.
+    const startVerb = info.isInbound ? "accepted" : "started";
     const initiated = [
-      starts > 0 && `started ${connections(starts)}`,
+      starts > 0 && `${startVerb} ${connections(starts)}`,
       ends > 0 && `ended ${connections(ends)}`,
     ].filter(Boolean) as string[];
 
     const sentences: React.ReactNode[] = [];
     if (initiated.length > 0) {
       sentences.push(
-        <>
-          {info.sourceName} {joinClauses(initiated)} to {info.destinationName}
-        </>,
+        info.isInbound ? (
+          <>
+            {info.destinationName} {joinClauses(initiated)} from{" "}
+            {info.sourceName}
+          </>
+        ) : (
+          <>
+            {info.sourceName} {joinClauses(initiated)} to {info.destinationName}
+          </>
+        ),
       );
     }
     if (drops > 0) {

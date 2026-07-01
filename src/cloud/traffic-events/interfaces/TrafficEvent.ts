@@ -59,11 +59,13 @@ export const getTrafficEventCounts = (event: TrafficEvent) => {
     ends,
     drops,
     total,
-    // A row is "aggregated" only when a single phase folds in more than one
-    // occurrence. A lone start+end pair (1 start, 1 end) is one connection, not
-    // an aggregate — so threshold on the max of the phases, never their sum
-    // (starts and ends double-count the same flow).
-    isAggregated: Math.max(starts, ends, drops) > 1,
+    // A row is counter-driven ("aggregated") whenever the backend reports any
+    // start/end/drop counter. These rows carry only a TYPE_UNKNOWN placeholder
+    // in events[], so their meaning lives entirely in the counters — even a
+    // single connection (1 start, 0/0) must render from the counters, otherwise
+    // the legacy events[]-based path falls back to "Unknown". Legacy/self-hosted
+    // backends omit the counters (all 0) and keep the old event-driven rendering.
+    isAggregated: total > 0,
   };
 };
 

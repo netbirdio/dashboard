@@ -26,9 +26,13 @@ export const TrafficEventsTextCell = ({ event }: Props) => {
   }, [event]);
 
   const { isAggregated, drops } = getTrafficEventCounts(event);
-  // Aggregated rows are a single self-contained summary line — no expansion.
-  // Only genuine multi-sub-event rows keep the expand affordance/connector.
-  const isExpandable = !isAggregated && event.events?.length > 1;
+  const hasPolicy = !!event.policy?.id;
+  // Aggregated rows are a single summary line; they only expand (caret +
+  // connector) when a policy is attached, matching the table's renderExpandedRow.
+  // Non-aggregated rows expand when there are multiple sub-events.
+  const isExpandable = isAggregated
+    ? hasPolicy
+    : event.events?.length > 1;
   // Aggregated rows have no usable events[].type (it's TYPE_UNKNOWN), so color
   // the dot from the counters: red when anything was blocked, else green.
   const isAggregatedBlocked = isAggregated && drops > 0;
