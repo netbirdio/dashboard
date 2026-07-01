@@ -1,6 +1,7 @@
 "use client";
 
 import Code from "@components/Code";
+import { HelpTooltip } from "@components/HelpTooltip";
 import * as React from "react";
 import {
   AIAccessLogEntry,
@@ -19,6 +20,7 @@ type Props = {
  */
 export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
   const isDeny = entry.decision === "deny";
+  const hasSession = Boolean(entry.sessionId);
   const hasPrompt = Boolean(entry.prompt);
   const hasCompletion = Boolean(entry.completion);
   const hasBody = hasPrompt || hasCompletion;
@@ -48,6 +50,21 @@ export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
         <Section heading={"Request"}>
           <Code dark small codeToCopy={requestLine}>
             <Code.Line>{requestLine}</Code.Line>
+          </Code>
+        </Section>
+      )}
+
+      {hasSession && (
+        <Section
+          heading={"Session ID"}
+          tooltip={
+            "The provider-side session this request belongs to. A single user " +
+            "can make several separate calls that the provider groups under the " +
+            "same session id."
+          }
+        >
+          <Code dark small codeToCopy={entry.sessionId}>
+            <Code.Line>{entry.sessionId}</Code.Line>
           </Code>
         </Section>
       )}
@@ -109,19 +126,22 @@ export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
 
 function Section({
   heading,
+  tooltip,
   children,
 }: {
   heading: string;
+  tooltip?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className={"space-y-1.5"}>
       <div
         className={
-          "text-[11px] font-medium uppercase tracking-wide text-nb-gray-400"
+          "flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-nb-gray-400"
         }
       >
         {heading}
+        {tooltip && <HelpTooltip content={tooltip} />}
       </div>
       {children}
     </div>

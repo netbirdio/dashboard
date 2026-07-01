@@ -154,6 +154,10 @@ export type AIAccessLogEntry = {
   // (llm.resolved_provider_id metadata). Empty for legacy entries
   // and non-agent-network requests where the router didn't run.
   resolvedProviderId: string;
+  // Provider-side session id grouping related calls. A single user can make
+  // several separate requests that the provider ties to one session
+  // (llm.session_id metadata). Empty when the provider didn't return one.
+  sessionId: string;
   timestamp: string;
   user: string;
   userId: string;
@@ -182,6 +186,30 @@ export type AIAccessLogEntry = {
   // calls like "GET /v1/models" are self-explanatory.
   method: string;
   path: string;
+};
+
+// AIAccessLogSession is a session-grouped view of access-log entries: all
+// requests sharing a provider session id (or a single session-less request,
+// keyed by its own id) folded into one summary plus its ordered entries.
+export type AIAccessLogSession = {
+  // Stable row id for table expansion: the session id, or the singleton
+  // request's id when the session id is empty. Mirrors the backend group key.
+  id: string;
+  sessionId: string; // empty for a session-less (singleton) request
+  user: string;
+  userId: string;
+  userGroups: string[];
+  startedAt: string;
+  endedAt: string;
+  requestCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  costUsd: number;
+  providers: string[]; // distinct vendor ids seen in the session
+  models: string[]; // distinct models seen in the session
+  decision: AIAccessLogDecision;
+  entries: AIAccessLogEntry[];
 };
 
 // Short labels for the proxy's llm_policy.reason deny codes. Keyed by the bare
