@@ -18,6 +18,7 @@ export type AIProviderId =
   | "cloudflare_ai_gateway"
   | "vercel_ai_gateway"
   | "openrouter"
+  | "vllm"
   | "custom";
 
 export type AIProviderStatus = "active" | "warning" | "disabled";

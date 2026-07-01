@@ -111,6 +111,8 @@ function upstreamUrlPlaceholder(providerId: AIProviderId): string {
       return "https://your-litellm-host";
     case "portkey":
       return "https://api.portkey.ai";
+    case "vllm":
+      return "https://your-vllm-host:8000";
     case "custom":
       return "https://your-llm-host";
     default:
@@ -132,6 +134,8 @@ function upstreamUrlHelpText(providerId: AIProviderId): string {
       return "Vercel AI Gateway uses a fixed endpoint; only the API key varies by operator. Apps choose the upstream provider with the model prefix, e.g. openai/gpt-5.4 or anthropic/claude-opus-4.6.";
     case "openrouter":
       return "OpenRouter uses a fixed endpoint, openrouter.ai/api/v1; apps choose the upstream provider via the model prefix, e.g. anthropic/claude-* or openai/gpt-*.";
+    case "vllm":
+      return "Your local vLLM server's OpenAI-compatible base URL.";
     default:
       return "Where NetBird forwards the traffic.";
   }
@@ -215,6 +219,9 @@ export default function AIProviderModal({
   );
 
   const catalog = getById(providerId);
+  // Custom-kind providers (the generic "Custom" entry and named self-hosted
+  // ones like vLLM) share the self-hosted extras, e.g. Skip TLS verification.
+  const isCustomKind = catalog?.kind === "custom";
   const customizableHeaderPair =
     catalog?.identity_injection?.header_pair?.customizable === true;
   const customizableJsonMetadata =
@@ -397,7 +404,7 @@ export default function AIProviderModal({
         models,
         extraValues: sanitizedExtraValues,
         ...identityOverrides,
-        skipTlsVerification: providerId === "custom" ? skipTlsVerification : false,
+        skipTlsVerification: isCustomKind ? skipTlsVerification : false,
         // Only forward the API key when the user actually rotated it
         ...(apiKey && apiKey !== "••••••••" ? { apiKey } : {}),
       });
@@ -412,22 +419,21 @@ export default function AIProviderModal({
       apiKey,
       extraValues: sanitizedExtraValues,
       ...identityOverrides,
-      skipTlsVerification: providerId === "custom" ? skipTlsVerification : false,
+      skipTlsVerification: isCustomKind ? skipTlsVerification : false,
       models,
       enabled: true,
     });
     handleClose();
   };
 
-  // providerOptions are sorted into three groups, gateways first, so
-  // the catalog Select makes the routing-layer entries (LiteLLM,
-  // Portkey) prominent. SelectDropdown renders section headers
-  // automatically when options carry a `group` value; the section
-  // order tracks first-occurrence in the array.
+  // providerOptions are sorted into three groups, first-party AI Providers
+  // first, then AI Gateways, then the self-hosted / custom catch-all.
+  // SelectDropdown renders section headers automatically when options carry a
+  // `group` value; the section order tracks first-occurrence in the array.
   const providerOptions = useMemo(() => {
     const groupRank: Record<string, number> = {
-      gateway: 0,
-      provider: 1,
+      provider: 0,
+      gateway: 1,
       custom: 2,
     };
     const groupLabel: Record<string, string> = {
@@ -613,7 +619,7 @@ export default function AIProviderModal({
                 />
               </FormRow>
 
-              {providerId === "custom" && (
+              {isCustomKind && (
                 <FancyToggleSwitch
                   value={skipTlsVerification}
                   onChange={setSkipTlsVerification}
