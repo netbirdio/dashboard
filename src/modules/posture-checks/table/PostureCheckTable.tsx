@@ -1,11 +1,20 @@
 import Button from "@components/Button";
-import ButtonGroup from "@components/ButtonGroup";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import { IconCirclePlus } from "@tabler/icons-react";
@@ -18,6 +27,9 @@ import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Policy } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
+import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
+import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFeatureOverlay";
+import { NetworkProvider } from "@/modules/networks/NetworkProvider";
 import PostureCheckModal from "@/modules/posture-checks/modal/PostureCheckModal";
 import { PostureCheckActionCell } from "@/modules/posture-checks/table/cells/PostureCheckActionCell";
 import { PostureCheckChecksCell } from "@/modules/posture-checks/table/cells/PostureCheckChecksCell";
@@ -111,6 +123,35 @@ export default function PostureCheckTable({
   const [currentRow, setCurrentRow] = useState<PostureCheck>();
   const [, setCurrentCellClicked] = useState("");
 
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Active", dotClass: "bg-green-500" },
+      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "active",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+    ],
+    [statusOptions],
+  );
+
   return (
     <div className={""}>
       {postureCheckModal && (
@@ -122,137 +163,133 @@ export default function PostureCheckTable({
           postureCheck={currentRow}
         />
       )}
-      <PoliciesProvider>
-        <DataTable
-          headingTarget={headingTarget}
-          isLoading={isLoading}
-          text={"Posture Check"}
-          sorting={sorting}
-          wrapperClassName={""}
-          setSorting={setSorting}
-          columns={Columns}
-          showHeader={true}
-          columnVisibility={{
-            active: false,
-          }}
-          onRowClick={(row, cell) => {
-            setCurrentRow(row.original);
-            setPostureCheckModal(true);
-            setCurrentCellClicked(cell);
-          }}
-          data={data}
-          searchPlaceholder={"Search by name and description..."}
-          rightSide={() => (
-            <>
-              {data && data?.length > 0 && (
-                <Button
-                  variant={"primary"}
-                  className={"ml-auto"}
-                  disabled={
-                    !permission.policies.create || !permission.policies.update
-                  }
-                  onClick={() => {
-                    setCurrentRow(undefined);
-                    setPostureCheckModal(true);
-                  }}
-                >
-                  <IconCirclePlus size={16} />
-                  Add Posture Check
-                </Button>
-              )}
-            </>
-          )}
-          getStartedCard={
-            <GetStartedTest
-              icon={
-                <SquareIcon
-                  icon={<ShieldCheck size={23} />}
-                  color={"gray"}
-                  size={"large"}
-                />
-              }
-              title={"Create Posture Check"}
-              description={
-                "Add posture checks to further restrict access in your network. E.g., only clients with a specific NetBird client version, operating system or location are allowed to connect."
-              }
-              button={
-                <Button
-                  variant={"primary"}
-                  className={"ml-auto"}
-                  disabled={
-                    !permission.policies.create || !permission.policies.update
-                  }
-                  onClick={() => setPostureCheckModal(true)}
-                >
-                  <IconCirclePlus size={16} />
-                  Create Posture Check
-                </Button>
-              }
-              learnMore={
-                <>
-                  Learn more about
-                  <InlineLink
-                    href={
-                      "https://docs.netbird.io/how-to/manage-posture-checks"
-                    }
-                    target={"_blank"}
-                  >
-                    Posture Checks
-                    <ExternalLinkIcon size={12} />
-                  </InlineLink>
-                </>
-              }
-            />
-          }
-        >
-          {(table) => {
-            return (
+
+      <LockedFeatureInfoCard
+        className={"px-4 sm:px-6 md:px-8 mt-0 mb-8"}
+        featureText={"Posture Checks"}
+        feature={"POSTURE_CHECKS"}
+      />
+
+      <LockedFeatureOverlay
+        opacity={data?.length > 0 ? 35 : 60}
+        feature={"POSTURE_CHECKS"}
+      >
+        <PoliciesProvider>
+          <DataTable
+            headingTarget={headingTarget}
+            isLoading={isLoading}
+            text={"Posture Check"}
+            sorting={sorting}
+            wrapperClassName={""}
+            setSorting={setSorting}
+            columns={Columns}
+            showHeader={true}
+            initialPageSize={25}
+            showResetFilterButton={false}
+            columnVisibility={{
+              active: false,
+            }}
+            aboveTable={(table) => (
+              <TableFilterChips table={table} filters={filterDefs} />
+            )}
+            onRowClick={(row, cell) => {
+              setCurrentRow(row.original);
+              setPostureCheckModal(true);
+              setCurrentCellClicked(cell);
+            }}
+            data={data}
+            searchPlaceholder={"Search by name and description..."}
+            rightSide={() => (
               <>
-                <ButtonGroup disabled={data?.length == 0}>
-                  <ButtonGroup.Button
-                    onClick={() => {
-                      table.setPageIndex(0);
-                      table.getColumn("active")?.setFilterValue(true);
-                    }}
-                    disabled={data?.length == 0}
-                    variant={
-                      table.getColumn("active")?.getFilterValue() == true
-                        ? "tertiary"
-                        : "secondary"
+                {data && data?.length > 0 && (
+                  <Button
+                    variant={"primary"}
+                    className={"ml-auto"}
+                    disabled={
+                      !permission.policies.create || !permission.policies.update
                     }
-                  >
-                    Active
-                  </ButtonGroup.Button>
-                  <ButtonGroup.Button
                     onClick={() => {
-                      table.setPageIndex(0);
-                      table.getColumn("active")?.setFilterValue("");
+                      setCurrentRow(undefined);
+                      setPostureCheckModal(true);
                     }}
-                    disabled={data?.length == 0}
-                    variant={
-                      table.getColumn("active")?.getFilterValue() != true
-                        ? "tertiary"
-                        : "secondary"
-                    }
                   >
-                    All
-                  </ButtonGroup.Button>
-                </ButtonGroup>
-                <DataTableRowsPerPage
-                  table={table}
-                  disabled={data?.length == 0}
-                />
-                <DataTableRefreshButton
-                  isDisabled={data?.length == 0}
-                  onClick={() => {
-                    mutate("/posture-checks");
-                  }}
-                />
+                    <IconCirclePlus size={16} />
+                    Add Posture Check
+                  </Button>
+                )}
               </>
-            );
-          }}
-        </DataTable>
-      </PoliciesProvider>
+            )}
+            getStartedCard={
+              <GetStartedTest
+                icon={
+                  <SquareIcon
+                    icon={<ShieldCheck size={23} />}
+                    color={"gray"}
+                    size={"large"}
+                  />
+                }
+                title={"Create Posture Check"}
+                description={
+                  "Add posture checks to further restrict access in your network. E.g., only clients with a specific NetBird client version, operating system or location are allowed to connect."
+                }
+                button={
+                  <Button
+                    variant={"primary"}
+                    className={"ml-auto"}
+                    disabled={
+                      !permission.policies.create || !permission.policies.update
+                    }
+                    onClick={() => setPostureCheckModal(true)}
+                  >
+                    <IconCirclePlus size={16} />
+                    Create Posture Check
+                  </Button>
+                }
+                learnMore={
+                  <>
+                    Learn more about
+                    <InlineLink
+                      href={
+                        "https://docs.netbird.io/how-to/manage-posture-checks"
+                      }
+                      target={"_blank"}
+                    >
+                      Posture Checks
+                      <ExternalLinkIcon size={12} />
+                    </InlineLink>
+                  </>
+                }
+              />
+            }
+          >
+            {(table) => {
+              return (
+                <>
+                  <TableFiltersButton
+                    table={table}
+                    filters={filterDefs}
+                    disabled={data?.length == 0}
+                  />
+                  <DataTableResetFilterButton
+                    table={table}
+                    onClick={() => {
+                      table.setPageIndex(0);
+                      table.resetColumnFilters();
+                      table.resetGlobalFilter();
+                    }}
+                  />
+                  <DataTableRefreshButton
+                    isDisabled={data?.length == 0}
+                    onClick={() => {
+                      mutate("/posture-checks");
+                    }}
+                  />
+                </>
+              );
+            }}
+          </DataTable>
+        </PoliciesProvider>
+      </LockedFeatureOverlay>
     </div>
   );
 }

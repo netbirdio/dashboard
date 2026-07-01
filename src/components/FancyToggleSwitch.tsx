@@ -43,7 +43,7 @@ interface Props extends FancyToggleSwitchVariants {
   label?: React.ReactNode;
   children?: React.ReactNode;
   disabled?: boolean;
-  dataCy?: string;
+  "data-testid"?: string;
   className?: string;
   labelClassName?: string;
   textWrapperClassName?: string;
@@ -56,7 +56,7 @@ export default function FancyToggleSwitch({
   label,
   children,
   disabled = false,
-  dataCy,
+  "data-testid": dataTestId,
   className,
   variant = "default",
   labelClassName,
@@ -99,7 +99,7 @@ export default function FancyToggleSwitch({
           <ToggleSwitch
             checked={value}
             onCheckedChange={onChange}
-            dataCy={dataCy}
+            data-testid={dataTestId}
           />
         </div>
       </div>

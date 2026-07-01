@@ -59,7 +59,7 @@ export default function UserNameCell({ user }: Readonly<Props>) {
   return (
     <div
       className={cn("flex gap-4 px-2 py-1 items-center")}
-      data-cy={"user-name-cell"}
+      data-testid={"user-name-cell"}
     >
       <div
         className={

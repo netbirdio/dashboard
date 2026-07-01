@@ -27,20 +27,16 @@ export const PeerNetworkRoutesSection = ({ peer }: Props) => {
           <div>
             <Paragraph>
               Access other networks without installing NetBird on every
-              resource.
-            </Paragraph>
-            <Paragraph>
-              Learn more about
+              resource.{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                 }
                 target={"_blank"}
               >
-                Network Routes
+                Learn more
                 <ExternalLinkIcon size={12} />
               </InlineLink>
-              in our documentation.
             </Paragraph>
           </div>
           <div className={"inline-flex gap-4 justify-end"}>

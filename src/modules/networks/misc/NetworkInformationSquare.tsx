@@ -1,4 +1,5 @@
 import DescriptionWithTooltip from "@components/ui/DescriptionWithTooltip";
+import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { cn } from "@utils/helpers";
 import { ArrowRightIcon } from "lucide-react";
 import * as React from "react";
@@ -20,7 +21,7 @@ export const NetworkInformationSquare = ({
   return (
     <button
       className={cn(
-        "flex w-full items-center max-w-[450px] gap-4 dark:text-neutral-300 text-neutral-500 transition-all group/network rounded-md",
+        "flex w-full min-w-0 items-center max-w-[450px] gap-4 dark:text-neutral-300 text-neutral-500 transition-all group/network rounded-md",
         onClick
           ? "hover:text-neutral-100 hover:bg-nb-gray-900/60 cursor-pointer py-2 pl-3 pr-14 relative"
           : "cursor-default",
@@ -50,15 +51,24 @@ export const NetworkInformationSquare = ({
           )}
         ></div>
       </div>
-      <div className={"mt-[0px] flex items-start flex-wrap flex-col"}>
-        <p
-          className={cn(
-            "font-medium text-left whitespace-nowrap",
-            size == "md" ? "text-sm" : "text-xl leading-none mb-0.5",
-          )}
-        >
-          {name}
-        </p>
+      <div
+        className={"mt-[0px] flex items-start flex-wrap flex-col min-w-0"}
+      >
+        {size === "md" ? (
+          <TextWithTooltip
+            text={name}
+            maxChars={25}
+            className={"font-medium text-left text-sm"}
+          />
+        ) : (
+          <p
+            className={
+              "font-medium text-left whitespace-nowrap text-xl leading-none mb-0.5"
+            }
+          >
+            {name}
+          </p>
+        )}
         <DescriptionWithTooltip
           className={cn("text-left", size == "lg" && "text-md mt-0.5")}
           maxChars={24}

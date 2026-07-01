@@ -10,6 +10,7 @@ import {
   LucideIcon,
   NetworkIcon,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   ShieldOff,
   WorkflowIcon,
@@ -19,7 +20,7 @@ import { useMemo } from "react";
 import { useCountries } from "@/contexts/CountryProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { ReverseProxy } from "@/interfaces/ReverseProxy";
+import { CrowdSecMode, ReverseProxy } from "@/interfaces/ReverseProxy";
 
 type RuleEntry = {
   key: string;
@@ -37,33 +38,44 @@ export default function ReverseProxyAccessControlCell({
   reverseProxy,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
-  const { openModal } = useReverseProxies();
+  const { openModal, domains } = useReverseProxies();
   const { countries } = useCountries();
 
   const canConfigure = !!permission?.services?.update;
   const restrictions = reverseProxy.access_restrictions;
 
+  const supportsCrowdSec = domains?.find(
+    (d) => d.domain === reverseProxy.proxy_cluster,
+  )?.supports_crowdsec;
+
+  const hasCrowdSec =
+    supportsCrowdSec &&
+    restrictions?.crowdsec_mode != null &&
+    restrictions.crowdsec_mode !== CrowdSecMode.OFF;
+
   const ruleCount =
     (restrictions?.allowed_cidrs?.length ?? 0) +
     (restrictions?.blocked_cidrs?.length ?? 0) +
     (restrictions?.allowed_countries?.length ?? 0) +
-    (restrictions?.blocked_countries?.length ?? 0);
+    (restrictions?.blocked_countries?.length ?? 0) +
+    (hasCrowdSec ? 1 : 0);
 
-  const rulesBadge =
-    ruleCount > 0 ? (
-      <Badge
-        variant={"gray"}
-        disabled={!canConfigure}
-        className={
-          "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
-        }
-      >
+  const rulesBadge = (
+    <Badge
+      variant={"gray"}
+      disabled={!canConfigure}
+      className={
+        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] !px-2 min-w-[50px] hover:bg-nb-gray-930 transition-all"
+      }
+    >
+      {ruleCount > 0 ? (
         <ShieldCheck size={12} className="text-green-500" />
-        <span className={"font-medium text-xs"}>
-          {ruleCount} {ruleCount === 1 ? "Rule" : "Rules"}
-        </span>
-      </Badge>
-    ) : null;
+      ) : (
+        <ShieldOff size={12} className="text-red-500" />
+      )}
+      <span className={"font-medium text-xs"}>{ruleCount}</span>
+    </Badge>
+  );
 
   const ruleGroups = useMemo(() => {
     const getCountryName = (code: string) => {
@@ -139,14 +151,27 @@ export default function ReverseProxyAccessControlCell({
       });
     }
 
+    if (hasCrowdSec) {
+      entries.push({
+        key: "crowdsec",
+        label: "CrowdSec",
+        Icon: ShieldAlert,
+        value:
+          restrictions?.crowdsec_mode === CrowdSecMode.ENFORCE
+            ? "Enforce"
+            : "Observe",
+      });
+    }
+
     return entries;
-  }, [restrictions, countries]);
+  }, [restrictions, countries, hasCrowdSec]);
 
   const showRulesHover = ruleGroups.length > 0;
 
   return (
     <div
       className={"flex"}
+      data-access-control-cell
       onClick={(e) => {
         e.stopPropagation();
         if (permission?.services?.update) {
@@ -155,15 +180,14 @@ export default function ReverseProxyAccessControlCell({
       }}
     >
       <div className={"flex items-center"}>
-        {rulesBadge ? (
-          <HoverCard openDelay={200} closeDelay={100}>
-            <HoverCardTrigger asChild={true}>{rulesBadge}</HoverCardTrigger>
-            {showRulesHover && (
-              <HoverCardContent
-                className={"p-0"}
-                sideOffset={14}
-                onClick={(e) => e.stopPropagation()}
-              >
+        <HoverCard openDelay={200} closeDelay={100}>
+          <HoverCardTrigger asChild={true}>{rulesBadge}</HoverCardTrigger>
+          {showRulesHover && (
+            <HoverCardContent
+              className={"p-0"}
+              sideOffset={14}
+              onClick={(e) => e.stopPropagation()}
+            >
                 <div className={"text-xs"}>
                   {ruleGroups.map(({ key, label, Icon, value, blocked }) => (
                     <div
@@ -193,25 +217,13 @@ export default function ReverseProxyAccessControlCell({
                     </div>
                   ))}
                 </div>
-              </HoverCardContent>
-            )}
-          </HoverCard>
-        ) : (
-          <Badge
-            variant={"gray"}
-            disabled={!canConfigure}
-            className={
-              "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
-            }
-          >
-            <ShieldOff size={12} className="text-red-500" />
-            <span className={"font-medium text-xs"}>No Rules</span>
-          </Badge>
-        )}
+            </HoverCardContent>
+          )}
+        </HoverCard>
         <Button
           size={"xs"}
           variant={"secondary"}
-          className={"!rounded-l-none !px-3 !h-[34px]"}
+          className={"!rounded-l-none !px-2 !h-[34px]"}
           onClick={(e) => {
             e.stopPropagation();
             openModal({ proxy: reverseProxy, initialTab: "access-control" });

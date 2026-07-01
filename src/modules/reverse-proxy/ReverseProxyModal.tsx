@@ -2,6 +2,7 @@
 
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
+import FullTooltip from "@components/FullTooltip";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
@@ -19,18 +20,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import {
   ArrowRight,
   Binary,
+  CircleUser,
   ClockFadingIcon,
   ExternalLinkIcon,
   FileCode2Icon,
   GlobeIcon,
   LockKeyhole,
   MapPinned,
+  NetworkIcon,
   PlusCircle,
   RectangleEllipsis,
+  RouteIcon,
   Settings,
   ShieldCheckIcon,
   Users,
 } from "lucide-react";
+import { Callout } from "@components/Callout";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
@@ -61,6 +66,7 @@ import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
 import AuthHeaderModal from "@/modules/reverse-proxy/auth/AuthHeaderModal";
 import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
+import AuthNetBirdOnlyModal from "@/modules/reverse-proxy/auth/AuthNetBirdOnlyModal";
 import ReverseProxyHTTPTargets from "@/modules/reverse-proxy/ReverseProxyHTTPTargets";
 import ReverseProxyLayer4Content from "@/modules/reverse-proxy/ReverseProxyLayer4Content";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
@@ -71,6 +77,7 @@ import {
   validateTimeout,
 } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { Group } from "@/interfaces/Group";
 import {
   ReverseProxyServiceModeSelector,
   SERVICE_MODES,
@@ -198,6 +205,41 @@ export default function ReverseProxyModal({
     reverseProxy?.targets || [],
   );
 
+  const [isPrivate, setIsPrivate] = useState<boolean>(
+    reverseProxy?.private ?? false,
+  );
+
+  // Tracks whether NetBird-only was switched on automatically because the
+  // operator picked a cluster target (see onClusterPick), as opposed to an
+  // explicit choice in the NetBird-Only modal. Only auto-enabled private is
+  // reverted when the cluster target is later removed or changed.
+  const [privateFromCluster, setPrivateFromCluster] = useState(false);
+
+  // togglePrivate normalises related state when the operator flips
+  // NetBird-only access. Private services are HTTP-only, so we drop out
+  // of L4 mode. NetBird-only and the other auth modes are mutually
+  // exclusive — entering private clears bearer/password/pin/header/link
+  // state so the inbound peer's tunnel identity is the only auth path.
+  // Existing targets are preserved; the backend rejects non-cluster
+  // targets on save, but operators expect their input to persist while
+  // they reshape it.
+  const togglePrivate = (next: boolean) => {
+    setIsPrivate(next);
+    if (next) {
+      setServiceMode(ServiceMode.HTTP);
+      setBearerEnabled(false);
+      setBearerGroups([]);
+      setPasswordEnabled(false);
+      setPassword("");
+      setPinEnabled(false);
+      setPin("");
+      setHeaderAuthsEnabled(false);
+      setLinkAuthEnabled(false);
+    } else {
+      setAccessGroups([]);
+    }
+  };
+
   const selectedDomain = useMemo(
     () =>
       domains?.find(
@@ -239,6 +281,55 @@ export default function ReverseProxyModal({
     initial: reverseProxy?.auth?.bearer_auth?.distribution_groups ?? [],
   });
 
+  // Access groups for NetBird-only services. Distinct from bearerGroups
+  // (which gates SSO callers); these groups gate inbound peers on
+  // private services and feed the auto-generated private-access policy.
+  const [
+    accessGroups,
+    setAccessGroups,
+    { save: saveAccessGroups },
+  ] = useGroupHelper({
+    initial: reverseProxy?.access_groups ?? [],
+  });
+
+  // Direct upstream is service-level in the UI; on save it patches the
+  // (single) cluster target's options.direct_upstream. Defaults off for
+  // peer/resource targets — cluster targets force it on via
+  // effectiveDirectUpstream below since they have no WireGuard endpoint
+  // to fall back to.
+  const [directUpstream, setDirectUpstream] = useState<boolean>(
+    reverseProxy?.targets?.some(
+      (t) => t.options?.direct_upstream === true,
+    ) ?? false,
+  );
+
+  // Cluster targets are reached over the embedded proxy's host stack —
+  // turning Direct Upstream off would route them back through the
+  // WireGuard tunnel they have no other endpoint for, so we force the
+  // toggle on and lock it whenever any target is a cluster.
+  const hasClusterTarget = useMemo(
+    () =>
+      targets.some(
+        (t) => t.target_type === ReverseProxyTargetType.CLUSTER,
+      ),
+    [targets],
+  );
+  const effectiveDirectUpstream = hasClusterTarget || directUpstream;
+
+  // Reverts the NetBird-only state that was auto-applied when a cluster
+  // target was picked, once the committed targets no longer include a
+  // cluster. Explicit NetBird-only choices (privateFromCluster === false)
+  // are left untouched.
+  const resetClusterPrivateIfNeeded = (next: ReverseProxyTarget[]) => {
+    if (
+      privateFromCluster &&
+      !next.some((t) => t.target_type === ReverseProxyTargetType.CLUSTER)
+    ) {
+      togglePrivate(false);
+      setPrivateFromCluster(false);
+    }
+  };
+
   const [linkAuthEnabled, setLinkAuthEnabled] = useState(
     reverseProxy?.auth?.link_auth?.enabled ?? false,
   );
@@ -261,6 +352,7 @@ export default function ReverseProxyModal({
   const [ssoModalOpen, setSsoModalOpen] = useState(false);
   const [pinModalOpen, setPinModalOpen] = useState(false);
   const [headerModalOpen, setHeaderModalOpen] = useState(false);
+  const [netBirdOnlyModalOpen, setNetBirdOnlyModalOpen] = useState(false);
 
   // Target being added/edited
   const [targetModalOpen, setTargetModalOpen] = useState(false);
@@ -268,6 +360,11 @@ export default function ReverseProxyModal({
     null,
   );
 
+  // canContinueToSettings gates tab navigation and the Continue button.
+  // It only needs domain + at least one valid endpoint so the operator
+  // can freely move between tabs to configure the rest of the service
+  // (auth, access control, advanced) — including reaching the Auth tab
+  // to enable bearer auth for a private service.
   const canContinueToSettings = useMemo(() => {
     const subdomainRequired =
       selectedDomain?.require_subdomain === true;
@@ -278,6 +375,7 @@ export default function ReverseProxyModal({
     const isValidPort = (port: number) => port >= 1 && port <= 65535;
     const hasHttpEndpoint = !isL4Mode && targets.length > 0;
     const hasL4Endpoint =
+      !isPrivate &&
       isL4Mode &&
       !!l4Target &&
       l4IsValidCidrHost &&
@@ -298,20 +396,28 @@ export default function ReverseProxyModal({
     port,
     isListenPortSupported,
     listenPort,
+    isPrivate,
   ]);
 
+  // canSaveService is the Save / Add Service button gate. Layers the
+  // private-service requirement on top of canContinueToSettings: a
+  // NetBird-only service must declare at least one access group so the
+  // auto-generated policy has sources to allow inbound peers from.
+  const canSaveService = useMemo(() => {
+    if (!canContinueToSettings) return false;
+    if (!isPrivate) return true;
+    return accessGroups.length > 0;
+  }, [canContinueToSettings, isPrivate, accessGroups.length]);
+
   const saveTarget = (targetData: ReverseProxyTarget) => {
-    if (editingTargetIndex !== null) {
-      // Update existing target
-      setTargets(
-        targets.map((t, i) =>
-          i === editingTargetIndex ? { ...t, ...targetData } : t,
-        ),
-      );
-    } else {
-      // Add new target
-      setTargets([...targets, targetData]);
-    }
+    const next =
+      editingTargetIndex !== null
+        ? targets.map((t, i) =>
+            i === editingTargetIndex ? { ...t, ...targetData } : t,
+          )
+        : [...targets, targetData];
+    setTargets(next);
+    resetClusterPrivateIfNeeded(next);
     setTargetModalOpen(false);
     setEditingTargetIndex(null);
   };
@@ -322,7 +428,9 @@ export default function ReverseProxyModal({
   };
 
   const removeTarget = (index: number) => {
-    setTargets(targets.filter((_, i) => i !== index));
+    const next = targets.filter((_, i) => i !== index);
+    setTargets(next);
+    resetClusterPrivateIfNeeded(next);
   };
 
   const toggleTargetEnabled = (index: number) => {
@@ -332,6 +440,7 @@ export default function ReverseProxyModal({
   };
 
   const isUnprotected =
+    !isPrivate &&
     !passwordEnabled &&
     !pinEnabled &&
     !bearerEnabled &&
@@ -354,6 +463,7 @@ export default function ReverseProxyModal({
     }
 
     const savedGroups = await saveGroups();
+    const savedAccessGroups = isPrivate ? await saveAccessGroups() : [];
 
     const auth: ReverseProxyAuth = {
       password_auth: {
@@ -405,18 +515,41 @@ export default function ReverseProxyModal({
         }
       : undefined;
 
+    const rawSubmittedTargets =
+      isL4Mode && l4TargetPayload ? [l4TargetPayload] : targets;
+
+    // For private services, the service-level Direct upstream toggle
+    // applies to every target (regardless of type) so the operator can
+    // mix cluster + peer/host/domain targets and still control the dial
+    // path globally. This is the only call site that writes the flag
+    // on a private service's targets.
+    const submittedTargets = isPrivate
+      ? rawSubmittedTargets.map((t) => ({
+          ...t,
+          options: {
+            ...(t.options ?? {}),
+            direct_upstream: effectiveDirectUpstream || undefined,
+          },
+        }))
+      : rawSubmittedTargets;
+
     handleCreateOrUpdateProxy({
       data: {
         name: fullDomain,
         domain: fullDomain,
         mode: isL4Mode ? (serviceMode as ServiceMode) : undefined,
-        listen_port: isL4Mode && isListenPortSupported ? listenPort : undefined,
-        targets: isL4Mode && l4TargetPayload ? [l4TargetPayload] : targets,
+        listen_port:
+          isL4Mode && isListenPortSupported ? listenPort : undefined,
+        targets: submittedTargets,
         enabled: reverseProxy?.enabled ?? true,
         pass_host_header: isL4Mode ? undefined : passHostHeader,
         rewrite_redirects: isL4Mode ? undefined : rewriteRedirects,
         auth: isL4Mode ? undefined : auth,
         access_restrictions: accessRestrictions,
+        private: isPrivate ? true : undefined,
+        access_groups: isPrivate
+          ? savedAccessGroups.map((g) => g.id as string)
+          : undefined,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -454,12 +587,16 @@ export default function ReverseProxyModal({
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList justify={"start"} className={"px-8"}>
-            <TabsTrigger value={"targets"}>
+            <TabsTrigger value={"targets"} data-testid="proxy-tab-targets">
               <ReverseProxyIcon size={14} />
               Service
             </TabsTrigger>
             {!isL4Mode && (
-              <TabsTrigger value={"auth"} disabled={!canContinueToSettings}>
+              <TabsTrigger
+                value={"auth"}
+                disabled={!canContinueToSettings}
+                data-testid="proxy-tab-auth"
+              >
                 <LockKeyhole size={14} />
                 Authentication
               </TabsTrigger>
@@ -467,11 +604,16 @@ export default function ReverseProxyModal({
             <TabsTrigger
               value={"access-control"}
               disabled={!canContinueToSettings}
+              data-testid="proxy-tab-access-control"
             >
               <ShieldCheckIcon size={14} />
               Access Control
             </TabsTrigger>
-            <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
+            <TabsTrigger
+              value={"settings"}
+              disabled={!canContinueToSettings}
+              data-testid="proxy-tab-settings"
+            >
               <Settings size={14} />
               Advanced Settings
             </TabsTrigger>
@@ -493,7 +635,7 @@ export default function ReverseProxyModal({
                 }
               />
 
-              {!reverseProxy && (
+              {!reverseProxy && !isPrivate && (
                 <ReverseProxyServiceModeSelector
                   onChange={setServiceMode}
                   value={serviceMode}
@@ -501,7 +643,14 @@ export default function ReverseProxyModal({
                 />
               )}
 
-              {isL4Mode ? (
+              {isPrivate && accessGroups.length === 0 && (
+                <Paragraph className={"!text-yellow-400 !text-xs !mt-0"}>
+                  NetBird-only is on but no access groups are set. Open it
+                  on the Authentication tab and pick at least one group.
+                </Paragraph>
+              )}
+
+              {isL4Mode && !isPrivate ? (
                 <ReverseProxyLayer4Content
                   l4Target={l4Target}
                   setL4Target={setL4Target}
@@ -536,60 +685,135 @@ export default function ReverseProxyModal({
           <TabsContent value={"auth"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-4"}>
               <SettingCard>
-                <SettingCard.Item
-                  label={
-                    <>
-                      <Users size={15} />
-                      SSO (Single Sign-On)
-                    </>
-                  }
-                  description="Require users to authenticate via SSO to access this service."
-                  enabled={bearerEnabled}
-                  onClick={() => setSsoModalOpen(true)}
-                />
-                <SettingCard.Item
-                  label={
-                    <>
-                      <RectangleEllipsis size={15} />
-                      Password
-                    </>
-                  }
-                  description="Require a password to access this service."
-                  enabled={passwordEnabled}
-                  onClick={() => setPasswordModalOpen(true)}
-                />
-                <SettingCard.Item
-                  label={
-                    <>
-                      <Binary size={15} />
-                      PIN Code
-                    </>
-                  }
-                  description="Require a numeric PIN code to access this service."
-                  enabled={pinEnabled}
-                  onClick={() => setPinModalOpen(true)}
-                />
-                <SettingCard.Item
-                  label={
-                    <>
-                      <FileCode2Icon size={15} />
-                      HTTP Headers
-                    </>
-                  }
-                  description="Require specific HTTP headers to access this service."
-                  enabled={headerAuthsEnabled}
-                  onClick={() => setHeaderModalOpen(true)}
-                />
+                {serviceMode === ServiceMode.HTTP &&
+                  (selectedDomain?.supports_private === true ? (
+                    <SettingCard.Item
+                      data-testid="auth-netbird-only-card"
+                      label={
+                        <>
+                          <NetworkIcon size={15} />
+                          NetBird-Only Access
+                        </>
+                      }
+                      description="Reachable only from connected peers in the selected NetBird groups."
+                      enabled={isPrivate}
+                      onClick={() => {
+                        setNetBirdOnlyModalOpen(true);
+                      }}
+                    />
+                  ) : (
+                    // Cluster doesn't advertise supports_private: keep the
+                    // row visible but disabled, with a tooltip explaining
+                    // why. FullTooltip's inline-flex wrapper makes this
+                    // row a bit narrower than the others; that's
+                    // acceptable for the disabled state.
+                    <FullTooltip
+                      className={"w-full"}
+                      content={
+                        <div className={"text-xs max-w-xs"}>
+                          NetBird-Only Access requires a proxy cluster with
+                          at least one connected embedded proxy (
+                          <code>netbird proxy</code>). The selected cluster
+                          doesn't have one. Connect an embedded proxy to
+                          this cluster to enable this option.
+                        </div>
+                      }
+                    >
+                      <SettingCard.Item
+                        data-testid="auth-netbird-only-card"
+                        label={
+                          <>
+                            <NetworkIcon size={15} />
+                            NetBird-Only Access
+                          </>
+                        }
+                        description="Reachable only from connected peers in the selected NetBird groups."
+                        enabled={isPrivate}
+                        disabled={true}
+                        onClick={() => {
+                          setNetBirdOnlyModalOpen(true);
+                        }}
+                      />
+                    </FullTooltip>
+                  ))}
+                {!isPrivate && (
+                  <>
+                    <SettingCard.Item
+                      data-testid="auth-sso-card"
+                      label={
+                        <>
+                          <Users size={15} />
+                          SSO (Single Sign-On)
+                        </>
+                      }
+                      description="Require users to authenticate via SSO to access this service."
+                      enabled={bearerEnabled}
+                      onClick={() => setSsoModalOpen(true)}
+                    />
+                    <SettingCard.Item
+                      data-testid="auth-password-card"
+                      label={
+                        <>
+                          <RectangleEllipsis size={15} />
+                          Password
+                        </>
+                      }
+                      description="Require a password to access this service."
+                      enabled={passwordEnabled}
+                      onClick={() => setPasswordModalOpen(true)}
+                    />
+                    <SettingCard.Item
+                      data-testid="auth-pin-card"
+                      label={
+                        <>
+                          <Binary size={15} />
+                          PIN Code
+                        </>
+                      }
+                      description="Require a numeric PIN code to access this service."
+                      enabled={pinEnabled}
+                      onClick={() => setPinModalOpen(true)}
+                    />
+                    <SettingCard.Item
+                      data-testid="auth-header-card"
+                      label={
+                        <>
+                          <FileCode2Icon size={15} />
+                          HTTP Headers
+                        </>
+                      }
+                      description="Require specific HTTP headers to access this service."
+                      enabled={headerAuthsEnabled}
+                      onClick={() => setHeaderModalOpen(true)}
+                    />
+                  </>
+                )}
               </SettingCard>
             </div>
           </TabsContent>
 
           <TabsContent value={"access-control"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-4"}>
+              {isPrivate && (
+                <Callout
+                  variant="info"
+                  icon={
+                    <CircleUser
+                      size={14}
+                      className="shrink-0 relative top-[3px]"
+                    />
+                  }
+                >
+                  This service is accessible via NetBird only. An allow rule
+                  for the NetBird network range is applied by default. Any
+                  rules you add here are layered on top.
+                </Callout>
+              )}
               <ReverseProxyAccessControlRules
                 value={accessRestrictions}
                 onChange={setAccessRestrictions}
                 onValidationChange={setAccessControlHasErrors}
+                supportsCrowdSec={selectedDomain?.supports_crowdsec}
               />
             </div>
           </TabsContent>
@@ -598,17 +822,18 @@ export default function ReverseProxyModal({
             <div className={"px-8 flex-col flex gap-6"}>
               {(serviceMode === ServiceMode.TCP ||
                 serviceMode === ServiceMode.TLS) && (
-                <FancyToggleSwitch
-                  value={proxyProtocol}
-                  onChange={setProxyProtocol}
-                  label={
-                    <>
-                      <MapPinned size={15} />
-                      Preserve Client Source IP
-                    </>
-                  }
-                  helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
-                />
+                  <FancyToggleSwitch
+                    value={proxyProtocol}
+                    onChange={setProxyProtocol}
+                    data-testid="toggle-preserve-client-ip"
+                    label={
+                      <>
+                        <MapPinned size={15} />
+                        Preserve Client Source IP
+                      </>
+                    }
+                    helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
+                  />
               )}
 
               {isL4Mode && (
@@ -643,6 +868,7 @@ export default function ReverseProxyModal({
                       maxWidthClass="w-[180px]"
                       errorTooltip={true}
                       error={timeoutError}
+                      data-testid="connection-timeout-input"
                     />
                   </div>
                 </>
@@ -651,19 +877,21 @@ export default function ReverseProxyModal({
               {!isL4Mode && (
                 <div className={"flex flex-col gap-4"}>
                   <FancyToggleSwitch
-                    value={passHostHeader}
-                    onChange={setPassHostHeader}
-                    label={
-                      <>
-                        <GlobeIcon size={15} />
-                        Pass Host Header
-                      </>
-                    }
-                    helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
-                  />
+                      value={passHostHeader}
+                      onChange={setPassHostHeader}
+                      data-testid="toggle-pass-host-header"
+                      label={
+                        <>
+                          <GlobeIcon size={15} />
+                          Pass Host Header
+                        </>
+                      }
+                      helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
+                    />
                   <FancyToggleSwitch
                     value={rewriteRedirects}
                     onChange={setRewriteRedirects}
+                    data-testid="toggle-rewrite-redirects"
                     label={
                       <>
                         <ArrowRight size={15} />
@@ -672,6 +900,39 @@ export default function ReverseProxyModal({
                     }
                     helpText="Rewrite Location headers in backend responses to use the public domain instead of the internal backend address."
                   />
+                  {isPrivate && (
+                    <FullTooltip
+                      disabled={selectedDomain?.supports_private === true}
+                      content={
+                        <div className={"text-xs max-w-xs"}>
+                          Direct Upstream is only configurable on clusters with
+                          at least one connected embedded proxy (
+                          <code>netbird proxy</code>). The selected cluster
+                          doesn't have one.
+                        </div>
+                      }
+                    >
+                      <FancyToggleSwitch
+                        value={effectiveDirectUpstream}
+                        onChange={setDirectUpstream}
+                        disabled={
+                          hasClusterTarget ||
+                          selectedDomain?.supports_private !== true
+                        }
+                        label={
+                          <>
+                            <RouteIcon size={15} />
+                            Direct Upstream
+                          </>
+                        }
+                        helpText={
+                          hasClusterTarget
+                            ? "Required and locked on for proxy-cluster targets: the cluster has no WireGuard endpoint to fall back to."
+                            : "Dial the upstream target from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a WireGuard connection."
+                        }
+                      />
+                    </FullTooltip>
+                  )}
                 </div>
               )}
             </div>
@@ -720,6 +981,7 @@ export default function ReverseProxyModal({
                     </ModalClose>
                     <Button
                       variant={"primary"}
+                      data-testid="proxy-continue"
                       onClick={() =>
                         setTab(isL4Mode ? "access-control" : "auth")
                       }
@@ -740,6 +1002,7 @@ export default function ReverseProxyModal({
                     </Button>
                     <Button
                       variant={"primary"}
+                      data-testid="proxy-continue"
                       onClick={() => setTab("access-control")}
                     >
                       Continue
@@ -757,6 +1020,7 @@ export default function ReverseProxyModal({
                     </Button>
                     <Button
                       variant={"primary"}
+                      data-testid="proxy-continue"
                       onClick={() => setTab("settings")}
                       disabled={accessControlHasErrors}
                     >
@@ -775,8 +1039,9 @@ export default function ReverseProxyModal({
                     </Button>
                     <Button
                       variant={"primary"}
+                      data-testid="submit-service"
                       disabled={
-                        !canContinueToSettings ||
+                        !canSaveService ||
                         !permission?.services?.create ||
                         !!timeoutError ||
                         accessControlHasErrors
@@ -796,8 +1061,9 @@ export default function ReverseProxyModal({
                 </ModalClose>
                 <Button
                   variant={"primary"}
+                  data-testid="proxy-save"
                   disabled={
-                    !canContinueToSettings ||
+                    !canSaveService ||
                     !permission?.services?.update ||
                     !!timeoutError ||
                     accessControlHasErrors
@@ -827,6 +1093,7 @@ export default function ReverseProxyModal({
           id: reverseProxy?.id || "",
           name: fullDomain,
           domain: fullDomain,
+          proxy_cluster: selectedDomain?.target_cluster || baseDomain || undefined,
           targets: targets,
           enabled: reverseProxy?.enabled ?? true,
           mode: serviceMode,
@@ -834,6 +1101,24 @@ export default function ReverseProxyModal({
         initialResource={initialResource}
         initialPeer={initialPeer}
         initialNetwork={initialNetwork}
+        onClusterPick={(cluster) => {
+          // Picking a cluster from the target selector commits it as
+          // the service's domain when none is set yet. We update
+          // baseDomain — selectedDomain is derived from it via useMemo.
+          if (!baseDomain) {
+            setBaseDomain(cluster);
+          }
+          // Cluster targets are reached over the WireGuard overlay, so
+          // the only callers that ever hit the proxy are NetBird peers.
+          // Auto-flip the service to NetBird-only so the auth model
+          // matches the wire reality instead of advertising SSO/PW/PIN
+          // that no public client could ever exercise. No-op when
+          // already private.
+          if (!isPrivate) {
+            togglePrivate(true);
+            setPrivateFromCluster(true);
+          }
+        }}
       />
 
       <AuthPasswordModal
@@ -872,6 +1157,27 @@ export default function ReverseProxyModal({
           setTimeout(() => {
             setBearerGroups([]);
             setBearerEnabled(false);
+          }, 200);
+        }}
+      />
+
+      <AuthNetBirdOnlyModal
+        open={netBirdOnlyModalOpen}
+        onOpenChange={setNetBirdOnlyModalOpen}
+        key={netBirdOnlyModalOpen ? "nb1" : "nb0"}
+        currentGroups={accessGroups}
+        isEnabled={isPrivate}
+        onSave={(groups) => {
+          setTimeout(() => {
+            setAccessGroups(groups);
+            togglePrivate(true);
+            setPrivateFromCluster(false);
+          }, 200);
+        }}
+        onRemove={() => {
+          setTimeout(() => {
+            togglePrivate(false);
+            setPrivateFromCluster(false);
           }, 200);
         }}
       />

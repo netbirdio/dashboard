@@ -58,6 +58,7 @@ export const EditGroupNameModal = ({
         <div className={"p-default flex flex-col gap-4"}>
           <div>
             <Input
+              data-testid="group-name-input"
               placeholder={"e.g., Developers"}
               value={name}
               onChange={handleNameChange}
@@ -77,6 +78,7 @@ export const EditGroupNameModal = ({
             <Button
               variant={"primary"}
               className={"w-full"}
+              data-testid="save-group-name"
               onClick={() => onSuccess(name)}
               disabled={isDisabled}
               type={"submit"}

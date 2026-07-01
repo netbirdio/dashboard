@@ -19,6 +19,7 @@ import { HelpTooltip } from "@components/HelpTooltip";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { useApiCall } from "@utils/api";
+import { normalizeHostCIDR } from "@utils/ip";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -172,7 +173,7 @@ export function ResourceModalContent({
     const promise = create({
       name,
       description,
-      address,
+      address: normalizeHostCIDR(address),
       groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
       enabled,
     }).then(async (r) => {
@@ -196,7 +197,7 @@ export function ResourceModalContent({
     const promise = update({
       name,
       description,
-      address,
+      address: normalizeHostCIDR(address),
       groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
       enabled,
     }).then(async (r) => {
@@ -258,6 +259,7 @@ export function ResourceModalContent({
                 ref={nameRef}
                 autoFocus={true}
                 tabIndex={0}
+                data-testid="resource-name-input"
                 placeholder={"e.g., Postgres Database"}
                 value={name}
                 error={nameError}
@@ -307,6 +309,7 @@ export function ResourceModalContent({
                   className={
                     "text-[0.8rem] tracking-wider text-nb-gray-200 py-4  my-0 leading-none gap-2 flex items-center"
                   }
+                  data-testid="resource-optional-settings"
                 >
                   <span className={"relative top-[1px]"}>
                     Optional Settings
@@ -324,6 +327,7 @@ export function ResourceModalContent({
                         placeholder={"e.g., Production, Development"}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
+                        data-testid="resource-description-input"
                       />
                     </div>
                     <div>
@@ -414,6 +418,7 @@ export function ResourceModalContent({
                   </ModalClose>
                   <Button
                     variant={"primary"}
+                    data-testid="resource-continue"
                     onClick={() => setTab("access-control")}
                     disabled={!canCreate}
                   >
@@ -432,7 +437,7 @@ export function ResourceModalContent({
                   </Button>
                   <Button
                     variant={"primary"}
-                    data-cy={"submit-route"}
+                    data-testid={"submit-resource"}
                     onClick={createResource}
                     disabled={!canCreate}
                   >
@@ -449,7 +454,7 @@ export function ResourceModalContent({
               </ModalClose>
               <Button
                 variant={"primary"}
-                data-cy={"submit-route"}
+                data-testid={"submit-route"}
                 onClick={updateResource}
                 disabled={!canCreate}
               >

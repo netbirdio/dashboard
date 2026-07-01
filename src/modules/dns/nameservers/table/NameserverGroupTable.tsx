@@ -1,20 +1,34 @@
 import Button from "@components/Button";
-import ButtonGroup from "@components/ButtonGroup";
 import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatGroupsChip,
+  GroupsPicker,
+} from "@components/table/filters/GroupsPicker";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import NoResults from "@/components/ui/NoResults";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
@@ -22,7 +36,6 @@ import { NameserverGroup } from "@/interfaces/Nameserver";
 import NameserverModal from "@/modules/dns/nameservers/NameserverModal";
 import NameserverTemplateModal from "@/modules/dns/nameservers/NameserverTemplateModal";
 import NameserverActionCell from "@/modules/dns/nameservers/table/NameserverActionCell";
-import NameserverActiveCell from "@/modules/dns/nameservers/table/NameserverActiveCell";
 import NameserverDistributionGroupsCell from "@/modules/dns/nameservers/table/NameserverDistributionGroupsCell";
 import NameserverMatchDomainsCell from "@/modules/dns/nameservers/table/NameserverMatchDomainsCell";
 import NameserverNameCell from "@/modules/dns/nameservers/table/NameserverNameCell";
@@ -52,10 +65,6 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
   {
     accessorKey: "enabled",
     sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
-    },
-    cell: ({ row }) => <NameserverActiveCell ns={row.original} />,
   },
   {
     accessorFn: (row) => row.domains?.length || 0,
@@ -77,11 +86,16 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
     accessorFn: (row) => row.groups?.length || 0,
     id: "groups",
     header: ({ column }) => {
-      return (
-        <DataTableHeader column={column}>Distribution Groups</DataTableHeader>
-      );
+      return <DataTableHeader column={column}>Groups</DataTableHeader>;
     },
     cell: ({ row }) => <NameserverDistributionGroupsCell ns={row.original} />,
+  },
+  {
+    id: "group_names_filter",
+    accessorFn: (row) =>
+      ((row as NameserverGroup & { _group_names?: string[] })._group_names) ??
+      [],
+    filterFn: "arrIncludesSome",
   },
   {
     accessorKey: "id",
@@ -108,6 +122,27 @@ export default function NameserverGroupTable({
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
+  const { groups } = useGroups();
+
+  const nameserverGroupsWithNames = useMemo(() => {
+    if (!nameserverGroups) return [];
+    return nameserverGroups.map((ns) => ({
+      ...ns,
+      _group_names: (ns.groups ?? [])
+        .map((id) => groups?.find((g) => g.id === id)?.name)
+        .filter((n): n is string => !!n),
+    }));
+  }, [nameserverGroups, groups]);
+
+  const tableGroups = useMemo(() => {
+    const map = new Map<string, { id?: string; name: string }>();
+    for (const ns of nameserverGroupsWithNames) {
+      for (const name of ns._group_names) {
+        if (name && !map.has(name)) map.set(name, { name });
+      }
+    }
+    return Array.from(map.values());
+  }, [nameserverGroupsWithNames]);
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -124,6 +159,48 @@ export default function NameserverGroupTable({
   const [editModal, setEditModal] = useState(false);
   const [currentRow, setCurrentRow] = useState<NameserverGroup>();
   const [currentCellClicked, setCurrentCellClicked] = useState("");
+
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Active", dotClass: "bg-green-500" },
+      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "enabled",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+      {
+        id: "group_names_filter",
+        label: "Groups",
+        renderPicker: (p) => (
+          <GroupsPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            groups={tableGroups}
+          />
+        ),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+      },
+    ],
+    [statusOptions, tableGroups],
+  );
 
   return (
     <>
@@ -149,10 +226,17 @@ export default function NameserverGroupTable({
         minimal={isGroupPage}
         showSearchAndFilters={isGroupPage}
         keepStateInLocalStorage={!isGroupPage}
+        initialPageSize={25}
+        showResetFilterButton={false}
+        aboveTable={(table) => (
+          <TableFilterChips table={table} filters={filterDefs} />
+        )}
         columnVisibility={{
           description: false,
           domain_list: false,
           ns_list: false,
+          group_names_filter: false,
+          enabled: false,
         }}
         onRowClick={(row, cell) => {
           setCurrentRow(row.original);
@@ -160,7 +244,7 @@ export default function NameserverGroupTable({
           setCurrentCellClicked(cell);
         }}
         columns={NameserverGroupTableColumns}
-        data={nameserverGroups}
+        data={nameserverGroupsWithNames}
         searchPlaceholder={"Search by name, domains or nameservers..."}
         getStartedCard={
           isGroupPage ? (
@@ -206,6 +290,7 @@ export default function NameserverGroupTable({
                         variant={"primary"}
                         className={""}
                         disabled={!permission.nameservers.create}
+                        data-testid="open-add-nameserver"
                       >
                         <PlusCircle size={16} />
                         Add Nameserver
@@ -239,6 +324,7 @@ export default function NameserverGroupTable({
                   variant={"primary"}
                   className={"ml-auto"}
                   disabled={!permission.nameservers.create}
+                  data-testid="open-add-nameserver"
                 >
                   <PlusCircle size={16} />
                   Add Nameserver
@@ -250,39 +336,18 @@ export default function NameserverGroupTable({
       >
         {(table) => (
           <>
-            <ButtonGroup disabled={nameserverGroups?.length == 0}>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.getColumn("enabled")?.setFilterValue(true);
-                }}
-                disabled={nameserverGroups?.length == 0}
-                variant={
-                  table.getColumn("enabled")?.getFilterValue() == true
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                Enabled
-              </ButtonGroup.Button>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.getColumn("enabled")?.setFilterValue("");
-                }}
-                disabled={nameserverGroups?.length == 0}
-                variant={
-                  table.getColumn("enabled")?.getFilterValue() != true
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                All
-              </ButtonGroup.Button>
-            </ButtonGroup>
-            <DataTableRowsPerPage
+            <TableFiltersButton
               table={table}
+              filters={filterDefs}
               disabled={nameserverGroups?.length == 0}
+            />
+            <DataTableResetFilterButton
+              table={table}
+              onClick={() => {
+                table.setPageIndex(0);
+                table.resetColumnFilters();
+                table.resetGlobalFilter();
+              }}
             />
             <DataTableRefreshButton
               isDisabled={nameserverGroups?.length == 0}

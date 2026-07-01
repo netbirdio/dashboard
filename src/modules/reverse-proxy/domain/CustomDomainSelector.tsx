@@ -9,13 +9,15 @@ import * as React from "react";
 import { useMemo } from "react";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { ReverseProxyDomainType } from "@/interfaces/ReverseProxy";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
+import TruncatedText from "@components/ui/TruncatedText";
 
 interface DomainSelectorProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   className?: string;
+  "data-testid"?: string;
 }
 
 export function CustomDomainSelector({
@@ -23,9 +25,10 @@ export function CustomDomainSelector({
   onChange,
   disabled = false,
   className,
+  "data-testid": dataTestId,
 }: DomainSelectorProps) {
   const router = useRouter();
-  const { domains } = useReverseProxies();
+  const { domains, isSelfHostedCluster } = useReverseProxies();
 
   const options: SelectOption[] = useMemo(() => {
     const opts: SelectOption[] = [];
@@ -34,18 +37,23 @@ export function CustomDomainSelector({
     domains
       ?.filter((d) => d.type === ReverseProxyDomainType.FREE)
       .forEach((domain) => {
+        const isAccountCluster = isSelfHostedCluster(
+          domain?.target_cluster ?? domain?.domain,
+        );
         opts.push({
           value: domain.domain,
           label: `.${domain.domain}`,
           renderItem: () => (
             <div className="flex items-center gap-2 w-full text-sm justify-between">
               <div className="flex items-center gap-2">
-                <span>.{domain.domain}</span>
+                <TruncatedText text={`.${domain.domain}`} maxWidth={"260px"} />
               </div>
-              {isNetBirdHosted() ? (
+              {isAccountCluster ? (
+                <SmallBadge text="Account" variant="sky" size="md" />
+              ) : isNetBirdCloud() ? (
                 <SmallBadge text="Free" variant="green" size="md" />
               ) : (
-                <SmallBadge text="Cluster" variant="green" size="md" />
+                <SmallBadge text="Shared" variant="green" size="md" />
               )}
             </div>
           ),
@@ -83,7 +91,7 @@ export function CustomDomainSelector({
     });
 
     return opts;
-  }, [domains]);
+  }, [domains, isSelfHostedCluster]);
 
   const handleChange = (selectedValue: string) => {
     if (selectedValue === "add_custom") {
@@ -98,12 +106,13 @@ export function CustomDomainSelector({
       value={value}
       onChange={handleChange}
       options={options}
-      popoverWidth={335}
+      popoverWidth={380}
       showSearch={true}
       searchPlaceholder="Search domains..."
       disabled={disabled}
       placeholder="Select domain..."
       className={className}
+      data-testid={dataTestId}
     />
   );
 }

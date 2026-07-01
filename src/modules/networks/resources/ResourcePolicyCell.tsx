@@ -35,22 +35,51 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
   if (isLoading) {
     return (
       <div className={"flex gap-3"}>
-        <Skeleton height={34} width={220} />
+        <Skeleton height={34} width={120} />
       </div>
     );
   }
 
-  return (
-    network && (
-      <div className={"flex gap-3"}>
-        {policyCount === 0 && (
-          <Badge variant={"gray"}>
-            <ShieldOff size={12} className="text-red-500" />
-            <span className={"font-medium text-xs"}>None</span>
-          </Badge>
-        )}
+  if (!network) return null;
 
-        {policyCount > 0 && (
+  const canConfigure = !!permission.networks.update;
+  const enabledCount = enabledPolicies?.length ?? 0;
+  const displayCount = enabledCount > 0 ? enabledCount : policyCount;
+
+  const policyBadge = (
+    <Badge
+      variant={"gray"}
+      useHover={false}
+      disabled={!canConfigure}
+      className={
+        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] !px-2 min-w-[50px] hover:bg-nb-gray-930 transition-all"
+      }
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!canConfigure) return;
+        if (tooltipOpen) setTooltipOpen(false);
+        openResourceModal(network, resource, "access-control");
+      }}
+    >
+      {policyCount > 0 ? (
+        <ShieldIcon
+          size={12}
+          className={cn(
+            enabledCount > 0 ? "text-green-500" : "text-nb-gray-400",
+          )}
+        />
+      ) : (
+        <ShieldOff size={12} className="text-red-500" />
+      )}
+      <span className={"font-medium text-xs"}>{displayCount}</span>
+    </Badge>
+  );
+
+  return (
+    <div className={"flex"}>
+      <div className={"flex items-center"}>
+        {policyCount > 0 ? (
           <FullTooltip
             contentClassName={"p-0"}
             delayDuration={200}
@@ -110,48 +139,26 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
             alignOffset={0}
             sideOffset={14}
           >
-            <Badge
-              variant={"gray"}
-              useHover={true}
-              className={"select-none hover:bg-nb-gray-910 cursor-pointer"}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!permission.networks.update) return;
-                if (tooltipOpen) setTooltipOpen(false);
-                openResourceModal(network, resource, "access-control");
-              }}
-            >
-              <ShieldIcon
-                size={14}
-                className={cn(
-                  enabledPolicies?.length > 0
-                    ? "text-green-500"
-                    : "text-nb-gray-400",
-                )}
-              />
-              <div>
-                <span className={"font-medium text-xs"}>
-                  {enabledPolicies?.length > 0
-                    ? enabledPolicies?.length
-                    : `${policyCount} Disabled`}
-                </span>
-              </div>
-            </Badge>
+            {policyBadge}
           </FullTooltip>
+        ) : (
+          policyBadge
         )}
 
         <Button
           size={"xs"}
           variant={"secondary"}
-          className={"!px-3"}
-          disabled={!permission.networks.update}
-          onClick={() => openResourceModal(network, resource, "access-control")}
+          className={"!rounded-l-none !px-2 !h-[34px]"}
+          disabled={!canConfigure}
+          onClick={(e) => {
+            e.stopPropagation();
+            openResourceModal(network, resource, "access-control");
+          }}
+          aria-label="Configure policies"
         >
           <Settings size={12} />
-          Configure
         </Button>
       </div>
-    )
+    </div>
   );
 };

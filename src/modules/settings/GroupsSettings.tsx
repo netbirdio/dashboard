@@ -8,7 +8,7 @@ import { notify } from "@components/Notification";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
-import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
+import { isLocalDev, isNetBirdCloud } from "@utils/netbird";
 import { AnimatePresence, motion } from "framer-motion";
 import { isEmpty } from "lodash";
 import {
@@ -155,6 +155,7 @@ export default function GroupsSettings({ account }: Props) {
             variant={"primary"}
             disabled={!hasChanges}
             onClick={saveChanges}
+            data-testid="save-groups-settings"
           >
             Save Changes
           </Button>
@@ -164,6 +165,7 @@ export default function GroupsSettings({ account }: Props) {
           <FancyToggleSwitch
             value={groupsPropagation}
             onChange={setGroupsPropagation}
+            data-testid="user-group-propagation"
             label={
               <>
                 <FolderInput size={15} />
@@ -175,7 +177,7 @@ export default function GroupsSettings({ account }: Props) {
             }
             disabled={!permission.settings.update}
           />
-          {(!isNetBirdHosted() || isLocalDev()) && (
+          {(!isNetBirdCloud() || isLocalDev()) && (
             <FancyToggleSwitch
               value={jwtGroupSync}
               onChange={setJwtGroupSync}
@@ -193,7 +195,7 @@ export default function GroupsSettings({ account }: Props) {
           )}
         </div>
 
-        {(!isNetBirdHosted() || isLocalDev()) && (
+        {(!isNetBirdCloud() || isLocalDev()) && (
           <AnimatePresence>
             {jwtGroupSync && (
               <div className={"overflow-hidden -top-4 relative z-0"}>

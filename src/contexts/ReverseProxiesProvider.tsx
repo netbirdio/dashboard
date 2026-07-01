@@ -2,6 +2,7 @@
 
 import { notify } from "@components/Notification";
 import useFetchApi, { useApiCall } from "@utils/api";
+import { wrapIPv6 } from "@utils/ip";
 import React, {
   createContext,
   useCallback,
@@ -15,6 +16,8 @@ import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
   ReverseProxy,
+  ReverseProxyCluster,
+  ReverseProxyClusterType,
   ReverseProxyDomain,
   ReverseProxyFlatTarget,
   ReverseProxyTarget,
@@ -23,6 +26,8 @@ import {
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyModal from "@/modules/reverse-proxy/ReverseProxyModal";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
+import { TerminatedProxiesProvider } from "@/cloud/reverse-proxy/TerminatedProxiesProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 
 type ReverseProxiesContextValue = {
   reverseProxies: ReverseProxy[] | undefined;
@@ -51,6 +56,9 @@ type ReverseProxiesContextValue = {
     domain: string,
     targetCluster: string,
   ) => Promise<ReverseProxyDomain>;
+  clusters: ReverseProxyCluster[] | undefined;
+  isClustersLoading: boolean;
+  isSelfHostedCluster: (clusterAddress?: string) => boolean;
 };
 
 type OpenModalOptions = {
@@ -90,10 +98,14 @@ export default function ReverseProxiesProvider({
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
+  const { permission } = usePermissions();
 
   // Reverse Proxies
   const { data: rawReverseProxies, isLoading } = useFetchApi<ReverseProxy[]>(
     "/reverse-proxies/services",
+    false,
+    true,
+    permission?.services.read,
   );
   const request = useApiCall<ReverseProxy>("/reverse-proxies/services", true);
 
@@ -101,6 +113,9 @@ export default function ReverseProxiesProvider({
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const { data: resources } = useFetchApi<NetworkResource[]>(
     "/networks/resources",
+    false,
+    true,
+    permission?.services.read,
   );
 
   const resolveDestination = useCallback(
@@ -125,10 +140,26 @@ export default function ReverseProxiesProvider({
   // Domains
   const { data: domains, isLoading: isLoadingDomains } = useFetchApi<
     ReverseProxyDomain[]
-  >("/reverse-proxies/domains");
+  >("/reverse-proxies/domains", false, true, permission.services?.read);
   const domainRequest = useApiCall<ReverseProxyDomain>(
     "/reverse-proxies/domains",
     true,
+  );
+
+  // Clusters
+  const { data: clusters, isLoading: isClustersLoading } = useFetchApi<
+    ReverseProxyCluster[]
+  >("/reverse-proxies/clusters", false, true, permission.services?.read);
+
+  const isSelfHostedCluster = useCallback(
+    (clusterAddress?: string) => {
+      if (!clusterAddress) return false;
+      return (
+        clusters?.find((c) => c.address === clusterAddress)?.type ===
+        ReverseProxyClusterType.ACCOUNT
+      );
+    },
+    [clusters],
   );
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -303,7 +334,18 @@ export default function ReverseProxiesProvider({
   const handleToggleTarget = useCallback(
     async (proxy: ReverseProxy, target: ReverseProxyTarget) => {
       const newEnabled = !target.enabled;
-      const targetIndex = proxy.targets.indexOf(target);
+      let targetIndex = proxy.targets.indexOf(target);
+      if (targetIndex === -1) {
+        targetIndex = proxy.targets.findIndex(
+          (t) =>
+            t.target_id === target.target_id &&
+            t.target_type === target.target_type &&
+            t.path === target.path &&
+            t.host === target.host &&
+            t.port === target.port,
+        );
+      }
+      if (targetIndex === -1) return;
       const updatedTargets = proxy.targets.map((t, i) => {
         return i === targetIndex ? { ...t, enabled: newEnabled } : t;
       });
@@ -373,7 +415,18 @@ export default function ReverseProxiesProvider({
           loadingMessage: "Deleting service...",
         });
       } else {
-        const targetIndex = proxy.targets.indexOf(target);
+        let targetIndex = proxy.targets.indexOf(target);
+        if (targetIndex === -1) {
+          targetIndex = proxy.targets.findIndex(
+            (t) =>
+              t.target_id === target.target_id &&
+              t.target_type === target.target_type &&
+              t.path === target.path &&
+              t.host === target.host &&
+              t.port === target.port,
+          );
+        }
+        if (targetIndex === -1) return;
         const updatedTargets = proxy.targets.filter(
           (_, i) => i !== targetIndex,
         );
@@ -483,8 +536,12 @@ export default function ReverseProxiesProvider({
         createDomain,
         validateDomain,
         deleteDomain,
+        clusters,
+        isClustersLoading,
+        isSelfHostedCluster,
       }}
     >
+      <TerminatedProxiesProvider />
       {children}
       {modalOpen && (
         <ReverseProxyModal
@@ -585,7 +642,19 @@ export function sanitizeTargets(
 ): ReverseProxyTarget[] {
   return targets.map((t) => {
     const { destination: _, ...target } = t;
+    // Subnet targets always own their Host. Cluster targets do too,
+    // and they imply direct_upstream — the proxy peer dials the
+    // operator-supplied upstream via the host network stack instead of
+    // through the embedded WG client. For peer/host/domain targets the
+    // backend resolves Host from the peer/resource unless the operator
+    // explicitly opted into direct_upstream.
     if (t.target_type === ReverseProxyTargetType.SUBNET)
+      return target as ReverseProxyTarget;
+    if (t.target_type === ReverseProxyTargetType.CLUSTER) {
+      const opts = { ...(target.options ?? {}), direct_upstream: true };
+      return { ...target, options: opts } as ReverseProxyTarget;
+    }
+    if (target.options?.direct_upstream && target.host?.trim())
       return target as ReverseProxyTarget;
     const { host: __, ...rest } = target;
     return rest as ReverseProxyTarget;
@@ -604,7 +673,7 @@ function formatTargetDestination(
   target: ReverseProxyTarget,
   resolvedHost?: string,
 ): string {
-  const host = target.host || resolvedHost || "localhost";
+  const host = wrapIPv6(target.host || resolvedHost || "localhost");
   const isDefault =
     (target.protocol === "http" && target.port === 80) ||
     (target.protocol === "https" && target.port === 443) ||

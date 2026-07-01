@@ -14,5 +14,15 @@
   "hotjarTrackID": "$NETBIRD_HOTJAR_TRACK_ID",
   "googleAnalyticsID": "$NETBIRD_GOOGLE_ANALYTICS_ID",
   "googleTagManagerID": "$NETBIRD_GOOGLE_TAG_MANAGER_ID",
-  "wasmPath": "$NETBIRD_WASM_PATH"
+  "authServiceUrl": "$NETBIRD_AUTH_SERVICE_URL",
+  "wasmPath": "$NETBIRD_WASM_PATH",
+  "licensed": "$NETBIRD_LICENSED",
+  "cloud": "$NETBIRD_CLOUD",
+  "agentNetworkOnly": "$NETBIRD_AGENT_NETWORK_ONLY",
+  "agentNetworkEnabled": "$NETBIRD_AGENT_NETWORK_ENABLED",
+  "hubspotPortalId": "$NETBIRD_HUBSPOT_PORTAL_ID",
+  "hubspotSignupFormId": "$NETBIRD_HUBSPOT_SIGNUP_FORM_ID",
+  "hubspotOnboardingFormId": "$NETBIRD_HUBSPOT_ONBOARDING_FORM_ID",
+  "hubspotSurveyFormId": "$NETBIRD_HUBSPOT_SURVEY_FORM_ID",
+  "analyticsExcludedEmails": "$NETBIRD_ANALYTICS_EXCLUDED_EMAILS"
 }

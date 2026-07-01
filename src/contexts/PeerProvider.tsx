@@ -30,6 +30,7 @@ const PeerContext = React.createContext(
       inactivityExpiration?: boolean;
       approval_required?: boolean;
       ip?: string;
+      ipv6?: string;
     }) => Promise<Peer>;
     toggleSSH: (newState: boolean) => Promise<void>;
     setSSHInstructionsModal: (open: boolean) => void;
@@ -43,8 +44,10 @@ export default function PeerProvider({
   peer,
   isPeerDetailPage = false,
 }: Props) {
-  const user = usePeerUser(peer);
-  const { peerGroups, isLoading } = usePeerGroups(peer);
+  const { user, isLoading: isUserLoading } = usePeerUser(peer);
+  const { peerGroups, isLoading: isGroupsLoading } = usePeerGroups(peer);
+  const isLoading =
+    isGroupsLoading || (peer.user_id ? isUserLoading : false);
   const peerRequest = useApiCall<Peer>("/peers", true);
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
@@ -80,6 +83,7 @@ export default function PeerProvider({
     inactivityExpiration?: boolean;
     approval_required?: boolean;
     ip?: string;
+    ipv6?: string;
   }) => {
     return peerRequest.put(
       {
@@ -92,13 +96,14 @@ export default function PeerProvider({
             : peer.login_expiration_enabled,
         inactivity_expiration_enabled:
           props?.inactivityExpiration == undefined
-            ? undefined
+            ? peer.inactivity_expiration_enabled
             : props.inactivityExpiration,
         approval_required:
           props?.approval_required == undefined
             ? undefined
             : props.approval_required,
         ip: props.ip != undefined ? props.ip : undefined,
+        ipv6: props.ipv6 != undefined ? props.ipv6 : undefined,
       },
       `/${peer.id}`,
     );
@@ -180,11 +185,13 @@ export const usePeerGroups = (peer?: Peer) => {
  * @param peer
  */
 export const usePeerUser = (peer: Peer) => {
-  const { users } = useUsers();
+  const { users, isLoading } = useUsers();
 
-  return useMemo(() => {
-    return users?.find((user) => user.id === peer.user_id);
+  const user = useMemo(() => {
+    return users?.find((u) => u.id === peer.user_id);
   }, [users, peer]);
+
+  return { user, isLoading };
 };
 
 /**

@@ -1,6 +1,6 @@
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
-import AddPeerButton from "@components/ui/AddPeerButton";
+import AddPeerDropdown from "@components/ui/AddPeerDropdown";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
@@ -10,7 +10,9 @@ type Props = {
   showBackground?: boolean;
 };
 
-export const NoPeersGettingStarted = ({ showBackground = true }) => {
+export const NoPeersGettingStarted = ({
+  showBackground = true,
+}: Readonly<Props>) => {
   return (
     <GetStartedTest
       showBackground={showBackground}
@@ -26,7 +28,7 @@ export const NoPeersGettingStarted = ({ showBackground = true }) => {
         "It looks like you don't have any connected machines.\n" +
         "Get started by adding one to your network."
       }
-      button={<AddPeerButton />}
+      button={<AddPeerDropdown />}
       learnMore={
         <>
           Learn more in our{" "}

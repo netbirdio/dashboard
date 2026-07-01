@@ -11,6 +11,7 @@ import localFont from "next/font/local";
 import React, { Suspense } from "react";
 import { Toaster } from "sonner";
 import OIDCProvider from "@/auth/OIDCProvider";
+import { useAWSMarketplace } from "@/cloud/aws/useAWSMarketplace";
 import FullScreenLoading from "@/components/ui/FullScreenLoading";
 import AnalyticsProvider, {
   GoogleTagManagerHeadScript,
@@ -37,6 +38,8 @@ export const viewport: Viewport = {
 export default function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  useAWSMarketplace();
+
   return (
     <html lang="en">
       <head>

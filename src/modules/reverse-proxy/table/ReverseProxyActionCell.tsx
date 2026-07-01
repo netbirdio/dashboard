@@ -3,10 +3,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
+import { MoreVertical, PowerIcon, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
+import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { ReverseProxy } from "@/interfaces/ReverseProxy";
@@ -19,13 +21,15 @@ export default function ReverseProxyActionCell({
   reverseProxy,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
-  const { openModal, handleDelete } = useReverseProxies();
+  const { openModal, handleDelete, handleToggle } = useReverseProxies();
+  const [open, setOpen] = useState(false);
 
   return (
     <div className={"flex justify-end pr-4"}>
-      <DropdownMenu modal={false}>
+      <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger
           asChild={true}
+          data-testid="service-actions"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -37,6 +41,7 @@ export default function ReverseProxyActionCell({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-auto" align="end">
           <DropdownMenuItem
+            data-testid="edit-service"
             data-proxy-edit-action={reverseProxy.id}
             onClick={(e) => {
               e.stopPropagation();
@@ -51,6 +56,24 @@ export default function ReverseProxyActionCell({
           </DropdownMenuItem>
 
           <DropdownMenuItem
+            data-testid="disable-service"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(false);
+              handleToggle(reverseProxy);
+            }}
+            disabled={!permission?.services?.update}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <PowerIcon size={14} className={"shrink-0"} />
+              {reverseProxy.enabled ? "Disable" : "Enable"}
+            </div>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            data-testid="delete-service"
             onClick={(e) => {
               e.stopPropagation();
               handleDelete(reverseProxy);

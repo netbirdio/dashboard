@@ -8,14 +8,13 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Peer } from "@/interfaces/Peer";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
-function AddPeerButton() {
+type Props = {
+  isUserDevice?: boolean;
+};
+
+function AddPeerButton({ isUserDevice }: Readonly<Props>) {
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const { oidcUser: user } = useOidcUser();
-
-  const [hasOnboardingFormCompleted] = useLocalStorage(
-    "netbird-onboarding-modal",
-    false,
-  );
 
   const [isFirstRun, setIsFirstRun] = useLocalStorage<boolean>(
     "netbird-first-run",
@@ -23,11 +22,7 @@ function AddPeerButton() {
   );
 
   const [installModal, setInstallModal] = useState(
-    !hasOnboardingFormCompleted
-      ? process.env.APP_ENV !== "test"
-        ? false
-        : isFirstRun
-      : isFirstRun,
+    process.env.APP_ENV !== "test" ? false : isFirstRun,
   );
 
   const handleOpenChange = (open: boolean) => {
@@ -36,17 +31,20 @@ function AddPeerButton() {
   };
 
   return (
-    <>
-      <Modal open={installModal} onOpenChange={handleOpenChange}>
-        <ModalTrigger asChild>
-          <Button variant={"primary"} size={"sm"} className={"ml-auto"}>
-            <PlusCircle size={16} />
-            Add Peer
-          </Button>
-        </ModalTrigger>
-        <SetupModal user={user} />
-      </Modal>
-    </>
+    <Modal open={installModal} onOpenChange={handleOpenChange}>
+      <ModalTrigger asChild>
+        <Button
+          variant={"primary"}
+          size={"sm"}
+          className={"ml-auto"}
+          data-testid={"add-peer-button"}
+        >
+          <PlusCircle size={16} />
+          Add Peer
+        </Button>
+      </ModalTrigger>
+      <SetupModal user={user} isUserDevice={isUserDevice} />
+    </Modal>
   );
 }
 

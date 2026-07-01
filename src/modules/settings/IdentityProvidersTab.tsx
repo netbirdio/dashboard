@@ -49,6 +49,7 @@ export const idpTypeLabels: Record<SSOIdentityProviderType, string> = {
   microsoft: "Microsoft",
   authentik: "Authentik",
   keycloak: "Keycloak",
+  adfs: "Microsoft AD FS",
 };
 
 type ActionCellProps = {

@@ -10,3 +10,10 @@ Select exactly one:
 Paste the PR link from https://github.com/netbirdio/docs here:
 
 https://github.com/netbirdio/docs/pull/__
+
+## E2E tests
+Optional: override the image tags used by the Playwright e2e workflow.
+Defaults to `main` when omitted.
+
+management-cloud-tag: main
+reverse-proxy-tag: main

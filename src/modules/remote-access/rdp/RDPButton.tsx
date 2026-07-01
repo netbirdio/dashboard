@@ -26,7 +26,7 @@ export const RDPButton = ({ peer, isDropdown = false }: Props) => {
 
   const openRDPPage = () => {
     window.open(
-      `peer/rdp?id=${peer.id}`,
+      `/peer/rdp?id=${peer.id}`,
       "_blank",
       "noopener,noreferrer,width=1200,height=650,left=100,top=100,location=no,toolbar=no,menubar=no,status=no",
     );

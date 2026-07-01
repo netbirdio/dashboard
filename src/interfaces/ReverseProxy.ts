@@ -15,18 +15,30 @@ export interface ReverseProxy {
   proxy_cluster?: string;
   targets: ReverseProxyTarget[];
   enabled: boolean;
+  terminated?: boolean;
   pass_host_header?: boolean;
   rewrite_redirects?: boolean;
   auth?: ReverseProxyAuth;
   access_restrictions?: AccessRestrictions;
   meta?: ReverseProxyMeta;
+  private?: boolean;
+  access_groups?: string[];
 }
+
+export const CrowdSecMode = {
+  OFF: "off",
+  ENFORCE: "enforce",
+  OBSERVE: "observe",
+} as const;
+
+export type CrowdSecMode = (typeof CrowdSecMode)[keyof typeof CrowdSecMode];
 
 export interface AccessRestrictions {
   allowed_cidrs?: string[];
   blocked_cidrs?: string[];
   allowed_countries?: string[];
   blocked_countries?: string[];
+  crowdsec_mode?: CrowdSecMode;
 }
 
 export interface ReverseProxyMeta {
@@ -53,6 +65,13 @@ export interface ServiceTargetOptions {
   path_rewrite?: ServiceTargetOptionsPathRewrite;
   custom_headers?: Record<string, string>;
   proxy_protocol?: boolean;
+  /**
+   * When true, the proxy dials this target via the host's network stack
+   * instead of through its embedded NetBird client. Use for upstreams
+   * reachable without WireGuard (public APIs, LAN services, localhost
+   * sidecars).
+   */
+  direct_upstream?: boolean;
 }
 
 export interface ReverseProxyTarget {
@@ -102,6 +121,8 @@ export interface ReverseProxyDomain {
   target_cluster?: string;
   supports_custom_ports?: boolean;
   require_subdomain?: boolean;
+  supports_crowdsec?: boolean;
+  supports_private?: boolean;
 }
 
 export enum ReverseProxyDomainType {
@@ -114,6 +135,7 @@ export enum ReverseProxyTargetType {
   HOST = "host",
   DOMAIN = "domain",
   SUBNET = "subnet",
+  CLUSTER = "cluster",
 }
 
 export enum ReverseProxyTargetProtocol {
@@ -149,6 +171,39 @@ export interface ReverseProxyEvent {
   bytes_upload: number;
   bytes_download: number;
   protocol?: EventProtocol;
+  metadata?: Record<string, string>;
+}
+
+export enum ReverseProxyClusterType {
+  ACCOUNT = "account",
+  SHARED = "shared",
+}
+
+export interface ReverseProxyCluster {
+  id?: string;
+  address: string;
+  type: ReverseProxyClusterType;
+  online: boolean;
+  connected_proxies: number;
+  supports_custom_ports?: boolean;
+  require_subdomain?: boolean;
+  supports_crowdsec?: boolean;
+  // True when at least one connected proxy in this cluster is running embedded
+  // in a netbird client (`netbird proxy`) and serving over a WireGuard tunnel.
+  // Lets the dashboard distinguish per-peer / private clusters from centralised
+  // ones.
+  private?: boolean;
+}
+
+export interface ReverseProxyClusterToken {
+  id?: string;
+  name: string;
+  plain_token?: string;
+  expires_at?: string;
+  expires_in?: number;
+  created_at?: string;
+  last_used?: string;
+  revoked?: boolean;
 }
 
 export function isL4Event(event: ReverseProxyEvent): boolean {
@@ -187,19 +242,25 @@ export const REVERSE_PROXY_SETTINGS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy#step-4-configure-advanced-settings";
 
 export const REVERSE_PROXY_CLUSTERS_DOCS_LINK =
-  "https://docs.netbird.io/manage/reverse-proxy#self-hosted-proxy-setup";
+  "https://docs.netbird.io/manage/reverse-proxy/bring-your-own-proxy#shared-and-account-clusters";
+
+export const REVERSE_PROXY_SELFHOSTED_ROUTING_DOCS_LINK =
+  "https://docs.netbird.io/selfhosted/migration/enable-reverse-proxy#connecting-through-traefik-instead-of-docker-network";
+
+export const REVERSE_PROXY_ENV_REFERENCE_DOCS_LINK =
+  "https://docs.netbird.io/selfhosted/migration/enable-reverse-proxy#environment-variable-reference";
 
 export const REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy/custom-domains";
 
 export const REVERSE_PROXY_DOMAIN_VERIFICATION_LINK =
-  "https://docs.netbird.io/manage/reverse-proxy/custom-domains#validating-a-custom-domain";
+  "https://docs.netbird.io/manage/reverse-proxy/custom-domains#verifying-a-custom-domain";
 
 export const REVERSE_PROXY_EVENTS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy/access-logs";
 
 export const REVERSE_PROXY_ACCESS_CONTROL_DOCS_LINK =
-  "https://docs.netbird.io/manage/reverse-proxy";
+  "https://docs.netbird.io/manage/reverse-proxy#step-3b-configure-access-control";
 
 export const REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK =
-  "https://docs.netbird.io/manage/reverse-proxy#troubleshooting";
+  "https://docs.netbird.io/manage/reverse-proxy/troubleshooting";

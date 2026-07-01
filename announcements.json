@@ -1,8 +1,8 @@
 [
   {
-    "tag": "New",
-    "text": "NetBird Reverse Proxy - Expose internal services to the public with automatic TLS and optional authentication.",
-    "link": "https://docs.netbird.io/manage/reverse-proxy",
+    "tag": "Preview",
+    "text": "The new NetBird desktop app is here - now available as a 0.75 release candidate.",
+    "link": "https://github.com/netbirdio/netbird/discussions/6483",
     "linkText": "Learn more",
     "variant": "important",
     "isExternal": true,

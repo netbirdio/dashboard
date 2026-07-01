@@ -30,6 +30,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
+import { UserMfaListItem } from "@/cloud/mfa/UserMFAListItem";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
@@ -125,6 +126,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
         )
         .then(() => {
           mutate(`/users?service_user=${isServiceUser}`);
+          mutate(`/integrations/msp/switcher`);
           updateChangesRef([role, selectedGroups]);
         }),
       loadingMessage: "Saving changes...",
@@ -222,7 +224,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                 className={"w-full"}
                 disabled={!hasChanges || !permission.users.update}
                 onClick={save}
-                data-cy={"save-changes"}
+                data-testid={"save-changes"}
               >
                 Save Changes
               </Button>
@@ -244,7 +246,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                   onChange={setSelectedGroups}
                   values={selectedGroups}
                   hideAllGroup={true}
-                  dataCy={"user-group-selector"}
+                  data-testid={"user-group-selector"}
                 />
               </div>
             )}
@@ -279,13 +281,16 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
       >
         <TabsList justify={"start"} className={"px-8"} hidden={!showTabs}>
           {showPeers && (
-            <TabsTrigger value={"peers"}>
+            <TabsTrigger value={"peers"} data-testid={"user-tab-peers"}>
               <MonitorSmartphoneIcon size={16} />
               Peers
             </TabsTrigger>
           )}
           {showAccessTokens && (
-            <TabsTrigger value={"access-tokens"}>
+            <TabsTrigger
+              value={"access-tokens"}
+              data-testid={"user-tab-access-tokens"}
+            >
               <KeyRoundIcon size={16} />
               Access Tokens
             </TabsTrigger>
@@ -312,7 +317,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                       <CreateAccessTokenModal user={user}>
                         <Button
                           variant={"primary"}
-                          data-cy={"access-token-open-modal"}
+                          data-testid={"access-token-open-modal"}
                           disabled={!permission.pats.create}
                         >
                           <IconCirclePlus size={16} />
@@ -374,6 +379,8 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
           }
           value={<UserStatusCell user={user} />}
         />
+
+        {!isServiceUser && user && <UserMfaListItem userId={user.id} />}
 
         {!isServiceUser && (
           <>

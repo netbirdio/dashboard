@@ -8,7 +8,7 @@ import ActiveInactiveRow from "@/modules/common-table-rows/ActiveInactiveRow";
 import { ExitNodePeerIndicator } from "@/modules/exit-node/ExitNodePeerIndicator";
 import { EphemeralPeerIndicator } from "@/modules/peer/EphemeralPeerIndicator";
 import { ExpirationDisabledIndicator } from "@/modules/peer/ExpirationDisabledIndicator";
-import { LoginRequiredIndicator } from "@/modules/peer/LoginRequiredIndicator";
+import { usePeerIssueIcon } from "@/modules/peer/PeerIssueIcon";
 
 type Props = {
   peer: Peer;
@@ -18,6 +18,7 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
   const { users } = useUsers();
   const router = useRouter();
   const { isOwnerOrAdmin } = useLoggedInUser();
+  const issueIcon = usePeerIssueIcon(peer);
 
   const userOfPeer = useMemo(() => {
     return users?.find((user) => user.id === peer.user_id);
@@ -52,7 +53,6 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
                 <ExitNodePeerIndicator peer={peer} />
                 <EphemeralPeerIndicator peer={peer} />
                 <ExpirationDisabledIndicator peer={peer} />
-                <LoginRequiredIndicator peer={peer} />
               </>
             )
           }
@@ -62,6 +62,15 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
               (displayUserId && `user: ${displayUserId}`)}
           </div>
         </ActiveInactiveRow>
+        {isOwnerOrAdmin && (
+          <div
+            className={
+              "ml-auto shrink-0 w-6 h-6 flex items-center justify-center"
+            }
+          >
+            {issueIcon}
+          </div>
+        )}
       </div>
     </div>
   );

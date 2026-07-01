@@ -11,6 +11,7 @@ import { UserCountStack } from "@components/ui/MultipleGroups";
 import {
   ArrowRightIcon,
   Binary,
+  CircleUser,
   FileCode2Icon,
   HelpCircle,
   LockKeyhole,
@@ -55,6 +56,12 @@ const HEADER_AUTH_METHOD = {
   Icon: FileCode2Icon,
 };
 
+const NETBIRD_ONLY_METHOD = {
+  label: "NetBird Only",
+  hoverLabel: "NetBird-Only Access",
+  Icon: CircleUser,
+};
+
 type Props = {
   reverseProxy: ReverseProxy;
 };
@@ -87,10 +94,12 @@ export default function ReverseProxyAuthCell({
   }
 
   const auth = reverseProxy.auth;
+  const isPrivate = !!reverseProxy.private;
 
   const enabled = AUTH_METHODS.filter((m) => auth?.[m.key]?.enabled);
   const hasHeaderAuths = (auth?.header_auths ?? []).some((h) => h.enabled);
-  const authCount = enabled.length + (hasHeaderAuths ? 1 : 0);
+  const authCount =
+    enabled.length + (hasHeaderAuths ? 1 : 0) + (isPrivate ? 1 : 0);
 
   const ssoGroups = auth?.bearer_auth?.enabled
     ? (auth.bearer_auth.distribution_groups ?? [])
@@ -98,66 +107,50 @@ export default function ReverseProxyAuthCell({
         .filter((g): g is Group => g != undefined)
     : [];
 
+  const accessGroups = isPrivate
+    ? (reverseProxy.access_groups ?? [])
+        .map((groupId) => groups?.find((g) => g.id === groupId))
+        .filter((g): g is Group => g != undefined)
+    : [];
+
   const canConfigure = !!permission?.services?.update;
-  const singleAuth =
-    authCount === 1
-      ? enabled.length === 1
-        ? enabled[0]
-        : HEADER_AUTH_METHOD
-      : null;
-  const SingleAuthIcon = singleAuth?.Icon ?? null;
 
-  const authBadge = SingleAuthIcon ? (
+  const authBadge = (
     <Badge
       variant={"gray"}
       useHover={false}
       disabled={!canConfigure}
       className={
-        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
+        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] !px-2 min-w-[50px] hover:bg-nb-gray-930 transition-all"
       }
     >
-      <SingleAuthIcon size={12} className="text-green-500" />
-      <span className={"font-medium text-xs"}>{singleAuth!.label}</span>
+      {authCount > 0 ? (
+        <LockKeyhole size={12} className="text-green-500" />
+      ) : (
+        <LockOpenIcon size={12} className="text-red-500" />
+      )}
+      <span className={"font-medium text-xs"}>{authCount}</span>
     </Badge>
-  ) : authCount > 1 ? (
-    <Badge
-      variant={"gray"}
-      useHover={false}
-      disabled={!canConfigure}
-      className={
-        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
-      }
-    >
-      <LockKeyhole size={12} className="text-green-500" />
-      <span className={"font-medium text-xs"}>{authCount} Enabled</span>
-    </Badge>
-  ) : null;
+  );
 
-  const showAuthHover =
-    authCount > 1 ||
-    (authCount === 1 && (auth?.bearer_auth?.enabled || hasHeaderAuths));
+  const showAuthHover = authCount > 0;
 
   return (
-    <div
-      className={"flex"}
-      data-auth-cell
-      onClick={(e) => {
-        e.stopPropagation();
-        if (permission?.services?.update) {
-          openModal({ proxy: reverseProxy, initialTab: "auth" });
-        }
-      }}
-    >
+    <div className={"flex"} data-auth-cell onClick={(e) => {
+      e.stopPropagation();
+      if (permission?.services?.update) {
+        openModal({ proxy: reverseProxy, initialTab: "auth" });
+      }
+    }}>
       <div className={"flex items-center"}>
-        {authBadge ? (
-          <HoverCard openDelay={200} closeDelay={100}>
-            <HoverCardTrigger asChild={true}>{authBadge}</HoverCardTrigger>
-            {showAuthHover && (
-              <HoverCardContent
-                className={"p-0"}
-                sideOffset={14}
-                onClick={(e) => e.stopPropagation()}
-              >
+        <HoverCard openDelay={200} closeDelay={100}>
+          <HoverCardTrigger asChild={true}>{authBadge}</HoverCardTrigger>
+          {showAuthHover && (
+            <HoverCardContent
+              className={"p-0"}
+              sideOffset={14}
+              onClick={(e) => e.stopPropagation()}
+            >
                 <div className={"text-xs"}>
                   {enabled.map(({ key, hoverLabel, Icon }) => (
                     <ListItem
@@ -198,39 +191,52 @@ export default function ReverseProxyAuthCell({
                       label={HEADER_AUTH_METHOD.hoverLabel}
                       value={
                         <div className={"text-green-500"}>
-                          {
-                            (auth?.header_auths ?? []).filter((h) => h.enabled)
-                              .length
-                          }{" "}
-                          Header
-                          {(auth?.header_auths ?? []).filter((h) => h.enabled)
-                            .length !== 1
-                            ? "s"
-                            : ""}
+                          {(auth?.header_auths ?? []).filter((h) => h.enabled).length} Header{(auth?.header_auths ?? []).filter((h) => h.enabled).length !== 1 ? "s" : ""}
                         </div>
                       }
                     />
                   )}
+                  {isPrivate && (
+                    <ListItem
+                      className={"py-0.5"}
+                      icon={<CircleUser size={14} />}
+                      label={NETBIRD_ONLY_METHOD.hoverLabel}
+                      value={
+                        <div className={"text-green-500"}>
+                          {accessGroups.length === 0
+                            ? "No groups"
+                            : accessGroups.length === 1
+                              ? "1 Group"
+                              : `${accessGroups.length} Groups`}
+                        </div>
+                      }
+                    >
+                      {accessGroups.length > 0 && (
+                        <div className={"flex flex-col gap-2 px-4 pt-2 pb-3"}>
+                          {accessGroups.map((group) => (
+                            <div
+                              key={group.id}
+                              className={
+                                "flex gap-2 items-center justify-between"
+                              }
+                            >
+                              <GroupBadge group={group} />
+                              <ArrowRightIcon size={14} />
+                              <UserCountStack group={group} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ListItem>
+                  )}
                 </div>
-              </HoverCardContent>
-            )}
-          </HoverCard>
-        ) : (
-          <Badge
-            variant={"gray"}
-            disabled={!canConfigure}
-            className={
-              "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
-            }
-          >
-            <LockOpenIcon size={12} className="text-red-500" />
-            <span className={"font-medium text-xs"}>No Auth</span>
-          </Badge>
-        )}
+            </HoverCardContent>
+          )}
+        </HoverCard>
         <Button
           size={"xs"}
           variant={"secondary"}
-          className={"!rounded-l-none !px-3 !h-[34px]"}
+          className={"!rounded-l-none !px-2 !h-[34px]"}
           onClick={(e) => {
             e.stopPropagation();
             openModal({ proxy: reverseProxy, initialTab: "auth" });

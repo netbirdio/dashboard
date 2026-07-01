@@ -1,10 +1,11 @@
-import { useOidcAccessToken } from "@axa-fr/react-oidc";
 import { useCallback, useRef, useState } from "react";
+import { useOidcAccessToken } from "@axa-fr/react-oidc";
 
 interface SSHConfig {
   hostname: string;
   port: number;
   username: string;
+  ipVersion?: string;
 }
 
 interface SSHConnection {
@@ -52,10 +53,7 @@ export const useSSH = (client: any) => {
           );
           console.log("Detection:", { requiresJwt, hasToken: !!accessToken });
         } catch (detectionErr) {
-          console.error(
-            "Detection failed, falling back to pubkey:",
-            detectionErr,
-          );
+          console.error("Detection failed, falling back to pubkey:", detectionErr);
         }
 
         if (requiresJwt && !accessToken) {
@@ -71,6 +69,7 @@ export const useSSH = (client: any) => {
           config.port,
           config.username,
           requiresJwt ? accessToken : undefined,
+          config.ipVersion,
         );
 
         ssh.onclose = () => {

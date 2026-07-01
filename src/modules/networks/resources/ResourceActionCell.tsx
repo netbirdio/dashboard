@@ -3,11 +3,22 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
+import { notify } from "@components/Notification";
+import { useApiCall } from "@utils/api";
+import {
+  MoreVertical,
+  PowerIcon,
+  SquarePenIcon,
+  Trash2,
+} from "lucide-react";
 import * as React from "react";
+import { useState } from "react";
+import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -17,10 +28,37 @@ type Props = {
 export const ResourceActionCell = ({ resource }: Props) => {
   const { permission } = usePermissions();
   const { deleteResource, network, openResourceModal } = useNetworksContext();
+  const { mutate } = useSWRConfig();
+  const [open, setOpen] = useState(false);
+
+  const update = useApiCall<NetworkResource>(
+    `/networks/${network?.id}/resources/${resource?.id}`,
+  ).put;
+
+  const toggleEnabled = async () => {
+    const nextEnabled = !resource.enabled;
+    notify({
+      title: `Update Resource`,
+      description: `'${resource?.name}' is now ${
+        nextEnabled ? "enabled" : "disabled"
+      }`,
+      loadingMessage: "Updating resource...",
+      duration: 1200,
+      promise: update({
+        ...resource,
+        groups: resource.groups
+          ?.map((g) => (g as Group).id)
+          .filter((g) => g !== undefined),
+        enabled: nextEnabled,
+      }).then(() => {
+        mutate(`/networks/${network?.id}/resources`);
+      }),
+    });
+  };
 
   return (
     <div className={"flex justify-end"}>
-      <DropdownMenu modal={false}>
+      <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger
           asChild={true}
           onClick={(e) => {
@@ -35,6 +73,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
             disabled={
               !permission.networks.update && !permission.networks.delete
             }
+            aria-label={"Resource actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
@@ -52,6 +91,19 @@ export const ResourceActionCell = ({ resource }: Props) => {
               Edit
             </div>
           </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              setOpen(false);
+              toggleEnabled();
+            }}
+            disabled={!permission.networks.update}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <PowerIcon size={14} className={"shrink-0"} />
+              {resource.enabled ? "Disable" : "Enable"}
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={() => {
               if (!network) return;

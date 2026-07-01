@@ -8,6 +8,7 @@ import loadConfig from "@utils/config";
 import { AlertOctagonIcon } from "lucide-react";
 import React from "react";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
+import { useAuthService } from "@/cloud/cloud-hooks/useAuthService";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Account } from "@/interfaces/Account";
@@ -18,26 +19,29 @@ type Props = {
 const config = loadConfig();
 
 export default function DangerZoneTab({ account }: Props) {
+  const { deleteAccount: deleteAuthServiceData } = useAuthService();
   const { confirm } = useDialog();
   const deleteRequest = useApiCall<Account>("/accounts/" + account.id);
   const { logout } = useLoggedInUser();
 
   const deleteAccount = async () => {
     const deletePromise = new Promise<void>((resolve, reject) => {
-      return deleteRequest
-        .del()
-        .then(() => {
-          // Clear browser storage only after confirmed account deletion
-          if (typeof window !== "undefined") {
-            localStorage.clear();
-            sessionStorage.clear();
-            // Optionally, clear cookies if needed
-            // document.cookie = ... (set cookies to expire)
-          }
-          logout().then();
-          resolve();
-        })
-        .catch((error) => reject(error));
+      deleteAuthServiceData().finally(async () => {
+        return deleteRequest
+          .del()
+          .catch((error) => reject(error))
+          .then(() => {
+            // Clear browser storage after account deletion
+            if (typeof window !== "undefined") {
+              localStorage.clear();
+              sessionStorage.clear();
+              // Optionally, clear cookies if needed
+              // document.cookie = ... (set cookies to expire)
+            }
+            logout().then();
+            resolve();
+          });
+      });
     });
 
     notify({

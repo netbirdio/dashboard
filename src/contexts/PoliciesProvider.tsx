@@ -70,9 +70,9 @@ export default function PoliciesProvider({ children }: Props) {
 
     const destinations = rule.destinationResource
       ? undefined
-      : await Promise.all((rule.destinations ?? []).map(resolveGroup)).then(
-          (ids) => ids.filter(Boolean) as string[],
-        );
+      : await Promise.all(
+          (rule.destinations ?? []).map(resolveGroup),
+        ).then((ids) => ids.filter(Boolean) as string[]);
 
     const destinationResource = rule.destinationResource
       ? { id: resource.id, type: resource.type }

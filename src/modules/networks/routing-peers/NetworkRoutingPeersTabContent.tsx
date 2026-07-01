@@ -34,7 +34,7 @@ export const NetworkRoutingPeersTabContent = ({
 
       return {
         ...router,
-        search: `${peer?.name ?? ""} ${peer?.ip ?? ""} ${user?.name ?? ""} ${user?.id ?? ""} ${group?.name ?? ""}`,
+        search: `${peer?.name ?? ""} ${peer?.ip ?? ""} ${peer?.ipv6 ?? ""} ${user?.name ?? ""} ${user?.id ?? ""} ${group?.name ?? ""}`,
       };
     });
   }, [users, peers, routers, groups]);
@@ -45,18 +45,14 @@ export const NetworkRoutingPeersTabContent = ({
         <div>
           <Paragraph>
             Add routing peers to this network to access resources inside this
-            network.
-          </Paragraph>
-          <Paragraph>
-            Learn more about
+            network.{" "}
             <InlineLink
               href={"https://docs.netbird.io/manage/networks#routing-peers"}
               target={"_blank"}
             >
-              Routing Peers
+              Learn more
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
           </Paragraph>
         </div>
       </div>

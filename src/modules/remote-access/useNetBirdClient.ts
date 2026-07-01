@@ -224,6 +224,7 @@ export const useNetBirdClient = () => {
       port: number,
       username: string,
       jwtToken?: string,
+      ipVersion?: string,
     ): Promise<any> => {
       if (!netBirdClient.current?.createSSHConnection) {
         throw new Error("Go client not ready");
@@ -233,6 +234,7 @@ export const useNetBirdClient = () => {
         port,
         username,
         jwtToken,
+        ipVersion,
       );
     },
     [],
@@ -287,12 +289,7 @@ export const useNetBirdClient = () => {
           {
             name,
             wg_pub_key: keyPairs.publicKey,
-            rules: rules ?? [
-              "tcp/22022",
-              "tcp/3389",
-              "tcp/44338",
-              "netbird-ssh/22",
-            ],
+            rules: rules ?? ["tcp/22022", "tcp/3389", "tcp/44338", "netbird-ssh/22"],
           },
           `/${peerId}/temporary-access`,
         );

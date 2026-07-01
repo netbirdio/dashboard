@@ -32,8 +32,9 @@ export const OnboardingTestResource = ({
 
   const pingAddress = useMemo(() => {
     let a = resource?.address || "";
-    if (isHost && a.endsWith("/32")) {
-      a = a.slice(0, -3);
+    if (isHost) {
+      if (a.endsWith("/32")) a = a.slice(0, -3);
+      else if (a.endsWith("/128")) a = a.slice(0, -4);
     }
     if (isWildCard) return `(any subdomain of ${a})`;
     return isSubnet ? `(resource ip in your subnet)` : a;

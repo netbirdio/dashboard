@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useReducer, useRef } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Label } from "@components/Label";
 import HelpText from "@components/HelpText";
 import Button from "@components/Button";
 import { Input } from "@components/Input";
 import cidr from "ip-cidr";
+import { hostSuffixFor, isIPv6 } from "@utils/ip";
 import {
   FlagIcon,
   MinusCircleIcon,
@@ -18,7 +19,8 @@ import {
   SelectOption,
 } from "@components/select/SelectDropdown";
 import { CountrySelector } from "@/components/ui/CountrySelector";
-import { AccessRestrictions } from "@/interfaces/ReverseProxy";
+import { AccessRestrictions, CrowdSecMode } from "@/interfaces/ReverseProxy";
+import { ReverseProxyCrowdSecIPReputation } from "@/modules/reverse-proxy/ReverseProxyCrowdSecIPReputation";
 
 type AccessAction = "allow" | "block";
 type AccessRuleType = "country" | "ip" | "cidr";
@@ -104,19 +106,21 @@ function restrictionsToRules(
   restrictions.blocked_countries?.forEach((v) =>
     rules.push({ id: nextId(), action: "block", type: "country", value: v }),
   );
-  restrictions.allowed_cidrs?.forEach((v) => {
-    const isIp = v.endsWith("/32");
-    rules.push({ id: nextId(), action: "allow", type: isIp ? "ip" : "cidr", value: isIp ? v.replace(/\/32$/, "") : v });
-  });
-  restrictions.blocked_cidrs?.forEach((v) => {
-    const isIp = v.endsWith("/32");
-    rules.push({ id: nextId(), action: "block", type: isIp ? "ip" : "cidr", value: isIp ? v.replace(/\/32$/, "") : v });
-  });
+  const cidrToRule = (v: string, action: AccessAction) => {
+    const isHostV4 = v.endsWith("/32");
+    const isHostV6 = v.endsWith("/128");
+    const isIp = isHostV4 || isHostV6;
+    const value = isHostV4 ? v.slice(0, -3) : isHostV6 ? v.slice(0, -4) : v;
+    rules.push({ id: nextId(), action, type: isIp ? "ip" : "cidr", value });
+  };
+  restrictions.allowed_cidrs?.forEach((v) => cidrToRule(v, "allow"));
+  restrictions.blocked_cidrs?.forEach((v) => cidrToRule(v, "block"));
   return rules;
 }
 
 function rulesToRestrictions(
   rules: AccessRule[],
+  crowdsecMode?: CrowdSecMode,
 ): AccessRestrictions | undefined {
   const allowed_countries: string[] = [];
   const blocked_countries: string[] = [];
@@ -129,17 +133,23 @@ function rulesToRestrictions(
       if (rule.action === "allow") allowed_countries.push(rule.value);
       else blocked_countries.push(rule.value);
     } else {
-      const value = rule.type === "ip" && !rule.value.includes("/") ? `${rule.value}/32` : rule.value;
+      let value = rule.value;
+      if (rule.type === "ip" && !value.includes("/")) {
+        const suffix = hostSuffixFor(value);
+        if (suffix !== null) value = `${value}/${suffix}`;
+      }
       if (rule.action === "allow") allowed_cidrs.push(value);
       else blocked_cidrs.push(value);
     }
   }
 
+  const hasCrowdSec = crowdsecMode != null && crowdsecMode !== CrowdSecMode.OFF;
   const hasAny =
     allowed_countries.length > 0 ||
     blocked_countries.length > 0 ||
     allowed_cidrs.length > 0 ||
-    blocked_cidrs.length > 0;
+    blocked_cidrs.length > 0 ||
+    hasCrowdSec;
 
   if (!hasAny) return undefined;
 
@@ -148,6 +158,7 @@ function rulesToRestrictions(
     ...(blocked_countries.length > 0 && { blocked_countries }),
     ...(allowed_cidrs.length > 0 && { allowed_cidrs }),
     ...(blocked_cidrs.length > 0 && { blocked_cidrs }),
+    ...(hasCrowdSec && { crowdsec_mode: crowdsecMode }),
   };
 }
 
@@ -155,28 +166,42 @@ type Props = {
   value: AccessRestrictions | undefined;
   onChange: (value: AccessRestrictions | undefined) => void;
   onValidationChange?: (hasErrors: boolean) => void;
+  supportsCrowdSec?: boolean;
 };
 
 function validateRule(rule: AccessRule): string {
   if (rule.type === "country" || !rule.value) return "";
   if (rule.type === "ip") {
-    const val = rule.value.includes("/") ? rule.value : `${rule.value}/32`;
+    let val = rule.value;
+    if (!val.includes("/")) {
+      const suffix = isIPv6(val) ? 128 : 32;
+      val = `${val}/${suffix}`;
+    }
     if (!cidr.isValidAddress(val)) {
-      return "Please enter a valid IP address, e.g., 85.203.15.42";
+      return "Please enter a valid IP address, e.g., 85.203.15.42 or 2001:db8::1";
     }
   } else {
     if (!rule.value.includes("/") || !cidr.isValidAddress(rule.value)) {
-      return "Please enter a valid CIDR block, e.g., 74.125.0.0/16";
+      return "Please enter a valid CIDR block, e.g., 74.125.0.0/16 or 2001:db8::/64";
     }
   }
   return "";
 }
 
-export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationChange }: Props) => {
+export const ReverseProxyAccessControlRules = ({
+  value,
+  onChange,
+  onValidationChange,
+  supportsCrowdSec,
+}: Props) => {
   const [rules, dispatch] = useReducer(
     rulesReducer,
     value,
     restrictionsToRules,
+  );
+
+  const [crowdsecMode, setCrowdsecMode] = useState<CrowdSecMode>(
+    value?.crowdsec_mode ?? CrowdSecMode.OFF,
   );
 
   const errors = useMemo(
@@ -196,8 +221,14 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
   onValidationChangeRef.current = onValidationChange;
 
   useEffect(() => {
-    onChangeRef.current(rulesToRestrictions(rules));
-  }, [rules]);
+    if (!supportsCrowdSec) {
+      setCrowdsecMode(CrowdSecMode.OFF);
+    }
+  }, [supportsCrowdSec]);
+
+  useEffect(() => {
+    onChangeRef.current(rulesToRestrictions(rules, crowdsecMode));
+  }, [rules, crowdsecMode]);
 
   useEffect(() => {
     onValidationChangeRef.current?.(hasErrors);
@@ -205,6 +236,12 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
 
   return (
     <div className={"flex-col flex"}>
+      {supportsCrowdSec && (
+        <ReverseProxyCrowdSecIPReputation
+          value={crowdsecMode}
+          onChange={setCrowdsecMode}
+        />
+      )}
       <div>
         <Label>Access Control Rules</Label>
         <HelpText>
@@ -216,9 +253,16 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
       </div>
       {rules.length > 0 && (
         <div className="flex flex-col gap-3 mt-1 mb-4">
-          {rules.map((rule) => (
-            <div key={rule.id} className="flex items-center">
-              <div className="w-[160px] shrink-0 [&_button]:rounded-r-none [&_button]:w-[160px]">
+          {rules.map((rule, ruleIndex) => (
+            <div
+              key={rule.id}
+              className="flex items-center"
+              data-testid={`access-rule-${ruleIndex}`}
+            >
+              <div
+                className="w-[160px] shrink-0 [&_button]:rounded-r-none [&_button]:w-[160px]"
+                data-testid={"access-rule-action"}
+              >
                 <SelectDropdown
                   value={rule.action}
                   onChange={(v) =>
@@ -234,7 +278,10 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                 />
               </div>
 
-              <div className="w-[160px] shrink-0 -ml-px [&_button]:rounded-none [&_button]:w-[160px]">
+              <div
+                className="w-[160px] shrink-0 -ml-px [&_button]:rounded-none [&_button]:w-[160px]"
+                data-testid={"access-rule-type"}
+              >
                 <SelectDropdown
                   value={rule.type}
                   onChange={(v) =>
@@ -270,8 +317,8 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                   <Input
                     placeholder={
                       rule.type === "ip"
-                        ? "e.g., 85.203.15.42"
-                        : "e.g., 74.125.0.0/16"
+                        ? "e.g., 85.203.15.42 or 2001:db8::1"
+                        : "e.g., 74.125.0.0/16 or 2001:db8::/64"
                     }
                     value={rule.value}
                     onChange={(e) =>
@@ -285,6 +332,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                     error={errors[rule.id]}
                     errorTooltip={true}
                     maxWidthClass="w-full"
+                    data-testid="access-rule-value"
                   />
                 )}
               </div>
@@ -294,6 +342,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                 className="h-[42px] w-[42px] !px-0 shrink-0 ml-2"
                 onClick={() => dispatch({ type: "remove", id: rule.id })}
                 aria-label="Remove rule"
+                data-testid="remove-access-rule"
               >
                 <MinusCircleIcon size={14} />
               </Button>
@@ -306,6 +355,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
         className="w-full"
         size="sm"
         onClick={() => dispatch({ type: "add" })}
+        data-testid="add-access-rule"
       >
         <PlusIcon size={14} />
         Add Rule

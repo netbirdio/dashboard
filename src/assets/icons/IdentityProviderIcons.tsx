@@ -23,6 +23,7 @@ export const idpIcon = (
     zitadel: <ZitadelIcon size={size} />,
     authentik: <AuthentikIcon size={size} />,
     keycloak: <KeycloakIcon size={size} />,
+    adfs: <MicrosoftIcon size={size} />,
     oidc: <KeyRound size={size} className="text-nb-gray-400" />,
   };
 

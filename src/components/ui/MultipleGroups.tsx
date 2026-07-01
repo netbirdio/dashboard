@@ -27,6 +27,15 @@ type Props = {
   redirectGroupTab?: string;
   showUsers?: boolean;
   disableRedirect?: boolean;
+  // countOnly collapses the visible chip to a single "N Groups" badge
+  // when there are 2+ groups. The first-group + "+N" pattern is
+  // suppressed in favour of a count summary; the hover card still
+  // shows the full list.
+  countOnly?: boolean;
+  // countThreshold raises the size at which countOnly kicks in.
+  // Default 1 means "collapse when length > 1". A threshold of 2
+  // shows up to 2 groups inline and only collapses when there are 3+.
+  countThreshold?: number;
 };
 
 export default function MultipleGroups({
@@ -39,11 +48,13 @@ export default function MultipleGroups({
   showUsers = false,
   redirectGroupTab,
   disableRedirect = false,
+  countOnly = false,
+  countThreshold = 1,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
 
   if (!groups || groups?.length === 0) return <EmptyRow />;
-  const orderedGroups = groups.sort((a, b) => {
+  const orderedGroups = [...groups].sort((a, b) => {
     if (a.name === "All") return 1;
     if (b.name === "All") return -1;
     const aPeerCount = a.peers_count ?? 0;
@@ -60,19 +71,10 @@ export default function MultipleGroups({
         <HoverCardTrigger>
           <div
             className={cn("inline-flex items-center gap-2 z-0", className)}
-            data-cy={"multiple-groups"}
+            data-testid={"multiple-groups"}
             onClick={onClick}
           >
-            {firstGroup && (
-              <GroupBadge
-                group={firstGroup}
-                showNewBadge={true}
-                className={
-                  permission.groups.update ? "group-hover:bg-nb-gray-800" : ""
-                }
-              />
-            )}
-            {otherGroups && otherGroups.length > 0 && (
+            {countOnly && orderedGroups.length > countThreshold ? (
               <Badge
                 variant={"gray-ghost"}
                 useHover={true}
@@ -81,8 +83,51 @@ export default function MultipleGroups({
                   permission.groups.update ? "group-hover:bg-nb-gray-800" : "",
                 )}
               >
-                + {otherGroups.length}
+                {orderedGroups.length} Groups
               </Badge>
+            ) : countOnly ? (
+              <div className={"inline-flex items-center gap-2"}>
+                {orderedGroups.map((group) => (
+                  <GroupBadge
+                    key={group?.id || group?.name}
+                    group={group}
+                    showNewBadge={true}
+                    className={
+                      permission.groups.update
+                        ? "group-hover:bg-nb-gray-800"
+                        : ""
+                    }
+                  />
+                ))}
+              </div>
+            ) : (
+              <>
+                {firstGroup && (
+                  <GroupBadge
+                    group={firstGroup}
+                    showNewBadge={true}
+                    className={
+                      permission.groups.update
+                        ? "group-hover:bg-nb-gray-800"
+                        : ""
+                    }
+                  />
+                )}
+                {otherGroups && otherGroups.length > 0 && (
+                  <Badge
+                    variant={"gray-ghost"}
+                    useHover={true}
+                    className={cn(
+                      "px-3 gap-2 whitespace-nowrap",
+                      permission.groups.update
+                        ? "group-hover:bg-nb-gray-800"
+                        : "",
+                    )}
+                  >
+                    + {otherGroups.length}
+                  </Badge>
+                )}
+              </>
             )}
           </div>
         </HoverCardTrigger>

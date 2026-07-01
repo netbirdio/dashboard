@@ -58,6 +58,24 @@ const isEqualDateRange = (a: DateRange | undefined, b: DateRange) => {
   return aFromDay === bFromDay && aToDay === bToDay;
 };
 
+// dateRangePresetLabel returns the human label of the matching quick-range
+// preset (e.g. "Last 14 Days", "Last Month") for a value, or null when the
+// value is a custom range (or empty). Shared so date-filter chips read the same
+// way as the picker's own button.
+export function dateRangePresetLabel(
+  value: DateRange | undefined,
+): string | null {
+  if (!value?.from && !value?.to) return null;
+  if (isEqualDateRange(value, defaultRanges.allTime)) return "All Time";
+  if (isEqualDateRange(value, defaultRanges.lastMonth)) return "Last Month";
+  if (isEqualDateRange(value, defaultRanges.last14Days)) return "Last 14 Days";
+  if (isEqualDateRange(value, defaultRanges.last2Days)) return "Last 2 Days";
+  if (isEqualDateRange(value, defaultRanges.last7Days)) return "Last 7 Days";
+  if (isEqualDateRange(value, defaultRanges.yesterday)) return "Yesterday";
+  if (isEqualDateRange(value, defaultRanges.today)) return "Today";
+  return null;
+}
+
 export function DatePickerWithRange({
   className,
   value,
@@ -79,19 +97,14 @@ export function DatePickerWithRange({
   const displayDateValue = useMemo(() => {
     if (!value) return "Select date range";
 
-    if (isActive.allTime) return "All Time";
-    if (isActive.lastMonth) return "Last Month";
-    if (isActive.last14Days) return "Last 14 Days";
-    if (isActive.last2Days) return "Last 2 Days";
-    if (isActive.last7Days) return "Last 7 Days";
-    if (isActive.yesterday) return "Yesterday";
-    if (isActive.today) return "Today";
+    const preset = dateRangePresetLabel(value);
+    if (preset) return preset;
 
     if (!value.to) return dayjs(value.from).format("MMM DD, YYYY").toString();
     return `${dayjs(value.from).format("MMM DD, YYYY")} - ${dayjs(
       value.to,
     ).format("MMM DD, YYYY")}`;
-  }, [value, isActive]);
+  }, [value]);
 
   const [calendarOpen, setCalendarOpen] = useState(false);
 

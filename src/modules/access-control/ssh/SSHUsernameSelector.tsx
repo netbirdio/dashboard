@@ -76,7 +76,7 @@ export function SSHUsernameSelector({
               "border border-neutral-200 dark:border-nb-gray-700 justify-between py-1.5 px-2.5",
               "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer hover:dark:bg-nb-gray-900/50",
             )}
-            data-cy={"ssh-username-selector"}
+            data-testid={"ssh-username-selector"}
             disabled={disabled}
             ref={inputRef}
           >
@@ -143,7 +143,7 @@ export function SSHUsernameSelector({
                     "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
                     "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
                   )}
-                  data-cy={"ssh-username-input"}
+                  data-testid={"ssh-username-input"}
                   ref={searchRef}
                   value={search}
                   onValueChange={setSearch}

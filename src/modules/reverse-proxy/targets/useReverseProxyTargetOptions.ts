@@ -29,7 +29,7 @@ export function useReverseProxyTargetOptions(
 ) {
   const [targetOptions, setTargetOptions] = useState<ServiceTargetOptions>(
     () => {
-      const { custom_headers: _, ...rest } = initialOptions ?? {};
+      const { custom_headers: _ch, ...rest } = initialOptions ?? {};
       return rest;
     },
   );

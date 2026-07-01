@@ -1,5 +1,6 @@
 import React from "react";
 import { useGroupContext } from "@/contexts/GroupProvider";
+import PeersProvider from "@/contexts/PeersProvider";
 import { Route } from "@/interfaces/Route";
 import { GroupDetailsTableContainer } from "@/modules/groups/details/GroupDetailsTableContainer";
 import NetworkRoutesTable from "@/modules/route-group/NetworkRoutesTable";
@@ -18,14 +19,16 @@ export const GroupNetworkRoutesSection = ({
   const { group } = useGroupContext();
 
   return (
-    <GroupDetailsTableContainer>
-      <NetworkRoutesTable
-        isGroupPage={true}
-        isLoading={isLoading}
-        groupedRoutes={groupedRoutes}
-        routes={routes}
-        distributionGroups={[group]}
-      />
-    </GroupDetailsTableContainer>
+    <PeersProvider>
+      <GroupDetailsTableContainer>
+        <NetworkRoutesTable
+          isGroupPage={true}
+          isLoading={isLoading}
+          groupedRoutes={groupedRoutes}
+          routes={routes}
+          distributionGroups={[group]}
+        />
+      </GroupDetailsTableContainer>
+    </PeersProvider>
   );
 };
