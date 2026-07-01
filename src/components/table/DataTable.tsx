@@ -191,11 +191,6 @@ interface DataTableProps<TData, TValue> {
   initialFilters?: ColumnFiltersState;
   initialSearch?: string;
   onSearchClick?: () => void;
-  // Load-more feed: when onLoadMore is set the numbered pagination is replaced
-  // by an auto-loading scroll sentinel that calls onLoadMore while hasMore.
-  onLoadMore?: () => void;
-  hasMore?: boolean;
-  isLoadingMore?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -257,9 +252,6 @@ export function DataTable<TData, TValue>({
   initialFilters,
   initialSearch,
   onSearchClick,
-  onLoadMore,
-  hasMore = false,
-  isLoadingMore = false,
 }: Readonly<DataTableProps<TData, TValue>>) {
   const path = usePathname();
   const isInitialRender = useRef(true);
@@ -390,25 +382,6 @@ export function DataTable<TData, TValue>({
   });
 
   const [accordion, setAccordion] = useState<string[]>();
-
-  // Load-more feed: observe a sentinel below the table and fetch the next page
-  // as it scrolls into view, as long as there's more and nothing is in flight.
-  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!onLoadMore) return;
-    const el = loadMoreSentinelRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && hasMore && !isFetching) {
-          onLoadMore();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [onLoadMore, hasMore, isFetching]);
 
   const TableComponent = as === "table" ? Table : "div";
   const TableHeaderComponent = as === "table" ? TableHeader : "div";
@@ -662,48 +635,14 @@ export function DataTable<TData, TValue>({
         </TableWrapper>
       </div>
 
-      {onLoadMore ? (
-        <div className={paginationClassName}>
-          <div
-            ref={loadMoreSentinelRef}
-            className={"h-px w-full"}
-            aria-hidden={true}
-          />
-          {isLoadingMore ? (
-            <div
-              className={
-                "flex items-center justify-center py-6 text-sm text-nb-gray-400"
-              }
-            >
-              Loading more…
-            </div>
-          ) : (
-            !hasMore &&
-            (data?.length ?? 0) > 0 && (
-              <div
-                className={
-                  "flex items-center justify-center py-6 text-sm text-nb-gray-400"
-                }
-              >
-                All{" "}
-                <span className={"font-medium text-white mx-1"}>
-                  {data?.length}
-                </span>{" "}
-                {text.toLowerCase()} loaded
-              </div>
-            )
-          )}
-        </div>
-      ) : (
-        <div className={paginationClassName}>
-          <DataTablePagination
-            table={table}
-            text={text}
-            paginationPadding={paginationPaddingClassName}
-            totalRecords={totalRecords}
-          />
-        </div>
-      )}
+      <div className={paginationClassName}>
+        <DataTablePagination
+          table={table}
+          text={text}
+          paginationPadding={paginationPaddingClassName}
+          totalRecords={totalRecords}
+        />
+      </div>
 
       <DataTableHeadingPortal
         table={table}

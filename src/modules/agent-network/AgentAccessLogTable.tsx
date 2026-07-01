@@ -710,7 +710,6 @@ export default function AgentAccessLogTable({
           <AgentAccessLogExpandedRow entry={row as AIAccessLogEntry} />
         )
       }
-      onLoadMore={paginationProps.loadMore}
       searchPlaceholder={"Search by user, agent, model, prompt…"}
       text={grouped ? "Sessions" : "Requests"}
       uniqueKey={

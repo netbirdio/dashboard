@@ -133,7 +133,6 @@ export default function UsageAndLogsPage() {
                       }
                       defaultPageSize={25}
                       defaultFilters={defaultAccessLogFilters}
-                      accumulate={true}
                     >
                       <AgentAccessLogTable
                         grouped={groupBySession}
