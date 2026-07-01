@@ -223,8 +223,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value>
-        was blocked
+        <Value>{event.meta.email}</Value> was blocked
       </div>
     );
 
@@ -232,8 +231,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value>
-        was unblocked
+        <Value>{event.meta.email}</Value> was unblocked
       </div>
     );
 
@@ -359,12 +357,19 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
-  if (event.activity_code == "peer.login.expire")
+  if (event.activity_code == "peer.login.expire") {
     return (
       <div className={"inline"}>
-        Login of the peer <Value>{m.name}</Value> is expired
+        Login of the peer <Value>{m.name}</Value> expired
+        {m.reason && (
+          <>
+            {" "}
+            due to <Value>{m.reason}</Value>
+          </>
+        )}
       </div>
     );
+  }
 
   if (event.activity_code == "peer.ssh.disable")
     return (
