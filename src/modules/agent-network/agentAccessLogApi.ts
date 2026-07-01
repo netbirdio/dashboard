@@ -46,8 +46,8 @@ export type APIAgentNetworkAccessLogsResponse = {
   data: APIAgentNetworkAccessLog[];
   page: number;
   page_size: number;
-  total_pages: number;
-  total_records: number;
+  // Load-more feed: no total is computed; has_more reports another page exists.
+  has_more: boolean;
 };
 
 // APIAgentNetworkAccessLogSession mirrors the api.AgentNetworkAccessLogSession

@@ -27,6 +27,13 @@ type ServerPaginationContextValue<T = unknown> = {
     pageSize: number;
   }) => void;
 
+  // Load-more feed (opt-in via the `accumulate` prop). In this mode `data`
+  // grows as pages are appended, there is no total count, and the consumer
+  // drives fetching via loadMore()/hasMore instead of numbered pagination.
+  hasMore?: boolean;
+  loadMore?: () => void;
+  isLoadingMore?: boolean;
+
   globalFilter: string;
   onGlobalFilterChange: (value: string) => void;
   setFilter: (key: string, value: string | undefined) => void;
@@ -50,6 +57,10 @@ type ProviderProps = {
   url: string;
   defaultPageSize?: number;
   defaultFilters?: Record<string, string>;
+  // When true the provider runs as a load-more feed: pages are appended into a
+  // growing `data` array and the response's has_more drives loadMore()/hasMore,
+  // so no total count is needed. Defaults to classic numbered pagination.
+  accumulate?: boolean;
   children: React.ReactNode;
 };
 
@@ -57,6 +68,7 @@ export default function ServerPaginationProvider({
   url,
   defaultPageSize = 50,
   defaultFilters,
+  accumulate = false,
   children,
 }: Readonly<ProviderProps>) {
   const { mutate: swrMutate } = useSWRConfig();
@@ -103,7 +115,51 @@ export default function ServerPaginationProvider({
 
   const activeResponse = response ?? previousResponse.current;
   const totalPages = activeResponse?.total_pages ?? 0;
-  const hasNextPage = page < totalPages;
+  const hasNextPage = accumulate
+    ? Boolean(response?.has_more)
+    : page < totalPages;
+
+  // Load-more accumulation: keep each fetched page's rows keyed by page number
+  // and expose their concatenation as the growing data array.
+  const [pagesData, setPagesData] = useState<Record<number, unknown[]>>({});
+  const [hasMoreState, setHasMoreState] = useState(false);
+  const loadingMoreRef = useRef(false);
+
+  // Any change to the query (search / filters) restarts the feed from page 1.
+  const resetKey = accumulate ? JSON.stringify({ search, filters }) : "";
+  useEffect(() => {
+    if (!accumulate) return;
+    setPagesData({});
+    setHasMoreState(false);
+    setPage(1);
+    loadingMoreRef.current = false;
+  }, [resetKey, accumulate]);
+
+  // Store each page's rows as it arrives; has_more tracks the latest page.
+  useEffect(() => {
+    if (!accumulate || !response) return;
+    const pageData = response.data as unknown[] | undefined;
+    if (pageData) {
+      setPagesData((prev) => ({ ...prev, [page]: pageData }));
+      setHasMoreState(Boolean(response.has_more));
+      loadingMoreRef.current = false;
+    }
+  }, [response, page, accumulate]);
+
+  const accumulatedData = useMemo(() => {
+    const loaded = Object.keys(pagesData)
+      .map(Number)
+      .sort((a, b) => a - b);
+    return loaded.flatMap((p) => pagesData[p]);
+  }, [pagesData]);
+
+  const loadMore = useCallback(() => {
+    // Guard against the scroll sentinel firing repeatedly before the next
+    // page's fetch settles (which would skip pages).
+    if (loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setPage((p) => p + 1);
+  }, []);
 
   // Prefetch next page
   useFetchApi<Pagination<unknown>>(
@@ -174,7 +230,7 @@ export default function ServerPaginationProvider({
 
   const value = useMemo<ServerPaginationContextValue>(
     () => ({
-      data: activeResponse?.data,
+      data: accumulate ? accumulatedData : activeResponse?.data,
       isLoading: isLoading && !hasLoadedOnce.current,
       isFetching: isValidating,
       mutate,
@@ -184,9 +240,12 @@ export default function ServerPaginationProvider({
       hasActiveFilters,
       resetFilters,
       pagination: { pageIndex: page - 1, pageSize },
-      pageCount: totalPages,
-      totalRecords: activeResponse?.total_records,
+      pageCount: accumulate ? 0 : totalPages,
+      totalRecords: accumulate ? undefined : activeResponse?.total_records,
       onPaginationChange,
+      hasMore: accumulate ? hasMoreState : undefined,
+      loadMore: accumulate ? loadMore : undefined,
+      isLoadingMore: accumulate ? isValidating && page > 1 : undefined,
       manualPagination: true,
       serverSidePagination: true,
       manualFiltering: true,
@@ -197,6 +256,8 @@ export default function ServerPaginationProvider({
       hasServerSideFilters: hasActiveFilters,
     }),
     [
+      accumulate,
+      accumulatedData,
       activeResponse?.data,
       activeResponse?.total_records,
       isLoading,
@@ -211,6 +272,8 @@ export default function ServerPaginationProvider({
       pageSize,
       totalPages,
       onPaginationChange,
+      hasMoreState,
+      loadMore,
       search,
       onGlobalFilterChange,
     ],
