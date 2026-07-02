@@ -170,7 +170,7 @@ export default function InstanceSetupWizard() {
             }
           >
             You are being redirected to login in{" "}
-            <span className={"text-white font-medium"}>{countdown}s</span>...
+            <span className={"text-nb-gray-100 font-medium"}>{countdown}s</span>...
           </div>
           <div className={"flex items-center justify-center mt-4"}>
             <Button

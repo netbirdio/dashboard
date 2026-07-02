@@ -84,7 +84,7 @@ export default function GroupBadgeWithEditPeers({
             {isNew && showNewBadge && (
               <span
                 className={
-                  "text-[7px] relative -top-[0px] leading-[0] bg-green-900 border border-green-500/20 py-1.5 px-1 rounded-[3px] text-green-400"
+                  "text-[7px] relative -top-[0px] leading-[0] bg-green-100 border border-green-500/20 py-1.5 px-1 rounded-[3px] text-green-700 dark:bg-green-900 dark:text-green-400"
                 }
               >
                 NEW

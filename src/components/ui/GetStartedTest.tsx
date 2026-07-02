@@ -28,7 +28,7 @@ export default function GetStartedTest({
           <>
             <div
               className={
-                "absolute z-20 bg-gradient-to-b  dark:to-nb-gray-950 dark:from-nb-gray-950/40 w-full h-full"
+                "absolute z-20 bg-gradient-to-b to-nb-gray-940 from-nb-gray-940/40 dark:to-nb-gray-950 dark:from-nb-gray-950/40 w-full h-full"
               }
             ></div>
             <div
