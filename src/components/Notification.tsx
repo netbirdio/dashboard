@@ -3,7 +3,7 @@ import type { ErrorResponse } from "@utils/api";
 import { cn } from "@utils/helpers";
 import classNames from "classnames";
 import { motion } from "framer-motion";
-import { CheckIcon, Loader2, XIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, Loader2, XIcon } from "lucide-react";
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ export interface NotifyProps<T> {
   preventSuccessToast?: boolean;
   showOnlyError?: boolean;
   errorMessages?: ErrorResponse[];
+  requestId?: string;
 }
 
 interface NotificationProps<T> extends NotifyProps<T> {
@@ -39,8 +40,11 @@ export default function Notification<T>({
   preventSuccessToast = false,
   showOnlyError = false,
   errorMessages,
+  requestId: requestIdProp,
 }: NotificationProps<T>) {
   const [error, setError] = useState("");
+  const [requestId, setRequestId] = useState(requestIdProp);
+  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(!!promise);
   const [readyToDismiss, setReadyToDismiss] = useState(!promise);
 
@@ -69,6 +73,17 @@ export default function Notification<T>({
       remainingRef.current - (Date.now() - startTimeRef.current),
     );
   }, []);
+
+  const copyRequestId = useCallback(async () => {
+    if (!requestId) return;
+    try {
+      await navigator.clipboard.writeText(requestId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+      // Clipboard access can be denied; keep the ID selectable as a fallback.
+    }
+  }, [requestId]);
 
   const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -125,6 +140,8 @@ export default function Notification<T>({
           let message = err.message || "Something went wrong...";
           message = message.charAt(0).toUpperCase() + message.slice(1);
           const code: number = err.code || 418;
+
+          if (err.requestId) setRequestId(err.requestId);
 
           if (errorMessages) {
             const errorMessage = errorMessages.find(
@@ -189,6 +206,28 @@ export default function Notification<T>({
             <p className={"text-xs dark:text-nb-gray-300 text-gray-600 mt-0.5"}>
               {loading ? loadingMessage : error ? error : description}
             </p>
+            {!loading && requestId && (
+              <button
+                type={"button"}
+                data-testid={"notification-request-id"}
+                title={"Copy request ID"}
+                onClick={copyRequestId}
+                className={
+                  "group/req flex items-center gap-1.5 mt-1 text-[11px] text-gray-500 dark:text-nb-gray-400 hover:text-gray-700 dark:hover:text-nb-gray-200 cursor-pointer text-left"
+                }
+              >
+                <span>Request ID:</span>
+                <span className={"font-mono select-all"}>{requestId}</span>
+                {copied ? (
+                  <CheckIcon size={12} className={"text-green-500 shrink-0"} />
+                ) : (
+                  <CopyIcon
+                    size={12}
+                    className={"opacity-0 group-hover/req:opacity-100 shrink-0"}
+                  />
+                )}
+              </button>
+            )}
           </div>
         </div>
 
