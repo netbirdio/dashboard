@@ -19,12 +19,19 @@ const NETWORKS_ENDPOINT = /\/api\/networks(\?|$)/;
 const REQUEST_ID_TESTID = "notification-request-id";
 
 // failNetworks mocks the networks list GET with a 500, optionally attaching the
-// X-Request-Id header to emulate a newer management server.
+// X-Request-Id header to emulate a newer management server. The dashboard talks
+// to the management API cross-origin, so the mock must mirror a CORS-enabled
+// server: the browser only lets JS read a non-safelisted response header when it
+// is listed in Access-Control-Expose-Headers. This is the same requirement the
+// real management server must satisfy for the feature to work in production.
 async function failNetworks(page: Page, opts: { withRequestId: boolean }) {
   await page.route(NETWORKS_ENDPOINT, async (route) => {
     if (route.request().method() !== "GET") return route.continue();
+    const origin = route.request().headers()["origin"] || "*";
     const headers: Record<string, string> = {
       "content-type": "application/json",
+      "access-control-allow-origin": origin,
+      "access-control-expose-headers": "X-Request-Id",
     };
     if (opts.withRequestId) headers["X-Request-Id"] = REQUEST_ID;
     await route.fulfill({
