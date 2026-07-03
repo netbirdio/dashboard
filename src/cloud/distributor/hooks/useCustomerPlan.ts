@@ -1,4 +1,5 @@
 import useFetchApi, { useApiCall } from "@utils/api";
+import { resolveActiveCurrency } from "@utils/billing";
 import { notify } from "@components/Notification";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -20,7 +21,6 @@ export const useCustomerPlan = ({ accountId, withUsage = false }: Props) => {
     true,
   );
   const {
-    currency,
     plans,
     isLoading: isBillingLoading,
     getCurrentPlanByPlanTier,
@@ -44,6 +44,12 @@ export const useCustomerPlan = ({ accountId, withUsage = false }: Props) => {
     isTrialExpired,
     isSubscriptionLoading,
   } = useTenantSubscription({ tenantId: accountId });
+
+  // This customer's own billing currency, not the distributor's account currency
+  const currency = useMemo(
+    () => resolveActiveCurrency(subscription),
+    [subscription],
+  );
 
   const teamAndBusinessPlans = plans?.filter(
     (plan) =>

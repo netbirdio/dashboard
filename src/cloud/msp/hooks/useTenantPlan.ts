@@ -1,4 +1,5 @@
 import useFetchApi from "@utils/api";
+import { resolveActiveCurrency } from "@utils/billing";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useTenants } from "@/cloud/msp/contexts/TenantsProvider";
@@ -18,7 +19,6 @@ export const useTenantPlan = ({ tenant, withUsage = true }: Props) => {
   const { mutate } = useSWRConfig();
   const { updateSubscription } = useTenants();
   const {
-    currency,
     plans,
     isLoading: isBillingLoading,
     getCurrentPlanByPlanTier,
@@ -42,6 +42,12 @@ export const useTenantPlan = ({ tenant, withUsage = true }: Props) => {
     isTrialExpired,
     isSubscriptionLoading,
   } = useTenantSubscription({ tenantId: tenant.id });
+
+  // This tenant's own billing currency, not the MSP admin's account currency
+  const currency = useMemo(
+    () => resolveActiveCurrency(subscription),
+    [subscription],
+  );
 
   const teamAndBusinessPlans = plans?.filter(
     (plan) =>

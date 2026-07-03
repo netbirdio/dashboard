@@ -1,16 +1,11 @@
 import { notify } from "@components/Notification";
 import useFetchApi, { useApiCall } from "@utils/api";
+import { resolveActiveCurrency } from "@utils/billing";
 import { isNetBirdCloud } from "@utils/netbird";
 import md5 from "crypto-js/md5";
 import dayjs from "dayjs";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { PlanFeatures } from "@/cloud/cloud-hooks/useIsFeatureLocked";
 import { MSPTrialExpiredModal } from "@/cloud/msp/MSPTrialExpiredModal";
@@ -81,7 +76,6 @@ export const BillingContext = React.createContext(
     ) => Promise<boolean>;
     trialDaysRemaining: number;
     currency: Currency;
-    setCurrency: (currency: Currency) => void;
     getCurrentPlanByPlanTier: (planTier: PlanTier) => Plan | undefined;
     calculateEstimatedPrice: (
       plan: Plan,
@@ -171,22 +165,11 @@ function BillingContextProvider({ children }: Readonly<Props>) {
     );
   }, [currentPlan, subscription]);
 
-  const initialCurrency = useRef<Currency | undefined>(undefined);
-
-  const [currency, setCurrency] = useState<Currency>(
-    subscription?.currency || Currency.USD,
-  );
+  const [currency, setCurrency] = useState<Currency>(Currency.EUR);
 
   useEffect(() => {
     if (isSubscriptionLoading) return;
-
-    if (subscription?.active && subscription?.currency) {
-      setCurrency(subscription.currency);
-      initialCurrency.current = subscription.currency;
-    } else if (!initialCurrency.current) {
-      initialCurrency.current = subscription?.currency || Currency.USD;
-      setCurrency(initialCurrency.current);
-    }
+    setCurrency(resolveActiveCurrency(subscription));
   }, [isSubscriptionLoading, subscription?.active, subscription?.currency]);
 
   const maxPeersOfPlan = useMemo(() => {
@@ -483,7 +466,6 @@ function BillingContextProvider({ children }: Readonly<Props>) {
         startTrial,
         trialDaysRemaining,
         currency,
-        setCurrency,
         getCurrentPlanByPlanTier,
         calculateEstimatedPrice,
         isAWS,
