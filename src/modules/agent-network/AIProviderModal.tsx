@@ -32,7 +32,7 @@ import {
   Sparkles,
   UploadIcon,
 } from "lucide-react";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import {
   ReverseProxyDomain,
@@ -639,7 +639,7 @@ export default function AIProviderModal({
                               certificates on your proxy instances instead.{" "}
                               <InlineLink
                                 href={
-                                  "https://docs.netbird.io/agent-network/providers/self-signed-certificates"
+                                  "https://docs.netbird.io/agent-network/providers#skip-tls-verification"
                                 }
                                 target={"_blank"}
                               >
@@ -1279,6 +1279,18 @@ type CatalogModelOption = {
   output_per_1k: number;
 };
 
+// priceToInput renders a stored price as an editable string, always using "."
+// as the decimal separator regardless of the browser locale.
+function priceToInput(n: number): string {
+  return Number.isFinite(n) ? String(n) : "";
+}
+
+// priceFromInput parses an operator-typed price, accepting a "," as the decimal
+// separator (some keyboards/locales) and normalising it to a plain number.
+function priceFromInput(s: string): number {
+  return parseFloat(s.replace(/,/g, ".")) || 0;
+}
+
 function ModelRowEditor({
   row,
   catalogModels,
@@ -1296,6 +1308,29 @@ function ModelRowEditor({
   onChangeOutput: (n: number) => void;
   onRemove: () => void;
 }) {
+  // Editable text for the price fields. We keep the raw string locally so the
+  // operator can type intermediate values ("0.", "0,00") without the number
+  // round-trip clobbering the cursor. The number is propagated to the parent
+  // on every change; a "." is always shown even in comma-decimal locales.
+  const [inputStr, setInputStr] = useState(() => priceToInput(row.inputPer1k));
+  const [outputStr, setOutputStr] = useState(() =>
+    priceToInput(row.outputPer1k),
+  );
+  // Re-sync when the price is set from outside (e.g. picking a catalog model
+  // fills its prices), but not while the operator is mid-typing the same value.
+  useEffect(() => {
+    if (priceFromInput(inputStr) !== row.inputPer1k) {
+      setInputStr(priceToInput(row.inputPer1k));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row.inputPer1k]);
+  useEffect(() => {
+    if (priceFromInput(outputStr) !== row.outputPer1k) {
+      setOutputStr(priceToInput(row.outputPer1k));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row.outputPer1k]);
+
   // Whether this provider type ships a catalog of preset models.
   // Stable across keystrokes — we mustn't let this flip mid-typing or
   // React will unmount the input and steal focus.
@@ -1342,21 +1377,25 @@ function ModelRowEditor({
       <div className={"w-[120px] shrink-0"}>
         <Label>Input $/1k</Label>
         <Input
-          type={"number"}
-          step={"0.0001"}
-          min={"0"}
-          value={row.inputPer1k}
-          onChange={(e) => onChangeInput(parseFloat(e.target.value) || 0)}
+          type={"text"}
+          inputMode={"decimal"}
+          value={inputStr}
+          onChange={(e) => {
+            setInputStr(e.target.value);
+            onChangeInput(priceFromInput(e.target.value));
+          }}
         />
       </div>
       <div className={"w-[120px] shrink-0"}>
         <Label>Output $/1k</Label>
         <Input
-          type={"number"}
-          step={"0.0001"}
-          min={"0"}
-          value={row.outputPer1k}
-          onChange={(e) => onChangeOutput(parseFloat(e.target.value) || 0)}
+          type={"text"}
+          inputMode={"decimal"}
+          value={outputStr}
+          onChange={(e) => {
+            setOutputStr(e.target.value);
+            onChangeOutput(priceFromInput(e.target.value));
+          }}
         />
       </div>
       <Button
