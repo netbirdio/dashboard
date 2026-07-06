@@ -110,12 +110,7 @@ export const applyD3HierarchicalLayout = (
   const destinationResourceNodes = simulationNodes.filter(
     (n) => n.type === "destinationResourceNode",
   );
-  // Treat agentPolicyNode as a sibling of policyNode for layout — both
-  // sit in the same "policy" column visually, between source group and
-  // destination endpoints.
-  const policyNodes = simulationNodes.filter(
-    (n) => n.type === "policyNode" || n.type === "agentPolicyNode",
-  );
+  const policyNodes = simulationNodes.filter((n) => n.type === "policyNode");
   const networkNodes = simulationNodes.filter((n) => n.type === "networkNode");
   const resourceNodes = simulationNodes.filter(
     (n) => n.type === "resourceNode",
@@ -123,13 +118,6 @@ export const applyD3HierarchicalLayout = (
   const peerNodes = simulationNodes.filter((n) => n.type === "peerNode");
   const expandedGroupPeers = simulationNodes.filter(
     (n) => n.type === "expandedGroupPeer",
-  );
-  // Agent-network providers share the destination axis visually — they
-  // hang off the source-group node as a parallel destination type to
-  // destinationGroup. Without this bucket they'd collapse to (0,0) and
-  // overlap the source.
-  const providerNodes = simulationNodes.filter(
-    (n) => n.type === "providerNode",
   );
 
   let networkAndResourceNodes = [...networkNodes, ...resourceNodes];
@@ -180,11 +168,9 @@ export const applyD3HierarchicalLayout = (
     centerY + 14,
   );
 
-  // Destination Groups (also carries agent-network provider nodes so
-  // they appear at the same column as other "destination" endpoints,
-  // hanging off the source group / select node).
+  // Destination Groups
   centerNodesVertically(
-    [...destinationGroupNodes, ...destinationResourceNodes, ...providerNodes],
+    [...destinationGroupNodes, ...destinationResourceNodes],
     startX + (options?.destinationGroup?.width ?? columnWidth),
     options?.destinationGroup?.spacing ?? nodeSpacing,
     centerY,

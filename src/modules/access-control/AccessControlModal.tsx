@@ -115,6 +115,7 @@ export function AccessControlUpdateModal({
 type ModalProps = {
   onSuccess?: (p: Policy) => void;
   policy?: Policy;
+  initialSourceGroups?: Group[] | string[];
   initialDestinationGroups?: Group[] | string[];
   initialName?: string;
   initialDescription?: string;
@@ -124,6 +125,7 @@ type ModalProps = {
   allowEditPeers?: boolean;
   initialProtocol?: Protocol;
   initialPorts?: number[];
+  initialSourceResource?: PolicyRuleResource;
   initialDestinationResource?: PolicyRuleResource;
   initialTab?: string;
   disableDestinationSelector?: boolean;
@@ -137,11 +139,13 @@ export function AccessControlModalContent({
   postureCheckTemplates,
   useSave = true,
   allowEditPeers = false,
+  initialSourceGroups,
   initialDestinationGroups,
   initialName,
   initialDescription,
   initialProtocol,
   initialPorts,
+  initialSourceResource,
   initialDestinationResource,
   initialTab,
   disableDestinationSelector = false,
@@ -190,11 +194,13 @@ export function AccessControlModalContent({
     policy,
     postureCheckTemplates,
     onSuccess,
+    initialSourceGroups,
     initialDestinationGroups,
     initialName,
     initialDescription,
     initialPorts,
     initialProtocol,
+    initialSourceResource,
     initialDestinationResource,
   });
 

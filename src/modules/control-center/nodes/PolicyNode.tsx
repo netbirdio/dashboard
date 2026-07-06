@@ -1,4 +1,3 @@
-import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { cn } from "@utils/helpers";
 import { Handle, type Node, Position } from "@xyflow/react";
 import * as React from "react";
@@ -20,7 +19,7 @@ export const PolicyNode = ({ data }: PolicyNode) => {
   return (
     <div
       className={cn(
-        "relative bg-nb-gray-940 hover:bg-nb-gray-930 cursor-pointer border border-nb-gray-800 rounded-full flex justify-between overflow-hidden",
+        "relative bg-nb-gray-940 hover:bg-nb-gray-930 cursor-pointer border border-nb-gray-900 rounded-full flex justify-between overflow-hidden",
         !isActive && "opacity-60",
       )}
     >
@@ -49,18 +48,14 @@ export const PolicyNode = ({ data }: PolicyNode) => {
         <div>{label === "" ? "All" : label}</div>
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        id={"sr"}
-        className={"opacity-0"}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id={"tl"}
-        className={"opacity-0"}
-      />
+      <Handle type="source" position={Position.Right} id={"sr"} className={"opacity-0"} isConnectable={false} />
+      <Handle type="source" position={Position.Left} id={"sl"} className={"opacity-0"} isConnectable={false} />
+      <Handle type="source" position={Position.Top} id={"st"} className={"opacity-0"} isConnectable={false} />
+      <Handle type="source" position={Position.Bottom} id={"sb"} className={"opacity-0"} isConnectable={false} />
+      <Handle type="target" position={Position.Left} id={"tl"} className={"opacity-0"} isConnectable={false} />
+      <Handle type="target" position={Position.Right} id={"tr"} className={"opacity-0"} isConnectable={false} />
+      <Handle type="target" position={Position.Top} id={"tt"} className={"opacity-0"} isConnectable={false} />
+      <Handle type="target" position={Position.Bottom} id={"tb"} className={"opacity-0"} isConnectable={false} />
     </div>
   );
 };

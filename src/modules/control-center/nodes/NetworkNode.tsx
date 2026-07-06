@@ -5,7 +5,7 @@ import { NetworkIcon } from "lucide-react";
 import * as React from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { Network, NetworkResource } from "@/interfaces/Network";
-import { DeviceCard } from "@components/DeviceCard";
+import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 
 type NetworkNodeType = {
   network: Network;
@@ -27,12 +27,12 @@ export const NetworkNode = ({ data }: NetworkNodeProps) => {
   return (
     <div
       className={cn(
-        "bg-nb-gray-940 border border-nb-gray-800 rounded-2xl overflow-hidden group hover:bg-nb-gray-935 transition-all cursor-pointer",
+        "bg-nb-gray-940 border border-nb-gray-900 rounded-2xl overflow-hidden group hover:bg-nb-gray-935 transition-all cursor-pointer",
       )}
     >
       <div
         className={cn(
-          "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-6 pr-6 py-3.5 font-normal bg-nb-gray-935 border-b border-nb-gray-800 group-hover:bg-nb-gray-930 transition-all",
+          "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-6 pr-6 py-3.5 font-normal bg-nb-gray-935 border-b border-nb-gray-900 group-hover:bg-nb-gray-930 transition-all",
           resources?.length === 0 && "border-b-0",
         )}
       >

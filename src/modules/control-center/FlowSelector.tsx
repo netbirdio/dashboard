@@ -1,5 +1,4 @@
 import { SegmentedTabs } from "@components/SegmentedTabs";
-import { isAgentNetworkOnly } from "@utils/netbird";
 import {
   FolderGit2,
   MonitorSmartphoneIcon,
@@ -30,37 +29,32 @@ export const FlowSelector = ({ value, onChange }: Props) => {
       >
         <SegmentedTabs.Trigger
           value={FlowView.PEERS}
-          className={"text-xs px-3 py-1"}
+          className={"text-xs px-3 py-[0.45rem]"}
         >
           <MonitorSmartphoneIcon size={12} />
           Peer
         </SegmentedTabs.Trigger>
         <SegmentedTabs.Trigger
           value={FlowView.USERS}
-          className={"text-xs px-3 py-1"}
+          className={"text-xs px-3 py-[0.45rem]"}
         >
           <UsersIcon size={12} />
           User
         </SegmentedTabs.Trigger>
         <SegmentedTabs.Trigger
           value={FlowView.GROUPS}
-          className={"text-xs px-3 py-1"}
+          className={"text-xs px-3 py-[0.45rem]"}
         >
           <FolderGit2 size={12} />
           Group
         </SegmentedTabs.Trigger>
-        {/* The agent-network repackaging drops Networks as a top-level
-            pivot. Keep it for everyone else so flag-off behaviour is
-            unchanged. */}
-        {!isAgentNetworkOnly() && (
-          <SegmentedTabs.Trigger
-            value={FlowView.NETWORKS}
-            className={"text-xs px-3 py-[0.45rem]"}
-          >
-            <NetworkIcon size={12} />
-            Networks
-          </SegmentedTabs.Trigger>
-        )}
+        <SegmentedTabs.Trigger
+          value={FlowView.NETWORKS}
+          className={"text-xs px-3 py-[0.45rem]"}
+        >
+          <NetworkIcon size={12} />
+          Networks
+        </SegmentedTabs.Trigger>
       </SegmentedTabs.List>
     </SegmentedTabs>
   );

@@ -37,10 +37,10 @@ export function DirectionIn({
         });
       case "bezier":
         return getSimpleBezierPath({
-          sourceX,
+          sourceX: sourceX - 10,
           sourceY,
           sourcePosition,
-          targetX,
+          targetX: targetX + 10,
           targetY,
           targetPosition,
         });

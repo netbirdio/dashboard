@@ -1,25 +1,33 @@
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import { Handle, type Node, Position } from "@xyflow/react";
+import { type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
 import { useAnySourceGroupEnabled } from "@/modules/control-center/utils/helpers";
+import { AllHandles } from "@/modules/control-center/handles/AllHandles";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 
 type GroupNodeProps = Node<
   {
     group: Group;
     enabled?: boolean;
     hoverable?: boolean;
+    dropTarget?: boolean;
+    showHandles?: boolean;
     onClick?: (g: Group) => void;
   },
   "groupNode"
 >;
 
 export const GroupNode = ({ data, id }: GroupNodeProps) => {
-  const { enabled, group, hoverable = true, onClick } = data;
+  const { enabled, group, hoverable = true, dropTarget, showHandles = false, onClick } = data;
   const sourceGroupEnabled = useAnySourceGroupEnabled(id);
   const isEnabled = enabled ?? sourceGroupEnabled;
+  const connection = useConnection();
+  const isTarget = connection.inProgress && connection.fromNode.id !== id;
+  const isNew = !group?.id;
 
   const countLabel = useMemo(() => {
     const peerCount = group?.peers_count || 0;
@@ -36,9 +44,13 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
   return (
     <div
       className={cn(
-        "cc-group-node bg-nb-gray-940  border border-nb-gray-800 rounded-lg overflow-hidden transition-all",
+        "cc-group-node bg-nb-gray-940 border rounded-lg overflow-hidden transition-all group/node",
+        dropTarget
+          ? "border-white ring-2 ring-white/20 bg-nb-gray-930"
+          : "border-nb-gray-900",
         !isEnabled && "opacity-60",
         hoverable && "hover:bg-nb-gray-930 cursor-pointer",
+        isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
       )}
       onClick={() => onClick?.(group)}
     >
@@ -56,8 +68,9 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
             <GroupBadgeIcon id={group?.id} issued={group?.issued} size={14} />
           </div>
           <div>
-            <div className={" text-nb-gray-200 font-normal whitespace-nowrap"}>
+            <div className={"flex items-center gap-2 text-nb-gray-200 font-normal whitespace-nowrap"}>
               {group.name}
+              {isNew && <SmallBadge />}
             </div>
             <div className={"text-nb-gray-400 whitespace-nowrap text-xs"}>
               {countLabel}
@@ -66,18 +79,17 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
         </div>
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        id={"sr"}
-        className={"opacity-0"}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id={"tl"}
-        className={"opacity-0"}
-      />
+      {showHandles ? (
+        <>
+          <AllHandles />
+          <ConnectHandle type={"source"} position={Position.Left} />
+          <ConnectHandle type={"source"} position={Position.Right} />
+        </>
+      ) : (
+        <>
+          <AllHandles />
+        </>
+      )}
     </div>
   );
 };
