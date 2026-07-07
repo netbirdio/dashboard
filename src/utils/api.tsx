@@ -16,7 +16,12 @@ type Method = "GET" | "POST" | "PUT" | "DELETE";
 export type ErrorResponse = {
   code: number;
   message: string;
+  requestId?: string;
 };
+
+// Header set by newer management API servers to correlate a response with a
+// server-side request. Absent on older servers.
+const REQUEST_ID_HEADER = "X-Request-Id";
 
 const config = loadConfig();
 
@@ -52,10 +57,12 @@ async function apiRequest<T>(
     signal: options?.signal,
   });
 
+  const requestId = res.headers.get(REQUEST_ID_HEADER) || undefined;
+
   try {
     if (!res.ok) {
       const error = (await res.json()) as ErrorResponse;
-      return Promise.reject(error);
+      return Promise.reject({ ...error, requestId });
     }
     if (options?.blob) return (await res.blob()) as T;
     return (await res.json()) as T;
@@ -64,6 +71,7 @@ async function apiRequest<T>(
       const error = {
         code: res.status,
         message: res.statusText,
+        requestId,
       } as ErrorResponse;
       return Promise.reject(error);
     }
