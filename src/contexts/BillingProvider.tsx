@@ -4,13 +4,7 @@ import { isNetBirdCloud } from "@utils/netbird";
 import md5 from "crypto-js/md5";
 import dayjs from "dayjs";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { PlanFeatures } from "@/cloud/cloud-hooks/useIsFeatureLocked";
 import { MSPTrialExpiredModal } from "@/cloud/msp/MSPTrialExpiredModal";
@@ -56,6 +50,12 @@ export const trialExpiresInfo: Announcement = {
   isCloudOnly: true,
 };
 
+export function resolveActiveCurrency(subscription?: Subscription): Currency {
+  return subscription?.active && subscription?.currency
+    ? subscription.currency
+    : Currency.EUR;
+}
+
 export const BillingContext = React.createContext(
   {} as {
     subscription: Subscription | undefined;
@@ -81,7 +81,6 @@ export const BillingContext = React.createContext(
     ) => Promise<boolean>;
     trialDaysRemaining: number;
     currency: Currency;
-    setCurrency: (currency: Currency) => void;
     getCurrentPlanByPlanTier: (planTier: PlanTier) => Plan | undefined;
     calculateEstimatedPrice: (
       plan: Plan,
@@ -171,23 +170,10 @@ function BillingContextProvider({ children }: Readonly<Props>) {
     );
   }, [currentPlan, subscription]);
 
-  const initialCurrency = useRef<Currency | undefined>(undefined);
-
-  const [currency, setCurrency] = useState<Currency>(
-    subscription?.currency || Currency.USD,
+  const currency = useMemo(
+    () => resolveActiveCurrency(subscription),
+    [subscription],
   );
-
-  useEffect(() => {
-    if (isSubscriptionLoading) return;
-
-    if (subscription?.active && subscription?.currency) {
-      setCurrency(subscription.currency);
-      initialCurrency.current = subscription.currency;
-    } else if (!initialCurrency.current) {
-      initialCurrency.current = subscription?.currency || Currency.USD;
-      setCurrency(initialCurrency.current);
-    }
-  }, [isSubscriptionLoading, subscription?.active, subscription?.currency]);
 
   const maxPeersOfPlan = useMemo(() => {
     return (
@@ -249,8 +235,10 @@ function BillingContextProvider({ children }: Readonly<Props>) {
   ]);
 
   const subscribe = async (plan: Plan, aws?: boolean) => {
-    const priceID = plan.prices.find((price) => price.currency === currency)
-      ?.price_id;
+    const effectiveCurrency = aws ? Currency.USD : currency;
+    const priceID = plan.prices.find(
+      (price) => price.currency === effectiveCurrency,
+    )?.price_id;
     if (!priceID) return Promise.reject();
 
     let promise;
@@ -285,8 +273,10 @@ function BillingContextProvider({ children }: Readonly<Props>) {
   };
 
   const changeSubscription = async (plan: Plan, aws = false) => {
-    const priceID = plan.prices.find((price) => price.currency === currency)
-      ?.price_id;
+    const effectiveCurrency = aws ? Currency.USD : currency;
+    const priceID = plan.prices.find(
+      (price) => price.currency === effectiveCurrency,
+    )?.price_id;
     if (!priceID) return Promise.reject();
     const downgrade = isDowngrade(plan);
     const choice = await confirm({
@@ -483,7 +473,6 @@ function BillingContextProvider({ children }: Readonly<Props>) {
         startTrial,
         trialDaysRemaining,
         currency,
-        setCurrency,
         getCurrentPlanByPlanTier,
         calculateEstimatedPrice,
         isAWS,

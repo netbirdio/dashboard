@@ -137,6 +137,7 @@ async function revokeSetupKey(
   );
   await page.getByTestId("confirmation.confirm").click();
   await responsePromise;
+  await expect(page.getByRole("dialog")).not.toBeVisible();
   await expect(
     page
       .locator("tr")
@@ -158,4 +159,5 @@ async function deleteSetupKey(
   await page.getByTestId("delete-setup-key").click({ force: true });
   await page.getByTestId("confirmation.confirm").click();
   await expect(page.locator("tr").filter({ hasText: name })).not.toBeVisible();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
 }

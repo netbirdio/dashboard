@@ -4,7 +4,10 @@ import { useSWRConfig } from "swr";
 import { useTenants } from "@/cloud/msp/contexts/TenantsProvider";
 import { useTenantSubscription } from "@/cloud/msp/hooks/useTenantSubscription";
 import { Tenant } from "@/cloud/msp/interfaces/Tenant";
-import { useBilling } from "@/contexts/BillingProvider";
+import {
+  resolveActiveCurrency,
+  useBilling,
+} from "@/contexts/BillingProvider";
 import { AccountUsageStats } from "@/interfaces/AccountUsageStats";
 import { Plan } from "@/interfaces/Plan";
 import { PlanTier } from "@/interfaces/Subscription";
@@ -18,7 +21,6 @@ export const useTenantPlan = ({ tenant, withUsage = true }: Props) => {
   const { mutate } = useSWRConfig();
   const { updateSubscription } = useTenants();
   const {
-    currency,
     plans,
     isLoading: isBillingLoading,
     getCurrentPlanByPlanTier,
@@ -42,6 +44,12 @@ export const useTenantPlan = ({ tenant, withUsage = true }: Props) => {
     isTrialExpired,
     isSubscriptionLoading,
   } = useTenantSubscription({ tenantId: tenant.id });
+
+  // This tenant's own billing currency, not the MSP admin's account currency
+  const currency = useMemo(
+    () => resolveActiveCurrency(subscription),
+    [subscription],
+  );
 
   const teamAndBusinessPlans = plans?.filter(
     (plan) =>

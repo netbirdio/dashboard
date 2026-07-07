@@ -13,7 +13,7 @@ import Skeleton from "react-loading-skeleton";
 import AWSMarketplaceLogo from "@/assets/integrations/aws-marketplace.svg";
 import { useBilling } from "@/contexts/BillingProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
-import { Plan } from "@/interfaces/Plan";
+import { Currency, Plan } from "@/interfaces/Plan";
 import { PlanTier } from "@/interfaces/Subscription";
 import { PlanCard, PlanLoadingSkeleton } from "@/modules/billing/PlanCard";
 
@@ -27,7 +27,6 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
     plans,
     isLoading,
     subscription,
-    currency,
     changeSubscription,
     isTrial,
     subscribe,
@@ -178,7 +177,7 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
                                 upgrade: "Subscribe to",
                                 downgrade: "Downgrade to",
                               }}
-                              currency={currency}
+                              currency={Currency.USD}
                               isSubscribing={isSubscribing}
                               onClick={() => subscribeToPlan(plan)}
                               key={plan.name}
