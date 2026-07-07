@@ -177,7 +177,7 @@ export class IronRDPWASMBridge {
     } catch (error) {
       console.error(`IronRDP connection failed:`, error);
       this.logIronError(error);
-      throw error;
+      throw new Error(this.getReadableError(error));
     }
   }
   private setupClipboard(builder: SessionBuilder): void {
@@ -278,6 +278,24 @@ export class IronRDPWASMBridge {
     }
 
     return backtraceMsg;
+  }
+
+  private getReadableError(error: unknown): string {
+    const ironError = error as any;
+    if (typeof ironError?.backtrace === "function") {
+      try {
+        const formatted = this.formatRDCleanPathError(ironError.backtrace());
+        if (formatted.startsWith("Connection failed:")) {
+          return formatted;
+        }
+      } catch {
+        // Fall through to generic handling below.
+      }
+    }
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return "RDP connection failed";
   }
 
   private logIronError(error: unknown): void {

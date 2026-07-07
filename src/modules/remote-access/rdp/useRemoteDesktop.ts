@@ -5,11 +5,6 @@ import {
   useRDPCertificateHandler,
 } from "./useRDPCertificateHandler";
 
-interface IronError {
-  message: string;
-  backtrace?: () => string;
-}
-
 interface RDPConfig {
   hostname: string;
   port: number;
@@ -216,10 +211,10 @@ export const useRemoteDesktop = (client: any) => {
           canvasRef?.current?.focus();
           return RDPStatus.CONNECTED;
         } catch (err) {
-          const ironError = err as IronError;
-          const errorMessage = ironError.backtrace
-            ? ironError.backtrace()
-            : "RDP connection failed";
+          const errorMessage =
+            err instanceof Error && err.message
+              ? err.message
+              : "RDP connection failed";
           setError(errorMessage);
           resetState();
           throw Error(errorMessage);
