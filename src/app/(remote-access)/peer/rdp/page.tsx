@@ -67,24 +67,55 @@ function RDPSession({ peer }: Props) {
     });
   };
 
+  /**
+   * Reset the RDP session state but keep the NetBird client connected,
+   * so a retry does not pay the full engine reconnect.
+   */
   const reset = useCallback(async () => {
     setCredentials(null);
     connected.current = false;
     setCredentialsModal(true);
     rdp.session?.disconnect();
-    await client.disconnect();
-  }, [client, rdp]);
+  }, [rdp]);
+
+  // Port the temporary access peer was created for; access is scoped to it.
+  const connectedPort = useRef<number | null>(null);
 
   /**
    * Establishes a connection to the peer
    */
   const connect = async (rdpCredentials: RDPCredentials) => {
     if (!peer?.id) return;
-    if (client.status === NetBirdStatus.DISCONNECTED) {
+
+    let status = client.status;
+
+    // The temporary access is scoped to a single port, so a port change
+    // requires a fresh temporary peer.
+    if (
+      status === NetBirdStatus.CONNECTED &&
+      connectedPort.current !== null &&
+      connectedPort.current !== rdpCredentials.port
+    ) {
       try {
-        setCredentials(rdpCredentials);
+        await client.disconnect();
+        connectedPort.current = null;
+        status = NetBirdStatus.DISCONNECTED;
+      } catch (error) {
+        sendErrorNotification(
+          "NetBird Connection Error",
+          (error as Error).message,
+        );
+        return;
+      }
+    }
+
+    setCredentials(rdpCredentials);
+
+    if (status === NetBirdStatus.DISCONNECTED) {
+      try {
         setIsNetBirdConnecting(true);
         await client.connectTemporary(peer.id, [`tcp/${rdpCredentials.port}`]);
+        connectedPort.current = rdpCredentials.port;
         setIsNetBirdConnecting(false);
       } catch (error) {
         sendErrorNotification(
