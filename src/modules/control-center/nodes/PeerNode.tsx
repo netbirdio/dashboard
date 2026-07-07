@@ -34,12 +34,12 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
   return (
     <div
       className={cn(
-        "rounded-lg overflow-hidden transition-all group/node pr-5 pl-3 py-1",
-        variant === "card" && "bg-nb-gray-940 border border-nb-gray-900",
-        variant === "default" && "border-0",
+        "relative rounded-lg overflow-hidden transition-all group/node pr-5 pl-3 py-1 border",
+        variant === "card" && "bg-nb-gray-940 border-nb-gray-900",
+        variant === "default" && "border-transparent",
         onClick &&
-          "border-transparent border hover:border-nb-gray-900 rounded-lg hover:bg-nb-gray-930 cursor-pointer",
-        isTarget && "hover:bg-nb-gray-930 pl-3 py-1 hover:ring-2 ring-white",
+          "hover:border-nb-gray-900 hover:bg-nb-gray-930 cursor-pointer",
+        isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
       )}
       onClick={() => onClick?.(peer)}
     >

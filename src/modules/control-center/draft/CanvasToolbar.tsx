@@ -1,8 +1,8 @@
 import * as React from "react";
 import { useEffect } from "react";
 import {
+  FullscreenIcon,
   HandIcon,
-  MaximizeIcon,
   MinusIcon,
   MousePointer2Icon,
   PlusIcon,
@@ -126,7 +126,7 @@ export const CanvasToolbar = () => {
           onClick={handleFitView}
           className="w-8"
         >
-          <MaximizeIcon size={14} />
+          <FullscreenIcon size={14} />
         </ToolbarButton>
       </ToolbarGroup>
     </ToolbarContainer>

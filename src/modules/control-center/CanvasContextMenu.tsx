@@ -70,20 +70,20 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
       onClick: () => setAddPeerModal(true),
     },
     {
-      label: "Create Group",
+      label: "Add Group",
       icon: <FolderGit2 size={14} />,
       onClick: handleCreateGroup,
     },
     {
-      label: "Create Network",
+      label: "Add Network",
       icon: <NetworkIcon size={14} />,
     },
     {
-      label: "Create Resource",
+      label: "Add Resource",
       icon: <Globe size={14} />,
     },
     {
-      label: "Invite User",
+      label: "Add User",
       icon: <UserPlusIcon size={14} />,
     },
   ];

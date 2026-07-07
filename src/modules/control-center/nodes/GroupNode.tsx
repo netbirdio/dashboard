@@ -5,9 +5,11 @@ import { type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
+import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useAnySourceGroupEnabled } from "@/modules/control-center/utils/helpers";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
+import { NodeHalo } from "@/modules/control-center/nodes/NodeHalo";
 
 type GroupNodeProps = Node<
   {
@@ -28,6 +30,8 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
   const connection = useConnection();
   const isTarget = connection.inProgress && connection.fromNode.id !== id;
   const isNew = !group?.id;
+  const { selectedDestinationGroup } = useCanvasState();
+  const isPanelActive = !!group?.id && selectedDestinationGroup === group.id;
 
   const countLabel = useMemo(() => {
     const peerCount = group?.peers_count || 0;
@@ -44,7 +48,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
   return (
     <div
       className={cn(
-        "cc-group-node bg-nb-gray-940 border rounded-lg overflow-hidden transition-all group/node",
+        "relative cc-group-node bg-nb-gray-940 border rounded-lg transition-all group/node",
         dropTarget
           ? "border-white ring-2 ring-white/20 bg-nb-gray-930"
           : "border-nb-gray-900",
@@ -54,6 +58,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
       )}
       onClick={() => onClick?.(group)}
     >
+      {isPanelActive && <NodeHalo />}
       <div
         className={
           "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-3 pr-5 py-3 font-normal"

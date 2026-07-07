@@ -2,8 +2,7 @@ import Button from "@components/Button";
 import {
   SelectDropdown,
 } from "@components/select/SelectDropdown";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import { ArrowLeftIcon, MessageSquareShareIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import React from "react";
 import { FlowSelector, FlowView } from "@/modules/control-center/FlowSelector";
 import { NetworkRoutingPeerCount } from "@/modules/control-center/NetworkRoutingPeerCount";
@@ -119,27 +118,6 @@ function HeaderBottom() {
         </div>
       )}
 
-      <div className={"absolute left-0 bottom-0 z-10"}>
-        <div className={"px-6 py-4"}>
-          <SmallBadge
-            text={"Beta"}
-            variant={"sky"}
-            className={"text-[12px] leading-none py-[3px] px-[6px]"}
-            textClassName={"top-0"}
-          />
-        </div>
-      </div>
-
-      <div className={"absolute right-0 bottom-0 z-10"}>
-        <div className={"px-6 py-4"}>
-          <a href={"https://forms.gle/MKJnVXCiUM1KtxLy6"} target={"_blank"}>
-            <Button variant={"secondary"} size={"xs"}>
-              <MessageSquareShareIcon size={12} />
-              Feedback
-            </Button>
-          </a>
-        </div>
-      </div>
     </>
   );
 }
