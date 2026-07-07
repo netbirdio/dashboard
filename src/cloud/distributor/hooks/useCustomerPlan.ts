@@ -1,10 +1,12 @@
 import useFetchApi, { useApiCall } from "@utils/api";
-import { resolveActiveCurrency } from "@utils/billing";
 import { notify } from "@components/Notification";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useTenantSubscription } from "@/cloud/msp/hooks/useTenantSubscription";
-import { useBilling } from "@/contexts/BillingProvider";
+import {
+  resolveActiveCurrency,
+  useBilling,
+} from "@/contexts/BillingProvider";
 import { AccountUsageStats } from "@/interfaces/AccountUsageStats";
 import { Plan } from "@/interfaces/Plan";
 import { PlanTier } from "@/interfaces/Subscription";

@@ -1,6 +1,5 @@
 import { notify } from "@components/Notification";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { resolveActiveCurrency } from "@utils/billing";
 import { isNetBirdCloud } from "@utils/netbird";
 import md5 from "crypto-js/md5";
 import dayjs from "dayjs";
@@ -50,6 +49,12 @@ export const trialExpiresInfo: Announcement = {
   closeable: false,
   isCloudOnly: true,
 };
+
+export function resolveActiveCurrency(subscription?: Subscription): Currency {
+  return subscription?.active && subscription?.currency
+    ? subscription.currency
+    : Currency.EUR;
+}
 
 export const BillingContext = React.createContext(
   {} as {
