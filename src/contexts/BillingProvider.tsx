@@ -170,12 +170,10 @@ function BillingContextProvider({ children }: Readonly<Props>) {
     );
   }, [currentPlan, subscription]);
 
-  const [currency, setCurrency] = useState<Currency>(Currency.EUR);
-
-  useEffect(() => {
-    if (isSubscriptionLoading) return;
-    setCurrency(resolveActiveCurrency(subscription));
-  }, [isSubscriptionLoading, subscription?.active, subscription?.currency]);
+  const currency = useMemo(
+    () => resolveActiveCurrency(subscription),
+    [subscription],
+  );
 
   const maxPeersOfPlan = useMemo(() => {
     return (
@@ -237,8 +235,10 @@ function BillingContextProvider({ children }: Readonly<Props>) {
   ]);
 
   const subscribe = async (plan: Plan, aws?: boolean) => {
-    const priceID = plan.prices.find((price) => price.currency === currency)
-      ?.price_id;
+    const effectiveCurrency = aws ? Currency.USD : currency;
+    const priceID = plan.prices.find(
+      (price) => price.currency === effectiveCurrency,
+    )?.price_id;
     if (!priceID) return Promise.reject();
 
     let promise;
@@ -273,8 +273,10 @@ function BillingContextProvider({ children }: Readonly<Props>) {
   };
 
   const changeSubscription = async (plan: Plan, aws = false) => {
-    const priceID = plan.prices.find((price) => price.currency === currency)
-      ?.price_id;
+    const effectiveCurrency = aws ? Currency.USD : currency;
+    const priceID = plan.prices.find(
+      (price) => price.currency === effectiveCurrency,
+    )?.price_id;
     if (!priceID) return Promise.reject();
     const downgrade = isDowngrade(plan);
     const choice = await confirm({
