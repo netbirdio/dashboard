@@ -198,7 +198,7 @@ export default function Notification<T>({
             )}
           </div>
           <div className={"flex flex-col text-sm"}>
-            <p>
+            <p data-testid={"notification-title"}>
               <span className={"font-semibold"}>
                 {loading ? loadingTitle || title : title}
               </span>

@@ -17,6 +17,7 @@ const SCREENSHOTS_DIR = path.resolve(__dirname, "..", "screenshots");
 const REQUEST_ID = "9m4e2mr0ui3e8a215n4g";
 const NETWORKS_ENDPOINT = /\/api\/networks(\?|$)/;
 const REQUEST_ID_TESTID = "notification-request-id";
+const TITLE_TESTID = "notification-title";
 
 // failNetworks mocks the networks list GET with a 500, optionally attaching the
 // X-Request-Id header to emulate a newer management server. The dashboard talks
@@ -65,9 +66,9 @@ test.describe.serial("API error request id @error-handling", () => {
       const requestIdLine = page.getByTestId(REQUEST_ID_TESTID);
       await expect(requestIdLine).toBeVisible();
       await expect(requestIdLine).toContainText(REQUEST_ID);
-      await expect(
-        page.getByText("Request failed with status code 500").first(),
-      ).toBeVisible();
+      await expect(page.getByTestId(TITLE_TESTID).first()).toContainText(
+        "Request failed with status code 500",
+      );
 
       const toast = page.locator("[data-toast-notification]").first();
       await toast.screenshot({
@@ -91,9 +92,9 @@ test.describe.serial("API error request id @error-handling", () => {
       await navigateTo(page, "/networks");
 
       // The generic error toast still appears for older servers...
-      await expect(
-        page.getByText("Request failed with status code 500").first(),
-      ).toBeVisible();
+      await expect(page.getByTestId(TITLE_TESTID).first()).toContainText(
+        "Request failed with status code 500",
+      );
       // ...but no request id line is rendered.
       await expect(page.getByTestId(REQUEST_ID_TESTID)).toHaveCount(0);
 
