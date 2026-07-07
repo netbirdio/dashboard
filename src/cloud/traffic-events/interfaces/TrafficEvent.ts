@@ -29,11 +29,30 @@ export interface TrafficEvent {
   rx_packets: number;
   tx_bytes: number;
   tx_packets: number;
+  num_of_starts?: number;
+  num_of_ends?: number;
+  num_of_drops?: number;
+  window_start?: string;
+  window_end?: string;
   events: {
     type: TrafficEventType;
     timestamp: string;
   }[];
 }
+
+export const getTrafficEventCounts = (event: TrafficEvent) => {
+  const starts = event.num_of_starts ?? 0;
+  const ends = event.num_of_ends ?? 0;
+  const drops = event.num_of_drops ?? 0;
+  const total = starts + ends + drops;
+  return {
+    starts,
+    ends,
+    drops,
+    total,
+    isAggregated: total > 0,
+  };
+};
 
 export interface TrafficEventMachine {
   id: string;

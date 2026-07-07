@@ -18,6 +18,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useSWRConfig } from "swr";
 import {
+  getTrafficEventCounts,
   TrafficEvent,
   TrafficEventDirection,
   TrafficEventType,
@@ -450,6 +451,11 @@ export default function TrafficEventsTable({
       setSorting={setSorting}
       rowClassName={"data-[accordion=opened]:!border-b-transparent"}
       renderExpandedRow={(e) => {
+        const { isAggregated } = getTrafficEventCounts(e);
+        if (isAggregated) {
+          if (!e.policy?.id) return undefined;
+          return <TrafficEventsDetailRow event={e} />;
+        }
         if (e.events.length < 2) return undefined;
         return <TrafficEventsDetailRow event={e} />;
       }}
