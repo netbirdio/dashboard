@@ -3,10 +3,7 @@ import { notify } from "@components/Notification";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useTenantSubscription } from "@/cloud/msp/hooks/useTenantSubscription";
-import {
-  resolveActiveCurrency,
-  useBilling,
-} from "@/contexts/BillingProvider";
+import { useBilling } from "@/contexts/BillingProvider";
 import { AccountUsageStats } from "@/interfaces/AccountUsageStats";
 import { Plan } from "@/interfaces/Plan";
 import { PlanTier } from "@/interfaces/Subscription";
@@ -23,6 +20,7 @@ export const useCustomerPlan = ({ accountId, withUsage = false }: Props) => {
     true,
   );
   const {
+    currency,
     plans,
     isLoading: isBillingLoading,
     getCurrentPlanByPlanTier,
@@ -46,12 +44,6 @@ export const useCustomerPlan = ({ accountId, withUsage = false }: Props) => {
     isTrialExpired,
     isSubscriptionLoading,
   } = useTenantSubscription({ tenantId: accountId });
-
-  // This customer's own billing currency, not the distributor's account currency
-  const currency = useMemo(
-    () => resolveActiveCurrency(subscription),
-    [subscription],
-  );
 
   const teamAndBusinessPlans = plans?.filter(
     (plan) =>
