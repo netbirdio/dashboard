@@ -105,7 +105,8 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const isCanvas = target.closest(".react-flow__pane");
-      if (!isCanvas) {
+      const isNode = target.closest(".react-flow__node");
+      if (!isCanvas || isNode) {
         close();
         return;
       }

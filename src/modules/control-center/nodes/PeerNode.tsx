@@ -2,6 +2,7 @@ import { cn } from "@utils/helpers";
 import { type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
 import type { Peer } from "@/interfaces/Peer";
+import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import { useAnySourceGroupEnabled } from "@/modules/control-center/utils/helpers";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
@@ -30,16 +31,20 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
   const isEnabled = enabled ?? sourceGroupEnabled;
   const connection = useConnection();
   const isTarget = connection.inProgress && connection.fromNode.id !== id;
+  const { contextMenuNodeId } = useCanvasState();
+  const showHalo = contextMenuNodeId === id;
 
   return (
     <div
       className={cn(
-        "relative rounded-lg overflow-hidden transition-all group/node pr-5 pl-3 py-1 border",
-        variant === "card" && "bg-nb-gray-940 border-nb-gray-900",
+        "relative rounded-lg transition-all group/node pr-5 pl-3 py-1 border",
+        variant === "card" &&
+          "bg-nb-gray-940 border-nb-gray-900 hover:bg-nb-gray-930 hover:border-nb-gray-800",
         variant === "default" && "border-transparent",
         onClick &&
-          "hover:border-nb-gray-900 hover:bg-nb-gray-930 cursor-pointer",
+          "hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer",
         isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
+        showHalo && "ring-2 ring-sky-500",
       )}
       onClick={() => onClick?.(peer)}
     >

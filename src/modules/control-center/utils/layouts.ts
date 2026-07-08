@@ -10,6 +10,7 @@ interface SimulationNode extends Node {
 
 export const DEFAULT_MAX_ZOOM = 1.6;
 export const DEFAULT_MIN_ZOOM = 0.2;
+export const EMPTY_STATE_ZOOM = 0.8;
 
 export const applyD3ForceLayout = (nodes: Node[], edges: Edge[]) => {
   const simulationNodes: SimulationNode[] = nodes.map((node) => ({

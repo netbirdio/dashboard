@@ -200,3 +200,15 @@ p {
 .react-flow__node-groupNode .selected{
     @apply border-netbird;
 }
+
+/* Keep drag-to-connect line behind nodes (default is above) */
+.react-flow__connectionline,
+.react-flow__connection {
+    z-index: 0 !important;
+}
+
+/* Solid border for the select-tool rectangle */
+.react-flow__selection,
+.react-flow__nodesselection-rect {
+    border-style: solid !important;
+}

@@ -1,7 +1,13 @@
 import * as React from "react";
 import { useMemo } from "react";
 import { cn } from "@utils/helpers";
-import { Handle, Position, useConnection, useNodeId } from "@xyflow/react";
+import {
+  Handle,
+  Position,
+  useConnection,
+  useNodeId,
+  useStore,
+} from "@xyflow/react";
 import {
   ArrowDownIcon,
   ArrowLeftIcon,
@@ -51,6 +57,11 @@ export const ConnectHandle = ({
   const isConnecting =
     connection.fromNode?.id === nodeId &&
     connection.fromHandle?.id === handleId;
+  const isDragging = useStore((s) => {
+    if (!nodeId) return false;
+    const node = s.nodeLookup?.get(nodeId);
+    return node?.dragging === true;
+  });
 
   const ArrowIcon = {
     [Position.Right]: ArrowRightIcon,
@@ -91,6 +102,7 @@ export const ConnectHandle = ({
             "bg-nb-gray-940 border border-nb-gray-800 rounded-full",
             "group-hover/handle:w-7 group-hover/handle:h-7 group-hover/handle:bg-white group-hover/handle:border-2 text-nb-gray",
             isConnecting && "opacity-0",
+            isDragging && "!opacity-0",
           )}
         >
           <div className="absolute inset-0 flex items-center justify-center group-hover/handle:opacity-0">

@@ -9,21 +9,25 @@ import { FlowView } from "@/modules/control-center/FlowSelector";
 import { ExternalLinkIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
 export function ControlCenterEmptyStates() {
   const { currentView } = useCanvasState();
+  const { isDraft } = useDraftMode();
   const { isPeersLoading, isNetworksLoading, peers, networks } =
     useControlCenterData();
   const router = useRouter();
   const { permission } = usePermissions();
+
+  if (isDraft) return null;
 
   return (
     <>
       {currentView === FlowView.PEERS &&
         !isPeersLoading &&
         peers?.length === 0 && (
-          <div className={"absolute left-0 top-0 w-full mt-20"}>
+          <div className={"absolute left-0 top-0 w-full mt-28"}>
             <NoPeersGettingStarted showBackground={false} />
           </div>
         )}
@@ -31,7 +35,7 @@ export function ControlCenterEmptyStates() {
       {currentView === FlowView.NETWORKS &&
         !isNetworksLoading &&
         networks?.length === 0 && (
-          <div className={"absolute left-0 top-0 w-full mt-20"}>
+          <div className={"absolute left-0 top-0 w-full mt-28"}>
             <GetStartedTest
               showBackground={false}
               icon={

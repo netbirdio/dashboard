@@ -9,7 +9,6 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useAnySourceGroupEnabled } from "@/modules/control-center/utils/helpers";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
-import { NodeHalo } from "@/modules/control-center/nodes/NodeHalo";
 
 type GroupNodeProps = Node<
   {
@@ -24,14 +23,23 @@ type GroupNodeProps = Node<
 >;
 
 export const GroupNode = ({ data, id }: GroupNodeProps) => {
-  const { enabled, group, hoverable = true, dropTarget, showHandles = false, onClick } = data;
+  const {
+    enabled,
+    group,
+    hoverable = true,
+    dropTarget,
+    showHandles = false,
+    onClick,
+  } = data;
   const sourceGroupEnabled = useAnySourceGroupEnabled(id);
   const isEnabled = enabled ?? sourceGroupEnabled;
   const connection = useConnection();
   const isTarget = connection.inProgress && connection.fromNode.id !== id;
   const isNew = !group?.id;
-  const { selectedDestinationGroup } = useCanvasState();
+  const { selectedDestinationGroup, contextMenuNodeId } = useCanvasState();
   const isPanelActive = !!group?.id && selectedDestinationGroup === group.id;
+  const isContextMenuActive = contextMenuNodeId === id;
+  const showHalo = isPanelActive || isContextMenuActive;
 
   const countLabel = useMemo(() => {
     const peerCount = group?.peers_count || 0;
@@ -53,12 +61,13 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
           ? "border-white ring-2 ring-white/20 bg-nb-gray-930"
           : "border-nb-gray-900",
         !isEnabled && "opacity-60",
-        hoverable && "hover:bg-nb-gray-930 cursor-pointer",
+        hoverable &&
+          "hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer",
         isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
+        showHalo && "ring-2 ring-sky-500",
       )}
       onClick={() => onClick?.(group)}
     >
-      {isPanelActive && <NodeHalo />}
       <div
         className={
           "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-3 pr-5 py-3 font-normal"
@@ -73,7 +82,11 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
             <GroupBadgeIcon id={group?.id} issued={group?.issued} size={14} />
           </div>
           <div>
-            <div className={"flex items-center gap-2 text-nb-gray-200 font-normal whitespace-nowrap"}>
+            <div
+              className={
+                "flex items-center gap-2 text-nb-gray-200 font-normal whitespace-nowrap"
+              }
+            >
               {group.name}
               {isNew && <SmallBadge />}
             </div>

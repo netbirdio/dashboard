@@ -55,6 +55,8 @@ interface CanvasState {
   setPreviousSelectedUser: (v: string) => void;
   selectedDestinationGroup: string;
   setSelectedDestinationGroup: (v: string) => void;
+  contextMenuNodeId: string;
+  setContextMenuNodeId: (v: string) => void;
   loggedInUser: User | undefined;
   forceSingleGroupViewRef: React.MutableRefObject<(id: string) => void>;
   forceSinglePeerViewRef: React.MutableRefObject<
@@ -101,6 +103,7 @@ export function CanvasStateProvider({
   const [selectedUser, setSelectedUser] = useState("");
   const [previousSelectedUser, setPreviousSelectedUser] = useState("");
   const [selectedDestinationGroup, setSelectedDestinationGroup] = useState("");
+  const [contextMenuNodeId, setContextMenuNodeId] = useState("");
 
   const forceSingleGroupViewRef = useRef<(id: string) => void>(() => {});
   const forceSinglePeerViewRef = useRef<
@@ -131,6 +134,8 @@ export function CanvasStateProvider({
       setPreviousSelectedUser,
       selectedDestinationGroup,
       setSelectedDestinationGroup,
+      contextMenuNodeId,
+      setContextMenuNodeId,
       loggedInUser,
       forceSingleGroupViewRef,
       forceSinglePeerViewRef,
@@ -150,6 +155,7 @@ export function CanvasStateProvider({
       selectedUser,
       previousSelectedUser,
       selectedDestinationGroup,
+      contextMenuNodeId,
       loggedInUser,
     ],
   );

@@ -1,6 +1,7 @@
 import { cn } from "@utils/helpers";
 import { Handle, type Node, Position } from "@xyflow/react";
 import * as React from "react";
+import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { getPolicyProtocolAndPortText } from "@/modules/control-center/utils/helpers";
 import { Policy } from "@/interfaces/Policy";
 
@@ -11,16 +12,19 @@ type PolicyNode = Node<
   "policyNode"
 >;
 
-export const PolicyNode = ({ data }: PolicyNode) => {
+export const PolicyNode = ({ data, id }: PolicyNode) => {
   const rule = data.policy.rules?.[0];
   const label = getPolicyProtocolAndPortText(data.policy);
   const isActive = rule?.enabled;
+  const { contextMenuNodeId } = useCanvasState();
+  const showHalo = contextMenuNodeId === id;
 
   return (
     <div
       className={cn(
-        "relative bg-nb-gray-940 hover:bg-nb-gray-930 cursor-pointer border border-nb-gray-900 rounded-full flex justify-between overflow-hidden",
+        "relative bg-nb-gray-940 hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer border border-nb-gray-900 rounded-full flex justify-between overflow-hidden transition-all",
         !isActive && "opacity-60",
+        showHalo && "ring-2 ring-sky-500",
       )}
     >
       <div className={"flex items-center justify-center"}>

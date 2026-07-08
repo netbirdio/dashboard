@@ -1,7 +1,7 @@
 import { Node, useReactFlow } from "@xyflow/react";
 import React, { useCallback, useEffect } from "react";
 import { FlowView } from "@/modules/control-center/FlowSelector";
-import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
+import { DEFAULT_MIN_ZOOM, EMPTY_STATE_ZOOM } from "@/modules/control-center/utils/layouts";
 import { getFirstGroup } from "@/modules/control-center/utils/helpers";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
@@ -57,8 +57,15 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     loggedInUser,
   } = useCanvasState();
 
-  const { policies, peers, networks, groups, users, networkResources, isLoading } =
-    useControlCenterData();
+  const {
+    policies,
+    peers,
+    networks,
+    groups,
+    users,
+    networkResources,
+    isLoading,
+  } = useControlCenterData();
 
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
 
@@ -77,15 +84,20 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   // ---------------------------------------------------------------------------
 
   const fitView = (newNodes?: Node[]) => {
-    window.requestAnimationFrame(() =>
+    const target = newNodes ?? nodes;
+    window.requestAnimationFrame(() => {
+      if (target.length === 0) {
+        reactFlow.setViewport({ x: 0, y: 0, zoom: EMPTY_STATE_ZOOM });
+        return;
+      }
       reactFlow.fitView({
-        nodes: newNodes ?? nodes,
+        nodes: target,
         padding: 0.1,
         duration: 750,
         maxZoom: 0.8,
         minZoom: DEFAULT_MIN_ZOOM,
-      }),
-    );
+      });
+    });
   };
 
   // ---------------------------------------------------------------------------
@@ -374,8 +386,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
             !initialUser ||
             !peers?.some((p) => p.user_id === initialUser?.id)
           ) {
-            initialUser = users?.find((u) =>
-              peers?.some((p) => p.user_id === u.id),
+            initialUser = users?.find(
+              (u) => peers?.some((p) => p.user_id === u.id),
             );
           }
           if (!initialUser) initialUser = users?.[0];
