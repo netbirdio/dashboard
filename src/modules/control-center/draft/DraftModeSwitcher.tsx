@@ -1,6 +1,6 @@
 import * as React from "react";
 import { SegmentedTabs } from "@components/SegmentedTabs";
-import { PencilLineIcon } from "lucide-react";
+import { PencilLineIcon, PlayIcon } from "lucide-react";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import Button from "@components/Button";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -22,11 +22,12 @@ export const DraftModeSwitcher = ({}: Props) => {
             variant={"secondary"}
             size={"xs"}
             onClick={() => handleSwitch("live")}
-            className={"h-[40px] px-5"}
+            className={"h-[39px] px-5"}
           >
             Save
           </Button>
-          <Button variant={"primary"} size={"xs"} className={"h-[40px] px-5"}>
+          <Button variant={"primary"} size={"xs"} className={"h-[39px] px-5"}>
+            <PlayIcon size={12} />
             Save & Apply
           </Button>
         </>

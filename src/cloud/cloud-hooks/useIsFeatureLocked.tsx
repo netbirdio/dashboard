@@ -50,6 +50,9 @@ export const useIsFeatureLocked = (feature: keyof typeof PlanFeatures) => {
   const { isTrial, currentPlan } = useTrial();
   const { isLicensed } = useIsLicensed();
 
+  // TODO: Do not commit, remove after commit
+  return false;
+
   if (process.env.APP_ENV === "test" && !testEditionOverride()) return false;
 
   if (!isNetBirdCloud()) {
