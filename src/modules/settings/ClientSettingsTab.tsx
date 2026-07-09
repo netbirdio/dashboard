@@ -20,7 +20,6 @@ import {
   AlertTriangle,
   ClockFadingIcon,
   ExternalLinkIcon,
-  FlaskConicalIcon,
   MonitorSmartphoneIcon,
   RefreshCcw,
 } from "lucide-react";
@@ -372,14 +371,14 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 
           <div>
             <Label>
-              <FlaskConicalIcon size={15} />
-              Experimental
+              <ClockFadingIcon size={15} />
+              Lazy Connections
             </Label>
 
             <HelpText>
-              Lazy connections are an experimental feature. Functionality and
-              behavior may evolve. Instead of maintaining always-on connections,
-              NetBird activates them on-demand based on activity or signaling.{" "}
+              Instead of maintaining always-on connections, NetBird activates
+              them on-demand based on activity or signaling. This requires
+              NetBird client v0.50.1 or higher.{" "}
               <InlineLink
                 href={"https://docs.netbird.io/how-to/lazy-connection"}
                 target={"_blank"}
@@ -393,17 +392,12 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               value={lazyConnection}
               onChange={toggleLazyConnection}
               data-testid="lazy-connections"
-              label={
-                <>
-                  <ClockFadingIcon size={15} />
-                  Enable Lazy Connections
-                </>
-              }
+              label={<>Enable Lazy Connections</>}
               helpText={
                 <>
                   Allow to establish connections between peers only when
-                  required. This requires NetBird client v0.45 or higher.
-                  Changes will only take effect after restarting the clients.
+                  required. Changes will take effect after restarting the
+                  clients.
                 </>
               }
               disabled={!permission.settings.update}
