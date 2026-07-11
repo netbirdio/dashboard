@@ -73,13 +73,27 @@ type Props = {
 };
 
 // buildCloudInit renders the canonical bootstrap with the same environment as
-// the Docker snippet in the cluster modal, for use as VM user data.
+// the Docker snippet in the cluster modal, for use as VM user data. When a
+// root password is given (DigitalOcean), it is set for web-console access
+// while SSH password login stays disabled.
 const buildCloudInit = (
   domain: string,
   token: string,
   managementUrl: string,
+  rootPassword?: string,
 ) => `#cloud-config
-write_files:
+${
+  rootPassword
+    ? `ssh_pwauth: false
+chpasswd:
+  expire: false
+  users:
+    - name: root
+      password: ${rootPassword}
+      type: text
+`
+    : ""
+}write_files:
   - path: /etc/netbird-proxy/env
     permissions: "0600"
     content: |
@@ -247,12 +261,22 @@ const waitForDropletIP = async (dropletId: number, doToken: string) => {
   return "";
 };
 
+// generateRootPassword creates a random droplet password from an alphanumeric
+// set without ambiguous characters.
+const generateRootPassword = () => {
+  const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  const values = new Uint32Array(20);
+  crypto.getRandomValues(values);
+  return Array.from(values, (v) => charset[v % charset.length]).join("");
+};
+
 const DigitalOceanDeploy = ({
   domain,
   token,
   managementUrl,
   isGeneratingToken,
 }: ProviderProps) => {
+  const [rootPassword] = useState(generateRootPassword);
   const [doToken, setDoToken] = useState("");
   const [region, setRegion] = useState("fra1");
   const [size, setSize] = useState("s-1vcpu-2gb");
@@ -278,7 +302,7 @@ const DigitalOceanDeploy = ({
         region,
         size,
         image: "ubuntu-24-04-x64",
-        user_data: buildCloudInit(domain, token, managementUrl),
+        user_data: buildCloudInit(domain, token, managementUrl, rootPassword),
         tags: ["netbird-proxy"],
       }),
     })
@@ -307,28 +331,42 @@ const DigitalOceanDeploy = ({
 
   if (isCreated) {
     return (
-      <Callout variant={"info"}>
-        Droplet <span className={"text-white font-medium"}>{dropletName}</span>{" "}
-        was created
-        {dropletIP ? (
-          <>
-            {" "}
-            with IP{" "}
-            <span className={"text-netbird font-medium"}>{dropletIP}</span>.
-            Update the DNS records from the previous step to point to this IP.
-            The proxy will request its certificate and connect within a minute
-            or two.
-          </>
-        ) : (
-          <>
-            {" "}
-            and is provisioning. Waiting for its public IP
-            {isDeploying
-              ? "..."
-              : " timed out - find the IP in the DigitalOcean control panel and update the DNS records from the previous step."}
-          </>
-        )}
-      </Callout>
+      <div className={"flex flex-col gap-4"}>
+        <Callout variant={"info"}>
+          Droplet{" "}
+          <span className={"text-white font-medium"}>{dropletName}</span> was
+          created
+          {dropletIP ? (
+            <>
+              {" "}
+              with IP{" "}
+              <span className={"text-netbird font-medium"}>{dropletIP}</span>.
+              Update the DNS records from the previous step to point to this IP.
+              The proxy will request its certificate and connect within a minute
+              or two.
+            </>
+          ) : (
+            <>
+              {" "}
+              and is provisioning. Waiting for its public IP
+              {isDeploying
+                ? "..."
+                : " timed out - find the IP in the DigitalOcean control panel and update the DNS records from the previous step."}
+            </>
+          )}
+        </Callout>
+        <div>
+          <Label>Droplet Root Password</Label>
+          <HelpText>
+            Use it with the Droplet Console in the DigitalOcean control panel
+            (SSH password login stays disabled). Copy it now - it is not stored
+            anywhere.
+          </HelpText>
+          <Code codeToCopy={rootPassword}>
+            <Code.Line>{rootPassword}</Code.Line>
+          </Code>
+        </div>
+      </div>
     );
   }
 
