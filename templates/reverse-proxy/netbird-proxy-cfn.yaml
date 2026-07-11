@@ -20,6 +20,7 @@ Metadata:
           - InstanceType
           - WireGuardPort
           - AllocateElasticIP
+          - IamInstanceProfile
           - KeyName
           - SSHAllowedCIDR
     ParameterLabels:
@@ -37,6 +38,8 @@ Metadata:
         default: WireGuard UDP port
       AllocateElasticIP:
         default: Allocate a static Elastic IP
+      IamInstanceProfile:
+        default: IAM instance profile (optional)
       KeyName:
         default: SSH key pair (optional)
       SSHAllowedCIDR:
@@ -83,6 +86,10 @@ Parameters:
     Default: "true"
     AllowedValues: ["true", "false"]
     Description: Allocate a static Elastic IP so the DNS record survives instance restarts.
+  IamInstanceProfile:
+    Type: String
+    Default: ""
+    Description: Optional name of an existing IAM instance profile to attach (e.g. for SSM Session Manager access or CloudWatch logging). Leave empty for none.
   KeyName:
     Type: String
     Default: ""
@@ -99,6 +106,7 @@ Parameters:
 
 Conditions:
   HasKeyName: !Not [!Equals [!Ref KeyName, ""]]
+  HasInstanceProfile: !Not [!Equals [!Ref IamInstanceProfile, ""]]
   UseElasticIP: !Equals [!Ref AllocateElasticIP, "true"]
 
 Resources:
@@ -140,6 +148,8 @@ Resources:
       ImageId: !Ref LatestUbuntuAmi
       InstanceType: !Ref InstanceType
       KeyName: !If [HasKeyName, !Ref KeyName, !Ref AWS::NoValue]
+      IamInstanceProfile:
+        !If [HasInstanceProfile, !Ref IamInstanceProfile, !Ref AWS::NoValue]
       SecurityGroups:
         - !Ref ProxySecurityGroup
       MetadataOptions:
@@ -154,7 +164,7 @@ Resources:
         Fn::Base64: !Sub |
           #cloud-config
           write_files:
-            - path: /etc/netbird-proxy/env
+            - path: /opt/netbird-proxy/env
               permissions: "0600"
               content: |
                 NB_PROXY_TOKEN=${ProxyToken}
@@ -167,15 +177,26 @@ Resources:
                 NB_PROXY_LOG_LEVEL=info
                 NB_PROXY_ADDRESS=:443
                 NB_PROXY_WG_PORT=${WireGuardPort}
+            - path: /opt/netbird-proxy/docker-compose.yml
+              permissions: "0644"
+              content: |
+                services:
+                  reverse-proxy:
+                    image: netbirdio/reverse-proxy:${ImageTag}
+                    restart: unless-stopped
+                    ports:
+                      - "80:80"
+                      - "443:443"
+                      - "${WireGuardPort}:${WireGuardPort}/udp"
+                    env_file:
+                      - /opt/netbird-proxy/env
+                    volumes:
+                      - proxy_certs:/certs
+                volumes:
+                  proxy_certs:
           runcmd:
             - curl -fsSL https://get.docker.com | sh
-            - >-
-              docker run -d --name netbird-proxy --restart unless-stopped
-              -p 443:443 -p 80:80
-              -p ${WireGuardPort}:${WireGuardPort}/udp
-              --env-file /etc/netbird-proxy/env
-              -v proxy_certs:/certs
-              netbirdio/reverse-proxy:${ImageTag}
+            - docker compose -f /opt/netbird-proxy/docker-compose.yml up -d
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-netbird-proxy"
