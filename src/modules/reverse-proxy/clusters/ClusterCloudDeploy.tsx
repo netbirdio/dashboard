@@ -9,10 +9,10 @@ import { SelectDropdown } from "@components/select/SelectDropdown";
 import { ExternalLinkIcon, Loader2, RocketIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
-// TODO(PoC): replace with the final public S3 location of
-// templates/reverse-proxy/netbird-proxy-cfn.yaml from this repository.
+// Synced from templates/reverse-proxy/netbird-proxy-cfn.yaml by the
+// sync-deploy-templates workflow.
 const CFN_TEMPLATE_URL =
-  "https://netbird-deploy-templates.s3.amazonaws.com/netbird-proxy-cfn.yaml";
+  "https://netbird-deploy-templates.s3.eu-central-1.amazonaws.com/templates/netbird-proxy-cfn.yaml";
 
 const DEFAULT_WIREGUARD_PORT = 51820;
 
