@@ -36,13 +36,14 @@ import {
   REVERSE_PROXY_SELFHOSTED_ROUTING_DOCS_LINK,
   ReverseProxyClusterToken,
 } from "@/interfaces/ReverseProxy";
+import { ClusterCloudDeploy } from "@/modules/reverse-proxy/clusters/ClusterCloudDeploy";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-type DeployMethod = "docker" | "compose" | "kubernetes";
+type DeployMethod = "docker" | "compose" | "kubernetes" | "hetzner" | "aws";
 
 const escapeRegExp = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -218,7 +219,19 @@ spec:
       title: "Deploy the Proxy on Kubernetes",
       command: kubernetesCommand,
     },
+    hetzner: {
+      label: "Hetzner Cloud",
+      title: "Deploy the Proxy on Hetzner Cloud",
+      command: "",
+    },
+    aws: {
+      label: "AWS CloudFormation",
+      title: "Deploy the Proxy on AWS",
+      command: "",
+    },
   }[deployMethod];
+
+  const isCloudDeploy = deployMethod === "hetzner" || deployMethod === "aws";
 
   const generateToken = useCallback(async () => {
     setIsGeneratingToken(true);
@@ -376,7 +389,9 @@ spec:
                 <div>
                   <Label>{deployment.title}</Label>
                   <HelpText className={"mb-0"}>
-                    {deployMethod === "kubernetes"
+                    {isCloudDeploy
+                      ? "Launch a dedicated cloud server running the proxy."
+                      : deployMethod === "kubernetes"
                       ? "Apply the following manifest to your cluster to start the proxy."
                       : "Run the following on your machine to start the proxy."}
                   </HelpText>
@@ -389,6 +404,8 @@ spec:
                       { value: "docker", label: "Docker" },
                       { value: "compose", label: "Docker Compose" },
                       { value: "kubernetes", label: "Kubernetes" },
+                      { value: "hetzner", label: "Hetzner Cloud" },
+                      { value: "aws", label: "AWS CloudFormation" },
                     ]}
                   />
                 </div>
@@ -410,39 +427,51 @@ spec:
                 </Callout>
               )}
 
-              <Code
-                key={deployMethod}
-                codeToCopy={deployment.command}
-                className={cn(
-                  "overflow-hidden",
-                  isGeneratingToken && "!border-nb-gray-930",
-                )}
-                showCopyIcon={!isGeneratingToken}
-              >
-                {isGeneratingToken && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 text-nb-gray-100 bg-nb-gray-950/90">
-                    <Loader2 size={16} className="animate-spin" />
-                    Generating proxy token...
-                  </div>
-                )}
+              {isCloudDeploy ? (
+                <ClusterCloudDeploy
+                  provider={deployMethod as "hetzner" | "aws"}
+                  domain={domain}
+                  token={token}
+                  managementUrl={managementUrl}
+                  isGeneratingToken={isGeneratingToken}
+                />
+              ) : (
+                <>
+                  <Code
+                    key={deployMethod}
+                    codeToCopy={deployment.command}
+                    className={cn(
+                      "overflow-hidden",
+                      isGeneratingToken && "!border-nb-gray-930",
+                    )}
+                    showCopyIcon={!isGeneratingToken}
+                  >
+                    {isGeneratingToken && (
+                      <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 text-nb-gray-100 bg-nb-gray-950/90">
+                        <Loader2 size={16} className="animate-spin" />
+                        Generating proxy token...
+                      </div>
+                    )}
 
-                {renderHighlightedCommand(deployment.command, [
-                  managementUrl,
-                  domain,
-                  tokenValue,
-                ])}
-              </Code>
+                    {renderHighlightedCommand(deployment.command, [
+                      managementUrl,
+                      domain,
+                      tokenValue,
+                    ])}
+                  </Code>
 
-              <HelpText className={"mb-0"}>
-                Need to fine-tune the proxy? See all available&nbsp;
-                <InlineLink
-                  href={REVERSE_PROXY_ENV_REFERENCE_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  environment variables
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </HelpText>
+                  <HelpText className={"mb-0"}>
+                    Need to fine-tune the proxy? See all available&nbsp;
+                    <InlineLink
+                      href={REVERSE_PROXY_ENV_REFERENCE_DOCS_LINK}
+                      target={"_blank"}
+                    >
+                      environment variables
+                      <ExternalLinkIcon size={12} />
+                    </InlineLink>
+                  </HelpText>
+                </>
+              )}
             </div>
           </TabsContent>
         </Tabs>
