@@ -10,7 +10,7 @@ import { ExternalLinkIcon, Loader2, RocketIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 
 // TODO(PoC): replace with the final public S3 location of
-// proxy/deploy/aws/netbird-proxy-cfn.yaml from the netbird repository.
+// templates/reverse-proxy/netbird-proxy-cfn.yaml from this repository.
 const CFN_TEMPLATE_URL =
   "https://netbird-deploy-templates.s3.amazonaws.com/netbird-proxy-cfn.yaml";
 
