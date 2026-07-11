@@ -67,8 +67,8 @@ type Props = {
 
 // buildCloudInit renders the canonical bootstrap with the same environment as
 // the Docker snippet in the cluster modal, for use as VM user data. When a
-// root password is given (DigitalOcean), it is set for web-console access
-// while SSH password login stays disabled.
+// root password is given, it is set for provider web-console access while
+// SSH password login stays disabled.
 const buildCloudInit = (
   domain: string,
   token: string,
@@ -260,7 +260,9 @@ const DeploySuccess = ({
           <>
             {" "}
             with {isStaticIP ? "static IP" : "IP"}{" "}
-            <span className={"text-netbird font-medium"}>{ip}</span>.
+            <span className={"text-netbird font-medium"}>{ip}</span>. It keeps
+            bootstrapping in the background - create the DNS records below in
+            the meantime.
           </>
         ) : (
           <> {ipPendingNote}</>
@@ -314,8 +316,9 @@ const DeploySuccess = ({
           <>
             <Loader2 size={16} className={"animate-spin shrink-0"} />
             <span className={"text-nb-gray-300"}>
-              Waiting for the proxy to register with NetBird - this takes a few
-              minutes while the instance installs Docker and starts the proxy...
+              Waiting for the proxy to register with NetBird. The instance still
+              installs Docker and starts the proxy after its IP appears - this
+              usually takes another minute or two...
             </span>
           </>
         )}
@@ -331,6 +334,7 @@ const HetznerDeploy = ({
   managementUrl,
   isGeneratingToken,
 }: ProviderProps) => {
+  const [rootPassword] = useState(generateRootPassword);
   const [hetznerToken, setHetznerToken] = useState("");
   const [catalog, setCatalog] = useState<HetznerCatalog | null>(null);
   const [catalogError, setCatalogError] = useState("");
@@ -420,7 +424,7 @@ const HetznerDeploy = ({
         server_type: serverType,
         image: "ubuntu-24.04",
         location,
-        user_data: buildCloudInit(domain, token, managementUrl),
+        user_data: buildCloudInit(domain, token, managementUrl, rootPassword),
       }),
     })
       .then(async (res) => {
@@ -474,7 +478,19 @@ const HetznerDeploy = ({
         ip={serverIP}
         isStaticIP={staticIP}
         domain={domain}
-      />
+      >
+        <div>
+          <Label>Server Root Password</Label>
+          <HelpText>
+            Use it with the server console in the Hetzner Cloud Console (SSH
+            password login stays disabled). Copy it now - it is not stored
+            anywhere.
+          </HelpText>
+          <Code codeToCopy={rootPassword}>
+            <Code.Line>{rootPassword}</Code.Line>
+          </Code>
+        </div>
+      </DeploySuccess>
     );
   }
 
