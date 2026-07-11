@@ -107,6 +107,11 @@ chpasswd:
         reverse-proxy:
           image: netbirdio/reverse-proxy:latest
           restart: unless-stopped
+          logging:
+            driver: json-file
+            options:
+              max-size: "500m"
+              max-file: "2"
           ports:
             - "80:80"
             - "443:443"
