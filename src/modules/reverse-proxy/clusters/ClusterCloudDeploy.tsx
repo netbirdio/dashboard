@@ -142,6 +142,7 @@ type HetznerCatalog = {
   locations: { name: string; label: string }[];
   availableTypeIds: Record<string, number[]>;
   serverTypes: HetznerServerType[];
+  sshKeys: { id: number; name: string }[];
 };
 
 // fetchHetznerCatalog loads the current locations, server types, and
@@ -149,9 +150,10 @@ type HetznerCatalog = {
 // server types, so the dropdowns always offer valid combinations.
 const fetchHetznerCatalog = async (token: string): Promise<HetznerCatalog> => {
   const headers = { Authorization: `Bearer ${token}` };
-  const [typesRes, dcsRes] = await Promise.all([
+  const [typesRes, dcsRes, keysRes] = await Promise.all([
     fetch("https://api.hetzner.cloud/v1/server_types?per_page=50", { headers }),
     fetch("https://api.hetzner.cloud/v1/datacenters?per_page=50", { headers }),
+    fetch("https://api.hetzner.cloud/v1/ssh_keys?per_page=50", { headers }),
   ]);
   const typesBody = await typesRes.json().catch(() => null);
   if (!typesRes.ok) {
@@ -164,6 +166,12 @@ const fetchHetznerCatalog = async (token: string): Promise<HetznerCatalog> => {
   if (!dcsRes.ok) {
     throw new Error(
       dcsBody?.error?.message ?? `Hetzner API error (HTTP ${dcsRes.status})`,
+    );
+  }
+  const keysBody = await keysRes.json().catch(() => null);
+  if (!keysRes.ok) {
+    throw new Error(
+      keysBody?.error?.message ?? `Hetzner API error (HTTP ${keysRes.status})`,
     );
   }
 
@@ -195,7 +203,11 @@ const fetchHetznerCatalog = async (token: string): Promise<HetznerCatalog> => {
     .map(([name, label]) => ({ name, label }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  return { locations, availableTypeIds, serverTypes };
+  const sshKeys = (
+    (keysBody?.ssh_keys ?? []) as { id: number; name: string }[]
+  ).map((k) => ({ id: k.id, name: k.name }));
+
+  return { locations, availableTypeIds, serverTypes, sshKeys };
 };
 
 type DeploySuccessProps = {
@@ -208,18 +220,9 @@ type DeploySuccessProps = {
   children?: React.ReactNode;
 };
 
-// DeploySuccess shows the deployment result: the DNS records to create for
-// the new instance IP and a live check that the proxy registered with the
-// NetBird management service.
-const DeploySuccess = ({
-  resourceLabel,
-  name,
-  ip,
-  isStaticIP,
-  domain,
-  ipPendingNote,
-  children,
-}: DeploySuccessProps) => {
+// RegistrationCheck polls the management API until the cluster for the given
+// domain reports a connected proxy.
+const RegistrationCheck = ({ domain }: { domain: string }) => {
   const clustersRequest = useApiCall<ReverseProxyCluster[]>(
     "/reverse-proxies/clusters",
     true,
@@ -251,6 +254,41 @@ const DeploySuccess = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registered, domain]);
 
+  return (
+    <div className={"flex items-center gap-2 text-sm"}>
+      {registered ? (
+        <>
+          <CheckCircle2 size={16} className={"text-green-500 shrink-0"} />
+          <span className={"text-nb-gray-100"}>
+            Proxy registered with NetBird and connected.
+          </span>
+        </>
+      ) : (
+        <>
+          <Loader2 size={16} className={"animate-spin shrink-0"} />
+          <span className={"text-nb-gray-300"}>
+            Waiting for the proxy to register with NetBird. The instance still
+            installs Docker and starts the proxy after its IP appears - this
+            usually takes another minute or two...
+          </span>
+        </>
+      )}
+    </div>
+  );
+};
+
+// DeploySuccess shows the deployment result: the DNS records to create for
+// the new instance IP and a live check that the proxy registered with the
+// NetBird management service.
+const DeploySuccess = ({
+  resourceLabel,
+  name,
+  ip,
+  isStaticIP,
+  domain,
+  ipPendingNote,
+  children,
+}: DeploySuccessProps) => {
   return (
     <div className={"flex flex-col gap-4"}>
       <Callout variant={"info"}>
@@ -304,25 +342,7 @@ const DeploySuccess = ({
           </CardTable>
         </div>
       )}
-      <div className={"flex items-center gap-2 text-sm"}>
-        {registered ? (
-          <>
-            <CheckCircle2 size={16} className={"text-green-500 shrink-0"} />
-            <span className={"text-nb-gray-100"}>
-              Proxy registered with NetBird and connected.
-            </span>
-          </>
-        ) : (
-          <>
-            <Loader2 size={16} className={"animate-spin shrink-0"} />
-            <span className={"text-nb-gray-300"}>
-              Waiting for the proxy to register with NetBird. The instance still
-              installs Docker and starts the proxy after its IP appears - this
-              usually takes another minute or two...
-            </span>
-          </>
-        )}
-      </div>
+      <RegistrationCheck domain={domain} />
       {children}
     </div>
   );
@@ -334,13 +354,13 @@ const HetznerDeploy = ({
   managementUrl,
   isGeneratingToken,
 }: ProviderProps) => {
-  const [rootPassword] = useState(generateRootPassword);
   const [hetznerToken, setHetznerToken] = useState("");
   const [catalog, setCatalog] = useState<HetznerCatalog | null>(null);
   const [catalogError, setCatalogError] = useState("");
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(false);
   const [location, setLocation] = useState("");
   const [serverType, setServerType] = useState("");
+  const [sshKeyId, setSshKeyId] = useState("");
   const [staticIP, setStaticIP] = useState(true);
   const [isDeploying, setIsDeploying] = useState(false);
   const [serverIP, setServerIP] = useState("");
@@ -411,6 +431,13 @@ const HetznerDeploy = ({
     }
   }, [catalog, location, serverTypeOptions, serverType]);
 
+  useEffect(() => {
+    if (!catalog) return;
+    if (!catalog.sshKeys.some((k) => String(k.id) === sshKeyId)) {
+      setSshKeyId(catalog.sshKeys[0] ? String(catalog.sshKeys[0].id) : "");
+    }
+  }, [catalog, sshKeyId]);
+
   const deploy = async () => {
     setIsDeploying(true);
     const promise = fetch("https://api.hetzner.cloud/v1/servers", {
@@ -424,7 +451,8 @@ const HetznerDeploy = ({
         server_type: serverType,
         image: "ubuntu-24.04",
         location,
-        user_data: buildCloudInit(domain, token, managementUrl, rootPassword),
+        ssh_keys: sshKeyId ? [Number(sshKeyId)] : [],
+        user_data: buildCloudInit(domain, token, managementUrl),
       }),
     })
       .then(async (res) => {
@@ -478,19 +506,7 @@ const HetznerDeploy = ({
         ip={serverIP}
         isStaticIP={staticIP}
         domain={domain}
-      >
-        <div>
-          <Label>Server Root Password</Label>
-          <HelpText>
-            Use it with the server console in the Hetzner Cloud Console (SSH
-            password login stays disabled). Copy it now - it is not stored
-            anywhere.
-          </HelpText>
-          <Code codeToCopy={rootPassword}>
-            <Code.Line>{rootPassword}</Code.Line>
-          </Code>
-        </div>
-      </DeploySuccess>
+      />
     );
   }
 
@@ -536,6 +552,24 @@ const HetznerDeploy = ({
                 options={serverTypeOptions}
               />
             </div>
+          </div>
+          <div>
+            <Label>SSH Key</Label>
+            {catalog.sshKeys.length > 0 ? (
+              <SelectDropdown
+                value={sshKeyId}
+                onChange={(v) => setSshKeyId(v as string)}
+                options={catalog.sshKeys.map((k) => ({
+                  value: String(k.id),
+                  label: k.name,
+                }))}
+              />
+            ) : (
+              <HelpText className={"mb-0"}>
+                No SSH keys found in this Hetzner project. Add one in the
+                Hetzner Console first if you need SSH access to the server.
+              </HelpText>
+            )}
           </div>
           <FancyToggleSwitch
             value={staticIP}
@@ -782,6 +816,7 @@ const AWSDeploy = ({
   isGeneratingToken,
 }: ProviderProps) => {
   const [region, setRegion] = useState("eu-central-1");
+  const [launched, setLaunched] = useState(false);
 
   const launchUrl = useMemo(() => {
     const params = new URLSearchParams({
@@ -818,7 +853,10 @@ const AWSDeploy = ({
       <Button
         variant={"primary"}
         disabled={isGeneratingToken || !token}
-        onClick={() => window.open(launchUrl, "_blank", "noopener,noreferrer")}
+        onClick={() => {
+          window.open(launchUrl, "_blank", "noopener,noreferrer");
+          setLaunched(true);
+        }}
       >
         <RocketIcon size={16} />
         Launch Stack in AWS Console
@@ -829,6 +867,7 @@ const AWSDeploy = ({
         token, review, and create the stack. Point the DNS records from the
         previous step to the PublicIP stack output afterwards.
       </HelpText>
+      {launched && <RegistrationCheck domain={domain} />}
     </div>
   );
 };
