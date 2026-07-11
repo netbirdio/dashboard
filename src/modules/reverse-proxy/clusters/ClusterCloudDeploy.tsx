@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
+import CardTable from "@components/CardTable";
 import Code from "@components/Code";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
@@ -7,8 +8,15 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
 import { SelectDropdown } from "@components/select/SelectDropdown";
-import { ExternalLinkIcon, Loader2, RocketIcon } from "lucide-react";
+import {
+  CheckCircle2,
+  ExternalLinkIcon,
+  Loader2,
+  RocketIcon,
+} from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
+import { useApiCall } from "@/utils/api";
+import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
 
 // Synced from templates/reverse-proxy/netbird-proxy-cfn.yaml by the
 // sync-deploy-templates workflow.
@@ -79,7 +87,7 @@ chpasswd:
 `
     : ""
 }write_files:
-  - path: /etc/netbird-proxy/env
+  - path: /opt/netbird-proxy/env
     permissions: "0600"
     content: |
       NB_PROXY_TOKEN=${token}
@@ -92,15 +100,26 @@ chpasswd:
       NB_PROXY_LOG_LEVEL=info
       NB_PROXY_ADDRESS=:443
       NB_PROXY_WG_PORT=${DEFAULT_WIREGUARD_PORT}
+  - path: /opt/netbird-proxy/docker-compose.yml
+    permissions: "0644"
+    content: |
+      services:
+        reverse-proxy:
+          image: netbirdio/reverse-proxy:latest
+          restart: unless-stopped
+          ports:
+            - "80:80"
+            - "443:443"
+            - "${DEFAULT_WIREGUARD_PORT}:${DEFAULT_WIREGUARD_PORT}/udp"
+          env_file:
+            - /opt/netbird-proxy/env
+          volumes:
+            - proxy_certs:/certs
+      volumes:
+        proxy_certs:
 runcmd:
   - curl -fsSL https://get.docker.com | sh
-  - >-
-    docker run -d --name netbird-proxy --restart unless-stopped
-    -p 443:443 -p 80:80
-    -p ${DEFAULT_WIREGUARD_PORT}:${DEFAULT_WIREGUARD_PORT}/udp
-    --env-file /etc/netbird-proxy/env
-    -v proxy_certs:/certs
-    netbirdio/reverse-proxy:latest
+  - docker compose -f /opt/netbird-proxy/docker-compose.yml up -d
 `;
 
 export const ClusterCloudDeploy = ({ provider, ...props }: Props) => {
@@ -177,6 +196,133 @@ const fetchHetznerCatalog = async (token: string): Promise<HetznerCatalog> => {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return { locations, availableTypeIds, serverTypes };
+};
+
+type DeploySuccessProps = {
+  resourceLabel: string;
+  name: string;
+  ip: string;
+  isStaticIP: boolean;
+  domain: string;
+  ipPendingNote?: string;
+  children?: React.ReactNode;
+};
+
+// DeploySuccess shows the deployment result: the DNS records to create for
+// the new instance IP and a live check that the proxy registered with the
+// NetBird management service.
+const DeploySuccess = ({
+  resourceLabel,
+  name,
+  ip,
+  isStaticIP,
+  domain,
+  ipPendingNote,
+  children,
+}: DeploySuccessProps) => {
+  const clustersRequest = useApiCall<ReverseProxyCluster[]>(
+    "/reverse-proxies/clusters",
+    true,
+  );
+  const [registered, setRegistered] = useState(false);
+
+  useEffect(() => {
+    if (registered) return;
+    let attempts = 0;
+    const timer = setInterval(() => {
+      attempts += 1;
+      if (attempts > 120) {
+        clearInterval(timer);
+        return;
+      }
+      clustersRequest
+        .get()
+        .then((clusters) => {
+          const cluster = clusters?.find((c) => c.address === domain);
+          if (cluster?.online && cluster.connected_proxies > 0) {
+            setRegistered(true);
+          }
+        })
+        .catch(() => {
+          // Polling failures are retried on the next tick.
+        });
+    }, 5000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registered, domain]);
+
+  return (
+    <div className={"flex flex-col gap-4"}>
+      <Callout variant={"info"}>
+        {resourceLabel} <span className={"text-white font-medium"}>{name}</span>{" "}
+        was created
+        {ip ? (
+          <>
+            {" "}
+            with {isStaticIP ? "static IP" : "IP"}{" "}
+            <span className={"text-netbird font-medium"}>{ip}</span>.
+          </>
+        ) : (
+          <> {ipPendingNote}</>
+        )}
+      </Callout>
+      {ip && (
+        <div>
+          <Label>Update your DNS records</Label>
+          <HelpText>
+            Point these records at the new {resourceLabel.toLowerCase()}. The
+            proxy requests its certificate once they resolve.
+          </HelpText>
+          <CardTable>
+            <CardTable.Header>
+              <CardTable.HeaderCell width={100}>Type</CardTable.HeaderCell>
+              <CardTable.HeaderCell>Name</CardTable.HeaderCell>
+              <CardTable.HeaderCell>Content</CardTable.HeaderCell>
+            </CardTable.Header>
+            <CardTable.Body>
+              <CardTable.Row>
+                <CardTable.Cell>A</CardTable.Cell>
+                <CardTable.Cell copy copyText={domain}>
+                  {domain}
+                </CardTable.Cell>
+                <CardTable.Cell copy copyText={ip}>
+                  {ip}
+                </CardTable.Cell>
+              </CardTable.Row>
+              <CardTable.Row>
+                <CardTable.Cell>CNAME</CardTable.Cell>
+                <CardTable.Cell copy copyText={`*.${domain}`}>
+                  {`*.${domain}`}
+                </CardTable.Cell>
+                <CardTable.Cell copy copyText={domain}>
+                  {domain}
+                </CardTable.Cell>
+              </CardTable.Row>
+            </CardTable.Body>
+          </CardTable>
+        </div>
+      )}
+      <div className={"flex items-center gap-2 text-sm"}>
+        {registered ? (
+          <>
+            <CheckCircle2 size={16} className={"text-green-500 shrink-0"} />
+            <span className={"text-nb-gray-100"}>
+              Proxy registered with NetBird and connected.
+            </span>
+          </>
+        ) : (
+          <>
+            <Loader2 size={16} className={"animate-spin shrink-0"} />
+            <span className={"text-nb-gray-300"}>
+              Waiting for the proxy to register with NetBird - this takes a few
+              minutes while the instance installs Docker and starts the proxy...
+            </span>
+          </>
+        )}
+      </div>
+      {children}
+    </div>
+  );
 };
 
 const HetznerDeploy = ({
@@ -322,13 +468,13 @@ const HetznerDeploy = ({
 
   if (serverIP) {
     return (
-      <Callout variant={"info"}>
-        Server <span className={"text-white font-medium"}>{serverName}</span>{" "}
-        was created with IP{" "}
-        <span className={"text-netbird font-medium"}>{serverIP}</span>. Update
-        the DNS records from the previous step to point to this IP. The proxy
-        will request its certificate and connect within a minute or two.
-      </Callout>
+      <DeploySuccess
+        resourceLabel={"Server"}
+        name={serverName}
+        ip={serverIP}
+        isStaticIP={staticIP}
+        domain={domain}
+      />
     );
   }
 
@@ -526,32 +672,18 @@ const DigitalOceanDeploy = ({
 
   if (isCreated) {
     return (
-      <div className={"flex flex-col gap-4"}>
-        <Callout variant={"info"}>
-          Droplet{" "}
-          <span className={"text-white font-medium"}>{dropletName}</span> was
-          created
-          {reservedIP || dropletIP ? (
-            <>
-              {" "}
-              with {reservedIP ? "static IP" : "IP"}{" "}
-              <span className={"text-netbird font-medium"}>
-                {reservedIP || dropletIP}
-              </span>
-              . Update the DNS records from the previous step to point to this
-              IP. The proxy will request its certificate and connect within a
-              minute or two.
-            </>
-          ) : (
-            <>
-              {" "}
-              and is provisioning. Waiting for its public IP
-              {isDeploying
-                ? "..."
-                : " timed out - find the IP in the DigitalOcean control panel and update the DNS records from the previous step."}
-            </>
-          )}
-        </Callout>
+      <DeploySuccess
+        resourceLabel={"Droplet"}
+        name={dropletName}
+        ip={reservedIP || dropletIP}
+        isStaticIP={!!reservedIP}
+        domain={domain}
+        ipPendingNote={
+          isDeploying
+            ? "and is provisioning. Waiting for its public IP..."
+            : "but waiting for its public IP timed out - find the IP in the DigitalOcean control panel."
+        }
+      >
         <div>
           <Label>Droplet Root Password</Label>
           <HelpText>
@@ -563,7 +695,7 @@ const DigitalOceanDeploy = ({
             <Code.Line>{rootPassword}</Code.Line>
           </Code>
         </div>
-      </div>
+      </DeploySuccess>
     );
   }
 

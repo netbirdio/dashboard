@@ -1,13 +1,15 @@
 # NetBird Reverse Proxy - canonical cloud-init bootstrap.
 #
 # This is the single source template all provider deployments derive from
-# (Hetzner user_data, AWS CloudFormation UserData, hcloud CLI, Terraform).
-# The environment matches the dashboard's cluster setup snippets exactly.
+# (Hetzner user_data, DigitalOcean user_data, AWS CloudFormation UserData,
+# hcloud CLI, Terraform). The environment matches the dashboard's cluster
+# setup snippets exactly; keep it in sync with buildCloudInit in
+# src/modules/reverse-proxy/clusters/ClusterCloudDeploy.tsx.
 # Placeholders in {{...}} are replaced at deploy time; the token must never
 # be committed or baked into a public image.
 #cloud-config
 write_files:
-  - path: /etc/netbird-proxy/env
+  - path: /opt/netbird-proxy/env
     permissions: "0600"
     content: |
       NB_PROXY_TOKEN={{NB_PROXY_TOKEN}}
@@ -20,12 +22,23 @@ write_files:
       NB_PROXY_LOG_LEVEL=info
       NB_PROXY_ADDRESS=:443
       NB_PROXY_WG_PORT={{NB_PROXY_WG_PORT}}
+  - path: /opt/netbird-proxy/docker-compose.yml
+    permissions: "0644"
+    content: |
+      services:
+        reverse-proxy:
+          image: netbirdio/reverse-proxy:{{IMAGE_TAG}}
+          restart: unless-stopped
+          ports:
+            - "80:80"
+            - "443:443"
+            - "{{NB_PROXY_WG_PORT}}:{{NB_PROXY_WG_PORT}}/udp"
+          env_file:
+            - /opt/netbird-proxy/env
+          volumes:
+            - proxy_certs:/certs
+      volumes:
+        proxy_certs:
 runcmd:
   - curl -fsSL https://get.docker.com | sh
-  - >-
-    docker run -d --name netbird-proxy --restart unless-stopped
-    -p 443:443 -p 80:80
-    -p {{NB_PROXY_WG_PORT}}:{{NB_PROXY_WG_PORT}}/udp
-    --env-file /etc/netbird-proxy/env
-    -v proxy_certs:/certs
-    netbirdio/reverse-proxy:{{IMAGE_TAG}}
+  - docker compose -f /opt/netbird-proxy/docker-compose.yml up -d
