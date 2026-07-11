@@ -1,13 +1,14 @@
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
 import Code from "@components/Code";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import { ExternalLinkIcon, Loader2, RocketIcon } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 // Synced from templates/reverse-proxy/netbird-proxy-cfn.yaml by the
 // sync-deploy-templates workflow.
@@ -15,22 +16,6 @@ const CFN_TEMPLATE_URL =
   "https://netbird-deploy-templates.s3.eu-central-1.amazonaws.com/templates/netbird-proxy-cfn.yaml";
 
 const DEFAULT_WIREGUARD_PORT = 51820;
-
-const HETZNER_LOCATIONS = [
-  { value: "nbg1", label: "Nuremberg, Germany (nbg1)" },
-  { value: "fsn1", label: "Falkenstein, Germany (fsn1)" },
-  { value: "hel1", label: "Helsinki, Finland (hel1)" },
-  { value: "ash", label: "Ashburn, VA, USA (ash)" },
-  { value: "hil", label: "Hillsboro, OR, USA (hil)" },
-  { value: "sin", label: "Singapore (sin)" },
-];
-
-const HETZNER_SERVER_TYPES = [
-  { value: "cx22", label: "CX22 - 2 vCPU / 4 GB (EU locations only)" },
-  { value: "cpx11", label: "CPX11 - 2 vCPU / 2 GB" },
-  { value: "cpx21", label: "CPX21 - 3 vCPU / 4 GB" },
-  { value: "cpx31", label: "CPX31 - 4 vCPU / 8 GB" },
-];
 
 const DIGITALOCEAN_REGIONS = [
   { value: "fra1", label: "Frankfurt, Germany (fra1)" },
@@ -126,6 +111,74 @@ export const ClusterCloudDeploy = ({ provider, ...props }: Props) => {
 
 type ProviderProps = Omit<Props, "provider">;
 
+type HetznerServerType = {
+  id: number;
+  name: string;
+  cores: number;
+  memory: number;
+  deprecated: boolean;
+};
+
+type HetznerCatalog = {
+  locations: { name: string; label: string }[];
+  availableTypeIds: Record<string, number[]>;
+  serverTypes: HetznerServerType[];
+};
+
+// fetchHetznerCatalog loads the current locations, server types, and
+// per-location availability from the Hetzner API, excluding deprecated
+// server types, so the dropdowns always offer valid combinations.
+const fetchHetznerCatalog = async (token: string): Promise<HetznerCatalog> => {
+  const headers = { Authorization: `Bearer ${token}` };
+  const [typesRes, dcsRes] = await Promise.all([
+    fetch("https://api.hetzner.cloud/v1/server_types?per_page=50", { headers }),
+    fetch("https://api.hetzner.cloud/v1/datacenters?per_page=50", { headers }),
+  ]);
+  const typesBody = await typesRes.json().catch(() => null);
+  if (!typesRes.ok) {
+    throw new Error(
+      typesBody?.error?.message ??
+        `Hetzner API error (HTTP ${typesRes.status})`,
+    );
+  }
+  const dcsBody = await dcsRes.json().catch(() => null);
+  if (!dcsRes.ok) {
+    throw new Error(
+      dcsBody?.error?.message ?? `Hetzner API error (HTTP ${dcsRes.status})`,
+    );
+  }
+
+  const serverTypes = ((typesBody?.server_types ?? []) as HetznerServerType[])
+    .filter((t) => !t.deprecated)
+    .sort((a, b) => a.memory - b.memory || a.cores - b.cores);
+
+  type Datacenter = {
+    location?: { name?: string; city?: string; country?: string };
+    server_types?: { available?: number[] };
+  };
+  const locationLabels = new Map<string, string>();
+  const availableTypeIds: Record<string, number[]> = {};
+  for (const dc of (dcsBody?.datacenters ?? []) as Datacenter[]) {
+    const name = dc.location?.name;
+    if (!name) continue;
+    locationLabels.set(
+      name,
+      `${dc.location?.city}, ${dc.location?.country} (${name})`,
+    );
+    const ids = new Set(availableTypeIds[name] ?? []);
+    for (const id of dc.server_types?.available ?? []) {
+      ids.add(id);
+    }
+    availableTypeIds[name] = Array.from(ids);
+  }
+
+  const locations = Array.from(locationLabels.entries())
+    .map(([name, label]) => ({ name, label }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return { locations, availableTypeIds, serverTypes };
+};
+
 const HetznerDeploy = ({
   domain,
   token,
@@ -133,8 +186,12 @@ const HetznerDeploy = ({
   isGeneratingToken,
 }: ProviderProps) => {
   const [hetznerToken, setHetznerToken] = useState("");
-  const [location, setLocation] = useState("nbg1");
-  const [serverType, setServerType] = useState("cx22");
+  const [catalog, setCatalog] = useState<HetznerCatalog | null>(null);
+  const [catalogError, setCatalogError] = useState("");
+  const [isLoadingCatalog, setIsLoadingCatalog] = useState(false);
+  const [location, setLocation] = useState("");
+  const [serverType, setServerType] = useState("");
+  const [staticIP, setStaticIP] = useState(true);
   const [isDeploying, setIsDeploying] = useState(false);
   const [serverIP, setServerIP] = useState("");
 
@@ -142,6 +199,67 @@ const HetznerDeploy = ({
     const label = domain.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase();
     return `netbird-proxy-${label}`.slice(0, 63).replace(/-+$/, "");
   }, [domain]);
+
+  // Load the live catalog once a plausible token is entered, debounced so we
+  // don't call the API on every keystroke.
+  useEffect(() => {
+    const apiToken = hetznerToken.trim();
+    if (apiToken.length < 32) {
+      setCatalog(null);
+      setCatalogError("");
+      return;
+    }
+    const timer = setTimeout(() => {
+      setIsLoadingCatalog(true);
+      setCatalogError("");
+      fetchHetznerCatalog(apiToken)
+        .then(setCatalog)
+        .catch((err) => {
+          setCatalog(null);
+          setCatalogError(
+            err instanceof Error ? err.message : "request failed",
+          );
+        })
+        .finally(() => setIsLoadingCatalog(false));
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [hetznerToken]);
+
+  const locationOptions = useMemo(
+    () =>
+      catalog?.locations.map((l) => ({ value: l.name, label: l.label })) ?? [],
+    [catalog],
+  );
+
+  const serverTypeOptions = useMemo(() => {
+    if (!catalog || !location) return [];
+    const ids = catalog.availableTypeIds[location] ?? [];
+    return catalog.serverTypes
+      .filter((t) => ids.includes(t.id))
+      .map((t) => ({
+        value: t.name,
+        label: `${t.name.toUpperCase()} - ${t.cores} vCPU / ${Math.round(
+          t.memory,
+        )} GB`,
+      }));
+  }, [catalog, location]);
+
+  useEffect(() => {
+    if (!catalog) return;
+    if (!catalog.locations.some((l) => l.name === location)) {
+      const preferred =
+        catalog.locations.find((l) => l.name === "nbg1") ??
+        catalog.locations[0];
+      setLocation(preferred?.name ?? "");
+    }
+  }, [catalog, location]);
+
+  useEffect(() => {
+    if (!catalog || !location) return;
+    if (!serverTypeOptions.some((o) => o.value === serverType)) {
+      setServerType(serverTypeOptions[0]?.value ?? "");
+    }
+  }, [catalog, location, serverTypeOptions, serverType]);
 
   const deploy = async () => {
     setIsDeploying(true);
@@ -167,6 +285,28 @@ const HetznerDeploy = ({
           );
         }
         setServerIP(body?.server?.public_net?.ipv4?.ip ?? "");
+        const primaryIPId = body?.server?.public_net?.ipv4?.id;
+        if (staticIP && primaryIPId) {
+          const ipRes = await fetch(
+            `https://api.hetzner.cloud/v1/primary_ips/${primaryIPId}`,
+            {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${hetznerToken.trim()}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ auto_delete: false }),
+            },
+          );
+          if (!ipRes.ok) {
+            const ipBody = await ipRes.json().catch(() => null);
+            throw new Error(
+              `server created, but keeping its IP static failed: ${
+                ipBody?.error?.message ?? `HTTP ${ipRes.status}`
+              }`,
+            );
+          }
+        }
       })
       .finally(() => setIsDeploying(false));
 
@@ -210,27 +350,57 @@ const HetznerDeploy = ({
           }
         />
       </div>
-      <div className={"flex gap-4"}>
-        <div className={"w-1/2"}>
-          <Label>Location</Label>
-          <SelectDropdown
-            value={location}
-            onChange={(v) => setLocation(v as string)}
-            options={HETZNER_LOCATIONS}
+      {catalogError && (
+        <Callout variant={"warning"}>
+          Could not load Hetzner options: {catalogError}
+        </Callout>
+      )}
+      {catalog ? (
+        <>
+          <div className={"flex gap-4"}>
+            <div className={"w-1/2"}>
+              <Label>Location</Label>
+              <SelectDropdown
+                value={location}
+                onChange={(v) => setLocation(v as string)}
+                options={locationOptions}
+              />
+            </div>
+            <div className={"w-1/2"}>
+              <Label>Server Type</Label>
+              <SelectDropdown
+                value={serverType}
+                onChange={(v) => setServerType(v as string)}
+                options={serverTypeOptions}
+              />
+            </div>
+          </div>
+          <FancyToggleSwitch
+            value={staticIP}
+            onChange={setStaticIP}
+            label={"Static IP"}
+            helpText={
+              "Keep the server's IP when the server is deleted or rebuilt, so the DNS records stay valid. Hetzner bills unassigned IPs."
+            }
           />
-        </div>
-        <div className={"w-1/2"}>
-          <Label>Server Type</Label>
-          <SelectDropdown
-            value={serverType}
-            onChange={(v) => setServerType(v as string)}
-            options={HETZNER_SERVER_TYPES}
-          />
-        </div>
-      </div>
+        </>
+      ) : (
+        <HelpText className={"mb-0"}>
+          {isLoadingCatalog
+            ? "Loading available locations and server types..."
+            : "Enter your API token to load the available locations and server types."}
+        </HelpText>
+      )}
       <Button
         variant={"primary"}
-        disabled={!hetznerToken || isDeploying || isGeneratingToken || !token}
+        disabled={
+          !catalog ||
+          !location ||
+          !serverType ||
+          isDeploying ||
+          isGeneratingToken ||
+          !token
+        }
         onClick={deploy}
       >
         {isDeploying || isGeneratingToken ? (
@@ -280,9 +450,11 @@ const DigitalOceanDeploy = ({
   const [doToken, setDoToken] = useState("");
   const [region, setRegion] = useState("fra1");
   const [size, setSize] = useState("s-1vcpu-2gb");
+  const [staticIP, setStaticIP] = useState(true);
   const [isDeploying, setIsDeploying] = useState(false);
   const [isCreated, setIsCreated] = useState(false);
   const [dropletIP, setDropletIP] = useState("");
+  const [reservedIP, setReservedIP] = useState("");
 
   const dropletName = useMemo(() => {
     const label = domain.replace(/[^a-zA-Z0-9.-]/g, "-").toLowerCase();
@@ -314,8 +486,31 @@ const DigitalOceanDeploy = ({
           );
         }
         setIsCreated(true);
-        const ip = await waitForDropletIP(body?.droplet?.id, doToken);
+        const dropletId = body?.droplet?.id;
+        const ip = await waitForDropletIP(dropletId, doToken);
         setDropletIP(ip);
+        if (staticIP && dropletId) {
+          const ipRes = await fetch(
+            "https://api.digitalocean.com/v2/reserved_ips",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${doToken}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ droplet_id: dropletId }),
+            },
+          );
+          const ipBody = await ipRes.json().catch(() => null);
+          if (!ipRes.ok) {
+            throw new Error(
+              `droplet created, but reserving a static IP failed: ${
+                ipBody?.message ?? `HTTP ${ipRes.status}`
+              }`,
+            );
+          }
+          setReservedIP(ipBody?.reserved_ip?.ip ?? "");
+        }
       })
       .finally(() => setIsDeploying(false));
 
@@ -336,14 +531,16 @@ const DigitalOceanDeploy = ({
           Droplet{" "}
           <span className={"text-white font-medium"}>{dropletName}</span> was
           created
-          {dropletIP ? (
+          {reservedIP || dropletIP ? (
             <>
               {" "}
-              with IP{" "}
-              <span className={"text-netbird font-medium"}>{dropletIP}</span>.
-              Update the DNS records from the previous step to point to this IP.
-              The proxy will request its certificate and connect within a minute
-              or two.
+              with {reservedIP ? "static IP" : "IP"}{" "}
+              <span className={"text-netbird font-medium"}>
+                {reservedIP || dropletIP}
+              </span>
+              . Update the DNS records from the previous step to point to this
+              IP. The proxy will request its certificate and connect within a
+              minute or two.
             </>
           ) : (
             <>
@@ -406,6 +603,14 @@ const DigitalOceanDeploy = ({
           />
         </div>
       </div>
+      <FancyToggleSwitch
+        value={staticIP}
+        onChange={setStaticIP}
+        label={"Static IP"}
+        helpText={
+          "Reserve a static IP and assign it to the droplet, so the DNS records survive rebuilds. Free while assigned to a droplet."
+        }
+      />
       <Button
         variant={"primary"}
         disabled={!doToken || isDeploying || isGeneratingToken || !token}
