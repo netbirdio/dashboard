@@ -21,6 +21,7 @@ Metadata:
           - WireGuardPort
           - AllocateElasticIP
           - IamInstanceProfile
+          - CreateInstanceRole
           - KeyName
           - SSHAllowedCIDR
     ParameterLabels:
@@ -39,7 +40,9 @@ Metadata:
       AllocateElasticIP:
         default: Allocate a static Elastic IP
       IamInstanceProfile:
-        default: IAM instance profile (optional)
+        default: Existing IAM instance profile (optional)
+      CreateInstanceRole:
+        default: Create IAM role with SSM access
       KeyName:
         default: SSH key pair (optional)
       SSHAllowedCIDR:
@@ -89,7 +92,12 @@ Parameters:
   IamInstanceProfile:
     Type: String
     Default: ""
-    Description: Optional name of an existing IAM instance profile to attach (e.g. for SSM Session Manager access or CloudWatch logging). Leave empty for none.
+    Description: Optional name of an existing IAM instance profile to attach. Takes precedence over CreateInstanceRole. Leave empty for none.
+  CreateInstanceRole:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: Create an IAM role and instance profile granting SSM Session Manager access (shell access without SSH). Ignored when an existing instance profile is provided.
   KeyName:
     Type: String
     Default: ""
@@ -101,12 +109,15 @@ Parameters:
     Description: CIDR allowed to reach SSH. Only used when a key pair is set.
   LatestUbuntuAmi:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id
-    Description: Resolved automatically to the latest Ubuntu 24.04 AMI. Do not change.
+    Default: /aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+    Description: Resolved automatically to the latest Ubuntu 26.04 AMI. Do not change.
 
 Conditions:
   HasKeyName: !Not [!Equals [!Ref KeyName, ""]]
   HasInstanceProfile: !Not [!Equals [!Ref IamInstanceProfile, ""]]
+  CreateRole: !And
+    - !Equals [!Ref CreateInstanceRole, "true"]
+    - !Equals [!Ref IamInstanceProfile, ""]
   UseElasticIP: !Equals [!Ref AllocateElasticIP, "true"]
 
 Resources:
@@ -142,14 +153,40 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-netbird-proxy"
 
+  ProxyInstanceRole:
+    Type: AWS::IAM::Role
+    Condition: CreateRole
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-netbird-proxy"
+
+  ProxyInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Condition: CreateRole
+    Properties:
+      Roles:
+        - !Ref ProxyInstanceRole
+
   ProxyInstance:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: !Ref LatestUbuntuAmi
       InstanceType: !Ref InstanceType
       KeyName: !If [HasKeyName, !Ref KeyName, !Ref AWS::NoValue]
-      IamInstanceProfile:
-        !If [HasInstanceProfile, !Ref IamInstanceProfile, !Ref AWS::NoValue]
+      IamInstanceProfile: !If
+        - HasInstanceProfile
+        - !Ref IamInstanceProfile
+        - !If [CreateRole, !Ref ProxyInstanceProfile, !Ref AWS::NoValue]
       SecurityGroups:
         - !Ref ProxySecurityGroup
       MetadataOptions:
@@ -223,3 +260,7 @@ Outputs:
   InstanceId:
     Description: EC2 instance ID.
     Value: !Ref ProxyInstance
+  InstanceRole:
+    Condition: CreateRole
+    Description: IAM role created for the instance (SSM Session Manager access).
+    Value: !Ref ProxyInstanceRole

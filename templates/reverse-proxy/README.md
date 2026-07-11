@@ -20,9 +20,13 @@ object. The dashboard opens the CloudFormation quick-create form with domain
 and management URL pre-filled; the proxy token is entered by the user in the
 AWS console (`NoEcho` parameter, kept out of URLs, logs, and stack outputs).
 
-The template launches one EC2 instance (Ubuntu 24.04 resolved via public SSM
+The template launches one EC2 instance (Ubuntu 26.04 resolved via public SSM
 parameter), a security group for 443/80/WG, an optional Elastic IP, and boots
-the container via cloud-init. SSH stays disabled unless a key pair is given.
+the container via Docker Compose from cloud-init. SSH stays disabled unless a
+key pair is given; alternatively an IAM instance profile can be attached
+(existing one by name, or created by the template with SSM Session Manager
+access — creating one requires acknowledging IAM capabilities in the console
+form).
 
 ## Cloud-init (`netbird-proxy-cloud-init.yaml`)
 
