@@ -32,6 +32,25 @@ const HETZNER_SERVER_TYPES = [
   { value: "cpx31", label: "CPX31 - 4 vCPU / 8 GB" },
 ];
 
+const DIGITALOCEAN_REGIONS = [
+  { value: "fra1", label: "Frankfurt, Germany (fra1)" },
+  { value: "ams3", label: "Amsterdam, Netherlands (ams3)" },
+  { value: "lon1", label: "London, UK (lon1)" },
+  { value: "nyc3", label: "New York, USA (nyc3)" },
+  { value: "sfo3", label: "San Francisco, USA (sfo3)" },
+  { value: "tor1", label: "Toronto, Canada (tor1)" },
+  { value: "sgp1", label: "Singapore (sgp1)" },
+  { value: "blr1", label: "Bangalore, India (blr1)" },
+  { value: "syd1", label: "Sydney, Australia (syd1)" },
+];
+
+const DIGITALOCEAN_SIZES = [
+  { value: "s-1vcpu-1gb", label: "Basic - 1 vCPU / 1 GB" },
+  { value: "s-1vcpu-2gb", label: "Basic - 1 vCPU / 2 GB" },
+  { value: "s-2vcpu-2gb", label: "Basic - 2 vCPU / 2 GB" },
+  { value: "s-2vcpu-4gb", label: "Basic - 2 vCPU / 4 GB" },
+];
+
 const AWS_REGIONS = [
   { value: "us-east-1", label: "US East (N. Virginia)" },
   { value: "us-east-2", label: "US East (Ohio)" },
@@ -43,8 +62,10 @@ const AWS_REGIONS = [
   { value: "ap-northeast-1", label: "Asia Pacific (Tokyo)" },
 ];
 
+export type CloudProvider = "hetzner" | "digitalocean" | "aws";
+
 type Props = {
-  provider: "hetzner" | "aws";
+  provider: CloudProvider;
   domain: string;
   token: string;
   managementUrl: string;
@@ -83,28 +104,10 @@ runcmd:
     netbirdio/reverse-proxy:latest
 `;
 
-export const ClusterCloudDeploy = ({
-  provider,
-  domain,
-  token,
-  managementUrl,
-  isGeneratingToken,
-}: Props) => {
-  return provider === "hetzner" ? (
-    <HetznerDeploy
-      domain={domain}
-      token={token}
-      managementUrl={managementUrl}
-      isGeneratingToken={isGeneratingToken}
-    />
-  ) : (
-    <AWSDeploy
-      domain={domain}
-      token={token}
-      managementUrl={managementUrl}
-      isGeneratingToken={isGeneratingToken}
-    />
-  );
+export const ClusterCloudDeploy = ({ provider, ...props }: Props) => {
+  if (provider === "hetzner") return <HetznerDeploy {...props} />;
+  if (provider === "digitalocean") return <DigitalOceanDeploy {...props} />;
+  return <AWSDeploy {...props} />;
 };
 
 type ProviderProps = Omit<Props, "provider">;
@@ -222,6 +225,160 @@ const HetznerDeploy = ({
           <RocketIcon size={16} />
         )}
         {isGeneratingToken ? "Preparing proxy token..." : "Deploy Server"}
+      </Button>
+    </div>
+  );
+};
+
+// waitForDropletIP polls the droplet until its public IPv4 is assigned.
+const waitForDropletIP = async (dropletId: number, doToken: string) => {
+  for (let attempt = 0; attempt < 18; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    const res = await fetch(
+      `https://api.digitalocean.com/v2/droplets/${dropletId}`,
+      { headers: { Authorization: `Bearer ${doToken}` } },
+    );
+    const body = await res.json().catch(() => null);
+    const ip = body?.droplet?.networks?.v4?.find(
+      (net: { type: string }) => net.type === "public",
+    )?.ip_address;
+    if (ip) return ip as string;
+  }
+  return "";
+};
+
+const DigitalOceanDeploy = ({
+  domain,
+  token,
+  managementUrl,
+  isGeneratingToken,
+}: ProviderProps) => {
+  const [doToken, setDoToken] = useState("");
+  const [region, setRegion] = useState("fra1");
+  const [size, setSize] = useState("s-1vcpu-2gb");
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [isCreated, setIsCreated] = useState(false);
+  const [dropletIP, setDropletIP] = useState("");
+
+  const dropletName = useMemo(() => {
+    const label = domain.replace(/[^a-zA-Z0-9.-]/g, "-").toLowerCase();
+    return `netbird-proxy-${label}`.slice(0, 63).replace(/[-.]+$/, "");
+  }, [domain]);
+
+  const deploy = async () => {
+    setIsDeploying(true);
+    const promise = fetch("https://api.digitalocean.com/v2/droplets", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${doToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: dropletName,
+        region,
+        size,
+        image: "ubuntu-24-04-x64",
+        user_data: buildCloudInit(domain, token, managementUrl),
+        tags: ["netbird-proxy"],
+      }),
+    })
+      .then(async (res) => {
+        const body = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(
+            body?.message ?? `DigitalOcean API error (HTTP ${res.status})`,
+          );
+        }
+        setIsCreated(true);
+        const ip = await waitForDropletIP(body?.droplet?.id, doToken);
+        setDropletIP(ip);
+      })
+      .finally(() => setIsDeploying(false));
+
+    notify({
+      title: "DigitalOcean Deployment",
+      description: "Failed to create the DigitalOcean droplet",
+      promise,
+      loadingMessage: "Creating DigitalOcean droplet...",
+      showOnlyError: true,
+      preventSuccessToast: true,
+    });
+  };
+
+  if (isCreated) {
+    return (
+      <Callout variant={"info"}>
+        Droplet <span className={"text-white font-medium"}>{dropletName}</span>{" "}
+        was created
+        {dropletIP ? (
+          <>
+            {" "}
+            with IP{" "}
+            <span className={"text-netbird font-medium"}>{dropletIP}</span>.
+            Update the DNS records from the previous step to point to this IP.
+            The proxy will request its certificate and connect within a minute
+            or two.
+          </>
+        ) : (
+          <>
+            {" "}
+            and is provisioning. Waiting for its public IP
+            {isDeploying
+              ? "..."
+              : " timed out - find the IP in the DigitalOcean control panel and update the DNS records from the previous step."}
+          </>
+        )}
+      </Callout>
+    );
+  }
+
+  return (
+    <div className={"flex flex-col gap-4"}>
+      <div>
+        <Label>DigitalOcean API Token</Label>
+        <HelpText>
+          Create a token with write scope in your DigitalOcean account. It is
+          sent directly from your browser to the DigitalOcean API and never
+          stored by NetBird.
+        </HelpText>
+        <Input
+          type={"password"}
+          placeholder={"Paste your DigitalOcean API token"}
+          value={doToken}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setDoToken(e.target.value)
+          }
+        />
+      </div>
+      <div className={"flex gap-4"}>
+        <div className={"w-1/2"}>
+          <Label>Region</Label>
+          <SelectDropdown
+            value={region}
+            onChange={(v) => setRegion(v as string)}
+            options={DIGITALOCEAN_REGIONS}
+          />
+        </div>
+        <div className={"w-1/2"}>
+          <Label>Droplet Size</Label>
+          <SelectDropdown
+            value={size}
+            onChange={(v) => setSize(v as string)}
+            options={DIGITALOCEAN_SIZES}
+          />
+        </div>
+      </div>
+      <Button
+        variant={"primary"}
+        disabled={!doToken || isDeploying || isGeneratingToken || !token}
+        onClick={deploy}
+      >
+        {isDeploying || isGeneratingToken ? (
+          <Loader2 size={16} className={"animate-spin"} />
+        ) : (
+          <RocketIcon size={16} />
+        )}
+        {isGeneratingToken ? "Preparing proxy token..." : "Deploy Droplet"}
       </Button>
     </div>
   );

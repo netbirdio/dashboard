@@ -36,14 +36,23 @@ import {
   REVERSE_PROXY_SELFHOSTED_ROUTING_DOCS_LINK,
   ReverseProxyClusterToken,
 } from "@/interfaces/ReverseProxy";
-import { ClusterCloudDeploy } from "@/modules/reverse-proxy/clusters/ClusterCloudDeploy";
+import {
+  ClusterCloudDeploy,
+  CloudProvider,
+} from "@/modules/reverse-proxy/clusters/ClusterCloudDeploy";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-type DeployMethod = "docker" | "compose" | "kubernetes" | "hetzner" | "aws";
+type DeployMethod =
+  | "docker"
+  | "compose"
+  | "kubernetes"
+  | "hetzner"
+  | "digitalocean"
+  | "aws";
 
 const escapeRegExp = (value: string) =>
   value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -224,6 +233,11 @@ spec:
       title: "Deploy the Proxy on Hetzner Cloud",
       command: "",
     },
+    digitalocean: {
+      label: "DigitalOcean",
+      title: "Deploy the Proxy on DigitalOcean",
+      command: "",
+    },
     aws: {
       label: "AWS CloudFormation",
       title: "Deploy the Proxy on AWS",
@@ -231,7 +245,9 @@ spec:
     },
   }[deployMethod];
 
-  const isCloudDeploy = deployMethod === "hetzner" || deployMethod === "aws";
+  const isCloudDeploy = ["hetzner", "digitalocean", "aws"].includes(
+    deployMethod,
+  );
 
   const generateToken = useCallback(async () => {
     setIsGeneratingToken(true);
@@ -405,6 +421,7 @@ spec:
                       { value: "compose", label: "Docker Compose" },
                       { value: "kubernetes", label: "Kubernetes" },
                       { value: "hetzner", label: "Hetzner Cloud" },
+                      { value: "digitalocean", label: "DigitalOcean" },
                       { value: "aws", label: "AWS CloudFormation" },
                     ]}
                   />
@@ -429,7 +446,7 @@ spec:
 
               {isCloudDeploy ? (
                 <ClusterCloudDeploy
-                  provider={deployMethod as "hetzner" | "aws"}
+                  provider={deployMethod as CloudProvider}
                   domain={domain}
                   token={token}
                   managementUrl={managementUrl}
