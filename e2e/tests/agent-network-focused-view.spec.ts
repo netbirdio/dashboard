@@ -22,6 +22,9 @@ type AccountMock = {
   // undefined leaves the setting absent (as an un-onboarded account would be).
   agentNetworkOnly?: boolean;
   signupFormPending?: boolean;
+  // dashboardFeaturesAgentNetwork sets settings.dashboard_features.agent_network,
+  // which makes the Agent Network menu available without focusing the dashboard.
+  dashboardFeaturesAgentNetwork?: boolean;
 };
 
 // mockAccounts rewrites GET /accounts to inject the focused-view setting and
@@ -50,6 +53,11 @@ function mockAccounts(
         delete body[0].settings.agent_network_only;
       } else {
         body[0].settings.agent_network_only = applied;
+      }
+      if (initial.dashboardFeaturesAgentNetwork !== undefined) {
+        body[0].settings.dashboard_features = {
+          agent_network: initial.dashboardFeaturesAgentNetwork,
+        };
       }
       body[0].onboarding = {
         ...(body[0].onboarding ?? {}),
@@ -174,6 +182,23 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
       // ...and the Agent Network section is gone: the explicit opt-out wins
       // and, without a deployment config flag, the section is not enabled.
       await expect(navItem(page, "Agent Network")).toHaveCount(0);
+    } finally {
+      await close();
+    }
+  });
+
+  test("dashboard_features.agent_network makes the menu available without focusing", async ({
+    browser,
+  }) => {
+    const { page, close } = await openWithAccount(browser, {
+      dashboardFeaturesAgentNetwork: true,
+    });
+    try {
+      // The Agent Network menu is available...
+      await expect(navItem(page, "Agent Network")).toBeVisible();
+      // ...but the dashboard is not focused: a regular section that focused
+      // mode hides (Reverse Proxy) is still present.
+      await expect(navItem(page, "Reverse Proxy")).toBeVisible();
     } finally {
       await close();
     }
