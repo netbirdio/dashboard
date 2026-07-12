@@ -1,6 +1,10 @@
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { isLocalDev, isNetBirdCloud } from "@utils/netbird";
+import {
+  isLocalDev,
+  isNetBirdCloud,
+  testOnboardingEnabled,
+} from "@utils/netbird";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
@@ -96,7 +100,9 @@ export const OnboardingProvider = ({
     agentNetworkOnly || hasAgentNetworkSignupSource();
 
   const showOnboarding = useMemo(() => {
-    if (process.env.APP_ENV === "test") return false;
+    if (process.env.APP_ENV === "test" && !testOnboardingEnabled()) {
+      return false;
+    }
     if (!account) return false;
     // The Agent Network onboarding runs a dedicated flow whose first step is
     // the signup form. Unlike the regular cloud survey (which relies on a JWT
