@@ -71,13 +71,13 @@ export const OnboardingProvider = ({
   const showOnboarding = useMemo(() => {
     if (process.env.APP_ENV === "test") return false;
     if (!account) return false;
-    // Agent Network-only deployments run a dedicated onboarding flow. The
-    // signup form is its first step (self-hosted only — the cloud survey relies
-    // on a JWT domain claim self-hosted IdPs don't emit), so the flow shows
-    // while either the signup form or the onboarding flow is still pending.
+    // The Agent Network focused view runs a dedicated onboarding flow whose
+    // first step is the signup form. Unlike the regular cloud survey (which
+    // relies on a JWT domain claim), this form is shown on both cloud and
+    // self-hosted, so the flow stays visible while either the signup form or
+    // the onboarding flow is still pending.
     if (agentNetworkOnly) {
-      const signupPending =
-        !isNetBirdCloud() && !!account?.onboarding?.signup_form_pending;
+      const signupPending = !!account?.onboarding?.signup_form_pending;
       return (
         isOwner &&
         (signupPending || !!account?.onboarding?.onboarding_flow_pending)
@@ -92,10 +92,9 @@ export const OnboardingProvider = ({
     return isOwner && show;
   }, [account, isOwner, agentNetworkOnly]);
 
-  // Self-hosted only: the cloud survey relies on a JWT domain claim self-hosted
-  // IdPs don't emit, so the agent-network flow uses its own signup step.
-  const agentSignupPending =
-    !isNetBirdCloud() && !!account?.onboarding?.signup_form_pending;
+  // The agent-network flow uses its own signup step on both cloud and
+  // self-hosted, so netbird.ai signups fill the form before onboarding.
+  const agentSignupPending = !!account?.onboarding?.signup_form_pending;
 
   const updateAccountMeta = async (meta: Partial<Account["onboarding"]>) => {
     if (!account) return;
