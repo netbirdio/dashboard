@@ -15,7 +15,9 @@ import { Account } from "@/interfaces/Account";
  */
 const isAgentNetworkSignupPending = (account?: Account) => {
   if (account?.onboarding?.signup_form_pending !== true) return false;
-  if (account.settings?.agent_network_only === true) return false;
+  // Only apply optimism when the account has no explicit choice yet; an
+  // explicit true or false is the user's decision and must be respected.
+  if (account.settings?.agent_network_only !== undefined) return false;
   try {
     return (
       typeof window !== "undefined" &&
@@ -46,10 +48,12 @@ export const useAgentNetworkMode = () => {
 
   return useMemo(() => {
     const account = accounts?.[0];
+    // An explicit account setting (true or false) always wins so a user can
+    // opt out even when the deployment config enables focused mode. Only when
+    // the setting is absent do signup optimism and deployment config apply.
+    const setting = account?.settings?.agent_network_only;
     const only =
-      isAgentNetworkSignupPending(account) ||
-      account?.settings?.agent_network_only === true ||
-      isAgentNetworkOnly();
+      setting ?? (isAgentNetworkSignupPending(account) || isAgentNetworkOnly());
     const enabled = only || isAgentNetworkEnabled();
     const loading = permission.accounts.read ? isLoading : false;
     return { only, enabled, loading } as const;
