@@ -78,8 +78,13 @@ export const NetBirdCloudProvider = () => {
             settings: { ...account.settings, agent_network_only: true },
           },
           "/" + account.id,
-        ).then(() => {
-          mutate("/accounts");
+        ).then(async () => {
+          // Revalidate before clearing the source key so the persisted
+          // setting is in cache first. Clearing it earlier would leave a
+          // window where neither the source-pending optimism nor the stored
+          // setting holds, briefly flipping the focused view off and closing
+          // the onboarding form as the toast appears.
+          await mutate("/accounts");
           localStorage.removeItem(SIGNUP_SOURCE_LOCAL_STORAGE_KEY);
         }),
         loadingMessage: "Enabling Agent Network focused view...",
