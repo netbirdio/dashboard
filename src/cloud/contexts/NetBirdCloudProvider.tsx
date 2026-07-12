@@ -51,32 +51,44 @@ export const NetBirdCloudProvider = () => {
     } catch (e) {}
   }, []);
 
-  // Apply the netbird.ai signup source once the account is available. Only
-  // new accounts (signup form still pending) are switched to the Agent
-  // Network focused view — a stale flag from an existing user is discarded.
+  // Apply the netbird.ai signup source once the account is available. New
+  // accounts (signup form still pending) get the focused view
+  // (agent_network_only); existing accounts just get the Agent Network menu
+  // made available (dashboard_features.agent_network), leaving the rest of
+  // their dashboard intact.
   useEffect(() => {
     if (!account || signupSourceApplied.current) return;
     try {
       const source = localStorage.getItem(SIGNUP_SOURCE_LOCAL_STORAGE_KEY);
       if (source !== AGENT_NETWORK_SIGNUP_SOURCE) return;
 
-      if (
-        account.onboarding?.signup_form_pending !== true ||
-        account.settings?.agent_network_only === true
-      ) {
+      const isNewAccount = account.onboarding?.signup_form_pending === true;
+      const alreadyApplied = isNewAccount
+        ? account.settings?.agent_network_only === true
+        : account.settings?.dashboard_features?.agent_network === true;
+
+      if (alreadyApplied) {
         localStorage.removeItem(SIGNUP_SOURCE_LOCAL_STORAGE_KEY);
         return;
       }
 
       signupSourceApplied.current = true;
+      const settings = isNewAccount
+        ? { ...account.settings, agent_network_only: true }
+        : {
+            ...account.settings,
+            dashboard_features: {
+              ...account.settings?.dashboard_features,
+              agent_network: true,
+            },
+          };
       notify({
         title: "Agent Network",
-        description: "Agent Network focused view enabled for your account.",
+        description: isNewAccount
+          ? "Agent Network focused view enabled for your account."
+          : "Agent Network enabled for your account.",
         promise: accountRequest(
-          {
-            id: account.id,
-            settings: { ...account.settings, agent_network_only: true },
-          },
+          { id: account.id, settings },
           "/" + account.id,
         ).then(async () => {
           // Revalidate before clearing the source key so the persisted
@@ -87,7 +99,9 @@ export const NetBirdCloudProvider = () => {
           await mutate("/accounts");
           localStorage.removeItem(SIGNUP_SOURCE_LOCAL_STORAGE_KEY);
         }),
-        loadingMessage: "Enabling Agent Network focused view...",
+        loadingMessage: isNewAccount
+          ? "Enabling Agent Network focused view..."
+          : "Enabling Agent Network...",
       });
     } catch (e) {}
   }, [account]);

@@ -229,6 +229,29 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
     }
   });
 
+  test("existing netbird.ai account gets dashboard_features, not the focused view", async ({
+    browser,
+  }) => {
+    // An existing account (signup form already submitted) with the netbird.ai
+    // source should have the Agent Network menu made available via
+    // dashboard_features, not the focused agent_network_only view.
+    const { page, captured, close } = await openWithAccount(
+      browser,
+      { signupFormPending: false },
+      { signupSource: true },
+    );
+    try {
+      await expect
+        .poll(
+          () => captured.putBody?.settings?.dashboard_features?.agent_network,
+        )
+        .toBe(true);
+      expect(captured.putBody?.settings?.agent_network_only).not.toBe(true);
+    } finally {
+      await close();
+    }
+  });
+
   test("exposes the focused-view toggle in client settings", async ({
     browser,
   }) => {
