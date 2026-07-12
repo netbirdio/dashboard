@@ -20,7 +20,11 @@ const credentials: Record<TestUser, { username: string; password: string }> = {
 /**
  * Navigate to the app, authenticate via Zitadel, and wait for the app to load.
  */
-export async function loginToApp(page: Page, user: TestUser = "owner") {
+export async function loginToApp(
+  page: Page,
+  user: TestUser = "owner",
+  opts: { expectOnboarding?: boolean } = {},
+) {
   const { username, password } = credentials[user];
 
   await page.goto("/");
@@ -39,7 +43,9 @@ export async function loginToApp(page: Page, user: TestUser = "owner") {
   const which = await Promise.race([
     appReady.waitFor({ timeout: 20_000 }).then(() => "app" as const),
     setupModal.waitFor({ timeout: 20_000 }).then(() => "modal" as const),
-    approvalPending.waitFor({ timeout: 20_000 }).then(() => "approval" as const),
+    approvalPending
+      .waitFor({ timeout: 20_000 })
+      .then(() => "approval" as const),
     onboarding.waitFor({ timeout: 20_000 }).then(() => "onboarding" as const),
     selectAccount.waitFor({ timeout: 20_000 }).then(() => "select" as const),
     loginInput.waitFor({ timeout: 20_000 }).then(() => "login" as const),
@@ -51,6 +57,9 @@ export async function loginToApp(page: Page, user: TestUser = "owner") {
   }
 
   if (which === "modal") {
+    // Onboarding tests render a full-screen overlay over the setup modal;
+    // clicking modal-close would be pointer-intercepted, so leave it be.
+    if (opts.expectOnboarding) return;
     await setupModal.getByTestId("modal-close").click();
     await expect(setupModal).not.toBeVisible();
     return;
@@ -89,8 +98,12 @@ export async function loginToApp(page: Page, user: TestUser = "owner") {
     onboarding.waitFor({ timeout: 15_000 }),
   ]);
 
-  // Dismiss setup modal if present
-  if (await setupModal.isVisible().catch(() => false)) {
+  // Dismiss setup modal if present, unless an onboarding overlay is expected
+  // on top of it (clicking through it would be pointer-intercepted).
+  if (
+    !opts.expectOnboarding &&
+    (await setupModal.isVisible().catch(() => false))
+  ) {
     await setupModal.getByTestId("modal-close").click();
     await expect(setupModal).not.toBeVisible();
   }

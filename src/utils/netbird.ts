@@ -17,6 +17,19 @@ export const getInstallUrl = () => {
 
 export type Edition = "cloud" | "licensed" | "oss";
 
+// testOnboardingEnabled lets e2e tests opt into rendering the onboarding flow,
+// which is disabled by default in the test build so it doesn't interfere with
+// other specs. Inert outside test builds (the APP_ENV check is tree-shaken).
+export const testOnboardingEnabled = (): boolean => {
+  if (process.env.APP_ENV !== "test") return false;
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem("netbird-test-onboarding") === "true";
+  } catch (e) {
+    return false;
+  }
+};
+
 // testEditionOverride lets e2e tests drive cloud/licensed/oss behavior against
 // the test build by setting localStorage. It is inert outside test builds,
 // where the APP_ENV check is replaced at compile time and tree-shaken away.

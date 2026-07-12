@@ -2,7 +2,6 @@
 
 import { notify } from "@components/Notification";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { isAgentNetworkEnabled } from "@utils/netbird";
 import React, {
   createContext,
   useCallback,
@@ -22,6 +21,7 @@ import {
   PolicyLimits,
   ProviderModel,
 } from "@/modules/agent-network/data/mockData";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 
 export type APIProviderModel = {
   id: string;
@@ -501,12 +501,13 @@ export function useAIProviders() {
 // which we still tolerate via ignoreError so older deploys don't surface
 // a spurious error in the empty state.
 export function useAgentNetworkSettings() {
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { data, error, isLoading, mutate } =
     useFetchApi<APIAgentNetworkSettings>(
       "/agent-network/settings",
       true,
       true,
-      isAgentNetworkEnabled(),
+      agentNetworkEnabled,
     );
   const settings = useMemo<AgentNetworkSettings | null>(
     () => (data ? settingsFromAPI(data) : null),
@@ -528,7 +529,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   // disabled — it can safely wrap surfaces like the Control Center
   // without hitting agent-network endpoints in deployments that don't
   // have the feature.
-  const agentNetworkEnabled = isAgentNetworkEnabled();
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
   const {
     data: apiProviders,

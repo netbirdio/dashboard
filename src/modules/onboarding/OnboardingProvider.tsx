@@ -1,6 +1,10 @@
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { isAgentNetworkOnly, isLocalDev, isNetBirdCloud } from "@utils/netbird";
+import {
+  isLocalDev,
+  isNetBirdCloud,
+  testOnboardingEnabled,
+} from "@utils/netbird";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
@@ -10,13 +14,34 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Account } from "@/interfaces/Account";
 import { Network } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
+import {
+  AGENT_NETWORK_SIGNUP_SOURCE,
+  SIGNUP_SOURCE_LOCAL_STORAGE_KEY,
+} from "@/hooks/useSignupSource";
 import { useAccount } from "@/modules/account/useAccount";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { AgentNetworkOnboarding } from "@/modules/onboarding/agent-network/AgentNetworkOnboarding";
 import {
   Intent,
   Onboarding,
   OnboardingState,
 } from "@/modules/onboarding/Onboarding";
+
+// hasAgentNetworkSignupSource reads the netbird.ai signup source captured
+// before authentication. It is available synchronously from the first render,
+// so the onboarding can commit to the Agent Network form immediately instead
+// of briefly showing the regular form while the account/mode data settles.
+const hasAgentNetworkSignupSource = () => {
+  try {
+    return (
+      typeof window !== "undefined" &&
+      localStorage.getItem(SIGNUP_SOURCE_LOCAL_STORAGE_KEY) ===
+        AGENT_NETWORK_SIGNUP_SOURCE
+    );
+  } catch (e) {
+    return false;
+  }
+};
 
 type Props = {
   onSurveySubmit?: (data: {
@@ -43,6 +68,8 @@ export const OnboardingProvider = ({
   const params = useSearchParams();
   const hsId = params?.get("hs_id") ?? "";
   const gaId = params?.get("ga_id") ?? "";
+  const { only: agentNetworkOnly, loading: agentNetworkModeLoading } =
+    useAgentNetworkMode();
 
   const accountId = account?.id ?? "unknown";
   const onboardingKey = `netbird-onboarding-flow:${accountId}`;
@@ -66,21 +93,33 @@ export const OnboardingProvider = ({
     },
   );
 
+  // A netbird.ai arrival commits to the Agent Network onboarding regardless of
+  // when the account setting is persisted; the signup source is known
+  // synchronously, so the regular form is never shown for these users.
+  const agentNetworkOnboarding =
+    agentNetworkOnly || hasAgentNetworkSignupSource();
+
   const showOnboarding = useMemo(() => {
-    if (process.env.APP_ENV === "test") return false;
+    if (process.env.APP_ENV === "test" && !testOnboardingEnabled()) {
+      return false;
+    }
     if (!account) return false;
-    // Agent Network-only deployments run a dedicated onboarding flow. The
-    // signup form is its first step (self-hosted only — the cloud survey relies
-    // on a JWT domain claim self-hosted IdPs don't emit), so the flow shows
-    // while either the signup form or the onboarding flow is still pending.
-    if (isAgentNetworkOnly()) {
-      const signupPending =
-        !isNetBirdCloud() && !!account?.onboarding?.signup_form_pending;
+    // The Agent Network onboarding runs a dedicated flow whose first step is
+    // the signup form. Unlike the regular cloud survey (which relies on a JWT
+    // domain claim), this form is shown on both cloud and self-hosted, so the
+    // flow stays visible while either the signup form or the onboarding flow
+    // is still pending.
+    if (agentNetworkOnboarding) {
+      const signupPending = !!account?.onboarding?.signup_form_pending;
       return (
         isOwner &&
         (signupPending || !!account?.onboarding?.onboarding_flow_pending)
       );
     }
+    // For everyone else, wait until the Agent Network mode has resolved before
+    // deciding, so a slow mode fetch can't briefly show the regular form to an
+    // account that turns out to be Agent Network-only via config.
+    if (agentNetworkModeLoading) return false;
     if (!isNetBirdCloud()) return false;
     const isSignupFormPending = isNetBirdCloud()
       ? !!account?.onboarding?.signup_form_pending
@@ -88,12 +127,11 @@ export const OnboardingProvider = ({
     const show =
       !!account?.onboarding?.onboarding_flow_pending || isSignupFormPending;
     return isOwner && show;
-  }, [account, isOwner]);
+  }, [account, isOwner, agentNetworkOnboarding, agentNetworkModeLoading]);
 
-  // Self-hosted only: the cloud survey relies on a JWT domain claim self-hosted
-  // IdPs don't emit, so the agent-network flow uses its own signup step.
-  const agentSignupPending =
-    !isNetBirdCloud() && !!account?.onboarding?.signup_form_pending;
+  // The agent-network flow uses its own signup step on both cloud and
+  // self-hosted, so netbird.ai signups fill the form before onboarding.
+  const agentSignupPending = !!account?.onboarding?.signup_form_pending;
 
   const updateAccountMeta = async (meta: Partial<Account["onboarding"]>) => {
     if (!account) return;
@@ -219,7 +257,7 @@ export const OnboardingProvider = ({
     ? !account?.onboarding?.signup_form_pending
     : true;
 
-  if (showOnboarding && isAgentNetworkOnly()) {
+  if (showOnboarding && agentNetworkOnboarding) {
     return (
       <AgentNetworkOnboarding
         initialStep={onboarding.step}

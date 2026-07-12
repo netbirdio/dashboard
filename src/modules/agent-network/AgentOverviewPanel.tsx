@@ -16,7 +16,6 @@ import {
   Tooltip,
 } from "chart.js";
 import useFetchApi from "@utils/api";
-import { isAgentNetworkEnabled } from "@utils/netbird";
 import dayjs from "dayjs";
 import { ActivityIcon, ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
@@ -30,6 +29,7 @@ import {
   APIAgentNetworkUsageBucket,
   buildUsageOverviewQuery,
 } from "@/modules/agent-network/agentAccessLogApi";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 
 // Register the chart.js building blocks we use. Idempotent, so it's safe
 // even when another agent-network chart already registered them.
@@ -55,6 +55,7 @@ export default function AgentOverviewPanel() {
     useAccessLogFilters();
   const { groups } = useGroups();
   const { users } = useUsers();
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
   // name → id and email → id maps so the (display-oriented) filter values
   // translate to the ids the backend filters on.
@@ -82,7 +83,7 @@ export default function AgentOverviewPanel() {
     `/agent-network/usage/overview?${query}`,
     false,
     true,
-    isAgentNetworkEnabled(),
+    agentNetworkEnabled,
   );
 
   const daily = useMemo(() => toDailyBuckets(buckets ?? []), [buckets]);

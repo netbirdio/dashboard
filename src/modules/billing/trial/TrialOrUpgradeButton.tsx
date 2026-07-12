@@ -2,7 +2,7 @@ import Button from "@components/Button";
 import FullTooltip from "@components/FullTooltip";
 import { IconHelpCircle } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
-import { isAgentNetworkOnly, isNetBirdCloud } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import { ExternalLinkIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -11,6 +11,7 @@ import { PlanFeatures } from "@/cloud/cloud-hooks/useIsFeatureLocked";
 import { useTrial } from "@/cloud/cloud-hooks/useTrial";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { PlanTier } from "@/interfaces/Subscription";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 
 type Props = {
   plan?: PlanTier;
@@ -143,10 +144,11 @@ export const SelfHostedUpgradeButton = ({
 }: {
   variant?: "primary" | "white";
 }) => {
+  const { only: agentNetworkOnly } = useAgentNetworkMode();
   // Agent Network-only deployments point at the Agent Network pricing page
   // (tagged so the visit is attributable); the regular self-hosted product
   // keeps the on-prem pricing anchor.
-  const href = isAgentNetworkOnly()
+  const href = agentNetworkOnly
     ? "https://netbird.ai/pricing?utm_source=dashboard_oss"
     : "https://netbird.io/pricing#on-prem";
   return (
