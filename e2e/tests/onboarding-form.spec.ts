@@ -93,7 +93,7 @@ async function openOnboarding(
   );
   const page = await context.newPage();
   mockAccounts(page, opts.account, opts.delayMs ?? 0);
-  await loginToApp(page, "owner");
+  await loginToApp(page, "owner", { expectOnboarding: true });
   return { page, close: () => context.close() };
 }
 
