@@ -10,6 +10,10 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Account } from "@/interfaces/Account";
 import { Network } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
+import {
+  AGENT_NETWORK_SIGNUP_SOURCE,
+  SIGNUP_SOURCE_LOCAL_STORAGE_KEY,
+} from "@/hooks/useSignupSource";
 import { useAccount } from "@/modules/account/useAccount";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { AgentNetworkOnboarding } from "@/modules/onboarding/agent-network/AgentNetworkOnboarding";
@@ -18,6 +22,22 @@ import {
   Onboarding,
   OnboardingState,
 } from "@/modules/onboarding/Onboarding";
+
+// hasAgentNetworkSignupSource reads the netbird.ai signup source captured
+// before authentication. It is available synchronously from the first render,
+// so the onboarding can commit to the Agent Network form immediately instead
+// of briefly showing the regular form while the account/mode data settles.
+const hasAgentNetworkSignupSource = () => {
+  try {
+    return (
+      typeof window !== "undefined" &&
+      localStorage.getItem(SIGNUP_SOURCE_LOCAL_STORAGE_KEY) ===
+        AGENT_NETWORK_SIGNUP_SOURCE
+    );
+  } catch (e) {
+    return false;
+  }
+};
 
 type Props = {
   onSurveySubmit?: (data: {
@@ -69,26 +89,31 @@ export const OnboardingProvider = ({
     },
   );
 
+  // A netbird.ai arrival commits to the Agent Network onboarding regardless of
+  // when the account setting is persisted; the signup source is known
+  // synchronously, so the regular form is never shown for these users.
+  const agentNetworkOnboarding =
+    agentNetworkOnly || hasAgentNetworkSignupSource();
+
   const showOnboarding = useMemo(() => {
     if (process.env.APP_ENV === "test") return false;
     if (!account) return false;
-    // Wait until the Agent Network mode is resolved before showing any form.
-    // account can load before useAgentNetworkMode's own /accounts fetch
-    // settles; rendering during that window would show the regular onboarding
-    // and then switch to the Agent Network flow once the mode arrives.
-    if (agentNetworkModeLoading) return false;
-    // The Agent Network focused view runs a dedicated onboarding flow whose
-    // first step is the signup form. Unlike the regular cloud survey (which
-    // relies on a JWT domain claim), this form is shown on both cloud and
-    // self-hosted, so the flow stays visible while either the signup form or
-    // the onboarding flow is still pending.
-    if (agentNetworkOnly) {
+    // The Agent Network onboarding runs a dedicated flow whose first step is
+    // the signup form. Unlike the regular cloud survey (which relies on a JWT
+    // domain claim), this form is shown on both cloud and self-hosted, so the
+    // flow stays visible while either the signup form or the onboarding flow
+    // is still pending.
+    if (agentNetworkOnboarding) {
       const signupPending = !!account?.onboarding?.signup_form_pending;
       return (
         isOwner &&
         (signupPending || !!account?.onboarding?.onboarding_flow_pending)
       );
     }
+    // For everyone else, wait until the Agent Network mode has resolved before
+    // deciding, so a slow mode fetch can't briefly show the regular form to an
+    // account that turns out to be Agent Network-only via config.
+    if (agentNetworkModeLoading) return false;
     if (!isNetBirdCloud()) return false;
     const isSignupFormPending = isNetBirdCloud()
       ? !!account?.onboarding?.signup_form_pending
@@ -96,7 +121,7 @@ export const OnboardingProvider = ({
     const show =
       !!account?.onboarding?.onboarding_flow_pending || isSignupFormPending;
     return isOwner && show;
-  }, [account, isOwner, agentNetworkOnly, agentNetworkModeLoading]);
+  }, [account, isOwner, agentNetworkOnboarding, agentNetworkModeLoading]);
 
   // The agent-network flow uses its own signup step on both cloud and
   // self-hosted, so netbird.ai signups fill the form before onboarding.
@@ -226,7 +251,7 @@ export const OnboardingProvider = ({
     ? !account?.onboarding?.signup_form_pending
     : true;
 
-  if (showOnboarding && agentNetworkOnly) {
+  if (showOnboarding && agentNetworkOnboarding) {
     return (
       <AgentNetworkOnboarding
         initialStep={onboarding.step}
