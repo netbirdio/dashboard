@@ -4,6 +4,7 @@ import CardTable from "@components/CardTable";
 import Code from "@components/Code";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
+import { HelpTooltip } from "@components/HelpTooltip";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
@@ -520,13 +521,16 @@ const HetznerDeploy = ({
       <div>
         <Label>Hetzner API Token</Label>
         <HelpText>
-          Create a read &amp; write API token in your Hetzner Cloud project. It
-          is sent directly from your browser to the Hetzner API and never stored
-          by NetBird.
+          Create a read &amp; write API token. It is never stored by NetBird{" "}
+          <HelpTooltip
+            content={
+              "The token is sent directly from your browser to the Hetzner API. It never reaches NetBird's servers."
+            }
+          />
         </HelpText>
         <Input
           type={"password"}
-          placeholder={"Paste your Hetzner Cloud API token"}
+          placeholder={"Paste your Hetzner Cloud API token here"}
           value={hetznerToken}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setHetznerToken(e.target.value)
@@ -759,13 +763,16 @@ const DigitalOceanDeploy = ({
       <div>
         <Label>DigitalOcean API Token</Label>
         <HelpText>
-          Create a token with write scope in your DigitalOcean account. It is
-          sent directly from your browser to the DigitalOcean API and never
-          stored by NetBird.
+          Create a token with write access. It is never stored by NetBird{" "}
+          <HelpTooltip
+            content={
+              "The token is sent directly from your browser to the DigitalOcean API. It never reaches NetBird's servers."
+            }
+          />
         </HelpText>
         <Input
           type={"password"}
-          placeholder={"Paste your DigitalOcean API token"}
+          placeholder={"Paste your DigitalOcean API token here"}
           value={doToken}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setDoToken(e.target.value)
@@ -795,7 +802,7 @@ const DigitalOceanDeploy = ({
         onChange={setStaticIP}
         label={"Static IP"}
         helpText={
-          "Reserve a static IP and assign it to the droplet, so the DNS records survive rebuilds. Free while assigned to a droplet."
+          "Reserve a static IP so DNS records remain valid after rebuilds. Free while assigned to a Droplet."
         }
       />
       <Button
@@ -838,8 +845,8 @@ const AWSDeploy = ({
       <div>
         <Label>Proxy Access Token</Label>
         <HelpText>
-          Copy this token first. AWS asks for it in the stack creation form (the
-          field is masked and excluded from stack outputs and logs).
+          Copy this token for AWS stack creation. It is excluded from outputs and
+          logs.
         </HelpText>
         <Code codeToCopy={token} showCopyIcon={!isGeneratingToken}>
           <Code.Line>
@@ -868,9 +875,8 @@ const AWSDeploy = ({
         <ExternalLinkIcon size={14} />
       </Button>
       <HelpText className={"mb-0"}>
-        The AWS console opens with a pre-filled CloudFormation form: paste the
-        token, review, and create the stack. Point the DNS records from the
-        previous step to the PublicIP stack output afterwards.
+        The AWS Console opens with a prefilled form. Paste the token, create the
+        stack, then point your DNS records to the PublicIP output.
       </HelpText>
       {launched && <RegistrationCheck domain={domain} />}
     </div>

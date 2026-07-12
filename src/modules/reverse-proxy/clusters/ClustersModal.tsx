@@ -216,32 +216,32 @@ spec:
   const deployment = {
     docker: {
       label: "Docker",
-      title: "Run the Proxy with Docker",
+      title: "Run with Docker",
       command: dockerCommand,
     },
     compose: {
       label: "Docker Compose",
-      title: "Run the Proxy with Docker Compose",
+      title: "Run with Docker Compose",
       command: composeCommand,
     },
     kubernetes: {
       label: "Kubernetes",
-      title: "Deploy the Proxy on Kubernetes",
+      title: "Deploy on Kubernetes",
       command: kubernetesCommand,
     },
     hetzner: {
       label: "Hetzner Cloud",
-      title: "Deploy the Proxy on Hetzner Cloud",
+      title: "Deploy on Hetzner Cloud",
       command: "",
     },
     digitalocean: {
       label: "DigitalOcean",
-      title: "Deploy the Proxy on DigitalOcean",
+      title: "Deploy on DigitalOcean",
       command: "",
     },
     aws: {
       label: "AWS CloudFormation",
-      title: "Deploy the Proxy on AWS",
+      title: "Deploy on AWS",
       command: "",
     },
   }[deployMethod];
@@ -402,21 +402,26 @@ spec:
 
           <TabsContent value={"install"} className={"pb-8"}>
             <div className={"px-8 flex flex-col gap-4"}>
-              <div className={"flex items-end justify-between gap-4"}>
+              <div className={"flex items-start justify-between gap-4"}>
                 <div>
                   <Label>{deployment.title}</Label>
                   <HelpText className={"mb-0"}>
-                    {isCloudDeploy
-                      ? "Launch a dedicated cloud server running the proxy."
+                    {deployMethod === "digitalocean"
+                      ? "Launch a droplet to run the proxy."
+                      : deployMethod === "aws"
+                      ? "Launch a dedicated AWS server to run the proxy."
+                      : isCloudDeploy
+                      ? "Launch a cloud server to run the proxy."
                       : deployMethod === "kubernetes"
-                      ? "Apply the following manifest to your cluster to start the proxy."
-                      : "Run the following on your machine to start the proxy."}
+                      ? "Apply this manifest to start the proxy."
+                      : "Run on your machine to start the proxy."}
                   </HelpText>
                 </div>
-                <div className={"w-[180px] shrink-0"}>
+                <div className={"w-[200px] shrink-0"}>
                   <SelectDropdown
                     value={deployMethod}
                     onChange={(v) => setDeployMethod(v as DeployMethod)}
+                    truncate={true}
                     options={[
                       { value: "docker", label: "Docker" },
                       { value: "compose", label: "Docker Compose" },
