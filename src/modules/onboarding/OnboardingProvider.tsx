@@ -44,7 +44,8 @@ export const OnboardingProvider = ({
   const params = useSearchParams();
   const hsId = params?.get("hs_id") ?? "";
   const gaId = params?.get("ga_id") ?? "";
-  const { only: agentNetworkOnly } = useAgentNetworkMode();
+  const { only: agentNetworkOnly, loading: agentNetworkModeLoading } =
+    useAgentNetworkMode();
 
   const accountId = account?.id ?? "unknown";
   const onboardingKey = `netbird-onboarding-flow:${accountId}`;
@@ -71,6 +72,11 @@ export const OnboardingProvider = ({
   const showOnboarding = useMemo(() => {
     if (process.env.APP_ENV === "test") return false;
     if (!account) return false;
+    // Wait until the Agent Network mode is resolved before showing any form.
+    // account can load before useAgentNetworkMode's own /accounts fetch
+    // settles; rendering during that window would show the regular onboarding
+    // and then switch to the Agent Network flow once the mode arrives.
+    if (agentNetworkModeLoading) return false;
     // The Agent Network focused view runs a dedicated onboarding flow whose
     // first step is the signup form. Unlike the regular cloud survey (which
     // relies on a JWT domain claim), this form is shown on both cloud and
@@ -90,7 +96,7 @@ export const OnboardingProvider = ({
     const show =
       !!account?.onboarding?.onboarding_flow_pending || isSignupFormPending;
     return isOwner && show;
-  }, [account, isOwner, agentNetworkOnly]);
+  }, [account, isOwner, agentNetworkOnly, agentNetworkModeLoading]);
 
   // The agent-network flow uses its own signup step on both cloud and
   // self-hosted, so netbird.ai signups fill the form before onboarding.
