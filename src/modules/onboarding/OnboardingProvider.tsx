@@ -1,6 +1,6 @@
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { isAgentNetworkOnly, isLocalDev, isNetBirdCloud } from "@utils/netbird";
+import { isLocalDev, isNetBirdCloud } from "@utils/netbird";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
@@ -11,6 +11,7 @@ import { Account } from "@/interfaces/Account";
 import { Network } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { useAccount } from "@/modules/account/useAccount";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { AgentNetworkOnboarding } from "@/modules/onboarding/agent-network/AgentNetworkOnboarding";
 import {
   Intent,
@@ -43,6 +44,7 @@ export const OnboardingProvider = ({
   const params = useSearchParams();
   const hsId = params?.get("hs_id") ?? "";
   const gaId = params?.get("ga_id") ?? "";
+  const { only: agentNetworkOnly } = useAgentNetworkMode();
 
   const accountId = account?.id ?? "unknown";
   const onboardingKey = `netbird-onboarding-flow:${accountId}`;
@@ -73,7 +75,7 @@ export const OnboardingProvider = ({
     // signup form is its first step (self-hosted only — the cloud survey relies
     // on a JWT domain claim self-hosted IdPs don't emit), so the flow shows
     // while either the signup form or the onboarding flow is still pending.
-    if (isAgentNetworkOnly()) {
+    if (agentNetworkOnly) {
       const signupPending =
         !isNetBirdCloud() && !!account?.onboarding?.signup_form_pending;
       return (
@@ -88,7 +90,7 @@ export const OnboardingProvider = ({
     const show =
       !!account?.onboarding?.onboarding_flow_pending || isSignupFormPending;
     return isOwner && show;
-  }, [account, isOwner]);
+  }, [account, isOwner, agentNetworkOnly]);
 
   // Self-hosted only: the cloud survey relies on a JWT domain claim self-hosted
   // IdPs don't emit, so the agent-network flow uses its own signup step.
@@ -219,7 +221,7 @@ export const OnboardingProvider = ({
     ? !account?.onboarding?.signup_form_pending
     : true;
 
-  if (showOnboarding && isAgentNetworkOnly()) {
+  if (showOnboarding && agentNetworkOnly) {
     return (
       <AgentNetworkOnboarding
         initialStep={onboarding.step}
