@@ -201,7 +201,7 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
             }
             title={"No clusters available"}
             description={
-              "Set up a self-hosted cluster to route traffic through your own infrastructure."
+              "Set up a cluster to route traffic through your own infrastructure."
             }
             button={
               <Button

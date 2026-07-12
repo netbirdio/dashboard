@@ -76,4 +76,11 @@ jobs:
           URL=$(grep -o 'https://[^"]*netbird-proxy-cfn\.yaml' src/modules/reverse-proxy/clusters/ClusterCloudDeploy.tsx)
           echo "CFN_TEMPLATE_URL: $URL"
           test -n "$URL"
-          curl -sfI "$URL"
+          # Non-blocking: the template is published by sync-deploy-templates on
+          # the default branch, so it may not exist yet for a PR that only edits
+          # the URL. Warn instead of failing the check.
+          if curl -sfI "$URL" >/dev/null; then
+            echo "OK: template URL is live"
+          else
+            echo "::warning::CloudFormation template URL is not reachable yet: $URL"
+          fi

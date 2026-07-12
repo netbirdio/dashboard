@@ -459,10 +459,11 @@ const HetznerDeploy = ({
 
   const deploy = async () => {
     setIsDeploying(true);
+    const apiToken = hetznerToken.trim();
     const promise = fetch("https://api.hetzner.cloud/v1/servers", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${hetznerToken}`,
+        Authorization: `Bearer ${apiToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -489,7 +490,7 @@ const HetznerDeploy = ({
             {
               method: "PUT",
               headers: {
-                Authorization: `Bearer ${hetznerToken.trim()}`,
+                Authorization: `Bearer ${apiToken}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({ auto_delete: false }),
