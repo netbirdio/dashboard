@@ -5,6 +5,7 @@ import Code from "@components/Code";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { HelpTooltip } from "@components/HelpTooltip";
+import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
@@ -273,9 +274,7 @@ const RegistrationCheck = ({ domain }: { domain: string }) => {
         <>
           <Loader2 size={16} className={"animate-spin shrink-0"} />
           <span className={"text-nb-gray-300"}>
-            Waiting for the proxy to register with NetBird. The instance still
-            installs Docker and starts the proxy after its IP appears - this
-            usually takes another minute or two...
+            Waiting for the proxy to register with NetBird...
           </span>
         </>
       )}
@@ -304,9 +303,8 @@ const DeploySuccess = ({
           <>
             {" "}
             with {isStaticIP ? "static IP" : "IP"}{" "}
-            <span className={"text-netbird font-medium"}>{ip}</span>. It keeps
-            bootstrapping in the background - create the DNS records below in
-            the meantime.
+            <span className={"text-netbird font-medium"}>{ip}</span> and is still
+            bootstrapping. Meanwhile, add the DNS records below.
           </>
         ) : (
           <> {ipPendingNote}</>
@@ -314,10 +312,10 @@ const DeploySuccess = ({
       </Callout>
       {ip && (
         <div>
-          <Label>Update your DNS records</Label>
+          <Label>Create DNS Records</Label>
           <HelpText>
             Point these records at the new {resourceLabel.toLowerCase()}. The
-            proxy requests its certificate once they resolve.
+            proxy gets its certificate once they resolve.
           </HelpText>
           <CardTable>
             <CardTable.Header>
@@ -348,8 +346,8 @@ const DeploySuccess = ({
           </CardTable>
         </div>
       )}
-      <RegistrationCheck domain={domain} />
       {children}
+      <RegistrationCheck domain={domain} />
     </div>
   );
 };
@@ -519,14 +517,16 @@ const HetznerDeploy = ({
   return (
     <div className={"flex flex-col gap-4"}>
       <div>
-        <Label>Hetzner API Token</Label>
-        <HelpText>
-          Create a read &amp; write API token. It is never stored by NetBird{" "}
+        <Label>
+          Hetzner API Token
           <HelpTooltip
             content={
-              "The token is sent directly from your browser to the Hetzner API. It never reaches NetBird's servers."
+              "The token is sent directly from your browser to the Hetzner API and never reaches NetBird's servers."
             }
           />
+        </Label>
+        <HelpText>
+          Create a read &amp; write API token. It is never stored by NetBird.
         </HelpText>
         <Input
           type={"password"}
@@ -746,8 +746,7 @@ const DigitalOceanDeploy = ({
         <div>
           <Label>Droplet Root Password</Label>
           <HelpText>
-            Use it with the Droplet Console in the DigitalOcean control panel
-            (SSH password login stays disabled). Copy it now - it is not stored
+            Use it with the Droplet Web Console. Copy it now - it is not stored
             anywhere.
           </HelpText>
           <Code codeToCopy={rootPassword}>
@@ -761,14 +760,33 @@ const DigitalOceanDeploy = ({
   return (
     <div className={"flex flex-col gap-4"}>
       <div>
-        <Label>DigitalOcean API Token</Label>
-        <HelpText>
-          Create a token with write access. It is never stored by NetBird{" "}
+        <Label>
+          DigitalOcean API Token
           <HelpTooltip
+            interactive={true}
             content={
-              "The token is sent directly from your browser to the DigitalOcean API. It never reaches NetBird's servers."
+              <>
+                For the tightest scope, grant full access to{" "}
+                <span className={"font-mono text-netbird"}>tag</span>,{" "}
+                <span className={"font-mono text-netbird"}>droplet</span>, and{" "}
+                <span className={"font-mono text-netbird"}>reserved_ip</span>{" "}
+                only. The token goes straight from your browser to DigitalOcean
+                and never touches NetBird&apos;s servers, and you can delete it
+                once setup succeeds.{" "}
+                <InlineLink
+                  href={
+                    "https://docs.digitalocean.com/reference/api/create-personal-access-token/"
+                  }
+                  target={"_blank"}
+                >
+                  How to create a token
+                </InlineLink>
+              </>
             }
           />
+        </Label>
+        <HelpText>
+          Create a token with write access. It is never stored by NetBird.
         </HelpText>
         <Input
           type={"password"}
@@ -802,7 +820,7 @@ const DigitalOceanDeploy = ({
         onChange={setStaticIP}
         label={"Static IP"}
         helpText={
-          "Reserve a static IP so DNS records remain valid after rebuilds. Free while assigned to a Droplet."
+          "Reserve a static IP so DNS records remain valid after rebuilds. Free of charge while assigned to a Droplet."
         }
       />
       <Button
