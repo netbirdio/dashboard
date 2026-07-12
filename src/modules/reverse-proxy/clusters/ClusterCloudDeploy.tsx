@@ -65,6 +65,9 @@ type Props = {
   token: string;
   managementUrl: string;
   isGeneratingToken: boolean;
+  // Fires once the deployed proxy registers and connects, so the modal can
+  // gate its "Finish Setup" action on real completion.
+  onRegistered?: () => void;
 };
 
 // buildCloudInit renders the canonical bootstrap with the same environment as
@@ -224,12 +227,19 @@ type DeploySuccessProps = {
   isStaticIP: boolean;
   domain: string;
   ipPendingNote?: string;
+  onRegistered?: () => void;
   children?: React.ReactNode;
 };
 
 // RegistrationCheck polls the management API until the cluster for the given
 // domain reports a connected proxy.
-const RegistrationCheck = ({ domain }: { domain: string }) => {
+const RegistrationCheck = ({
+  domain,
+  onRegistered,
+}: {
+  domain: string;
+  onRegistered?: () => void;
+}) => {
   const clustersRequest = useApiCall<ReverseProxyCluster[]>(
     "/reverse-proxies/clusters",
     true,
@@ -237,7 +247,10 @@ const RegistrationCheck = ({ domain }: { domain: string }) => {
   const [registered, setRegistered] = useState(false);
 
   useEffect(() => {
-    if (registered) return;
+    if (registered) {
+      onRegistered?.();
+      return;
+    }
     let attempts = 0;
     const timer = setInterval(() => {
       attempts += 1;
@@ -292,6 +305,7 @@ const DeploySuccess = ({
   isStaticIP,
   domain,
   ipPendingNote,
+  onRegistered,
   children,
 }: DeploySuccessProps) => {
   return (
@@ -347,7 +361,7 @@ const DeploySuccess = ({
         </div>
       )}
       {children}
-      <RegistrationCheck domain={domain} />
+      <RegistrationCheck domain={domain} onRegistered={onRegistered} />
     </div>
   );
 };
@@ -357,6 +371,7 @@ const HetznerDeploy = ({
   token,
   managementUrl,
   isGeneratingToken,
+  onRegistered,
 }: ProviderProps) => {
   const [hetznerToken, setHetznerToken] = useState("");
   const [catalog, setCatalog] = useState<HetznerCatalog | null>(null);
@@ -510,6 +525,7 @@ const HetznerDeploy = ({
         ip={serverIP}
         isStaticIP={staticIP}
         domain={domain}
+        onRegistered={onRegistered}
       />
     );
   }
@@ -663,6 +679,7 @@ const DigitalOceanDeploy = ({
   token,
   managementUrl,
   isGeneratingToken,
+  onRegistered,
 }: ProviderProps) => {
   const [rootPassword] = useState(generateRootPassword);
   const [doToken, setDoToken] = useState("");
@@ -750,6 +767,7 @@ const DigitalOceanDeploy = ({
         ip={reservedIP || dropletIP}
         isStaticIP={!!reservedIP}
         domain={domain}
+        onRegistered={onRegistered}
         ipPendingNote={
           isDeploying
             ? "and is provisioning. Waiting for its public IP..."
@@ -857,6 +875,7 @@ const AWSDeploy = ({
   token,
   managementUrl,
   isGeneratingToken,
+  onRegistered,
 }: ProviderProps) => {
   const [region, setRegion] = useState("eu-central-1");
   const [launched, setLaunched] = useState(false);
@@ -909,7 +928,9 @@ const AWSDeploy = ({
         The AWS Console opens with a prefilled form. Paste the token, create the
         stack, then point your DNS records to the PublicIP output.
       </HelpText>
-      {launched && <RegistrationCheck domain={domain} />}
+      {launched && (
+        <RegistrationCheck domain={domain} onRegistered={onRegistered} />
+      )}
     </div>
   );
 };

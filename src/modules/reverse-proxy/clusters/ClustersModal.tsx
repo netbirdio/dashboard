@@ -24,7 +24,7 @@ import {
   ServerIcon,
   SquareTerminalIcon,
 } from "lucide-react";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useApiCall } from "@/utils/api";
 import { cn, validator } from "@utils/helpers";
@@ -88,6 +88,7 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
   const [token, setToken] = useState("");
   const [isGeneratingToken, setIsGeneratingToken] = useState(true);
   const [deployMethod, setDeployMethod] = useState<DeployMethod>("docker");
+  const [proxyRegistered, setProxyRegistered] = useState(false);
 
   const tokenRequest = useApiCall<ReverseProxyClusterToken>(
     "/reverse-proxies/proxy-tokens",
@@ -250,6 +251,30 @@ spec:
     deployMethod,
   );
 
+  // Cloud one-click deploys provision the server and surface the DNS records
+  // (with the real IP) after deployment, so the standalone DNS step only
+  // applies to the manual paths. Bounce off it if the method flips to cloud.
+  useEffect(() => {
+    if (isCloudDeploy && tab === "dns") setTab("install");
+  }, [isCloudDeploy, tab]);
+
+  // A new deploy target means the proxy has not registered yet, so drop any
+  // prior completion state that would otherwise unlock "Finish Setup".
+  useEffect(() => {
+    setProxyRegistered(false);
+  }, [domain, deployMethod]);
+
+  const deployDescription =
+    deployMethod === "digitalocean"
+      ? "Launch a droplet to run the proxy."
+      : deployMethod === "aws"
+      ? "Launch a dedicated AWS server to run the proxy."
+      : isCloudDeploy
+      ? "Launch a cloud server to run the proxy."
+      : deployMethod === "kubernetes"
+      ? "Apply this manifest to start the proxy."
+      : "Run on your machine to start the proxy.";
+
   const generateToken = useCallback(async () => {
     setIsGeneratingToken(true);
     const promise = tokenRequest
@@ -291,7 +316,7 @@ spec:
         <ModalHeader
           icon={<ServerIcon size={16} />}
           title={"Setup Cluster"}
-          description={"Setup a proxy cluster"}
+          description={"Setup a proxy cluster on infra you own"}
           color={"netbird"}
         />
 
@@ -304,19 +329,21 @@ spec:
               <GlobeIcon size={14} />
               Domain
             </TabsTrigger>
-            <TabsTrigger
-              value={"dns"}
-              disabled={!domain.trim() || !!domainError}
-            >
-              <ListIcon size={14} />
-              DNS Records
-            </TabsTrigger>
+            {!isCloudDeploy && (
+              <TabsTrigger
+                value={"dns"}
+                disabled={!domain.trim() || !!domainError}
+              >
+                <ListIcon size={14} />
+                DNS Records
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value={"install"}
               disabled={!domain.trim() || !!domainError}
             >
               <SquareTerminalIcon size={14} />
-              Run the Proxy
+              {isCloudDeploy ? "Deploy" : "Run the Proxy"}
             </TabsTrigger>
           </TabsList>
 
@@ -337,27 +364,45 @@ spec:
                   }
                 />
               </div>
-              <Callout variant={"info"}>
-                In order to run the proxy, please make sure your machine meets
-                the following requirements:
-                <ul className={"list-disc pl-4 mt-2 flex flex-col gap-1"}>
-                  <li>
-                    <span className={"text-white font-medium"}>
-                      Publicly accessible IP address
-                    </span>
-                  </li>
-                  <li>
-                    <span className={"text-white font-medium"}>Docker</span>{" "}
-                    installed and running
-                  </li>
-                  <li>
-                    <span className={"text-white font-medium"}>
-                      Port 80 and 443
-                    </span>{" "}
-                    open and not in use
-                  </li>
-                </ul>
-              </Callout>
+              <div>
+                <Label>Deployment Method</Label>
+                <HelpText>{deployDescription}</HelpText>
+                <SelectDropdown
+                  value={deployMethod}
+                  onChange={(v) => setDeployMethod(v as DeployMethod)}
+                  options={[
+                    { value: "docker", label: "Docker" },
+                    { value: "compose", label: "Docker Compose" },
+                    { value: "kubernetes", label: "Kubernetes" },
+                    { value: "hetzner", label: "Hetzner Cloud" },
+                    { value: "digitalocean", label: "DigitalOcean" },
+                    { value: "aws", label: "AWS CloudFormation" },
+                  ]}
+                />
+              </div>
+              {!isCloudDeploy && (
+                <Callout variant={"info"}>
+                  In order to run the proxy, please make sure your machine meets
+                  the following requirements:
+                  <ul className={"list-disc pl-4 mt-2 flex flex-col gap-1"}>
+                    <li>
+                      <span className={"text-white font-medium"}>
+                        Publicly accessible IP address
+                      </span>
+                    </li>
+                    <li>
+                      <span className={"text-white font-medium"}>Docker</span>{" "}
+                      installed and running
+                    </li>
+                    <li>
+                      <span className={"text-white font-medium"}>
+                        Port 80 and 443
+                      </span>{" "}
+                      open and not in use
+                    </li>
+                  </ul>
+                </Callout>
+              )}
             </div>
           </TabsContent>
 
@@ -402,36 +447,9 @@ spec:
 
           <TabsContent value={"install"} className={"pb-8"}>
             <div className={"px-8 flex flex-col gap-4"}>
-              <div className={"flex items-start justify-between gap-4"}>
-                <div>
-                  <Label>{deployment.title}</Label>
-                  <HelpText className={"mb-0"}>
-                    {deployMethod === "digitalocean"
-                      ? "Launch a droplet to run the proxy."
-                      : deployMethod === "aws"
-                      ? "Launch a dedicated AWS server to run the proxy."
-                      : isCloudDeploy
-                      ? "Launch a cloud server to run the proxy."
-                      : deployMethod === "kubernetes"
-                      ? "Apply this manifest to start the proxy."
-                      : "Run on your machine to start the proxy."}
-                  </HelpText>
-                </div>
-                <div className={"w-[200px] shrink-0"}>
-                  <SelectDropdown
-                    value={deployMethod}
-                    onChange={(v) => setDeployMethod(v as DeployMethod)}
-                    truncate={true}
-                    options={[
-                      { value: "docker", label: "Docker" },
-                      { value: "compose", label: "Docker Compose" },
-                      { value: "kubernetes", label: "Kubernetes" },
-                      { value: "hetzner", label: "Hetzner Cloud" },
-                      { value: "digitalocean", label: "DigitalOcean" },
-                      { value: "aws", label: "AWS CloudFormation" },
-                    ]}
-                  />
-                </div>
+              <div>
+                <Label>{deployment.title}</Label>
+                <HelpText className={"mb-0"}>{deployDescription}</HelpText>
               </div>
 
               {!isNetBirdCloud() && (
@@ -457,6 +475,7 @@ spec:
                   token={token}
                   managementUrl={managementUrl}
                   isGeneratingToken={isGeneratingToken}
+                  onRegistered={() => setProxyRegistered(true)}
                 />
               ) : (
                 <>
@@ -520,7 +539,7 @@ spec:
                 </ModalClose>
                 <Button
                   variant={"primary"}
-                  onClick={() => setTab("dns")}
+                  onClick={() => (isCloudDeploy ? goToInstall() : setTab("dns"))}
                   disabled={!domain.trim() || !!domainError}
                 >
                   Continue
@@ -539,10 +558,17 @@ spec:
             )}
             {tab === "install" && (
               <>
-                <Button variant={"secondary"} onClick={() => setTab("dns")}>
+                <Button
+                  variant={"secondary"}
+                  onClick={() => setTab(isCloudDeploy ? "domain" : "dns")}
+                >
                   Back
                 </Button>
-                <Button variant={"primary"} onClick={finishSetup}>
+                <Button
+                  variant={"primary"}
+                  onClick={finishSetup}
+                  disabled={isCloudDeploy && !proxyRegistered}
+                >
                   Finish Setup
                 </Button>
               </>
