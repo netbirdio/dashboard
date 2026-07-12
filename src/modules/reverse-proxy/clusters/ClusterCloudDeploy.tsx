@@ -520,8 +520,21 @@ const HetznerDeploy = ({
         <Label>
           Hetzner API Token
           <HelpTooltip
+            interactive={true}
             content={
-              "The token is sent directly from your browser to the Hetzner API and never reaches NetBird's servers."
+              <>
+                The token goes straight from your browser to Hetzner and never
+                touches NetBird&apos;s servers, and you can delete it once setup
+                succeeds.{" "}
+                <InlineLink
+                  href={
+                    "https://docs.hetzner.com/cloud/api/getting-started/generating-api-token/"
+                  }
+                  target={"_blank"}
+                >
+                  How to create a token
+                </InlineLink>
+              </>
             }
           />
         </Label>
