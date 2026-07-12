@@ -35,6 +35,7 @@ export interface Account {
     local_mfa_enabled?: boolean;
     ipv6_enabled_groups?: string[];
     network_range_v6?: string;
+    agent_network_only?: boolean;
   };
   onboarding?: AccountOnboarding;
 }
