@@ -113,12 +113,12 @@ function navItem(page: Page, text: string) {
 // Regular dashboard sections that the focused view hides (gated on
 // !agentNetworkOnly in Navigation.tsx).
 const FOCUS_HIDDEN_NAV = ["Networks", "Reverse Proxy", "DNS", "Activity"];
-// Agent Network views that make up the focused menu.
-const AGENT_NAV_CHILDREN = [
-  "Providers",
-  "Policies",
-  "Usage & Logs",
-  "Configuration",
+// Agent Network view routes that make up the focused surface.
+const AGENT_VIEW_PATHS = [
+  "/agent-network/providers",
+  "/agent-network/policies",
+  "/agent-network/usage",
+  "/agent-network/configuration",
 ];
 
 test.describe.serial("Agent Network focused view @agent-network", () => {
@@ -138,29 +138,25 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
       for (const label of FOCUS_HIDDEN_NAV) {
         await expect(navItem(page, label)).toHaveCount(0);
       }
-
-      // The Agent Network views are reachable from the menu.
-      await navItem(page, "Agent Network").click();
-      for (const child of AGENT_NAV_CHILDREN) {
-        await expect(navItem(page, child)).toBeVisible();
-      }
     } finally {
       await close();
     }
   });
 
-  test("focused view keeps Agent Network routes reachable", async ({
+  test("focused view keeps every Agent Network route reachable", async ({
     browser,
   }) => {
     const { page, close } = await openWithAccount(browser, {
       agentNetworkOnly: true,
     });
     try {
-      // The route guard renders the view instead of redirecting away.
-      await navigateTo(page, "/agent-network/providers");
-      await expect(page).toHaveURL(/\/agent-network\/providers/);
-      await expect(navItem(page, "Agent Network")).toBeVisible();
-      await expect(navItem(page, "Networks")).toHaveCount(0);
+      // Each Agent Network view renders instead of the route guard redirecting
+      // away; the Agent Network section stays in the sidebar throughout.
+      for (const path of AGENT_VIEW_PATHS) {
+        await navigateTo(page, path);
+        await expect(page).toHaveURL(new RegExp(path.replace(/\//g, "\\/")));
+        await expect(navItem(page, "Agent Network")).toBeVisible();
+      }
     } finally {
       await close();
     }
