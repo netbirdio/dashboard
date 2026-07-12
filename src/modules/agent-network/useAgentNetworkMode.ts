@@ -54,7 +54,11 @@ export const useAgentNetworkMode = () => {
     const setting = account?.settings?.agent_network_only;
     const only =
       setting ?? (isAgentNetworkSignupPending(account) || isAgentNetworkOnly());
-    const enabled = only || isAgentNetworkEnabled();
+    // dashboard_features.agent_network makes the Agent Network menu available
+    // alongside the full dashboard (unlike "only", which hides everything else).
+    const featureEnabled =
+      account?.settings?.dashboard_features?.agent_network === true;
+    const enabled = only || featureEnabled || isAgentNetworkEnabled();
     const loading = permission.accounts.read ? isLoading : false;
     return { only, enabled, loading } as const;
   }, [accounts, isLoading, permission.accounts.read]);
