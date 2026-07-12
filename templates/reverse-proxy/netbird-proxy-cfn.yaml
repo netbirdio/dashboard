@@ -1,0 +1,271 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  NetBird Reverse Proxy - launches a single EC2 instance running the
+  netbirdio/reverse-proxy container with ACME certificates. Point your proxy
+  domain's DNS A record at the instance IP after stack creation.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: NetBird configuration
+        Parameters:
+          - ProxyToken
+          - ProxyDomain
+          - ManagementURL
+          - ImageTag
+      - Label:
+          default: Instance configuration
+        Parameters:
+          - InstanceType
+          - WireGuardPort
+          - AllocateElasticIP
+          - IamInstanceProfile
+          - CreateInstanceRole
+          - KeyName
+          - SSHAllowedCIDR
+    ParameterLabels:
+      ProxyToken:
+        default: Proxy access token (nbx_...)
+      ProxyDomain:
+        default: Proxy domain
+      ManagementURL:
+        default: Management URL
+      ImageTag:
+        default: Container image tag
+      InstanceType:
+        default: EC2 instance type
+      WireGuardPort:
+        default: WireGuard UDP port
+      AllocateElasticIP:
+        default: Allocate a static Elastic IP
+      IamInstanceProfile:
+        default: Existing IAM instance profile (optional)
+      CreateInstanceRole:
+        default: Create IAM role with SSM access
+      KeyName:
+        default: SSH key pair (optional)
+      SSHAllowedCIDR:
+        default: SSH allowed CIDR
+
+Parameters:
+  ProxyToken:
+    Type: String
+    NoEcho: true
+    AllowedPattern: "^nbx_\\S+$"
+    ConstraintDescription: must be a NetBird proxy access token starting with nbx_
+    Description: NetBird proxy access token created in the dashboard (kept out of logs and console output).
+  ProxyDomain:
+    Type: String
+    AllowedPattern: "^[a-zA-Z0-9.-]+$"
+    Description: Public domain the proxy serves, e.g. proxy.example.com. Create a DNS A record for it after the stack is up.
+  ManagementURL:
+    Type: String
+    Default: https://api.netbird.io:443
+    Description: NetBird management service address.
+  ImageTag:
+    Type: String
+    Default: latest
+    Description: netbirdio/reverse-proxy image tag to run.
+  InstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
+      - c5.large
+      - c5.xlarge
+    Description: EC2 instance type.
+  WireGuardPort:
+    Type: Number
+    Default: 51820
+    MinValue: 1024
+    MaxValue: 65535
+    Description: UDP port for direct WireGuard connectivity (relay is used as fallback if unreachable).
+  AllocateElasticIP:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Allocate a static Elastic IP so the DNS record survives instance restarts.
+  IamInstanceProfile:
+    Type: String
+    Default: ""
+    Description: Optional name of an existing IAM instance profile to attach. Takes precedence over CreateInstanceRole. Leave empty for none.
+  CreateInstanceRole:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: Create an IAM role and instance profile granting SSM Session Manager access (shell access without SSH). Ignored when an existing instance profile is provided.
+  KeyName:
+    Type: String
+    Default: ""
+    Description: Optional EC2 key pair name for SSH access. Leave empty to disable SSH entirely.
+  SSHAllowedCIDR:
+    Type: String
+    Default: 0.0.0.0/0
+    AllowedPattern: "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}/\\d{1,2}$"
+    Description: CIDR allowed to reach SSH. Only used when a key pair is set.
+  LatestUbuntuAmi:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+    Description: Resolved automatically to the latest Ubuntu 26.04 AMI. Do not change.
+
+Conditions:
+  HasKeyName: !Not [!Equals [!Ref KeyName, ""]]
+  HasInstanceProfile: !Not [!Equals [!Ref IamInstanceProfile, ""]]
+  CreateRole: !And
+    - !Equals [!Ref CreateInstanceRole, "true"]
+    - !Equals [!Ref IamInstanceProfile, ""]
+  UseElasticIP: !Equals [!Ref AllocateElasticIP, "true"]
+
+Resources:
+  ProxySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: NetBird reverse proxy - HTTPS, ACME HTTP challenge, WireGuard
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS and ACME tls-alpn-01
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: ACME http-01 challenge
+        - IpProtocol: udp
+          FromPort: !Ref WireGuardPort
+          ToPort: !Ref WireGuardPort
+          CidrIp: 0.0.0.0/0
+          Description: WireGuard direct connectivity
+        - !If
+          - HasKeyName
+          - IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: !Ref SSHAllowedCIDR
+            Description: SSH
+          - !Ref AWS::NoValue
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-netbird-proxy"
+
+  ProxyInstanceRole:
+    Type: AWS::IAM::Role
+    Condition: CreateRole
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-netbird-proxy"
+
+  ProxyInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Condition: CreateRole
+    Properties:
+      Roles:
+        - !Ref ProxyInstanceRole
+
+  ProxyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestUbuntuAmi
+      InstanceType: !Ref InstanceType
+      KeyName: !If [HasKeyName, !Ref KeyName, !Ref AWS::NoValue]
+      IamInstanceProfile: !If
+        - HasInstanceProfile
+        - !Ref IamInstanceProfile
+        - !If [CreateRole, !Ref ProxyInstanceProfile, !Ref AWS::NoValue]
+      SecurityGroups:
+        - !Ref ProxySecurityGroup
+      MetadataOptions:
+        HttpTokens: required
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+            Encrypted: true
+      UserData:
+        Fn::Base64: !Sub |
+          #cloud-config
+          write_files:
+            - path: /opt/netbird-proxy/env
+              permissions: "0600"
+              content: |
+                NB_PROXY_TOKEN=${ProxyToken}
+                NB_PROXY_DOMAIN=${ProxyDomain}
+                NB_PROXY_MANAGEMENT_ADDRESS=${ManagementURL}
+                NB_PROXY_ACME_CERTIFICATES=true
+                NB_PROXY_CERTIFICATE_DIRECTORY=/certs
+                NB_PROXY_ALLOW_INSECURE=true
+                NB_PROXY_PRIVATE=true
+                NB_PROXY_LOG_LEVEL=info
+                NB_PROXY_ADDRESS=:443
+                NB_PROXY_WG_PORT=${WireGuardPort}
+            - path: /opt/netbird-proxy/docker-compose.yml
+              permissions: "0644"
+              content: |
+                services:
+                  reverse-proxy:
+                    image: netbirdio/reverse-proxy:${ImageTag}
+                    restart: unless-stopped
+                    logging:
+                      driver: json-file
+                      options:
+                        max-size: "500m"
+                        max-file: "2"
+                    ports:
+                      - "80:80"
+                      - "443:443"
+                      - "${WireGuardPort}:${WireGuardPort}/udp"
+                    env_file:
+                      - /opt/netbird-proxy/env
+                    volumes:
+                      - proxy_certs:/certs
+                volumes:
+                  proxy_certs:
+          runcmd:
+            - curl -fsSL https://get.docker.com | sh
+            - docker compose -f /opt/netbird-proxy/docker-compose.yml up -d
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-netbird-proxy"
+
+  ProxyElasticIP:
+    Type: AWS::EC2::EIP
+    Condition: UseElasticIP
+    Properties:
+      InstanceId: !Ref ProxyInstance
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-netbird-proxy"
+
+Outputs:
+  PublicIP:
+    Description: Public IP of the proxy instance. Point your proxy domain's A record here.
+    Value: !If [UseElasticIP, !Ref ProxyElasticIP, !GetAtt ProxyInstance.PublicIp]
+  ProxyURL:
+    Description: URL the proxy will serve once DNS is set and certificates are issued.
+    Value: !Sub "https://${ProxyDomain}"
+  NextStep:
+    Description: What to do after stack creation.
+    Value: !Sub "Create a DNS A record for ${ProxyDomain} pointing to the PublicIP output, then wait ~1 minute for ACME certificate issuance."
+  InstanceId:
+    Description: EC2 instance ID.
+    Value: !Ref ProxyInstance
+  InstanceRole:
+    Condition: CreateRole
+    Description: IAM role created for the instance (SSM Session Manager access).
+    Value: !Ref ProxyInstanceRole
