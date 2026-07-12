@@ -2,8 +2,7 @@ name: Sync deploy templates to S3
 
 on:
   push:
-    # TODO: remove feature/cluster-one-click-deploy before merging - dev only.
-    branches: [main, feature/cluster-one-click-deploy]
+    branches: [main]
     paths:
       - "templates/reverse-proxy/**"
 

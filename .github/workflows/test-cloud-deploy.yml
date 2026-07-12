@@ -7,14 +7,6 @@ on:
       - "templates/reverse-proxy/**"
       - "src/modules/reverse-proxy/clusters/ClusterCloudDeploy.tsx"
       - ".github/workflows/test-cloud-deploy.yml"
-  push:
-    # TODO: remove feature/cluster-one-click-deploy before merging - dev only.
-    branches: [feature/cluster-one-click-deploy]
-    paths:
-      - "docker/init_react_envs.sh"
-      - "templates/reverse-proxy/**"
-      - "src/modules/reverse-proxy/clusters/ClusterCloudDeploy.tsx"
-      - ".github/workflows/test-cloud-deploy.yml"
 
 permissions:
   contents: read
