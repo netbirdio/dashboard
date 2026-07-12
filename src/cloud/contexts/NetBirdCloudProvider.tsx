@@ -73,15 +73,18 @@ export const NetBirdCloudProvider = () => {
       }
 
       signupSourceApplied.current = true;
-      const settings = isNewAccount
-        ? { ...account.settings, agent_network_only: true }
-        : {
-            ...account.settings,
-            dashboard_features: {
-              ...account.settings?.dashboard_features,
-              agent_network: true,
-            },
-          };
+      // Always enable the Agent Network menu (dashboard_features). New accounts
+      // additionally get the focused view (agent_network_only). Keeping the
+      // menu flag set means that if a focused account later turns the focused
+      // view off, it keeps access to Agent Network rather than losing the menu.
+      const settings = {
+        ...account.settings,
+        dashboard_features: {
+          ...account.settings?.dashboard_features,
+          agent_network: true,
+        },
+        ...(isNewAccount ? { agent_network_only: true } : {}),
+      };
       notify({
         title: "Agent Network",
         description: isNewAccount

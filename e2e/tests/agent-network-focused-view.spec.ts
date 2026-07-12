@@ -217,10 +217,14 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
       await expect(navItem(page, "Agent Network")).toBeVisible();
       await expect(navItem(page, "Networks")).toHaveCount(0);
 
-      // The signup source is persisted as the account setting.
+      // The signup source is persisted: focused view plus the Agent Network
+      // menu flag, so turning focus off later keeps access to Agent Network.
       await expect
         .poll(() => captured.putBody?.settings?.agent_network_only)
         .toBe(true);
+      expect(
+        captured.putBody?.settings?.dashboard_features?.agent_network,
+      ).toBe(true);
 
       // The focused view is retained after the write settles.
       await expect(navItem(page, "Networks")).toHaveCount(0);
