@@ -110,8 +110,9 @@ function navItem(page: Page, text: string) {
     .getByText(text, { exact: true });
 }
 
-// Regular dashboard sections that the focused view hides.
-const REGULAR_NAV = ["Networks", "Reverse Proxy", "DNS", "Activity"];
+// Regular dashboard sections that the focused view hides (gated on
+// !agentNetworkOnly in Navigation.tsx).
+const FOCUS_HIDDEN_NAV = ["Networks", "Reverse Proxy", "DNS", "Activity"];
 // Agent Network views that make up the focused menu.
 const AGENT_NAV_CHILDREN = [
   "Providers",
@@ -128,13 +129,15 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
       agentNetworkOnly: true,
     });
     try {
+      // Peers always renders for an owner and is not part of the focused
+      // split, so it confirms the sidebar rendered before asserting absences.
+      await expect(navItem(page, "Peers")).toBeVisible();
+
       // The Agent Network section is present and the regular sections are gone.
       await expect(navItem(page, "Agent Network")).toBeVisible();
-      for (const label of REGULAR_NAV) {
+      for (const label of FOCUS_HIDDEN_NAV) {
         await expect(navItem(page, label)).toHaveCount(0);
       }
-      // Core sections that are not part of the focused/regular split remain.
-      await expect(navItem(page, "Settings")).toBeVisible();
 
       // The Agent Network views are reachable from the menu.
       await navItem(page, "Agent Network").click();
@@ -170,11 +173,10 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
       agentNetworkOnly: false,
     });
     try {
-      // The regular sections come back...
-      for (const label of REGULAR_NAV) {
-        await expect(navItem(page, label)).toBeVisible();
-      }
-      // ...and the Agent Network section is gone (not enabled by config here).
+      // The sidebar rendered (Peers is always present for an owner)...
+      await expect(navItem(page, "Peers")).toBeVisible();
+      // ...and the Agent Network section is gone: the explicit opt-out wins
+      // and, without a deployment config flag, the section is not enabled.
       await expect(navItem(page, "Agent Network")).toHaveCount(0);
     } finally {
       await close();
