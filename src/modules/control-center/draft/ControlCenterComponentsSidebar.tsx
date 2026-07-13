@@ -8,10 +8,11 @@ import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
-import { Globe, GripVerticalIcon, LucideIcon, MonitorSmartphoneIcon, Search, UsersIcon } from "lucide-react";
+import { Boxes, Globe, GripVerticalIcon, LucideIcon, MonitorSmartphoneIcon, Search, UsersIcon, XIcon } from "lucide-react";
 import TruncatedText from "@components/ui/TruncatedText";
 import { ScrollArea } from "@components/ScrollArea";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { Input } from "@/components/Input";
 import Kbd from "@components/Kbd";
 import { OnDropAction, useDragAndDrop, useDragAndDropPosition } from "@/modules/control-center/DragAndDropProvider";
@@ -29,15 +30,18 @@ type GhostData = {
 };
 
 export const ControlCenterComponentsSidebar = () => {
-  const { isDraft } = useDraftMode();
+  const { isDraft, componentsPanelOpen, setComponentsPanelOpen } =
+    useDraftMode();
 
-  if (!isDraft) return null;
+  if (!isDraft || !componentsPanelOpen) return null;
 
-  return <SidebarContent />;
+  return <SidebarContent onClose={() => setComponentsPanelOpen(false)} />;
 };
 
-const SidebarContent = React.memo(() => {
+const SidebarContent = React.memo(({ onClose }: { onClose: () => void }) => {
   const [search, setSearch] = useState("");
+
+  useControlCenterShortcuts({ Escape: onClose });
   const reactFlow = useReactFlow();
   const { onDragStart, isDragging } = useDragAndDrop();
   const [ghostData, setGhostData] = useState<GhostData>();
@@ -154,9 +158,25 @@ const SidebarContent = React.memo(() => {
       {isDragging && ghostData && <DragGhost ghost={ghostData} />}
       <div
         className={cn(
-          "border-r border-zinc-700/40 w-[360px] h-full flex flex-col overflow-hidden shrink-0",
+          "absolute left-6 top-[72px] bottom-[64px] z-20",
+          "border border-nb-gray-900 rounded-lg w-[360px] flex flex-col overflow-hidden",
+          "bg-nb-gray-940/95 backdrop-blur-sm shadow-xl",
         )}
       >
+        <div className={"flex items-center justify-between px-6 pt-4"}>
+          <div className={"flex items-center gap-2 text-sm text-nb-gray-200"}>
+            <Boxes size={15} />
+            Components
+          </div>
+          <button
+            onClick={onClose}
+            className={
+              "p-1 rounded hover:bg-nb-gray-800 text-nb-gray-400 hover:text-nb-gray-200 transition-colors shrink-0"
+            }
+          >
+            <XIcon size={16} />
+          </button>
+        </div>
         <div className={"px-6 mt-4"}>
           <Input
             icon={<Search size={15} />}

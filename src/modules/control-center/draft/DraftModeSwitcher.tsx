@@ -22,11 +22,11 @@ export const DraftModeSwitcher = ({}: Props) => {
             variant={"secondary"}
             size={"xs"}
             onClick={() => handleSwitch("live")}
-            className={"h-[39px] px-5"}
+            className={"h-[38px] px-4.5"}
           >
             Save
           </Button>
-          <Button variant={"primary"} size={"xs"} className={"h-[39px] px-5"}>
+          <Button variant={"primary"} size={"xs"} className={"h-[38px] px-4.5"}>
             <PlayIcon size={12} />
             Save & Apply
           </Button>

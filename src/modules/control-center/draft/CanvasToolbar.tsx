@@ -14,14 +14,23 @@ import {
   CanvasTool,
   useDraftMode,
 } from "@/modules/control-center/draft/DraftModeContext";
-import { useControlCenterShortcuts, isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
+import {
+  isInputFocused,
+  useControlCenterShortcuts,
+} from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { ToolbarButton } from "@/modules/control-center/toolbar/ToolbarButton";
 import { ToolbarContainer } from "@/modules/control-center/toolbar/ToolbarContainer";
 import { ToolbarDivider } from "@/modules/control-center/toolbar/ToolbarDivider";
 import { ToolbarGroup } from "@/modules/control-center/toolbar/ToolbarGroup";
 
 export const CanvasToolbar = () => {
-  const { isDraft, activeTool, setActiveTool } = useDraftMode();
+  const {
+    isDraft,
+    activeTool,
+    setActiveTool,
+    componentsPanelOpen,
+    setComponentsPanelOpen,
+  } = useDraftMode();
   const reactFlow = useReactFlow();
 
   const handleZoomIn = () => reactFlow.zoomIn({ duration: 200 });
@@ -30,6 +39,7 @@ export const CanvasToolbar = () => {
     reactFlow.fitView({ padding: 0.1, duration: 500, maxZoom: 0.8 });
 
   useControlCenterShortcuts({
+    a: () => setComponentsPanelOpen(!componentsPanelOpen),
     v: () => setActiveTool(CanvasTool.Select),
     h: () => setActiveTool(CanvasTool.Hand),
     f: handleFitView,
@@ -69,7 +79,23 @@ export const CanvasToolbar = () => {
 
   return (
     <ToolbarContainer>
-      <ToolbarGroup position="first">
+      <ToolbarGroup position="first" className="pl-2 py-1.5">
+        <ToolbarButton
+          tooltip="Add Components"
+          shortcut="A"
+          variant="primary"
+          active={componentsPanelOpen}
+          onClick={() => setComponentsPanelOpen(!componentsPanelOpen)}
+          className="pl-2 pr-2.5 gap-1 text-sm"
+        >
+          <PlusIcon size={13} />
+          Add
+        </ToolbarButton>
+      </ToolbarGroup>
+
+      <ToolbarDivider className="ml-2 mr-2" />
+
+      <ToolbarGroup position="middle">
         <ToolbarButton
           tooltip="Select Tool"
           shortcut="V"

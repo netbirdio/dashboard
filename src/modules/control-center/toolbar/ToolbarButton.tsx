@@ -9,6 +9,7 @@ interface ToolbarButtonProps {
   active?: boolean;
   disabled?: boolean;
   className?: string;
+  variant?: "default" | "primary";
   onClick?: () => void;
 }
 
@@ -19,6 +20,7 @@ export const ToolbarButton = ({
   active,
   disabled,
   className,
+  variant = "default",
   onClick,
 }: ToolbarButtonProps) => {
   const button = (
@@ -26,8 +28,12 @@ export const ToolbarButton = ({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "h-8 flex items-center justify-center rounded-md transition-colors text-nb-gray-300 hover:text-nb-gray-100 hover:bg-nb-gray-800",
-        active && "bg-nb-gray-800 text-nb-gray-100",
+        "h-8 flex items-center justify-center rounded-md transition-colors",
+        variant === "default" &&
+          "text-nb-gray-300 hover:text-nb-gray-100 hover:bg-nb-gray-800",
+        variant === "default" && active && "bg-nb-gray-800 text-nb-gray-100",
+        variant === "primary" &&
+          "bg-netbird text-white hover:bg-netbird-500 hover:text-white",
         disabled &&
           "text-nb-gray-700 hover:text-nb-gray-700 hover:bg-transparent cursor-not-allowed",
         className,

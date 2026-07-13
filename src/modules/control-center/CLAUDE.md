@@ -85,7 +85,7 @@ control-center/
 ├── draft/
 │   ├── DraftModeContext.tsx            → isDraft toggle + CanvasTool (Select/Hand)
 │   ├── DraftChangesetContext.tsx       → Tracks draft changes (create-group)
-│   ├── ControlCenterComponentsSidebar.tsx → Draggable components list (disabled if on canvas)
+│   ├── ControlCenterComponentsSidebar.tsx → Floating, toggleable left panel of draggable components (collapsed to a "Components" button by default; disabled items if already on canvas)
 │   ├── CanvasToolbar.tsx              → Bottom toolbar (select/hand/undo/redo/zoom/fit)
 │   ├── PeersToolbar.tsx               → Selection toolbar (create group from selected peers/resources)
 │   ├── CreateGroupNameModal.tsx       → Shared modal for entering group name (used by PeersToolbar + CanvasContextMenu)
@@ -162,7 +162,7 @@ When exiting draft:
 2. Canvas fits to view
 
 ### Draft Features
-- **Drag from sidebar**: Add peers/groups/resources to canvas (disabled if already on canvas)
+- **Drag from sidebar**: Add peers/groups/resources to canvas (disabled if already on canvas). The components sidebar is a floating overlay on the left (mirrors `DestinationGroupPanel` on the right): hidden behind a "Components" toggle button, opens as a floating panel with a close (X) button — it does not push the canvas.
 - **Connect nodes**: Drag between handles to create a policy (peer↔peer, peer↔group, group↔group, group↔resource, peer↔resource)
 - **Create group**: Select 2+ peers/resources → toolbar appears → opens name modal → creates group via API → replaces selected nodes with group node
 - **Create group (context menu)**: Right-click canvas → "Create Group" → name modal → creates group via API at click position
@@ -197,6 +197,7 @@ The `SmartEdge` is used in draft mode. It dynamically picks connection sides:
 
 | Key | Action |
 |-----|--------|
+| `A` | Toggle components panel |
 | `V` | Select tool |
 | `H` | Hand tool |
 | `Space` (hold) | Temporary hand tool |
