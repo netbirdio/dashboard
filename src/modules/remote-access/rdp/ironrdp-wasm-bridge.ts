@@ -2,12 +2,17 @@ export interface IronRDPModule {
   SessionBuilder: new () => SessionBuilder;
   DesktopSize: new (width: number, height: number) => DesktopSize;
   ClipboardData?: new () => ClipboardData;
+  Extension?: new (ident: string, value: unknown) => Extension;
   default?: () => Promise<void>;
   init?: () => Promise<void>;
+  setup?: (logLevel: string) => void;
 }
 interface DesktopSize {
   width: number;
   height: number;
+}
+interface Extension {
+  free(): void;
 }
 interface SessionBuilder {
   username(user: string): SessionBuilder;
@@ -18,6 +23,7 @@ interface SessionBuilder {
   renderCanvas(canvas: HTMLCanvasElement): SessionBuilder;
   proxyAddress(url: string): SessionBuilder;
   authToken(token: string): SessionBuilder;
+  extension(ext: Extension): SessionBuilder;
   setCursorStyleCallback(cb: (style: string) => void): void;
   setCursorStyleCallbackContext(ctx: unknown): void;
   remoteClipboardChangedCallback(cb: (data: ClipboardData) => void): void;
@@ -28,6 +34,13 @@ export interface RDPSession {
   run(): Promise<TerminationInfo>;
   shutdown(): void;
   sendInput(input: unknown): void;
+  resize(
+    width: number,
+    height: number,
+    scaleFactor?: number | null,
+    physicalWidth?: number | null,
+    physicalHeight?: number | null,
+  ): void;
   onClipboardPaste?(content: ClipboardData): Promise<void>;
 }
 interface TerminationInfo {
@@ -67,6 +80,30 @@ declare global {
 
 const IRON_RDP_PKG = "/ironrdp-pkg/ironrdp_web.js";
 
+// IronErrorKind values as exposed by the IronRDP wasm module's kind() method,
+// indexed by the enum's numeric value.
+const IRON_ERROR_KIND_NAMES = [
+  "General",
+  "WrongPassword",
+  "LogonFailure",
+  "AccessDenied",
+  "RDCleanPath",
+  "ProxyConnect",
+  "NegotiationFailure",
+] as const;
+
+// User-facing message per error kind. "General" is intentionally absent: it
+// carries no structured detail, so its reason is read from the backtrace.
+const IRON_ERROR_KIND_MESSAGES: Record<string, string> = {
+  WrongPassword: "Incorrect username or password.",
+  LogonFailure: "Login failed. Check your username and password.",
+  AccessDenied: "The remote host denied access.",
+  RDCleanPath: "Could not establish the RDP connection to the host.",
+  ProxyConnect: "Could not reach the remote host.",
+  NegotiationFailure:
+    "RDP negotiation failed. The host may not support the required security protocol.",
+};
+
 export class IronRDPWASMBridge {
   private ironrdp: IronRDPModule | null = null;
   private initialized = false;
@@ -91,6 +128,13 @@ export class IronRDPWASMBridge {
           await ironrdpModule.init();
         }
       }
+      if (ironrdpModule.setup) {
+        try {
+          ironrdpModule.setup("info");
+        } catch (e) {
+          console.warn("IronRDP log setup failed:", e);
+        }
+      }
       this.ironrdp = ironrdpModule;
       this.initialized = true;
       if (window.onIronRDPReady) {
@@ -112,6 +156,8 @@ export class IronRDPWASMBridge {
     netbirdClient?: {
       createRDPProxy: (hostname: string, port: string) => Promise<string>;
     },
+    onSessionEnd?: (error: string | null) => void,
+    enableDisplayControl = false,
   ): Promise<string> {
     if (!this.initialized) {
       await this.initialize();
@@ -144,6 +190,15 @@ export class IronRDPWASMBridge {
         config.height,
       );
       builder.desktopSize(desktopSize);
+
+      // Enable the Display Control dynamic channel so the desktop can be
+      // resized in-session (Session.resize) instead of reconnecting. Gated to
+      // hosts known to handle it (Windows); xrdp mishandles the reactivation.
+      if (enableDisplayControl && this.ironrdp.Extension) {
+        builder.extension(
+          new this.ironrdp.Extension("display_control", true),
+        );
+      }
       if (canvas) {
         const ctx = canvas.getContext("2d");
         if (ctx) {
@@ -172,7 +227,7 @@ export class IronRDPWASMBridge {
       if (enableClipboard) {
         this.startClipboardEventListeners();
       }
-      this.startSession(session, sessionId);
+      this.startSession(session, sessionId, onSessionEnd);
       return sessionId;
     } catch (error) {
       console.error(`IronRDP connection failed:`, error);
@@ -193,16 +248,22 @@ export class IronRDPWASMBridge {
     });
   }
 
-  private startSession(session: RDPSession, sessionId: string): void {
+  private startSession(
+    session: RDPSession,
+    sessionId: string,
+    onSessionEnd?: (error: string | null) => void,
+  ): void {
     session
       .run()
       .then((termInfo) => {
         this.cleanupSession(session, sessionId);
+        onSessionEnd?.(null);
       })
       .catch((err) => {
         console.error("IronRDP session error:", err);
+        this.logIronError(err);
         this.cleanupSession(session, sessionId);
-        throw Error(err);
+        onSessionEnd?.(this.getReadableError(err));
       });
   }
   private cleanupSession(session: RDPSession, sessionId: string): void {
@@ -282,11 +343,24 @@ export class IronRDPWASMBridge {
 
   private getReadableError(error: unknown): string {
     const ironError = error as any;
-    if (typeof ironError?.backtrace === "function") {
+    if (ironError && ironError.__wbg_ptr) {
       try {
-        const formatted = this.formatRDCleanPathError(ironError.backtrace());
-        if (formatted.startsWith("Connection failed:")) {
-          return formatted;
+        if (typeof ironError.kind === "function") {
+          const kindName = IRON_ERROR_KIND_NAMES[ironError.kind()];
+          if (kindName && IRON_ERROR_KIND_MESSAGES[kindName]) {
+            return IRON_ERROR_KIND_MESSAGES[kindName];
+          }
+        }
+        if (typeof ironError.backtrace === "function") {
+          const backtrace = ironError.backtrace();
+          const formatted = this.formatRDCleanPathError(backtrace);
+          if (formatted.startsWith("Connection failed:")) {
+            return formatted;
+          }
+          const reason = this.extractIronReason(backtrace);
+          if (reason) {
+            return `RDP session error: ${reason}`;
+          }
         }
       } catch {
         // Fall through to generic handling below.
@@ -296,6 +370,19 @@ export class IronRDPWASMBridge {
       return error.message;
     }
     return "RDP connection failed";
+  }
+
+  // extractIronReason pulls the human-readable reason out of an IronRDP
+  // backtrace like `[IO channel] reason: unhandled PDU: "Update PDU"`. The
+  // wasm error has no structured field for this, so General-kind errors can
+  // only expose it as free text.
+  private extractIronReason(backtrace: string): string {
+    if (!backtrace) return "";
+    const reasonMatch = backtrace.match(/reason:\s*(.+)/);
+    if (reasonMatch) {
+      return reasonMatch[1].trim();
+    }
+    return backtrace.replace(/^\[[^\]]*\]\s*/, "").trim();
   }
 
   private logIronError(error: unknown): void {
@@ -310,16 +397,7 @@ export class IronRDPWASMBridge {
       }
       if (ironError.kind) {
         const errorKind = ironError.kind();
-        const errorKindNames = [
-          "General",
-          "WrongPassword",
-          "LogonFailure",
-          "AccessDenied",
-          "RDCleanPath",
-          "ProxyConnect",
-          "NegotiationFailure",
-        ];
-        const errorKindName = errorKindNames[errorKind] || "Unknown";
+        const errorKindName = IRON_ERROR_KIND_NAMES[errorKind] || "Unknown";
         console.error("IronRDP error kind:", errorKindName, `(${errorKind})`);
       }
     } catch (e) {
@@ -328,6 +406,12 @@ export class IronRDPWASMBridge {
   }
   getSession(sessionId: string): RDPSession | null {
     return this.sessions.get(sessionId) || null;
+  }
+
+  resize(sessionId: string, width: number, height: number): void {
+    const session = this.sessions.get(sessionId);
+    if (!session || typeof session.resize !== "function") return;
+    session.resize(width, height);
   }
 
   disconnect(sessionId: string): void {

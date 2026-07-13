@@ -3,6 +3,8 @@ import { useCallback, useMemo, useState } from "react";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { Peer } from "@/interfaces/Peer";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
   ChevronsLeftRightEllipsis,
   ExternalLinkIcon,
@@ -38,7 +40,11 @@ export const RDPCredentialsModal = ({
   error,
   loading,
 }: Props) => {
-  const [username, setUsername] = useState("Administrator");
+  const defaultUsername =
+    getOperatingSystem(peer?.os) === OperatingSystem.WINDOWS
+      ? "Administrator"
+      : "root";
+  const [username, setUsername] = useState(defaultUsername);
   const [password, setPassword] = useState("");
 
   const [port, setPort] = useState("3389");
