@@ -156,7 +156,7 @@ export class IronRDPWASMBridge {
     netbirdClient?: {
       createRDPProxy: (hostname: string, port: string) => Promise<string>;
     },
-    onSessionEnd?: (error: string | null) => void,
+    onSessionEnd?: (error: string | null, sessionId: string) => void,
     enableDisplayControl = false,
   ): Promise<string> {
     if (!this.initialized) {
@@ -251,19 +251,19 @@ export class IronRDPWASMBridge {
   private startSession(
     session: RDPSession,
     sessionId: string,
-    onSessionEnd?: (error: string | null) => void,
+    onSessionEnd?: (error: string | null, sessionId: string) => void,
   ): void {
     session
       .run()
       .then((termInfo) => {
         this.cleanupSession(session, sessionId);
-        onSessionEnd?.(null);
+        onSessionEnd?.(null, sessionId);
       })
       .catch((err) => {
         console.error("IronRDP session error:", err);
         this.logIronError(err);
         this.cleanupSession(session, sessionId);
-        onSessionEnd?.(this.getReadableError(err));
+        onSessionEnd?.(this.getReadableError(err), sessionId);
       });
   }
   private cleanupSession(session: RDPSession, sessionId: string): void {

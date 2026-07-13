@@ -190,7 +190,10 @@ export const useRemoteDesktop = (client: any) => {
             canvas,
             true,
             client.client,
-            (sessionError: string | null) => {
+            (sessionError: string | null, endedSessionId: string) => {
+              // Ignore terminations from superseded sessions (e.g. a resize
+              // reconnect) so they can't tear down a newer connection.
+              if (endedSessionId !== session.current?.id) return;
               resetState();
               if (sessionError) setError(sessionError);
             },
