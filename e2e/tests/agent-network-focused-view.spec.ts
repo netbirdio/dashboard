@@ -118,6 +118,13 @@ function navItem(page: Page, text: string) {
     .getByText(text, { exact: true });
 }
 
+// navItemContaining matches a sidebar entry by a substring of its label. Some
+// entries (Agent Network, Reverse Proxy) render a "Beta" badge inside the label
+// when the dashboard is not focused, so exact text matching would miss them.
+function navItemContaining(page: Page, text: string) {
+  return page.getByTestId("left-navigation-item").filter({ hasText: text });
+}
+
 // Regular dashboard sections that the focused view hides (gated on
 // !agentNetworkOnly in Navigation.tsx).
 const FOCUS_HIDDEN_NAV = ["Networks", "Reverse Proxy", "DNS", "Activity"];
@@ -194,11 +201,12 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
       dashboardFeaturesAgentNetwork: true,
     });
     try {
-      // The Agent Network menu is available...
-      await expect(navItem(page, "Agent Network")).toBeVisible();
+      // The Agent Network menu is available (the label carries a "Beta" badge
+      // outside focused mode, so match on the label substring)...
+      await expect(navItemContaining(page, "Agent Network")).toBeVisible();
       // ...but the dashboard is not focused: a regular section that focused
       // mode hides (Reverse Proxy) is still present.
-      await expect(navItem(page, "Reverse Proxy")).toBeVisible();
+      await expect(navItemContaining(page, "Reverse Proxy")).toBeVisible();
     } finally {
       await close();
     }
