@@ -48,12 +48,15 @@ export const useAgentNetworkMode = () => {
 
   return useMemo(() => {
     const account = accounts?.[0];
-    // An explicit account setting (true or false) always wins so a user can
-    // opt out even when the deployment config enables focused mode. Only when
-    // the setting is absent do signup optimism and deployment config apply.
+    // Deployment config is a floor: NETBIRD_AGENT_NETWORK_ONLY focuses the
+    // dashboard regardless of the per-account setting. The management API always
+    // serializes agent_network_only (defaulting to false), so a false value
+    // can't be read as "unset" — without this floor it would silently override
+    // the env flag. When the config flag is off (e.g. cloud) the per-account
+    // setting decides, so a user can still opt in via signup or the toggle.
     const setting = account?.settings?.agent_network_only;
     const only =
-      setting ?? (isAgentNetworkSignupPending(account) || isAgentNetworkOnly());
+      isAgentNetworkOnly() || (setting ?? isAgentNetworkSignupPending(account));
     // dashboard_features.agent_network makes the Agent Network menu available
     // alongside the full dashboard (unlike "only", which hides everything else).
     const featureEnabled =
