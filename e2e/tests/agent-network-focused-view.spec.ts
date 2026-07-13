@@ -17,6 +17,11 @@ import { loginToApp, navigateTo } from "../helpers/auth";
 
 const SIGNUP_SOURCE_KEY = "netbird-signup-source";
 const AGENT_NETWORK_SOURCE = "netbird.ai";
+// Drives the NETBIRD_AGENT_NETWORK_ONLY / _ENABLED deployment flags against the
+// test build (see testAgentNetworkOverride in utils/netbird.ts).
+const AGENT_NETWORK_CONFIG_KEY = "netbird-test-agent-network";
+
+type AgentNetworkConfig = "only" | "enabled" | "off";
 
 type AccountMock = {
   // undefined leaves the setting absent (as an un-onboarded account would be).
@@ -86,7 +91,10 @@ function mockAccounts(
 async function openWithAccount(
   browser: Browser,
   account: AccountMock,
-  opts: { signupSource?: boolean } = {},
+  opts: {
+    signupSource?: boolean;
+    agentNetworkConfig?: AgentNetworkConfig;
+  } = {},
 ): Promise<{
   page: Page;
   captured: { putBody?: any };
@@ -103,6 +111,16 @@ async function openWithAccount(
         } catch (e) {}
       },
       [SIGNUP_SOURCE_KEY, AGENT_NETWORK_SOURCE],
+    );
+  }
+  if (opts.agentNetworkConfig) {
+    await context.addInitScript(
+      ([key, value]) => {
+        try {
+          window.localStorage.setItem(key as string, value as string);
+        } catch (e) {}
+      },
+      [AGENT_NETWORK_CONFIG_KEY, opts.agentNetworkConfig],
     );
   }
   const page = await context.newPage();
@@ -263,6 +281,71 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
       await close();
     }
   });
+
+  // Matrix of the two deployment flags (NETBIRD_AGENT_NETWORK_ONLY / _ENABLED,
+  // "off" = neither) crossed with the netbird.ai signup source, with no explicit
+  // account settings. The API defaults agent_network_only to false, so the
+  // deployment flags must still take effect. A present source implies a new
+  // signup (signup_form_pending), which focuses the dashboard optimistically
+  // regardless of the flags.
+  type Expectation = "hidden" | "available" | "focused";
+
+  const ENV_SIGNUP_MATRIX: {
+    env: AgentNetworkConfig;
+    signupSource: boolean;
+    expected: Expectation;
+  }[] = [
+    { env: "off", signupSource: false, expected: "hidden" },
+    { env: "off", signupSource: true, expected: "focused" },
+    { env: "enabled", signupSource: false, expected: "available" },
+    { env: "enabled", signupSource: true, expected: "focused" },
+    { env: "only", signupSource: false, expected: "focused" },
+    { env: "only", signupSource: true, expected: "focused" },
+  ];
+
+  async function expectAgentNetworkState(page: Page, expected: Expectation) {
+    // Peers always renders for an owner, confirming the sidebar loaded.
+    await expect(navItem(page, "Peers")).toBeVisible();
+
+    if (expected === "hidden") {
+      await expect(navItemContaining(page, "Agent Network")).toHaveCount(0);
+      // The regular dashboard stays intact.
+      await expect(navItemContaining(page, "Reverse Proxy")).toBeVisible();
+      return;
+    }
+
+    await expect(navItemContaining(page, "Agent Network")).toBeVisible();
+
+    if (expected === "focused") {
+      for (const label of FOCUS_HIDDEN_NAV) {
+        await expect(navItem(page, label)).toHaveCount(0);
+      }
+      return;
+    }
+
+    // available: the menu shows alongside the regular dashboard.
+    await expect(navItemContaining(page, "Reverse Proxy")).toBeVisible();
+  }
+
+  for (const { env, signupSource, expected } of ENV_SIGNUP_MATRIX) {
+    const sourceLabel = signupSource ? "netbird.ai" : "none";
+    test(`env=${env} signup_source=${sourceLabel} -> ${expected}`, async ({
+      browser,
+    }) => {
+      const { page, close } = await openWithAccount(
+        browser,
+        // A source present means a fresh netbird.ai signup (form still pending);
+        // otherwise a plain account with no agent-network settings.
+        { signupFormPending: signupSource },
+        { agentNetworkConfig: env, signupSource },
+      );
+      try {
+        await expectAgentNetworkState(page, expected);
+      } finally {
+        await close();
+      }
+    });
+  }
 
   test("exposes the focused-view toggle in client settings", async ({
     browser,
