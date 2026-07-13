@@ -49,7 +49,7 @@ export const DestinationGroupPanel = ({
   return (
     <div
       className={cn(
-        "absolute right-6 top-[72px] bottom-[64px] z-20",
+        "absolute right-6 top-[76px] bottom-5 z-20",
         "border border-nb-gray-900 rounded-lg w-[320px] flex flex-col",
         "bg-nb-gray-940/95 backdrop-blur-sm shadow-xl",
       )}

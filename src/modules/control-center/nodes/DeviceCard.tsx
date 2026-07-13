@@ -42,12 +42,12 @@ export const DeviceCard = ({
         className={cn(
           "flex items-center justify-center rounded-md shrink-0 bg-nb-gray-850 transition-all",
           "group-hover:bg-nb-gray-800 relative",
-          isSmall ? "h-7 w-7" : "h-9 w-9",
+          isSmall ? "h-8 w-8" : "h-9 w-9",
         )}
       >
-        {device && <PeerOSIcon os={device.os} size={isSmall ? 12 : 16} />}
+        {device && <PeerOSIcon os={device.os} size={isSmall ? 14 : 16} />}
         {resource?.type && (
-          <ResourceIcon type={resource.type} size={isSmall ? 12 : 15} />
+          <ResourceIcon type={resource.type} size={isSmall ? 14 : 15} />
         )}
 
         {device?.country_code && (

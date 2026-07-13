@@ -42,11 +42,14 @@ export function useControlCenterShortcuts(
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isInputFocused()) return;
 
-      // Check exact key first (for special keys like Delete, Escape, +, -)
-      // then check lowercase (for letter keys, case-insensitive)
+      // Modifier combos are registered as "shift+<key>" and take priority.
+      // Otherwise check exact key first (for special keys like Delete, Escape,
+      // +, -) then lowercase (for letter keys, case-insensitive).
+      const lower = e.key.toLowerCase();
       const handler =
-        shortcutsRef.current[e.key] ??
-        shortcutsRef.current[e.key.toLowerCase()];
+        (e.shiftKey && shortcutsRef.current[`shift+${lower}`]) ||
+        shortcutsRef.current[e.key] ||
+        shortcutsRef.current[lower];
       if (handler) {
         handler();
       }

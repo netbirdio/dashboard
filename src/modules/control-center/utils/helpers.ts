@@ -29,6 +29,16 @@ export const getNetworksFromPolicy = (networks: Network[], policy: Policy) => {
   });
 };
 
+// Shared "X Peer(s), Y Resource(s)" label used by GroupNode and the
+// components sidebar so a group reads the same on the canvas and in the list.
+export const getGroupCountLabel = (group?: Group) => {
+  const peerCount = group?.peers_count || 0;
+  const resourceCount = group?.resources_count || 0;
+  if (resourceCount === 0) return `${peerCount} Peer(s)`;
+  if (peerCount === 0) return `${resourceCount} Resource(s)`;
+  return `${peerCount} Peer(s), ${resourceCount} Resource(s)`;
+};
+
 export const getPeersFromGroup = (group: Group, peers: Peer[]) => {
   return peers.filter((peer) => {
     const groupIds = peer.groups?.map((g) => g.id) || [];

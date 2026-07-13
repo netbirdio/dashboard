@@ -27,6 +27,7 @@ import { DraftModeProvider } from "@/modules/control-center/draft/DraftModeConte
 import { CanvasContextMenu } from "@/modules/control-center/CanvasContextMenu";
 import { NodeContextMenu } from "@/modules/control-center/NodeContextMenu";
 import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
+import { DraftInstallPeerModal } from "@/modules/control-center/draft/DraftInstallPeerModal";
 import { useDraft } from "@/modules/control-center/hooks/useDraft";
 import { ControlCenterHeader } from "@/modules/control-center/ControlCenterHeader";
 import { ControlCenterEmptyStates } from "@/modules/control-center/ControlCenterEmptyStates";
@@ -96,6 +97,7 @@ function ControlCenterCanvas() {
       <ControlCenterEmptyStates />
       <ControlCenterHeader />
       <PeersToolbar />
+      <DraftInstallPeerModal />
       <ReactFlow
         className={draft.isSelectMode ? "select-mode" : undefined}
         edges={canvas.edges}

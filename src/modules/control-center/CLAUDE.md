@@ -85,10 +85,11 @@ control-center/
 ├── draft/
 │   ├── DraftModeContext.tsx            → isDraft toggle + CanvasTool (Select/Hand)
 │   ├── DraftChangesetContext.tsx       → Tracks draft changes (create-group)
-│   ├── ControlCenterComponentsSidebar.tsx → Floating, toggleable left panel of draggable components (collapsed to a "Components" button by default; disabled items if already on canvas)
+│   ├── ControlCenterComponentsSidebar.tsx → Floating, toggleable "Components" panel. Peers/Resources/Groups accordion sections, each with create-new items on top + existing entities below. Toggled via the CanvasToolbar "Add" button (A) / Esc to close
 │   ├── CanvasToolbar.tsx              → Bottom toolbar (select/hand/undo/redo/zoom/fit)
 │   ├── PeersToolbar.tsx               → Selection toolbar (create group from selected peers/resources)
 │   ├── CreateGroupNameModal.tsx       → Shared modal for entering group name (used by PeersToolbar + CanvasContextMenu)
+│   ├── DraftInstallPeerModal.tsx      → Shared "Install NetBird" modal (driven by useDraftMode().installModal)
 │   ├── DraftModeSwitcher.tsx          → Live/Draft toggle
 │   └── DraftModeTitle.tsx             → Draft name + dropdown selector
 │
@@ -162,7 +163,12 @@ When exiting draft:
 2. Canvas fits to view
 
 ### Draft Features
-- **Drag from sidebar**: Add peers/groups/resources to canvas (disabled if already on canvas). The components sidebar is a floating overlay on the left (mirrors `DestinationGroupPanel` on the right): hidden behind a "Components" toggle button, opens as a floating panel with a close (X) button — it does not push the canvas.
+- **Components sidebar**: A floating overlay on the left (mirrors `DestinationGroupPanel` on the right). Toggled by the CanvasToolbar "Add" button (shortcut `A`); `Esc` closes it. Does not push the canvas. Three collapsible accordion sections (**Peers** / **Resources** / **Groups**), each with its create-new items pinned at the top followed by the existing entities:
+  - **Peers**: create items **User Device** / **Server** / **Agent** → all draggable onto the canvas. **User Device** drop opens the `SetupModal` install flow (`isUserDevice=true`). **Server**/**Agent** drop generates a one-off setup key (`POST /setup-keys`, `ephemeral=true` for agent), held locally on a dropped placeholder `PeerNode` (`placeholderKind` + `setupKey`) that renders an **Install** button. The Install button (and User Device drop) open the shared install modal via `useDraftMode().setInstallModal`, rendered once by `DraftInstallPeerModal` in the canvas. Then existing peers (drag onto canvas; disabled if already there).
+  - **Resources**: create items **Resource** + **Network** → drag onto canvas to drop a blank, id-less node. Then existing resources.
+  - **Groups**: create item **Group** → drag to drop a blank group node (renders NEW badge). Then existing groups.
+  - Blank nodes: only `create-group` is tracked by the changeset today; blank network/resource nodes are visual placeholders (no apply wiring yet).
+  - Each section's count reflects existing entities only (not create items). Search matches item names/labels **and** category words (e.g. "peers"/"groups"/"resources"/"networks" reveal the whole matching section); a section shows if its existing items OR its create items match.
 - **Connect nodes**: Drag between handles to create a policy (peer↔peer, peer↔group, group↔group, group↔resource, peer↔resource)
 - **Create group**: Select 2+ peers/resources → toolbar appears → opens name modal → creates group via API → replaces selected nodes with group node
 - **Create group (context menu)**: Right-click canvas → "Create Group" → name modal → creates group via API at click position
@@ -197,7 +203,7 @@ The `SmartEdge` is used in draft mode. It dynamically picks connection sides:
 
 | Key | Action |
 |-----|--------|
-| `A` | Toggle components panel |
+| `C` | Toggle components panel |
 | `V` | Select tool |
 | `H` | Hand tool |
 | `Space` (hold) | Temporary hand tool |

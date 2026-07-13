@@ -39,7 +39,7 @@ export const CanvasToolbar = () => {
     reactFlow.fitView({ padding: 0.1, duration: 500, maxZoom: 0.8 });
 
   useControlCenterShortcuts({
-    a: () => setComponentsPanelOpen(!componentsPanelOpen),
+    c: () => setComponentsPanelOpen(!componentsPanelOpen),
     v: () => setActiveTool(CanvasTool.Select),
     h: () => setActiveTool(CanvasTool.Hand),
     f: handleFitView,
@@ -82,7 +82,7 @@ export const CanvasToolbar = () => {
       <ToolbarGroup position="first" className="pl-2 py-1.5">
         <ToolbarButton
           tooltip="Add Components"
-          shortcut="A"
+          shortcut="C"
           variant="primary"
           active={componentsPanelOpen}
           onClick={() => setComponentsPanelOpen(!componentsPanelOpen)}

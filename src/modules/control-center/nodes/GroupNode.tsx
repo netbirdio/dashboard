@@ -6,7 +6,10 @@ import * as React from "react";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
-import { useAnySourceGroupEnabled } from "@/modules/control-center/utils/helpers";
+import {
+  getGroupCountLabel,
+  useAnySourceGroupEnabled,
+} from "@/modules/control-center/utils/helpers";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 
@@ -41,17 +44,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
   const isContextMenuActive = contextMenuNodeId === id;
   const showHalo = isPanelActive || isContextMenuActive;
 
-  const countLabel = useMemo(() => {
-    const peerCount = group?.peers_count || 0;
-    const resourceCount = group?.resources_count || 0;
-    if (resourceCount === 0) {
-      return `${peerCount} Peer(s)`;
-    }
-    if (peerCount === 0) {
-      return `${resourceCount} Resource(s)`;
-    }
-    return `${peerCount} Peer(s), ${resourceCount} Resource(s)`;
-  }, [group?.peers_count, group?.resources_count]);
+  const countLabel = useMemo(() => getGroupCountLabel(group), [group]);
 
   return (
     <div
