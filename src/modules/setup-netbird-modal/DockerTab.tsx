@@ -61,6 +61,7 @@ export default function DockerTab({
             <Code>
               <Code.Line>docker run --rm -d \</Code.Line>
               <Code.Line> --cap-add=NET_ADMIN \</Code.Line>
+              <Code.Line> --restart unless-stopped \</Code.Line>
               <Code.Line>
                 {" "}
                 -e NB_SETUP_KEY=
