@@ -59,7 +59,7 @@ export default function DockerTab({
               {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
             </p>
             <Code>
-              <Code.Line>docker run --rm -d \</Code.Line>
+              <Code.Line>docker run -d \</Code.Line>
               <Code.Line> --cap-add=NET_ADMIN \</Code.Line>
               <Code.Line> --restart unless-stopped \</Code.Line>
               <Code.Line>
