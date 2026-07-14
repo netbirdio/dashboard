@@ -85,7 +85,7 @@ export const CanvasToolbar = () => {
           shortcut="C"
           variant="primary"
           active={componentsPanelOpen}
-          onClick={() => setComponentsPanelOpen(!componentsPanelOpen)}
+          onClick={() => setComponentsPanelOpen(true)}
           className="pl-2 pr-2.5 gap-1 text-sm"
         >
           <PlusIcon size={13} />

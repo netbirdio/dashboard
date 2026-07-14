@@ -43,6 +43,7 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
   const [installModal, setInstallModal] = useState<InstallModalState | null>(
     null,
   );
+
   return (
     <DraftModeContext.Provider
       value={{

@@ -285,15 +285,19 @@ export function useDraft() {
       setNodes(updatedNodes);
       setEdges(updatedEdges);
 
-      setTimeout(() => {
-        reactFlow.fitView({
-          nodes: updatedNodes,
-          padding: 0.1,
-          duration: 500,
-          maxZoom: 0.8,
-          minZoom: DEFAULT_MIN_ZOOM,
-        });
-      }, 100);
+      // Only fit when the draft actually has content — fitting an empty draft
+      // leaves the viewport in an odd spot, throwing off later drop positions.
+      if (updatedNodes.length > 0) {
+        setTimeout(() => {
+          reactFlow.fitView({
+            nodes: updatedNodes,
+            padding: 0.1,
+            duration: 500,
+            maxZoom: 0.8,
+            minZoom: DEFAULT_MIN_ZOOM,
+          });
+        }, 100);
+      }
     } else if (liveStateRef.current) {
       const restored = liveStateRef.current;
       setNodes(restored.nodes);

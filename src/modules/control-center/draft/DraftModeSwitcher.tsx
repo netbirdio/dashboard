@@ -4,11 +4,15 @@ import { PencilLineIcon, PlayIcon } from "lucide-react";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import Button from "@components/Button";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 
 type Props = {};
 export const DraftModeSwitcher = ({}: Props) => {
   const { isDraft, setIsDraft } = useDraftMode();
+  const { nodes } = useCanvasState();
   const mode = isDraft ? "draft" : "live";
+  // Nothing to deploy on an empty draft canvas.
+  const canvasEmpty = nodes.length === 0;
 
   const handleSwitch = (v: string) => {
     setIsDraft(v === "draft");
@@ -24,12 +28,18 @@ export const DraftModeSwitcher = ({}: Props) => {
             onClick={() => handleSwitch("live")}
             className={"h-[38px] px-4.5"}
           >
-            Save
+            Cancel
           </Button>
-          <Button variant={"primary"} size={"xs"} className={"h-[38px] px-4.5"}>
-            <PlayIcon size={12} />
-            Save & Apply
-          </Button>
+          {!canvasEmpty && (
+            <Button
+              variant={"primary"}
+              size={"xs"}
+              className={"h-[38px] px-4.5"}
+            >
+              <PlayIcon size={12} />
+              Deploy
+            </Button>
+          )}
         </>
       )}
       <SegmentedTabs value={mode} onChange={handleSwitch}>

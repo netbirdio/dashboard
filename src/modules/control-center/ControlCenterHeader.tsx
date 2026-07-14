@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   SelectDropdown,
 } from "@components/select/SelectDropdown";
@@ -9,14 +10,13 @@ import { NetworkRoutingPeerCount } from "@/modules/control-center/NetworkRouting
 import { ControlCenterCurrentUserBadge } from "@/modules/control-center/user/ControlCenterCurrentUserBadge";
 import { DraftModeSwitcher } from "@/modules/control-center/draft/DraftModeSwitcher";
 import { CanvasToolbar } from "@/modules/control-center/draft/CanvasToolbar";
-import { DraftModeTitle } from "@/modules/control-center/draft/DraftModeTitle";
 import { useCanvasState, useControlCenterUI } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 function HeaderTopLeft() {
   const { currentView, selectedNetwork, previousSelectedUser } =
     useCanvasState();
-  const { isDraft } = useDraftMode();
+  const { isDraft, setIsDraft } = useDraftMode();
   const {
     networkOptions,
     currentNetwork,
@@ -33,7 +33,7 @@ function HeaderTopLeft() {
         }
       >
         <div className={"flex gap-4"}>
-          {selectedNetwork !== "" && (
+          {!isDraft && selectedNetwork !== "" && (
             <Button
               variant={"secondary"}
               size={"xs"}
@@ -44,7 +44,7 @@ function HeaderTopLeft() {
             </Button>
           )}
 
-          {previousSelectedUser !== "" && (
+          {!isDraft && previousSelectedUser !== "" && (
             <>
               <Button
                 variant={"secondary"}
@@ -68,9 +68,23 @@ function HeaderTopLeft() {
               <FlowSelector value={currentView} onChange={onViewChange} />
             )}
 
-          <DraftModeTitle />
+          {isDraft && (
+            <Button
+              variant={"secondary"}
+              size={"xs"}
+              className={
+                "!px-0 !bg-nb-gray-930 h-[40px] !w-[40px] !min-w-[40px]"
+              }
+              onClick={() => setIsDraft(false)}
+            >
+              <ArrowLeftIcon size={14} />
+            </Button>
+          )}
 
-          {currentView === "networks" && (
+          {/* Draft title (Untitled Draft dropdown + three-dots menu) hidden for now */}
+          {/* {isDraft && <DraftModeTitle />} */}
+
+          {!isDraft && currentView === "networks" && (
             <div className={"w-64"}>
               <SelectDropdown
                 variant={"secondary"}
@@ -86,7 +100,7 @@ function HeaderTopLeft() {
             </div>
           )}
 
-          {selectedNetwork && currentNetwork && (
+          {!isDraft && selectedNetwork && currentNetwork && (
             <NetworkRoutingPeerCount network={currentNetwork} />
           )}
         </div>
@@ -108,17 +122,25 @@ function HeaderTopRight() {
 function HeaderBottom() {
   const { isDraft } = useDraftMode();
 
+  // Always visible in draft (slides in/out with draft via framer-motion).
+  const showToolbar = isDraft;
+
   return (
-    <>
-      {isDraft && (
-        <div className={"absolute bottom-0 left-1/2 -translate-x-1/2 z-10"}>
+    <AnimatePresence>
+      {showToolbar && (
+        <motion.div
+          className={"absolute bottom-0 left-1/2 z-10"}
+          initial={{ x: "-50%", y: 80, opacity: 0 }}
+          animate={{ x: "-50%", y: 0, opacity: 1 }}
+          exit={{ x: "-50%", y: 80, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 32 }}
+        >
           <div className={"py-4"}>
             <CanvasToolbar />
           </div>
-        </div>
+        </motion.div>
       )}
-
-    </>
+    </AnimatePresence>
   );
 }
 

@@ -6,6 +6,7 @@ import { getFirstGroup } from "@/modules/control-center/utils/helpers";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 interface UseSelectNodeHandlersParams {
   views: {
@@ -68,6 +69,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   } = useControlCenterData();
 
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
+  const { isDraft } = useDraftMode();
 
   const {
     views: {
@@ -339,6 +341,9 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
 
   useEffect(() => {
     if (isLoading) return;
+    // Draft mode manages its own canvas (useDraft); don't let the live view
+    // initialization run/fitView while drafting.
+    if (isDraft) return;
     if (layoutInitialized) return;
 
     switch (currentView) {
@@ -462,6 +467,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     selectedUser,
     isLoading,
     layoutInitialized,
+    isDraft,
   ]);
 
   return {

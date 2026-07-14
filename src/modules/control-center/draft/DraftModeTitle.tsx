@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import Button from "@components/Button";
-import { ArrowLeftIcon, FilePenIcon, MoreVertical, PencilLineIcon, PlusCircle, Trash2 } from "lucide-react";
+import { FilePenIcon, MoreVertical, PencilLineIcon, PlusCircle, Trash2 } from "lucide-react";
 
 type Draft = {
   id: string;
@@ -18,10 +18,7 @@ type Draft = {
 };
 
 export const DraftModeTitle = () => {
-  const { isDraft, setIsDraft } = useDraftMode();
-  const handleBack = () => {
-    setIsDraft(false);
-  };
+  const { isDraft } = useDraftMode();
 
   // TODO: replace with actual drafts from API
   const [drafts, setDrafts] = useState<Draft[]>([
@@ -68,14 +65,6 @@ export const DraftModeTitle = () => {
 
   return (
     <div className={"flex items-center gap-2"}>
-      <Button
-        variant={"secondary"}
-        size={"xs"}
-        className={"!px-0 !bg-nb-gray-930 h-[40px] !w-[40px] !min-w-[40px]"}
-        onClick={handleBack}
-      >
-        <ArrowLeftIcon size={14} />
-      </Button>
       <SelectDropdown
         value={selectedDraft}
         onChange={handleChange}

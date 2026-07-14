@@ -23,11 +23,15 @@ import { NODE_TYPES } from "@/modules/control-center/utils/nodes";
 import { DragAndDropProvider } from "@/modules/control-center/DragAndDropProvider";
 import { ConnectionLine } from "@/modules/control-center/ConnectionLine";
 import { ControlCenterComponentsSidebar } from "@/modules/control-center/draft/ControlCenterComponentsSidebar";
-import { DraftModeProvider } from "@/modules/control-center/draft/DraftModeContext";
+import {
+  DraftModeProvider,
+  useDraftMode,
+} from "@/modules/control-center/draft/DraftModeContext";
 import { CanvasContextMenu } from "@/modules/control-center/CanvasContextMenu";
 import { NodeContextMenu } from "@/modules/control-center/NodeContextMenu";
 import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
 import { DraftInstallPeerModal } from "@/modules/control-center/draft/DraftInstallPeerModal";
+import { DraftEmptyCanvas } from "@/modules/control-center/draft/DraftEmptyCanvas";
 import { useDraft } from "@/modules/control-center/hooks/useDraft";
 import { ControlCenterHeader } from "@/modules/control-center/ControlCenterHeader";
 import { ControlCenterEmptyStates } from "@/modules/control-center/ControlCenterEmptyStates";
@@ -76,6 +80,7 @@ function ControlCenterCanvas() {
   const canvas = useCanvasState();
   const ui = useControlCenterUI();
   const draft = useDraft();
+  const { componentsPanelOpen } = useDraftMode();
   const { onNodeDrag, onNodeDragStop } = useDragToGroup();
 
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
@@ -85,7 +90,11 @@ function ControlCenterCanvas() {
   } | null>(null);
   const nodeContextMenuOpen = nodeContextMenuPos !== null;
   const anyMenuOpen = contextMenuOpen || nodeContextMenuOpen;
-  const canInteract = !anyMenuOpen && !draft.isSelectMode;
+  // An empty state overlay is up (live peers/networks empty, or the draft start
+  // screen) — lock canvas interactions. Once the user starts (opens the
+  // components panel) the empty canvas becomes interactive again.
+  const emptyState = canvas.nodes.length === 0 && !componentsPanelOpen;
+  const canInteract = !anyMenuOpen && !draft.isSelectMode && !emptyState;
 
   const closeNodeContextMenu = React.useCallback(() => {
     setNodeContextMenuPos(null);
@@ -95,6 +104,7 @@ function ControlCenterCanvas() {
   return (
     <>
       <ControlCenterEmptyStates />
+      <DraftEmptyCanvas />
       <ControlCenterHeader />
       <PeersToolbar />
       <DraftInstallPeerModal />
@@ -124,14 +134,14 @@ function ControlCenterCanvas() {
         minZoom={DEFAULT_MIN_ZOOM}
         colorMode={"dark"}
         panOnDrag={canInteract}
-        panOnScroll={draft.isSelectMode}
+        panOnScroll={draft.isSelectMode && !emptyState}
         zoomOnScroll={canInteract}
         zoomOnPinch={canInteract}
         zoomOnDoubleClick={canInteract}
-        nodesDraggable={!anyMenuOpen}
-        nodesConnectable={!anyMenuOpen}
-        elementsSelectable={!anyMenuOpen}
-        selectionOnDrag={draft.isSelectMode}
+        nodesDraggable={!anyMenuOpen && !emptyState}
+        nodesConnectable={!anyMenuOpen && !emptyState}
+        elementsSelectable={!anyMenuOpen && !emptyState}
+        selectionOnDrag={draft.isSelectMode && !emptyState}
         selectionMode={SelectionMode.Partial}
       >
         <Background bgColor={"#181a1d"} gap={20} color={"#717171"} />

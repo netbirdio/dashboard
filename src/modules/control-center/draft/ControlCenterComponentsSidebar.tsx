@@ -173,34 +173,14 @@ const SidebarContent = React.memo(({ onClose }: { onClose: () => void }) => {
     [setupKeyRequest],
   );
 
-  // Adds a node at the drop point, then re-centers it on the cursor once
-  // ReactFlow has measured it — node sizes vary (peer/group/resource), so a
-  // fixed offset can't center them all. Drop position comes from
-  // screenToFlowPosition, so it's correct regardless of the sidebar's layout.
+  // Places a dropped node roughly centered under the cursor. Drop position
+  // comes from screenToFlowPosition (flow coords), so it lands where dropped.
   const placeDroppedNode = useCallback(
     (node: Node, position?: XYPosition) => {
-      reactFlow.setNodes((prev) =>
-        prev.concat({ ...node, position: position ?? { x: 0, y: 0 } }),
-      );
-      if (!position) return;
-      let attempts = 0;
-      const center = () => {
-        const measured = reactFlow.getNode(node.id)?.measured;
-        if (
-          (measured?.width == null || measured?.height == null) &&
-          attempts < 10
-        ) {
-          attempts++;
-          requestAnimationFrame(center);
-          return;
-        }
-        const w = measured?.width ?? 200;
-        const h = measured?.height ?? 50;
-        reactFlow.updateNode(node.id, {
-          position: { x: position.x - w / 2, y: position.y - h / 2 },
-        });
-      };
-      requestAnimationFrame(center);
+      const pos = position
+        ? { x: position.x - 100, y: position.y - 30 }
+        : { x: 0, y: 0 };
+      reactFlow.setNodes((prev) => prev.concat({ ...node, position: pos }));
     },
     [reactFlow],
   );
@@ -536,7 +516,7 @@ const SidebarContent = React.memo(({ onClose }: { onClose: () => void }) => {
                   count={filteredPeers.length}
                 />
                 <AccordionContent>
-                  <div className={"flex flex-col gap-2 px-5 pb-3"}>
+                  <div className={"flex flex-col gap-2.5 px-5 pb-3"}>
                     {filteredPeerTemplates.map((tpl) => (
                       <TemplateItem
                         key={tpl.key}
@@ -579,7 +559,7 @@ const SidebarContent = React.memo(({ onClose }: { onClose: () => void }) => {
                   count={filteredResources.length}
                 />
                 <AccordionContent>
-                  <div className={"flex flex-col gap-2 px-5 pb-3"}>
+                  <div className={"flex flex-col gap-2.5 px-5 pb-3"}>
                     {resourceTemplates.map((tpl) => (
                       <TemplateItem
                         key={tpl.kind}
@@ -620,7 +600,7 @@ const SidebarContent = React.memo(({ onClose }: { onClose: () => void }) => {
                   count={filteredGroups.length}
                 />
                 <AccordionContent>
-                  <div className={"flex flex-col gap-2 px-5 pb-3"}>
+                  <div className={"flex flex-col gap-2.5 px-5 pb-3"}>
                     {groupTemplates.map((tpl) => (
                       <TemplateItem
                         key={tpl.kind}
