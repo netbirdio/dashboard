@@ -70,8 +70,8 @@ export function addDestinationResourceNodes(
       id: `policy-dest-resource-${policy.id}-${nodeId}`,
       source: `policy-${policy.id}`,
       target: nodeId,
-      type: "in",
-      data: { enabled, type: "bezier" },
+      type: "smart",
+      data: { enabled, policy },
     });
   }
 }

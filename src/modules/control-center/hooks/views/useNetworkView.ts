@@ -70,8 +70,8 @@ export function useNetworkView() {
             id: `group-${group.id}-policy-${policy.id}`,
             source: `group-${group.id}`,
             target: `policy-${policy.id}`,
-            type: "in",
-            data: { enabled, type: "bezier" },
+            type: "smart",
+            data: { enabled, policy },
           });
         });
       }
@@ -125,8 +125,8 @@ export function useNetworkView() {
               id: `policy-${policy.id}-group-${group.id}`,
               source: `policy-${policy.id}`,
               target: `group-${group.id}`,
-              type: "in",
-              data: { enabled, type: "bezier" },
+              type: "smart",
+              data: { enabled, policy },
             });
 
             addEdge(allEdges, {
@@ -149,8 +149,8 @@ export function useNetworkView() {
               id: `group-${group.id}-policy-${policy.id}`,
               source: `group-${group.id}`,
               target: `policy-${policy.id}`,
-              type: "in",
-              data: { enabled, type: "bezier" },
+              type: "smart",
+              data: { enabled, policy },
             });
           });
         }

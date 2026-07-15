@@ -44,8 +44,8 @@ export function useGroupView() {
         id: `group-policy-${groupId}-${policy.id}`,
         source: `select-group-node`,
         target: `policy-${policy.id}`,
-        type: "in",
-        data: { enabled, type: "bezier" },
+        type: "smart",
+        data: { enabled, policy },
       });
 
       const destinations = orderBy(
@@ -78,8 +78,8 @@ export function useGroupView() {
           id: `policy-group-${policy.id}-${destination.id}`,
           source: `policy-${policy.id}`,
           target: destinationNodeId,
-          type: "in",
-          data: { enabled, type: "bezier" },
+          type: "smart",
+          data: { enabled, policy },
         });
       });
 

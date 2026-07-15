@@ -95,8 +95,8 @@ export function useUserView() {
             source: `source-peer-${peer.id}`,
             sourceHandle: "sr",
             target: policyNodeId,
-            type: "in",
-            data: { enabled, type: "bezier" },
+            type: "smart",
+            data: { enabled, policy },
           });
         }
       });
@@ -125,8 +125,8 @@ export function useUserView() {
             id: `policy-group-${policy.id}-${destination.id}`,
             source: policyNodeId,
             target: destinationNodeId,
-            type: "in",
-            data: { enabled, type: "bezier" },
+            type: "smart",
+            data: { enabled, policy },
           });
         }
 

@@ -218,7 +218,7 @@ When a policy is saved from the modal:
 
 ### SmartEdge
 
-The `SmartEdge` is used in draft mode. It dynamically picks connection sides:
+The `SmartEdge` is used for all policy edges — in draft mode and in every live view (peer, group, user, network). It dynamically picks connection sides:
 - **Policy nodes**: fixed sides — sources enter LEFT, destinations exit RIGHT
 - **Other nodes**: picks best side (left/right) based on relative position
 - **Bidirectional policies**: renders two green animated lines
@@ -265,9 +265,9 @@ Shortcut badges are platform-aware via the shared `isMac` from `src/hooks/useOpe
 
 | Type | Component | When used |
 |------|-----------|-----------|
-| `smart` | SmartEdge | Draft mode (dynamic routing, bi/unidirectional) |
-| `in` | DirectionIn | Live mode (peer→policy→group) |
-| `bi` | BidirectionalEdges | Live mode bidirectional |
+| `smart` | SmartEdge | All policy edges, draft + live (dynamic routing, bi/unidirectional) |
+| `in` | DirectionIn | Registry only (policy edges migrated to `smart`) |
+| `bi` | BidirectionalEdges | Registry only |
 | `floating` | FloatingEdge | Dynamic floating edges |
 | `floating-straight` | AnimatedLine | Network view (group→network) |
 | `simple` | SimpleConnection | Group→peer/resource expansion |
