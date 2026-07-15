@@ -25,14 +25,14 @@ DraftModeProvider          → isDraft, activeTool (select/hand)
 
 ### Key Contexts
 
-| Context | Hook | What it provides |
-|---------|------|-----------------|
-| `CanvasStateProvider` | `useCanvasState()` | nodes, edges, setters, layoutInitialized, currentView, all selection state, loggedInUser, forceSingle*ViewRefs |
-| `ControlCenterUIProvider` | `useControlCenterUI()` | networkOptions, currentNetwork, onViewChange, onNetworkSelect, onNodeClick, onForceSingleUserView |
-| `ControlCenterPolicyProvider` | `useControlCenterPolicy()` | selectedPolicy, policyModalOpen, createPolicyModal, source/destination resources & groups, addPolicyEdge |
-| `DraftModeProvider` | `useDraftMode()` | isDraft, setIsDraft, activeTool, setActiveTool |
-| `DraftChangesetProvider` | `useDraftChangeset()` | changes, changeCount, CRUD track* helpers (create/update/delete group + policy), removeChange, clearChanges — persisted to localStorage |
-| `GroupsProvider` | `useGroups()` | groups, createOrUpdate, refresh, dropdownOptions |
+| Context                       | Hook                       | What it provides                                                                                                                         |
+| ----------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `CanvasStateProvider`         | `useCanvasState()`         | nodes, edges, setters, layoutInitialized, currentView, all selection state, loggedInUser, forceSingle\*ViewRefs                          |
+| `ControlCenterUIProvider`     | `useControlCenterUI()`     | networkOptions, currentNetwork, onViewChange, onNetworkSelect, onNodeClick, onForceSingleUserView                                        |
+| `ControlCenterPolicyProvider` | `useControlCenterPolicy()` | selectedPolicy, policyModalOpen, createPolicyModal, source/destination resources & groups, addPolicyEdge                                 |
+| `DraftModeProvider`           | `useDraftMode()`           | isDraft, setIsDraft, activeTool, setActiveTool                                                                                           |
+| `DraftChangesetProvider`      | `useDraftChangeset()`      | changes, changeCount, CRUD track\* helpers (create/update/delete group + policy), removeChange, clearChanges — persisted to localStorage |
+| `GroupsProvider`              | `useGroups()`              | groups, createOrUpdate, refresh, dropdownOptions                                                                                         |
 
 ### Data Flow
 
@@ -65,6 +65,7 @@ control-center/
 ├── ControlCenterHeader.tsx            → Header overlays (HeaderTopLeft, HeaderTopRight, HeaderBottom); the networks-view selector only renders when networks exist (hidden alongside the empty state)
 ├── ControlCenterEmptyStates.tsx       → Empty state displays per view
 ├── CanvasContextMenu.tsx              → Right-click canvas menu (Create Group, Add Peer, etc.)
+├── NodeContextMenu.tsx                → Right-click node menu (Rename/Remove/Delete, policy Enable/Disable)
 ├── ConnectionLine.tsx                 → Custom connection line during drag
 ├── DragAndDropProvider.tsx            → Drag-from-sidebar state
 ├── FlowSelector.tsx                   → Peer/User/Group/Networks tab selector
@@ -75,6 +76,8 @@ control-center/
 │   ├── useSelectNodeHandlers.ts       → Entity handlers, force-view, navigation, onNodeClick, view init effect
 │   ├── useDraft.ts                    → Draft save/restore, canvas persistence (localStorage), node transformation, onNodeConnect
 │   ├── useControlCenterShortcuts.ts   → Keyboard shortcut hook (draft-only, input-aware) + isInputFocused()
+│   ├── useDraftPeerUpgrade.ts        → Watches peers; upgrades installed placeholders (matched by installHostname) to real peer nodes + re-records their policies
+│   ├── useEdgeAwareMenuPosition.ts    → Keeps context menus inside the viewport (flip to other side of cursor, clamp fallback); used by CanvasContextMenu + NodeContextMenu
 │   ├── useCreateGroupOnCanvas.ts     → Creates group (API in live, changeset in draft) + adds group node to canvas
 │   ├── useDraftGroupActions.ts       → Draft group ops: addNewGroup, renameGroup, removeGroup, deleteGroup (changeset-only)
 │   ├── useDeployChangeset.ts         → Deploys the changeset via API in dependency order
@@ -149,16 +152,17 @@ control-center/
 
 Each view builds a node/edge graph from API data:
 
-| View | Source node | Layout | What it shows |
-|------|------------|--------|---------------|
-| **Peer** | SelectPeerNode → PeerNode (draft) | Hierarchical | Selected peer → policies → destination groups → expanded peers/resources |
-| **Group** | SelectGroupNode | Hierarchical | Selected group → policies → destination groups → peers/resources |
-| **User** | SelectUserNode | Hierarchical | Selected user → their peers → policies → destination groups |
-| **Network** | (all networks) | Force / Hierarchical | All networks with groups, or single network detail |
+| View        | Source node                       | Layout               | What it shows                                                            |
+| ----------- | --------------------------------- | -------------------- | ------------------------------------------------------------------------ |
+| **Peer**    | SelectPeerNode → PeerNode (draft) | Hierarchical         | Selected peer → policies → destination groups → expanded peers/resources |
+| **Group**   | SelectGroupNode                   | Hierarchical         | Selected group → policies → destination groups → peers/resources         |
+| **User**    | SelectUserNode                    | Hierarchical         | Selected user → their peers → policies → destination groups              |
+| **Network** | (all networks)                    | Force / Hierarchical | All networks with groups, or single network detail                       |
 
 ## Draft Mode
 
 When entering draft from a live view:
+
 1. Live state (nodes/edges) is saved to a ref
 2. Canvas is rebuilt from **visible policies** (only policies that had policyNodes on the live canvas), plus the entities shown in the live view even when they have no policies (group nodes on the canvas and the group/peer picked in the live select node) so a policy-less view doesn't enter an empty draft:
    - Source groups/peers → policy node → destination groups/peers/resources
@@ -169,22 +173,24 @@ When entering draft from a live view:
 4. Canvas fits to view
 
 When exiting draft:
+
 1. Live state is restored from the ref
 2. Canvas fits to view
 
 ### Draft Features
-- **Draft start screen** (`DraftEmptyCanvas`): shown while `isDraft && nodes.length === 0`; hides instantly (no animation) when the components panel opens. Right-clicking it opens the draft canvas context menu — the overlay root carries the `draft-empty-canvas` marker class that `CanvasContextMenu` treats as canvas, and the menu is portaled to `<body>` so it renders above the overlay. Mirrors the live `GetStartedTest` header (no card bg) with template cards (Remote Access / Business VPN / Site-to-Site — all just open the components panel for now; starter topologies are TODO). No standalone Add button — the always-visible `CanvasToolbar` "Add" is used to open the components panel. Draft chrome in draft: `HeaderTopLeft` is empty — exiting happens via Cancel in the `DraftModeSwitcher` (`DraftModeTitle` — Untitled Draft dropdown + three-dots — is currently hidden/commented out in the header, kept for later), the `CanvasToolbar` (always visible in draft, slides in/out with draft via framer-motion) in `HeaderBottom`, and Cancel / Review & Deploy in `DraftModeSwitcher` (Cancel always shown and exits draft via `useDiscardDraft`; Review & Deploy **hidden** when the canvas is empty and no changes are pending, **disabled** at 0 changes, and shows the change count as a badge). While an empty state is shown (`nodes.length === 0`), canvas interactions (pan/zoom/select/drag) are locked in `page.tsx`. In draft, `HeaderTopLeft` shows nothing (all live controls — tabs, network selector, etc. — are gated `!isDraft`).
-- **Components picker**: A node-picker panel floating above the bottom toolbar (centered, ~680px). Toggled by the CanvasToolbar "Add" button (shortcut `C`, plus icon rotates 45° while open); closed by `Esc`, clicking the canvas, or opening the canvas context menu (right-click). Layout: search bar on top, category rail on the left (**Home** / **Peers** / **Policies** / **Groups** / **Resources**), 2-column item grid on the right. **Home** shows "Popular" — every create template labelled "New …" (New Group, New Policy, New Agent, …). Searching spans all categories with section headings. Category contents (create templates pinned first, then existing entities):
-  - **Peers**: create items **User Device** / **Server** / **Agent** → all draggable onto the canvas. **User Device** drop opens the `SetupModal` install flow (`isUserDevice=true`). **Server**/**Agent** drop only places a placeholder `PeerNode` (`placeholderKind`, no API call) with an **Install** button. The Install button (and User Device drop) open the shared install modal via `useDraftMode().setInstallModal` (carrying `placeholderKind` + `nodeId`), rendered once by `DraftInstallPeerModal`. The setup key is generated *inside* the modal on demand (`SetupKeyGenerator`, `ephemeralKey` for agents) and written back onto the node (`setupKey`) so reopening Install reuses it. Then existing peers (drag onto canvas; disabled if already there).
+
+- **Draft start screen** (`DraftEmptyCanvas`): shown while `isDraft && nodes.length === 0`; fades out/in (100ms ease-out, matching the components panel animation) when the panel opens/closes. Right-clicking it opens the draft canvas context menu — the overlay root carries the `draft-empty-canvas` marker class that `CanvasContextMenu` treats as canvas, and the menu is portaled to `<body>` so it renders above the overlay. Mirrors the live `GetStartedTest` header (no card bg) with template cards (Remote Access / Business VPN / Site-to-Site — all just open the components panel for now; starter topologies are TODO). No standalone Add button — the always-visible `CanvasToolbar` "Add" is used to open the components panel. Draft chrome in draft: `HeaderTopLeft` is empty — exiting happens via Cancel in the `DraftModeSwitcher` (`DraftModeTitle` — Untitled Draft dropdown + three-dots — is currently hidden/commented out in the header, kept for later), the `CanvasToolbar` (always visible in draft, slides in/out with draft via framer-motion) in `HeaderBottom`, and Cancel / Review & Deploy in `DraftModeSwitcher` (Cancel always shown and exits draft via `useDiscardDraft`; Review & Deploy **hidden** when the canvas is empty and no changes are pending, **disabled** at 0 changes, and shows the change count as a badge). While an empty state is shown (`nodes.length === 0`), canvas interactions (pan/zoom/select/drag) are locked in `page.tsx`. In draft, `HeaderTopLeft` shows nothing (all live controls — tabs, network selector, etc. — are gated `!isDraft`).
+- **Components picker**: A node-picker panel floating above the bottom toolbar (centered, ~680px). Toggled by the CanvasToolbar "Add" button (shortcut `C` — the shortcut hook cancels the keystroke so it isn't typed into the search input the panel focuses on open; plus icon rotates 45° while open); closed by `Esc` — even while focus is inside the panel (handled on the panel root, since the global shortcut hook is input-aware) — clicking the canvas, or opening the canvas context menu (right-click). Layout: search bar on top (placeholder "Search components, peers, groups, resources...", with a clickable `ESC` badge instead of an X — an X next to the search would read as "clear search"), category rail on the left (**Peers** / **Policies** / **Groups** / **Resources** — no separate "Create New" tab; every tab carries its own create items), virtualized item list on the right. Create-new templates use the same solid icon box as existing entities and always sit under an **"Add New"** section heading: entity categories show "Add New" followed by "Existing Peers/Policies/Groups/Resources", and search results show a top "Add New" section (matching templates across all categories) followed by per-entity sections of existing items. Items can be dragged onto the canvas **or simply clicked** — `useDragAndDrop` treats a release with < 5px pointer travel as a click and fires the same drop action at the canvas viewport center — or, when that spot is occupied, at the nearest free spot the user can currently see (`findFreeDropPosition` ring-searches outward from the center against the measured node rects). When the whole visible view is full, the node lands just outside it and the viewport zooms out via `fitBounds` to reveal it. Entities already on the canvas are disabled (content dimmed) and show a gray "ADDED" badge on the right instead of the drag grip. When a search matches nothing, the list area shows the same not-found state as the global search modal (icon box + "Could not find any results"). Templates that open a modal (**User Device**, new **Policy**) close the panel after a short delay (`MODAL_CLOSE_DELAY_MS`, 150ms) so the modal is already visible when the panel fades out — an instant close next to an opening modal reads as a flicker. Category contents:
+  - **Peers**: create items **User Device** / **Server** / **Agent** → all draggable onto the canvas. **User Device** drop opens the `SetupModal` install flow (`isUserDevice=true`). **Server**/**Agent** drop only places a placeholder `PeerNode` (`placeholderKind`, no API call) with an **Install** button, named uniquely per drop: "Server", "Server (1)", … / "Agent", "Agent (1)", … (`placeholderName`, computed against placeholder names on canvas). The Install button (and User Device drop) open the shared install modal via `useDraftMode().setInstallModal` (carrying `placeholderKind` + `nodeId`), rendered once by `DraftInstallPeerModal`. The setup key is generated _inside_ the modal on demand (`SetupKeyGenerator`, `ephemeralKey` for agents) and written back onto the node (`setupKey`) so reopening Install reuses it. The placeholder node mirrors a real peer node's card layout (same paddings/text sizes); the IP slot shows a dimmed IP placeholder derived from the account's peer network range via `getIpPlaceholderFromRange` (`settings.network_range`, default 100.64.0.0/10 → "100.x.x.x"; prefix-fixed octets kept, host octets become "x"). Placeholders are renamable via the node context menu (Rename → shared `GroupRenameModal` with peer copy; duplicate check via `takenNames` against the other draft peers on canvas) — the name (`placeholderName`) is canvas-only. The install modal receives a suggested `hostname` (`getPlaceholderHostname`: the canvas name sanitized to lowercase/dashes, made unique across draft peers by appending -1, -2, …) woven into the `netbird up --hostname` commands, so the installed machine registers under the drafted name. The suggested hostname is stamped onto the node (`installHostname`, like `setupKey`) when the install modal opens; `useDraftPeerUpgrade` (called from `useDraft`) then watches the peers list and, when a peer registers with that hostname (or name), upgrades the placeholder in place — real peer node at the same position, edges rewired, and draft policies referencing the "draft-…" id re-recorded with the real peer id (now deployable → enters the changeset). Then existing peers (drag onto canvas; disabled if already there).
   - **Resources**: create items **Resource** + **Network** → drag onto canvas to drop a blank, id-less node. Then existing resources.
   - **Groups**: create item **Group** → drag to drop a blank group node (renders NEW badge). Then existing groups; groups pending deletion show a red DELETED badge and are disabled (can't be re-added).
-  - **Policies**: create item **Policy** → drop opens the create-policy modal (the created policy lands at the drop position). Then existing policies → drop draws the policy with its sources/destinations via `drawPolicyOnCanvas`: nodes already on canvas are connected, missing ones are created around the drop point; disabled when already on canvas.
+  - **Policies**: create item **Policy** → drop places a blank policy node (no modal) named uniquely "Policy" / "Policy (1)" … via `useDraftNodeCreation.addBlankPolicy` (client id `new-<uuid>`, empty sources/destinations, enabled, bidirectional, protocol all). Blank policies are NOT in the changeset — only real policies deploy; see Changeset below. Then existing policies → drop draws the policy with its sources/destinations via `drawPolicyOnCanvas`: nodes already on canvas are connected, missing ones are created around the drop point; disabled when already on canvas.
   - Blank nodes: only `create-group` is tracked by the changeset today; blank network/resource nodes are visual placeholders (no apply wiring yet).
   - Each section's count reflects existing entities only (not create items). Search matches item names/labels **and** category words (e.g. "peers"/"groups"/"resources"/"networks" reveal the whole matching section); a section shows if its existing items OR its create items match.
-- **Connect nodes**: Drag between handles to create a policy (peer↔peer, peer↔group, group↔group, group↔resource, peer↔resource). The policy modal runs with `useSave={false}` in draft — it returns pure policy data (no API call), recorded as a `create-policy` change and drawn on canvas with a `policy-new-<uuid>` client id. Connecting a group to itself (e.g. All → All) creates a destination copy node (self-referencing policy).
-- **Policy connect handles (draft)**: policy nodes show hover ConnectHandles; dragging from the policy's **right** handle onto a group adds it as a **destination**, from the **left** as a **source**. The reverse works too — policies expose a full-area target in draft: dragging from a group's **left** handle onto a policy adds the group as a **destination**, from its **right** handle as a **source** (`onNodeConnect` → `addGroupToPolicy` → `updateDraftPolicy`). No-ops for duplicates, resource-based sides, and non-group participants. Policy nodes also get the sky halo while their modal is open.
+- **Connect nodes**: Drag between handles to create a policy (peer↔peer, peer↔group, group↔group, group↔resource, peer↔resource). The create-policy modal opens prefilled: groups land in the group lists, a peer lands as a single `PolicyRuleResource {type:"peer"}` (shown as a peer badge in `PeerGroupSelector`, which enforces per side: multiple groups XOR one peer/resource). All four prefill fields are reset on every connect so a cancelled modal can't leak stale values. The modal runs with `useSave={false}` in draft — it returns pure policy data (no API call), recorded as a `create-policy` change and drawn on canvas with a `policy-new-<uuid>` client id. Connecting a group to itself (e.g. All → All) creates a destination copy node (self-referencing policy). Placeholder peers participate too: `getPlaceholderPeer` (utils/helpers) turns their node into a pseudo-Peer with its unique draft id ("draft-<uuid>", node id `peer-draft-<uuid>`), so they prefill and connect like real peers — the policy modal's peer selectors receive them via `additionalPeers` (PeerGroupSelector merges them with fetched peers). Policies referencing an uninstalled placeholder are NOT deployable and stay out of the changeset (see Changeset).
+- **Policy connect handles (draft)**: policy nodes show hover ConnectHandles; dragging from the policy's **right** handle onto a group or peer adds it as a **destination**, from the **left** as a **source**. The reverse works too — policies expose a full-area target in draft: dragging from a node's **left** handle onto a policy adds it as a **destination**, from its **right** handle as a **source** (`onNodeConnect` → `addGroupToPolicy` / `addPeerToPolicy` → `updateDraftPolicy`). Groups append to the side's group list; a peer (incl. placeholders) becomes the side's single `sourceResource`/`destinationResource` `{type:"peer"}` and only lands on an **empty** side (a side holds multiple groups XOR one peer/resource). No-ops for duplicates and occupied sides. Policy nodes also get the sky halo while their modal is open.
 - **Default policy name**: connecting two nodes prefills the create-policy modal name as "Source to Destination" (e.g. "All to New Group") via `policyInitialName` on the policy context.
-- **Auto Arrange** (toolbar, `A`): `applyDraftArrangeLayout` re-arranges by *connectivity* (not node type): policy sources → left column, policies → middle, destinations → right, unconnected nodes → far-left column; columns sorted by average policy index to reduce crossings.
+- **Auto Arrange** (toolbar, `A`): `applyDraftArrangeLayout` re-arranges by _connectivity_ (not node type): policy sources → left column, policies → middle, destinations → right, unconnected nodes → far-left column; columns sorted by average policy index to reduce crossings.
 - **Undo/redo (draft)**: `DraftHistoryContext` — debounced snapshots of nodes+edges+changes (drag positions collapse into one entry); toolbar buttons + ⌘Z/⇧⌘Z (Ctrl+Y also redoes). History resets when entering/leaving draft.
 - **Create group**: Select 2+ peers/resources → toolbar appears → opens name modal → group node replaces selected nodes; changeset-only in draft (API in live)
 - **Create group (context menu)**: Right-click canvas → "Add Group" → name modal → group node at click position; changeset-only in draft
@@ -196,20 +202,24 @@ When exiting draft:
 
 ### Changeset & Deploy
 
-- **Changeset** (`DraftChangesetContext`): CRUD-shaped changes — `create-group` / `update-group` / `delete-group` and `create-policy` / `update-policy` / `delete-policy` — each mapped to its API call (`getChangeApiCall`) and a human label (`getChangeLabel`). One change per entity: a rename and drag-added members share a single `update-group` (one PUT); enable/disable is an `update-policy` with `origin: "toggle"` (labelled Enable/Disable); a modal edit is `origin: "edit"` and supersedes toggles. Changes coalesce/cancel (renaming back to the original name with nothing else pending removes the change; edits to a not-yet-created entity fold into its create change). Draft-only groups are keyed by (unique) name, existing ones by id.
-- **Policy editing in draft**: clicking a policy (including draft-created `policy-new-…`) opens the modal with the *draft* state — `currentPolicy` resolves from the canvas node data, not the API. The modal runs with `useSave={false}`; on save the provider records `update-policy` (or updates the create change), ensures `create-group` changes for any group typed directly into the selector, and redraws the policy (node data refreshed, edges fully replaced via `drawPolicyOnCanvas`). Draft groups are synced into `useGroups().dropdownOptions` (client-state, pruned on exit) so the modal's group selectors offer them.
+- **Changeset** (`DraftChangesetContext`): CRUD-shaped changes — `create-group` / `update-group` / `delete-group` and `create-policy` / `update-policy` / `delete-policy` — each mapped to its API call (`getChangeApiCall`) and a human label (`getChangeLabel`). Blank dropped policies stay OUT of the changeset until they're deployable: `updateDraftPolicy` (and `addPolicyEdge` for modal creates) records the `create-policy` change only once the policy has both a source and a destination AND neither side references an uninstalled placeholder peer (`isCompletePolicy` — placeholder peer ids start with "draft-"); until then edits/toggles/deletes of a `new-…` policy without a create change are canvas-only no-ops. A tracked draft policy that stops being deployable (e.g. a placeholder peer replaces a group) drops its pending create again. One change per entity: a rename and drag-added members share a single `update-group` (one PUT); enable/disable is an `update-policy` with `origin: "toggle"` (labelled Enable/Disable); a modal edit is `origin: "edit"` and supersedes toggles. Changes coalesce/cancel (renaming back to the original name with nothing else pending removes the change; edits to a not-yet-created entity fold into its create change). Draft-only groups are keyed by (unique) name, existing ones by id.
+- **Policy editing in draft**: clicking a policy (including draft-created `policy-new-…`) opens the modal with the _draft_ state — `currentPolicy` resolves from the canvas node data, not the API. The modal runs with `useSave={false}`; on save the provider records `update-policy` (or updates the create change), ensures `create-group` changes for any group typed directly into the selector, and redraws the policy (node data refreshed, edges fully replaced via `drawPolicyOnCanvas`). Draft groups are synced into `useGroups().dropdownOptions` (client-state, pruned on exit) so the modal's group selectors offer them.
 - **Persistence**: changes + a canvas snapshot live in localStorage (`draft-storage.ts`, `addedMembers` Sets serialized as arrays; unknown persisted change types are dropped on load) so a reload doesn't lose the draft; re-entering draft restores the persisted canvas instead of rebuilding. Cancel / switching to Live destroy both — guarded by a confirm dialog while changes are pending (`useDiscardDraft`). `DraftLeaveGuard` extends the guard to tab close/reload (native beforeunload prompt) and in-app navigation — anchor clicks (capture-phase intercept) and programmatic `router.push`/`replace` (the shared app-router instance is wrapped while changes are pending; the sidebar navigates via `router.push`, not links). Browser back/forward (popstate) is not guarded.
 - **Review & Deploy** (`DraftModeSwitcher` → `ReviewDeployModal`): the button shows a change-count badge; the modal lists every change with its API call and allows discarding individual ones. Deploy (`useDeployChangeset`) runs sequentially in CRUD dependency order — create groups (collecting name→id for policy resolution) → update groups → create policies → update policies → delete policies → delete groups — then clears the draft and returns to live (awaits SWR revalidation and forces a live-view rebuild). On failure it stops, keeps the failed + remaining changes for retry, and notifies.
 
 ### Node Connections (onNodeConnect)
+
 When two nodes are connected by dragging a handle:
+
 1. Node IDs are parsed to determine type (peer/group/resource) and extract entity ID
 2. Groups are looked up from API data or canvas node data (for newly created groups)
 3. Policy modal opens pre-filled with source/destination groups or resources
 4. After policy creation, `addPolicyEdge` creates missing nodes on canvas and connects edges
 
 ### addPolicyEdge
+
 When a policy is saved from the modal:
+
 1. Reads the policy's sources, destinations, sourceResource, destinationResource
 2. For each source/destination: finds existing canvas nodes by ID or name, creates missing ones
 3. Self-referencing groups (same in source + destination) reuse existing dest-group nodes
@@ -219,6 +229,7 @@ When a policy is saved from the modal:
 ### SmartEdge
 
 The `SmartEdge` is used for all policy edges — in draft mode and in every live view (peer, group, user, network). It dynamically picks connection sides:
+
 - **Policy nodes**: fixed sides — sources enter LEFT, destinations exit RIGHT
 - **Other nodes**: picks best side (left/right) based on relative position
 - **Bidirectional policies**: renders two green animated lines
@@ -226,48 +237,48 @@ The `SmartEdge` is used for all policy edges — in draft mode and in every live
 
 ### Keyboard Shortcuts (draft mode only)
 
-| Key | Action |
-|-----|--------|
-| `C` | Toggle components panel |
-| `V` | Select tool |
-| `H` | Hand tool |
-| `Space` (hold) | Temporary hand tool |
-| `F` | Fit to view |
-| `+` / `-` | Zoom in / out |
-| `G` | Create group (when peers selected) |
-| `Escape` | Cancel selection |
-| `Delete` / `Backspace` | Remove selected (when peers selected) |
-| `A` | Auto arrange |
-| `⌘/Ctrl+Z` | Undo |
-| `⇧⌘/Ctrl+Shift+Z`, `Ctrl+Y` | Redo |
+| Key                         | Action                                |
+| --------------------------- | ------------------------------------- |
+| `C`                         | Toggle components panel               |
+| `V`                         | Select tool                           |
+| `H`                         | Hand tool                             |
+| `Space` (hold)              | Temporary hand tool                   |
+| `F`                         | Fit to view                           |
+| `+` / `-`                   | Zoom in / out                         |
+| `G`                         | Create group (when peers selected)    |
+| `Escape`                    | Cancel selection                      |
+| `Delete` / `Backspace`      | Remove selected (when peers selected) |
+| `A`                         | Auto arrange                          |
+| `⌘/Ctrl+Z`                  | Undo                                  |
+| `⇧⌘/Ctrl+Shift+Z`, `Ctrl+Y` | Redo                                  |
 
-Shortcut badges are platform-aware via the shared `isMac` from `src/hooks/useOperatingSystem.ts` (⌥/⌘ glyphs on macOS, "Alt + …"/"Ctrl + …" text elsewhere; `FORCE_PLATFORM` there previews the other platform). Shortcuts are managed by `useControlCenterShortcuts(shortcuts, enabled?)` — automatically draft-only and input-aware. The `isInputFocused()` helper (exported from the same file) checks `INPUT`, `TEXTAREA`, `SELECT`, `BUTTON`, `OPTION`, `DETAILS`, `SUMMARY`, `contentEditable`, and elements inside `[role='dialog']`/`[role='alertdialog']`. The spacebar hold-to-pan in `CanvasToolbar.tsx` uses the same guard.
+Shortcut badges are platform-aware via the shared `isMac` from `src/hooks/useOperatingSystem.ts` (⌥/⌘ glyphs on macOS, "Alt + …"/"Ctrl + …" text elsewhere; `FORCE_PLATFORM` there previews the other platform). Shortcuts are managed by `useControlCenterShortcuts(shortcuts, enabled?)` — automatically draft-only and input-aware. The `isInputFocused()` helper (exported from the same file) checks only genuine text-entry contexts: `INPUT`, `TEXTAREA`, `SELECT`, `contentEditable`, and elements inside `[role='dialog']`/`[role='alertdialog']`. Focused buttons deliberately do NOT block shortcuts — a click leaves the button focused, and hotkeys must keep working afterwards (Enter still activates a focused button). The spacebar hold-to-pan in `CanvasToolbar.tsx` uses the same guard.
 
 ## Node Types
 
-| Type | ID Pattern | Used in |
-|------|-----------|---------|
-| `peerNode` | `peer-{id}` | All views, draft — left+right source ConnectHandles |
-| `groupNode` | `group-{id}` | All views — left+right source ConnectHandles when `showHandles`, NEW badge if no id |
-| `policyNode` | `policy-{id}` | All views — all handles `isConnectable={false}` (edges render but no user drag) |
-| `networkNode` | `network-{id}` | Network view |
-| `resourceNode` | `resource-{id}` | Network/expanded views — target only (no source handles, can't be dragged from) |
-| `selectPeerNode` | `select-peer-node` | Peer view (live) |
-| `selectGroupNode` | `select-group-node` | Group view (live) |
-| `selectUserNode` | `select-user-node` | User view (live) |
-| `sourcePeerNode` | `source-peer-{id}` | User view |
-| `sourceGroupNode` | `group-{id}` | Group view |
-| `destinationGroupNode` | `group-{id}` or `dest-group-{id}-{policyId}` | Peer/Group/User views, draft (copy for self-ref policies) |
-| `expandedGroupPeer` | `expanded-peer-{id}` | Expanded destination groups |
-| `destinationResourceNode` | `destination-resource-{id}` | Policy destination resources |
+| Type                      | ID Pattern                                   | Used in                                                                             |
+| ------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `peerNode`                | `peer-{id}`                                  | All views, draft — left+right source ConnectHandles                                 |
+| `groupNode`               | `group-{id}`                                 | All views — left+right source ConnectHandles when `showHandles`, NEW badge if no id |
+| `policyNode`              | `policy-{id}`                                | All views — all handles `isConnectable={false}` (edges render but no user drag)     |
+| `networkNode`             | `network-{id}`                               | Network view                                                                        |
+| `resourceNode`            | `resource-{id}`                              | Network/expanded views — target only (no source handles, can't be dragged from)     |
+| `selectPeerNode`          | `select-peer-node`                           | Peer view (live)                                                                    |
+| `selectGroupNode`         | `select-group-node`                          | Group view (live)                                                                   |
+| `selectUserNode`          | `select-user-node`                           | User view (live)                                                                    |
+| `sourcePeerNode`          | `source-peer-{id}`                           | User view                                                                           |
+| `sourceGroupNode`         | `group-{id}`                                 | Group view                                                                          |
+| `destinationGroupNode`    | `group-{id}` or `dest-group-{id}-{policyId}` | Peer/Group/User views, draft (copy for self-ref policies)                           |
+| `expandedGroupPeer`       | `expanded-peer-{id}`                         | Expanded destination groups                                                         |
+| `destinationResourceNode` | `destination-resource-{id}`                  | Policy destination resources                                                        |
 
 ## Edge Types
 
-| Type | Component | When used |
-|------|-----------|-----------|
-| `smart` | SmartEdge | All policy edges, draft + live (dynamic routing, bi/unidirectional) |
-| `in` | DirectionIn | Registry only (policy edges migrated to `smart`) |
-| `bi` | BidirectionalEdges | Registry only |
-| `floating` | FloatingEdge | Dynamic floating edges |
-| `floating-straight` | AnimatedLine | Network view (group→network) |
-| `simple` | SimpleConnection | Group→peer/resource expansion |
+| Type                | Component          | When used                                                           |
+| ------------------- | ------------------ | ------------------------------------------------------------------- |
+| `smart`             | SmartEdge          | All policy edges, draft + live (dynamic routing, bi/unidirectional) |
+| `in`                | DirectionIn        | Registry only (policy edges migrated to `smart`)                    |
+| `bi`                | BidirectionalEdges | Registry only                                                       |
+| `floating`          | FloatingEdge       | Dynamic floating edges                                              |
+| `floating-straight` | AnimatedLine       | Network view (group→network)                                        |
+| `simple`            | SimpleConnection   | Group→peer/resource expansion                                       |

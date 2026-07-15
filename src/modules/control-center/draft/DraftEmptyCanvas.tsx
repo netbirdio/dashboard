@@ -75,6 +75,8 @@ export const DraftEmptyCanvas = () => {
         // draft-empty-canvas marks the overlay for CanvasContextMenu — a
         // right-click here counts as a canvas right-click.
         "draft-empty-canvas absolute left-0 top-0 w-full mt-28 z-10 pointer-events-none",
+        // Fade matches the components panel animation (0.1s ease-out).
+        "transition-opacity duration-100 ease-out",
         dimmed && "opacity-0",
       )}
     >

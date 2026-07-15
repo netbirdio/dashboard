@@ -8,8 +8,8 @@ import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
-import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
+import { getGroupCountLabel } from "@/modules/control-center/utils/helpers";
 
 type NodeProps = Node<
   {
@@ -39,18 +39,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
   );
 
   const group = groups?.find((g) => g.id === data.currentGroup);
-
-  const countLabel = useMemo(() => {
-    const peerCount = group?.peers_count || 0;
-    const resourceCount = group?.resources_count || 0;
-    if (resourceCount === 0) {
-      return `${peerCount} Peer(s)`;
-    }
-    if (peerCount === 0) {
-      return `${resourceCount} Resource(s)`;
-    }
-    return `${peerCount} Peer(s), ${resourceCount} Resource(s)`;
-  }, [group]);
+  const countLabel = getGroupCountLabel(group);
 
   return (
     <div

@@ -1,4 +1,4 @@
-import { useReactFlow } from "@xyflow/react";
+import { Node as CanvasNode, useReactFlow } from "@xyflow/react";
 import { orderBy } from "lodash";
 import { Group } from "@/interfaces/Group";
 import { Network } from "@/interfaces/Network";
@@ -34,7 +34,8 @@ export const getNetworksFromPolicy = (networks: Network[], policy: Policy) => {
 export const getGroupCountLabel = (group?: Group) => {
   const peerCount = group?.peers_count || 0;
   const resourceCount = group?.resources_count || 0;
-  if (resourceCount === 0) return `${peerCount} Peer(s)`;
+  if (resourceCount === 0)
+    return peerCount === 0 ? "No Peer(s)" : `${peerCount} Peer(s)`;
   if (peerCount === 0) return `${resourceCount} Resource(s)`;
   return `${peerCount} Peer(s), ${resourceCount} Resource(s)`;
 };
@@ -153,3 +154,70 @@ export function getFirstGroup(groups?: Group[], policies?: Policy[]) {
 
   return sortedGroups?.[0];
 }
+
+// NetBird's default peer network range, used when the account has no custom
+// `settings.network_range`.
+const DEFAULT_NETWORK_RANGE = "100.64.0.0/10";
+
+// Placeholder for the IP slot of not-yet-installed peers, derived from the
+// account's peer network range: octets fully fixed by the prefix are kept,
+// the rest become "x" — 100.64.0.0/10 → "100.x.x.x", 10.20.0.0/16 →
+// "10.20.x.x", 192.168.1.0/24 → "192.168.1.x".
+export const getIpPlaceholderFromRange = (range?: string) => {
+  const [address, prefixStr] = (range || DEFAULT_NETWORK_RANGE).split("/");
+  const octets = address?.split(".") ?? [];
+  const prefix = Number(prefixStr);
+  if (octets.length !== 4 || !Number.isFinite(prefix)) return "100.x.x.x";
+  const fixedOctets = Math.min(4, Math.max(0, Math.floor(prefix / 8)));
+  return octets.map((o, i) => (i < fixedOctets ? o : "x")).join(".");
+};
+
+// A placeholder peer node (Server / Agent, not installed yet) as a
+// pseudo-Peer: unique draft id ("draft-<uuid>", from node id
+// "peer-draft-<uuid>") plus its canvas name — lets placeholders participate
+// in policies and the policy modal's peer selector before they exist in the
+// API.
+export const getPlaceholderPeer = (node?: CanvasNode): Peer | undefined => {
+  const data = node?.data as
+    | { placeholderKind?: string; placeholderName?: string }
+    | undefined;
+  if (!node || !data?.placeholderKind) return undefined;
+  return {
+    id: node.id.replace("peer-", ""),
+    name:
+      data.placeholderName ??
+      (data.placeholderKind === "agent" ? "Agent" : "Server"),
+    ip: "",
+    os: "",
+  } as Peer;
+};
+
+// Suggested install hostname for a placeholder peer: its canvas name,
+// sanitized (lowercase, dashes), made unique across the other draft peers on
+// the canvas by appending -1, -2, … Names are unique, but sanitizing can
+// still collide — "Agent (1)" and "Agent 1" both become "agent-1" — so
+// hostnames are assigned greedily in node order.
+export const getPlaceholderHostname = (
+  nodes: CanvasNode[],
+  nodeId: string,
+): string | undefined => {
+  const sanitize = (name: string) =>
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  const placeholders = nodes.filter(
+    (n) => (n.data as { placeholderKind?: string })?.placeholderKind,
+  );
+  const taken = new Set<string>();
+  let result: string | undefined;
+  placeholders.forEach((n) => {
+    const base = sanitize(getPlaceholderPeer(n)?.name ?? "") || "peer";
+    let candidate = base;
+    let suffix = 1;
+    while (taken.has(candidate)) candidate = `${base}-${suffix++}`;
+    taken.add(candidate);
+    if (n.id === nodeId) result = candidate;
+  });
+  return result;
+};

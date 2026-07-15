@@ -47,6 +47,7 @@ import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { useAccessControl } from "@/modules/access-control/useAccessControl";
@@ -70,6 +71,7 @@ type UpdateModalProps = {
   onSuccess?: (policy: Policy) => void;
   useSave?: boolean;
   allowEditPeers?: boolean;
+  additionalPeers?: Peer[];
 };
 
 export default function AccessControlModal({ children }: Readonly<Props>) {
@@ -92,6 +94,7 @@ export function AccessControlUpdateModal({
   onSuccess,
   useSave = true,
   allowEditPeers,
+  additionalPeers,
 }: Readonly<UpdateModalProps>) {
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
@@ -106,6 +109,7 @@ export function AccessControlUpdateModal({
           postureCheckTemplates={postureCheckTemplates}
           useSave={useSave}
           allowEditPeers={allowEditPeers}
+          additionalPeers={additionalPeers}
         />
       )}
     </Modal>
@@ -130,6 +134,9 @@ type ModalProps = {
   initialTab?: string;
   disableDestinationSelector?: boolean;
   additionalResources?: NetworkResource[];
+  // Draft-only placeholder peers (not installed yet) offered in the peer
+  // selectors alongside the real peers.
+  additionalPeers?: Peer[];
 };
 
 export function AccessControlModalContent({
@@ -150,6 +157,7 @@ export function AccessControlModalContent({
   initialTab,
   disableDestinationSelector = false,
   additionalResources,
+  additionalPeers,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
   const { users } = useUsers();
@@ -358,6 +366,7 @@ export function AccessControlModalContent({
                   users={protocol === "netbird-ssh" ? users : undefined}
                   resource={sourceResource}
                   onResourceChange={setSourceResource}
+                  additionalPeers={additionalPeers}
                   saveGroupAssignments={useSave}
                   disabled={
                     !permission.policies.update || !permission.policies.create
@@ -400,6 +409,7 @@ export function AccessControlModalContent({
                   onChange={setDestinationGroups}
                   resource={destinationResource}
                   onResourceChange={setDestinationResource}
+                  additionalPeers={additionalPeers}
                   saveGroupAssignments={useSave}
                   additionalResources={additionalResources}
                   disabled={

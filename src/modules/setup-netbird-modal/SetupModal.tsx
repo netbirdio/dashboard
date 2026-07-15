@@ -55,6 +55,8 @@ type Props = {
   //   undefined – legacy: keep historical heuristic (mobile shown unless
   //               a setupKey is already provided; Docker shown).
   isUserDevice?: boolean;
+  // Preset hostname woven into the install commands (netbird up --hostname).
+  hostname?: string;
   // Options for the in-modal key generator (server flow without a key).
   ephemeralKey?: boolean;
   onSetupKeyGenerated?: (key: SetupKey) => void;
@@ -68,6 +70,7 @@ export default function SetupModal({
   className,
   style,
   isUserDevice,
+  hostname,
   ephemeralKey,
   onSetupKeyGenerated,
 }: Readonly<Props>) {
@@ -86,6 +89,7 @@ export default function SetupModal({
         setupKey={setupKey}
         showOnlyRoutingPeerOS={showOnlyRoutingPeerOS}
         isUserDevice={isUserDevice}
+        hostname={hostname}
         ephemeralKey={ephemeralKey}
         onSetupKeyGenerated={onSetupKeyGenerated}
       />

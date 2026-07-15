@@ -19,7 +19,10 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
+import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
+import { useDraftPeerUpgrade } from "@/modules/control-center/hooks/useDraftPeerUpgrade";
 import {
   addNode,
   addEdge,
@@ -27,6 +30,9 @@ import {
 } from "@/modules/control-center/utils/graph-builder";
 
 export function useDraft() {
+  // Upgrades installed placeholders to real peers as they register.
+  useDraftPeerUpgrade();
+
   const { nodes, edges, setNodes, setEdges, setLayoutInitialized } =
     useCanvasState();
   const { policies, peers, networkResources, groups } =
@@ -458,6 +464,12 @@ export function useDraft() {
       return (canvasNode?.data as any)?.group as Group | undefined;
     };
 
+    // Find a peer from API data or a placeholder peer node (not installed
+    // yet — pseudo-peer with its unique draft id).
+    const findPeer = (id: string): Peer | undefined =>
+      peers?.find((p) => p.id === id) ??
+      getPlaceholderPeer(currentNodes.find((n) => n.id === `peer-${id}`));
+
     // Adds a group to one side of an existing policy — recorded as an
     // update-policy change and redrawn. No-ops for duplicates and for sides
     // occupied by a resource (groups can't be mixed with resources).
@@ -490,37 +502,68 @@ export function useDraft() {
       });
     };
 
-    // Policy handle → group: the right handle adds the group as a
+    // Adds a single peer to one side of an existing policy — a side holds
+    // either groups or ONE peer/resource, so this only applies to an empty
+    // side. Placeholder peers connect with their draft id.
+    const addPeerToPolicy = (
+      policyNodeId: string,
+      peerId: string,
+      side: "sources" | "destinations",
+    ) => {
+      const policyNode = currentNodes.find((n) => n.id === policyNodeId);
+      const policy = (policyNode?.data as any)?.policy as Policy | undefined;
+      const rule = policy?.rules?.[0];
+      if (!policy || !rule) return;
+      const resourceKey =
+        side === "sources" ? "sourceResource" : "destinationResource";
+      if (rule[resourceKey]) return;
+      if (((rule[side] as unknown[]) ?? []).length > 0) return;
+      const peer = findPeer(peerId);
+      if (!peer?.id) return;
+      updateDraftPolicy({
+        ...policy,
+        rules: [
+          { ...rule, [resourceKey]: { id: peer.id, type: "peer" } },
+          ...(policy.rules?.slice(1) ?? []),
+        ],
+      });
+    };
+
+    // Policy handle → group/peer: the right handle adds the target as a
     // destination, the left one as a source.
     if (sourceInfo.kind === "policy") {
-      if (targetInfo.kind !== "group") return;
-      addGroupToPolicy(
-        source,
-        targetInfo.id,
-        connection.sourceHandle?.startsWith("sl") ? "sources" : "destinations",
-      );
+      const side = connection.sourceHandle?.startsWith("sl")
+        ? ("sources" as const)
+        : ("destinations" as const);
+      if (targetInfo.kind === "group") addGroupToPolicy(source, targetInfo.id, side);
+      else if (targetInfo.kind === "peer") addPeerToPolicy(source, targetInfo.id, side);
       return;
     }
 
-    // Group handle → policy: dragging from the group's left handle means the
-    // group sits to the right of the policy → destination; from its right
+    // Group/peer handle → policy: dragging from the node's left handle means
+    // it sits to the right of the policy → destination; from its right
     // handle → source.
     if (targetInfo.kind === "policy") {
-      if (sourceInfo.kind !== "group") return;
-      addGroupToPolicy(
-        target,
-        sourceInfo.id,
-        connection.sourceHandle?.startsWith("sl") ? "destinations" : "sources",
-      );
+      const side = connection.sourceHandle?.startsWith("sl")
+        ? ("destinations" as const)
+        : ("sources" as const);
+      if (sourceInfo.kind === "group") addGroupToPolicy(target, sourceInfo.id, side);
+      else if (sourceInfo.kind === "peer") addPeerToPolicy(target, sourceInfo.id, side);
       return;
     }
+
+    // Prefill for the create-policy modal. Each side holds either groups or
+    // a single peer/resource (never both) — reset everything first so a
+    // previously cancelled modal can't leak stale values into this connect.
+    setPolicySourceResource(undefined);
+    setPolicyDestinationResource(undefined);
 
     // Set source resource or group
     let sourceName: string | undefined;
     let destName: string | undefined;
     const sourceGroups: Group[] = [];
     if (sourceInfo.kind === "peer") {
-      const peer = peers?.find((p) => p.id === sourceInfo.id);
+      const peer = findPeer(sourceInfo.id);
       if (peer?.id) {
         setPolicySourceResource({ id: peer.id, type: "peer" });
         sourceName = peer.name;
@@ -542,7 +585,7 @@ export function useDraft() {
     // Set destination resource or group
     const destGroups: Group[] = [];
     if (targetInfo.kind === "peer") {
-      const peer = peers?.find((p) => p.id === targetInfo.id);
+      const peer = findPeer(targetInfo.id);
       if (peer?.id) {
         setPolicyDestinationResource({ id: peer.id, type: "peer" });
         destName = peer.name;
@@ -561,8 +604,8 @@ export function useDraft() {
       }
     }
 
-    if (sourceGroups.length > 0) setPolicySourceGroups(sourceGroups);
-    if (destGroups.length > 0) setPolicyDestinationGroups(destGroups);
+    setPolicySourceGroups(sourceGroups);
+    setPolicyDestinationGroups(destGroups);
 
     // Default policy name, e.g. "All to New Group".
     setPolicyInitialName(

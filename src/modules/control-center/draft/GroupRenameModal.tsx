@@ -16,7 +16,15 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   onRename: (name: string) => void;
   currentName: string;
+  // Duplicate check against group names; ignored when takenNames is set.
   groups: Group[] | undefined;
+  // Generic duplicate check (e.g. placeholder peer names on the canvas) —
+  // takes precedence over the groups check.
+  takenNames?: string[];
+  duplicateError?: string;
+  title?: string;
+  description?: string;
+  inputPlaceholder?: string;
 };
 
 export const GroupRenameModal = ({
@@ -25,6 +33,11 @@ export const GroupRenameModal = ({
   onRename,
   currentName,
   groups,
+  takenNames,
+  duplicateError = "This group already exists. Please choose another name.",
+  title = "Rename Group",
+  description = "Set an easily identifiable name for your group.",
+  inputPlaceholder = "e.g., Developers",
 }: Props) => {
   const [name, setName] = useState(currentName);
   const [error, setError] = useState("");
@@ -38,10 +51,11 @@ export const GroupRenameModal = ({
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
     const exists =
-      newName !== currentName && groups?.find((g) => g.name === newName);
-    setError(
-      exists ? "This group already exists. Please choose another name." : "",
-    );
+      newName !== currentName &&
+      (takenNames
+        ? takenNames.includes(trim(newName))
+        : !!groups?.find((g) => g.name === newName));
+    setError(exists ? duplicateError : "");
     setName(newName);
   };
 
@@ -61,14 +75,10 @@ export const GroupRenameModal = ({
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-md"}>
-        <ModalHeader
-          title={"Rename Group"}
-          description={"Set an easily identifiable name for your group."}
-          color={"blue"}
-        />
+        <ModalHeader title={title} description={description} color={"blue"} />
         <div className={"p-default flex flex-col gap-4"}>
           <Input
-            placeholder={"e.g., Developers"}
+            placeholder={inputPlaceholder}
             value={name}
             onChange={handleNameChange}
             onKeyDown={(e) => e.key === "Enter" && submit()}

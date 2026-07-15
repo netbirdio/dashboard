@@ -104,6 +104,9 @@ interface MultiSelectProps {
   placeholderForSearch?: string;
   resourceIds?: string[];
   additionalResources?: NetworkResource[];
+  // Extra peers offered alongside the fetched ones (e.g. draft placeholder
+  // peers that don't exist in the API yet).
+  additionalPeers?: Peer[];
   policies?: Policy[];
 }
 export function PeerGroupSelector({
@@ -137,6 +140,7 @@ export function PeerGroupSelector({
   placeholderForSearch = 'Search groups or add new group by pressing "Enter"...',
   resourceIds,
   additionalResources,
+  additionalPeers,
   policies,
   showClusters = false,
   clusters,
@@ -155,8 +159,16 @@ export function PeerGroupSelector({
     return [...(fetchedResources || []), ...additional];
   }, [fetchedResources, additionalResources]);
 
-  const { data: peers, isLoading: isPeersLoading } =
+  const { data: fetchedPeers, isLoading: isPeersLoading } =
     useFetchApi<Peer[]>("/peers");
+
+  const peers = useMemo(() => {
+    if (!additionalPeers?.length) return fetchedPeers;
+    const additional = additionalPeers.filter(
+      (ap) => !fetchedPeers?.some((p) => p.id === ap.id),
+    );
+    return [...(fetchedPeers || []), ...additional];
+  }, [fetchedPeers, additionalPeers]);
 
   const { groups, dropdownOptions, setDropdownOptions, addDropdownOptions } =
     useGroups();
@@ -289,6 +301,20 @@ export function PeerGroupSelector({
 
   const [tab, setTab] = useState<PeerGroupSelectorTab>(getDefaultTab);
 
+  // Opening the dropdown lands on the tab of the current selection: a chosen
+  // peer opens Peers, a resource opens Resources, groups open Groups.
+  const getOpeningTab = (): PeerGroupSelectorTab => {
+    if (resource) {
+      if (resource.type === "peer") {
+        return showPeers ? "peers" : getDefaultTab();
+      }
+      return showResources ? "resources" : getDefaultTab();
+    }
+    if (selectedCluster && showClusters) return "clusters";
+    if (values.length > 0 && !hideGroupsTab) return "groups";
+    return getDefaultTab();
+  };
+
   useEffect(() => {
     if (open) {
       setTimeout(() => {
@@ -371,6 +397,7 @@ export function PeerGroupSelector({
     <Popover
       open={open}
       onOpenChange={(isOpen) => {
+        if (isOpen) setTab(getOpeningTab());
         setOpen(isOpen);
         if (!isOpen && search.length > 0) {
           setTimeout(() => {

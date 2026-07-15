@@ -21,6 +21,7 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useReactFlow, XYPosition } from "@xyflow/react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
 
 interface PolicyContextType {
   // Edit existing policy
@@ -75,8 +76,13 @@ export function ControlCenterPolicyProvider({
   const { policies, peers, networkResources, groups } = useControlCenterData();
   const { nodes, edges, setLayoutInitialized } = useCanvasState();
   const { isDraft } = useDraftMode();
-  const { changes, trackCreatePolicy, trackUpdatePolicy, trackCreateGroup } =
-    useDraftChangeset();
+  const {
+    changes,
+    trackCreatePolicy,
+    trackUpdatePolicy,
+    trackDeletePolicy,
+    trackCreateGroup,
+  } = useDraftChangeset();
   const { setDropdownOptions } = useGroups();
   const reactFlow = useReactFlow();
 
@@ -178,6 +184,16 @@ export function ControlCenterPolicyProvider({
       }
     });
   };
+
+  // Placeholder peers (Server / Agent, not installed) as pseudo-peers — shown
+  // and selectable in the policy modal's peer selector with their draft ids.
+  const placeholderPeers = useMemo(
+    () =>
+      nodes
+        .map((n) => getPlaceholderPeer(n))
+        .filter(Boolean) as NonNullable<ReturnType<typeof getPlaceholderPeer>>[],
+    [nodes],
+  );
 
   // Where the last "new policy" template was dropped.
   const policyDropPositionRef = React.useRef<XYPosition | undefined>(undefined);
@@ -336,6 +352,9 @@ export function ControlCenterPolicyProvider({
           newSourceCount++;
         }
         sourceNodeIds.push(nodeId);
+      } else if (findNode(`peer-${sourceResource.id}`)) {
+        // Placeholder peer (not installed) — connect its existing node.
+        sourceNodeIds.push(`peer-${sourceResource.id}`);
       }
     }
 
@@ -423,6 +442,9 @@ export function ControlCenterPolicyProvider({
             newDestCount++;
           }
           destNodeIds.push(nodeId);
+        } else if (findNode(`peer-${destResource.id}`)) {
+          // Placeholder peer (not installed) — connect its existing node.
+          destNodeIds.push(`peer-${destResource.id}`);
         }
       } else {
         const resource = networkResources?.find(
@@ -515,11 +537,34 @@ export function ControlCenterPolicyProvider({
       }`;
       policy = { ...policy, id: clientId };
       ensureDraftGroupChanges(policy);
-      trackCreatePolicy({ clientId, policy });
+      // Policies referencing uninstalled placeholder peers aren't deployable
+      // — they stay out of the changeset (like blank policies) until real.
+      if (isCompletePolicy(policy)) {
+        trackCreatePolicy({ clientId, policy });
+      }
     }
 
     drawPolicyOnCanvas(policy, policyDropPositionRef.current);
     policyDropPositionRef.current = undefined;
+  };
+
+  // Only a policy with both a source and a destination is deployable — and
+  // neither side may reference a placeholder peer ("draft-…" id): the peer
+  // doesn't exist in the API until it's installed.
+  const isCompletePolicy = (policy: Policy) => {
+    const rule = policy.rules?.[0];
+    if (!rule) return false;
+    const hasSource = (rule.sources?.length ?? 0) > 0 || !!rule.sourceResource;
+    const hasDestination =
+      (rule.destinations?.length ?? 0) > 0 || !!rule.destinationResource;
+    const isDeployableResource = (r?: { id: string }) =>
+      !r?.id?.startsWith("draft-");
+    return (
+      hasSource &&
+      hasDestination &&
+      isDeployableResource(rule.sourceResource) &&
+      isDeployableResource(rule.destinationResource)
+    );
   };
 
   // Applies an edited policy to the draft: record an update change and redraw
@@ -528,6 +573,28 @@ export function ControlCenterPolicyProvider({
   const updateDraftPolicy = (policy: Policy) => {
     if (!policy.id) return;
     ensureDraftGroupChanges(policy);
+    // Blank dropped policies ("new-…" without a create change) stay out of
+    // the changeset until they're real: the first edit/connect that gives
+    // them both a source and a destination records their create change.
+    if (policy.id.startsWith("new-")) {
+      const hasCreateChange = changes.some(
+        (c) => c.type === "create-policy" && c.clientId === policy.id,
+      );
+      if (!hasCreateChange) {
+        if (isCompletePolicy(policy)) {
+          trackCreatePolicy({ clientId: policy.id, policy });
+        }
+        drawPolicyOnCanvas(policy);
+        return;
+      }
+      // Tracked but no longer deployable (e.g. a placeholder peer replaced a
+      // group) — drop the pending create until it's real again.
+      if (!isCompletePolicy(policy)) {
+        trackDeletePolicy({ policyId: policy.id, name: policy.name ?? "Policy" });
+        drawPolicyOnCanvas(policy);
+        return;
+      }
+    }
     trackUpdatePolicy({ policyId: policy.id, policy });
     drawPolicyOnCanvas(policy);
   };
@@ -595,6 +662,7 @@ export function ControlCenterPolicyProvider({
           // In draft the modal must not call the API — edits are recorded as
           // update-policy changes and applied on deploy.
           useSave={!isDraft}
+          additionalPeers={isDraft ? placeholderPeers : undefined}
           onSuccess={(p) =>
             isDraft ? handleDraftPolicyUpdate(p) : handlePolicyChange()
           }
@@ -614,6 +682,7 @@ export function ControlCenterPolicyProvider({
             initialDestinationResource={policyDestinationResource}
             initialSourceGroups={policySourceGroups}
             initialDestinationGroups={policyDestinationGroups}
+            additionalPeers={isDraft ? placeholderPeers : undefined}
           />
         </Modal>
       )}

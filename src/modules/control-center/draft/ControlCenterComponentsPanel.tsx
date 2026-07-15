@@ -28,8 +28,7 @@ import {
   PlusIcon,
   ServerIcon,
   ShieldIcon,
-  SquarePlusIcon,
-  XIcon,
+  TextSearchIcon,
 } from "lucide-react";
 import TruncatedText from "@components/ui/TruncatedText";
 import { MemoizedScrollArea, ScrollAreaViewport } from "@components/ScrollArea";
@@ -44,7 +43,7 @@ import {
   useDragAndDrop,
   useDragAndDropPosition,
 } from "@/modules/control-center/DragAndDropProvider";
-import { Node, useReactFlow, XYPosition } from "@xyflow/react";
+import { XYPosition } from "@xyflow/react";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 import {
   getGroupCountLabel,
@@ -60,6 +59,11 @@ import {
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { SmallBadge } from "@components/ui/SmallBadge";
+
+// Templates that open a modal (User Device install) close the panel after a
+// short delay so the modal is already up when the panel fades out — closing
+// both at the same instant reads as a flicker.
+const MODAL_CLOSE_DELAY_MS = 150;
 
 // Draggable "create new" templates that drop a blank node onto the canvas.
 type BlankKind = "group" | "network" | "resource";
@@ -148,14 +152,13 @@ type FlatRow =
   | { key: string; kind: "heading"; title: string }
   | { key: string; kind: "row"; node: React.ReactNode };
 
-type PanelCategory = "home" | "peers" | "policies" | "groups" | "resources";
+type PanelCategory = "peers" | "policies" | "groups" | "resources";
 
 const CATEGORIES: {
   id: PanelCategory;
   label: string;
   icon: LucideIcon;
 }[] = [
-  { id: "home", label: "Create New", icon: SquarePlusIcon },
   { id: "peers", label: "Peers", icon: MonitorSmartphoneIcon },
   { id: "policies", label: "Policies", icon: ShieldIcon },
   { id: "groups", label: "Groups", icon: FolderGit2 },
@@ -181,13 +184,24 @@ export const ControlCenterComponentsPanel = () => {
 const PanelContent = React.memo(
   ({ open, onClose }: { open: boolean; onClose: () => void }) => {
     const [search, setSearch] = useState("");
-    const [category, setCategory] = useState<PanelCategory>("home");
+    const [category, setCategory] = useState<PanelCategory>("peers");
     const isSearching = search.trim().length > 0;
     const searchRef = useRef<HTMLInputElement>(null);
+    const panelRef = useRef<HTMLDivElement>(null);
 
     // autoFocus only fires on mount — focus explicitly on every open.
+    // Closing clears the search so the panel reopens fresh, and releases
+    // focus back to the canvas — the panel only hides, so a still-focused
+    // search input would keep swallowing the canvas shortcuts.
     React.useEffect(() => {
-      if (open) searchRef.current?.focus();
+      if (open) {
+        searchRef.current?.focus();
+        return;
+      }
+      setSearch("");
+      if (panelRef.current?.contains(document.activeElement)) {
+        (document.activeElement as HTMLElement).blur();
+      }
     }, [open]);
 
     useControlCenterShortcuts({ Escape: onClose }, open);
@@ -198,6 +212,7 @@ const PanelContent = React.memo(
       addPeerPlaceholder,
       addUserDevice,
       addBlankNode: addBlankPlaceholderNode,
+      addBlankPolicy,
     } = useDraftNodeCreation();
 
     const handlePeerDrop = useCallback(
@@ -227,46 +242,19 @@ const PanelContent = React.memo(
         onDragStart(event, ({ position }) => {
           void handlePeerDrop(tpl, position);
           setGhostData(undefined);
-          onClose();
+          // User Device opens the install modal — delay the close.
+          if (tpl.key === "user-device") {
+            setTimeout(onClose, MODAL_CLOSE_DELAY_MS);
+          } else {
+            onClose();
+          }
         });
       },
       [onDragStart, handlePeerDrop, onClose],
     );
 
     const { addNewGroup } = useDraftGroupActions();
-    const {
-      drawPolicyOnCanvas,
-      setPolicyDropPosition,
-      setCreatePolicyModal,
-      setPolicyInitialName,
-      setPolicySourceResource,
-      setPolicyDestinationResource,
-      setPolicySourceGroups,
-      setPolicyDestinationGroups,
-    } = useControlCenterPolicy();
-
-    // New policy template: opens the create-policy modal; the created policy
-    // node lands where the template was dropped.
-    const handleNewPolicyDrop = useCallback(
-      (position?: XYPosition) => {
-        setPolicyInitialName("");
-        setPolicySourceResource(undefined);
-        setPolicyDestinationResource(undefined);
-        setPolicySourceGroups([]);
-        setPolicyDestinationGroups([]);
-        setPolicyDropPosition(position);
-        setCreatePolicyModal(true);
-      },
-      [
-        setPolicyInitialName,
-        setPolicySourceResource,
-        setPolicyDestinationResource,
-        setPolicySourceGroups,
-        setPolicyDestinationGroups,
-        setPolicyDropPosition,
-        setCreatePolicyModal,
-      ],
-    );
+    const { drawPolicyOnCanvas } = useControlCenterPolicy();
 
     // Existing policy: draw it with its sources/destinations — nodes already on
     // the canvas are connected, missing ones are created around the drop point.
@@ -290,13 +278,15 @@ const PanelContent = React.memo(
           initialY: event.clientY,
         });
         onDragStart(event, ({ position }) => {
+          // New-policy template drops a blank policy node — no modal; it
+          // becomes a changeset entry once connects give it both sides.
           if (policy) handleExistingPolicyDrop(policy, position);
-          else handleNewPolicyDrop(position);
+          else addBlankPolicy(position);
           setGhostData(undefined);
           onClose();
         });
       },
-      [onDragStart, handleExistingPolicyDrop, handleNewPolicyDrop, onClose],
+      [onDragStart, handleExistingPolicyDrop, addBlankPolicy, onClose],
     );
 
     // Drops a fresh, id-less "new" node so the node components render their
@@ -592,32 +582,40 @@ const PanelContent = React.memo(
       ));
 
     const buildPeerRows = () =>
-      filteredPeers.map((peer) => (
-        <PanelListItem
-          key={peer.id}
-          disabled={canvasNodeIds.has(`peer-${peer.id}`)}
-          onPointerDown={(e) => handleDragStart(e, NodeType.PeerNode, peer)}
-        >
-          <DeviceCard device={peer} size="small" className="flex-1" />
-        </PanelListItem>
-      ));
+      filteredPeers.map((peer) => {
+        const onCanvas = canvasNodeIds.has(`peer-${peer.id}`);
+        return (
+          <PanelListItem
+            key={peer.id}
+            disabled={onCanvas}
+            onCanvas={onCanvas}
+            onPointerDown={(e) => handleDragStart(e, NodeType.PeerNode, peer)}
+          >
+            <DeviceCard device={peer} size="small" className="flex-1" />
+          </PanelListItem>
+        );
+      });
 
     const buildResourceRows = () =>
-      filteredResources.map((resource) => (
-        <PanelListItem
-          key={resource.id}
-          disabled={canvasNodeIds.has(`resource-${resource.id}`)}
-          onPointerDown={(e) =>
-            handleDragStart(e, NodeType.ResourceNode, resource)
-          }
-        >
-          <DeviceCard resource={resource} size="small" className="flex-1" />
-        </PanelListItem>
-      ));
+      filteredResources.map((resource) => {
+        const onCanvas = canvasNodeIds.has(`resource-${resource.id}`);
+        return (
+          <PanelListItem
+            key={resource.id}
+            disabled={onCanvas}
+            onCanvas={onCanvas}
+            onPointerDown={(e) =>
+              handleDragStart(e, NodeType.ResourceNode, resource)
+            }
+          >
+            <DeviceCard resource={resource} size="small" className="flex-1" />
+          </PanelListItem>
+        );
+      });
 
     const buildDraftGroupRows = () =>
       draftGroups.map(({ nodeId, group }) => (
-        <PanelListItem key={nodeId} disabled>
+        <PanelListItem key={nodeId} disabled onCanvas>
           <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
             <div
               className={
@@ -650,10 +648,12 @@ const PanelContent = React.memo(
     const buildGroupRows = () =>
       filteredGroups.map((group) => {
         const pendingDelete = pendingDeleteGroupIds.has(group.id ?? "");
+        const onCanvas = canvasNodeIds.has(`group-${group.id}`);
         return (
           <PanelListItem
             key={group.id}
-            disabled={canvasNodeIds.has(`group-${group.id}`) || pendingDelete}
+            disabled={onCanvas || pendingDelete}
+            onCanvas={onCanvas}
             onPointerDown={(e) => handleDragStart(e, NodeType.GroupNode, group)}
           >
             <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
@@ -697,10 +697,12 @@ const PanelContent = React.memo(
     const buildPolicyRows = () =>
       filteredPolicies.map((policy) => {
         const protocolLabel = getPolicyProtocolAndPortText(policy);
+        const onCanvas = canvasNodeIds.has(`policy-${policy.id}`);
         return (
           <PanelListItem
             key={policy.id}
-            disabled={canvasNodeIds.has(`policy-${policy.id}`)}
+            disabled={onCanvas}
+            onCanvas={onCanvas}
             onPointerDown={(e) => handlePolicyDragStart(e, policy)}
           >
             <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
@@ -723,9 +725,9 @@ const PanelContent = React.memo(
                     hideTooltip={true}
                   />
                 </span>
-                <span className={"text-[0.7rem] text-nb-gray-400"}>
-                  {policy.enabled ? "Enabled" : "Disabled"}
-                  {protocolLabel ? ` · ${protocolLabel}` : ""}
+                <span className={"text-[0.7rem] text-nb-gray-400 truncate"}>
+                  {/* Same fallback as PolicyNode: empty label = all protocols */}
+                  {protocolLabel || "All"}
                 </span>
               </div>
             </div>
@@ -733,91 +735,54 @@ const PanelContent = React.memo(
         );
       });
 
-    // Home "Create new": every create template.
-    const buildPopularRows = () => [
-      ...BLANK_TEMPLATES.filter((t) => t.kind === "group").map((tpl) => (
-        <TemplateItem
-          key={`popular-${tpl.kind}`}
-          icon={tpl.icon}
-          label={tpl.label}
-          description={tpl.description}
-          draggable
-          onPointerDown={(e) => handleBlankDragStart(e, tpl.kind)}
-        />
-      )),
-      <TemplateItem
-        key={"popular-policy"}
-        icon={ShieldIcon}
-        label={"Policy"}
-        description={"Control access between sources and destinations"}
-        draggable
-        onPointerDown={(e) => handlePolicyDragStart(e)}
-      />,
-      ...PEER_TEMPLATES.map((tpl) => (
-        <TemplateItem
-          key={`popular-${tpl.key}`}
-          icon={tpl.icon}
-          label={tpl.label}
-          description={tpl.description}
-          draggable
-          onPointerDown={(e) => handlePeerTemplateDragStart(e, tpl)}
-        />
-      )),
-      ...BLANK_TEMPLATES.filter((t) => t.kind !== "group").map((tpl) => (
-        <TemplateItem
-          key={`popular-${tpl.kind}`}
-          icon={tpl.icon}
-          label={tpl.label}
-          description={tpl.description}
-          draggable
-          onPointerDown={(e) => handleBlankDragStart(e, tpl.kind)}
-        />
-      )),
-    ];
-
     // While searching, results span every category; otherwise the rail
-    // decides. Rows are built lazily — only for the visible view — so opening
-    // the panel (home view) doesn't render every entity list up front.
-    const sections: { title?: string; rows: React.ReactNode[] }[] = isSearching
-      ? [
-          {
-            title: "Peers",
-            rows: [...buildPeerTemplateRows(), ...buildPeerRows()],
-          },
-          {
-            title: "Policies",
-            rows: [...buildPolicyTemplateRows(), ...buildPolicyRows()],
-          },
-          {
-            title: "Groups",
-            rows: [
-              ...buildGroupTemplateRows(),
-              ...buildDraftGroupRows(),
-              ...buildGroupRows(),
-            ],
-          },
-          {
-            title: "Resources",
-            rows: [...buildResourceTemplateRows(), ...buildResourceRows()],
-          },
-        ].filter((sec) => sec.rows.length > 0)
-      : category === "home"
-      ? [{ title: "Create New", rows: buildPopularRows() }]
-      : category === "peers"
-      ? [{ rows: [...buildPeerTemplateRows(), ...buildPeerRows()] }]
-      : category === "policies"
-      ? [{ rows: [...buildPolicyTemplateRows(), ...buildPolicyRows()] }]
-      : category === "groups"
-      ? [
-          {
-            rows: [
-              ...buildGroupTemplateRows(),
-              ...buildDraftGroupRows(),
-              ...buildGroupRows(),
-            ],
-          },
-        ]
-      : [{ rows: [...buildResourceTemplateRows(), ...buildResourceRows()] }];
+    // decides. Create-new templates always live in their own "Add New"
+    // section so they're clearly separated from existing entities. Rows are
+    // built lazily — only for the visible view — so opening the panel
+    // doesn't render every entity list up front.
+    const sections: { title?: string; rows: React.ReactNode[] }[] = (
+      isSearching
+        ? [
+            {
+              title: "Add New",
+              rows: [
+                ...buildPeerTemplateRows(),
+                ...buildPolicyTemplateRows(),
+                ...buildGroupTemplateRows(),
+                ...buildResourceTemplateRows(),
+              ],
+            },
+            { title: "Peers", rows: buildPeerRows() },
+            { title: "Policies", rows: buildPolicyRows() },
+            {
+              title: "Groups",
+              rows: [...buildDraftGroupRows(), ...buildGroupRows()],
+            },
+            { title: "Resources", rows: buildResourceRows() },
+          ]
+        : category === "peers"
+        ? [
+            { title: "Add New", rows: buildPeerTemplateRows() },
+            { title: "Existing Peers", rows: buildPeerRows() },
+          ]
+        : category === "policies"
+        ? [
+            { title: "Add New", rows: buildPolicyTemplateRows() },
+            { title: "Existing Policies", rows: buildPolicyRows() },
+          ]
+        : category === "groups"
+        ? [
+            { title: "Add New", rows: buildGroupTemplateRows() },
+            {
+              title: "Existing Groups",
+              rows: [...buildDraftGroupRows(), ...buildGroupRows()],
+            },
+          ]
+        : [
+            { title: "Add New", rows: buildResourceTemplateRows() },
+            { title: "Existing Resources", rows: buildResourceRows() },
+          ]
+    ).filter((sec) => sec.rows.length > 0);
 
     // Flattened for virtualization: headings and rows become one list, only
     // the visible slice is rendered (like PeerSelector).
@@ -844,6 +809,7 @@ const PanelContent = React.memo(
       <>
         {isDragging && ghostData && <DragGhost ghost={ghostData} />}
         <motion.div
+          ref={panelRef}
           initial={false}
           animate={
             open
@@ -851,19 +817,28 @@ const PanelContent = React.memo(
               : { x: "-50%", y: 14, opacity: 0 }
           }
           transition={{ duration: 0.1, ease: "easeOut" }}
+          // The global Escape shortcut is input-aware and stays quiet while
+          // focus is inside the panel (search input, category buttons) — so
+          // Esc is also handled here, where it always reaches us.
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              e.stopPropagation();
+              onClose();
+            }
+          }}
           className={cn(
             !open && "pointer-events-none",
             // Node picker floating above the bottom toolbar.
             "absolute bottom-[80px] left-1/2 z-20",
             "w-[480px] max-w-[calc(100%-48px)] h-[420px] max-h-[calc(100%-170px)]",
-            "border border-nb-gray-900 rounded-lg flex flex-col overflow-hidden",
+            "border border-nb-gray-910 rounded-lg flex flex-col overflow-hidden",
             "bg-nb-gray-935 shadow-xl",
           )}
         >
           {/* Search — transparent, like the global search */}
           <div
             className={
-              "flex items-center gap-2 pr-3 border-b border-nb-gray-900"
+              "flex items-center gap-2 pr-3 border-b border-nb-gray-910"
             }
           >
             <DropdownInput
@@ -874,17 +849,23 @@ const PanelContent = React.memo(
                   typeof DropdownInput
                 >["onChange"]
               }
-              placeholder={"Search components..."}
+              placeholder={"Search components, peers, groups, resources..."}
               className={"py-3.5"}
               hideEnterIcon
             />
+            {/* ESC badge instead of an X — an X next to the search reads as
+                "clear the search"; this closes the whole panel. */}
             <button
               onClick={onClose}
-              className={
-                "p-1 rounded hover:bg-nb-gray-800 text-nb-gray-400 hover:text-nb-gray-200 transition-colors shrink-0"
-              }
+              className={cn(
+                "shrink-0 px-1.5 py-0.5 rounded border border-nb-gray-900 bg-nb-gray-920",
+                // Keycap: 2px "side" below + faint highlight on top.
+                "shadow-[0_2px_0_0_#1e2123,inset_0_1px_0_0_rgba(255,255,255,0.05)]",
+                "text-[8px] font-medium tracking-wide text-nb-gray-350",
+                "hover:bg-nb-gray-910 hover:text-nb-gray-200 transition-colors",
+              )}
             >
-              <XIcon size={16} />
+              ESC
             </button>
           </div>
 
@@ -892,7 +873,7 @@ const PanelContent = React.memo(
             {/* Category rail — icon only, tooltip on hover */}
             <div
               className={
-                "w-[52px] shrink-0 border-r border-nb-gray-900 py-2 flex flex-col items-center gap-1"
+                "w-[52px] shrink-0 border-r border-nb-gray-910 py-2 flex flex-col items-center gap-1"
               }
             >
               {CATEGORIES.map((cat) => (
@@ -900,7 +881,7 @@ const PanelContent = React.memo(
                   key={cat.id}
                   content={<span className={"text-xs"}>{cat.label}</span>}
                   side={"left"}
-                  sideOffset={10}
+                  sideOffset={14}
                   interactive={false}
                   contentClassName={"!px-2 !py-1.5"}
                   variant={"lighter"}
@@ -954,10 +935,31 @@ const PanelContent = React.memo(
                 />
               </MemoizedScrollArea>
             ) : (
-              <div
-                className={"flex-1 text-sm text-nb-gray-400 text-center py-8"}
-              >
-                No components found.
+              // Same not-found state as the global search modal.
+              <div className={"flex-1 flex justify-center pt-8"}>
+                <div className={"text-center"}>
+                  <div
+                    className={"flex items-center justify-center mb-3 gap-3"}
+                  >
+                    <div
+                      className={
+                        "bg-nb-gray-920 h-8 w-8 flex items-center justify-center rounded-md"
+                      }
+                    >
+                      <TextSearchIcon size={16} />
+                    </div>
+                  </div>
+                  <div className={"text-nb-gray-100 mb-1"}>
+                    Could not find any results
+                  </div>
+                  <div
+                    className={
+                      "text-sm text-nb-gray-350 font-light max-w-xs px-6"
+                    }
+                  >
+                    {`We couldn't find any results. Please try a different search term.`}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1035,10 +1037,12 @@ const PanelListItem = React.memo(
     className,
     onPointerDown,
     disabled,
+    onCanvas,
   }: PropsWithChildren<{
     className?: string;
     onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
     disabled?: boolean;
+    onCanvas?: boolean;
   }>) => {
     return (
       <div
@@ -1046,17 +1050,36 @@ const PanelListItem = React.memo(
         className={cn(
           "group/item flex items-center h-[52px] rounded-md px-1 transition-colors",
           disabled
-            ? "opacity-40 cursor-default"
+            ? "cursor-default"
             : "hover:bg-nb-gray-900/50 cursor-grab active:cursor-grabbing",
           className,
         )}
       >
-        {children}
-        {!disabled && (
-          <GripVerticalIcon
-            size={14}
-            className="shrink-0 ml-auto mr-3 text-nb-gray-400"
-          />
+        {/* Only the entity content dims when disabled — the badge stays
+            readable. */}
+        <div
+          className={cn(
+            "flex items-center flex-1 min-w-0",
+            disabled && "opacity-40",
+          )}
+        >
+          {children}
+        </div>
+        {onCanvas ? (
+          <span
+            className={
+              "shrink-0 ml-auto mr-3 text-[0.50rem] leading-none px-1 py-[0.3rem] rounded-[3px] bg-nb-gray-910 border border-nb-gray-800/30 text-nb-gray-350 opacity-70"
+            }
+          >
+            ON CANVAS
+          </span>
+        ) : (
+          !disabled && (
+            <GripVerticalIcon
+              size={14}
+              className="shrink-0 ml-auto mr-3 text-nb-gray-400"
+            />
+          )
         )}
       </div>
     );

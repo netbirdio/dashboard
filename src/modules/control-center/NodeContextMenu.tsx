@@ -22,6 +22,8 @@ import {
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
+import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
+import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
 
 type MenuPosition = {
   x: number;
@@ -47,6 +49,8 @@ export const NodeContextMenu = ({
   onClose,
 }: NodeContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
+  // Where the menu renders — flipped/clamped away from the viewport edges.
+  const menuPosition = useEdgeAwareMenuPosition(position, menuRef);
   const { nodes, setNodes, setEdges } = useCanvasState();
   const { isDraft } = useDraftMode();
   const { groups, policies } = useControlCenterData();
@@ -59,8 +63,38 @@ export const NodeContextMenu = ({
   } = useDraftGroupActions();
 
   // The rename modal must survive the menu closing (position → null), so the
-  // target node is snapshotted separately.
+  // target node is snapshotted separately. It targets either a group node or
+  // a placeholder peer (New Server / New Agent).
   const [renameTarget, setRenameTarget] = useState<Node | null>(null);
+  const isPlaceholderRename = !!renameTarget?.data?.placeholderKind;
+  const placeholderCurrentName =
+    (renameTarget?.data?.placeholderName as string) ||
+    (renameTarget?.data?.placeholderKind === "agent" ? "Agent" : "Server");
+
+  // Placeholder names must stay unique across the draft peers on the canvas.
+  const placeholderTakenNames = useMemo(
+    () =>
+      nodes
+        .filter((n) => n.id !== renameTarget?.id)
+        .map((n) => getPlaceholderPeer(n)?.name)
+        .filter(Boolean) as string[],
+    [nodes, renameTarget],
+  );
+
+  // Placeholder names live only on the canvas node — the real name comes from
+  // the machine once the peer is installed.
+  const renamePlaceholder = useCallback(
+    (id: string, name: string) => {
+      setNodes((prev) =>
+        prev.map((n) =>
+          n.id === id
+            ? { ...n, data: { ...n.data, placeholderName: name } }
+            : n,
+        ),
+      );
+    },
+    [setNodes],
+  );
 
   const node = useMemo(
     () => nodes.find((n) => n.id === nodeId),
@@ -201,6 +235,22 @@ export const NodeContextMenu = ({
       ];
     }
 
+    // Placeholder peers (New Server / New Agent) — canvas-only rename.
+    if (node.data?.placeholderKind) {
+      return [
+        {
+          label: "Rename",
+          icon: <PencilIcon size={14} />,
+          onClick: () => setRenameTarget(node),
+        },
+        {
+          label: "Remove",
+          icon: <MinusCircleIcon size={14} />,
+          onClick: handleRemove,
+        },
+      ];
+    }
+
     return [
       {
         label: "Remove",
@@ -235,7 +285,10 @@ export const NodeContextMenu = ({
         <div
           ref={menuRef}
           className="fixed z-50 min-w-[180px] rounded-md border border-nb-gray-900 bg-nb-gray-940 p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
-          style={{ top: position.y, left: position.x }}
+          style={{
+            top: (menuPosition ?? position).y,
+            left: (menuPosition ?? position).x,
+          }}
         >
           {items.map((item) => (
             <button
@@ -261,10 +314,30 @@ export const NodeContextMenu = ({
       <GroupRenameModal
         open={renameTarget !== null}
         onOpenChange={(open) => !open && setRenameTarget(null)}
-        currentName={getNodeGroup(renameTarget ?? undefined)?.name ?? ""}
-        groups={groups}
+        title={isPlaceholderRename ? "Rename Peer" : undefined}
+        description={
+          isPlaceholderRename
+            ? "Set an easily identifiable name for this peer."
+            : undefined
+        }
+        inputPlaceholder={isPlaceholderRename ? "e.g., Backup Server" : undefined}
+        currentName={
+          isPlaceholderRename
+            ? placeholderCurrentName
+            : getNodeGroup(renameTarget ?? undefined)?.name ?? ""
+        }
+        groups={isPlaceholderRename ? undefined : groups}
+        takenNames={isPlaceholderRename ? placeholderTakenNames : undefined}
+        duplicateError={
+          isPlaceholderRename
+            ? "A peer with this name already exists on the canvas. Please choose another name."
+            : undefined
+        }
         onRename={(name) => {
-          if (renameTarget) renameGroup(renameTarget, name);
+          if (renameTarget) {
+            if (isPlaceholderRename) renamePlaceholder(renameTarget.id, name);
+            else renameGroup(renameTarget, name);
+          }
           setRenameTarget(null);
         }}
       />

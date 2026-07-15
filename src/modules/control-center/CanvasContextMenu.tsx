@@ -14,8 +14,8 @@ import { useReactFlow, XYPosition } from "@xyflow/react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
+import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
 import { isMac } from "@hooks/useOperatingSystem";
 
 type MenuPosition = {
@@ -45,43 +45,16 @@ interface CanvasContextMenuProps {
 export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   const [position, setPosition] = useState<MenuPosition | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  // Where the menu renders — flipped/clamped away from the viewport edges.
+  // `position` stays the raw click point so actions create nodes there.
+  const menuPosition = useEdgeAwareMenuPosition(position, menuRef);
   const reactFlow = useReactFlow();
   const { isDraft, setComponentsPanelOpen } = useDraftMode();
   const { addNewGroup } = useDraftGroupActions();
-  const { addPeerPlaceholder, addUserDevice, addBlankNode } =
+  const { addPeerPlaceholder, addUserDevice, addBlankNode, addBlankPolicy } =
     useDraftNodeCreation();
-  const {
-    setCreatePolicyModal,
-    setPolicyInitialName,
-    setPolicySourceResource,
-    setPolicyDestinationResource,
-    setPolicySourceGroups,
-    setPolicyDestinationGroups,
-    setPolicyDropPosition,
-  } = useControlCenterPolicy();
 
   // ---- Draft mode actions ----
-
-  const newPolicyAt = useCallback(
-    (pos: XYPosition) => {
-      setPolicyInitialName("");
-      setPolicySourceResource(undefined);
-      setPolicyDestinationResource(undefined);
-      setPolicySourceGroups([]);
-      setPolicyDestinationGroups([]);
-      setPolicyDropPosition(pos);
-      setCreatePolicyModal(true);
-    },
-    [
-      setPolicyInitialName,
-      setPolicySourceResource,
-      setPolicyDestinationResource,
-      setPolicySourceGroups,
-      setPolicyDestinationGroups,
-      setPolicyDropPosition,
-      setCreatePolicyModal,
-    ],
-  );
 
   // Same "New …" set as the components picker, grouped with separators:
   // group/policy · peers · network/resource. Each action takes the flow
@@ -104,7 +77,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
           label: "New Policy",
           icon: <ShieldIcon size={14} />,
           shortcut: shortcutLabel(2),
-          action: (pos) => newPolicyAt(pos),
+          action: (pos) => addBlankPolicy(pos),
         },
       ],
       [
@@ -142,7 +115,13 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
         },
       ],
     ],
-    [addNewGroup, newPolicyAt, addUserDevice, addPeerPlaceholder, addBlankNode],
+    [
+      addNewGroup,
+      addBlankPolicy,
+      addUserDevice,
+      addPeerPlaceholder,
+      addBlankNode,
+    ],
   );
 
   // Alt/⌥+1…7 create at the viewport center (draft-only, input-aware).
@@ -244,7 +223,10 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     <div
       ref={menuRef}
       className="fixed z-50 min-w-[210px] rounded-md border border-nb-gray-900 bg-nb-gray-940 p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
-      style={{ top: position.y, left: position.x }}
+      style={{
+        top: (menuPosition ?? position).y,
+        left: (menuPosition ?? position).x,
+      }}
     >
       {draftItemGroups.map((group, gi) => (
         <React.Fragment key={gi}>

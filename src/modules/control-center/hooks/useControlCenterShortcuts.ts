@@ -3,20 +3,16 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type ShortcutMap = Record<string, () => void>;
 
-const INTERACTIVE_TAGS = new Set([
-  "INPUT",
-  "TEXTAREA",
-  "SELECT",
-  "BUTTON",
-  "OPTION",
-  "DETAILS",
-  "SUMMARY",
-]);
+// Only genuine text-entry contexts block shortcuts. Focused buttons (a click
+// leaves the button focused) must NOT block them — otherwise hotkeys go dead
+// after any toolbar/canvas button press. Enter still activates a focused
+// button; plain-key shortcuts don't overlap button interaction.
+const TEXT_ENTRY_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
 export function isInputFocused(): boolean {
   const el = document.activeElement as HTMLElement;
   if (!el) return false;
-  if (INTERACTIVE_TAGS.has(el.tagName)) return true;
+  if (TEXT_ENTRY_TAGS.has(el.tagName)) return true;
   if (el.isContentEditable) return true;
   if (el.closest("[role='dialog']") || el.closest("[role='alertdialog']"))
     return true;
@@ -65,7 +61,10 @@ export function useControlCenterShortcuts(
           !e.altKey &&
           (shortcutsRef.current[e.key] || shortcutsRef.current[lower]));
       if (handler) {
-        if (e.ctrlKey || e.shiftKey || e.altKey) e.preventDefault();
+        // Always cancel the keystroke — a handler may move focus into an
+        // input (e.g. C opens the components panel, which focuses its
+        // search), and without this the pressed key would be typed there.
+        e.preventDefault();
         handler();
       }
     };
