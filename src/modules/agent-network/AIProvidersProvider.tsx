@@ -50,6 +50,9 @@ export type APIProvider = {
   // Skip TLS certificate verification on upstream requests (custom providers
   // with self-signed certs). Off by default.
   skip_tls_verification?: boolean;
+  // Disable identity metadata injection (caller user + authorizing group) on
+  // upstream requests. Off by default (metadata is sent).
+  metadata_disabled?: boolean;
   enabled: boolean;
   created_at: string;
   updated_at: string;
@@ -67,6 +70,7 @@ export type APIProviderRequest = {
   identity_header_user_id?: string;
   identity_header_groups?: string;
   skip_tls_verification?: boolean;
+  metadata_disabled?: boolean;
   models: APIProviderModel[];
   enabled?: boolean;
 };
@@ -84,6 +88,8 @@ export type ProviderConnectInput = {
   identityHeaderGroups?: string;
   // Skip upstream TLS verification (custom providers with self-signed certs).
   skipTlsVerification?: boolean;
+  // Disable identity metadata injection (user + authorizing group). Off by default.
+  metadataDisabled?: boolean;
   models: ProviderModel[];
   enabled?: boolean;
 };
@@ -97,6 +103,7 @@ export type ProviderUpdateInput = {
   identityHeaderUserId?: string;
   identityHeaderGroups?: string;
   skipTlsVerification?: boolean;
+  metadataDisabled?: boolean;
   models?: ProviderModel[];
   enabled?: boolean;
 };
@@ -159,6 +166,7 @@ function fromAPI(p: APIProvider): AIProvider {
     identityHeaderUserId: p.identity_header_user_id,
     identityHeaderGroups: p.identity_header_groups,
     skipTlsVerification: p.skip_tls_verification ?? false,
+    metadataDisabled: p.metadata_disabled ?? false,
     status: p.enabled ? "active" : "disabled",
     models,
     allowedGroups: [],
@@ -201,6 +209,7 @@ function toCreateRequest(input: ProviderConnectInput): APIProviderRequest {
     identity_header_user_id: input.identityHeaderUserId,
     identity_header_groups: input.identityHeaderGroups,
     skip_tls_verification: input.skipTlsVerification,
+    metadata_disabled: input.metadataDisabled,
     models: toAPIModels(input.models),
     enabled: input.enabled,
   };
@@ -647,6 +656,8 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           updates.identityHeaderGroups ?? existing.identity_header_groups,
         skip_tls_verification:
           updates.skipTlsVerification ?? existing.skip_tls_verification,
+        metadata_disabled:
+          updates.metadataDisabled ?? existing.metadata_disabled,
         models: updates.models
           ? toAPIModels(updates.models)
           : existing.models ?? [],

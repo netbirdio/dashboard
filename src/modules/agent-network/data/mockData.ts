@@ -64,6 +64,9 @@ export type AIProvider = {
   // Skip TLS certificate verification on upstream requests — for custom
   // providers using self-signed certs. Off by default.
   skipTlsVerification?: boolean;
+  // Disable identity metadata injection (caller user + authorizing group) on
+  // upstream requests, e.g. AWS Bedrock cost-allocation. Off by default.
+  metadataDisabled?: boolean;
   status: AIProviderStatus;
   models: ProviderModel[];
   allowedGroups: string[];

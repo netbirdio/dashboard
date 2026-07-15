@@ -217,6 +217,9 @@ export default function AIProviderModal({
   const [skipTlsVerification, setSkipTlsVerification] = useState<boolean>(
     provider?.skipTlsVerification ?? false,
   );
+  const [metadataDisabled, setMetadataDisabled] = useState<boolean>(
+    provider?.metadataDisabled ?? false,
+  );
 
   const catalog = getById(providerId);
   // Custom-kind providers (the generic "Custom" entry and named self-hosted
@@ -340,6 +343,7 @@ export default function AIProviderModal({
       setIdentityHeaderUserId(provider.identityHeaderUserId ?? "");
       setIdentityHeaderGroups(provider.identityHeaderGroups ?? "");
       setSkipTlsVerification(provider.skipTlsVerification ?? false);
+      setMetadataDisabled(provider.metadataDisabled ?? false);
     } else {
       const fallback = getById("openai_api");
       setProviderId("openai_api");
@@ -354,6 +358,7 @@ export default function AIProviderModal({
       setIdentityHeaderUserId("");
       setIdentityHeaderGroups("");
       setSkipTlsVerification(false);
+      setMetadataDisabled(false);
     }
   };
 
@@ -405,6 +410,7 @@ export default function AIProviderModal({
         extraValues: sanitizedExtraValues,
         ...identityOverrides,
         skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+        metadataDisabled,
         // Only forward the API key when the user actually rotated it
         ...(apiKey && apiKey !== "••••••••" ? { apiKey } : {}),
       });
@@ -420,6 +426,7 @@ export default function AIProviderModal({
       extraValues: sanitizedExtraValues,
       ...identityOverrides,
       skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+      metadataDisabled,
       models,
       enabled: true,
     });
@@ -655,6 +662,42 @@ export default function AIProviderModal({
                   helpText={"Disable upstream TLS certificate validation."}
                 />
               )}
+
+              <FancyToggleSwitch
+                value={metadataDisabled}
+                onChange={setMetadataDisabled}
+                label={
+                  <>
+                    <ArrowRightLeft size={15} />
+                    Disable identity metadata
+                    <span onClick={(e) => e.stopPropagation()}>
+                      <HelpTooltip
+                        interactive
+                        content={
+                          <>
+                            By default NetBird forwards the caller&apos;s user and
+                            authorizing group to the provider as metadata (e.g. AWS
+                            Bedrock&apos;s X-Amzn-Bedrock-Request-Metadata header for
+                            cost allocation). Turn on to stop sending it.{" "}
+                            <InlineLink
+                              href={
+                                "https://docs.netbird.io/agent-network/providers#identity-metadata"
+                              }
+                              target={"_blank"}
+                            >
+                              Learn more
+                              <ExternalLinkIcon size={12} />
+                            </InlineLink>
+                          </>
+                        }
+                      />
+                    </span>
+                  </>
+                }
+                helpText={
+                  "Stop forwarding the caller's user and authorizing group to this provider."
+                }
+              />
 
               {providerId === "vertex_ai_api" ? (
                 <FormRow
