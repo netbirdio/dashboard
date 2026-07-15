@@ -22,7 +22,7 @@ import {
 import { NODE_TYPES } from "@/modules/control-center/utils/nodes";
 import { DragAndDropProvider } from "@/modules/control-center/DragAndDropProvider";
 import { ConnectionLine } from "@/modules/control-center/ConnectionLine";
-import { ControlCenterComponentsSidebar } from "@/modules/control-center/draft/ControlCenterComponentsSidebar";
+import { ControlCenterComponentsPanel } from "@/modules/control-center/draft/ControlCenterComponentsPanel";
 import {
   DraftModeProvider,
   useDraftMode,
@@ -32,6 +32,7 @@ import { NodeContextMenu } from "@/modules/control-center/NodeContextMenu";
 import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
 import { DraftInstallPeerModal } from "@/modules/control-center/draft/DraftInstallPeerModal";
 import { DraftEmptyCanvas } from "@/modules/control-center/draft/DraftEmptyCanvas";
+import { DraftLeaveGuard } from "@/modules/control-center/draft/DraftLeaveGuard";
 import { useDraft } from "@/modules/control-center/hooks/useDraft";
 import { ControlCenterHeader } from "@/modules/control-center/ControlCenterHeader";
 import { ControlCenterEmptyStates } from "@/modules/control-center/ControlCenterEmptyStates";
@@ -43,6 +44,7 @@ import {
 } from "@/modules/control-center/ControlCenterContext";
 import { ControlCenterPolicyProvider } from "@/modules/control-center/ControlCenterPolicyModals";
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
+import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import GroupsProvider from "@/contexts/GroupsProvider";
 
@@ -55,17 +57,19 @@ export default function ControlCenter() {
             <PeersProvider>
               <CanvasStateProvider>
                 <GroupsProvider>
-                <ControlCenterPolicyProvider>
-                  <DraftChangesetProvider>
+                <DraftChangesetProvider>
+                  <DraftHistoryProvider>
+                  <ControlCenterPolicyProvider>
                   <PageContainer>
                     <ControlCenterUIProvider
-                      sidebar={<ControlCenterComponentsSidebar />}
+                      sidebar={<ControlCenterComponentsPanel />}
                     >
                       <ControlCenterCanvas />
                     </ControlCenterUIProvider>
                   </PageContainer>
-                  </DraftChangesetProvider>
-                </ControlCenterPolicyProvider>
+                  </ControlCenterPolicyProvider>
+                  </DraftHistoryProvider>
+                </DraftChangesetProvider>
                 </GroupsProvider>
               </CanvasStateProvider>
             </PeersProvider>
@@ -80,7 +84,7 @@ function ControlCenterCanvas() {
   const canvas = useCanvasState();
   const ui = useControlCenterUI();
   const draft = useDraft();
-  const { componentsPanelOpen } = useDraftMode();
+  const { componentsPanelOpen, setComponentsPanelOpen } = useDraftMode();
   const { onNodeDrag, onNodeDragStop } = useDragToGroup();
 
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
@@ -108,6 +112,7 @@ function ControlCenterCanvas() {
       <ControlCenterHeader />
       <PeersToolbar />
       <DraftInstallPeerModal />
+      <DraftLeaveGuard />
       <ReactFlow
         className={draft.isSelectMode ? "select-mode" : undefined}
         edges={canvas.edges}
@@ -119,17 +124,27 @@ function ControlCenterCanvas() {
         connectionLineComponent={ConnectionLine}
         onNodeClick={ui.onNodeClick}
         onNodeContextMenu={(event, node) => {
+          // Live mode keeps the browser's default context menu.
+          if (!draft.isDraft) return;
           event.preventDefault();
           setNodeContextMenuPos({ x: event.clientX, y: event.clientY });
           canvas.setContextMenuNodeId(node.id);
         }}
-        onPaneClick={() => canvas.setSelectedDestinationGroup("")}
+        onPaneClick={() => {
+          canvas.setSelectedDestinationGroup("");
+          setComponentsPanelOpen(false);
+        }}
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         nodeTypes={NODE_TYPES as unknown as NodeTypes}
         edgeTypes={EDGE_TYPES as unknown as EdgeTypes}
         fitView={false}
         defaultViewport={{ x: 0, y: 0, zoom: EMPTY_STATE_ZOOM }}
+        // Center the origin on mount — defaultViewport {0,0} anchors it at
+        // the screen corner, so the first fit would animate in from far away.
+        onInit={(instance) =>
+          void instance.setCenter(0, 0, { zoom: EMPTY_STATE_ZOOM })
+        }
         maxZoom={DEFAULT_MAX_ZOOM}
         minZoom={DEFAULT_MIN_ZOOM}
         colorMode={"dark"}

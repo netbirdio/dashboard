@@ -1,21 +1,29 @@
 import * as React from "react";
+import { useState } from "react";
 import { SegmentedTabs } from "@components/SegmentedTabs";
-import { PencilLineIcon, PlayIcon } from "lucide-react";
+import { GitPullRequestArrowIcon, PencilLineIcon } from "lucide-react";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import Button from "@components/Button";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDiscardDraft } from "@/modules/control-center/draft/useDiscardDraft";
+import { ReviewDeployModal } from "@/modules/control-center/draft/ReviewDeployModal";
 
 type Props = {};
 export const DraftModeSwitcher = ({}: Props) => {
   const { isDraft, setIsDraft } = useDraftMode();
-  const { nodes } = useCanvasState();
+  const { changeCount } = useDraftChangeset();
+  const { discardAndExit, exitAfterDeploy } = useDiscardDraft();
+  const [reviewOpen, setReviewOpen] = useState(false);
   const mode = isDraft ? "draft" : "live";
-  // Nothing to deploy on an empty draft canvas.
-  const canvasEmpty = nodes.length === 0;
 
   const handleSwitch = (v: string) => {
-    setIsDraft(v === "draft");
+    if (v === "draft") {
+      setIsDraft(true);
+      return;
+    }
+    // Switching to live destroys the draft — confirmed while changes exist.
+    void discardAndExit();
   };
 
   return (
@@ -25,21 +33,32 @@ export const DraftModeSwitcher = ({}: Props) => {
           <Button
             variant={"secondary"}
             size={"xs"}
-            onClick={() => handleSwitch("live")}
-            className={"h-[38px] px-4.5"}
+            onClick={() => void discardAndExit()}
+            className={"h-[39px] px-4.5"}
           >
             Cancel
           </Button>
-          {!canvasEmpty && (
-            <Button
-              variant={"primary"}
-              size={"xs"}
-              className={"h-[38px] px-4.5"}
-            >
-              <PlayIcon size={12} />
-              Deploy
-            </Button>
-          )}
+          <Button
+            variant={"primary"}
+            size={"xs"}
+            className={
+              "h-[39px] px-4.5 disabled:!opacity-90 disabled:!bg-nb-gray-940 disabled:!text-nb-gray-800 disabled:!border disabled:!border-nb-gray-930/80"
+            }
+            disabled={changeCount === 0}
+            onClick={() => setReviewOpen(true)}
+          >
+            <GitPullRequestArrowIcon size={14} />
+            Review & Deploy
+            {changeCount > 0 && (
+              <span
+                className={
+                  "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-md bg-black/30 text-[0.68rem] leading-none font-medium"
+                }
+              >
+                {changeCount}
+              </span>
+            )}
+          </Button>
         </>
       )}
       <SegmentedTabs value={mode} onChange={handleSwitch}>
@@ -64,6 +83,12 @@ export const DraftModeSwitcher = ({}: Props) => {
           </SegmentedTabs.Trigger>
         </SegmentedTabs.List>
       </SegmentedTabs>
+
+      <ReviewDeployModal
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        onDeployed={exitAfterDeploy}
+      />
     </div>
   );
 };

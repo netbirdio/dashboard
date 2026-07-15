@@ -1,5 +1,10 @@
 import { useEffect, useRef } from "react";
 import { Connection, Edge, Node, useReactFlow } from "@xyflow/react";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import {
+  loadDraftCanvas,
+  saveDraftCanvas,
+} from "@/modules/control-center/draft/draft-storage";
 import {
   applyD3HierarchicalLayout,
   DEFAULT_MIN_ZOOM,
@@ -14,6 +19,7 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
+import { Policy } from "@/interfaces/Policy";
 import {
   addNode,
   addEdge,
@@ -25,23 +31,59 @@ export function useDraft() {
     useCanvasState();
   const { policies, peers, networkResources, groups } =
     useControlCenterData();
-  const { isDraft, setIsDraft, activeTool, setActiveTool } = useDraftMode();
+  const { isDraft, setIsDraft, activeTool, setActiveTool, draftSession } =
+    useDraftMode();
   const {
     setCreatePolicyModal,
+    setPolicyInitialName,
     setPolicySourceResource,
     setPolicyDestinationResource,
     setPolicySourceGroups,
     setPolicyDestinationGroups,
+    updateDraftPolicy,
   } = useControlCenterPolicy();
+  const { changeCount } = useDraftChangeset();
   const reactFlow = useReactFlow();
   const liveStateRef = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
+  const wasDraftRef = useRef(false);
 
-  const isSelectMode = activeTool === CanvasTool.Select;
+  // Tools only apply in draft — live mode always pans (grab cursor), even if
+  // the select tool was active when the draft was left.
+  const isSelectMode = isDraft && activeTool === CanvasTool.Select;
 
-  // Save live state when entering draft, build canvas from policies; restore when leaving
+  // Save live state when entering draft, build canvas from policies; restore
+  // when leaving. Also re-runs when draftSession bumps ("New Draft") — then
+  // the live snapshot must NOT be overwritten with the current draft canvas.
   useEffect(() => {
     if (isDraft) {
-      liveStateRef.current = { nodes, edges };
+      if (!wasDraftRef.current) {
+        liveStateRef.current = { nodes, edges };
+      }
+      wasDraftRef.current = true;
+      // Rebuilds triggered while already drafting ("New Draft") must derive
+      // from the saved live canvas, not the current draft nodes.
+      const liveNodes = liveStateRef.current?.nodes ?? nodes;
+
+      // A persisted draft (e.g. the page was reloaded mid-draft) takes
+      // precedence over rebuilding from live policies — it carries the
+      // pending changes' canvas state.
+      const persisted = loadDraftCanvas();
+      if (persisted && (persisted.nodes.length > 0 || changeCount > 0)) {
+        setNodes(persisted.nodes);
+        setEdges(persisted.edges);
+        if (persisted.nodes.length > 0) {
+          setTimeout(() => {
+            reactFlow.fitView({
+              nodes: persisted.nodes,
+              padding: 0.1,
+              duration: 500,
+              maxZoom: 0.8,
+              minZoom: DEFAULT_MIN_ZOOM,
+            });
+          }, 100);
+        }
+        return;
+      }
 
       // Build a lookup of group members from API data
       const groupMembers = new Map<string, Set<string>>();
@@ -67,7 +109,7 @@ export function useDraft() {
       const allEdges: Edge[] = [];
 
       const livePolicyIds = new Set(
-        nodes
+        liveNodes
           .filter((n) => n.type === "policyNode")
           .map((n) => (n.data as any)?.policy?.id)
           .filter(Boolean),
@@ -272,6 +314,54 @@ export function useDraft() {
         }
       });
 
+      // Carry over the entities shown in the live view even when they have no
+      // policies (e.g. group view of a policy-less group) so the draft
+      // doesn't start empty. Covers group nodes drawn on the live canvas and
+      // the group/peer picked in the live select node.
+      const hasGroup = (id?: string) =>
+        !!id && allNodes.some((n) => (n.data as any)?.group?.id === id);
+      const hasPeer = (id?: string) =>
+        !!id && allNodes.some((n) => (n.data as any)?.peer?.id === id);
+
+      liveNodes.forEach((liveNode) => {
+        const data = liveNode.data as any;
+
+        const group: Group | undefined =
+          liveNode.type === "selectGroupNode"
+            ? groups?.find((g) => g.id === data?.currentGroup)
+            : data?.group?.id
+            ? (data.group as Group)
+            : undefined;
+        if (group?.id && !hasGroup(group.id)) {
+          const members = groupMembers.get(group.id);
+          addNode(allNodes, {
+            id: `group-${group.id}`,
+            type: "groupNode",
+            data: {
+              group,
+              enabled: true,
+              showHandles: true,
+              ...(members ? { addedMembers: members } : {}),
+            },
+            position: { x: 0, y: 0 },
+          });
+          return;
+        }
+
+        const peer =
+          liveNode.type === "selectPeerNode"
+            ? peers?.find((p) => p.id === data?.currentPeer)
+            : undefined;
+        if (peer?.id && !hasPeer(peer.id)) {
+          addNode(allNodes, {
+            id: `peer-${peer.id}`,
+            type: "peerNode",
+            data: { peer, enabled: true, showHandles: true, variant: "card" },
+            position: { x: 0, y: 0 },
+          });
+        }
+      });
+
       // Apply hierarchical layout: sources → policies → destinations
       const { updatedNodes, updatedEdges } = applyD3HierarchicalLayout(
         allNodes,
@@ -299,6 +389,7 @@ export function useDraft() {
         }, 100);
       }
     } else if (liveStateRef.current) {
+      wasDraftRef.current = false;
       const restored = liveStateRef.current;
       setNodes(restored.nodes);
       setEdges(restored.edges);
@@ -315,7 +406,15 @@ export function useDraft() {
       }, 100);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDraft]);
+  }, [isDraft, draftSession]);
+
+  // Persist the draft canvas (debounced) so a reload doesn't lose the draft.
+  // Cancel / Deploy / switch-to-live clear it via clearDraftStorage().
+  useEffect(() => {
+    if (!isDraft) return;
+    const timer = setTimeout(() => saveDraftCanvas(nodes, edges), 400);
+    return () => clearTimeout(timer);
+  }, [isDraft, nodes, edges]);
 
   const onNodeConnect = (connection: Connection) => {
     const source = connection?.source;
@@ -324,13 +423,17 @@ export function useDraft() {
     type NodeInfo =
       | { kind: "peer"; id: string }
       | { kind: "group"; id: string }
-      | { kind: "resource"; id: string };
+      | { kind: "resource"; id: string }
+      | { kind: "policy"; id: string };
 
     const parseNodeId = (id: string): NodeInfo | undefined => {
       if (id.startsWith("peer-")) return { kind: "peer", id: id.replace("peer-", "") };
       if (id.startsWith("dest-group-")) return { kind: "group", id };
+      // Draft groups have no API id — keep the full node id for lookup.
+      if (id.startsWith("group-new-")) return { kind: "group", id };
       if (id.startsWith("group-")) return { kind: "group", id: id.replace("group-", "") };
       if (id.startsWith("resource-")) return { kind: "resource", id: id.replace("resource-", "") };
+      if (id.startsWith("policy-")) return { kind: "policy", id: id.replace("policy-", "") };
       // Handle expanded/destination variants
       if (id.startsWith("expanded-peer-")) return { kind: "peer", id: id.replace("expanded-peer-", "") };
       if (id.startsWith("source-peer-")) return { kind: "peer", id: id.replace("source-peer-", "") };
@@ -355,34 +458,116 @@ export function useDraft() {
       return (canvasNode?.data as any)?.group as Group | undefined;
     };
 
+    // Adds a group to one side of an existing policy — recorded as an
+    // update-policy change and redrawn. No-ops for duplicates and for sides
+    // occupied by a resource (groups can't be mixed with resources).
+    const addGroupToPolicy = (
+      policyNodeId: string,
+      groupNodeId: string,
+      side: "sources" | "destinations",
+    ) => {
+      const policyNode = currentNodes.find((n) => n.id === policyNodeId);
+      const policy = (policyNode?.data as any)?.policy as Policy | undefined;
+      const rule = policy?.rules?.[0];
+      if (!policy || !rule) return;
+      if (side === "sources" && rule.sourceResource) return;
+      if (side === "destinations" && rule.destinationResource) return;
+
+      const group = findGroup(groupNodeId);
+      if (!group) return;
+
+      const groupKey = (g: Group | string) =>
+        typeof g === "string" ? g : g.id ?? g.name;
+      const list = (rule[side] as (Group | string)[]) ?? [];
+      if (list.some((g) => groupKey(g) === groupKey(group))) return;
+
+      updateDraftPolicy({
+        ...policy,
+        rules: [
+          { ...rule, [side]: [...list, group] },
+          ...(policy.rules?.slice(1) ?? []),
+        ],
+      });
+    };
+
+    // Policy handle → group: the right handle adds the group as a
+    // destination, the left one as a source.
+    if (sourceInfo.kind === "policy") {
+      if (targetInfo.kind !== "group") return;
+      addGroupToPolicy(
+        source,
+        targetInfo.id,
+        connection.sourceHandle?.startsWith("sl") ? "sources" : "destinations",
+      );
+      return;
+    }
+
+    // Group handle → policy: dragging from the group's left handle means the
+    // group sits to the right of the policy → destination; from its right
+    // handle → source.
+    if (targetInfo.kind === "policy") {
+      if (sourceInfo.kind !== "group") return;
+      addGroupToPolicy(
+        target,
+        sourceInfo.id,
+        connection.sourceHandle?.startsWith("sl") ? "destinations" : "sources",
+      );
+      return;
+    }
+
     // Set source resource or group
+    let sourceName: string | undefined;
+    let destName: string | undefined;
     const sourceGroups: Group[] = [];
     if (sourceInfo.kind === "peer") {
       const peer = peers?.find((p) => p.id === sourceInfo.id);
-      if (peer?.id) setPolicySourceResource({ id: peer.id, type: "peer" });
+      if (peer?.id) {
+        setPolicySourceResource({ id: peer.id, type: "peer" });
+        sourceName = peer.name;
+      }
     } else if (sourceInfo.kind === "group") {
       const group = findGroup(sourceInfo.id);
-      if (group) sourceGroups.push(group);
+      if (group) {
+        sourceGroups.push(group);
+        sourceName = group.name;
+      }
     } else if (sourceInfo.kind === "resource") {
       const resource = networkResources?.find((r) => r.id === sourceInfo.id);
-      if (resource?.id) setPolicySourceResource({ id: resource.id, type: "host" });
+      if (resource?.id) {
+        setPolicySourceResource({ id: resource.id, type: "host" });
+        sourceName = resource.name;
+      }
     }
 
     // Set destination resource or group
     const destGroups: Group[] = [];
     if (targetInfo.kind === "peer") {
       const peer = peers?.find((p) => p.id === targetInfo.id);
-      if (peer?.id) setPolicyDestinationResource({ id: peer.id, type: "peer" });
+      if (peer?.id) {
+        setPolicyDestinationResource({ id: peer.id, type: "peer" });
+        destName = peer.name;
+      }
     } else if (targetInfo.kind === "group") {
       const group = findGroup(targetInfo.id);
-      if (group) destGroups.push(group);
+      if (group) {
+        destGroups.push(group);
+        destName = group.name;
+      }
     } else if (targetInfo.kind === "resource") {
       const resource = networkResources?.find((r) => r.id === targetInfo.id);
-      if (resource?.id) setPolicyDestinationResource({ id: resource.id, type: "host" });
+      if (resource?.id) {
+        setPolicyDestinationResource({ id: resource.id, type: "host" });
+        destName = resource.name;
+      }
     }
 
     if (sourceGroups.length > 0) setPolicySourceGroups(sourceGroups);
     if (destGroups.length > 0) setPolicyDestinationGroups(destGroups);
+
+    // Default policy name, e.g. "All to New Group".
+    setPolicyInitialName(
+      sourceName && destName ? `${sourceName} to ${destName}` : "",
+    );
 
     setCreatePolicyModal(true);
   };

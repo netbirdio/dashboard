@@ -1,29 +1,42 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
+  BotIcon,
   FolderGit2,
   Globe,
   MonitorSmartphoneIcon,
   NetworkIcon,
-  UserPlusIcon,
+  OptionIcon,
+  ServerIcon,
+  ShieldIcon,
 } from "lucide-react";
-import { useOidcUser } from "@axa-fr/react-oidc";
-import { useReactFlow } from "@xyflow/react";
-import { Modal } from "@components/modal/Modal";
-import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useCreateGroupOnCanvas } from "@/modules/control-center/hooks/useCreateGroupOnCanvas";
-import { CreateGroupNameModal } from "@/modules/control-center/draft/CreateGroupNameModal";
+import { useReactFlow, XYPosition } from "@xyflow/react";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
+import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
+import { isMac } from "@hooks/useOperatingSystem";
 
 type MenuPosition = {
   x: number;
   y: number;
 };
 
-type MenuItem = {
-  label: string;
-  icon: React.ReactNode;
-  onClick?: () => void;
-};
+// Shortcut badges: ⌥ icon on macOS, "Alt" text elsewhere (Ctrl+digit is
+// reserved for tab switching on Windows/Linux browsers).
+const shortcutLabel = (n: number): React.ReactNode =>
+  isMac ? (
+    <span className={"flex items-center gap-0.5"}>
+      <OptionIcon size={11} className={"relative -top-[0.5px]"} />
+      {n}
+    </span>
+  ) : (
+    <span className={"flex items-center gap-0.5"}>
+      Alt<span>+</span>
+      {n}
+    </span>
+  );
 
 interface CanvasContextMenuProps {
   onOpenChange?: (open: boolean) => void;
@@ -31,69 +44,140 @@ interface CanvasContextMenuProps {
 
 export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   const [position, setPosition] = useState<MenuPosition | null>(null);
-  const [createAtPosition, setCreateAtPosition] = useState<MenuPosition | null>(null);
-  const [addPeerModal, setAddPeerModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const reactFlow = useReactFlow();
-  const { groups } = useControlCenterData();
-  const { createGroup, modalOpen, setModalOpen } = useCreateGroupOnCanvas();
-  const { oidcUser: user } = useOidcUser();
+  const { isDraft, setComponentsPanelOpen } = useDraftMode();
+  const { addNewGroup } = useDraftGroupActions();
+  const { addPeerPlaceholder, addUserDevice, addBlankNode } =
+    useDraftNodeCreation();
+  const {
+    setCreatePolicyModal,
+    setPolicyInitialName,
+    setPolicySourceResource,
+    setPolicyDestinationResource,
+    setPolicySourceGroups,
+    setPolicyDestinationGroups,
+    setPolicyDropPosition,
+  } = useControlCenterPolicy();
 
-  const handleCreateGroup = useCallback(() => {
-    if (!position) return;
-    setCreateAtPosition(position);
-    setModalOpen(true);
-  }, [position, setModalOpen]);
+  // ---- Draft mode actions ----
 
-  const handleSaveGroup = useCallback(
-    async (groupName: string) => {
-      setModalOpen(false);
-      if (!createAtPosition) return;
-
-      const canvasPos = reactFlow.screenToFlowPosition({
-        x: createAtPosition.x,
-        y: createAtPosition.y,
-      });
-
-      await createGroup({
-        name: groupName,
-        position: canvasPos,
-      });
+  const newPolicyAt = useCallback(
+    (pos: XYPosition) => {
+      setPolicyInitialName("");
+      setPolicySourceResource(undefined);
+      setPolicyDestinationResource(undefined);
+      setPolicySourceGroups([]);
+      setPolicyDestinationGroups([]);
+      setPolicyDropPosition(pos);
+      setCreatePolicyModal(true);
     },
-    [createGroup, createAtPosition, reactFlow, setModalOpen],
+    [
+      setPolicyInitialName,
+      setPolicySourceResource,
+      setPolicyDestinationResource,
+      setPolicySourceGroups,
+      setPolicyDestinationGroups,
+      setPolicyDropPosition,
+      setCreatePolicyModal,
+    ],
   );
 
-  const items: MenuItem[] = [
-    {
-      label: "Add Peer",
-      icon: <MonitorSmartphoneIcon size={14} />,
-      onClick: () => setAddPeerModal(true),
-    },
-    {
-      label: "Add Group",
-      icon: <FolderGit2 size={14} />,
-      onClick: handleCreateGroup,
-    },
-    {
-      label: "Add Network",
-      icon: <NetworkIcon size={14} />,
-    },
-    {
-      label: "Add Resource",
-      icon: <Globe size={14} />,
-    },
-    {
-      label: "Add User",
-      icon: <UserPlusIcon size={14} />,
-    },
-  ];
+  // Same "New …" set as the components picker, grouped with separators:
+  // group/policy · peers · network/resource. Each action takes the flow
+  // position it should create at (right-click point or viewport center).
+  const draftItemGroups: {
+    label: string;
+    icon: React.ReactNode;
+    shortcut: React.ReactNode;
+    action: (pos: XYPosition) => void;
+  }[][] = useMemo(
+    () => [
+      [
+        {
+          label: "New Group",
+          icon: <FolderGit2 size={14} />,
+          shortcut: shortcutLabel(1),
+          action: (pos) => addNewGroup({ x: pos.x - 100, y: pos.y - 30 }),
+        },
+        {
+          label: "New Policy",
+          icon: <ShieldIcon size={14} />,
+          shortcut: shortcutLabel(2),
+          action: (pos) => newPolicyAt(pos),
+        },
+      ],
+      [
+        {
+          label: "New User Device",
+          icon: <MonitorSmartphoneIcon size={14} />,
+          shortcut: shortcutLabel(3),
+          action: () => addUserDevice(),
+        },
+        {
+          label: "New Server",
+          icon: <ServerIcon size={14} />,
+          shortcut: shortcutLabel(4),
+          action: (pos) => addPeerPlaceholder("server", pos),
+        },
+        {
+          label: "New Agent",
+          icon: <BotIcon size={14} />,
+          shortcut: shortcutLabel(5),
+          action: (pos) => addPeerPlaceholder("agent", pos),
+        },
+      ],
+      [
+        {
+          label: "New Network",
+          icon: <NetworkIcon size={14} />,
+          shortcut: shortcutLabel(6),
+          action: (pos) => addBlankNode("network", pos),
+        },
+        {
+          label: "New Resource",
+          icon: <Globe size={14} />,
+          shortcut: shortcutLabel(7),
+          action: (pos) => addBlankNode("resource", pos),
+        },
+      ],
+    ],
+    [addNewGroup, newPolicyAt, addUserDevice, addPeerPlaceholder, addBlankNode],
+  );
+
+  // Alt/⌥+1…7 create at the viewport center (draft-only, input-aware).
+  const viewportCenter = useCallback(
+    () =>
+      reactFlow.screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      }),
+    [reactFlow],
+  );
+
+  const shortcutMap = useMemo(() => {
+    const flat = draftItemGroups.flat();
+    return Object.fromEntries(
+      flat.map((item, i) => [
+        `alt+${i + 1}`,
+        () => item.action(viewportCenter()),
+      ]),
+    );
+  }, [draftItemGroups, viewportCenter]);
+
+  useControlCenterShortcuts(shortcutMap);
+
+  // ---- Menu open/close ----
 
   const open = useCallback(
     (pos: MenuPosition) => {
+      // Right-clicking the pane dismisses the components panel, matching
+      // onPaneClick — the menu and the floating panel shouldn't coexist.
+      setComponentsPanelOpen(false);
       setPosition(pos);
       onOpenChange?.(true);
     },
-    [onOpenChange],
+    [onOpenChange, setComponentsPanelOpen],
   );
 
   const close = useCallback(() => {
@@ -103,8 +187,17 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
 
   const handleContextMenu = useCallback(
     (e: MouseEvent) => {
+      // Live mode keeps the browser's default context menu.
+      if (!isDraft) {
+        close();
+        return;
+      }
       const target = e.target as HTMLElement;
-      const isCanvas = target.closest(".react-flow__pane");
+      // The draft start screen overlays the pane while the canvas is empty —
+      // right-clicking it counts as right-clicking the canvas.
+      const isCanvas = target.closest(
+        ".react-flow__pane, .draft-empty-canvas",
+      );
       const isNode = target.closest(".react-flow__node");
       if (!isCanvas || isNode) {
         close();
@@ -113,7 +206,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
       e.preventDefault();
       open({ x: e.clientX, y: e.clientY });
     },
-    [open, close],
+    [isDraft, open, close],
   );
 
   useEffect(() => {
@@ -128,40 +221,56 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     };
   }, [handleContextMenu, close]);
 
-  return (
-    <>
-      {position && (
-        <div
-          ref={menuRef}
-          className="fixed z-50 min-w-[180px] rounded-md border border-nb-gray-900 bg-nb-gray-940 p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
-          style={{ top: position.y, left: position.x }}
-        >
-          {items.map((item) => (
+  const menuItemClass =
+    "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm text-nb-gray-300 transition-colors hover:bg-nb-gray-900 hover:text-gray-50 cursor-pointer";
+
+  const renderShortcut = (shortcut?: React.ReactNode) =>
+    shortcut ? (
+      <kbd
+        className={
+          "ml-auto pl-5 text-xs font-mono text-nb-gray-400 whitespace-nowrap"
+        }
+      >
+        {shortcut}
+      </kbd>
+    ) : null;
+
+  if (!position) return null;
+
+  // Portaled to <body>: rendered inside ReactFlow the menu is trapped in the
+  // canvas stacking context and ends up beneath overlays like the draft
+  // start screen.
+  return createPortal(
+    <div
+      ref={menuRef}
+      className="fixed z-50 min-w-[210px] rounded-md border border-nb-gray-900 bg-nb-gray-940 p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
+      style={{ top: position.y, left: position.x }}
+    >
+      {draftItemGroups.map((group, gi) => (
+        <React.Fragment key={gi}>
+          {gi > 0 && <div className={"-mx-1 my-1 h-px bg-nb-gray-910"} />}
+          {group.map((item) => (
             <button
               key={item.label}
               onClick={() => {
-                item.onClick?.();
+                item.action(
+                  reactFlow.screenToFlowPosition({
+                    x: position.x,
+                    y: position.y,
+                  }),
+                );
                 close();
               }}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm text-nb-gray-300 transition-colors hover:bg-nb-gray-900 hover:text-gray-50 cursor-pointer"
+              className={menuItemClass}
             >
               {item.icon}
               {item.label}
+              {renderShortcut(item.shortcut)}
             </button>
           ))}
-        </div>
-      )}
-
-      <CreateGroupNameModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onSuccess={handleSaveGroup}
-        groups={groups}
-      />
-
-      <Modal open={addPeerModal} onOpenChange={setAddPeerModal}>
-        <SetupModal user={user} />
-      </Modal>
-    </>
+        </React.Fragment>
+      ))}
+    </div>,
+    document.body,
   );
 };

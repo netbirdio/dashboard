@@ -10,9 +10,10 @@ import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
-// A not-yet-installed peer dropped from the components sidebar. `setupKey` is
-// the locally-held key generated when the Server/Agent template was dropped;
-// the Install button opens the setup modal pre-filled with it.
+// A not-yet-installed peer dropped from the components sidebar. No setup key
+// exists until the user installs: the Install button opens the setup modal,
+// where the key is generated on demand and then held here (`setupKey`) so a
+// later reopen reuses it.
 export type PeerPlaceholderKind = "server" | "agent";
 
 export type PeerNodeType = Node<
@@ -72,7 +73,12 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
           </div>
           <button
             onClick={() =>
-              setInstallModal({ isUserDevice: false, setupKey })
+              setInstallModal({
+                isUserDevice: false,
+                setupKey,
+                placeholderKind,
+                nodeId: id,
+              })
             }
             className={cn(
               "ml-2 flex items-center gap-1.5 rounded-md bg-netbird px-2.5 py-1.5 text-xs text-white",

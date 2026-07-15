@@ -5,7 +5,8 @@ import FullTooltip from "@components/FullTooltip";
 interface ToolbarButtonProps {
   children: React.ReactNode;
   tooltip?: string;
-  shortcut?: string;
+  // Text or icon-based content (e.g. lucide Command icon + "Z").
+  shortcut?: React.ReactNode;
   active?: boolean;
   disabled?: boolean;
   className?: string;

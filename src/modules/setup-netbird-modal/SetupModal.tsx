@@ -55,6 +55,9 @@ type Props = {
   //   undefined – legacy: keep historical heuristic (mobile shown unless
   //               a setupKey is already provided; Docker shown).
   isUserDevice?: boolean;
+  // Options for the in-modal key generator (server flow without a key).
+  ephemeralKey?: boolean;
+  onSetupKeyGenerated?: (key: SetupKey) => void;
 };
 
 export default function SetupModal({
@@ -65,6 +68,8 @@ export default function SetupModal({
   className,
   style,
   isUserDevice,
+  ephemeralKey,
+  onSetupKeyGenerated,
 }: Readonly<Props>) {
   return (
     <ModalContent
@@ -81,6 +86,8 @@ export default function SetupModal({
         setupKey={setupKey}
         showOnlyRoutingPeerOS={showOnlyRoutingPeerOS}
         isUserDevice={isUserDevice}
+        ephemeralKey={ephemeralKey}
+        onSetupKeyGenerated={onSetupKeyGenerated}
       />
     </ModalContent>
   );
@@ -96,6 +103,8 @@ type SetupModalContentProps = {
   title?: string;
   hostname?: string;
   isUserDevice?: boolean;
+  ephemeralKey?: boolean;
+  onSetupKeyGenerated?: (key: SetupKey) => void;
 };
 
 export function SetupModalContent({
@@ -108,6 +117,8 @@ export function SetupModalContent({
   title,
   hostname,
   isUserDevice,
+  ephemeralKey,
+  onSetupKeyGenerated,
 }: Readonly<SetupModalContentProps>) {
   const os = useOperatingSystem();
   const [isFirstRun] = useLocalStorage<boolean>("netbird-first-run", true);
@@ -163,7 +174,11 @@ export function SetupModalContent({
       </div>
       <SetupKeyGenerator
         generatedKey={generatedKey}
-        onGenerated={setGeneratedKey}
+        ephemeral={ephemeralKey}
+        onGenerated={(key) => {
+          setGeneratedKey(key);
+          onSetupKeyGenerated?.(key);
+        }}
       />
     </>
   ) : undefined;
@@ -466,6 +481,8 @@ export const RoutingPeerSetupKeyInfo = () => {
 type SetupKeyGeneratorProps = {
   generatedKey?: SetupKey;
   onGenerated: (key: SetupKey) => void;
+  // Ephemeral peers (agents) disappear when offline for a while.
+  ephemeral?: boolean;
 };
 
 // SetupKeyGenerator renders the inline banner that lets the operator
@@ -475,6 +492,7 @@ type SetupKeyGeneratorProps = {
 function SetupKeyGenerator({
   generatedKey,
   onGenerated,
+  ephemeral = false,
 }: SetupKeyGeneratorProps) {
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -492,7 +510,7 @@ function SetupKeyGenerator({
         revoked: false,
         auto_groups: [],
         usage_limit: 1,
-        ephemeral: false,
+        ephemeral,
         allow_extra_dns_labels: false,
       })
       .then((created) => {

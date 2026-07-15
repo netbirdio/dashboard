@@ -27,7 +27,6 @@ import { usePeerView } from "@/modules/control-center/hooks/views/usePeerView";
 import { useUserView } from "@/modules/control-center/hooks/views/useUserView";
 import { useNetworkView } from "@/modules/control-center/hooks/views/useNetworkView";
 import { useSelectNodeHandlers } from "@/modules/control-center/hooks/useSelectNodeHandlers";
-import { ControlCenterComponentsSidebar } from "@/modules/control-center/draft/ControlCenterComponentsSidebar";
 import { DestinationGroupPanel } from "@/modules/control-center/DestinationGroupPanel";
 
 // ---- Canvas State Context ----

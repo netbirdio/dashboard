@@ -1,10 +1,14 @@
 import * as React from "react";
 import { useEffect } from "react";
+import { cn } from "@utils/helpers";
 import {
+  ArrowBigUpIcon,
+  CommandIcon,
   FullscreenIcon,
   HandIcon,
   MinusIcon,
   MousePointer2Icon,
+  NetworkIcon,
   PlusIcon,
   Redo2Icon,
   Undo2Icon,
@@ -14,6 +18,38 @@ import {
   CanvasTool,
   useDraftMode,
 } from "@/modules/control-center/draft/DraftModeContext";
+import { useDraftHistory } from "@/modules/control-center/draft/DraftHistoryContext";
+import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import {
+  applyDraftArrangeLayout,
+  DEFAULT_MIN_ZOOM,
+} from "@/modules/control-center/utils/layouts";
+import { isMac } from "@hooks/useOperatingSystem";
+
+// Undo/redo shortcut badges: ⌘ icon on macOS, "Ctrl" text on Windows/Linux;
+// the big-arrow icon stands in for Shift on both.
+const UndoShortcut = isMac ? (
+  <span className="flex items-center gap-0.5">
+    <CommandIcon size={10} className="relative -top-[1px]" />Z
+  </span>
+) : (
+  <span className="flex items-center gap-0.5">
+    Ctrl<span>+</span>Z
+  </span>
+);
+
+const RedoShortcut = isMac ? (
+  <span className="flex items-center gap-0.5">
+    <ArrowBigUpIcon size={12} className="relative -top-[1px]" />
+    <CommandIcon size={10} className="relative -top-[1px]" />Z
+  </span>
+) : (
+  <span className="flex items-center gap-0.5">
+    Ctrl<span>+</span>
+    <ArrowBigUpIcon size={12} className="relative -top-[1px]" />
+    <span>+</span>Z
+  </span>
+);
 import {
   isInputFocused,
   useControlCenterShortcuts,
@@ -32,17 +68,41 @@ export const CanvasToolbar = () => {
     setComponentsPanelOpen,
   } = useDraftMode();
   const reactFlow = useReactFlow();
+  const { undo, redo, canUndo, canRedo } = useDraftHistory();
+  const { nodes, edges, setNodes, setEdges } = useCanvasState();
 
   const handleZoomIn = () => reactFlow.zoomIn({ duration: 200 });
   const handleZoomOut = () => reactFlow.zoomOut({ duration: 200 });
   const handleFitView = () =>
     reactFlow.fitView({ padding: 0.1, duration: 500, maxZoom: 0.8 });
 
+  // Re-arranges the current graph by connectivity (sources → policies →
+  // destinations), tidying up manually dragged nodes.
+  const handleArrange = () => {
+    if (nodes.length === 0) return;
+    const { updatedNodes, updatedEdges } = applyDraftArrangeLayout(
+      nodes,
+      edges,
+    );
+    setNodes(updatedNodes);
+    setEdges(updatedEdges);
+    setTimeout(() => {
+      reactFlow.fitView({
+        nodes: updatedNodes,
+        padding: 0.1,
+        duration: 500,
+        maxZoom: 0.8,
+        minZoom: DEFAULT_MIN_ZOOM,
+      });
+    }, 50);
+  };
+
   useControlCenterShortcuts({
     c: () => setComponentsPanelOpen(!componentsPanelOpen),
     v: () => setActiveTool(CanvasTool.Select),
     h: () => setActiveTool(CanvasTool.Hand),
     f: handleFitView,
+    a: handleArrange,
     "+": handleZoomIn,
     "-": handleZoomOut,
   });
@@ -85,10 +145,18 @@ export const CanvasToolbar = () => {
           shortcut="C"
           variant="primary"
           active={componentsPanelOpen}
-          onClick={() => setComponentsPanelOpen(true)}
-          className="pl-2 pr-2.5 gap-1 text-sm"
+          // Toggle, matching the C shortcut — panel buttons close on re-click
+          // rather than being disabled while open.
+          onClick={() => setComponentsPanelOpen(!componentsPanelOpen)}
+          className="pl-2 pr-2.5 gap-1 text-sm group/add"
         >
-          <PlusIcon size={13} />
+          <PlusIcon
+            size={13}
+            className={cn(
+              "transition-transform duration-300",
+              "group-hover/add:rotate-90",
+            )}
+          />
           Add
         </ToolbarButton>
       </ToolbarGroup>
@@ -119,10 +187,22 @@ export const CanvasToolbar = () => {
       <ToolbarDivider className="ml-3 mr-2" />
 
       <ToolbarGroup compact position="middle">
-        <ToolbarButton disabled tooltip="Undo" className="w-8">
+        <ToolbarButton
+          disabled={!canUndo}
+          tooltip="Undo"
+          shortcut={UndoShortcut}
+          onClick={undo}
+          className="w-8"
+        >
           <Undo2Icon size={14} />
         </ToolbarButton>
-        <ToolbarButton disabled tooltip="Redo" className="w-8">
+        <ToolbarButton
+          disabled={!canRedo}
+          tooltip="Redo"
+          shortcut={RedoShortcut}
+          onClick={redo}
+          className="w-8"
+        >
           <Redo2Icon size={14} />
         </ToolbarButton>
       </ToolbarGroup>
@@ -153,6 +233,14 @@ export const CanvasToolbar = () => {
           className="w-8"
         >
           <FullscreenIcon size={14} />
+        </ToolbarButton>
+        <ToolbarButton
+          tooltip="Auto Arrange"
+          shortcut="A"
+          onClick={handleArrange}
+          className="w-8"
+        >
+          <NetworkIcon size={14} className="-rotate-90" />
         </ToolbarButton>
       </ToolbarGroup>
     </ToolbarContainer>

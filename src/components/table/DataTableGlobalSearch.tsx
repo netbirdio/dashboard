@@ -4,6 +4,7 @@ import { useDebounce } from "@hooks/useDebounce";
 import { Search } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { isMac } from "@hooks/useOperatingSystem";
 
 interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
   setGlobalSearch: (value: string) => void;
@@ -72,7 +73,17 @@ export default function DataTableGlobalSearch({
       value={inputValue} // Shows immediate updates
       onChange={handleChange}
       maxWidthClass={className}
-      customSuffix={<Kbd>⌘ K</Kbd>}
+      customSuffix={
+        <Kbd>
+          {isMac ? (
+            "⌘ K"
+          ) : (
+            <span className="flex items-center gap-0.5">
+              Ctrl<span>+</span>K
+            </span>
+          )}
+        </Kbd>
+      }
       disabled={false}
     />
   );

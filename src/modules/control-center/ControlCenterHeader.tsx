@@ -17,7 +17,7 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 function HeaderTopLeft() {
   const { currentView, selectedNetwork, previousSelectedUser } =
     useCanvasState();
-  const { isDraft, setIsDraft } = useDraftMode();
+  const { isDraft } = useDraftMode();
   const {
     networkOptions,
     currentNetwork,
@@ -71,18 +71,8 @@ function HeaderTopLeft() {
               <FlowSelector value={currentView} onChange={onViewChange} />
             )}
 
-          {isDraft && (
-            <Button
-              variant={"secondary"}
-              size={"xs"}
-              className={
-                "!px-0 !bg-nb-gray-930 h-[40px] !w-[40px] !min-w-[40px]"
-              }
-              onClick={() => setIsDraft(false)}
-            >
-              <ArrowLeftIcon size={14} />
-            </Button>
-          )}
+          {/* Draft: no header controls top-left — exiting happens via
+              Cancel / Review & Deploy in the DraftModeSwitcher. */}
 
           {/* Draft title (Untitled Draft dropdown + three-dots menu) hidden for now */}
           {/* {isDraft && <DraftModeTitle />} */}

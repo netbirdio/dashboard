@@ -1,15 +1,19 @@
 import * as React from "react";
 import { useOidcUser } from "@axa-fr/react-oidc";
+import { useReactFlow } from "@xyflow/react";
 import { Modal } from "@components/modal/Modal";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 // Renders the "Install NetBird" modal once for the whole canvas, driven by the
 // shared installModal state (opened from the components sidebar or a placeholder
-// peer node's Install button).
+// peer node's Install button). Server/Agent installs arrive without a setup key
+// — the key is generated inside the modal on demand and written back onto the
+// placeholder node so reopening Install reuses it.
 export const DraftInstallPeerModal = () => {
   const { installModal, setInstallModal } = useDraftMode();
   const { oidcUser: user } = useOidcUser();
+  const reactFlow = useReactFlow();
 
   return (
     <Modal
@@ -21,6 +25,18 @@ export const DraftInstallPeerModal = () => {
           user={user}
           isUserDevice={installModal.isUserDevice}
           setupKey={installModal.setupKey}
+          ephemeralKey={installModal.placeholderKind === "agent"}
+          onSetupKeyGenerated={(key) => {
+            const nodeId = installModal.nodeId;
+            if (!nodeId || !key?.key) return;
+            reactFlow.setNodes((prev) =>
+              prev.map((n) =>
+                n.id === nodeId
+                  ? { ...n, data: { ...n.data, setupKey: key.key } }
+                  : n,
+              ),
+            );
+          }}
         />
       )}
     </Modal>

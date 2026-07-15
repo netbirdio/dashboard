@@ -42,15 +42,30 @@ export function useControlCenterShortcuts(
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isInputFocused()) return;
 
-      // Modifier combos are registered as "shift+<key>" and take priority.
-      // Otherwise check exact key first (for special keys like Delete, Escape,
-      // +, -) then lowercase (for letter keys, case-insensitive).
+      // Modifier combos are registered as "ctrl+<key>" / "alt+<key>" /
+      // "shift+<key>" and take priority. Plain-key shortcuts never fire while
+      // Ctrl/Cmd/Alt is held (so e.g. Ctrl+C copy doesn't toggle the
+      // components panel). Alt combos match on e.code (Option+digit types
+      // special characters on macOS). Exact key is checked first (Delete,
+      // Escape, +, -) then lowercase letters.
       const lower = e.key.toLowerCase();
+      const codeKey = e.code?.startsWith("Digit")
+        ? e.code.slice(5)
+        : e.code?.startsWith("Key")
+        ? e.code.slice(3).toLowerCase()
+        : undefined;
       const handler =
+        (e.ctrlKey && shortcutsRef.current[`ctrl+${lower}`]) ||
+        (e.altKey &&
+          (shortcutsRef.current[`alt+${lower}`] ||
+            (codeKey && shortcutsRef.current[`alt+${codeKey}`]))) ||
         (e.shiftKey && shortcutsRef.current[`shift+${lower}`]) ||
-        shortcutsRef.current[e.key] ||
-        shortcutsRef.current[lower];
+        (!e.ctrlKey &&
+          !e.metaKey &&
+          !e.altKey &&
+          (shortcutsRef.current[e.key] || shortcutsRef.current[lower]));
       if (handler) {
+        if (e.ctrlKey || e.shiftKey || e.altKey) e.preventDefault();
         handler();
       }
     };

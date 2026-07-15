@@ -1,7 +1,8 @@
 import * as React from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useContext } from "react";
 import { cn } from "@utils/helpers";
 import Paragraph from "@components/Paragraph";
+import DragAndDropContext from "@/modules/control-center/DragAndDropProvider";
 import SquareIcon from "@components/SquareIcon";
 import {
   BoxesIcon,
@@ -50,9 +51,16 @@ export const DraftEmptyCanvas = () => {
   const { isDraft, componentsPanelOpen, setComponentsPanelOpen } =
     useDraftMode();
   const { nodes } = useCanvasState();
+  // Only read isDragging from the context — the useDragAndDrop() hook
+  // registers its own drop listener and would double-fire the drop action.
+  const dragContext = useContext(DragAndDropContext);
+  const isDragging = dragContext?.isDragging ?? false;
 
-  // Start screen: only while the draft canvas is empty. When the components
-  // panel is open it stays visible but dimmed (see opacity below).
+  // Start screen: only while the draft canvas is empty. Once the components
+  // picker opens (and while dragging) it dims and lets pointer events
+  // through so drops land on the canvas beneath.
+  const dimmed = componentsPanelOpen || isDragging;
+
   if (!isDraft || nodes.length > 0) return null;
 
   // TODO: build the starter topology per template. For now every entry just
@@ -62,70 +70,76 @@ export const DraftEmptyCanvas = () => {
   };
 
   return (
-    <AnimatePresence>
-      {!componentsPanelOpen && (
-        <motion.div
-          className={"absolute left-0 top-0 w-full mt-28 z-10 pointer-events-none"}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className={"pointer-events-auto px-8 mt-8"}>
-            <div className={"flex flex-col items-center py-8"}>
-              {/* Header — mirrors GetStartedTest spacing (mt-8 + py-8 + p-8). */}
-              <div className={"max-w-lg text-center flex flex-col gap-2 p-8"}>
-                <div className={"mx-auto"}>
-                  <SquareIcon
-                    icon={<BoxesIcon className={"text-nb-gray-200"} size={20} />}
-                    color={"gray"}
-                    size={"large"}
-                  />
-                </div>
-                <div className={"text-center"}>
-                  <h1 className={"text-3xl font-medium max-w-lg mx-auto mt-3"}>
-                    Start building your network
-                  </h1>
-                  <Paragraph className={"justify-center mt-3 mb-3"}>
-                    Add components to design your network yourself, or pick a
-                    template to start from a common setup.
-                  </Paragraph>
-                </div>
-              </div>
-
-              {/* Templates */}
-              <div className={"max-w-2xl w-full flex flex-col items-center"}>
-                <div className={"grid grid-cols-3 gap-3 w-full"}>
-                  {TEMPLATES.map((tpl) => (
-                    <button
-                      key={tpl.id}
-                      onClick={() => handleSelectTemplate(tpl.id)}
-                      className={cn(
-                        "flex flex-col items-start justify-between text-left rounded-lg border border-nb-gray-900 bg-nb-gray-940 px-4 py-4 min-h-[132px] transition-colors",
-                        "hover:border-nb-gray-700 hover:bg-nb-gray-930",
-                      )}
-                    >
-                      <tpl.icon size={18} className={"text-nb-gray-300"} />
-                      <div>
-                        <div className={"text-sm text-nb-gray-100"}>
-                          {tpl.title}
-                        </div>
-                        <div
-                          className={
-                            "text-xs text-nb-gray-400 mt-1 leading-relaxed"
-                          }
-                        >
-                          {tpl.description}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+    <div
+      className={cn(
+        // draft-empty-canvas marks the overlay for CanvasContextMenu — a
+        // right-click here counts as a canvas right-click.
+        "draft-empty-canvas absolute left-0 top-0 w-full mt-28 z-10 pointer-events-none",
+        dimmed && "opacity-0",
+      )}
+    >
+      <div
+        className={cn(
+          "px-8 mt-8",
+          dimmed ? "pointer-events-none" : "pointer-events-auto",
+        )}
+      >
+        <div className={"flex flex-col items-center py-8"}>
+          {/* Header — mirrors GetStartedTest spacing (mt-8 + py-8 + p-8). */}
+          <div
+            className={
+              "max-w-lg text-center flex flex-col gap-2 px-8 pt-8 pb-4"
+            }
+          >
+            <div className={"mx-auto"}>
+              <SquareIcon
+                icon={<BoxesIcon className={"text-nb-gray-200"} size={20} />}
+                color={"gray"}
+                size={"large"}
+              />
+            </div>
+            <div className={"text-center"}>
+              <h1 className={"text-3xl font-medium max-w-lg mx-auto mt-3"}>
+                Start building your network
+              </h1>
+              <Paragraph className={"justify-center mt-3 mb-3"}>
+                Add components to design your network yourself, or pick a
+                template to start from a common setup.
+              </Paragraph>
             </div>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+
+          {/* Templates */}
+          <div className={"max-w-2xl w-full flex flex-col items-center"}>
+            <div className={"grid grid-cols-3 gap-3 w-full"}>
+              {TEMPLATES.map((tpl) => (
+                <button
+                  key={tpl.id}
+                  onClick={() => handleSelectTemplate(tpl.id)}
+                  className={cn(
+                    "flex flex-col items-start justify-between text-left rounded-lg border border-nb-gray-900 bg-nb-gray-940 px-4 py-4 min-h-[132px] transition-colors",
+                    "hover:border-nb-gray-700 hover:bg-nb-gray-930",
+                  )}
+                >
+                  <tpl.icon size={18} className={"text-nb-gray-300"} />
+                  <div>
+                    <div className={"text-sm text-nb-gray-100"}>
+                      {tpl.title}
+                    </div>
+                    <div
+                      className={
+                        "text-xs text-nb-gray-400 mt-1 leading-relaxed"
+                      }
+                    >
+                      {tpl.description}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };

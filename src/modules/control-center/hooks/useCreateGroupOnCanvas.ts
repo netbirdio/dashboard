@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { useReactFlow, XYPosition } from "@xyflow/react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
@@ -13,18 +14,51 @@ type CreateGroupOptions = {
   resources?: NetworkResource[];
 };
 
+const uid = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
 export function useCreateGroupOnCanvas() {
   const reactFlow = useReactFlow();
   const { createOrUpdate } = useGroups();
   const { isDraft } = useDraftMode();
+  const { trackCreateGroup } = useDraftChangeset();
   const [modalOpen, setModalOpen] = useState(false);
 
   const createGroup = useCallback(
     async ({ name, position, peers, resources }: CreateGroupOptions) => {
+      const peerIds = (peers?.map((p) => p.id).filter(Boolean) as string[]) ?? [];
+      const resourceIds =
+        (resources?.map((r) => r.id).filter(Boolean) as string[]) ?? [];
+
+      // Draft: no API call — put the group on the canvas and record the change.
+      if (isDraft) {
+        const nodeId = `group-new-${uid()}`;
+        const group: Group = {
+          name,
+          peers_count: peerIds.length,
+          resources_count: resourceIds.length,
+        };
+        reactFlow.addNodes({
+          id: nodeId,
+          type: "groupNode",
+          data: {
+            group,
+            enabled: true,
+            showHandles: true,
+            addedMembers: new Set([...peerIds, ...resourceIds]),
+          },
+          position,
+        });
+        trackCreateGroup({ clientId: nodeId, name, peerIds, resourceIds });
+        return group;
+      }
+
       const createdGroup = await createOrUpdate({
         name,
-        peers: peers?.map((p) => p.id).filter(Boolean) as string[] ?? [],
-        resources: resources?.map((r) => r.id).filter(Boolean) as string[] ?? [],
+        peers: peerIds,
+        resources: resourceIds,
       });
 
       if (!createdGroup?.id) return undefined;
@@ -35,14 +69,14 @@ export function useCreateGroupOnCanvas() {
         data: {
           group: createdGroup,
           enabled: true,
-          showHandles: isDraft,
+          showHandles: false,
         },
         position,
       });
 
       return createdGroup;
     },
-    [createOrUpdate, reactFlow, isDraft],
+    [createOrUpdate, reactFlow, isDraft, trackCreateGroup],
   );
 
   return {

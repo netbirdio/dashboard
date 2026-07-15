@@ -59,11 +59,11 @@ function Trigger({
       disabled={disabled}
       data-testid={dataTestId}
       className={cn(
-        "px-4 py-2 text-sm rounded-md w-full transition-all data-[disabled]:opacity-10",
+        "px-4 py-2 text-sm rounded-md w-full transition-all data-[disabled]:opacity-50",
         value == currentValue
           ? "bg-nb-gray-900"
           : disabled
-          ? ""
+          ? "data-[disabled]:text-nb-gray-400"
           : "text-nb-gray-400 hover:bg-nb-gray-900/50",
         className,
       )}

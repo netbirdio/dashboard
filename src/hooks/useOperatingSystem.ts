@@ -18,6 +18,20 @@ export default function useOperatingSystem() {
   return getOperatingSystem(userAgent);
 }
 
+// Platform detection for shortcut badges: ⌥/⌘ glyphs on macOS, "Alt"/"Ctrl"
+// text on Windows/Linux.
+//
+// Set FORCE_PLATFORM to "windows" or "mac" to preview the other platform's
+// shortcut labels during development. Display-only — the actual key handling
+// (event.altKey/metaKey/ctrlKey) is unaffected. Keep it null in production.
+const FORCE_PLATFORM = null as "mac" | "windows" | null;
+
+export const isMac =
+  FORCE_PLATFORM !== null
+    ? FORCE_PLATFORM === "mac"
+    : typeof navigator !== "undefined" &&
+      /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent);
+
 /**
  * Get the operating system based on a string (user agent, api response, etc.)
  * Falls back to Linux if the operating system is not recognized

@@ -1,7 +1,27 @@
-import React, { useCallback, useEffect, useRef } from "react";
-import { MinusCircleIcon, TrashIcon } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  MinusCircleIcon,
+  PencilIcon,
+  PowerIcon,
+  PowerOffIcon,
+  TrashIcon,
+} from "lucide-react";
+import { Node } from "@xyflow/react";
 import { cn } from "@utils/helpers";
+import { Policy } from "@/interfaces/Policy";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import {
+  canRenameGroup,
+  getNodeGroup,
+  isAllGroup,
+  isGroupNode,
+  isNewGroup,
+  useDraftGroupActions,
+} from "@/modules/control-center/hooks/useDraftGroupActions";
+import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
 
 type MenuPosition = {
   x: number;
@@ -27,29 +47,177 @@ export const NodeContextMenu = ({
   onClose,
 }: NodeContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
-  const { setNodes } = useCanvasState();
+  const { nodes, setNodes, setEdges } = useCanvasState();
+  const { isDraft } = useDraftMode();
+  const { groups, policies } = useControlCenterData();
+  const { trackSetPolicyEnabled, trackDeletePolicy } = useDraftChangeset();
+  const {
+    renameGroup,
+    removeGroup,
+    confirmAndDeleteGroups,
+    removeNodeWithEdges,
+  } = useDraftGroupActions();
+
+  // The rename modal must survive the menu closing (position → null), so the
+  // target node is snapshotted separately.
+  const [renameTarget, setRenameTarget] = useState<Node | null>(null);
+
+  const node = useMemo(
+    () => nodes.find((n) => n.id === nodeId),
+    [nodes, nodeId],
+  );
 
   const handleRemove = useCallback(() => {
-    setNodes((prev) => prev.filter((n) => n.id !== nodeId));
-  }, [nodeId, setNodes]);
+    removeNodeWithEdges(nodeId);
+  }, [nodeId, removeNodeWithEdges]);
 
-  const handleDelete = useCallback(() => {
-    setNodes((prev) => prev.filter((n) => n.id !== nodeId));
-  }, [nodeId, setNodes]);
+  // ---- Policy actions (draft) ----
 
-  const items: MenuItem[] = [
-    {
-      label: "Remove",
-      icon: <MinusCircleIcon size={14} />,
-      onClick: handleRemove,
-    },
-    {
-      label: "Delete",
-      icon: <TrashIcon size={14} />,
-      onClick: handleDelete,
-      danger: true,
-    },
-  ];
+  const nodePolicy = node?.data?.policy as Policy | undefined;
+  const policyClientId = nodeId.startsWith("policy-")
+    ? nodeId.replace("policy-", "")
+    : "";
+  const policyEnabled = nodePolicy?.rules?.[0]?.enabled ?? nodePolicy?.enabled;
+
+  const handleTogglePolicy = useCallback(() => {
+    if (!nodePolicy) return;
+    const enabled = !policyEnabled;
+    const originalEnabled =
+      policies?.find((p) => p.id === nodePolicy.id)?.enabled ?? !enabled;
+
+    trackSetPolicyEnabled({
+      policyId: policyClientId,
+      name: nodePolicy.name ?? "Policy",
+      enabled,
+      originalEnabled,
+      policy: nodePolicy,
+    });
+
+    setNodes((prev) =>
+      prev.map((n) => {
+        if (n.id !== nodeId) return n;
+        const policy = n.data.policy as Policy;
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            policy: {
+              ...policy,
+              enabled,
+              rules: policy.rules?.map((r) => ({ ...r, enabled })),
+            },
+          },
+        };
+      }),
+    );
+    setEdges((prev) =>
+      prev.map((e) =>
+        e.source === nodeId || e.target === nodeId
+          ? { ...e, data: { ...e.data, enabled } }
+          : e,
+      ),
+    );
+  }, [
+    nodePolicy,
+    policyEnabled,
+    policies,
+    policyClientId,
+    nodeId,
+    trackSetPolicyEnabled,
+    setNodes,
+    setEdges,
+  ]);
+
+  const handleDeletePolicy = useCallback(() => {
+    if (!nodePolicy) return;
+    trackDeletePolicy({
+      policyId: policyClientId,
+      name: nodePolicy.name ?? "Policy",
+    });
+    removeNodeWithEdges(nodeId);
+  }, [nodePolicy, policyClientId, nodeId, trackDeletePolicy, removeNodeWithEdges]);
+
+  // ---- Menu items ----
+
+  const items: MenuItem[] = useMemo(() => {
+    // Live mode keeps the simple canvas-only actions.
+    if (!isDraft || !node) {
+      return [
+        {
+          label: "Remove",
+          icon: <MinusCircleIcon size={14} />,
+          onClick: handleRemove,
+        },
+      ];
+    }
+
+    if (isGroupNode(node)) {
+      const group = getNodeGroup(node);
+      const remove: MenuItem = {
+        label: "Remove",
+        icon: <MinusCircleIcon size={14} />,
+        onClick: () => removeGroup(node),
+      };
+      // "All" can neither be renamed nor deleted.
+      if (isAllGroup(group)) return [remove];
+
+      const items: MenuItem[] = [];
+      if (canRenameGroup(group)) {
+        items.push({
+          label: "Rename",
+          icon: <PencilIcon size={14} />,
+          onClick: () => setRenameTarget(node),
+        });
+      }
+      items.push(remove);
+      if (!isNewGroup(group)) {
+        items.push({
+          label: "Delete",
+          icon: <TrashIcon size={14} />,
+          onClick: () => void confirmAndDeleteGroups([node]),
+          danger: true,
+        });
+      }
+      return items;
+    }
+
+    if (node.type === "policyNode") {
+      return [
+        {
+          label: policyEnabled ? "Disable" : "Enable",
+          icon: policyEnabled ? (
+            <PowerOffIcon size={14} />
+          ) : (
+            <PowerIcon size={14} />
+          ),
+          onClick: handleTogglePolicy,
+        },
+        {
+          label: "Delete",
+          icon: <TrashIcon size={14} />,
+          onClick: handleDeletePolicy,
+          danger: true,
+        },
+      ];
+    }
+
+    return [
+      {
+        label: "Remove",
+        icon: <MinusCircleIcon size={14} />,
+        onClick: handleRemove,
+      },
+    ];
+  }, [
+    isDraft,
+    node,
+    policyEnabled,
+    handleRemove,
+    removeGroup,
+    confirmAndDeleteGroups,
+    handleTogglePolicy,
+    handleDeletePolicy,
+  ]);
 
   useEffect(() => {
     if (!position) return;
@@ -61,32 +229,45 @@ export const NodeContextMenu = ({
     };
   }, [position, onClose]);
 
-  if (!position) return null;
-
   return (
-    <div
-      ref={menuRef}
-      className="fixed z-50 min-w-[180px] rounded-md border border-nb-gray-900 bg-nb-gray-940 p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
-      style={{ top: position.y, left: position.x }}
-    >
-      {items.map((item) => (
-        <button
-          key={item.label}
-          onClick={() => {
-            item.onClick?.();
-            onClose();
-          }}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm transition-colors cursor-pointer",
-            item.danger
-              ? "text-red-500 hover:bg-red-900/20 hover:text-red-500"
-              : "text-nb-gray-300 hover:bg-nb-gray-900 hover:text-gray-50",
-          )}
+    <>
+      {position && (
+        <div
+          ref={menuRef}
+          className="fixed z-50 min-w-[180px] rounded-md border border-nb-gray-900 bg-nb-gray-940 p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
+          style={{ top: position.y, left: position.x }}
         >
-          {item.icon}
-          {item.label}
-        </button>
-      ))}
-    </div>
+          {items.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => {
+                item.onClick?.();
+                onClose();
+              }}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm transition-colors cursor-pointer",
+                item.danger
+                  ? "text-red-500 hover:bg-red-900/20 hover:text-red-500"
+                  : "text-nb-gray-300 hover:bg-nb-gray-900 hover:text-gray-50",
+              )}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <GroupRenameModal
+        open={renameTarget !== null}
+        onOpenChange={(open) => !open && setRenameTarget(null)}
+        currentName={getNodeGroup(renameTarget ?? undefined)?.name ?? ""}
+        groups={groups}
+        onRename={(name) => {
+          if (renameTarget) renameGroup(renameTarget, name);
+          setRenameTarget(null);
+        }}
+      />
+    </>
   );
 };

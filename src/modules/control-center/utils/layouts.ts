@@ -241,6 +241,96 @@ export const applyD3HierarchicalLayout = (
   return { updatedNodes, updatedEdges };
 };
 
+// Auto-arrange for the draft canvas. Unlike applyD3HierarchicalLayout it
+// classifies nodes by connectivity, not node type (a sidebar-dropped group is
+// a `groupNode` even when it's only used as a destination): policy sources go
+// to the left column, policies to the middle, destinations to the right, and
+// nodes without any policy connection into their own column on the far left.
+// Columns are ordered by the average index of their policy neighbors to
+// reduce edge crossings.
+export const applyDraftArrangeLayout = (nodes: Node[], edges: Edge[]) => {
+  const simulationNodes: SimulationNode[] = nodes.map((node) => ({
+    ...node,
+    x: node.position?.x || 0,
+    y: node.position?.y || 0,
+  }));
+  const byId = new Map(simulationNodes.map((n) => [n.id, n]));
+  const isPolicy = (id: string) => byId.get(id)?.type === "policyNode";
+
+  const policies = simulationNodes.filter((n) => n.type === "policyNode");
+  const policyIndex = new Map(policies.map((p, i) => [p.id, i]));
+
+  // node id → indices of the policies it connects to
+  const sourceLinks = new Map<string, number[]>();
+  const destLinks = new Map<string, number[]>();
+  edges.forEach((e) => {
+    if (isPolicy(e.target) && !isPolicy(e.source) && byId.has(e.source)) {
+      const list = sourceLinks.get(e.source) ?? [];
+      list.push(policyIndex.get(e.target) ?? 0);
+      sourceLinks.set(e.source, list);
+    }
+    if (isPolicy(e.source) && !isPolicy(e.target) && byId.has(e.target)) {
+      const list = destLinks.get(e.target) ?? [];
+      list.push(policyIndex.get(e.source) ?? 0);
+      destLinks.set(e.target, list);
+    }
+  });
+
+  const sources = simulationNodes.filter((n) => sourceLinks.has(n.id));
+  const destinations = simulationNodes.filter(
+    (n) => destLinks.has(n.id) && !sourceLinks.has(n.id),
+  );
+  const unconnected = simulationNodes.filter(
+    (n) =>
+      n.type !== "policyNode" &&
+      !sourceLinks.has(n.id) &&
+      !destLinks.has(n.id),
+  );
+
+  const avg = (list?: number[]) =>
+    list && list.length > 0
+      ? list.reduce((a, b) => a + b, 0) / list.length
+      : 0;
+  sources.sort(
+    (a, b) => avg(sourceLinks.get(a.id)) - avg(sourceLinks.get(b.id)),
+  );
+  destinations.sort(
+    (a, b) => avg(destLinks.get(a.id)) - avg(destLinks.get(b.id)),
+  );
+
+  // Column positions/spacings mirror the draft build layout
+  // (applyD3HierarchicalLayout with DEFAULT_LAYOUT_CONFIG).
+  centerNodesVertically(unconnected, -450, 120, 0);
+  centerNodesVertically(sources, 0, 120, 0);
+  centerNodesVertically(policies, 500, 60, 14);
+  centerNodesVertically(destinations, 1000, 100, 0);
+
+  const updatedNodes: Node[] = simulationNodes.map((node) => ({
+    ...node,
+    position: { x: node.x, y: node.y },
+  }));
+
+  const updatedEdges: Edge[] = edges.map((edge) => {
+    const sourceNode = byId.get(edge.source);
+    const targetNode = byId.get(edge.target);
+    return {
+      ...edge,
+      data: {
+        ...edge.data,
+        points:
+          sourceNode && targetNode
+            ? [
+                { x: sourceNode.x, y: sourceNode.y },
+                { x: targetNode.x, y: targetNode.y },
+              ]
+            : undefined,
+      },
+    };
+  });
+
+  return { updatedNodes, updatedEdges };
+};
+
 const centerNodesVertically = (
   nodesList: SimulationNode[],
   x: number,

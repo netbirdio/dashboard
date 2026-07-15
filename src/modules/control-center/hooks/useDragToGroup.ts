@@ -61,7 +61,7 @@ function groupContainsItem(groupNode: Node, itemId: string): boolean {
 export function useDragToGroup() {
   const { isDraft } = useDraftMode();
   const { setNodes, setEdges } = useCanvasState();
-  const { addChange } = useDraftChangeset();
+  const { trackAddGroupMembers } = useDraftChangeset();
   const reactFlow = useReactFlow();
 
   const onNodeDrag = useCallback(
@@ -152,14 +152,14 @@ export function useDragToGroup() {
         }),
       );
 
-      addChange({
-        type: "create-group",
-        name: groupData.name ?? "",
-        peers: peer ? [peer] : [],
-        resources: resource ? [resource] : [],
+      trackAddGroupMembers({
+        groupId: groupData.id,
+        groupName: groupData.name ?? "",
+        peerIds: peer?.id ? [peer.id] : [],
+        resourceIds: resource ? [resource.id] : [],
       });
     },
-    [isDraft, reactFlow, setNodes, setEdges, addChange],
+    [isDraft, reactFlow, setNodes, setEdges, trackAddGroupMembers],
   );
 
   return { onNodeDrag, onNodeDragStop };

@@ -89,7 +89,10 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     const target = newNodes ?? nodes;
     window.requestAnimationFrame(() => {
       if (target.length === 0) {
-        reactFlow.setViewport({ x: 0, y: 0, zoom: EMPTY_STATE_ZOOM });
+        // Center the flow origin mid-screen (a raw {0,0} viewport anchors it
+        // at the top-left corner, making the next view's fit animation fly in
+        // from far away).
+        void reactFlow.setCenter(0, 0, { zoom: EMPTY_STATE_ZOOM });
         return;
       }
       reactFlow.fitView({
@@ -311,8 +314,9 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       const isPolicyNode = _node.type === "policyNode";
 
       const networkId = isNetworkNode ? _node.id.replace("network-", "") : "";
+      // Draft groups have no API id yet — the panel is keyed by node id then.
       const groupId = isGroupNode
-        ? (_node.data as any)?.group?.id || _node.id.replace("group-", "")
+        ? (_node.data as any)?.group?.id || (isDraft ? _node.id : _node.id.replace("group-", ""))
         : "";
       const policyId = isPolicyNode ? _node.id.replace("policy-", "") : "";
 
@@ -321,18 +325,21 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       }
       if (
         groupId &&
-        (currentView === FlowView.PEERS ||
+        (isDraft ||
+          currentView === FlowView.PEERS ||
           currentView === FlowView.GROUPS ||
           currentView === FlowView.USERS)
       ) {
         onDestinationGroupSelect(groupId);
       }
+      // Works for draft-created policies too ("new-…") — the policy provider
+      // resolves those from the canvas node data.
       if (policyId) {
         setSelectedPolicy(policyId);
         setPolicyModalOpen(true);
       }
     },
-    [onNetworkSelect, onDestinationGroupSelect, currentView],
+    [onNetworkSelect, onDestinationGroupSelect, currentView, isDraft],
   );
 
   // ---------------------------------------------------------------------------

@@ -40,7 +40,11 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
   const isTarget = connection.inProgress && connection.fromNode.id !== id;
   const isNew = !group?.id;
   const { selectedDestinationGroup, contextMenuNodeId } = useCanvasState();
-  const isPanelActive = !!group?.id && selectedDestinationGroup === group.id;
+  // Panel selection is keyed by group id, or by node id for draft groups.
+  const isPanelActive =
+    selectedDestinationGroup !== "" &&
+    (selectedDestinationGroup === group?.id ||
+      selectedDestinationGroup === id);
   const isContextMenuActive = contextMenuNodeId === id;
   const showHalo = isPanelActive || isContextMenuActive;
 
