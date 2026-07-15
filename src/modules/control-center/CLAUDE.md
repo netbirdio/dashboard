@@ -59,7 +59,7 @@ control-center/
 ├── page.tsx                          → Provider tree + ControlCenterCanvas component
 ├── ControlCenterContext.tsx           → CanvasStateProvider + ControlCenterUIProvider
 ├── ControlCenterPolicyModals.tsx      → Policy modal context + modals (renders inside provider)
-├── ControlCenterHeader.tsx            → Header overlays (HeaderTopLeft, HeaderTopRight, HeaderBottom)
+├── ControlCenterHeader.tsx            → Header overlays (HeaderTopLeft, HeaderTopRight, HeaderBottom); the networks-view selector only renders when networks exist (hidden alongside the empty state)
 ├── ControlCenterEmptyStates.tsx       → Empty state displays per view
 ├── ControlCenterComponentsPanel.tsx   → Legacy panel (used by sidebar)
 ├── CanvasContextMenu.tsx              → Right-click canvas menu (Create Group, Add Peer, etc.)

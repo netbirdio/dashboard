@@ -12,6 +12,7 @@ import { DraftModeSwitcher } from "@/modules/control-center/draft/DraftModeSwitc
 import { CanvasToolbar } from "@/modules/control-center/draft/CanvasToolbar";
 import { useCanvasState, useControlCenterUI } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
 function HeaderTopLeft() {
   const { currentView, selectedNetwork, previousSelectedUser } =
@@ -24,6 +25,8 @@ function HeaderTopLeft() {
     onNetworkSelect,
     onForceSingleUserView,
   } = useControlCenterUI();
+  const { networks } = useControlCenterData();
+  const hasNetworks = (networks?.length ?? 0) > 0;
 
   return (
     <div className={"absolute left-0 top-0 z-10"}>
@@ -84,7 +87,7 @@ function HeaderTopLeft() {
           {/* Draft title (Untitled Draft dropdown + three-dots menu) hidden for now */}
           {/* {isDraft && <DraftModeTitle />} */}
 
-          {!isDraft && currentView === "networks" && (
+          {!isDraft && currentView === "networks" && hasNetworks && (
             <div className={"w-64"}>
               <SelectDropdown
                 variant={"secondary"}
