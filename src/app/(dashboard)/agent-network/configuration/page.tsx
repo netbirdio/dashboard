@@ -1,25 +1,33 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
+import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { VerticalTabs } from "@components/VerticalTabs";
 import * as Tabs from "@radix-ui/react-tabs";
-import { Gauge, ScrollText } from "lucide-react";
+import { ExternalLinkIcon, Gauge, ScrollText, ServerIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { REVERSE_PROXY_CLUSTERS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import AgentAccountControlsCard from "@/modules/agent-network/AgentAccountControlsCard";
 import AgentBudgetRulesTable from "@/modules/agent-network/AgentBudgetRulesTable";
 import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
 
+const ClustersTable = lazy(
+  () => import("@/modules/reverse-proxy/clusters/ClustersTable"),
+);
+
 const TAB_BUDGET_SETTINGS = "budget-settings";
 const TAB_LOG_SETTINGS = "log-settings";
+const TAB_CLUSTERS = "clusters";
 
 // AgentNetworkConfigurationPage holds the configuration surfaces extracted from
 // Usage & Logs — global limits and log-collection controls — using the same
@@ -27,6 +35,7 @@ const TAB_LOG_SETTINGS = "log-settings";
 // Settings page so it reads as "settings for the Agent Network".
 export default function AgentNetworkConfigurationPage() {
   const { permission } = usePermissions();
+  const { only: agentNetworkOnly } = useAgentNetworkMode();
   const queryParams = useSearchParams();
   const queryTab = queryParams.get("tab");
   const [tab, setTab] = useState(queryTab ?? TAB_BUDGET_SETTINGS);
@@ -46,6 +55,10 @@ export default function AgentNetworkConfigurationPage() {
           <VerticalTabs.Trigger value={TAB_LOG_SETTINGS}>
             <ScrollText size={14} />
             Log Collection
+          </VerticalTabs.Trigger>
+          <VerticalTabs.Trigger value={TAB_CLUSTERS}>
+            <ServerIcon size={14} />
+            Clusters
           </VerticalTabs.Trigger>
         </VerticalTabs.List>
         <RestrictedAccess
@@ -80,6 +93,27 @@ export default function AgentNetworkConfigurationPage() {
                         mirroring the Settings > Authentication layout. */}
                     <Suspense fallback={<SkeletonTable />}>
                       <AgentAccountControlsCard />
+                    </Suspense>
+                  </Tabs.Content>
+
+                  <Tabs.Content value={TAB_CLUSTERS} className={"w-full"}>
+                    <ConfigTabHeader
+                      label={"Clusters"}
+                      href={"/agent-network/configuration?tab=clusters"}
+                    >
+                      {agentNetworkOnly
+                        ? "Proxy clusters route your agents' traffic to AI providers and run on your own infrastructure. Add multiple clusters to scale your environment."
+                        : "Proxy clusters route inbound traffic to your services. Shared clusters are run by the platform; account clusters (self-hosted) run on your own infrastructure."}{" "}
+                      <InlineLink
+                        href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
+                        target={"_blank"}
+                      >
+                        Learn more
+                        <ExternalLinkIcon size={12} />
+                      </InlineLink>
+                    </ConfigTabHeader>
+                    <Suspense fallback={<SkeletonTable />}>
+                      <ClustersTable />
                     </Suspense>
                   </Tabs.Content>
                 </div>
