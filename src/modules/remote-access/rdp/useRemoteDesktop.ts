@@ -13,6 +13,10 @@ interface RDPConfig {
   domain?: string;
   width?: number;
   height?: number;
+  // dynamicResize enables the Display Control channel and in-session resize.
+  // Only reliable against Windows hosts; xrdp mishandles the reactivation, so
+  // non-Windows peers fall back to reconnect-on-resize.
+  dynamicResize?: boolean;
 }
 
 export interface RDPCredentials {
@@ -186,6 +190,14 @@ export const useRemoteDesktop = (client: any) => {
             canvas,
             true,
             client.client,
+            (sessionError: string | null, endedSessionId: string) => {
+              // Ignore terminations from superseded sessions (e.g. a resize
+              // reconnect) so they can't tear down a newer connection.
+              if (endedSessionId !== session.current?.id) return;
+              resetState();
+              if (sessionError) setError(sessionError);
+            },
+            rdpConfig.dynamicResize ?? false,
           );
 
           // Store the ironrdp module and session for the input handler hook
@@ -265,7 +277,9 @@ export const useRemoteDesktop = (client: any) => {
   }, []);
 
   /**
-   * Handle window resize events - reconnect with new dimensions
+   * Handle window resize events. Hosts that support the Display Control channel
+   * (Windows) resize the live session in place; others reconnect with the new
+   * dimensions.
    */
   useEffect(() => {
     const handleResize = () => {
@@ -277,6 +291,31 @@ export const useRemoteDesktop = (client: any) => {
       // Clear any existing timeout
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
+      }
+
+      if (lastConnectedConfigRef.current.dynamicResize) {
+        // In-session resize via Display Control, no reconnect.
+        resizeTimeoutRef.current = setTimeout(() => {
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+
+          if (canvasRef.current) {
+            canvasRef.current.width = width;
+            canvasRef.current.height = height;
+          }
+
+          if (session.current && client?.ironRDPBridge) {
+            client.ironRDPBridge.resize(session.current.id, width, height);
+          }
+
+          lastConnectedConfigRef.current = {
+            ...lastConnectedConfigRef.current!,
+            width,
+            height,
+          };
+          canvasRef?.current?.focus();
+        }, 200);
+        return;
       }
 
       setIsResizing(true);
@@ -317,7 +356,7 @@ export const useRemoteDesktop = (client: any) => {
         clearTimeout(resizeTimeoutRef.current);
       }
     };
-  }, [status, connect]);
+  }, [status, connect, client]);
 
   /**
    * Auto accept certificate if previously accepted (for reconnects)
