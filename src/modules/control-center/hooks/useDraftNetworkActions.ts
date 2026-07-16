@@ -208,11 +208,11 @@ export function useDraftNetworkActions() {
                 ? {
                     parentId: networkNodeId,
                     position: getFrameChildPosition(childCount),
-                    // Laid out by the frame — fixed, full frame width.
-                    draggable: false,
+                    // Laid out by the frame, full frame width; dragging one
+                    // moves the whole frame (intercepted in useDragToGroup).
                     style: { ...n.style, width: NETWORK_FRAME_CHILD_WIDTH },
                   }
-                : { parentId: undefined, draggable: true }),
+                : { parentId: undefined }),
             };
           }
           // The frame grows to fit its members.

@@ -86,7 +86,7 @@ function ControlCenterCanvas() {
   const ui = useControlCenterUI();
   const draft = useDraft();
   const { componentsPanelOpen, setComponentsPanelOpen } = useDraftMode();
-  const { onNodeDrag, onNodeDragStop } = useDragToGroup();
+  const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragToGroup();
 
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [nodeContextMenuPos, setNodeContextMenuPos] = useState<{
@@ -136,6 +136,7 @@ function ControlCenterCanvas() {
           canvas.setSelectedDestinationGroup("");
           setComponentsPanelOpen(false);
         }}
+        onNodeDragStart={onNodeDragStart}
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         nodeTypes={NODE_TYPES as unknown as NodeTypes}

@@ -261,9 +261,9 @@ export function useDraftNodeCreation() {
             type: NodeType.ResourceNode,
             parentId: networkNodeId,
             position: getFrameChildPosition(0),
-            // Contained resources are laid out by the frame — fixed in
-            // place, spanning (basically) the full frame width.
-            draggable: false,
+            // Contained resources are laid out by the frame, spanning
+            // (basically) the full frame width; dragging one moves the whole
+            // frame (intercepted in useDragToGroup).
             style: { width: NETWORK_FRAME_CHILD_WIDTH },
             data: {
               resource: { name },

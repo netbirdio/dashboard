@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
@@ -65,9 +65,64 @@ export function useDragToGroup() {
   const { updateDraftPolicy } = useControlCenterPolicy();
   const reactFlow = useReactFlow();
 
+  // Dragging a resource contained in a network frame moves the WHOLE frame
+  // (and everything in it): the child's displacement is transferred to the
+  // frame each drag tick while the child snaps back to its slot.
+  const frameDrag = useRef<{
+    childId: string;
+    childStart: { x: number; y: number };
+    frameId: string;
+    frameStart: { x: number; y: number };
+  } | null>(null);
+
+  const onNodeDragStart = useCallback(
+    (_event: React.MouseEvent, draggedNode: Node) => {
+      frameDrag.current = null;
+      if (!isDraft) return;
+      const parentId = draggedNode.parentId;
+      if (!parentId?.startsWith("network-new-")) return;
+      const frame = reactFlow.getNodes().find((n) => n.id === parentId);
+      if (!frame) return;
+      frameDrag.current = {
+        childId: draggedNode.id,
+        childStart: { ...draggedNode.position },
+        frameId: frame.id,
+        frameStart: { ...frame.position },
+      };
+    },
+    [isDraft, reactFlow],
+  );
+
   const onNodeDrag = useCallback(
     (_event: React.MouseEvent, draggedNode: Node) => {
       if (!isDraft) return;
+
+      // Contained resource → transfer the movement to its frame.
+      const frame = frameDrag.current;
+      if (frame && draggedNode.id === frame.childId) {
+        const delta = {
+          x: draggedNode.position.x - frame.childStart.x,
+          y: draggedNode.position.y - frame.childStart.y,
+        };
+        if (delta.x === 0 && delta.y === 0) return;
+        frame.frameStart = {
+          x: frame.frameStart.x + delta.x,
+          y: frame.frameStart.y + delta.y,
+        };
+        setNodes((prev) =>
+          prev.map((n) => {
+            if (n.id === frame.frameId) {
+              return { ...n, position: { ...frame.frameStart } };
+            }
+            if (n.id === frame.childId) {
+              return { ...n, position: { ...frame.childStart } };
+            }
+            return n;
+          }),
+        );
+        return;
+      }
+
       if (!DROPPABLE_NODE_TYPES.has(draggedNode.type ?? "")) return;
 
       const targetGroup = getIntersectingGroup(draggedNode, reactFlow);
@@ -92,6 +147,21 @@ export function useDragToGroup() {
   const onNodeDragStop = useCallback(
     (_event: React.MouseEvent, draggedNode: Node) => {
       if (!isDraft) return;
+
+      // Contained resource → final snap; no group-drop for framed resources.
+      const frame = frameDrag.current;
+      if (frame && draggedNode.id === frame.childId) {
+        frameDrag.current = null;
+        setNodes((prev) =>
+          prev.map((n) =>
+            n.id === frame.childId
+              ? { ...n, position: { ...frame.childStart } }
+              : n,
+          ),
+        );
+        return;
+      }
+
       if (!DROPPABLE_NODE_TYPES.has(draggedNode.type ?? "")) return;
 
       // Clear all dropTarget highlights
@@ -198,5 +268,5 @@ export function useDragToGroup() {
     ],
   );
 
-  return { onNodeDrag, onNodeDragStop };
+  return { onNodeDragStart, onNodeDrag, onNodeDragStop };
 }
