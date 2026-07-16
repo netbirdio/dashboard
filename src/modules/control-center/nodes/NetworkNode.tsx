@@ -9,6 +9,7 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
 import {
   DraftNetworkRef,
   getDraftResource,
@@ -20,13 +21,66 @@ type NetworkNodeType = {
 
 type NetworkNodeProps = Node<NetworkNodeType, "networkNode">;
 
+// Traffic light: gray = 0, yellow = 1, green ≥ 2 (HA).
+const RoutingPeersIndicator = ({
+  count,
+  hideWhenZero = false,
+  dotSize = 8,
+  className,
+}: {
+  count: number;
+  hideWhenZero?: boolean;
+  dotSize?: number;
+  className?: string;
+}) => {
+  if (hideWhenZero && count === 0) return null;
+  return (
+    <div className={cn("flex items-center", className)}>
+      <CircleIcon
+        size={dotSize}
+        className={cn(
+          "shrink-0 block",
+          count === 0 && "bg-nb-gray-500",
+          count === 1 && "bg-yellow-400",
+          count > 1 && "bg-green-400",
+        )}
+      />
+      {count} Routing Peer(s)
+    </div>
+  );
+};
+
+// Floating "Add Routing Peer" above the node — the install path for the
+// network's first router (drops a connected Server placeholder + opens the
+// setup-key flow).
+const AddRoutingPeerButton = ({ networkNodeId }: { networkNodeId: string }) => {
+  const { addRoutingPeer } = useDraftNodeCreation();
+  return (
+    <div className={"absolute bottom-full left-0 mb-2"}>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          addRoutingPeer(networkNodeId);
+        }}
+        className={cn(
+          "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs shrink-0 whitespace-nowrap",
+          "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
+          "hover:text-white hover:bg-nb-gray-910 transition-colors",
+        )}
+      >
+        <PlusCircleIcon size={13} />
+        Add Routing Peer
+      </button>
+    </div>
+  );
+};
+
 export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   const { data: networkResources } = useFetchApi<NetworkResource[]>(
     "/networks/resources",
   );
   const { isDraft } = useDraftMode();
   const { nodes, edges, contextMenuNodeId } = useCanvasState();
-  const { addRoutingPeer } = useDraftNodeCreation();
   const connection = useConnection();
   const isTarget = connection.inProgress && connection.fromNode?.id !== id;
   const showHalo = contextMenuNodeId === id;
@@ -69,9 +123,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   );
   const routingPeersCount = (n?.routing_peers_count ?? 0) + draftRouterCount;
 
-  // Draft networks render as a FRAME: border + slightly opaque background,
-  // with their resource nodes living inside as ReactFlow children. The
-  // node's width/height come from its style (sized to the member count).
+  // Draft networks render as a FRAME: dashed border + solid background, with
+  // their resource nodes living inside as ReactFlow children. The node's
+  // width/height come from its style (sized to the member count).
   if (isNew) {
     return (
       <div
@@ -94,23 +148,12 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           </div>
           {/* Hidden entirely at 0 — the floating Add Routing Peer button
               carries that state. */}
-          {routingPeersCount > 0 && (
-            <div
-              className={
-                "flex items-center gap-1.5 text-[0.7rem] text-nb-gray-400 shrink-0"
-              }
-            >
-              <CircleIcon
-                size={7}
-                className={cn(
-                  "shrink-0 block",
-                  routingPeersCount === 1 && "bg-yellow-400",
-                  routingPeersCount > 1 && "bg-green-400",
-                )}
-              />
-              {routingPeersCount} Routing Peer(s)
-            </div>
-          )}
+          <RoutingPeersIndicator
+            count={routingPeersCount}
+            hideWhenZero
+            dotSize={7}
+            className={"gap-1.5 text-[0.7rem] text-nb-gray-400 shrink-0"}
+          />
         </div>
 
         {resources.length === 0 && (
@@ -123,51 +166,15 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           </div>
         )}
 
-        {/* Resources are only reachable through a routing peer — offer the
-            install path right on the frame while there is none. */}
         {isDraft && routingPeersCount === 0 && (
-          <div className={"absolute bottom-full left-0 mb-2"}>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                addRoutingPeer(id);
-              }}
-              className={cn(
-                "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs shrink-0 whitespace-nowrap",
-                "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
-                "hover:text-white hover:bg-nb-gray-910 transition-colors",
-              )}
-            >
-              <PlusCircleIcon size={13} />
-              Add Routing Peer
-            </button>
-          </div>
+          <AddRoutingPeerButton networkNodeId={id} />
         )}
-
-        {isDraft && (
-          <Handle
-            type={"target"}
-            position={Position.Left}
-            id={"ta"}
-            isConnectableStart={false}
-            isConnectable={isTarget}
-            style={{
-              background: "none",
-              border: "none",
-              borderRadius: "0",
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              left: "0",
-              top: 0,
-              transform: "none",
-            }}
-          />
-        )}
+        {isDraft && <FullAreaTargetHandle isConnectable={isTarget} />}
       </div>
     );
   }
 
+  // Existing networks (live network view) keep the card layout.
   return (
     <div
       className={cn(
@@ -197,18 +204,10 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             </div>
           </div>
         </div>
-        <div className={"flex items-center gap-2 text-xs"}>
-          <CircleIcon
-            size={8}
-            className={cn(
-              "shrink-0 block",
-              routingPeersCount === 0 && "bg-nb-gray-500",
-              routingPeersCount === 1 && "bg-yellow-400",
-              routingPeersCount > 1 && "bg-green-400",
-            )}
-          />
-          {routingPeersCount} Routing Peer(s)
-        </div>
+        <RoutingPeersIndicator
+          count={routingPeersCount}
+          className={"gap-2 text-xs"}
+        />
       </div>
 
       {resources && resources.length > 0 && (
@@ -227,67 +226,26 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         </div>
       )}
 
-      {/* Draft: resources are only reachable through a routing peer — offer
-          the install path right on the node while there is none. */}
       {isDraft && routingPeersCount === 0 && (
-        <div className={"absolute bottom-full left-0 mb-2"}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              addRoutingPeer(id);
-            }}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs shrink-0 whitespace-nowrap",
-              "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
-              "hover:text-white hover:bg-nb-gray-910 transition-colors",
-            )}
-          >
-            <PlusCircleIcon size={13} />
-            Add Routing Peer
-          </button>
-        </div>
+        <AddRoutingPeerButton networkNodeId={id} />
       )}
 
+      {/* Anchors for the live network view's edges. */}
       <Handle
         type="source"
         position={Position.Right}
         id={"sr"}
         isConnectable={false}
-        style={{
-          opacity: 0,
-        }}
+        style={{ opacity: 0 }}
       />
       <Handle
         type="target"
         position={Position.Left}
         id={"tl"}
         isConnectable={false}
-        style={{
-          opacity: 0,
-        }}
+        style={{ opacity: 0 }}
       />
-      {/* Draft: full-area target — accepts routing peers/groups and resource
-          membership drags; networks are never policy actors. */}
-      {isDraft && (
-        <Handle
-          type={"target"}
-          position={Position.Left}
-          id={"ta"}
-          isConnectableStart={false}
-          isConnectable={isTarget}
-          style={{
-            background: "none",
-            border: "none",
-            borderRadius: "0",
-            position: "absolute",
-            width: "100%",
-            height: "100%",
-            left: "0",
-            top: 0,
-            transform: "none",
-          }}
-        />
-      )}
+      {isDraft && <FullAreaTargetHandle isConnectable={isTarget} />}
     </div>
   );
 };

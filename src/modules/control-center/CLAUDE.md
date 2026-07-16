@@ -130,7 +130,8 @@ control-center/
 │
 ├── handles/
 │   ├── AllHandles.tsx                 → Left/right source handles + full-area target handle (top/bottom non-connectable for edge anchors)
-│   └── ConnectHandle.tsx              → Visible connection handle with arrow icon (shown on hover via group/node)
+│   ├── ConnectHandle.tsx              → Visible connection handle with arrow icon (shown on hover via group/node)
+│   └── FullAreaTargetHandle.tsx       → Invisible whole-node target (shared by AllHandles, PolicyNode, NetworkNode)
 │
 ├── toolbar/
 │   ├── ToolbarButton.tsx              → Button with tooltip + shortcut badge

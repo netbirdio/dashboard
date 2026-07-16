@@ -5,6 +5,7 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
+import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
 import { getPolicyProtocolAndPortText } from "@/modules/control-center/utils/helpers";
 import { Policy } from "@/interfaces/Policy";
 
@@ -82,24 +83,7 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
         <>
           <ConnectHandle type={"source"} position={Position.Left} />
           <ConnectHandle type={"source"} position={Position.Right} />
-          <Handle
-            type={"target"}
-            position={Position.Left}
-            id={"ta"}
-            isConnectableStart={false}
-            isConnectable={isDropTarget}
-            style={{
-              background: "none",
-              border: "none",
-              borderRadius: "0",
-              position: "absolute",
-              width: "100%",
-              height: "100%",
-              left: "0",
-              top: 0,
-              transform: "none",
-            }}
-          />
+          <FullAreaTargetHandle isConnectable={isDropTarget} />
         </>
       )}
     </div>

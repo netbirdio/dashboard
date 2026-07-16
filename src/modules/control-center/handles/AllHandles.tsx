@@ -1,5 +1,6 @@
 import { Handle, Position, useConnection, useNodeId } from "@xyflow/react";
 import * as React from "react";
+import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
 
 export const AllHandles = () => {
   const connection = useConnection();
@@ -21,24 +22,7 @@ export const AllHandles = () => {
         className={"opacity-0"}
       />
 
-      <Handle
-        type={"target"}
-        position={Position.Left}
-        isConnectableStart={false}
-        isConnectable={isTarget}
-        id={"tl"}
-        style={{
-          background: "none",
-          border: "none",
-          borderRadius: "0",
-          position: "absolute",
-          width: "100%",
-          height: "100%",
-          left: "0",
-          top: 0,
-          transform: "none",
-        }}
-      />
+      <FullAreaTargetHandle isConnectable={isTarget} id={"tl"} />
     </>
   );
 };
