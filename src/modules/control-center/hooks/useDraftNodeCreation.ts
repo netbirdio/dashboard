@@ -8,6 +8,7 @@ import {
   getFrameChildPosition,
   getNetworkFrameHeight,
   makeRouterEdge,
+  NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_WIDTH,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
@@ -260,6 +261,10 @@ export function useDraftNodeCreation() {
             type: NodeType.ResourceNode,
             parentId: networkNodeId,
             position: getFrameChildPosition(0),
+            // Contained resources are laid out by the frame — fixed in
+            // place, spanning (basically) the full frame width.
+            draggable: false,
+            style: { width: NETWORK_FRAME_CHILD_WIDTH },
             data: {
               resource: { name },
               enabled: true,

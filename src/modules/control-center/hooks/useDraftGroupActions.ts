@@ -211,6 +211,8 @@ export function useDraftGroupActions() {
               ...(wasChild
                 ? {
                     parentId: undefined,
+                    draggable: true,
+                    style: { ...n.style, width: undefined },
                     position: {
                       x: (frame?.position.x ?? 0) + n.position.x,
                       y: (frame?.position.y ?? 0) + n.position.y,

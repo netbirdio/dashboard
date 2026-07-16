@@ -58,7 +58,7 @@ export const ResourceNode = ({ data, id }: ResourceNode) => {
     return (
       <div
         className={cn(
-          "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-900",
+          "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-900 w-full",
           "hover:bg-nb-gray-930 hover:border-nb-gray-800 pr-5 pl-3 py-1 cursor-pointer",
           isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
           className,

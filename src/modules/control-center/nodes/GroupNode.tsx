@@ -67,7 +67,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
     >
       <div
         className={
-          "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-3 pr-5 py-3 font-normal"
+          "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-4 pr-7 py-3.5 font-normal"
         }
       >
         <div className={"flex items-center gap-3 font-normal text-sm"}>

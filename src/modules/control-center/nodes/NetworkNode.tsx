@@ -77,6 +77,8 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
       <div
         className={cn(
           "w-full h-full rounded-xl border border-dashed border-nb-gray-700 bg-nb-gray-940 relative transition-all",
+          // Same hover treatment as peer nodes.
+          "hover:bg-nb-gray-930 hover:border-nb-gray-600",
           isDraft && isTarget && "ring-2 ring-white/60 bg-nb-gray-930",
           showHalo && "ring-2 ring-sky-500",
         )}
