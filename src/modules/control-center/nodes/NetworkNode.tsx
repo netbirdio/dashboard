@@ -83,7 +83,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           showHalo && "ring-2 ring-sky-500",
         )}
       >
-        <div className={"flex items-center justify-between px-4 pt-3"}>
+        <div className={"flex items-center justify-between px-5 pt-4"}>
           <div
             className={
               "flex items-center gap-2 text-nb-gray-100 text-[0.85rem] font-medium min-w-0"
@@ -116,7 +116,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         {resources.length === 0 && (
           <div
             className={
-              "absolute inset-x-0 top-[52px] bottom-4 flex items-center justify-center text-sm text-nb-gray-500 font-light pointer-events-none"
+              "absolute inset-x-0 top-[64px] bottom-5 flex items-center justify-center text-sm text-nb-gray-500 font-light pointer-events-none"
             }
           >
             No resources yet

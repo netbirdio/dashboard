@@ -385,13 +385,13 @@ export const makeMembershipEdge = (
 // Draft network frame (a bordered, slightly opaque container node that
 // wraps its resource nodes as ReactFlow children). Sizing is computed from
 // the member count — child resources stack vertically under the header.
-export const NETWORK_FRAME_WIDTH = 360;
-const NETWORK_FRAME_HEADER = 56;
-const NETWORK_FRAME_ROW = 74;
-const NETWORK_FRAME_PADDING_BOTTOM = 20;
+export const NETWORK_FRAME_WIDTH = 420;
+const NETWORK_FRAME_HEADER = 64;
+const NETWORK_FRAME_ROW = 78;
+const NETWORK_FRAME_PADDING_BOTTOM = 24;
 // Contained resources are fixed in place and stretch to (basically) the
 // full frame width.
-export const NETWORK_FRAME_CHILD_WIDTH = NETWORK_FRAME_WIDTH - 20;
+export const NETWORK_FRAME_CHILD_WIDTH = NETWORK_FRAME_WIDTH - 28;
 
 export const getNetworkFrameHeight = (resourceCount: number) =>
   NETWORK_FRAME_HEADER +
@@ -401,6 +401,6 @@ export const getNetworkFrameHeight = (resourceCount: number) =>
 // Child position of the i-th resource inside its network frame (relative
 // coordinates — the resource node carries parentId).
 export const getFrameChildPosition = (index: number) => ({
-  x: 10,
+  x: 14,
   y: NETWORK_FRAME_HEADER + index * NETWORK_FRAME_ROW,
 });
