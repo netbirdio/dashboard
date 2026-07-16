@@ -24,6 +24,11 @@ import { ToolbarGroup } from "@/modules/control-center/toolbar/ToolbarGroup";
 import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
+import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import {
+  getPlaceholderPeer,
+  getPolicyRegroupUpdates,
+} from "@/modules/control-center/utils/helpers";
 
 const GROUPABLE_NODE_TYPES = new Set([
   "peerNode",
@@ -58,6 +63,7 @@ export const PeersToolbar = () => {
     return [...(groups ?? []), ...draftGroups];
   }, [groups, nodes]);
   const { createGroup, modalOpen, setModalOpen } = useCreateGroupOnCanvas();
+  const { updateDraftPolicy } = useControlCenterPolicy();
   const [mouseDown, setMouseDown] = React.useState(false);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
 
@@ -150,8 +156,12 @@ export const PeersToolbar = () => {
       const selectedResources: NetworkResource[] = [];
 
       selectedGroupableNodes.forEach((node) => {
-        if (PEER_NODE_TYPES.has(node.type ?? "") && node.data?.peer) {
-          selectedPeers.push(node.data.peer as Peer);
+        if (PEER_NODE_TYPES.has(node.type ?? "")) {
+          // Placeholders join as pseudo-peers with their draft ids — the
+          // upgrade flow swaps those for the real peer id on install/select,
+          // and deploy filters out any that never materialize.
+          const peer = (node.data?.peer as Peer) ?? getPlaceholderPeer(node);
+          if (peer) selectedPeers.push(peer);
         }
         if (RESOURCE_NODE_TYPES.has(node.type ?? "") && node.data?.resource) {
           selectedResources.push(node.data.resource as NetworkResource);
@@ -181,9 +191,39 @@ export const PeersToolbar = () => {
           (e) => !selectedIds.has(e.source) && !selectedIds.has(e.target),
         ),
       );
+
+      // Policies that referenced a grouped peer/resource as their single
+      // source/destination now point at the new group instead — the peer is
+      // gone from the canvas, so the reference would otherwise dangle with
+      // no connection. Placeholders count too (their draft ids).
+      const groupedIds = new Set<string>();
+      selectedPeers.forEach((p) => p.id && groupedIds.add(p.id));
+      selectedResources.forEach((r) => groupedIds.add(r.id));
+
+      const policyUpdates = getPolicyRegroupUpdates(
+        nodes,
+        groupedIds,
+        createdGroup,
+      );
+      if (policyUpdates.length > 0) {
+        // Next tick — the node removal must be committed to the canvas
+        // before drawPolicyOnCanvas rebuilds the policies' edges.
+        setTimeout(() => policyUpdates.forEach((p) => updateDraftPolicy(p)), 0);
+      }
+
       clearSelection();
     },
-    [selectedGroupableNodes, reactFlow, setNodes, setEdges, createGroup, setModalOpen, clearSelection],
+    [
+      selectedGroupableNodes,
+      nodes,
+      reactFlow,
+      setNodes,
+      setEdges,
+      createGroup,
+      updateDraftPolicy,
+      setModalOpen,
+      clearSelection,
+    ],
   );
 
   const handleCancel = clearSelection;

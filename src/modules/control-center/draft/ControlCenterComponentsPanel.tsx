@@ -60,25 +60,17 @@ import {
 } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { SmallBadge } from "@components/ui/SmallBadge";
 
-// Templates that open a modal (User Device install) close the panel after a
-// short delay so the modal is already up when the panel fades out — closing
-// both at the same instant reads as a flicker.
-const MODAL_CLOSE_DELAY_MS = 150;
-
 // Draggable "create new" templates that drop a blank node onto the canvas.
 type BlankKind = "group" | "network" | "resource";
 
-// Clickable "create new" peer templates. NetBird peers are real devices that
-// must install the agent, so these open the SetupModal install flow rather
-// than dropping a blank node. `isUserDevice` selects the SetupModal variant:
-//   true  → user device (interactive login, mobile tabs)
-//   false → server / agent (setup-key + Docker)
+// Draggable "create new" peer templates — all drop a placeholder node onto
+// the canvas. Server/Agent placeholders carry an Install button; the User
+// Device placeholder is a select node (pick an existing peer or install).
 type PeerTemplate = {
-  key: string;
+  key: PeerPlaceholderKind;
   label: string;
   description: string;
   icon: LucideIcon;
-  isUserDevice: boolean;
 };
 
 const PEER_TEMPLATES: PeerTemplate[] = [
@@ -87,21 +79,18 @@ const PEER_TEMPLATES: PeerTemplate[] = [
     label: "User Device",
     description: "Install on a computer or phone",
     icon: MonitorSmartphoneIcon,
-    isUserDevice: true,
   },
   {
     key: "server",
     label: "Server",
     description: "Install on a server or VM",
     icon: ServerIcon,
-    isUserDevice: false,
   },
   {
     key: "agent",
     label: "Agent",
     description: "Add an automated or ephemeral peer",
     icon: BotIcon,
-    isUserDevice: false,
   },
 ];
 
@@ -210,22 +199,9 @@ const PanelContent = React.memo(
     const {
       placeNode: placeDroppedNode,
       addPeerPlaceholder,
-      addUserDevice,
       addBlankNode: addBlankPlaceholderNode,
       addBlankPolicy,
     } = useDraftNodeCreation();
-
-    const handlePeerDrop = useCallback(
-      (tpl: PeerTemplate, position?: XYPosition) => {
-        // User Device installs interactively — just open the setup modal.
-        if (tpl.key === "user-device") {
-          addUserDevice();
-          return;
-        }
-        addPeerPlaceholder(tpl.key as PeerPlaceholderKind, position);
-      },
-      [addUserDevice, addPeerPlaceholder],
-    );
 
     const handlePeerTemplateDragStart = useCallback(
       (event: React.PointerEvent<HTMLDivElement>, tpl: PeerTemplate) => {
@@ -240,17 +216,12 @@ const PanelContent = React.memo(
           initialY: event.clientY,
         });
         onDragStart(event, ({ position }) => {
-          void handlePeerDrop(tpl, position);
+          addPeerPlaceholder(tpl.key, position);
           setGhostData(undefined);
-          // User Device opens the install modal — delay the close.
-          if (tpl.key === "user-device") {
-            setTimeout(onClose, MODAL_CLOSE_DELAY_MS);
-          } else {
-            onClose();
-          }
+          onClose();
         });
       },
-      [onDragStart, handlePeerDrop, onClose],
+      [onDragStart, addPeerPlaceholder, onClose],
     );
 
     const { addNewGroup } = useDraftGroupActions();

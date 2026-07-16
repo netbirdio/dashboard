@@ -51,7 +51,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   const reactFlow = useReactFlow();
   const { isDraft, setComponentsPanelOpen } = useDraftMode();
   const { addNewGroup } = useDraftGroupActions();
-  const { addPeerPlaceholder, addUserDevice, addBlankNode, addBlankPolicy } =
+  const { addPeerPlaceholder, addBlankNode, addBlankPolicy } =
     useDraftNodeCreation();
 
   // ---- Draft mode actions ----
@@ -85,7 +85,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
           label: "New User Device",
           icon: <MonitorSmartphoneIcon size={14} />,
           shortcut: shortcutLabel(3),
-          action: () => addUserDevice(),
+          action: (pos) => addPeerPlaceholder("user-device", pos),
         },
         {
           label: "New Server",
@@ -115,13 +115,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
         },
       ],
     ],
-    [
-      addNewGroup,
-      addBlankPolicy,
-      addUserDevice,
-      addPeerPlaceholder,
-      addBlankNode,
-    ],
+    [addNewGroup, addBlankPolicy, addPeerPlaceholder, addBlankNode],
   );
 
   // Alt/⌥+1…7 create at the viewport center (draft-only, input-aware).

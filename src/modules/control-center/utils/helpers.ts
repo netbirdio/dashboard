@@ -172,21 +172,30 @@ export const getIpPlaceholderFromRange = (range?: string) => {
   return octets.map((o, i) => (i < fixedOctets ? o : "x")).join(".");
 };
 
-// A placeholder peer node (Server / Agent, not installed yet) as a
-// pseudo-Peer: unique draft id ("draft-<uuid>", from node id
+// Default names per placeholder kind ("Agent", "Agent (1)", …).
+export const PLACEHOLDER_BASE_NAMES: Record<string, string> = {
+  agent: "Agent",
+  server: "Server",
+  "user-device": "User Device",
+};
+
+// A placeholder peer node (Server / Agent / User Device, not installed yet)
+// as a pseudo-Peer: unique draft id ("draft-<uuid>", from node id
 // "peer-draft-<uuid>") plus its canvas name — lets placeholders participate
 // in policies and the policy modal's peer selector before they exist in the
-// API.
+// API. A user-device select node with a peer chosen is that real peer, not
+// a placeholder anymore.
 export const getPlaceholderPeer = (node?: CanvasNode): Peer | undefined => {
   const data = node?.data as
-    | { placeholderKind?: string; placeholderName?: string }
+    | { placeholderKind?: string; placeholderName?: string; peer?: Peer }
     | undefined;
-  if (!node || !data?.placeholderKind) return undefined;
+  if (!node || !data?.placeholderKind || data.peer) return undefined;
   return {
     id: node.id.replace("peer-", ""),
     name:
       data.placeholderName ??
-      (data.placeholderKind === "agent" ? "Agent" : "Server"),
+      PLACEHOLDER_BASE_NAMES[data.placeholderKind] ??
+      "Peer",
     ip: "",
     os: "",
   } as Peer;
@@ -206,13 +215,13 @@ export const getPlaceholderHostname = (
       .toLowerCase()
       .replace(/[^a-z0-9-]+/g, "-")
       .replace(/^-+|-+$/g, "");
-  const placeholders = nodes.filter(
-    (n) => (n.data as { placeholderKind?: string })?.placeholderKind,
-  );
   const taken = new Set<string>();
   let result: string | undefined;
-  placeholders.forEach((n) => {
-    const base = sanitize(getPlaceholderPeer(n)?.name ?? "") || "peer";
+  nodes.forEach((n) => {
+    // Skips non-placeholders and user-device selects that picked a peer.
+    const peer = getPlaceholderPeer(n);
+    if (!peer) return;
+    const base = sanitize(peer.name ?? "") || "peer";
     let candidate = base;
     let suffix = 1;
     while (taken.has(candidate)) candidate = `${base}-${suffix++}`;
@@ -220,4 +229,64 @@ export const getPlaceholderHostname = (
     if (n.id === nodeId) result = candidate;
   });
   return result;
+};
+
+// Policies that referenced one of the grouped entities as their single
+// source/destination get rewritten to point at the group instead — the
+// entity's node leaves the canvas when it's grouped, so the reference would
+// otherwise dangle with no connection. Returns the updated policies; run
+// them through updateDraftPolicy (which records changes + redraws edges).
+export const getPolicyRegroupUpdates = (
+  nodes: CanvasNode[],
+  groupedIds: Set<string>,
+  group: Group,
+): Policy[] => {
+  const updates: Policy[] = [];
+  nodes.forEach((n) => {
+    const policy = (n.data as { policy?: Policy })?.policy;
+    const rule = policy?.rules?.[0];
+    if (!policy || !rule) return;
+    const sourceGrouped =
+      !!rule.sourceResource && groupedIds.has(rule.sourceResource.id);
+    const destGrouped =
+      !!rule.destinationResource &&
+      groupedIds.has(rule.destinationResource.id);
+    if (!sourceGrouped && !destGrouped) return;
+    updates.push({
+      ...policy,
+      rules: [
+        {
+          ...rule,
+          sources: sourceGrouped ? [group] : rule.sources,
+          sourceResource: sourceGrouped ? undefined : rule.sourceResource,
+          destinations: destGrouped ? [group] : rule.destinations,
+          destinationResource: destGrouped
+            ? undefined
+            : rule.destinationResource,
+        },
+        ...(policy.rules?.slice(1) ?? []),
+      ],
+    });
+  });
+  return updates;
+};
+
+// Only a policy with both a source and a destination is deployable — and
+// neither side may reference a placeholder peer ("draft-…" id): the peer
+// doesn't exist in the API until it's installed. Policies failing this stay
+// out of the changeset (canvas-only) until the draft completes them.
+export const isDeployablePolicy = (policy: Policy) => {
+  const rule = policy.rules?.[0];
+  if (!rule) return false;
+  const hasSource = (rule.sources?.length ?? 0) > 0 || !!rule.sourceResource;
+  const hasDestination =
+    (rule.destinations?.length ?? 0) > 0 || !!rule.destinationResource;
+  const isDeployableResource = (r?: { id: string }) =>
+    !r?.id?.startsWith("draft-");
+  return (
+    hasSource &&
+    hasDestination &&
+    isDeployableResource(rule.sourceResource) &&
+    isDeployableResource(rule.destinationResource)
+  );
 };

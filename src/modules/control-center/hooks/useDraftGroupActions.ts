@@ -1,8 +1,10 @@
 import { useCallback } from "react";
 import { Node, XYPosition, useReactFlow } from "@xyflow/react";
 import { Group, GroupIssued } from "@/interfaces/Group";
+import { Policy } from "@/interfaces/Policy";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { NodeType } from "@/modules/control-center/utils/nodes";
@@ -49,6 +51,7 @@ export function useDraftGroupActions() {
   const reactFlow = useReactFlow();
   const { setNodes, setEdges, setSelectedDestinationGroup } = useCanvasState();
   const { groups } = useControlCenterData();
+  const { updateDraftPolicy } = useControlCenterPolicy();
   const { confirm } = useDialog();
   const {
     changes,
@@ -142,13 +145,64 @@ export function useDraftGroupActions() {
 
   const removeNodeWithEdges = useCallback(
     (nodeId: string) => {
+      // Removing a peer (real or placeholder) or resource also removes it
+      // from any policy that referenced it as its single source/destination
+      // — the cleared side mirrors the removed connection.
+      const node = reactFlow.getNodes().find((n) => n.id === nodeId);
+      const data = node?.data as
+        | {
+            peer?: { id?: string };
+            resource?: { id?: string };
+            placeholderKind?: string;
+          }
+        | undefined;
+      const entityId =
+        data?.peer?.id ??
+        data?.resource?.id ??
+        (data?.placeholderKind ? nodeId.replace("peer-", "") : undefined);
+
       setNodes((prev) => prev.filter((n) => n.id !== nodeId));
       setEdges((prev) =>
         prev.filter((e) => e.source !== nodeId && e.target !== nodeId),
       );
       setSelectedDestinationGroup("");
+
+      if (!entityId) return;
+      const policyUpdates: Policy[] = [];
+      reactFlow.getNodes().forEach((n) => {
+        const policy = (n.data as { policy?: Policy })?.policy;
+        const rule = policy?.rules?.[0];
+        if (!policy || !rule) return;
+        const sourceHit = rule.sourceResource?.id === entityId;
+        const destHit = rule.destinationResource?.id === entityId;
+        if (!sourceHit && !destHit) return;
+        policyUpdates.push({
+          ...policy,
+          rules: [
+            {
+              ...rule,
+              sourceResource: sourceHit ? undefined : rule.sourceResource,
+              destinationResource: destHit
+                ? undefined
+                : rule.destinationResource,
+            },
+            ...(policy.rules?.slice(1) ?? []),
+          ],
+        });
+      });
+      if (policyUpdates.length > 0) {
+        // Next tick — the node removal must be committed to the canvas
+        // before drawPolicyOnCanvas rebuilds the policies' edges.
+        setTimeout(() => policyUpdates.forEach((p) => updateDraftPolicy(p)), 0);
+      }
     },
-    [setNodes, setEdges, setSelectedDestinationGroup],
+    [
+      reactFlow,
+      setNodes,
+      setEdges,
+      setSelectedDestinationGroup,
+      updateDraftPolicy,
+    ],
   );
 
   // Remove: takes the node off the canvas without deleting anything. If it was

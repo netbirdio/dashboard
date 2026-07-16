@@ -224,6 +224,9 @@ interface DraftChangesetContextType {
   // Removes a draft-only group's pending changes without deleting anything
   // (used when a new group is removed from the canvas).
   untrackNewGroup: (name: string) => void;
+  // Renames a member peer id inside every create/update-group change — used
+  // when a placeholder ("draft-…") upgrades to a real peer.
+  replacePeerIdInGroups: (oldId: string, newId: string) => void;
   trackCreatePolicy: (params: { clientId: string; policy: Policy }) => void;
   // Edits from the policy modal — updates the pending create change for draft
   // policies ("new-…" ids), records/replaces an update-policy change otherwise.
@@ -434,6 +437,24 @@ export function DraftChangesetProvider({
     );
   }, []);
 
+  const replacePeerIdInGroups = useCallback(
+    (oldId: string, newId: string) => {
+      setChanges((prev) =>
+        prev.map((c) => {
+          if (c.type !== "create-group" && c.type !== "update-group") return c;
+          if (!c.peerIds.includes(oldId)) return c;
+          return {
+            ...c,
+            peerIds: [
+              ...new Set(c.peerIds.map((id) => (id === oldId ? newId : id))),
+            ],
+          };
+        }),
+      );
+    },
+    [],
+  );
+
   const trackDeleteGroup = useCallback(
     ({ groupId, name }: GroupRef & { name: string }) => {
       setChanges((prev) => {
@@ -606,6 +627,7 @@ export function DraftChangesetProvider({
       trackAddGroupMembers,
       trackDeleteGroup,
       untrackNewGroup,
+      replacePeerIdInGroups,
       trackCreatePolicy,
       trackUpdatePolicy,
       trackSetPolicyEnabled,
@@ -621,6 +643,7 @@ export function DraftChangesetProvider({
       trackAddGroupMembers,
       trackDeleteGroup,
       untrackNewGroup,
+      replacePeerIdInGroups,
       trackCreatePolicy,
       trackUpdatePolicy,
       trackSetPolicyEnabled,

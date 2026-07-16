@@ -106,7 +106,9 @@ export function useDeployChangeset() {
         case "create-group": {
           const created = await groupRequest.post({
             name: change.name,
-            peers: change.peerIds,
+            // Placeholder members that never installed keep their "draft-"
+            // ids — those don't exist in the API and can't be deployed.
+            peers: change.peerIds.filter((id) => !id.startsWith("draft-")),
             resources: change.resourceIds,
           });
           if (created?.id) nameToId.set(created.name, created.id);
@@ -117,7 +119,9 @@ export function useDeployChangeset() {
           if (!base) throw new Error("Group no longer exists.");
           const peers = new Set(toIds(base.peers));
           const resources = new Set(toIds(base.resources));
-          change.peerIds.forEach((id) => peers.add(id));
+          change.peerIds.forEach(
+            (id) => !id.startsWith("draft-") && peers.add(id),
+          );
           change.resourceIds.forEach((id) => resources.add(id));
           const updated = await groupRequest.put(
             {

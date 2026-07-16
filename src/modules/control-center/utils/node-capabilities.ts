@@ -1,0 +1,46 @@
+import { Node } from "@xyflow/react";
+import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
+
+// Capability predicates for canvas nodes — the single place that answers
+// "what can this node do in draft mode". Wired into the node context menu
+// and drag-to-group; node-capabilities.test.ts documents the full matrix.
+
+// A placeholder that hasn't materialized yet (Server / Agent / User Device
+// without a chosen peer). A user-device select node that picked a peer IS
+// that peer and stops being a placeholder.
+export const isPlaceholderPeerNode = (node?: Node) =>
+  !!getPlaceholderPeer(node);
+
+// Placeholders carry a canvas-only name (Rename in the context menu) and an
+// Install button; real peers get their name from the machine.
+export const canRenamePeerNode = isPlaceholderPeerNode;
+export const canInstallPeerNode = isPlaceholderPeerNode;
+
+// Only the User Device variant offers the peer-select dropdown — kept after
+// a peer is chosen so the selection can be switched.
+export const canSelectPeer = (node?: Node) =>
+  (node?.data as { placeholderKind?: string })?.placeholderKind ===
+  "user-device";
+
+// Node types that can be dragged into a group.
+export const DROPPABLE_INTO_GROUP_NODE_TYPES = new Set([
+  "peerNode",
+  "sourcePeerNode",
+  "expandedGroupPeer",
+  "resourceNode",
+  "destinationResourceNode",
+]);
+
+// The entity id that would join a group when this node is dropped onto one:
+// real peer id, placeholder draft id, or resource id — undefined when the
+// node can't join a group (groups, policies, blank id-less resources).
+export const getGroupableEntityId = (node?: Node): string | undefined => {
+  if (!node || !DROPPABLE_INTO_GROUP_NODE_TYPES.has(node.type ?? "")) {
+    return undefined;
+  }
+  const data = node.data as {
+    peer?: { id?: string };
+    resource?: { id?: string };
+  };
+  return data?.peer?.id ?? getPlaceholderPeer(node)?.id ?? data?.resource?.id;
+};

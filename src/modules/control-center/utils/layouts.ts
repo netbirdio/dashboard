@@ -298,12 +298,13 @@ export const applyDraftArrangeLayout = (nodes: Node[], edges: Edge[]) => {
     (a, b) => avg(destLinks.get(a.id)) - avg(destLinks.get(b.id)),
   );
 
-  // Column positions/spacings mirror the draft build layout
-  // (applyD3HierarchicalLayout with DEFAULT_LAYOUT_CONFIG).
-  centerNodesVertically(unconnected, -450, 120, 0);
-  centerNodesVertically(sources, 0, 120, 0);
-  centerNodesVertically(policies, 500, 60, 14);
-  centerNodesVertically(destinations, 1000, 100, 0);
+  // Column x positions mirror the draft build layout
+  // (applyD3HierarchicalLayout with DEFAULT_LAYOUT_CONFIG); vertical spacing
+  // is roomier so nodes with floating Install buttons don't crowd each other.
+  centerNodesVertically(unconnected, -450, 160, 0);
+  centerNodesVertically(sources, 0, 160, 0);
+  centerNodesVertically(policies, 500, 80, 14);
+  centerNodesVertically(destinations, 1000, 160, 0);
 
   const updatedNodes: Node[] = simulationNodes.map((node) => ({
     ...node,

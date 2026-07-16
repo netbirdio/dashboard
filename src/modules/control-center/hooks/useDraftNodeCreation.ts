@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import { Node, XYPosition, useReactFlow } from "@xyflow/react";
 import { NodeType } from "@/modules/control-center/utils/nodes";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { PLACEHOLDER_BASE_NAMES } from "@/modules/control-center/utils/helpers";
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 import type { Policy } from "@/interfaces/Policy";
 
@@ -17,7 +17,7 @@ const getNextPlaceholderName = (
   kind: PeerPlaceholderKind,
   nodes: Node[],
 ): string => {
-  const base = kind === "agent" ? "Agent" : "Server";
+  const base = PLACEHOLDER_BASE_NAMES[kind] ?? "Peer";
   const taken = new Set(
     nodes
       .map((n) => (n.data as { placeholderName?: string })?.placeholderName)
@@ -52,7 +52,6 @@ const getNextPolicyName = (
 // (click/shortcut).
 export function useDraftNodeCreation() {
   const reactFlow = useReactFlow();
-  const { setInstallModal } = useDraftMode();
   const { policies } = useControlCenterData();
 
   // Places a node roughly centered under the given flow position.
@@ -91,9 +90,6 @@ export function useDraftNodeCreation() {
     [placeNode, reactFlow],
   );
 
-  const addUserDevice = useCallback(() => {
-    setInstallModal({ isUserDevice: true });
-  }, [setInstallModal]);
 
   // Drops a blank policy node — no modal, no changeset entry. A policy
   // without a source and a destination isn't deployable; it only enters the
@@ -164,7 +160,6 @@ export function useDraftNodeCreation() {
   return {
     placeNode,
     addPeerPlaceholder,
-    addUserDevice,
     addBlankNode,
     addBlankPolicy,
   };

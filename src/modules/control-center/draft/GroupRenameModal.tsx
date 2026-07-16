@@ -76,7 +76,7 @@ export const GroupRenameModal = ({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-md"}>
         <ModalHeader title={title} description={description} color={"blue"} />
-        <div className={"p-default flex flex-col gap-4"}>
+        <div className={"p-default flex flex-col"}>
           <Input
             placeholder={inputPlaceholder}
             value={name}

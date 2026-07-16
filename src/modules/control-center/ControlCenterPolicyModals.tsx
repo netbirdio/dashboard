@@ -21,7 +21,10 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useReactFlow, XYPosition } from "@xyflow/react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
+import {
+  getPlaceholderPeer,
+  isDeployablePolicy,
+} from "@/modules/control-center/utils/helpers";
 
 interface PolicyContextType {
   // Edit existing policy
@@ -82,6 +85,7 @@ export function ControlCenterPolicyProvider({
     trackUpdatePolicy,
     trackDeletePolicy,
     trackCreateGroup,
+    removeChange,
   } = useDraftChangeset();
   const { setDropdownOptions } = useGroups();
   const reactFlow = useReactFlow();
@@ -548,24 +552,8 @@ export function ControlCenterPolicyProvider({
     policyDropPositionRef.current = undefined;
   };
 
-  // Only a policy with both a source and a destination is deployable — and
-  // neither side may reference a placeholder peer ("draft-…" id): the peer
-  // doesn't exist in the API until it's installed.
-  const isCompletePolicy = (policy: Policy) => {
-    const rule = policy.rules?.[0];
-    if (!rule) return false;
-    const hasSource = (rule.sources?.length ?? 0) > 0 || !!rule.sourceResource;
-    const hasDestination =
-      (rule.destinations?.length ?? 0) > 0 || !!rule.destinationResource;
-    const isDeployableResource = (r?: { id: string }) =>
-      !r?.id?.startsWith("draft-");
-    return (
-      hasSource &&
-      hasDestination &&
-      isDeployableResource(rule.sourceResource) &&
-      isDeployableResource(rule.destinationResource)
-    );
-  };
+  // Shared with the unit tests — see isDeployablePolicy in utils/helpers.
+  const isCompletePolicy = isDeployablePolicy;
 
   // Applies an edited policy to the draft: record an update change and redraw
   // — draft-created policies just update their create change. Used by the
@@ -594,6 +582,18 @@ export function ControlCenterPolicyProvider({
         drawPolicyOnCanvas(policy);
         return;
       }
+    }
+    // Existing policies: an incomplete state (e.g. its single-peer source
+    // was removed from the canvas) isn't deployable — a pending edit would
+    // ship that broken state, so it's dropped; the API policy stays as-is
+    // until the draft completes it again.
+    if (!isCompletePolicy(policy)) {
+      const pending = changes.find(
+        (c) => c.type === "update-policy" && c.policyId === policy.id,
+      );
+      if (pending) removeChange(pending.id);
+      drawPolicyOnCanvas(policy);
+      return;
     }
     trackUpdatePolicy({ policyId: policy.id, policy });
     drawPolicyOnCanvas(policy);

@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   MinusCircleIcon,
   PencilIcon,
@@ -23,7 +29,11 @@ import {
 } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
-import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
+import {
+  getPlaceholderPeer,
+  PLACEHOLDER_BASE_NAMES,
+} from "@/modules/control-center/utils/helpers";
+import { canRenamePeerNode } from "@/modules/control-center/utils/node-capabilities";
 
 type MenuPosition = {
   x: number;
@@ -69,7 +79,8 @@ export const NodeContextMenu = ({
   const isPlaceholderRename = !!renameTarget?.data?.placeholderKind;
   const placeholderCurrentName =
     (renameTarget?.data?.placeholderName as string) ||
-    (renameTarget?.data?.placeholderKind === "agent" ? "Agent" : "Server");
+    PLACEHOLDER_BASE_NAMES[renameTarget?.data?.placeholderKind as string] ||
+    "Peer";
 
   // Placeholder names must stay unique across the draft peers on the canvas.
   const placeholderTakenNames = useMemo(
@@ -169,7 +180,13 @@ export const NodeContextMenu = ({
       name: nodePolicy.name ?? "Policy",
     });
     removeNodeWithEdges(nodeId);
-  }, [nodePolicy, policyClientId, nodeId, trackDeletePolicy, removeNodeWithEdges]);
+  }, [
+    nodePolicy,
+    policyClientId,
+    nodeId,
+    trackDeletePolicy,
+    removeNodeWithEdges,
+  ]);
 
   // ---- Menu items ----
 
@@ -235,8 +252,10 @@ export const NodeContextMenu = ({
       ];
     }
 
-    // Placeholder peers (New Server / New Agent) — canvas-only rename.
-    if (node.data?.placeholderKind) {
+    // Placeholder peers (Server / Agent / User Device) — canvas-only rename.
+    // A user-device select node with a peer chosen is that peer already, so
+    // it falls through to the plain Remove below.
+    if (canRenamePeerNode(node)) {
       return [
         {
           label: "Rename",
@@ -320,7 +339,9 @@ export const NodeContextMenu = ({
             ? "Set an easily identifiable name for this peer."
             : undefined
         }
-        inputPlaceholder={isPlaceholderRename ? "e.g., Backup Server" : undefined}
+        inputPlaceholder={
+          isPlaceholderRename ? "e.g., Backup Server" : undefined
+        }
         currentName={
           isPlaceholderRename
             ? placeholderCurrentName
@@ -330,7 +351,7 @@ export const NodeContextMenu = ({
         takenNames={isPlaceholderRename ? placeholderTakenNames : undefined}
         duplicateError={
           isPlaceholderRename
-            ? "A peer with this name already exists on the canvas. Please choose another name."
+            ? "Name already taken. Please choose another name."
             : undefined
         }
         onRename={(name) => {

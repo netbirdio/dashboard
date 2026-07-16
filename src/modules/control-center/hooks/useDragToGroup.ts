@@ -1,19 +1,20 @@
 import { useCallback } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import {
+  getPlaceholderPeer,
+  getPolicyRegroupUpdates,
+} from "@/modules/control-center/utils/helpers";
+import {
+  DROPPABLE_INTO_GROUP_NODE_TYPES as DROPPABLE_NODE_TYPES,
+  getGroupableEntityId,
+} from "@/modules/control-center/utils/node-capabilities";
 import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
-
-const DROPPABLE_NODE_TYPES = new Set([
-  "peerNode",
-  "sourcePeerNode",
-  "expandedGroupPeer",
-  "resourceNode",
-  "destinationResourceNode",
-]);
 
 const GROUP_NODE_TYPES = new Set([
   "groupNode",
@@ -29,13 +30,11 @@ function getIntersectingGroup(
   return intersecting.find((n) => GROUP_NODE_TYPES.has(n.type ?? ""));
 }
 
-function getDraggedItemId(node: Node): string | undefined {
-  const peer = node.data?.peer as Peer | undefined;
-  const resource = node.data?.resource as NetworkResource | undefined;
-  return peer?.id ?? resource?.id;
-}
+// Placeholders (Server / Agent / unselected User Device) join with their
+// draft ids — the upgrade flow swaps them for the real id on install.
+const getDraggedItemId = getGroupableEntityId;
 
-function groupContainsItem(groupNode: Node, itemId: string): boolean {
+export function groupContainsItem(groupNode: Node, itemId: string): boolean {
   const group = groupNode.data?.group as Group | undefined;
   if (!group) return false;
 
@@ -62,6 +61,7 @@ export function useDragToGroup() {
   const { isDraft } = useDraftMode();
   const { setNodes, setEdges } = useCanvasState();
   const { trackAddGroupMembers } = useDraftChangeset();
+  const { updateDraftPolicy } = useControlCenterPolicy();
   const reactFlow = useReactFlow();
 
   const onNodeDrag = useCallback(
@@ -114,7 +114,9 @@ export function useDragToGroup() {
       const groupData = targetGroup.data.group as Group;
       const draggedId = draggedNode.id;
 
-      const peer = draggedNode.data?.peer as Peer | undefined;
+      const peer =
+        (draggedNode.data?.peer as Peer | undefined) ??
+        getPlaceholderPeer(draggedNode);
       const resource = draggedNode.data?.resource as
         | NetworkResource
         | undefined;
@@ -127,13 +129,18 @@ export function useDragToGroup() {
         prev.filter((e) => e.source !== draggedId && e.target !== draggedId),
       );
 
-      // Update the group node's counts and track added members
+      // Update counts and added members on EVERY canvas instance of the
+      // group — a group can appear twice (source node + destination copy),
+      // and both must reflect the new member.
       setNodes((prev) =>
         prev.map((n) => {
-          if (n.id !== targetGroup.id) return n;
-          const group = {
-            ...(n.data.group as Group),
-          };
+          const g = n.data?.group as Group | undefined;
+          if (!g) return n;
+          const sameGroup = groupData.id
+            ? g.id === groupData.id
+            : !g.id && g.name === groupData.name;
+          if (!sameGroup) return n;
+          const group = { ...g };
           const addedMembers = new Set(
             (n.data.addedMembers as Set<string>) ?? [],
           );
@@ -158,8 +165,28 @@ export function useDragToGroup() {
         peerIds: peer?.id ? [peer.id] : [],
         resourceIds: resource ? [resource.id] : [],
       });
+
+      // Policies that referenced the dragged entity as their single
+      // source/destination follow it into the group.
+      const policyUpdates = getPolicyRegroupUpdates(
+        reactFlow.getNodes(),
+        new Set([itemId]),
+        groupData,
+      );
+      if (policyUpdates.length > 0) {
+        // Next tick — the node removal must be committed to the canvas
+        // before drawPolicyOnCanvas rebuilds the policies' edges.
+        setTimeout(() => policyUpdates.forEach((p) => updateDraftPolicy(p)), 0);
+      }
     },
-    [isDraft, reactFlow, setNodes, setEdges, trackAddGroupMembers],
+    [
+      isDraft,
+      reactFlow,
+      setNodes,
+      setEdges,
+      trackAddGroupMembers,
+      updateDraftPolicy,
+    ],
   );
 
   return { onNodeDrag, onNodeDragStop };
