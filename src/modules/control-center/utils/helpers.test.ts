@@ -3,11 +3,14 @@ import { describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
 import {
+  deriveResourceType,
+  getDraftResource,
   getGroupCountLabel,
   getIpPlaceholderFromRange,
   getPlaceholderHostname,
   getPlaceholderPeer,
   getPolicyRegroupUpdates,
+  isCompleteDraftResource,
   isDeployablePolicy,
   PLACEHOLDER_BASE_NAMES,
 } from "./helpers";
@@ -269,5 +272,48 @@ describe("getGroupCountLabel", () => {
         resources_count: 2,
       } as Group),
     ).toBe("1 Peer(s), 2 Resource(s)");
+  });
+});
+
+describe("draft resources", () => {
+  it("derives the display type from the address", () => {
+    expect(deriveResourceType("service.internal")).toBe("domain");
+    expect(deriveResourceType("*.example.com")).toBe("domain");
+    expect(deriveResourceType("192.168.1.0/24")).toBe("subnet");
+    expect(deriveResourceType("10.0.0.5")).toBe("host");
+  });
+
+  it("getDraftResource builds a pseudo-resource with the new-… id", () => {
+    const resource = getDraftResource(
+      node("resource-new-r1", {
+        resource: { name: "DB", address: "10.0.0.5" },
+      }),
+    );
+    expect(resource).toMatchObject({ id: "new-r1", name: "DB", type: "host" });
+    // Real resources are not draft resources.
+    expect(getDraftResource(node("resource-r1", { resource: {} }))).toBe(
+      undefined,
+    );
+  });
+
+  it("isCompleteDraftResource requires name + address + network", () => {
+    const incomplete = node("resource-new-r1", {
+      resource: { name: "DB" },
+    });
+    const complete = node("resource-new-r1", {
+      resource: { name: "DB", address: "10.0.0.5" },
+      draftNetwork: { networkClientId: "new-n1", name: "Office" },
+    });
+    expect(isCompleteDraftResource(incomplete)).toBe(false);
+    expect(isCompleteDraftResource(complete)).toBe(true);
+  });
+
+  it("policies referencing draft resources deploy only when the resource is tracked", () => {
+    const policy = makePolicy("p", {
+      sources: [{ name: "G" } as Group],
+      destinationResource: { id: "new-r1", type: "host" },
+    });
+    expect(isDeployablePolicy(policy, new Set())).toBe(false);
+    expect(isDeployablePolicy(policy, new Set(["new-r1"]))).toBe(true);
   });
 });

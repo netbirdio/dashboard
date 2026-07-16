@@ -277,3 +277,172 @@ describe("policy changes", () => {
     expect(result.current.changes[0].type).toBe("delete-policy");
   });
 });
+
+describe("network / resource / router changes", () => {
+  const resourceParams = {
+    clientId: "new-r1",
+    name: "DB",
+    address: "10.0.0.5",
+    networkClientId: "new-n1",
+    networkName: "Office",
+    groupIds: [] as string[],
+  };
+
+  it("records networks and folds edits into the create change", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateNetwork({ clientId: "new-n1", name: "Office" }),
+    );
+    act(() =>
+      result.current.updateDraftNetwork({ clientId: "new-n1", name: "HQ" }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    expect(result.current.changes[0]).toMatchObject({
+      type: "create-network",
+      name: "HQ",
+    });
+  });
+
+  it("network renames follow into dependent resource/router labels", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateNetwork({ clientId: "new-n1", name: "Office" }),
+    );
+    act(() => result.current.trackCreateResource(resourceParams));
+    act(() =>
+      result.current.trackCreateRouter({
+        clientId: "new-x",
+        networkClientId: "new-n1",
+        networkName: "Office",
+        peerId: "p1",
+        peerName: "server-1",
+      }),
+    );
+    act(() =>
+      result.current.updateDraftNetwork({ clientId: "new-n1", name: "HQ" }),
+    );
+    const named = result.current.changes.filter(
+      (c) => "networkName" in c && c.networkName === "HQ",
+    );
+    expect(named).toHaveLength(2);
+  });
+
+  it("resource edits upsert by clientId (one change per resource)", () => {
+    const { result } = setup();
+    act(() => result.current.trackCreateResource(resourceParams));
+    act(() =>
+      result.current.trackCreateResource({
+        ...resourceParams,
+        address: "10.0.0.9",
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    expect(result.current.changes[0]).toMatchObject({ address: "10.0.0.9" });
+  });
+
+  it("routers dedup per (network, peer/group) pair", () => {
+    const { result } = setup();
+    const router = {
+      clientId: "new-x",
+      networkClientId: "new-n1",
+      networkName: "Office",
+      peerId: "p1",
+    };
+    act(() => result.current.trackCreateRouter(router));
+    act(() => result.current.trackCreateRouter({ ...router, clientId: "new-y" }));
+    expect(result.current.changes).toHaveLength(1);
+  });
+
+  it("removing a draft network cascades to its resources and routers", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateNetwork({ clientId: "new-n1", name: "Office" }),
+    );
+    act(() => result.current.trackCreateResource(resourceParams));
+    act(() =>
+      result.current.trackCreateRouter({
+        clientId: "new-x",
+        networkClientId: "new-n1",
+        networkName: "Office",
+        peerId: "p1",
+      }),
+    );
+    act(() => result.current.untrackNetwork("new-n1"));
+    expect(result.current.changes).toHaveLength(0);
+  });
+
+  it("removing a draft resource drops it from group memberships too", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateGroup({
+        clientId: "group-new-1",
+        name: "G",
+        resourceIds: ["new-r1", "r-real"],
+      }),
+    );
+    act(() => result.current.trackCreateResource(resourceParams));
+    act(() => result.current.untrackResource("new-r1"));
+    expect(result.current.changes).toHaveLength(1);
+    expect(result.current.changes[0]).toMatchObject({
+      type: "create-group",
+      resourceIds: ["r-real"],
+    });
+  });
+
+  it("addGroupToDraftResource adds group refs to the resource change", () => {
+    const { result } = setup();
+    act(() => result.current.trackCreateResource(resourceParams));
+    act(() => result.current.addGroupToDraftResource("new-r1", "g-1"));
+    act(() => result.current.addGroupToDraftResource("new-r1", "g-1"));
+    expect(result.current.changes[0]).toMatchObject({ groupIds: ["g-1"] });
+  });
+
+  it("placeholder upgrade renames router peer ids", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateRouter({
+        clientId: "new-x",
+        networkClientId: "new-n1",
+        networkName: "Office",
+        peerId: "draft-a",
+        peerName: "Server",
+      }),
+    );
+    act(() =>
+      result.current.replacePeerIdInGroups("draft-a", "real-1", "server-1"),
+    );
+    expect(result.current.changes[0]).toMatchObject({
+      peerId: "real-1",
+      peerName: "server-1",
+    });
+  });
+
+  it("group renames follow into resource groupIds and router group refs", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateGroup({ clientId: "group-new-1", name: "G" }),
+    );
+    act(() =>
+      result.current.trackCreateResource({
+        ...resourceParams,
+        groupIds: ["G"],
+      }),
+    );
+    act(() =>
+      result.current.trackCreateRouter({
+        clientId: "new-x",
+        networkClientId: "new-n1",
+        networkName: "Office",
+        groupId: "G",
+        groupName: "G",
+      }),
+    );
+    act(() => result.current.trackRenameGroup({ from: "G", to: "G2" }));
+    expect(
+      result.current.changes.find((c) => c.type === "create-resource"),
+    ).toMatchObject({ groupIds: ["G2"] });
+    expect(
+      result.current.changes.find((c) => c.type === "create-router"),
+    ).toMatchObject({ groupId: "G2", groupName: "G2" });
+  });
+});

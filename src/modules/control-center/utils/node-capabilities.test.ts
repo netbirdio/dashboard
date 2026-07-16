@@ -1,8 +1,12 @@
 import { Node } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
 import {
+  canAssignToNetwork,
+  canBeRoutingPeer,
+  canConfigureResource,
   canInstallPeerNode,
   canRenamePeerNode,
+  canRenameNetworkNode,
   canSelectPeer,
   getGroupableEntityId,
   isPlaceholderPeerNode,
@@ -149,13 +153,54 @@ describe("Resource nodes", () => {
     expect(getGroupableEntityId(resourceNode)).toBe("r1");
   });
 
-  it("a blank (id-less) resource placeholder cannot join a group", () => {
+  it("an incomplete draft resource cannot join a group (its data lives on the node)", () => {
     expect(getGroupableEntityId(blankResourceNode)).toBe(undefined);
+  });
+
+  it("a complete draft resource joins a group with its new-… id", () => {
+    const completeDraft = node("resource-new-2", "resourceNode", {
+      resource: { name: "DB", address: "10.0.0.5" },
+      draftNetwork: { networkClientId: "new-n1", name: "Office" },
+    });
+    expect(getGroupableEntityId(completeDraft)).toBe("new-2");
   });
 
   it("has no peer capabilities", () => {
     expect(canRenamePeerNode(resourceNode)).toBe(false);
     expect(canInstallPeerNode(resourceNode)).toBe(false);
     expect(canSelectPeer(resourceNode)).toBe(false);
+  });
+});
+
+describe("Networks & routing peers", () => {
+  const draftNetwork = node("network-new-1", "networkNode", {
+    network: { name: "Office", resources: [] },
+  });
+  const apiNetwork = node("network-n1", "networkNode", {
+    network: { id: "n1", name: "Prod", resources: [] },
+  });
+
+  it("peers (real + placeholders) and groups can be routing peers", () => {
+    expect(canBeRoutingPeer(realPeer)).toBe(true);
+    expect(canBeRoutingPeer(serverPlaceholder)).toBe(true);
+    expect(canBeRoutingPeer(groupNode)).toBe(true);
+  });
+
+  it("resources, networks, and policies can NOT be routing peers", () => {
+    expect(canBeRoutingPeer(resourceNode)).toBe(false);
+    expect(canBeRoutingPeer(draftNetwork)).toBe(false);
+    expect(canBeRoutingPeer(policyNode)).toBe(false);
+  });
+
+  it("only draft networks are renamable on the canvas (v1)", () => {
+    expect(canRenameNetworkNode(draftNetwork)).toBe(true);
+    expect(canRenameNetworkNode(apiNetwork)).toBe(false);
+  });
+
+  it("only draft resources can be assigned to a network / configured (v1)", () => {
+    expect(canAssignToNetwork(blankResourceNode)).toBe(true);
+    expect(canAssignToNetwork(resourceNode)).toBe(false);
+    expect(canConfigureResource(blankResourceNode)).toBe(true);
+    expect(canConfigureResource(resourceNode)).toBe(false);
   });
 });

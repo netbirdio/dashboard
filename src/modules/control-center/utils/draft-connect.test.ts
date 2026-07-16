@@ -286,3 +286,128 @@ describe("connect node ↔ policy (direct side edit)", () => {
     expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
   });
 });
+
+// ---- node ↔ network: routers and membership (no policy modal) --------------
+
+describe("connect node ↔ network (routers & membership)", () => {
+  const draftNetworkNode = node("network-new-1", "networkNode", {
+    network: { name: "Office", resources: [] },
+  });
+  const draftResourceNode = node("resource-new-r1", "resourceNode", {
+    resource: { name: "DB", address: "10.0.0.5" },
+  });
+
+  const withNetworkDeps = () => {
+    const deps = {
+      ...makeDeps([draftNetworkNode, draftResourceNode, placeholderAgent]),
+      onRouterConnect: vi.fn(),
+      onResourceAssign: vi.fn(),
+    };
+    return deps;
+  };
+
+  it("peer → network creates a router (incl. placeholders)", () => {
+    const deps = withNetworkDeps();
+    handleDraftConnect(connect("peer-a", "network-new-1"), deps);
+    expect(deps.onRouterConnect).toHaveBeenCalledWith({
+      networkNodeId: "network-new-1",
+      peerNodeId: "peer-a",
+    });
+    handleDraftConnect(connect("peer-draft-x", "network-new-1"), deps);
+    expect(deps.onRouterConnect).toHaveBeenLastCalledWith({
+      networkNodeId: "network-new-1",
+      peerNodeId: "peer-draft-x",
+    });
+    expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
+  });
+
+  it("group → network creates a group router", () => {
+    const deps = withNetworkDeps();
+    handleDraftConnect(connect("group-g-all", "network-new-1"), deps);
+    expect(deps.onRouterConnect).toHaveBeenCalledWith({
+      networkNodeId: "network-new-1",
+      groupNodeId: "group-g-all",
+    });
+  });
+
+  it("resource → network assigns the parent network", () => {
+    const deps = withNetworkDeps();
+    handleDraftConnect(connect("resource-new-r1", "network-new-1"), deps);
+    expect(deps.onResourceAssign).toHaveBeenCalledWith({
+      resourceNodeId: "resource-new-r1",
+      networkNodeId: "network-new-1",
+    });
+    expect(deps.onRouterConnect).not.toHaveBeenCalled();
+  });
+
+  it("a network can never be a connect source", () => {
+    const deps = withNetworkDeps();
+    handleDraftConnect(connect("network-new-1", "peer-a"), deps);
+    expect(deps.onRouterConnect).not.toHaveBeenCalled();
+    expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
+  });
+});
+
+// ---- resources in policies (destinations only) -----------------------------
+
+describe("resources in policies (one-way)", () => {
+  const draftResourceNode = node("resource-new-r1", "resourceNode", {
+    resource: { name: "DB", address: "10.0.0.5" },
+  });
+
+  it("peer → draft resource prefills it as the destination (derived type)", () => {
+    const deps = makeDeps([draftResourceNode]);
+    handleDraftConnect(connect("peer-a", "resource-new-r1"), deps);
+    expect(deps.setPolicyDestinationResource).toHaveBeenLastCalledWith({
+      id: "new-r1",
+      type: "host",
+    });
+    expect(deps.setPolicyInitialName).toHaveBeenCalledWith("Peer A to DB");
+  });
+
+  it("a resource can never be a connect source toward peers/groups/policies", () => {
+    const blank = makePolicy("new-1");
+    const deps = makeDeps([
+      draftResourceNode,
+      node("policy-new-1", "policyNode", { policy: blank }),
+    ]);
+    handleDraftConnect(connect("resource-res-1", "peer-a"), deps);
+    handleDraftConnect(connect("resource-res-1", "group-g-all"), deps);
+    expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
+    expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
+  });
+
+  it("policy's right handle → resource sets the single destinationResource", () => {
+    const blank = makePolicy("new-1");
+    const deps = makeDeps([
+      draftResourceNode,
+      node("policy-new-1", "policyNode", { policy: blank }),
+    ]);
+    handleDraftConnect(connect("policy-new-1", "resource-new-r1", "sr"), deps);
+    const updated = deps.updateDraftPolicy.mock.calls[0][0] as Policy;
+    expect(updated.rules[0].destinationResource).toEqual({
+      id: "new-r1",
+      type: "host",
+    });
+  });
+
+  it("policy's left (source) handle → resource is a no-op", () => {
+    const blank = makePolicy("new-1");
+    const deps = makeDeps([
+      draftResourceNode,
+      node("policy-new-1", "policyNode", { policy: blank }),
+    ]);
+    handleDraftConnect(connect("policy-new-1", "resource-new-r1", "sl"), deps);
+    expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
+  });
+
+  it("does NOT set a resource on an occupied destination side", () => {
+    const withDest = makePolicy("new-2", { destinations: [groupAll] });
+    const deps = makeDeps([
+      draftResourceNode,
+      node("policy-new-2", "policyNode", { policy: withDest }),
+    ]);
+    handleDraftConnect(connect("policy-new-2", "resource-new-r1", "sr"), deps);
+    expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
+  });
+});

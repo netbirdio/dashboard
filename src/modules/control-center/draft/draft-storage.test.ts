@@ -97,3 +97,34 @@ describe("draft canvas persistence", () => {
     expect(loadDraftCanvas()).toBe(null);
   });
 });
+
+describe("network / resource / router change persistence", () => {
+  beforeEach(() => window.localStorage.clear());
+
+  it("round-trips the new change types", () => {
+    const changes: DraftChange[] = [
+      { id: "1", type: "create-network", clientId: "new-n1", name: "Office" },
+      {
+        id: "2",
+        type: "create-resource",
+        clientId: "new-r1",
+        name: "DB",
+        address: "10.0.0.5",
+        networkClientId: "new-n1",
+        networkName: "Office",
+        groupIds: ["G"],
+      },
+      {
+        id: "3",
+        type: "create-router",
+        clientId: "new-x",
+        networkClientId: "new-n1",
+        networkName: "Office",
+        peerId: "p1",
+        peerName: "server-1",
+      },
+    ];
+    saveDraftChanges(changes);
+    expect(loadDraftChanges()).toEqual(changes);
+  });
+});
