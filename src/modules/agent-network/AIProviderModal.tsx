@@ -1254,8 +1254,11 @@ export default function AIProviderModal({
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
               Learn more about
-              <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
-                Agent Network
+              <InlineLink
+                href={"https://docs.netbird.io/agent-network/providers"}
+                target={"_blank"}
+              >
+                Agent Network Providers
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
