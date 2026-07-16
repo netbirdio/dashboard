@@ -1,4 +1,3 @@
-import { SmallBadge } from "@components/ui/SmallBadge";
 import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
 import { Handle, type Node, Position, useConnection } from "@xyflow/react";
@@ -77,8 +76,8 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
     return (
       <div
         className={cn(
-          "w-full h-full rounded-xl border border-nb-gray-800 bg-nb-gray-900/25 relative transition-all",
-          isDraft && isTarget && "ring-2 ring-white/60 bg-nb-gray-900/40",
+          "w-full h-full rounded-xl border border-dashed border-nb-gray-700 bg-nb-gray-940 relative transition-all",
+          isDraft && isTarget && "ring-2 ring-white/60 bg-nb-gray-930",
           showHalo && "ring-2 ring-sky-500",
         )}
       >
@@ -90,24 +89,26 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           >
             <NetworkIcon size={13} className={"shrink-0 text-nb-gray-300"} />
             <span className={"truncate"}>{n?.name}</span>
-            <SmallBadge />
           </div>
-          <div
-            className={
-              "flex items-center gap-1.5 text-[0.7rem] text-nb-gray-400 shrink-0"
-            }
-          >
-            <CircleIcon
-              size={7}
-              className={cn(
-                "shrink-0 block",
-                routingPeersCount === 0 && "bg-nb-gray-500",
-                routingPeersCount === 1 && "bg-yellow-400",
-                routingPeersCount > 1 && "bg-green-400",
-              )}
-            />
-            {routingPeersCount} Routing Peer(s)
-          </div>
+          {/* Hidden entirely at 0 — the floating Add Routing Peer button
+              carries that state. */}
+          {routingPeersCount > 0 && (
+            <div
+              className={
+                "flex items-center gap-1.5 text-[0.7rem] text-nb-gray-400 shrink-0"
+              }
+            >
+              <CircleIcon
+                size={7}
+                className={cn(
+                  "shrink-0 block",
+                  routingPeersCount === 1 && "bg-yellow-400",
+                  routingPeersCount > 1 && "bg-green-400",
+                )}
+              />
+              {routingPeersCount} Routing Peer(s)
+            </div>
+          )}
         </div>
 
         {resources.length === 0 && (
@@ -188,7 +189,6 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             >
               <NetworkIcon size={12} />
               {n?.name}
-              {isNew && <SmallBadge />}
             </div>
             <div className={"text-nb-gray-400 whitespace-nowrap mt-0.5"}>
               {resources?.length || 0} Resources

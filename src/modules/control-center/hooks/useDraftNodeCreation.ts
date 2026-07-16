@@ -70,7 +70,7 @@ const getNextUniqueName = (base: string, taken: Set<string>) => {
 export function useDraftNodeCreation() {
   const reactFlow = useReactFlow();
   const { policies, networks, networkResources } = useControlCenterData();
-  const { setResourceEditor, setInstallModal } = useDraftMode();
+  const { setInstallModal } = useDraftMode();
   const { trackCreateNetwork } = useDraftChangeset();
 
   // Places a node roughly centered under the given flow position.
@@ -211,12 +211,11 @@ export function useDraftNodeCreation() {
     [placeNode, reactFlow, networks, trackCreateNetwork],
   );
 
-  // Drops a draft resource and opens the editor right away — a bare resource
-  // isn't deployable (needs address + network), so the editor front-loads
-  // the required fields. A draft network FRAME is created around it (a
-  // resource always lives in a network); the resource node is its ReactFlow
-  // child. Cancelling the editor keeps the node as an incomplete placeholder
-  // with a "Set up" affordance.
+  // Drops a draft resource wrapped in an auto-created draft network FRAME
+  // (a resource always lives in a network); the resource node is the
+  // frame's ReactFlow child. The editor opens on node click — until the
+  // address is set, the node shows a dimmed x.x.x.x placeholder and stays
+  // out of the changeset.
   const addDraftResource = useCallback(
     (position?: XYPosition) => {
       const takenResources = new Set<string>();
@@ -277,7 +276,6 @@ export function useDraftNodeCreation() {
         clientId: networkNodeId.replace("network-", ""),
         name: networkName,
       });
-      setResourceEditor({ nodeId });
       return nodeId;
     },
     [
@@ -285,7 +283,6 @@ export function useDraftNodeCreation() {
       networkResources,
       networks,
       trackCreateNetwork,
-      setResourceEditor,
     ],
   );
 
