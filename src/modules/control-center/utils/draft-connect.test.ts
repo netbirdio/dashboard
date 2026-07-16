@@ -365,7 +365,7 @@ describe("resources in policies (one-way)", () => {
     expect(deps.setPolicyInitialName).toHaveBeenCalledWith("Peer A to DB");
   });
 
-  it("a resource can never be a connect source toward peers/groups/policies", () => {
+  it("a resource can never be a connect source toward peers/groups", () => {
     const blank = makePolicy("new-1");
     const deps = makeDeps([
       draftResourceNode,
@@ -374,6 +374,31 @@ describe("resources in policies (one-way)", () => {
     handleDraftConnect(connect("resource-res-1", "peer-a"), deps);
     handleDraftConnect(connect("resource-res-1", "group-g-all"), deps);
     expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
+    expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
+  });
+
+  it("resource left-handle → policy lands on the destination side", () => {
+    const blank = makePolicy("new-1");
+    const deps = makeDeps([
+      draftResourceNode,
+      node("policy-new-1", "policyNode", { policy: blank }),
+    ]);
+    handleDraftConnect(connect("resource-new-r1", "policy-new-1", "sl"), deps);
+    const updated = deps.updateDraftPolicy.mock.calls[0][0] as Policy;
+    expect(updated.rules[0].destinationResource).toEqual({
+      id: "new-r1",
+      type: "host",
+    });
+    expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
+  });
+
+  it("a resource mapped onto a policy's source side is rejected (backstop)", () => {
+    const blank = makePolicy("new-1");
+    const deps = makeDeps([
+      draftResourceNode,
+      node("policy-new-1", "policyNode", { policy: blank }),
+    ]);
+    handleDraftConnect(connect("resource-new-r1", "policy-new-1", "sr"), deps);
     expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
   });
 

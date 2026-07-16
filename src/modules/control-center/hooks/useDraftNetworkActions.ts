@@ -9,10 +9,13 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import {
   DraftNetworkRef,
   getDraftResource,
+  getFrameChildPosition,
+  getNetworkFrameHeight,
   getPlaceholderPeer,
   isCompleteDraftResource,
   makeMembershipEdge,
   makeRouterEdge,
+  NETWORK_FRAME_WIDTH,
 } from "@/modules/control-center/utils/helpers";
 
 const uid = () =>
@@ -172,7 +175,9 @@ export function useDraftNetworkActions() {
   );
 
   // Assigns (or re-assigns) a draft resource's parent network: node data +
-  // membership edge + change sync.
+  // containment + change sync. Draft networks are FRAMES — the resource node
+  // becomes a ReactFlow child inside the frame (which grows to fit); other
+  // parents fall back to a membership edge.
   const assignResourceToNetwork = useCallback(
     ({
       resourceNodeId,
@@ -187,27 +192,70 @@ export function useDraftNetworkActions() {
         reactFlow.getNodes().find((n) => n.id === networkNodeId),
       );
       if (!networkRef) return;
+      const isFrame = networkNodeId.startsWith("network-new-");
 
-      reactFlow.setNodes((prev) =>
-        prev.map((n) =>
-          n.id === resourceNodeId
-            ? { ...n, data: { ...n.data, draftNetwork: networkRef } }
-            : n,
-        ),
-      );
-      // One parent network — replace any previous membership edge.
-      reactFlow.setEdges((prev) =>
-        prev
-          .filter((e) => !e.id.startsWith(`member-${resourceNodeId}-`))
-          .concat(makeMembershipEdge(resourceNodeId, networkNodeId)),
-      );
+      reactFlow.setNodes((prev) => {
+        const childCount = prev.filter(
+          (n) => n.parentId === networkNodeId && n.id !== resourceNodeId,
+        ).length;
+        let next = prev.map((n) => {
+          if (n.id === resourceNodeId) {
+            return {
+              ...n,
+              data: { ...n.data, draftNetwork: networkRef },
+              ...(isFrame
+                ? {
+                    parentId: networkNodeId,
+                    position: getFrameChildPosition(childCount),
+                  }
+                : { parentId: undefined }),
+            };
+          }
+          // The frame grows to fit its members.
+          if (isFrame && n.id === networkNodeId) {
+            return {
+              ...n,
+              style: {
+                ...n.style,
+                width: NETWORK_FRAME_WIDTH,
+                height: getNetworkFrameHeight(childCount + 1),
+              },
+            };
+          }
+          return n;
+        });
+        // ReactFlow requires parents before their children in the array.
+        if (isFrame) {
+          const childIdx = next.findIndex((n) => n.id === resourceNodeId);
+          const parentIdx = next.findIndex((n) => n.id === networkNodeId);
+          if (childIdx < parentIdx) {
+            const [child] = next.splice(childIdx, 1);
+            next.splice(
+              next.findIndex((n) => n.id === networkNodeId) + 1,
+              0,
+              child,
+            );
+          }
+        }
+        return next;
+      });
+      // One parent network — old membership edges go either way; a frame
+      // parent shows containment instead of an edge.
+      reactFlow.setEdges((prev) => {
+        const kept = prev.filter(
+          (e) => !e.id.startsWith(`member-${resourceNodeId}-`),
+        );
+        return isFrame
+          ? kept
+          : kept.concat(makeMembershipEdge(resourceNodeId, networkNodeId));
+      });
       setTimeout(() => syncDraftResource(resourceNodeId), 0);
     },
     [reactFlow, syncDraftResource],
   );
 
   // Saves the draft resource editor: node data (name/address/description,
-  // groups, parent network), membership edge, change sync.
+  // groups, parent network), containment/membership, change sync.
   const saveDraftResource = useCallback(
     (params: {
       nodeId: string;
@@ -226,29 +274,34 @@ export function useDraftNetworkActions() {
                 data: {
                   ...n.data,
                   resource: { name, address, description },
-                  draftNetwork: network,
                   resourceGroupIds: groupIds,
                 },
               }
             : n,
         ),
       );
-      // Membership edge if the parent network is on the canvas.
+      // Containment / membership when the parent network is on the canvas
+      // (assign also stamps draftNetwork + syncs the change).
       const networkNodeId = network.networkClientId
         ? `network-${network.networkClientId}`
         : `network-${network.networkId}`;
       const networkOnCanvas = reactFlow
         .getNodes()
         .some((n) => n.id === networkNodeId);
-      reactFlow.setEdges((prev) => {
-        const kept = prev.filter((e) => !e.id.startsWith(`member-${nodeId}-`));
-        return networkOnCanvas
-          ? kept.concat(makeMembershipEdge(nodeId, networkNodeId))
-          : kept;
-      });
-      setTimeout(() => syncDraftResource(nodeId), 0);
+      if (networkOnCanvas) {
+        assignResourceToNetwork({ resourceNodeId: nodeId, networkNodeId });
+      } else {
+        reactFlow.setNodes((prev) =>
+          prev.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...n.data, draftNetwork: network } }
+              : n,
+          ),
+        );
+        setTimeout(() => syncDraftResource(nodeId), 0);
+      }
     },
-    [reactFlow, syncDraftResource],
+    [reactFlow, assignResourceToNetwork, syncDraftResource],
   );
 
   // Renames a draft network on the canvas node + change + dependent

@@ -5,7 +5,10 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
+  getFrameChildPosition,
+  getNetworkFrameHeight,
   makeRouterEdge,
+  NETWORK_FRAME_WIDTH,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
@@ -194,6 +197,10 @@ export function useDraftNodeCreation() {
           id: nodeId,
           type: NodeType.NetworkNode,
           position: { x: 0, y: 0 },
+          style: {
+            width: NETWORK_FRAME_WIDTH,
+            height: getNetworkFrameHeight(0),
+          },
           data: { network: { name, resources: [] } },
         },
         position,
@@ -206,36 +213,80 @@ export function useDraftNodeCreation() {
 
   // Drops a draft resource and opens the editor right away — a bare resource
   // isn't deployable (needs address + network), so the editor front-loads
-  // the required fields. Cancelling keeps the node as an incomplete
-  // placeholder with a "Set up" affordance.
+  // the required fields. A draft network FRAME is created around it (a
+  // resource always lives in a network); the resource node is its ReactFlow
+  // child. Cancelling the editor keeps the node as an incomplete placeholder
+  // with a "Set up" affordance.
   const addDraftResource = useCallback(
     (position?: XYPosition) => {
-      const taken = new Set<string>();
-      networkResources?.forEach((r) => r.name && taken.add(r.name));
+      const takenResources = new Set<string>();
+      networkResources?.forEach((r) => r.name && takenResources.add(r.name));
+      const takenNetworks = new Set<string>();
+      networks?.forEach((n) => n.name && takenNetworks.add(n.name));
       reactFlow.getNodes().forEach((n) => {
-        const name = (n.data as { resource?: { name?: string } })?.resource
-          ?.name;
-        if (name) taken.add(name);
+        const resourceName = (n.data as { resource?: { name?: string } })
+          ?.resource?.name;
+        if (resourceName) takenResources.add(resourceName);
+        const networkName = (n.data as { network?: { name?: string } })
+          ?.network?.name;
+        if (networkName) takenNetworks.add(networkName);
       });
-      const name = getNextUniqueName("New Resource", taken);
+      const name = getNextUniqueName("New Resource", takenResources);
+      const networkName = getNextUniqueName("New Network", takenNetworks);
+
+      const networkNodeId = `network-new-${uid()}`;
       const nodeId = `resource-new-${uid()}`;
-      placeNode(
-        {
-          id: nodeId,
-          type: NodeType.ResourceNode,
-          position: { x: 0, y: 0 },
-          data: {
-            resource: { name },
-            enabled: true,
-            showHandles: true,
+      const framePosition = position
+        ? {
+            x: position.x - NETWORK_FRAME_WIDTH / 2,
+            y: position.y - getNetworkFrameHeight(1) / 2,
+          }
+        : { x: 0, y: 0 };
+
+      // Parent must precede its children in the nodes array (ReactFlow).
+      reactFlow.setNodes((prev) =>
+        prev.concat([
+          {
+            id: networkNodeId,
+            type: NodeType.NetworkNode,
+            position: framePosition,
+            style: {
+              width: NETWORK_FRAME_WIDTH,
+              height: getNetworkFrameHeight(1),
+            },
+            data: { network: { name: networkName, resources: [] } },
           },
-        },
-        position,
+          {
+            id: nodeId,
+            type: NodeType.ResourceNode,
+            parentId: networkNodeId,
+            position: getFrameChildPosition(0),
+            data: {
+              resource: { name },
+              enabled: true,
+              showHandles: true,
+              draftNetwork: {
+                networkClientId: networkNodeId.replace("network-", ""),
+                name: networkName,
+              },
+            },
+          },
+        ]),
       );
+      trackCreateNetwork({
+        clientId: networkNodeId.replace("network-", ""),
+        name: networkName,
+      });
       setResourceEditor({ nodeId });
       return nodeId;
     },
-    [placeNode, reactFlow, networkResources, setResourceEditor],
+    [
+      reactFlow,
+      networkResources,
+      networks,
+      trackCreateNetwork,
+      setResourceEditor,
+    ],
   );
 
   // Kept for callers that still switch on kind (components panel templates,

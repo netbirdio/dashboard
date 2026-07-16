@@ -194,16 +194,31 @@ export function useDraftGroupActions() {
 
       // Draft networks cascade: create-network + dependent resource/router
       // changes dropped; canvas resources lose their parent (incomplete
-      // again, "Set up" affordance returns).
+      // again, "Set up" affordance returns). Contained resources pop out of
+      // the removed frame at their absolute position.
       if (nodeId.startsWith("network-new-")) {
         const clientId = nodeId.replace("network-", "");
+        const frame = node;
         untrackNetwork(clientId);
         setNodes((prev) =>
           prev.map((n) => {
             const ref = (n.data as { draftNetwork?: { networkClientId?: string } })
               ?.draftNetwork;
-            if (ref?.networkClientId !== clientId) return n;
-            return { ...n, data: { ...n.data, draftNetwork: undefined } };
+            const wasChild = n.parentId === nodeId;
+            if (ref?.networkClientId !== clientId && !wasChild) return n;
+            return {
+              ...n,
+              ...(wasChild
+                ? {
+                    parentId: undefined,
+                    position: {
+                      x: (frame?.position.x ?? 0) + n.position.x,
+                      y: (frame?.position.y ?? 0) + n.position.y,
+                    },
+                  }
+                : {}),
+              data: { ...n.data, draftNetwork: undefined },
+            };
           }),
         );
       }

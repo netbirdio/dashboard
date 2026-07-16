@@ -28,6 +28,8 @@ import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftN
 import {
   DraftNetworkRef,
   getDraftResource,
+  getNetworkFrameHeight,
+  NETWORK_FRAME_WIDTH,
 } from "@/modules/control-center/utils/helpers";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
 
@@ -184,13 +186,21 @@ const EditorContent = ({
     if (creatingNetwork) {
       const networkName = trim(newNetworkName);
       const networkNodeId = `network-new-${uid()}`;
+      // Absolute drop position — the resource may currently sit inside
+      // another frame (relative coordinates).
+      const parent = node.parentId
+        ? reactFlow.getNodes().find((n) => n.id === node.parentId)
+        : undefined;
+      const absoluteX = (parent?.position.x ?? 0) + node.position.x;
+      const absoluteY = (parent?.position.y ?? 0) + node.position.y;
       reactFlow.setNodes((prev) =>
         prev.concat({
           id: networkNodeId,
           type: "networkNode",
-          position: {
-            x: node.position.x + 380,
-            y: node.position.y - 40,
+          position: { x: absoluteX + 380, y: absoluteY - 40 },
+          style: {
+            width: NETWORK_FRAME_WIDTH,
+            height: getNetworkFrameHeight(0),
           },
           data: { network: { name: networkName, resources: [] } },
         }),

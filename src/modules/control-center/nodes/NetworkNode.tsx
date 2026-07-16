@@ -70,6 +70,101 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   );
   const routingPeersCount = (n?.routing_peers_count ?? 0) + draftRouterCount;
 
+  // Draft networks render as a FRAME: border + slightly opaque background,
+  // with their resource nodes living inside as ReactFlow children. The
+  // node's width/height come from its style (sized to the member count).
+  if (isNew) {
+    return (
+      <div
+        className={cn(
+          "w-full h-full rounded-xl border border-nb-gray-800 bg-nb-gray-900/25 relative transition-all",
+          isDraft && isTarget && "ring-2 ring-white/60 bg-nb-gray-900/40",
+          showHalo && "ring-2 ring-sky-500",
+        )}
+      >
+        <div className={"flex items-center justify-between px-4 pt-3"}>
+          <div
+            className={
+              "flex items-center gap-2 text-nb-gray-100 text-[0.85rem] font-medium min-w-0"
+            }
+          >
+            <NetworkIcon size={13} className={"shrink-0 text-nb-gray-300"} />
+            <span className={"truncate"}>{n?.name}</span>
+            <SmallBadge />
+          </div>
+          <div
+            className={
+              "flex items-center gap-1.5 text-[0.7rem] text-nb-gray-400 shrink-0"
+            }
+          >
+            <CircleIcon
+              size={7}
+              className={cn(
+                "shrink-0 block",
+                routingPeersCount === 0 && "bg-nb-gray-500",
+                routingPeersCount === 1 && "bg-yellow-400",
+                routingPeersCount > 1 && "bg-green-400",
+              )}
+            />
+            {routingPeersCount} Routing Peer(s)
+          </div>
+        </div>
+
+        {resources.length === 0 && (
+          <div
+            className={
+              "absolute inset-x-0 top-[52px] bottom-4 flex items-center justify-center text-sm text-nb-gray-500 font-light pointer-events-none"
+            }
+          >
+            No resources yet
+          </div>
+        )}
+
+        {/* Resources are only reachable through a routing peer — offer the
+            install path right on the frame while there is none. */}
+        {isDraft && routingPeersCount === 0 && (
+          <div className={"absolute bottom-full left-0 mb-2"}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                addRoutingPeer(id);
+              }}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs shrink-0 whitespace-nowrap",
+                "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
+                "hover:text-white hover:bg-nb-gray-910 transition-colors",
+              )}
+            >
+              <PlusCircleIcon size={13} />
+              Add Routing Peer
+            </button>
+          </div>
+        )}
+
+        {isDraft && (
+          <Handle
+            type={"target"}
+            position={Position.Left}
+            id={"ta"}
+            isConnectableStart={false}
+            isConnectable={isTarget}
+            style={{
+              background: "none",
+              border: "none",
+              borderRadius: "0",
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              left: "0",
+              top: 0,
+              transform: "none",
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(

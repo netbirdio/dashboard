@@ -256,6 +256,9 @@ export const applyDraftArrangeLayout = (nodes: Node[], edges: Edge[]) => {
   }));
   const byId = new Map(simulationNodes.map((n) => [n.id, n]));
   const isPolicy = (id: string) => byId.get(id)?.type === "policyNode";
+  // Children of network frames don't move themselves (relative positions) —
+  // their connectivity counts for the frame instead.
+  const resolveToParent = (id: string) => byId.get(id)?.parentId ?? id;
 
   const policies = simulationNodes.filter((n) => n.type === "policyNode");
   const policyIndex = new Map(policies.map((p, i) => [p.id, i]));
@@ -265,22 +268,25 @@ export const applyDraftArrangeLayout = (nodes: Node[], edges: Edge[]) => {
   const destLinks = new Map<string, number[]>();
   edges.forEach((e) => {
     if (isPolicy(e.target) && !isPolicy(e.source) && byId.has(e.source)) {
-      const list = sourceLinks.get(e.source) ?? [];
+      const key = resolveToParent(e.source);
+      const list = sourceLinks.get(key) ?? [];
       list.push(policyIndex.get(e.target) ?? 0);
-      sourceLinks.set(e.source, list);
+      sourceLinks.set(key, list);
     }
     if (isPolicy(e.source) && !isPolicy(e.target) && byId.has(e.target)) {
-      const list = destLinks.get(e.target) ?? [];
+      const key = resolveToParent(e.target);
+      const list = destLinks.get(key) ?? [];
       list.push(policyIndex.get(e.source) ?? 0);
-      destLinks.set(e.target, list);
+      destLinks.set(key, list);
     }
   });
 
-  const sources = simulationNodes.filter((n) => sourceLinks.has(n.id));
-  const destinations = simulationNodes.filter(
+  const positionable = simulationNodes.filter((n) => !n.parentId);
+  const sources = positionable.filter((n) => sourceLinks.has(n.id));
+  const destinations = positionable.filter(
     (n) => destLinks.has(n.id) && !sourceLinks.has(n.id),
   );
-  const unconnected = simulationNodes.filter(
+  const unconnected = positionable.filter(
     (n) =>
       n.type !== "policyNode" &&
       !sourceLinks.has(n.id) &&

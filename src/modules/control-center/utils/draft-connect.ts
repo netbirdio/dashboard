@@ -193,11 +193,6 @@ export function handleDraftConnect(
     });
   };
 
-  // Resources are destinations only — a resource can never be the source of
-  // a connection toward peers/groups/policies (their nodes expose no source
-  // handles; this is the hard backstop).
-  if (sourceInfo.kind === "resource") return;
-
   // Adds a single resource as a policy's destination — resources never sit
   // on the source side, and a side holds groups XOR one peer/resource.
   const addResourceToPolicy = (
@@ -242,17 +237,25 @@ export function handleDraftConnect(
     return;
   }
 
-  // Group/peer handle → policy: dragging from the node's left handle means
-  // it sits to the right of the policy → destination; from its right
-  // handle → source.
+  // Group/peer/resource handle → policy: dragging from the node's left
+  // handle means it sits to the right of the policy → destination; from its
+  // right handle → source. Resources only carry a LEFT handle, so they can
+  // only ever land on the destination side (addResourceToPolicy rejects
+  // sources as the backstop).
   if (targetInfo.kind === "policy") {
     const side = connection.sourceHandle?.startsWith("sl")
       ? ("destinations" as const)
       : ("sources" as const);
     if (sourceInfo.kind === "group") addGroupToPolicy(target, sourceInfo.id, side);
     else if (sourceInfo.kind === "peer") addPeerToPolicy(target, sourceInfo.id, side);
+    else if (sourceInfo.kind === "resource")
+      addResourceToPolicy(target, sourceInfo.id, side);
     return;
   }
+
+  // Resources are destinations only — toward anything but a policy or a
+  // network (both handled above), a resource-sourced drag is a no-op.
+  if (sourceInfo.kind === "resource") return;
 
   // Prefill for the create-policy modal. Each side holds either groups or
   // a single peer/resource (never both) — reset everything first so a
