@@ -273,7 +273,8 @@ export default function AIProviderModal({
     providerId === "bifrost" ||
     providerId === "cloudflare_ai_gateway" ||
     providerId === "vercel_ai_gateway" ||
-    providerId === "openrouter";
+    providerId === "openrouter" ||
+    providerId === "bedrock_api";
 
   // If the user flips provider type while viewing the Mappings tab and
   // the new type doesn't show mappings, snap back to the Provider tab
@@ -1036,6 +1037,41 @@ export default function AIProviderModal({
                 >
                   <MappingRow header={"_user"} sourceLabel={"User Email"} />
                   <MappingRow header={"groups"} sourceLabel={"Groups"} />
+                </div>
+              </div>
+            </TabsContent>
+          )}
+
+          {showMappings && providerId === "bedrock_api" && (
+            <TabsContent value={"mappings"} className={"pb-8"}>
+              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                <div>
+                  <Label>Identity Metadata</Label>
+                  <HelpText className={"mb-0"}>
+                    NetBird stamps the{" "}
+                    <code
+                      className={
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                      }
+                    >
+                      X-Amzn-Bedrock-Request-Metadata
+                    </code>{" "}
+                    header with a JSON object carrying the caller&apos;s
+                    identity, so you can break Bedrock spend down by user and
+                    group with AWS cost-allocation tags. The proxy strips any
+                    client-supplied value first, so an app can&apos;t spoof
+                    identity. Values are sanitized to Bedrock&apos;s accepted
+                    character set. The mapping is fixed.
+                  </HelpText>
+                </div>
+
+                <div
+                  className={
+                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
+                  }
+                >
+                  <MappingRow header={"user"} sourceLabel={"User Email"} />
+                  <MappingRow header={"group"} sourceLabel={"Groups"} />
                 </div>
               </div>
             </TabsContent>
