@@ -385,7 +385,7 @@ export const makeMembershipEdge = (
 // Draft network frame (a bordered, slightly opaque container node that
 // wraps its resource nodes as ReactFlow children). Sizing is computed from
 // the member count — child resources stack vertically under the header.
-export const NETWORK_FRAME_WIDTH = 420;
+export const NETWORK_FRAME_WIDTH = 340;
 const NETWORK_FRAME_HEADER = 64;
 const NETWORK_FRAME_ROW = 78;
 const NETWORK_FRAME_PADDING_BOTTOM = 24;
