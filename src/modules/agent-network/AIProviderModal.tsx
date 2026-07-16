@@ -225,6 +225,14 @@ export default function AIProviderModal({
   // Custom-kind providers (the generic "Custom" entry and named self-hosted
   // ones like vLLM) share the self-hosted extras, e.g. Skip TLS verification.
   const isCustomKind = catalog?.kind === "custom";
+  // injectsIdentity is true only for providers whose catalog entry declares an
+  // identity shape (HeaderPair or JSONMetadata) — i.e. the ones NetBird actually
+  // stamps the caller's identity onto. The metadata toggle is meaningless for
+  // the rest (plain OpenAI/Anthropic/Azure/Vertex/Mistral, vLLM, custom), so it
+  // is hidden for them.
+  const injectsIdentity =
+    !!catalog?.identity_injection?.header_pair ||
+    !!catalog?.identity_injection?.json_metadata;
   const customizableHeaderPair =
     catalog?.identity_injection?.header_pair?.customizable === true;
   const customizableJsonMetadata =
@@ -663,41 +671,44 @@ export default function AIProviderModal({
                 />
               )}
 
-              <FancyToggleSwitch
-                value={metadataDisabled}
-                onChange={setMetadataDisabled}
-                label={
-                  <>
-                    <ArrowRightLeft size={15} />
-                    Disable identity metadata
-                    <span onClick={(e) => e.stopPropagation()}>
-                      <HelpTooltip
-                        interactive
-                        content={
-                          <>
-                            By default NetBird forwards the caller&apos;s user and
-                            authorizing group to the provider as metadata (e.g. AWS
-                            Bedrock&apos;s X-Amzn-Bedrock-Request-Metadata header for
-                            cost allocation). Turn on to stop sending it.{" "}
-                            <InlineLink
-                              href={
-                                "https://docs.netbird.io/agent-network/providers#identity-metadata"
-                              }
-                              target={"_blank"}
-                            >
-                              Learn more
-                              <ExternalLinkIcon size={12} />
-                            </InlineLink>
-                          </>
-                        }
-                      />
-                    </span>
-                  </>
-                }
-                helpText={
-                  "Stop forwarding the caller's user and authorizing group to this provider."
-                }
-              />
+              {injectsIdentity && (
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward identity metadata
+                      <span onClick={(e) => e.stopPropagation()}>
+                        <HelpTooltip
+                          interactive
+                          content={
+                            <>
+                              Forwards the caller&apos;s user and authorizing group
+                              to the provider as metadata (e.g. AWS Bedrock&apos;s
+                              X-Amzn-Bedrock-Request-Metadata header for cost
+                              allocation), so it can attribute usage to the real
+                              caller. Turn off to stop sending it.{" "}
+                              <InlineLink
+                                href={
+                                  "https://docs.netbird.io/agent-network/providers#identity-metadata"
+                                }
+                                target={"_blank"}
+                              >
+                                Learn more
+                                <ExternalLinkIcon size={12} />
+                              </InlineLink>
+                            </>
+                          }
+                        />
+                      </span>
+                    </>
+                  }
+                  helpText={
+                    "Forward the caller's user and authorizing group to this provider."
+                  }
+                />
+              )}
 
               {providerId === "vertex_ai_api" ? (
                 <FormRow
