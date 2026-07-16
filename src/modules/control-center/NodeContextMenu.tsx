@@ -8,6 +8,7 @@ import React, {
 import {
   MinusCircleIcon,
   PencilIcon,
+  PlusCircleIcon,
   PowerIcon,
   PowerOffIcon,
   TrashIcon,
@@ -34,6 +35,9 @@ import {
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
 import { canRenamePeerNode } from "@/modules/control-center/utils/node-capabilities";
+import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
+import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import { Network } from "@/interfaces/Network";
 
 type MenuPosition = {
   x: number;
@@ -62,8 +66,10 @@ export const NodeContextMenu = ({
   // Where the menu renders — flipped/clamped away from the viewport edges.
   const menuPosition = useEdgeAwareMenuPosition(position, menuRef);
   const { nodes, setNodes, setEdges } = useCanvasState();
-  const { isDraft } = useDraftMode();
-  const { groups, policies } = useControlCenterData();
+  const { isDraft, setResourceEditor } = useDraftMode();
+  const { addRoutingPeer } = useDraftNodeCreation();
+  const { renameDraftNetwork } = useDraftNetworkActions();
+  const { groups, policies, networks } = useControlCenterData();
   const { trackSetPolicyEnabled, trackDeletePolicy } = useDraftChangeset();
   const {
     renameGroup,
@@ -90,6 +96,22 @@ export const NodeContextMenu = ({
         .map((n) => getPlaceholderPeer(n)?.name)
         .filter(Boolean) as string[],
     [nodes, renameTarget],
+  );
+
+  // Draft network renames — unique across API networks + canvas networks.
+  const isNetworkRename = renameTarget?.type === "networkNode";
+  const networkCurrentName =
+    ((renameTarget?.data as { network?: Network })?.network?.name as string) ??
+    "";
+  const networkTakenNames = useMemo(
+    () => [
+      ...(networks ?? []).map((n) => n.name),
+      ...(nodes
+        .filter((n) => n.type === "networkNode" && n.id !== renameTarget?.id)
+        .map((n) => (n.data as { network?: Network })?.network?.name)
+        .filter(Boolean) as string[]),
+    ],
+    [networks, nodes, renameTarget],
   );
 
   // Placeholder names live only on the canvas node — the real name comes from
@@ -270,6 +292,44 @@ export const NodeContextMenu = ({
       ];
     }
 
+    // Draft networks: Rename / Add Routing Peer / Remove (removal cascades
+    // to dependent resource/router changes).
+    if (node.type === "networkNode" && !(node.data as any)?.network?.id) {
+      return [
+        {
+          label: "Rename",
+          icon: <PencilIcon size={14} />,
+          onClick: () => setRenameTarget(node),
+        },
+        {
+          label: "Add Routing Peer",
+          icon: <PlusCircleIcon size={14} />,
+          onClick: () => addRoutingPeer(nodeId),
+        },
+        {
+          label: "Remove",
+          icon: <MinusCircleIcon size={14} />,
+          onClick: handleRemove,
+        },
+      ];
+    }
+
+    // Draft resources: Edit (reopens the editor) / Remove.
+    if (nodeId.startsWith("resource-new-")) {
+      return [
+        {
+          label: "Edit",
+          icon: <PencilIcon size={14} />,
+          onClick: () => setResourceEditor({ nodeId }),
+        },
+        {
+          label: "Remove",
+          icon: <MinusCircleIcon size={14} />,
+          onClick: handleRemove,
+        },
+      ];
+    }
+
     return [
       {
         label: "Remove",
@@ -280,12 +340,15 @@ export const NodeContextMenu = ({
   }, [
     isDraft,
     node,
+    nodeId,
     policyEnabled,
     handleRemove,
     removeGroup,
     confirmAndDeleteGroups,
     handleTogglePolicy,
     handleDeletePolicy,
+    addRoutingPeer,
+    setResourceEditor,
   ]);
 
   useEffect(() => {
@@ -333,30 +396,52 @@ export const NodeContextMenu = ({
       <GroupRenameModal
         open={renameTarget !== null}
         onOpenChange={(open) => !open && setRenameTarget(null)}
-        title={isPlaceholderRename ? "Rename Peer" : undefined}
+        title={
+          isNetworkRename
+            ? "Rename Network"
+            : isPlaceholderRename
+            ? "Rename Peer"
+            : undefined
+        }
         description={
-          isPlaceholderRename
+          isNetworkRename
+            ? "Set an easily identifiable name for this network."
+            : isPlaceholderRename
             ? "Set an easily identifiable name for this peer."
             : undefined
         }
         inputPlaceholder={
-          isPlaceholderRename ? "e.g., Backup Server" : undefined
+          isNetworkRename
+            ? "e.g., Office Network"
+            : isPlaceholderRename
+            ? "e.g., Backup Server"
+            : undefined
         }
         currentName={
-          isPlaceholderRename
+          isNetworkRename
+            ? networkCurrentName
+            : isPlaceholderRename
             ? placeholderCurrentName
             : getNodeGroup(renameTarget ?? undefined)?.name ?? ""
         }
-        groups={isPlaceholderRename ? undefined : groups}
-        takenNames={isPlaceholderRename ? placeholderTakenNames : undefined}
+        groups={isPlaceholderRename || isNetworkRename ? undefined : groups}
+        takenNames={
+          isNetworkRename
+            ? networkTakenNames
+            : isPlaceholderRename
+            ? placeholderTakenNames
+            : undefined
+        }
         duplicateError={
-          isPlaceholderRename
+          isPlaceholderRename || isNetworkRename
             ? "Name already taken. Please choose another name."
             : undefined
         }
         onRename={(name) => {
           if (renameTarget) {
-            if (isPlaceholderRename) renamePlaceholder(renameTarget.id, name);
+            if (isNetworkRename) renameDraftNetwork(renameTarget, name);
+            else if (isPlaceholderRename)
+              renamePlaceholder(renameTarget.id, name);
             else renameGroup(renameTarget, name);
           }
           setRenameTarget(null);

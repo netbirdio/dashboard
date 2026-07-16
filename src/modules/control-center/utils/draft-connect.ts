@@ -3,7 +3,10 @@ import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
-import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
+import {
+  getDraftResource,
+  getPlaceholderPeer,
+} from "@/modules/control-center/utils/helpers";
 
 // Everything a draft connect needs from the outside — injected so the
 // connect rules are a pure function (see draft-connect.test.ts for the
@@ -22,12 +25,24 @@ export type DraftConnectDeps = {
   setPolicyDestinationGroups: (g: Group[]) => void;
   setPolicyInitialName: (name: string) => void;
   setCreatePolicyModal: (open: boolean) => void;
+  // Routing: a peer or group connected onto a network node.
+  onRouterConnect?: (params: {
+    networkNodeId: string;
+    peerNodeId?: string;
+    groupNodeId?: string;
+  }) => void;
+  // Resource dragged onto a network node — parent-network assignment.
+  onResourceAssign?: (params: {
+    resourceNodeId: string;
+    networkNodeId: string;
+  }) => void;
 };
 
 type NodeInfo =
   | { kind: "peer"; id: string }
   | { kind: "group"; id: string }
   | { kind: "resource"; id: string }
+  | { kind: "network"; id: string }
   | { kind: "policy"; id: string };
 
 export const parseNodeId = (id: string): NodeInfo | undefined => {
@@ -37,6 +52,9 @@ export const parseNodeId = (id: string): NodeInfo | undefined => {
   if (id.startsWith("group-new-")) return { kind: "group", id };
   if (id.startsWith("group-")) return { kind: "group", id: id.replace("group-", "") };
   if (id.startsWith("resource-")) return { kind: "resource", id: id.replace("resource-", "") };
+  // Draft networks keep the full node id (no API id yet).
+  if (id.startsWith("network-new-")) return { kind: "network", id };
+  if (id.startsWith("network-")) return { kind: "network", id: id.replace("network-", "") };
   if (id.startsWith("policy-")) return { kind: "policy", id: id.replace("policy-", "") };
   // Handle expanded/destination variants
   if (id.startsWith("expanded-peer-")) return { kind: "peer", id: id.replace("expanded-peer-", "") };
@@ -92,6 +110,29 @@ export function handleDraftConnect(
   const findPeer = (id: string): Peer | undefined =>
     peers?.find((p) => p.id === id) ??
     getPlaceholderPeer(currentNodes.find((n) => n.id === `peer-${id}`));
+
+  // Find a resource from API data or a draft resource node (pseudo-resource
+  // with its "new-<uuid>" id).
+  const findResource = (id: string): NetworkResource | undefined =>
+    networkResources?.find((r) => r.id === id) ??
+    getDraftResource(currentNodes.find((n) => n.id === `resource-${id}`));
+
+  // Networks are never policy actors — they only accept routing peers/groups
+  // and resource membership, and can't be a connect source at all.
+  if (sourceInfo.kind === "network") return;
+  if (targetInfo.kind === "network") {
+    if (sourceInfo.kind === "peer") {
+      deps.onRouterConnect?.({ networkNodeId: target, peerNodeId: source });
+    } else if (sourceInfo.kind === "group") {
+      deps.onRouterConnect?.({ networkNodeId: target, groupNodeId: source });
+    } else if (sourceInfo.kind === "resource") {
+      deps.onResourceAssign?.({
+        resourceNodeId: source,
+        networkNodeId: target,
+      });
+    }
+    return;
+  }
 
   // Adds a group to one side of an existing policy — recorded as an
   // update-policy change and redrawn. No-ops for duplicates and for sides
@@ -152,14 +193,52 @@ export function handleDraftConnect(
     });
   };
 
-  // Policy handle → group/peer: the right handle adds the target as a
-  // destination, the left one as a source.
+  // Resources are destinations only — a resource can never be the source of
+  // a connection toward peers/groups/policies (their nodes expose no source
+  // handles; this is the hard backstop).
+  if (sourceInfo.kind === "resource") return;
+
+  // Adds a single resource as a policy's destination — resources never sit
+  // on the source side, and a side holds groups XOR one peer/resource.
+  const addResourceToPolicy = (
+    policyNodeId: string,
+    resourceId: string,
+    side: "sources" | "destinations",
+  ) => {
+    if (side !== "destinations") return;
+    const policyNode = currentNodes.find((n) => n.id === policyNodeId);
+    const policy = (policyNode?.data as any)?.policy as Policy | undefined;
+    const rule = policy?.rules?.[0];
+    if (!policy || !rule) return;
+    if (rule.destinationResource) return;
+    if (((rule.destinations as unknown[]) ?? []).length > 0) return;
+    const resource = findResource(resourceId);
+    if (!resource?.id) return;
+    updateDraftPolicy({
+      ...policy,
+      rules: [
+        {
+          ...rule,
+          destinationResource: {
+            id: resource.id,
+            type: resource.type ?? "host",
+          },
+        },
+        ...(policy.rules?.slice(1) ?? []),
+      ],
+    });
+  };
+
+  // Policy handle → group/peer/resource: the right handle adds the target as
+  // a destination, the left one as a source.
   if (sourceInfo.kind === "policy") {
     const side = connection.sourceHandle?.startsWith("sl")
       ? ("sources" as const)
       : ("destinations" as const);
     if (targetInfo.kind === "group") addGroupToPolicy(source, targetInfo.id, side);
     else if (targetInfo.kind === "peer") addPeerToPolicy(source, targetInfo.id, side);
+    else if (targetInfo.kind === "resource")
+      addResourceToPolicy(source, targetInfo.id, side);
     return;
   }
 
@@ -197,12 +276,6 @@ export function handleDraftConnect(
       sourceGroups.push(group);
       sourceName = group.name;
     }
-  } else if (sourceInfo.kind === "resource") {
-    const resource = networkResources?.find((r) => r.id === sourceInfo.id);
-    if (resource?.id) {
-      setPolicySourceResource({ id: resource.id, type: "host" });
-      sourceName = resource.name;
-    }
   }
 
   // Set destination resource or group
@@ -220,9 +293,13 @@ export function handleDraftConnect(
       destName = group.name;
     }
   } else if (targetInfo.kind === "resource") {
-    const resource = networkResources?.find((r) => r.id === targetInfo.id);
+    // Draft resources participate with their "new-…" pseudo ids.
+    const resource = findResource(targetInfo.id);
     if (resource?.id) {
-      setPolicyDestinationResource({ id: resource.id, type: "host" });
+      setPolicyDestinationResource({
+        id: resource.id,
+        type: resource.type ?? "host",
+      });
       destName = resource.name;
     }
   }

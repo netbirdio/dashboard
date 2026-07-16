@@ -22,6 +22,7 @@ import { useReactFlow, XYPosition } from "@xyflow/react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
+  getDraftResource,
   getPlaceholderPeer,
   isDeployablePolicy,
 } from "@/modules/control-center/utils/helpers";
@@ -196,6 +197,16 @@ export function ControlCenterPolicyProvider({
       nodes
         .map((n) => getPlaceholderPeer(n))
         .filter(Boolean) as NonNullable<ReturnType<typeof getPlaceholderPeer>>[],
+    [nodes],
+  );
+
+  // Draft resources as pseudo-resources — selectable policy destinations
+  // with their "new-…" ids (mirror of placeholderPeers).
+  const draftResources = useMemo(
+    () =>
+      nodes
+        .map((n) => getDraftResource(n))
+        .filter(Boolean) as NonNullable<ReturnType<typeof getDraftResource>>[],
     [nodes],
   );
 
@@ -467,6 +478,9 @@ export function ControlCenterPolicyProvider({
             newDestCount++;
           }
           destNodeIds.push(nodeId);
+        } else if (findNode(`resource-${destResource.id}`)) {
+          // Draft resource ("new-…") — connect its existing node.
+          destNodeIds.push(`resource-${destResource.id}`);
         }
       }
     }
@@ -553,7 +567,19 @@ export function ControlCenterPolicyProvider({
   };
 
   // Shared with the unit tests — see isDeployablePolicy in utils/helpers.
-  const isCompletePolicy = isDeployablePolicy;
+  // Policies referencing draft resources are deployable only while the
+  // resource is tracked (complete).
+  const trackedResourceClientIds = useMemo(
+    () =>
+      new Set(
+        changes
+          .filter((c) => c.type === "create-resource")
+          .map((c) => (c.type === "create-resource" ? c.clientId : "")),
+      ),
+    [changes],
+  );
+  const isCompletePolicy = (policy: Policy) =>
+    isDeployablePolicy(policy, trackedResourceClientIds);
 
   // Applies an edited policy to the draft: record an update change and redraw
   // — draft-created policies just update their create change. Used by the
@@ -663,6 +689,7 @@ export function ControlCenterPolicyProvider({
           // update-policy changes and applied on deploy.
           useSave={!isDraft}
           additionalPeers={isDraft ? placeholderPeers : undefined}
+          additionalResources={isDraft ? draftResources : undefined}
           onSuccess={(p) =>
             isDraft ? handleDraftPolicyUpdate(p) : handlePolicyChange()
           }
@@ -683,6 +710,7 @@ export function ControlCenterPolicyProvider({
             initialSourceGroups={policySourceGroups}
             initialDestinationGroups={policyDestinationGroups}
             additionalPeers={isDraft ? placeholderPeers : undefined}
+            additionalResources={isDraft ? draftResources : undefined}
           />
         </Modal>
       )}

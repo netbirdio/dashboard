@@ -20,6 +20,7 @@ import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPo
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { handleDraftConnect } from "@/modules/control-center/utils/draft-connect";
+import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftPeerUpgrade } from "@/modules/control-center/hooks/useDraftPeerUpgrade";
 import {
   addNode,
@@ -431,6 +432,7 @@ export function useDraft() {
 
   // Connect rules live in utils/draft-connect.ts (pure, unit-tested) — this
   // just injects the live dependencies.
+  const { connectRouter, assignResourceToNetwork } = useDraftNetworkActions();
   const onNodeConnect = (connection: Connection) => {
     handleDraftConnect(connection, {
       nodes: reactFlow.getNodes(),
@@ -444,6 +446,8 @@ export function useDraft() {
       setPolicyDestinationGroups,
       setPolicyInitialName,
       setCreatePolicyModal,
+      onRouterConnect: connectRouter,
+      onResourceAssign: assignResourceToNetwork,
     });
   };
 

@@ -21,6 +21,10 @@ import {
   SquareMinusIcon,
   SquarePenIcon,
   SquarePlusIcon,
+  GlobeIcon,
+  NetworkIcon,
+  TriangleAlertIcon,
+  WaypointsIcon,
   XIcon,
 } from "lucide-react";
 import { Group } from "@/interfaces/Group";
@@ -28,6 +32,7 @@ import {
   ChangeKind,
   DraftChange,
   getChangeKind,
+  getDraftWarnings,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
@@ -50,6 +55,12 @@ const changeIcon = (change: DraftChange) => {
     case "update-policy":
     case "delete-policy":
       return <ShieldIcon size={14} />;
+    case "create-network":
+      return <NetworkIcon size={14} />;
+    case "create-resource":
+      return <GlobeIcon size={14} />;
+    case "create-router":
+      return <WaypointsIcon size={14} />;
   }
 };
 
@@ -64,6 +75,14 @@ const entityTitle = (change: DraftChange) => {
     case "update-policy":
     case "delete-policy":
       return `Policy “${change.name}”`;
+    case "create-network":
+      return `Network “${change.name}”`;
+    case "create-resource":
+      return `Resource “${change.name}” in “${change.networkName}”`;
+    case "create-router":
+      return change.peerId
+        ? `Routing peer “${change.peerName ?? change.peerId}” for “${change.networkName}”`
+        : `Routing peer group “${change.groupName ?? change.groupId}” for “${change.networkName}”`;
   }
 };
 
@@ -137,6 +156,7 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   const { deploy, isDeploying } = useDeployChangeset();
 
   const count = changes.length;
+  const warnings = useMemo(() => getDraftWarnings(changes), [changes]);
 
   // Policies that reference draft-created groups become parents: every group
   // creation the policy requires nests under it. A group required by several
@@ -206,6 +226,28 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
           description={description}
         />
         <div className={"px-8 pt-2 pb-8"}>
+          {/* Non-blocking warnings — deploying is still allowed (mirrors the
+              live "no access control policies" confirmation). */}
+          {warnings.length > 0 && (
+            <div
+              className={
+                "rounded-md border border-amber-500/25 bg-amber-900/20 px-3.5 py-2.5 mb-3 flex flex-col gap-1.5"
+              }
+            >
+              {warnings.map((warning) => (
+                <div
+                  key={warning}
+                  className={"flex items-start gap-2 text-xs text-amber-300"}
+                >
+                  <TriangleAlertIcon
+                    size={13}
+                    className={"shrink-0 mt-[1px]"}
+                  />
+                  {warning}
+                </div>
+              ))}
+            </div>
+          )}
           <div
             className={
               "rounded-md border border-nb-gray-910 bg-nb-gray-930/40 overflow-hidden"

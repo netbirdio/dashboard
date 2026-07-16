@@ -1,5 +1,9 @@
 import { Node } from "@xyflow/react";
-import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
+import {
+  getDraftResource,
+  getPlaceholderPeer,
+  isCompleteDraftResource,
+} from "@/modules/control-center/utils/helpers";
 
 // Capability predicates for canvas nodes — the single place that answers
 // "what can this node do in draft mode". Wired into the node context menu
@@ -42,5 +46,35 @@ export const getGroupableEntityId = (node?: Node): string | undefined => {
     peer?: { id?: string };
     resource?: { id?: string };
   };
-  return data?.peer?.id ?? getPlaceholderPeer(node)?.id ?? data?.resource?.id;
+  return (
+    data?.peer?.id ??
+    getPlaceholderPeer(node)?.id ??
+    data?.resource?.id ??
+    // Complete draft resources join with their "new-…" ids; incomplete ones
+    // can't — their data lives on the node, which leaves the canvas on drop.
+    (isCompleteDraftResource(node) ? getDraftResource(node)?.id : undefined)
+  );
 };
+
+// What can act as a routing peer for a network: real peers, placeholder
+// peers, and groups — never resources, networks, or policies.
+const PEER_TYPES = new Set(["peerNode", "sourcePeerNode", "expandedGroupPeer"]);
+const GROUP_TYPES = new Set([
+  "groupNode",
+  "sourceGroupNode",
+  "destinationGroupNode",
+]);
+export const canBeRoutingPeer = (node?: Node) =>
+  !!node && (PEER_TYPES.has(node.type ?? "") || GROUP_TYPES.has(node.type ?? ""));
+
+// Only draft resources can be (re-)assigned to a network on the canvas —
+// existing resources aren't mutated in v1.
+export const canAssignToNetwork = (node?: Node) =>
+  !!node?.id.startsWith("resource-new-");
+
+// Draft-created entities are editable on the canvas; existing ones are
+// read-only references in v1.
+export const canConfigureResource = canAssignToNetwork;
+export const canRenameNetworkNode = (node?: Node) =>
+  node?.type === "networkNode" &&
+  !(node.data as { network?: { id?: string } })?.network?.id;

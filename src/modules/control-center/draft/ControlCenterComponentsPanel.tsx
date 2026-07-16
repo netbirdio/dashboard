@@ -46,6 +46,7 @@ import {
 import { XYPosition } from "@xyflow/react";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 import {
+  getDraftResource,
   getGroupCountLabel,
   getPolicyProtocolAndPortText,
 } from "@/modules/control-center/utils/helpers";
@@ -469,6 +470,21 @@ const PanelContent = React.memo(
       return result.filter((r) => r.group.name.toLowerCase().includes(lower));
     }, [canvasNodes, search, groupsCategory]);
 
+    // Resources created in this draft — listed with a NEW badge, disabled
+    // (they're already on the canvas by construction).
+    const draftResources = useMemo(() => {
+      const result: { nodeId: string; resource: NetworkResource }[] = [];
+      canvasNodes.forEach((n) => {
+        const resource = getDraftResource(n);
+        if (resource) result.push({ nodeId: n.id, resource });
+      });
+      if (!search || resourcesCategory) return result;
+      const lower = search.toLowerCase();
+      return result.filter((r) =>
+        r.resource.name.toLowerCase().includes(lower),
+      );
+    }, [canvasNodes, search, resourcesCategory]);
+
     const matchesSearch = useCallback(
       (label: string) =>
         !search || label.toLowerCase().includes(search.toLowerCase()),
@@ -583,6 +599,16 @@ const PanelContent = React.memo(
           </PanelListItem>
         );
       });
+
+    const buildDraftResourceRows = () =>
+      draftResources.map(({ nodeId, resource }) => (
+        <PanelListItem key={nodeId} disabled onCanvas>
+          <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
+            <DeviceCard resource={resource} size="small" />
+            <SmallBadge />
+          </div>
+        </PanelListItem>
+      ));
 
     const buildDraftGroupRows = () =>
       draftGroups.map(({ nodeId, group }) => (
@@ -729,7 +755,10 @@ const PanelContent = React.memo(
               title: "Groups",
               rows: [...buildDraftGroupRows(), ...buildGroupRows()],
             },
-            { title: "Resources", rows: buildResourceRows() },
+            {
+              title: "Resources",
+              rows: [...buildDraftResourceRows(), ...buildResourceRows()],
+            },
           ]
         : category === "peers"
         ? [
@@ -751,7 +780,10 @@ const PanelContent = React.memo(
           ]
         : [
             { title: "Add New", rows: buildResourceTemplateRows() },
-            { title: "Existing Resources", rows: buildResourceRows() },
+            {
+              title: "Existing Resources",
+              rows: [...buildDraftResourceRows(), ...buildResourceRows()],
+            },
           ]
     ).filter((sec) => sec.rows.length > 0);
 

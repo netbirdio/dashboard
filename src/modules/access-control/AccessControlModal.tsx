@@ -72,6 +72,7 @@ type UpdateModalProps = {
   useSave?: boolean;
   allowEditPeers?: boolean;
   additionalPeers?: Peer[];
+  additionalResources?: NetworkResource[];
 };
 
 export default function AccessControlModal({ children }: Readonly<Props>) {
@@ -95,6 +96,7 @@ export function AccessControlUpdateModal({
   useSave = true,
   allowEditPeers,
   additionalPeers,
+  additionalResources,
 }: Readonly<UpdateModalProps>) {
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
@@ -110,6 +112,7 @@ export function AccessControlUpdateModal({
           useSave={useSave}
           allowEditPeers={allowEditPeers}
           additionalPeers={additionalPeers}
+          additionalResources={additionalResources}
         />
       )}
     </Modal>

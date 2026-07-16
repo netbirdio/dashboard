@@ -21,10 +21,15 @@ export type PlaceholderUpgrade = {
 // deployable, so they enter the changeset). User-device select nodes keep
 // their dropdown (placeholderKind stays on the node); installed server/agent
 // placeholders become regular peer cards.
+const uid = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
 export function usePlaceholderUpgrade() {
   const reactFlow = useReactFlow();
   const { updateDraftPolicy } = useControlCenterPolicy();
-  const { replacePeerIdInGroups } = useDraftChangeset();
+  const { replacePeerIdInGroups, trackCreateRouter } = useDraftChangeset();
 
   return useCallback(
     (upgrades: PlaceholderUpgrade[]) => {
@@ -33,6 +38,36 @@ export function usePlaceholderUpgrade() {
         ...u,
         oldId: u.nodeId.replace("peer-", ""),
       }));
+
+      // Routing edges from upgraded placeholders become deployable — record
+      // their create-router changes with the real peer id. (Read pre-swap:
+      // edge sources still carry the old node ids.)
+      const routerEdges = reactFlow
+        .getEdges()
+        .filter((e) => (e.data as { router?: boolean })?.router);
+      withOldIds.forEach((u) => {
+        routerEdges
+          .filter((e) => e.source === u.nodeId)
+          .forEach((e) => {
+            const networkNode = reactFlow
+              .getNodes()
+              .find((n) => n.id === e.target);
+            const network = (
+              networkNode?.data as { network?: { id?: string; name: string } }
+            )?.network;
+            if (!networkNode || !network) return;
+            trackCreateRouter({
+              clientId: `new-${uid()}`,
+              networkId: network.id,
+              networkClientId: network.id
+                ? undefined
+                : networkNode.id.replace("network-", ""),
+              networkName: network.name,
+              peerId: u.peer.id as string,
+              peerName: u.peer.name,
+            });
+          });
+      });
 
       reactFlow.setNodes((prev) =>
         prev.map((n) => {
@@ -130,7 +165,7 @@ export function usePlaceholderUpgrade() {
         setTimeout(() => policyUpdates.forEach((p) => updateDraftPolicy(p)), 0);
       }
     },
-    [reactFlow, updateDraftPolicy, replacePeerIdInGroups],
+    [reactFlow, updateDraftPolicy, replacePeerIdInGroups, trackCreateRouter],
   );
 }
 

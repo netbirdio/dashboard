@@ -1,9 +1,15 @@
 import { useCallback, useState } from "react";
 import { mutate } from "swr";
 import { useApiCall } from "@utils/api";
+import { normalizeHostCIDR } from "@utils/ip";
 import { notify } from "@components/Notification";
 import { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
-import { Policy } from "@/interfaces/Policy";
+import {
+  Network,
+  NetworkResource,
+  NetworkRouter,
+} from "@/interfaces/Network";
+import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import {
   DraftChange,
@@ -27,6 +33,9 @@ export function useDeployChangeset() {
   const { groups } = useControlCenterData();
   const groupRequest = useApiCall<Group>("/groups", true);
   const policyRequest = useApiCall<Policy>("/policies", true);
+  const networkRequest = useApiCall<Network>("/networks", true);
+  const resourceRequest = useApiCall<NetworkResource>("/networks", true);
+  const routerRequest = useApiCall<NetworkRouter>("/networks", true);
   const [isDeploying, setIsDeploying] = useState(false);
 
   const deploy = useCallback(async (): Promise<boolean> => {
@@ -35,6 +44,31 @@ export function useDeployChangeset() {
     // Group name → id, updated as groups get created during the deploy.
     const nameToId = new Map<string, string>();
     groups?.forEach((g) => g.id && nameToId.set(g.name, g.id));
+
+    // Draft network / resource client ids → API ids, filled as the creates
+    // respond; consumed by dependent resources/routers/policies.
+    const networkClientToId = new Map<string, string>();
+    const resourceClientToId = new Map<
+      string,
+      { id: string; type?: NetworkResource["type"] }
+    >();
+    const resolveNetworkId = (change: {
+      networkId?: string;
+      networkClientId?: string;
+      networkName: string;
+    }) => {
+      const id =
+        change.networkId ??
+        (change.networkClientId
+          ? networkClientToId.get(change.networkClientId)
+          : undefined);
+      if (!id) {
+        throw new Error(
+          `Network "${change.networkName}" is missing — it may have been removed from the draft.`,
+        );
+      }
+      return id;
+    };
 
     const resolveGroupIds = (list?: (Group | string)[] | null) => {
       if (!list) return undefined;
@@ -67,6 +101,22 @@ export function useDeployChangeset() {
         );
       }
 
+      // Draft resources deploy before policies — resolve their "new-…" ids
+      // (and take the authoritative type from the created resource).
+      const resolveResource = (
+        r?: PolicyRuleResource,
+      ): PolicyRuleResource | undefined => {
+        if (!r) return undefined;
+        if (!r.id.startsWith("new-")) return r;
+        const created = resourceClientToId.get(r.id);
+        if (!created) {
+          throw new Error(
+            "A referenced resource is missing — it may have been removed from the draft.",
+          );
+        }
+        return { id: created.id, type: created.type ?? r.type };
+      };
+
       return {
         name: policy.name,
         description: policy.description ?? "",
@@ -91,8 +141,8 @@ export function useDeployChangeset() {
             destinations: rule.destinationResource
               ? undefined
               : resolveGroupIds(rule.destinations as Group[]),
-            sourceResource: rule.sourceResource || undefined,
-            destinationResource: rule.destinationResource || undefined,
+            sourceResource: resolveResource(rule.sourceResource),
+            destinationResource: resolveResource(rule.destinationResource),
             ports: isSsh ? ["22"] : rule.ports,
             port_ranges: isSsh ? [] : rule.port_ranges,
             authorized_groups: isSsh ? authorizedGroups : undefined,
@@ -109,7 +159,11 @@ export function useDeployChangeset() {
             // Placeholder members that never installed keep their "draft-"
             // ids — those don't exist in the API and can't be deployed.
             peers: change.peerIds.filter((id) => !id.startsWith("draft-")),
-            resources: change.resourceIds,
+            // Draft resources ("new-…") deploy after groups — membership is
+            // applied through the resource's own `groups` field instead.
+            resources: change.resourceIds.filter(
+              (id) => !id.startsWith("new-"),
+            ),
           });
           if (created?.id) nameToId.set(created.name, created.id);
           return;
@@ -122,7 +176,9 @@ export function useDeployChangeset() {
           change.peerIds.forEach(
             (id) => !id.startsWith("draft-") && peers.add(id),
           );
-          change.resourceIds.forEach((id) => resources.add(id));
+          change.resourceIds.forEach(
+            (id) => !id.startsWith("new-") && resources.add(id),
+          );
           const updated = await groupRequest.put(
             {
               name: change.name,
@@ -132,6 +188,56 @@ export function useDeployChangeset() {
             `/${change.groupId}`,
           );
           if (updated?.id) nameToId.set(updated.name, updated.id);
+          return;
+        }
+        case "create-network": {
+          const created = await networkRequest.post({
+            name: change.name,
+            description: change.description ?? "",
+          });
+          if (created?.id) networkClientToId.set(change.clientId, created.id);
+          return;
+        }
+        case "create-resource": {
+          const networkId = resolveNetworkId(change);
+          const created = await resourceRequest.post(
+            {
+              name: change.name,
+              description: change.description ?? "",
+              address: normalizeHostCIDR(change.address),
+              enabled: true,
+              // API ids pass through; draft-group names resolve via the
+              // groups created earlier in this run.
+              groups: change.groupIds.map((ref) => nameToId.get(ref) ?? ref),
+            },
+            `/${networkId}/resources`,
+          );
+          if (created?.id) {
+            resourceClientToId.set(change.clientId, {
+              id: created.id,
+              type: created.type,
+            });
+          }
+          return;
+        }
+        case "create-router": {
+          const networkId = resolveNetworkId(change);
+          // The live modal's defaults: metric 9999, masquerade on, enabled.
+          await routerRequest.post(
+            {
+              ...(change.peerId
+                ? { peer: change.peerId }
+                : {
+                    peer_groups: [
+                      nameToId.get(change.groupId ?? "") ?? change.groupId,
+                    ],
+                  }),
+              metric: 9999,
+              masquerade: true,
+              enabled: true,
+            },
+            `/${networkId}/routers`,
+          );
           return;
         }
         case "create-policy": {
@@ -159,6 +265,9 @@ export function useDeployChangeset() {
     const order: DraftChange["type"][] = [
       "create-group",
       "update-group",
+      "create-network",
+      "create-resource",
+      "create-router",
       "create-policy",
       "update-policy",
       "delete-policy",
@@ -200,12 +309,24 @@ export function useDeployChangeset() {
       return false;
     } finally {
       // Await revalidation so the live view rebuilds from fresh data on exit.
-      await Promise.all([mutate("/groups"), mutate("/policies")]).catch(
-        () => {},
-      );
+      await Promise.all([
+        mutate("/groups"),
+        mutate("/policies"),
+        mutate("/networks"),
+        mutate("/networks/resources"),
+      ]).catch(() => {});
       setIsDeploying(false);
     }
-  }, [changes, groups, groupRequest, policyRequest, removeChange]);
+  }, [
+    changes,
+    groups,
+    groupRequest,
+    policyRequest,
+    networkRequest,
+    resourceRequest,
+    routerRequest,
+    removeChange,
+  ]);
 
   return { deploy, isDeploying };
 }

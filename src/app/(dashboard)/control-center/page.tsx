@@ -31,6 +31,7 @@ import { CanvasContextMenu } from "@/modules/control-center/CanvasContextMenu";
 import { NodeContextMenu } from "@/modules/control-center/NodeContextMenu";
 import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
 import { DraftInstallPeerModal } from "@/modules/control-center/draft/DraftInstallPeerModal";
+import { DraftResourceEditorModal } from "@/modules/control-center/draft/DraftResourceEditorModal";
 import { DraftEmptyCanvas } from "@/modules/control-center/draft/DraftEmptyCanvas";
 import { DraftLeaveGuard } from "@/modules/control-center/draft/DraftLeaveGuard";
 import { useDraft } from "@/modules/control-center/hooks/useDraft";
@@ -112,6 +113,7 @@ function ControlCenterCanvas() {
       <ControlCenterHeader />
       <PeersToolbar />
       <DraftInstallPeerModal />
+      <DraftResourceEditorModal />
       <DraftLeaveGuard />
       <ReactFlow
         className={draft.isSelectMode ? "select-mode" : undefined}

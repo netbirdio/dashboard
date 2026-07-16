@@ -81,13 +81,63 @@ export interface DeletePolicyChange {
   name: string;
 }
 
+// Networks only need a name — deployable the moment they hit the canvas.
+export interface CreateNetworkChange {
+  id: string;
+  type: "create-network";
+  // Canvas node id network-new-<uuid> → clientId "new-<uuid>".
+  clientId: string;
+  name: string;
+  description?: string;
+}
+
+// Draft resources are recorded only once complete (name + address + network)
+// — the editor saves all required fields, incomplete resources are
+// canvas-only.
+export interface CreateResourceChange {
+  id: string;
+  type: "create-resource";
+  clientId: string; // "new-<uuid>"
+  name: string;
+  description?: string;
+  address: string;
+  // Parent network: API id, or clientId of a draft network (resolved on
+  // deploy). networkName is display-only (labels), kept in sync on rename.
+  networkId?: string;
+  networkClientId?: string;
+  networkName: string;
+  // API group ids or draft-group names (resolved like policy groups).
+  groupIds: string[];
+}
+
+// Routers referencing a placeholder peer stay OUT of the changeset (the
+// routing edge carries the intent) until the peer installs — the upgrade
+// sweep records them with the real id.
+export interface CreateRouterChange {
+  id: string;
+  type: "create-router";
+  clientId: string;
+  networkId?: string;
+  networkClientId?: string;
+  networkName: string;
+  // Exactly one of the two. groupId may be a draft-group name.
+  peerId?: string;
+  groupId?: string;
+  // Display-only for labels.
+  peerName?: string;
+  groupName?: string;
+}
+
 export type DraftChange =
   | CreateGroupChange
   | UpdateGroupChange
   | DeleteGroupChange
   | CreatePolicyChange
   | UpdatePolicyChange
-  | DeletePolicyChange;
+  | DeletePolicyChange
+  | CreateNetworkChange
+  | CreateResourceChange
+  | CreateRouterChange;
 
 // Git-style classification for diff coloring (+ green, ~ orange, − red).
 export type ChangeKind = "add" | "update" | "remove";
@@ -96,6 +146,9 @@ export const getChangeKind = (change: DraftChange): ChangeKind => {
   switch (change.type) {
     case "create-group":
     case "create-policy":
+    case "create-network":
+    case "create-resource":
+    case "create-router":
       return "add";
     case "delete-group":
     case "delete-policy":
@@ -120,6 +173,12 @@ export const getChangeApiCall = (change: DraftChange): string => {
       return `PUT /policies/${change.policyId}`;
     case "delete-policy":
       return `DELETE /policies/${change.policyId}`;
+    case "create-network":
+      return "POST /networks";
+    case "create-resource":
+      return `POST /networks/${change.networkId ?? "{new}"}/resources`;
+    case "create-router":
+      return `POST /networks/${change.networkId ?? "{new}"}/routers`;
   }
 };
 
@@ -188,7 +247,75 @@ export const getChangeLabel = (
     }
     case "delete-policy":
       return { title: `Delete policy “${change.name}”` };
+    case "create-network":
+      return {
+        title: `Create network “${change.name}”`,
+        detail: change.description || undefined,
+      };
+    case "create-resource":
+      return {
+        title: `Create resource “${change.name}” in “${change.networkName}”`,
+        detail: change.address,
+      };
+    case "create-router":
+      return {
+        title: change.peerId
+          ? `Add routing peer “${change.peerName ?? change.peerId}” to “${change.networkName}”`
+          : `Add routing peer group “${change.groupName ?? change.groupId}” to “${change.networkName}”`,
+      };
   }
+};
+
+// Non-blocking Review & Deploy warnings (the draft equivalent of the live
+// "no access control policies" confirmations): unreachable resources and
+// resources nothing grants access to. Warnings never block deploying.
+export const getDraftWarnings = (changes: DraftChange[]): string[] => {
+  const warnings: string[] = [];
+  const networks = changes.filter(
+    (c): c is CreateNetworkChange => c.type === "create-network",
+  );
+  const resources = changes.filter(
+    (c): c is CreateResourceChange => c.type === "create-resource",
+  );
+  const routers = changes.filter(
+    (c): c is CreateRouterChange => c.type === "create-router",
+  );
+
+  networks.forEach((n) => {
+    const hasResources = resources.some(
+      (r) => r.networkClientId === n.clientId,
+    );
+    const hasRouter = routers.some((r) => r.networkClientId === n.clientId);
+    if (hasResources && !hasRouter) {
+      warnings.push(
+        `Network “${n.name}” has no routing peers — its resources won't be reachable.`,
+      );
+    }
+  });
+
+  const policyChanges = changes.filter(
+    (c): c is CreatePolicyChange | UpdatePolicyChange =>
+      c.type === "create-policy" || c.type === "update-policy",
+  );
+  resources.forEach((res) => {
+    const direct = policyChanges.some(
+      (p) => p.policy.rules?.[0]?.destinationResource?.id === res.clientId,
+    );
+    const viaGroup = policyChanges.some((p) => {
+      const destinations = (p.policy.rules?.[0]?.destinations as Group[]) ?? [];
+      return destinations.some(
+        (g) =>
+          typeof g !== "string" && res.groupIds.includes(g.id ?? g.name),
+      );
+    });
+    if (!direct && !viaGroup) {
+      warnings.push(
+        `Resource “${res.name}” is not referenced by any policy — no peer will have access.`,
+      );
+    }
+  });
+
+  return warnings;
 };
 
 const uid = () =>
@@ -224,9 +351,41 @@ interface DraftChangesetContextType {
   // Removes a draft-only group's pending changes without deleting anything
   // (used when a new group is removed from the canvas).
   untrackNewGroup: (name: string) => void;
-  // Renames a member peer id inside every create/update-group change — used
-  // when a placeholder ("draft-…") upgrades to a real peer.
-  replacePeerIdInGroups: (oldId: string, newId: string) => void;
+  // Renames a member peer id inside every create/update-group change and
+  // every router change — used when a placeholder ("draft-…") upgrades to a
+  // real peer.
+  replacePeerIdInGroups: (oldId: string, newId: string, newName?: string) => void;
+  // Networks / resources / routers (draft-created; edits fold into creates).
+  trackCreateNetwork: (params: {
+    clientId: string;
+    name: string;
+    description?: string;
+  }) => void;
+  // Rename/description edits fold into the create change and follow into
+  // dependent resource/router labels.
+  updateDraftNetwork: (params: {
+    clientId: string;
+    name: string;
+    description?: string;
+  }) => void;
+  // Drops the network and cascades: dependent resources lose their network
+  // (change dropped — they're incomplete now), dependent routers dropped.
+  untrackNetwork: (clientId: string) => void;
+  // Upserts by clientId — the editor always saves the full resource.
+  trackCreateResource: (params: Omit<CreateResourceChange, "id" | "type">) => void;
+  // Drops the resource change and removes its id from group memberships.
+  untrackResource: (clientId: string) => void;
+  // Adds a group ref (API id or draft-group name) to a draft resource's
+  // create change — deploy applies groups via the resource's own `groups`
+  // field (group changes deploy before resources exist).
+  addGroupToDraftResource: (clientId: string, groupRef: string) => void;
+  trackCreateRouter: (params: Omit<CreateRouterChange, "id" | "type">) => void;
+  // Drops a router change by its network + peer/group reference.
+  untrackRouter: (params: {
+    networkRef: string; // networkId or networkClientId
+    peerId?: string;
+    groupId?: string;
+  }) => void;
   trackCreatePolicy: (params: { clientId: string; policy: Policy }) => void;
   // Edits from the policy modal — updates the pending create change for draft
   // policies ("new-…" ids), records/replaces an update-policy change otherwise.
@@ -261,14 +420,24 @@ export function useDraftChangeset(): DraftChangesetContextType {
   return ctx;
 }
 
-// Renames inside recorded policy changes: draft policies reference new groups
-// by name, so a later group rename must follow into them.
+// Renames inside recorded changes: draft groups are referenced by name in
+// policies (sources/destinations), resources (groupIds), and routers
+// (groupId), so a later group rename must follow into them.
 const renameGroupInPolicies = (
   changes: DraftChange[],
   from: string,
   to: string,
 ): DraftChange[] =>
   changes.map((c) => {
+    if (c.type === "create-resource" && c.groupIds.includes(from)) {
+      return {
+        ...c,
+        groupIds: c.groupIds.map((id) => (id === from ? to : id)),
+      };
+    }
+    if (c.type === "create-router" && c.groupId === from) {
+      return { ...c, groupId: to, groupName: to };
+    }
     if (c.type !== "create-policy" && c.type !== "update-policy") return c;
     const rename = (groups?: Group[] | string[] | null) =>
       groups
@@ -438,9 +607,12 @@ export function DraftChangesetProvider({
   }, []);
 
   const replacePeerIdInGroups = useCallback(
-    (oldId: string, newId: string) => {
+    (oldId: string, newId: string, newName?: string) => {
       setChanges((prev) =>
         prev.map((c) => {
+          if (c.type === "create-router" && c.peerId === oldId) {
+            return { ...c, peerId: newId, peerName: newName ?? c.peerName };
+          }
           if (c.type !== "create-group" && c.type !== "update-group") return c;
           if (!c.peerIds.includes(oldId)) return c;
           return {
@@ -450,6 +622,167 @@ export function DraftChangesetProvider({
             ],
           };
         }),
+      );
+    },
+    [],
+  );
+
+  const trackCreateNetwork = useCallback(
+    ({
+      clientId,
+      name,
+      description,
+    }: {
+      clientId: string;
+      name: string;
+      description?: string;
+    }) => {
+      setChanges((prev) => [
+        ...prev,
+        { id: uid(), type: "create-network", clientId, name, description },
+      ]);
+    },
+    [],
+  );
+
+  const updateDraftNetwork = useCallback(
+    ({
+      clientId,
+      name,
+      description,
+    }: {
+      clientId: string;
+      name: string;
+      description?: string;
+    }) => {
+      setChanges((prev) =>
+        prev.map((c) => {
+          if (c.type === "create-network" && c.clientId === clientId) {
+            return { ...c, name, description };
+          }
+          // Dependent resource/router labels follow the rename.
+          if (
+            (c.type === "create-resource" || c.type === "create-router") &&
+            c.networkClientId === clientId
+          ) {
+            return { ...c, networkName: name };
+          }
+          return c;
+        }),
+      );
+    },
+    [],
+  );
+
+  const untrackNetwork = useCallback((clientId: string) => {
+    setChanges((prev) =>
+      prev.filter((c) => {
+        if (c.type === "create-network" && c.clientId === clientId)
+          return false;
+        // A resource without its network is incomplete → out of the
+        // changeset; routers without their network are meaningless.
+        if (
+          (c.type === "create-resource" || c.type === "create-router") &&
+          c.networkClientId === clientId
+        )
+          return false;
+        return true;
+      }),
+    );
+  }, []);
+
+  const trackCreateResource = useCallback(
+    (params: Omit<CreateResourceChange, "id" | "type">) => {
+      setChanges((prev) => {
+        const existing = prev.find(
+          (c): c is CreateResourceChange =>
+            c.type === "create-resource" && c.clientId === params.clientId,
+        );
+        if (existing) {
+          return prev.map((c) =>
+            c.id === existing.id ? { ...existing, ...params } : c,
+          );
+        }
+        return [...prev, { id: uid(), type: "create-resource", ...params }];
+      });
+    },
+    [],
+  );
+
+  const untrackResource = useCallback((clientId: string) => {
+    setChanges((prev) =>
+      prev
+        .filter(
+          (c) => !(c.type === "create-resource" && c.clientId === clientId),
+        )
+        // The draft resource can't be a group member anymore.
+        .map((c) =>
+          (c.type === "create-group" || c.type === "update-group") &&
+          c.resourceIds.includes(clientId)
+            ? {
+                ...c,
+                resourceIds: c.resourceIds.filter((id) => id !== clientId),
+              }
+            : c,
+        ),
+    );
+  }, []);
+
+  const addGroupToDraftResource = useCallback(
+    (clientId: string, groupRef: string) => {
+      setChanges((prev) =>
+        prev.map((c) =>
+          c.type === "create-resource" &&
+          c.clientId === clientId &&
+          !c.groupIds.includes(groupRef)
+            ? { ...c, groupIds: [...c.groupIds, groupRef] }
+            : c,
+        ),
+      );
+    },
+    [],
+  );
+
+  const trackCreateRouter = useCallback(
+    (params: Omit<CreateRouterChange, "id" | "type">) => {
+      setChanges((prev) => {
+        // One router per (network, peer/group) pair.
+        const duplicate = prev.some(
+          (c) =>
+            c.type === "create-router" &&
+            (c.networkId ?? c.networkClientId) ===
+              (params.networkId ?? params.networkClientId) &&
+            c.peerId === params.peerId &&
+            c.groupId === params.groupId,
+        );
+        if (duplicate) return prev;
+        return [...prev, { id: uid(), type: "create-router", ...params }];
+      });
+    },
+    [],
+  );
+
+  const untrackRouter = useCallback(
+    ({
+      networkRef,
+      peerId,
+      groupId,
+    }: {
+      networkRef: string;
+      peerId?: string;
+      groupId?: string;
+    }) => {
+      setChanges((prev) =>
+        prev.filter(
+          (c) =>
+            !(
+              c.type === "create-router" &&
+              (c.networkId === networkRef ||
+                c.networkClientId === networkRef) &&
+              c.peerId === peerId &&
+              c.groupId === groupId
+            ),
+        ),
       );
     },
     [],
@@ -628,6 +961,14 @@ export function DraftChangesetProvider({
       trackDeleteGroup,
       untrackNewGroup,
       replacePeerIdInGroups,
+      trackCreateNetwork,
+      updateDraftNetwork,
+      untrackNetwork,
+      trackCreateResource,
+      untrackResource,
+      addGroupToDraftResource,
+      trackCreateRouter,
+      untrackRouter,
       trackCreatePolicy,
       trackUpdatePolicy,
       trackSetPolicyEnabled,
@@ -644,6 +985,14 @@ export function DraftChangesetProvider({
       trackDeleteGroup,
       untrackNewGroup,
       replacePeerIdInGroups,
+      trackCreateNetwork,
+      updateDraftNetwork,
+      untrackNetwork,
+      trackCreateResource,
+      untrackResource,
+      addGroupToDraftResource,
+      trackCreateRouter,
+      untrackRouter,
       trackCreatePolicy,
       trackUpdatePolicy,
       trackSetPolicyEnabled,

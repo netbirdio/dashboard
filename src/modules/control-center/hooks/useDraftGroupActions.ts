@@ -7,6 +7,7 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 
 export const GROUP_NODE_TYPES = new Set([
@@ -60,6 +61,9 @@ export function useDraftGroupActions() {
     trackDeleteGroup,
     untrackNewGroup,
     trackDeletePolicy,
+    untrackNetwork,
+    untrackResource,
+    untrackRouter,
   } = useDraftChangeset();
 
   // Drops a fresh draft group ("New Group", "New Group (1)", …) and records
@@ -159,7 +163,55 @@ export function useDraftGroupActions() {
       const entityId =
         data?.peer?.id ??
         data?.resource?.id ??
-        (data?.placeholderKind ? nodeId.replace("peer-", "") : undefined);
+        (data?.placeholderKind
+          ? nodeId.replace("peer-", "")
+          : nodeId.startsWith("resource-new-")
+          ? nodeId.replace("resource-", "")
+          : undefined);
+
+      // Router changes whose routing edge passes through this node go too.
+      reactFlow
+        .getEdges()
+        .filter(
+          (e) =>
+            (e.data as { router?: boolean })?.router &&
+            (e.source === nodeId || e.target === nodeId),
+        )
+        .forEach((e) => {
+          const networkRef = getNetworkRef(
+            reactFlow.getNodes().find((n) => n.id === e.target),
+          );
+          if (!networkRef) return;
+          const source = reactFlow.getNodes().find((n) => n.id === e.source);
+          const group = (source?.data as { group?: Group })?.group;
+          untrackRouter({
+            networkRef: networkRef.networkId ?? networkRef.networkClientId!,
+            ...(e.source.startsWith("peer-")
+              ? { peerId: e.source.replace("peer-", "") }
+              : { groupId: group?.id ?? group?.name }),
+          });
+        });
+
+      // Draft networks cascade: create-network + dependent resource/router
+      // changes dropped; canvas resources lose their parent (incomplete
+      // again, "Set up" affordance returns).
+      if (nodeId.startsWith("network-new-")) {
+        const clientId = nodeId.replace("network-", "");
+        untrackNetwork(clientId);
+        setNodes((prev) =>
+          prev.map((n) => {
+            const ref = (n.data as { draftNetwork?: { networkClientId?: string } })
+              ?.draftNetwork;
+            if (ref?.networkClientId !== clientId) return n;
+            return { ...n, data: { ...n.data, draftNetwork: undefined } };
+          }),
+        );
+      }
+
+      // Draft resources: pending create + group memberships dropped.
+      if (nodeId.startsWith("resource-new-")) {
+        untrackResource(nodeId.replace("resource-", ""));
+      }
 
       setNodes((prev) => prev.filter((n) => n.id !== nodeId));
       setEdges((prev) =>
@@ -202,6 +254,9 @@ export function useDraftGroupActions() {
       setEdges,
       setSelectedDestinationGroup,
       updateDraftPolicy,
+      untrackNetwork,
+      untrackResource,
+      untrackRouter,
     ],
   );
 

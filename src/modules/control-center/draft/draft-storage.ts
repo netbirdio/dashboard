@@ -16,6 +16,9 @@ const KNOWN_CHANGE_TYPES = new Set([
   "create-policy",
   "update-policy",
   "delete-policy",
+  "create-network",
+  "create-resource",
+  "create-router",
 ]);
 
 export function loadDraftChanges(): DraftChange[] {

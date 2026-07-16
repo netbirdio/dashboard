@@ -1,7 +1,11 @@
-import { Node as CanvasNode, useReactFlow } from "@xyflow/react";
+import {
+  Edge as CanvasEdge,
+  Node as CanvasNode,
+  useReactFlow,
+} from "@xyflow/react";
 import { orderBy } from "lodash";
 import { Group } from "@/interfaces/Group";
-import { Network } from "@/interfaces/Network";
+import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 
@@ -275,14 +279,28 @@ export const getPolicyRegroupUpdates = (
 // neither side may reference a placeholder peer ("draft-…" id): the peer
 // doesn't exist in the API until it's installed. Policies failing this stay
 // out of the changeset (canvas-only) until the draft completes them.
-export const isDeployablePolicy = (policy: Policy) => {
+export const isDeployablePolicy = (
+  policy: Policy,
+  // Client ids of draft resources that ARE tracked (complete) — a policy
+  // referencing a "new-…" resource is deployable only when the resource
+  // itself will be created on deploy.
+  trackedResourceClientIds?: Set<string>,
+) => {
   const rule = policy.rules?.[0];
   if (!rule) return false;
   const hasSource = (rule.sources?.length ?? 0) > 0 || !!rule.sourceResource;
   const hasDestination =
     (rule.destinations?.length ?? 0) > 0 || !!rule.destinationResource;
-  const isDeployableResource = (r?: { id: string }) =>
-    !r?.id?.startsWith("draft-");
+  const isDeployableResource = (r?: { id: string }) => {
+    if (!r?.id) return true;
+    // Placeholder peers don't exist in the API until installed.
+    if (r.id.startsWith("draft-")) return false;
+    // Draft resources deploy first and resolve — but only tracked ones.
+    if (r.id.startsWith("new-")) {
+      return trackedResourceClientIds?.has(r.id) ?? false;
+    }
+    return true;
+  };
   return (
     hasSource &&
     hasDestination &&
@@ -290,3 +308,76 @@ export const isDeployablePolicy = (policy: Policy) => {
     isDeployableResource(rule.destinationResource)
   );
 };
+
+// Derived resource type for canvas display; the API derives the
+// authoritative type on create. Mirrors ResourceSingleAddressInput: letters
+// → domain, "/" → subnet, otherwise a single host address.
+export const deriveResourceType = (
+  address: string,
+): "domain" | "host" | "subnet" => {
+  if (/[a-z*]/i.test(address)) return "domain";
+  if (address.includes("/")) return "subnet";
+  return "host";
+};
+
+// The parent-network reference a draft resource node carries (set by the
+// draft resource editor / drag-onto-network).
+export type DraftNetworkRef = {
+  networkId?: string;
+  networkClientId?: string;
+  name: string;
+};
+
+// A draft resource node's pseudo-NetworkResource (counterpart of
+// getPlaceholderPeer): pseudo id "new-<uuid>" from node id
+// resource-new-<uuid>. Returns undefined for real resources.
+export const getDraftResource = (
+  node?: CanvasNode,
+): NetworkResource | undefined => {
+  if (!node?.id.startsWith("resource-new-")) return undefined;
+  const resource = (node.data as { resource?: Partial<NetworkResource> })
+    ?.resource;
+  return {
+    ...resource,
+    id: node.id.replace("resource-", ""),
+    name: resource?.name ?? "New Resource",
+    address: resource?.address ?? "",
+    type: resource?.address ? deriveResourceType(resource.address) : undefined,
+    enabled: true,
+  } as NetworkResource;
+};
+
+// A draft resource is complete (and thus changeset-worthy) once it has a
+// name, a valid-enough address, and a parent network.
+export const isCompleteDraftResource = (node?: CanvasNode): boolean => {
+  const resource = getDraftResource(node);
+  const network = (node?.data as { draftNetwork?: DraftNetworkRef })
+    ?.draftNetwork;
+  return !!resource?.name && !!resource?.address && !!network?.name;
+};
+
+// Routing edge (peer/group → network): gray dashed "routes" line, visually
+// distinct from policy edges; never opens the policy modal.
+export const makeRouterEdge = (
+  sourceNodeId: string,
+  networkNodeId: string,
+): CanvasEdge => ({
+  id: `router-${sourceNodeId}-${networkNodeId}`,
+  source: sourceNodeId,
+  target: networkNodeId,
+  type: "floating-straight",
+  data: { router: true, label: "routes" },
+});
+
+// Membership edge (resource → network): subtle dashed line showing the
+// parent-network relationship when both are on canvas. Display-only.
+export const makeMembershipEdge = (
+  resourceNodeId: string,
+  networkNodeId: string,
+): CanvasEdge => ({
+  id: `member-${resourceNodeId}-${networkNodeId}`,
+  source: resourceNodeId,
+  target: networkNodeId,
+  type: "simple",
+  data: { membership: true },
+});

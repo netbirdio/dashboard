@@ -26,6 +26,9 @@ type DraftModeContextType = {
   setComponentsPanelOpen: (value: boolean) => void;
   installModal: InstallModalState | null;
   setInstallModal: (value: InstallModalState | null) => void;
+  // Draft resource editor (pure-data modal) — targets a resource node.
+  resourceEditor: { nodeId: string } | null;
+  setResourceEditor: (value: { nodeId: string } | null) => void;
   // Bumped by "New Draft" — forces the draft canvas to rebuild from live.
   draftSession: number;
   newDraftSession: () => void;
@@ -40,6 +43,8 @@ const DraftModeContext = createContext<DraftModeContextType>({
   setComponentsPanelOpen: () => {},
   installModal: null,
   setInstallModal: () => {},
+  resourceEditor: null,
+  setResourceEditor: () => {},
   draftSession: 0,
   newDraftSession: () => {},
 });
@@ -53,6 +58,9 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
   const [installModal, setInstallModal] = useState<InstallModalState | null>(
     null,
   );
+  const [resourceEditor, setResourceEditor] = useState<{
+    nodeId: string;
+  } | null>(null);
   const [draftSession, setDraftSession] = useState(0);
   const newDraftSession = () => setDraftSession((s) => s + 1);
 
@@ -67,6 +75,8 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
         setComponentsPanelOpen,
         installModal,
         setInstallModal,
+        resourceEditor,
+        setResourceEditor,
         draftSession,
         newDraftSession,
       }}

@@ -60,7 +60,8 @@ export function groupContainsItem(groupNode: Node, itemId: string): boolean {
 export function useDragToGroup() {
   const { isDraft } = useDraftMode();
   const { setNodes, setEdges } = useCanvasState();
-  const { trackAddGroupMembers } = useDraftChangeset();
+  const { trackAddGroupMembers, addGroupToDraftResource } =
+    useDraftChangeset();
   const { updateDraftPolicy } = useControlCenterPolicy();
   const reactFlow = useReactFlow();
 
@@ -166,6 +167,13 @@ export function useDragToGroup() {
         resourceIds: resource ? [resource.id] : [],
       });
 
+      // Draft resources also carry the group on their own create change —
+      // deploy applies groups via the resource's `groups` field, since group
+      // changes run before the resource exists.
+      if (itemId.startsWith("new-") && draggedId.startsWith("resource-")) {
+        addGroupToDraftResource(itemId, groupData.id ?? groupData.name);
+      }
+
       // Policies that referenced the dragged entity as their single
       // source/destination follow it into the group.
       const policyUpdates = getPolicyRegroupUpdates(
@@ -185,6 +193,7 @@ export function useDragToGroup() {
       setNodes,
       setEdges,
       trackAddGroupMembers,
+      addGroupToDraftResource,
       updateDraftPolicy,
     ],
   );

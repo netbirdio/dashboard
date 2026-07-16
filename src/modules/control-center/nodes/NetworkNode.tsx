@@ -1,11 +1,19 @@
+import { SmallBadge } from "@components/ui/SmallBadge";
 import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
-import { Handle, type Node, Position } from "@xyflow/react";
-import { NetworkIcon } from "lucide-react";
+import { Handle, type Node, Position, useConnection } from "@xyflow/react";
+import { NetworkIcon, PlusCircleIcon } from "lucide-react";
 import * as React from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { Network, NetworkResource } from "@/interfaces/Network";
+import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import {
+  DraftNetworkRef,
+  getDraftResource,
+} from "@/modules/control-center/utils/helpers";
 
 type NetworkNodeType = {
   network: Network;
@@ -13,21 +21,61 @@ type NetworkNodeType = {
 
 type NetworkNodeProps = Node<NetworkNodeType, "networkNode">;
 
-export const NetworkNode = ({ data }: NetworkNodeProps) => {
+export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   const { data: networkResources } = useFetchApi<NetworkResource[]>(
     "/networks/resources",
   );
+  const { isDraft } = useDraftMode();
+  const { nodes, edges, contextMenuNodeId } = useCanvasState();
+  const { addRoutingPeer } = useDraftNodeCreation();
+  const connection = useConnection();
+  const isTarget = connection.inProgress && connection.fromNode?.id !== id;
+  const showHalo = contextMenuNodeId === id;
 
   const n = data.network as Network;
-  const routingPeersCount = n?.routing_peers_count ?? 0;
+  // Draft networks have no API id — their state lives on the canvas.
+  const isNew = !n?.id;
+
+  // Draft members: resource nodes assigned to this network via the editor or
+  // drag-onto-network (matched by node id for draft networks, API id
+  // otherwise).
+  const draftResources = React.useMemo(
+    () =>
+      nodes
+        .filter((node) => {
+          const ref = (node.data as { draftNetwork?: DraftNetworkRef })
+            ?.draftNetwork;
+          if (!ref) return false;
+          return ref.networkClientId
+            ? `network-${ref.networkClientId}` === id
+            : !!n?.id && ref.networkId === n.id;
+        })
+        .map((node) => getDraftResource(node))
+        .filter(Boolean) as NetworkResource[],
+    [nodes, id, n?.id],
+  );
+
   const resourceIds = n?.resources || [];
-  const resources =
+  const apiResources =
     networkResources?.filter((r) => resourceIds.includes(r?.id || "")) || [];
+  const resources = [...apiResources, ...draftResources];
+
+  // Draft routers: routing edges targeting this network node.
+  const draftRouterCount = React.useMemo(
+    () =>
+      edges.filter(
+        (e) => e.target === id && (e.data as { router?: boolean })?.router,
+      ).length,
+    [edges, id],
+  );
+  const routingPeersCount = (n?.routing_peers_count ?? 0) + draftRouterCount;
 
   return (
     <div
       className={cn(
-        "bg-nb-gray-940 border border-nb-gray-900 rounded-2xl overflow-hidden group hover:bg-nb-gray-935 transition-all cursor-pointer",
+        "bg-nb-gray-940 border border-nb-gray-900 rounded-2xl overflow-hidden group hover:bg-nb-gray-935 transition-all cursor-pointer relative",
+        isDraft && isTarget && "hover:bg-nb-gray-930 ring-2 ring-white/60",
+        showHalo && "ring-2 ring-sky-500",
       )}
     >
       <div
@@ -45,6 +93,7 @@ export const NetworkNode = ({ data }: NetworkNodeProps) => {
             >
               <NetworkIcon size={12} />
               {n?.name}
+              {isNew && <SmallBadge />}
             </div>
             <div className={"text-nb-gray-400 whitespace-nowrap mt-0.5"}>
               {resources?.length || 0} Resources
@@ -81,10 +130,32 @@ export const NetworkNode = ({ data }: NetworkNodeProps) => {
         </div>
       )}
 
+      {/* Draft: resources are only reachable through a routing peer — offer
+          the install path right on the node while there is none. */}
+      {isDraft && routingPeersCount === 0 && (
+        <div className={"absolute bottom-full left-0 mb-2"}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              addRoutingPeer(id);
+            }}
+            className={cn(
+              "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs shrink-0 whitespace-nowrap",
+              "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
+              "hover:text-white hover:bg-nb-gray-910 transition-colors",
+            )}
+          >
+            <PlusCircleIcon size={13} />
+            Add Routing Peer
+          </button>
+        </div>
+      )}
+
       <Handle
         type="source"
         position={Position.Right}
         id={"sr"}
+        isConnectable={false}
         style={{
           opacity: 0,
         }}
@@ -93,10 +164,33 @@ export const NetworkNode = ({ data }: NetworkNodeProps) => {
         type="target"
         position={Position.Left}
         id={"tl"}
+        isConnectable={false}
         style={{
           opacity: 0,
         }}
       />
+      {/* Draft: full-area target — accepts routing peers/groups and resource
+          membership drags; networks are never policy actors. */}
+      {isDraft && (
+        <Handle
+          type={"target"}
+          position={Position.Left}
+          id={"ta"}
+          isConnectableStart={false}
+          isConnectable={isTarget}
+          style={{
+            background: "none",
+            border: "none",
+            borderRadius: "0",
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+            left: "0",
+            top: 0,
+            transform: "none",
+          }}
+        />
+      )}
     </div>
   );
 };

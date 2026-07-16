@@ -1,11 +1,12 @@
 # Draft Mode: Networks, Resources & Routing Peers — Specification
 
-> Status: **Draft / not implemented.** This spec defines how networks, network
-> resources, and routing peers become first-class citizens of the control
-> center draft mode. Today the components panel already offers **Network** and
-> **Resource** create templates, but they drop purely visual placeholders —
-> no editor, no changeset entry, no deploy wiring
-> (`useDraftNodeCreation.addBlankNode`, see CLAUDE.md "Blank nodes").
+> Status: **Implemented (v1).** Deviations from this spec: the network
+> context menu offers Rename (name only — no description editor yet) and
+> the resource editor is opened via the node click / "Set up" affordance /
+> context-menu Edit; deleting a routing *edge* alone (keyboard edge delete)
+> does not yet drop the router change — remove the peer/group or network
+> node instead. Everything else matches, including the §8 test surface
+> (draft-connect / node-capabilities / changeset / storage suites).
 
 ## 1. Goals
 
