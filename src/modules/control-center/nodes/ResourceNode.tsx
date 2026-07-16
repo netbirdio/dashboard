@@ -1,6 +1,6 @@
 import TruncatedText from "@components/ui/TruncatedText";
 import { cn } from "@utils/helpers";
-import { type Node, Position, useConnection, useStore } from "@xyflow/react";
+import { type Node, Position, useConnection } from "@xyflow/react";
 import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
 import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
@@ -40,10 +40,6 @@ export const ResourceNode = ({ data, id }: ResourceNode) => {
   const connection = useConnection();
   const isTarget = connection.inProgress && connection.fromNode.id !== id;
   const { isDraft, setResourceEditor } = useDraftMode();
-  // Contained resources (children of a network frame) are laid out by the
-  // frame — "nodrag" stops drag initiation entirely, otherwise ReactFlow
-  // falls through to dragging the parent frame. Clicks still work.
-  const isContained = useStore((s) => !!s.nodeLookup.get(id)?.parentId);
 
   // Draft resources (resource-new-…) are edited on the canvas via click /
   // context-menu Edit; incomplete ones (no address yet) show the dimmed
@@ -63,7 +59,6 @@ export const ResourceNode = ({ data, id }: ResourceNode) => {
       <div
         className={cn(
           "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-900 w-full",
-          isContained && "nodrag",
           "hover:bg-nb-gray-930 hover:border-nb-gray-800 pr-5 pl-3 py-1 cursor-pointer",
           isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
           className,
