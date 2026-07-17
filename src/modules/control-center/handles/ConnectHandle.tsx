@@ -19,6 +19,9 @@ type Props = {
   position?: Position;
   type?: "source" | "target";
   style?: React.CSSProperties;
+  // Horizontal shift in px (positive → right). Moves the hit area and the
+  // visible bubble together, on top of ReactFlow's own handle placement.
+  offsetX?: number;
 };
 
 const generateHandleId = (type: "source" | "target", position: Position) => {
@@ -45,6 +48,7 @@ export const ConnectHandle = ({
   position = Position.Right,
   type = "source",
   style,
+  offsetX,
 }: Props) => {
   const nodeId = useNodeId();
 
@@ -87,6 +91,7 @@ export const ConnectHandle = ({
           ...(isHorizontal
             ? { width: "1em", height: "4em" }
             : { width: "4em", height: "1em" }),
+          ...(offsetX ? { marginLeft: offsetX } : {}),
           ...style,
         }}
       >

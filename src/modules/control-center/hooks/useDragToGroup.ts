@@ -89,8 +89,14 @@ export function useDragToGroup() {
         frameId: frame.id,
         frameStart: { ...frame.position },
       };
+      // ReactFlow only elevates the DRAGGED node (the child) — raise the
+      // frame too so frame + children ride above other nodes while moving
+      // (children inherit the parent's elevation).
+      setNodes((prev) =>
+        prev.map((n) => (n.id === frame.id ? { ...n, zIndex: 1000 } : n)),
+      );
     },
-    [isDraft, reactFlow],
+    [isDraft, reactFlow, setNodes],
   );
 
   const onNodeDrag = useCallback(
@@ -152,13 +158,28 @@ export function useDragToGroup() {
       const frame = frameDrag.current;
       if (frame && draggedNode.id === frame.childId) {
         frameDrag.current = null;
-        setNodes((prev) =>
-          prev.map((n) =>
-            n.id === frame.childId
-              ? { ...n, position: { ...frame.childStart } }
-              : n,
-          ),
-        );
+        setNodes((prev) => {
+          // The dropped frame stays on top: TWO above the highest settled z
+          // (drag-time elevations of 1000 excluded) — children render at
+          // parentZ + 1, so +1 would tie with the other frames' children
+          // and lose to DOM order (their resources would paint over this
+          // frame).
+          const maxZ = Math.max(
+            0,
+            ...prev.map((n) =>
+              typeof n.zIndex === "number" && n.zIndex < 1000 ? n.zIndex : 0,
+            ),
+          );
+          return prev.map((n) => {
+            if (n.id === frame.childId) {
+              return { ...n, position: { ...frame.childStart } };
+            }
+            if (n.id === frame.frameId) {
+              return { ...n, zIndex: maxZ + 2 };
+            }
+            return n;
+          });
+        });
         return;
       }
 

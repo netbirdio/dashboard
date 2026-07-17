@@ -232,9 +232,9 @@ export function useDeployChangeset() {
                       nameToId.get(change.groupId ?? "") ?? change.groupId,
                     ],
                   }),
-              metric: 9999,
-              masquerade: true,
-              enabled: true,
+              metric: change.metric ?? 9999,
+              masquerade: change.masquerade ?? true,
+              enabled: change.enabled ?? true,
             },
             `/${networkId}/routers`,
           );

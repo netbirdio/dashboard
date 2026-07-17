@@ -126,6 +126,11 @@ export interface CreateRouterChange {
   // Display-only for labels.
   peerName?: string;
   groupName?: string;
+  // Advanced settings from the routing-peer modal; deploy falls back to the
+  // live-modal defaults (9999 / true / true) when absent.
+  metric?: number;
+  masquerade?: boolean;
+  enabled?: boolean;
 }
 
 export type DraftChange =

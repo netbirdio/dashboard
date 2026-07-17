@@ -22,6 +22,9 @@ import { NetworkResource } from "@/interfaces/Network";
 import { handleDraftConnect } from "@/modules/control-center/utils/draft-connect";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftPeerUpgrade } from "@/modules/control-center/hooks/useDraftPeerUpgrade";
+import { useNetworkFrameLayout } from "@/modules/control-center/hooks/useNetworkFrameLayout";
+import { useFrameEdgeAttachment } from "@/modules/control-center/hooks/useFrameEdgeAttachment";
+import { useNetworkDrillDown } from "@/modules/control-center/hooks/useNetworkDrillDown";
 import {
   addNode,
   addEdge,
@@ -31,13 +34,26 @@ import {
 export function useDraft() {
   // Upgrades installed placeholders to real peers as they register.
   useDraftPeerUpgrade();
+  // Network frames size themselves from their children's measured heights.
+  useNetworkFrameLayout();
+  // Policy edges to framed resources attach to the frame (parent view) or
+  // the resource (drill-down).
+  useFrameEdgeAttachment();
+  // Clicking a frame enters the single-network drill-down view.
+  useNetworkDrillDown();
 
   const { nodes, edges, setNodes, setEdges, setLayoutInitialized } =
     useCanvasState();
   const { policies, peers, networkResources, groups } =
     useControlCenterData();
-  const { isDraft, setIsDraft, activeTool, setActiveTool, draftSession } =
-    useDraftMode();
+  const {
+    isDraft,
+    setIsDraft,
+    activeTool,
+    setActiveTool,
+    draftSession,
+    setNetworkDestinationPicker,
+  } = useDraftMode();
   const {
     setCreatePolicyModal,
     setPolicyInitialName,
@@ -45,6 +61,7 @@ export function useDraft() {
     setPolicyDestinationResource,
     setPolicySourceGroups,
     setPolicyDestinationGroups,
+    setPolicyDestinationScope,
     updateDraftPolicy,
   } = useControlCenterPolicy();
   const { changeCount } = useDraftChangeset();
@@ -432,7 +449,7 @@ export function useDraft() {
 
   // Connect rules live in utils/draft-connect.ts (pure, unit-tested) — this
   // just injects the live dependencies.
-  const { connectRouter, assignResourceToNetwork } = useDraftNetworkActions();
+  const { assignResourceToNetwork } = useDraftNetworkActions();
   const onNodeConnect = (connection: Connection) => {
     handleDraftConnect(connection, {
       nodes: reactFlow.getNodes(),
@@ -446,8 +463,9 @@ export function useDraft() {
       setPolicyDestinationGroups,
       setPolicyInitialName,
       setCreatePolicyModal,
-      onRouterConnect: connectRouter,
+      onNetworkConnect: setNetworkDestinationPicker,
       onResourceAssign: assignResourceToNetwork,
+      setPolicyDestinationScope,
     });
   };
 

@@ -201,7 +201,10 @@ export const getPlaceholderPeer = (node?: CanvasNode): Peer | undefined => {
       PLACEHOLDER_BASE_NAMES[data.placeholderKind] ??
       "Peer",
     ip: "",
-    os: "",
+    // The kind rides along in `os` so peer selectors/badges can show the
+    // Server/Agent/User-Device icon instead of a (wrong) OS logo — see
+    // PeerOperatingSystemIcon; getOperatingSystem treats it as unknown.
+    os: `draft-${data.placeholderKind}`,
   } as Peer;
 };
 
@@ -253,8 +256,7 @@ export const getPolicyRegroupUpdates = (
     const sourceGrouped =
       !!rule.sourceResource && groupedIds.has(rule.sourceResource.id);
     const destGrouped =
-      !!rule.destinationResource &&
-      groupedIds.has(rule.destinationResource.id);
+      !!rule.destinationResource && groupedIds.has(rule.destinationResource.id);
     if (!sourceGrouped && !destGrouped) return;
     updates.push({
       ...policy,
@@ -340,7 +342,7 @@ export const getDraftResource = (
   return {
     ...resource,
     id: node.id.replace("resource-", ""),
-    name: resource?.name ?? "New Resource",
+    name: resource?.name ?? "Resource",
     address: resource?.address ?? "",
     type: resource?.address ? deriveResourceType(resource.address) : undefined,
     enabled: true,
@@ -382,25 +384,68 @@ export const makeMembershipEdge = (
   data: { membership: true },
 });
 
-// Draft network frame (a bordered, slightly opaque container node that
-// wraps its resource nodes as ReactFlow children). Sizing is computed from
-// the member count — child resources stack vertically under the header.
-export const NETWORK_FRAME_WIDTH = 340;
-const NETWORK_FRAME_HEADER = 64;
-const NETWORK_FRAME_ROW = 78;
-const NETWORK_FRAME_PADDING_BOTTOM = 24;
-// Contained resources are fixed in place and stretch to (basically) the
-// full frame width.
-export const NETWORK_FRAME_CHILD_WIDTH = NETWORK_FRAME_WIDTH - 28;
+// Draft network frame (a bordered container node that wraps its resource
+// nodes as ReactFlow children). Children stack under the header with a
+// NETWORK_FRAME_PADDING_X/Y around the content; the actual row
+// heights are measured at runtime (useNetworkFrameLayout) — the constants
+// below only seed the initial placement until nodes report their size.
+export const NETWORK_FRAME_WIDTH = 300;
+// Height of the frame's header band; the content area starts below it.
+export const NETWORK_FRAME_HEADER = 72;
+// Content padding inside the frame: X = left/right, Y = below the header
+// and above the bottom edge.
+export const NETWORK_FRAME_PADDING_X = 20;
+export const NETWORK_FRAME_PADDING_Y = 14;
+export const NETWORK_FRAME_GAP = 0;
+// Vertical spacing between resource rows (tighter than the column gap).
+export const NETWORK_FRAME_ROW_GAP = 6;
+// Estimated resource card height before measurement.
+export const NETWORK_FRAME_FALLBACK_ROW = 58;
+
+export const NETWORK_FRAME_CHILD_WIDTH =
+  NETWORK_FRAME_WIDTH - NETWORK_FRAME_PADDING_X * 2;
+// Row width in MULTI-column layouts — rows hug their content there, a
+// full-width row per column would leave a big gap between the columns.
+export const NETWORK_FRAME_CHILD_WIDTH_MULTI = 185;
+
+// Parent (collapsed) frame view shows at most 2 columns x 4 rows; overflow
+// is summarized ("+N more") and fully visible in the drill-down.
+export const NETWORK_FRAME_MAX_VISIBLE = 6;
+export const NETWORK_FRAME_OVERFLOW_ROW = 28;
+
+// Drill-down grid math: the column count targets a square-ish frame
+// (width ≈ height in pixels) — cols = sqrt(N * cellH / cellW).
+export const getFrameGridColumns = (count: number) => {
+  if (count <= 2) return 1;
+  const cellW = NETWORK_FRAME_CHILD_WIDTH + NETWORK_FRAME_GAP;
+  const cellH = NETWORK_FRAME_FALLBACK_ROW + NETWORK_FRAME_ROW_GAP;
+  return Math.max(1, Math.round(Math.sqrt(count * (cellH / cellW))));
+};
+
+// Frame width for a column count (1 column = NETWORK_FRAME_WIDTH).
+export const getNetworkFrameWidth = (
+  cols: number,
+  childWidth = NETWORK_FRAME_CHILD_WIDTH,
+) =>
+  NETWORK_FRAME_PADDING_X * 2 +
+  cols * childWidth +
+  (cols - 1) * NETWORK_FRAME_GAP;
 
 export const getNetworkFrameHeight = (resourceCount: number) =>
   NETWORK_FRAME_HEADER +
-  Math.max(resourceCount, 1) * NETWORK_FRAME_ROW +
-  NETWORK_FRAME_PADDING_BOTTOM;
+  NETWORK_FRAME_PADDING_Y +
+  Math.max(resourceCount, 1) *
+    (NETWORK_FRAME_FALLBACK_ROW + NETWORK_FRAME_ROW_GAP) -
+  NETWORK_FRAME_ROW_GAP +
+  NETWORK_FRAME_PADDING_Y;
 
-// Child position of the i-th resource inside its network frame (relative
-// coordinates — the resource node carries parentId).
+// Initial child position of the i-th resource inside its network frame
+// (relative coordinates — the resource node carries parentId); corrected by
+// the measured layout once heights are known.
 export const getFrameChildPosition = (index: number) => ({
-  x: 14,
-  y: NETWORK_FRAME_HEADER + index * NETWORK_FRAME_ROW,
+  x: NETWORK_FRAME_PADDING_X,
+  y:
+    NETWORK_FRAME_HEADER +
+    NETWORK_FRAME_PADDING_Y +
+    index * (NETWORK_FRAME_FALLBACK_ROW + NETWORK_FRAME_ROW_GAP),
 });

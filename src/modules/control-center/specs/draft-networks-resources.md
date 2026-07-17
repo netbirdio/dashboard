@@ -396,3 +396,48 @@ Unit test surface (Vitest, mirroring the existing suites):
    change (consistent with dependent-policy dropping), but worth a UX pass.
 3. Should the membership edge (resource → network) be interactive
    (deletable to unassign)? v1: display-only; unassign via editor.
+
+## 10. v2: Parent view, drill-down & network-level connections (agreed direction)
+
+> Status: **Implemented** (with an amended interaction model: peer/group
+> drags onto the frame or its contained rows open the CREATE-POLICY modal —
+> source prefilled, contained rows prefill the destination — while the
+> minimal destination picker is reserved for POLICY↔network drags).
+> Parent-view visuals, the destination picker (`DraftNetworkDestinationModal`), frame-
+> attached policy edges (`useFrameEdgeAttachment` / `computeFrameEdgeTargets`)
+> and the drill-down (`useNetworkDrillDown` / `computeDrillDownKeepSet`,
+> drilled branch in `useNetworkFrameLayout`, back affordance in the header)
+> are in. The drill-down mirrors the live single-network view: no frame box
+> and no routing-peer nodes on canvas — the header carries back arrow,
+> network name and the routing-peer count (which opens the routing-peer
+> modal). Notes: the §4.4 connect-drag router creation is REMOVED as agreed —
+> the frame button group's "Add" and the context menu open the networks
+> page's routing-peer modal in pure-data mode instead; clicking a contained
+> resource still opens its editor (in both views) — entering the drill-down
+> is a click on the frame itself; group-mediated policies and auto-arrange
+> in the drill-down are accepted gaps (see limitations.md).
+
+- **Parent (collapsed) frame view**: live-card-like header (name + "N
+  Resources"); the routing state lives in a floating BUTTON GROUP above the
+  frame — `[● No Routing Peers / N Routing Peer(s) | Install]` — where
+  Install runs the Add Routing Peer flow. Resources render in a fixed
+  2-column grid capped at 4 rows (8 visible, `NETWORK_FRAME_MAX_VISIBLE`);
+  overflow children are `hidden` and summarized as "+N more resources".
+- **Connections in parent view target the NETWORK only.** Contained
+  resources stop exposing connect handles in the parent view. Dropping a
+  connection (peer/group/policy handle) onto the frame opens a minimal
+  destination picker — a stripped-down policy modal that offers ONLY the
+  network's own resources and the resource-groups represented in it. The
+  pick becomes the policy destination (single resource XOR groups); the drag
+  source becomes the policy source. Router creation moves exclusively to the
+  Install button / context menu (drag-onto-network no longer creates
+  routers).
+- **Edges in parent view attach to the frame**: a policy whose destination
+  is a framed (possibly hidden) resource draws its edge to the network frame
+  in the parent view.
+- **Drill-down**: clicking the frame enters a single-network draft view
+  (like the live network view, still in draft): all resources (full grid,
+  viewport-shaped `getFrameGridColumns` math), their policies (edges attach
+  to the actual resources here), routing peers, and a back affordance to the
+  parent canvas. Connecting to individual resources is allowed in the
+  drill-down. Parent canvas state is preserved and restored on exit.

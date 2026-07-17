@@ -1,5 +1,12 @@
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import { Handle, type Node, Position, useConnection, useNodeId } from "@xyflow/react";
+import {
+  Handle,
+  type Node,
+  Position,
+  useConnection,
+  useNodeId,
+} from "@xyflow/react";
 import * as React from "react";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
@@ -35,9 +42,11 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
   return (
     <div
       className={cn(
-        "relative group/node bg-nb-gray-940 hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer border border-nb-gray-900 rounded-full flex justify-between transition-all",
+        "relative group/node bg-nb-gray-940 hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer border border-nb-gray-850 rounded-full flex justify-between transition-all",
         !isActive && "opacity-60",
-        isDraft && isDropTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
+        isDraft &&
+          isDropTarget &&
+          "hover:bg-nb-gray-930 hover:ring-2 ring-white",
         showHalo && "ring-2 ring-sky-500",
       )}
     >
@@ -56,6 +65,9 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
           }
         >
           <div className={"truncate max-w-[200px]"}>{rule?.name}</div>
+          {String(data.policy.id ?? "").startsWith("new-") && (
+            <SmallBadge className={"ml-1.5"} />
+          )}
         </div>
       </div>
       <div
@@ -66,14 +78,62 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
         <div>{label === "" ? "All" : label}</div>
       </div>
 
-      <Handle type="source" position={Position.Right} id={"sr"} className={"opacity-0"} isConnectable={false} />
-      <Handle type="source" position={Position.Left} id={"sl"} className={"opacity-0"} isConnectable={false} />
-      <Handle type="source" position={Position.Top} id={"st"} className={"opacity-0"} isConnectable={false} />
-      <Handle type="source" position={Position.Bottom} id={"sb"} className={"opacity-0"} isConnectable={false} />
-      <Handle type="target" position={Position.Left} id={"tl"} className={"opacity-0"} isConnectable={false} />
-      <Handle type="target" position={Position.Right} id={"tr"} className={"opacity-0"} isConnectable={false} />
-      <Handle type="target" position={Position.Top} id={"tt"} className={"opacity-0"} isConnectable={false} />
-      <Handle type="target" position={Position.Bottom} id={"tb"} className={"opacity-0"} isConnectable={false} />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id={"sr"}
+        className={"opacity-0"}
+        isConnectable={false}
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id={"sl"}
+        className={"opacity-0"}
+        isConnectable={false}
+      />
+      <Handle
+        type="source"
+        position={Position.Top}
+        id={"st"}
+        className={"opacity-0"}
+        isConnectable={false}
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id={"sb"}
+        className={"opacity-0"}
+        isConnectable={false}
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id={"tl"}
+        className={"opacity-0"}
+        isConnectable={false}
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id={"tr"}
+        className={"opacity-0"}
+        isConnectable={false}
+      />
+      <Handle
+        type="target"
+        position={Position.Top}
+        id={"tt"}
+        className={"opacity-0"}
+        isConnectable={false}
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id={"tb"}
+        className={"opacity-0"}
+        isConnectable={false}
+      />
 
       {/* Draft: hover connect handles — dragging from the right adds the
           target group as a destination, from the left as a source. The

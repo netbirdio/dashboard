@@ -6,6 +6,7 @@ import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
+import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
@@ -33,13 +34,26 @@ const TYPE_ICONS = {
   host: WorkflowIcon,
 };
 
-export const ResourceNode = ({ data, id }: ResourceNode) => {
+export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   const { enabled, resource, peer, showHandles = false, className } = data;
   const sourceGroupEnabled = useAnySourceGroupEnabled(id);
   const isEnabled = enabled ?? sourceGroupEnabled;
   const connection = useConnection();
+  const {
+    isDraft,
+    setResourceEditor,
+    drillDownNetworkNodeId,
+    hoveredNetworkNodeId,
+  } = useDraftMode();
+  const isFrameHovered = !!parentId && hoveredNetworkNodeId === parentId;
+  // Framed resources accept connection DROPS in every view — the drop
+  // routes into the destination picker preselected with this resource. Only
+  // dragging FROM the resource stays drill-down-only in the parent view.
+  const isFramed = !!parentId?.startsWith("network-new-");
+  const handlesActive = !isFramed || drillDownNetworkNodeId === parentId;
   const isTarget = connection.inProgress && connection.fromNode.id !== id;
-  const { isDraft, setResourceEditor } = useDraftMode();
+  const { contextMenuNodeId } = useCanvasState();
+  const showHalo = contextMenuNodeId === id;
 
   // Draft resources (resource-new-…) are edited on the canvas via click /
   // context-menu Edit; incomplete ones (no address yet) show the dimmed
@@ -58,9 +72,11 @@ export const ResourceNode = ({ data, id }: ResourceNode) => {
     return (
       <div
         className={cn(
-          "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-900 w-full",
-          "hover:bg-nb-gray-930 hover:border-nb-gray-800 pr-5 pl-3 py-1 cursor-pointer",
-          isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
+          // min width matches NETWORK_FRAME_CHILD_WIDTH_MULTI so unframed
+          // resources don't collapse below the framed rows (and framed
+          // multi-column rows aren't overridden wider).
+          "relative rounded-lg transition-all group/node w-full min-w-[185px]",
+          "cursor-pointer",
           className,
         )}
         onClick={() => {
@@ -69,9 +85,17 @@ export const ResourceNode = ({ data, id }: ResourceNode) => {
       >
         <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
           <div
-            className={
-              "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 group-hover/node:bg-nb-gray-800 transition-all"
-            }
+            className={cn(
+              "h-9 w-9 bg-nb-gray-850 group-hover/node:text-nb-gray-200 rounded-md flex items-center justify-center shrink-0 group-hover/node:bg-nb-gray-700 transition-all",
+              "border border-nb-gray-850 group-hover/node:border-nb-gray-700",
+              // Frame hover lifts only the icon box, not the row.
+              isFrameHovered && "bg-nb-gray-800 border-nb-gray-800",
+              // Rings live on the icon box, not the whole row: white while a
+              // connection drag hovers this node, sky halo for the context
+              // menu (same as group nodes).
+              isTarget && "group-hover/node:ring-2 group-hover/node:ring-white",
+              showHalo && "ring-2 ring-sky-500",
+            )}
           >
             <Icon size={16} />
           </div>
@@ -83,7 +107,7 @@ export const ResourceNode = ({ data, id }: ResourceNode) => {
             >
               <TruncatedText
                 text={draftResource.name}
-                maxWidth={"150px"}
+                maxWidth={"135px"}
                 hideTooltip
               />
             </span>
@@ -98,7 +122,7 @@ export const ResourceNode = ({ data, id }: ResourceNode) => {
           </div>
         </div>
         <AllHandles />
-        {isDraft && showHandles && (
+        {isDraft && showHandles && handlesActive && (
           <ConnectHandle type={"source"} position={Position.Left} />
         )}
       </div>

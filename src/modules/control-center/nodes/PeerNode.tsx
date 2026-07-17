@@ -2,6 +2,7 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import TruncatedText from "@components/ui/TruncatedText";
 import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
@@ -98,7 +99,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
     return (
       <div
         className={cn(
-          "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-900",
+          "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-850",
           "hover:bg-nb-gray-930 hover:border-nb-gray-800 pr-5 pl-3 py-1",
           isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
           showHalo && "ring-2 ring-sky-500",
@@ -106,7 +107,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
       >
         {/* Floating Install — top-left above the node, zooms with the
             canvas (positioned inside the node, not a NodeToolbar portal). */}
-        <div className={"absolute bottom-full left-0 mb-2"}>
+        <div className={"absolute bottom-full left-0 mb-3"}>
           <button
             onClick={() =>
               setInstallModal({
@@ -141,6 +142,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
               }
             >
               <TruncatedText text={label} maxWidth={"150px"} hideTooltip />
+              <SmallBadge />
             </span>
             {/* Sits in the slot where real peers show their NetBird IP —
                 x placeholders read as "assigned on install", derived from
@@ -170,7 +172,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
       className={cn(
         "relative rounded-lg transition-all group/node pr-5 pl-3 py-1 border",
         variant === "card" &&
-          "bg-nb-gray-940 border-nb-gray-900 hover:bg-nb-gray-930 hover:border-nb-gray-800",
+          "bg-nb-gray-940 border-nb-gray-850 hover:bg-nb-gray-930 hover:border-nb-gray-800",
         variant === "default" && "border-transparent",
         onClick &&
           "hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer",
@@ -195,7 +197,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
 };
 
 // Draft "User Device" placeholder: a select node like the live-mode peer
-// picker. Before a peer is chosen it shows "Select user device..." with a
+// picker. Before a peer is chosen it shows "Select existing device..." with a
 // floating Install button (top-left, like the peers toolbar); choosing a
 // peer upgrades the node in place via usePlaceholderUpgrade — edges are
 // rewired and draft policies referencing it follow the selection.
@@ -251,7 +253,7 @@ const UserDeviceSelectNode = ({
   return (
     <div
       className={cn(
-        "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-900",
+        "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-850",
         "hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer",
         isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
         showHalo && "ring-2 ring-sky-500",
@@ -262,7 +264,7 @@ const UserDeviceSelectNode = ({
           with the canvas. Hidden once a peer is selected (the device already
           exists). */}
       {!peer && (
-        <div className={"absolute bottom-full left-0 mb-2"}>
+        <div className={"absolute bottom-full left-0 mb-3"}>
           <button
             onClick={() =>
               setInstallModal({
@@ -308,7 +310,9 @@ const UserDeviceSelectNode = ({
               >
                 <MonitorSmartphoneIcon size={16} />
               </div>
-              <div className={"flex flex-col gap-0 justify-center leading-tight"}>
+              <div
+                className={"flex flex-col gap-0 justify-center leading-tight"}
+              >
                 <span
                   className={
                     "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1.5 mt-2"

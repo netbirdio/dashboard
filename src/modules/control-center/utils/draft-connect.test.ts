@@ -74,6 +74,8 @@ const makeDeps = (nodes: Node[] = []) =>
       vi.fn<DraftConnectDeps["setPolicyDestinationGroups"]>(),
     setPolicyInitialName: vi.fn<DraftConnectDeps["setPolicyInitialName"]>(),
     setCreatePolicyModal: vi.fn<DraftConnectDeps["setCreatePolicyModal"]>(),
+    setPolicyDestinationScope:
+      vi.fn<NonNullable<DraftConnectDeps["setPolicyDestinationScope"]>>(),
   }) satisfies DraftConnectDeps;
 
 const placeholderAgent = node("peer-draft-x", "peerNode", {
@@ -91,6 +93,7 @@ describe("connect node ↔ node (create-policy modal)", () => {
 
   it("peer → peer prefills both sides as single-peer resources", () => {
     handleDraftConnect(connect("peer-a", "peer-b"), deps);
+    expect(deps.setPolicyDestinationScope).toHaveBeenCalledWith(undefined);
     expect(deps.setPolicySourceResource).toHaveBeenLastCalledWith({
       id: "a",
       type: "peer",
@@ -289,7 +292,7 @@ describe("connect node ↔ policy (direct side edit)", () => {
 
 // ---- node ↔ network: routers and membership (no policy modal) --------------
 
-describe("connect node ↔ network (routers & membership)", () => {
+describe("connect node ↔ network (destination picker & membership)", () => {
   const draftNetworkNode = node("network-new-1", "networkNode", {
     network: { name: "Office", resources: [] },
   });
@@ -300,34 +303,109 @@ describe("connect node ↔ network (routers & membership)", () => {
   const withNetworkDeps = () => {
     const deps = {
       ...makeDeps([draftNetworkNode, draftResourceNode, placeholderAgent]),
-      onRouterConnect: vi.fn(),
+      onNetworkConnect: vi.fn(),
       onResourceAssign: vi.fn(),
     };
     return deps;
   };
 
-  it("peer → network creates a router (incl. placeholders)", () => {
+  it("peer → network opens the create-policy modal with the peer as source", () => {
     const deps = withNetworkDeps();
     handleDraftConnect(connect("peer-a", "network-new-1"), deps);
-    expect(deps.onRouterConnect).toHaveBeenCalledWith({
-      networkNodeId: "network-new-1",
-      peerNodeId: "peer-a",
+    expect(deps.setPolicySourceResource).toHaveBeenLastCalledWith({
+      id: "a",
+      type: "peer",
     });
+    expect(deps.setPolicyInitialName).toHaveBeenCalledWith("Peer A to Office");
+    expect(deps.setPolicyDestinationScope).toHaveBeenCalledWith({
+      resourceIds: [],
+      groupIds: [],
+    });
+    expect(deps.setCreatePolicyModal).toHaveBeenCalledWith(true);
+    // The picker is reserved for policy drags.
+    expect(deps.onNetworkConnect).not.toHaveBeenCalled();
+
     handleDraftConnect(connect("peer-draft-x", "network-new-1"), deps);
-    expect(deps.onRouterConnect).toHaveBeenLastCalledWith({
-      networkNodeId: "network-new-1",
-      peerNodeId: "peer-draft-x",
+    expect(deps.setPolicySourceResource).toHaveBeenLastCalledWith({
+      id: "draft-x",
+      type: "peer",
     });
-    expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
   });
 
-  it("group → network creates a group router", () => {
+  it("group → network opens the create-policy modal with the group as source", () => {
     const deps = withNetworkDeps();
     handleDraftConnect(connect("group-g-all", "network-new-1"), deps);
-    expect(deps.onRouterConnect).toHaveBeenCalledWith({
+    expect(deps.setPolicySourceGroups).toHaveBeenLastCalledWith([groupAll]);
+    expect(deps.setPolicyDestinationGroups).toHaveBeenLastCalledWith([]);
+    expect(deps.setCreatePolicyModal).toHaveBeenCalledWith(true);
+    expect(deps.onNetworkConnect).not.toHaveBeenCalled();
+  });
+
+  it("policy destination handle → network opens the picker for that policy", () => {
+    const blank = makePolicy("new-1");
+    const deps = {
+      ...withNetworkDeps(),
+      ...makeDeps([
+        draftNetworkNode,
+        node("policy-new-1", "policyNode", { policy: blank }),
+      ]),
+      onNetworkConnect: vi.fn(),
+    };
+    handleDraftConnect(connect("policy-new-1", "network-new-1", "sr"), deps);
+    expect(deps.onNetworkConnect).toHaveBeenCalledWith({
       networkNodeId: "network-new-1",
-      groupNodeId: "group-g-all",
+      policyNodeId: "policy-new-1",
     });
+    // Either policy handle works — the pick always lands on the destination.
+    const fromLeft = { ...deps, onNetworkConnect: vi.fn() };
+    handleDraftConnect(connect("policy-new-1", "network-new-1", "sl"), fromLeft);
+    expect(fromLeft.onNetworkConnect).toHaveBeenCalledWith({
+      networkNodeId: "network-new-1",
+      policyNodeId: "policy-new-1",
+    });
+  });
+
+  it("peer → FRAMED resource opens the policy modal with it as destination", () => {
+    const framedResource = {
+      ...node("resource-new-r1", "resourceNode", {
+        resource: { name: "DB", address: "10.0.0.5" },
+      }),
+      parentId: "network-new-1",
+    };
+    const deps = {
+      ...makeDeps([draftNetworkNode, framedResource, placeholderAgent]),
+      onNetworkConnect: vi.fn(),
+    };
+    handleDraftConnect(connect("peer-a", "resource-new-r1"), deps);
+    expect(deps.setPolicyDestinationResource).toHaveBeenLastCalledWith({
+      id: "new-r1",
+      type: "host",
+    });
+    expect(deps.setPolicyDestinationScope).toHaveBeenCalledWith({
+      resourceIds: ["new-r1"],
+      groupIds: [],
+    });
+    expect(deps.setCreatePolicyModal).toHaveBeenCalledWith(true);
+    expect(deps.onNetworkConnect).not.toHaveBeenCalled();
+  });
+
+  it("peer → resource-group row opens the policy modal with the group as destination", () => {
+    const groupRow = {
+      ...node("resourcegroup-g1", "resourceGroupNode", {
+        group: { id: "g1", name: "Databases" },
+      }),
+      parentId: "network-new-1",
+    };
+    const deps = {
+      ...makeDeps([draftNetworkNode, groupRow]),
+      onNetworkConnect: vi.fn(),
+    };
+    handleDraftConnect(connect("peer-a", "resourcegroup-g1"), deps);
+    expect(deps.setPolicyDestinationGroups).toHaveBeenLastCalledWith([
+      { id: "g1", name: "Databases" },
+    ]);
+    expect(deps.setCreatePolicyModal).toHaveBeenCalledWith(true);
+    expect(deps.onNetworkConnect).not.toHaveBeenCalled();
   });
 
   it("resource → network assigns the parent network", () => {
@@ -337,13 +415,33 @@ describe("connect node ↔ network (routers & membership)", () => {
       resourceNodeId: "resource-new-r1",
       networkNodeId: "network-new-1",
     });
-    expect(deps.onRouterConnect).not.toHaveBeenCalled();
+    expect(deps.onNetworkConnect).not.toHaveBeenCalled();
   });
 
-  it("a network can never be a connect source", () => {
+  it("network's left connector → policy opens the picker for that policy", () => {
+    const blank = makePolicy("new-1");
+    const deps = {
+      ...withNetworkDeps(),
+      ...makeDeps([
+        draftNetworkNode,
+        node("policy-new-1", "policyNode", { policy: blank }),
+      ]),
+      onNetworkConnect: vi.fn(),
+    };
+    handleDraftConnect(
+      connect("network-new-1", "policy-new-1", "sl-connect"),
+      deps,
+    );
+    expect(deps.onNetworkConnect).toHaveBeenCalledWith({
+      networkNodeId: "network-new-1",
+      policyNodeId: "policy-new-1",
+    });
+  });
+
+  it("a network can't be a connect source toward peers/groups", () => {
     const deps = withNetworkDeps();
-    handleDraftConnect(connect("network-new-1", "peer-a"), deps);
-    expect(deps.onRouterConnect).not.toHaveBeenCalled();
+    handleDraftConnect(connect("network-new-1", "peer-a", "sl-connect"), deps);
+    expect(deps.onNetworkConnect).not.toHaveBeenCalled();
     expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
   });
 });

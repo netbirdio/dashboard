@@ -1,7 +1,15 @@
 import TruncatedText from "@components/ui/TruncatedText";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { cn } from "@utils/helpers";
-import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
+import {
+  BotIcon,
+  GlobeIcon,
+  LucideIcon,
+  MonitorSmartphoneIcon,
+  NetworkIcon,
+  ServerIcon,
+  WorkflowIcon,
+} from "lucide-react";
 import * as React from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { NetworkResource } from "@/interfaces/Network";
@@ -16,6 +24,8 @@ type DeviceCardProps = {
   resource?: NetworkResource;
   className?: string;
   size?: DeviceCardSize;
+  // Rendered inline after the name (e.g. the NEW badge for draft entities).
+  badge?: React.ReactNode;
 };
 
 export const DeviceCard = ({
@@ -23,6 +33,7 @@ export const DeviceCard = ({
   resource,
   className,
   size = "default",
+  badge,
 }: DeviceCardProps) => {
   if (!device && !resource) return;
 
@@ -46,8 +57,12 @@ export const DeviceCard = ({
         )}
       >
         {device && <PeerOSIcon os={device.os} size={isSmall ? 14 : 16} />}
-        {resource?.type && (
-          <ResourceIcon type={resource.type} size={isSmall ? 14 : 15} />
+        {resource && (
+          // Type-less draft resources (no address yet) get the default icon.
+          <ResourceIcon
+            type={resource.type ?? "host"}
+            size={isSmall ? 14 : 15}
+          />
         )}
 
         {device?.country_code && (
@@ -80,6 +95,7 @@ export const DeviceCard = ({
             maxWidth={isSmall ? "120px" : "150px"}
             hideTooltip={true}
           />
+          {badge}
         </span>
         <span
           className={cn(
@@ -96,7 +112,25 @@ export const DeviceCard = ({
   );
 };
 
+// Draft placeholder peers carry their kind in `os` (see getPlaceholderPeer).
+const DRAFT_KIND_ICONS: Record<string, LucideIcon> = {
+  "draft-agent": BotIcon,
+  "draft-server": ServerIcon,
+  "draft-user-device": MonitorSmartphoneIcon,
+};
+
 const PeerOSIcon = ({ os, size = 16 }: { os: string; size?: number }) => {
+  const DraftIcon = DRAFT_KIND_ICONS[os];
+  if (DraftIcon) {
+    return (
+      <div
+        className={"flex items-center justify-center shrink-0"}
+        style={{ width: size, height: size }}
+      >
+        <DraftIcon size={size} />
+      </div>
+    );
+  }
   const osType = getOperatingSystem(os);
   return (
     <div

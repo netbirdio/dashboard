@@ -25,11 +25,19 @@ export type DraftConnectDeps = {
   setPolicyDestinationGroups: (g: Group[]) => void;
   setPolicyInitialName: (name: string) => void;
   setCreatePolicyModal: (open: boolean) => void;
-  // Routing: a peer or group connected onto a network node.
-  onRouterConnect?: (params: {
+  // A policy connected with a network frame (either drag direction) —
+  // opens the minimal destination picker for that policy. Routers are
+  // created via the frame's Add button, never by drag.
+  onNetworkConnect?: (params: {
     networkNodeId: string;
-    peerNodeId?: string;
-    groupNodeId?: string;
+    policyNodeId: string;
+  }) => void;
+  // Restricts the create-policy modal's destination side to a network's
+  // contents (connects onto a frame / framed resource / resource-group);
+  // undefined clears the restriction for ordinary connects.
+  setPolicyDestinationScope?: (scope?: {
+    resourceIds: string[];
+    groupIds: string[];
   }) => void;
   // Resource dragged onto a network node — parent-network assignment.
   onResourceAssign?: (params: {
@@ -50,6 +58,9 @@ export const parseNodeId = (id: string): NodeInfo | undefined => {
   if (id.startsWith("dest-group-")) return { kind: "group", id };
   // Draft groups have no API id — keep the full node id for lookup.
   if (id.startsWith("group-new-")) return { kind: "group", id };
+  // Resource-group rows inside a network frame — group semantics, resolved
+  // from the canvas node's data by full node id.
+  if (id.startsWith("resourcegroup-")) return { kind: "group", id };
   if (id.startsWith("group-")) return { kind: "group", id: id.replace("group-", "") };
   if (id.startsWith("resource-")) return { kind: "resource", id: id.replace("resource-", "") };
   // Draft networks keep the full node id (no API id yet).
@@ -117,19 +128,102 @@ export function handleDraftConnect(
     networkResources?.find((r) => r.id === id) ??
     getDraftResource(currentNodes.find((n) => n.id === `resource-${id}`));
 
-  // Networks are never policy actors — they only accept routing peers/groups
-  // and resource membership, and can't be a connect source at all.
-  if (sourceInfo.kind === "network") return;
+  // Everything a network frame contains — the create-policy modal restricts
+  // its destination side to this when the connect targets the network world.
+  const scopeForFrame = (frameId: string) => {
+    const resourceIds: string[] = [];
+    const groupIds = new Set<string>();
+    // Existing-network cards (dropped from the panel) have no draft
+    // children — their contents come from the API data instead.
+    const apiNetwork = (
+      currentNodes.find((n) => n.id === frameId)?.data as {
+        network?: { id?: string; resources?: string[] };
+      }
+    )?.network;
+    if (apiNetwork?.id) {
+      (apiNetwork.resources ?? []).forEach((rid) => {
+        resourceIds.push(rid);
+        const resource = networkResources?.find((r) => r.id === rid);
+        (resource?.groups as (Group | string)[] | undefined)?.forEach((g) =>
+          groupIds.add(typeof g === "string" ? g : g.id ?? g.name),
+        );
+      });
+      return { resourceIds, groupIds: Array.from(groupIds) };
+    }
+    currentNodes
+      .filter((n) => n.parentId === frameId)
+      .forEach((n) => {
+        const resource = getDraftResource(n);
+        if (resource?.id) resourceIds.push(resource.id);
+        (
+          n.data as { resourceGroupIds?: string[] }
+        )?.resourceGroupIds?.forEach((idOrName) => groupIds.add(idOrName));
+        if (n.type === "resourceGroupNode") {
+          const group = (n.data as { group?: Group })?.group;
+          if (group) groupIds.add(group.id ?? group.name);
+        }
+      });
+    return { resourceIds, groupIds: Array.from(groupIds) };
+  };
+
+  // Networks are never policy actors. The frame's left connector can drag
+  // into a POLICY — networks, like resources, only ever sit on the
+  // destination side, so the pick lands there (via the destination picker);
+  // toward anything else a network-sourced drag is a no-op.
+  if (sourceInfo.kind === "network") {
+    if (
+      targetInfo.kind === "policy" &&
+      connection.sourceHandle?.startsWith("sl")
+    ) {
+      deps.onNetworkConnect?.({ networkNodeId: source, policyNodeId: target });
+    }
+    return;
+  }
+  // A connection dropped ONTO a frame: a POLICY drag opens the destination
+  // picker (choose among the network's resources/resource-groups); a
+  // peer/group drag opens the create-policy modal with the source prefilled
+  // — exactly like peer→peer / group→group connects. Resources dragged onto
+  // a frame re-assign their parent network instead.
   if (targetInfo.kind === "network") {
-    if (sourceInfo.kind === "peer") {
-      deps.onRouterConnect?.({ networkNodeId: target, peerNodeId: source });
-    } else if (sourceInfo.kind === "group") {
-      deps.onRouterConnect?.({ networkNodeId: target, groupNodeId: source });
-    } else if (sourceInfo.kind === "resource") {
+    if (sourceInfo.kind === "resource") {
       deps.onResourceAssign?.({
         resourceNodeId: source,
         networkNodeId: target,
       });
+    } else if (sourceInfo.kind === "policy") {
+      // Either policy handle may point at a network — the pick always lands
+      // on the DESTINATION side (resources never sit on the source side).
+      deps.onNetworkConnect?.({
+        networkNodeId: target,
+        policyNodeId: source,
+      });
+    } else if (sourceInfo.kind === "peer" || sourceInfo.kind === "group") {
+      setPolicySourceResource(undefined);
+      setPolicyDestinationResource(undefined);
+      setPolicyDestinationGroups([]);
+      deps.setPolicyDestinationScope?.(scopeForFrame(target));
+      let sourceName: string | undefined;
+      if (sourceInfo.kind === "peer") {
+        const peer = findPeer(sourceInfo.id);
+        if (!peer?.id) return;
+        setPolicySourceResource({ id: peer.id, type: "peer" });
+        setPolicySourceGroups([]);
+        sourceName = peer.name;
+      } else {
+        const group = findGroup(sourceInfo.id);
+        if (!group) return;
+        setPolicySourceGroups([group]);
+        sourceName = group.name;
+      }
+      const networkName = (
+        currentNodes.find((n) => n.id === target)?.data as {
+          network?: { name?: string };
+        }
+      )?.network?.name;
+      setPolicyInitialName(
+        sourceName && networkName ? `${sourceName} to ${networkName}` : "",
+      );
+      setCreatePolicyModal(true);
     }
     return;
   }
@@ -262,6 +356,14 @@ export function handleDraftConnect(
   // previously cancelled modal can't leak stale values into this connect.
   setPolicySourceResource(undefined);
   setPolicyDestinationResource(undefined);
+  // Connecting onto a FRAMED resource / resource-group restricts the modal's
+  // destination side to that network's contents; anything else clears it.
+  const targetFrameId = currentNodes.find((n) => n.id === target)?.parentId;
+  deps.setPolicyDestinationScope?.(
+    targetFrameId?.startsWith("network-new-")
+      ? scopeForFrame(targetFrameId)
+      : undefined,
+  );
 
   // Set source resource or group
   let sourceName: string | undefined;

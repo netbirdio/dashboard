@@ -320,7 +320,10 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         : "";
       const policyId = isPolicyNode ? _node.id.replace("policy-", "") : "";
 
-      if (networkId && currentView === FlowView.NETWORKS) {
+      // Draft network clicks are handled by the node itself (frame
+      // drill-down) — selecting a live network view there would leak a
+      // draft-only id into the live selection.
+      if (networkId && currentView === FlowView.NETWORKS && !isDraft) {
         onNetworkSelect(networkId);
       }
       if (

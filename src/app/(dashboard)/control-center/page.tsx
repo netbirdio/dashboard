@@ -32,6 +32,9 @@ import { NodeContextMenu } from "@/modules/control-center/NodeContextMenu";
 import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
 import { DraftInstallPeerModal } from "@/modules/control-center/draft/DraftInstallPeerModal";
 import { DraftResourceEditorModal } from "@/modules/control-center/draft/DraftResourceEditorModal";
+import { DraftNetworkDestinationModal } from "@/modules/control-center/draft/DraftNetworkDestinationModal";
+import { DraftNetworkEditModal } from "@/modules/control-center/draft/DraftNetworkEditModal";
+import { DraftRoutingPeerModal } from "@/modules/control-center/draft/DraftRoutingPeerModal";
 import { DraftEmptyCanvas } from "@/modules/control-center/draft/DraftEmptyCanvas";
 import { DraftLeaveGuard } from "@/modules/control-center/draft/DraftLeaveGuard";
 import { useDraft } from "@/modules/control-center/hooks/useDraft";
@@ -85,7 +88,8 @@ function ControlCenterCanvas() {
   const canvas = useCanvasState();
   const ui = useControlCenterUI();
   const draft = useDraft();
-  const { componentsPanelOpen, setComponentsPanelOpen } = useDraftMode();
+  const { componentsPanelOpen, setComponentsPanelOpen, setHoveredNetworkNodeId } =
+    useDraftMode();
   const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragToGroup();
 
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
@@ -114,6 +118,9 @@ function ControlCenterCanvas() {
       <PeersToolbar />
       <DraftInstallPeerModal />
       <DraftResourceEditorModal />
+      <DraftRoutingPeerModal />
+      <DraftNetworkDestinationModal />
+      <DraftNetworkEditModal />
       <DraftLeaveGuard />
       <ReactFlow
         className={draft.isSelectMode ? "select-mode" : undefined}
@@ -136,6 +143,16 @@ function ControlCenterCanvas() {
           canvas.setSelectedDestinationGroup("");
           setComponentsPanelOpen(false);
         }}
+        onNodeMouseEnter={(_, node) => {
+          if (!draft.isDraft) return;
+          const frameId = node.id.startsWith("network-new-")
+            ? node.id
+            : node.parentId?.startsWith("network-new-")
+            ? node.parentId
+            : null;
+          setHoveredNetworkNodeId(frameId);
+        }}
+        onNodeMouseLeave={() => setHoveredNetworkNodeId(null)}
         onNodeDragStart={onNodeDragStart}
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}

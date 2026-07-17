@@ -24,8 +24,19 @@ edge delete) leaves the change behind. Same class of gap exists for policy
 edges (visual-only edge deletion) — probably solved together by disabling
 raw edge deletion or handling `onEdgesChange` removals.
 
-## Draft network description is not editable on the canvas
+## Drill-down doesn't surface group-mediated policies
 
-`create-network` supports an optional description and the editor's inline
-network creation could carry one, but the network context menu only offers
-Rename (name). Needs a small edit modal (name + description).
+The single-network drill-down keeps policies whose `destinationResource`
+lives in the frame (plus their sources), but a policy that reaches the
+network only through a **resource-group** destination stays hidden — its
+destination node is a regular group node outside the frame, and mapping
+group membership back to contained resources isn't wired up. Same for the
+destination picker's group picks: the created policy's edge attaches to the
+(out-of-frame) group node, not the frame.
+
+## Auto-arrange while drilled in ignores the drill-down
+
+`A` re-arranges ALL nodes — including the hidden ones — around policy
+connectivity, so positions shift behind the drill-down and the parent view
+looks rearranged on exit. Probably: disable auto-arrange while drilled, or
+scope it to the visible subset.

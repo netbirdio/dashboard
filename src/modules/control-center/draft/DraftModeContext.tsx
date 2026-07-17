@@ -17,6 +17,19 @@ export type InstallModalState = {
   nodeId?: string;
 };
 
+// Minimal destination picker — a POLICY dragged onto a network frame (or
+// the frame's connector onto a policy) picks that policy's destination from
+// the network's resources/resource-groups. Peer/group drags open the
+// create-policy modal instead.
+export type NetworkDestinationPickerState = {
+  networkNodeId: string;
+  policyNodeId: string;
+};
+
+export type ResourceEditorState =
+  | { nodeId: string; createInNetworkNodeId?: never }
+  | { nodeId?: never; createInNetworkNodeId: string };
+
 type DraftModeContextType = {
   isDraft: boolean;
   setIsDraft: (value: boolean) => void;
@@ -26,9 +39,31 @@ type DraftModeContextType = {
   setComponentsPanelOpen: (value: boolean) => void;
   installModal: InstallModalState | null;
   setInstallModal: (value: InstallModalState | null) => void;
-  // Draft resource editor (pure-data modal) — targets a resource node.
-  resourceEditor: { nodeId: string } | null;
-  setResourceEditor: (value: { nodeId: string } | null) => void;
+  // Draft resource editor (pure-data modal) — edits an existing resource
+  // node, OR creates a new one into a frame (Add Resource row/menu).
+  resourceEditor: ResourceEditorState | null;
+  setResourceEditor: (value: ResourceEditorState | null) => void;
+  // Draft routing-peer modal (networks page modal, pure-data) — targets a
+  // network frame.
+  routingPeerModal: { networkNodeId: string } | null;
+  setRoutingPeerModal: (value: { networkNodeId: string } | null) => void;
+  networkDestinationPicker: NetworkDestinationPickerState | null;
+  setNetworkDestinationPicker: (
+    value: NetworkDestinationPickerState | null,
+  ) => void;
+  // Draft network editor (networks page's modal, pure-data) — name +
+  // description of a draft network frame.
+  networkEditor: { networkNodeId: string } | null;
+  setNetworkEditor: (value: { networkNodeId: string } | null) => void;
+  // Drilled-into network frame (single-network draft view) — framed
+  // resources only expose connect handles while their frame is drilled.
+  drillDownNetworkNodeId: string | null;
+  setDrillDownNetworkNodeId: (value: string | null) => void;
+  // Frame under the pointer (incl. its children — they're separate canvas
+  // nodes, so CSS hover can't span the frame): header, border and resource
+  // rows highlight together, like the live card.
+  hoveredNetworkNodeId: string | null;
+  setHoveredNetworkNodeId: (value: string | null) => void;
   // Bumped by "New Draft" — forces the draft canvas to rebuild from live.
   draftSession: number;
   newDraftSession: () => void;
@@ -45,6 +80,16 @@ const DraftModeContext = createContext<DraftModeContextType>({
   setInstallModal: () => {},
   resourceEditor: null,
   setResourceEditor: () => {},
+  routingPeerModal: null,
+  setRoutingPeerModal: () => {},
+  networkDestinationPicker: null,
+  setNetworkDestinationPicker: () => {},
+  networkEditor: null,
+  setNetworkEditor: () => {},
+  drillDownNetworkNodeId: null,
+  setDrillDownNetworkNodeId: () => {},
+  hoveredNetworkNodeId: null,
+  setHoveredNetworkNodeId: () => {},
   draftSession: 0,
   newDraftSession: () => {},
 });
@@ -58,9 +103,22 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
   const [installModal, setInstallModal] = useState<InstallModalState | null>(
     null,
   );
-  const [resourceEditor, setResourceEditor] = useState<{
-    nodeId: string;
+  const [resourceEditor, setResourceEditor] =
+    useState<ResourceEditorState | null>(null);
+  const [routingPeerModal, setRoutingPeerModal] = useState<{
+    networkNodeId: string;
   } | null>(null);
+  const [networkDestinationPicker, setNetworkDestinationPicker] =
+    useState<NetworkDestinationPickerState | null>(null);
+  const [networkEditor, setNetworkEditor] = useState<{
+    networkNodeId: string;
+  } | null>(null);
+  const [drillDownNetworkNodeId, setDrillDownNetworkNodeId] = useState<
+    string | null
+  >(null);
+  const [hoveredNetworkNodeId, setHoveredNetworkNodeId] = useState<
+    string | null
+  >(null);
   const [draftSession, setDraftSession] = useState(0);
   const newDraftSession = () => setDraftSession((s) => s + 1);
 
@@ -77,6 +135,16 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
         setInstallModal,
         resourceEditor,
         setResourceEditor,
+        routingPeerModal,
+        setRoutingPeerModal,
+        networkDestinationPicker,
+        setNetworkDestinationPicker,
+        networkEditor,
+        setNetworkEditor,
+        drillDownNetworkNodeId,
+        setDrillDownNetworkNodeId,
+        hoveredNetworkNodeId,
+        setHoveredNetworkNodeId,
         draftSession,
         newDraftSession,
       }}

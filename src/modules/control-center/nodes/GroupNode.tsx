@@ -43,8 +43,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
   // Panel selection is keyed by group id, or by node id for draft groups.
   const isPanelActive =
     selectedDestinationGroup !== "" &&
-    (selectedDestinationGroup === group?.id ||
-      selectedDestinationGroup === id);
+    (selectedDestinationGroup === group?.id || selectedDestinationGroup === id);
   const isContextMenuActive = contextMenuNodeId === id;
   const showHalo = isPanelActive || isContextMenuActive;
 
@@ -56,7 +55,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
         "relative cc-group-node bg-nb-gray-940 border rounded-lg transition-all group/node",
         dropTarget
           ? "border-white ring-2 ring-white/20 bg-nb-gray-930"
-          : "border-nb-gray-900",
+          : "border-nb-gray-850",
         !isEnabled && "opacity-60",
         hoverable &&
           "hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer",

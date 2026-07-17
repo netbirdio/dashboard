@@ -10,6 +10,7 @@ import React, {
 import { sortBy } from "lodash";
 import {
   AccessControlModalContent,
+  PolicyDestinationScope,
   AccessControlUpdateModal,
 } from "@/modules/access-control/AccessControlModal";
 import { Modal } from "@components/modal/Modal";
@@ -41,6 +42,10 @@ interface PolicyContextType {
   // nodes are connected, missing ones created (used when dropping an existing
   // policy from the components sidebar).
   drawPolicyOnCanvas: (policy: Policy, fallbackPosition?: XYPosition) => void;
+  // Records a freshly built draft policy (client id, group changes, tracked
+  // when deployable) and draws it — the create modal's save path, also used
+  // by the network destination picker.
+  addPolicyEdge: (policy: Policy) => void;
   // Where a dropped "new policy" template landed — the created policy node
   // falls back to this position when no matched nodes exist yet.
   setPolicyDropPosition: (position?: XYPosition) => void;
@@ -58,6 +63,9 @@ interface PolicyContextType {
   setPolicySourceGroups: (g: Group[]) => void;
   policyDestinationGroups: Group[];
   setPolicyDestinationGroups: (g: Group[]) => void;
+  // Restricts the create-policy modal's destination to a network's contents
+  // (set when connecting onto a frame / framed resource / resource-group).
+  setPolicyDestinationScope: (scope?: PolicyDestinationScope) => void;
 }
 
 const PolicyContext = createContext<PolicyContextType | null>(null);
@@ -95,6 +103,9 @@ export function ControlCenterPolicyProvider({
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
   const [createPolicyModal, setCreatePolicyModal] = useState(false);
   const [policyInitialName, setPolicyInitialName] = useState("");
+  const [policyDestinationScope, setPolicyDestinationScope] = useState<
+    PolicyDestinationScope | undefined
+  >(undefined);
   const [policySourceResource, setPolicySourceResource] =
     useState<PolicyRuleResource>();
   const [policyDestinationResource, setPolicyDestinationResource] =
@@ -546,6 +557,7 @@ export function ControlCenterPolicyProvider({
     setPolicyDestinationResource(undefined);
     setPolicySourceGroups([]);
     setPolicyDestinationGroups([]);
+    setPolicyDestinationScope(undefined);
 
     if (isDraft && !policy?.id) {
       const clientId = `new-${
@@ -645,6 +657,7 @@ export function ControlCenterPolicyProvider({
       handlePolicyChange,
       updateDraftPolicy,
       drawPolicyOnCanvas,
+      addPolicyEdge,
       setPolicyDropPosition,
       createPolicyModal,
       setCreatePolicyModal,
@@ -658,6 +671,7 @@ export function ControlCenterPolicyProvider({
       setPolicySourceGroups,
       policyDestinationGroups,
       setPolicyDestinationGroups,
+      setPolicyDestinationScope,
     }),
     [
       selectedPolicy,
@@ -711,6 +725,7 @@ export function ControlCenterPolicyProvider({
             initialDestinationGroups={policyDestinationGroups}
             additionalPeers={isDraft ? placeholderPeers : undefined}
             additionalResources={isDraft ? draftResources : undefined}
+            destinationScope={policyDestinationScope}
           />
         </Modal>
       )}

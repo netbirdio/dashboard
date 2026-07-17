@@ -1,8 +1,10 @@
+import { AddNetworkResourceNode } from "@/modules/control-center/nodes/AddNetworkResourceNode";
 import { GroupNode } from "@/modules/control-center/nodes/GroupNode";
 import { NetworkNode } from "@/modules/control-center/nodes/NetworkNode";
 import { PeerNode } from "@/modules/control-center/nodes/PeerNode";
 import { PolicyNode } from "@/modules/control-center/nodes/PolicyNode";
 import { ResourceNode } from "@/modules/control-center/nodes/ResourceNode";
+import { ResourceGroupNode } from "@/modules/control-center/nodes/ResourceGroupNode";
 import { SelectGroupNode } from "@/modules/control-center/nodes/SelectGroupNode";
 import { SelectPeerNode } from "@/modules/control-center/nodes/SelectPeerNode";
 import { SelectUserNode } from "@/modules/control-center/nodes/SelectUserNode";
@@ -14,6 +16,8 @@ export enum NodeType {
   DestinationResourceNode = "destinationResourceNode",
   NetworkNode = "networkNode",
   ResourceNode = "resourceNode",
+  ResourceGroupNode = "resourceGroupNode",
+  AddNetworkResourceNode = "addNetworkResourceNode",
   PolicyNode = "policyNode",
   PeerNode = "peerNode",
   SourcePeerNode = "sourcePeerNode",
@@ -30,6 +34,8 @@ export const NODE_TYPES = {
   [NodeType.DestinationResourceNode]: ResourceNode,
   [NodeType.NetworkNode]: NetworkNode,
   [NodeType.ResourceNode]: ResourceNode,
+  [NodeType.ResourceGroupNode]: ResourceGroupNode,
+  [NodeType.AddNetworkResourceNode]: AddNetworkResourceNode,
   [NodeType.PolicyNode]: PolicyNode,
   [NodeType.PeerNode]: PeerNode,
   [NodeType.SourcePeerNode]: PeerNode,

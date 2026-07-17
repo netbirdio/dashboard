@@ -3,16 +3,90 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   SelectDropdown,
 } from "@components/select/SelectDropdown";
-import { ArrowLeftIcon } from "lucide-react";
+import { cn } from "@utils/helpers";
+import { ArrowLeftIcon, PencilLineIcon } from "lucide-react";
 import React from "react";
+import CircleIcon from "@/assets/icons/CircleIcon";
 import { FlowSelector, FlowView } from "@/modules/control-center/FlowSelector";
 import { NetworkRoutingPeerCount } from "@/modules/control-center/NetworkRoutingPeerCount";
 import { ControlCenterCurrentUserBadge } from "@/modules/control-center/user/ControlCenterCurrentUserBadge";
 import { DraftModeSwitcher } from "@/modules/control-center/draft/DraftModeSwitcher";
 import { CanvasToolbar } from "@/modules/control-center/draft/CanvasToolbar";
 import { useCanvasState, useControlCenterUI } from "@/modules/control-center/ControlCenterContext";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+
+// Shown while a network frame is drilled into (single-network draft view),
+// mirroring the live single-network header: back arrow, the network's name
+// chip with an edit button (networks page's network modal in pure-data mode
+// — name + description land on the draft network), and the routing-peer
+// count (from draft state; clicking it opens the routing-peer modal, the
+// draft counterpart of the live navigation to the routing-peers tab).
+function DraftDrillDownHeader() {
+  const {
+    drillDownNetworkNodeId,
+    setDrillDownNetworkNodeId,
+    setRoutingPeerModal,
+    setNetworkEditor,
+  } = useDraftMode();
+  const { nodes } = useCanvasState();
+  const { changes } = useDraftChangeset();
+  if (!drillDownNetworkNodeId) return null;
+  const frame = nodes.find((n) => n.id === drillDownNetworkNodeId);
+  const name =
+    (frame?.data as { network?: { name?: string } })?.network?.name ?? "";
+  const clientId = drillDownNetworkNodeId.replace("network-", "");
+  const routerCount = changes.filter(
+    (c) => c.type === "create-router" && c.networkClientId === clientId,
+  ).length;
+  const dotColor =
+    routerCount === 0
+      ? "bg-nb-gray-500"
+      : routerCount === 1
+      ? "bg-yellow-400"
+      : "bg-green-400";
+  return (
+    <>
+      <Button
+        variant={"secondary"}
+        size={"xs"}
+        className={"!bg-nb-gray-930"}
+        onClick={() => setDrillDownNetworkNodeId(null)}
+      >
+        <ArrowLeftIcon size={14} />
+      </Button>
+      <Button
+        variant={"secondary"}
+        size={"xs"}
+        className={"!cursor-default"}
+      >
+        {name}
+      </Button>
+      <Button
+        variant={"secondary"}
+        size={"xs"}
+        className={"!px-2"}
+        aria-label={"Edit network"}
+        onClick={() =>
+          setNetworkEditor({ networkNodeId: drillDownNetworkNodeId })
+        }
+      >
+        <PencilLineIcon size={12} />
+      </Button>
+      <Button
+        variant={"secondary"}
+        size={"xs"}
+        onClick={() =>
+          setRoutingPeerModal({ networkNodeId: drillDownNetworkNodeId })
+        }
+      >
+        <CircleIcon size={8} className={cn("shrink-0 block", dotColor)} />
+        {routerCount} Routing Peer(s)
+      </Button>
+    </>
+  );
+}
 
 function HeaderTopLeft() {
   const { currentView, selectedNetwork, previousSelectedUser } =
@@ -71,8 +145,10 @@ function HeaderTopLeft() {
               <FlowSelector value={currentView} onChange={onViewChange} />
             )}
 
-          {/* Draft: no header controls top-left — exiting happens via
-              Cancel / Review & Deploy in the DraftModeSwitcher. */}
+          {/* Draft: the drill-down breadcrumb is the only top-left
+              control — exiting draft happens via Cancel / Review & Deploy
+              in the DraftModeSwitcher. */}
+          {isDraft && <DraftDrillDownHeader />}
 
           {/* Draft title (Untitled Draft dropdown + three-dots menu) hidden for now */}
           {/* {isDraft && <DraftModeTitle />} */}

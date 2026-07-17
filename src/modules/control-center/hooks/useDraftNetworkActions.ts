@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
 import { Group } from "@/interfaces/Group";
 import { Network } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
@@ -11,10 +12,8 @@ import {
   getDraftResource,
   getFrameChildPosition,
   getNetworkFrameHeight,
-  getPlaceholderPeer,
   isCompleteDraftResource,
   makeMembershipEdge,
-  makeRouterEdge,
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_WIDTH,
 } from "@/modules/control-center/utils/helpers";
@@ -46,75 +45,12 @@ export function useDraftNetworkActions() {
   const { updateDraftPolicy } = useControlCenterPolicy();
   const {
     changes,
+    trackCreateGroup,
     trackCreateRouter,
     trackCreateResource,
     untrackResource,
     updateDraftNetwork,
   } = useDraftChangeset();
-
-  // Peer or group connected onto a network node → routing edge + a
-  // create-router change. Placeholder peers stay out of the changeset (the
-  // edge carries the intent until they install — see useDraftPeerUpgrade).
-  const connectRouter = useCallback(
-    ({
-      networkNodeId,
-      peerNodeId,
-      groupNodeId,
-    }: {
-      networkNodeId: string;
-      peerNodeId?: string;
-      groupNodeId?: string;
-    }) => {
-      const nodes = reactFlow.getNodes();
-      const networkRef = getNetworkRef(
-        nodes.find((n) => n.id === networkNodeId),
-      );
-      const sourceNodeId = peerNodeId ?? groupNodeId;
-      if (!networkRef || !sourceNodeId) return;
-
-      // One router per (network, peer/group) pair.
-      const edgeId = `router-${sourceNodeId}-${networkNodeId}`;
-      if (reactFlow.getEdges().some((e) => e.id === edgeId)) return;
-      reactFlow.setEdges((prev) =>
-        prev.concat(makeRouterEdge(sourceNodeId, networkNodeId)),
-      );
-
-      if (peerNodeId) {
-        const peerId = peerNodeId.replace("peer-", "");
-        const placeholder = getPlaceholderPeer(
-          nodes.find((n) => n.id === peerNodeId),
-        );
-        // Placeholder routers aren't deployable yet — recorded on upgrade.
-        if (placeholder) return;
-        const peer = peers?.find((p) => p.id === peerId);
-        trackCreateRouter({
-          clientId: `new-${uid()}`,
-          networkId: networkRef.networkId,
-          networkClientId: networkRef.networkClientId,
-          networkName: networkRef.name,
-          peerId,
-          peerName: peer?.name ?? peerId,
-        });
-        return;
-      }
-
-      if (groupNodeId) {
-        const node = nodes.find((n) => n.id === groupNodeId);
-        const group = (node?.data as { group?: Group })?.group;
-        if (!group) return;
-        trackCreateRouter({
-          clientId: `new-${uid()}`,
-          networkId: networkRef.networkId,
-          networkClientId: networkRef.networkClientId,
-          networkName: networkRef.name,
-          // Draft groups have no id — referenced by (unique) name.
-          groupId: group.id ?? group.name,
-          groupName: group.name,
-        });
-      }
-    },
-    [reactFlow, peers, trackCreateRouter],
-  );
 
   // Re-records the create-resource change from a draft resource node's
   // current data — only complete resources are changeset-worthy. Policies
@@ -311,7 +247,7 @@ export function useDraftNetworkActions() {
   // Renames a draft network on the canvas node + change + dependent
   // resource nodes' network refs (labels).
   const renameDraftNetwork = useCallback(
-    (node: Node, newName: string) => {
+    (node: Node, newName: string, description?: string) => {
       const network = (node.data as { network?: Network })?.network;
       if (!network || network.id) return;
       const clientId = node.id.replace("network-", "");
@@ -337,18 +273,72 @@ export function useDraftNetworkActions() {
       updateDraftNetwork({
         clientId,
         name: newName,
-        description: (
-          changes.find(
-            (c) => c.type === "create-network" && c.clientId === clientId,
-          ) as { description?: string } | undefined
-        )?.description,
+        description:
+          description ??
+          (
+            changes.find(
+              (c) => c.type === "create-network" && c.clientId === clientId,
+            ) as { description?: string } | undefined
+          )?.description,
       });
     },
     [reactFlow, updateDraftNetwork, changes],
   );
 
+  // Applies the routing-peer modal's pick: records the create-router change
+  // (with the modal's settings) — routers have no canvas representation, the
+  // frame's routing-peer count reflects the changeset. Id-less groups picked
+  // in the modal get their create-group change.
+  const addRouterFromSelection = useCallback(
+    (params: {
+      networkNodeId: string;
+      peer?: Peer;
+      peerGroups: Group[];
+      metric: number;
+      masquerade: boolean;
+      enabled: boolean;
+    }) => {
+      const { networkNodeId, peer, peerGroups, metric, masquerade, enabled } =
+        params;
+      const frame = reactFlow
+        .getNodes()
+        .find((n) => n.id === networkNodeId);
+      const networkRef = getNetworkRef(frame);
+      const group = peerGroups[0];
+      if (!networkRef || (peer ? !peer.id : !group?.name)) return;
+
+      // Groups typed straight into the modal's selector are draft groups.
+      if (group && !group.id) {
+        const exists = changes.some(
+          (c) => c.type === "create-group" && c.name === group.name,
+        );
+        if (!exists) {
+          trackCreateGroup({
+            clientId: `group-new-${group.name}`,
+            name: group.name,
+          });
+        }
+      }
+
+      trackCreateRouter({
+        clientId: `new-${uid()}`,
+        networkId: networkRef.networkId,
+        networkClientId: networkRef.networkClientId,
+        networkName: networkRef.name,
+        peerId: peer?.id,
+        peerName: peer?.name,
+        groupId: group ? group.id ?? group.name : undefined,
+        groupName: group?.name,
+        metric,
+        masquerade,
+        enabled,
+      });
+    },
+    [reactFlow, changes, trackCreateGroup, trackCreateRouter],
+  );
+
   return {
-    connectRouter,
+    addRouterFromSelection,
     assignResourceToNetwork,
     saveDraftResource,
     syncDraftResource,
