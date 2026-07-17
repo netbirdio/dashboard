@@ -793,6 +793,23 @@ export default function AIProviderModal({
           {showMappings && providerId === "litellm_proxy" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
               <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                {/* The forwarding toggle sits first: it gates the identity
+                    mappings described below, so turning it off makes the fixed
+                    mapping that follows moot. */}
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the identity mappings below onto LiteLLM requests."
+                  }
+                />
+
                 <div>
                   <Label>Identity Mappings</Label>
                   <HelpText className={"mb-0"}>
