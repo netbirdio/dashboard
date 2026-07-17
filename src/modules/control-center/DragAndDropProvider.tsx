@@ -1,4 +1,5 @@
 import { Node, useReactFlow, XYPosition } from "@xyflow/react";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   createContext,
   Dispatch,
@@ -275,6 +276,25 @@ export const useDragAndDrop = () => {
       document.removeEventListener("pointerup", onDragEnd);
     };
   }, [onDragEnd, isDragging]);
+
+  // A REAL drag (pointer traveled past the click threshold) hides the
+  // components panel right away so the canvas is visible while dragging —
+  // plain clicks (click-to-place) keep it open.
+  const { setComponentsPanelOpen } = useDraftMode();
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (event: PointerEvent) => {
+      const start = dragStartPosition.current;
+      if (!start) return;
+      const moved = Math.hypot(
+        event.clientX - start.x,
+        event.clientY - start.y,
+      );
+      if (moved >= CLICK_MOVE_THRESHOLD) setComponentsPanelOpen(false);
+    };
+    document.addEventListener("pointermove", onMove);
+    return () => document.removeEventListener("pointermove", onMove);
+  }, [isDragging, setComponentsPanelOpen]);
 
   return {
     isDragging,

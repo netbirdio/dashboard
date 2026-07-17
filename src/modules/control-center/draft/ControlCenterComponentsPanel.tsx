@@ -8,10 +8,10 @@ import {
   useState,
 } from "react";
 import { motion } from "framer-motion";
-import { cn } from "@utils/helpers";
+import { cn, singularize } from "@utils/helpers";
 import useFetchApi from "@utils/api";
 import { Peer } from "@/interfaces/Peer";
-import { NetworkResource } from "@/interfaces/Network";
+import { Network, NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
 import { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
@@ -20,7 +20,7 @@ import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import {
   BotIcon,
   FolderGit2,
-  Globe,
+  WorkflowIcon,
   GripVerticalIcon,
   LucideIcon,
   MonitorSmartphoneIcon,
@@ -47,11 +47,14 @@ import { XYPosition } from "@xyflow/react";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 import {
   getDraftResource,
+  getIpPlaceholderFromRange,
+  getPlaceholderPeer,
   getGroupCountLabel,
   getPolicyProtocolAndPortText,
 } from "@/modules/control-center/utils/helpers";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useAccount } from "@/modules/account/useAccount";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import {
   getNodeGroup,
@@ -117,7 +120,7 @@ const BLANK_TEMPLATES: {
     kind: "resource",
     label: "Resource",
     description: "A host subnet or domain in a network",
-    icon: Globe,
+    icon: WorkflowIcon,
   },
 ];
 
@@ -152,7 +155,7 @@ const CATEGORIES: {
   { id: "peers", label: "Peers", icon: MonitorSmartphoneIcon },
   { id: "policies", label: "Policies", icon: ShieldIcon },
   { id: "groups", label: "Groups", icon: FolderGit2 },
-  { id: "resources", label: "Resources", icon: Globe },
+  { id: "resources", label: "Networks & Resources", icon: NetworkIcon },
 ];
 
 export const ControlCenterComponentsPanel = () => {
@@ -303,7 +306,7 @@ const PanelContent = React.memo(
     const addNode = useCallback(
       (
         type: NodeType,
-        data: Peer | Group | NetworkResource,
+        data: Peer | Group | NetworkResource | Network,
         position?: XYPosition,
       ) => {
         let nodeData: any;
@@ -327,6 +330,9 @@ const PanelContent = React.memo(
             showHandles: true,
           };
           nodeId = `resource-${data.id}`;
+        } else if (type === NodeType.NetworkNode) {
+          nodeData = { network: data as Network };
+          nodeId = `network-${data.id}`;
         }
 
         placeDroppedNode(
@@ -343,7 +349,10 @@ const PanelContent = React.memo(
     );
 
     const createDropHandler = useCallback(
-      (type: NodeType, data: Peer | Group | NetworkResource): OnDropAction => {
+      (
+        type: NodeType,
+        data: Peer | Group | NetworkResource | Network,
+      ): OnDropAction => {
         return ({ position }) => {
           addNode(type, data, position);
           setGhostData(undefined);
@@ -357,7 +366,7 @@ const PanelContent = React.memo(
       (
         event: React.PointerEvent<HTMLDivElement>,
         type: NodeType,
-        data: Peer | Group | NetworkResource,
+        data: Peer | Group | NetworkResource | Network,
       ) => {
         const el = event.currentTarget;
         const rect = el.getBoundingClientRect();
@@ -380,8 +389,10 @@ const PanelContent = React.memo(
     );
     const { data: groups } = useFetchApi<Group[]>("/groups");
     const { data: policies } = useFetchApi<Policy[]>("/policies");
+    const { data: networks } = useFetchApi<Network[]>("/networks");
 
     const { nodes: canvasNodes } = useCanvasState();
+    const account = useAccount();
     const canvasNodeIds = useMemo(
       () => new Set(canvasNodes.map((n) => n.id)),
       [canvasNodes],
@@ -411,7 +422,12 @@ const PanelContent = React.memo(
       [search],
     );
     const peersCategory = categoryMatch(["peer", "peers", "device", "devices"]);
-    const resourcesCategory = categoryMatch(["resource", "resources"]);
+    const resourcesCategory = categoryMatch([
+      "resource",
+      "resources",
+      "network",
+      "networks",
+    ]);
     const groupsCategory = categoryMatch(["group", "groups"]);
     const networksCategory = categoryMatch(["network", "networks"]);
     const policiesCategory = categoryMatch(["policy", "policies", "access"]);
@@ -483,6 +499,70 @@ const PanelContent = React.memo(
       return result.filter((r) =>
         r.resource.name.toLowerCase().includes(lower),
       );
+    }, [canvasNodes, search, resourcesCategory]);
+
+    // Placeholder peers dropped in this draft (Server / Agent / User
+    // Device) — NEW badge, disabled (already on canvas by construction).
+    const draftPeers = useMemo(() => {
+      const result: { nodeId: string; peer: Peer }[] = [];
+      canvasNodes.forEach((n) => {
+        const peer = getPlaceholderPeer(n);
+        if (peer) result.push({ nodeId: n.id, peer });
+      });
+      if (!search || peersCategory) return result;
+      const lower = search.toLowerCase();
+      return result.filter((r) => r.peer.name.toLowerCase().includes(lower));
+    }, [canvasNodes, search, peersCategory]);
+
+    // Draft-created policies — NEW badge, disabled.
+    const draftPolicies = useMemo(() => {
+      const seen = new Set<string>();
+      const result: { nodeId: string; policy: Policy }[] = [];
+      canvasNodes.forEach((n) => {
+        if (n.type !== "policyNode") return;
+        const policy = (n.data as { policy?: Policy })?.policy;
+        if (!policy?.id || !String(policy.id).startsWith("new-")) return;
+        if (seen.has(policy.id)) return;
+        seen.add(policy.id);
+        result.push({ nodeId: n.id, policy });
+      });
+      if (!search || policiesCategory) return result;
+      const lower = search.toLowerCase();
+      return result.filter((r) =>
+        (r.policy.name ?? "").toLowerCase().includes(lower),
+      );
+    }, [canvasNodes, search, policiesCategory]);
+
+    const filteredNetworks = useMemo(() => {
+      if (!networks) return [];
+      if (!search || resourcesCategory) return networks;
+      const lower = search.toLowerCase();
+      return networks.filter((n) => n.name.toLowerCase().includes(lower));
+    }, [networks, search, resourcesCategory]);
+
+    // Networks created in this draft (frames) — NEW badge, disabled.
+    const draftNetworks = useMemo(() => {
+      const result: {
+        nodeId: string;
+        name: string;
+        resourceCount: number;
+      }[] = [];
+      canvasNodes.forEach((n) => {
+        if (!n.id.startsWith("network-new-")) return;
+        const name = (n.data as { network?: { name?: string } })?.network
+          ?.name;
+        if (!name) return;
+        result.push({
+          nodeId: n.id,
+          name,
+          resourceCount: canvasNodes.filter(
+            (c) => c.parentId === n.id && c.id.startsWith("resource-"),
+          ).length,
+        });
+      });
+      if (!search || resourcesCategory) return result;
+      const lower = search.toLowerCase();
+      return result.filter((r) => r.name.toLowerCase().includes(lower));
     }, [canvasNodes, search, resourcesCategory]);
 
     const matchesSearch = useCallback(
@@ -583,6 +663,131 @@ const PanelContent = React.memo(
         );
       });
 
+    const buildDraftPeerRows = () =>
+      draftPeers.map(({ nodeId, peer }) => (
+        <PanelListItem key={nodeId} disabled onCanvas>
+          <DeviceCard
+            // Same dimmed IP placeholder as the canvas card — assigned on
+            // install, derived from the account's peer network range.
+            device={{
+              ...peer,
+              ip: getIpPlaceholderFromRange(account?.settings?.network_range),
+            }}
+            size="small"
+            className="flex-1"
+            badge={<SmallBadge />}
+          />
+        </PanelListItem>
+      ));
+
+    const buildDraftPolicyRows = () =>
+      draftPolicies.map(({ nodeId, policy }) => {
+        const protocolLabel = getPolicyProtocolAndPortText(policy);
+        return (
+          <PanelListItem key={nodeId} disabled onCanvas>
+            <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
+              <div
+                className={
+                  "h-8 w-8 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 text-nb-gray-300"
+                }
+              >
+                <ShieldIcon size={14} />
+              </div>
+              <div className={"flex flex-col leading-tight min-w-0"}>
+                <span
+                  className={
+                    "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
+                  }
+                >
+                  <TruncatedText
+                    text={policy.name ?? "Policy"}
+                    maxWidth={"150px"}
+                    hideTooltip={true}
+                  />
+                  <SmallBadge />
+                </span>
+                <span className={"text-[0.7rem] text-nb-gray-400 truncate"}>
+                  {protocolLabel || "All"}
+                </span>
+              </div>
+            </div>
+          </PanelListItem>
+        );
+      });
+
+    const buildDraftNetworkRows = () =>
+      draftNetworks.map(({ nodeId, name, resourceCount }) => (
+        <PanelListItem key={nodeId} disabled onCanvas>
+          <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
+            <div
+              className={
+                "h-8 w-8 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 text-nb-gray-300"
+              }
+            >
+              <NetworkIcon size={14} />
+            </div>
+            <div className={"flex flex-col leading-tight min-w-0"}>
+              <span
+                className={
+                  "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
+                }
+              >
+                <TruncatedText
+                  text={name}
+                  maxWidth={"150px"}
+                  hideTooltip={true}
+                />
+                <SmallBadge />
+              </span>
+              <span className={"text-[0.7rem] text-nb-gray-400 truncate"}>
+                {singularize("Resources", resourceCount, true)}
+              </span>
+            </div>
+          </div>
+        </PanelListItem>
+      ));
+
+    const buildNetworkRows = () =>
+      filteredNetworks.map((network) => {
+        const onCanvas = canvasNodeIds.has(`network-${network.id}`);
+        return (
+          <PanelListItem
+            key={network.id}
+            disabled={onCanvas}
+            onCanvas={onCanvas}
+            onPointerDown={(e) =>
+              handleDragStart(e, NodeType.NetworkNode, network)
+            }
+          >
+            <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
+              <div
+                className={
+                  "h-8 w-8 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 text-nb-gray-300"
+                }
+              >
+                <NetworkIcon size={14} />
+              </div>
+              <div className={"flex flex-col leading-tight min-w-0"}>
+                <span
+                  className={
+                    "text-xs text-nb-gray-100 flex items-center min-w-0"
+                  }
+                >
+                  <TruncatedText
+                    text={network.name}
+                    maxWidth={"150px"}
+                    hideTooltip={true}
+                  />
+                </span>
+                <span className={"text-[0.7rem] text-nb-gray-400 truncate"}>
+                  {singularize("Resources", network.resources?.length ?? 0, true)}
+                </span>
+              </div>
+            </div>
+          </PanelListItem>
+        );
+      });
+
     const buildResourceRows = () =>
       filteredResources.map((resource) => {
         const onCanvas = canvasNodeIds.has(`resource-${resource.id}`);
@@ -603,10 +808,12 @@ const PanelContent = React.memo(
     const buildDraftResourceRows = () =>
       draftResources.map(({ nodeId, resource }) => (
         <PanelListItem key={nodeId} disabled onCanvas>
-          <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
-            <DeviceCard resource={resource} size="small" />
-            <SmallBadge />
-          </div>
+          <DeviceCard
+            resource={resource}
+            size="small"
+            className="flex-1"
+            badge={<SmallBadge />}
+          />
         </PanelListItem>
       ));
 
@@ -749,11 +956,21 @@ const PanelContent = React.memo(
                 ...buildResourceTemplateRows(),
               ],
             },
-            { title: "Peers", rows: buildPeerRows() },
-            { title: "Policies", rows: buildPolicyRows() },
+            {
+              title: "Peers",
+              rows: [...buildDraftPeerRows(), ...buildPeerRows()],
+            },
+            {
+              title: "Policies",
+              rows: [...buildDraftPolicyRows(), ...buildPolicyRows()],
+            },
             {
               title: "Groups",
               rows: [...buildDraftGroupRows(), ...buildGroupRows()],
+            },
+            {
+              title: "Networks",
+              rows: [...buildDraftNetworkRows(), ...buildNetworkRows()],
             },
             {
               title: "Resources",
@@ -763,12 +980,18 @@ const PanelContent = React.memo(
         : category === "peers"
         ? [
             { title: "Add New", rows: buildPeerTemplateRows() },
-            { title: "Existing Peers", rows: buildPeerRows() },
+            {
+              title: "Existing Peers",
+              rows: [...buildDraftPeerRows(), ...buildPeerRows()],
+            },
           ]
         : category === "policies"
         ? [
             { title: "Add New", rows: buildPolicyTemplateRows() },
-            { title: "Existing Policies", rows: buildPolicyRows() },
+            {
+              title: "Existing Policies",
+              rows: [...buildDraftPolicyRows(), ...buildPolicyRows()],
+            },
           ]
         : category === "groups"
         ? [
@@ -780,6 +1003,10 @@ const PanelContent = React.memo(
           ]
         : [
             { title: "Add New", rows: buildResourceTemplateRows() },
+            {
+              title: "Existing Networks",
+              rows: [...buildDraftNetworkRows(), ...buildNetworkRows()],
+            },
             {
               title: "Existing Resources",
               rows: [...buildDraftResourceRows(), ...buildResourceRows()],
@@ -914,9 +1141,20 @@ const PanelContent = React.memo(
                 className={"flex-1 min-h-0"}
               >
                 <Virtuoso
+                  // The panel stays mounted while closed (it only fades) —
+                  // Virtuoso and the scroll area would keep their first,
+                  // invisible-mount measurements (wrong scrollbar size, or
+                  // none at all). Remount the list on every open for a
+                  // fresh measure of the now-visible container.
+                  key={open ? "panel-open" : "panel-closed"}
                   data={flatRows}
-                  overscan={100}
-                  defaultItemHeight={58}
+                  overscan={300}
+                  // Exact row height (h-[52px]) — headings are shorter and
+                  // measured as soon as they render; an overestimate here
+                  // inflates the scrollbar until every item was measured
+                  // (visibly off on heading-heavy tabs like Networks &
+                  // Resources).
+                  defaultItemHeight={52}
                   computeItemKey={(index) => flatRows[index].key}
                   itemContent={(index, row) => (
                     <div className={cn("px-2", index === 0 && "pt-2")}>

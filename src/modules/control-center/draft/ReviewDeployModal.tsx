@@ -21,7 +21,7 @@ import {
   SquareMinusIcon,
   SquarePenIcon,
   SquarePlusIcon,
-  GlobeIcon,
+  WorkflowIcon,
   NetworkIcon,
   TriangleAlertIcon,
   WaypointsIcon,
@@ -58,7 +58,7 @@ const changeIcon = (change: DraftChange) => {
     case "create-network":
       return <NetworkIcon size={14} />;
     case "create-resource":
-      return <GlobeIcon size={14} />;
+      return <WorkflowIcon size={14} />;
     case "create-router":
       return <WaypointsIcon size={14} />;
   }

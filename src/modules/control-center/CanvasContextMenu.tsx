@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import {
   BotIcon,
   FolderGit2,
-  Globe,
+  WorkflowIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
   OptionIcon,
@@ -57,7 +57,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   // ---- Draft mode actions ----
 
   // Same "New …" set as the components picker, grouped with separators:
-  // group/policy · peers · network/resource. Each action takes the flow
+  // peers · group/policy · network/resource. Each action takes the flow
   // position it should create at (right-click point or viewport center).
   const draftItemGroups: {
     label: string;
@@ -68,36 +68,36 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     () => [
       [
         {
-          label: "New Group",
-          icon: <FolderGit2 size={14} />,
-          shortcut: shortcutLabel(1),
-          action: (pos) => addNewGroup({ x: pos.x - 100, y: pos.y - 30 }),
-        },
-        {
-          label: "New Policy",
-          icon: <ShieldIcon size={14} />,
-          shortcut: shortcutLabel(2),
-          action: (pos) => addBlankPolicy(pos),
-        },
-      ],
-      [
-        {
           label: "New User Device",
           icon: <MonitorSmartphoneIcon size={14} />,
-          shortcut: shortcutLabel(3),
+          shortcut: shortcutLabel(1),
           action: (pos) => addPeerPlaceholder("user-device", pos),
         },
         {
           label: "New Server",
           icon: <ServerIcon size={14} />,
-          shortcut: shortcutLabel(4),
+          shortcut: shortcutLabel(2),
           action: (pos) => addPeerPlaceholder("server", pos),
         },
         {
           label: "New Agent",
           icon: <BotIcon size={14} />,
-          shortcut: shortcutLabel(5),
+          shortcut: shortcutLabel(3),
           action: (pos) => addPeerPlaceholder("agent", pos),
+        },
+      ],
+      [
+        {
+          label: "New Policy",
+          icon: <ShieldIcon size={14} />,
+          shortcut: shortcutLabel(4),
+          action: (pos) => addBlankPolicy(pos),
+        },
+        {
+          label: "New Group",
+          icon: <FolderGit2 size={14} />,
+          shortcut: shortcutLabel(5),
+          action: (pos) => addNewGroup({ x: pos.x - 100, y: pos.y - 30 }),
         },
       ],
       [
@@ -109,7 +109,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
         },
         {
           label: "New Resource",
-          icon: <Globe size={14} />,
+          icon: <WorkflowIcon size={14} />,
           shortcut: shortcutLabel(7),
           action: (pos) => addBlankNode("resource", pos),
         },

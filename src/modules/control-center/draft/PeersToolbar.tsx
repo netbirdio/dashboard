@@ -1,11 +1,6 @@
 import * as React from "react";
 import { useEffect, useMemo } from "react";
-import {
-  FolderPlusIcon,
-  MinusCircleIcon,
-  TrashIcon,
-  XIcon,
-} from "lucide-react";
+import { CircleXIcon, FolderPlusIcon, TrashIcon } from "lucide-react";
 import { useReactFlow, useStoreApi, useViewport } from "@xyflow/react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
@@ -19,7 +14,6 @@ import {
 import { CreateGroupNameModal } from "@/modules/control-center/draft/CreateGroupNameModal";
 import { ToolbarButton } from "@/modules/control-center/toolbar/ToolbarButton";
 import { ToolbarContainer } from "@/modules/control-center/toolbar/ToolbarContainer";
-import { ToolbarDivider } from "@/modules/control-center/toolbar/ToolbarDivider";
 import { ToolbarGroup } from "@/modules/control-center/toolbar/ToolbarGroup";
 import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
@@ -252,6 +246,13 @@ export const PeersToolbar = () => {
     clearSelection();
   }, [mixedSelectionNodes, removeGroup, removeNodeWithEdges, clearSelection]);
 
+  // Selected peers/resources: canvas-only removal (policy/router references
+  // are cleaned by removeNodeWithEdges per node).
+  const handleRemoveGroupables = React.useCallback(() => {
+    selectedGroupableNodes.forEach((n) => removeNodeWithEdges(n.id));
+    clearSelection();
+  }, [selectedGroupableNodes, removeNodeWithEdges, clearSelection]);
+
   useControlCenterShortcuts(
     { g: handleOpenModal },
     selectedGroupableNodes.length >= 2,
@@ -275,20 +276,29 @@ export const PeersToolbar = () => {
           }}
         >
           <ToolbarContainer className="shadow-lg">
-            <ToolbarGroup position="first">
+            <ToolbarGroup>
               {selectedGroupableNodes.length >= 2 ? (
-                <ToolbarButton
-                  shortcut="G"
-                  onClick={handleOpenModal}
-                  className="px-3"
-                >
-                  <FolderPlusIcon size={14} />
-                  <span className="text-xs ml-2">Create Group</span>
-                </ToolbarButton>
+                <>
+                  <ToolbarButton
+                    shortcut="G"
+                    onClick={handleOpenModal}
+                    className="px-3"
+                  >
+                    <FolderPlusIcon size={14} />
+                    <span className="text-xs ml-2">Create Group</span>
+                  </ToolbarButton>
+                  <ToolbarButton
+                    onClick={handleRemoveGroupables}
+                    className="px-3"
+                  >
+                    <CircleXIcon size={14} />
+                    <span className="text-xs ml-2">Remove</span>
+                  </ToolbarButton>
+                </>
               ) : selectedGroupNodes.length >= 2 ? (
                 <>
                   <ToolbarButton onClick={handleRemoveGroups} className="px-3">
-                    <MinusCircleIcon size={14} />
+                    <CircleXIcon size={14} />
                     <span className="text-xs ml-2">Remove</span>
                   </ToolbarButton>
                   <ToolbarButton
@@ -304,23 +314,10 @@ export const PeersToolbar = () => {
                   onClick={handleRemoveSelection}
                   className="px-3"
                 >
-                  <MinusCircleIcon size={14} />
+                  <CircleXIcon size={14} />
                   <span className="text-xs ml-2">Remove</span>
                 </ToolbarButton>
               )}
-            </ToolbarGroup>
-
-            <ToolbarDivider />
-
-            <ToolbarGroup position="last">
-              <ToolbarButton
-                tooltip="Cancel Selection"
-                shortcut="ESC"
-                onClick={handleCancel}
-                className="w-8"
-              >
-                <XIcon size={14} />
-              </ToolbarButton>
             </ToolbarGroup>
           </ToolbarContainer>
         </div>

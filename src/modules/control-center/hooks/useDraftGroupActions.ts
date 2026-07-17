@@ -39,7 +39,7 @@ const uid = () =>
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export const getNextNewGroupName = (taken: Set<string>) => {
-  let name = "New Group";
+  let name = "Group";
   let i = 1;
   while (taken.has(name)) name = `New Group (${i++})`;
   return name;
@@ -66,7 +66,7 @@ export function useDraftGroupActions() {
     untrackRouter,
   } = useDraftChangeset();
 
-  // Drops a fresh draft group ("New Group", "New Group (1)", …) and records
+  // Drops a fresh draft group ("Group", "Group (1)", …) and records
   // the create change. The group panel opens on click, not on drop.
   const addNewGroup = useCallback(
     (position: XYPosition) => {
@@ -193,34 +193,43 @@ export function useDraftGroupActions() {
         });
 
       // Draft networks cascade: create-network + dependent resource/router
-      // changes dropped; canvas resources lose their parent (incomplete
-      // again, "Set up" affordance returns). Contained resources pop out of
-      // the removed frame at their absolute position.
+      // changes dropped, the network's resources are removed with it, and so
+      // are routing peers whose ONLY connection was routing this network
+      // (the Add Routing Peer placeholders — peers/groups with other
+      // relationships stay).
       if (nodeId.startsWith("network-new-")) {
         const clientId = nodeId.replace("network-", "");
-        const frame = node;
         untrackNetwork(clientId);
+
+        const allNodes = reactFlow.getNodes();
+        const allEdges = reactFlow.getEdges();
+        const containedResourceIds = allNodes
+          .filter((n) => n.parentId === nodeId)
+          .map((n) => n.id);
+        const soleRouterPeerIds = allEdges
+          .filter(
+            (e) =>
+              (e.data as { router?: boolean })?.router &&
+              e.target === nodeId &&
+              e.source.startsWith("peer-") &&
+              allEdges.filter(
+                (other) => other.source === e.source || other.target === e.source,
+              ).length === 1,
+          )
+          .map((e) => e.source);
+
+        // Recursive removal reuses the policy/changeset sweeps per node.
+        [...containedResourceIds, ...soleRouterPeerIds].forEach((cascadeId) =>
+          removeNodeWithEdges(cascadeId),
+        );
+
+        // Any non-contained resource still referencing the network loses it.
         setNodes((prev) =>
           prev.map((n) => {
             const ref = (n.data as { draftNetwork?: { networkClientId?: string } })
               ?.draftNetwork;
-            const wasChild = n.parentId === nodeId;
-            if (ref?.networkClientId !== clientId && !wasChild) return n;
-            return {
-              ...n,
-              ...(wasChild
-                ? {
-                    parentId: undefined,
-                    draggable: true,
-                    style: { ...n.style, width: undefined },
-                    position: {
-                      x: (frame?.position.x ?? 0) + n.position.x,
-                      y: (frame?.position.y ?? 0) + n.position.y,
-                    },
-                  }
-                : {}),
-              data: { ...n.data, draftNetwork: undefined },
-            };
+            if (ref?.networkClientId !== clientId) return n;
+            return { ...n, data: { ...n.data, draftNetwork: undefined } };
           }),
         );
       }

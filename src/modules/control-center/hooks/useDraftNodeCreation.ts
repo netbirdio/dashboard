@@ -3,11 +3,9 @@ import { Node, XYPosition, useReactFlow } from "@xyflow/react";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   getFrameChildPosition,
   getNetworkFrameHeight,
-  makeRouterEdge,
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_WIDTH,
   PLACEHOLDER_BASE_NAMES,
@@ -71,7 +69,6 @@ const getNextUniqueName = (base: string, taken: Set<string>) => {
 export function useDraftNodeCreation() {
   const reactFlow = useReactFlow();
   const { policies, networks, networkResources } = useControlCenterData();
-  const { setInstallModal } = useDraftMode();
   const { trackCreateNetwork } = useDraftChangeset();
 
   // Places a node roughly centered under the given flow position.
@@ -111,34 +108,6 @@ export function useDraftNodeCreation() {
     },
     [placeNode, reactFlow],
   );
-
-  // "Add Routing Peer" on a network node: drops a connected Server
-  // placeholder next to the network and opens the setup-key install flow.
-  // The create-router change is recorded once the placeholder installs (the
-  // routing edge carries the intent until then — placeholder ids stay out of
-  // the changeset).
-  const addRoutingPeer = useCallback(
-    (networkNodeId: string) => {
-      const networkNode = reactFlow
-        .getNodes()
-        .find((n) => n.id === networkNodeId);
-      if (!networkNode) return;
-      const peerNodeId = addPeerPlaceholder("server", {
-        x: networkNode.position.x - 260,
-        y: networkNode.position.y + 60,
-      });
-      reactFlow.setEdges((prev) =>
-        prev.concat(makeRouterEdge(peerNodeId, networkNodeId)),
-      );
-      setInstallModal({
-        isUserDevice: false,
-        placeholderKind: "server",
-        nodeId: peerNodeId,
-      });
-    },
-    [reactFlow, addPeerPlaceholder, setInstallModal],
-  );
-
 
   // Drops a blank policy node — no modal, no changeset entry. A policy
   // without a source and a destination isn't deployable; it only enters the
@@ -191,7 +160,7 @@ export function useDraftNodeCreation() {
           ?.name;
         if (name) taken.add(name);
       });
-      const name = getNextUniqueName("New Network", taken);
+      const name = getNextUniqueName("Network", taken);
       const nodeId = `network-new-${uid()}`;
       placeNode(
         {
@@ -207,6 +176,52 @@ export function useDraftNodeCreation() {
         position,
       );
       trackCreateNetwork({ clientId: nodeId.replace("network-", ""), name });
+
+      // ─── TEMP: layout-testing seed — REMOVE before shipping ─────────────
+      // Fills the new network with 30 draft resources and 10 resource
+      // groups (15 resources each) as frame children (canvas-only, no
+      // changeset entries) to exercise the viewport-shaped grid at scale.
+      const seedResources: Node[] = Array.from({ length: 30 }, (_, i) => ({
+        id: `resource-new-seed-${uid()}`,
+        type: NodeType.ResourceNode,
+        parentId: nodeId,
+        position: getFrameChildPosition(i),
+        style: { width: NETWORK_FRAME_CHILD_WIDTH },
+        data: {
+          resource: {
+            name: `Test Resource ${i + 1}`,
+            address: `10.0.${Math.floor(i / 4)}.${(i % 4) + 1}`,
+          },
+          draftNetwork: {
+            networkClientId: nodeId.replace("network-", ""),
+            name,
+          },
+          enabled: true,
+          showHandles: true,
+        },
+      }));
+      const seedGroups: Node[] = Array.from({ length: 10 }, (_, i) => ({
+        // "resourcegroup-" prefix: unknown to parseNodeId → connects no-op.
+        id: `resourcegroup-seed-${uid()}`,
+        type: NodeType.ResourceGroupNode,
+        parentId: nodeId,
+        position: getFrameChildPosition(30 + i),
+        style: { width: NETWORK_FRAME_CHILD_WIDTH },
+        data: {
+          group: {
+            name: `Test Group ${i + 1}`,
+            peers_count: 0,
+            resources_count: 15,
+          },
+          enabled: true,
+          showHandles: true,
+        },
+      }));
+      reactFlow.setNodes((prev) =>
+        prev.concat([...seedResources, ...seedGroups]),
+      );
+      // ─── /TEMP ───────────────────────────────────────────────────────────
+
       return nodeId;
     },
     [placeNode, reactFlow, networks, trackCreateNetwork],
@@ -231,8 +246,8 @@ export function useDraftNodeCreation() {
           ?.network?.name;
         if (networkName) takenNetworks.add(networkName);
       });
-      const name = getNextUniqueName("New Resource", takenResources);
-      const networkName = getNextUniqueName("New Network", takenNetworks);
+      const name = getNextUniqueName("Resource", takenResources);
+      const networkName = getNextUniqueName("Network", takenNetworks);
 
       const networkNodeId = `network-new-${uid()}`;
       const nodeId = `resource-new-${uid()}`;
@@ -291,6 +306,52 @@ export function useDraftNodeCreation() {
     ],
   );
 
+  // Adds a draft resource INTO an existing network frame (context menu's
+  // "Add Resource") — child of the frame, laid out by useNetworkFrameLayout.
+  const addResourceToFrame = useCallback(
+    (networkNodeId: string) => {
+      const nodes = reactFlow.getNodes();
+      const frame = nodes.find((n) => n.id === networkNodeId);
+      const network = (frame?.data as { network?: { name?: string } })
+        ?.network;
+      if (!frame || !network?.name) return;
+
+      const takenResources = new Set<string>();
+      networkResources?.forEach((r) => r.name && takenResources.add(r.name));
+      nodes.forEach((n) => {
+        const resourceName = (n.data as { resource?: { name?: string } })
+          ?.resource?.name;
+        if (resourceName) takenResources.add(resourceName);
+      });
+      const name = getNextUniqueName("Resource", takenResources);
+      const childCount = nodes.filter(
+        (n) => n.parentId === networkNodeId,
+      ).length;
+
+      const nodeId = `resource-new-${uid()}`;
+      reactFlow.setNodes((prev) =>
+        prev.concat({
+          id: nodeId,
+          type: NodeType.ResourceNode,
+          parentId: networkNodeId,
+          position: getFrameChildPosition(childCount),
+          style: { width: NETWORK_FRAME_CHILD_WIDTH },
+          data: {
+            resource: { name },
+            enabled: true,
+            showHandles: true,
+            draftNetwork: {
+              networkClientId: networkNodeId.replace("network-", ""),
+              name: network.name,
+            },
+          },
+        }),
+      );
+      return nodeId;
+    },
+    [reactFlow, networkResources],
+  );
+
   // Kept for callers that still switch on kind (components panel templates,
   // context menu).
   const addBlankNode = useCallback(
@@ -304,10 +365,10 @@ export function useDraftNodeCreation() {
   return {
     placeNode,
     addPeerPlaceholder,
-    addRoutingPeer,
     addBlankNode,
     addDraftNetwork,
     addDraftResource,
     addBlankPolicy,
+    addResourceToFrame,
   };
 }
