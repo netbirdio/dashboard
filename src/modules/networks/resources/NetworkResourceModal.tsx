@@ -76,12 +76,29 @@ export default function NetworkResourceModal({
   );
 }
 
+// Pure-data result for useSave={false} callers (control-center draft mode).
+export type ResourceModalResult = {
+  name: string;
+  description: string;
+  address: string;
+  groups: Group[];
+  enabled: boolean;
+};
+
 type ModalProps = {
   onCreated?: (r: NetworkResource) => void;
   onUpdated?: (r: NetworkResource) => void;
   network: Network;
   resource?: NetworkResource;
   initialTab?: string;
+  // false → no API calls: the modal hands the resource data back via
+  // onSaved (draft mode). The Access Control tab is hidden — draft policies
+  // are drawn on the canvas instead.
+  useSave?: boolean;
+  onSaved?: (data: ResourceModalResult) => void;
+  // Extra uniqueness names for useSave={false} (e.g. draft resources on the
+  // canvas that don't exist in the API yet).
+  takenNames?: string[];
 };
 
 export function ResourceModalContent({
@@ -90,6 +107,9 @@ export function ResourceModalContent({
   network,
   resource,
   initialTab,
+  useSave = true,
+  onSaved,
+  takenNames,
 }: ModalProps) {
   const create = useApiCall<NetworkResource>(
     `/networks/${network.id}/resources`,
@@ -149,10 +169,24 @@ export function ResourceModalContent({
 
   const nameError = useMemo(() => {
     if (name === "") return "";
-    if (resourceExists(name, resource?.id))
+    if (
+      resourceExists(name, resource?.id) ||
+      (name.trim() !== resource?.name && takenNames?.includes(name.trim()))
+    )
       return "A resource with this name already exists. Please use another name.";
     return "";
-  }, [name, resourceExists, resource?.id]);
+  }, [name, resourceExists, resource?.id, resource?.name, takenNames]);
+
+  // Draft mode: no API call — hand the validated data back to the caller.
+  const saveDraft = () => {
+    onSaved?.({
+      name: name.trim(),
+      description,
+      address: normalizeHostCIDR(address),
+      groups,
+      enabled,
+    });
+  };
 
   const confirmMissingPolicies = async () => {
     if (allResourcePolicies.length > 0) return true;
@@ -239,13 +273,15 @@ export function ResourceModalContent({
             <WorkflowIcon size={16} />
             Resource
           </TabsTrigger>
-          <TabsTrigger
-            value={"access-control"}
-            disabled={!resource && !canCreate}
-          >
-            <ShieldCheck size={16} />
-            Access Control
-          </TabsTrigger>
+          {useSave && (
+            <TabsTrigger
+              value={"access-control"}
+              disabled={!resource && !canCreate}
+            >
+              <ShieldCheck size={16} />
+              Access Control
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value={"resource"} className={"pb-4"}>
@@ -409,7 +445,24 @@ export function ResourceModalContent({
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          {!resource ? (
+          {!useSave ? (
+            // Draft mode: single-step save, no Access Control step.
+            <>
+              <ModalClose asChild={true}>
+                <Button variant={"secondary"}>Cancel</Button>
+              </ModalClose>
+              <ModalClose asChild={true}>
+                <Button
+                  variant={"primary"}
+                  data-testid={"submit-resource"}
+                  onClick={saveDraft}
+                  disabled={!canCreate}
+                >
+                  {resource ? "Save Changes" : "Add Resource"}
+                </Button>
+              </ModalClose>
+            </>
+          ) : !resource ? (
             <>
               {tab === "resource" && (
                 <>

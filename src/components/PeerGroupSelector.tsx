@@ -85,6 +85,9 @@ interface MultiSelectProps {
   showPeerCounter?: boolean;
   hideGroupsTab?: boolean;
   tabOrder?: PeerGroupSelectorTab[];
+  // Tab the dropdown opens on (when nothing is selected yet) — unlike
+  // tabOrder it does NOT reorder the tab triggers.
+  initialTab?: PeerGroupSelectorTab;
   closeOnSelect?: boolean;
   /** Show a Clusters tab. Off by default; flip on with clusters list. */
   showClusters?: boolean;
@@ -103,6 +106,9 @@ interface MultiSelectProps {
   users?: User[];
   placeholderForSearch?: string;
   resourceIds?: string[];
+  // Limit the Groups tab to these ids (or names for draft groups) — e.g. the
+  // network destination picker. Also disables inline group creation.
+  groupIds?: string[];
   additionalResources?: NetworkResource[];
   // Extra peers offered alongside the fetched ones (e.g. draft placeholder
   // peers that don't exist in the API yet).
@@ -129,6 +135,7 @@ export function PeerGroupSelector({
   showPeerCounter = true,
   hideGroupsTab = false,
   tabOrder,
+  initialTab,
   closeOnSelect = false,
   resource,
   onResourceChange,
@@ -139,6 +146,7 @@ export function PeerGroupSelector({
   users,
   placeholderForSearch = 'Search groups or add new group by pressing "Enter"...',
   resourceIds,
+  groupIds,
   additionalResources,
   additionalPeers,
   policies,
@@ -181,13 +189,15 @@ export function PeerGroupSelector({
 
   const [open, setOpen] = useState(false);
 
-  const visibleDropdownOptions = useMemo(
-    () =>
-      hideAllGroup
-        ? dropdownOptions.filter((g) => g.name !== "All")
-        : dropdownOptions,
-    [dropdownOptions, hideAllGroup],
-  );
+  const visibleDropdownOptions = useMemo(() => {
+    let options = hideAllGroup
+      ? dropdownOptions.filter((g) => g.name !== "All")
+      : dropdownOptions;
+    if (groupIds) {
+      options = options.filter((g) => groupIds.includes(g.id ?? g.name));
+    }
+    return options;
+  }, [dropdownOptions, hideAllGroup, groupIds]);
 
   const sortedDropdownOptions = useSortedDropdownOptions(
     visibleDropdownOptions,
@@ -288,12 +298,13 @@ export function PeerGroupSelector({
     const groupDoesNotExist =
       dropdownOptions.filter((item) => item.name == trim(search)).length == 0;
     const isAllGroup = search.toLowerCase() == "all";
-    return isSearching && groupDoesNotExist && !isAllGroup;
-  }, [search, dropdownOptions]);
+    return isSearching && groupDoesNotExist && !isAllGroup && !groupIds;
+  }, [search, dropdownOptions, groupIds]);
 
   const [slice, setSlice] = useState(10);
 
   const getDefaultTab = (): PeerGroupSelectorTab => {
+    if (initialTab) return initialTab;
     if (tabOrder?.[0]) return tabOrder[0];
     if (hideGroupsTab) return showPeers ? "peers" : "resources";
     return "groups";
@@ -637,6 +648,18 @@ export function PeerGroupSelector({
                       </CommandItem>
                     )}
 
+                    {groupIds &&
+                      filteredGroups.length === 0 &&
+                      !searchedGroupNotFound && (
+                        <DropdownInfoText
+                          className={"mt-5 mb-5 max-w-sm mx-auto"}
+                        >
+                          {search !== ""
+                            ? "There are no groups matching your search. Please try a different search term."
+                            : "There are no groups that contain resources yet."}
+                        </DropdownInfoText>
+                      )}
+
                     {filteredGroups.slice(0, slice).map((option) => {
                       const isSelected =
                         values.find((group) => group.name == option.name) !=
@@ -774,6 +797,7 @@ const TabTriggers = ({
   showClusters = false,
   hideGroupsTab = false,
   tabOrder,
+  initialTab,
 }: {
   searchRef: React.MutableRefObject<HTMLInputElement | null>;
   showResources?: boolean;
@@ -781,6 +805,9 @@ const TabTriggers = ({
   showClusters?: boolean;
   hideGroupsTab?: boolean;
   tabOrder?: PeerGroupSelectorTab[];
+  // Tab the dropdown opens on (when nothing is selected yet) — unlike
+  // tabOrder it does NOT reorder the tab triggers.
+  initialTab?: PeerGroupSelectorTab;
 }) => {
   const tabCount =
     (!hideGroupsTab ? 1 : 0) +
@@ -1067,7 +1094,9 @@ const ResourcesList = ({
                     e.preventDefault();
                   }}
                 >
-                  {res.type === "host" && (
+                  {/* Draft resources without an address have no type yet —
+                      show the default (host) icon instead of none. */}
+                  {(res.type === "host" || !res.type) && (
                     <WorkflowIcon size={12} className={"shrink-0"} />
                   )}
                   {res.type === "domain" && (

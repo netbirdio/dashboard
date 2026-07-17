@@ -38,6 +38,7 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { Group } from "@/interfaces/Group";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
@@ -76,18 +77,33 @@ export default function NetworkRoutingPeerModal({
   );
 }
 
+// Pure-data result for useSave={false} callers (control-center draft mode).
+export type RoutingPeerModalResult = {
+  peer?: Peer;
+  peerGroups: Group[];
+  metric: number;
+  masquerade: boolean;
+  enabled: boolean;
+};
+
 type ContentProps = {
   network: Network;
   router?: NetworkRouter;
   onCreated?: (r: NetworkRouter) => void;
   onUpdated?: (r: NetworkRouter) => void;
+  // false → no API calls: the modal hands the router data back via onSaved
+  // (draft mode).
+  useSave?: boolean;
+  onSaved?: (r: RoutingPeerModalResult) => void;
 };
 
-function RoutingPeerModalContent({
+export function RoutingPeerModalContent({
   network,
   router,
   onCreated,
   onUpdated,
+  useSave = true,
+  onSaved,
 }: ContentProps) {
   const isRoutingPeer = router ? router.peer != "" : true;
 
@@ -197,6 +213,19 @@ function RoutingPeerModalContent({
   };
 
   const canContinue = routingPeer !== undefined || routingPeerGroups.length > 0;
+
+  // Draft mode: hand the validated selection back — group creation and the
+  // API call happen on deploy via the changeset.
+  const saveDraft = () => {
+    onSaved?.({
+      peer: type === "peer" ? routingPeer : undefined,
+      peerGroups: type === "peer" ? [] : routingPeerGroups,
+      metric: parseInt(metric),
+      masquerade:
+        type === "peer" && isNonLinuxRoutingPeer ? true : masquerade,
+      enabled,
+    });
+  };
 
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
@@ -393,7 +422,9 @@ function RoutingPeerModalContent({
                 disabled={
                   routingPeer == undefined && routingPeerGroups.length <= 0
                 }
-                onClick={router ? updateRouter : addRouter}
+                onClick={
+                  !useSave ? saveDraft : router ? updateRouter : addRouter
+                }
                 data-testid="submit-routing-peer"
               >
                 {router ? (

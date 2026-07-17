@@ -42,7 +42,7 @@ import {
   SquareTerminalIcon,
   Text,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
@@ -140,6 +140,16 @@ type ModalProps = {
   // Draft-only placeholder peers (not installed yet) offered in the peer
   // selectors alongside the real peers.
   additionalPeers?: Peer[];
+  // Set when the policy is created by connecting onto a network (or one of
+  // its resources/resource-groups) in the draft canvas: the destination
+  // selector offers ONLY the network's resources and groups (no peers), and
+  // the policy is locked one-way — resource access is never bidirectional.
+  destinationScope?: PolicyDestinationScope;
+};
+
+export type PolicyDestinationScope = {
+  resourceIds: string[];
+  groupIds: string[];
 };
 
 export function AccessControlModalContent({
@@ -161,6 +171,7 @@ export function AccessControlModalContent({
   disableDestinationSelector = false,
   additionalResources,
   additionalPeers,
+  destinationScope,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
   const { users } = useUsers();
@@ -246,6 +257,11 @@ export function AccessControlModalContent({
     const data = getPolicyData();
     onSuccess && onSuccess(data);
   };
+
+  // Network-scoped destinations are resource access — one-way by nature.
+  useEffect(() => {
+    if (destinationScope && direction !== "in") setDirection("in");
+  }, [destinationScope, direction, setDirection]);
 
   return (
     <ModalContent maxWidthClass={"max-w-3xl"}>
@@ -379,7 +395,7 @@ export function AccessControlModalContent({
               <PolicyDirection
                 value={direction}
                 onChange={setDirection}
-                disabled={destinationOnlyResources}
+                disabled={destinationOnlyResources || !!destinationScope}
                 protocol={protocol}
                 destinationResource={destinationResource}
               />
@@ -404,7 +420,10 @@ export function AccessControlModalContent({
                   placeholder={"Select destination(s)..."}
                   showRoutes={true}
                   showResources={protocol !== "netbird-ssh"}
-                  showPeers={true}
+                  showPeers={!destinationScope}
+                  resourceIds={destinationScope?.resourceIds}
+                  groupIds={destinationScope?.groupIds}
+                  hideAllGroup={!!destinationScope}
                   showResourceCounter={true}
                   showPeerCount={allowEditPeers}
                   disableInlineRemoveGroup={false}
