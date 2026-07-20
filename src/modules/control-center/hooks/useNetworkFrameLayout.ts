@@ -2,17 +2,16 @@ import { useEffect } from "react";
 import { Node } from "@xyflow/react";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { NodeType } from "@/modules/control-center/utils/nodes";
 import {
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_CHILD_WIDTH_MULTI,
-  getFrameChildPosition,
   NETWORK_FRAME_FALLBACK_ROW,
   NETWORK_FRAME_GAP,
   NETWORK_FRAME_HEADER,
   NETWORK_FRAME_PADDING_X,
   NETWORK_FRAME_PADDING_Y,
   NETWORK_FRAME_MAX_VISIBLE,
+  NETWORK_FRAME_OVERFLOW_ROW,
   NETWORK_FRAME_ROW_GAP,
   getFrameGridColumns,
   getNetworkFrameHeight,
@@ -25,6 +24,9 @@ import {
 // left/right/bottom; the frame grows/shrinks to fit exactly. Runs as a
 // reconciling effect — it only writes when a position/size actually
 // drifted, so it settles immediately after ReactFlow reports dimensions.
+// Adding resources happens from the frame header's "Add Resource" button, and
+// overflow past the visible cap is summarized by NetworkNode's "+N More"
+// footer — so the frame's only children are resource nodes.
 export function useNetworkFrameLayout() {
   const { nodes, setNodes } = useCanvasState();
   const { drillDownNetworkNodeId } = useDraftMode();
@@ -34,7 +36,18 @@ export function useNetworkFrameLayout() {
     if (frames.length === 0) return;
 
     const updates = new Map<string, Partial<Node>>();
-    const missingAddRows: Node[] = [];
+    // Legacy utility children from older drafts: the "Add Resource" row moved
+    // to the frame header and the overflow row became a footer, so any
+    // persisted ones are swept off the canvas.
+    const obsolete = new Set<string>();
+    nodes.forEach((n) => {
+      if (
+        n.parentId?.startsWith("network-new-") &&
+        (n.id.startsWith("add-resource-") || n.id.startsWith("overflow-"))
+      ) {
+        obsolete.add(n.id);
+      }
+    });
 
     frames.forEach((frame) => {
       // While a frame is drilled, the others are hidden and frozen — writing
@@ -43,51 +56,25 @@ export function useNetworkFrameLayout() {
         return;
       }
       const drilled = frame.id === drillDownNetworkNodeId;
-      // Stable grid order: current row, then column — the "Add Resource" row
-      // is pinned last.
-      const isAddRow = (n: Node) =>
-        n.type === NodeType.AddNetworkResourceNode;
-      const children = nodes
-        .filter((n) => n.parentId === frame.id)
-        .sort((a, b) => {
-          if (isAddRow(a) !== isAddRow(b)) return isAddRow(a) ? 1 : -1;
-          return a.position.y - b.position.y || a.position.x - b.position.x;
-        });
+      const resources = nodes
+        .filter((n) => n.parentId === frame.id && !obsolete.has(n.id))
+        .sort(
+          (a, b) => a.position.y - b.position.y || a.position.x - b.position.x,
+        );
 
-      // The add-row is ALWAYS present (reconciled here so every path — drop,
-      // assign, context menu, restore, and a freshly-added empty network —
-      // gets it); an empty frame shows just the add-row, never a text hint.
-      const resourceChildren = children.filter((n) => !isAddRow(n));
-      const addRow = children.find(isAddRow);
-      if (!addRow) {
-        missingAddRows.push({
-          id: `add-resource-${frame.id}`,
-          type: NodeType.AddNetworkResourceNode,
-          parentId: frame.id,
-          position: getFrameChildPosition(resourceChildren.length),
-          style: { width: NETWORK_FRAME_CHILD_WIDTH },
-          data: {},
-        });
-      }
-
-      // Parent view: the visible cap applies to RESOURCES only — the
-      // "Add Resource" row is always appended after them, never hidden.
-      // Overflow hides behind the fade; the drill-down shows everything in
-      // a square-ish grid instead.
+      // Parent view caps visible resources; overflow is hidden and summarized
+      // by NetworkNode's "+N More" footer. The drill-down shows everything in
+      // a square-ish grid, so there's no overflow while drilled.
       const visibleResources = drilled
-        ? resourceChildren
-        : resourceChildren.slice(0, NETWORK_FRAME_MAX_VISIBLE);
+        ? resources
+        : resources.slice(0, NETWORK_FRAME_MAX_VISIBLE);
       const overflow = drilled
-        ? []
-        : resourceChildren.slice(NETWORK_FRAME_MAX_VISIBLE);
-      const visible = addRow
-        ? [...visibleResources, addRow]
-        : visibleResources;
-      // Row-major fill: left → right, then the next row (a single resource
-      // gets the add-row at its right, not below).
+        ? 0
+        : Math.max(0, resources.length - NETWORK_FRAME_MAX_VISIBLE);
+
       const cols = drilled
-        ? getFrameGridColumns(children.length)
-        : visible.length > 1
+        ? getFrameGridColumns(resources.length)
+        : visibleResources.length > 1
         ? 2
         : 1;
       // Multi-column rows hug their content; single-column rows span the
@@ -96,37 +83,22 @@ export function useNetworkFrameLayout() {
         cols > 1 ? NETWORK_FRAME_CHILD_WIDTH_MULTI : NETWORK_FRAME_CHILD_WIDTH;
       const width = getNetworkFrameWidth(cols, childWidth);
 
-      overflow.forEach((child) => {
+      resources.slice(visibleResources.length).forEach((child) => {
         if (!child.hidden) updates.set(child.id, { hidden: true });
       });
 
-      // With hidden overflow the last visible RESOURCE row fades out
-      // (live-mode look) — a CSS mask on the row's nodes, since an overlay
-      // inside the frame would paint UNDER its child nodes. The add-row
-      // stays solid.
-      const lastResourceRowFirstIndex =
-        cols * Math.floor((visibleResources.length - 1) / cols);
-
       let y = NETWORK_FRAME_HEADER + NETWORK_FRAME_PADDING_Y;
       let rowMaxHeight = 0;
-      visible.forEach((child, index) => {
+      visibleResources.forEach((child, index) => {
         const col = index % cols;
         if (col === 0 && index > 0) {
           y += rowMaxHeight + NETWORK_FRAME_ROW_GAP;
           rowMaxHeight = 0;
         }
         const desired = {
-          x:
-            NETWORK_FRAME_PADDING_X +
-            col * (childWidth + NETWORK_FRAME_GAP),
+          x: NETWORK_FRAME_PADDING_X + col * (childWidth + NETWORK_FRAME_GAP),
           y,
         };
-        const fadeMask =
-          overflow.length > 0 &&
-          index < visibleResources.length &&
-          index >= lastResourceRowFirstIndex
-            ? "linear-gradient(to bottom, black 10%, transparent 95%)"
-            : undefined;
         const childUpdate: Partial<Node> = {};
         if (child.hidden) childUpdate.hidden = false;
         if (
@@ -135,15 +107,15 @@ export function useNetworkFrameLayout() {
         ) {
           childUpdate.position = desired;
         }
-        if (
-          child.style?.width !== childWidth ||
-          child.style?.maskImage !== fadeMask
-        ) {
+        // Sync the width and clear any stale fade mask left by the old
+        // overflow treatment (rows are solid now; overflow is summarized by
+        // the "+N More" footer instead).
+        if (child.style?.width !== childWidth || child.style?.maskImage) {
           childUpdate.style = {
             ...child.style,
             width: childWidth,
-            maskImage: fadeMask,
-            WebkitMaskImage: fadeMask,
+            maskImage: undefined,
+            WebkitMaskImage: undefined,
           };
         }
         if (Object.keys(childUpdate).length > 0) {
@@ -155,9 +127,12 @@ export function useNetworkFrameLayout() {
         );
       });
 
+      // Reserve a band at the bottom for the "+N More" footer NetworkNode
+      // renders when resources overflow the visible cap.
+      const overflowBand = overflow > 0 ? NETWORK_FRAME_OVERFLOW_ROW : 0;
       const height =
-        visible.length > 0
-          ? y + rowMaxHeight + NETWORK_FRAME_PADDING_Y
+        visibleResources.length > 0
+          ? y + rowMaxHeight + NETWORK_FRAME_PADDING_Y + overflowBand
           : getNetworkFrameHeight(0);
       if (frame.style?.height !== height || frame.style?.width !== width) {
         updates.set(frame.id, {
@@ -166,16 +141,16 @@ export function useNetworkFrameLayout() {
       }
     });
 
-    if (updates.size === 0 && missingAddRows.length === 0) {
+    if (updates.size === 0 && obsolete.size === 0) {
       return;
     }
     setNodes((prev) =>
       prev
+        .filter((n) => !obsolete.has(n.id))
         .map((n) => {
           const update = updates.get(n.id);
           return update ? { ...n, ...update } : n;
-        })
-        .concat(missingAddRows),
+        }),
     );
   }, [nodes, setNodes, drillDownNetworkNodeId]);
 }

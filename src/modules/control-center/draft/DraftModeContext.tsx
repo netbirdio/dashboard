@@ -40,7 +40,8 @@ type DraftModeContextType = {
   installModal: InstallModalState | null;
   setInstallModal: (value: InstallModalState | null) => void;
   // Draft resource editor (pure-data modal) — edits an existing resource
-  // node, OR creates a new one into a frame (Add Resource row/menu).
+  // node, OR creates a new one into a frame (the frame header's "Add
+  // Resource" button / context menu).
   resourceEditor: ResourceEditorState | null;
   setResourceEditor: (value: ResourceEditorState | null) => void;
   // Draft routing-peer modal (networks page modal, pure-data) — targets a

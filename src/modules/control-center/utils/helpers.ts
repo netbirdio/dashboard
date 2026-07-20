@@ -408,10 +408,12 @@ export const NETWORK_FRAME_CHILD_WIDTH =
 // full-width row per column would leave a big gap between the columns.
 export const NETWORK_FRAME_CHILD_WIDTH_MULTI = 185;
 
-// Parent (collapsed) frame view shows at most 2 columns x 4 rows; overflow
-// is summarized ("+N more") and fully visible in the drill-down.
+// Parent (collapsed) frame view shows at most this many resources; overflow
+// is summarized by a "+N More" footer and fully visible in the drill-down.
 export const NETWORK_FRAME_MAX_VISIBLE = 6;
-export const NETWORK_FRAME_OVERFLOW_ROW = 28;
+// Height of the "+N More" footer band the frame reserves at its bottom edge
+// (kept in sync with NetworkNode's footer height).
+export const NETWORK_FRAME_OVERFLOW_ROW = 44;
 
 // Drill-down grid math: the column count targets a square-ish frame
 // (width ≈ height in pixels) — cols = sqrt(N * cellH / cellW).

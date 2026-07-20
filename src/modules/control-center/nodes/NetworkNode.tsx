@@ -1,8 +1,21 @@
 import useFetchApi from "@utils/api";
 import { cn, singularize } from "@utils/helpers";
 import { Handle, type Node, Position, useConnection } from "@xyflow/react";
-import { HelpCircle, NetworkIcon, PlusCircleIcon } from "lucide-react";
+import {
+  ChevronDown,
+  HelpCircle,
+  NetworkIcon,
+  PlusCircleIcon,
+  ServerIcon,
+  WorkflowIcon,
+} from "lucide-react";
 import FullTooltip from "@components/FullTooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
 import * as React from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { SmallBadge } from "@components/ui/SmallBadge";
@@ -16,6 +29,8 @@ import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaT
 import {
   DraftNetworkRef,
   getDraftResource,
+  NETWORK_FRAME_MAX_VISIBLE,
+  NETWORK_FRAME_OVERFLOW_ROW,
 } from "@/modules/control-center/utils/helpers";
 
 type NetworkNodeType = {
@@ -96,6 +111,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   const {
     isDraft,
     setRoutingPeerModal,
+    setResourceEditor,
     drillDownNetworkNodeId,
     setDrillDownNetworkNodeId,
     hoveredNetworkNodeId,
@@ -133,6 +149,15 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   const apiResources =
     networkResources?.filter((r) => resourceIds.includes(r?.id || "")) || [];
   const resources = [...apiResources, ...draftResources];
+
+  // Parent view caps the frame at NETWORK_FRAME_MAX_VISIBLE resources
+  // (useNetworkFrameLayout hides the rest); the "+N More" footer summarizes
+  // them in the band the layout reserves at the frame's bottom. Drilling in
+  // reveals all, so there's no overflow there.
+  const overflowCount =
+    isFrame && !isDrilled
+      ? Math.max(0, resources.length - NETWORK_FRAME_MAX_VISIBLE)
+      : 0;
 
   // Draft routers: create-router changes for this network (routers have no
   // canvas representation — the count IS the state).
@@ -178,8 +203,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             "w-full text-nb-gray-300 gap-2 text-sm pl-6 pr-6 py-3.5 font-normal bg-nb-gray-935 border-b border-nb-gray-800 transition-all rounded-t-[11px]",
             isFrame && isFrameHovered && "bg-nb-gray-930 border-nb-gray-700",
             !isFrame && "group-hover:bg-nb-gray-930",
-            // Card with no resources has nothing below the header; a frame
-            // always has the "Add Resource" row, so it keeps its separator.
+            // Card with no resources has nothing below the header, so it
+            // drops the separator; a frame keeps it (its body holds the
+            // resource grid).
             !isFrame && resources.length === 0 && "border-b-0",
           ),
         )}
@@ -208,11 +234,47 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             className={"gap-2 text-xs shrink-0"}
           />
         )}
+        {/* Frame: "Add" dropdown → routing peer or resource. */}
+        {isDraft && isFrame && (
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className={cn(
+                  "flex items-center gap-1 rounded-md pl-2 pr-1.5 py-1 text-xs shrink-0 whitespace-nowrap",
+                  "border border-nb-gray-700 text-nb-gray-300",
+                  "hover:text-white hover:bg-nb-gray-800 transition-colors",
+                )}
+              >
+                Add
+                <ChevronDown size={13} className={"shrink-0"} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align={"end"} className={"w-[180px]"}>
+              <DropdownMenuItem
+                onClick={() => setRoutingPeerModal({ networkNodeId: id })}
+              >
+                <div className={"flex gap-3 items-center"}>
+                  <ServerIcon size={14} className={"shrink-0"} />
+                  Routing Peer
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setResourceEditor({ createInNetworkNodeId: id })}
+              >
+                <div className={"flex gap-3 items-center"}>
+                  <WorkflowIcon size={14} className={"shrink-0"} />
+                  Resource
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
-      {/* Body: the frame's resources (and the always-present "Add Resource"
-          row) render as child NODES inside it; the card previews its
-          resources as a grid. */}
+      {/* Body: the frame's resources (plus the always-present "Add Resource"
+          row and, past the visible cap, a "+N more" row) render as child
+          NODES inside it; the card previews its resources as a grid. */}
       {!isFrame && resources.length > 0 && (
         <div className={"px-2 flex flex-col gap-4 relative"}>
           <div className={"grid grid-cols-2 relative z-0"}>
@@ -223,10 +285,11 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         </div>
       )}
 
-      {/* Frame: routing status + install as one button group above it. */}
+      {/* Frame: routing status pill above it (adding a routing peer now
+          lives in the header "Add" dropdown). */}
       {isDraft && isFrame && (
         <div
-          // The button group must not drill into the frame.
+          // The status pill must not drill into the frame.
           onClick={(e) => e.stopPropagation()}
           className={
             "absolute bottom-full left-0 mb-3 flex items-stretch rounded-md bg-nb-gray-920 border border-gray-700/40 overflow-hidden"
@@ -281,19 +344,6 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
               />
             </button>
           </FullTooltip>
-          <div className={"w-px bg-gray-700/40"} />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setRoutingPeerModal({ networkNodeId: id });
-            }}
-            className={
-              "flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-nb-gray-910 transition-colors whitespace-nowrap"
-            }
-          >
-            <PlusCircleIcon size={13} />
-            Add
-          </button>
         </div>
       )}
       {isDraft && !isFrame && routingPeersCount === 0 && (
@@ -323,6 +373,20 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         <ConnectHandle type={"source"} position={Position.Left} />
       )}
       {isDraft && <FullAreaTargetHandle isConnectable={isTarget} />}
+
+      {/* Overflow footer: resources past the visible cap are hidden and
+          summarized here, in the band the layout reserves at the frame's
+          bottom. Clicks fall through so the frame still drills in. */}
+      {isFrame && overflowCount > 0 && (
+        <div
+          className={
+            "absolute inset-x-0 bottom-0 flex items-center justify-center rounded-b-[11px] bg-gradient-to-b from-transparent to-nb-gray-935 text-sm text-nb-gray-400 pointer-events-none"
+          }
+          style={{ height: NETWORK_FRAME_OVERFLOW_ROW }}
+        >
+          +{overflowCount} More
+        </div>
+      )}
     </div>
   );
 };
