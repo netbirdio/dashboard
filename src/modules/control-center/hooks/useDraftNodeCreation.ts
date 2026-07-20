@@ -177,51 +177,6 @@ export function useDraftNodeCreation() {
       );
       trackCreateNetwork({ clientId: nodeId.replace("network-", ""), name });
 
-      // ─── TEMP: layout-testing seed — REMOVE before shipping ─────────────
-      // Fills the new network with 30 draft resources and 10 resource
-      // groups (15 resources each) as frame children (canvas-only, no
-      // changeset entries) to exercise the viewport-shaped grid at scale.
-      const seedResources: Node[] = Array.from({ length: 30 }, (_, i) => ({
-        id: `resource-new-seed-${uid()}`,
-        type: NodeType.ResourceNode,
-        parentId: nodeId,
-        position: getFrameChildPosition(i),
-        style: { width: NETWORK_FRAME_CHILD_WIDTH },
-        data: {
-          resource: {
-            name: `Test Resource ${i + 1}`,
-            address: `10.0.${Math.floor(i / 4)}.${(i % 4) + 1}`,
-          },
-          draftNetwork: {
-            networkClientId: nodeId.replace("network-", ""),
-            name,
-          },
-          enabled: true,
-          showHandles: true,
-        },
-      }));
-      const seedGroups: Node[] = Array.from({ length: 10 }, (_, i) => ({
-        // "resourcegroup-" prefix: unknown to parseNodeId → connects no-op.
-        id: `resourcegroup-seed-${uid()}`,
-        type: NodeType.ResourceGroupNode,
-        parentId: nodeId,
-        position: getFrameChildPosition(30 + i),
-        style: { width: NETWORK_FRAME_CHILD_WIDTH },
-        data: {
-          group: {
-            name: `Test Group ${i + 1}`,
-            peers_count: 0,
-            resources_count: 15,
-          },
-          enabled: true,
-          showHandles: true,
-        },
-      }));
-      reactFlow.setNodes((prev) =>
-        prev.concat([...seedResources, ...seedGroups]),
-      );
-      // ─── /TEMP ───────────────────────────────────────────────────────────
-
       return nodeId;
     },
     [placeNode, reactFlow, networks, trackCreateNetwork],

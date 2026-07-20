@@ -35,7 +35,6 @@ export function useNetworkFrameLayout() {
 
     const updates = new Map<string, Partial<Node>>();
     const missingAddRows: Node[] = [];
-    const obsoleteAddRows = new Set<string>();
 
     frames.forEach((frame) => {
       // While a frame is drilled, the others are hidden and frozen — writing
@@ -55,11 +54,12 @@ export function useNetworkFrameLayout() {
           return a.position.y - b.position.y || a.position.x - b.position.x;
         });
 
-      // The add-row exists while the frame has resources (reconciled here so
-      // every creation path — drop, assign, context menu, restore — gets it).
+      // The add-row is ALWAYS present (reconciled here so every path — drop,
+      // assign, context menu, restore, and a freshly-added empty network —
+      // gets it); an empty frame shows just the add-row, never a text hint.
       const resourceChildren = children.filter((n) => !isAddRow(n));
       const addRow = children.find(isAddRow);
-      if (resourceChildren.length > 0 && !addRow) {
+      if (!addRow) {
         missingAddRows.push({
           id: `add-resource-${frame.id}`,
           type: NodeType.AddNetworkResourceNode,
@@ -68,8 +68,6 @@ export function useNetworkFrameLayout() {
           style: { width: NETWORK_FRAME_CHILD_WIDTH },
           data: {},
         });
-      } else if (resourceChildren.length === 0 && addRow) {
-        obsoleteAddRows.add(addRow.id);
       }
 
       // Parent view: the visible cap applies to RESOURCES only — the
@@ -168,16 +166,11 @@ export function useNetworkFrameLayout() {
       }
     });
 
-    if (
-      updates.size === 0 &&
-      missingAddRows.length === 0 &&
-      obsoleteAddRows.size === 0
-    ) {
+    if (updates.size === 0 && missingAddRows.length === 0) {
       return;
     }
     setNodes((prev) =>
       prev
-        .filter((n) => !obsoleteAddRows.has(n.id))
         .map((n) => {
           const update = updates.get(n.id);
           return update ? { ...n, ...update } : n;

@@ -9,10 +9,10 @@ type AddNetworkResourceNode = Node<
   "addNetworkResourceNode"
 >;
 
-// The "Add Resource" row INSIDE a network frame — created/removed by
-// useNetworkFrameLayout (present while the frame has >= 1 resource, always
-// laid out as the last row). Clicking opens the resource editor in
-// create-mode; the resource node lands in the frame on save.
+// The "Add Resource" row INSIDE a network frame — created by
+// useNetworkFrameLayout and always present (even in an empty frame), laid
+// out as the last row. Clicking opens the resource editor in create-mode;
+// the resource node lands in the frame on save.
 export const AddNetworkResourceNode = ({
   parentId,
 }: AddNetworkResourceNode) => {

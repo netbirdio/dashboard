@@ -178,7 +178,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             "w-full text-nb-gray-300 gap-2 text-sm pl-6 pr-6 py-3.5 font-normal bg-nb-gray-935 border-b border-nb-gray-800 transition-all rounded-t-[11px]",
             isFrame && isFrameHovered && "bg-nb-gray-930 border-nb-gray-700",
             !isFrame && "group-hover:bg-nb-gray-930",
-            resources.length === 0 && "border-b-0",
+            // Card with no resources has nothing below the header; a frame
+            // always has the "Add Resource" row, so it keeps its separator.
+            !isFrame && resources.length === 0 && "border-b-0",
           ),
         )}
       >
@@ -194,7 +196,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             {isFrame && <SmallBadge />}
           </div>
           <div className={cn("text-nb-gray-400 whitespace-nowrap mt-0.5")}>
-            {singularize("Resources", resources.length, true)}
+            {resources.length === 0
+              ? "No Resources"
+              : singularize("Resources", resources.length, true)}
           </div>
         </div>
         {/* The frame's routing count lives in the floating button group. */}
@@ -206,17 +210,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         )}
       </div>
 
-      {/* Body: the frame's resources render as child NODES inside it (hint
-          when empty); the card previews its resources as a grid. */}
-      {isFrame && resources.length === 0 && (
-        <div
-          className={
-            "absolute inset-x-0 top-[72px] bottom-4 flex items-center justify-center text-sm text-nb-gray-500 font-light pointer-events-none"
-          }
-        >
-          No resources yet
-        </div>
-      )}
+      {/* Body: the frame's resources (and the always-present "Add Resource"
+          row) render as child NODES inside it; the card previews its
+          resources as a grid. */}
       {!isFrame && resources.length > 0 && (
         <div className={"px-2 flex flex-col gap-4 relative"}>
           <div className={"grid grid-cols-2 relative z-0"}>
@@ -224,12 +220,6 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
               <DeviceCard resource={r} key={r.id} />
             ))}
           </div>
-          <div
-            className={cn(
-              "absolute w-full h-full bg-gradient-to-b from-transparent via-nb-gray-940/20 to-nb-gray-940 z-10 left-0 top-0 pointer-events-none",
-              resources.length > 6 ? "opacity-100" : "opacity-0",
-            )}
-          ></div>
         </div>
       )}
 
