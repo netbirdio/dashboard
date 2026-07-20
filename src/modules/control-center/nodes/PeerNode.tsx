@@ -30,6 +30,7 @@ import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { usePlaceholderUpgrade } from "@/modules/control-center/hooks/useDraftPeerUpgrade";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
+import Button from "@components/Button";
 
 // A not-yet-installed peer dropped from the components sidebar. Server/Agent
 // carry no setup key until the user installs: the Install button opens the
@@ -108,7 +109,9 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
         {/* Floating Install — top-left above the node, zooms with the
             canvas (positioned inside the node, not a NodeToolbar portal). */}
         <div className={"absolute bottom-full left-0 mb-3"}>
-          <button
+          <Button
+            variant={"secondary"}
+            size={"xs"}
             onClick={() =>
               setInstallModal({
                 isUserDevice: false,
@@ -117,15 +120,11 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
                 nodeId: id,
               })
             }
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs shrink-0",
-              "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
-              "hover:text-white hover:bg-nb-gray-910 transition-colors",
-            )}
+            className={"!px-3"}
           >
-            <DownloadIcon size={13} />
+            <DownloadIcon size={12} />
             Install
-          </button>
+          </Button>
         </div>
         <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
           <div
@@ -265,7 +264,9 @@ const UserDeviceSelectNode = ({
           exists). */}
       {!peer && (
         <div className={"absolute bottom-full left-0 mb-3"}>
-          <button
+          <Button
+            variant={"secondary"}
+            size={"xs"}
             onClick={() =>
               setInstallModal({
                 isUserDevice: true,
@@ -274,15 +275,11 @@ const UserDeviceSelectNode = ({
                 nodeId: id,
               })
             }
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs shrink-0",
-              "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
-              "hover:text-white hover:bg-nb-gray-910 transition-colors",
-            )}
+            className={"!px-3"}
           >
-            <DownloadIcon size={13} />
+            <DownloadIcon size={12} />
             Install
-          </button>
+          </Button>
         </div>
       )}
 

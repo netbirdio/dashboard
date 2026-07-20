@@ -12,6 +12,7 @@ import {
   NETWORK_FRAME_PADDING_Y,
   NETWORK_FRAME_MAX_VISIBLE,
   NETWORK_FRAME_OVERFLOW_ROW,
+  NETWORK_FRAME_ADD_ROW,
   NETWORK_FRAME_ROW_GAP,
   getFrameGridColumns,
   getNetworkFrameHeight,
@@ -77,10 +78,19 @@ export function useNetworkFrameLayout() {
         : visibleResources.length > 1
         ? 2
         : 1;
-      // Multi-column rows hug their content; single-column rows span the
-      // frame's card width.
+      // Empty / single-resource parent frames mirror the two-resource size so
+      // the frame doesn't jump as the first resources land: a lone resource
+      // spans both columns' worth of width (→ same frame width as two
+      // resources), and the height already matches (both are one row).
+      const sparse = !drilled && resources.length <= 1;
+      // Multi-column rows hug their content; a single row spans the frame's
+      // card width — the two-column width when sparse.
       const childWidth =
-        cols > 1 ? NETWORK_FRAME_CHILD_WIDTH_MULTI : NETWORK_FRAME_CHILD_WIDTH;
+        cols > 1
+          ? NETWORK_FRAME_CHILD_WIDTH_MULTI
+          : sparse
+          ? 2 * NETWORK_FRAME_CHILD_WIDTH_MULTI + NETWORK_FRAME_GAP
+          : NETWORK_FRAME_CHILD_WIDTH;
       const width = getNetworkFrameWidth(cols, childWidth);
 
       resources.slice(visibleResources.length).forEach((child) => {
@@ -127,12 +137,16 @@ export function useNetworkFrameLayout() {
         );
       });
 
-      // Reserve a band at the bottom for the "+N More" footer NetworkNode
-      // renders when resources overflow the visible cap.
+      // Reserve a band at the bottom: the "+N More" footer when resources
+      // overflow the visible cap, otherwise the "Add Resource" button
+      // (NetworkNode renders one or the other, never both).
       const overflowBand = overflow > 0 ? NETWORK_FRAME_OVERFLOW_ROW : 0;
+      const addBand = overflow > 0 ? 0 : NETWORK_FRAME_ADD_ROW;
+      // Empty frames reserve one row (getNetworkFrameHeight) so they're the
+      // same height as one/two resources.
       const height =
         visibleResources.length > 0
-          ? y + rowMaxHeight + NETWORK_FRAME_PADDING_Y + overflowBand
+          ? y + rowMaxHeight + NETWORK_FRAME_PADDING_Y + overflowBand + addBand
           : getNetworkFrameHeight(0);
       if (frame.style?.height !== height || frame.style?.width !== width) {
         updates.set(frame.id, {

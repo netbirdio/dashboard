@@ -22,6 +22,9 @@ type Props = {
   // Horizontal shift in px (positive → right). Moves the hit area and the
   // visible bubble together, on top of ReactFlow's own handle placement.
   offsetX?: number;
+  // Force the bubble hidden even while the node is hovered (e.g. the pointer
+  // is over a floating control that shouldn't reveal the handle).
+  hidden?: boolean;
 };
 
 const generateHandleId = (type: "source" | "target", position: Position) => {
@@ -49,6 +52,7 @@ export const ConnectHandle = ({
   type = "source",
   style,
   offsetX,
+  hidden = false,
 }: Props) => {
   const nodeId = useNodeId();
 
@@ -108,6 +112,7 @@ export const ConnectHandle = ({
             "group-hover/handle:w-7 group-hover/handle:h-7 group-hover/handle:bg-white group-hover/handle:border-2 text-nb-gray",
             isConnecting && "opacity-0",
             isDragging && "!opacity-0",
+            hidden && "!opacity-0",
           )}
         >
           <div className="absolute inset-0 flex items-center justify-center group-hover/handle:opacity-0">

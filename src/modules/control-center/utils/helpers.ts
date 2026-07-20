@@ -414,6 +414,14 @@ export const NETWORK_FRAME_MAX_VISIBLE = 6;
 // Height of the "+N More" footer band the frame reserves at its bottom edge
 // (kept in sync with NetworkNode's footer height).
 export const NETWORK_FRAME_OVERFLOW_ROW = 44;
+// Height of the bottom "Add Resource" band the frame reserves (draft) whenever
+// it isn't showing the "+N More" overflow footer — kept in sync with
+// NetworkNode's bottom add-resource button.
+export const NETWORK_FRAME_ADD_ROW = 54;
+// Empty frames get a little extra height so the centered "Add Resource"
+// button has breathing room (only the empty state — 1+ resources keep the
+// one-row height).
+export const NETWORK_FRAME_EMPTY_EXTRA_H = 28;
 
 // Drill-down grid math: the column count targets a square-ish frame
 // (width ≈ height in pixels) — cols = sqrt(N * cellH / cellW).
@@ -433,13 +441,21 @@ export const getNetworkFrameWidth = (
   cols * childWidth +
   (cols - 1) * NETWORK_FRAME_GAP;
 
+// Frame body = header + resource rows + the bottom "Add Resource" band. An
+// empty frame still reserves ONE row (Math.max(count, 1)) so it's about the
+// single/two-resource height, plus a little extra so its centered button
+// breathes. Seed height; useNetworkFrameLayout reconciles it from measured
+// rows (and swaps the add band for the "+N More" footer once resources
+// overflow the visible cap).
 export const getNetworkFrameHeight = (resourceCount: number) =>
   NETWORK_FRAME_HEADER +
   NETWORK_FRAME_PADDING_Y +
   Math.max(resourceCount, 1) *
     (NETWORK_FRAME_FALLBACK_ROW + NETWORK_FRAME_ROW_GAP) -
   NETWORK_FRAME_ROW_GAP +
-  NETWORK_FRAME_PADDING_Y;
+  NETWORK_FRAME_PADDING_Y +
+  NETWORK_FRAME_ADD_ROW +
+  (resourceCount === 0 ? NETWORK_FRAME_EMPTY_EXTRA_H : 0);
 
 // Initial child position of the i-th resource inside its network frame
 // (relative coordinates — the resource node carries parentId); corrected by

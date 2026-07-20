@@ -1,21 +1,9 @@
 import useFetchApi from "@utils/api";
 import { cn, singularize } from "@utils/helpers";
 import { Handle, type Node, Position, useConnection } from "@xyflow/react";
-import {
-  ChevronDown,
-  HelpCircle,
-  NetworkIcon,
-  PlusCircleIcon,
-  ServerIcon,
-  WorkflowIcon,
-} from "lucide-react";
+import { HelpCircle, NetworkIcon, PlusIcon } from "lucide-react";
 import FullTooltip from "@components/FullTooltip";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@components/DropdownMenu";
+import Button from "@components/Button";
 import * as React from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { SmallBadge } from "@components/ui/SmallBadge";
@@ -29,6 +17,7 @@ import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaT
 import {
   DraftNetworkRef,
   getDraftResource,
+  NETWORK_FRAME_HEADER,
   NETWORK_FRAME_MAX_VISIBLE,
   NETWORK_FRAME_OVERFLOW_ROW,
 } from "@/modules/control-center/utils/helpers";
@@ -75,31 +64,6 @@ const RoutingPeersIndicator = ({
   );
 };
 
-// Floating "Add Routing Peer" above the node — the install path for the
-// network's first router (drops a connected Server placeholder + opens the
-// setup-key flow).
-const AddRoutingPeerButton = ({ networkNodeId }: { networkNodeId: string }) => {
-  const { setRoutingPeerModal } = useDraftMode();
-  return (
-    <div className={"absolute bottom-full left-0 mb-3"}>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setRoutingPeerModal({ networkNodeId });
-        }}
-        className={cn(
-          "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs shrink-0 whitespace-nowrap",
-          "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
-          "hover:text-white hover:bg-nb-gray-910 transition-colors",
-        )}
-      >
-        <PlusCircleIcon size={12} />
-        Add Routing Peer
-      </button>
-    </div>
-  );
-};
-
 // One component, two variants: draft networks (no API id) render as a FRAME
 // — dashed border, solid bg, resources living inside as ReactFlow children,
 // sized via the node style. Existing networks (live network view) keep the
@@ -115,6 +79,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
     drillDownNetworkNodeId,
     setDrillDownNetworkNodeId,
     hoveredNetworkNodeId,
+    setHoveredNetworkNodeId,
   } = useDraftMode();
   const isFrameHovered = hoveredNetworkNodeId === id;
   const isDrilled = drillDownNetworkNodeId === id;
@@ -122,6 +87,11 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   const connection = useConnection();
   const isTarget = connection.inProgress && connection.fromNode?.id !== id;
   const showHalo = contextMenuNodeId === id;
+
+  // Hovering the floating controls must neither highlight the frame nor
+  // reveal its ConnectHandle — both key off the node's `group/node` hover,
+  // which fires for any descendant.
+  const [controlsHovered, setControlsHovered] = React.useState(false);
 
   const n = data.network as Network;
   const isFrame = !n?.id;
@@ -227,54 +197,19 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
               : singularize("Resources", resources.length, true)}
           </div>
         </div>
-        {/* The frame's routing count lives in the floating button group. */}
+        {/* The frame's routing status + "Add" live in the floating button
+            group above the frame; the card keeps its inline routing count. */}
         {!isFrame && (
           <RoutingPeersIndicator
             count={routingPeersCount}
             className={"gap-2 text-xs shrink-0"}
           />
         )}
-        {/* Frame: "Add" dropdown → routing peer or resource. */}
-        {isDraft && isFrame && (
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className={cn(
-                  "flex items-center gap-1 rounded-md pl-2 pr-1.5 py-1 text-xs shrink-0 whitespace-nowrap",
-                  "border border-nb-gray-700 text-nb-gray-300",
-                  "hover:text-white hover:bg-nb-gray-800 transition-colors",
-                )}
-              >
-                Add
-                <ChevronDown size={13} className={"shrink-0"} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align={"end"} className={"w-[180px]"}>
-              <DropdownMenuItem
-                onClick={() => setRoutingPeerModal({ networkNodeId: id })}
-              >
-                <div className={"flex gap-3 items-center"}>
-                  <ServerIcon size={14} className={"shrink-0"} />
-                  Routing Peer
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => setResourceEditor({ createInNetworkNodeId: id })}
-              >
-                <div className={"flex gap-3 items-center"}>
-                  <WorkflowIcon size={14} className={"shrink-0"} />
-                  Resource
-                </div>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
       </div>
 
-      {/* Body: the frame's resources (plus the always-present "Add Resource"
-          row and, past the visible cap, a "+N more" row) render as child
-          NODES inside it; the card previews its resources as a grid. */}
+      {/* Body: the frame's resources (and, past the visible cap, a "+N more"
+          row) render as child NODES inside it; the card previews its
+          resources as a grid. */}
       {!isFrame && resources.length > 0 && (
         <div className={"px-2 flex flex-col gap-4 relative"}>
           <div className={"grid grid-cols-2 relative z-0"}>
@@ -285,69 +220,147 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         </div>
       )}
 
-      {/* Frame: routing status pill above it (adding a routing peer now
-          lives in the header "Add" dropdown). */}
-      {isDraft && isFrame && (
+      {/* "Add Resource" button, shown whenever the "+N More" overflow footer
+          isn't (up to the visible cap and in the drill-down). Empty frames
+          center it in the body (auto width); once there are resources it's a
+          full-width row pinned to the bottom band the layout reserves.
+          Hovering it must not highlight the frame / reveal the ConnectHandle,
+          same as the floating controls. */}
+      {isDraft && isFrame && overflowCount === 0 && (
         <div
-          // The status pill must not drill into the frame.
-          onClick={(e) => e.stopPropagation()}
-          className={
-            "absolute bottom-full left-0 mb-3 flex items-stretch rounded-md bg-nb-gray-920 border border-gray-700/40 overflow-hidden"
+          className={cn(
+            "absolute inset-x-0 bottom-0 nodrag",
+            resources.length === 0
+              ? "flex items-center justify-center"
+              : "px-5 pb-3.5",
+          )}
+          style={
+            resources.length === 0 ? { top: NETWORK_FRAME_HEADER } : undefined
           }
         >
-          <FullTooltip
-            interactive={false}
-            disabled={routingPeersCount === 0}
-            content={
-              <div className={"max-w-xs text-xs"}>
-                {routingPeersCount >= 2 ? (
-                  <>
-                    High availability is{" "}
-                    <span className={"text-green-500 font-medium"}>active</span>{" "}
-                    for this network.
-                    <div className={"inline-flex mt-2"}>
-                      You can add more routing peers to increase the
-                      availability of this network.
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    High availability is currently{" "}
-                    <span className={"text-yellow-400 font-medium"}>
-                      inactive
-                    </span>{" "}
-                    for this network.
-                    <div className={"inline-flex mt-2"}>
-                      Go ahead and add more routing peers or groups with routing
-                      peers to enable high availability for this network.
-                    </div>
-                  </>
-                )}
-              </div>
-            }
+          <Button
+            variant={"secondary"}
+            size={"xs"}
+            className={cn("!px-3", resources.length > 0 && "w-full")}
+            onClick={() => setResourceEditor({ createInNetworkNodeId: id })}
+            onMouseEnter={() => {
+              setHoveredNetworkNodeId(null);
+              setControlsHovered(true);
+            }}
+            onMouseLeave={() => {
+              setHoveredNetworkNodeId(id);
+              setControlsHovered(false);
+            }}
           >
+            <PlusIcon size={12} />
+            Add Resource
+          </Button>
+        </div>
+      )}
+
+      {/* Frame: routing-peers button group floating above the frame (left) —
+          status pill + "Add" routing peer. */}
+      {isDraft && isFrame && (
+        <div
+          // The floating controls must not drill into the frame, and hovering
+          // them (they're DOM children of the node, so ReactFlow's
+          // onNodeMouseEnter fires) must not highlight the frame — suppress it
+          // here and restore it when the pointer moves back onto the frame.
+          // ReactFlow fires enter outer→inner and leave inner→outer, so these
+          // run after (enter) / before (leave) its handler and win.
+          onClick={(e) => e.stopPropagation()}
+          onMouseEnter={() => {
+            setHoveredNetworkNodeId(null);
+            setControlsHovered(true);
+          }}
+          onMouseLeave={() => {
+            setHoveredNetworkNodeId(id);
+            setControlsHovered(false);
+          }}
+          className={
+            "absolute bottom-full left-0 mb-3 flex items-stretch gap-2 nodrag"
+          }
+        >
+          {/* Routing-peers button group: [● status | ⊕ Add]. The status opens
+              the routing-peer modal (HA tooltip on hover); the trailing "Add"
+              (split off by a left border) adds a routing peer. */}
+          <div
+            className={cn(
+              "flex items-stretch rounded-md overflow-hidden shrink-0",
+              "bg-nb-gray-920 border border-gray-700/40",
+            )}
+          >
+            <FullTooltip
+              interactive={false}
+              disabled={routingPeersCount === 0}
+              content={
+                <div className={"max-w-xs text-xs"}>
+                  {routingPeersCount >= 2 ? (
+                    <>
+                      High availability is{" "}
+                      <span className={"text-green-500 font-medium"}>
+                        active
+                      </span>{" "}
+                      for this network.
+                      <div className={"inline-flex mt-2"}>
+                        You can add more routing peers to increase the
+                        availability of this network.
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      High availability is currently{" "}
+                      <span className={"text-yellow-400 font-medium"}>
+                        inactive
+                      </span>{" "}
+                      for this network.
+                      <div className={"inline-flex mt-2"}>
+                        Go ahead and add more routing peers or groups with
+                        routing peers to enable high availability for this
+                        network.
+                      </div>
+                    </>
+                  )}
+                </div>
+              }
+            >
+              <button
+                type={"button"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRoutingPeerModal({ networkNodeId: id });
+                }}
+                className={cn(
+                  "flex items-center px-3 py-2 text-xs text-gray-400 whitespace-nowrap outline-none",
+                  "hover:text-white hover:bg-nb-gray-910 transition-colors",
+                )}
+              >
+                <RoutingPeersIndicator
+                  count={routingPeersCount}
+                  dotSize={7}
+                  className={"gap-1.5"}
+                  zeroLabel={"No Routing Peers"}
+                  helpIcon={routingPeersCount > 0}
+                />
+              </button>
+            </FullTooltip>
             <button
+              type={"button"}
               onClick={(e) => {
                 e.stopPropagation();
                 setRoutingPeerModal({ networkNodeId: id });
               }}
-              className={
-                "px-2.5 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-nb-gray-910 transition-colors"
-              }
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap outline-none",
+                "border-l border-gray-700/40 text-gray-400",
+                "hover:text-white hover:bg-nb-gray-910 transition-colors",
+              )}
             >
-              <RoutingPeersIndicator
-                count={routingPeersCount}
-                dotSize={7}
-                className={"gap-1.5"}
-                zeroLabel={"No Routing Peers"}
-                helpIcon={routingPeersCount > 0}
-              />
+              <PlusIcon size={12} className={"shrink-0"} />
+              Add
             </button>
-          </FullTooltip>
+          </div>
         </div>
-      )}
-      {isDraft && !isFrame && routingPeersCount === 0 && (
-        <AddRoutingPeerButton networkNodeId={id} />
       )}
 
       {/* Anchors for the live network view's edges (card only). */}
@@ -370,7 +383,11 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         </>
       )}
       {isDraft && isFrame && (
-        <ConnectHandle type={"source"} position={Position.Left} />
+        <ConnectHandle
+          type={"source"}
+          position={Position.Left}
+          hidden={controlsHovered}
+        />
       )}
       {isDraft && <FullAreaTargetHandle isConnectable={isTarget} />}
 
