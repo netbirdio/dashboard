@@ -21,7 +21,7 @@ const ENDPOINT_EXISTS_ERROR_CODES = [401, 403, 405];
  * activation be picked up without forcing the user to clear storage.
  */
 const LICENSE_CACHE_PREFIX = "netbird-licensed:";
-const LICENSE_CACHE_TTL_MS = 60 * 60 * 1000;
+const LICENSE_CACHE_TTL_MS = 60 * 10 * 1000;
 
 const licenseCacheKey = () => `${LICENSE_CACHE_PREFIX}${loadConfig().apiOrigin}`;
 
