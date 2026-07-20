@@ -169,8 +169,11 @@ export default function AgentProvidersTable({
           learnMore={
             <>
               Learn more about
-              <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
-                Agent Network
+              <InlineLink
+                href={"https://docs.netbird.io/agent-network/providers"}
+                target={"_blank"}
+              >
+                Agent Network Providers
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>

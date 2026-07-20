@@ -217,6 +217,9 @@ export default function AIProviderModal({
   const [skipTlsVerification, setSkipTlsVerification] = useState<boolean>(
     provider?.skipTlsVerification ?? false,
   );
+  const [metadataDisabled, setMetadataDisabled] = useState<boolean>(
+    provider?.metadataDisabled ?? false,
+  );
 
   const catalog = getById(providerId);
   // Custom-kind providers (the generic "Custom" entry and named self-hosted
@@ -262,7 +265,8 @@ export default function AIProviderModal({
     providerId === "bifrost" ||
     providerId === "cloudflare_ai_gateway" ||
     providerId === "vercel_ai_gateway" ||
-    providerId === "openrouter";
+    providerId === "openrouter" ||
+    providerId === "bedrock_api";
 
   // If the user flips provider type while viewing the Mappings tab and
   // the new type doesn't show mappings, snap back to the Provider tab
@@ -340,6 +344,7 @@ export default function AIProviderModal({
       setIdentityHeaderUserId(provider.identityHeaderUserId ?? "");
       setIdentityHeaderGroups(provider.identityHeaderGroups ?? "");
       setSkipTlsVerification(provider.skipTlsVerification ?? false);
+      setMetadataDisabled(provider.metadataDisabled ?? false);
     } else {
       const fallback = getById("openai_api");
       setProviderId("openai_api");
@@ -354,6 +359,7 @@ export default function AIProviderModal({
       setIdentityHeaderUserId("");
       setIdentityHeaderGroups("");
       setSkipTlsVerification(false);
+      setMetadataDisabled(false);
     }
   };
 
@@ -405,6 +411,7 @@ export default function AIProviderModal({
         extraValues: sanitizedExtraValues,
         ...identityOverrides,
         skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+        metadataDisabled,
         // Only forward the API key when the user actually rotated it
         ...(apiKey && apiKey !== "••••••••" ? { apiKey } : {}),
       });
@@ -420,6 +427,7 @@ export default function AIProviderModal({
       extraValues: sanitizedExtraValues,
       ...identityOverrides,
       skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+      metadataDisabled,
       models,
       enabled: true,
     });
@@ -785,6 +793,23 @@ export default function AIProviderModal({
           {showMappings && providerId === "litellm_proxy" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
               <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                {/* The forwarding toggle sits first: it gates the identity
+                    mappings described below, so turning it off makes the fixed
+                    mapping that follows moot. */}
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the identity mappings below onto LiteLLM requests."
+                  }
+                />
+
                 <div>
                   <Label>Identity Mappings</Label>
                   <HelpText className={"mb-0"}>
@@ -987,6 +1012,61 @@ export default function AIProviderModal({
             </TabsContent>
           )}
 
+          {showMappings && providerId === "bedrock_api" && (
+            <TabsContent value={"mappings"} className={"pb-8"}>
+              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                {/* The forwarding toggle sits first: it gates the identity
+                    metadata described below, so turning it off makes the fixed
+                    mapping that follows moot. */}
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the identity metadata below onto Bedrock requests."
+                  }
+                />
+
+                <div>
+                  <Label>Identity Metadata</Label>
+                  <HelpText className={"mb-0"}>
+                    NetBird stamps the caller&apos;s identity into the{" "}
+                    <InlineLink
+                      href={
+                        "https://docs.aws.amazon.com/bedrock/latest/userguide/cost-mgmt-request-metadata.html"
+                      }
+                      target={"_blank"}
+                    >
+                      <code
+                        className={
+                          "text-xs font-mono bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        }
+                      >
+                        X-Amzn-Bedrock-Request-Metadata
+                      </code>
+                    </InlineLink>{" "}
+                    header, so you can break Bedrock spend down by user and
+                    group. Client-supplied values are stripped and sanitized.
+                  </HelpText>
+                </div>
+
+                <div
+                  className={
+                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
+                  }
+                >
+                  <MappingRow header={"user"} sourceLabel={"User Email"} />
+                  <MappingRow header={"group"} sourceLabel={"Groups"} />
+                </div>
+              </div>
+            </TabsContent>
+          )}
+
           {showMappings && providerId === "vercel_ai_gateway" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
               <div className={"px-8 pt-3 flex-col flex gap-4"}>
@@ -1164,8 +1244,11 @@ export default function AIProviderModal({
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
               Learn more about
-              <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
-                Agent Network
+              <InlineLink
+                href={"https://docs.netbird.io/agent-network/providers"}
+                target={"_blank"}
+              >
+                Agent Network Providers
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
