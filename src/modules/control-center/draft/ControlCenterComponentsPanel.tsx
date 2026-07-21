@@ -204,8 +204,12 @@ const PanelContent = React.memo(
       placeNode: placeDroppedNode,
       addPeerPlaceholder,
       addBlankNode: addBlankPlaceholderNode,
+      addResourceToFrame,
       addBlankPolicy,
+      dropExistingNetworkFrame,
     } = useDraftNodeCreation();
+    // Declared before addNode (which references it) to avoid a TDZ in its deps.
+    const { data: networks } = useFetchApi<Network[]>("/networks");
 
     const handlePeerTemplateDragStart = useCallback(
       (event: React.PointerEvent<HTMLDivElement>, tpl: PeerTemplate) => {
@@ -269,7 +273,7 @@ const PanelContent = React.memo(
     // Groups go through addNewGroup: unique "New Group (n)" name, tracked in
     // the draft changeset, group panel opened for immediate renaming.
     const addBlankNode = useCallback(
-      (kind: BlankKind, position?: XYPosition) => {
+      (kind: BlankKind, position?: XYPosition, targetNodeId?: string) => {
         if (kind === "group") {
           const pos = position
             ? { x: position.x - 100, y: position.y - 30 }
@@ -277,9 +281,17 @@ const PanelContent = React.memo(
           addNewGroup(pos);
           return;
         }
+        // A resource dropped onto a network frame is added INTO it; otherwise
+        // it lands as a standalone "No Network" card. (targetNodeId is already
+        // resolved to the frame id by the drop provider; every network- node on
+        // the draft canvas is a frame.)
+        if (kind === "resource" && targetNodeId?.startsWith("network-")) {
+          addResourceToFrame(targetNodeId);
+          return;
+        }
         addBlankPlaceholderNode(kind, position);
       },
-      [addBlankPlaceholderNode, addNewGroup],
+      [addBlankPlaceholderNode, addResourceToFrame, addNewGroup],
     );
 
     const handleBlankDragStart = useCallback(
@@ -294,11 +306,15 @@ const PanelContent = React.memo(
           initialX: event.clientX,
           initialY: event.clientY,
         });
-        onDragStart(event, ({ position }) => {
-          addBlankNode(kind, position);
-          setGhostData(undefined);
-          onClose();
-        });
+        onDragStart(
+          event,
+          ({ position, targetNodeId }) => {
+            addBlankNode(kind, position, targetNodeId);
+            setGhostData(undefined);
+            onClose();
+          },
+          { canDropIntoFrame: kind === "resource" },
+        );
       },
       [onDragStart, addBlankNode, onClose],
     );
@@ -309,6 +325,13 @@ const PanelContent = React.memo(
         data: Peer | Group | NetworkResource | Network,
         position?: XYPosition,
       ) => {
+        // Existing networks drop as a full frame (chrome + existing resources
+        // as children), reusing the draft-frame machinery.
+        if (type === NodeType.NetworkNode) {
+          dropExistingNetworkFrame(data as Network, position);
+          return;
+        }
+
         let nodeData: any;
         let nodeId: string;
 
@@ -324,15 +347,21 @@ const PanelContent = React.memo(
           nodeData = { group: data as Group, enabled: true, showHandles: true };
           nodeId = `group-${data.id}`;
         } else if (type === NodeType.ResourceNode) {
+          // Existing resources already live in a network — stamp its ref so
+          // the standalone card shows the network name (read-only in v1).
+          const resourceData = data as NetworkResource;
+          const network = networks?.find((n) =>
+            n.resources?.some((r) => r === resourceData.id),
+          );
           nodeData = {
-            resource: data as NetworkResource,
+            resource: resourceData,
             enabled: true,
             showHandles: true,
+            draftNetwork: network
+              ? { networkId: network.id, name: network.name }
+              : undefined,
           };
           nodeId = `resource-${data.id}`;
-        } else if (type === NodeType.NetworkNode) {
-          nodeData = { network: data as Network };
-          nodeId = `network-${data.id}`;
         }
 
         placeDroppedNode(
@@ -345,7 +374,7 @@ const PanelContent = React.memo(
           position,
         );
       },
-      [placeDroppedNode],
+      [placeDroppedNode, networks, dropExistingNetworkFrame],
     );
 
     const createDropHandler = useCallback(
@@ -389,7 +418,6 @@ const PanelContent = React.memo(
     );
     const { data: groups } = useFetchApi<Group[]>("/groups");
     const { data: policies } = useFetchApi<Policy[]>("/policies");
-    const { data: networks } = useFetchApi<Network[]>("/networks");
 
     const { nodes: canvasNodes } = useCanvasState();
     const account = useAccount();
@@ -791,6 +819,15 @@ const PanelContent = React.memo(
     const buildResourceRows = () =>
       filteredResources.map((resource) => {
         const onCanvas = canvasNodeIds.has(`resource-${resource.id}`);
+        // Existing resources already live in a network — show "name - network"
+        // (like the global search) and, since v1 doesn't reassign existing
+        // resources, they must NOT drop into another network frame.
+        const network = networks?.find((n) =>
+          n.resources?.some((r) => r === resource.id),
+        );
+        const displayResource = network
+          ? { ...resource, name: `${resource.name} - ${network.name}` }
+          : resource;
         return (
           <PanelListItem
             key={resource.id}
@@ -800,7 +837,11 @@ const PanelContent = React.memo(
               handleDragStart(e, NodeType.ResourceNode, resource)
             }
           >
-            <DeviceCard resource={resource} size="small" className="flex-1" />
+            <DeviceCard
+              resource={displayResource}
+              size="small"
+              className="flex-1"
+            />
           </PanelListItem>
         );
       });

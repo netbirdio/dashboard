@@ -327,6 +327,25 @@ export const deriveResourceType = (
   return "host";
 };
 
+// A network node that renders/behaves as a draft-canvas FRAME. Frame-ness is
+// an explicit `data.frame` flag (set on existing networks dropped as frames),
+// with the `network-new-` id kept as a built-in fallback for draft networks
+// (always frames) — so it is NOT tied to the id prefix. Distinct from
+// `isDraftNetworkNode` (a not-yet-created network: `network-new-`).
+export const isFrameNode = (node?: {
+  id: string;
+  data?: unknown;
+}): boolean =>
+  !!node &&
+  (node.id.startsWith("network-new-") ||
+    !!(node.data as { frame?: boolean } | undefined)?.frame);
+
+// A frame for a network that does NOT exist yet — it's tracked as a
+// create-network change and is editable/removable as a draft. Existing
+// networks dropped as frames are not draft networks.
+export const isDraftNetworkNode = (node?: { id: string }): boolean =>
+  !!node && node.id.startsWith("network-new-");
+
 // The parent-network reference a draft resource node carries (set by the
 // draft resource editor / drag-onto-network).
 export type DraftNetworkRef = {

@@ -360,7 +360,7 @@ export function handleDraftConnect(
   // destination side to that network's contents; anything else clears it.
   const targetFrameId = currentNodes.find((n) => n.id === target)?.parentId;
   deps.setPolicyDestinationScope?.(
-    targetFrameId?.startsWith("network-new-")
+    targetFrameId?.startsWith("network-")
       ? scopeForFrame(targetFrameId)
       : undefined,
   );

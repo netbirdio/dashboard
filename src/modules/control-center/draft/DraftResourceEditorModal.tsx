@@ -70,7 +70,11 @@ const EditorContent = ({
   const frame = editor.createInNetworkNodeId
     ? reactFlow.getNodes().find((n) => n.id === editor.createInNetworkNodeId)
     : undefined;
-  const draftResource = getDraftResource(node);
+  // Draft resources carry their data via getDraftResource; existing ones
+  // (edited in place) prefill from their real resource on the node.
+  const draftResource =
+    getDraftResource(node) ??
+    (node?.data as { resource?: NetworkResource })?.resource;
   const network: DraftNetworkRef | undefined = isCreate
     ? {
         networkClientId: editor.createInNetworkNodeId!.replace("network-", ""),

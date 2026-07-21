@@ -16,7 +16,7 @@ export function computeFrameEdgeTargets(
 ): Edge[] | null {
   const frameOf = new Map<string, string>();
   nodes.forEach((n) => {
-    if (n.parentId?.startsWith("network-new-")) {
+    if (n.parentId?.startsWith("network-")) {
       frameOf.set(n.id, n.parentId);
     }
   });

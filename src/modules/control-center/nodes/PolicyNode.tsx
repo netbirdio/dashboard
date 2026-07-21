@@ -9,7 +9,6 @@ import {
 } from "@xyflow/react";
 import * as React from "react";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
@@ -28,16 +27,15 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
   const label = getPolicyProtocolAndPortText(data.policy);
   const isActive = rule?.enabled;
   const { contextMenuNodeId } = useCanvasState();
-  const { selectedPolicy, policyModalOpen } = useControlCenterPolicy();
   const { isDraft } = useDraftMode();
   const connection = useConnection();
   const nodeId = useNodeId();
   // A drag from another node may be dropped here (add group to this policy).
   const isDropTarget =
     connection.inProgress && connection.fromNode?.id !== nodeId;
-  // Halo while the context menu targets this policy or its modal is open.
-  const isEditing = policyModalOpen && `policy-${selectedPolicy}` === id;
-  const showHalo = contextMenuNodeId === id || isEditing;
+  // Halo only while the context menu targets this policy — NOT while its modal
+  // is open (left-click opens the modal and shouldn't leave a lingering ring).
+  const showHalo = contextMenuNodeId === id;
 
   return (
     <div

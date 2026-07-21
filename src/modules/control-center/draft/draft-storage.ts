@@ -19,6 +19,8 @@ const KNOWN_CHANGE_TYPES = new Set([
   "create-network",
   "create-resource",
   "create-router",
+  "update-resource",
+  "delete-resource",
 ]);
 
 export function loadDraftChanges(): DraftChange[] {

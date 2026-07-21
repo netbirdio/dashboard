@@ -205,7 +205,7 @@ export function useDeployChangeset() {
               name: change.name,
               description: change.description ?? "",
               address: normalizeHostCIDR(change.address),
-              enabled: true,
+              enabled: change.enabled ?? true,
               // API ids pass through; draft-group names resolve via the
               // groups created earlier in this run.
               groups: change.groupIds.map((ref) => nameToId.get(ref) ?? ref),
@@ -259,6 +259,26 @@ export function useDeployChangeset() {
           await groupRequest.del("", `/${change.groupId}`);
           return;
         }
+        case "update-resource": {
+          await resourceRequest.put(
+            {
+              name: change.name,
+              description: change.description ?? "",
+              address: normalizeHostCIDR(change.address),
+              enabled: change.enabled,
+              groups: change.groupIds.map((ref) => nameToId.get(ref) ?? ref),
+            },
+            `/${change.networkId}/resources/${change.resourceId}`,
+          );
+          return;
+        }
+        case "delete-resource": {
+          await resourceRequest.del(
+            "",
+            `/${change.networkId}/resources/${change.resourceId}`,
+          );
+          return;
+        }
       }
     };
 
@@ -267,10 +287,12 @@ export function useDeployChangeset() {
       "update-group",
       "create-network",
       "create-resource",
+      "update-resource",
       "create-router",
       "create-policy",
       "update-policy",
       "delete-policy",
+      "delete-resource",
       "delete-group",
     ];
     const ordered = [...changes].sort(

@@ -8,6 +8,10 @@ import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPo
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkActions";
+import {
+  isDraftNetworkNode,
+  isFrameNode,
+} from "@/modules/control-center/utils/helpers";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 
 export const GROUP_NODE_TYPES = new Set([
@@ -192,14 +196,19 @@ export function useDraftGroupActions() {
           });
         });
 
-      // Draft networks cascade: create-network + dependent resource/router
-      // changes dropped, the network's resources are removed with it, and so
-      // are routing peers whose ONLY connection was routing this network
-      // (the Add Routing Peer placeholders — peers/groups with other
-      // relationships stay).
-      if (nodeId.startsWith("network-new-")) {
+      // Removing a network frame (draft or existing) cascades: its contained
+      // resources are removed with it, and so are routing peers whose ONLY
+      // connection was routing this network (the Add Routing Peer placeholders
+      // — peers/groups with other relationships stay). Draft networks also
+      // drop their create-network + dependent changes (untrackNetwork).
+      const removedNode = reactFlow.getNodes().find((n) => n.id === nodeId);
+      if (isFrameNode(removedNode)) {
+        const isDraftNetwork = isDraftNetworkNode(removedNode);
         const clientId = nodeId.replace("network-", "");
-        untrackNetwork(clientId);
+        const realNetworkId = (
+          removedNode?.data as { network?: { id?: string } }
+        )?.network?.id;
+        if (isDraftNetwork) untrackNetwork(clientId);
 
         const allNodes = reactFlow.getNodes();
         const allEdges = reactFlow.getEdges();
@@ -223,12 +232,22 @@ export function useDraftGroupActions() {
           removeNodeWithEdges(cascadeId),
         );
 
-        // Any non-contained resource still referencing the network loses it.
+        // Any non-contained resource still referencing the network loses it —
+        // matched by client id (draft) or real id (existing).
         setNodes((prev) =>
           prev.map((n) => {
-            const ref = (n.data as { draftNetwork?: { networkClientId?: string } })
-              ?.draftNetwork;
-            if (ref?.networkClientId !== clientId) return n;
+            const ref = (
+              n.data as {
+                draftNetwork?: {
+                  networkClientId?: string;
+                  networkId?: string;
+                };
+              }
+            )?.draftNetwork;
+            const matches = isDraftNetwork
+              ? ref?.networkClientId === clientId
+              : !!realNetworkId && ref?.networkId === realNetworkId;
+            if (!matches) return n;
             return { ...n, data: { ...n.data, draftNetwork: undefined } };
           }),
         );

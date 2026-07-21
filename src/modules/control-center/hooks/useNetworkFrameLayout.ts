@@ -16,7 +16,13 @@ import {
   getFrameGridColumns,
   getNetworkFrameHeight,
   getNetworkFrameWidth,
+  isFrameNode,
 } from "@/modules/control-center/utils/helpers";
+
+// Base z-index for network frames — their resource children render at
+// FRAME_Z + 1, so both sit above default (0) nodes and no plain node can slip
+// between the frame and its resources.
+const FRAME_Z = 1;
 
 // The "+N more" cell a network frame shows in its last grid slot once its
 // resources overflow the visible cap. Frame-relative rect + the hidden count;
@@ -55,7 +61,7 @@ export function useNetworkFrameLayout() {
   const { drillDownNetworkNodeId } = useDraftMode();
 
   useEffect(() => {
-    const frames = nodes.filter((n) => n.id.startsWith("network-new-"));
+    const frames = nodes.filter(isFrameNode);
     if (frames.length === 0) return;
 
     const updates = new Map<string, Partial<Node>>();
@@ -66,7 +72,7 @@ export function useNetworkFrameLayout() {
     const obsolete = new Set<string>();
     nodes.forEach((n) => {
       if (
-        n.parentId?.startsWith("network-new-") &&
+        n.parentId?.startsWith("network-") &&
         (n.id.startsWith("add-resource-") || n.id.startsWith("overflow-"))
       ) {
         obsolete.add(n.id);
@@ -204,6 +210,19 @@ export function useNetworkFrameLayout() {
       const frameUpdate: Partial<Node> = {};
       if (frame.style?.height !== height || frame.style?.width !== width) {
         frameUpdate.style = { ...frame.style, width, height };
+      }
+      // Keep the frame on its own z-layer so a plain node (peer, user device,
+      // …) can never render BETWEEN the frame box and its resource children
+      // (ReactFlow gives children parentZ + 1). Frames sit at FRAME_Z (≥ 1),
+      // children at FRAME_Z + 1 — both above default (0) nodes, so those stay
+      // fully behind. Drag/drop elevations (≥ FRAME_Z) are left alone.
+      if (
+        frame.zIndex === undefined ||
+        (typeof frame.zIndex === "number" &&
+          frame.zIndex < FRAME_Z &&
+          frame.zIndex !== 1000)
+      ) {
+        frameUpdate.zIndex = FRAME_Z;
       }
       const prevMore = (frame.data as { moreCell?: FrameMoreCell }).moreCell;
       if (!sameMoreCell(prevMore, moreCell)) {

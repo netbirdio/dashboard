@@ -4,9 +4,11 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import {
   getPlaceholderPeer,
   getPolicyRegroupUpdates,
+  isFrameNode,
 } from "@/modules/control-center/utils/helpers";
 import {
   DROPPABLE_INTO_GROUP_NODE_TYPES as DROPPABLE_NODE_TYPES,
@@ -28,6 +30,14 @@ function getIntersectingGroup(
 ): Node | undefined {
   const intersecting = reactFlow.getIntersectingNodes(draggedNode);
   return intersecting.find((n) => GROUP_NODE_TYPES.has(n.type ?? ""));
+}
+
+function getIntersectingFrame(
+  draggedNode: Node,
+  reactFlow: ReturnType<typeof useReactFlow>,
+): Node | undefined {
+  const intersecting = reactFlow.getIntersectingNodes(draggedNode);
+  return intersecting.find(isFrameNode);
 }
 
 // Placeholders (Server / Agent / unselected User Device) join with their
@@ -63,6 +73,7 @@ export function useDragToGroup() {
   const { trackAddGroupMembers, addGroupToDraftResource } =
     useDraftChangeset();
   const { updateDraftPolicy } = useControlCenterPolicy();
+  const { assignResourceToNetwork } = useDraftNetworkActions();
   const reactFlow = useReactFlow();
 
   // Dragging a resource contained in a network frame moves the WHOLE frame
@@ -80,7 +91,7 @@ export function useDragToGroup() {
       frameDrag.current = null;
       if (!isDraft) return;
       const parentId = draggedNode.parentId;
-      if (!parentId?.startsWith("network-new-")) return;
+      if (!parentId?.startsWith("network-")) return;
       const frame = reactFlow.getNodes().find((n) => n.id === parentId);
       if (!frame) return;
       frameDrag.current = {
@@ -129,6 +140,24 @@ export function useDragToGroup() {
         return;
       }
 
+      // Standalone draft resource → highlight the network frame it's over as
+      // a drop target (mirrors the group-drop highlight below).
+      if (
+        draggedNode.id.startsWith("resource-new-") &&
+        !draggedNode.parentId
+      ) {
+        const targetFrame = getIntersectingFrame(draggedNode, reactFlow);
+        setNodes((prev) =>
+          prev.map((n) => {
+            if (!isFrameNode(n)) return n;
+            const isTarget = targetFrame?.id === n.id;
+            if (!!n.data.dropTarget === isTarget) return n;
+            return { ...n, data: { ...n.data, dropTarget: isTarget } };
+          }),
+        );
+        return;
+      }
+
       if (!DROPPABLE_NODE_TYPES.has(draggedNode.type ?? "")) return;
 
       const targetGroup = getIntersectingGroup(draggedNode, reactFlow);
@@ -153,6 +182,16 @@ export function useDragToGroup() {
   const onNodeDragStop = useCallback(
     (_event: React.MouseEvent, draggedNode: Node) => {
       if (!isDraft) return;
+
+      // Always clear frame drop-target highlights first, regardless of where
+      // the drag ends (the branches below return early).
+      setNodes((prev) =>
+        prev.map((n) =>
+          isFrameNode(n) && n.data.dropTarget
+            ? { ...n, data: { ...n.data, dropTarget: false } }
+            : n,
+        ),
+      );
 
       // Contained resource → final snap; no group-drop for framed resources.
       const frame = frameDrag.current;
@@ -181,6 +220,23 @@ export function useDragToGroup() {
           });
         });
         return;
+      }
+
+      // Standalone draft resource dropped onto a network frame → assign it to
+      // that network (reparents into the frame). The other way to assign is
+      // the "No Network" picker.
+      if (
+        draggedNode.id.startsWith("resource-new-") &&
+        !draggedNode.parentId
+      ) {
+        const targetFrame = getIntersectingFrame(draggedNode, reactFlow);
+        if (targetFrame) {
+          assignResourceToNetwork({
+            resourceNodeId: draggedNode.id,
+            networkNodeId: targetFrame.id,
+          });
+          return;
+        }
       }
 
       if (!DROPPABLE_NODE_TYPES.has(draggedNode.type ?? "")) return;
@@ -286,6 +342,7 @@ export function useDragToGroup() {
       trackAddGroupMembers,
       addGroupToDraftResource,
       updateDraftPolicy,
+      assignResourceToNetwork,
     ],
   );
 

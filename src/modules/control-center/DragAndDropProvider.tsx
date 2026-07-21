@@ -1,4 +1,5 @@
 import { Node, useReactFlow, XYPosition } from "@xyflow/react";
+import { isFrameNode } from "@/modules/control-center/utils/helpers";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   createContext,
@@ -11,7 +12,16 @@ import {
   useState,
 } from "react";
 
-export type OnDropAction = ({ position }: { position: XYPosition }) => void;
+export type OnDropAction = ({
+  position,
+  targetNodeId,
+}: {
+  position: XYPosition;
+  // Id of the ReactFlow node the pointer was released over (if any) — lets a
+  // drop handler assign into that node (e.g. a resource into a network frame)
+  // instead of dropping standalone.
+  targetNodeId?: string;
+}) => void;
 
 // Pointer travel (px) below which a pointerdown/up pair counts as a click.
 const CLICK_MOVE_THRESHOLD = 5;
@@ -146,7 +156,8 @@ export function DragAndDropProvider({
 export default DragAndDropContext;
 
 export const useDragAndDrop = () => {
-  const { screenToFlowPosition, getNodes, fitBounds } = useReactFlow();
+  const { screenToFlowPosition, getNodes, fitBounds, setNodes } =
+    useReactFlow();
 
   const context = useContext(DragAndDropContext);
 
@@ -159,12 +170,53 @@ export const useDragAndDrop = () => {
   // Where the pointer went down — releasing within CLICK_MOVE_THRESHOLD px is
   // a click, not a drag.
   const dragStartPosition = useRef<XYPosition | undefined>(undefined);
+  // Whether the current drag can drop INTO a network frame (resources) — if
+  // so, frames highlight as drop targets while the pointer is over them.
+  const canDropIntoFrame = useRef(false);
+
+  // Resolve the network frame under a screen point (walking a frame child up
+  // to its parent), for the drop-target highlight.
+  const frameUnderPoint = useCallback(
+    (clientX: number, clientY: number): string | undefined => {
+      const overId =
+        document
+          .elementFromPoint(clientX, clientY)
+          ?.closest(".react-flow__node")
+          ?.getAttribute("data-id") ?? undefined;
+      if (!overId) return undefined;
+      const node = getNodes().find((n) => n.id === overId);
+      if (isFrameNode(node)) return overId;
+      return node?.parentId?.startsWith("network-")
+        ? node.parentId
+        : undefined;
+    },
+    [getNodes],
+  );
+
+  const setFrameDropTarget = useCallback(
+    (frameId: string | undefined) => {
+      setNodes((prev) =>
+        prev.map((n) => {
+          if (!isFrameNode(n)) return n;
+          const isTarget = n.id === frameId;
+          if (!!n.data.dropTarget === isTarget) return n;
+          return { ...n, data: { ...n.data, dropTarget: isTarget } };
+        }),
+      );
+    },
+    [setNodes],
+  );
 
   const onDragStart = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>, onDrop: OnDropAction) => {
+    (
+      event: React.PointerEvent<HTMLDivElement>,
+      onDrop: OnDropAction,
+      options?: { canDropIntoFrame?: boolean },
+    ) => {
       event.preventDefault();
       (event.target as HTMLElement).setPointerCapture(event.pointerId);
       dragStartPosition.current = { x: event.clientX, y: event.clientY };
+      canDropIntoFrame.current = !!options?.canDropIntoFrame;
       setIsDragging(true);
       setDropAction(onDrop);
     },
@@ -173,6 +225,10 @@ export const useDragAndDrop = () => {
 
   const onDragEnd = useCallback(
     (event: PointerEvent) => {
+      // Clear any frame drop-target highlight raised during the drag. The
+      // reparent (addResourceToFrame) itself keeps no highlight, so this is
+      // the only thing that needs to tidy up.
+      if (canDropIntoFrame.current) setFrameDropTarget(undefined);
       if (!isDragging) {
         setIsDragging(false);
         return;
@@ -258,12 +314,33 @@ export const useDragAndDrop = () => {
           x: event.clientX,
           y: event.clientY,
         });
-        dropAction?.({ position: flowPosition });
+        // The ReactFlow node released over (if any) — lets a resource drop
+        // assign into a network frame instead of landing standalone. If the
+        // pointer is over a frame's child (a resource row), resolve to the
+        // frame itself.
+        const overId =
+          elementUnderPointer
+            ?.closest(".react-flow__node")
+            ?.getAttribute("data-id") ?? undefined;
+        const overNode = overId
+          ? getNodes().find((n) => n.id === overId)
+          : undefined;
+        const targetNodeId = overNode?.parentId?.startsWith("network-")
+          ? overNode.parentId
+          : overId;
+        dropAction?.({ position: flowPosition, targetNodeId });
       }
 
       setIsDragging(false);
     },
-    [screenToFlowPosition, getNodes, fitBounds, setIsDragging, dropAction],
+    [
+      screenToFlowPosition,
+      getNodes,
+      fitBounds,
+      setIsDragging,
+      dropAction,
+      setFrameDropTarget,
+    ],
   );
 
   // Add global touch event listeners
@@ -291,10 +368,15 @@ export const useDragAndDrop = () => {
         event.clientY - start.y,
       );
       if (moved >= CLICK_MOVE_THRESHOLD) setComponentsPanelOpen(false);
+      // Highlight the network frame under the pointer (resource drags only) —
+      // the same white border a canvas resource-drag shows.
+      if (canDropIntoFrame.current) {
+        setFrameDropTarget(frameUnderPoint(event.clientX, event.clientY));
+      }
     };
     document.addEventListener("pointermove", onMove);
     return () => document.removeEventListener("pointermove", onMove);
-  }, [isDragging, setComponentsPanelOpen]);
+  }, [isDragging, setComponentsPanelOpen, frameUnderPoint, setFrameDropTarget]);
 
   return {
     isDragging,

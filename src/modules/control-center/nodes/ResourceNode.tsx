@@ -1,4 +1,4 @@
-import TruncatedText from "@components/ui/TruncatedText";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { type Node, Position, useConnection } from "@xyflow/react";
 import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
@@ -6,6 +6,7 @@ import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
+import { StandaloneResourceNode } from "@/modules/control-center/nodes/StandaloneResourceNode";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
@@ -43,7 +44,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   // Framed resources accept connection DROPS in every view — the drop
   // routes into the destination picker preselected with this resource. Only
   // dragging FROM the resource stays drill-down-only in the parent view.
-  const isFramed = !!parentId?.startsWith("network-new-");
+  const isFramed = !!parentId?.startsWith("network-");
   const handlesActive = !isFramed || drillDownNetworkNodeId === parentId;
   const isTarget = connection.inProgress && connection.fromNode.id !== id;
   const { contextMenuNodeId } = useCanvasState();
@@ -55,26 +56,30 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   const isDraftResource = id.startsWith("resource-new-");
   const node = { id, data, position: { x: 0, y: 0 } } as Node;
   const draftResource = isDraftResource ? getDraftResource(node) : undefined;
+  // The resource to render in the card — draft ones use their live-edited
+  // draft data, existing (dropped) ones use their API resource.
+  const cardResource = draftResource ?? resource;
 
-  // Draft resources mirror the placeholder-peer card: icon box, name row,
-  // and the address slot dimmed to "x.x.x.x" until it's set. Click (or the
-  // context menu's Edit) opens the resource editor. The single LEFT connect
-  // handle drags into a policy — resources are destinations only, so they
-  // sit right of policies.
-  if (isDraftResource && draftResource) {
-    const Icon = TYPE_ICONS[draftResource.type ?? "host"] ?? GlobeIcon;
+  // Standalone draft/existing resource → its own card component (network shown
+  // inline after the name; context-menu halo on the whole card).
+  if (isDraft && cardResource && !isFramed) {
+    return <StandaloneResourceNode id={id} data={data} />;
+  }
+
+  // A resource INSIDE a network frame: a flat row managed by the frame (no
+  // card border/bg). The context-menu halo lives on the icon box here.
+  if (isDraft && cardResource && isFramed) {
+    const Icon = TYPE_ICONS[cardResource.type ?? "host"] ?? GlobeIcon;
     return (
       <div
         className={cn(
-          // min width matches NETWORK_FRAME_CHILD_WIDTH_MULTI so unframed
-          // resources don't collapse below the framed rows (and framed
-          // multi-column rows aren't overridden wider).
-          "relative rounded-lg transition-all group/node w-full min-w-[185px]",
+          "relative rounded-lg transition-colors group/node w-full min-w-[185px]",
           "cursor-pointer",
+          data.enabled === false && "opacity-60",
           className,
         )}
         onClick={() => {
-          if (isDraft) setResourceEditor({ nodeId: id });
+          if (isDraftResource) setResourceEditor({ nodeId: id });
         }}
       >
         <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
@@ -82,9 +87,8 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
             className={cn(
               "h-9 w-9 bg-nb-gray-850 group-hover/node:text-nb-gray-200 rounded-md flex items-center justify-center shrink-0 group-hover/node:bg-nb-gray-700 transition-all",
               "border border-nb-gray-850 group-hover/node:border-nb-gray-700",
-              // Rings live on the icon box, not the whole row: white while a
-              // connection drag hovers this node, sky halo for the context
-              // menu (same as group nodes).
+              // Rings live on the icon box for framed rows: white while a
+              // connection drag hovers, sky halo for the context menu.
               isTarget && "group-hover/node:ring-2 group-hover/node:ring-white",
               showHalo && "ring-2 ring-sky-500",
             )}
@@ -97,19 +101,18 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
                 "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1 mt-1 relative top-[0.05rem]"
               }
             >
-              <TruncatedText
-                text={draftResource.name}
-                maxWidth={"135px"}
-                hideTooltip
-              />
+              <span className={"truncate max-w-[135px]"}>
+                {cardResource.name}
+              </span>
+              {isDraftResource && <SmallBadge />}
             </span>
             {/* Address slot — dimmed placeholder until it's set. */}
             <span
               className={
-                "font-normal text-sm text-nb-gray-500 relative -top-[0.25rem]"
+                "font-normal text-sm text-nb-gray-500 relative -top-[0.1rem]"
               }
             >
-              {draftResource.address || "x.x.x.x"}
+              {cardResource.address || "IP, CIDR or Domain"}
             </span>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
 import { Group } from "@/interfaces/Group";
-import { Network } from "@/interfaces/Network";
+import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
@@ -13,6 +13,7 @@ import {
   getFrameChildPosition,
   getNetworkFrameHeight,
   isCompleteDraftResource,
+  isFrameNode,
   makeMembershipEdge,
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_WIDTH,
@@ -24,6 +25,8 @@ const uid = () =>
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 // The (id XOR clientId) + display-name reference a network node resolves to.
+// An existing-network frame keeps its real id on data.network → networkId;
+// a draft network frame (no id yet) → networkClientId from its node id.
 export const getNetworkRef = (node?: Node): DraftNetworkRef | undefined => {
   const network = (node?.data as { network?: Network })?.network;
   if (!node || !network) return undefined;
@@ -49,6 +52,7 @@ export function useDraftNetworkActions() {
     trackCreateRouter,
     trackCreateResource,
     untrackResource,
+    trackUpdateResource,
     updateDraftNetwork,
   } = useDraftChangeset();
 
@@ -80,6 +84,7 @@ export function useDraftNetworkActions() {
         networkClientId: network.networkClientId,
         networkName: network.name,
         groupIds,
+        enabled: (node.data as { enabled?: boolean }).enabled ?? true,
       });
 
       // Re-record policies referencing this resource (next tick — canvas
@@ -125,11 +130,12 @@ export function useDraftNetworkActions() {
     }) => {
       // v1: draft resources only — existing resources aren't mutated.
       if (!resourceNodeId.startsWith("resource-new-")) return;
-      const networkRef = getNetworkRef(
-        reactFlow.getNodes().find((n) => n.id === networkNodeId),
-      );
+      const networkNode = reactFlow
+        .getNodes()
+        .find((n) => n.id === networkNodeId);
+      const networkRef = getNetworkRef(networkNode);
       if (!networkRef) return;
-      const isFrame = networkNodeId.startsWith("network-new-");
+      const isFrame = isFrameNode(networkNode);
 
       reactFlow.setNodes((prev) => {
         const childCount = prev.filter(
@@ -153,16 +159,22 @@ export function useDraftNetworkActions() {
                 : { parentId: undefined }),
             };
           }
-          // The frame grows to fit its members.
+          // The frame grows to fit its members — and clears any drop-target
+          // highlight in the SAME update so it can't linger after the drop.
           if (isFrame && n.id === networkNodeId) {
             return {
               ...n,
+              data: { ...n.data, dropTarget: false },
               style: {
                 ...n.style,
                 width: NETWORK_FRAME_WIDTH,
                 height: getNetworkFrameHeight(childCount + 1),
               },
             };
+          }
+          // Any other frame that was highlighted mid-drag clears too.
+          if (isFrameNode(n) && n.data.dropTarget) {
+            return { ...n, data: { ...n.data, dropTarget: false } };
           }
           return n;
         });
@@ -196,6 +208,41 @@ export function useDraftNetworkActions() {
     [reactFlow, syncDraftResource],
   );
 
+  // Assigns a standalone draft resource to an EXISTING (API) network that
+  // isn't a frame on the canvas — just stamps the network ref onto the node
+  // (the card keeps showing the network's name) and re-syncs the changeset.
+  const assignResourceToExistingNetwork = useCallback(
+    ({
+      resourceNodeId,
+      network,
+    }: {
+      resourceNodeId: string;
+      network: { id: string; name: string };
+    }) => {
+      if (!resourceNodeId.startsWith("resource-new-")) return;
+      reactFlow.setNodes((prev) =>
+        prev.map((n) =>
+          n.id === resourceNodeId
+            ? {
+                ...n,
+                // Detach from any frame it was in.
+                parentId: undefined,
+                data: {
+                  ...n.data,
+                  draftNetwork: { networkId: network.id, name: network.name },
+                },
+              }
+            : n,
+        ),
+      );
+      reactFlow.setEdges((prev) =>
+        prev.filter((e) => !e.id.startsWith(`member-${resourceNodeId}-`)),
+      );
+      setTimeout(() => syncDraftResource(resourceNodeId), 0);
+    },
+    [reactFlow, syncDraftResource],
+  );
+
   // Saves the draft resource editor: node data (name/address/description,
   // groups, parent network), containment/membership, change sync.
   const saveDraftResource = useCallback(
@@ -215,13 +262,46 @@ export function useDraftNetworkActions() {
                 ...n,
                 data: {
                   ...n.data,
-                  resource: { name, address, description },
+                  // Preserve an existing resource's real id (editing an
+                  // existing standalone resource updates the canvas only).
+                  resource: {
+                    ...(n.data as { resource?: NetworkResource }).resource,
+                    name,
+                    address,
+                    description,
+                  },
                   resourceGroupIds: groupIds,
                 },
               }
             : n,
         ),
       );
+      // Existing resource (real id): record an update-resource change with the
+      // edited fields. Existing resources keep their network (v1 doesn't
+      // reassign), so skip the draft containment/sync path below.
+      if (!nodeId.startsWith("resource-new-")) {
+        const node = reactFlow.getNodes().find((n) => n.id === nodeId);
+        const resource = (node?.data as { resource?: NetworkResource })
+          ?.resource;
+        const enabled =
+          (node?.data as { enabled?: boolean })?.enabled ??
+          resource?.enabled ??
+          true;
+        if (resource?.id && network.networkId) {
+          trackUpdateResource({
+            resourceId: resource.id,
+            networkId: network.networkId,
+            name,
+            networkName: network.name,
+            address,
+            description,
+            enabled,
+            groupIds,
+          });
+        }
+        return;
+      }
+
       // Containment / membership when the parent network is on the canvas
       // (assign also stamps draftNetwork + syncs the change).
       const networkNodeId = network.networkClientId
@@ -243,7 +323,7 @@ export function useDraftNetworkActions() {
         setTimeout(() => syncDraftResource(nodeId), 0);
       }
     },
-    [reactFlow, assignResourceToNetwork, syncDraftResource],
+    [reactFlow, assignResourceToNetwork, syncDraftResource, trackUpdateResource],
   );
 
   // Renames a draft network on the canvas node + change + dependent
@@ -342,6 +422,7 @@ export function useDraftNetworkActions() {
   return {
     addRouterFromSelection,
     assignResourceToNetwork,
+    assignResourceToExistingNetwork,
     saveDraftResource,
     syncDraftResource,
     renameDraftNetwork,

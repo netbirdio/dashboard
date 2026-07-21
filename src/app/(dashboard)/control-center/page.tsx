@@ -32,6 +32,7 @@ import { NodeContextMenu } from "@/modules/control-center/NodeContextMenu";
 import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
 import { DraftInstallPeerModal } from "@/modules/control-center/draft/DraftInstallPeerModal";
 import { DraftResourceEditorModal } from "@/modules/control-center/draft/DraftResourceEditorModal";
+import { DraftResourceNetworkModal } from "@/modules/control-center/draft/DraftResourceNetworkModal";
 import { DraftNetworkDestinationModal } from "@/modules/control-center/draft/DraftNetworkDestinationModal";
 import { DraftNetworkEditModal } from "@/modules/control-center/draft/DraftNetworkEditModal";
 import { DraftRoutingPeerModal } from "@/modules/control-center/draft/DraftRoutingPeerModal";
@@ -105,9 +106,13 @@ function ControlCenterCanvas() {
   const emptyState = canvas.nodes.length === 0 && !componentsPanelOpen;
   const canInteract = !anyMenuOpen && !draft.isSelectMode && !emptyState;
 
+  // A click outside should dismiss everything at once — the context menu AND
+  // any open panel/components picker — so the user never has to click twice.
   const closeNodeContextMenu = React.useCallback(() => {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
+    canvas.setSelectedDestinationGroup("");
+    setComponentsPanelOpen(false);
   }, [canvas]);
 
   return (
@@ -118,6 +123,7 @@ function ControlCenterCanvas() {
       <PeersToolbar />
       <DraftInstallPeerModal />
       <DraftResourceEditorModal />
+      <DraftResourceNetworkModal />
       <DraftRoutingPeerModal />
       <DraftNetworkDestinationModal />
       <DraftNetworkEditModal />
@@ -142,6 +148,7 @@ function ControlCenterCanvas() {
         onPaneClick={() => {
           canvas.setSelectedDestinationGroup("");
           setComponentsPanelOpen(false);
+          closeNodeContextMenu();
         }}
         onNodeMouseEnter={(_, node) => {
           if (!draft.isDraft) return;

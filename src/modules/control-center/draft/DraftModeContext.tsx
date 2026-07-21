@@ -44,6 +44,10 @@ type DraftModeContextType = {
   // Resource" button / context menu).
   resourceEditor: ResourceEditorState | null;
   setResourceEditor: (value: ResourceEditorState | null) => void;
+  // "No Network" picker for a standalone draft resource — pick an existing
+  // network or create a new one to assign the resource to.
+  resourceNetworkPicker: { nodeId: string } | null;
+  setResourceNetworkPicker: (value: { nodeId: string } | null) => void;
   // Draft routing-peer modal (networks page modal, pure-data) — targets a
   // network frame.
   routingPeerModal: { networkNodeId: string } | null;
@@ -81,6 +85,8 @@ const DraftModeContext = createContext<DraftModeContextType>({
   setInstallModal: () => {},
   resourceEditor: null,
   setResourceEditor: () => {},
+  resourceNetworkPicker: null,
+  setResourceNetworkPicker: () => {},
   routingPeerModal: null,
   setRoutingPeerModal: () => {},
   networkDestinationPicker: null,
@@ -106,6 +112,9 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
   );
   const [resourceEditor, setResourceEditor] =
     useState<ResourceEditorState | null>(null);
+  const [resourceNetworkPicker, setResourceNetworkPicker] = useState<{
+    nodeId: string;
+  } | null>(null);
   const [routingPeerModal, setRoutingPeerModal] = useState<{
     networkNodeId: string;
   } | null>(null);
@@ -136,6 +145,8 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
         setInstallModal,
         resourceEditor,
         setResourceEditor,
+        resourceNetworkPicker,
+        setResourceNetworkPicker,
         routingPeerModal,
         setRoutingPeerModal,
         networkDestinationPicker,

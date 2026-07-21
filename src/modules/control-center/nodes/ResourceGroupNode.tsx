@@ -1,4 +1,4 @@
-import TruncatedText from "@components/ui/TruncatedText";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { cn, singularize } from "@utils/helpers";
 import { type Node, Position, useConnection } from "@xyflow/react";
@@ -31,7 +31,7 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
   // Framed rows accept connection DROPS in every view — the drop routes
   // into the destination picker preselected with this group. Only dragging
   // FROM the row stays drill-down-only (same rule as ResourceNode).
-  const isFramed = !!parentId?.startsWith("network-new-");
+  const isFramed = !!parentId?.startsWith("network-");
   const handlesActive = !isFramed || drillDownNetworkNodeId === parentId;
   const isTarget = connection.inProgress && connection.fromNode.id !== id;
 
@@ -56,11 +56,12 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
               "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1 mt-1 relative top-[0.05rem]"
             }
           >
-            <TruncatedText text={group?.name} maxWidth={"135px"} hideTooltip />
+            <span className={"truncate max-w-[135px]"}>{group?.name}</span>
+            {!group?.id && <SmallBadge />}
           </span>
           <span
             className={
-              "font-normal text-sm text-nb-gray-500 relative -top-[0.25rem]"
+              "font-normal text-sm text-nb-gray-500 relative -top-[0.1rem]"
             }
           >
             {group?.resources_count

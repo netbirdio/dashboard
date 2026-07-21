@@ -11,8 +11,10 @@ import {
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
 import { getNextNewGroupName } from "@/modules/control-center/hooks/useDraftGroupActions";
+import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 import type { Policy } from "@/interfaces/Policy";
+import type { Network } from "@/interfaces/Network";
 
 const uid = () =>
   typeof crypto !== "undefined" && crypto.randomUUID
@@ -153,7 +155,7 @@ export function useDraftNodeCreation() {
   // Drops a draft network — networks only need a name, so the create-network
   // change is recorded immediately (symmetry with addNewGroup).
   const addDraftNetwork = useCallback(
-    (position?: XYPosition) => {
+    (position?: XYPosition, preset?: { name: string; description?: string }) => {
       const taken = new Set<string>();
       networks?.forEach((n) => n.name && taken.add(n.name));
       reactFlow.getNodes().forEach((n) => {
@@ -161,7 +163,9 @@ export function useDraftNodeCreation() {
           ?.name;
         if (name) taken.add(name);
       });
-      const name = getNextUniqueName("Network", taken);
+      // A preset name (from the "Create New Network" modal) is used verbatim;
+      // an auto-drop gets the next unique "Network (n)".
+      const name = preset?.name || getNextUniqueName("Network", taken);
       const nodeId = `network-new-${uid()}`;
       placeNode(
         {
@@ -172,94 +176,55 @@ export function useDraftNodeCreation() {
             width: NETWORK_FRAME_WIDTH,
             height: getNetworkFrameHeight(0),
           },
-          data: { network: { name, resources: [] } },
+          data: { network: { name, resources: [] }, frame: true },
         },
         position,
       );
-      trackCreateNetwork({ clientId: nodeId.replace("network-", ""), name });
+      trackCreateNetwork({
+        clientId: nodeId.replace("network-", ""),
+        name,
+        description: preset?.description,
+      });
 
       return nodeId;
     },
     [placeNode, reactFlow, networks, trackCreateNetwork],
   );
 
-  // Drops a draft resource wrapped in an auto-created draft network FRAME
-  // (a resource always lives in a network); the resource node is the
-  // frame's ReactFlow child. The editor opens on node click — until the
-  // address is set, the node shows a dimmed x.x.x.x placeholder and stays
-  // out of the changeset.
+  // Drops a STANDALONE draft resource card (no network yet). A resource still
+  // needs a network to deploy, but assignment is a deliberate step: the card
+  // shows a "No Network" control (see ResourceNode) and stays out of the
+  // changeset until it's dropped into a frame or a network is picked. The
+  // editor opens on node click; the address stays a dimmed placeholder until
+  // set.
   const addDraftResource = useCallback(
     (position?: XYPosition) => {
       const takenResources = new Set<string>();
       networkResources?.forEach((r) => r.name && takenResources.add(r.name));
-      const takenNetworks = new Set<string>();
-      networks?.forEach((n) => n.name && takenNetworks.add(n.name));
       reactFlow.getNodes().forEach((n) => {
         const resourceName = (n.data as { resource?: { name?: string } })
           ?.resource?.name;
         if (resourceName) takenResources.add(resourceName);
-        const networkName = (n.data as { network?: { name?: string } })
-          ?.network?.name;
-        if (networkName) takenNetworks.add(networkName);
       });
       const name = getNextUniqueName("Resource", takenResources);
-      const networkName = getNextUniqueName("Network", takenNetworks);
 
-      const networkNodeId = `network-new-${uid()}`;
       const nodeId = `resource-new-${uid()}`;
-      const framePosition = position
-        ? {
-            x: position.x - NETWORK_FRAME_WIDTH / 2,
-            y: position.y - getNetworkFrameHeight(1) / 2,
-          }
-        : { x: 0, y: 0 };
-
-      // Parent must precede its children in the nodes array (ReactFlow).
-      reactFlow.setNodes((prev) =>
-        prev.concat([
-          {
-            id: networkNodeId,
-            type: NodeType.NetworkNode,
-            position: framePosition,
-            style: {
-              width: NETWORK_FRAME_WIDTH,
-              height: getNetworkFrameHeight(1),
-            },
-            data: { network: { name: networkName, resources: [] } },
+      placeNode(
+        {
+          id: nodeId,
+          type: NodeType.ResourceNode,
+          position: { x: 0, y: 0 },
+          data: {
+            resource: { name },
+            enabled: true,
+            showHandles: true,
           },
-          {
-            id: nodeId,
-            type: NodeType.ResourceNode,
-            parentId: networkNodeId,
-            position: getFrameChildPosition(0),
-            // Contained resources are laid out by the frame, spanning
-            // (basically) the full frame width; dragging one moves the whole
-            // frame (intercepted in useDragToGroup).
-            style: { width: NETWORK_FRAME_CHILD_WIDTH },
-            data: {
-              resource: { name },
-              enabled: true,
-              showHandles: true,
-              draftNetwork: {
-                networkClientId: networkNodeId.replace("network-", ""),
-                name: networkName,
-              },
-            },
-          },
-        ]),
+        },
+        position,
       );
-      trackCreateNetwork({
-        clientId: networkNodeId.replace("network-", ""),
-        name: networkName,
-      });
       return nodeId;
     },
-    [
-      reactFlow,
-      networkResources,
-      networks,
-      trackCreateNetwork,
-    ],
+    [placeNode, reactFlow, networkResources],
   );
 
   // Adds a draft resource INTO an existing network frame (context menu's
@@ -268,9 +233,10 @@ export function useDraftNodeCreation() {
     (networkNodeId: string) => {
       const nodes = reactFlow.getNodes();
       const frame = nodes.find((n) => n.id === networkNodeId);
-      const network = (frame?.data as { network?: { name?: string } })
-        ?.network;
-      if (!frame || !network?.name) return;
+      // Resolve the frame's network ref (real id for existing-network frames,
+      // client id for draft ones) instead of assuming a client id.
+      const networkRef = getNetworkRef(frame);
+      if (!frame || !networkRef) return;
 
       const takenResources = new Set<string>();
       networkResources?.forEach((r) => r.name && takenResources.add(r.name));
@@ -296,10 +262,7 @@ export function useDraftNodeCreation() {
             resource: { name },
             enabled: true,
             showHandles: true,
-            draftNetwork: {
-              networkClientId: networkNodeId.replace("network-", ""),
-              name: network.name,
-            },
+            draftNetwork: networkRef,
           },
         }),
       );
@@ -348,6 +311,88 @@ export function useDraftNodeCreation() {
     [reactFlow],
   );
 
+  // Drops an EXISTING network as a full frame (same chrome + behaviour as a
+  // draft network frame). It keeps its REAL id (`network-<realId>`, data.network
+  // with its id) and is marked a frame via `data.frame` — frame-ness is a flag,
+  // not the `network-new-` prefix (which stays reserved for draft networks). Its
+  // existing resources are created as read-only child nodes. No create-network
+  // change — the network already exists (v1 doesn't mutate it); dropping it is
+  // for building policies around its resources.
+  const dropExistingNetworkFrame = useCallback(
+    (network: Network, position?: XYPosition) => {
+      if (!network.id) return;
+      const frameNodeId = `network-${network.id}`;
+      const childResources = (networkResources ?? []).filter((r) =>
+        network.resources?.includes(r.id ?? ""),
+      );
+      const framePosition = position
+        ? {
+            x: position.x - NETWORK_FRAME_WIDTH / 2,
+            y:
+              position.y -
+              getNetworkFrameHeight(Math.max(childResources.length, 1)) / 2,
+          }
+        : { x: 0, y: 0 };
+
+      const frame: Node = {
+        id: frameNodeId,
+        type: NodeType.NetworkNode,
+        position: framePosition,
+        style: {
+          width: NETWORK_FRAME_WIDTH,
+          height: getNetworkFrameHeight(Math.max(childResources.length, 1)),
+        },
+        // Real network (with id) + explicit frame flag → NetworkNode renders
+        // it as a frame while references resolve to the real network id.
+        data: { network, frame: true },
+      };
+      const childRef = { networkId: network.id, name: network.name };
+      const childIds = new Set(childResources.map((r) => `resource-${r.id}`));
+
+      reactFlow.setNodes((prev) => {
+        const alreadyPresent = new Set(prev.map((n) => n.id));
+        // A resource of this network already on the canvas (dropped standalone)
+        // must be REPARENTED into the frame, not duplicated — same node id.
+        const reparent = (n: Node, index: number): Node => ({
+          ...n,
+          parentId: frameNodeId,
+          position: getFrameChildPosition(index),
+          style: { ...n.style, width: NETWORK_FRAME_CHILD_WIDTH },
+          data: { ...n.data, draftNetwork: childRef },
+        });
+        // Fresh child nodes for resources not yet on the canvas.
+        const newChildren: Node[] = childResources
+          .filter((r) => !alreadyPresent.has(`resource-${r.id}`))
+          .map((r, i) => ({
+            id: `resource-${r.id}`,
+            type: NodeType.ResourceNode,
+            parentId: frameNodeId,
+            position: getFrameChildPosition(i),
+            style: { width: NETWORK_FRAME_CHILD_WIDTH },
+            data: {
+              resource: r,
+              enabled: true,
+              showHandles: true,
+              draftNetwork: childRef,
+            },
+          }));
+
+        // Rebuild the array with the frame BEFORE its children (ReactFlow
+        // requires parents to precede children): keep unrelated nodes, then
+        // frame, then all its children (reparented existing + new).
+        let idx = 0;
+        const others = prev.filter((n) => !childIds.has(n.id));
+        const reparented = prev
+          .filter((n) => childIds.has(n.id))
+          .map((n) => reparent(n, idx++));
+        newChildren.forEach((n) => (n.position = getFrameChildPosition(idx++)));
+        return [...others, frame, ...reparented, ...newChildren];
+      });
+      return frameNodeId;
+    },
+    [reactFlow, networkResources],
+  );
+
   // Kept for callers that still switch on kind (components panel templates,
   // context menu).
   const addBlankNode = useCallback(
@@ -367,5 +412,6 @@ export function useDraftNodeCreation() {
     addBlankPolicy,
     addResourceToFrame,
     addResourceGroupToFrame,
+    dropExistingNetworkFrame,
   };
 }

@@ -1,7 +1,7 @@
 import useFetchApi from "@utils/api";
 import { cn, singularize } from "@utils/helpers";
 import { Handle, type Node, Position, useConnection } from "@xyflow/react";
-import { NetworkIcon, PlusIcon } from "lucide-react";
+import { AlertTriangleIcon, NetworkIcon, PlusIcon } from "lucide-react";
 import Button from "@components/Button";
 import * as React from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
@@ -43,17 +43,28 @@ const RoutingPeersIndicator = ({
   zeroLabel?: string;
 }) => {
   if (hideWhenZero && count === 0) return null;
+  // The frame's status bar (has a zeroLabel) flags "no routing peers" with a
+  // yellow AlertTriangle, same as a resource's "No Network" — a missing router
+  // means the network can't route. Elsewhere the traffic-light dot is kept.
+  const showAlert = count === 0 && !!zeroLabel;
   return (
     <div className={cn("flex items-center", className)}>
-      <CircleIcon
-        size={dotSize}
-        className={cn(
-          "shrink-0 block",
-          count === 0 && "bg-nb-gray-500",
-          count === 1 && "bg-yellow-400",
-          count > 1 && "bg-green-400",
-        )}
-      />
+      {showAlert ? (
+        <AlertTriangleIcon
+          size={dotSize + 5}
+          className={"shrink-0 text-yellow-400"}
+        />
+      ) : (
+        <CircleIcon
+          size={dotSize}
+          className={cn(
+            "shrink-0 block",
+            count === 0 && "bg-nb-gray-500",
+            count === 1 && "bg-yellow-400",
+            count > 1 && "bg-green-400",
+          )}
+        />
+      )}
       {count === 0 && zeroLabel
         ? zeroLabel
         : singularize("Routing Peers", count, true)}
@@ -91,7 +102,11 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   const [controlsHovered, setControlsHovered] = React.useState(false);
 
   const n = data.network as Network;
-  const isFrame = !n?.id;
+  // Frame-ness is an explicit flag (existing-network frames keep their real
+  // id), with the draft `network-new-` id as a built-in fallback. Live network
+  // cards carry neither → they render as cards.
+  const isFrame =
+    id.startsWith("network-new-") || !!(data as { frame?: boolean }).frame;
 
   // Draft members: resource nodes assigned to this network via the editor or
   // drag-onto-network (matched by node id for draft networks, API id
@@ -161,7 +176,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           : undefined
       }
       className={cn(
-        "relative transition-all border bg-nb-gray-940",
+        // transition-colors (not -all) so reparenting a resource — which
+        // resizes the frame — snaps instead of animating the width/height.
+        "relative transition-colors border bg-nb-gray-940",
         isFrame
           ? "w-full h-full rounded-xl border border-nb-gray-800 group group/node"
           : "rounded-2xl border-nb-gray-900 overflow-hidden group hover:bg-nb-gray-935 cursor-pointer",
@@ -170,6 +187,12 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         isDraft &&
           isTarget &&
           "hover:ring-2 hover:ring-white/60 hover:bg-nb-gray-930",
+        // Drop indicator while dragging a resource card onto the frame (like
+        // dropping a peer into a group): a white border. Set on the frame
+        // node's data by useDragToGroup during the drag.
+        isFrame &&
+          (data as { dropTarget?: boolean }).dropTarget &&
+          "border-white bg-nb-gray-930",
         showHalo && "ring-2 ring-sky-500",
       )}
     >
@@ -237,8 +260,11 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           same as the floating controls. */}
       {isDraft && isFrame && (
         <div
+          // Wrapper spans the body but stays click-through (pointer-events-none)
+          // so dragging on empty frame content still moves the frame; only the
+          // button itself captures events and blocks the drag (nodrag).
           className={cn(
-            "absolute inset-x-0 bottom-0 nodrag",
+            "absolute inset-x-0 bottom-0 pointer-events-none",
             frameCellCount === 0
               ? "flex items-center justify-center"
               : "px-5 pb-5",
@@ -250,7 +276,10 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           <Button
             variant={"secondary"}
             size={"xs"}
-            className={cn("!px-3 !py-0 h-9", frameCellCount > 0 && "w-full")}
+            className={cn(
+              "!px-3 !py-0 h-9 nodrag pointer-events-auto",
+              frameCellCount > 0 && "w-full",
+            )}
             onClick={() => setResourceEditor({ createInNetworkNodeId: id })}
             onMouseEnter={() => {
               setHoveredNetworkNodeId(null);
@@ -317,21 +346,25 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
                 zeroLabel={"No Routing Peers"}
               />
             </button>
-            <button
-              type={"button"}
-              onClick={(e) => {
-                e.stopPropagation();
-                setRoutingPeerModal({ networkNodeId: id });
-              }}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap outline-none",
-                "border-l border-gray-700/40 text-gray-400",
-                "hover:text-white hover:bg-nb-gray-910 transition-colors",
-              )}
-            >
-              <PlusIcon size={12} className={"shrink-0"} />
-              Add
-            </button>
+            {/* Trailing "Add" only once there's a routing peer — with none,
+                the status button itself ("No Routing Peers") adds the first. */}
+            {routingPeersCount > 0 && (
+              <button
+                type={"button"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRoutingPeerModal({ networkNodeId: id });
+                }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap outline-none",
+                  "border-l border-gray-700/40 text-gray-400",
+                  "hover:text-white hover:bg-nb-gray-910 transition-colors",
+                )}
+              >
+                <PlusIcon size={12} className={"shrink-0"} />
+                Add
+              </button>
+            )}
           </div>
         </div>
       )}

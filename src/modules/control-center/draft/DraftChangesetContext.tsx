@@ -108,6 +108,8 @@ export interface CreateResourceChange {
   networkName: string;
   // API group ids or draft-group names (resolved like policy groups).
   groupIds: string[];
+  // Canvas enabled state — defaults to enabled when absent.
+  enabled?: boolean;
 }
 
 // Routers referencing a placeholder peer stay OUT of the changeset (the
@@ -133,6 +135,31 @@ export interface CreateRouterChange {
   enabled?: boolean;
 }
 
+// Edits to an EXISTING (API) resource — enable/disable and (future) field
+// edits. Keyed by the real resource id; deploy PUTs the full resource.
+export interface UpdateResourceChange {
+  id: string;
+  type: "update-resource";
+  resourceId: string;
+  networkId: string;
+  name: string;
+  networkName: string; // display-only (labels)
+  address: string;
+  description?: string;
+  enabled: boolean;
+  groupIds: string[];
+}
+
+// Deletes an EXISTING (API) resource.
+export interface DeleteResourceChange {
+  id: string;
+  type: "delete-resource";
+  resourceId: string;
+  networkId: string;
+  name: string;
+  networkName: string; // display-only (labels)
+}
+
 export type DraftChange =
   | CreateGroupChange
   | UpdateGroupChange
@@ -142,7 +169,9 @@ export type DraftChange =
   | DeletePolicyChange
   | CreateNetworkChange
   | CreateResourceChange
-  | CreateRouterChange;
+  | CreateRouterChange
+  | UpdateResourceChange
+  | DeleteResourceChange;
 
 // Git-style classification for diff coloring (+ green, ~ orange, − red).
 export type ChangeKind = "add" | "update" | "remove";
@@ -155,11 +184,13 @@ export const getChangeKind = (change: DraftChange): ChangeKind => {
     case "create-resource":
     case "create-router":
       return "add";
+    case "delete-resource":
     case "delete-group":
     case "delete-policy":
       return "remove";
     case "update-group":
     case "update-policy":
+    case "update-resource":
       return "update";
   }
 };
@@ -184,6 +215,10 @@ export const getChangeApiCall = (change: DraftChange): string => {
       return `POST /networks/${change.networkId ?? "{new}"}/resources`;
     case "create-router":
       return `POST /networks/${change.networkId ?? "{new}"}/routers`;
+    case "update-resource":
+      return `PUT /networks/${change.networkId}/resources/${change.resourceId}`;
+    case "delete-resource":
+      return `DELETE /networks/${change.networkId}/resources/${change.resourceId}`;
   }
 };
 
@@ -267,6 +302,16 @@ export const getChangeLabel = (
         title: change.peerId
           ? `Add routing peer “${change.peerName ?? change.peerId}” to “${change.networkName}”`
           : `Add routing peer group “${change.groupName ?? change.groupId}” to “${change.networkName}”`,
+      };
+    case "update-resource":
+      return {
+        title: `${change.enabled ? "Enable" : "Disable"} resource “${
+          change.name
+        }” in “${change.networkName}”`,
+      };
+    case "delete-resource":
+      return {
+        title: `Delete resource “${change.name}” from “${change.networkName}”`,
       };
   }
 };
@@ -380,6 +425,15 @@ interface DraftChangesetContextType {
   trackCreateResource: (params: Omit<CreateResourceChange, "id" | "type">) => void;
   // Drops the resource change and removes its id from group memberships.
   untrackResource: (clientId: string) => void;
+  // Edits to an EXISTING resource (enable/disable, field edits) — one change
+  // per resource id.
+  trackUpdateResource: (
+    params: Omit<UpdateResourceChange, "id" | "type">,
+  ) => void;
+  // Deletes an EXISTING resource (supersedes a pending update).
+  trackDeleteResource: (
+    params: Omit<DeleteResourceChange, "id" | "type">,
+  ) => void;
   // Adds a group ref (API id or draft-group name) to a draft resource's
   // create change — deploy applies groups via the resource's own `groups`
   // field (group changes deploy before resources exist).
@@ -733,6 +787,45 @@ export function DraftChangesetProvider({
     );
   }, []);
 
+  // Edits to an existing resource (enable/disable, field edits) — one
+  // update-resource per resource id. Reverting `enabled` back to its original
+  // with nothing else changed drops the change.
+  const trackUpdateResource = useCallback(
+    (params: Omit<UpdateResourceChange, "id" | "type">) => {
+      setChanges((prev) => {
+        const existing = prev.find(
+          (c): c is UpdateResourceChange =>
+            c.type === "update-resource" &&
+            c.resourceId === params.resourceId,
+        );
+        if (existing) {
+          return prev.map((c) =>
+            c.id === existing.id ? { ...existing, ...params } : c,
+          );
+        }
+        return [...prev, { id: uid(), type: "update-resource", ...params }];
+      });
+    },
+    [],
+  );
+
+  // Deletes an existing resource — supersedes any pending update-resource.
+  const trackDeleteResource = useCallback(
+    (params: Omit<DeleteResourceChange, "id" | "type">) => {
+      setChanges((prev) => [
+        ...prev.filter(
+          (c) =>
+            !(
+              c.type === "update-resource" &&
+              c.resourceId === params.resourceId
+            ),
+        ),
+        { id: uid(), type: "delete-resource", ...params },
+      ]);
+    },
+    [],
+  );
+
   const addGroupToDraftResource = useCallback(
     (clientId: string, groupRef: string) => {
       setChanges((prev) =>
@@ -971,6 +1064,8 @@ export function DraftChangesetProvider({
       untrackNetwork,
       trackCreateResource,
       untrackResource,
+      trackUpdateResource,
+      trackDeleteResource,
       addGroupToDraftResource,
       trackCreateRouter,
       untrackRouter,
@@ -995,6 +1090,8 @@ export function DraftChangesetProvider({
       untrackNetwork,
       trackCreateResource,
       untrackResource,
+      trackUpdateResource,
+      trackDeleteResource,
       addGroupToDraftResource,
       trackCreateRouter,
       untrackRouter,

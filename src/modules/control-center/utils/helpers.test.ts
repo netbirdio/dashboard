@@ -261,9 +261,9 @@ describe("isDeployablePolicy — only real policies enter the changeset", () => 
 
 describe("getGroupCountLabel", () => {
   it("formats peer and resource counts", () => {
-    expect(getGroupCountLabel(undefined)).toBe("No Peer(s)");
+    expect(getGroupCountLabel(undefined)).toBe("No Peers");
     expect(getGroupCountLabel({ name: "g", peers_count: 3 } as Group)).toBe(
-      "3 Peer(s)",
+      "3 Peers",
     );
     expect(
       getGroupCountLabel({
@@ -271,7 +271,7 @@ describe("getGroupCountLabel", () => {
         peers_count: 1,
         resources_count: 2,
       } as Group),
-    ).toBe("1 Peer(s), 2 Resource(s)");
+    ).toBe("1 Peer, 2 Resources");
   });
 });
 

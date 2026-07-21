@@ -330,7 +330,7 @@ const UserDeviceSelectNode = ({
               </div>
             </div>
           )}
-          <ChevronsUpDown size={18} className={"shrink-0 text-nb-gray-400"} />
+          <ChevronsUpDown size={18} className={"shrink-0"} />
         </div>
       </SelectDropdown>
 

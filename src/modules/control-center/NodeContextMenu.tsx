@@ -33,13 +33,18 @@ import {
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
 import {
+  DraftNetworkRef,
   getPlaceholderPeer,
+  isDraftNetworkNode,
+  isFrameNode,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
+import { NetworkResource } from "@/interfaces/Network";
 import { canRenamePeerNode } from "@/modules/control-center/utils/node-capabilities";
 
 type MenuPosition = {
@@ -74,7 +79,12 @@ export const NodeContextMenu = ({
     useDraftMode();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const { groups, policies } = useControlCenterData();
-  const { trackSetPolicyEnabled, trackDeletePolicy } = useDraftChangeset();
+  const {
+    trackSetPolicyEnabled,
+    trackDeletePolicy,
+    trackUpdateResource,
+    trackDeleteResource,
+  } = useDraftChangeset();
   const {
     renameGroup,
     removeGroup,
@@ -82,6 +92,7 @@ export const NodeContextMenu = ({
     removeNodeWithEdges,
   } = useDraftGroupActions();
   const { addResourceToFrame, addResourceGroupToFrame } = useDraftNodeCreation();
+  const { syncDraftResource } = useDraftNetworkActions();
 
   // The rename modal must survive the menu closing (position → null), so the
   // target node is snapshotted separately. It targets either a group node or
@@ -99,6 +110,20 @@ export const NodeContextMenu = ({
     (renameTarget?.data?.placeholderName as string) ||
     PLACEHOLDER_BASE_NAMES[renameTarget?.data?.placeholderKind as string] ||
     "Peer";
+  const isResourceRename = !!renameTarget?.id.startsWith("resource-new-");
+  const resourceCurrentName =
+    (renameTarget?.data?.resource as { name?: string } | undefined)?.name ?? "";
+  // Draft resource names must stay unique across the other draft resources.
+  const resourceTakenNames = useMemo(
+    () =>
+      nodes
+        .filter(
+          (n) => n.id.startsWith("resource-new-") && n.id !== renameTarget?.id,
+        )
+        .map((n) => (n.data?.resource as { name?: string } | undefined)?.name)
+        .filter(Boolean) as string[],
+    [nodes, renameTarget],
+  );
 
   // Placeholder names must stay unique across the draft peers on the canvas.
   const placeholderTakenNames = useMemo(
@@ -123,6 +148,95 @@ export const NodeContextMenu = ({
       );
     },
     [setNodes],
+  );
+
+  // Rename a draft resource node (canvas + changeset re-sync for saved ones).
+  const renameResource = useCallback(
+    (id: string, name: string) => {
+      setNodes((prev) =>
+        prev.map((n) =>
+          n.id === id
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  resource: {
+                    ...(n.data.resource as object),
+                    name,
+                  },
+                },
+              }
+            : n,
+        ),
+      );
+      setTimeout(() => syncDraftResource(id), 0);
+    },
+    [setNodes, syncDraftResource],
+  );
+
+  // Enable/disable a resource on the canvas (dims the node), mirroring the
+  // policy Enable/Disable toggle. For an EXISTING resource it also records an
+  // update-resource change so the enabled state deploys.
+  const toggleResourceEnabled = useCallback(
+    (id: string) => {
+      const target = nodes.find((n) => n.id === id);
+      const enabled = !(
+        (target?.data as { enabled?: boolean })?.enabled ?? true
+      );
+      setNodes((prev) =>
+        prev.map((n) =>
+          n.id === id ? { ...n, data: { ...n.data, enabled } } : n,
+        ),
+      );
+      // Draft resources carry their enabled state via their create-resource
+      // change (re-sync after the canvas update). Existing resources record an
+      // update-resource change.
+      if (id.startsWith("resource-new-")) {
+        setTimeout(() => syncDraftResource(id), 0);
+        return;
+      }
+      const resource = (target?.data as { resource?: NetworkResource })
+        ?.resource;
+      const net = (target?.data as { draftNetwork?: DraftNetworkRef })
+        ?.draftNetwork;
+      if (resource?.id && net?.networkId) {
+        trackUpdateResource({
+          resourceId: resource.id,
+          networkId: net.networkId,
+          name: resource.name,
+          networkName: net.name,
+          address: resource.address,
+          description: resource.description,
+          enabled,
+          groupIds: ((resource.groups as (string | { id?: string })[]) ?? [])
+            .map((g) => (typeof g === "string" ? g : g.id ?? ""))
+            .filter(Boolean),
+        });
+      }
+    },
+    [nodes, setNodes, trackUpdateResource, syncDraftResource],
+  );
+
+  // Delete an EXISTING resource: record the delete-resource change, then take
+  // it off the canvas.
+  const deleteResource = useCallback(
+    (id: string) => {
+      const target = nodes.find((n) => n.id === id);
+      const resource = (target?.data as { resource?: NetworkResource })
+        ?.resource;
+      const net = (target?.data as { draftNetwork?: DraftNetworkRef })
+        ?.draftNetwork;
+      if (resource?.id && net?.networkId) {
+        trackDeleteResource({
+          resourceId: resource.id,
+          networkId: net.networkId,
+          name: resource.name,
+          networkName: net.name,
+        });
+      }
+      removeNodeWithEdges(id);
+    },
+    [nodes, trackDeleteResource, removeNodeWithEdges],
   );
 
   const node = useMemo(
@@ -312,16 +426,21 @@ export const NodeContextMenu = ({
       ];
     }
 
-    // Draft networks: Edit (networks page's modal — name + description) /
-    // Add Routing Peer / Remove (removal cascades to dependent
-    // resource/router changes).
-    if (node.type === "networkNode" && !(node.data as any)?.network?.id) {
+    // Network frames (draft or existing dropped onto the canvas): frame
+    // actions apply to both; Edit (name + description) is draft-only, since
+    // v1 doesn't rename existing networks.
+    if (node.type === "networkNode" && isFrameNode(node)) {
+      const draftNetwork = isDraftNetworkNode(node);
       return [
-        {
-          label: "Edit",
-          icon: <SquarePenIcon size={14} />,
-          onClick: () => setNetworkEditor({ networkNodeId: nodeId }),
-        },
+        ...(draftNetwork
+          ? [
+              {
+                label: "Edit",
+                icon: <SquarePenIcon size={14} />,
+                onClick: () => setNetworkEditor({ networkNodeId: nodeId }),
+              },
+            ]
+          : []),
         {
           label: "Add Resource",
           icon: <WorkflowIcon size={14} />,
@@ -361,20 +480,54 @@ export const NodeContextMenu = ({
       ];
     }
 
-    // Draft resources: Edit (reopens the editor) / Remove.
-    if (nodeId.startsWith("resource-new-")) {
-      return [
+    // Resource nodes (draft or existing): Edit + Enable/Disable for all;
+    // Rename for draft only. An existing resource INSIDE a network can only be
+    // Deleted (not removed from canvas); draft/standalone resources are
+    // Removed.
+    if (node.type === "resourceNode") {
+      const isDraftRes = nodeId.startsWith("resource-new-");
+      const isFramed = !!node.parentId?.startsWith("network-");
+      const resEnabled =
+        (node.data as { enabled?: boolean }).enabled ?? true;
+      const items: MenuItem[] = [
         {
           label: "Edit",
           icon: <SquarePenIcon size={14} />,
           onClick: () => setResourceEditor({ nodeId }),
         },
-        {
+      ];
+      if (isDraftRes) {
+        items.push({
+          label: "Rename",
+          icon: <PencilLineIcon size={14} />,
+          onClick: () => openRename(node),
+        });
+      }
+      items.push({
+        label: resEnabled ? "Disable" : "Enable",
+        icon: resEnabled ? (
+          <PowerOffIcon size={14} />
+        ) : (
+          <PowerIcon size={14} />
+        ),
+        onClick: () => toggleResourceEnabled(nodeId),
+      });
+      // Existing resource inside a network → Delete only; otherwise Remove.
+      if (!isDraftRes && isFramed) {
+        items.push({
+          label: "Delete",
+          icon: <TrashIcon size={14} />,
+          onClick: () => deleteResource(nodeId),
+          danger: true,
+        });
+      } else {
+        items.push({
           label: "Remove",
           icon: <CircleXIcon size={14} />,
           onClick: handleRemove,
-        },
-      ];
+        });
+      }
+      return items;
     }
 
     return [
@@ -401,6 +554,8 @@ export const NodeContextMenu = ({
     setSelectedPolicy,
     setPolicyModalOpen,
     openRename,
+    toggleResourceEnabled,
+    deleteResource,
     addResourceToFrame,
     addResourceGroupToFrame,
   ]);
@@ -450,30 +605,53 @@ export const NodeContextMenu = ({
       <GroupRenameModal
         open={renameOpen}
         onOpenChange={setRenameOpen}
-        title={isPlaceholderRename ? "Rename Peer" : undefined}
+        title={
+          isPlaceholderRename
+            ? "Rename Peer"
+            : isResourceRename
+            ? "Rename Resource"
+            : undefined
+        }
         description={
           isPlaceholderRename
             ? "Set an easily identifiable name for this peer."
+            : isResourceRename
+            ? "Set an easily identifiable name for this resource."
             : undefined
         }
         inputPlaceholder={
-          isPlaceholderRename ? "e.g., Backup Server" : undefined
+          isPlaceholderRename
+            ? "e.g., Backup Server"
+            : isResourceRename
+            ? "e.g., Internal API"
+            : undefined
         }
         currentName={
           isPlaceholderRename
             ? placeholderCurrentName
+            : isResourceRename
+            ? resourceCurrentName
             : getNodeGroup(renameTarget ?? undefined)?.name ?? ""
         }
-        groups={isPlaceholderRename ? undefined : groups}
-        takenNames={isPlaceholderRename ? placeholderTakenNames : undefined}
-        duplicateError={
+        groups={
+          isPlaceholderRename || isResourceRename ? undefined : groups
+        }
+        takenNames={
           isPlaceholderRename
+            ? placeholderTakenNames
+            : isResourceRename
+            ? resourceTakenNames
+            : undefined
+        }
+        duplicateError={
+          isPlaceholderRename || isResourceRename
             ? "Name already taken. Please choose another name."
             : undefined
         }
         onRename={(name) => {
           if (renameTarget) {
             if (isPlaceholderRename) renamePlaceholder(renameTarget.id, name);
+            else if (isResourceRename) renameResource(renameTarget.id, name);
             else renameGroup(renameTarget, name);
           }
           setRenameOpen(false);
