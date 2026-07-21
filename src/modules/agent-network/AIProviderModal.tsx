@@ -113,6 +113,8 @@ function upstreamUrlPlaceholder(providerId: AIProviderId): string {
       return "https://api.portkey.ai";
     case "vllm":
       return "https://your-vllm-host:8000";
+    case "kimi_api":
+      return "https://api.moonshot.ai";
     case "custom":
       return "https://your-llm-host";
     default:
@@ -136,6 +138,8 @@ function upstreamUrlHelpText(providerId: AIProviderId): string {
       return "OpenRouter uses a fixed endpoint, openrouter.ai/api/v1; apps choose the upstream provider via the model prefix, e.g. anthropic/claude-* or openai/gpt-*.";
     case "vllm":
       return "Your local vLLM server's OpenAI-compatible base URL.";
+    case "kimi_api":
+      return "Moonshot AI's international platform endpoint. Keep https://api.moonshot.ai for OpenAI-shaped agents (Codex, OpenAI SDK) or append /anthropic for Anthropic-shaped agents like Claude Code and Kimi CLI — Moonshot serves both APIs with the same key. Mainland-China accounts use api.moonshot.cn instead.";
     default:
       return "Where NetBird forwards the traffic.";
   }
@@ -738,7 +742,7 @@ export default function AIProviderModal({
                     onChange={(e) => setApiKey(e.target.value)}
                     customPrefix={<KeyRound size={14} />}
                     placeholder={
-                      providerId === "openai_api"
+                      providerId === "openai_api" || providerId === "kimi_api"
                         ? "sk-..."
                         : providerId === "anthropic_api"
                         ? "sk-ant-..."

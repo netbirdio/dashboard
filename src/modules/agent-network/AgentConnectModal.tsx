@@ -2,6 +2,7 @@
 
 import Code from "@components/Code";
 import { Modal, ModalContent } from "@components/modal/Modal";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import Paragraph from "@components/Paragraph";
 import SmallParagraph from "@components/SmallParagraph";
 import SquareIcon from "@components/SquareIcon";
@@ -56,6 +57,7 @@ export function AgentConnectTabs({
   listClassName = "px-8",
   contentClassName = "px-6 py-2",
   defaultTab = "claude-code",
+  providerIds = [],
 }: {
   endpoint: string;
   listClassName?: string;
@@ -64,23 +66,48 @@ export function AgentConnectTabs({
   // matching tool (e.g. Anthropic → claude-code, OpenAI → curl). Keyed below
   // so a late-resolving defaultTab still re-initialises the tabs.
   defaultTab?: string;
+  // Catalog ids of the account's connected providers. Kimi-specific config
+  // surfaces (the Kimi CLI tab and the Kimi variants inside the Claude Code /
+  // Codex tabs) only render when a kimi_api provider is actually connected —
+  // showing Moonshot setup against an endpoint that can't route to Kimi
+  // would just be a trap.
+  providerIds?: string[];
 }) {
   const baseUrl = `https://${endpoint}`;
   const openaiBase = `${baseUrl}/v1`;
+  const hasKimi = providerIds.includes("kimi_api");
   const [claudeMode, setClaudeMode] = React.useState<"config" | "shell">(
     "config",
   );
-  // Which backend the Claude Code config targets — Anthropic API direct, or
-  // via Vertex AI / Bedrock. Switched in-tab instead of separate tabs.
+  // Which backend the Claude Code config targets — Anthropic API direct,
+  // via Vertex AI / Bedrock, or Kimi (Moonshot AI, whose upstream speaks the
+  // Anthropic Messages API too). Switched in-tab instead of separate tabs.
+  // When Kimi is the only Anthropic-shaped provider connected, it's the only
+  // config that can work, so start there.
+  const kimiOnlyAnthropicShape =
+    hasKimi &&
+    !["anthropic_api", "vertex_ai_api", "bedrock_api"].some((id) =>
+      providerIds.includes(id),
+    );
   const [claudeProvider, setClaudeProvider] = React.useState<
-    "anthropic" | "vertex" | "bedrock"
-  >("anthropic");
+    "anthropic" | "vertex" | "bedrock" | "kimi"
+  >(kimiOnlyAnthropicShape ? "kimi" : "anthropic");
+  // Which upstream the Codex config targets. Codex speaks the Responses API
+  // natively; Kimi's OpenAI-compatible upstream is Chat Completions only, so
+  // its variant needs wire_api = "chat" plus a Kimi model id.
+  const kimiOnlyOpenAIShape =
+    hasKimi &&
+    !["openai_api", "azure_openai_api"].some((id) => providerIds.includes(id));
+  const [codexProvider, setCodexProvider] = React.useState<"openai" | "kimi">(
+    kimiOnlyOpenAIShape ? "kimi" : "openai",
+  );
 
   return (
     <Tabs key={defaultTab} defaultValue={defaultTab} className={"mt-2"}>
       <TabsList justify={"start"} className={listClassName}>
         <TabsTrigger value={"claude-code"}>Claude Code</TabsTrigger>
         <TabsTrigger value={"codex"}>Codex</TabsTrigger>
+        {hasKimi && <TabsTrigger value={"kimi-cli"}>Kimi CLI</TabsTrigger>}
         <TabsTrigger value={"openai-sdk"}>OpenAI SDK</TabsTrigger>
         <TabsTrigger value={"curl"}>cURL</TabsTrigger>
       </TabsList>
@@ -91,12 +118,17 @@ export function AgentConnectTabs({
             <SelectDropdown
               value={claudeProvider}
               onChange={(v) =>
-                setClaudeProvider(v as "anthropic" | "vertex" | "bedrock")
+                setClaudeProvider(
+                  v as "anthropic" | "vertex" | "bedrock" | "kimi",
+                )
               }
               options={[
                 { label: "Anthropic API", value: "anthropic" },
                 { label: "Vertex AI", value: "vertex" },
                 { label: "Bedrock", value: "bedrock" },
+                ...(hasKimi
+                  ? [{ label: "Kimi (Moonshot AI)", value: "kimi" }]
+                  : []),
               ]}
               showValues={false}
               className={"w-[160px]"}
@@ -176,22 +208,158 @@ export function AgentConnectTabs({
               ]}
             />
           )}
+
+          {claudeProvider === "kimi" && (
+            <>
+              <div className={"flex items-center justify-between gap-3 mb-2"}>
+                <SmallParagraph className={"!mb-0"}>
+                  {claudeMode === "config"
+                    ? "Add to ~/.claude/settings.json:"
+                    : "Run in your shell:"}
+                </SmallParagraph>
+                <button
+                  type={"button"}
+                  onClick={() =>
+                    setClaudeMode(claudeMode === "config" ? "shell" : "config")
+                  }
+                  className={
+                    "shrink-0 mr-2 text-[11px] text-white hover:underline underline-offset-2 cursor-pointer"
+                  }
+                >
+                  {claudeMode === "config" ? "Shell" : "JSON"}
+                </button>
+              </div>
+              <Snippet
+                // Claude Code speaks the Anthropic Messages API, which
+                // Moonshot serves under the /anthropic path prefix — the Kimi
+                // provider's upstream URL must be
+                // https://api.moonshot.ai/anthropic. The model tiers point at
+                // a Kimi model id since the upstream has no Claude models.
+                lines={
+                  claudeMode === "config"
+                    ? [
+                        `{`,
+                        `  "apiKeyHelper": "echo '-'",`,
+                        `  "env": {`,
+                        `    "ANTHROPIC_BASE_URL": "${baseUrl}",`,
+                        `    "ANTHROPIC_MODEL": "kimi-k3",`,
+                        `    "ANTHROPIC_SMALL_FAST_MODEL": "kimi-k3"`,
+                        `  }`,
+                        `}`,
+                      ]
+                    : [
+                        `export ANTHROPIC_BASE_URL=${baseUrl}`,
+                        `export ANTHROPIC_API_KEY=none`,
+                        `export ANTHROPIC_MODEL=kimi-k3`,
+                        `export ANTHROPIC_SMALL_FAST_MODEL=kimi-k3`,
+                        `claude`,
+                      ]
+                }
+              />
+              <SmallParagraph className={"mt-3"}>
+                Requires the Kimi provider&apos;s upstream URL to be{" "}
+                <code className={"font-mono"}>
+                  https://api.moonshot.ai/anthropic
+                </code>{" "}
+                — Moonshot serves the Anthropic Messages API under that path.
+              </SmallParagraph>
+            </>
+          )}
         </div>
       </TabsContent>
 
       <TabsContent value={"codex"}>
         <div className={contentClassName}>
+          {hasKimi && (
+            <div className={"mb-3"}>
+              <SelectDropdown
+                value={codexProvider}
+                onChange={(v) => setCodexProvider(v as "openai" | "kimi")}
+                options={[
+                  { label: "OpenAI API", value: "openai" },
+                  { label: "Kimi (Moonshot AI)", value: "kimi" },
+                ]}
+                showValues={false}
+                className={"w-[180px]"}
+              />
+            </div>
+          )}
+          {codexProvider === "openai" && (
+            <Snippet
+              caption={"Add to ~/.codex/config.toml:"}
+              lines={[
+                `model_provider = "netbird"`,
+                ``,
+                `[model_providers.netbird]`,
+                `name = "NetBird"`,
+                `base_url = "${openaiBase}"`,
+                `wire_api = "responses"`,
+              ]}
+            />
+          )}
+          {codexProvider === "kimi" && (
+            <>
+              <Snippet
+                // Kimi's OpenAI-compatible upstream speaks Chat Completions,
+                // not the Responses API Codex defaults to — wire_api "chat"
+                // is what makes Codex talk to it.
+                caption={"Add to ~/.codex/config.toml:"}
+                lines={[
+                  `model_provider = "netbird"`,
+                  `model = "kimi-k3"`,
+                  ``,
+                  `[model_providers.netbird]`,
+                  `name = "NetBird"`,
+                  `base_url = "${openaiBase}"`,
+                  `wire_api = "chat"`,
+                ]}
+              />
+              <SmallParagraph className={"mt-3"}>
+                Requires the Kimi provider&apos;s upstream URL to be{" "}
+                <code className={"font-mono"}>https://api.moonshot.ai</code> —
+                Codex sends OpenAI-shaped requests on /v1, and{" "}
+                <code className={"font-mono"}>wire_api = &quot;chat&quot;</code>{" "}
+                switches it from the Responses API to Chat Completions, which
+                is what Kimi&apos;s upstream speaks.
+              </SmallParagraph>
+            </>
+          )}
+        </div>
+      </TabsContent>
+
+      <TabsContent value={"kimi-cli"}>
+        <div className={contentClassName} hidden={!hasKimi}>
           <Snippet
-            caption={"Add to ~/.codex/config.toml:"}
+            // Kimi CLI reads providers from ~/.kimi/config.toml. The
+            // "anthropic" provider type matches a Kimi provider whose
+            // upstream URL is https://api.moonshot.ai/anthropic; api_key is
+            // a placeholder since NetBird injects the real key server-side.
+            caption={"Add to ~/.kimi/config.toml:"}
             lines={[
-              `model_provider = "netbird"`,
+              `default_model = "kimi-k3"`,
               ``,
-              `[model_providers.netbird]`,
-              `name = "NetBird"`,
-              `base_url = "${openaiBase}"`,
-              `wire_api = "responses"`,
+              `[providers.netbird]`,
+              `type = "anthropic"`,
+              `base_url = "${baseUrl}"`,
+              `api_key = "-"`,
+              ``,
+              `[models.kimi-k3]`,
+              `provider = "netbird"`,
+              `model = "kimi-k3"`,
+              `max_context_size = 1000000`,
             ]}
           />
+          <SmallParagraph className={"mt-3"}>
+            Pairs with a Kimi provider whose upstream URL is{" "}
+            <code className={"font-mono"}>
+              https://api.moonshot.ai/anthropic
+            </code>
+            . For an OpenAI-shaped provider (upstream{" "}
+            <code className={"font-mono"}>https://api.moonshot.ai</code>), use{" "}
+            <code className={"font-mono"}>type = &quot;openai_legacy&quot;</code>{" "}
+            with <code className={"font-mono"}>base_url = &quot;{openaiBase}&quot;</code>{" "}
+            instead.
+          </SmallParagraph>
         </div>
       </TabsContent>
 
@@ -243,6 +411,9 @@ export default function AgentConnectModal({
   onOpenChange,
   endpoint,
 }: Readonly<Props>) {
+  // Rendered inside <AIProvidersProvider> (providers page); the connected
+  // provider ids gate which per-tool config variants the tabs offer.
+  const { providers } = useAIProviders();
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-2xl"}>
@@ -258,7 +429,10 @@ export default function AgentConnectModal({
           </Paragraph>
         </div>
 
-        <AgentConnectTabs endpoint={endpoint} />
+        <AgentConnectTabs
+          endpoint={endpoint}
+          providerIds={providers.map((p) => p.providerId)}
+        />
       </ModalContent>
     </Modal>
   );

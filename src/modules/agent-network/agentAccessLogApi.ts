@@ -132,6 +132,7 @@ const KNOWN_PROVIDER_IDS: AIProviderId[] = [
   "bedrock_api",
   "vertex_ai_api",
   "mistral_api",
+  "kimi_api",
   "custom",
 ];
 
