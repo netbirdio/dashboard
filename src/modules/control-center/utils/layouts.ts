@@ -307,10 +307,10 @@ export const applyDraftArrangeLayout = (nodes: Node[], edges: Edge[]) => {
   // Column x positions mirror the draft build layout
   // (applyD3HierarchicalLayout with DEFAULT_LAYOUT_CONFIG); vertical spacing
   // is roomier so nodes with floating Install buttons don't crowd each other.
-  centerNodesVertically(unconnected, -450, 160, 0);
-  centerNodesVertically(sources, 0, 160, 0);
-  centerNodesVertically(policies, 500, 80, 14);
-  centerNodesVertically(destinations, 1000, 160, 0);
+  centerNodesVertically(unconnected, -450, 160, 0, true, true);
+  centerNodesVertically(sources, 0, 160, 0, true, true);
+  centerNodesVertically(policies, 500, 80, 14, true, true);
+  centerNodesVertically(destinations, 1000, 160, 0, true, true);
 
   const updatedNodes: Node[] = simulationNodes.map((node) => ({
     ...node,
@@ -355,8 +355,22 @@ const centerNodesVertically = (
   nodeSpacing: number,
   centerY: number,
   enable = true,
+  // Height-aware pitch is opt-in (draft auto-arrange only) — the live
+  // hierarchical layout uses a fixed pitch so equal-height nodes stay aligned
+  // in a straight column.
+  heightAware = false,
 ) => {
   if (nodesList.length === 0) return;
+
+  if (!heightAware) {
+    const totalHeight = (nodesList.length - 1) * nodeSpacing;
+    const startY = centerY - totalHeight / 2;
+    nodesList.forEach((node, index) => {
+      node.x = x;
+      node.y = (enable ? startY : 0) + index * nodeSpacing;
+    });
+    return;
+  }
 
   // Each node claims a row at least `nodeSpacing` tall, but a taller node
   // (e.g. a network frame) claims its own height plus a gap so the next node
