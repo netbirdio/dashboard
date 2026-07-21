@@ -106,9 +106,16 @@ function ControlCenterCanvas() {
   const emptyState = canvas.nodes.length === 0 && !componentsPanelOpen;
   const canInteract = !anyMenuOpen && !draft.isSelectMode && !emptyState;
 
-  // A click outside should dismiss everything at once — the context menu AND
-  // any open panel/components picker — so the user never has to click twice.
+  // Closes just the context menu — used after picking a menu item (so an
+  // action like "Details", which opens the group panel, isn't undone).
   const closeNodeContextMenu = React.useCallback(() => {
+    setNodeContextMenuPos(null);
+    canvas.setContextMenuNodeId("");
+  }, [canvas]);
+
+  // A click OUTSIDE dismisses everything at once — the context menu AND any
+  // open panel/components picker — so the user never has to click twice.
+  const dismissCanvasOverlays = React.useCallback(() => {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
     canvas.setSelectedDestinationGroup("");
@@ -146,9 +153,7 @@ function ControlCenterCanvas() {
           canvas.setContextMenuNodeId(node.id);
         }}
         onPaneClick={() => {
-          canvas.setSelectedDestinationGroup("");
-          setComponentsPanelOpen(false);
-          closeNodeContextMenu();
+          dismissCanvasOverlays();
         }}
         onNodeMouseEnter={(_, node) => {
           if (!draft.isDraft) return;
@@ -192,6 +197,7 @@ function ControlCenterCanvas() {
           position={nodeContextMenuPos}
           nodeId={canvas.contextMenuNodeId}
           onClose={closeNodeContextMenu}
+          onDismiss={dismissCanvasOverlays}
         />
       </ReactFlow>
     </>

@@ -62,13 +62,17 @@ type MenuItem = {
 interface NodeContextMenuProps {
   position: MenuPosition | null;
   nodeId: string;
+  // Close just the menu (after picking an item — keeps any panel it opened).
   onClose: () => void;
+  // Dismiss everything (menu + panel + components) on an outside click.
+  onDismiss: () => void;
 }
 
 export const NodeContextMenu = ({
   position,
   nodeId,
   onClose,
+  onDismiss,
 }: NodeContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
   // Where the menu renders — flipped/clamped away from the viewport edges.
@@ -562,13 +566,15 @@ export const NodeContextMenu = ({
 
   useEffect(() => {
     if (!position) return;
-    document.addEventListener("click", onClose);
-    document.addEventListener("scroll", onClose, true);
+    // An outside click/scroll dismisses everything; item clicks stopPropagation
+    // so they don't reach this listener.
+    document.addEventListener("click", onDismiss);
+    document.addEventListener("scroll", onDismiss, true);
     return () => {
-      document.removeEventListener("click", onClose);
-      document.removeEventListener("scroll", onClose, true);
+      document.removeEventListener("click", onDismiss);
+      document.removeEventListener("scroll", onDismiss, true);
     };
-  }, [position, onClose]);
+  }, [position, onDismiss]);
 
   return (
     <>
@@ -584,7 +590,10 @@ export const NodeContextMenu = ({
           {items.map((item) => (
             <button
               key={item.label}
-              onClick={() => {
+              onClick={(e) => {
+                // Keep this click from reaching the document listener (which
+                // would dismiss the panel this item may have just opened).
+                e.stopPropagation();
                 item.onClick?.();
                 onClose();
               }}
