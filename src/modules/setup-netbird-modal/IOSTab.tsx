@@ -24,6 +24,7 @@ export default function IOSTab() {
               <Link
                 href={"https://apps.apple.com/app/netbird-p2p-vpn/id6469329339"}
                 target={"_blank"}
+                rel="noopener noreferrer"
               >
                 <Image
                   src={AppStoreButton}

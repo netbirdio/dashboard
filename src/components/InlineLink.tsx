@@ -9,6 +9,7 @@ interface Props extends LinkProps, InlineLinkProps {
   children: React.ReactNode;
   className?: string;
   target?: "_blank" | "_self" | "_parent" | "_top";
+  rel?: string;
 }
 
 interface InlineButtonProps
@@ -16,7 +17,6 @@ interface InlineButtonProps
     InlineLinkProps {
   children: React.ReactNode;
   className?: string;
-  target?: "_blank" | "_self" | "_parent" | "_top";
 }
 
 export const linkVariants = cva(
@@ -35,8 +35,22 @@ export const linkVariants = cva(
 );
 
 export default function InlineLink({ variant = "default", ...props }: Props) {
+  const safeRel = React.useMemo(() => {
+    if (props.target !== "_blank") return props.rel;
+
+    const tokens = new Set((props.rel ?? "").split(/\s+/).filter(Boolean));
+    tokens.add("noopener");
+    tokens.add("noreferrer");
+
+    return Array.from(tokens).join(" ");
+  }, [props.target, props.rel]);
+
   return (
-    <Link {...props} className={cn(props.className, linkVariants({ variant }))}>
+    <Link
+      {...props}
+      rel={safeRel}
+      className={cn(props.className, linkVariants({ variant }))}
+    >
       {props.children}
     </Link>
   );
