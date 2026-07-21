@@ -143,7 +143,9 @@ export function useDraftNetworkActions() {
               ...(isFrame
                 ? {
                     parentId: networkNodeId,
-                    position: getFrameChildPosition(childCount),
+                    // Index -1 sorts above every existing child so the assigned
+                    // resource lands FIRST; the reconciling layout re-sorts.
+                    position: getFrameChildPosition(-1),
                     // Laid out by the frame, full frame width; dragging one
                     // moves the whole frame (intercepted in useDragToGroup).
                     style: { ...n.style, width: NETWORK_FRAME_CHILD_WIDTH },

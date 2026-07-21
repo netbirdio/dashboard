@@ -10,6 +10,7 @@ import {
   NETWORK_FRAME_WIDTH,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
+import { getNextNewGroupName } from "@/modules/control-center/hooks/useDraftGroupActions";
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 import type { Policy } from "@/interfaces/Policy";
 
@@ -279,9 +280,6 @@ export function useDraftNodeCreation() {
         if (resourceName) takenResources.add(resourceName);
       });
       const name = getNextUniqueName("Resource", takenResources);
-      const childCount = nodes.filter(
-        (n) => n.parentId === networkNodeId,
-      ).length;
 
       const nodeId = `resource-new-${uid()}`;
       reactFlow.setNodes((prev) =>
@@ -289,7 +287,10 @@ export function useDraftNodeCreation() {
           id: nodeId,
           type: NodeType.ResourceNode,
           parentId: networkNodeId,
-          position: getFrameChildPosition(childCount),
+          // Index -1 sorts above every existing child, so the newly added
+          // node lands FIRST in the frame's grid (the reconciling layout
+          // re-sorts by y/x and repositions everything).
+          position: getFrameChildPosition(-1),
           style: { width: NETWORK_FRAME_CHILD_WIDTH },
           data: {
             resource: { name },
@@ -305,6 +306,46 @@ export function useDraftNodeCreation() {
       return nodeId;
     },
     [reactFlow, networkResources],
+  );
+
+  // Adds a blank draft resource GROUP into an existing network frame (context
+  // menu's "Add Resource Group") — child of the frame, laid out by
+  // useNetworkFrameLayout like a resource row. Editable later.
+  const addResourceGroupToFrame = useCallback(
+    (networkNodeId: string) => {
+      const nodes = reactFlow.getNodes();
+      const frame = nodes.find((n) => n.id === networkNodeId);
+      if (!frame) return;
+
+      const taken = new Set<string>();
+      nodes.forEach((n) => {
+        const groupName = (n.data as { group?: { name?: string } })?.group
+          ?.name;
+        if (groupName) taken.add(groupName);
+      });
+      const name = getNextNewGroupName(taken);
+
+      const nodeId = `resourcegroup-new-${uid()}`;
+      reactFlow.setNodes((prev) =>
+        prev.concat({
+          id: nodeId,
+          type: NodeType.ResourceGroupNode,
+          parentId: networkNodeId,
+          // Index -1 sorts above every existing child, so the newly added
+          // node lands FIRST in the frame's grid (the reconciling layout
+          // re-sorts by y/x and repositions everything).
+          position: getFrameChildPosition(-1),
+          style: { width: NETWORK_FRAME_CHILD_WIDTH },
+          data: {
+            group: { name },
+            enabled: true,
+            showHandles: true,
+          },
+        }),
+      );
+      return nodeId;
+    },
+    [reactFlow],
   );
 
   // Kept for callers that still switch on kind (components panel templates,
@@ -325,5 +366,6 @@ export function useDraftNodeCreation() {
     addDraftResource,
     addBlankPolicy,
     addResourceToFrame,
+    addResourceGroupToFrame,
   };
 }

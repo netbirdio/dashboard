@@ -39,13 +39,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   const sourceGroupEnabled = useAnySourceGroupEnabled(id);
   const isEnabled = enabled ?? sourceGroupEnabled;
   const connection = useConnection();
-  const {
-    isDraft,
-    setResourceEditor,
-    drillDownNetworkNodeId,
-    hoveredNetworkNodeId,
-  } = useDraftMode();
-  const isFrameHovered = !!parentId && hoveredNetworkNodeId === parentId;
+  const { isDraft, setResourceEditor, drillDownNetworkNodeId } = useDraftMode();
   // Framed resources accept connection DROPS in every view — the drop
   // routes into the destination picker preselected with this resource. Only
   // dragging FROM the resource stays drill-down-only in the parent view.
@@ -88,8 +82,6 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
             className={cn(
               "h-9 w-9 bg-nb-gray-850 group-hover/node:text-nb-gray-200 rounded-md flex items-center justify-center shrink-0 group-hover/node:bg-nb-gray-700 transition-all",
               "border border-nb-gray-850 group-hover/node:border-nb-gray-700",
-              // Frame hover lifts only the icon box, not the row.
-              isFrameHovered && "bg-nb-gray-800 border-nb-gray-800",
               // Rings live on the icon box, not the whole row: white while a
               // connection drag hovers this node, sky halo for the context
               // menu (same as group nodes).
@@ -99,10 +91,10 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
           >
             <Icon size={16} />
           </div>
-          <div className={"flex flex-col gap-0 justify-center leading-tight"}>
+          <div className={"flex flex-col gap-0 justify-center leading-tight "}>
             <span
               className={
-                "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1.5 mt-2"
+                "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1 mt-1 relative top-[0.05rem]"
               }
             >
               <TruncatedText
@@ -114,7 +106,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
             {/* Address slot — dimmed placeholder until it's set. */}
             <span
               className={
-                "font-normal text-sm text-nb-gray-500 relative -top-[0.3rem]"
+                "font-normal text-sm text-nb-gray-500 relative -top-[0.25rem]"
               }
             >
               {draftResource.address || "x.x.x.x"}

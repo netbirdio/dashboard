@@ -7,9 +7,10 @@ import React, {
 } from "react";
 import {
   CircleXIcon,
+  ListIcon,
   WorkflowIcon,
   PencilLineIcon,
-  PlusCircleIcon,
+  PlusIcon,
   SquarePenIcon,
   PowerIcon,
   PowerOffIcon,
@@ -32,6 +33,7 @@ import {
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
 import {
@@ -66,7 +68,8 @@ export const NodeContextMenu = ({
   const menuRef = useRef<HTMLDivElement>(null);
   // Where the menu renders — flipped/clamped away from the viewport edges.
   const menuPosition = useEdgeAwareMenuPosition(position, menuRef);
-  const { nodes, setNodes, setEdges } = useCanvasState();
+  const { nodes, setNodes, setEdges, setSelectedDestinationGroup } =
+    useCanvasState();
   const { isDraft, setResourceEditor, setRoutingPeerModal, setNetworkEditor } =
     useDraftMode();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
@@ -78,7 +81,7 @@ export const NodeContextMenu = ({
     confirmAndDeleteGroups,
     removeNodeWithEdges,
   } = useDraftGroupActions();
-  const { addResourceToFrame } = useDraftNodeCreation();
+  const { addResourceToFrame, addResourceGroupToFrame } = useDraftNodeCreation();
 
   // The rename modal must survive the menu closing (position → null), so the
   // target node is snapshotted separately. It targets either a group node or
@@ -224,10 +227,17 @@ export const NodeContextMenu = ({
         icon: <CircleXIcon size={14} />,
         onClick: () => removeGroup(node),
       };
+      // Opens the group panel (name/metadata + assign peers) — the same thing
+      // a left-click on the node does; surfaced here so it's discoverable.
+      const edit: MenuItem = {
+        label: "Details",
+        icon: <ListIcon size={14} />,
+        onClick: () => setSelectedDestinationGroup(group?.id || node.id),
+      };
       // "All" can neither be renamed nor deleted.
-      if (isAllGroup(group)) return [remove];
+      if (isAllGroup(group)) return [edit, remove];
 
-      const items: MenuItem[] = [];
+      const items: MenuItem[] = [edit];
       if (canRenameGroup(group)) {
         items.push({
           label: "Rename",
@@ -318,9 +328,30 @@ export const NodeContextMenu = ({
           onClick: () => addResourceToFrame(nodeId),
         },
         {
+          label: "Add Resource Group",
+          icon: <GroupBadgeIcon size={14} />,
+          onClick: () => addResourceGroupToFrame(nodeId),
+        },
+        {
           label: "Add Routing Peer",
-          icon: <PlusCircleIcon size={14} />,
+          icon: <PlusIcon size={14} />,
           onClick: () => setRoutingPeerModal({ networkNodeId: nodeId }),
+        },
+        {
+          label: "Remove",
+          icon: <CircleXIcon size={14} />,
+          onClick: handleRemove,
+        },
+      ];
+    }
+
+    // Draft resource groups (inside a frame): Rename / Remove.
+    if (nodeId.startsWith("resourcegroup-new-")) {
+      return [
+        {
+          label: "Rename",
+          icon: <PencilLineIcon size={14} />,
+          onClick: () => openRename(node),
         },
         {
           label: "Remove",
@@ -360,6 +391,7 @@ export const NodeContextMenu = ({
     policyEnabled,
     handleRemove,
     removeGroup,
+    setSelectedDestinationGroup,
     confirmAndDeleteGroups,
     handleTogglePolicy,
     handleDeletePolicy,
@@ -370,6 +402,7 @@ export const NodeContextMenu = ({
     setPolicyModalOpen,
     openRename,
     addResourceToFrame,
+    addResourceGroupToFrame,
   ]);
 
   useEffect(() => {

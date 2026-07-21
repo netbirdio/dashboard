@@ -1,8 +1,7 @@
 import useFetchApi from "@utils/api";
 import { cn, singularize } from "@utils/helpers";
 import { Handle, type Node, Position, useConnection } from "@xyflow/react";
-import { HelpCircle, NetworkIcon, PlusIcon } from "lucide-react";
-import FullTooltip from "@components/FullTooltip";
+import { NetworkIcon, PlusIcon } from "lucide-react";
 import Button from "@components/Button";
 import * as React from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
@@ -14,12 +13,13 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
+import { MoreResourcesNode } from "@/modules/control-center/nodes/MoreResourcesNode";
+import { NodeType } from "@/modules/control-center/utils/nodes";
+import type { FrameMoreCell } from "@/modules/control-center/hooks/useNetworkFrameLayout";
 import {
   DraftNetworkRef,
   getDraftResource,
   NETWORK_FRAME_HEADER,
-  NETWORK_FRAME_MAX_VISIBLE,
-  NETWORK_FRAME_OVERFLOW_ROW,
 } from "@/modules/control-center/utils/helpers";
 
 type NetworkNodeType = {
@@ -35,14 +35,12 @@ const RoutingPeersIndicator = ({
   dotSize = 8,
   className,
   zeroLabel,
-  helpIcon = false,
 }: {
   count: number;
   hideWhenZero?: boolean;
   dotSize?: number;
   className?: string;
   zeroLabel?: string;
-  helpIcon?: boolean;
 }) => {
   if (hideWhenZero && count === 0) return null;
   return (
@@ -59,7 +57,6 @@ const RoutingPeersIndicator = ({
       {count === 0 && zeroLabel
         ? zeroLabel
         : singularize("Routing Peers", count, true)}
-      {helpIcon && <HelpCircle size={12} className={"shrink-0"} />}
     </div>
   );
 };
@@ -120,14 +117,25 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
     networkResources?.filter((r) => resourceIds.includes(r?.id || "")) || [];
   const resources = [...apiResources, ...draftResources];
 
-  // Parent view caps the frame at NETWORK_FRAME_MAX_VISIBLE resources
-  // (useNetworkFrameLayout hides the rest); the "+N More" footer summarizes
-  // them in the band the layout reserves at the frame's bottom. Drilling in
-  // reveals all, so there's no overflow there.
-  const overflowCount =
-    isFrame && !isDrilled
-      ? Math.max(0, resources.length - NETWORK_FRAME_MAX_VISIBLE)
-      : 0;
+  // Resource-group child nodes live in the frame as their own rows (no
+  // draftNetwork ref, so they're not in `resources`); they still occupy a
+  // grid cell and count toward the frame's contents like a resource does.
+  const resourceGroupCount = React.useMemo(
+    () =>
+      nodes.filter(
+        (node) =>
+          node.parentId === id && node.type === NodeType.ResourceGroupNode,
+      ).length,
+    [nodes, id],
+  );
+  // Total cells the frame holds — drives the header count and whether the
+  // "Add Resource" button is centered (empty) or a bottom row (has content).
+  const frameCellCount = resources.length + resourceGroupCount;
+
+  // Parent view caps the frame's visible cells; useNetworkFrameLayout hides
+  // the overflow and hands back the rect for a "+N more" cell in the last
+  // grid slot (cleared while drilled, since drilling reveals everything).
+  const moreCell = (data as { moreCell?: FrameMoreCell }).moreCell;
 
   // Draft routers: create-router changes for this network (routers have no
   // canvas representation — the count IS the state).
@@ -220,28 +228,29 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         </div>
       )}
 
-      {/* "Add Resource" button, shown whenever the "+N More" overflow footer
-          isn't (up to the visible cap and in the drill-down). Empty frames
-          center it in the body (auto width); once there are resources it's a
-          full-width row pinned to the bottom band the layout reserves.
+      {/* "Add Resource" button — always present in a draft frame so resources
+          can be added at any count. Empty frames center it in the body (auto
+          width); once there are resources it's a full-width row pinned to the
+          bottom band the layout reserves, and the "+N More" overflow footer
+          (when resources overflow the visible cap) stacks just above it.
           Hovering it must not highlight the frame / reveal the ConnectHandle,
           same as the floating controls. */}
-      {isDraft && isFrame && overflowCount === 0 && (
+      {isDraft && isFrame && (
         <div
           className={cn(
             "absolute inset-x-0 bottom-0 nodrag",
-            resources.length === 0
+            frameCellCount === 0
               ? "flex items-center justify-center"
-              : "px-5 pb-3.5",
+              : "px-5 pb-5",
           )}
           style={
-            resources.length === 0 ? { top: NETWORK_FRAME_HEADER } : undefined
+            frameCellCount === 0 ? { top: NETWORK_FRAME_HEADER } : undefined
           }
         >
           <Button
             variant={"secondary"}
             size={"xs"}
-            className={cn("!px-3", resources.length > 0 && "w-full")}
+            className={cn("!px-3 !py-0 h-9", frameCellCount > 0 && "w-full")}
             onClick={() => setResourceEditor({ createInNetworkNodeId: id })}
             onMouseEnter={() => {
               setHoveredNetworkNodeId(null);
@@ -282,68 +291,32 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           }
         >
           {/* Routing-peers button group: [● status | ⊕ Add]. The status opens
-              the routing-peer modal (HA tooltip on hover); the trailing "Add"
-              (split off by a left border) adds a routing peer. */}
+              the routing-peer modal; the trailing "Add" (split off by a left
+              border) adds a routing peer. */}
           <div
             className={cn(
               "flex items-stretch rounded-md overflow-hidden shrink-0",
               "bg-nb-gray-920 border border-gray-700/40",
             )}
           >
-            <FullTooltip
-              interactive={false}
-              disabled={routingPeersCount === 0}
-              content={
-                <div className={"max-w-xs text-xs"}>
-                  {routingPeersCount >= 2 ? (
-                    <>
-                      High availability is{" "}
-                      <span className={"text-green-500 font-medium"}>
-                        active
-                      </span>{" "}
-                      for this network.
-                      <div className={"inline-flex mt-2"}>
-                        You can add more routing peers to increase the
-                        availability of this network.
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      High availability is currently{" "}
-                      <span className={"text-yellow-400 font-medium"}>
-                        inactive
-                      </span>{" "}
-                      for this network.
-                      <div className={"inline-flex mt-2"}>
-                        Go ahead and add more routing peers or groups with
-                        routing peers to enable high availability for this
-                        network.
-                      </div>
-                    </>
-                  )}
-                </div>
-              }
+            <button
+              type={"button"}
+              onClick={(e) => {
+                e.stopPropagation();
+                setRoutingPeerModal({ networkNodeId: id });
+              }}
+              className={cn(
+                "flex items-center px-3 py-2 text-xs text-gray-400 whitespace-nowrap outline-none",
+                "hover:text-white hover:bg-nb-gray-910 transition-colors",
+              )}
             >
-              <button
-                type={"button"}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setRoutingPeerModal({ networkNodeId: id });
-                }}
-                className={cn(
-                  "flex items-center px-3 py-2 text-xs text-gray-400 whitespace-nowrap outline-none",
-                  "hover:text-white hover:bg-nb-gray-910 transition-colors",
-                )}
-              >
-                <RoutingPeersIndicator
-                  count={routingPeersCount}
-                  dotSize={7}
-                  className={"gap-1.5"}
-                  zeroLabel={"No Routing Peers"}
-                  helpIcon={routingPeersCount > 0}
-                />
-              </button>
-            </FullTooltip>
+              <RoutingPeersIndicator
+                count={routingPeersCount}
+                dotSize={7}
+                className={"gap-1.5"}
+                zeroLabel={"No Routing Peers"}
+              />
+            </button>
             <button
               type={"button"}
               onClick={(e) => {
@@ -391,18 +364,19 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
       )}
       {isDraft && <FullAreaTargetHandle isConnectable={isTarget} />}
 
-      {/* Overflow footer: resources past the visible cap are hidden and
-          summarized here, in the band the layout reserves at the frame's
-          bottom. Clicks fall through so the frame still drills in. */}
-      {isFrame && overflowCount > 0 && (
-        <div
-          className={
-            "absolute inset-x-0 bottom-0 flex items-center justify-center rounded-b-[11px] bg-gradient-to-b from-transparent to-nb-gray-935 text-sm text-nb-gray-400 pointer-events-none"
-          }
-          style={{ height: NETWORK_FRAME_OVERFLOW_ROW }}
-        >
-          +{overflowCount} More
-        </div>
+      {/* Overflow: resources past the visible cap collapse into a "+N more"
+          cell in the frame's last grid slot (positioned by
+          useNetworkFrameLayout). Clicks bubble to the frame → drill in. */}
+      {isFrame && !isDrilled && moreCell && (
+        <MoreResourcesNode
+          count={moreCell.count}
+          style={{
+            left: moreCell.x,
+            top: moreCell.y - 1,
+            width: moreCell.width,
+            height: moreCell.height,
+          }}
+        />
       )}
     </div>
   );

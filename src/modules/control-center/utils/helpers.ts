@@ -4,6 +4,7 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import { orderBy } from "lodash";
+import { singularize } from "@utils/helpers";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -39,9 +40,13 @@ export const getGroupCountLabel = (group?: Group) => {
   const peerCount = group?.peers_count || 0;
   const resourceCount = group?.resources_count || 0;
   if (resourceCount === 0)
-    return peerCount === 0 ? "No Peer(s)" : `${peerCount} Peer(s)`;
-  if (peerCount === 0) return `${resourceCount} Resource(s)`;
-  return `${peerCount} Peer(s), ${resourceCount} Resource(s)`;
+    return peerCount === 0 ? "No Peers" : singularize("Peers", peerCount, true);
+  if (peerCount === 0) return singularize("Resources", resourceCount, true);
+  return `${singularize("Peers", peerCount, true)}, ${singularize(
+    "Resources",
+    resourceCount,
+    true,
+  )}`;
 };
 
 export const getPeersFromGroup = (group: Group, peers: Peer[]) => {
@@ -398,7 +403,7 @@ export const NETWORK_FRAME_PADDING_X = 20;
 export const NETWORK_FRAME_PADDING_Y = 14;
 export const NETWORK_FRAME_GAP = 0;
 // Vertical spacing between resource rows (tighter than the column gap).
-export const NETWORK_FRAME_ROW_GAP = 6;
+export const NETWORK_FRAME_ROW_GAP = 4;
 // Estimated resource card height before measurement.
 export const NETWORK_FRAME_FALLBACK_ROW = 58;
 
@@ -408,16 +413,27 @@ export const NETWORK_FRAME_CHILD_WIDTH =
 // full-width row per column would leave a big gap between the columns.
 export const NETWORK_FRAME_CHILD_WIDTH_MULTI = 185;
 
-// Parent (collapsed) frame view shows at most this many resources; overflow
-// is summarized by a "+N More" footer and fully visible in the drill-down.
+// Parent (collapsed) frame view shows at most this many grid cells; once
+// resources exceed the cap the last cell becomes a "+N more" cell (occupying
+// one slot) and the rest are hidden. Everything is visible in the drill-down.
 export const NETWORK_FRAME_MAX_VISIBLE = 6;
-// Height of the "+N More" footer band the frame reserves at its bottom edge
-// (kept in sync with NetworkNode's footer height).
-export const NETWORK_FRAME_OVERFLOW_ROW = 44;
-// Height of the bottom "Add Resource" band the frame reserves (draft) whenever
-// it isn't showing the "+N More" overflow footer — kept in sync with
-// NetworkNode's bottom add-resource button.
-export const NETWORK_FRAME_ADD_ROW = 54;
+// Fixed height of the bottom "Add Resource" button — NetworkNode pins it
+// (h-9 = 36px) so the gap below the resources is exact, not dependent on the
+// button's ambiguous intrinsic size.
+export const NETWORK_FRAME_ADD_BUTTON_H = 36;
+// Gap between the last resource row and the bottom "Add Resource" button.
+// Deliberately larger than NETWORK_FRAME_ROW_GAP so the button reads as a
+// separate action, not just another resource row.
+export const NETWORK_FRAME_ADD_GAP = 12;
+// Padding between the "Add Resource" button and the frame's bottom edge.
+// Matches the button container's `pb-5` (20px) in NetworkNode.
+export const NETWORK_FRAME_ADD_PAD = 20;
+// Vertical band the frame reserves below the resources for the add button:
+// the top gap + the button height + the bottom padding. The button is
+// bottom-pinned with NETWORK_FRAME_ADD_PAD below it, leaving
+// NETWORK_FRAME_ADD_GAP above it.
+export const NETWORK_FRAME_ADD_ROW =
+  NETWORK_FRAME_ADD_GAP + NETWORK_FRAME_ADD_BUTTON_H + NETWORK_FRAME_ADD_PAD;
 // Empty frames get a little extra height so the centered "Add Resource"
 // button has breathing room (only the empty state — 1+ resources keep the
 // one-row height).

@@ -252,9 +252,9 @@ const UserDeviceSelectNode = ({
   return (
     <div
       className={cn(
-        "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-850",
-        "hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer",
-        isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
+        "relative rounded-lg transition-all group/node border bg-nb-gray-930 border-nb-gray-800",
+        "hover:bg-nb-gray-910 cursor-pointer",
+        isTarget && "hover:bg-nb-gray-910 hover:ring-2 ring-white",
         showHalo && "ring-2 ring-sky-500",
       )}
     >
@@ -291,7 +291,9 @@ const UserDeviceSelectNode = ({
         showSearch={true}
         searchPlaceholder={"Search peers..."}
         popoverWidth={280}
-        className={"!bg-transparent !text-nb-gray-300 rounded-lg"}
+        className={
+          "!bg-nb-gray-920 !hover:bg-nb-gray-925 !text-nb-gray-300 rounded-lg"
+        }
         size={"xs"}
         maxHeight={300}
       >
@@ -315,7 +317,8 @@ const UserDeviceSelectNode = ({
                     "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1.5 mt-2"
                   }
                 >
-                  <TruncatedText text={label} maxWidth={"150px"} hideTooltip />
+                  <span className={"truncate max-w-[150px]"}>{label}</span>
+                  <SmallBadge />
                 </span>
                 <span
                   className={

@@ -338,6 +338,17 @@ export const applyDraftArrangeLayout = (nodes: Node[], edges: Edge[]) => {
   return { updatedNodes, updatedEdges };
 };
 
+// Measured/styled height of a node — network frames are much taller than peer
+// or group nodes (and vary with their resource count), so a fixed row pitch
+// makes them overlap their neighbours.
+const getNodeHeight = (node: SimulationNode) => {
+  const measured = node.measured?.height;
+  if (typeof measured === "number" && measured > 0) return measured;
+  const styled = node.style?.height;
+  if (typeof styled === "number" && styled > 0) return styled;
+  return 0;
+};
+
 const centerNodesVertically = (
   nodesList: SimulationNode[],
   x: number,
@@ -347,11 +358,21 @@ const centerNodesVertically = (
 ) => {
   if (nodesList.length === 0) return;
 
-  const totalHeight = (nodesList.length - 1) * nodeSpacing;
+  // Each node claims a row at least `nodeSpacing` tall, but a taller node
+  // (e.g. a network frame) claims its own height plus a gap so the next node
+  // clears it — the gap is generous because frames carry floating controls
+  // above them (routing bar) that sit outside the measured box.
+  const GAP = 84;
+  const pitches = nodesList.map((node) =>
+    Math.max(nodeSpacing, getNodeHeight(node) + GAP),
+  );
+  const totalHeight = pitches.reduce((a, b) => a + b, 0);
   const startY = centerY - totalHeight / 2;
 
+  let cursor = enable ? startY : 0;
   nodesList.forEach((node, index) => {
     node.x = x;
-    node.y = (enable ? startY : 0) + index * nodeSpacing;
+    node.y = cursor;
+    cursor += pitches[index];
   });
 };

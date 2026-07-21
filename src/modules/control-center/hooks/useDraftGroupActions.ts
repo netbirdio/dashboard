@@ -40,8 +40,8 @@ const uid = () =>
 
 export const getNextNewGroupName = (taken: Set<string>) => {
   let name = "Group";
-  let i = 1;
-  while (taken.has(name)) name = `New Group (${i++})`;
+  let i = 2;
+  while (taken.has(name)) name = `Group (${i++})`;
   return name;
 };
 

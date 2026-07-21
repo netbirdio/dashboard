@@ -11,7 +11,6 @@ import {
   NETWORK_FRAME_PADDING_X,
   NETWORK_FRAME_PADDING_Y,
   NETWORK_FRAME_MAX_VISIBLE,
-  NETWORK_FRAME_OVERFLOW_ROW,
   NETWORK_FRAME_ADD_ROW,
   NETWORK_FRAME_ROW_GAP,
   getFrameGridColumns,
@@ -19,15 +18,38 @@ import {
   getNetworkFrameWidth,
 } from "@/modules/control-center/utils/helpers";
 
+// The "+N more" cell a network frame shows in its last grid slot once its
+// resources overflow the visible cap. Frame-relative rect + the hidden count;
+// NetworkNode renders it as an overlay (see MoreResourcesNode).
+export type FrameMoreCell = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  count: number;
+};
+
+const sameMoreCell = (a?: FrameMoreCell, b?: FrameMoreCell) => {
+  if (!a || !b) return !a && !b;
+  return (
+    a.x === b.x &&
+    a.y === b.y &&
+    a.width === b.width &&
+    a.height === b.height &&
+    a.count === b.count
+  );
+};
+
 // Lays out network frames from MEASURED child heights: resources fill a
 // row-major grid under the header (column count targets a viewport-shaped
 // frame, see getFrameGridColumns) with a uniform 16px inset on the
 // left/right/bottom; the frame grows/shrinks to fit exactly. Runs as a
 // reconciling effect — it only writes when a position/size actually
 // drifted, so it settles immediately after ReactFlow reports dimensions.
-// Adding resources happens from the frame header's "Add Resource" button, and
-// overflow past the visible cap is summarized by NetworkNode's "+N More"
-// footer — so the frame's only children are resource nodes.
+// Adding resources happens from the frame's bottom "Add Resource" button, and
+// overflow past the visible cap collapses into a "+N more" cell that
+// NetworkNode overlays on the last grid slot (rect computed here) — so the
+// frame's only children are resource nodes.
 export function useNetworkFrameLayout() {
   const { nodes, setNodes } = useCanvasState();
   const { drillDownNetworkNodeId } = useDraftMode();
@@ -37,9 +59,10 @@ export function useNetworkFrameLayout() {
     if (frames.length === 0) return;
 
     const updates = new Map<string, Partial<Node>>();
-    // Legacy utility children from older drafts: the "Add Resource" row moved
-    // to the frame header and the overflow row became a footer, so any
-    // persisted ones are swept off the canvas.
+    // Legacy utility children from older drafts: the "Add Resource" row became
+    // a bottom button and the overflow row became a "+N more" overlay cell
+    // (neither is a child node anymore), so any persisted ones are swept off
+    // the canvas.
     const obsolete = new Set<string>();
     nodes.forEach((n) => {
       if (
@@ -63,19 +86,27 @@ export function useNetworkFrameLayout() {
           (a, b) => a.position.y - b.position.y || a.position.x - b.position.x,
         );
 
-      // Parent view caps visible resources; overflow is hidden and summarized
-      // by NetworkNode's "+N More" footer. The drill-down shows everything in
-      // a square-ish grid, so there's no overflow while drilled.
+      // Parent view caps visible cells at NETWORK_FRAME_MAX_VISIBLE. Past the
+      // cap the LAST cell becomes a "+N more" cell (NetworkNode renders it from
+      // the rect computed below), so one real resource yields its slot to it.
+      // The drill-down shows everything in a square-ish grid, no overflow.
+      const hasMore = !drilled && resources.length > NETWORK_FRAME_MAX_VISIBLE;
       const visibleResources = drilled
         ? resources
-        : resources.slice(0, NETWORK_FRAME_MAX_VISIBLE);
-      const overflow = drilled
-        ? 0
-        : Math.max(0, resources.length - NETWORK_FRAME_MAX_VISIBLE);
+        : resources.slice(
+            0,
+            hasMore ? NETWORK_FRAME_MAX_VISIBLE - 1 : NETWORK_FRAME_MAX_VISIBLE,
+          );
+      const moreCount = hasMore
+        ? resources.length - visibleResources.length
+        : 0;
 
+      // The "+N more" cell shares the resources' grid, so count it toward the
+      // column decision.
+      const cellCount = visibleResources.length + (hasMore ? 1 : 0);
       const cols = drilled
         ? getFrameGridColumns(resources.length)
-        : visibleResources.length > 1
+        : cellCount > 1
         ? 2
         : 1;
       // Empty / single-resource parent frames mirror the two-resource size so
@@ -97,29 +128,35 @@ export function useNetworkFrameLayout() {
         if (!child.hidden) updates.set(child.id, { hidden: true });
       });
 
+      // Places a cell at row-major grid index `index`, advancing the running
+      // row cursor (y / rowMaxHeight); returns the cell's top-left.
       let y = NETWORK_FRAME_HEADER + NETWORK_FRAME_PADDING_Y;
       let rowMaxHeight = 0;
-      visibleResources.forEach((child, index) => {
+      const placeCell = (index: number, cellHeight: number) => {
         const col = index % cols;
         if (col === 0 && index > 0) {
           y += rowMaxHeight + NETWORK_FRAME_ROW_GAP;
           rowMaxHeight = 0;
         }
-        const desired = {
+        rowMaxHeight = Math.max(rowMaxHeight, cellHeight);
+        return {
           x: NETWORK_FRAME_PADDING_X + col * (childWidth + NETWORK_FRAME_GAP),
           y,
         };
+      };
+
+      visibleResources.forEach((child, index) => {
+        const desired = placeCell(
+          index,
+          child.measured?.height ?? NETWORK_FRAME_FALLBACK_ROW,
+        );
         const childUpdate: Partial<Node> = {};
         if (child.hidden) childUpdate.hidden = false;
-        if (
-          child.position.x !== desired.x ||
-          child.position.y !== desired.y
-        ) {
+        if (child.position.x !== desired.x || child.position.y !== desired.y) {
           childUpdate.position = desired;
         }
         // Sync the width and clear any stale fade mask left by the old
-        // overflow treatment (rows are solid now; overflow is summarized by
-        // the "+N More" footer instead).
+        // overflow treatment (rows are solid; overflow is a "+N more" cell).
         if (child.style?.width !== childWidth || child.style?.maskImage) {
           childUpdate.style = {
             ...child.style,
@@ -131,27 +168,49 @@ export function useNetworkFrameLayout() {
         if (Object.keys(childUpdate).length > 0) {
           updates.set(child.id, childUpdate);
         }
-        rowMaxHeight = Math.max(
-          rowMaxHeight,
-          child.measured?.height ?? NETWORK_FRAME_FALLBACK_ROW,
-        );
       });
 
-      // Reserve a band at the bottom: the "+N More" footer when resources
-      // overflow the visible cap, otherwise the "Add Resource" button
-      // (NetworkNode renders one or the other, never both).
-      const overflowBand = overflow > 0 ? NETWORK_FRAME_OVERFLOW_ROW : 0;
-      const addBand = overflow > 0 ? 0 : NETWORK_FRAME_ADD_ROW;
+      // The "+N more" cell takes the slot after the last visible resource. It
+      // adopts its row sibling's measured height (so the row isn't inflated to
+      // the fallback), or the fallback when it starts a fresh row. NetworkNode
+      // renders it from this frame-relative rect (a resource row's box);
+      // placing it advances the row cursor, so the height below accounts for it.
+      const moreCell: FrameMoreCell | undefined = hasMore
+        ? (() => {
+            const sharesRow = visibleResources.length % cols > 0;
+            const cellHeight = sharesRow
+              ? rowMaxHeight
+              : NETWORK_FRAME_FALLBACK_ROW;
+            return {
+              ...placeCell(visibleResources.length, cellHeight),
+              width: childWidth,
+              height: cellHeight,
+              count: moreCount,
+            };
+          })()
+        : undefined;
+
+      // Bottom band: the "Add Resource" button is always present in a draft
+      // frame, so its band is always reserved (overflow now lives in-grid as
+      // the "+N more" cell, not a footer).
+      const addBand = NETWORK_FRAME_ADD_ROW;
       // Empty frames reserve one row (getNetworkFrameHeight) so they're the
       // same height as one/two resources.
       const height =
         visibleResources.length > 0
-          ? y + rowMaxHeight + NETWORK_FRAME_PADDING_Y + overflowBand + addBand
+          ? y + rowMaxHeight + addBand
           : getNetworkFrameHeight(0);
+
+      const frameUpdate: Partial<Node> = {};
       if (frame.style?.height !== height || frame.style?.width !== width) {
-        updates.set(frame.id, {
-          style: { ...frame.style, width, height },
-        });
+        frameUpdate.style = { ...frame.style, width, height };
+      }
+      const prevMore = (frame.data as { moreCell?: FrameMoreCell }).moreCell;
+      if (!sameMoreCell(prevMore, moreCell)) {
+        frameUpdate.data = { ...frame.data, moreCell };
+      }
+      if (Object.keys(frameUpdate).length > 0) {
+        updates.set(frame.id, frameUpdate);
       }
     });
 

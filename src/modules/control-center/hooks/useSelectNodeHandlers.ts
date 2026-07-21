@@ -291,13 +291,13 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   // onDestinationGroupSelect
   // ---------------------------------------------------------------------------
 
+  // Clicking a group opens its panel; clicking it again keeps it open (no
+  // toggle) — the panel only closes on a click outside (pane click / Esc).
   const onDestinationGroupSelect = useCallback(
     (groupId: string) => {
-      setSelectedDestinationGroup(
-        selectedDestinationGroup === groupId ? "" : groupId,
-      );
+      setSelectedDestinationGroup(groupId);
     },
-    [selectedDestinationGroup, setSelectedDestinationGroup],
+    [setSelectedDestinationGroup],
   );
 
   // ---------------------------------------------------------------------------
