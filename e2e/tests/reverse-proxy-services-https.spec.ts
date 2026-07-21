@@ -2,7 +2,7 @@ import { test, expect } from "../helpers/fixtures";
 import { navigateTo } from "../helpers/auth";
 import { generateRandomName } from "../helpers/utils";
 import { deleteNetworksByPrefix, deleteServicesByPrefix } from "../helpers/api";
-import { gotoReverseProxyPage, selectProxyDomain, CUSTOM_PORTS_DOMAIN } from "../helpers/reverse-proxy-l4";
+import { gotoReverseProxyPage, selectL4Resource, selectProxyDomain, CUSTOM_PORTS_DOMAIN } from "../helpers/reverse-proxy-l4";
 
 let createdNetwork = "";
 let createdResource = "";
@@ -122,6 +122,105 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy", () => {
     await page.getByTestId("submit-service").click();
 
     await expect(page.locator("tr").filter({ hasText: subdomain })).toBeVisible({ timeout: 30_000 });
+  });
+
+  test("Should reuse the HTTPS hostname for a non-conflicting TCP service", async ({
+    dashboardAsOwner: page,
+  }) => {
+    test.setTimeout(60_000);
+    await gotoReverseProxyPage(page, "/reverse-proxy/services");
+
+    await page.getByTestId("add-service").first().click();
+    await page.getByTestId("proxy-subdomain-input").fill(createdSubdomain);
+    await selectProxyDomain(page, CUSTOM_PORTS_DOMAIN);
+    await expect(page.getByText("This domain is already used by another service.")).toBeVisible();
+
+    await page.getByTestId("service-mode-select-button").click({ force: true });
+    await page.getByTestId("service-mode-option-tls").click({ force: true });
+    await expect(page.getByText("This domain is already used by another service.")).toBeVisible();
+
+    await page.getByTestId("service-mode-select-button").click({ force: true });
+    await page.getByTestId("service-mode-option-tcp").click({ force: true });
+    await expect(page.getByText("This domain is already used by another service.")).not.toBeVisible();
+
+    await selectL4Resource(page, createdResource);
+    await page.getByTestId("listen-port-input").fill("1773");
+    await page.getByTestId("destination-port-input").fill("1773");
+    await page.getByTestId("add-port-mapping").click();
+    const secondMapping = page.getByTestId("port-mapping-1");
+    await secondMapping.getByRole("combobox").click();
+    await page.getByRole("option", { name: "TLS", exact: true }).click();
+    await expect(page.getByText("This domain is already used by another service.")).toBeVisible();
+    await secondMapping.getByRole("combobox").click();
+    await page.getByRole("option", { name: "TCP", exact: true }).click();
+    await expect(page.getByText("This domain is already used by another service.")).not.toBeVisible();
+
+    await page.getByTestId("listen-port-start-1").fill("1984");
+    await page.getByTestId("listen-port-end-1").fill("1986");
+    await page.getByTestId("destination-port-start-1").fill("1984");
+    await page.getByTestId("destination-port-end-1").fill("1986");
+
+    const originalViewport = page.viewportSize() ?? { width: 1280, height: 720 };
+    for (const width of [375, 768]) {
+      await page.setViewportSize({ width, height: 900 });
+      const horizontalOverflows = await page
+        .locator('[data-testid^="port-mapping-"]')
+        .evaluateAll((cards) =>
+          cards.map((card) => {
+            const bounds = card.getBoundingClientRect();
+            return {
+              internal: card.scrollWidth - card.clientWidth,
+              left: bounds.left,
+              right: bounds.right,
+              viewport: window.innerWidth,
+            };
+          }),
+        );
+      expect(
+        horizontalOverflows.every(
+          ({ internal, left, right, viewport }) =>
+            internal <= 1 && left >= -1 && right <= viewport + 1,
+        ),
+      ).toBe(true);
+
+      const dialogBounds = await page.getByRole("dialog").boundingBox();
+      expect(dialogBounds).not.toBeNull();
+      expect(dialogBounds!.x).toBeGreaterThanOrEqual(-1);
+      expect(dialogBounds!.x + dialogBounds!.width).toBeLessThanOrEqual(
+        width + 1,
+      );
+    }
+    await page.setViewportSize(originalViewport);
+
+    await page.getByTestId("proxy-continue").click();
+    await page.getByTestId("proxy-continue").click();
+
+    const createResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/reverse-proxies/services") &&
+        response.request().method() === "POST",
+      { timeout: 15_000 },
+    );
+    await page.getByTestId("submit-service").click();
+    await page.getByTestId("confirmation.confirm").click({ force: true });
+    expect([200, 201]).toContain((await createResponse).status());
+
+    await resetServiceFilters(page);
+    const sharedDomainRows = page.locator("tr").filter({ hasText: createdSubdomain });
+    await expect(sharedDomainRows).toHaveCount(2);
+    const tcpRow = sharedDomainRows.filter({ has: page.getByText("TCP", { exact: true }) });
+    await expect(tcpRow).toHaveCount(1);
+    await tcpRow.getByTestId("service-actions").click({ force: true });
+    await page.getByTestId("delete-service").click({ force: true });
+    await page.getByTestId("confirmation.confirm").click({ force: true });
+    await expect(sharedDomainRows).toHaveCount(1);
+
+    const httpsRow = sharedDomainRows;
+    await httpsRow.getByTestId("service-actions").click({ force: true });
+    await page.getByTestId("edit-service").click({ force: true });
+    const httpsTargets = page.getByText("HTTPS Targets").locator("..");
+    await expect(httpsTargets.locator("table tbody tr")).toHaveCount(2);
+    await page.getByTestId("modal-close").click();
   });
 
   test("Should edit the service, remove auth and rules, then delete", async ({

@@ -120,24 +120,14 @@ export default function ReverseProxyModal({
   const { confirm } = useDialog();
   const { handleCreateOrUpdateProxy } = useReverseProxies();
 
-  const {
-    subdomain,
-    setSubdomain,
-    baseDomain,
-    setBaseDomain,
-    fullDomain,
-    domainAlreadyExists,
-    isClusterConnected,
-  } = useReverseProxyDomain({ reverseProxy, domains, initialSubdomain });
+  const [serviceMode, setServiceMode] = useState<ServiceMode>(
+    reverseProxy?.mode ?? ServiceMode.HTTP,
+  );
 
   const [tab, setTab] = useState(() => {
     if (initialTab && initialTab !== "") return initialTab;
     return "targets";
   });
-
-  const [serviceMode, setServiceMode] = useState<ServiceMode>(
-    reverseProxy?.mode ?? ServiceMode.HTTP,
-  );
 
   const isL4Mode = isL4ServiceMode(serviceMode);
 
@@ -202,6 +192,22 @@ export default function ReverseProxyModal({
   const effectiveL4Mode =
     portMappings[0]?.protocol ??
     (serviceMode as ReverseProxyPortMapping["protocol"]);
+
+  const {
+    subdomain,
+    setSubdomain,
+    baseDomain,
+    setBaseDomain,
+    fullDomain,
+    domainAlreadyExists,
+    isClusterConnected,
+  } = useReverseProxyDomain({
+    reverseProxy,
+    domains,
+    initialSubdomain,
+    serviceMode,
+    portMappings,
+  });
 
   // The first mapping is the legacy mode/listener compatibility mirror. Keep
   // the selector, title, and protocol-specific settings aligned when mappings
@@ -627,7 +633,9 @@ export default function ReverseProxyModal({
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
       <ModalContent
-        maxWidthClass={tab === "service" ? "max-w-xl" : "max-w-2xl"}
+        maxWidthClass={
+          isL4Mode ? "max-w-3xl" : tab === "service" ? "max-w-xl" : "max-w-2xl"
+        }
       >
         <ModalHeader
           icon={<ReverseProxyIcon className={"fill-netbird"} size={18} />}

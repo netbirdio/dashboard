@@ -222,21 +222,23 @@ export default function ReverseProxyLayer4Content({
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div>
             <Label>
               Port Mappings
               <HelpTooltip content="Each inclusive public range maps one-to-one onto an equally sized destination range. TCP and UDP may use the same numeric port." />
             </Label>
             <HelpText className="mb-0">
-              A hostname selects the proxy cluster. Raw UDP clients still
-              connect by address and port; UDP has no hostname routing on the
-              wire.
+              A hostname may also be used by an HTTPS service for TCP or UDP
+              mappings. TLS passthrough cannot share a hostname with an HTTPS
+              service. Raw UDP clients still connect by address and port; UDP
+              has no hostname routing on the wire.
             </HelpText>
           </div>
           <Button
             variant="secondary"
             size="xs"
+            className="self-start shrink-0"
             onClick={() =>
               setPortMappings((current) => [
                 ...current,
@@ -262,128 +264,11 @@ export default function ReverseProxyLayer4Content({
               className="rounded-md border border-nb-gray-800 bg-nb-gray-920/40 p-3"
               data-testid={`port-mapping-${index}`}
             >
-              <div className="grid grid-cols-[120px_1fr_1fr_auto] items-end gap-3">
-                <div>
-                  <Label>Protocol</Label>
-                  <Select
-                    value={mapping.protocol}
-                    onValueChange={(value) =>
-                      updateMapping(index, {
-                        protocol: value as ReverseProxyPortMapping["protocol"],
-                      })
-                    }
-                  >
-                    <SelectTrigger className="mt-2 min-w-[110px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mappingProtocols.map((protocol) => (
-                        <SelectItem key={protocol} value={protocol}>
-                          {protocol.toUpperCase()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>
-                    Listener Range
-                    {!listenerSupported && (
-                      <HelpTooltip content="This cluster assigns the single TCP or UDP listener automatically." />
-                    )}
-                  </Label>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={65535}
-                      placeholder={listenerSupported ? "8080" : "Auto"}
-                      value={
-                        listenerSupported ? mapping.listen_port_start || "" : ""
-                      }
-                      onChange={(event) =>
-                        updateRangeStart(
-                          index,
-                          "listen",
-                          Number.parseInt(event.target.value, 10) || 0,
-                        )
-                      }
-                      disabled={!listenerSupported || !l4Target}
-                      aria-label={`Mapping ${index + 1} listener start`}
-                      data-testid={
-                        index === 0
-                          ? "listen-port-input"
-                          : `listen-port-start-${index}`
-                      }
-                    />
-                    <span className="text-nb-gray-500">–</span>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={65535}
-                      placeholder={listenerSupported ? "8080" : "Auto"}
-                      value={
-                        listenerSupported ? mapping.listen_port_end || "" : ""
-                      }
-                      onChange={(event) =>
-                        updateMapping(index, {
-                          listen_port_end:
-                            Number.parseInt(event.target.value, 10) || 0,
-                        })
-                      }
-                      disabled={!listenerSupported || !l4Target}
-                      aria-label={`Mapping ${index + 1} listener end`}
-                      data-testid={`listen-port-end-${index}`}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Destination Range</Label>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={65535}
-                      placeholder="8080"
-                      value={mapping.target_port_start || ""}
-                      onChange={(event) =>
-                        updateRangeStart(
-                          index,
-                          "target",
-                          Number.parseInt(event.target.value, 10) || 0,
-                        )
-                      }
-                      disabled={!l4Target}
-                      aria-label={`Mapping ${index + 1} destination start`}
-                      data-testid={
-                        index === 0
-                          ? "destination-port-input"
-                          : `destination-port-start-${index}`
-                      }
-                    />
-                    <span className="text-nb-gray-500">–</span>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={65535}
-                      placeholder="8080"
-                      value={mapping.target_port_end || ""}
-                      onChange={(event) =>
-                        updateMapping(index, {
-                          target_port_end:
-                            Number.parseInt(event.target.value, 10) || 0,
-                        })
-                      }
-                      disabled={!l4Target}
-                      aria-label={`Mapping ${index + 1} destination end`}
-                      data-testid={`destination-port-end-${index}`}
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-1 pb-0.5">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <span className="text-xs font-medium text-nb-gray-400">
+                  Mapping {index + 1}
+                </span>
+                <div className="flex shrink-0 gap-1">
                   <Button
                     variant="default-outline"
                     size="xs"
@@ -420,6 +305,132 @@ export default function ReverseProxyLayer4Content({
                   >
                     <Trash2 size={14} />
                   </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-[120px_minmax(0,1fr)_minmax(0,1fr)]">
+                <div>
+                  <Label>Protocol</Label>
+                  <Select
+                    value={mapping.protocol}
+                    onValueChange={(value) =>
+                      updateMapping(index, {
+                        protocol: value as ReverseProxyPortMapping["protocol"],
+                      })
+                    }
+                  >
+                    <SelectTrigger className="mt-2 min-w-[110px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mappingProtocols.map((protocol) => (
+                        <SelectItem key={protocol} value={protocol}>
+                          {protocol.toUpperCase()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>
+                    Listener Range
+                    {!listenerSupported && (
+                      <HelpTooltip content="This cluster assigns the single TCP or UDP listener automatically." />
+                    )}
+                  </Label>
+                  <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={65535}
+                      placeholder={listenerSupported ? "8080" : "Auto"}
+                      value={
+                        listenerSupported ? mapping.listen_port_start || "" : ""
+                      }
+                      onChange={(event) =>
+                        updateRangeStart(
+                          index,
+                          "listen",
+                          Number.parseInt(event.target.value, 10) || 0,
+                        )
+                      }
+                      disabled={!listenerSupported || !l4Target}
+                      maxWidthClass="w-full min-w-0"
+                      aria-label={`Mapping ${index + 1} listener start`}
+                      data-testid={
+                        index === 0
+                          ? "listen-port-input"
+                          : `listen-port-start-${index}`
+                      }
+                    />
+                    <span className="text-nb-gray-500">–</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={65535}
+                      placeholder={listenerSupported ? "8080" : "Auto"}
+                      value={
+                        listenerSupported ? mapping.listen_port_end || "" : ""
+                      }
+                      onChange={(event) =>
+                        updateMapping(index, {
+                          listen_port_end:
+                            Number.parseInt(event.target.value, 10) || 0,
+                        })
+                      }
+                      disabled={!listenerSupported || !l4Target}
+                      maxWidthClass="w-full min-w-0"
+                      aria-label={`Mapping ${index + 1} listener end`}
+                      data-testid={`listen-port-end-${index}`}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Destination Range</Label>
+                  <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={65535}
+                      placeholder="8080"
+                      value={mapping.target_port_start || ""}
+                      onChange={(event) =>
+                        updateRangeStart(
+                          index,
+                          "target",
+                          Number.parseInt(event.target.value, 10) || 0,
+                        )
+                      }
+                      disabled={!l4Target}
+                      maxWidthClass="w-full min-w-0"
+                      aria-label={`Mapping ${index + 1} destination start`}
+                      data-testid={
+                        index === 0
+                          ? "destination-port-input"
+                          : `destination-port-start-${index}`
+                      }
+                    />
+                    <span className="text-nb-gray-500">–</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={65535}
+                      placeholder="8080"
+                      value={mapping.target_port_end || ""}
+                      onChange={(event) =>
+                        updateMapping(index, {
+                          target_port_end:
+                            Number.parseInt(event.target.value, 10) || 0,
+                        })
+                      }
+                      disabled={!l4Target}
+                      maxWidthClass="w-full min-w-0"
+                      aria-label={`Mapping ${index + 1} destination end`}
+                      data-testid={`destination-port-end-${index}`}
+                    />
+                  </div>
                 </div>
               </div>
 
