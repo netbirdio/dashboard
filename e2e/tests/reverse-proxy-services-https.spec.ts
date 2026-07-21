@@ -70,7 +70,7 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy", () => {
       port: 4433,
     });
 
-    const targetsSection = page.getByText("HTTPS Targets").locator("..");
+    const targetsSection = page.getByTestId("https-targets");
     await expect(targetsSection.locator("table tbody tr")).toHaveCount(2);
 
     await page.getByTestId("proxy-continue").click();
@@ -148,10 +148,10 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy", () => {
     await page.getByTestId("destination-port-input").fill("1773");
     await page.getByTestId("add-port-mapping").click();
     const secondMapping = page.getByTestId("port-mapping-1");
-    await secondMapping.getByRole("combobox").click();
+    await secondMapping.getByRole("combobox").click({ force: true });
     await page.getByRole("option", { name: "TLS", exact: true }).click();
     await expect(page.getByText("This domain is already used by another service.")).toBeVisible();
-    await secondMapping.getByRole("combobox").click();
+    await secondMapping.getByRole("combobox").click({ force: true });
     await page.getByRole("option", { name: "TCP", exact: true }).click();
     await expect(page.getByText("This domain is already used by another service.")).not.toBeVisible();
 
@@ -161,36 +161,39 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy", () => {
     await page.getByTestId("destination-port-end-1").fill("1986");
 
     const originalViewport = page.viewportSize() ?? { width: 1280, height: 720 };
-    for (const width of [375, 768]) {
-      await page.setViewportSize({ width, height: 900 });
-      const horizontalOverflows = await page
-        .locator('[data-testid^="port-mapping-"]')
-        .evaluateAll((cards) =>
-          cards.map((card) => {
-            const bounds = card.getBoundingClientRect();
-            return {
-              internal: card.scrollWidth - card.clientWidth,
-              left: bounds.left,
-              right: bounds.right,
-              viewport: window.innerWidth,
-            };
-          }),
-        );
-      expect(
-        horizontalOverflows.every(
-          ({ internal, left, right, viewport }) =>
-            internal <= 1 && left >= -1 && right <= viewport + 1,
-        ),
-      ).toBe(true);
+    try {
+      for (const width of [375, 768]) {
+        await page.setViewportSize({ width, height: 900 });
+        const horizontalOverflows = await page
+          .locator('[data-testid^="port-mapping-"]')
+          .evaluateAll((cards) =>
+            cards.map((card) => {
+              const bounds = card.getBoundingClientRect();
+              return {
+                internal: card.scrollWidth - card.clientWidth,
+                left: bounds.left,
+                right: bounds.right,
+                viewport: window.innerWidth,
+              };
+            }),
+          );
+        expect(
+          horizontalOverflows.every(
+            ({ internal, left, right, viewport }) =>
+              internal <= 1 && left >= -1 && right <= viewport + 1,
+          ),
+        ).toBe(true);
 
-      const dialogBounds = await page.getByRole("dialog").boundingBox();
-      expect(dialogBounds).not.toBeNull();
-      expect(dialogBounds!.x).toBeGreaterThanOrEqual(-1);
-      expect(dialogBounds!.x + dialogBounds!.width).toBeLessThanOrEqual(
-        width + 1,
-      );
+        const dialogBounds = await page.getByRole("dialog").boundingBox();
+        expect(dialogBounds).not.toBeNull();
+        expect(dialogBounds!.x).toBeGreaterThanOrEqual(-1);
+        expect(dialogBounds!.x + dialogBounds!.width).toBeLessThanOrEqual(
+          width + 1,
+        );
+      }
+    } finally {
+      await page.setViewportSize(originalViewport);
     }
-    await page.setViewportSize(originalViewport);
 
     await page.getByTestId("proxy-continue").click();
     await page.getByTestId("proxy-continue").click();
@@ -218,7 +221,7 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy", () => {
     const httpsRow = sharedDomainRows;
     await httpsRow.getByTestId("service-actions").click({ force: true });
     await page.getByTestId("edit-service").click({ force: true });
-    const httpsTargets = page.getByText("HTTPS Targets").locator("..");
+    const httpsTargets = page.getByTestId("https-targets");
     await expect(httpsTargets.locator("table tbody tr")).toHaveCount(2);
     await page.getByTestId("modal-close").click();
   });
@@ -231,7 +234,7 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy", () => {
     await page.getByTestId("edit-service").click({ force: true });
 
     // Edit first target
-    const targetsSection = page.getByText("HTTPS Targets").locator("..");
+    const targetsSection = page.getByTestId("https-targets");
     await targetsSection.locator("table tbody tr").first().click({ force: true });
     await page.getByTestId("target-location-input").fill("/new-location");
     await page.getByTestId("submit-target").click();

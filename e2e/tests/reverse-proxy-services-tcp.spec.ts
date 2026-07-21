@@ -91,7 +91,7 @@ test.describe.serial("Reverse Proxy - Services (TCP) @reverse-proxy", () => {
 
     await page.getByTestId("add-port-mapping").click();
     const udpMapping = page.getByTestId("port-mapping-2");
-    await udpMapping.getByRole("combobox").click();
+    await udpMapping.getByRole("combobox").click({ force: true });
     await page.getByRole("option", { name: "UDP", exact: true }).click();
     await page.getByTestId("listen-port-start-2").fill("3308");
     await page.getByTestId("destination-port-start-2").fill("3308");

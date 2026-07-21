@@ -45,7 +45,7 @@ export default function ReverseProxyHTTPTargets({
   onNavigateToResources,
 }: Readonly<Props>) {
   return (
-    <div>
+    <div data-testid="https-targets">
       <Label>HTTPS Targets</Label>
       <HelpText>
         Add one or more devices running your service or resources to make it
