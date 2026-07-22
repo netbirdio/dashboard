@@ -30,6 +30,7 @@ import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaT
 import { MoreResourcesNode } from "@/modules/control-center/nodes/MoreResourcesNode";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 import type { FrameMoreCell } from "@/modules/control-center/hooks/useNetworkFrameLayout";
+import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import {
   DraftNetworkRef,
   getDraftResource,
@@ -97,12 +98,12 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   const {
     isDraft,
     setRoutingPeerModal,
-    setResourceEditor,
     drillDownNetworkNodeId,
     setDrillDownNetworkNodeId,
     hoveredNetworkNodeId,
     setHoveredNetworkNodeId,
   } = useDraftMode();
+  const { addResourceToFrame } = useDraftNodeCreation();
   const isFrameHovered = hoveredNetworkNodeId === id;
   const isDrilled = drillDownNetworkNodeId === id;
   const { nodes, edges, contextMenuNodeId } = useCanvasState();
@@ -379,7 +380,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
               "!px-3 !py-0 h-9 nodrag pointer-events-auto",
               frameCellCount > 0 && "w-full",
             )}
-            onClick={() => setResourceEditor({ createInNetworkNodeId: id })}
+            // Drops a blank resource row straight into the frame — same as
+            // the context menu's "Add Resource" (the editor opens on click).
+            onClick={() => addResourceToFrame(id)}
             onMouseEnter={() => {
               setHoveredNetworkNodeId(null);
               setControlsHovered(true);
