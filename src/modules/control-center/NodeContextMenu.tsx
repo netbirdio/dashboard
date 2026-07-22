@@ -86,11 +86,10 @@ export const NodeContextMenu = ({
   const { groups, policies } = useControlCenterData();
   const {
     trackSetPolicyEnabled,
+    trackUpdatePolicy,
     trackDeletePolicy,
     trackUpdateResource,
     trackDeleteResource,
-    changes,
-    removeChange,
   } = useDraftChangeset();
   const { confirm } = useDialog();
   const {
@@ -325,11 +324,12 @@ export const NodeContextMenu = ({
     setEdges,
   ]);
 
-  // Remove a policy from the CANVAS only (nothing is deleted, no confirm):
-  // the policy node and its edges go away; its source and destination nodes
-  // STAY on the canvas. A draft-created policy drops its pending create; an
-  // existing policy sheds any pending update/toggle change so an invisible
-  // edit can't deploy.
+  // Remove a policy from the CANVAS (no confirm, nothing deleted): the
+  // policy node and its edges go away; its source and destination nodes STAY
+  // on the canvas. The policy itself loses its sources/destinations: a
+  // draft-created policy drops its pending create, an existing policy records
+  // an update-policy change with emptied sides (superseding any pending
+  // update/toggle) so the disconnect deploys.
   const handleRemovePolicyFromCanvas = useCallback(() => {
     if (!nodePolicy) return;
 
@@ -340,11 +340,25 @@ export const NodeContextMenu = ({
         name: nodePolicy.name ?? "Policy",
       });
     } else {
-      changes
-        .filter(
-          (c) => c.type === "update-policy" && c.policyId === policyClientId,
-        )
-        .forEach((c) => removeChange(c.id));
+      const rule = nodePolicy.rules?.[0];
+      trackUpdatePolicy({
+        policyId: policyClientId,
+        policy: {
+          ...nodePolicy,
+          rules: rule
+            ? [
+                {
+                  ...rule,
+                  sources: [],
+                  destinations: [],
+                  sourceResource: undefined,
+                  destinationResource: undefined,
+                },
+                ...(nodePolicy.rules?.slice(1) ?? []),
+              ]
+            : nodePolicy.rules,
+        },
+      });
     }
 
     removeNodeWithEdges(nodeId);
@@ -352,9 +366,8 @@ export const NodeContextMenu = ({
     nodePolicy,
     nodeId,
     policyClientId,
-    changes,
-    removeChange,
     trackDeletePolicy,
+    trackUpdatePolicy,
     removeNodeWithEdges,
   ]);
 

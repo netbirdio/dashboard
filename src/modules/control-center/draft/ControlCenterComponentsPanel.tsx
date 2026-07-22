@@ -215,6 +215,7 @@ const PanelContent = React.memo(
       "/networks/resources",
     );
     const { data: policies } = useFetchApi<Policy[]>("/policies");
+    const { changes } = useDraftChangeset();
 
     const handlePeerTemplateDragStart = useCallback(
       (event: React.PointerEvent<HTMLDivElement>, tpl: PeerTemplate) => {
@@ -242,11 +243,19 @@ const PanelContent = React.memo(
 
     // Existing policy: draw it with its sources/destinations — nodes already on
     // the canvas are connected, missing ones are created around the drop point.
+    // A pending update-policy change wins over the API data, so a policy edited
+    // or disconnected in this draft (e.g. Remove emptied its sides) comes back
+    // in its draft state, not its deployed one.
     const handleExistingPolicyDrop = useCallback(
       (policy: Policy, position?: XYPosition) => {
-        drawPolicyOnCanvas(policy, position);
+        const pending = changes.find(
+          (c) => c.type === "update-policy" && c.policyId === policy.id,
+        );
+        const draftPolicy =
+          pending?.type === "update-policy" ? pending.policy : policy;
+        drawPolicyOnCanvas(draftPolicy, position);
       },
-      [drawPolicyOnCanvas],
+      [drawPolicyOnCanvas, changes],
     );
 
     // Mirror of the existing-policy drop for existing networks/resources:
@@ -254,9 +263,18 @@ const PanelContent = React.memo(
     // (sources created/connected around an anchor left of the drop point).
     const drawResourcePolicies = useCallback(
       (droppedResources: NetworkResource[], position?: XYPosition) => {
+        // Pending update-policy changes win over API data (see
+        // handleExistingPolicyDrop) — a policy disconnected in this draft
+        // doesn't get re-drawn with its deployed sides.
+        const draftPolicies = (policies ?? []).map((p) => {
+          const pending = changes.find(
+            (c) => c.type === "update-policy" && c.policyId === p.id,
+          );
+          return pending?.type === "update-policy" ? pending.policy : p;
+        });
         const related = getPoliciesTargetingResources(
           droppedResources,
-          policies ?? [],
+          draftPolicies,
         );
         if (related.length === 0) return;
         // Next tick — the dropped nodes must be committed to the canvas
@@ -270,7 +288,7 @@ const PanelContent = React.memo(
           });
         }, 0);
       },
-      [policies, drawPolicyOnCanvas],
+      [policies, changes, drawPolicyOnCanvas],
     );
 
     const handlePolicyDragStart = useCallback(
@@ -471,7 +489,6 @@ const PanelContent = React.memo(
 
     // Groups marked for deletion in the draft can't be re-added — they'd be
     // gone right after deploy.
-    const { changes } = useDraftChangeset();
     const pendingDeleteGroupIds = useMemo(
       () =>
         new Set(
