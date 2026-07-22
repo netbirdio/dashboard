@@ -10,7 +10,7 @@ import {
   ListIcon,
   WorkflowIcon,
   PencilLineIcon,
-  PlusIcon,
+  Share2Icon,
   SquarePenIcon,
   PowerIcon,
   PowerOffIcon,
@@ -535,7 +535,7 @@ export const NodeContextMenu = ({
         },
         {
           label: "Add Routing Peer",
-          icon: <PlusIcon size={14} />,
+          icon: <Share2Icon size={14} />,
           onClick: () => setRoutingPeerModal({ networkNodeId: nodeId }),
         },
         {

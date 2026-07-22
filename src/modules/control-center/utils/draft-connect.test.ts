@@ -147,6 +147,35 @@ describe("connect node ↔ node (create-policy modal)", () => {
     });
   });
 
+  it("resource → peer flips the roles: peer source, resource destination", () => {
+    handleDraftConnect(connect("resource-res-1", "peer-a", "sl"), deps);
+    expect(deps.setPolicySourceResource).toHaveBeenLastCalledWith({
+      id: "a",
+      type: "peer",
+    });
+    expect(deps.setPolicyDestinationResource).toHaveBeenLastCalledWith({
+      id: "res-1",
+      type: "host",
+    });
+    expect(deps.setPolicyInitialName).toHaveBeenCalledWith(
+      "Peer A to Database",
+    );
+    expect(deps.setCreatePolicyModal).toHaveBeenCalledWith(true);
+  });
+
+  it("resource → group flips the roles: group source, resource destination", () => {
+    handleDraftConnect(connect("resource-res-1", "group-g-dev", "sl"), deps);
+    expect(deps.setPolicySourceGroups).toHaveBeenLastCalledWith([groupDev]);
+    expect(deps.setPolicyDestinationResource).toHaveBeenLastCalledWith({
+      id: "res-1",
+      type: "host",
+    });
+    expect(deps.setPolicyInitialName).toHaveBeenCalledWith(
+      "Developers to Database",
+    );
+    expect(deps.setCreatePolicyModal).toHaveBeenCalledWith(true);
+  });
+
   it("placeholder peers participate with their draft ids", () => {
     handleDraftConnect(connect("peer-draft-x", "group-g-dev"), deps);
     expect(deps.setPolicySourceResource).toHaveBeenLastCalledWith({
@@ -463,15 +492,22 @@ describe("resources in policies (one-way)", () => {
     expect(deps.setPolicyInitialName).toHaveBeenCalledWith("Peer A to DB");
   });
 
-  it("a resource can never be a connect source toward peers/groups", () => {
+  it("a resource dragged toward a peer/group still lands as the DESTINATION (roles flipped)", () => {
     const blank = makePolicy("new-1");
     const deps = makeDeps([
       draftResourceNode,
       node("policy-new-1", "policyNode", { policy: blank }),
     ]);
     handleDraftConnect(connect("resource-res-1", "peer-a"), deps);
-    handleDraftConnect(connect("resource-res-1", "group-g-all"), deps);
-    expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
+    expect(deps.setPolicySourceResource).toHaveBeenLastCalledWith({
+      id: "a",
+      type: "peer",
+    });
+    expect(deps.setPolicyDestinationResource).toHaveBeenLastCalledWith({
+      id: "res-1",
+      type: "host",
+    });
+    // Direct side edits never happen on node↔node connects.
     expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
   });
 

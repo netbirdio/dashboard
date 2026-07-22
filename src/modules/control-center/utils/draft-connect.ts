@@ -347,9 +347,51 @@ export function handleDraftConnect(
     return;
   }
 
-  // Resources are destinations only — toward anything but a policy or a
-  // network (both handled above), a resource-sourced drag is a no-op.
-  if (sourceInfo.kind === "resource") return;
+  // Resources are destinations only — dragging FROM a resource onto a peer
+  // or group still opens the create-policy modal, just with the roles
+  // flipped: the resource lands on the destination side and the peer/group
+  // becomes the source. Anything else is a no-op.
+  if (sourceInfo.kind === "resource") {
+    if (targetInfo.kind !== "peer" && targetInfo.kind !== "group") return;
+    const resource = findResource(sourceInfo.id);
+    if (!resource?.id) return;
+
+    setPolicySourceResource(undefined);
+    setPolicySourceGroups([]);
+    setPolicyDestinationGroups([]);
+    // A framed resource restricts the modal's destination side to its
+    // network's contents — same as connecting onto it.
+    const sourceFrameId = currentNodes.find((n) => n.id === source)?.parentId;
+    deps.setPolicyDestinationScope?.(
+      sourceFrameId?.startsWith("network-")
+        ? scopeForFrame(sourceFrameId)
+        : undefined,
+    );
+    setPolicyDestinationResource({
+      id: resource.id,
+      type: resource.type ?? "host",
+    });
+
+    let flipSourceName: string | undefined;
+    if (targetInfo.kind === "peer") {
+      const peer = findPeer(targetInfo.id);
+      if (!peer?.id) return;
+      setPolicySourceResource({ id: peer.id, type: "peer" });
+      flipSourceName = peer.name;
+    } else {
+      const group = findGroup(targetInfo.id);
+      if (!group) return;
+      setPolicySourceGroups([group]);
+      flipSourceName = group.name;
+    }
+    setPolicyInitialName(
+      flipSourceName && resource.name
+        ? `${flipSourceName} to ${resource.name}`
+        : "",
+    );
+    setCreatePolicyModal(true);
+    return;
+  }
 
   // Prefill for the create-policy modal. Each side holds either groups or
   // a single peer/resource (never both) — reset everything first so a

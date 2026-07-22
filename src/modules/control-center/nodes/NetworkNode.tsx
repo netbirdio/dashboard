@@ -1,7 +1,7 @@
 import useFetchApi from "@utils/api";
 import { cn, singularize } from "@utils/helpers";
 import { Handle, type Node, Position, useConnection } from "@xyflow/react";
-import { AlertTriangleIcon, NetworkIcon, PlusIcon } from "lucide-react";
+import { AlertTriangleIcon, CirclePlusIcon, NetworkIcon } from "lucide-react";
 import Button from "@components/Button";
 import * as React from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
@@ -290,7 +290,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
               setControlsHovered(false);
             }}
           >
-            <PlusIcon size={12} />
+            <CirclePlusIcon size={12} />
             Add Resource
           </Button>
         </div>
@@ -361,7 +361,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
                   "hover:text-white hover:bg-nb-gray-910 transition-colors",
                 )}
               >
-                <PlusIcon size={12} className={"shrink-0"} />
+                <CirclePlusIcon size={12} className={"shrink-0"} />
                 Add
               </button>
             )}
