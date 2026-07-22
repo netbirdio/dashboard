@@ -30,6 +30,14 @@ export type ResourceEditorState =
   | { nodeId: string; createInNetworkNodeId?: never }
   | { nodeId?: never; createInNetworkNodeId: string };
 
+// Routing-peer modal target: a network frame, and optionally an existing
+// create-router change to EDIT (the frame's routing-peers dropdown) — the
+// modal opens prefilled and the save replaces that change.
+export type RoutingPeerModalState = {
+  networkNodeId: string;
+  editChangeId?: string;
+};
+
 type DraftModeContextType = {
   isDraft: boolean;
   setIsDraft: (value: boolean) => void;
@@ -50,8 +58,8 @@ type DraftModeContextType = {
   setResourceNetworkPicker: (value: { nodeId: string } | null) => void;
   // Draft routing-peer modal (networks page modal, pure-data) — targets a
   // network frame.
-  routingPeerModal: { networkNodeId: string } | null;
-  setRoutingPeerModal: (value: { networkNodeId: string } | null) => void;
+  routingPeerModal: RoutingPeerModalState | null;
+  setRoutingPeerModal: (value: RoutingPeerModalState | null) => void;
   networkDestinationPicker: NetworkDestinationPickerState | null;
   setNetworkDestinationPicker: (
     value: NetworkDestinationPickerState | null,
@@ -115,9 +123,8 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
   const [resourceNetworkPicker, setResourceNetworkPicker] = useState<{
     nodeId: string;
   } | null>(null);
-  const [routingPeerModal, setRoutingPeerModal] = useState<{
-    networkNodeId: string;
-  } | null>(null);
+  const [routingPeerModal, setRoutingPeerModal] =
+    useState<RoutingPeerModalState | null>(null);
   const [networkDestinationPicker, setNetworkDestinationPicker] =
     useState<NetworkDestinationPickerState | null>(null);
   const [networkEditor, setNetworkEditor] = useState<{
