@@ -47,9 +47,9 @@ export default function DataTableHeader({
       <div
         onClick={sorting ? handleSort : undefined}
         className={cn(
-          "flex items-center whitespace-nowrap gap-2 dark:text-gray-400 transition-all select-none text-xs tracking-wide",
+          "flex items-center whitespace-nowrap gap-2 dark:text-gray-400 text-gray-500 transition-all select-none text-xs tracking-wide",
           sorting &&
-            "cursor-pointer dark:hover:text-gray-300 hover:text-nb-gray",
+            "cursor-pointer dark:hover:text-gray-300 hover:text-nb-gray-100",
           center && "justify-center w-full",
           className,
         )}

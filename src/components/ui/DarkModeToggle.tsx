@@ -1,65 +1,52 @@
 "use client";
 
-import Button from "@components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@components/DropdownMenu";
+import { cn } from "@utils/helpers";
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { type Theme, useTheme } from "@/contexts/ThemeProvider";
 
+const OPTIONS: {
+  value: Theme;
+  label: string;
+  icon: typeof SunIcon;
+}[] = [
+  { value: "light", label: "Light", icon: SunIcon },
+  { value: "dark", label: "Dark", icon: MoonIcon },
+  { value: "system", label: "System", icon: MonitorIcon },
+];
+
+/* Segmented theme switcher rendered as a footer row inside the
+   profile dropdown. Plain buttons (not DropdownMenuItem) so picking
+   a theme doesn't close the menu. */
 export default function DarkModeToggle() {
-  const [mounted, setMounted] = useState(false);
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  return mounted ? (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button className={"!px-3"} variant={"default"}>
-          <div>
-            <SunIcon
-              size={16}
-              className={"scale-100 dark:scale-0 dark:absolute relative"}
-            />
-            <MoonIcon
-              size={16}
-              className={"scale-0 dark:scale-100 absolute dark:relative"}
-            />
-          </div>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side={"bottom"} align={"end"}>
-        <DropdownMenuItem
-          onClick={() => setTheme("light")}
-          className={"flex gap-2"}
-          disabled={true}
-        >
-          <SunIcon size={16} />
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme("dark")}
-          className={"flex gap-2"}
-        >
-          <MoonIcon size={16} />
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          disabled={true}
-          onClick={() => setTheme("system")}
-          className={"flex gap-2"}
-        >
-          <MonitorIcon size={16} />
-          System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  ) : null;
+  return (
+    <div
+      className={
+        "flex items-center justify-between gap-3 pl-3 pr-2 py-1.5 text-sm"
+      }
+    >
+      <span className={"text-nb-gray-300"}>Theme</span>
+      <div className={"flex items-center gap-1"}>
+        {OPTIONS.map(({ value, label, icon: Icon }) => (
+          <button
+            key={value}
+            type={"button"}
+            title={label}
+            aria-label={`${label} theme`}
+            aria-pressed={theme === value}
+            onClick={() => setTheme(value)}
+            className={cn(
+              "p-1.5 rounded-md transition-colors",
+              theme === value
+                ? "bg-nb-gray-900 text-nb-gray-100"
+                : "text-nb-gray-400 hover:bg-nb-gray-900 hover:text-nb-gray-100",
+            )}
+          >
+            <Icon size={14} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }

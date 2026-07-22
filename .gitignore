@@ -35,6 +35,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# local UI sandbox (throwaway preview harness — never commit)
+/src/app/sandbox/
+
 # config
 .local*config*.json
 .test-config.json
@@ -53,3 +56,5 @@ e2e/playwright-report/
 /public/netbird.wasm
 .idea
 src/.local-config*
+# local mock data (throwaway preview — never commit)
+/src/utils/mockData.ts

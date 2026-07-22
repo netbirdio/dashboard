@@ -70,7 +70,7 @@ export const ReverseProxyEventsUserCell = ({ event }: Props) => {
     <div className={"flex items-center gap-2 py-2 px-3"}>
       <div
         className={
-          "w-8 h-8 rounded-full flex items-center justify-center text-white uppercase text-xs font-medium bg-nb-gray-900 shrink-0"
+          "w-8 h-8 rounded-full flex items-center justify-center text-neutral-700 dark:text-white uppercase text-xs font-medium bg-nb-gray-900 shrink-0"
         }
         style={{
           color: generateColorFromUser(identityForColor),
