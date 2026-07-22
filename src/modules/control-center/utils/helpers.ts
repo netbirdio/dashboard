@@ -41,10 +41,11 @@ export const getGroupCountLabel = (group?: Group) => {
   const resourceCount = group?.resources_count || 0;
   if (resourceCount === 0)
     return peerCount === 0 ? "No Peers" : singularize("Peers", peerCount, true);
+  // Resources lead once the group holds any; a zero side is omitted.
   if (peerCount === 0) return singularize("Resources", resourceCount, true);
-  return `${singularize("Peers", peerCount, true)}, ${singularize(
-    "Resources",
-    resourceCount,
+  return `${singularize("Resources", resourceCount, true)}, ${singularize(
+    "Peers",
+    peerCount,
     true,
   )}`;
 };
@@ -144,6 +145,76 @@ export const getPoliciesTargetingResources = (
     return destinations.some((d) =>
       groupIds.has(typeof d === "string" ? d : d.id ?? ""),
     );
+  });
+};
+
+// Whether a GROUP node may be dropped INTO a network frame (it becomes a
+// resource-group row): allowed when the group is EMPTY (no peers/resources,
+// no draft-added members) or when at least one of the network's resources
+// (API list + draft/standalone resources assigned to the frame) belongs to
+// the group.
+export const canDropGroupIntoNetwork = (
+  groupNode: CanvasNode,
+  frameNode: CanvasNode,
+  nodes: CanvasNode[],
+  networkResources?: NetworkResource[],
+): boolean => {
+  const group = (groupNode.data as { group?: Group })?.group;
+  if (!group) return false;
+  const addedMembers = (groupNode.data as { addedMembers?: Set<string> })
+    ?.addedMembers;
+  if (
+    !group.peers_count &&
+    !group.resources_count &&
+    !(addedMembers && addedMembers.size > 0)
+  ) {
+    return true;
+  }
+  // A draft group carrying UNASSIGNED draft resources (grouped standalone
+  // cards) may drop into any network — the drop assigns those resources to
+  // it (see useDragToGroup).
+  const carriedDraftResources = (
+    groupNode.data as { draftResources?: NetworkResource[] }
+  )?.draftResources;
+  if (carriedDraftResources?.length) return true;
+
+  const groupKey = group.id ?? group.name;
+  const network = (
+    frameNode.data as { network?: { id?: string; resources?: string[] } }
+  )?.network;
+
+  // The network's resources: the API list plus draft/standalone resource
+  // nodes assigned to this frame (children or a matching draftNetwork ref).
+  const resourceIds = new Set<string>(network?.resources ?? []);
+  nodes.forEach((n) => {
+    const ref = (n.data as { draftNetwork?: DraftNetworkRef })?.draftNetwork;
+    const assigned =
+      n.parentId === frameNode.id ||
+      (ref &&
+        (ref.networkClientId
+          ? `network-${ref.networkClientId}` === frameNode.id
+          : !!network?.id && ref.networkId === network.id));
+    if (!assigned) return;
+    const rid = (n.data as { resource?: { id?: string } })?.resource?.id;
+    if (rid) resourceIds.add(rid);
+    else if (n.id.startsWith("resource-"))
+      resourceIds.add(n.id.replace("resource-", ""));
+  });
+
+  const inGroup = (groups?: (Group | string)[]) =>
+    (groups ?? []).some(
+      (g) => (typeof g === "string" ? g : g.id ?? g.name) === groupKey,
+    );
+
+  return Array.from(resourceIds).some((rid) => {
+    const api = networkResources?.find((r) => r.id === rid);
+    if (api && inGroup(api.groups as (Group | string)[])) return true;
+    const nodeResource = (
+      nodes.find((n) => n.id === `resource-${rid}`)?.data as {
+        resource?: { groups?: (Group | string)[] };
+      }
+    )?.resource;
+    return inGroup(nodeResource?.groups);
   });
 };
 

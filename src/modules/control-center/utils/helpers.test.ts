@@ -8,6 +8,7 @@ import {
   getGroupCountLabel,
   getIpPlaceholderFromRange,
   getPlaceholderHostname,
+  canDropGroupIntoNetwork,
   getPlaceholderPeer,
   getPoliciesTargetingResources,
   getPolicyRegroupUpdates,
@@ -267,12 +268,16 @@ describe("getGroupCountLabel", () => {
       "3 Peers",
     );
     expect(
+      getGroupCountLabel({ name: "g", resources_count: 2 } as Group),
+    ).toBe("2 Resources");
+    // Resources lead once the group holds any.
+    expect(
       getGroupCountLabel({
         name: "g",
         peers_count: 1,
         resources_count: 2,
       } as Group),
-    ).toBe("1 Peer, 2 Resources");
+    ).toBe("2 Resources, 1 Peer");
   });
 });
 
@@ -373,5 +378,58 @@ describe("getPoliciesTargetingResources — policies drawn when an existing netw
       [p],
     );
     expect(result).toEqual([p]);
+  });
+});
+
+describe("canDropGroupIntoNetwork — group → frame eligibility", () => {
+  const frame = (id: string, resources: string[] = []): Node =>
+    node(`network-${id}`, {
+      frame: true,
+      network: { id, name: "Net", resources },
+    });
+  const groupNode = (group: Group, extra: Record<string, unknown> = {}): Node =>
+    node(`group-${group.id ?? "new"}`, { group, ...extra });
+
+  it("allows an empty group", () => {
+    const g = groupNode({ id: "g1", name: "Empty" });
+    expect(canDropGroupIntoNetwork(g, frame("n1"), [], [])).toBe(true);
+  });
+
+  it("rejects a non-empty group with no resources in the network", () => {
+    const g = groupNode({ id: "g1", name: "Peers", peers_count: 2 });
+    expect(canDropGroupIntoNetwork(g, frame("n1"), [], [])).toBe(false);
+  });
+
+  it("rejects an empty-count group with draft-added members", () => {
+    const g = groupNode(
+      { id: "g1", name: "Drafted" },
+      { addedMembers: new Set(["peer-1"]) },
+    );
+    expect(canDropGroupIntoNetwork(g, frame("n1"), [], [])).toBe(false);
+  });
+
+  it("allows a group when one of the network's API resources belongs to it", () => {
+    const g = groupNode({ id: "g1", name: "Servers", resources_count: 1 });
+    const resources = [
+      { id: "r1", name: "DB", address: "1.1.1.1", groups: ["g1"] } as any,
+    ];
+    expect(canDropGroupIntoNetwork(g, frame("n1", ["r1"]), [], resources)).toBe(
+      true,
+    );
+    // Same resource exists, but in ANOTHER network → rejected.
+    expect(canDropGroupIntoNetwork(g, frame("n2"), [], resources)).toBe(false);
+  });
+
+  it("allows a group via a draft resource assigned to the frame", () => {
+    const g = groupNode({ id: "g1", name: "Servers", resources_count: 1 });
+    const draftResource: Node = {
+      ...node("resource-new-r1", {
+        resource: { id: "new-r1", name: "API", groups: ["g1"] },
+      }),
+      parentId: "network-n1",
+    };
+    expect(
+      canDropGroupIntoNetwork(g, frame("n1"), [draftResource], []),
+    ).toBe(true);
   });
 });

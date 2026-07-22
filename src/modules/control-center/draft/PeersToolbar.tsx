@@ -20,6 +20,7 @@ import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import {
+  getDraftResource,
   getPlaceholderPeer,
   getPolicyRegroupUpdates,
 } from "@/modules/control-center/utils/helpers";
@@ -148,6 +149,10 @@ export const PeersToolbar = () => {
 
       const selectedPeers: Peer[] = [];
       const selectedResources: NetworkResource[] = [];
+      // Unassigned draft resources: their nodes leave the canvas with the
+      // grouping, so their data rides on the group node — dropping the group
+      // into a network frame later assigns them to that network.
+      const unassignedDraftResources: NetworkResource[] = [];
 
       selectedGroupableNodes.forEach((node) => {
         if (PEER_NODE_TYPES.has(node.type ?? "")) {
@@ -157,8 +162,17 @@ export const PeersToolbar = () => {
           const peer = (node.data?.peer as Peer) ?? getPlaceholderPeer(node);
           if (peer) selectedPeers.push(peer);
         }
-        if (RESOURCE_NODE_TYPES.has(node.type ?? "") && node.data?.resource) {
-          selectedResources.push(node.data.resource as NetworkResource);
+        if (RESOURCE_NODE_TYPES.has(node.type ?? "")) {
+          // Draft resources carry their "new-…" id via getDraftResource (the
+          // raw node data has none — it would be dropped from the group).
+          const draftResource = getDraftResource(node);
+          const resource =
+            draftResource ??
+            (node.data?.resource as NetworkResource | undefined);
+          if (resource) selectedResources.push(resource);
+          if (draftResource && !node.data?.draftNetwork) {
+            unassignedDraftResources.push(draftResource);
+          }
         }
       });
 
@@ -172,6 +186,7 @@ export const PeersToolbar = () => {
         position: { x: centerX - 75, y: centerY - 20 },
         peers: selectedPeers,
         resources: selectedResources,
+        unassignedDraftResources,
       });
 
       if (!createdGroup) return;

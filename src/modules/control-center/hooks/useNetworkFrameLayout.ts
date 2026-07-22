@@ -131,7 +131,9 @@ export function useNetworkFrameLayout() {
       const width = getNetworkFrameWidth(cols, childWidth);
 
       resources.slice(visibleResources.length).forEach((child) => {
-        if (!child.hidden) updates.set(child.id, { hidden: true });
+        if (!child.hidden || child.selectable !== false) {
+          updates.set(child.id, { hidden: true, selectable: false });
+        }
       });
 
       // Places a cell at row-major grid index `index`, advancing the running
@@ -158,6 +160,10 @@ export function useNetworkFrameLayout() {
         );
         const childUpdate: Partial<Node> = {};
         if (child.hidden) childUpdate.hidden = false;
+        // Frame rows are frame-managed: keep them out of rubber-band
+        // selection (a row spans the full frame width, and Partial selection
+        // would catch it on any graze — phantom members in Create Group).
+        if (child.selectable !== false) childUpdate.selectable = false;
         if (child.position.x !== desired.x || child.position.y !== desired.y) {
           childUpdate.position = desired;
         }
