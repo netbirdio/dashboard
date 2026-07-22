@@ -1,4 +1,10 @@
-import { Node, useReactFlow } from "@xyflow/react";
+import { Node, Rect, useReactFlow } from "@xyflow/react";
+import {
+  drillInto,
+  drillOutOf,
+  getNodeRect,
+  isCanvasTransitionActive,
+} from "@/modules/control-center/utils/canvas-transition";
 import React, { useCallback, useEffect } from "react";
 import { FlowView } from "@/modules/control-center/FlowSelector";
 import { DEFAULT_MIN_ZOOM, EMPTY_STATE_ZOOM } from "@/modules/control-center/utils/layouts";
@@ -86,6 +92,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   // ---------------------------------------------------------------------------
 
   const fitView = (newNodes?: Node[]) => {
+    // A running canvas transition owns the camera — its reveal does the fit.
+    if (isCanvasTransitionActive()) return;
     const target = newNodes ?? nodes;
     window.requestAnimationFrame(() => {
       if (target.length === 0) {
@@ -259,11 +267,24 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setLayoutInitialized(false);
   };
 
-  const onNetworkSelect = useCallback((networkId: string) => {
-    resetView();
-    setCurrentView(FlowView.NETWORKS);
-    setSelectedNetwork(networkId);
-  }, []);
+  // Selecting a network plays the shared canvas transition: dive IN toward
+  // the clicked frame (or a plain zoom-in for dropdown picks, where there's
+  // no rect), fly OUT when going back to the overview. The view rebuild
+  // happens in the invisible swap window; the transition's reveal owns the
+  // camera (the init effect's fitView is suppressed meanwhile).
+  const onNetworkSelect = useCallback(
+    (networkId: string, targetRect?: Rect | null) => {
+      const swap = () => {
+        resetView();
+        setCurrentView(FlowView.NETWORKS);
+        setSelectedNetwork(networkId);
+      };
+      if (networkId) drillInto(reactFlow, targetRect, swap);
+      else drillOutOf(reactFlow, swap);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   const onGroupSelect = useCallback((groupId: string) => {
     resetView();
@@ -339,7 +360,12 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       // drill-down) — selecting a live network view there would leak a
       // draft-only id into the live selection.
       if (networkId && currentView === FlowView.NETWORKS && !isDraft) {
-        onNetworkSelect(networkId);
+        // The dive-in targets the clicked frame (a resource row resolves to
+        // its parent frame).
+        const frame = reactFlow
+          .getNodes()
+          .find((n) => n.id === `network-${networkId}`);
+        onNetworkSelect(networkId, getNodeRect(frame));
       }
       if (
         groupId &&

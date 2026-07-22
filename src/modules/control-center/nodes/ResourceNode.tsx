@@ -1,6 +1,11 @@
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import { type Node, Position, useConnection } from "@xyflow/react";
+import {
+  type Node,
+  Position,
+  useConnection,
+  useInternalNode,
+} from "@xyflow/react";
 import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
 import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
@@ -66,7 +71,13 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   // standalone look, only the parent view keeps the flat rows. The LIVE
   // single-network view uses the card too (its resources carry a
   // draftNetwork ref so the network shows inline).
-  const isDrilledChild = isFramed && drillDownNetworkNodeId === parentId;
+  // Drilled rendering keys off the parent frame being HIDDEN, not the drill
+  // id: the id is set before the dive-in (frame still visible → keep rows)
+  // and cleared before the exit fade finishes (frame still hidden → keep
+  // cards). The swap between row and card thus always happens while the
+  // canvas is invisible.
+  const parentFrame = useInternalNode(parentId ?? "");
+  const isDrilledChild = isFramed && !!parentFrame?.hidden;
   const standaloneCard = isDraft
     ? !isFramed || isDrilledChild
     : !isFramed && !!data.draftNetwork;

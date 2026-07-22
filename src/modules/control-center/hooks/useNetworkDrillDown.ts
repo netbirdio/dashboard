@@ -7,6 +7,11 @@ import {
   applyDrilledLayout,
   getDrilledFrameAnchor,
 } from "@/modules/control-center/utils/drilled-layout";
+import {
+  drillInto,
+  drillOutOf,
+  getNodeRect,
+} from "@/modules/control-center/utils/canvas-transition";
 
 // Drill-down (spec §10): clicking a network frame enters a single-network
 // draft view — only the frame (full resource grid via useNetworkFrameLayout's
@@ -25,6 +30,9 @@ export function useNetworkDrillDown() {
   const viewportRef = useRef<Viewport | null>(null);
   // Parent-view positions of top-level nodes, restored on exit.
   const positionsRef = useRef<Map<string, XYPosition> | null>(null);
+  // True while the exit choreography plays — the reconciling repair must not
+  // unhide nodes mid-fade (it would swap the worlds while still visible).
+  const exitingRef = useRef(false);
 
   // Leaving draft or removing the drilled frame always exits the drill-down.
   useEffect(() => {
@@ -65,29 +73,99 @@ export function useNetworkDrillDown() {
       // first child cell coincides with the layout's resource-column start
       // (including the frame in the layout itself skews the column math).
       const childCount = nodes.filter((n) => n.parentId === frameId).length;
-      drilledPos.set(frameId, getDrilledFrameAnchor(childCount));
+      const frameAnchor = getDrilledFrameAnchor(childCount);
+      drilledPos.set(frameId, frameAnchor);
 
-      setNodes((prevNodes) =>
-        prevNodes.map((n) => {
-          const hidden = !keep.has(n.id);
-          const position = !n.parentId ? drilledPos.get(n.id) : undefined;
-          if (n.hidden === hidden && !position) return n;
-          return { ...n, hidden, ...(position ? { position } : {}) };
-        }),
-      );
-      // Fit once the drilled layout settled (measured rows → full grid) —
-      // same fit parameters as the live views, so switching live ↔ draft
-      // keeps the camera identical.
-      setTimeout(() => {
-        const fitNodes = reactFlow.getNodes().filter((n) => keep.has(n.id));
-        if (fitNodes.length === 0) return;
-        reactFlow.fitView({
-          nodes: fitNodes,
-          padding: 0.1,
-          duration: 500,
-          maxZoom: 0.8,
+      const pane = document.querySelector<HTMLElement>(".react-flow");
+
+      // The final fit viewport, computed MATHEMATICALLY from the precomputed
+      // positions (+ current measured sizes) — no waiting for the drilled
+      // grid to render/measure, so the fade-in can start immediately after
+      // the fade-out.
+      const computeFinalViewport = (): Viewport => {
+        let minX = Infinity,
+          minY = Infinity,
+          maxX = -Infinity,
+          maxY = -Infinity;
+        const extend = (x: number, y: number, nw: number, nh: number) => {
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x + nw);
+          maxY = Math.max(maxY, y + nh);
+        };
+        nodes.forEach((n) => {
+          if (n.parentId === frameId) {
+            // Drilled grid slot (single column, fixed pitch).
+            const i = nodes
+              .filter((c) => c.parentId === frameId)
+              .indexOf(n);
+            extend(
+              frameAnchor.x + 20,
+              frameAnchor.y + 86 + i * 95,
+              n.measured?.width ?? 200,
+              n.measured?.height ?? 66,
+            );
+            return;
+          }
+          if (!keep.has(n.id)) return;
+          const pos = drilledPos.get(n.id) ?? n.position;
+          extend(
+            pos.x,
+            pos.y,
+            n.measured?.width ?? 200,
+            n.measured?.height ?? 80,
+          );
         });
-      }, 200);
+        const W = pane?.clientWidth ?? window.innerWidth;
+        const H = pane?.clientHeight ?? window.innerHeight;
+        const bw = Math.max(maxX - minX, 1);
+        const bh = Math.max(maxY - minY, 1);
+        const zoom = Math.min((W * 0.8) / bw, (H * 0.8) / bh, 0.8);
+        return {
+          zoom,
+          x: W / 2 - (minX + bw / 2) * zoom,
+          y: H / 2 - (minY + bh / 2) * zoom,
+        };
+      };
+
+      const applyDrill = (fitDuration: number | null) => {
+        setNodes((prevNodes) =>
+          prevNodes.map((n) => {
+            const hidden = !keep.has(n.id);
+            const position = !n.parentId ? drilledPos.get(n.id) : undefined;
+            if (n.hidden === hidden && !position) return n;
+            return { ...n, hidden, ...(position ? { position } : {}) };
+          }),
+        );
+        // Fit once the drilled layout settled (measured rows → full grid) —
+        // same fit parameters as the live views, so switching live ↔ draft
+        // keeps the camera identical. null → the caller drives the camera
+        // itself (the choreography's grow-in must not be snapped mid-flight).
+        if (fitDuration === null) return;
+        setTimeout(() => {
+          const fitNodes = reactFlow.getNodes().filter((n) => keep.has(n.id));
+          if (fitNodes.length === 0) return;
+          reactFlow.fitView({
+            nodes: fitNodes,
+            padding: 0.1,
+            duration: fitDuration,
+            maxZoom: 0.8,
+          });
+        }, 200);
+      };
+
+      // Drill illusion via the shared canvas transition: dive INTO the
+      // clicked frame, swap invisibly, grow the drilled world in. Skipped
+      // when the frame is already hidden (entering draft from the live
+      // drilled view builds pre-drilled).
+      const frameNode = nodes.find((n) => n.id === frameId);
+      if (frameNode && !frameNode.hidden) {
+        drillInto(reactFlow, frameNode, () => applyDrill(null), {
+          finalViewport: computeFinalViewport,
+        });
+      } else {
+        applyDrill(500);
+      }
       return;
     }
 
@@ -102,10 +180,7 @@ export function useNetworkDrillDown() {
     // Exit transition: restore the snapshotted parent positions along with
     // the hidden flags (the drill re-laid the kept world out).
     const savedPositions = prev ? positionsRef.current : null;
-    if (
-      savedPositions ||
-      nodes.some((n) => n.hidden && !n.parentId)
-    ) {
+    const restoreNodes = () => {
       setNodes((prevNodes) =>
         prevNodes.map((n) => {
           if (n.parentId) return n;
@@ -114,11 +189,41 @@ export function useNetworkDrillDown() {
           return { ...n, hidden: false, ...(position ? { position } : {}) };
         }),
       );
-    }
+    };
     if (prev) positionsRef.current = null;
-    if (prev && viewportRef.current) {
-      reactFlow.setViewport(viewportRef.current, { duration: 400 });
-      viewportRef.current = null;
+
+    // Reverse drill illusion via the shared canvas transition: the drilled
+    // world zooms OUT while fading, the parent canvas is restored invisibly
+    // with the camera close-up ON the frame's parent position (wherever it
+    // sits), then the camera flies out of it into a centered fit.
+    const savedViewport = viewportRef.current;
+    viewportRef.current = null;
+    if (prev && savedViewport) {
+      exitingRef.current = true;
+      const frameNode = nodes.find((n) => n.id === prev);
+      const framePos =
+        (frameNode && savedPositions?.get(prev)) ?? frameNode?.position;
+      const fromRect =
+        frameNode && framePos
+          ? { ...getNodeRect(frameNode)!, x: framePos.x, y: framePos.y }
+          : null;
+      drillOutOf(reactFlow, restoreNodes, fromRect, {
+        onDone: () => {
+          exitingRef.current = false;
+        },
+      });
+      return;
+    }
+
+    // While the exit choreography is in flight, leave the hidden flags to it.
+    if (exitingRef.current) return;
+
+    // Fallback / reconciling repair (no transition to play).
+    if (savedPositions || nodes.some((n) => n.hidden && !n.parentId)) {
+      restoreNodes();
+    }
+    if (prev && savedViewport) {
+      reactFlow.setViewport(savedViewport, { duration: 400 });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drillDownNetworkNodeId, isDraft, nodes, edges]);

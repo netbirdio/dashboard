@@ -14,6 +14,7 @@ import {
   OnNodesChange,
   useEdgesState,
   useNodesState,
+  Rect,
 } from "@xyflow/react";
 import { useSearchParams } from "next/navigation";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -172,7 +173,9 @@ interface ControlCenterUIContextType {
   networkOptions: SelectOption[];
   currentNetwork: Network | undefined;
   onViewChange: (view: FlowView) => void;
-  onNetworkSelect: (id: string) => void;
+  // targetRect: the clicked frame's rect — the canvas transition dives into
+  // it; without one (dropdown/back picks) it zooms from the viewport center.
+  onNetworkSelect: (id: string, targetRect?: Rect | null) => void;
   onForceSingleUserView: (userId: string) => void;
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
 }

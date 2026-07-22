@@ -85,7 +85,17 @@ export function useNetworkFrameLayout() {
       if (drillDownNetworkNodeId && frame.id !== drillDownNetworkNodeId) {
         return;
       }
-      const drilled = frame.id === drillDownNetworkNodeId;
+      // A hidden frame with no active drill is mid-exit-choreography (or
+      // about to be healed by the drill hook's repair) — freeze it: laying
+      // its children back into the parent grid now would visibly yank the
+      // still-shown drilled cards.
+      if (frame.hidden && frame.id !== drillDownNetworkNodeId) {
+        return;
+      }
+      // Drilled RENDERING only once the swap happened (frame hidden) — the
+      // drill id is set before the zoom-in choreography, and the frame must
+      // keep its parent look while still visible.
+      const drilled = frame.id === drillDownNetworkNodeId && !!frame.hidden;
       const resources = nodes
         .filter((n) => n.parentId === frame.id && !obsolete.has(n.id))
         .sort(
