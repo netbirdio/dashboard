@@ -92,8 +92,9 @@ export const sortRoutingPeerRows = (rows: RoutingPeerRow[]) =>
 
 // Routing-peers button group `[● status ⌄ | ⊕ Add]`: the status button opens
 // a PeerSelector-style popover (search + one row per router); with no routers
-// it triggers onAdd directly. Shared by the draft network frame's floating
-// bar and the live single-network header.
+// it triggers onAdd directly. Without onAdd the bar is read-only (no Add
+// segment). Shared by the draft network frame's floating bar, the live
+// network frames, and the live single-network header.
 export const RoutingPeersBar = ({
   rows,
   count,
@@ -101,7 +102,7 @@ export const RoutingPeersBar = ({
 }: {
   rows: RoutingPeerRow[];
   count: number;
-  onAdd: () => void;
+  onAdd?: () => void;
 }) => {
   const [open, setOpen] = React.useState(false);
   const [filteredRows, search, setSearch] = useSearch(
@@ -115,7 +116,8 @@ export const RoutingPeersBar = ({
   return (
     <div
       className={cn(
-        "flex items-stretch rounded-md overflow-hidden shrink-0",
+        // Fixed height matching the header's network SelectDropdown.
+        "flex items-stretch h-[40px] rounded-md overflow-hidden shrink-0",
         "bg-nb-gray-920 border border-gray-700/40",
       )}
     >
@@ -131,10 +133,10 @@ export const RoutingPeersBar = ({
             type={"button"}
             onClick={(e) => {
               e.stopPropagation();
-              if (!hasRouters) onAdd();
+              if (!hasRouters) onAdd?.();
             }}
             className={cn(
-              "flex items-center gap-2 pl-3.5 pr-3 py-2 text-xs text-gray-400 whitespace-nowrap outline-none",
+              "flex items-center gap-2 pl-3.5 pr-3 text-xs text-gray-400 whitespace-nowrap outline-none",
               "hover:text-white hover:bg-nb-gray-910 transition-colors",
             )}
           >
@@ -142,9 +144,10 @@ export const RoutingPeersBar = ({
               count={count}
               dotSize={7}
               className={"gap-1.5"}
-              zeroLabel={"No Routing Peers"}
+              zeroLabel={"No Routing Peer"}
             />
-            {hasRouters && <ChevronsUpDown size={13} className={"shrink-0"} />}
+            {/* Same size as the SelectDropdown trigger's chevron. */}
+            {hasRouters && <ChevronsUpDown size={16} className={"shrink-0"} />}
           </button>
         </PopoverTrigger>
         <PopoverContent
@@ -213,8 +216,8 @@ export const RoutingPeersBar = ({
         </PopoverContent>
       </Popover>
       {/* Trailing "Add" only once there's a routing peer — with none, the
-          status button itself ("No Routing Peers") adds the first. */}
-      {hasRouters && (
+          status button itself ("No Routing Peer") adds the first. */}
+      {hasRouters && onAdd && (
         <button
           type={"button"}
           onClick={(e) => {
@@ -222,7 +225,7 @@ export const RoutingPeersBar = ({
             onAdd();
           }}
           className={cn(
-            "flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap outline-none",
+            "flex items-center gap-1.5 px-3 text-xs whitespace-nowrap outline-none",
             "border-l border-gray-700/40 text-gray-400",
             "hover:text-white hover:bg-nb-gray-910 transition-colors",
           )}

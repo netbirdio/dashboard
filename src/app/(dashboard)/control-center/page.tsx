@@ -51,6 +51,7 @@ import { ControlCenterPolicyProvider } from "@/modules/control-center/ControlCen
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
 import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
+import { isFrameNode } from "@/modules/control-center/utils/helpers";
 import GroupsProvider from "@/contexts/GroupsProvider";
 
 export default function ControlCenter() {
@@ -156,10 +157,12 @@ function ControlCenterCanvas() {
           dismissCanvasOverlays();
         }}
         onNodeMouseEnter={(_, node) => {
-          if (!draft.isDraft) return;
-          const frameId = node.id.startsWith("network-new-")
+          // Hovering a frame OR anything inside it (resource rows are
+          // separate ReactFlow nodes, not DOM children) highlights the frame
+          // — draft and live network frames alike.
+          const frameId = isFrameNode(node)
             ? node.id
-            : node.parentId?.startsWith("network-new-")
+            : node.parentId?.startsWith("network-")
             ? node.parentId
             : null;
           setHoveredNetworkNodeId(frameId);

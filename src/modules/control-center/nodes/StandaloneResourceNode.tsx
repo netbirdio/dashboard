@@ -38,9 +38,13 @@ type StandaloneResourceNodeData = {
 export const StandaloneResourceNode = ({
   id,
   data,
+  hideNetwork = false,
 }: {
   id: string;
   data: StandaloneResourceNodeData;
+  // Drilled views already show the network in the header — the inline
+  // "- Network" suffix is redundant there.
+  hideNetwork?: boolean;
 }) => {
   const { showHandles = false } = data;
   const connection = useConnection();
@@ -56,10 +60,11 @@ export const StandaloneResourceNode = ({
   if (!resource) return null;
 
   const Icon = TYPE_ICONS[resource.type ?? "host"] ?? GlobeIcon;
-  // Both draft and existing standalone resources open the editor / network
-  // picker on click. (Existing resources edit the canvas node only — v1
-  // doesn't push updates to the API.)
-  const editable = true;
+  // In draft, both draft and existing standalone resources open the editor /
+  // network picker on click (existing ones edit the canvas node only — v1
+  // doesn't push updates to the API). The LIVE single-network view renders
+  // the same card read-only.
+  const editable = isDraft;
   // "Assigned" only once the ref points at a real network (id) or a draft
   // frame (clientId) — an empty ref still reads as "No Network".
   const network = data.draftNetwork;
@@ -119,7 +124,7 @@ export const StandaloneResourceNode = ({
             {/* Once assigned, the network shows inline after the name in the
                 same color; clickable to reopen the picker for draft resources
                 (existing resources can't be reassigned in v1). */}
-            {hasNetwork && (
+            {hasNetwork && !hideNetwork && (
               <span
                 className={cn(
                   "flex items-center gap-1.5 shrink-0",

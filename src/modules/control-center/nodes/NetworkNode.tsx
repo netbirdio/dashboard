@@ -4,21 +4,17 @@ import { Handle, type Node, Position, useConnection } from "@xyflow/react";
 import { CirclePlusIcon, NetworkIcon } from "lucide-react";
 import {
   getRoutingPeerCount,
-  RoutingPeerRow,
   RoutingPeersBar,
   RoutingPeersIndicator,
-  sortRoutingPeerRows,
 } from "@/modules/control-center/RoutingPeersBar";
+import { useFrameRouterRows } from "@/modules/control-center/hooks/useFrameRouterRows";
 import Button from "@components/Button";
 import * as React from "react";
 import { SmallBadge } from "@components/ui/SmallBadge";
-import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
-import { usePeers } from "@/contexts/PeersProvider";
-import { useGroups } from "@/contexts/GroupsProvider";
+import { Network, NetworkResource } from "@/interfaces/Network";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
 import { MoreResourcesNode } from "@/modules/control-center/nodes/MoreResourcesNode";
@@ -117,70 +113,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   // grid slot (cleared while drilled, since drilling reveals everything).
   const moreCell = (data as { moreCell?: FrameMoreCell }).moreCell;
 
-  // Draft routers: create-router changes for this network (routers have no
-  // canvas representation — the count IS the state).
-  const { changes } = useDraftChangeset();
-  const clientId = id.replace("network-", "");
-  const draftRouters = React.useMemo(
-    () =>
-      changes.filter(
-        (c) =>
-          c.type === "create-router" &&
-          (c.networkClientId === clientId || (n?.id && c.networkId === n.id)),
-      ),
-    [changes, clientId, n?.id],
-  );
-  // Routing-peers dropdown (frame's floating button): lists the network's
-  // routers — draft changes plus, for existing networks, the API routers.
-  const { peers } = usePeers();
-  const { groups } = useGroups();
-  const { data: apiRouters } = useFetchApi<NetworkRouter[]>(
-    `/networks/${n?.id}/routers`,
-    false,
-    false,
-    isDraft && isFrame && !!n?.id,
-  );
-
-  const routerRows: RoutingPeerRow[] = React.useMemo(() => {
-    const rows: RoutingPeerRow[] = [];
-    (apiRouters ?? []).forEach((r) => {
-      const peer = r.peer ? peers?.find((p) => p.id === r.peer) : undefined;
-      const groupId = r.peer_groups?.[0];
-      const group = groupId
-        ? groups?.find((g) => g.id === groupId)
-        : undefined;
-      rows.push({
-        key: `api-${r.id}`,
-        peerOs: peer?.os,
-        name: peer?.name ?? group?.name ?? "Routing Peer",
-        isGroup: !r.peer,
-        peersCount: !r.peer ? group?.peers_count ?? 0 : undefined,
-        enabled: r.enabled,
-      });
-    });
-    draftRouters.forEach((c) => {
-      if (c.type !== "create-router") return;
-      const peer = c.peerId
-        ? peers?.find((p) => p.id === c.peerId)
-        : undefined;
-      const group = c.groupId
-        ? groups?.find((g) => g.id === c.groupId || g.name === c.groupId)
-        : undefined;
-      rows.push({
-        key: `draft-${c.id}`,
-        peerOs: peer?.os,
-        name: c.peerName ?? c.groupName ?? "Routing Peer",
-        isGroup: !c.peerId,
-        peersCount: !c.peerId ? group?.peers_count ?? 0 : undefined,
-        enabled: c.enabled ?? true,
-        // Draft routers open the routing-peer modal prefilled; the save
-        // replaces the change.
-        onEdit: () =>
-          setRoutingPeerModal({ networkNodeId: id, editChangeId: c.id }),
-      });
-    });
-    return sortRoutingPeerRows(rows);
-  }, [apiRouters, draftRouters, peers, groups, id, setRoutingPeerModal]);
+  // Routing-peers dropdown (frame's floating button): the frame's routers —
+  // draft create-router changes plus, for existing networks, the API routers.
+  const { rows: routerRows } = useFrameRouterRows(id, isFrame);
 
   // Frames count peers, not routers (see getRoutingPeerCount); the live card
   // keeps the API count.
@@ -204,7 +139,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           ? "w-full h-full rounded-xl border border-nb-gray-800 group group/node"
           : "rounded-2xl border-nb-gray-900 overflow-hidden group hover:bg-nb-gray-935 cursor-pointer",
         isFrame && isFrameHovered && "border-nb-gray-700",
-        isDraft && isFrame && !isDrilled && "cursor-pointer",
+        isFrame && !isDrilled && "cursor-pointer",
         isDraft &&
           isTarget &&
           "hover:ring-2 hover:ring-white/60 hover:bg-nb-gray-930",
@@ -241,7 +176,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           >
             <NetworkIcon size={12} className={"shrink-0 text-nb-gray-300"} />
             <span className={"truncate"}>{n?.name}</span>
-            {isFrame && <SmallBadge />}
+            {/* NEW badge only for draft networks — existing ones (live
+                frames, dropped existing networks) already exist. */}
+            {isFrame && !n?.id && <SmallBadge />}
           </div>
           <div className={cn("text-nb-gray-400 whitespace-nowrap mt-0.5")}>
             {resources.length === 0
@@ -320,8 +257,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
       )}
 
       {/* Frame: routing-peers button group floating above the frame (left) —
-          status pill + "Add" routing peer. */}
-      {isDraft && isFrame && (
+          status pill + "Add" routing peer (Add is draft-only; live frames are
+          read-only, click drills into the single-network view). */}
+      {isFrame && (
         <div
           // The floating controls must not drill into the frame, and hovering
           // them (they're DOM children of the node, so ReactFlow's
@@ -345,13 +283,18 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           <RoutingPeersBar
             rows={routerRows}
             count={routingPeersCount}
-            onAdd={() => setRoutingPeerModal({ networkNodeId: id })}
+            onAdd={
+              isDraft
+                ? () => setRoutingPeerModal({ networkNodeId: id })
+                : undefined
+            }
           />
         </div>
       )}
 
-      {/* Anchors for the live network view's edges (card only). */}
-      {!isFrame && (
+      {/* Anchors for the live network view's edges (cards, and live frames —
+          draft frames get their target from FullAreaTargetHandle instead). */}
+      {(!isFrame || !isDraft) && (
         <>
           <Handle
             type="source"

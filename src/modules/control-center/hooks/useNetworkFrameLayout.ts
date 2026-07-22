@@ -13,11 +13,11 @@ import {
   NETWORK_FRAME_MAX_VISIBLE,
   NETWORK_FRAME_ADD_ROW,
   NETWORK_FRAME_ROW_GAP,
-  getFrameGridColumns,
   getNetworkFrameHeight,
   getNetworkFrameWidth,
   isFrameNode,
 } from "@/modules/control-center/utils/helpers";
+import { DRILLED_RESOURCE_SPACING } from "@/modules/control-center/utils/drilled-layout";
 
 // Base z-index for network frames — their resource children render at
 // FRAME_Z + 1, so both sit above default (0) nodes and no plain node can slip
@@ -58,7 +58,7 @@ const sameMoreCell = (a?: FrameMoreCell, b?: FrameMoreCell) => {
 // frame's only children are resource nodes.
 export function useNetworkFrameLayout() {
   const { nodes, setNodes } = useCanvasState();
-  const { drillDownNetworkNodeId } = useDraftMode();
+  const { isDraft, drillDownNetworkNodeId } = useDraftMode();
 
   useEffect(() => {
     const frames = nodes.filter(isFrameNode);
@@ -110,11 +110,10 @@ export function useNetworkFrameLayout() {
       // The "+N more" cell shares the resources' grid, so count it toward the
       // column decision.
       const cellCount = visibleResources.length + (hasMore ? 1 : 0);
-      const cols = drilled
-        ? getFrameGridColumns(resources.length)
-        : cellCount > 1
-        ? 2
-        : 1;
+      // Drilled: a single column at the shared drilled layout's FIXED pitch
+      // — pixel-identical to the live single-network view's resource column
+      // (measured-height pitches would drift a few px per row).
+      const cols = drilled ? 1 : cellCount > 1 ? 2 : 1;
       // Empty / single-resource parent frames mirror the two-resource size so
       // the frame doesn't jump as the first resources land: a lone resource
       // spans both columns' worth of width (→ same frame width as two
@@ -143,7 +142,9 @@ export function useNetworkFrameLayout() {
       const placeCell = (index: number, cellHeight: number) => {
         const col = index % cols;
         if (col === 0 && index > 0) {
-          y += rowMaxHeight + NETWORK_FRAME_ROW_GAP;
+          y += drilled
+            ? DRILLED_RESOURCE_SPACING
+            : rowMaxHeight + NETWORK_FRAME_ROW_GAP;
           rowMaxHeight = 0;
         }
         rowMaxHeight = Math.max(rowMaxHeight, cellHeight);
@@ -169,10 +170,13 @@ export function useNetworkFrameLayout() {
         }
         // Sync the width and clear any stale fade mask left by the old
         // overflow treatment (rows are solid; overflow is a "+N more" cell).
-        if (child.style?.width !== childWidth || child.style?.maskImage) {
+        // Drilled cards auto-size like live/standalone ones (min-width from
+        // the card itself) — no forced width.
+        const desiredWidth = drilled ? undefined : childWidth;
+        if (child.style?.width !== desiredWidth || child.style?.maskImage) {
           childUpdate.style = {
             ...child.style,
-            width: childWidth,
+            width: desiredWidth,
             maskImage: undefined,
             WebkitMaskImage: undefined,
           };
@@ -204,14 +208,15 @@ export function useNetworkFrameLayout() {
 
       // Bottom band: the "Add Resource" button is always present in a draft
       // frame, so its band is always reserved (overflow now lives in-grid as
-      // the "+N more" cell, not a footer).
-      const addBand = NETWORK_FRAME_ADD_ROW;
+      // the "+N more" cell, not a footer). Live frames have no button — just
+      // the regular bottom padding.
+      const addBand = isDraft ? NETWORK_FRAME_ADD_ROW : NETWORK_FRAME_PADDING_Y;
       // Empty frames reserve one row (getNetworkFrameHeight) so they're the
       // same height as one/two resources.
       const height =
         visibleResources.length > 0
           ? y + rowMaxHeight + addBand
-          : getNetworkFrameHeight(0);
+          : getNetworkFrameHeight(0) - (isDraft ? 0 : NETWORK_FRAME_ADD_ROW);
 
       const frameUpdate: Partial<Node> = {};
       if (frame.style?.height !== height || frame.style?.width !== width) {
@@ -250,5 +255,5 @@ export function useNetworkFrameLayout() {
           return update ? { ...n, ...update } : n;
         }),
     );
-  }, [nodes, setNodes, drillDownNetworkNodeId]);
+  }, [nodes, setNodes, isDraft, drillDownNetworkNodeId]);
 }

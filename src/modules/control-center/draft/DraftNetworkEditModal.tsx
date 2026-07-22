@@ -40,8 +40,8 @@ const EditorContent = ({
   const { renameDraftNetwork } = useDraftNetworkActions();
 
   const frame = reactFlow.getNodes().find((n) => n.id === networkNodeId);
-  const name =
-    (frame?.data as { network?: { name?: string } })?.network?.name ?? "";
+  const network = (frame?.data as { network?: Network })?.network;
+  const name = network?.name ?? "";
   // The description lives only in the create-network change.
   const clientId = networkNodeId.replace("network-", "");
   const description = (
@@ -49,6 +49,12 @@ const EditorContent = ({
       (c) => c.type === "create-network" && c.clientId === clientId,
     ) as { description?: string } | undefined
   )?.description;
+
+  // EXISTING networks edit through the real modal — its save PUTs via the
+  // API (same approach as API routers in the routing-peers dropdown).
+  if (network?.id) {
+    return <NetworkModalContent network={network} onUpdated={onClose} />;
+  }
 
   return (
     <NetworkModalContent

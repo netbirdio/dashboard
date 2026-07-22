@@ -11,18 +11,21 @@ import {
   RoutingPeersBar,
   sortRoutingPeerRows,
 } from "@/modules/control-center/RoutingPeersBar";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type Props = {
   network: Network;
 };
 
 // Live single-network view's routing-peers control — the same button group +
-// dropdown as the draft frame's floating bar. Add and row-edit navigate to
-// the network page's routing-peers tab (live edits happen there).
+// dropdown as the draft frame's floating bar. Rows open the real
+// routing-peer modal (its save PUTs); Add navigates to the network page's
+// routing-peers tab.
 export const NetworkRoutingPeerCount = ({ network }: Props) => {
   const router = useRouter();
   const { peers } = usePeers();
   const { groups } = useGroups();
+  const { setRoutingPeerModal } = useDraftMode();
   const { data: apiRouters } = useFetchApi<NetworkRouter[]>(
     `/networks/${network?.id}/routers`,
     false,
@@ -52,7 +55,8 @@ export const NetworkRoutingPeerCount = ({ network }: Props) => {
             isGroup: !r.peer,
             peersCount: !r.peer ? group?.peers_count ?? 0 : undefined,
             enabled: r.enabled,
-            onEdit: openNetworkPage,
+            // Opens the real routing-peer modal (its save PUTs).
+            onEdit: () => setRoutingPeerModal({ network, router: r }),
           };
         }),
       ),

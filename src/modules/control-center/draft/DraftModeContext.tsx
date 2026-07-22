@@ -1,4 +1,5 @@
 import { createContext, PropsWithChildren, useContext, useState } from "react";
+import type { Network, NetworkRouter } from "@/interfaces/Network";
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 
 export enum CanvasTool {
@@ -30,12 +31,15 @@ export type ResourceEditorState =
   | { nodeId: string; createInNetworkNodeId?: never }
   | { nodeId?: never; createInNetworkNodeId: string };
 
-// Routing-peer modal target: a network frame, and optionally an existing
-// create-router change to EDIT (the frame's routing-peers dropdown) — the
-// modal opens prefilled and the save replaces that change.
+// Routing-peer modal target: a network frame (or a direct network, for the
+// live header where no frame node exists). editChangeId opens an existing
+// create-router change to EDIT (the save replaces it); router opens an API
+// router in the real modal (its save PUTs via the API).
 export type RoutingPeerModalState = {
-  networkNodeId: string;
+  networkNodeId?: string;
+  network?: Network;
   editChangeId?: string;
+  router?: NetworkRouter;
 };
 
 type DraftModeContextType = {

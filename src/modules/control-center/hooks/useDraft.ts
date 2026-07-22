@@ -18,8 +18,15 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { Group } from "@/interfaces/Group";
-import { NetworkResource } from "@/interfaces/Network";
+import { Network, NetworkResource } from "@/interfaces/Network";
+import {
+  getFrameChildPosition,
+  getNetworkFrameHeight,
+  NETWORK_FRAME_CHILD_WIDTH,
+  NETWORK_FRAME_WIDTH,
+} from "@/modules/control-center/utils/helpers";
 import { handleDraftConnect } from "@/modules/control-center/utils/draft-connect";
+import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftPeerUpgrade } from "@/modules/control-center/hooks/useDraftPeerUpgrade";
 import { useNetworkFrameLayout } from "@/modules/control-center/hooks/useNetworkFrameLayout";
@@ -42,9 +49,16 @@ export function useDraft() {
   // Clicking a frame enters the single-network drill-down view.
   useNetworkDrillDown();
 
-  const { nodes, edges, setNodes, setEdges, setLayoutInitialized } =
-    useCanvasState();
-  const { policies, peers, networkResources, groups } =
+  const {
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    setLayoutInitialized,
+    selectedNetwork,
+    setSelectedNetwork,
+  } = useCanvasState();
+  const { policies, peers, networks, networkResources, groups } =
     useControlCenterData();
   const {
     isDraft,
@@ -53,6 +67,8 @@ export function useDraft() {
     setActiveTool,
     draftSession,
     setNetworkDestinationPicker,
+    drillDownNetworkNodeId,
+    setDrillDownNetworkNodeId,
   } = useDraftMode();
   const {
     setCreatePolicyModal,
@@ -136,6 +152,15 @@ export function useDraft() {
           .map((n) => (n.data as any)?.policy?.id)
           .filter(Boolean),
       );
+      // The all-networks live view draws no policy nodes (dashed group/peer →
+      // network lines instead) — the frames' policies still belong in the
+      // draft, connections included.
+      liveNodes.forEach((n) => {
+        if (n.type !== "networkNode") return;
+        ((n.data as any)?.network?.policies ?? []).forEach((pid: string) =>
+          livePolicyIds.add(pid),
+        );
+      });
 
       const visiblePolicies = policies?.filter(
         (p) => p.id && livePolicyIds.has(p.id),
@@ -393,15 +418,120 @@ export function useDraft() {
         }
       });
 
-      // Apply hierarchical layout: sources → policies → destinations
+      // Live network frames carry into the draft as EXISTING-network frames
+      // (same shape as dropExistingNetworkFrame): the frame keeps its real
+      // id, its resources become read-only children. Resources already drawn
+      // by the policy pass are reparented into the frame.
+      const carryNetworkFrame = (network: Network) => {
+        if (!network.id) return;
+        const frameId = `network-${network.id}`;
+        if (allNodes.some((n) => n.id === frameId)) return;
+
+        const childResources = (networkResources ?? []).filter((r) =>
+          network.resources?.includes(r.id ?? ""),
+        );
+        allNodes.push({
+          id: frameId,
+          type: "networkNode",
+          position: { x: 0, y: 0 },
+          style: {
+            width: NETWORK_FRAME_WIDTH,
+            height: getNetworkFrameHeight(Math.max(childResources.length, 1)),
+          },
+          data: { network, frame: true },
+        });
+        const childRef = { networkId: network.id, name: network.name };
+        childResources.forEach((r, i) => {
+          // Reparent an already-drawn resource node (splice + re-push so the
+          // child follows its parent in the array), or create a fresh child.
+          const idx = allNodes.findIndex((n) => n.id === `resource-${r.id}`);
+          const existing = idx >= 0 ? allNodes.splice(idx, 1)[0] : undefined;
+          allNodes.push({
+            ...(existing ?? {
+              id: `resource-${r.id}`,
+              type: "resourceNode",
+            }),
+            parentId: frameId,
+            position: getFrameChildPosition(i),
+            style: { ...existing?.style, width: NETWORK_FRAME_CHILD_WIDTH },
+            data: {
+              ...existing?.data,
+              resource: r,
+              enabled: true,
+              showHandles: true,
+              draftNetwork: childRef,
+            },
+          } as Node);
+        });
+      };
+      liveNodes.forEach((liveNode) => {
+        if (liveNode.type !== "networkNode") return;
+        const network = (liveNode.data as { network?: Network })?.network;
+        if (network?.id) carryNetworkFrame(network);
+      });
+      // Entering draft from the live single-network (drilled) view: that
+      // view has no network node on the canvas — carry the selected network
+      // as a frame and enter the draft drill-down directly (below).
+      const drilledNetwork = selectedNetwork
+        ? networks?.find((n) => n.id === selectedNetwork)
+        : undefined;
+      if (drilledNetwork) carryNetworkFrame(drilledNetwork);
+
+      // Apply hierarchical layout: sources → policies → destinations. Frame
+      // children stay out of it — their positions are frame-relative and the
+      // reconciling frame layout manages them.
+      const frameChildren = allNodes.filter((n) => n.parentId);
       const { updatedNodes, updatedEdges } = applyD3HierarchicalLayout(
-        allNodes,
+        allNodes.filter((n) => !n.parentId),
         allEdges,
         400,
         120,
         "peer",
         DEFAULT_LAYOUT_CONFIG,
       );
+      // Anchor the draft to the live canvas: shift everything so the first
+      // carried network frame keeps its live position — switching modes then
+      // has no big positional drift (the layouts differ, but the world stays
+      // roughly in place, so the viewport is kept as-is too).
+      const liveAnchor = liveNodes.find(
+        (n) =>
+          n.type === "networkNode" && updatedNodes.some((u) => u.id === n.id),
+      );
+      if (liveAnchor) {
+        const placed = updatedNodes.find((n) => n.id === liveAnchor.id)!;
+        const dx = liveAnchor.position.x - placed.position.x;
+        const dy = liveAnchor.position.y - placed.position.y;
+        updatedNodes.forEach((n) => {
+          n.position = { x: n.position.x + dx, y: n.position.y + dy };
+        });
+      }
+
+      // Parents precede children (all parents are in updatedNodes).
+      updatedNodes.push(...frameChildren);
+
+      // From the live drilled view, enter the draft drill-down of the same
+      // network in the SAME commit: the hidden flags are pre-applied so the
+      // parent view (frame box & co.) never paints, and the drill effect —
+      // which reads the committed state — takes over from there (fitView
+      // included).
+      if (drilledNetwork) {
+        const frameId = `network-${drilledNetwork.id}`;
+        // Positions don't matter here — the drill-down (entered in the same
+        // commit below) applies THE shared drilled layout, identical to the
+        // live single-network view's.
+        const keep = computeDrillDownKeepSet(
+          updatedNodes,
+          updatedEdges,
+          frameId,
+        );
+        updatedNodes.forEach((n) => {
+          n.hidden = !keep.has(n.id);
+        });
+        setDrillDownNetworkNodeId(frameId);
+        setNodes(updatedNodes);
+        setEdges(updatedEdges);
+        return;
+      }
 
       setNodes(updatedNodes);
       setEdges(updatedEdges);
@@ -422,9 +552,25 @@ export function useDraft() {
     } else if (liveStateRef.current) {
       wasDraftRef.current = false;
       const restored = liveStateRef.current;
+      liveStateRef.current = null;
+
+      // Leaving draft while drilled into an EXISTING network → land in the
+      // live single-network view of that network (not whatever live view the
+      // draft was entered from). Draft-only networks have no live view.
+      const drilledFrame = drillDownNetworkNodeId
+        ? nodes.find((n) => n.id === drillDownNetworkNodeId)
+        : undefined;
+      const drilledNetworkId = (
+        drilledFrame?.data as { network?: { id?: string } }
+      )?.network?.id;
+      if (drilledNetworkId) {
+        setLayoutInitialized(false);
+        setSelectedNetwork(drilledNetworkId);
+        return;
+      }
+
       setNodes(restored.nodes);
       setEdges(restored.edges);
-      liveStateRef.current = null;
       // Fit view after restoring live state
       setTimeout(() => {
         reactFlow.fitView({

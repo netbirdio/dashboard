@@ -85,11 +85,14 @@ export function SelectDropdown({
 
   const toggle = (selectedValue: string) => {
     const isSelected = value == selectedValue;
-    if (!isSelected) onChange?.(selectedValue);
+    setOpen(false);
+    // Fire the change only after the popover's close animation has played
+    // out — a heavy onChange (e.g. the control center rebuilding its canvas)
+    // otherwise janks mid-animation and the dropdown lingers, then blinks.
+    if (!isSelected) setTimeout(() => onChange?.(selectedValue), 180);
     setTimeout(() => {
       setSearch("");
     }, 100);
-    setOpen(false);
   };
 
   const [open, setOpen] = useState(false);
@@ -202,7 +205,7 @@ export function SelectDropdown({
               {!isLoading && selected && <SelectedItem />}
               {!isLoading && !selected && <PlaceholderItem />}
               <div className={"pl-2"}>
-                <ChevronsUpDown size={18} className={"shrink-0"} />
+                <ChevronsUpDown size={16} className={"shrink-0"} />
               </div>
             </div>
           </Button>

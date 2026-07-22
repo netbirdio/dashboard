@@ -61,19 +61,38 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   const cardResource = draftResource ?? resource;
 
   // Standalone draft/existing resource → its own card component (network shown
-  // inline after the name; context-menu halo on the whole card).
-  if (isDraft && cardResource && !isFramed) {
-    return <StandaloneResourceNode id={id} data={data} />;
+  // inline after the name; context-menu halo on the whole card). Drilled
+  // frame children render as the same card — the drill-down mirrors the
+  // standalone look, only the parent view keeps the flat rows. The LIVE
+  // single-network view uses the card too (its resources carry a
+  // draftNetwork ref so the network shows inline).
+  const isDrilledChild = isFramed && drillDownNetworkNodeId === parentId;
+  const standaloneCard = isDraft
+    ? !isFramed || isDrilledChild
+    : !isFramed && !!data.draftNetwork;
+  if (cardResource && standaloneCard) {
+    // Drilled views (draft drill-down, live single-network) already show the
+    // network in the header — no inline "- Network" suffix on the card.
+    return (
+      <StandaloneResourceNode
+        id={id}
+        data={data}
+        hideNetwork={isDrilledChild || !isDraft}
+      />
+    );
   }
 
   // A resource INSIDE a network frame: a flat row managed by the frame (no
-  // card border/bg). The context-menu halo lives on the icon box here.
-  if (isDraft && cardResource && isFramed) {
+  // card border/bg) — draft frames and live network frames alike. The
+  // context-menu halo lives on the icon box here.
+  if (cardResource && isFramed) {
     const Icon = TYPE_ICONS[cardResource.type ?? "host"] ?? GlobeIcon;
     return (
       <div
         className={cn(
           "relative rounded-lg transition-colors group/node w-full min-w-[185px]",
+          // Live rows keep the pointer (clicking drills into the network like
+          // the frame does) but no row hover styling — the frame highlights.
           "cursor-pointer",
           data.enabled === false && "opacity-60",
           className,
@@ -85,8 +104,10 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
         <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
           <div
             className={cn(
-              "h-9 w-9 bg-nb-gray-850 group-hover/node:text-nb-gray-200 rounded-md flex items-center justify-center shrink-0 group-hover/node:bg-nb-gray-700 transition-all",
-              "border border-nb-gray-850 group-hover/node:border-nb-gray-700",
+              "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 transition-all",
+              "border border-nb-gray-850",
+              isDraft &&
+                "group-hover/node:text-nb-gray-200 group-hover/node:bg-nb-gray-700 group-hover/node:border-nb-gray-700",
               // Rings live on the icon box for framed rows: white while a
               // connection drag hovers, sky halo for the context menu.
               isTarget && "group-hover/node:ring-2 group-hover/node:ring-white",

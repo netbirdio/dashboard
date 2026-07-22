@@ -313,12 +313,27 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         _node.type === "destinationGroupNode";
       const isPolicyNode = _node.type === "policyNode";
 
-      const networkId = isNetworkNode ? _node.id.replace("network-", "") : "";
+      // A live frame's resource row drills into its network, same as the
+      // frame itself (rows are separate nodes, so the frame click never
+      // fires for them).
+      const frameChildNetworkId =
+        !isDraft &&
+        _node.type === "resourceNode" &&
+        _node.parentId?.startsWith("network-")
+          ? _node.parentId.replace("network-", "")
+          : "";
+      const networkId = isNetworkNode
+        ? _node.id.replace("network-", "")
+        : frameChildNetworkId;
       // Draft groups have no API id yet — the panel is keyed by node id then.
       const groupId = isGroupNode
         ? (_node.data as any)?.group?.id || (isDraft ? _node.id : _node.id.replace("group-", ""))
         : "";
-      const policyId = isPolicyNode ? _node.id.replace("policy-", "") : "";
+      // Inline policy pills (all-networks view) use per-network node ids
+      // ("policy-<pid>-net-<nid>") — the data carries the real policy id.
+      const policyId = isPolicyNode
+        ? (_node.data as any)?.policy?.id ?? _node.id.replace("policy-", "")
+        : "";
 
       // Draft network clicks are handled by the node itself (frame
       // drill-down) — selecting a live network view there would leak a

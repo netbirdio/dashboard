@@ -4,24 +4,28 @@ import { Group } from "@/interfaces/Group";
 import {
   addNode,
   addEdge,
-  DEFAULT_LAYOUT_CONFIG,
 } from "@/modules/control-center/utils/graph-builder";
+import { applyD3ForceLayout } from "@/modules/control-center/utils/layouts";
+import { applyDrilledLayout } from "@/modules/control-center/utils/drilled-layout";
 import {
-  applyD3HierarchicalLayout,
-  applyD3ForceLayout,
-} from "@/modules/control-center/utils/layouts";
-import {
+  getFrameChildPosition,
+  getNetworkFrameHeight,
   getResourcePolicyByGroups,
   getPolicyProtocolAndPortText,
+  NETWORK_FRAME_CHILD_WIDTH,
+  NETWORK_FRAME_WIDTH,
 } from "@/modules/control-center/utils/helpers";
 import { ViewResult } from "./types";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
+// Uni-directional (network access is always one-way) — SmartEdge's blue.
+const NETWORK_LINE_COLOR = "#0ea5e9";
+
 export function useNetworkView() {
   const { selectedNetwork, layoutInitialized, forceSingleGroupViewRef } =
     useCanvasState();
-  const { policies, networks, networkResources, isLoading, isDataReady } =
+  const { policies, networks, networkResources, peers, isLoading, isDataReady } =
     useControlCenterData();
 
   const applySingleNetworkView = (
@@ -74,6 +78,29 @@ export function useNetworkView() {
             data: { enabled, policy },
           });
         });
+
+        // Single-peer sources (rule.sourceResource) connect to the policy
+        // like a source group would.
+        const sourceResource = rule.sourceResource;
+        if (sourceResource?.id && sourceResource.type === "peer") {
+          const peer = peers?.find((p) => p.id === sourceResource.id);
+          if (peer) {
+            addNode(allNodes, {
+              id: `peer-${peer.id}`,
+              type: "peerNode",
+              data: { peer, enabled: true, variant: "card" },
+              position: { x: 0, y: 0 },
+            });
+
+            addEdge(allEdges, {
+              id: `peer-${peer.id}-policy-${policy.id}`,
+              source: `peer-${peer.id}`,
+              target: `policy-${policy.id}`,
+              type: "smart",
+              data: { enabled, policy },
+            });
+          }
+        }
       }
     });
 
@@ -86,8 +113,28 @@ export function useNetworkView() {
       addNode(allNodes, {
         id: `resource-${resource.id}`,
         type: "resourceNode",
-        data: { resource },
+        // The draftNetwork ref routes the node to the standalone CARD look
+        // (name - network inline), same as the draft drill-down.
+        data: {
+          resource,
+          enabled: true,
+          draftNetwork: { networkId: network.id, name: network.name },
+        },
         position: { x: 0, y: 0 },
+      });
+
+      // Policies targeting this resource DIRECTLY (single-resource
+      // destination) — the group sweep below only covers group-mediated ones.
+      (policies ?? []).forEach((policy) => {
+        if (!networkPolicies.includes(policy.id || "")) return;
+        if (policy.rules?.[0]?.destinationResource?.id !== resource.id) return;
+        addEdge(allEdges, {
+          id: `policy-${policy.id}-resource-${resource.id}`,
+          source: `policy-${policy.id}`,
+          target: `resource-${resource.id}`,
+          type: "smart",
+          data: { enabled: policy.enabled, policy },
+        });
       });
 
       const networkResourceGroups = (resource.groups as Group[]) || [];
@@ -157,14 +204,9 @@ export function useNetworkView() {
       });
     });
 
-    return applyD3HierarchicalLayout(
-      allNodes,
-      allEdges,
-      400,
-      120,
-      "network",
-      DEFAULT_LAYOUT_CONFIG,
-    );
+    // THE shared single-network layout (see drilled-layout.ts) — identical
+    // to the draft drill-down's arrangement.
+    return applyDrilledLayout(allNodes, allEdges);
   };
 
   const applyNetworksView = (): ViewResult | undefined => {
@@ -173,15 +215,48 @@ export function useNetworkView() {
 
     const allNodes: Node[] = [];
     const allEdges: Edge[] = [];
+    // Frame children (resources) are appended AFTER the layout — the force
+    // layout must not touch their frame-relative positions, and ReactFlow
+    // needs parents to precede children in the array.
+    const childNodes: Node[] = [];
     const hidePolicies = !selectedNetwork;
 
     networks!.forEach((network) => {
+      // Live networks render as FRAMES too (same chrome as draft frames,
+      // read-only): resources live inside as children, the floating
+      // RoutingPeersBar shows the routers, clicking drills into the
+      // single-network view.
+      const childResources = (network.resources ?? [])
+        .map((rid) => networkResources?.find((r) => r.id === rid))
+        .filter(Boolean) as NonNullable<typeof networkResources>;
+
       allNodes.push({
         id: `network-${network.id}`,
         type: "networkNode",
-        data: { network, selectedNetwork },
+        data: { network, selectedNetwork, frame: true },
         draggable: true,
         position: { x: 0, y: 0 },
+        style: {
+          width: NETWORK_FRAME_WIDTH,
+          height: getNetworkFrameHeight(Math.max(childResources.length, 1)),
+        },
+      });
+      childResources.forEach((resource, i) => {
+        childNodes.push({
+          id: `resource-${resource.id}`,
+          type: "resourceNode",
+          parentId: `network-${network.id}`,
+          position: getFrameChildPosition(i),
+          // Draft row-drags move the whole frame (useDragToGroup intercepts);
+          // live has no such interception, so rows aren't draggable at all.
+          draggable: false,
+          style: { width: NETWORK_FRAME_CHILD_WIDTH },
+          data: {
+            resource,
+            enabled: true,
+            draftNetwork: { networkId: network.id, name: network.name },
+          },
+        });
       });
 
       const networkPolicies = network.policies || [];
@@ -193,6 +268,12 @@ export function useNetworkView() {
             const rule = policy.rules?.[0];
             if (rule) {
               const ruleSourceGroups = (rule.sources as Group[]) || [];
+              const sourceResource = rule.sourceResource;
+              const sourcePeer =
+                sourceResource?.id && sourceResource.type === "peer"
+                  ? peers?.find((pr) => pr.id === sourceResource.id)
+                  : undefined;
+              const sourceIds: string[] = [];
 
               ruleSourceGroups.forEach((group) => {
                 addNode(allNodes, {
@@ -206,25 +287,51 @@ export function useNetworkView() {
                   },
                   position: { x: 0, y: 0 },
                 });
+                sourceIds.push(`group-${group.id}`);
+              });
 
-                if (hidePolicies) {
-                  const label = getPolicyProtocolAndPortText(policy);
+              // A single-peer source (rule.sourceResource) connects like a
+              // source group.
+              if (sourcePeer) {
+                addNode(allNodes, {
+                  id: `peer-${sourcePeer.id}`,
+                  type: "peerNode",
+                  data: { peer: sourcePeer, enabled: true, variant: "card" },
+                  position: { x: 0, y: 0 },
+                });
+                sourceIds.push(`peer-${sourcePeer.id}`);
+              }
+
+              // Straight blue dashed lines source → network with the
+              // policy's protocol/port label — network access is always
+              // one-way (blue, never the bidirectional green).
+              if (hidePolicies && sourceIds.length > 0) {
+                // "All" fallback like the policy pill — an all-traffic policy
+                // has no protocol/port text and would leave the line bare.
+                const label = getPolicyProtocolAndPortText(policy) || "All";
+                sourceIds.forEach((sourceId) => {
                   addEdge(allEdges, {
-                    id: `group-${group.id}-network-${network.id}`,
-                    source: `group-${group.id}`,
+                    id: `${sourceId}-network-${network.id}`,
+                    source: sourceId,
                     target: `network-${network.id}`,
                     type: "floating-straight",
-                    data: { label },
+                    data: { label, color: NETWORK_LINE_COLOR },
                   });
-                }
-              });
+                });
+              }
             }
           }
         });
       }
     });
 
-    return applyD3ForceLayout(allNodes, allEdges);
+    const layouted = applyD3ForceLayout(allNodes, allEdges);
+    if (!layouted) return layouted;
+    // Children after every parent, with their frame-relative positions.
+    return {
+      ...layouted,
+      updatedNodes: [...layouted.updatedNodes, ...childNodes],
+    };
   };
 
   return { applySingleNetworkView, applyNetworksView };
