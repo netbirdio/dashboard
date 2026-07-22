@@ -1,38 +1,70 @@
-import Button from "@components/Button";
-import { cn } from "@utils/helpers";
+import useFetchApi from "@utils/api";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
-import CircleIcon from "@/assets/icons/CircleIcon";
-import { Network } from "@/interfaces/Network";
+import { Network, NetworkRouter } from "@/interfaces/Network";
+import { usePeers } from "@/contexts/PeersProvider";
+import { useGroups } from "@/contexts/GroupsProvider";
+import {
+  getRoutingPeerCount,
+  RoutingPeerRow,
+  RoutingPeersBar,
+  sortRoutingPeerRows,
+} from "@/modules/control-center/RoutingPeersBar";
 
 type Props = {
   network: Network;
 };
 
+// Live single-network view's routing-peers control — the same button group +
+// dropdown as the draft frame's floating bar. Add and row-edit navigate to
+// the network page's routing-peers tab (live edits happen there).
 export const NetworkRoutingPeerCount = ({ network }: Props) => {
   const router = useRouter();
-  const routerCount = network?.routing_peers_count ?? 0;
-
-  const routingPeerStatusColor = useMemo(() => {
-    if (!network) return "bg-nb-gray-500";
-    if (routerCount === 0) return "bg-nb-gray-500";
-    if (routerCount === 1) return "bg-yellow-400";
-    if (routerCount > 1) return "bg-green-400";
-    return "bg-nb-gray-500";
-  }, [network, routerCount]);
+  const { peers } = usePeers();
+  const { groups } = useGroups();
+  const { data: apiRouters } = useFetchApi<NetworkRouter[]>(
+    `/networks/${network?.id}/routers`,
+    false,
+    false,
+    !!network?.id,
+  );
 
   const openNetworkPage = () => {
     router.push(`/network?id=${network.id}&tab=routing-peers`);
   };
 
+  const rows: RoutingPeerRow[] = useMemo(
+    () =>
+      sortRoutingPeerRows(
+        (apiRouters ?? []).map((r) => {
+          const peer = r.peer
+            ? peers?.find((p) => p.id === r.peer)
+            : undefined;
+          const groupId = r.peer_groups?.[0];
+          const group = groupId
+            ? groups?.find((g) => g.id === groupId)
+            : undefined;
+          return {
+            key: r.id,
+            peerOs: peer?.os,
+            name: peer?.name ?? group?.name ?? "Routing Peer",
+            isGroup: !r.peer,
+            peersCount: !r.peer ? group?.peers_count ?? 0 : undefined,
+            enabled: r.enabled,
+            onEdit: openNetworkPage,
+          };
+        }),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [apiRouters, peers, groups, network?.id],
+  );
+
   return (
-    <Button variant={"secondary"} size={"xs"} onClick={openNetworkPage}>
-      <CircleIcon
-        size={8}
-        className={cn("shrink-0 block", routingPeerStatusColor)}
-      />
-      {routerCount} Routing Peer(s)
-    </Button>
+    <RoutingPeersBar
+      rows={rows}
+      count={getRoutingPeerCount(rows)}
+      onAdd={openNetworkPage}
+    />
   );
 };

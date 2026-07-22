@@ -69,7 +69,8 @@ control-center/
 ├── ConnectionLine.tsx                 → Custom connection line during drag
 ├── DragAndDropProvider.tsx            → Drag-from-sidebar state
 ├── FlowSelector.tsx                   → Peer/User/Group/Networks tab selector
-├── NetworkRoutingPeerCount.tsx        → Network peer count badge
+├── NetworkRoutingPeerCount.tsx        → Live single-network header's routing-peers control (RoutingPeersBar over the API routers; Add/edit navigate to the network page's routing-peers tab)
+├── RoutingPeersBar.tsx                → Shared `[● status ⌄ | ⊕ Add]` button group + PeerSelector-style routers popover (RoutingPeersIndicator, RoutingPeerRow, getRoutingPeerCount, sortRoutingPeerRows) — used by the draft frame's floating bar and the live header
 │
 ├── hooks/
 │   ├── useControlCenterData.ts        → All API fetching + networkOptions + isDataReady

@@ -1,26 +1,20 @@
 import useFetchApi from "@utils/api";
 import { cn, singularize } from "@utils/helpers";
 import { Handle, type Node, Position, useConnection } from "@xyflow/react";
+import { CirclePlusIcon, NetworkIcon } from "lucide-react";
 import {
-  AlertTriangleIcon,
-  ChevronsUpDown,
-  CirclePlusIcon,
-  NetworkIcon,
-  SquarePenIcon,
-} from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
-import { DropdownInput } from "@components/DropdownInput";
-import { DropdownInfoText } from "@components/DropdownInfoText";
-import { useSearch } from "@hooks/useSearch";
+  getRoutingPeerCount,
+  RoutingPeerRow,
+  RoutingPeersBar,
+  RoutingPeersIndicator,
+  sortRoutingPeerRows,
+} from "@/modules/control-center/RoutingPeersBar";
 import Button from "@components/Button";
 import * as React from "react";
-import CircleIcon from "@/assets/icons/CircleIcon";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
 import { usePeers } from "@/contexts/PeersProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
-import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
-import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -42,50 +36,6 @@ type NetworkNodeType = {
 };
 
 type NetworkNodeProps = Node<NetworkNodeType, "networkNode">;
-
-// Traffic light: gray = 0, yellow = 1, green ≥ 2 (HA).
-const RoutingPeersIndicator = ({
-  count,
-  hideWhenZero = false,
-  dotSize = 8,
-  className,
-  zeroLabel,
-}: {
-  count: number;
-  hideWhenZero?: boolean;
-  dotSize?: number;
-  className?: string;
-  zeroLabel?: string;
-}) => {
-  if (hideWhenZero && count === 0) return null;
-  // The frame's status bar (has a zeroLabel) flags "no routing peers" with a
-  // yellow AlertTriangle, same as a resource's "No Network" — a missing router
-  // means the network can't route. Elsewhere the traffic-light dot is kept.
-  const showAlert = count === 0 && !!zeroLabel;
-  return (
-    <div className={cn("flex items-center", className)}>
-      {showAlert ? (
-        <AlertTriangleIcon
-          size={dotSize + 5}
-          className={"shrink-0 text-yellow-400"}
-        />
-      ) : (
-        <CircleIcon
-          size={dotSize}
-          className={cn(
-            "shrink-0 block",
-            count === 0 && "bg-nb-gray-500",
-            count === 1 && "bg-yellow-400",
-            count > 1 && "bg-green-400",
-          )}
-        />
-      )}
-      {count === 0 && zeroLabel
-        ? zeroLabel
-        : singularize("Routing Peers", count, true)}
-    </div>
-  );
-};
 
 // One component, two variants: draft networks (no API id) render as a FRAME
 // — dashed border, solid bg, resources living inside as ReactFlow children,
@@ -182,8 +132,6 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   );
   // Routing-peers dropdown (frame's floating button): lists the network's
   // routers — draft changes plus, for existing networks, the API routers.
-  // PeerSelector-style: Popover + search input + rows.
-  const [routersOpen, setRoutersOpen] = React.useState(false);
   const { peers } = usePeers();
   const { groups } = useGroups();
   const { data: apiRouters } = useFetchApi<NetworkRouter[]>(
@@ -193,17 +141,8 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
     isDraft && isFrame && !!n?.id,
   );
 
-  type RouterRow = {
-    key: string;
-    peerOs?: string;
-    name: string;
-    isGroup: boolean;
-    peersCount?: number;
-    enabled: boolean;
-    editChangeId?: string;
-  };
-  const routerRows: RouterRow[] = React.useMemo(() => {
-    const rows: RouterRow[] = [];
+  const routerRows: RoutingPeerRow[] = React.useMemo(() => {
+    const rows: RoutingPeerRow[] = [];
     (apiRouters ?? []).forEach((r) => {
       const peer = r.peer ? peers?.find((p) => p.id === r.peer) : undefined;
       const groupId = r.peer_groups?.[0];
@@ -234,38 +173,20 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         isGroup: !c.peerId,
         peersCount: !c.peerId ? group?.peers_count ?? 0 : undefined,
         enabled: c.enabled ?? true,
-        editChangeId: c.id,
+        // Draft routers open the routing-peer modal prefilled; the save
+        // replaces the change.
+        onEdit: () =>
+          setRoutingPeerModal({ networkNodeId: id, editChangeId: c.id }),
       });
     });
-    // Disabled routers last; within each half groups first (most peers on
-    // top), then peer routers by name.
-    return rows.sort((a, b) => {
-      if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
-      if (a.isGroup !== b.isGroup) return a.isGroup ? -1 : 1;
-      if (a.isGroup && b.isGroup)
-        return (b.peersCount ?? 0) - (a.peersCount ?? 0);
-      return a.name.localeCompare(b.name);
-    });
-  }, [apiRouters, draftRouters, peers, groups]);
+    return sortRoutingPeerRows(rows);
+  }, [apiRouters, draftRouters, peers, groups, id, setRoutingPeerModal]);
 
-  // The status counts PEERS, not routers: a group router contributes its
-  // peers, a peer router one — disabled routers contribute nothing. Frames
-  // compute from the rows; the live card keeps the API count.
-  const enabledRouterPeers = routerRows.reduce(
-    (sum, r) => (r.enabled ? sum + (r.isGroup ? r.peersCount ?? 0 : 1) : sum),
-    0,
-  );
+  // Frames count peers, not routers (see getRoutingPeerCount); the live card
+  // keeps the API count.
   const routingPeersCount = isFrame
-    ? enabledRouterPeers
+    ? getRoutingPeerCount(routerRows)
     : n?.routing_peers_count ?? 0;
-  const hasRouters = routerRows.length > 0;
-
-  const [filteredRouterRows, routerSearch, setRouterSearch] = useSearch(
-    routerRows,
-    (row: RouterRow, query: string) =>
-      row.name.toLowerCase().includes(query.toLowerCase()),
-    { filter: true, debounce: 150 },
-  );
 
   return (
     <div
@@ -421,139 +342,11 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             "absolute bottom-full -left-[2px] mb-3 flex items-stretch gap-2 nodrag"
           }
         >
-          {/* Routing-peers button group: [● status | ⊕ Add]. The status opens
-              the routing-peer modal; the trailing "Add" (split off by a left
-              border) adds a routing peer. */}
-          <div
-            className={cn(
-              "flex items-stretch rounded-md overflow-hidden shrink-0",
-              "bg-nb-gray-920 border border-gray-700/40",
-            )}
-          >
-            {/* With routers, the status button opens the routing-peers
-                dropdown (PeerSelector-style popover with search); with none,
-                it opens the modal to add the first. */}
-            <Popover
-              open={routersOpen && hasRouters}
-              onOpenChange={(isOpen) => {
-                if (!isOpen) setTimeout(() => setRouterSearch(""), 100);
-                setRoutersOpen(isOpen);
-              }}
-            >
-              <PopoverTrigger asChild>
-                <button
-                  type={"button"}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!hasRouters) {
-                      setRoutingPeerModal({ networkNodeId: id });
-                    }
-                  }}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 text-xs text-gray-400 whitespace-nowrap outline-none",
-                    "hover:text-white hover:bg-nb-gray-910 transition-colors",
-                  )}
-                >
-                  <RoutingPeersIndicator
-                    count={routingPeersCount}
-                    dotSize={7}
-                    className={"gap-1.5"}
-                    zeroLabel={"No Routing Peers"}
-                  />
-                  {hasRouters && (
-                    <ChevronsUpDown size={13} className={"shrink-0"} />
-                  )}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                hideWhenDetached={false}
-                className={"w-[300px] p-0 shadow-sm shadow-nb-gray-950"}
-                align={"start"}
-                side={"bottom"}
-                sideOffset={8}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <DropdownInput
-                  value={routerSearch}
-                  onChange={setRouterSearch}
-                  placeholder={"Search by peer or group name..."}
-                  hideEnterIcon={true}
-                />
-                {filteredRouterRows.length === 0 && routerSearch !== "" && (
-                  <DropdownInfoText>
-                    There are no routing peers matching your search.
-                  </DropdownInfoText>
-                )}
-                <div className={"pb-1 px-1"}>
-                  {filteredRouterRows.map((row) => (
-                    <div
-                      key={row.key}
-                      className={cn(
-                        "group/row flex items-center gap-2.5 rounded-md py-2 pl-3 pr-3",
-                        "text-sm text-nb-gray-300 hover:bg-nb-gray-900 hover:text-gray-50",
-                        row.editChangeId && "cursor-pointer",
-                        !row.enabled && "opacity-50",
-                      )}
-                      onClick={() => {
-                        if (!row.editChangeId) return;
-                        setRoutersOpen(false);
-                        setRoutingPeerModal({
-                          networkNodeId: id,
-                          editChangeId: row.editChangeId,
-                        });
-                      }}
-                    >
-                      {row.isGroup ? (
-                        <span
-                          className={
-                            "flex h-4 w-4 items-center justify-center shrink-0"
-                          }
-                        >
-                          <GroupBadgeIcon size={14} />
-                        </span>
-                      ) : (
-                        <PeerOperatingSystemIcon os={row.peerOs ?? ""} />
-                      )}
-                      <span className={"truncate flex-1 min-w-0"}>
-                        {row.name}
-                        {row.peersCount !== undefined &&
-                          ` (${singularize("Peers", row.peersCount, true)})`}
-                      </span>
-                      {row.editChangeId && (
-                        <SquarePenIcon
-                          size={13}
-                          className={cn(
-                            "shrink-0 text-nb-gray-400 group-hover/row:text-white",
-                            "opacity-0 group-hover/row:opacity-100 transition-opacity",
-                          )}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-            {/* Trailing "Add" only once there's a routing peer — with none,
-                the status button itself ("No Routing Peers") adds the first. */}
-            {routingPeersCount > 0 && (
-              <button
-                type={"button"}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setRoutingPeerModal({ networkNodeId: id });
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 text-xs whitespace-nowrap outline-none",
-                  "border-l border-gray-700/40 text-gray-400",
-                  "hover:text-white hover:bg-nb-gray-910 transition-colors",
-                )}
-              >
-                <CirclePlusIcon size={12} className={"shrink-0"} />
-                Add
-              </button>
-            )}
-          </div>
-
+          <RoutingPeersBar
+            rows={routerRows}
+            count={routingPeersCount}
+            onAdd={() => setRoutingPeerModal({ networkNodeId: id })}
+          />
         </div>
       )}
 
