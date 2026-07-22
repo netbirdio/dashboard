@@ -64,7 +64,6 @@ export function useDraftGroupActions() {
     trackRenameGroup,
     trackDeleteGroup,
     untrackNewGroup,
-    trackDeletePolicy,
     untrackNetwork,
     untrackResource,
     untrackRouter,
@@ -121,34 +120,6 @@ export function useDraftGroupActions() {
       trackRenameGroup({ groupId: group.id, from, to: newName });
     },
     [setNodes, trackRenameGroup],
-  );
-
-  // Draft policies reference new groups by name; once the group is gone they
-  // can never be created, so drop them (change + canvas node + edges).
-  const dropPoliciesReferencing = useCallback(
-    (groupName: string) => {
-      const orphaned = changes.filter((c) => {
-        if (c.type !== "create-policy") return false;
-        const rule = c.policy.rules?.[0];
-        const has = (groups?: Group[] | string[] | null) =>
-          ((groups as Group[]) ?? []).some(
-            (g) => typeof g !== "string" && !g.id && g.name === groupName,
-          );
-        return has(rule?.sources) || has(rule?.destinations);
-      });
-      orphaned.forEach((c) => {
-        if (c.type !== "create-policy") return;
-        trackDeletePolicy({ policyId: c.clientId, name: c.name });
-        const policyNodeId = `policy-${c.clientId}`;
-        setNodes((prev) => prev.filter((n) => n.id !== policyNodeId));
-        setEdges((prev) =>
-          prev.filter(
-            (e) => e.source !== policyNodeId && e.target !== policyNodeId,
-          ),
-        );
-      });
-    },
-    [changes, trackDeletePolicy, setNodes, setEdges],
   );
 
   const removeNodeWithEdges = useCallback(
@@ -258,39 +229,97 @@ export function useDraftGroupActions() {
         untrackResource(nodeId.replace("resource-", ""));
       }
 
+      // Removing a GROUP node also removes the group from the policies it was
+      // connected to — mirroring the peer/resource sweep below, but for the
+      // sources/destinations group lists. The removed node's edges say which
+      // side(s) of which policies it served (a self-ref policy draws the group
+      // twice: source node + dest copy — only the removed side is cleared).
+      // Snapshot before the node and its edges disappear.
+      const removedGroup = isGroupNode(node) ? getNodeGroup(node) : undefined;
+      const groupPolicyUpdates: Policy[] = [];
+      if (removedGroup) {
+        const gKey = removedGroup.id ?? removedGroup.name;
+        const matchesGroup = (g: Group | string) =>
+          (typeof g === "string" ? g : g.id ?? g.name) === gKey;
+        const allNodes = reactFlow.getNodes();
+        const updatesById = new Map<string, Policy>();
+        reactFlow.getEdges().forEach((e) => {
+          if (e.source !== nodeId && e.target !== nodeId) return;
+          const isSourceSide = e.source === nodeId; // group → policy
+          const policyNodeId = isSourceSide ? e.target : e.source;
+          const policyNode = allNodes.find((n) => n.id === policyNodeId);
+          if (policyNode?.type !== NodeType.PolicyNode) return;
+          const policy =
+            updatesById.get(policyNodeId) ??
+            ((policyNode.data as { policy?: Policy })?.policy as Policy);
+          const rule = policy?.rules?.[0];
+          if (!policy || !rule) return;
+          const sources = (rule.sources ?? []) as (Group | string)[];
+          const destinations = (rule.destinations ?? []) as (Group | string)[];
+          const hit = isSourceSide
+            ? sources.some(matchesGroup)
+            : destinations.some(matchesGroup);
+          if (!hit) return;
+          updatesById.set(policyNodeId, {
+            ...policy,
+            rules: [
+              {
+                ...rule,
+                sources: isSourceSide
+                  ? (sources.filter((g) => !matchesGroup(g)) as Group[])
+                  : rule.sources,
+                destinations: !isSourceSide
+                  ? (destinations.filter((g) => !matchesGroup(g)) as Group[])
+                  : rule.destinations,
+              },
+              ...(policy.rules?.slice(1) ?? []),
+            ],
+          });
+        });
+        groupPolicyUpdates.push(...updatesById.values());
+      }
+
       setNodes((prev) => prev.filter((n) => n.id !== nodeId));
       setEdges((prev) =>
         prev.filter((e) => e.source !== nodeId && e.target !== nodeId),
       );
       setSelectedDestinationGroup("");
 
-      if (!entityId) return;
-      const policyUpdates: Policy[] = [];
-      reactFlow.getNodes().forEach((n) => {
-        const policy = (n.data as { policy?: Policy })?.policy;
-        const rule = policy?.rules?.[0];
-        if (!policy || !rule) return;
-        const sourceHit = rule.sourceResource?.id === entityId;
-        const destHit = rule.destinationResource?.id === entityId;
-        if (!sourceHit && !destHit) return;
-        policyUpdates.push({
-          ...policy,
-          rules: [
-            {
-              ...rule,
-              sourceResource: sourceHit ? undefined : rule.sourceResource,
-              destinationResource: destHit
-                ? undefined
-                : rule.destinationResource,
-            },
-            ...(policy.rules?.slice(1) ?? []),
-          ],
+      const policyUpdates: Policy[] = [...groupPolicyUpdates];
+      if (entityId) {
+        reactFlow.getNodes().forEach((n) => {
+          const policy = (n.data as { policy?: Policy })?.policy;
+          const rule = policy?.rules?.[0];
+          if (!policy || !rule) return;
+          const sourceHit = rule.sourceResource?.id === entityId;
+          const destHit = rule.destinationResource?.id === entityId;
+          if (!sourceHit && !destHit) return;
+          policyUpdates.push({
+            ...policy,
+            rules: [
+              {
+                ...rule,
+                sourceResource: sourceHit ? undefined : rule.sourceResource,
+                destinationResource: destHit
+                  ? undefined
+                  : rule.destinationResource,
+              },
+              ...(policy.rules?.slice(1) ?? []),
+            ],
+          });
         });
-      });
+      }
       if (policyUpdates.length > 0) {
         // Next tick — the node removal must be committed to the canvas
-        // before drawPolicyOnCanvas rebuilds the policies' edges.
-        setTimeout(() => policyUpdates.forEach((p) => updateDraftPolicy(p)), 0);
+        // before drawPolicyOnCanvas rebuilds the policies' edges. A policy
+        // removed in the same cascade (e.g. Remove-policy also removing its
+        // endpoints) is skipped — updating it would redraw it.
+        setTimeout(() => {
+          const remaining = new Set(reactFlow.getNodes().map((n) => n.id));
+          policyUpdates.forEach(
+            (p) => remaining.has(`policy-${p.id}`) && updateDraftPolicy(p),
+          );
+        }, 0);
       }
     },
     [
@@ -305,9 +334,10 @@ export function useDraftGroupActions() {
     ],
   );
 
-  // Remove: takes the node off the canvas without deleting anything. If it was
-  // the last canvas instance of a draft-only group, its pending creation (and
-  // any draft policies pointing at it) are dropped too.
+  // Remove: takes the node off the canvas without deleting anything.
+  // removeNodeWithEdges clears the group out of the policies this node was
+  // connected to. If it was the last canvas instance of a draft-only group,
+  // its pending creation is dropped too.
   const removeGroup = useCallback(
     (node: Node) => {
       const group = getNodeGroup(node);
@@ -325,17 +355,10 @@ export function useDraftGroupActions() {
           );
         if (!otherInstance) {
           untrackNewGroup(group.name);
-          dropPoliciesReferencing(group.name);
         }
       }
     },
-    [
-      reactFlow,
-      changes,
-      removeNodeWithEdges,
-      untrackNewGroup,
-      dropPoliciesReferencing,
-    ],
+    [reactFlow, removeNodeWithEdges, untrackNewGroup],
   );
 
   // Delete: records a delete-group change (DELETE on deploy) and removes every
@@ -391,8 +414,9 @@ export function useDraftGroupActions() {
         title: `Delete ${
           deletable.length === 1 ? "group" : `${deletable.length} groups`
         } ${names}?`,
-        description:
-          "The deletion is added to your draft and applied to your network when you deploy.",
+        description: `${
+          deletable.length === 1 ? "It" : "They"
+        } will be marked for deletion and deleted when you review and deploy.`,
         confirmText: "Delete",
         cancelText: "Cancel",
         type: "danger",

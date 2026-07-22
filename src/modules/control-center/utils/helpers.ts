@@ -118,6 +118,35 @@ export const getResourcePolicyByGroups = (
   });
 };
 
+// Policies that grant access to any of the given resources — either directly
+// (destinationResource id) or via a destination group the resource belongs
+// to. Used when an existing network/resource is dropped onto the draft
+// canvas: its policies are drawn alongside it (mirror of dropping an
+// existing policy, which draws its sources/destinations).
+export const getPoliciesTargetingResources = (
+  resources: NetworkResource[],
+  policies: Policy[],
+): Policy[] => {
+  const resourceIds = new Set(resources.map((r) => r.id).filter(Boolean));
+  const groupIds = new Set(
+    resources.flatMap((r) =>
+      ((r.groups ?? []) as (Group | string)[])
+        .map((g) => (typeof g === "string" ? g : g.id ?? ""))
+        .filter(Boolean),
+    ),
+  );
+  return policies.filter((policy) => {
+    const rule = policy.rules?.[0];
+    if (!rule) return false;
+    const destResource = rule.destinationResource;
+    if (destResource?.id && resourceIds.has(destResource.id)) return true;
+    const destinations = (rule.destinations ?? []) as (Group | string)[];
+    return destinations.some((d) =>
+      groupIds.has(typeof d === "string" ? d : d.id ?? ""),
+    );
+  });
+};
+
 export function useSourceGroupEnabled(sourceId: string) {
   const { getNode } = useReactFlow();
   const node = getNode(sourceId);

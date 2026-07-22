@@ -6,7 +6,7 @@ import React, {
   useState,
 } from "react";
 import {
-  CircleXIcon,
+  CircleMinusIcon,
   ListIcon,
   WorkflowIcon,
   PencilLineIcon,
@@ -19,6 +19,7 @@ import {
 import { Node } from "@xyflow/react";
 import { cn } from "@utils/helpers";
 import { Policy } from "@/interfaces/Policy";
+import { useDialog } from "@/contexts/DialogProvider";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
@@ -88,7 +89,10 @@ export const NodeContextMenu = ({
     trackDeletePolicy,
     trackUpdateResource,
     trackDeleteResource,
+    changes,
+    removeChange,
   } = useDraftChangeset();
+  const { confirm } = useDialog();
   const {
     renameGroup,
     removeGroup,
@@ -221,11 +225,23 @@ export const NodeContextMenu = ({
     [nodes, setNodes, trackUpdateResource, syncDraftResource],
   );
 
-  // Delete an EXISTING resource: record the delete-resource change, then take
-  // it off the canvas.
+  // Delete an EXISTING resource: confirm, record the delete-resource change,
+  // then take it off the canvas.
   const deleteResource = useCallback(
-    (id: string) => {
+    async (id: string) => {
       const target = nodes.find((n) => n.id === id);
+      const resourceName =
+        (target?.data as { resource?: NetworkResource })?.resource?.name ??
+        "Resource";
+      const choice = await confirm({
+        title: `Delete resource “${resourceName}”?`,
+        description:
+          "It will be marked for deletion and deleted when you review and deploy.",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        type: "danger",
+      });
+      if (!choice) return;
       const resource = (target?.data as { resource?: NetworkResource })
         ?.resource;
       const net = (target?.data as { draftNetwork?: DraftNetworkRef })
@@ -240,7 +256,7 @@ export const NodeContextMenu = ({
       }
       removeNodeWithEdges(id);
     },
-    [nodes, trackDeleteResource, removeNodeWithEdges],
+    [nodes, confirm, trackDeleteResource, removeNodeWithEdges],
   );
 
   const node = useMemo(
@@ -309,8 +325,52 @@ export const NodeContextMenu = ({
     setEdges,
   ]);
 
-  const handleDeletePolicy = useCallback(() => {
+  // Remove a policy from the CANVAS only (nothing is deleted, no confirm):
+  // the policy node and its edges go away; its source and destination nodes
+  // STAY on the canvas. A draft-created policy drops its pending create; an
+  // existing policy sheds any pending update/toggle change so an invisible
+  // edit can't deploy.
+  const handleRemovePolicyFromCanvas = useCallback(() => {
     if (!nodePolicy) return;
+
+    if (nodeId.startsWith("policy-new-")) {
+      // Cancels the pending create (changeset semantics for "new-" ids).
+      trackDeletePolicy({
+        policyId: policyClientId,
+        name: nodePolicy.name ?? "Policy",
+      });
+    } else {
+      changes
+        .filter(
+          (c) => c.type === "update-policy" && c.policyId === policyClientId,
+        )
+        .forEach((c) => removeChange(c.id));
+    }
+
+    removeNodeWithEdges(nodeId);
+  }, [
+    nodePolicy,
+    nodeId,
+    policyClientId,
+    changes,
+    removeChange,
+    trackDeletePolicy,
+    removeNodeWithEdges,
+  ]);
+
+  // Delete an EXISTING policy: confirm, record the delete-policy change, then
+  // take it off the canvas.
+  const handleDeletePolicy = useCallback(async () => {
+    if (!nodePolicy) return;
+    const choice = await confirm({
+      title: `Delete policy “${nodePolicy.name ?? "Policy"}”?`,
+      description:
+        "It will be marked for deletion and deleted when you review and deploy.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+    });
+    if (!choice) return;
     trackDeletePolicy({
       policyId: policyClientId,
       name: nodePolicy.name ?? "Policy",
@@ -320,6 +380,7 @@ export const NodeContextMenu = ({
     nodePolicy,
     policyClientId,
     nodeId,
+    confirm,
     trackDeletePolicy,
     removeNodeWithEdges,
   ]);
@@ -332,7 +393,7 @@ export const NodeContextMenu = ({
       return [
         {
           label: "Remove",
-          icon: <CircleXIcon size={14} />,
+          icon: <CircleMinusIcon size={14} />,
           onClick: handleRemove,
         },
       ];
@@ -342,7 +403,7 @@ export const NodeContextMenu = ({
       const group = getNodeGroup(node);
       const remove: MenuItem = {
         label: "Remove",
-        icon: <CircleXIcon size={14} />,
+        icon: <CircleMinusIcon size={14} />,
         onClick: () => removeGroup(node),
       };
       // Opens the group panel (name/metadata + assign peers) — the same thing
@@ -394,21 +455,25 @@ export const NodeContextMenu = ({
           ),
           onClick: handleTogglePolicy,
         },
-        // Draft-created policies only exist on the canvas — taking them off
-        // is a Remove (drops the pending create). Delete is reserved for
-        // policies that exist in the API and will really be deleted.
-        nodeId.startsWith("policy-new-")
-          ? {
-              label: "Remove",
-              icon: <CircleXIcon size={14} />,
-              onClick: handleDeletePolicy,
-            }
-          : {
-              label: "Delete",
-              icon: <TrashIcon size={14} />,
-              onClick: handleDeletePolicy,
-              danger: true,
-            },
+        // Remove is canvas-only (the policy node goes; its sources and
+        // destinations stay on the canvas — nothing is deleted).
+        // Delete is reserved for policies that exist in the API and will
+        // really be deleted on deploy.
+        {
+          label: "Remove",
+          icon: <CircleMinusIcon size={14} />,
+          onClick: () => void handleRemovePolicyFromCanvas(),
+        },
+        ...(nodeId.startsWith("policy-new-")
+          ? []
+          : [
+              {
+                label: "Delete",
+                icon: <TrashIcon size={14} />,
+                onClick: handleDeletePolicy,
+                danger: true,
+              },
+            ]),
       ];
     }
 
@@ -424,7 +489,7 @@ export const NodeContextMenu = ({
         },
         {
           label: "Remove",
-          icon: <CircleXIcon size={14} />,
+          icon: <CircleMinusIcon size={14} />,
           onClick: handleRemove,
         },
       ];
@@ -462,7 +527,7 @@ export const NodeContextMenu = ({
         },
         {
           label: "Remove",
-          icon: <CircleXIcon size={14} />,
+          icon: <CircleMinusIcon size={14} />,
           onClick: handleRemove,
         },
       ];
@@ -478,7 +543,7 @@ export const NodeContextMenu = ({
         },
         {
           label: "Remove",
-          icon: <CircleXIcon size={14} />,
+          icon: <CircleMinusIcon size={14} />,
           onClick: handleRemove,
         },
       ];
@@ -527,7 +592,7 @@ export const NodeContextMenu = ({
       } else {
         items.push({
           label: "Remove",
-          icon: <CircleXIcon size={14} />,
+          icon: <CircleMinusIcon size={14} />,
           onClick: handleRemove,
         });
       }
@@ -537,7 +602,7 @@ export const NodeContextMenu = ({
     return [
       {
         label: "Remove",
-        icon: <CircleXIcon size={14} />,
+        icon: <CircleMinusIcon size={14} />,
         onClick: handleRemove,
       },
     ];
@@ -552,6 +617,7 @@ export const NodeContextMenu = ({
     confirmAndDeleteGroups,
     handleTogglePolicy,
     handleDeletePolicy,
+    handleRemovePolicyFromCanvas,
     setRoutingPeerModal,
     setResourceEditor,
     setNetworkEditor,

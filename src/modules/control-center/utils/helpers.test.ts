@@ -9,6 +9,7 @@ import {
   getIpPlaceholderFromRange,
   getPlaceholderHostname,
   getPlaceholderPeer,
+  getPoliciesTargetingResources,
   getPolicyRegroupUpdates,
   isCompleteDraftResource,
   isDeployablePolicy,
@@ -315,5 +316,62 @@ describe("draft resources", () => {
     });
     expect(isDeployablePolicy(policy, new Set())).toBe(false);
     expect(isDeployablePolicy(policy, new Set(["new-r1"]))).toBe(true);
+  });
+});
+
+describe("getPoliciesTargetingResources — policies drawn when an existing network/resource drops", () => {
+  const resource = (id: string, groups: (string | Group)[] = []) =>
+    ({ id, name: id, address: "1.2.3.4", groups }) as any;
+
+  it("matches a policy targeting the resource directly (destinationResource)", () => {
+    const p = makePolicy("p1", {
+      sources: [{ id: "g1", name: "All" } as Group],
+      destinationResource: { id: "r1", type: "host" } as any,
+    });
+    const other = makePolicy("p2", {
+      destinationResource: { id: "r9", type: "host" } as any,
+    });
+    expect(getPoliciesTargetingResources([resource("r1")], [p, other])).toEqual(
+      [p],
+    );
+  });
+
+  it("matches a policy whose destination group contains the resource", () => {
+    const p = makePolicy("p1", {
+      sources: [{ id: "g1", name: "All" } as Group],
+      destinations: [{ id: "g2", name: "Servers" } as Group],
+    });
+    expect(
+      getPoliciesTargetingResources(
+        [resource("r1", [{ id: "g2", name: "Servers" } as Group])],
+        [p],
+      ),
+    ).toEqual([p]);
+    // group ids as plain strings too
+    expect(
+      getPoliciesTargetingResources([resource("r1", ["g2"])], [p]),
+    ).toEqual([p]);
+  });
+
+  it("ignores unrelated policies and source-side matches", () => {
+    const sourceOnly = makePolicy("p1", {
+      sources: [{ id: "g2", name: "Servers" } as Group],
+      destinations: [{ id: "g3", name: "Other" } as Group],
+    });
+    expect(
+      getPoliciesTargetingResources([resource("r1", ["g2"])], [sourceOnly]),
+    ).toEqual([]);
+    expect(getPoliciesTargetingResources([resource("r1")], [])).toEqual([]);
+  });
+
+  it("collects matches across several resources without duplicates", () => {
+    const p = makePolicy("p1", {
+      destinations: [{ id: "g2", name: "Servers" } as Group],
+    });
+    const result = getPoliciesTargetingResources(
+      [resource("r1", ["g2"]), resource("r2", ["g2"])],
+      [p],
+    );
+    expect(result).toEqual([p]);
   });
 });

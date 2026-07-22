@@ -49,6 +49,7 @@ import {
   getDraftResource,
   getIpPlaceholderFromRange,
   getPlaceholderPeer,
+  getPoliciesTargetingResources,
   getGroupCountLabel,
   getPolicyProtocolAndPortText,
 } from "@/modules/control-center/utils/helpers";
@@ -208,8 +209,12 @@ const PanelContent = React.memo(
       addBlankPolicy,
       dropExistingNetworkFrame,
     } = useDraftNodeCreation();
-    // Declared before addNode (which references it) to avoid a TDZ in its deps.
+    // Declared before addNode (which references them) to avoid a TDZ in its deps.
     const { data: networks } = useFetchApi<Network[]>("/networks");
+    const { data: resources } = useFetchApi<NetworkResource[]>(
+      "/networks/resources",
+    );
+    const { data: policies } = useFetchApi<Policy[]>("/policies");
 
     const handlePeerTemplateDragStart = useCallback(
       (event: React.PointerEvent<HTMLDivElement>, tpl: PeerTemplate) => {
@@ -242,6 +247,30 @@ const PanelContent = React.memo(
         drawPolicyOnCanvas(policy, position);
       },
       [drawPolicyOnCanvas],
+    );
+
+    // Mirror of the existing-policy drop for existing networks/resources:
+    // the policies granting access to the dropped resources are drawn too
+    // (sources created/connected around an anchor left of the drop point).
+    const drawResourcePolicies = useCallback(
+      (droppedResources: NetworkResource[], position?: XYPosition) => {
+        const related = getPoliciesTargetingResources(
+          droppedResources,
+          policies ?? [],
+        );
+        if (related.length === 0) return;
+        // Next tick — the dropped nodes must be committed to the canvas
+        // before drawPolicyOnCanvas connects the policies' edges to them.
+        setTimeout(() => {
+          related.forEach((policy, i) => {
+            const anchor = position
+              ? { x: position.x - 500, y: position.y + i * 140 }
+              : undefined;
+            drawPolicyOnCanvas(policy, anchor);
+          });
+        }, 0);
+      },
+      [policies, drawPolicyOnCanvas],
     );
 
     const handlePolicyDragStart = useCallback(
@@ -326,9 +355,15 @@ const PanelContent = React.memo(
         position?: XYPosition,
       ) => {
         // Existing networks drop as a full frame (chrome + existing resources
-        // as children), reusing the draft-frame machinery.
+        // as children), reusing the draft-frame machinery — plus the policies
+        // that grant access to its resources.
         if (type === NodeType.NetworkNode) {
-          dropExistingNetworkFrame(data as Network, position);
+          const network = data as Network;
+          dropExistingNetworkFrame(network, position);
+          const childResources = (resources ?? []).filter((r) =>
+            network.resources?.includes(r.id ?? ""),
+          );
+          drawResourcePolicies(childResources, position);
           return;
         }
 
@@ -373,8 +408,20 @@ const PanelContent = React.memo(
           },
           position,
         );
+
+        // Existing resources also pull in the policies granting access to
+        // them (directly or via their groups).
+        if (type === NodeType.ResourceNode) {
+          drawResourcePolicies([data as NetworkResource], position);
+        }
       },
-      [placeDroppedNode, networks, dropExistingNetworkFrame],
+      [
+        placeDroppedNode,
+        networks,
+        resources,
+        dropExistingNetworkFrame,
+        drawResourcePolicies,
+      ],
     );
 
     const createDropHandler = useCallback(
@@ -413,11 +460,7 @@ const PanelContent = React.memo(
     );
 
     const { data: peers } = useFetchApi<Peer[]>("/peers");
-    const { data: resources } = useFetchApi<NetworkResource[]>(
-      "/networks/resources",
-    );
     const { data: groups } = useFetchApi<Group[]>("/groups");
-    const { data: policies } = useFetchApi<Policy[]>("/policies");
 
     const { nodes: canvasNodes } = useCanvasState();
     const account = useAccount();
