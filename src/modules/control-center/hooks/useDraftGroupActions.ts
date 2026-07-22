@@ -9,6 +9,7 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import {
+  getTopZIndex,
   isDraftNetworkNode,
   isFrameNode,
 } from "@/modules/control-center/utils/helpers";
@@ -87,6 +88,7 @@ export function useDraftGroupActions() {
           id: nodeId,
           type: NodeType.GroupNode,
           position,
+          zIndex: getTopZIndex(prev),
           data: {
             group: { name, peers_count: 0, resources_count: 0 },
             enabled: true,

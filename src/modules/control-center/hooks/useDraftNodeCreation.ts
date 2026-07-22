@@ -6,6 +6,7 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import {
   getFrameChildPosition,
   getNetworkFrameHeight,
+  getTopZIndex,
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_WIDTH,
   PLACEHOLDER_BASE_NAMES,
@@ -74,13 +75,17 @@ export function useDraftNodeCreation() {
   const { policies, networks, networkResources } = useControlCenterData();
   const { trackCreateNetwork } = useDraftChangeset();
 
-  // Places a node roughly centered under the given flow position.
+  // Places a node roughly centered under the given flow position, on top of
+  // everything already on the canvas (frames elevate their z — a peer dropped
+  // over one must paint above it, not behind).
   const placeNode = useCallback(
     (node: Node, position?: XYPosition) => {
       const pos = position
         ? { x: position.x - 100, y: position.y - 30 }
         : { x: 0, y: 0 };
-      reactFlow.setNodes((prev) => prev.concat({ ...node, position: pos }));
+      reactFlow.setNodes((prev) =>
+        prev.concat({ ...node, position: pos, zIndex: getTopZIndex(prev) }),
+      );
     },
     [reactFlow],
   );
@@ -386,6 +391,7 @@ export function useDraftNodeCreation() {
           .filter((n) => childIds.has(n.id))
           .map((n) => reparent(n, idx++));
         newChildren.forEach((n) => (n.position = getFrameChildPosition(idx++)));
+        frame.zIndex = getTopZIndex(prev);
         return [...others, frame, ...reparented, ...newChildren];
       });
       return frameNodeId;

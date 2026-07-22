@@ -147,6 +147,20 @@ export const getPoliciesTargetingResources = (
   });
 };
 
+// Z-index that puts a node above everything settled on the canvas — dropped
+// and dragged nodes call this so they paint over frames (which elevate to
+// maxZ+2 themselves; their children render at parent+1, so +2 beats both).
+// Drag-time elevations (>= 1000) are transient and ignored.
+export const getTopZIndex = (nodes: CanvasNode[]) => {
+  const maxZ = Math.max(
+    0,
+    ...nodes.map((n) =>
+      typeof n.zIndex === "number" && n.zIndex < 1000 ? n.zIndex : 0,
+    ),
+  );
+  return maxZ + 2;
+};
+
 export function useSourceGroupEnabled(sourceId: string) {
   const { getNode } = useReactFlow();
   const node = getNode(sourceId);

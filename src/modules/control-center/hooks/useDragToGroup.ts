@@ -7,6 +7,7 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import {
   getPlaceholderPeer,
+  getTopZIndex,
   getPolicyRegroupUpdates,
   isFrameNode,
 } from "@/modules/control-center/utils/helpers";
@@ -193,28 +194,31 @@ export function useDragToGroup() {
         ),
       );
 
+      // Whatever was dragged settles on top — e.g. a peer dropped over a
+      // network frame must paint above it, not behind. Frame children are
+      // handled by the frame branch below (they ride their parent's z).
+      if (!draggedNode.parentId) {
+        setNodes((prev) => {
+          const z = getTopZIndex(prev);
+          return prev.map((n) =>
+            n.id === draggedNode.id ? { ...n, zIndex: z } : n,
+          );
+        });
+      }
+
       // Contained resource → final snap; no group-drop for framed resources.
       const frame = frameDrag.current;
       if (frame && draggedNode.id === frame.childId) {
         frameDrag.current = null;
         setNodes((prev) => {
-          // The dropped frame stays on top: TWO above the highest settled z
-          // (drag-time elevations of 1000 excluded) — children render at
-          // parentZ + 1, so +1 would tie with the other frames' children
-          // and lose to DOM order (their resources would paint over this
-          // frame).
-          const maxZ = Math.max(
-            0,
-            ...prev.map((n) =>
-              typeof n.zIndex === "number" && n.zIndex < 1000 ? n.zIndex : 0,
-            ),
-          );
+          // The dropped frame stays on top (see getTopZIndex for why +2).
+          const z = getTopZIndex(prev);
           return prev.map((n) => {
             if (n.id === frame.childId) {
               return { ...n, position: { ...frame.childStart } };
             }
             if (n.id === frame.frameId) {
-              return { ...n, zIndex: maxZ + 2 };
+              return { ...n, zIndex: z };
             }
             return n;
           });
