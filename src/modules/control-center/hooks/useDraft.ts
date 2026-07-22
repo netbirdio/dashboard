@@ -568,6 +568,14 @@ export function useDraft() {
         setSelectedNetwork(drilledNetworkId);
         return;
       }
+      // Entered draft from the live drilled view but backed out of the
+      // drill inside the draft → mirror that too: land on the all-networks
+      // overview, not the stale drilled snapshot.
+      if (selectedNetwork) {
+        setLayoutInitialized(false);
+        setSelectedNetwork("");
+        return;
+      }
 
       setNodes(restored.nodes);
       setEdges(restored.edges);
