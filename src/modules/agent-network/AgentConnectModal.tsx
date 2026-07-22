@@ -67,8 +67,8 @@ export function AgentConnectTabs({
   // so a late-resolving defaultTab still re-initialises the tabs.
   defaultTab?: string;
   // Catalog ids of the account's connected providers. Kimi-specific config
-  // surfaces (the Kimi CLI tab and the Kimi variants inside the Claude Code /
-  // Codex tabs) only render when a kimi_api provider is actually connected —
+  // surfaces (the Kimi CLI tab and the Kimi variant inside the Claude Code
+  // tab) only render when a kimi_api provider is actually connected —
   // showing Moonshot setup against an endpoint that can't route to Kimi
   // would just be a trap.
   providerIds?: string[];
@@ -92,15 +92,6 @@ export function AgentConnectTabs({
   const [claudeProvider, setClaudeProvider] = React.useState<
     "anthropic" | "vertex" | "bedrock" | "kimi"
   >(kimiOnlyAnthropicShape ? "kimi" : "anthropic");
-  // Which upstream the Codex config targets. Codex speaks the Responses API
-  // natively; Kimi's OpenAI-compatible upstream is Chat Completions only, so
-  // its variant needs wire_api = "chat" plus a Kimi model id.
-  const kimiOnlyOpenAIShape =
-    hasKimi &&
-    !["openai_api", "azure_openai_api"].some((id) => providerIds.includes(id));
-  const [codexProvider, setCodexProvider] = React.useState<"openai" | "kimi">(
-    kimiOnlyOpenAIShape ? "kimi" : "openai",
-  );
 
   return (
     <Tabs key={defaultTab} defaultValue={defaultTab} className={"mt-2"}>
@@ -233,8 +224,12 @@ export function AgentConnectTabs({
                 // Claude Code speaks the Anthropic Messages API, which
                 // Moonshot serves under the /anthropic path prefix — the Kimi
                 // provider's upstream URL must be
-                // https://api.moonshot.ai/anthropic. The model tiers point at
-                // a Kimi model id since the upstream has no Claude models.
+                // https://api.moonshot.ai/anthropic. Every model slot Claude
+                // Code fills on its own (opus/sonnet/haiku tiers, subagents)
+                // is pinned to kimi-k3 so no Claude model names leak into
+                // requests the upstream can't serve, and tool search is off
+                // because Moonshot rejects its tool_reference blocks — both
+                // per Moonshot's Claude Code guide.
                 lines={
                   claudeMode === "config"
                     ? [
@@ -243,7 +238,11 @@ export function AgentConnectTabs({
                         `  "env": {`,
                         `    "ANTHROPIC_BASE_URL": "${baseUrl}",`,
                         `    "ANTHROPIC_MODEL": "kimi-k3",`,
-                        `    "ANTHROPIC_SMALL_FAST_MODEL": "kimi-k3"`,
+                        `    "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k3",`,
+                        `    "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k3",`,
+                        `    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k3",`,
+                        `    "CLAUDE_CODE_SUBAGENT_MODEL": "kimi-k3",`,
+                        `    "ENABLE_TOOL_SEARCH": "false"`,
                         `  }`,
                         `}`,
                       ]
@@ -251,7 +250,11 @@ export function AgentConnectTabs({
                         `export ANTHROPIC_BASE_URL=${baseUrl}`,
                         `export ANTHROPIC_API_KEY=none`,
                         `export ANTHROPIC_MODEL=kimi-k3`,
-                        `export ANTHROPIC_SMALL_FAST_MODEL=kimi-k3`,
+                        `export ANTHROPIC_DEFAULT_OPUS_MODEL=kimi-k3`,
+                        `export ANTHROPIC_DEFAULT_SONNET_MODEL=kimi-k3`,
+                        `export ANTHROPIC_DEFAULT_HAIKU_MODEL=kimi-k3`,
+                        `export CLAUDE_CODE_SUBAGENT_MODEL=kimi-k3`,
+                        `export ENABLE_TOOL_SEARCH=false`,
                         `claude`,
                       ]
                 }
@@ -270,60 +273,17 @@ export function AgentConnectTabs({
 
       <TabsContent value={"codex"}>
         <div className={contentClassName}>
-          {hasKimi && (
-            <div className={"mb-3"}>
-              <SelectDropdown
-                value={codexProvider}
-                onChange={(v) => setCodexProvider(v as "openai" | "kimi")}
-                options={[
-                  { label: "OpenAI API", value: "openai" },
-                  { label: "Kimi (Moonshot AI)", value: "kimi" },
-                ]}
-                showValues={false}
-                className={"w-[180px]"}
-              />
-            </div>
-          )}
-          {codexProvider === "openai" && (
-            <Snippet
-              caption={"Add to ~/.codex/config.toml:"}
-              lines={[
-                `model_provider = "netbird"`,
-                ``,
-                `[model_providers.netbird]`,
-                `name = "NetBird"`,
-                `base_url = "${openaiBase}"`,
-                `wire_api = "responses"`,
-              ]}
-            />
-          )}
-          {codexProvider === "kimi" && (
-            <>
-              <Snippet
-                // Kimi's OpenAI-compatible upstream speaks Chat Completions,
-                // not the Responses API Codex defaults to — wire_api "chat"
-                // is what makes Codex talk to it.
-                caption={"Add to ~/.codex/config.toml:"}
-                lines={[
-                  `model_provider = "netbird"`,
-                  `model = "kimi-k3"`,
-                  ``,
-                  `[model_providers.netbird]`,
-                  `name = "NetBird"`,
-                  `base_url = "${openaiBase}"`,
-                  `wire_api = "chat"`,
-                ]}
-              />
-              <SmallParagraph className={"mt-3"}>
-                Requires the Kimi provider&apos;s upstream URL to be{" "}
-                <code className={"font-mono"}>https://api.moonshot.ai</code> —
-                Codex sends OpenAI-shaped requests on /v1, and{" "}
-                <code className={"font-mono"}>wire_api = &quot;chat&quot;</code>{" "}
-                switches it from the Responses API to Chat Completions, which
-                is what Kimi&apos;s upstream speaks.
-              </SmallParagraph>
-            </>
-          )}
+          <Snippet
+            caption={"Add to ~/.codex/config.toml:"}
+            lines={[
+              `model_provider = "netbird"`,
+              ``,
+              `[model_providers.netbird]`,
+              `name = "NetBird"`,
+              `base_url = "${openaiBase}"`,
+              `wire_api = "responses"`,
+            ]}
+          />
         </div>
       </TabsContent>
 

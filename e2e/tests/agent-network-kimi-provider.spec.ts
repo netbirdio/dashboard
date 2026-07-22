@@ -129,16 +129,25 @@ test.describe.serial("Agent Network Kimi provider @agent-network", () => {
 
       // Claude Code tab's backend dropdown offers (and, with Kimi as the only
       // Anthropic-shaped provider, pre-selects) Kimi — its settings.json
-      // snippet pins the model tiers to kimi-k3.
+      // snippet pins every model slot to kimi-k3 and disables tool search,
+      // per Moonshot's Claude Code guide.
       await expect(page.getByText('"ANTHROPIC_MODEL": "kimi-k3"')).toBeVisible();
+      await expect(
+        page.getByText('"CLAUDE_CODE_SUBAGENT_MODEL": "kimi-k3"'),
+      ).toBeVisible();
+      await expect(
+        page.getByText('"ENABLE_TOOL_SEARCH": "false"'),
+      ).toBeVisible();
 
       // Kimi CLI tab carries the ~/.kimi/config.toml provider block.
       await page.getByRole("tab", { name: "Kimi CLI" }).click({ force: true });
       await expect(page.getByText('default_model = "kimi-k3"')).toBeVisible();
 
-      // Codex tab's Kimi variant switches the wire API to Chat Completions.
+      // Codex has no Kimi variant — Kimi's upstream doesn't support Codex, so
+      // the tab keeps the plain Responses-API config with no backend dropdown.
       await page.getByRole("tab", { name: "Codex" }).click({ force: true });
-      await expect(page.getByText('wire_api = "chat"')).toBeVisible();
+      await expect(page.getByText('wire_api = "responses"')).toBeVisible();
+      await expect(page.getByText('wire_api = "chat"')).not.toBeVisible();
 
       await page.keyboard.press("Escape");
 

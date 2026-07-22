@@ -139,7 +139,7 @@ function upstreamUrlHelpText(providerId: AIProviderId): string {
     case "vllm":
       return "Your local vLLM server's OpenAI-compatible base URL.";
     case "kimi_api":
-      return "Moonshot AI's international platform endpoint. Keep https://api.moonshot.ai for OpenAI-shaped agents (Codex, OpenAI SDK) or append /anthropic for Anthropic-shaped agents like Claude Code and Kimi CLI — Moonshot serves both APIs with the same key. Mainland-China accounts use api.moonshot.cn instead.";
+      return "Moonshot AI's international platform endpoint. Append /anthropic for Anthropic-shaped agents like Claude Code and Kimi CLI, or keep https://api.moonshot.ai for OpenAI-shaped callers (OpenAI SDK, Chat Completions) — Moonshot serves both APIs with the same key. Mainland-China accounts use api.moonshot.cn instead.";
     default:
       return "Where NetBird forwards the traffic.";
   }
