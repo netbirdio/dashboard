@@ -113,6 +113,8 @@ function upstreamUrlPlaceholder(providerId: AIProviderId): string {
       return "https://api.portkey.ai";
     case "vllm":
       return "https://your-vllm-host:8000";
+    case "kimi_api":
+      return "https://api.moonshot.ai";
     case "custom":
       return "https://your-llm-host";
     default:
@@ -617,7 +619,20 @@ export default function AIProviderModal({
               </FormRow>
 
               <FormRow
-                label={"Upstream URL"}
+                label={
+                  providerId === "kimi_api" ? (
+                    <>
+                      Upstream URL
+                      <HelpTooltip
+                        content={
+                          "Moonshot AI's international platform endpoint. Keep the bare host. Moonshot serves both API shapes with the same key: the path an agent calls rides through to Moonshot, so its base URL picks the shape (Claude Code appends /anthropic; Kimi CLI and OpenAI shaped callers use the bare endpoint). Mainland China accounts use api.moonshot.cn instead."
+                        }
+                      />
+                    </>
+                  ) : (
+                    "Upstream URL"
+                  )
+                }
                 helpText={upstreamUrlHelpText(providerId)}
               >
                 <Input
@@ -738,7 +753,7 @@ export default function AIProviderModal({
                     onChange={(e) => setApiKey(e.target.value)}
                     customPrefix={<KeyRound size={14} />}
                     placeholder={
-                      providerId === "openai_api"
+                      providerId === "openai_api" || providerId === "kimi_api"
                         ? "sk-..."
                         : providerId === "anthropic_api"
                         ? "sk-ant-..."

@@ -12,6 +12,7 @@ export type AIProviderId =
   | "bedrock_api"
   | "vertex_ai_api"
   | "mistral_api"
+  | "kimi_api"
   | "litellm_proxy"
   | "portkey"
   | "bifrost"
