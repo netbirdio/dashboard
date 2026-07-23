@@ -5,6 +5,7 @@ import {
   ReverseProxyDomainType,
 } from "@/interfaces/ReverseProxy";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { sanitizeSubdomain } from "./subdomain";
 
 // Helper to parse domain into subdomain and base domain.
 // When availableDomains is provided, matches against them first (longest match wins)
@@ -90,11 +91,7 @@ export function useReverseProxyDomain({
   const [subdomain, setSubdomain] = useState(() => {
     return (
       parsed?.subdomain ||
-      initialSubdomain
-        ?.toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "") ||
-      ""
+      sanitizeSubdomain(initialSubdomain?.replace(/\s+/g, "-") ?? "")
     );
   });
 
