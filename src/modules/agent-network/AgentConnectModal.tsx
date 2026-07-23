@@ -291,10 +291,9 @@ export function AgentConnectTabs({
       <TabsContent value={"kimi-cli"}>
         <div className={contentClassName} hidden={!hasKimi}>
           <Snippet
-            // Kimi CLI reads providers from ~/.kimi/config.toml. The
-            // "anthropic" provider type speaks the Anthropic Messages API,
-            // so like Claude Code its base_url carries the /anthropic
-            // prefix that rides through to Moonshot; api_key is a
+            // Kimi CLI reads providers from ~/.kimi/config.toml. Unlike
+            // Claude Code, its "anthropic" provider type needs the bare
+            // endpoint — no /anthropic prefix in base_url; api_key is a
             // placeholder since NetBird injects the real key server-side.
             caption={"Add to ~/.kimi/config.toml:"}
             lines={[
@@ -302,7 +301,7 @@ export function AgentConnectTabs({
               ``,
               `[providers.netbird]`,
               `type = "anthropic"`,
-              `base_url = "${baseUrl}/anthropic"`,
+              `base_url = "${baseUrl}"`,
               `api_key = "-"`,
               ``,
               `[models.kimi-k3]`,
