@@ -51,6 +51,7 @@ import { ControlCenterPolicyProvider } from "@/modules/control-center/ControlCen
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
 import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
+import { useDrillDownBrowserHistory } from "@/modules/control-center/hooks/useDrillDownBrowserHistory";
 import { isFrameNode } from "@/modules/control-center/utils/helpers";
 import GroupsProvider from "@/contexts/GroupsProvider";
 
@@ -93,6 +94,7 @@ function ControlCenterCanvas() {
   const { componentsPanelOpen, setComponentsPanelOpen, setHoveredNetworkNodeId } =
     useDraftMode();
   const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragToGroup();
+  useDrillDownBrowserHistory();
 
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [nodeContextMenuPos, setNodeContextMenuPos] = useState<{

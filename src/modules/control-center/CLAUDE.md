@@ -91,6 +91,7 @@ control-center/
 │   ├── useDraftGroupActions.ts       → Draft group ops: addNewGroup, renameGroup, removeGroup, deleteGroup (changeset-only)
 │   ├── useDeployChangeset.ts         → Deploys the changeset via API in dependency order
 │   ├── useDragToGroup.ts             → Drag peer/resource onto group node (tracked as update-group in draft)
+│   ├── useDrillDownBrowserHistory.ts → Browser Back exits canvas drill-downs: every level with a UI back arrow (network: live selectedNetwork / draft drillDownNetworkNodeId as one combined level; user-peer: previousSelectedUser) pushes ONE same-URL history entry on enter; popstate exits through the same path as its back arrow (transition plays); UI exits consume the entry via a suppressed history.back(). Levels are a stack — add new drill-downs as entries in its `levels` array
 │   └── views/
 │       ├── types.ts                   → ViewResult type + addDestinationResourceNodes helper
 │       ├── useGroupView.ts            → Group view builder
