@@ -48,12 +48,14 @@ import {
   ControlCenterUIProvider,
   useCanvasState,
   useControlCenterUI,
+  useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
 import { ControlCenterPolicyProvider } from "@/modules/control-center/ControlCenterPolicyModals";
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
 import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import { useDrillDownBrowserHistory } from "@/modules/control-center/hooks/useDrillDownBrowserHistory";
+import { useGroupFocusDim } from "@/modules/control-center/hooks/useGroupFocusDim";
 import { isFrameNode } from "@/modules/control-center/utils/helpers";
 import GroupsProvider from "@/contexts/GroupsProvider";
 
@@ -97,9 +99,17 @@ function ControlCenterCanvas() {
   const ui = useControlCenterUI();
   const draft = useDraft();
   const { componentsPanelOpen, setComponentsPanelOpen } = useDraftMode();
+  // Focus mode (live group panel open + path highlight): node dragging is
+  // disabled so dragging anywhere pans the canvas instead of accidentally
+  // moving dimmed nodes.
+  const { selectedDestinationGroup, focusedNodeId, setFocusedNodeId } =
+    useDestinationGroup();
+  const focusMode =
+    !draft.isDraft && (selectedDestinationGroup !== "" || focusedNodeId !== "");
   const { setHoveredNetworkNodeId } = useNetworkHover();
   const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragToGroup();
   useDrillDownBrowserHistory();
+  useGroupFocusDim();
 
   // ReactFlow re-renders whenever the nodes prop changes (every drag tick);
   // its internal GraphView bails via memo ONLY when all other props keep
@@ -141,8 +151,9 @@ function ControlCenterCanvas() {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
     canvas.setSelectedDestinationGroup("");
+    setFocusedNodeId("");
     setComponentsPanelOpen(false);
-  }, [canvas]);
+  }, [canvas, setFocusedNodeId]);
 
   const stableOnConnect = useStableHandler(draft.onNodeConnect);
   const stableOnNodeClick = useStableHandler(ui.onNodeClick);
@@ -229,7 +240,7 @@ function ControlCenterCanvas() {
         zoomOnScroll={canInteract}
         zoomOnPinch={canInteract}
         zoomOnDoubleClick={canInteract}
-        nodesDraggable={!anyMenuOpen && !emptyState}
+        nodesDraggable={!anyMenuOpen && !emptyState && !focusMode}
         nodesConnectable={!anyMenuOpen && !emptyState}
         elementsSelectable={!anyMenuOpen && !emptyState}
         selectionOnDrag={draft.isSelectMode && !emptyState}

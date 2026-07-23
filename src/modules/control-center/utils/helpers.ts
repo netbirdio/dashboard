@@ -695,8 +695,8 @@ export function useStructuralNodes(options?: { selection?: boolean }) {
 // their own heights; odd columns start half a typical cell lower so edges
 // flow between frames. Mutates the frames' positions in place and centers
 // the block vertically on `centerMidY`.
-export const FRAME_GRID_GAP_X = 220;
-export const FRAME_GRID_GAP_Y = 150;
+export const FRAME_GRID_GAP_X = 280;
+export const FRAME_GRID_GAP_Y = 200;
 
 export function packFrameGrid(
   frames: CanvasNode[],

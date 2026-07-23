@@ -229,3 +229,19 @@ p {
 .cc-animated-edge {
     animation: cc-edge-dash 0.5s linear infinite;
 }
+
+/* Group focus highlight (live control-center): nodes/edges off the selected
+   group's path fade to grayscale while its panel is open. */
+.react-flow__node.cc-dimmed {
+    opacity: 0.25;
+    filter: grayscale(1);
+    transition: opacity 150ms ease, filter 150ms ease;
+    /* Dimmed nodes aren't interactive in focus mode — clicks fall through
+       to the pane, which closes the panel and exits the focus view. */
+    pointer-events: none !important;
+}
+.react-flow__edge.cc-dimmed {
+    opacity: 0.12;
+    filter: grayscale(1);
+    transition: opacity 150ms ease, filter 150ms ease;
+}

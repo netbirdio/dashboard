@@ -17,8 +17,6 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 // - network: live single-network view / draft drill-down — one combined
 //   level, they mirror each other across mode switches. Switching networks
 //   while drilled reuses the entry.
-// - user-peer: user view → clicked a peer (peer view with the "back to
-//   user" breadcrumb via previousSelectedUser).
 type DrillLevel = {
   key: string;
   active: boolean;
@@ -26,8 +24,8 @@ type DrillLevel = {
 };
 
 export function useDrillDownBrowserHistory() {
-  const { selectedNetwork, previousSelectedUser } = useCanvasState();
-  const { onNetworkSelect, onForceSingleUserView } = useControlCenterUI();
+  const { selectedNetwork } = useCanvasState();
+  const { onNetworkSelect } = useControlCenterUI();
   const { isDraft, drillDownNetworkNodeId, setDrillDownNetworkNodeId } =
     useDraftMode();
 
@@ -39,11 +37,6 @@ export function useDrillDownBrowserHistory() {
         if (isDraft) setDrillDownNetworkNodeId(null);
         else onNetworkSelect("");
       },
-    },
-    {
-      key: "user-peer",
-      active: !isDraft && previousSelectedUser !== "",
-      exit: () => onForceSingleUserView(previousSelectedUser),
     },
   ];
 

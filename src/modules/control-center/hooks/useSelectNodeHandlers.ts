@@ -13,6 +13,7 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
 import { Policy } from "@/interfaces/Policy";
 
 interface UseSelectNodeHandlersParams {
@@ -59,7 +60,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setSelectedPeer,
     selectedUser,
     setSelectedUser,
-    setPreviousSelectedUser,
     setSelectedDestinationGroup,
     selectedDestinationGroup,
     loggedInUser,
@@ -76,6 +76,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   } = useControlCenterData();
 
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
+  const { setFocusedNodeId } = useDestinationGroup();
   const { isDraft } = useDraftMode();
 
   const {
@@ -295,48 +296,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       applyView: applySingleGroupView,
     });
 
-  const forceSingleUserView = (userId: string) =>
-    forceEntityView(userId, {
-      flowView: FlowView.USERS,
-      resetState: () => {
-        setSelectedPeer("");
-        setSelectedUser("");
-        setPreviousSelectedUser("");
-      },
-      selectNode: {
-        id: "select-user-node",
-        type: "selectUserNode",
-        position: { x: -550, y: 0 },
-        data: {
-          currentUser: userId,
-          onUserChange: handleUserChange,
-        },
-      },
-      applyView: applyUserView,
-    });
-
-  const forceSinglePeerView = (peerId: string, userId?: string) =>
-    forceEntityView(peerId, {
-      flowView: FlowView.PEERS,
-      resetState: () => {
-        setSelectedPeer(peerId);
-        setSelectedNetwork("");
-        setSelectedUser("");
-      },
-      selectNode: {
-        id: "select-peer-node",
-        type: "selectPeerNode",
-        position: { x: 0, y: 0 },
-        data: {
-          currentPeer: peerId,
-          onPeerChange: handlePeerChange,
-          userId,
-          placeholder: "Search peers of user...",
-        },
-      },
-      applyView: applyPeerView,
-    });
-
   // ---------------------------------------------------------------------------
   // Navigation
   // ---------------------------------------------------------------------------
@@ -394,9 +353,11 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   // toggle) — the panel only closes on a click outside (pane click / Esc).
   const onDestinationGroupSelect = useCallback(
     (groupId: string) => {
+      // One focus at a time — a group focus supersedes a peer focus.
+      setFocusedNodeId("");
       setSelectedDestinationGroup(groupId);
     },
-    [setSelectedDestinationGroup],
+    [setSelectedDestinationGroup, setFocusedNodeId],
   );
 
   // ---------------------------------------------------------------------------
@@ -445,14 +406,19 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
           .find((n) => n.id === `network-${networkId}`);
         onNetworkSelect(networkId, getNodeRect(frame));
       }
-      if (
-        groupId &&
-        (isDraft ||
-          currentView === FlowView.PEERS ||
-          currentView === FlowView.GROUPS ||
-          currentView === FlowView.USERS)
-      ) {
+      if (groupId) {
+        // Every view (live networks included): clicking a group opens its
+        // side panel — the focus-dim effect highlights its path.
         onDestinationGroupSelect(groupId);
+      }
+      // Resource cards (standalone / destination resources) focus their
+      // path like peers do — framed overview rows keep drilling into their
+      // network instead (handled above via frameChildNetworkId).
+      const isResourceNode =
+        _node.type === "resourceNode" ||
+        _node.type === "destinationResourceNode";
+      if (!isDraft && isResourceNode && !frameChildNetworkId) {
+        setFocusedNodeId(_node.id);
       }
       // Works for draft-created policies too ("new-…") — the policy provider
       // resolves those from the canvas node data.
@@ -461,7 +427,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         setPolicyModalOpen(true);
       }
     },
-    [onNetworkSelect, onDestinationGroupSelect, currentView, isDraft],
+    [onNetworkSelect, onDestinationGroupSelect, currentView, isDraft, setFocusedNodeId],
   );
 
   // ---------------------------------------------------------------------------
@@ -605,8 +571,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     handlePeerChange,
     handleUserChange,
     forceSingleGroupView,
-    forceSingleUserView,
-    forceSinglePeerView,
     onDestinationGroupSelect,
     onNetworkSelect,
     refreshLiveView,

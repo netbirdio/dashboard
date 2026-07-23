@@ -17,7 +17,6 @@ import { FlowSelector, FlowView } from "@/modules/control-center/FlowSelector";
 import { NetworkRoutingPeerCount } from "@/modules/control-center/NetworkRoutingPeerCount";
 import { RoutingPeersBar } from "@/modules/control-center/RoutingPeersBar";
 import { useFrameRouterRows } from "@/modules/control-center/hooks/useFrameRouterRows";
-import { ControlCenterCurrentUserBadge } from "@/modules/control-center/user/ControlCenterCurrentUserBadge";
 import { DraftModeSwitcher } from "@/modules/control-center/draft/DraftModeSwitcher";
 import { CanvasToolbar } from "@/modules/control-center/draft/CanvasToolbar";
 import { useCanvasState, useControlCenterUI } from "@/modules/control-center/ControlCenterContext";
@@ -151,15 +150,13 @@ function DraftDrillDownHeader() {
 }
 
 function HeaderTopLeft() {
-  const { currentView, selectedNetwork, previousSelectedUser } =
-    useCanvasState();
+  const { currentView, selectedNetwork } = useCanvasState();
   const { isDraft } = useDraftMode();
   const {
     networkOptions,
     currentNetwork,
     onViewChange,
     onNetworkSelect,
-    onForceSingleUserView,
   } = useControlCenterUI();
   const { networks } = useControlCenterData();
   const hasNetworks = (networks?.length ?? 0) > 0;
@@ -188,29 +185,9 @@ function HeaderTopLeft() {
             </Button>
           )}
 
-          {!isDraft && previousSelectedUser !== "" && (
-            <>
-              <Button
-                variant={"secondary"}
-                size={"xs"}
-                className={"!bg-nb-gray-930"}
-                onClick={() => {
-                  onForceSingleUserView(previousSelectedUser);
-                }}
-              >
-                <ArrowLeftIcon size={14} />
-              </Button>
-              <ControlCenterCurrentUserBadge
-                userId={previousSelectedUser}
-              />
-            </>
+          {selectedNetwork === "" && !isDraft && (
+            <FlowSelector value={currentView} onChange={onViewChange} />
           )}
-
-          {selectedNetwork === "" &&
-            previousSelectedUser === "" &&
-            !isDraft && (
-              <FlowSelector value={currentView} onChange={onViewChange} />
-            )}
 
           {/* Draft: the drill-down breadcrumb is the only top-left
               control — exiting draft happens via Cancel / Review & Deploy

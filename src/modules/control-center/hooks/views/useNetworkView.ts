@@ -13,15 +13,11 @@ import {
   isFrameNode,
   NETWORK_FRAME_FALLBACK_ROW,
   getResourcePolicyByGroups,
-  getPolicyProtocolAndPortText,
   packFrameGrid,
 } from "@/modules/control-center/utils/helpers";
 import { ViewResult } from "./types";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-
-// Uni-directional (network access is always one-way) — SmartEdge's blue.
-const NETWORK_LINE_COLOR = "#0ea5e9";
 
 export function useNetworkView() {
   const { selectedNetwork, layoutInitialized, forceSingleGroupViewRef } =
@@ -251,11 +247,28 @@ export function useNetworkView() {
       // (2 cols, visible cap, fallback rows) — a mismatched seed made every
       // frame resize and its "+N more" cell shift right after mount.
       const grid = getLiveFrameGrid(childResources.length);
+      // A network whose policies are ALL disabled dims like a disabled
+      // destination elsewhere (no policies → normal).
+      const networkPolicyObjs = (network.policies ?? [])
+        .map((pid) =>
+          (policiesOverride ?? policies!).find((po) => po.id === pid),
+        )
+        .filter(Boolean) as Policy[];
+      const networkEnabled =
+        networkPolicyObjs.length === 0 ||
+        networkPolicyObjs.some((po) => po.rules?.[0]?.enabled);
       allNodes.push({
         id: `network-${network.id}`,
         type: "networkNode",
-        data: { network, selectedNetwork, frame: true },
-        draggable: true,
+        data: {
+          network,
+          selectedNetwork,
+          frame: true,
+          enabled: networkEnabled,
+        },
+        // No explicit draggable — a per-node `draggable: true` OVERRIDES
+        // ReactFlow's global nodesDraggable, which must win in focus mode
+        // (group panel open → dragging pans, never moves nodes).
         position: { x: 0, y: 0 },
         style: { width: grid.width, height: grid.height },
       });
@@ -276,7 +289,8 @@ export function useNetworkView() {
           style: { width: grid.childWidth, height: NETWORK_FRAME_FALLBACK_ROW },
           data: {
             resource,
-            enabled: true,
+            // Children are separate DOM nodes — they dim with their frame.
+            enabled: networkEnabled,
             draftNetwork: { networkId: network.id, name: network.name },
           },
         });
@@ -304,12 +318,9 @@ export function useNetworkView() {
                 addNode(allNodes, {
                   id: `group-${group.id}`,
                   type: "groupNode",
-                  data: {
-                    group,
-                    enabled,
-                    onClick: () =>
-                      forceSingleGroupViewRef.current(group.id || ""),
-                  },
+                  // No onClick — clicking opens the group panel + focus
+                  // highlight via onNodeClick (like draft), not navigation.
+                  data: { group, enabled },
                   position: { x: 0, y: 0 },
                 });
                 sourceIds.push(`group-${group.id}`);
@@ -333,21 +344,31 @@ export function useNetworkView() {
                 sourceIds.push(`peer-${sourcePeer.id}`);
               }
 
-              // Straight blue dashed lines source → network with the
-              // policy's protocol/port label — network access is always
-              // one-way (blue, never the bidirectional green).
+              // POLICY NODES in the overview, like the draft build: source
+              // → policy → network, all smart edges — live and draft read
+              // the same.
               if (hidePolicies && sourceIds.length > 0) {
-                // "All" fallback like the policy pill — an all-traffic policy
-                // has no protocol/port text and would leave the line bare.
-                const label = getPolicyProtocolAndPortText(policy) || "All";
+                addNode(allNodes, {
+                  id: `policy-${policy.id}`,
+                  type: "policyNode",
+                  data: { policy, enabled },
+                  position: { x: 0, y: 0 },
+                });
                 sourceIds.forEach((sourceId) => {
                   addEdge(allEdges, {
-                    id: `${sourceId}-network-${network.id}`,
+                    id: `${sourceId}-policy-${policy.id}`,
                     source: sourceId,
-                    target: `network-${network.id}`,
-                    type: "floating-straight",
-                    data: { label, color: NETWORK_LINE_COLOR },
+                    target: `policy-${policy.id}`,
+                    type: "smart",
+                    data: { enabled, policy },
                   });
+                });
+                addEdge(allEdges, {
+                  id: `policy-${policy.id}-network-${network.id}`,
+                  source: `policy-${policy.id}`,
+                  target: `network-${network.id}`,
+                  type: "smart",
+                  data: { enabled, policy },
                 });
               }
             }
@@ -356,17 +377,27 @@ export function useNetworkView() {
       }
     });
 
-    // Same arrangement as the draft build: sources (groups/peers) in a
-    // left column, network frames in the staggered grid on the right —
-    // the old force layout scattered everything radially.
+    // Same arrangement as the draft build: sources (groups/peers) left,
+    // policies in the middle column, network frames in the staggered grid
+    // on the right.
     const frames = allNodes.filter((n) => isFrameNode(n));
-    const sources = allNodes.filter((n) => !isFrameNode(n));
+    const policyNodes = allNodes.filter((n) => n.type === "policyNode");
+    const sources = allNodes.filter(
+      (n) => !isFrameNode(n) && n.type !== "policyNode",
+    );
     const SOURCE_SPACING = 160;
     const sourcesHeight = (sources.length - 1) * SOURCE_SPACING;
     sources.forEach((n, i) => {
       n.position = { x: 0, y: -sourcesHeight / 2 + i * SOURCE_SPACING };
     });
-    packFrameGrid(frames, 700, 0);
+    const POLICY_SPACING = 90;
+    const policiesHeight = (policyNodes.length - 1) * POLICY_SPACING;
+    policyNodes.forEach((n, i) => {
+      n.position = { x: 480, y: -policiesHeight / 2 + i * POLICY_SPACING };
+    });
+    const GRID_BASE_X = 1050;
+    packFrameGrid(frames, GRID_BASE_X, 0);
+
     return {
       updatedNodes: [...allNodes, ...childNodes],
       updatedEdges: allEdges,

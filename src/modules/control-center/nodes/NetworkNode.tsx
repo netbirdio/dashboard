@@ -170,6 +170,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         // transition-colors (not -all) so reparenting a resource — which
         // resizes the frame — snaps instead of animating the width/height.
         "relative transition-colors border bg-nb-gray-940",
+        // All of the network's policies are disabled → the frame dims like
+        // a disabled destination (its child rows dim via their own data).
+        (data as { enabled?: boolean }).enabled === false && "opacity-60",
         isFrame
           ? "w-full h-full rounded-xl border border-nb-gray-800 group group/node"
           : "rounded-2xl border-nb-gray-900 overflow-hidden group hover:bg-nb-gray-935 cursor-pointer",

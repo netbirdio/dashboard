@@ -5,12 +5,11 @@ import { Policy } from "@/interfaces/Policy";
 import { DEFAULT_LAYOUT_CONFIG } from "@/modules/control-center/utils/graph-builder";
 import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
 import { addDestinationResourceNodes, ViewResult } from "./types";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
 export function useUserView() {
-  const { forceSinglePeerViewRef, setPreviousSelectedUser } =
-    useCanvasState();
+  const { setFocusedNodeId } = useDestinationGroup();
   const { policies, peers, networkResources, isDataReady } =
     useControlCenterData();
 
@@ -46,10 +45,9 @@ export function useUserView() {
           // handles in live mode.
           variant: "card",
           showHandles: false,
-          onClick: () => {
-            setPreviousSelectedUser(userId);
-            forceSinglePeerViewRef.current(peer.id || "", userId);
-          },
+          // Clicking a peer FOCUSES its path (dim everything else) — the
+          // old peer-detail navigation is gone.
+          onClick: () => setFocusedNodeId(`source-peer-${peer.id}`),
         },
         position: { x: 0, y: 0 },
       });

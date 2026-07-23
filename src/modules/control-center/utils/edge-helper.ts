@@ -135,3 +135,7 @@ export const rectAsInternalNode = (r: EdgeNodeRect): InternalNode<Node> =>
     measured: { width: r.width, height: r.height },
     internals: { positionAbsolute: { x: r.x, y: r.y } },
   } as InternalNode<Node>);
+
+// ---------------------------------------------------------------------------
+// Orthogonal routing (live networks overview)
+// ---------------------------------------------------------------------------

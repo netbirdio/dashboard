@@ -53,17 +53,12 @@ interface CanvasState {
   setSelectedPeer: (v: string) => void;
   selectedUser: string;
   setSelectedUser: (v: string) => void;
-  previousSelectedUser: string;
-  setPreviousSelectedUser: (v: string) => void;
   selectedDestinationGroup: string;
   setSelectedDestinationGroup: (v: string) => void;
   contextMenuNodeId: string;
   setContextMenuNodeId: (v: string) => void;
   loggedInUser: User | undefined;
   forceSingleGroupViewRef: React.MutableRefObject<(id: string) => void>;
-  forceSinglePeerViewRef: React.MutableRefObject<
-    (id: string, userId?: string) => void
-  >;
   // Live policy saves patch the canvas in place from the API response —
   // wired from useSelectNodeHandlers (same circular-dependency ref pattern
   // as the force*ViewRefs). No-op in draft mode.
@@ -96,6 +91,11 @@ const CanvasUIContext = createContext<CanvasUIState | null>(null);
 interface DestinationGroupState {
   selectedDestinationGroup: string;
   setSelectedDestinationGroup: (v: string) => void;
+  // Generic focus target (no panel): clicking a peer in the user view
+  // focuses its path the same way a group click does — the dim hook keys
+  // on either.
+  focusedNodeId: string;
+  setFocusedNodeId: (v: string) => void;
 }
 
 const DestinationGroupContext = createContext<DestinationGroupState | null>(
@@ -155,14 +155,11 @@ export function CanvasStateProvider({
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedPeer, setSelectedPeer] = useState("");
   const [selectedUser, setSelectedUser] = useState("");
-  const [previousSelectedUser, setPreviousSelectedUser] = useState("");
   const [selectedDestinationGroup, setSelectedDestinationGroup] = useState("");
+  const [focusedNodeId, setFocusedNodeId] = useState("");
   const [contextMenuNodeId, setContextMenuNodeId] = useState("");
 
   const forceSingleGroupViewRef = useRef<(id: string) => void>(() => {});
-  const forceSinglePeerViewRef = useRef<
-    (id: string, userId?: string) => void
-  >(() => {});
   const refreshLiveViewRef = useRef<(policy: Policy) => void>(() => {});
   const addResourceToFrameRef = useRef<(nodeId: string) => void>(() => {});
 
@@ -186,15 +183,12 @@ export function CanvasStateProvider({
       setSelectedPeer,
       selectedUser,
       setSelectedUser,
-      previousSelectedUser,
-      setPreviousSelectedUser,
       selectedDestinationGroup,
       setSelectedDestinationGroup,
       contextMenuNodeId,
       setContextMenuNodeId,
       loggedInUser,
       forceSingleGroupViewRef,
-      forceSinglePeerViewRef,
       refreshLiveViewRef,
     }),
     [
@@ -210,7 +204,6 @@ export function CanvasStateProvider({
       selectedGroup,
       selectedPeer,
       selectedUser,
-      previousSelectedUser,
       selectedDestinationGroup,
       contextMenuNodeId,
       loggedInUser,
@@ -227,8 +220,13 @@ export function CanvasStateProvider({
   );
 
   const destinationGroupValue = useMemo(
-    () => ({ selectedDestinationGroup, setSelectedDestinationGroup }),
-    [selectedDestinationGroup],
+    () => ({
+      selectedDestinationGroup,
+      setSelectedDestinationGroup,
+      focusedNodeId,
+      setFocusedNodeId,
+    }),
+    [selectedDestinationGroup, focusedNodeId],
   );
 
   return (
@@ -251,7 +249,6 @@ interface ControlCenterUIContextType {
   // targetRect: the clicked frame's rect — the canvas transition dives into
   // it; without one (dropdown/back picks) it zooms from the viewport center.
   onNetworkSelect: (id: string, targetRect?: Rect | null) => void;
-  onForceSingleUserView: (userId: string) => void;
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
 }
 
@@ -295,7 +292,6 @@ export function ControlCenterUIProvider({
 
   // Wire up circular dependency refs
   canvas.forceSingleGroupViewRef.current = handlers.forceSingleGroupView;
-  canvas.forceSinglePeerViewRef.current = handlers.forceSinglePeerView;
   canvas.refreshLiveViewRef.current = handlers.refreshLiveView;
   const { addResourceToFrame } = useDraftNodeCreation();
   useCanvasUI().addResourceToFrameRef.current = addResourceToFrame;
@@ -308,7 +304,6 @@ export function ControlCenterUIProvider({
       ),
       onViewChange: handlers.onViewChange,
       onNetworkSelect: handlers.onNetworkSelect,
-      onForceSingleUserView: handlers.forceSingleUserView,
       onNodeClick: handlers.onNodeClick,
     }),
     [
@@ -317,7 +312,6 @@ export function ControlCenterUIProvider({
       canvas.selectedNetwork,
       handlers.onViewChange,
       handlers.onNetworkSelect,
-      handlers.forceSingleUserView,
       handlers.onNodeClick,
     ],
   );
