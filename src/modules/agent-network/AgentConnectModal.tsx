@@ -222,21 +222,22 @@ export function AgentConnectTabs({
               </div>
               <Snippet
                 // Claude Code speaks the Anthropic Messages API, which
-                // Moonshot serves under the /anthropic path prefix — the Kimi
-                // provider's upstream URL must be
-                // https://api.moonshot.ai/anthropic. Every model slot Claude
-                // Code fills on its own (opus/sonnet/haiku tiers, subagents)
-                // is pinned to kimi-k3 so no Claude model names leak into
-                // requests the upstream can't serve, and tool search is off
-                // because Moonshot rejects its tool_reference blocks — both
-                // per Moonshot's Claude Code guide.
+                // Moonshot serves under the /anthropic path prefix. The
+                // prefix goes in the agent's base URL and rides through the
+                // endpoint to the bare https://api.moonshot.ai upstream, so
+                // one Kimi provider serves both API shapes. Every model slot
+                // Claude Code fills on its own (opus/sonnet/haiku tiers,
+                // subagents) is pinned to kimi-k3 so no Claude model names
+                // leak into requests the upstream can't serve, and tool
+                // search is off because Moonshot rejects its tool_reference
+                // blocks — both per Moonshot's Claude Code guide.
                 lines={
                   claudeMode === "config"
                     ? [
                         `{`,
                         `  "apiKeyHelper": "echo '-'",`,
                         `  "env": {`,
-                        `    "ANTHROPIC_BASE_URL": "${baseUrl}",`,
+                        `    "ANTHROPIC_BASE_URL": "${baseUrl}/anthropic",`,
                         `    "ANTHROPIC_MODEL": "kimi-k3",`,
                         `    "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k3",`,
                         `    "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k3",`,
@@ -247,7 +248,7 @@ export function AgentConnectTabs({
                         `}`,
                       ]
                     : [
-                        `export ANTHROPIC_BASE_URL=${baseUrl}`,
+                        `export ANTHROPIC_BASE_URL=${baseUrl}/anthropic`,
                         `export ANTHROPIC_API_KEY=none`,
                         `export ANTHROPIC_MODEL=kimi-k3`,
                         `export ANTHROPIC_DEFAULT_OPUS_MODEL=kimi-k3`,
@@ -260,11 +261,11 @@ export function AgentConnectTabs({
                 }
               />
               <SmallParagraph className={"mt-3"}>
-                Requires the Kimi provider&apos;s upstream URL to be{" "}
-                <code className={"font-mono"}>
-                  https://api.moonshot.ai/anthropic
-                </code>{" "}
-                — Moonshot serves the Anthropic Messages API under that path.
+                Pairs with a Kimi provider keeping the default upstream URL{" "}
+                <code className={"font-mono"}>https://api.moonshot.ai</code> —
+                the <code className={"font-mono"}>/anthropic</code> suffix in
+                the base URL rides through the endpoint to Moonshot, which
+                serves the Anthropic Messages API under that path.
               </SmallParagraph>
             </>
           )}
@@ -291,16 +292,17 @@ export function AgentConnectTabs({
         <div className={contentClassName} hidden={!hasKimi}>
           <Snippet
             // Kimi CLI reads providers from ~/.kimi/config.toml. The
-            // "anthropic" provider type matches a Kimi provider whose
-            // upstream URL is https://api.moonshot.ai/anthropic; api_key is
-            // a placeholder since NetBird injects the real key server-side.
+            // "anthropic" provider type speaks the Anthropic Messages API,
+            // so like Claude Code its base_url carries the /anthropic
+            // prefix that rides through to Moonshot; api_key is a
+            // placeholder since NetBird injects the real key server-side.
             caption={"Add to ~/.kimi/config.toml:"}
             lines={[
               `default_model = "kimi-k3"`,
               ``,
               `[providers.netbird]`,
               `type = "anthropic"`,
-              `base_url = "${baseUrl}"`,
+              `base_url = "${baseUrl}/anthropic"`,
               `api_key = "-"`,
               ``,
               `[models.kimi-k3]`,
@@ -310,15 +312,11 @@ export function AgentConnectTabs({
             ]}
           />
           <SmallParagraph className={"mt-3"}>
-            Pairs with a Kimi provider whose upstream URL is{" "}
-            <code className={"font-mono"}>
-              https://api.moonshot.ai/anthropic
-            </code>
-            . For an OpenAI-shaped provider (upstream{" "}
-            <code className={"font-mono"}>https://api.moonshot.ai</code>), use{" "}
+            Pairs with a Kimi provider keeping the default upstream URL{" "}
+            <code className={"font-mono"}>https://api.moonshot.ai</code>. For
+            the OpenAI shape instead, use{" "}
             <code className={"font-mono"}>type = &quot;openai_legacy&quot;</code>{" "}
-            with <code className={"font-mono"}>base_url = &quot;{openaiBase}&quot;</code>{" "}
-            instead.
+            with <code className={"font-mono"}>base_url = &quot;{openaiBase}&quot;</code>.
           </SmallParagraph>
         </div>
       </TabsContent>

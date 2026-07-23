@@ -138,6 +138,11 @@ test.describe.serial("Agent Network Kimi provider @agent-network", () => {
       await expect(
         page.getByText('"ENABLE_TOOL_SEARCH": "false"'),
       ).toBeVisible();
+      // The base URL carries the /anthropic shape prefix that rides through
+      // the endpoint to Moonshot's Anthropic surface.
+      await expect(
+        page.getByText(/"ANTHROPIC_BASE_URL": "https:\/\/[^"]+\/anthropic"/),
+      ).toBeVisible();
 
       // Kimi CLI tab carries the ~/.kimi/config.toml provider block.
       await page.getByRole("tab", { name: "Kimi CLI" }).click({ force: true });
