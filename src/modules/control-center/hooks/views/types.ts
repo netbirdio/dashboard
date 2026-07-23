@@ -43,14 +43,17 @@ export function addDestinationResourceNodes(
       nodes.push({
         id: nodeId,
         type: "destinationResourceNode",
-        data: { peer, enabled, className: "pl-3" },
+        // standalone: card look (bg+border) like the peer nodes elsewhere.
+        data: { peer, enabled, standalone: true },
         position: { x: 0, y: 0 },
       });
     } else if (resource) {
       nodes.push({
         id: nodeId,
         type: "destinationResourceNode",
-        data: { resource, enabled, className: "pl-3" },
+        // standalone: render as the StandaloneResourceNode CARD (bg+border)
+        // like the single-network views — not the transparent DeviceCard.
+        data: { resource, enabled, standalone: true },
         position: { x: 0, y: 0 },
       });
     }

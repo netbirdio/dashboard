@@ -309,7 +309,7 @@ Shortcut badges are platform-aware via the shared `isMac` from `src/hooks/useOpe
 | `sourceGroupNode`         | `group-{id}`                                 | Group view                                                                          |
 | `destinationGroupNode`    | `group-{id}` or `dest-group-{id}-{policyId}` | Peer/Group/User views, draft (copy for self-ref policies)                           |
 | `expandedGroupPeer`       | `expanded-peer-{id}`                         | Expanded destination groups                                                         |
-| `destinationResourceNode` | `destination-resource-{id}`                  | Policy destination resources                                                        |
+| `destinationResourceNode` | `destination-resource-{id}`                  | Policy destination resources (both carry `standalone: true`: resources → StandaloneResourceNode card, peers → DeviceCard on the same card surface)                          |
 
 ## Edge Types
 

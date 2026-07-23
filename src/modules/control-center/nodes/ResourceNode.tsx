@@ -30,6 +30,9 @@ type ResourceNode = Node<
     showHandles?: boolean;
     className?: string;
     draftNetwork?: DraftNetworkRef;
+    // Live views (peer/group/user destinations): force the standalone card
+    // look without a network ref.
+    standalone?: boolean;
   },
   "resourceNode"
 >;
@@ -80,7 +83,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   const isDrilledChild = isFramed && !!parentFrame?.hidden;
   const standaloneCard = isDraft
     ? !isFramed || isDrilledChild
-    : !isFramed && !!data.draftNetwork;
+    : !isFramed && (!!data.draftNetwork || !!data.standalone);
   if (cardResource && standaloneCard) {
     // Drilled views (draft drill-down, live single-network) already show the
     // network in the header — no inline "- Network" suffix on the card.
@@ -159,7 +162,12 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   return (
     <div
       className={cn(
-        "cursor-pointer border border-transparent rounded-lg overflow-hidden transition-all group/node",
+        "cursor-pointer border rounded-lg overflow-hidden transition-all group/node",
+        // standalone (live peer/group/user destinations): the same card
+        // surface as PeerNode's card variant instead of a transparent row.
+        data.standalone
+          ? "bg-nb-gray-940 border-nb-gray-850 pr-5 pl-3 py-1"
+          : "border-transparent",
         "hover:bg-nb-gray-930 hover:border-nb-gray-800",
         isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
         className,
