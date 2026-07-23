@@ -20,6 +20,7 @@ import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPo
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import {
+  FRAME_GRID_BASE_X,
   getFrameChildPosition,
   getLiveFrameGrid,
   isFrameNode,
@@ -445,11 +446,7 @@ export function useDraft() {
           id: frameId,
           type: "networkNode",
           position: { x: 0, y: 0 },
-          style: {
-            width: grid.width,
-            height:
-              grid.height - NETWORK_FRAME_PADDING_Y + NETWORK_FRAME_ADD_ROW,
-          },
+          style: { width: grid.width, height: grid.height },
           data: { network, frame: true },
         });
         const childRef = { networkId: network.id, name: network.name };
@@ -517,12 +514,18 @@ export function useDraft() {
         if (!gid) return;
         const members = [...(groupMembers.get(gid) ?? [])];
         if (members.length === 0) return;
-        // Every member must be a resource, all of the SAME carried network.
+        // Same eligibility as dropping a group onto a frame by hand
+        // (canDropGroupIntoNetwork): at least ONE member resource belongs
+        // to exactly one carried network — peer members don't block the
+        // fold (a destination group that grants access to a network's
+        // resource must never float detached next to the network).
         const memberNetworks = new Set(
-          members.map((m) => resourceNetwork.get(m)),
+          members
+            .map((m) => resourceNetwork.get(m))
+            .filter(Boolean) as string[],
         );
-        if (memberNetworks.size !== 1 || memberNetworks.has(undefined)) return;
-        const frameId = frameByNetworkId.get([...memberNetworks][0]!);
+        if (memberNetworks.size !== 1) return;
+        const frameId = frameByNetworkId.get([...memberNetworks][0]);
         if (!frameId) return;
         // Convert in place (id kept — the smart edges follow to the frame);
         // ordering is safe: frame children are re-appended after the layout.
@@ -535,29 +538,122 @@ export function useDraft() {
         };
       });
 
+      // Re-seed the frame sizes with their FOLDED group rows included —
+      // the grid packing below must use final heights (live packs with the
+      // group rows too; packing on pre-fold heights gave draft a tighter
+      // vertical rhythm than live).
+      allNodes.forEach((n) => {
+        if (!isFrameNode(n)) return;
+        const childCount = allNodes.filter(
+          (c) => c.parentId === n.id,
+        ).length;
+        const g = getLiveFrameGrid(childCount);
+        n.style = { ...n.style, width: g.width, height: g.height };
+      });
+
+      // Networks-entered drafts mirror the networks view: PEER-ONLY
+      // destination groups (no member resources — e.g. a 6-peer group) are
+      // never drawn there in live, so the draft skips them and their edges
+      // too. Only applies when the draft carries network frames (i.e. it
+      // was entered from the networks view).
+      if (allNodes.some((n) => isFrameNode(n))) {
+        const removedIds = new Set<string>();
+        allNodes.forEach((node) => {
+          if (node.type !== "destinationGroupNode" || node.parentId) return;
+          const gid = (node.data as { group?: Group })?.group?.id;
+          if (!gid) return;
+          const members = [...(groupMembers.get(gid) ?? [])];
+          const hasResource = members.some((m) => resourceNetwork.has(m));
+          if (!hasResource) removedIds.add(node.id);
+        });
+        for (let i = allNodes.length - 1; i >= 0; i--) {
+          if (removedIds.has(allNodes[i].id)) allNodes.splice(i, 1);
+        }
+        for (let i = allEdges.length - 1; i >= 0; i--) {
+          if (
+            removedIds.has(allEdges[i].source) ||
+            removedIds.has(allEdges[i].target)
+          ) {
+            allEdges.splice(i, 1);
+          }
+        }
+      }
+
       // Apply hierarchical layout: sources → policies → destinations. Frame
       // children stay out of it — their positions are frame-relative and the
       // reconciling frame layout manages them.
       const frameChildren = allNodes.filter((n) => n.parentId);
+      // Column x/pitch matches the LIVE networks overview (sources 160
+      // pitch, policies at x 480 / 90 pitch) so switching modes doesn't
+      // re-rhythm the columns.
       const { updatedNodes, updatedEdges } = applyD3HierarchicalLayout(
         allNodes.filter((n) => !n.parentId),
         allEdges,
         400,
-        120,
+        160,
         "peer",
-        DEFAULT_LAYOUT_CONFIG,
+        {
+          ...DEFAULT_LAYOUT_CONFIG,
+          policy: { width: 480, spacing: 90 },
+        },
       );
+      // Source column: groups AND source peers stack as ONE column (the
+      // hierarchical layout centers groupNodes and peerNodes independently
+      // at x=0, which overlaps them when both exist) — same combined
+      // 160-pitch column as the live overview.
+      const sourceColumn = updatedNodes.filter(
+        (n) =>
+          !n.parentId &&
+          !isFrameNode(n) &&
+          (n.type === "groupNode" || n.type === "peerNode") &&
+          n.position.x < 240,
+      );
+      const draftDisplayName = (n: Node) =>
+        (
+          (n.data as { group?: { name?: string }; peer?: { name?: string } })
+            ?.group?.name ??
+          (n.data as { peer?: { name?: string } })?.peer?.name ??
+          ""
+        ).toLowerCase();
+      if (sourceColumn.length > 1) {
+        // Name-sorted like the live overview.
+        sourceColumn.sort((a, b) =>
+          draftDisplayName(a).localeCompare(draftDisplayName(b)),
+        );
+        const colHeight = (sourceColumn.length - 1) * 160;
+        sourceColumn.forEach((n, i) => {
+          n.position = { x: 0, y: -colHeight / 2 + i * 160 };
+        });
+      }
+      // Policies column: same name order + rhythm as live.
+      const policyColumn = updatedNodes.filter(
+        (n) => !n.parentId && n.type === "policyNode",
+      );
+      if (policyColumn.length > 1) {
+        const policyName = (n: Node) =>
+          ((n.data as { policy?: { name?: string } })?.policy?.name ?? "")
+            .toLowerCase();
+        policyColumn.sort((a, b) =>
+          policyName(a).localeCompare(policyName(b)),
+        );
+        const colHeight = (policyColumn.length - 1) * 90;
+        policyColumn.forEach((n, i) => {
+          n.position = { x: 480, y: -colHeight / 2 + i * 90 };
+        });
+      }
+
       // Arrange the network frames in a STAGGERED GRID on the right instead
       // of one cramped column: rows × cols chosen for a ~1:1 aspect block,
       // odd columns offset by half a cell so the policy edges flow through
       // the gaps between frames.
       const frames = updatedNodes.filter((n) => isFrameNode(n));
       if (frames.length > 1) {
-        // Keep the block where the layout put the frames column (right of
-        // the policies), centered on the vertical middle of the REST of the
+        // Same x-origin as the live overview (the hierarchical layout put
+        // frames at its far column, which left a much wider policy → network
+        // gap than live), centered on the vertical middle of the REST of the
         // scene (source groups / policies) — the hierarchical columns aren't
         // guaranteed to center at 0.
-        const baseX = Math.min(...frames.map((f) => f.position.x));
+        const baseX = FRAME_GRID_BASE_X;
         const others = updatedNodes.filter(
           (n) => !isFrameNode(n) && !n.parentId,
         );

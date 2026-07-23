@@ -58,6 +58,7 @@ const EditorContent = ({
   onClose: () => void;
 }) => {
   const reactFlow = useReactFlow();
+  const { isDraft } = useDraftMode();
   const { groups: apiGroups } = useControlCenterData();
   const { changes, trackCreateGroup } = useDraftChangeset();
   const { saveDraftResource } = useDraftNetworkActions();
@@ -127,6 +128,19 @@ const EditorContent = ({
     }
     onClose();
   };
+
+  // LIVE mode: the frame's "Add Resource" creates against the REAL network
+  // (the modal's own save POSTs); mutate lands via SWR revalidation.
+  if (!isDraft && editor.createInNetworkNodeId) {
+    const liveNetwork = (frame?.data as { network?: Network })?.network;
+    if (!liveNetwork?.id) return null;
+    return (
+      <ResourceModalContent
+        network={liveNetwork}
+        onCreated={() => onClose()}
+      />
+    );
+  }
 
   return (
     <ResourceModalContent

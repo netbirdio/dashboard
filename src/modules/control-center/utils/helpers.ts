@@ -650,16 +650,16 @@ export const getLiveFrameGrid = (resourceCount: number) => {
   });
   return {
     width: getNetworkFrameWidth(cols, childWidth),
-    // Live frames: bottom band is just the padding (no Add button); empty
-    // frames mirror the reconciler's empty height.
+    // Both modes reserve the bottom Add-Resource band; empty frames mirror
+    // the reconciler's empty height.
     height:
       resourceCount > 0
         ? NETWORK_FRAME_HEADER +
           NETWORK_FRAME_PADDING_Y +
           rows * NETWORK_FRAME_FALLBACK_ROW +
           (rows - 1) * NETWORK_FRAME_ROW_GAP +
-          NETWORK_FRAME_PADDING_Y
-        : getNetworkFrameHeight(0) - NETWORK_FRAME_ADD_ROW,
+          NETWORK_FRAME_ADD_ROW
+        : getNetworkFrameHeight(0),
     childWidth,
     visibleCount,
     cellPosition,
@@ -695,6 +695,9 @@ export function useStructuralNodes(options?: { selection?: boolean }) {
 // their own heights; odd columns start half a typical cell lower so edges
 // flow between frames. Mutates the frames' positions in place and centers
 // the block vertically on `centerMidY`.
+// Grid x-origin right of the policies column — SHARED by the live overview
+// and the draft build so the policy → network gap reads identical.
+export const FRAME_GRID_BASE_X = 1050;
 export const FRAME_GRID_GAP_X = 280;
 export const FRAME_GRID_GAP_Y = 200;
 
@@ -715,7 +718,12 @@ export function packFrameGrid(
   const columnY = Array.from({ length: cols }, (_, col) =>
     col % 2 === 1 ? avgH / 2 : 0,
   );
-  const ordered = frames.slice().sort((a, b) => a.position.y - b.position.y);
+  // Deterministic order by network NAME — live and draft fill the grid
+  // identically regardless of how their builds enumerated the frames.
+  const nameOf = (n: CanvasNode) =>
+    ((n.data as { network?: { name?: string } })?.network?.name ?? "")
+      .toLowerCase();
+  const ordered = frames.slice().sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
   ordered.forEach((frame, i) => {
     const col = i % cols;
     frame.position = { x: baseX + col * cellW, y: columnY[col] };

@@ -104,12 +104,16 @@ export const RoutingPeersBar = ({
   rows,
   count,
   onAdd,
+  onPrefetch,
   onOpenChange,
   loading = false,
 }: {
   rows: RoutingPeerRow[];
   count: number;
   onAdd?: () => void;
+  // Fired on trigger hover — frames prefetch their rows so the popover
+  // usually opens with data already there (no skeleton flash).
+  onPrefetch?: () => void;
   // Fired when the popover toggles — live frames use it to lazily fetch
   // their router rows on first open (mounting a fetch per frame lagged the
   // networks overview).
@@ -154,6 +158,7 @@ export const RoutingPeersBar = ({
         <PopoverTrigger asChild>
           <button
             type={"button"}
+            onMouseEnter={onPrefetch}
             onClick={(e) => {
               e.stopPropagation();
               if (!hasRouters) onAdd?.();
@@ -192,25 +197,38 @@ export const RoutingPeersBar = ({
               There are no routing peers matching your search.
             </DropdownInfoText>
           )}
-          {loading && rows.length === 0 ? (
-            // One skeleton per known routing peer (the count comes from the
-            // /networks payload), capped to what the max height fits.
+          {loading ? (
+            // While the API rows load: any already-known rows (draft
+            // changeset) render as skeleton placeholders too — one per known
+            // routing peer (count from the /networks payload), capped to
+            // what the max height fits.
             <div
-              className={"flex flex-col gap-1 px-2 pb-2 pt-1 overflow-hidden"}
+              className={"flex flex-col px-2 pb-2 pt-1 overflow-hidden"}
               style={{ maxHeight: MAX_LIST_HEIGHT }}
             >
               {Array.from({
-                length: Math.min(Math.max(count, 1), 5),
+                length: Math.min(Math.max(count, rows.length, 1), 5),
               }).map((_, i) => (
-                <Skeleton key={i} height={30} className={"rounded-md"} />
+                <Skeleton
+                  key={i}
+                  height={30}
+                  className={"rounded-md !my-[2px]"}
+                />
               ))}
             </div>
           ) : (
             <VirtualScrollAreaList
               items={virtualRows}
               itemKey={(row) => row.key}
+              // Tighter gap below the search input (default pt-2 read as a
+              // dead strip; the network selector sits closer).
+              scrollAreaClassName={"!pt-1"}
               maxHeight={MAX_LIST_HEIGHT}
-              estimatedItemHeight={38}
+              // Measured row: py-2 (16) + one text line (~17) ≈ 33px — 38
+              // left a visible dead strip below the last row.
+              estimatedItemHeight={34}
+              // pt-1 (4) + last row pb-2 (8) on top of the rows themselves.
+              heightAdjustment={4}
               onSelect={(row) => {
                 if (!row.onEdit) return;
                 setOpen(false);

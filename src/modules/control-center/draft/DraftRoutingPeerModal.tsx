@@ -15,7 +15,7 @@ import { RoutingPeerModalContent } from "@/modules/networks/routing-peers/Networ
 // routing-peers dropdown) the REAL modal opens against the real network —
 // its save PUTs via the API.
 export const DraftRoutingPeerModal = () => {
-  const { routingPeerModal, setRoutingPeerModal } = useDraftMode();
+  const { isDraft, routingPeerModal, setRoutingPeerModal } = useDraftMode();
   const { addRouterFromSelection } = useDraftNetworkActions();
   const { changes, removeChange } = useDraftChangeset();
   const reactFlow = useReactFlow();

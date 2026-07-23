@@ -233,17 +233,16 @@ export function useNetworkFrameLayout() {
           })()
         : undefined;
 
-      // Bottom band: the "Add Resource" button is always present in a draft
-      // frame, so its band is always reserved (overflow now lives in-grid as
-      // the "+N more" cell, not a footer). Live frames have no button — just
-      // the regular bottom padding.
-      const addBand = isDraft ? NETWORK_FRAME_ADD_ROW : NETWORK_FRAME_PADDING_Y;
+      // Bottom band: the "Add Resource" button is present in BOTH modes now
+      // (live adds against the real API), so its band is always reserved
+      // (overflow lives in-grid as the "+N more" cell, not a footer).
+      const addBand = NETWORK_FRAME_ADD_ROW;
       // Empty frames reserve one row (getNetworkFrameHeight) so they're the
       // same height as one/two resources.
       const height =
         visibleResources.length > 0
           ? y + rowMaxHeight + addBand
-          : getNetworkFrameHeight(0) - (isDraft ? 0 : NETWORK_FRAME_ADD_ROW);
+          : getNetworkFrameHeight(0);
 
       const frameUpdate: Partial<Node> = {};
       if (frame.style?.height !== height || frame.style?.width !== width) {

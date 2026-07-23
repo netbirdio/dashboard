@@ -9,6 +9,7 @@ import {
 } from "@/modules/control-center/utils/graph-builder";
 import { applyDrilledLayout } from "@/modules/control-center/utils/drilled-layout";
 import {
+  FRAME_GRID_BASE_X,
   getLiveFrameGrid,
   isFrameNode,
   NETWORK_FRAME_FALLBACK_ROW,
@@ -243,10 +244,6 @@ export function useNetworkView() {
         .map((rid) => networkResources?.find((r) => r.id === rid))
         .filter(Boolean) as NonNullable<typeof networkResources>;
 
-      // Seed the frame with the SAME grid the reconciling layout produces
-      // (2 cols, visible cap, fallback rows) — a mismatched seed made every
-      // frame resize and its "+N more" cell shift right after mount.
-      const grid = getLiveFrameGrid(childResources.length);
       // A network whose policies are ALL disabled dims like a disabled
       // destination elsewhere (no policies → normal).
       const networkPolicyObjs = (network.policies ?? [])
@@ -254,6 +251,32 @@ export function useNetworkView() {
           (policiesOverride ?? policies!).find((po) => po.id === pid),
         )
         .filter(Boolean) as Policy[];
+
+      // Destination RESOURCE-GROUPS live INSIDE the frame as rows, exactly
+      // like the draft build: a destination group qualifies when one of the
+      // network's resources belongs to it. Peer-only destination groups are
+      // SKIPPED here — they grant peer access, not network access, and have
+      // no business floating next to a network.
+      const resourceIdSet = new Set(network.resources ?? []);
+      const groupRows: Group[] = [];
+      networkPolicyObjs.forEach((po) => {
+        ((po.rules?.[0]?.destinations as Group[]) ?? []).forEach((g) => {
+          if (!g?.id || groupRows.some((x) => x.id === g.id)) return;
+          const hasNetworkResource = networkResources?.some(
+            (r) =>
+              resourceIdSet.has(r.id ?? "") &&
+              ((r.groups ?? []) as (Group | string)[]).some(
+                (gg) => (typeof gg === "string" ? gg : gg?.id) === g.id,
+              ),
+          );
+          if (hasNetworkResource) groupRows.push(g);
+        });
+      });
+
+      // Seed the frame with the SAME grid the reconciling layout produces
+      // (2 cols, visible cap, fallback rows) — a mismatched seed made every
+      // frame resize and its "+N more" cell shift right after mount.
+      const grid = getLiveFrameGrid(childResources.length + groupRows.length);
       const networkEnabled =
         networkPolicyObjs.length === 0 ||
         networkPolicyObjs.some((po) => po.rules?.[0]?.enabled);
@@ -272,7 +295,9 @@ export function useNetworkView() {
         position: { x: 0, y: 0 },
         style: { width: grid.width, height: grid.height },
       });
-      childResources.forEach((resource, i) => {
+      childResources.forEach((resource, idx) => {
+        // Group rows occupy the FIRST cells (same order as the draft build).
+        const i = groupRows.length + idx;
         childNodes.push({
           id: `resource-${resource.id}`,
           type: "resourceNode",
@@ -293,6 +318,21 @@ export function useNetworkView() {
             enabled: networkEnabled,
             draftNetwork: { networkId: network.id, name: network.name },
           },
+        });
+      });
+      groupRows.forEach((g, i) => {
+        childNodes.push({
+          // Per-network id — a group's resources may span networks, and a
+          // node id must be unique.
+          id: `resource-group-${network.id}-${g.id}`,
+          type: "resourceGroupNode",
+          parentId: `network-${network.id}`,
+          position: grid.cellPosition(i),
+          hidden: i >= grid.visibleCount,
+          selectable: false,
+          draggable: false,
+          style: { width: grid.childWidth, height: NETWORK_FRAME_FALLBACK_ROW },
+          data: { group: g, enabled: networkEnabled, showHandles: false },
         });
       });
 
@@ -385,18 +425,31 @@ export function useNetworkView() {
     const sources = allNodes.filter(
       (n) => !isFrameNode(n) && n.type !== "policyNode",
     );
+    // Name-sorted columns — the draft build sorts identically, so both
+    // modes read the same top-to-bottom.
+    const displayName = (n: Node) =>
+      (
+        (n.data as { group?: { name?: string }; peer?: { name?: string } })
+          ?.group?.name ??
+        (n.data as { peer?: { name?: string } })?.peer?.name ??
+        ""
+      ).toLowerCase();
+    sources.sort((a, b) => displayName(a).localeCompare(displayName(b)));
     const SOURCE_SPACING = 160;
     const sourcesHeight = (sources.length - 1) * SOURCE_SPACING;
     sources.forEach((n, i) => {
       n.position = { x: 0, y: -sourcesHeight / 2 + i * SOURCE_SPACING };
     });
+    const policyName = (n: Node) =>
+      ((n.data as { policy?: { name?: string } })?.policy?.name ?? "")
+        .toLowerCase();
+    policyNodes.sort((a, b) => policyName(a).localeCompare(policyName(b)));
     const POLICY_SPACING = 90;
     const policiesHeight = (policyNodes.length - 1) * POLICY_SPACING;
     policyNodes.forEach((n, i) => {
       n.position = { x: 480, y: -policiesHeight / 2 + i * POLICY_SPACING };
     });
-    const GRID_BASE_X = 1050;
-    packFrameGrid(frames, GRID_BASE_X, 0);
+    packFrameGrid(frames, FRAME_GRID_BASE_X, 0);
 
     return {
       updatedNodes: [...allNodes, ...childNodes],

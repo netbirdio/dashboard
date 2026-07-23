@@ -254,7 +254,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           (when resources overflow the visible cap) stacks just above it.
           Hovering it must not highlight the frame / reveal the ConnectHandle,
           same as the floating controls. */}
-      {isDraft && isFrame && (
+      {isFrame && (
         <FrameAddResourceButton
           id={id}
           frameCellCount={frameCellCount}
@@ -292,11 +292,10 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             count={routingPeersCount}
             loading={routerRowsLoading}
             onOpenChange={(open) => open && setRoutersRequested(true)}
-            onAdd={
-              isDraft
-                ? () => setRoutingPeerModal({ networkNodeId: id })
-                : undefined
-            }
+            onPrefetch={() => setRoutersRequested(true)}
+            // Adds work in BOTH modes — live opens the real routing-peer
+            // modal (its save POSTs), draft records a change.
+            onAdd={() => setRoutingPeerModal({ networkNodeId: id })}
           />
         </div>
       )}
@@ -369,6 +368,7 @@ const FrameAddResourceButton = ({
   // useControlCenterData (six SWR subscriptions), and mounting that per
   // frame lagged big drafts. Wired once in ControlCenterUIProvider.
   const { addResourceToFrameRef } = useCanvasUI();
+  const { isDraft, setResourceEditor } = useDraftMode();
   return (
     <div
       // Wrapper spans the body but stays click-through (pointer-events-none)
@@ -391,7 +391,14 @@ const FrameAddResourceButton = ({
         )}
         // Drops a blank resource row straight into the frame — same as
         // the context menu's "Add Resource" (the editor opens on click).
-        onClick={() => addResourceToFrameRef.current(id)}
+        // Draft drops a blank resource row (editor opens on click); live
+        // opens the resource modal against the real network. Clicks must
+        // not bubble into the frame (live frame click drills).
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isDraft) addResourceToFrameRef.current(id);
+          else setResourceEditor({ createInNetworkNodeId: id });
+        }}
         onMouseEnter={() => {
           setHoveredNetworkNodeId(null);
           setControlsHovered(true);
