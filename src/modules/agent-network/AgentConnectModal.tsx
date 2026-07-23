@@ -310,6 +310,13 @@ export function AgentConnectTabs({
               `max_context_size = 1000000`,
             ]}
           />
+          <SmallParagraph className={"mt-3"}>
+            Pairs with a Kimi provider keeping the default upstream URL{" "}
+            <code className={"font-mono"}>https://api.moonshot.ai</code>. For
+            the OpenAI shape instead, use{" "}
+            <code className={"font-mono"}>type = &quot;openai_legacy&quot;</code>{" "}
+            with <code className={"font-mono"}>base_url = &quot;{openaiBase}&quot;</code>.
+          </SmallParagraph>
         </div>
       </TabsContent>
 
