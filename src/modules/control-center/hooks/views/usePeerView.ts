@@ -12,7 +12,7 @@ import { addDestinationResourceNodes, ViewResult } from "./types";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
 export function usePeerView() {
-  const { policies, peers, networkResources, isDataReady } =
+  const { policies, peers, networks, networkResources, isDataReady } =
     useControlCenterData();
 
   const applyPeerView = (
@@ -83,6 +83,7 @@ export function usePeerView() {
         allEdges,
         peers!,
         networkResources!,
+        networks,
       );
     });
 

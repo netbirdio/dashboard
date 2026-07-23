@@ -155,6 +155,18 @@ export function useDraft() {
       const allNodes: Node[] = [];
       const allEdges: Edge[] = [];
 
+      // Draft nodes whose id differs from their live counterpart (self-ref
+      // destination clones, destination resources/peers) REMOUNT on the mode
+      // switch, and React Flow hides unmeasured new nodes for one frame — a
+      // visible blink in the destination column. Adopting the live node's
+      // measured size lets them paint immediately in the same slot.
+      const liveDims = (liveId: string) => {
+        const m = liveNodes.find((n) => n.id === liveId)?.measured;
+        return m?.width && m?.height
+          ? { initialWidth: m.width, initialHeight: m.height }
+          : {};
+      };
+
       const livePolicyIds = new Set(
         liveNodes
           .filter((n) => n.type === "policyNode")
@@ -312,6 +324,11 @@ export function useDraft() {
           addNode(allNodes, {
             id: nodeId,
             type: "destinationGroupNode",
+            // A self-ref clone replaces the live node `group-<gid>` in the
+            // destination slot — adopt its size (see liveDims).
+            ...(nodeId !== `group-${groupId}`
+              ? liveDims(`group-${groupId}`)
+              : {}),
             data: {
               group,
               enabled,
@@ -340,6 +357,9 @@ export function useDraft() {
               addNode(allNodes, {
                 id: nodeId,
                 type: "peerNode",
+                // Replaces the live `destination-resource-<id>` node in the
+                // destination slot — adopt its size (see liveDims).
+                ...liveDims(`destination-resource-${peer.id}`),
                 data: {
                   peer,
                   enabled: true,
@@ -373,6 +393,9 @@ export function useDraft() {
               addNode(allNodes, {
                 id: nodeId,
                 type: "resourceNode",
+                // Replaces the live `destination-resource-<id>` node in the
+                // destination slot — adopt its size (see liveDims).
+                ...liveDims(`destination-resource-${resource.id}`),
                 data: {
                   resource,
                   enabled,
@@ -665,9 +688,12 @@ export function useDraft() {
         sourceColumn.sort((a, b) =>
           draftDisplayName(a).localeCompare(draftDisplayName(b)),
         );
-        const colHeight = (sourceColumn.length - 1) * baseSpacing;
+        // Same pitch as the destination column (100) so both sides share
+        // one rhythm; frame drafts keep the networks-overview pitch.
+        const sourcePitch = carriesFrames ? baseSpacing : 100;
+        const colHeight = (sourceColumn.length - 1) * sourcePitch;
         sourceColumn.forEach((n, i) => {
-          n.position = { x: 0, y: -colHeight / 2 + i * baseSpacing };
+          n.position = { x: 0, y: -colHeight / 2 + i * sourcePitch };
         });
       }
       if (carriesFrames) {
@@ -696,11 +722,16 @@ export function useDraft() {
         // bucket at 1400/80) and destination peers are `peerNode`s (stacked
         // at x=0 with the sources), so restack them together at the live
         // rhythm, keeping the layout's top-to-bottom order.
+        // groupNode included: a group that is BOTH a source and a destination
+        // dedups into one groupNode — the source restack skips destinations,
+        // so without this it would strand at x=0 while the live view shows it
+        // in the destination column (visible jump on mode switch).
         const destColumn = updatedNodes.filter(
           (n) =>
             !n.parentId &&
             destinationIds.has(n.id) &&
             (n.type === "destinationGroupNode" ||
+              n.type === "groupNode" ||
               n.type === "resourceNode" ||
               n.type === "peerNode"),
         );
@@ -712,7 +743,8 @@ export function useDraft() {
           // order — the draft dedups by entity id, so a node also used as a
           // source elsewhere was created earlier than its live counterpart —
           // and NOT layout y, which is meaningless across layout buckets.
-          const rank = (n: Node) => (n.type === "destinationGroupNode" ? 0 : 1);
+          const rank = (n: Node) =>
+            n.type === "destinationGroupNode" || n.type === "groupNode" ? 0 : 1;
           const firstDestEdgeIndex = new Map<string, number>();
           updatedEdges.forEach((e, i) => {
             if (policyNodeIds.has(e.source) && !firstDestEdgeIndex.has(e.target))
@@ -781,6 +813,20 @@ export function useDraft() {
 
       // Parents precede children (all parents are in updatedNodes).
       updatedNodes.push(...frameChildren);
+
+      // React Flow hides unmeasured nodes for one frame — with all-new node
+      // objects that blanks the whole canvas on the mode switch. Most draft
+      // nodes have a live twin with the same id (or an alias handled by
+      // liveDims above); adopt its measured size so the swap paints
+      // immediately.
+      updatedNodes.forEach((n) => {
+        if (n.initialWidth) return;
+        const m = liveNodes.find((l) => l.id === n.id)?.measured;
+        if (m?.width && m?.height) {
+          n.initialWidth = m.width;
+          n.initialHeight = m.height;
+        }
+      });
 
       // From the live drilled view, enter the draft drill-down of the same
       // network in the SAME commit: the hidden flags are pre-applied so the

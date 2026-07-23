@@ -12,7 +12,7 @@ import { addDestinationResourceNodes, ViewResult } from "./types";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
 export function useGroupView() {
-  const { policies, peers, networkResources, isDataReady } =
+  const { policies, peers, networks, networkResources, isDataReady } =
     useControlCenterData();
 
   // policiesOverride: rebuild from fresher data than the SWR cache (e.g. the
@@ -137,6 +137,7 @@ export function useGroupView() {
         allEdges,
         peers!,
         networkResources!,
+        networks,
       );
     });
 

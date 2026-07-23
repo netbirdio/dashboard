@@ -146,11 +146,11 @@ export const applyD3HierarchicalLayout = (
     ];
   }
 
-  // Source Peer
+  // Source Peer (user view) — same pitch as the destination column.
   centerNodesVertically(
     sourcePeerNodes,
     startX - 100,
-    nodeSpacing / 1.5,
+    options?.destinationGroup?.spacing ?? nodeSpacing,
     centerY,
   );
 
@@ -164,8 +164,17 @@ export const applyD3HierarchicalLayout = (
     );
   }
 
-  // Groups or Source Groups
-  centerNodesVertically(groupNodes, startX, nodeSpacing, centerY);
+  // Groups or Source Groups — in the peer/group/user views the source column
+  // shares the destination column's pitch (one rhythm on both sides, and the
+  // draft rebuild mirrors it); the drilled network view keeps the base pitch.
+  centerNodesVertically(
+    groupNodes,
+    startX,
+    view === "network"
+      ? nodeSpacing
+      : (options?.destinationGroup?.spacing ?? nodeSpacing),
+    centerY,
+  );
   if (view === "group") {
     // Mirror image of the destination column: sources of the policies that
     // target the selected group sit on the far left.

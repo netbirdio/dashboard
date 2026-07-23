@@ -1,4 +1,4 @@
-import { NetworkResource } from "@/interfaces/Network";
+import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { Edge, Node } from "@xyflow/react";
@@ -24,6 +24,7 @@ export function addDestinationResourceNodes(
   edges: Edge[],
   peers: Peer[],
   networkResources: NetworkResource[],
+  networks?: Network[],
 ) {
   const destinationPolicyResource = policy?.rules?.[0].destinationResource;
   const enabled = policy.enabled;
@@ -48,12 +49,22 @@ export function addDestinationResourceNodes(
         position: { x: 0, y: 0 },
       });
     } else if (resource) {
+      // Stamp the resource's network so the card shows "Name - Network"
+      // inline, same as draft mode (without the ref it shows nothing).
+      const net = networks?.find((n) => n.resources?.includes(resource.id));
       nodes.push({
         id: nodeId,
         type: "destinationResourceNode",
         // standalone: render as the StandaloneResourceNode CARD (bg+border)
         // like the single-network views — not the transparent DeviceCard.
-        data: { resource, enabled, standalone: true },
+        data: {
+          resource,
+          enabled,
+          standalone: true,
+          ...(net?.id
+            ? { draftNetwork: { networkId: net.id, name: net.name } }
+            : {}),
+        },
         position: { x: 0, y: 0 },
       });
     }

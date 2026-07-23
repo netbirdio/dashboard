@@ -10,7 +10,7 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 
 export function useUserView() {
   const { setFocusedNodeId } = useDestinationGroup();
-  const { policies, peers, networkResources, isDataReady } =
+  const { policies, peers, networks, networkResources, isDataReady } =
     useControlCenterData();
 
   const applyUserView = (
@@ -144,6 +144,7 @@ export function useUserView() {
         allEdges,
         peers!,
         networkResources!,
+        networks,
       );
     });
 
