@@ -310,13 +310,6 @@ export function AgentConnectTabs({
               `max_context_size = 1000000`,
             ]}
           />
-          <SmallParagraph className={"mt-3"}>
-            Pairs with a Kimi provider keeping the default upstream URL{" "}
-            <code className={"font-mono"}>https://api.moonshot.ai</code>. The{" "}
-            <code className={"font-mono"}>/anthropic</code> suffix in the base
-            URL rides through the endpoint to Moonshot, which serves the
-            Anthropic Messages API under that path.
-          </SmallParagraph>
         </div>
       </TabsContent>
 
