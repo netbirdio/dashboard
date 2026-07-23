@@ -93,10 +93,25 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   // fitView
   // ---------------------------------------------------------------------------
 
+  // First fit after a mount: returning to the page via client-side nav
+  // remounts with a warm SWR cache, so nodes commit (and paint at the
+  // default viewport — a top-left flash) before the camera is fitted. Hide
+  // the viewport (cc-prefit, applied synchronously so it lands in the same
+  // paint as the nodes) and fit WITHOUT animation, revealing the scene
+  // already framed.
+  const firstFitRef = React.useRef(true);
+
   const fitView = (newNodes?: Node[]) => {
     // A running canvas transition owns the camera — its reveal does the fit.
     if (isCanvasTransitionActive()) return;
     const target = newNodes ?? nodes;
+    const isFirstFit = firstFitRef.current;
+    firstFitRef.current = false;
+    const flowEl = isFirstFit
+      ? document.querySelector<HTMLElement>(".react-flow")
+      : null;
+    flowEl?.classList.add("cc-prefit");
+    const reveal = () => flowEl?.classList.remove("cc-prefit");
     // Returning to the page via client-side nav remounts everything with a
     // warm SWR cache: the view initializes on the very first commit, before
     // ReactFlow has rendered/measured the new nodes — fitView would compute
@@ -108,6 +123,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         // at the top-left corner, making the next view's fit animation fly in
         // from far away).
         void reactFlow.setCenter(0, 0, { zoom: EMPTY_STATE_ZOOM });
+        reveal();
         return;
       }
       const stored = new Map(reactFlow.getNodes().map((n) => [n.id, n]));
@@ -125,17 +141,20 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         window.requestAnimationFrame(() => attempt(triesLeft - 1));
         return;
       }
-      reactFlow.fitView({
-        nodes: target,
-        padding: 0.1,
-        duration: 800,
-        // Gentle ease-OUT (quad): starts moving on the first frame — the
-        // default ease-in-out barely moves for the first ~150ms, which reads
-        // as a stall — but decelerates softly instead of snapping.
-        ease: (t: number) => t * (2 - t),
-        maxZoom: 0.8,
-        minZoom: DEFAULT_MIN_ZOOM,
-      });
+      void reactFlow
+        .fitView({
+          nodes: target,
+          padding: 0.1,
+          // The first fit reveals a hidden scene — snap, don't animate.
+          duration: isFirstFit ? 0 : 800,
+          // Gentle ease-OUT (quad): starts moving on the first frame — the
+          // default ease-in-out barely moves for the first ~150ms, which reads
+          // as a stall — but decelerates softly instead of snapping.
+          ease: (t: number) => t * (2 - t),
+          maxZoom: 0.8,
+          minZoom: DEFAULT_MIN_ZOOM,
+        })
+        .then(reveal, reveal);
     };
     window.requestAnimationFrame(() => attempt(30));
   };

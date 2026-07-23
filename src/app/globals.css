@@ -230,6 +230,21 @@ p {
     animation: cc-edge-dash 0.5s linear infinite;
 }
 
+/* First fit after a control-center mount: the view initializes before the
+   camera is fitted (fitView waits for node measurement), so the nodes would
+   paint at the default viewport for a few frames — a top-left flash when
+   returning to the page via client-side nav. Hide the scene until the first
+   fit lands, then fade it in already framed. */
+.react-flow.cc-prefit .react-flow__viewport {
+    /* Hide INSTANTLY (no transition) — the base transition below only fades
+       the reveal; letting it run here would show the flash fading out. */
+    opacity: 0;
+    transition: none;
+}
+.react-flow .react-flow__viewport {
+    transition: opacity 120ms ease;
+}
+
 /* Group focus highlight (live control-center): nodes/edges off the selected
    group's path fade to grayscale while its panel is open. */
 .react-flow__node.cc-dimmed {
