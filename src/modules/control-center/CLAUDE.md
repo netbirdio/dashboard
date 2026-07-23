@@ -50,10 +50,14 @@ DraftModeProvider          → isDraft, activeTool (select/hand)
 View hooks create node `onClick` callbacks that reference `forceSingleGroupView`/`forceSinglePeerView` from the handlers. But handlers need the view builders. This is resolved via refs in `CanvasStateProvider`:
 
 ```
-forceSingleGroupViewRef / forceSinglePeerViewRef
+forceSingleGroupViewRef / forceSinglePeerViewRef / refreshLiveViewRef
   ↑ set by ControlCenterUIProvider after both hooks return
   ↓ read by view hooks via useCanvasState() when onClick fires
 ```
+
+### Live policy updates (no refetch wait)
+
+Saving a policy in LIVE mode patches the canvas in place from the PUT response instead of waiting for the SWR `/policies` revalidation: the modal's `handlePolicyChange(updated)` calls `refreshLiveViewRef.current(updated)` → `refreshLiveView` (useSelectNodeHandlers) rebuilds the CURRENT view (group/peer/user/single-network/networks-overview) with the fresh policy spliced into the cached list — every view applier accepts an optional `policiesOverride` (single/overview network views skip their `layoutInitialized` guard when it's given). Surviving top-level nodes keep their positions, `select-*` nodes are carried over, no `layoutInitialized` reset, no fitView — added/removed sources, destinations, edges and handles reconcile through the rebuild. `currentPolicy` (policy modal) prefers the canvas node's `data.policy` in BOTH modes (freshest: draft edits or the just-saved response), falling back to the API list. The background `mutate("/policies")` from PoliciesProvider still runs and simply confirms what's already drawn.
 
 ## File Structure
 

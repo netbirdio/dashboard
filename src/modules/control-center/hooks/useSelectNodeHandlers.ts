@@ -13,14 +13,15 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { Policy } from "@/interfaces/Policy";
 
 interface UseSelectNodeHandlersParams {
   views: {
-    applySingleGroupView: (id: string) => any;
-    applyPeerView: (id: string) => any;
-    applyUserView: (id: string) => any;
-    applySingleNetworkView: (id: string) => any;
-    applyNetworksView: () => any;
+    applySingleGroupView: (id: string, policiesOverride?: Policy[]) => any;
+    applyPeerView: (id: string, policiesOverride?: Policy[]) => any;
+    applyUserView: (id: string, policiesOverride?: Policy[]) => any;
+    applySingleNetworkView: (id: string, policiesOverride?: Policy[]) => any;
+    applyNetworksView: (policiesOverride?: Policy[]) => any;
   };
 }
 
@@ -175,6 +176,58 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       setSelected: setSelectedUser,
       applyView: applyUserView,
     });
+
+  // ---------------------------------------------------------------------------
+  // refreshLiveView — in-place canvas update after a live policy save
+  // ---------------------------------------------------------------------------
+
+  // Rebuilds the CURRENT live view from the API response of a policy update
+  // (the SWR cache still holds the pre-save list until its background
+  // revalidation lands). Surviving nodes keep their positions and the camera
+  // stays put — no layoutInitialized reset, no fitView; added/removed
+  // sources, destinations and edges reconcile through the rebuild itself.
+  const refreshLiveView = (updatedPolicy: Policy) => {
+    if (isDraft || !policies) return;
+    const patched = policies.map((p) =>
+      p.id === updatedPolicy.id ? updatedPolicy : p,
+    );
+
+    let result;
+    switch (currentView) {
+      case FlowView.GROUPS:
+        if (selectedGroup) result = applySingleGroupView(selectedGroup, patched);
+        break;
+      case FlowView.PEERS:
+        if (selectedPeer) result = applyPeerView(selectedPeer, patched);
+        break;
+      case FlowView.USERS:
+        if (selectedUser) result = applyUserView(selectedUser, patched);
+        break;
+      case FlowView.NETWORKS:
+        result = selectedNetwork
+          ? applySingleNetworkView(selectedNetwork, patched)
+          : applyNetworksView(patched);
+        break;
+    }
+    if (!result) return;
+
+    setNodes((prev) => {
+      // Keep positions of nodes the user already sees (only top-level ones —
+      // frame children stay frame-relative); brand-new nodes take their
+      // layout positions.
+      const prevPositions = new Map(
+        prev.filter((n) => !n.parentId).map((n) => [n.id, n.position]),
+      );
+      const merged = (result.updatedNodes as Node[]).map((n) => {
+        const position = !n.parentId ? prevPositions.get(n.id) : undefined;
+        return position ? { ...n, position } : n;
+      });
+      // The select node isn't part of view results — carry it over.
+      const selects = prev.filter((n) => n.id.startsWith("select-"));
+      return [...merged, ...selects];
+    });
+    setEdges(result.updatedEdges);
+  };
 
   // ---------------------------------------------------------------------------
   // Generic forceEntityView
@@ -531,6 +584,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     forceSinglePeerView,
     onDestinationGroupSelect,
     onNetworkSelect,
+    refreshLiveView,
     onViewChange,
     onNodeClick,
   };

@@ -35,7 +35,7 @@ interface PolicyContextType {
   policyModalOpen: boolean;
   setPolicyModalOpen: (open: boolean) => void;
   currentPolicy: Policy | undefined;
-  handlePolicyChange: () => void;
+  handlePolicyChange: (updated: Policy) => void;
   // Draft: record an update change for the policy and redraw it on canvas.
   updateDraftPolicy: (policy: Policy) => void;
   // Draws a policy with its sources/destinations on the canvas — existing
@@ -86,7 +86,8 @@ export function ControlCenterPolicyProvider({
   children: React.ReactNode;
 }) {
   const { policies, peers, networkResources, groups } = useControlCenterData();
-  const { nodes, edges, setLayoutInitialized } = useCanvasState();
+  const { nodes, edges, setLayoutInitialized, refreshLiveViewRef } =
+    useCanvasState();
   const { isDraft } = useDraftMode();
   const {
     changes,
@@ -115,21 +116,26 @@ export function ControlCenterPolicyProvider({
     Group[]
   >([]);
 
-  // In draft the canvas node carries the policy's draft state (toggles and
-  // pending edits) — the API policy is the live-mode source.
+  // The canvas node carries the freshest policy state: in draft the pending
+  // edits/toggles, in live the just-saved PUT response (refreshLiveView
+  // patches the node before the SWR cache revalidates). The API list is the
+  // fallback.
   const currentPolicy = useMemo(() => {
     if (!selectedPolicy) return undefined;
-    if (isDraft) {
-      const node = nodes.find((n) => n.id === `policy-${selectedPolicy}`);
-      const nodePolicy = (node?.data as any)?.policy as Policy | undefined;
-      if (nodePolicy) return nodePolicy;
-    }
+    const node = nodes.find((n) => n.id === `policy-${selectedPolicy}`);
+    const nodePolicy = (node?.data as any)?.policy as Policy | undefined;
+    if (nodePolicy) return nodePolicy;
     return policies?.find((p) => p.id === selectedPolicy);
-  }, [policies, selectedPolicy, isDraft, nodes]);
+  }, [policies, selectedPolicy, nodes]);
 
-  const handlePolicyChange = () => {
+  // Live-mode save: the canvas is patched in place from the PUT response —
+  // no layoutInitialized reset, no waiting for the SWR /policies
+  // revalidation (that lands in the background and matches what's already
+  // drawn). refreshLiveView rebuilds the current view with the fresh policy,
+  // keeping positions and camera.
+  const handlePolicyChange = (updated: Policy) => {
+    refreshLiveViewRef.current(updated);
     setTimeout(() => {
-      setLayoutInitialized(false);
       setSelectedPolicy("");
       setPolicyModalOpen(false);
     }, 500);
@@ -705,7 +711,7 @@ export function ControlCenterPolicyProvider({
           additionalPeers={isDraft ? placeholderPeers : undefined}
           additionalResources={isDraft ? draftResources : undefined}
           onSuccess={(p) =>
-            isDraft ? handleDraftPolicyUpdate(p) : handlePolicyChange()
+            isDraft ? handleDraftPolicyUpdate(p) : handlePolicyChange(p)
           }
           onOpenChange={setPolicyModalOpen}
         />

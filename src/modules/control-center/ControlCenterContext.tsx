@@ -22,6 +22,7 @@ import { FlowView } from "@/modules/control-center/FlowSelector";
 import { User } from "@/interfaces/User";
 import { SelectOption } from "@components/select/SelectDropdown";
 import { Network } from "@/interfaces/Network";
+import { Policy } from "@/interfaces/Policy";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useGroupView } from "@/modules/control-center/hooks/views/useGroupView";
 import { usePeerView } from "@/modules/control-center/hooks/views/usePeerView";
@@ -62,6 +63,10 @@ interface CanvasState {
   forceSinglePeerViewRef: React.MutableRefObject<
     (id: string, userId?: string) => void
   >;
+  // Live policy saves patch the canvas in place from the API response —
+  // wired from useSelectNodeHandlers (same circular-dependency ref pattern
+  // as the force*ViewRefs). No-op in draft mode.
+  refreshLiveViewRef: React.MutableRefObject<(policy: Policy) => void>;
 }
 
 const CanvasStateContext = createContext<CanvasState | null>(null);
@@ -109,6 +114,7 @@ export function CanvasStateProvider({
   const forceSinglePeerViewRef = useRef<
     (id: string, userId?: string) => void
   >(() => {});
+  const refreshLiveViewRef = useRef<(policy: Policy) => void>(() => {});
 
   const value = useMemo(
     () => ({
@@ -139,6 +145,7 @@ export function CanvasStateProvider({
       loggedInUser,
       forceSingleGroupViewRef,
       forceSinglePeerViewRef,
+      refreshLiveViewRef,
     }),
     [
       nodes,
@@ -221,6 +228,7 @@ export function ControlCenterUIProvider({
   // Wire up circular dependency refs
   canvas.forceSingleGroupViewRef.current = handlers.forceSingleGroupView;
   canvas.forceSinglePeerViewRef.current = handlers.forceSinglePeerView;
+  canvas.refreshLiveViewRef.current = handlers.refreshLiveView;
 
   const value = useMemo(
     () => ({

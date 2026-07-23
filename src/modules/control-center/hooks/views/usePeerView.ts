@@ -1,6 +1,7 @@
 import { Edge, Node } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { Group } from "@/interfaces/Group";
+import { Policy } from "@/interfaces/Policy";
 import {
   addNode,
   addEdge,
@@ -14,7 +15,10 @@ export function usePeerView() {
   const { policies, peers, networkResources, isDataReady } =
     useControlCenterData();
 
-  const applyPeerView = (peerId: string): ViewResult | undefined => {
+  const applyPeerView = (
+    peerId: string,
+    policiesOverride?: Policy[],
+  ): ViewResult | undefined => {
     if (!isDataReady()) return;
 
     const allNodes: Node[] = [];
@@ -26,7 +30,7 @@ export function usePeerView() {
     const peerGroups = peer.groups || [];
 
     const peerPolicies = sortBy(
-      policies!.filter((p) => {
+      (policiesOverride ?? policies!).filter((p) => {
         const rule = p.rules?.[0];
         if (!rule) return false;
         const sources = rule.sources as Group[];

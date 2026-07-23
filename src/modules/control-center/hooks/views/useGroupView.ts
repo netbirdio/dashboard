@@ -1,6 +1,7 @@
 import { Edge, Node } from "@xyflow/react";
 import { orderBy, sortBy } from "lodash";
 import { Group } from "@/interfaces/Group";
+import { Policy } from "@/interfaces/Policy";
 import {
   addNode,
   addEdge,
@@ -14,14 +15,19 @@ export function useGroupView() {
   const { policies, peers, networkResources, isDataReady } =
     useControlCenterData();
 
-  const applySingleGroupView = (groupId: string): ViewResult | undefined => {
+  // policiesOverride: rebuild from fresher data than the SWR cache (e.g. the
+  // PUT response of a policy update) — see refreshLiveView.
+  const applySingleGroupView = (
+    groupId: string,
+    policiesOverride?: Policy[],
+  ): ViewResult | undefined => {
     if (!isDataReady()) return;
 
     const allNodes: Node[] = [];
     const allEdges: Edge[] = [];
 
     const groupPolicies = sortBy(
-      policies!.filter((policy) => {
+      (policiesOverride ?? policies!).filter((policy) => {
         const rule = policy.rules?.[0];
         if (!rule) return false;
         const sources = rule.sources as Group[];

@@ -1,6 +1,7 @@
 import { Edge, Node } from "@xyflow/react";
 import { forEach } from "lodash";
 import { Group } from "@/interfaces/Group";
+import { Policy } from "@/interfaces/Policy";
 import {
   addNode,
   addEdge,
@@ -28,11 +29,16 @@ export function useNetworkView() {
   const { policies, networks, networkResources, peers, isLoading, isDataReady } =
     useControlCenterData();
 
+  // policiesOverride: rebuild from fresher data than the SWR cache (e.g. the
+  // PUT response of a policy update) — see refreshLiveView. Refreshes happen
+  // on an already-initialized layout, so the guard is skipped.
   const applySingleNetworkView = (
     networkId: string,
+    policiesOverride?: Policy[],
   ): ViewResult | undefined => {
     if (isLoading) return;
-    if (layoutInitialized) return;
+    if (layoutInitialized && !policiesOverride) return;
+    const effectivePolicies = policiesOverride ?? policies;
 
     const allNodes: Node[] = [];
     const allEdges: Edge[] = [];
@@ -43,7 +49,9 @@ export function useNetworkView() {
     const networkPolicies = network.policies || [];
 
     forEach(networkPolicies, (p) => {
-      const policy = policies?.find((policyItem) => policyItem.id === p);
+      const policy = effectivePolicies?.find(
+        (policyItem) => policyItem.id === p,
+      );
       if (!policy) return;
       const enabled = policy.rules?.[0]?.enabled;
 
@@ -125,7 +133,7 @@ export function useNetworkView() {
 
       // Policies targeting this resource DIRECTLY (single-resource
       // destination) — the group sweep below only covers group-mediated ones.
-      (policies ?? []).forEach((policy) => {
+      (effectivePolicies ?? []).forEach((policy) => {
         if (!networkPolicies.includes(policy.id || "")) return;
         if (policy.rules?.[0]?.destinationResource?.id !== resource.id) return;
         addEdge(allEdges, {
@@ -141,7 +149,7 @@ export function useNetworkView() {
 
       let resourcePolicies = getResourcePolicyByGroups(
         networkResourceGroups as Group[],
-        policies ?? [],
+        effectivePolicies ?? [],
       );
 
       resourcePolicies = resourcePolicies.filter((rp) =>
@@ -209,9 +217,11 @@ export function useNetworkView() {
     return applyDrilledLayout(allNodes, allEdges);
   };
 
-  const applyNetworksView = (): ViewResult | undefined => {
+  const applyNetworksView = (
+    policiesOverride?: Policy[],
+  ): ViewResult | undefined => {
     if (!isDataReady()) return;
-    if (layoutInitialized) return;
+    if (layoutInitialized && !policiesOverride) return;
 
     const allNodes: Node[] = [];
     const allEdges: Edge[] = [];
@@ -262,7 +272,9 @@ export function useNetworkView() {
       const networkPolicies = network.policies || [];
       if (networkPolicies.length > 0) {
         forEach(networkPolicies, (p) => {
-          const policy = policies!.find((policyItem) => policyItem.id === p);
+          const policy = (policiesOverride ?? policies!).find(
+            (policyItem) => policyItem.id === p,
+          );
           if (policy) {
             const enabled = policy.rules?.[0]?.enabled;
             const rule = policy.rules?.[0];

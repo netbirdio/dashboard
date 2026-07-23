@@ -1,6 +1,7 @@
 import { Edge, Node } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { Group } from "@/interfaces/Group";
+import { Policy } from "@/interfaces/Policy";
 import { DEFAULT_LAYOUT_CONFIG } from "@/modules/control-center/utils/graph-builder";
 import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
 import { addDestinationResourceNodes, ViewResult } from "./types";
@@ -13,7 +14,10 @@ export function useUserView() {
   const { policies, peers, networkResources, isDataReady } =
     useControlCenterData();
 
-  const applyUserView = (userId: string): ViewResult | undefined => {
+  const applyUserView = (
+    userId: string,
+    policiesOverride?: Policy[],
+  ): ViewResult | undefined => {
     if (!isDataReady()) return;
 
     const allNodes: Node[] = [];
@@ -59,7 +63,7 @@ export function useUserView() {
       ...new Set(userPeers.flatMap((p) => p.groups?.map((g) => g.id) || [])),
     ];
     const userPolicies = sortBy(
-      policies!.filter((p) => {
+      (policiesOverride ?? policies!).filter((p) => {
         const rule = p.rules?.[0];
         if (!rule) return false;
         const sources = rule.sources as Group[];
