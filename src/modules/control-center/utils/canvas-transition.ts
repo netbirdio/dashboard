@@ -68,7 +68,10 @@ export type CanvasTransitionOptions = {
   // (e.g. a close-up on a frame the camera then flies out of).
   revealFrom?: () => Rect | null;
   reveal?: () => void;
-  // Grow-in start scale relative to the final viewport (finalViewport mode).
+  // Reveal start scale relative to the final viewport. Defaults by
+  // direction: "in" grows the new scene in (0.7 → 1), "out" starts CLOSE
+  // and settles outward (1.45 → 1) — the back motion must mirror the dive,
+  // zooming out of the frame, not growing the overview in.
   growFrom?: number;
   onDone?: () => void;
 };
@@ -82,7 +85,7 @@ export function runCanvasTransition(
     finalViewport,
     revealFrom,
     reveal,
-    growFrom = 0.7,
+    growFrom = direction === "in" ? 0.7 : 1.45,
     onDone,
   }: CanvasTransitionOptions,
 ) {
