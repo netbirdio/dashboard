@@ -18,7 +18,10 @@ import {
 import * as React from "react";
 import type { Peer } from "@/interfaces/Peer";
 import { useAccount } from "@/modules/account/useAccount";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import {
+  useCanvasState,
+  useCanvasUI,
+} from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import {
   getIpPlaceholderFromRange,
@@ -69,11 +72,15 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
     placeholderName,
     setupKey,
   } = data;
-  const sourceGroupEnabled = useAnySourceGroupEnabled(id);
+  const sourceGroupEnabled = useAnySourceGroupEnabled(
+    id,
+    enabled !== undefined,
+  );
   const isEnabled = enabled ?? sourceGroupEnabled;
-  const connection = useConnection();
-  const isTarget = connection.inProgress && connection.fromNode.id !== id;
-  const { contextMenuNodeId } = useCanvasState();
+  const isTarget = useConnection(
+    (c) => c.inProgress && c.fromNode.id !== id,
+  );
+  const { contextMenuNodeId } = useCanvasUI();
   const { setInstallModal } = useDraftMode();
   const account = useAccount();
   const showHalo = contextMenuNodeId === id;

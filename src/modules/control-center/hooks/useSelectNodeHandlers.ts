@@ -110,9 +110,16 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         return;
       }
       const stored = new Map(reactFlow.getNodes().map((n) => [n.id, n]));
-      const allMeasured = target.every(
-        (n) => (stored.get(n.id)?.measured?.width ?? 0) > 0,
-      );
+      const allMeasured = target.every((n) => {
+        const s = stored.get(n.id);
+        if (!s) return false;
+        // Style-sized nodes (network frames) don't need to wait for the
+        // ResizeObserver — their geometry is already known.
+        if (Number(s.style?.width) > 0 && Number(s.style?.height) > 0) {
+          return true;
+        }
+        return (s.measured?.width ?? 0) > 0;
+      });
       if (!allMeasured && triesLeft > 0) {
         window.requestAnimationFrame(() => attempt(triesLeft - 1));
         return;
@@ -120,7 +127,11 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       reactFlow.fitView({
         nodes: target,
         padding: 0.1,
-        duration: 750,
+        duration: 800,
+        // Gentle ease-OUT (quad): starts moving on the first frame — the
+        // default ease-in-out barely moves for the first ~150ms, which reads
+        // as a stall — but decelerates softly instead of snapping.
+        ease: (t: number) => t * (2 - t),
         maxZoom: 0.8,
         minZoom: DEFAULT_MIN_ZOOM,
       });

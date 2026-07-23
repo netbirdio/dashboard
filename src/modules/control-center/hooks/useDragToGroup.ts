@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import { Node, useReactFlow } from "@xyflow/react";
+import { Node, useReactFlow, XYPosition } from "@xyflow/react";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -95,10 +95,13 @@ export function useDragToGroup() {
     frameId: string;
     frameStart: { x: number; y: number };
   } | null>(null);
+  // Last dragged position at which the drop-target highlight ran.
+  const lastHighlightCheck = useRef<XYPosition | null>(null);
 
   const onNodeDragStart = useCallback(
     (_event: React.MouseEvent, draggedNode: Node) => {
       frameDrag.current = null;
+      lastHighlightCheck.current = null;
       if (!isDraft) return;
       const parentId = draggedNode.parentId;
       if (!parentId?.startsWith("network-")) return;
@@ -150,6 +153,19 @@ export function useDragToGroup() {
         return;
       }
 
+      // The drop-target highlight branches below run intersection tests over
+      // the whole canvas — throttle them to ~every 8px of movement instead
+      // of every pointer-move tick (a real cost with many network frames).
+      const last = lastHighlightCheck.current;
+      if (
+        last &&
+        Math.abs(draggedNode.position.x - last.x) < 8 &&
+        Math.abs(draggedNode.position.y - last.y) < 8
+      ) {
+        return;
+      }
+      lastHighlightCheck.current = { ...draggedNode.position };
+
       // Standalone draft resource → highlight the network frame it's over as
       // a drop target (mirrors the group-drop highlight below).
       if (
@@ -157,14 +173,19 @@ export function useDragToGroup() {
         !draggedNode.parentId
       ) {
         const targetFrame = getIntersectingFrame(draggedNode, reactFlow);
-        setNodes((prev) =>
-          prev.map((n) => {
+        setNodes((prev) => {
+          let changed = false;
+          const next = prev.map((n) => {
             if (!isFrameNode(n)) return n;
             const isTarget = targetFrame?.id === n.id;
             if (!!n.data.dropTarget === isTarget) return n;
+            changed = true;
             return { ...n, data: { ...n.data, dropTarget: isTarget } };
-          }),
-        );
+          });
+          // Same array when nothing flipped — a new identity per drag tick
+          // re-rendered the whole canvas.
+          return changed ? next : prev;
+        });
         return;
       }
 
@@ -180,14 +201,17 @@ export function useDragToGroup() {
             reactFlow.getNodes(),
             networkResources,
           );
-        setNodes((prev) =>
-          prev.map((n) => {
+        setNodes((prev) => {
+          let changed = false;
+          const next = prev.map((n) => {
             if (!isFrameNode(n)) return n;
             const isTarget = eligible && targetFrame?.id === n.id;
             if (!!n.data.dropTarget === isTarget) return n;
+            changed = true;
             return { ...n, data: { ...n.data, dropTarget: isTarget } };
-          }),
-        );
+          });
+          return changed ? next : prev;
+        });
         return;
       }
 
@@ -200,14 +224,17 @@ export function useDragToGroup() {
       const canDrop =
         targetGroup && itemId && !groupContainsItem(targetGroup, itemId);
 
-      setNodes((prev) =>
-        prev.map((n) => {
+      setNodes((prev) => {
+        let changed = false;
+        const next = prev.map((n) => {
           if (!GROUP_NODE_TYPES.has(n.type ?? "")) return n;
           const isTarget = canDrop && targetGroup?.id === n.id;
           if (!!n.data.dropTarget === isTarget) return n;
+          changed = true;
           return { ...n, data: { ...n.data, dropTarget: isTarget } };
-        }),
-      );
+        });
+        return changed ? next : prev;
+      });
     },
     [isDraft, reactFlow, setNodes, networkResources],
   );
@@ -218,13 +245,15 @@ export function useDragToGroup() {
 
       // Always clear frame drop-target highlights first, regardless of where
       // the drag ends (the branches below return early).
-      setNodes((prev) =>
-        prev.map((n) =>
-          isFrameNode(n) && n.data.dropTarget
-            ? { ...n, data: { ...n.data, dropTarget: false } }
-            : n,
-        ),
-      );
+      setNodes((prev) => {
+        let changed = false;
+        const next = prev.map((n) => {
+          if (!(isFrameNode(n) && n.data.dropTarget)) return n;
+          changed = true;
+          return { ...n, data: { ...n.data, dropTarget: false } };
+        });
+        return changed ? next : prev;
+      });
 
       // Whatever was dragged settles on top — e.g. a peer dropped over a
       // network frame must paint above it, not behind. Frame children are

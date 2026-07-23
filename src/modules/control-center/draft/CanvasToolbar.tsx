@@ -69,7 +69,9 @@ export const CanvasToolbar = () => {
   } = useDraftMode();
   const reactFlow = useReactFlow();
   const { undo, redo, canUndo, canRedo } = useDraftHistory();
-  const { nodes, edges, setNodes, setEdges } = useCanvasState();
+  // Setters only — subscribing to nodes/edges re-rendered the toolbar on
+  // every drag tick; arrange reads them at click time via the store.
+  const { setNodes, setEdges } = useCanvasState();
 
   const handleZoomIn = () => reactFlow.zoomIn({ duration: 200 });
   const handleZoomOut = () => reactFlow.zoomOut({ duration: 200 });
@@ -79,6 +81,8 @@ export const CanvasToolbar = () => {
   // Re-arranges the current graph by connectivity (sources → policies →
   // destinations), tidying up manually dragged nodes.
   const handleArrange = () => {
+    const nodes = reactFlow.getNodes();
+    const edges = reactFlow.getEdges();
     if (nodes.length === 0) return;
     const { updatedNodes, updatedEdges } = applyDraftArrangeLayout(
       nodes,

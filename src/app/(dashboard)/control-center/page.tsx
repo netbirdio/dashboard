@@ -4,6 +4,7 @@ import "@xyflow/react/dist/style.css";
 import {
   Background,
   EdgeTypes,
+  type Node as FlowNode,
   NodeTypes,
   ReactFlow,
   ReactFlowProvider,
@@ -26,6 +27,7 @@ import { ControlCenterComponentsPanel } from "@/modules/control-center/draft/Con
 import {
   DraftModeProvider,
   useDraftMode,
+  useNetworkHover,
 } from "@/modules/control-center/draft/DraftModeContext";
 import { CanvasContextMenu } from "@/modules/control-center/CanvasContextMenu";
 import { NodeContextMenu } from "@/modules/control-center/NodeContextMenu";
@@ -87,14 +89,31 @@ export default function ControlCenter() {
   );
 }
 
+const PRO_OPTIONS = { hideAttribution: true };
+const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: EMPTY_STATE_ZOOM };
+
 function ControlCenterCanvas() {
   const canvas = useCanvasState();
   const ui = useControlCenterUI();
   const draft = useDraft();
-  const { componentsPanelOpen, setComponentsPanelOpen, setHoveredNetworkNodeId } =
-    useDraftMode();
+  const { componentsPanelOpen, setComponentsPanelOpen } = useDraftMode();
+  const { setHoveredNetworkNodeId } = useNetworkHover();
   const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragToGroup();
   useDrillDownBrowserHistory();
+
+  // ReactFlow re-renders whenever the nodes prop changes (every drag tick);
+  // its internal GraphView bails via memo ONLY when all other props keep
+  // their identity. Inline/per-render callbacks defeated that memo and made
+  // every tick re-render the WHOLE canvas subtree (~2700 fibers, 120ms+ —
+  // measured with the React profiler). Every handler below goes through a
+  // stable wrapper.
+  const useStableHandler = <A extends unknown[], R>(
+    fn: (...args: A) => R,
+  ): ((...args: A) => R) => {
+    const ref = React.useRef(fn);
+    ref.current = fn;
+    return React.useCallback((...args: A) => ref.current(...args), []);
+  };
 
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [nodeContextMenuPos, setNodeContextMenuPos] = useState<{
@@ -125,6 +144,42 @@ function ControlCenterCanvas() {
     setComponentsPanelOpen(false);
   }, [canvas]);
 
+  const stableOnConnect = useStableHandler(draft.onNodeConnect);
+  const stableOnNodeClick = useStableHandler(ui.onNodeClick);
+  const stableOnNodeContextMenu = useStableHandler(
+    (event: React.MouseEvent, node: FlowNode) => {
+      // Live mode keeps the browser's default context menu.
+      if (!draft.isDraft) return;
+      event.preventDefault();
+      setNodeContextMenuPos({ x: event.clientX, y: event.clientY });
+      canvas.setContextMenuNodeId(node.id);
+    },
+  );
+  const stableOnPaneClick = useStableHandler(() => dismissCanvasOverlays());
+  const stableOnNodeMouseEnter = useStableHandler(
+    (_: React.MouseEvent, node: FlowNode) => {
+      // Hovering a frame OR anything inside it (resource rows are separate
+      // ReactFlow nodes, not DOM children) highlights the frame — draft and
+      // live network frames alike.
+      const frameId = isFrameNode(node)
+        ? node.id
+        : node.parentId?.startsWith("network-")
+        ? node.parentId
+        : null;
+      setHoveredNetworkNodeId(frameId);
+    },
+  );
+  const stableOnNodeMouseLeave = useStableHandler(() =>
+    setHoveredNetworkNodeId(null),
+  );
+  const stableOnNodeDragStart = useStableHandler(onNodeDragStart);
+  const stableOnNodeDrag = useStableHandler(onNodeDrag);
+  const stableOnNodeDragStop = useStableHandler(onNodeDragStop);
+  const stableOnInit = useStableHandler(
+    (instance: { setCenter: (x: number, y: number, o?: object) => unknown }) =>
+      void instance.setCenter(0, 0, { zoom: EMPTY_STATE_ZOOM }),
+  );
+
   return (
     <>
       <ControlCenterEmptyStates />
@@ -144,44 +199,28 @@ function ControlCenterCanvas() {
         nodes={canvas.nodes}
         onNodesChange={canvas.onNodesChange}
         onEdgesChange={canvas.onEdgesChange}
-        proOptions={{ hideAttribution: true }}
-        onConnect={draft.onNodeConnect}
+        proOptions={PRO_OPTIONS}
+        onConnect={stableOnConnect}
         connectionLineComponent={ConnectionLine}
-        onNodeClick={ui.onNodeClick}
-        onNodeContextMenu={(event, node) => {
-          // Live mode keeps the browser's default context menu.
-          if (!draft.isDraft) return;
-          event.preventDefault();
-          setNodeContextMenuPos({ x: event.clientX, y: event.clientY });
-          canvas.setContextMenuNodeId(node.id);
-        }}
-        onPaneClick={() => {
-          dismissCanvasOverlays();
-        }}
-        onNodeMouseEnter={(_, node) => {
-          // Hovering a frame OR anything inside it (resource rows are
-          // separate ReactFlow nodes, not DOM children) highlights the frame
-          // — draft and live network frames alike.
-          const frameId = isFrameNode(node)
-            ? node.id
-            : node.parentId?.startsWith("network-")
-            ? node.parentId
-            : null;
-          setHoveredNetworkNodeId(frameId);
-        }}
-        onNodeMouseLeave={() => setHoveredNetworkNodeId(null)}
-        onNodeDragStart={onNodeDragStart}
-        onNodeDrag={onNodeDrag}
-        onNodeDragStop={onNodeDragStop}
+        onNodeClick={stableOnNodeClick}
+        onNodeContextMenu={stableOnNodeContextMenu}
+        onPaneClick={stableOnPaneClick}
+        onNodeMouseEnter={stableOnNodeMouseEnter}
+        onNodeMouseLeave={stableOnNodeMouseLeave}
+        onNodeDragStart={stableOnNodeDragStart}
+        onNodeDrag={stableOnNodeDrag}
+        onNodeDragStop={stableOnNodeDragStop}
         nodeTypes={NODE_TYPES as unknown as NodeTypes}
         edgeTypes={EDGE_TYPES as unknown as EdgeTypes}
         fitView={false}
-        defaultViewport={{ x: 0, y: 0, zoom: EMPTY_STATE_ZOOM }}
+        // Don't re-sort edges into elevated SVG groups on select/drag start —
+        // the DOM reshuffle restarts every edge's dash animation (visible
+        // flicker the moment a drag begins).
+        elevateEdgesOnSelect={false}
+        defaultViewport={DEFAULT_VIEWPORT}
         // Center the origin on mount — defaultViewport {0,0} anchors it at
         // the screen corner, so the first fit would animate in from far away.
-        onInit={(instance) =>
-          void instance.setCenter(0, 0, { zoom: EMPTY_STATE_ZOOM })
-        }
+        onInit={stableOnInit}
         maxZoom={DEFAULT_MAX_ZOOM}
         minZoom={DEFAULT_MIN_ZOOM}
         colorMode={"dark"}

@@ -1,4 +1,5 @@
 import { Edge, Node } from "@xyflow/react";
+import { useMemo } from "react";
 import { forEach } from "lodash";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
@@ -6,15 +7,14 @@ import {
   addNode,
   addEdge,
 } from "@/modules/control-center/utils/graph-builder";
-import { applyD3ForceLayout } from "@/modules/control-center/utils/layouts";
 import { applyDrilledLayout } from "@/modules/control-center/utils/drilled-layout";
 import {
-  getFrameChildPosition,
-  getNetworkFrameHeight,
+  getLiveFrameGrid,
+  isFrameNode,
+  NETWORK_FRAME_FALLBACK_ROW,
   getResourcePolicyByGroups,
   getPolicyProtocolAndPortText,
-  NETWORK_FRAME_CHILD_WIDTH,
-  NETWORK_FRAME_WIDTH,
+  packFrameGrid,
 } from "@/modules/control-center/utils/helpers";
 import { ViewResult } from "./types";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
@@ -26,8 +26,15 @@ const NETWORK_LINE_COLOR = "#0ea5e9";
 export function useNetworkView() {
   const { selectedNetwork, layoutInitialized, forceSingleGroupViewRef } =
     useCanvasState();
-  const { policies, networks, networkResources, peers, isLoading, isDataReady } =
-    useControlCenterData();
+  const {
+    policies,
+    networks,
+    networkResources,
+    peers,
+    groups,
+    isLoading,
+    isDataReady,
+  } = useControlCenterData();
 
   // policiesOverride: rebuild from fresher data than the SWR cache (e.g. the
   // PUT response of a policy update) — see refreshLiveView. Refreshes happen
@@ -218,11 +225,10 @@ export function useNetworkView() {
     return applyDrilledLayout(allNodes, allEdges);
   };
 
-  const applyNetworksView = (
+  const buildNetworksView = (
     policiesOverride?: Policy[],
   ): ViewResult | undefined => {
     if (!isDataReady()) return;
-    if (layoutInitialized && !policiesOverride) return;
 
     const allNodes: Node[] = [];
     const allEdges: Edge[] = [];
@@ -241,27 +247,33 @@ export function useNetworkView() {
         .map((rid) => networkResources?.find((r) => r.id === rid))
         .filter(Boolean) as NonNullable<typeof networkResources>;
 
+      // Seed the frame with the SAME grid the reconciling layout produces
+      // (2 cols, visible cap, fallback rows) — a mismatched seed made every
+      // frame resize and its "+N more" cell shift right after mount.
+      const grid = getLiveFrameGrid(childResources.length);
       allNodes.push({
         id: `network-${network.id}`,
         type: "networkNode",
         data: { network, selectedNetwork, frame: true },
         draggable: true,
         position: { x: 0, y: 0 },
-        style: {
-          width: NETWORK_FRAME_WIDTH,
-          height: getNetworkFrameHeight(Math.max(childResources.length, 1)),
-        },
+        style: { width: grid.width, height: grid.height },
       });
       childResources.forEach((resource, i) => {
         childNodes.push({
           id: `resource-${resource.id}`,
           type: "resourceNode",
           parentId: `network-${network.id}`,
-          position: getFrameChildPosition(i),
+          position: grid.cellPosition(i),
+          // Overflow past the visible cap starts hidden (the "+N more" cell
+          // stands in for it) — the reconciler keeps it that way.
+          hidden: i >= grid.visibleCount,
+          selectable: false,
           // Draft row-drags move the whole frame (useDragToGroup intercepts);
           // live has no such interception, so rows aren't draggable at all.
           draggable: false,
-          style: { width: NETWORK_FRAME_CHILD_WIDTH },
+          // Same fixed slot size the frame layout stamps — seed === final.
+          style: { width: grid.childWidth, height: NETWORK_FRAME_FALLBACK_ROW },
           data: {
             resource,
             enabled: true,
@@ -344,13 +356,46 @@ export function useNetworkView() {
       }
     });
 
-    const layouted = applyD3ForceLayout(allNodes, allEdges);
-    if (!layouted) return layouted;
-    // Children after every parent, with their frame-relative positions.
+    // Same arrangement as the draft build: sources (groups/peers) in a
+    // left column, network frames in the staggered grid on the right —
+    // the old force layout scattered everything radially.
+    const frames = allNodes.filter((n) => isFrameNode(n));
+    const sources = allNodes.filter((n) => !isFrameNode(n));
+    const SOURCE_SPACING = 160;
+    const sourcesHeight = (sources.length - 1) * SOURCE_SPACING;
+    sources.forEach((n, i) => {
+      n.position = { x: 0, y: -sourcesHeight / 2 + i * SOURCE_SPACING };
+    });
+    packFrameGrid(frames, 700, 0);
     return {
-      ...layouted,
-      updatedNodes: [...layouted.updatedNodes, ...childNodes],
+      updatedNodes: [...allNodes, ...childNodes],
+      updatedEdges: allEdges,
     };
+  };
+
+  // PRECOMPUTED while the user is on another view (this hook lives in the
+  // always-mounted UI provider and the data is fetched globally): the build
+  // runs a synchronous d3-force simulation, and computing it at switch time
+  // visibly froze the tab change. The memo re-runs only when the underlying
+  // data (or the selected network) changes.
+  // Deps must cover EVERYTHING isDataReady() checks — if a late-loading
+  // dataset (groups) wasn't a dep, the memo cached `undefined` forever and
+  // the networks tab rendered nothing.
+  const precomputedNetworksView = useMemo(
+    () => (isDataReady() ? buildNetworksView() : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [networks, networkResources, policies, peers, groups, isLoading, selectedNetwork],
+  );
+
+  const applyNetworksView = (
+    policiesOverride?: Policy[],
+  ): ViewResult | undefined => {
+    if (!isDataReady()) return;
+    if (layoutInitialized && !policiesOverride) return;
+    // Fresh build for in-place refreshes (policy just saved); the cached
+    // result everywhere else.
+    if (policiesOverride) return buildNetworksView(policiesOverride);
+    return precomputedNetworksView;
   };
 
   return { applySingleNetworkView, applyNetworksView };

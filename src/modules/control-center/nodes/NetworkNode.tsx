@@ -1,6 +1,12 @@
 import useFetchApi from "@utils/api";
 import { cn, singularize } from "@utils/helpers";
-import { Handle, type Node, Position, useConnection } from "@xyflow/react";
+import {
+  Handle,
+  type Node,
+  Position,
+  useConnection,
+  useStore,
+} from "@xyflow/react";
 import { CirclePlusIcon, NetworkIcon } from "lucide-react";
 import {
   getRoutingPeerCount,
@@ -12,15 +18,17 @@ import Button from "@components/Button";
 import * as React from "react";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { Network, NetworkResource } from "@/interfaces/Network";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasUI } from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import {
+  useDraftMode,
+  useNetworkHover,
+} from "@/modules/control-center/draft/DraftModeContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
 import { MoreResourcesNode } from "@/modules/control-center/nodes/MoreResourcesNode";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 import type { FrameMoreCell } from "@/modules/control-center/hooks/useNetworkFrameLayout";
-import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import {
   DraftNetworkRef,
   getDraftResource,
@@ -38,23 +46,19 @@ type NetworkNodeProps = Node<NetworkNodeType, "networkNode">;
 // sized via the node style. Existing networks (live network view) keep the
 // card with the resource preview grid.
 export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
-  const { data: networkResources } = useFetchApi<NetworkResource[]>(
-    "/networks/resources",
-  );
   const {
     isDraft,
     setRoutingPeerModal,
     drillDownNetworkNodeId,
     setDrillDownNetworkNodeId,
-    hoveredNetworkNodeId,
-    setHoveredNetworkNodeId,
   } = useDraftMode();
-  const { addResourceToFrame } = useDraftNodeCreation();
+  const { hoveredNetworkNodeId, setHoveredNetworkNodeId } = useNetworkHover();
   const isFrameHovered = hoveredNetworkNodeId === id;
   const isDrilled = drillDownNetworkNodeId === id;
-  const { nodes, edges, contextMenuNodeId } = useCanvasState();
-  const connection = useConnection();
-  const isTarget = connection.inProgress && connection.fromNode?.id !== id;
+  const { contextMenuNodeId } = useCanvasUI();
+  const isTarget = useConnection(
+    (c) => c.inProgress && c.fromNode?.id !== id,
+  );
   const showHalo = contextMenuNodeId === id;
 
   // Hovering the floating controls must neither highlight the frame nor
@@ -72,9 +76,12 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   // Draft members: resource nodes assigned to this network via the editor or
   // drag-onto-network (matched by node id for draft networks, API id
   // otherwise).
-  const draftResources = React.useMemo(
-    () =>
-      nodes
+  // Subscribed via a ReactFlow store selector with a value-based equality —
+  // NOT the CanvasState context: subscribing to the nodes array re-rendered
+  // every frame on every canvas update (drag ticks, layout reconciles).
+  const draftResources = useStore(
+    (s) =>
+      s.nodes
         .filter((node) => {
           const ref = (node.data as { draftNetwork?: DraftNetworkRef })
             ?.draftNetwork;
@@ -85,28 +92,47 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         })
         .map((node) => getDraftResource(node))
         .filter(Boolean) as NetworkResource[],
-    [nodes, id, n?.id],
+    (a, b) =>
+      a.length === b.length &&
+      a.every(
+        (r, i) =>
+          r.id === b[i].id &&
+          r.name === b[i].name &&
+          r.address === b[i].address &&
+          r.type === b[i].type,
+      ),
   );
 
+  // Card preview needs the resource OBJECTS — frames only need the count
+  // (from network.resources ids), so they skip this SWR subscription
+  // entirely (one per frame added up on the networks overview).
+  const { data: networkResources } = useFetchApi<NetworkResource[]>(
+    "/networks/resources",
+    false,
+    true,
+    !isFrame,
+  );
   const resourceIds = n?.resources || [];
   const apiResources =
     networkResources?.filter((r) => resourceIds.includes(r?.id || "")) || [];
   const resources = [...apiResources, ...draftResources];
+  const resourceCount = isFrame
+    ? resourceIds.length + draftResources.length
+    : resources.length;
 
   // Resource-group child nodes live in the frame as their own rows (no
   // draftNetwork ref, so they're not in `resources`); they still occupy a
   // grid cell and count toward the frame's contents like a resource does.
-  const resourceGroupCount = React.useMemo(
-    () =>
-      nodes.filter(
+  const resourceGroupCount = useStore(
+    (s) =>
+      s.nodes.filter(
         (node) =>
           node.parentId === id && node.type === NodeType.ResourceGroupNode,
       ).length,
-    [nodes, id],
   );
   // Total cells the frame holds — drives the header count and whether the
   // "Add Resource" button is centered (empty) or a bottom row (has content).
-  const frameCellCount = resources.length + resourceGroupCount;
+  const frameCellCount = resourceCount + resourceGroupCount;
 
   // Parent view caps the frame's visible cells; useNetworkFrameLayout hides
   // the overflow and hands back the rect for a "+N more" cell in the last
@@ -115,12 +141,21 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
 
   // Routing-peers dropdown (frame's floating button): the frame's routers —
   // draft create-router changes plus, for existing networks, the API routers.
-  const { rows: routerRows } = useFrameRouterRows(id, isFrame);
+  // ALL frames (draft and live) fetch their API rows LAZILY (first popover
+  // open): a routers GET per frame on mount noticeably lagged views with
+  // many networks. Until the rows load, the indicator combines the API's
+  // routing_peers_count (from /networks) with the draft-change rows, which
+  // need no fetch.
+  const [routersRequested, setRoutersRequested] = React.useState(false);
+  const { rows: routerRows, isLoading: routerRowsLoading } =
+    useFrameRouterRows(id, isFrame && routersRequested);
 
   // Frames count peers, not routers (see getRoutingPeerCount); the live card
   // keeps the API count.
   const routingPeersCount = isFrame
-    ? getRoutingPeerCount(routerRows)
+    ? routersRequested && !routerRowsLoading
+      ? getRoutingPeerCount(routerRows)
+      : (n?.routing_peers_count ?? 0) + getRoutingPeerCount(routerRows)
     : n?.routing_peers_count ?? 0;
 
   return (
@@ -163,7 +198,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             // Card with no resources has nothing below the header, so it
             // drops the separator; a frame keeps it (its body holds the
             // resource grid).
-            !isFrame && resources.length === 0 && "border-b-0",
+            !isFrame && resourceCount === 0 && "border-b-0",
           ),
         )}
       >
@@ -181,9 +216,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             {isFrame && !n?.id && <SmallBadge />}
           </div>
           <div className={cn("text-nb-gray-400 whitespace-nowrap mt-0.5")}>
-            {resources.length === 0
+            {resourceCount === 0
               ? "No Resources"
-              : singularize("Resources", resources.length, true)}
+              : singularize("Resources", resourceCount, true)}
           </div>
         </div>
         {/* The frame's routing status + "Add" live in the floating button
@@ -217,43 +252,12 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           Hovering it must not highlight the frame / reveal the ConnectHandle,
           same as the floating controls. */}
       {isDraft && isFrame && (
-        <div
-          // Wrapper spans the body but stays click-through (pointer-events-none)
-          // so dragging on empty frame content still moves the frame; only the
-          // button itself captures events and blocks the drag (nodrag).
-          className={cn(
-            "absolute inset-x-0 bottom-0 pointer-events-none",
-            frameCellCount === 0
-              ? "flex items-center justify-center"
-              : "px-5 pb-5",
-          )}
-          style={
-            frameCellCount === 0 ? { top: NETWORK_FRAME_HEADER } : undefined
-          }
-        >
-          <Button
-            variant={"secondary"}
-            size={"xs"}
-            className={cn(
-              "!px-3 !py-0 h-9 nodrag pointer-events-auto",
-              frameCellCount > 0 && "w-full",
-            )}
-            // Drops a blank resource row straight into the frame — same as
-            // the context menu's "Add Resource" (the editor opens on click).
-            onClick={() => addResourceToFrame(id)}
-            onMouseEnter={() => {
-              setHoveredNetworkNodeId(null);
-              setControlsHovered(true);
-            }}
-            onMouseLeave={() => {
-              setHoveredNetworkNodeId(id);
-              setControlsHovered(false);
-            }}
-          >
-            <CirclePlusIcon size={12} />
-            Add Resource
-          </Button>
-        </div>
+        <FrameAddResourceButton
+          id={id}
+          frameCellCount={frameCellCount}
+          setHoveredNetworkNodeId={setHoveredNetworkNodeId}
+          setControlsHovered={setControlsHovered}
+        />
       )}
 
       {/* Frame: routing-peers button group floating above the frame (left) —
@@ -283,6 +287,8 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           <RoutingPeersBar
             rows={routerRows}
             count={routingPeersCount}
+            loading={routerRowsLoading}
+            onOpenChange={(open) => open && setRoutersRequested(true)}
             onAdd={
               isDraft
                 ? () => setRoutingPeerModal({ networkNodeId: id })
@@ -335,6 +341,66 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           }}
         />
       )}
+    </div>
+  );
+};
+
+// Draft-only "Add Resource" button, split into its own component so LIVE
+// frames never mount useDraftNodeCreation (it pulls useControlCenterData —
+// six SWR subscriptions per frame, a real mount cost on the networks
+// overview). Empty frames center it in the body (auto width); with content
+// it's a full-width row pinned to the bottom band the layout reserves.
+// Hovering it must not highlight the frame / reveal the ConnectHandle.
+const FrameAddResourceButton = ({
+  id,
+  frameCellCount,
+  setHoveredNetworkNodeId,
+  setControlsHovered,
+}: {
+  id: string;
+  frameCellCount: number;
+  setHoveredNetworkNodeId: (v: string | null) => void;
+  setControlsHovered: (v: boolean) => void;
+}) => {
+  // Action via the canvas-UI ref — useDraftNodeCreation pulls
+  // useControlCenterData (six SWR subscriptions), and mounting that per
+  // frame lagged big drafts. Wired once in ControlCenterUIProvider.
+  const { addResourceToFrameRef } = useCanvasUI();
+  return (
+    <div
+      // Wrapper spans the body but stays click-through (pointer-events-none)
+      // so dragging on empty frame content still moves the frame; only the
+      // button itself captures events and blocks the drag (nodrag).
+      className={cn(
+        "absolute inset-x-0 bottom-0 pointer-events-none",
+        frameCellCount === 0
+          ? "flex items-center justify-center"
+          : "px-5 pb-5",
+      )}
+      style={frameCellCount === 0 ? { top: NETWORK_FRAME_HEADER } : undefined}
+    >
+      <Button
+        variant={"secondary"}
+        size={"xs"}
+        className={cn(
+          "!px-3 !py-0 h-9 nodrag pointer-events-auto",
+          frameCellCount > 0 && "w-full",
+        )}
+        // Drops a blank resource row straight into the frame — same as
+        // the context menu's "Add Resource" (the editor opens on click).
+        onClick={() => addResourceToFrameRef.current(id)}
+        onMouseEnter={() => {
+          setHoveredNetworkNodeId(null);
+          setControlsHovered(true);
+        }}
+        onMouseLeave={() => {
+          setHoveredNetworkNodeId(id);
+          setControlsHovered(false);
+        }}
+      >
+        <CirclePlusIcon size={12} />
+        Add Resource
+      </Button>
     </div>
   );
 };

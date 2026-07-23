@@ -12,6 +12,9 @@ export function useFrameEdgeAttachment() {
   const { drillDownNetworkNodeId } = useDraftMode();
 
   useEffect(() => {
+    // Mid-drag no edge can change frames (membership changes land on drag
+    // stop) — skip the per-pointer-move-tick recompute.
+    if (nodes.some((n) => n.dragging)) return;
     // Edges re-attach to the resources only once the swap happened (frame
     // hidden) — the drill id is set before the zoom-in choreography. The
     // reverse holds on exit: while the frame is STILL hidden (fade-out /

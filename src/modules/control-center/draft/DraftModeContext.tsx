@@ -1,4 +1,11 @@
-import { createContext, PropsWithChildren, useContext, useState } from "react";
+import {
+  createContext,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import type { Network, NetworkRouter } from "@/interfaces/Network";
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 
@@ -76,15 +83,28 @@ type DraftModeContextType = {
   // resources only expose connect handles while their frame is drilled.
   drillDownNetworkNodeId: string | null;
   setDrillDownNetworkNodeId: (value: string | null) => void;
-  // Frame under the pointer (incl. its children — they're separate canvas
-  // nodes, so CSS hover can't span the frame): header, border and resource
-  // rows highlight together, like the live card.
-  hoveredNetworkNodeId: string | null;
-  setHoveredNetworkNodeId: (value: string | null) => void;
   // Bumped by "New Draft" — forces the draft canvas to rebuild from live.
   draftSession: number;
   newDraftSession: () => void;
 };
+
+// Frame under the pointer (incl. its children — they're separate canvas
+// nodes, so CSS hover can't span the frame): header, border and resource
+// rows highlight together, like the live card. Lives in its OWN context —
+// hover flips on every mouse move across nodes, and putting it on the main
+// draft context re-rendered every node component on the canvas (visible lag
+// with many networks). Only NetworkNode and the canvas subscribe here.
+type NetworkHoverContextType = {
+  hoveredNetworkNodeId: string | null;
+  setHoveredNetworkNodeId: (value: string | null) => void;
+};
+
+const NetworkHoverContext = createContext<NetworkHoverContextType>({
+  hoveredNetworkNodeId: null,
+  setHoveredNetworkNodeId: () => {},
+});
+
+export const useNetworkHover = () => useContext(NetworkHoverContext);
 
 const DraftModeContext = createContext<DraftModeContextType>({
   isDraft: false,
@@ -107,8 +127,6 @@ const DraftModeContext = createContext<DraftModeContextType>({
   setNetworkEditor: () => {},
   drillDownNetworkNodeId: null,
   setDrillDownNetworkNodeId: () => {},
-  hoveredNetworkNodeId: null,
-  setHoveredNetworkNodeId: () => {},
   draftSession: 0,
   newDraftSession: () => {},
 });
@@ -141,38 +159,63 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
     string | null
   >(null);
   const [draftSession, setDraftSession] = useState(0);
-  const newDraftSession = () => setDraftSession((s) => s + 1);
+  const newDraftSession = useCallback(() => setDraftSession((s) => s + 1), []);
+
+  const hoverValue = useMemo(
+    () => ({ hoveredNetworkNodeId, setHoveredNetworkNodeId }),
+    [hoveredNetworkNodeId],
+  );
+
+  // MEMOIZED — an unmemoized value re-rendered EVERY useDraftMode consumer
+  // (every node component) whenever ANY provider state changed; hover flips
+  // (which fire on every node mouse enter/leave, live mode included) made
+  // whole-tree ~2700-fiber User-Blocking commits of 100ms+ per flip.
+  const value = useMemo(
+    () => ({
+      isDraft,
+      setIsDraft,
+      activeTool,
+      setActiveTool,
+      componentsPanelOpen,
+      setComponentsPanelOpen,
+      installModal,
+      setInstallModal,
+      resourceEditor,
+      setResourceEditor,
+      resourceNetworkPicker,
+      setResourceNetworkPicker,
+      routingPeerModal,
+      setRoutingPeerModal,
+      networkDestinationPicker,
+      setNetworkDestinationPicker,
+      networkEditor,
+      setNetworkEditor,
+      drillDownNetworkNodeId,
+      setDrillDownNetworkNodeId,
+      draftSession,
+      newDraftSession,
+    }),
+    [
+      isDraft,
+      activeTool,
+      componentsPanelOpen,
+      installModal,
+      resourceEditor,
+      resourceNetworkPicker,
+      routingPeerModal,
+      networkDestinationPicker,
+      networkEditor,
+      drillDownNetworkNodeId,
+      draftSession,
+      newDraftSession,
+    ],
+  );
 
   return (
-    <DraftModeContext.Provider
-      value={{
-        isDraft,
-        setIsDraft,
-        activeTool,
-        setActiveTool,
-        componentsPanelOpen,
-        setComponentsPanelOpen,
-        installModal,
-        setInstallModal,
-        resourceEditor,
-        setResourceEditor,
-        resourceNetworkPicker,
-        setResourceNetworkPicker,
-        routingPeerModal,
-        setRoutingPeerModal,
-        networkDestinationPicker,
-        setNetworkDestinationPicker,
-        networkEditor,
-        setNetworkEditor,
-        drillDownNetworkNodeId,
-        setDrillDownNetworkNodeId,
-        hoveredNetworkNodeId,
-        setHoveredNetworkNodeId,
-        draftSession,
-        newDraftSession,
-      }}
-    >
-      {children}
+    <DraftModeContext.Provider value={value}>
+      <NetworkHoverContext.Provider value={hoverValue}>
+        {children}
+      </NetworkHoverContext.Provider>
     </DraftModeContext.Provider>
   );
 };

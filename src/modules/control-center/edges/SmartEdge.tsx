@@ -3,8 +3,8 @@ import {
   type EdgeProps,
   getSimpleBezierPath,
   Position,
-  useInternalNode,
 } from "@xyflow/react";
+import { useEdgeNodeRect } from "@/modules/control-center/utils/edge-helper";
 import React from "react";
 import type { Policy } from "@/interfaces/Policy";
 
@@ -18,20 +18,22 @@ type Props = {
 const OFFSET = 4;
 
 export function SmartEdge({ id, source, target, data }: Props) {
-  const sourceNode = useInternalNode(source);
-  const targetNode = useInternalNode(target);
+  // Value-equality subscriptions — see useEdgeNodeRect (unrelated edges
+  // must not re-render/flicker while another node drags).
+  const sourceRect = useEdgeNodeRect(source);
+  const targetRect = useEdgeNodeRect(target);
 
-  if (!sourceNode || !targetNode) return null;
+  if (!sourceRect || !targetRect) return null;
 
   const enabled = data?.enabled ?? true;
   const bidirectional = data?.policy?.rules?.[0]?.bidirectional ?? false;
 
-  const sPos = sourceNode.internals.positionAbsolute;
-  const tPos = targetNode.internals.positionAbsolute;
-  const sW = sourceNode.measured.width ?? 0;
-  const sH = sourceNode.measured.height ?? 0;
-  const tW = targetNode.measured.width ?? 0;
-  const tH = targetNode.measured.height ?? 0;
+  const sPos = sourceRect;
+  const tPos = targetRect;
+  const sW = sourceRect.width;
+  const sH = sourceRect.height;
+  const tW = targetRect.width;
+  const tH = targetRect.height;
 
   const sourceIsPolicy = source.startsWith("policy-");
   const targetIsPolicy = target.startsWith("policy-");
@@ -96,17 +98,8 @@ export function SmartEdge({ id, source, target, data }: Props) {
             stroke: enabled ? "#0e9f6e" : "#787878",
             strokeDasharray: "5, 5",
           }}
-        >
-          {enabled && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="20"
-              to="0"
-              dur="0.5s"
-              repeatCount="indefinite"
-            />
-          )}
-        </BaseEdge>
+          className={enabled ? "cc-animated-edge" : undefined}
+        />
         <BaseEdge
           id={`${id}-backward`}
           path={backwardPath}
@@ -116,17 +109,8 @@ export function SmartEdge({ id, source, target, data }: Props) {
             stroke: enabled ? "#0e9f6e" : "#787878",
             strokeDasharray: "5, 5",
           }}
-        >
-          {enabled && (
-            <animate
-              attributeName="stroke-dashoffset"
-              from="20"
-              to="0"
-              dur="0.5s"
-              repeatCount="indefinite"
-            />
-          )}
-        </BaseEdge>
+          className={enabled ? "cc-animated-edge" : undefined}
+        />
       </>
     );
   }
@@ -150,16 +134,7 @@ export function SmartEdge({ id, source, target, data }: Props) {
         stroke: enabled ? "#0ea5e9" : "#787878",
         strokeDasharray: "5, 5",
       }}
-    >
-      {enabled && (
-        <animate
-          attributeName="stroke-dashoffset"
-          from="20"
-          to="0"
-          dur="0.5s"
-          repeatCount="indefinite"
-        />
-      )}
-    </BaseEdge>
+      className={enabled ? "cc-animated-edge" : undefined}
+    />
   );
 }

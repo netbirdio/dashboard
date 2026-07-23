@@ -1,6 +1,10 @@
-import { Edge, useInternalNode } from "@xyflow/react";
+import { Edge } from "@xyflow/react";
 import React from "react";
-import { getEdgeParams } from "@/modules/control-center/utils/edge-helper";
+import {
+  getEdgeParams,
+  rectAsInternalNode,
+  useEdgeNodeRect,
+} from "@/modules/control-center/utils/edge-helper";
 
 type AnimatedLineProps = Edge<
   {
@@ -11,11 +15,14 @@ type AnimatedLineProps = Edge<
 >;
 
 function AnimatedLine({ id, source, target, data }: AnimatedLineProps) {
-  const sourceNode = useInternalNode(source);
-  const targetNode = useInternalNode(target);
-  if (!sourceNode || !targetNode) return null;
+  const sourceRect = useEdgeNodeRect(source);
+  const targetRect = useEdgeNodeRect(target);
+  if (!sourceRect || !targetRect) return null;
 
-  const { sx, sy, tx, ty } = getEdgeParams(sourceNode, targetNode);
+  const { sx, sy, tx, ty } = getEdgeParams(
+    rectAsInternalNode(sourceRect),
+    rectAsInternalNode(targetRect),
+  );
 
   const labelX = (sx + tx) / 2;
   const labelY = (sy + ty) / 2;
@@ -62,15 +69,8 @@ function AnimatedLine({ id, source, target, data }: AnimatedLineProps) {
         stroke={color}
         strokeWidth={2}
         strokeDasharray="5, 5"
-      >
-        <animate
-          attributeName="stroke-dashoffset"
-          from="20"
-          to="0"
-          dur="0.5s"
-          repeatCount="indefinite"
-        />
-      </line>
+        className="cc-animated-edge"
+      />
       <line
         x1={postLabelX}
         y1={postLabelY}
@@ -79,15 +79,8 @@ function AnimatedLine({ id, source, target, data }: AnimatedLineProps) {
         stroke={color}
         strokeWidth={2}
         strokeDasharray="5, 5"
-      >
-        <animate
-          attributeName="stroke-dashoffset"
-          from="20"
-          to="0"
-          dur="0.5s"
-          repeatCount="indefinite"
-        />
-      </line>
+        className="cc-animated-edge"
+      />
       {label && hasLabel && (
         <foreignObject
           x={labelX - labelWidth / 2}

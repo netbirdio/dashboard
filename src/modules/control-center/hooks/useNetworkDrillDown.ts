@@ -12,6 +12,7 @@ import {
   drillOutOf,
   getNodeRect,
 } from "@/modules/control-center/utils/canvas-transition";
+import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 
 // Drill-down (spec §10): clicking a network frame enters a single-network
 // draft view — only the frame (full resource grid via useNetworkFrameLayout's
@@ -120,7 +121,11 @@ export function useNetworkDrillDown() {
         const H = pane?.clientHeight ?? window.innerHeight;
         const bw = Math.max(maxX - minX, 1);
         const bh = Math.max(maxY - minY, 1);
-        const zoom = Math.min((W * 0.8) / bw, (H * 0.8) / bh, 0.8);
+        // Clamped to the canvas min zoom (setViewport doesn't clamp).
+        const zoom = Math.max(
+          Math.min((W * 0.8) / bw, (H * 0.8) / bh, 0.8),
+          DEFAULT_MIN_ZOOM,
+        );
         return {
           zoom,
           x: W / 2 - (minX + bw / 2) * zoom,

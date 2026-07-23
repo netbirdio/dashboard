@@ -21,9 +21,14 @@ import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import {
   getFrameChildPosition,
-  getNetworkFrameHeight,
+  getLiveFrameGrid,
+  isFrameNode,
+  NETWORK_FRAME_ADD_ROW,
   NETWORK_FRAME_CHILD_WIDTH,
+  NETWORK_FRAME_FALLBACK_ROW,
+  NETWORK_FRAME_PADDING_Y,
   NETWORK_FRAME_WIDTH,
+  packFrameGrid,
 } from "@/modules/control-center/utils/helpers";
 import { handleDraftConnect } from "@/modules/control-center/utils/draft-connect";
 import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
@@ -430,13 +435,20 @@ export function useDraft() {
         const childResources = (networkResources ?? []).filter((r) =>
           network.resources?.includes(r.id ?? ""),
         );
+        // Seed with the CAPPED parent-view grid (same as the live overview):
+        // an uncapped height (all resources) made big frames seed thousands
+        // of px tall — the frame grid below then spread them apart, and the
+        // reconciler's later shrink left huge gaps. Draft frames swap the
+        // bottom padding for the Add Resource band.
+        const grid = getLiveFrameGrid(childResources.length);
         allNodes.push({
           id: frameId,
           type: "networkNode",
           position: { x: 0, y: 0 },
           style: {
-            width: NETWORK_FRAME_WIDTH,
-            height: getNetworkFrameHeight(Math.max(childResources.length, 1)),
+            width: grid.width,
+            height:
+              grid.height - NETWORK_FRAME_PADDING_Y + NETWORK_FRAME_ADD_ROW,
           },
           data: { network, frame: true },
         });
@@ -452,8 +464,14 @@ export function useDraft() {
               type: "resourceNode",
             }),
             parentId: frameId,
-            position: getFrameChildPosition(i),
-            style: { ...existing?.style, width: NETWORK_FRAME_CHILD_WIDTH },
+            position: grid.cellPosition(i),
+            hidden: i >= grid.visibleCount,
+            selectable: false,
+            style: {
+              ...existing?.style,
+              width: grid.childWidth,
+              height: NETWORK_FRAME_FALLBACK_ROW,
+            },
             data: {
               ...existing?.data,
               resource: r,
@@ -477,6 +495,46 @@ export function useDraft() {
         : undefined;
       if (drilledNetwork) carryNetworkFrame(drilledNetwork);
 
+      // Destination groups that are pure RESOURCE groups of ONE carried
+      // network live INSIDE that network's frame as resource-group rows —
+      // the policy edge re-attaches to the frame (useFrameEdgeAttachment,
+      // same as framed resources), so "policy → resource group" reads as
+      // "policy → network" instead of a detached group bubble.
+      const frameByNetworkId = new Map<string, string>();
+      allNodes.forEach((n) => {
+        if (!isFrameNode(n)) return;
+        const netId = (n.data as { network?: Network })?.network?.id;
+        if (netId) frameByNetworkId.set(netId, n.id);
+      });
+      const resourceNetwork = new Map<string, string>();
+      networks?.forEach((net) => {
+        if (!net.id) return;
+        net.resources?.forEach((rid) => resourceNetwork.set(rid, net.id!));
+      });
+      allNodes.forEach((node, idx) => {
+        if (node.type !== "destinationGroupNode" || node.parentId) return;
+        const gid = (node.data as { group?: Group })?.group?.id;
+        if (!gid) return;
+        const members = [...(groupMembers.get(gid) ?? [])];
+        if (members.length === 0) return;
+        // Every member must be a resource, all of the SAME carried network.
+        const memberNetworks = new Set(
+          members.map((m) => resourceNetwork.get(m)),
+        );
+        if (memberNetworks.size !== 1 || memberNetworks.has(undefined)) return;
+        const frameId = frameByNetworkId.get([...memberNetworks][0]!);
+        if (!frameId) return;
+        // Convert in place (id kept — the smart edges follow to the frame);
+        // ordering is safe: frame children are re-appended after the layout.
+        allNodes[idx] = {
+          ...node,
+          type: NodeType.ResourceGroupNode,
+          parentId: frameId,
+          position: getFrameChildPosition(-1),
+          style: { ...node.style, width: NETWORK_FRAME_CHILD_WIDTH },
+        };
+      });
+
       // Apply hierarchical layout: sources → policies → destinations. Frame
       // children stay out of it — their positions are frame-relative and the
       // reconciling frame layout manages them.
@@ -489,6 +547,36 @@ export function useDraft() {
         "peer",
         DEFAULT_LAYOUT_CONFIG,
       );
+      // Arrange the network frames in a STAGGERED GRID on the right instead
+      // of one cramped column: rows × cols chosen for a ~1:1 aspect block,
+      // odd columns offset by half a cell so the policy edges flow through
+      // the gaps between frames.
+      const frames = updatedNodes.filter((n) => isFrameNode(n));
+      if (frames.length > 1) {
+        // Keep the block where the layout put the frames column (right of
+        // the policies), centered on the vertical middle of the REST of the
+        // scene (source groups / policies) — the hierarchical columns aren't
+        // guaranteed to center at 0.
+        const baseX = Math.min(...frames.map((f) => f.position.x));
+        const others = updatedNodes.filter(
+          (n) => !isFrameNode(n) && !n.parentId,
+        );
+        const othersMid =
+          others.length > 0
+            ? (Math.min(...others.map((n) => n.position.y)) +
+                Math.max(
+                  ...others.map(
+                    (n) =>
+                      n.position.y +
+                      (n.measured?.height ??
+                        (Number(n.style?.height) || 80)),
+                  ),
+                )) /
+              2
+            : 5;
+        packFrameGrid(frames, baseX, othersMid);
+      }
+
       // Anchor the draft to the live canvas: shift everything so the first
       // carried network frame keeps its live position — switching modes then
       // has no big positional drift (the layouts differ, but the world stays
@@ -595,9 +683,42 @@ export function useDraft() {
 
   // Persist the draft canvas (debounced) so a reload doesn't lose the draft.
   // Cancel / Deploy / switch-to-live clear it via clearDraftStorage().
+  // NEVER while a node is dragging: the stringify + synchronous
+  // localStorage write scale with the canvas and visibly froze the drag
+  // (and every edge animation) whenever the debounce elapsed mid-drag —
+  // the drag-stop commit clears the dragging flag and saves then.
+  // Cheap structural pre-check (O(N) reference compares) — selection
+  // clicks and hover elevations must NOT trigger the expensive stringify +
+  // write (a visible main-thread freeze on big canvases).
+  const lastSavedRef = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
   useEffect(() => {
-    if (!isDraft) return;
-    const timer = setTimeout(() => saveDraftCanvas(nodes, edges), 400);
+    if (!isDraft) {
+      lastSavedRef.current = null;
+      return;
+    }
+    if (nodes.some((n) => n.dragging)) return;
+    const prev = lastSavedRef.current;
+    const unchanged =
+      !!prev &&
+      prev.edges === edges &&
+      prev.nodes.length === nodes.length &&
+      prev.nodes.every((p, i) => {
+        const n = nodes[i];
+        return (
+          p.id === n.id &&
+          p.data === n.data &&
+          p.parentId === n.parentId &&
+          p.hidden === n.hidden &&
+          p.style === n.style &&
+          p.position.x === n.position.x &&
+          p.position.y === n.position.y
+        );
+      });
+    if (unchanged) return;
+    const timer = setTimeout(() => {
+      lastSavedRef.current = { nodes, edges };
+      saveDraftCanvas(nodes, edges);
+    }, 400);
     return () => clearTimeout(timer);
   }, [isDraft, nodes, edges]);
 

@@ -2,6 +2,7 @@ import {
   Edge as CanvasEdge,
   Node as CanvasNode,
   useReactFlow,
+  useStore,
 } from "@xyflow/react";
 import { orderBy } from "lodash";
 import { singularize } from "@utils/helpers";
@@ -238,18 +239,15 @@ export function useSourceGroupEnabled(sourceId: string) {
   return node?.data?.enabled ?? false;
 }
 
-export function useAnySourceGroupEnabled(sourceId: string) {
-  const { getNodes, getEdges } = useReactFlow();
-
-  const nodes = getNodes();
+// `skip` when the caller already has an explicit enabled flag (the common
+// case) — getNodes()/getEdges() copy the full arrays, and running that on
+// every render of every node component added up on big canvases.
+export function useAnySourceGroupEnabled(sourceId: string, skip = false) {
+  const { getEdges } = useReactFlow();
+  if (skip) return false;
   const edges = getEdges();
-
   const incomingEdges = edges.filter((e) => e.target === sourceId);
-  const sourceNodes = incomingEdges
-    .map((edge) => nodes.find((n) => n.id === edge.source))
-    .filter(Boolean);
-  const sourceEnabledStates = incomingEdges.map((e) => e?.data?.enabled);
-  return sourceEnabledStates.some(Boolean);
+  return incomingEdges.some((e) => e?.data?.enabled);
 }
 
 // Initial group-view pick — always tries to show a non-empty canvas:
@@ -621,3 +619,114 @@ export const getFrameChildPosition = (index: number) => ({
     NETWORK_FRAME_PADDING_Y +
     index * (NETWORK_FRAME_FALLBACK_ROW + NETWORK_FRAME_ROW_GAP),
 });
+
+// Seed grid for a LIVE overview frame — the same grid useNetworkFrameLayout
+// reconciles to (2 columns, NETWORK_FRAME_MAX_VISIBLE cap with a "+N more"
+// cell taking the last slot, fallback row heights). Seeding with the old
+// single-column math made every frame resize and its "+N more" cell shift
+// one beat after mount.
+export const getLiveFrameGrid = (resourceCount: number) => {
+  const hasMore = resourceCount > NETWORK_FRAME_MAX_VISIBLE;
+  const visibleCount = hasMore
+    ? NETWORK_FRAME_MAX_VISIBLE - 1
+    : Math.min(resourceCount, NETWORK_FRAME_MAX_VISIBLE);
+  const cellCount = visibleCount + (hasMore ? 1 : 0);
+  const cols = cellCount > 1 ? 2 : 1;
+  const sparse = resourceCount <= 1;
+  const childWidth =
+    cols > 1
+      ? NETWORK_FRAME_CHILD_WIDTH_MULTI
+      : sparse
+      ? 2 * NETWORK_FRAME_CHILD_WIDTH_MULTI + NETWORK_FRAME_GAP
+      : NETWORK_FRAME_CHILD_WIDTH;
+  const rows = Math.max(Math.ceil(cellCount / cols), 1);
+  const cellPosition = (index: number) => ({
+    x: NETWORK_FRAME_PADDING_X + (index % cols) * (childWidth + NETWORK_FRAME_GAP),
+    y:
+      NETWORK_FRAME_HEADER +
+      NETWORK_FRAME_PADDING_Y +
+      Math.floor(index / cols) *
+        (NETWORK_FRAME_FALLBACK_ROW + NETWORK_FRAME_ROW_GAP),
+  });
+  return {
+    width: getNetworkFrameWidth(cols, childWidth),
+    // Live frames: bottom band is just the padding (no Add button); empty
+    // frames mirror the reconciler's empty height.
+    height:
+      resourceCount > 0
+        ? NETWORK_FRAME_HEADER +
+          NETWORK_FRAME_PADDING_Y +
+          rows * NETWORK_FRAME_FALLBACK_ROW +
+          (rows - 1) * NETWORK_FRAME_ROW_GAP +
+          NETWORK_FRAME_PADDING_Y
+        : getNetworkFrameHeight(0) - NETWORK_FRAME_ADD_ROW,
+    childWidth,
+    visibleCount,
+    cellPosition,
+  };
+};
+
+// Canvas nodes subscribed STRUCTURALLY (ids, data refs, parentId and —
+// optionally — selection), ignoring positions/measure/drag state: for
+// always-mounted consumers (components panel, toolbars) that only derive
+// from node data, so node drags don't re-render them every tick. Positions
+// must be read imperatively (reactFlow.getNodes()) when needed.
+export function useStructuralNodes(options?: { selection?: boolean }) {
+  const withSelection = options?.selection ?? false;
+  return useStore(
+    (s: { nodes: CanvasNode[] }) => s.nodes,
+    (a: CanvasNode[], b: CanvasNode[]) =>
+      a === b ||
+      (a.length === b.length &&
+        a.every((n, i) => {
+          const m = b[i];
+          return (
+            n.id === m.id &&
+            n.data === m.data &&
+            n.parentId === m.parentId &&
+            (!withSelection || n.selected === m.selected)
+          );
+        })),
+  );
+}
+
+// Staggered grid for network frames (draft build + live networks overview):
+// cols ≈ √(n·avgCellH/cellW) for a ~1:1 block; each column packs frames by
+// their own heights; odd columns start half a typical cell lower so edges
+// flow between frames. Mutates the frames' positions in place and centers
+// the block vertically on `centerMidY`.
+export const FRAME_GRID_GAP_X = 220;
+export const FRAME_GRID_GAP_Y = 150;
+
+export function packFrameGrid(
+  frames: CanvasNode[],
+  baseX: number,
+  centerMidY: number,
+) {
+  if (frames.length === 0) return;
+  const cellW = NETWORK_FRAME_WIDTH + FRAME_GRID_GAP_X;
+  const heights = frames.map((f) => Number(f.style?.height) || 300);
+  const avgH =
+    heights.reduce((a, b) => a + b, 0) / heights.length + FRAME_GRID_GAP_Y;
+  const cols = Math.min(
+    Math.max(1, Math.round(Math.sqrt((frames.length * avgH) / cellW))),
+    frames.length,
+  );
+  const columnY = Array.from({ length: cols }, (_, col) =>
+    col % 2 === 1 ? avgH / 2 : 0,
+  );
+  const ordered = frames.slice().sort((a, b) => a.position.y - b.position.y);
+  ordered.forEach((frame, i) => {
+    const col = i % cols;
+    frame.position = { x: baseX + col * cellW, y: columnY[col] };
+    columnY[col] += (Number(frame.style?.height) || 300) + FRAME_GRID_GAP_Y;
+  });
+  const minY = Math.min(...ordered.map((f) => f.position.y));
+  const maxY = Math.max(
+    ...ordered.map((f) => f.position.y + (Number(f.style?.height) || 300)),
+  );
+  const shiftY = centerMidY - (minY + maxY) / 2;
+  ordered.forEach((f) => {
+    f.position = { x: f.position.x, y: f.position.y + shiftY };
+  });
+}

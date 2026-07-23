@@ -61,6 +61,10 @@ export function useNetworkFrameLayout() {
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();
 
   useEffect(() => {
+    // Mid-drag the grid can't change (membership changes land on drag stop)
+    // — skip the O(frames × nodes) reconcile per pointer-move tick; the
+    // effect reruns when the drag ends (dragging flags clear).
+    if (nodes.some((n) => n.dragging)) return;
     const frames = nodes.filter(isFrameNode);
     if (frames.length === 0) return;
 
@@ -165,9 +169,16 @@ export function useNetworkFrameLayout() {
       };
 
       visibleResources.forEach((child, index) => {
+        // Parent-view rows occupy FIXED slots (fallback height, not the
+        // measured size): measured heights land one commit after mount, and
+        // re-laying out per measurement made rows and the "+N more" cell
+        // visibly shift while re-rendering every frame (lag). The row node
+        // itself is stamped to the slot height so visuals match geometry.
         const desired = placeCell(
           index,
-          child.measured?.height ?? NETWORK_FRAME_FALLBACK_ROW,
+          drilled
+            ? child.measured?.height ?? NETWORK_FRAME_FALLBACK_ROW
+            : NETWORK_FRAME_FALLBACK_ROW,
         );
         const childUpdate: Partial<Node> = {};
         if (child.hidden) childUpdate.hidden = false;
@@ -178,15 +189,21 @@ export function useNetworkFrameLayout() {
         if (child.position.x !== desired.x || child.position.y !== desired.y) {
           childUpdate.position = desired;
         }
-        // Sync the width and clear any stale fade mask left by the old
-        // overflow treatment (rows are solid; overflow is a "+N more" cell).
-        // Drilled cards auto-size like live/standalone ones (min-width from
-        // the card itself) — no forced width.
+        // Sync the width/height and clear any stale fade mask left by the
+        // old overflow treatment (rows are solid; overflow is a "+N more"
+        // cell). Drilled cards auto-size like live/standalone ones
+        // (min-width from the card itself) — no forced size.
         const desiredWidth = drilled ? undefined : childWidth;
-        if (child.style?.width !== desiredWidth || child.style?.maskImage) {
+        const desiredHeight = drilled ? undefined : NETWORK_FRAME_FALLBACK_ROW;
+        if (
+          child.style?.width !== desiredWidth ||
+          child.style?.height !== desiredHeight ||
+          child.style?.maskImage
+        ) {
           childUpdate.style = {
             ...child.style,
             width: desiredWidth,
+            height: desiredHeight,
             maskImage: undefined,
             WebkitMaskImage: undefined,
           };

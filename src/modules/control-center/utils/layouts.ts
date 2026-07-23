@@ -38,8 +38,12 @@ export const applyD3ForceLayout = (nodes: Node[], edges: Edge[]) => {
     )
     .force("collision", d3.forceCollide().radius(300));
 
-  // Run simulation for fewer iterations to preserve radial structure
-  for (let i = 0; i < 1000; i++) {
+  // Run simulation for fewer iterations to preserve radial structure.
+  // Stop once alpha decayed past the point of visible movement (~300 ticks)
+  // — blindly running 1000 synchronous ticks froze the main thread on views
+  // with many nodes.
+  simulation.stop();
+  for (let i = 0; i < 1000 && simulation.alpha() > 0.005; i++) {
     simulation.tick();
   }
 

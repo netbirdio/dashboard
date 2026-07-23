@@ -1,4 +1,5 @@
 import type { Node, ReactFlowInstance, Rect, Viewport } from "@xyflow/react";
+import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 
 // Reusable "dive / fly-out" scene transition for the control-center canvas.
 //
@@ -136,7 +137,12 @@ export function runCanvasTransition(
     const bw = Math.max(b.width, 1);
     const bh = Math.max(b.height, 1);
     const pad = 1 - 2 * CANVAS_FIT.padding;
-    const zoom = Math.min((W * pad) / bw, (H * pad) / bh, CANVAS_FIT.maxZoom);
+    // Clamped to the canvas min zoom — setViewport doesn't clamp (unlike
+    // user zooming), so a huge scene must not fly out past the zoom limit.
+    const zoom = Math.max(
+      Math.min((W * pad) / bw, (H * pad) / bh, CANVAS_FIT.maxZoom),
+      DEFAULT_MIN_ZOOM,
+    );
     return {
       zoom,
       x: W / 2 - (b.x + bw / 2) * zoom,

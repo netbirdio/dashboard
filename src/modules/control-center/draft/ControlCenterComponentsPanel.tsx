@@ -47,6 +47,7 @@ import { XYPosition } from "@xyflow/react";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 import {
   getDraftResource,
+  useStructuralNodes,
   getIpPlaceholderFromRange,
   getPlaceholderPeer,
   getPoliciesTargetingResources,
@@ -56,7 +57,6 @@ import {
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useAccount } from "@/modules/account/useAccount";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import {
   getNodeGroup,
   isGroupNode,
@@ -480,7 +480,9 @@ const PanelContent = React.memo(
     const { data: peers } = useFetchApi<Peer[]>("/peers");
     const { data: groups } = useFetchApi<Group[]>("/groups");
 
-    const { nodes: canvasNodes } = useCanvasState();
+    // Structural subscription (ids/data/parentId; never positions) — the
+    // canvas context re-rendered this whole list on every drag tick.
+    const canvasNodes = useStructuralNodes();
     const account = useAccount();
     const canvasNodeIds = useMemo(
       () => new Set(canvasNodes.map((n) => n.id)),

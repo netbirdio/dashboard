@@ -5,7 +5,10 @@ import { type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import {
+  useCanvasUI,
+  useDestinationGroup,
+} from "@/modules/control-center/ControlCenterContext";
 import {
   getGroupCountLabel,
   useAnySourceGroupEnabled,
@@ -34,12 +37,19 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
     showHandles = false,
     onClick,
   } = data;
-  const sourceGroupEnabled = useAnySourceGroupEnabled(id);
+  const sourceGroupEnabled = useAnySourceGroupEnabled(
+    id,
+    enabled !== undefined,
+  );
   const isEnabled = enabled ?? sourceGroupEnabled;
-  const connection = useConnection();
-  const isTarget = connection.inProgress && connection.fromNode.id !== id;
+  // Selector form: re-renders only when the boolean flips, not on every
+  // pointer move of a connect drag.
+  const isTarget = useConnection(
+    (c) => c.inProgress && c.fromNode.id !== id,
+  );
   const isNew = !group?.id;
-  const { selectedDestinationGroup, contextMenuNodeId } = useCanvasState();
+  const { contextMenuNodeId } = useCanvasUI();
+  const { selectedDestinationGroup } = useDestinationGroup();
   // Panel selection is keyed by group id, or by node id for draft groups.
   const isPanelActive =
     selectedDestinationGroup !== "" &&

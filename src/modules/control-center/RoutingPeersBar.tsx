@@ -6,8 +6,10 @@ import {
   SquarePenIcon,
 } from "lucide-react";
 import * as React from "react";
+import Skeleton from "react-loading-skeleton";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
+import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { DropdownInput } from "@components/DropdownInput";
 import { DropdownInfoText } from "@components/DropdownInfoText";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
@@ -90,6 +92,9 @@ export const sortRoutingPeerRows = (rows: RoutingPeerRow[]) =>
     return a.name.localeCompare(b.name);
   });
 
+// Max height of the popover's row list (scrolls beyond it).
+const MAX_LIST_HEIGHT = 195;
+
 // Routing-peers button group `[● status ⌄ | ⊕ Add]`: the status button opens
 // a PeerSelector-style popover (search + one row per router); with no routers
 // it triggers onAdd directly. Without onAdd the bar is read-only (no Add
@@ -99,19 +104,36 @@ export const RoutingPeersBar = ({
   rows,
   count,
   onAdd,
+  onOpenChange,
+  loading = false,
 }: {
   rows: RoutingPeerRow[];
   count: number;
   onAdd?: () => void;
+  // Fired when the popover toggles — live frames use it to lazily fetch
+  // their router rows on first open (mounting a fetch per frame lagged the
+  // networks overview).
+  onOpenChange?: (open: boolean) => void;
+  // Rows still loading (lazy live fetch) — the popover opens immediately
+  // with skeleton rows instead of waiting.
+  loading?: boolean;
 }) => {
   const [open, setOpen] = React.useState(false);
+
   const [filteredRows, search, setSearch] = useSearch(
     rows,
     (row: RoutingPeerRow, query: string) =>
       row.name.toLowerCase().includes(query.toLowerCase()),
     { filter: true, debounce: 150 },
   );
-  const hasRouters = rows.length > 0;
+  // count covers rows that haven't loaded yet (lazy live frames) — the
+  // popover simply appears once they land.
+  const hasRouters = rows.length > 0 || count > 0;
+  // VirtualScrollAreaList keys items by `id`.
+  const virtualRows = React.useMemo(
+    () => filteredRows.map((row) => ({ ...row, id: row.key })),
+    [filteredRows],
+  );
 
   return (
     <div
@@ -122,10 +144,11 @@ export const RoutingPeersBar = ({
       )}
     >
       <Popover
-        open={open && hasRouters}
+        open={open && (rows.length > 0 || loading)}
         onOpenChange={(isOpen) => {
           if (!isOpen) setTimeout(() => setSearch(""), 100);
           setOpen(isOpen);
+          onOpenChange?.(isOpen);
         }}
       >
         <PopoverTrigger asChild>
@@ -164,55 +187,73 @@ export const RoutingPeersBar = ({
             placeholder={"Search by peer or group name..."}
             hideEnterIcon={true}
           />
-          {filteredRows.length === 0 && search !== "" && (
+          {filteredRows.length === 0 && search !== "" && !loading && (
             <DropdownInfoText>
               There are no routing peers matching your search.
             </DropdownInfoText>
           )}
-          <div className={"pb-1 px-1"}>
-            {filteredRows.map((row) => (
-              <div
-                key={row.key}
-                className={cn(
-                  "group/row flex items-center gap-2.5 rounded-md py-2 pl-3 pr-3",
-                  "text-sm text-nb-gray-300 hover:bg-nb-gray-900 hover:text-gray-50",
-                  row.onEdit && "cursor-pointer",
+          {loading && rows.length === 0 ? (
+            // One skeleton per known routing peer (the count comes from the
+            // /networks payload), capped to what the max height fits.
+            <div
+              className={"flex flex-col gap-1 px-2 pb-2 pt-1 overflow-hidden"}
+              style={{ maxHeight: MAX_LIST_HEIGHT }}
+            >
+              {Array.from({
+                length: Math.min(Math.max(count, 1), 5),
+              }).map((_, i) => (
+                <Skeleton key={i} height={30} className={"rounded-md"} />
+              ))}
+            </div>
+          ) : (
+            <VirtualScrollAreaList
+              items={virtualRows}
+              itemKey={(row) => row.key}
+              maxHeight={MAX_LIST_HEIGHT}
+              estimatedItemHeight={38}
+              onSelect={(row) => {
+                if (!row.onEdit) return;
+                setOpen(false);
+                row.onEdit();
+              }}
+              itemClassNameWithItem={(row) =>
+                cn(
+                  "text-sm text-nb-gray-300",
+                  row.onEdit ? "cursor-pointer" : "cursor-default",
                   !row.enabled && "opacity-50",
-                )}
-                onClick={() => {
-                  if (!row.onEdit) return;
-                  setOpen(false);
-                  row.onEdit();
-                }}
-              >
-                {row.isGroup ? (
-                  <span
-                    className={
-                      "flex h-4 w-4 items-center justify-center shrink-0"
-                    }
-                  >
-                    <GroupBadgeIcon size={14} />
+                )
+              }
+              renderItem={(row) => (
+                <div className={"flex items-center gap-2.5 w-full min-w-0"}>
+                  {row.isGroup ? (
+                    <span
+                      className={
+                        "flex h-4 w-4 items-center justify-center shrink-0"
+                      }
+                    >
+                      <GroupBadgeIcon size={14} />
+                    </span>
+                  ) : (
+                    <PeerOperatingSystemIcon os={row.peerOs ?? ""} />
+                  )}
+                  <span className={"truncate flex-1 min-w-0"}>
+                    {row.name}
+                    {row.peersCount !== undefined &&
+                      ` (${singularize("Peers", row.peersCount, true)})`}
                   </span>
-                ) : (
-                  <PeerOperatingSystemIcon os={row.peerOs ?? ""} />
-                )}
-                <span className={"truncate flex-1 min-w-0"}>
-                  {row.name}
-                  {row.peersCount !== undefined &&
-                    ` (${singularize("Peers", row.peersCount, true)})`}
-                </span>
-                {row.onEdit && (
-                  <SquarePenIcon
-                    size={13}
-                    className={cn(
-                      "shrink-0 text-nb-gray-400 group-hover/row:text-white",
-                      "opacity-0 group-hover/row:opacity-100 transition-opacity",
-                    )}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+                  {row.onEdit && (
+                    <SquarePenIcon
+                      size={13}
+                      className={cn(
+                        "shrink-0 text-nb-gray-400",
+                        "opacity-0 group-hover/list-item:opacity-100 group-hover/list-item:text-white transition-opacity",
+                      )}
+                    />
+                  )}
+                </div>
+              )}
+            />
+          )}
         </PopoverContent>
       </Popover>
       {/* Trailing "Add" only once there's a routing peer — with none, the

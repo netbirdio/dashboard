@@ -5,7 +5,7 @@ import { type Node, Position, useConnection } from "@xyflow/react";
 import { AlertTriangleIcon, GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
 import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasUI } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
@@ -47,12 +47,13 @@ export const StandaloneResourceNode = ({
   hideNetwork?: boolean;
 }) => {
   const { showHandles = false } = data;
-  const connection = useConnection();
   const { isDraft, setResourceEditor, setResourceNetworkPicker } =
     useDraftMode();
-  const { contextMenuNodeId } = useCanvasState();
+  const { contextMenuNodeId } = useCanvasUI();
   const showHalo = contextMenuNodeId === id;
-  const isTarget = connection.inProgress && connection.fromNode.id !== id;
+  const isTarget = useConnection(
+    (c) => c.inProgress && c.fromNode.id !== id,
+  );
 
   const isDraftResource = id.startsWith("resource-new-");
   const node = { id, data, position: { x: 0, y: 0 } } as Node;

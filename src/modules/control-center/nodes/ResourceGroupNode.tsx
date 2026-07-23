@@ -4,7 +4,7 @@ import { cn, singularize } from "@utils/helpers";
 import { type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
 import { Group } from "@/interfaces/Group";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasUI } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
@@ -24,19 +24,26 @@ type ResourceGroupNode = Node<
 // (fixed in place; dragging it moves the whole frame).
 export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => {
   const { group, showHandles = true } = data;
-  const connection = useConnection();
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();
-  const { contextMenuNodeId } = useCanvasState();
+  const { contextMenuNodeId } = useCanvasUI();
   const showHalo = contextMenuNodeId === id;
   // Framed rows accept connection DROPS in every view — the drop routes
   // into the destination picker preselected with this group. Only dragging
   // FROM the row stays drill-down-only (same rule as ResourceNode).
   const isFramed = !!parentId?.startsWith("network-");
   const handlesActive = !isFramed || drillDownNetworkNodeId === parentId;
-  const isTarget = connection.inProgress && connection.fromNode.id !== id;
+  const isTarget = useConnection(
+    (c) => c.inProgress && c.fromNode.id !== id,
+  );
 
   return (
-    <div className={"relative rounded-lg transition-all group/node w-full"}>
+    <div
+      className={
+        // h-full + centering: the frame layout stamps a fixed slot height on
+        // framed rows (deterministic grid — no measure-based re-layout).
+        "relative rounded-lg transition-all group/node w-full h-full flex flex-col justify-center"
+      }
+    >
       <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
         <div
           className={cn(

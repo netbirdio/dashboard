@@ -29,6 +29,7 @@ import { usePeerView } from "@/modules/control-center/hooks/views/usePeerView";
 import { useUserView } from "@/modules/control-center/hooks/views/useUserView";
 import { useNetworkView } from "@/modules/control-center/hooks/views/useNetworkView";
 import { useSelectNodeHandlers } from "@/modules/control-center/hooks/useSelectNodeHandlers";
+import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { DestinationGroupPanel } from "@/modules/control-center/DestinationGroupPanel";
 
 // ---- Canvas State Context ----
@@ -70,6 +71,54 @@ interface CanvasState {
 }
 
 const CanvasStateContext = createContext<CanvasState | null>(null);
+
+// Lightweight UI state the NODE COMPONENTS need (context-menu halo, group
+// details panel target). Split from CanvasState so nodes don't subscribe to
+// the nodes/edges arrays — the full context changes identity on every canvas
+// update (drag ticks, layout reconciles) and re-rendered every node on the
+// canvas (visible lag with many networks).
+interface CanvasUIState {
+  contextMenuNodeId: string;
+  setContextMenuNodeId: (v: string) => void;
+  // Draft frames' "Add Resource" action — wired once from
+  // ControlCenterUIProvider (useDraftNodeCreation pulls six SWR
+  // subscriptions; mounting it per frame lagged big drafts). Lives HERE
+  // (stable context) so the per-frame button doesn't subscribe to nodes.
+  addResourceToFrameRef: React.MutableRefObject<(nodeId: string) => void>;
+}
+
+const CanvasUIContext = createContext<CanvasUIState | null>(null);
+
+// Group-details selection in its OWN context: it lived in CanvasUIState,
+// so clicking a group (opening the panel) re-rendered EVERY node component
+// on the canvas — a visible freeze on big canvases. Only GroupNode (its
+// highlight) subscribes here.
+interface DestinationGroupState {
+  selectedDestinationGroup: string;
+  setSelectedDestinationGroup: (v: string) => void;
+}
+
+const DestinationGroupContext = createContext<DestinationGroupState | null>(
+  null,
+);
+
+export function useDestinationGroup(): DestinationGroupState {
+  const ctx = useContext(DestinationGroupContext);
+  if (!ctx) {
+    throw new Error(
+      "useDestinationGroup must be used within a CanvasStateProvider",
+    );
+  }
+  return ctx;
+}
+
+export function useCanvasUI(): CanvasUIState {
+  const ctx = useContext(CanvasUIContext);
+  if (!ctx) {
+    throw new Error("useCanvasUI must be used within a CanvasStateProvider");
+  }
+  return ctx;
+}
 
 export function useCanvasState(): CanvasState {
   const ctx = useContext(CanvasStateContext);
@@ -115,6 +164,7 @@ export function CanvasStateProvider({
     (id: string, userId?: string) => void
   >(() => {});
   const refreshLiveViewRef = useRef<(policy: Policy) => void>(() => {});
+  const addResourceToFrameRef = useRef<(nodeId: string) => void>(() => {});
 
   const value = useMemo(
     () => ({
@@ -167,9 +217,27 @@ export function CanvasStateProvider({
     ],
   );
 
+  const uiValue = useMemo(
+    () => ({
+      contextMenuNodeId,
+      setContextMenuNodeId,
+      addResourceToFrameRef,
+    }),
+    [contextMenuNodeId],
+  );
+
+  const destinationGroupValue = useMemo(
+    () => ({ selectedDestinationGroup, setSelectedDestinationGroup }),
+    [selectedDestinationGroup],
+  );
+
   return (
     <CanvasStateContext.Provider value={value}>
-      {children}
+      <CanvasUIContext.Provider value={uiValue}>
+        <DestinationGroupContext.Provider value={destinationGroupValue}>
+          {children}
+        </DestinationGroupContext.Provider>
+      </CanvasUIContext.Provider>
     </CanvasStateContext.Provider>
   );
 }
@@ -229,6 +297,8 @@ export function ControlCenterUIProvider({
   canvas.forceSingleGroupViewRef.current = handlers.forceSingleGroupView;
   canvas.forceSinglePeerViewRef.current = handlers.forceSinglePeerView;
   canvas.refreshLiveViewRef.current = handlers.refreshLiveView;
+  const { addResourceToFrame } = useDraftNodeCreation();
+  useCanvasUI().addResourceToFrameRef.current = addResourceToFrame;
 
   const value = useMemo(
     () => ({

@@ -11,7 +11,7 @@ import {
   LucideIcon,
   WaypointsIcon,
 } from "lucide-react";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useStore } from "@xyflow/react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 export type DraftTemplateId = "remote-access" | "business-vpn" | "site-to-site";
@@ -50,7 +50,9 @@ const TEMPLATES: DraftTemplate[] = [
 export const DraftEmptyCanvas = () => {
   const { isDraft, componentsPanelOpen, setComponentsPanelOpen } =
     useDraftMode();
-  const { nodes } = useCanvasState();
+  // Only emptiness matters — a nodes-array subscription re-rendered this on
+  // every drag tick.
+  const isEmpty = useStore((s) => s.nodes.length === 0);
   // Only read isDragging from the context — the useDragAndDrop() hook
   // registers its own drop listener and would double-fire the drop action.
   const dragContext = useContext(DragAndDropContext);
@@ -61,7 +63,7 @@ export const DraftEmptyCanvas = () => {
   // through so drops land on the canvas beneath.
   const dimmed = componentsPanelOpen || isDragging;
 
-  if (!isDraft || nodes.length > 0) return null;
+  if (!isDraft || !isEmpty) return null;
 
   // TODO: build the starter topology per template. For now every entry just
   // opens the components panel.

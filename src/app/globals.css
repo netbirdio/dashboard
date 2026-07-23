@@ -212,3 +212,20 @@ p {
 .react-flow__nodesselection-rect {
     border-style: solid !important;
 }
+
+/* Marching-dashes edge animation (control-center edges). One shared CSS
+   animation instead of a SMIL <animate> per edge — SMIL runs per-element on
+   the main thread and made the canvas visibly lag once a view had many
+   animated edges. */
+@keyframes cc-edge-dash {
+    from {
+        stroke-dashoffset: 20;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.cc-animated-edge {
+    animation: cc-edge-dash 0.5s linear infinite;
+}

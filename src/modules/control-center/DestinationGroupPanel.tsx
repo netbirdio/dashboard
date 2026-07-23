@@ -14,7 +14,7 @@ import {
   getGroupResources,
 } from "@/modules/control-center/utils/graph-builder";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   canRenameGroup,
@@ -35,7 +35,10 @@ export const DestinationGroupPanel = ({
   onClose,
 }: DestinationGroupPanelProps) => {
   const { peers, networkResources, groups } = useControlCenterData();
-  const { nodes } = useCanvasState();
+  // Structural subscription — the panel derives from node data only, and a
+  // context nodes subscription re-rendered it (and its member lists) on
+  // every canvas update while open.
+  const nodes = useStructuralNodes();
   const { isDraft } = useDraftMode();
   const { renameGroup } = useDraftGroupActions();
 

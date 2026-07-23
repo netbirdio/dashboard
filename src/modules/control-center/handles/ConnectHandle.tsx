@@ -61,10 +61,16 @@ export const ConnectHandle = ({
     [type, position],
   );
 
-  const connection = useConnection();
-  const isConnecting =
-    connection.fromNode?.id === nodeId &&
-    connection.fromHandle?.id === handleId;
+  // Selector form: re-renders only when the flags flip, not on every
+  // pointer move of a connect drag (this handle renders in EVERY node).
+  const connectionState = useConnection((c) =>
+    !c.inProgress
+      ? "idle"
+      : c.fromNode?.id === nodeId && c.fromHandle?.id === handleId
+      ? "self"
+      : "other",
+  );
+  const isConnecting = connectionState === "self";
   const isDragging = useStore((s) => {
     if (!nodeId) return false;
     const node = s.nodeLookup?.get(nodeId);
@@ -82,7 +88,7 @@ export const ConnectHandle = ({
     position === Position.Left || position === Position.Right;
 
   return (
-    (!connection.inProgress || isConnecting) && (
+    (connectionState === "idle" || isConnecting) && (
       <Handle
         type={type}
         position={position}

@@ -4,6 +4,7 @@ import { CircleXIcon, FolderPlusIcon, TrashIcon } from "lucide-react";
 import { useReactFlow, useStoreApi, useViewport } from "@xyflow/react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
 import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useCreateGroupOnCanvas } from "@/modules/control-center/hooks/useCreateGroupOnCanvas";
@@ -46,7 +47,10 @@ const RESOURCE_NODE_TYPES = new Set([
 
 export const PeersToolbar = () => {
   const { isDraft } = useDraftMode();
-  const { nodes, setNodes, setEdges } = useCanvasState();
+  const { setNodes, setEdges } = useCanvasState();
+  // Structural subscription incl. selection — positions don't matter here,
+  // and the context re-rendered the toolbar on every drag tick.
+  const nodes = useStructuralNodes({ selection: true });
   const reactFlow = useReactFlow();
   const { groups } = useControlCenterData();
 

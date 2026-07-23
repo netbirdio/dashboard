@@ -3,9 +3,10 @@ import * as React from "react";
 import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
 
 export const AllHandles = () => {
-  const connection = useConnection();
   const nodeId = useNodeId();
-  const isTarget = connection.inProgress && connection.fromNode.id !== nodeId;
+  const isTarget = useConnection(
+    (c) => c.inProgress && c.fromNode.id !== nodeId,
+  );
 
   return (
     <>

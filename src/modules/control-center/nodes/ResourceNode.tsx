@@ -4,7 +4,7 @@ import {
   type Node,
   Position,
   useConnection,
-  useInternalNode,
+  useStore,
 } from "@xyflow/react";
 import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
 import * as React from "react";
@@ -12,7 +12,7 @@ import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import { StandaloneResourceNode } from "@/modules/control-center/nodes/StandaloneResourceNode";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasUI } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
@@ -45,17 +45,21 @@ const TYPE_ICONS = {
 
 export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   const { enabled, resource, peer, showHandles = false, className } = data;
-  const sourceGroupEnabled = useAnySourceGroupEnabled(id);
+  const sourceGroupEnabled = useAnySourceGroupEnabled(
+    id,
+    enabled !== undefined,
+  );
   const isEnabled = enabled ?? sourceGroupEnabled;
-  const connection = useConnection();
   const { isDraft, setResourceEditor, drillDownNetworkNodeId } = useDraftMode();
   // Framed resources accept connection DROPS in every view — the drop
   // routes into the destination picker preselected with this resource. Only
   // dragging FROM the resource stays drill-down-only in the parent view.
   const isFramed = !!parentId?.startsWith("network-");
   const handlesActive = !isFramed || drillDownNetworkNodeId === parentId;
-  const isTarget = connection.inProgress && connection.fromNode.id !== id;
-  const { contextMenuNodeId } = useCanvasState();
+  const isTarget = useConnection(
+    (c) => c.inProgress && c.fromNode.id !== id,
+  );
+  const { contextMenuNodeId } = useCanvasUI();
   const showHalo = contextMenuNodeId === id;
 
   // Draft resources (resource-new-…) are edited on the canvas via click /
@@ -79,8 +83,13 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   // and cleared before the exit fade finishes (frame still hidden → keep
   // cards). The swap between row and card thus always happens while the
   // canvas is invisible.
-  const parentFrame = useInternalNode(parentId ?? "");
-  const isDrilledChild = isFramed && !!parentFrame?.hidden;
+  // Boolean store selector, NOT useInternalNode — the internal lookup is
+  // rebuilt every drag tick, and useInternalNode re-rendered EVERY framed
+  // resource row per tick (the main drag lag with many network frames).
+  const parentFrameHidden = useStore((st) =>
+    parentId ? !!st.nodeLookup.get(parentId)?.hidden : false,
+  );
+  const isDrilledChild = isFramed && parentFrameHidden;
   const standaloneCard = isDraft
     ? !isFramed || isDrilledChild
     : !isFramed && (!!data.draftNetwork || !!data.standalone);
@@ -105,6 +114,9 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
       <div
         className={cn(
           "relative rounded-lg transition-colors group/node w-full min-w-[185px]",
+          // h-full + centering: the frame layout stamps a fixed slot height
+          // on framed rows (deterministic grid — no measure-based re-layout).
+          "h-full flex flex-col justify-center",
           // Live rows keep the pointer (clicking drills into the network like
           // the frame does) but no row hover styling — the frame highlights.
           "cursor-pointer",

@@ -1,9 +1,9 @@
 import { useMemo } from "react";
+import { useStore } from "@xyflow/react";
 import useFetchApi from "@utils/api";
 import { NetworkRouter } from "@/interfaces/Network";
 import { usePeers } from "@/contexts/PeersProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
@@ -20,15 +20,23 @@ export function useFrameRouterRows(
   networkNodeId: string | undefined,
   enabled: boolean,
 ) {
-  const { nodes } = useCanvasState();
   const { changes } = useDraftChangeset();
   const { peers } = usePeers();
   const { groups } = useGroups();
   const { setRoutingPeerModal } = useDraftMode();
 
-  const frame = nodes.find((n) => n.id === networkNodeId);
-  const networkId = (frame?.data as { network?: { id?: string } })?.network
-    ?.id;
+  // Targeted store selector (string equality) — this hook renders in EVERY
+  // network frame; subscribing to the whole nodes array re-rendered them all
+  // on every canvas update.
+  const networkId = useStore((s) =>
+    networkNodeId
+      ? (
+          s.nodeLookup.get(networkNodeId)?.data as {
+            network?: { id?: string };
+          }
+        )?.network?.id
+      : undefined,
+  );
   const clientId = networkNodeId?.replace("network-", "");
 
   const draftRouters = useMemo(
@@ -42,12 +50,13 @@ export function useFrameRouterRows(
     [changes, clientId, networkId],
   );
 
-  const { data: apiRouters } = useFetchApi<NetworkRouter[]>(
-    `/networks/${networkId}/routers`,
-    false,
-    false,
-    enabled && !!networkId,
-  );
+  const { data: apiRouters, isLoading: isApiLoading } =
+    useFetchApi<NetworkRouter[]>(
+      `/networks/${networkId}/routers`,
+      false,
+      false,
+      enabled && !!networkId,
+    );
 
   const rows: RoutingPeerRow[] = useMemo(() => {
     if (!networkNodeId) return [];
@@ -98,5 +107,10 @@ export function useFrameRouterRows(
     setRoutingPeerModal,
   ]);
 
-  return { rows, count: getRoutingPeerCount(rows) };
+  return {
+    rows,
+    count: getRoutingPeerCount(rows),
+    // Lazy live fetch in flight (no rows yet) — the popover shows skeletons.
+    isLoading: enabled && !!networkId && isApiLoading,
+  };
 }
