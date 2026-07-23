@@ -138,8 +138,6 @@ function upstreamUrlHelpText(providerId: AIProviderId): string {
       return "OpenRouter uses a fixed endpoint, openrouter.ai/api/v1; apps choose the upstream provider via the model prefix, e.g. anthropic/claude-* or openai/gpt-*.";
     case "vllm":
       return "Your local vLLM server's OpenAI-compatible base URL.";
-    case "kimi_api":
-      return "Moonshot AI's international platform endpoint — keep the bare host. Moonshot serves both API shapes with the same key: the path an agent calls rides through to Moonshot, so its base URL picks the shape (Claude Code appends /anthropic; Kimi CLI and OpenAI-shaped callers use the bare endpoint). Mainland-China accounts use api.moonshot.cn instead.";
     default:
       return "Where NetBird forwards the traffic.";
   }
@@ -621,7 +619,20 @@ export default function AIProviderModal({
               </FormRow>
 
               <FormRow
-                label={"Upstream URL"}
+                label={
+                  providerId === "kimi_api" ? (
+                    <>
+                      Upstream URL
+                      <HelpTooltip
+                        content={
+                          "Moonshot AI's international platform endpoint. Keep the bare host. Moonshot serves both API shapes with the same key: the path an agent calls rides through to Moonshot, so its base URL picks the shape (Claude Code appends /anthropic; Kimi CLI and OpenAI shaped callers use the bare endpoint). Mainland China accounts use api.moonshot.cn instead."
+                        }
+                      />
+                    </>
+                  ) : (
+                    "Upstream URL"
+                  )
+                }
                 helpText={upstreamUrlHelpText(providerId)}
               >
                 <Input
