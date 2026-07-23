@@ -2,9 +2,17 @@ import Button from "@components/Button";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   SelectDropdown,
+  SelectOption,
 } from "@components/select/SelectDropdown";
-import { ArrowLeftIcon, NetworkIcon, PencilLineIcon } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  LayoutGridIcon,
+  NetworkIcon,
+  PencilLineIcon,
+} from "lucide-react";
+import { sortBy } from "lodash";
 import React from "react";
+import { isFrameNode } from "@/modules/control-center/utils/helpers";
 import { FlowSelector, FlowView } from "@/modules/control-center/FlowSelector";
 import { NetworkRoutingPeerCount } from "@/modules/control-center/NetworkRoutingPeerCount";
 import { RoutingPeersBar } from "@/modules/control-center/RoutingPeersBar";
@@ -35,7 +43,51 @@ function DraftDrillDownHeader() {
     drillDownNetworkNodeId ?? undefined,
     !!drillDownNetworkNodeId,
   );
-  if (!drillDownNetworkNodeId) return null;
+
+  // Overview (not drilled): a network selector stays top-left, like the live
+  // networks view — it lists the frames on the canvas and picking one drills
+  // into it (the drill effect plays the dive transition itself).
+  const frameOptions = React.useMemo(() => {
+    const options: SelectOption[] = sortBy(
+      nodes
+        .filter((n) => isFrameNode(n))
+        .map((n) => ({
+          value: n.id,
+          label:
+            (n.data as { network?: { name?: string } })?.network?.name ??
+            "Network",
+          icon: NetworkIcon,
+        })),
+      "label",
+    );
+    // Mirrors the live selector: "All Networks" (value "") is the overview.
+    options.unshift({
+      value: "",
+      label: "All Networks",
+      icon: () => <LayoutGridIcon size={14} />,
+    } as SelectOption);
+    return options;
+  }, [nodes]);
+
+  if (!drillDownNetworkNodeId) {
+    if (frameOptions.length <= 1) return null;
+    return (
+      <div key={"draft-network-select"} className={"w-64"}>
+        <SelectDropdown
+          variant={"secondary"}
+          value={""}
+          onChange={(nodeId) => nodeId && setDrillDownNetworkNodeId(nodeId)}
+          options={frameOptions}
+          showSearch={true}
+          className={
+            // Same treatment as the live network selector.
+            "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0"
+          }
+          size={"xs"}
+        />
+      </div>
+    );
+  }
   const frame = nodes.find((n) => n.id === drillDownNetworkNodeId);
   const name =
     (frame?.data as { network?: { name?: string } })?.network?.name ?? "";

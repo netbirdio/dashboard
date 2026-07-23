@@ -56,6 +56,14 @@ export function useDrillDownBrowserHistory() {
   const ownedStackRef = useRef<string[]>([]);
   // Counts popstates caused by our own history.back() calls.
   const suppressPopRef = useRef(0);
+  // Deferred entry consumption per level. Mode switches (draft ↔ live while
+  // drilled) briefly deactivate the level across commits (drill id cleared
+  // before selectedNetwork is set) — consuming the entry immediately and
+  // re-pushing races the async history.back() and scrambles the stack. A
+  // reactivation within the window cancels the consume and REUSES the entry.
+  const pendingConsumeRef = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
 
   const activeSignature = levels.map((l) => (l.active ? "1" : "0")).join("");
   useEffect(() => {
@@ -63,18 +71,31 @@ export function useDrillDownBrowserHistory() {
       const prev = prevActiveRef.current[level.key] ?? false;
       prevActiveRef.current[level.key] = level.active;
       const owned = ownedStackRef.current.includes(level.key);
-      if (level.active && !prev && !owned) {
-        window.history.pushState({ controlCenterDrill: level.key }, "");
-        ownedStackRef.current.push(level.key);
+      if (level.active && !prev) {
+        const pending = pendingConsumeRef.current[level.key];
+        if (pending) {
+          // Transient deactivation (mode switch) — keep the existing entry.
+          clearTimeout(pending);
+          delete pendingConsumeRef.current[level.key];
+          return;
+        }
+        if (!owned) {
+          window.history.pushState({ controlCenterDrill: level.key }, "");
+          ownedStackRef.current.push(level.key);
+        }
         return;
       }
-      if (!level.active && prev && owned) {
-        // Exited through the UI — take our entry back off the stack.
-        ownedStackRef.current = ownedStackRef.current.filter(
-          (k) => k !== level.key,
-        );
-        suppressPopRef.current += 1;
-        window.history.back();
+      if (!level.active && prev && owned && !pendingConsumeRef.current[level.key]) {
+        // Exited through the UI — take our entry back off the stack, unless
+        // the level reactivates within the window (see pendingConsumeRef).
+        pendingConsumeRef.current[level.key] = setTimeout(() => {
+          delete pendingConsumeRef.current[level.key];
+          ownedStackRef.current = ownedStackRef.current.filter(
+            (k) => k !== level.key,
+          );
+          suppressPopRef.current += 1;
+          window.history.back();
+        }, 150);
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
