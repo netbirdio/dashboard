@@ -122,7 +122,7 @@ export function AgentConnectTabs({
                   : []),
               ]}
               showValues={false}
-              className={"w-[160px]"}
+              className={"!w-auto min-w-[160px]"}
             />
           </div>
 
@@ -262,8 +262,8 @@ export function AgentConnectTabs({
               />
               <SmallParagraph className={"mt-3"}>
                 Pairs with a Kimi provider keeping the default upstream URL{" "}
-                <code className={"font-mono"}>https://api.moonshot.ai</code> —
-                the <code className={"font-mono"}>/anthropic</code> suffix in
+                <code className={"font-mono"}>https://api.moonshot.ai</code>.
+                The <code className={"font-mono"}>/anthropic</code> suffix in
                 the base URL rides through the endpoint to Moonshot, which
                 serves the Anthropic Messages API under that path.
               </SmallParagraph>
@@ -312,10 +312,10 @@ export function AgentConnectTabs({
           />
           <SmallParagraph className={"mt-3"}>
             Pairs with a Kimi provider keeping the default upstream URL{" "}
-            <code className={"font-mono"}>https://api.moonshot.ai</code>. For
-            the OpenAI shape instead, use{" "}
-            <code className={"font-mono"}>type = &quot;openai_legacy&quot;</code>{" "}
-            with <code className={"font-mono"}>base_url = &quot;{openaiBase}&quot;</code>.
+            <code className={"font-mono"}>https://api.moonshot.ai</code>. The{" "}
+            <code className={"font-mono"}>/anthropic</code> suffix in the base
+            URL rides through the endpoint to Moonshot, which serves the
+            Anthropic Messages API under that path.
           </SmallParagraph>
         </div>
       </TabsContent>
