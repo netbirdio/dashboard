@@ -9,6 +9,7 @@ import {
   getIpPlaceholderFromRange,
   getPlaceholderHostname,
   canDropGroupIntoNetwork,
+  getFirstGroup,
   getPlaceholderPeer,
   getPoliciesTargetingResources,
   getPolicyRegroupUpdates,
@@ -431,5 +432,34 @@ describe("canDropGroupIntoNetwork — group → frame eligibility", () => {
     expect(
       canDropGroupIntoNetwork(g, frame("n1"), [draftResource], []),
     ).toBe(true);
+  });
+});
+
+describe("getFirstGroup", () => {
+  const group = (id: string, name: string, peers_count = 0): Group =>
+    ({ id, name, peers_count }) as Group;
+  const sourcePolicy = (groupId: string): Policy =>
+    ({
+      id: `p-${groupId}`,
+      rules: [{ sources: [{ id: groupId }] }],
+    }) as unknown as Policy;
+
+  it("prefers a non-All group that is a policy source", () => {
+    const groups = [group("all", "All", 9), group("g1", "Devs", 1)];
+    expect(getFirstGroup(groups, [sourcePolicy("g1")])?.id).toBe("g1");
+  });
+
+  it("falls back to All when only All has policies (never an empty group)", () => {
+    const groups = [group("all", "All", 9), group("g1", "Devs", 1)];
+    expect(getFirstGroup(groups, [sourcePolicy("all")])?.id).toBe("all");
+  });
+
+  it("falls back to a non-All group when nothing has policies", () => {
+    const groups = [group("all", "All", 9), group("g1", "Devs", 1)];
+    expect(getFirstGroup(groups, [])?.id).toBe("g1");
+  });
+
+  it("returns All when it is the only group", () => {
+    expect(getFirstGroup([group("all", "All", 9)], [])?.id).toBe("all");
   });
 });

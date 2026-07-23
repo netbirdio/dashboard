@@ -158,7 +158,7 @@ control-center/
 │   ├── graph-builder.ts               → addNode, addEdge, addExpandedGroupContent, getGroupPeers/Resources, DEFAULT_LAYOUT_CONFIG
 │   ├── nodes.ts                       → NodeType enum + NODE_TYPES registry
 │   ├── edges.ts                       → EDGE_TYPES registry
-│   ├── helpers.ts                     → getFirstGroup, getPolicyProtocolAndPortText, getResourcePolicyByGroups
+│   ├── helpers.ts                     → getFirstGroup (initial group-view pick: non-All group with policies → All with policies → any non-All → any; never an empty group while a populated one exists), getPolicyProtocolAndPortText, getResourcePolicyByGroups
 │   ├── layouts.ts                     → D3 force/hierarchical layout + zoom constants
 │   ├── canvas-transition.ts           → Shared dive/fly-out scene transition. One-liner facades for ANY drill-down: `drillInto(reactFlow, clickedNodeOrRect, swap)` and `drillOutOf(reactFlow, swap, fromNodeOrRect?)` (accelerating pre-swap motion + fade-out → invisible swap → grow-in reveal computed from the new scene; half-eases stitch into ONE zoom). Used by the draft drill-down (both directions) and live network select/back; view-init fitView is suppressed while isCanvasTransitionActive()
 │   ├── drilled-layout.ts              → THE single-network layout (applyDrilledLayout + getDrilledFrameAnchor + DRILLED_RESOURCE_SPACING) — one definition shared by the live single-network view, the draft drill-down, and live→draft drilled entry

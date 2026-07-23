@@ -252,26 +252,31 @@ export function useAnySourceGroupEnabled(sourceId: string) {
   return sourceEnabledStates.some(Boolean);
 }
 
+// Initial group-view pick — always tries to show a non-empty canvas:
+// 1. a non-"All" group that is a policy source, 2. "All" if it is one
+// (a populated All view beats an empty group), 3. any non-"All" group,
+// 4. whatever is left.
 export function getFirstGroup(groups?: Group[], policies?: Policy[]) {
   const sortedGroups = orderBy(groups, "peers_count", "desc");
   const groupsWithoutAll = sortedGroups?.filter((g) => g.name !== "All");
 
-  const groupsWithPolicies = orderBy(
-    groupsWithoutAll?.filter((g) => {
-      return policies?.some((p) => {
-        const sources = getSourceGroupsFromPolicy(p);
-        return sources?.some((source) => source.id === g.id);
-      });
-    }),
-    "peers_count",
-    "desc",
-  );
+  const hasPolicies = (g: Group) =>
+    !!policies?.some((p) => {
+      const sources = getSourceGroupsFromPolicy(p);
+      return sources?.some((source) => source.id === g.id);
+    });
 
-  if (groupsWithPolicies && groupsWithPolicies?.length > 0) {
+  const groupsWithPolicies = groupsWithoutAll?.filter(hasPolicies);
+  if (groupsWithPolicies && groupsWithPolicies.length > 0) {
     return groupsWithPolicies[0];
   }
 
-  if (groupsWithoutAll && groupsWithoutAll?.length > 0) {
+  const allGroup = sortedGroups?.find((g) => g.name === "All");
+  if (allGroup && hasPolicies(allGroup)) {
+    return allGroup;
+  }
+
+  if (groupsWithoutAll && groupsWithoutAll.length > 0) {
     return groupsWithoutAll[0];
   }
 
