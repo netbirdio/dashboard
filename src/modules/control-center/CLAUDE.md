@@ -28,7 +28,7 @@ Key directories under `control-center/`: `hooks/` (data, views, draft logic, lay
 
 ## Views (live)
 
-Peer / Group / User: select node on the left → policies (x500, 60 pitch) → destinations (groups + resources as ONE column, x1000, 100 pitch). Built with `applyD3HierarchicalLayout(nodes, edges, 400, 120, view, DEFAULT_LAYOUT_CONFIG)`. Policies sorted by enabled; the GROUP view additionally name-sorts each policy's destinations.
+Peer / Group / User: select node on the left → policies (x500, 60 pitch) → destinations (groups + resources as ONE column, x1000, 100 pitch). Built with `applyD3HierarchicalLayout(nodes, edges, 400, 120, view, DEFAULT_LAYOUT_CONFIG)`. Policies sorted by enabled; the GROUP view additionally name-sorts each policy's destinations/sources. GROUP view also shows policies where the selected group is only a DESTINATION, mirrored to the left (sources at x-1000 → policy at x-500 → selected group); those policy nodes carry `data.side === "left"`, which the layout uses to split the policy column.
 
 Networks: all networks as interactive frames (resources as child rows, capped at 6 with a "+N more" cell) — sources column (160 pitch) → policy nodes (x480, 90 pitch) → staggered frame grid (`packFrameGrid`). Clicking a frame drills into the single-network view (`drilled-layout.ts`, shared with draft). Focus mode (click a group in any live view, or a peer in the user view) dims everything off the node's edge path via `cc-dimmed`.
 

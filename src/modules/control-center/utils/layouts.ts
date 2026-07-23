@@ -115,7 +115,15 @@ export const applyD3HierarchicalLayout = (
   const destinationResourceNodes = simulationNodes.filter(
     (n) => n.type === "destinationResourceNode",
   );
-  const policyNodes = simulationNodes.filter((n) => n.type === "policyNode");
+  // The single-group view mirrors policies where the selected group is the
+  // destination to the LEFT (sources → policy → selected group); the view
+  // stamps those policy nodes with data.side === "left".
+  const policyNodes = simulationNodes.filter(
+    (n) => n.type === "policyNode" && n.data?.side !== "left",
+  );
+  const leftPolicyNodes = simulationNodes.filter(
+    (n) => n.type === "policyNode" && n.data?.side === "left",
+  );
   const networkNodes = simulationNodes.filter((n) => n.type === "networkNode");
   const resourceNodes = simulationNodes.filter(
     (n) => n.type === "resourceNode",
@@ -158,17 +166,34 @@ export const applyD3HierarchicalLayout = (
 
   // Groups or Source Groups
   centerNodesVertically(groupNodes, startX, nodeSpacing, centerY);
-  centerNodesVertically(
-    sourceGroupNodes,
-    startX + columnWidth,
-    nodeSpacing,
-    centerY,
-  );
+  if (view === "group") {
+    // Mirror image of the destination column: sources of the policies that
+    // target the selected group sit on the far left.
+    centerNodesVertically(
+      sourceGroupNodes,
+      startX - (options?.destinationGroup?.width ?? columnWidth),
+      options?.destinationGroup?.spacing ?? nodeSpacing,
+      centerY,
+    );
+  } else {
+    centerNodesVertically(
+      sourceGroupNodes,
+      startX + columnWidth,
+      nodeSpacing,
+      centerY,
+    );
+  }
 
   // Policies
   centerNodesVertically(
     policyNodes,
     startX + (options?.policy?.width ?? columnWidth),
+    options?.policy?.spacing ?? nodeSpacing,
+    centerY + 14,
+  );
+  centerNodesVertically(
+    leftPolicyNodes,
+    startX - (options?.policy?.width ?? columnWidth),
     options?.policy?.spacing ?? nodeSpacing,
     centerY + 14,
   );

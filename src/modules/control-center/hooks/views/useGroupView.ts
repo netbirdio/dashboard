@@ -31,20 +31,62 @@ export function useGroupView() {
         const rule = policy.rules?.[0];
         if (!rule) return false;
         const sources = rule.sources as Group[];
-        return sources?.some((d) => d.id === groupId);
+        const destinations = rule.destinations as Group[];
+        return (
+          sources?.some((s) => s.id === groupId) ||
+          destinations?.some((d) => d.id === groupId)
+        );
       }),
       "enabled",
       "asc",
     );
 
     groupPolicies.forEach((policy) => {
-      const enabled = policy.rules?.[0]?.enabled;
+      const rule = policy.rules?.[0];
+      const enabled = rule?.enabled;
+      const isSource = (rule?.sources as Group[])?.some(
+        (s) => s.id === groupId,
+      );
+
+      // side: "left" mirrors the policy column to the left of the selected
+      // group when the group is only a destination (sources → policy → group).
       addNode(allNodes, {
         id: `policy-${policy.id}`,
         type: "policyNode",
-        data: { policy },
+        data: { policy, side: isSource ? "right" : "left" },
         position: { x: 0, y: 0 },
       });
+
+      if (!isSource) {
+        addEdge(allEdges, {
+          id: `policy-group-${policy.id}-${groupId}`,
+          source: `policy-${policy.id}`,
+          target: `select-group-node`,
+          type: "smart",
+          data: { enabled, policy },
+        });
+
+        const sources = orderBy(rule?.sources as Group[], "name", "asc");
+        sources?.forEach((source) => {
+          addNode(allNodes, {
+            id: `source-group-${source.id}`,
+            type: "sourceGroupNode",
+            // Explicit enabled — GroupNode's fallback checks INCOMING edges,
+            // and source groups only have outgoing ones (they'd render dimmed).
+            data: { group: source, enabled },
+            position: { x: 0, y: 0 },
+          });
+
+          addEdge(allEdges, {
+            id: `group-policy-${source.id}-${policy.id}`,
+            source: `source-group-${source.id}`,
+            target: `policy-${policy.id}`,
+            type: "smart",
+            data: { enabled, policy },
+          });
+        });
+        return;
+      }
 
       addEdge(allEdges, {
         id: `group-policy-${groupId}-${policy.id}`,
