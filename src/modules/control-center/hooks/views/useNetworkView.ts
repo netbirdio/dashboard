@@ -96,7 +96,8 @@ export function useNetworkView() {
             addNode(allNodes, {
               id: `peer-${peer.id}`,
               type: "peerNode",
-              data: { peer, enabled: true, variant: "card" },
+              // Live view: card look, no connect handles (read-only).
+              data: { peer, enabled: true, variant: "card", showHandles: false },
               position: { x: 0, y: 0 },
             });
 
@@ -308,7 +309,13 @@ export function useNetworkView() {
                 addNode(allNodes, {
                   id: `peer-${sourcePeer.id}`,
                   type: "peerNode",
-                  data: { peer: sourcePeer, enabled: true, variant: "card" },
+                  // Live view: card look, no connect handles (read-only).
+                  data: {
+                    peer: sourcePeer,
+                    enabled: true,
+                    variant: "card",
+                    showHandles: false,
+                  },
                   position: { x: 0, y: 0 },
                 });
                 sourceIds.push(`peer-${sourcePeer.id}`);
