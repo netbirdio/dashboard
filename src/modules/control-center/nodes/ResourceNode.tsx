@@ -188,7 +188,9 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
       <DeviceCard
         resource={resource}
         device={peer}
-        className={cn("p-0", !isEnabled && "opacity-60")}
+        // w-auto for peers: PeerNode's card variant sizes to content — the
+        // fixed w-[200px] made the same peer wider here than in draft.
+        className={cn("p-0", !isEnabled && "opacity-60", peer && "w-auto")}
       />
       <AllHandles />
     </div>

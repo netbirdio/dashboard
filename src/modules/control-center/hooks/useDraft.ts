@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { orderBy, sortBy } from "lodash";
+import { FlowView } from "@/modules/control-center/FlowSelector";
 import { Connection, Edge, Node, useReactFlow } from "@xyflow/react";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
@@ -63,6 +65,7 @@ export function useDraft() {
     setLayoutInitialized,
     selectedNetwork,
     setSelectedNetwork,
+    currentView,
   } = useCanvasState();
   const { policies, peers, networks, networkResources, groups } =
     useControlCenterData();
@@ -168,8 +171,13 @@ export function useDraft() {
         );
       });
 
-      const visiblePolicies = policies?.filter(
-        (p) => p.id && livePolicyIds.has(p.id),
+      // Same order as the live views' build (sortBy(policies, "enabled",
+      // "desc")) — the policy column and, through per-policy node creation,
+      // the destination column then keep the live vertical order.
+      const visiblePolicies = sortBy(
+        policies?.filter((p) => p.id && livePolicyIds.has(p.id)) ?? [],
+        "enabled",
+        "desc",
       );
 
       visiblePolicies?.forEach((policy) => {
@@ -265,8 +273,15 @@ export function useDraft() {
           }
         }
 
-        // Destination groups
-        destinations.forEach((dest) => {
+        // Destination groups — the live GROUP view sorts each policy's
+        // destinations by name (peer/user views keep the API order); match
+        // the view the draft was entered from so the column order carries
+        // over.
+        const orderedDestinations =
+          currentView === FlowView.GROUPS
+            ? orderBy(destinations, "name", "asc")
+            : destinations;
+        orderedDestinations.forEach((dest) => {
           const groupId = typeof dest === "string" ? dest : dest.id;
           if (!groupId) return;
           const group =
@@ -348,10 +363,24 @@ export function useDraft() {
             );
             if (resource) {
               const nodeId = `resource-${resource.id}`;
+              // Stamp the resource's real network (StandaloneResourceNode
+              // shows a "No Network" control without it — wrong for an
+              // existing resource, which always belongs to one). Frame
+              // carry-over below overwrites this with the frame's ref.
+              const net = networks?.find((n) =>
+                n.resources?.includes(resource.id ?? ""),
+              );
               addNode(allNodes, {
                 id: nodeId,
                 type: "resourceNode",
-                data: { resource, enabled },
+                data: {
+                  resource,
+                  enabled,
+                  showHandles: true,
+                  ...(net?.id
+                    ? { draftNetwork: { networkId: net.id, name: net.name } }
+                    : {}),
+                },
                 position: { x: 0, y: 0 },
               });
 
@@ -583,29 +612,45 @@ export function useDraft() {
       // children stay out of it — their positions are frame-relative and the
       // reconciling frame layout manages them.
       const frameChildren = allNodes.filter((n) => n.parentId);
-      // Column x/pitch matches the LIVE networks overview (sources 160
-      // pitch, policies at x 480 / 90 pitch) so switching modes doesn't
-      // re-rhythm the columns.
+      // Column x/pitch matches whatever LIVE view the draft was entered
+      // from, so switching modes doesn't re-rhythm the columns: drafts
+      // carrying network frames mirror the networks overview (sources 160
+      // pitch, policies at x 480 / 90 pitch); peer/group/user-entered
+      // drafts mirror those views' shared layout (spacing 120,
+      // DEFAULT_LAYOUT_CONFIG — policies 500/60, destinations 1000/100).
+      const carriesFrames = allNodes.some((n) => isFrameNode(n));
+      const baseSpacing = carriesFrames ? 160 : 120;
       const { updatedNodes, updatedEdges } = applyD3HierarchicalLayout(
         allNodes.filter((n) => !n.parentId),
         allEdges,
         400,
-        160,
+        baseSpacing,
         "peer",
-        {
-          ...DEFAULT_LAYOUT_CONFIG,
-          policy: { width: 480, spacing: 90 },
-        },
+        carriesFrames
+          ? { ...DEFAULT_LAYOUT_CONFIG, policy: { width: 480, spacing: 90 } }
+          : DEFAULT_LAYOUT_CONFIG,
+      );
+      // Edge direction tells a node's side: node → policy = source,
+      // policy → node = destination (the layout buckets by TYPE, so a
+      // destination peer would otherwise be stacked with the sources).
+      const policyNodeIds = new Set(
+        updatedNodes.filter((n) => n.type === "policyNode").map((n) => n.id),
+      );
+      const destinationIds = new Set(
+        updatedEdges
+          .filter((e) => policyNodeIds.has(e.source))
+          .map((e) => e.target),
       );
       // Source column: groups AND source peers stack as ONE column (the
       // hierarchical layout centers groupNodes and peerNodes independently
       // at x=0, which overlaps them when both exist) — same combined
-      // 160-pitch column as the live overview.
+      // column as the live view, at its pitch.
       const sourceColumn = updatedNodes.filter(
         (n) =>
           !n.parentId &&
           !isFrameNode(n) &&
           (n.type === "groupNode" || n.type === "peerNode") &&
+          !destinationIds.has(n.id) &&
           n.position.x < 240,
       );
       const draftDisplayName = (n: Node) =>
@@ -620,26 +665,70 @@ export function useDraft() {
         sourceColumn.sort((a, b) =>
           draftDisplayName(a).localeCompare(draftDisplayName(b)),
         );
-        const colHeight = (sourceColumn.length - 1) * 160;
+        const colHeight = (sourceColumn.length - 1) * baseSpacing;
         sourceColumn.forEach((n, i) => {
-          n.position = { x: 0, y: -colHeight / 2 + i * 160 };
+          n.position = { x: 0, y: -colHeight / 2 + i * baseSpacing };
         });
       }
-      // Policies column: same name order + rhythm as live.
-      const policyColumn = updatedNodes.filter(
-        (n) => !n.parentId && n.type === "policyNode",
-      );
-      if (policyColumn.length > 1) {
-        const policyName = (n: Node) =>
-          ((n.data as { policy?: { name?: string } })?.policy?.name ?? "")
-            .toLowerCase();
-        policyColumn.sort((a, b) =>
-          policyName(a).localeCompare(policyName(b)),
+      if (carriesFrames) {
+        // Policies column: same name order + rhythm as the live overview
+        // (the frameless layout already matches the live views via
+        // DEFAULT_LAYOUT_CONFIG).
+        const policyColumn = updatedNodes.filter(
+          (n) => !n.parentId && n.type === "policyNode",
         );
-        const colHeight = (policyColumn.length - 1) * 90;
-        policyColumn.forEach((n, i) => {
-          n.position = { x: 480, y: -colHeight / 2 + i * 90 };
-        });
+        if (policyColumn.length > 1) {
+          const policyName = (n: Node) =>
+            ((n.data as { policy?: { name?: string } })?.policy?.name ?? "")
+              .toLowerCase();
+          policyColumn.sort((a, b) =>
+            policyName(a).localeCompare(policyName(b)),
+          );
+          const colHeight = (policyColumn.length - 1) * 90;
+          policyColumn.forEach((n, i) => {
+            n.position = { x: 480, y: -colHeight / 2 + i * 90 };
+          });
+        }
+      } else {
+        // Destination column: live views center destination groups AND
+        // destination resources as ONE column (x 1000, pitch 100) — the
+        // draft build's resources are `resourceNode`s (a separate layout
+        // bucket at 1400/80) and destination peers are `peerNode`s (stacked
+        // at x=0 with the sources), so restack them together at the live
+        // rhythm, keeping the layout's top-to-bottom order.
+        const destColumn = updatedNodes.filter(
+          (n) =>
+            !n.parentId &&
+            destinationIds.has(n.id) &&
+            (n.type === "destinationGroupNode" ||
+              n.type === "resourceNode" ||
+              n.type === "peerNode"),
+        );
+        if (destColumn.length > 0) {
+          // Live concatenates [destination groups, destination resources] —
+          // groups on top, resources/peers below; within each block, ordered
+          // by the first policy that targets the node (live creates its
+          // destination nodes per-policy in that order). NOT node creation
+          // order — the draft dedups by entity id, so a node also used as a
+          // source elsewhere was created earlier than its live counterpart —
+          // and NOT layout y, which is meaningless across layout buckets.
+          const rank = (n: Node) => (n.type === "destinationGroupNode" ? 0 : 1);
+          const firstDestEdgeIndex = new Map<string, number>();
+          updatedEdges.forEach((e, i) => {
+            if (policyNodeIds.has(e.source) && !firstDestEdgeIndex.has(e.target))
+              firstDestEdgeIndex.set(e.target, i);
+          });
+          destColumn.sort(
+            (a, b) =>
+              rank(a) - rank(b) ||
+              (firstDestEdgeIndex.get(a.id) ?? 0) -
+                (firstDestEdgeIndex.get(b.id) ?? 0),
+          );
+          const colHeight = (destColumn.length - 1) * 100;
+          destColumn.forEach((n, i) => {
+            n.position = { x: 1000, y: -colHeight / 2 + i * 100 };
+          });
+        }
       }
 
       // Arrange the network frames in a STAGGERED GRID on the right instead
