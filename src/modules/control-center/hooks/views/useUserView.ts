@@ -42,6 +42,10 @@ export function useUserView() {
         data: {
           peer,
           enabled: true,
+          // Draft-style card look (bg + border), read-only: no connect
+          // handles in live mode.
+          variant: "card",
+          showHandles: false,
           onClick: () => {
             setPreviousSelectedUser(userId);
             forceSinglePeerViewRef.current(peer.id || "", userId);

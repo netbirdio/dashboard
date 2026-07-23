@@ -304,7 +304,7 @@ Shortcut badges are platform-aware via the shared `isMac` from `src/hooks/useOpe
 | `selectPeerNode`          | `select-peer-node`                           | Peer view (live)                                                                    |
 | `selectGroupNode`         | `select-group-node`                          | Group view (live)                                                                   |
 | `selectUserNode`          | `select-user-node`                           | User view (live)                                                                    |
-| `sourcePeerNode`          | `source-peer-{id}`                           | User view                                                                           |
+| `sourcePeerNode`          | `source-peer-{id}`                           | User view (draft-style card via `variant:"card"`, `showHandles:false` — PeerNode always renders the invisible AllHandles edge anchors; showHandles only gates the visible connect bubbles) |
 | `sourceGroupNode`         | `group-{id}`                                 | Group view                                                                          |
 | `destinationGroupNode`    | `group-{id}` or `dest-group-{id}-{policyId}` | Peer/Group/User views, draft (copy for self-ref policies)                           |
 | `expandedGroupPeer`       | `expanded-peer-{id}`                         | Expanded destination groups                                                         |

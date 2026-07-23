@@ -184,9 +184,12 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
         device={peer}
         className={cn("p-0", !isEnabled && "opacity-60", "w-auto")}
       />
+      {/* Like GroupNode: AllHandles always render (invisible edge anchors —
+          edges need them to attach); showHandles only gates the visible
+          connect bubbles. */}
+      <AllHandles />
       {showHandles && (
         <>
-          <AllHandles />
           <ConnectHandle type={"source"} position={Position.Left} />
           <ConnectHandle type={"source"} position={Position.Right} />
         </>
