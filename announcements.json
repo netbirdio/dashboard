@@ -1,8 +1,8 @@
 [
   {
-    "tag": "Preview",
-    "text": "The new NetBird desktop app is here - now available as a 0.75 release candidate.",
-    "link": "https://github.com/netbirdio/netbird/discussions/6483",
+    "tag": "New",
+    "text": "The new NetBird desktop app is GA on the latest 0.75.0 release",
+    "link": "https://netbird.io/knowledge-hub/netbird-v0-75-new-desktop-app",
     "linkText": "Learn more",
     "variant": "important",
     "isExternal": true,
