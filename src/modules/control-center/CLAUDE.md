@@ -38,7 +38,7 @@ DraftModeProvider          → isDraft, activeTool (select/hand)
 
 1. **`useControlCenterData()`** fetches all API data (policies, peers, networks, groups, users, resources) + derives `networkOptions` and `isDataReady`
 2. **View hooks** (`useGroupView`, `usePeerView`, `useUserView`, `useNetworkView`) build node/edge graphs for each view mode. They consume data and canvas state via context internally — no params needed.
-3. **`useSelectNodeHandlers({ views })`** owns all navigation, entity change handlers, view initialization effect, and onNodeClick. Only param is `views` (to break circular dep between handlers and view builders).
+3. **`useSelectNodeHandlers({ views })`** owns all navigation, entity change handlers, view initialization effect, and onNodeClick. Only param is `views` (to break circular dep between handlers and view builders). Its shared `fitView` waits (bounded rAF retries) until every target node has a measured size — returning to the page via client-side nav remounts with a warm SWR cache, so the view initializes before ReactFlow measured the new nodes and an immediate fit would misalign the camera.
 4. **`ControlCenterUIProvider`** calls the view hooks + handlers internally, wires up circular dependency refs, and provides everything to the UI via context.
 5. **`useDraft()`** manages draft mode — builds canvas from visible policies (source groups/peers → policy → destination groups/peers/resources), restores a persisted draft canvas after a reload, persists the draft canvas to localStorage (debounced), handles node connections to open policy modal.
 6. **`useCreateGroupOnCanvas()`** creates groups and adds them to canvas — via API in live mode, changeset-only in draft. Used by PeersToolbar and CanvasContextMenu.

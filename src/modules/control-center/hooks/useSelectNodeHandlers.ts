@@ -96,12 +96,25 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     // A running canvas transition owns the camera — its reveal does the fit.
     if (isCanvasTransitionActive()) return;
     const target = newNodes ?? nodes;
-    window.requestAnimationFrame(() => {
+    // Returning to the page via client-side nav remounts everything with a
+    // warm SWR cache: the view initializes on the very first commit, before
+    // ReactFlow has rendered/measured the new nodes — fitView would compute
+    // bounds from unmeasured nodes and misalign the camera. Wait (bounded)
+    // until every target node is in the store with a measured size.
+    const attempt = (triesLeft: number) => {
       if (target.length === 0) {
         // Center the flow origin mid-screen (a raw {0,0} viewport anchors it
         // at the top-left corner, making the next view's fit animation fly in
         // from far away).
         void reactFlow.setCenter(0, 0, { zoom: EMPTY_STATE_ZOOM });
+        return;
+      }
+      const stored = new Map(reactFlow.getNodes().map((n) => [n.id, n]));
+      const allMeasured = target.every(
+        (n) => (stored.get(n.id)?.measured?.width ?? 0) > 0,
+      );
+      if (!allMeasured && triesLeft > 0) {
+        window.requestAnimationFrame(() => attempt(triesLeft - 1));
         return;
       }
       reactFlow.fitView({
@@ -111,7 +124,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         maxZoom: 0.8,
         minZoom: DEFAULT_MIN_ZOOM,
       });
-    });
+    };
+    window.requestAnimationFrame(() => attempt(30));
   };
 
   // ---------------------------------------------------------------------------
