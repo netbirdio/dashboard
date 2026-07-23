@@ -47,6 +47,8 @@ const TRANSIENT_NODE_KEYS = new Set([
   "zIndex",
   // Drop-target highlight flag flipped during drags.
   "dropTarget",
+  // Focus-mode dimming (useGroupFocusDim) — visual only.
+  "className",
   // Drill-down navigation hides/reveals nodes; frame overflow rows are
   // hidden by the reconciling layout — derived state, not user changes.
   "hidden",

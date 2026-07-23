@@ -3,23 +3,21 @@ import {
   useCanvasState,
   useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
-// LIVE focus highlight: while a group's side panel is open, everything that
-// is NOT on the group's path dims to grayscale — the group, the policies it
-// feeds, and the networks/destinations those reach stay lit, so "group X →
-// policy → network Y" reads at a glance. Applied via node/edge `className`
-// (`cc-dimmed`, globals.css); cleared when the panel closes. Draft keeps its
-// editing visuals untouched.
+// Focus highlight (live AND draft): while a group's side panel is open (or
+// a peer/resource is focused), everything that is NOT on the node's path
+// dims to grayscale — the node, the policies it feeds, and the
+// networks/destinations those reach stay lit, so "group X → policy →
+// network Y" reads at a glance. Applied via node/edge `className`
+// (`cc-dimmed`, globals.css); cleared when the focus ends.
 export function useGroupFocusDim() {
   const { nodes, edges, setNodes, setEdges } = useCanvasState();
   const { selectedDestinationGroup, focusedNodeId } = useDestinationGroup();
-  const { isDraft } = useDraftMode();
 
   // Either a group (panel open) or a directly focused node (peer click in
   // the user view).
-  const focusGroup = !isDraft ? selectedDestinationGroup : "";
-  const focusNode = !isDraft ? focusedNodeId : "";
+  const focusGroup = selectedDestinationGroup;
+  const focusNode = focusedNodeId;
 
   useEffect(() => {
     const clear = () => {

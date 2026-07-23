@@ -104,8 +104,9 @@ function ControlCenterCanvas() {
   // moving dimmed nodes.
   const { selectedDestinationGroup, focusedNodeId, setFocusedNodeId } =
     useDestinationGroup();
-  const focusMode =
-    !draft.isDraft && (selectedDestinationGroup !== "" || focusedNodeId !== "");
+  // Focus mode applies in draft too — dims off-path nodes, locks node
+  // dragging (dragging pans until the focus is dismissed).
+  const focusMode = selectedDestinationGroup !== "" || focusedNodeId !== "";
   const { setHoveredNetworkNodeId } = useNetworkHover();
   const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragToGroup();
   useDrillDownBrowserHistory();
