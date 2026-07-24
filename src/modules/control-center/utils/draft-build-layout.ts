@@ -3,6 +3,7 @@ import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layout
 import { DEFAULT_LAYOUT_CONFIG } from "@/modules/control-center/utils/graph-builder";
 import {
   FRAME_GRID_BASE_X,
+  SOURCE_NODE_HALF_HEIGHT,
   isFrameNode,
   packFrameGrid,
 } from "@/modules/control-center/utils/helpers";
@@ -79,10 +80,9 @@ export const resolveNodeOverlaps = (nodes: Node[]) => {
 // (spacing 120, DEFAULT_LAYOUT_CONFIG — policies 500/60, destinations
 // 1000/100).
 //
-// `liveNodes` (draft rebuild only) supplies measured sizes for fresh,
-// not-yet-measured nodes and the live anchor frame that pins the draft to
-// the live canvas position; Auto Arrange runs on measured nodes and passes
-// none — its fitView re-centers the camera anyway.
+// `liveNodes` (draft rebuild only) supplies the live anchor frame that pins
+// the draft to the live canvas position; Auto Arrange passes none — its
+// fitView re-centers the camera anyway.
 export const applyDraftBuildLayout = (
   allNodes: Node[],
   allEdges: Edge[],
@@ -226,33 +226,13 @@ export const applyDraftBuildLayout = (
   // layout's far column and the live-anchor shift below drags the
   // source/policy columns out of line with it.
   if (frames.length > 0) {
-    // Same x-origin as the live overview (the hierarchical layout put
-    // frames at its far column, which left a much wider policy → network
-    // gap than live), centered on the vertical middle of the REST of the
-    // scene (source groups / policies) — the hierarchical columns aren't
-    // guaranteed to center at 0.
-    const baseX = FRAME_GRID_BASE_X;
-    const others = updatedNodes.filter((n) => !isFrameNode(n) && !n.parentId);
-    const othersMid =
-      others.length > 0
-        ? (Math.min(...others.map((n) => n.position.y)) +
-            Math.max(
-              ...others.map(
-                (n) =>
-                  n.position.y +
-                  // Fresh rebuild nodes aren't measured yet — fall back
-                  // to the live twin's measured height (the adoption
-                  // post-pass runs later), else the 80px guess skews the
-                  // frame-grid midline vs the columns by ~16px.
-                  (n.measured?.height ??
-                    n.initialHeight ??
-                    liveNodes.find((l) => l.id === n.id)?.measured?.height ??
-                    (Number(n.style?.height) || 80)),
-              ),
-            )) /
-          2
-        : 5;
-    packFrameGrid(frames, baseX, othersMid);
+    // Same x-origin AND the same FIXED vertical midline as the live
+    // overview (packFrameGrid at SOURCE_NODE_HALF_HEIGHT). Deriving the
+    // midline from the columns' measured pixel boxes always landed a few
+    // px off the live value — and since the scene is then anchored to the
+    // live frame position (below), that delta shifted the source/policy
+    // columns on every live↔draft switch.
+    packFrameGrid(frames, FRAME_GRID_BASE_X, SOURCE_NODE_HALF_HEIGHT);
   }
 
   // Nodes the columns above don't claim (e.g. a standalone resource in a
