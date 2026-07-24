@@ -18,8 +18,11 @@ import {
 } from "lucide-react";
 import { Node } from "@xyflow/react";
 import { cn } from "@utils/helpers";
+import { mutate } from "swr";
 import { Policy } from "@/interfaces/Policy";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
+import { usePolicies } from "@/contexts/PoliciesProvider";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
@@ -78,8 +81,15 @@ export const NodeContextMenu = ({
   const menuRef = useRef<HTMLDivElement>(null);
   // Where the menu renders — flipped/clamped away from the viewport edges.
   const menuPosition = useEdgeAwareMenuPosition(position, menuRef);
-  const { nodes, setNodes, setEdges, setSelectedDestinationGroup } =
-    useCanvasState();
+  const {
+    nodes,
+    setNodes,
+    setEdges,
+    setSelectedDestinationGroup,
+    refreshLiveViewRef,
+  } = useCanvasState();
+  const { updatePolicy, serializeRules } = usePolicies();
+  const { permission } = usePermissions();
   const { isDraft, setResourceEditor, setRoutingPeerModal, setNetworkEditor } =
     useDraftMode();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
@@ -398,16 +408,86 @@ export const NodeContextMenu = ({
     removeNodeWithEdges,
   ]);
 
+  // ---- Policy actions (live) ----
+
+  // The canvas node's policy may predate the last save — the SWR list is the
+  // freshest copy of a live policy.
+  const livePolicy = useMemo(
+    () =>
+      (nodePolicy?.id &&
+        policies?.find((p) => p.id === nodePolicy.id)) ||
+      nodePolicy,
+    [policies, nodePolicy],
+  );
+
+  // Live actions hit the real account — every one confirms first.
+  const handleLiveEditPolicy = useCallback(async () => {
+    if (!livePolicy?.id) return;
+    const choice = await confirm({
+      title: `Edit policy “${livePolicy.name ?? "Policy"}”?`,
+      description:
+        "You are in live mode — saving your changes will apply them to your account immediately.",
+      confirmText: "Edit",
+      cancelText: "Cancel",
+      type: "warning",
+    });
+    if (!choice) return;
+    setSelectedPolicy(livePolicy.id);
+    setPolicyModalOpen(true);
+  }, [livePolicy, confirm, setSelectedPolicy, setPolicyModalOpen]);
+
+  const handleLiveTogglePolicy = useCallback(async () => {
+    if (!livePolicy?.id) return;
+    const enabled = !(livePolicy.enabled ?? true);
+    const choice = await confirm({
+      title: `${enabled ? "Enable" : "Disable"} policy “${
+        livePolicy.name ?? "Policy"
+      }”?`,
+      description: `You are in live mode — the policy will be ${
+        enabled ? "enabled" : "disabled"
+      } on your account immediately.`,
+      confirmText: enabled ? "Enable" : "Disable",
+      cancelText: "Cancel",
+      type: "warning",
+    });
+    if (!choice) return;
+    updatePolicy(
+      livePolicy,
+      { enabled, rules: serializeRules(livePolicy.rules, enabled) },
+      (p) => {
+        mutate("/policies");
+        // Same in-place canvas patch as a live modal save — no fitView,
+        // no refetch wait.
+        refreshLiveViewRef.current(p);
+      },
+      enabled
+        ? "The policy was successfully enabled"
+        : "The policy was successfully disabled",
+    );
+  }, [livePolicy, confirm, updatePolicy, serializeRules, refreshLiveViewRef]);
+
   // ---- Menu items ----
 
   const items: MenuItem[] = useMemo(() => {
-    // Live mode keeps the simple canvas-only actions.
-    if (!isDraft || !node) {
+    if (!node) return [];
+
+    // Live mode: only policy nodes get a menu (see onNodeContextMenu) —
+    // Edit and Disable/Enable act on the real account behind confirmations.
+    // No Delete in live; deleting stays a draft/deploy flow.
+    if (!isDraft) {
+      if (node.type !== "policyNode" || !nodePolicy?.id) return [];
+      if (!permission.policies.update) return [];
+      const enabled = livePolicy?.enabled ?? true;
       return [
         {
-          label: "Remove",
-          icon: <CircleMinusIcon size={14} />,
-          onClick: handleRemove,
+          label: "Edit",
+          icon: <SquarePenIcon size={14} />,
+          onClick: () => void handleLiveEditPolicy(),
+        },
+        {
+          label: enabled ? "Disable" : "Enable",
+          icon: enabled ? <PowerOffIcon size={14} /> : <PowerIcon size={14} />,
+          onClick: () => void handleLiveTogglePolicy(),
         },
       ];
     }
@@ -623,6 +703,11 @@ export const NodeContextMenu = ({
     isDraft,
     node,
     nodeId,
+    nodePolicy,
+    livePolicy,
+    permission.policies.update,
+    handleLiveEditPolicy,
+    handleLiveTogglePolicy,
     policyEnabled,
     handleRemove,
     removeGroup,
@@ -657,7 +742,7 @@ export const NodeContextMenu = ({
 
   return (
     <>
-      {position && (
+      {position && items.length > 0 && (
         <div
           ref={menuRef}
           className="fixed z-50 min-w-[180px] rounded-md border border-nb-gray-900 bg-nb-gray-940 p-1 shadow-lg animate-in fade-in-0 zoom-in-95"

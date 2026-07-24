@@ -8,7 +8,10 @@ import {
   useNodeId,
 } from "@xyflow/react";
 import * as React from "react";
-import { useCanvasUI } from "@/modules/control-center/ControlCenterContext";
+import {
+  useCanvasUI,
+  useDestinationGroup,
+} from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
@@ -34,9 +37,10 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
     (c) => c.inProgress && c.fromNode?.id !== nodeId,
   );
 
-  // Halo only while the context menu targets this policy — NOT while its modal
-  // is open (left-click opens the modal and shouldn't leave a lingering ring).
-  const showHalo = contextMenuNodeId === id;
+  // Halo while the context menu targets this policy, and while it's the
+  // focused node (left-click focus mode) — same ring the other nodes show.
+  const { focusedNodeId } = useDestinationGroup();
+  const showHalo = contextMenuNodeId === id || focusedNodeId === id;
 
   return (
     <div

@@ -11,7 +11,6 @@ import { DEFAULT_MIN_ZOOM, EMPTY_STATE_ZOOM } from "@/modules/control-center/uti
 import { getFirstGroup } from "@/modules/control-center/utils/helpers";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
 import { Policy } from "@/interfaces/Policy";
@@ -75,7 +74,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     isLoading,
   } = useControlCenterData();
 
-  const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const { setFocusedNodeId } = useDestinationGroup();
   const { isDraft } = useDraftMode();
 
@@ -439,11 +437,16 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       if (!isDraft && isResourceNode && !frameChildNetworkId) {
         setFocusedNodeId(_node.id);
       }
-      // Works for draft-created policies too ("new-…") — the policy provider
-      // resolves those from the canvas node data.
-      if (policyId) {
-        setSelectedPolicy(policyId);
-        setPolicyModalOpen(true);
+      // Clicking a policy or a peer focuses its path (live AND draft) —
+      // policy editing moved to the node's context menu.
+      const isPeerNode =
+        _node.type === "peerNode" ||
+        _node.type === "sourcePeerNode" ||
+        _node.type === "expandedGroupPeer";
+      if (policyId || isPeerNode) {
+        // One focus at a time — this focus supersedes a group focus.
+        setSelectedDestinationGroup("");
+        setFocusedNodeId(_node.id);
       }
     },
     [onNetworkSelect, onDestinationGroupSelect, currentView, isDraft, setFocusedNodeId],
