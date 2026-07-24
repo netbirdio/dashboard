@@ -5,6 +5,7 @@ import { SegmentedTabs } from "@components/SegmentedTabs";
 import { GitPullRequestArrowIcon, PencilLineIcon } from "lucide-react";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import Button from "@components/Button";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDiscardDraft } from "@/modules/control-center/draft/useDiscardDraft";
@@ -83,6 +84,13 @@ export const DraftModeSwitcher = ({}: Props) => {
           >
             <PencilLineIcon size={12} />
             Draft
+            {/* Same Beta treatment as the sidebar's Reverse Proxy entry. */}
+            <SmallBadge
+              text={"Beta"}
+              variant={"sky"}
+              className={"text-[8px] leading-none py-[3px] px-[5px]"}
+              textClassName={"top-0"}
+            />
           </SegmentedTabs.Trigger>
         </SegmentedTabs.List>
       </SegmentedTabs>
