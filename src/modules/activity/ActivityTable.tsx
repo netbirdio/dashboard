@@ -50,6 +50,7 @@ export default function ActivityTable({
   headingTarget,
 }: Props) {
   const t = useTranslations("activity");
+  const tCommon = useTranslations("common");
   const tPeers = useTranslations("peers");
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -135,7 +136,7 @@ export default function ActivityTable({
     () => [
       {
         id: "activity_code",
-        label: "Type",
+        label: tCommon("type"),
         renderPicker: (p) => (
           <ActivityTypePicker
             value={p.value as string[] | undefined}
@@ -148,7 +149,7 @@ export default function ActivityTable({
       },
       {
         id: "initiator_email",
-        label: "Initiator",
+        label: t("initiator"),
         renderPicker: (p) => (
           <UsersPicker
             value={p.value as string | undefined}
@@ -161,7 +162,7 @@ export default function ActivityTable({
           formatUsersChip(v as string | undefined, userOptions),
       },
     ],
-    [events, userOptions],
+    [events, t, tCommon, userOptions],
   );
 
   return (

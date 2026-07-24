@@ -27,6 +27,7 @@ import {
 import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import dayjs from "dayjs";
 import React, { useCallback, useMemo, useState } from "react";
@@ -57,12 +58,13 @@ import ReverseProxyEventExpandedRow from "@/modules/reverse-proxy/events/Reverse
 export const makeEventsColumns = (
   servicesMap: Map<string, ReverseProxy>,
   userById: Map<string, User>,
+  t: ReturnType<typeof useTranslations>,
 ): ColumnDef<ReverseProxyEvent>[] => [
   {
     id: "timestamp",
     header: ({ column }) => (
       <DataTableHeader column={column} name="timestamp">
-        Time
+        {t("time")}
       </DataTableHeader>
     ),
     cell: ({ row }) => (
@@ -78,7 +80,7 @@ export const makeEventsColumns = (
       `${row.source_ip} ${row.city_name || ""} ${row.country_code || ""}`,
     header: ({ column }) => (
       <DataTableHeader column={column} name="source_ip">
-        Location / IP
+        {t("locationIp")}
       </DataTableHeader>
     ),
     cell: ({ row }) => (
@@ -91,7 +93,7 @@ export const makeEventsColumns = (
     accessorKey: "method",
     header: ({ column }) => (
       <DataTableHeader column={column} name="method">
-        Request
+        {t("request")}
       </DataTableHeader>
     ),
     cell: ({ row }) => (
@@ -112,7 +114,7 @@ export const makeEventsColumns = (
     accessorKey: "status_code",
     header: ({ column }) => (
       <DataTableHeader column={column} name="status_code">
-        Status
+        {t("status")}
       </DataTableHeader>
     ),
     cell: ({ row }) => (
@@ -138,7 +140,7 @@ export const makeEventsColumns = (
     accessorFn: (row) => (row.bytes_download ?? 0) + (row.bytes_upload ?? 0),
     header: ({ column }) => (
       <DataTableHeader column={column} sorting={false}>
-        Bytes
+        {t("bytes")}
       </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsBytesCell event={row.original} />,
@@ -151,7 +153,7 @@ export const makeEventsColumns = (
     },
     header: ({ column }) => (
       <DataTableHeader column={column} name="user_id">
-        User
+        {t("user")}
       </DataTableHeader>
     ),
     cell: ({ row }) => (
@@ -174,6 +176,8 @@ type Props = {
 export default function ReverseProxyEventsTable({
   headingTarget,
 }: Readonly<Props>) {
+  const t = useTranslations("reverseProxy");
+  const tCommon = useTranslations("common");
   const {
     data: events,
     isLoading,
@@ -207,8 +211,8 @@ export default function ReverseProxyEventsTable({
   }, [users]);
 
   const columns = useMemo(
-    () => makeEventsColumns(servicesMap, userById),
-    [servicesMap, userById],
+    () => makeEventsColumns(servicesMap, userById, t),
+    [servicesMap, t, userById],
   );
 
   const activeStatus = getFilter("status");
@@ -246,16 +250,16 @@ export default function ReverseProxyEventsTable({
 
   const statusOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: "success", label: "Success", dotClass: "bg-green-500" },
-      { value: "failed", label: "Failed", dotClass: "bg-red-500" },
+      { value: undefined, label: tCommon("all"), dotClass: "bg-nb-gray-500" },
+      { value: "success", label: tCommon("success"), dotClass: "bg-green-500" },
+      { value: "failed", label: tCommon("failed"), dotClass: "bg-red-500" },
     ],
-    [],
+    [tCommon],
   );
 
   const methodOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
+      { value: undefined, label: tCommon("all") },
       { value: "GET", label: "GET" },
       { value: "POST", label: "POST" },
       { value: "PUT", label: "PUT" },
@@ -264,7 +268,7 @@ export default function ReverseProxyEventsTable({
       { value: "HEAD", label: "HEAD" },
       { value: "OPTIONS", label: "OPTIONS" },
     ],
-    [],
+    [tCommon],
   );
 
   const userOptions = useMemo<UserOption[]>(() => {
@@ -284,7 +288,7 @@ export default function ReverseProxyEventsTable({
     () => [
       {
         id: "status_filter",
-        label: "Status",
+        label: t("status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -301,7 +305,7 @@ export default function ReverseProxyEventsTable({
       },
       {
         id: "method",
-        label: "Method",
+        label: t("method"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -318,7 +322,7 @@ export default function ReverseProxyEventsTable({
       },
       {
         id: "user",
-        label: "User",
+        label: t("user"),
         renderPicker: (p) => (
           <UsersPicker
             value={p.value as string | undefined}
@@ -338,7 +342,7 @@ export default function ReverseProxyEventsTable({
       },
       {
         id: "location_ip",
-        label: "Location / IP",
+        label: t("locationIp"),
         renderPicker: (p) => (
           <TextInputPicker
             value={p.value as string | undefined}
@@ -348,13 +352,13 @@ export default function ReverseProxyEventsTable({
               setFilter("source_ip", trimmed ? trimmed : undefined);
             }}
             close={p.close}
-            placeholder={"e.g. 10.0.0.5 or Berlin"}
+            placeholder={t("locationIpPlaceholder")}
           />
         ),
         formatChip: (v) => formatTextChip(v as string | undefined),
       },
     ],
-    [statusOptions, methodOptions, userOptions, setFilter],
+    [methodOptions, setFilter, statusOptions, t, userOptions],
   );
 
   const initialColumnFilters = useMemo<{ id: string; value: unknown }[]>(() => {
@@ -388,7 +392,7 @@ export default function ReverseProxyEventsTable({
       isLoading={isLoading}
       inset={false}
       tableCellClassName={"py-1 px-2"}
-      text={"Proxy Events"}
+      text={t("proxyEvents")}
       sorting={sorting}
       setSorting={setSorting}
       columns={columns}
@@ -404,7 +408,7 @@ export default function ReverseProxyEventsTable({
       renderExpandedRow={(event) => (
         <ReverseProxyEventExpandedRow event={event} />
       )}
-      searchPlaceholder={"Search by IP, host, path, user..."}
+      searchPlaceholder={t("searchProxyEvents")}
       getStartedCard={
         <GetStartedTest
           icon={
@@ -416,18 +420,16 @@ export default function ReverseProxyEventsTable({
               size={"large"}
             />
           }
-          title={"No Proxy Events Yet"}
-          description={
-            "No proxy traffic yet. Events appear here once your reverse proxy services start serving requests."
-          }
+		  title={t("noProxyEventsTitle")}
+		  description={t("noProxyEventsDescription")}
           learnMore={
             <>
-              Learn more about
+			  {tCommon("learnMoreAbout")} {" "}
               <InlineLink
                 href={REVERSE_PROXY_EVENTS_DOCS_LINK}
                 target={"_blank"}
               >
-                Proxy Events
+				{t("proxyEvents")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>

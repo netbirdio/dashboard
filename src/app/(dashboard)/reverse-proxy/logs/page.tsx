@@ -6,11 +6,14 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
+import dayjs from "dayjs";
 import { ExternalLinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
+import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import ServerPaginationProvider from "@/contexts/ServerPaginationProvider";
 import { REVERSE_PROXY_EVENTS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -25,6 +28,15 @@ export default function ProxyLogsPage() {
 
 	const { ref: headingRef, portalTarget } =
 		usePortalElement<HTMLHeadingElement>();
+	const defaultFilters = useMemo(
+		() => ({
+			start_date: dayjs().subtract(7, "day").startOf("day").toISOString(),
+			end_date: dayjs().endOf("day").toISOString(),
+			sort_by: "timestamp",
+			sort_order: "desc",
+		}),
+		[],
+	);
 
 	return (
 		<PageContainer>
@@ -53,9 +65,17 @@ export default function ProxyLogsPage() {
 					page={t("accessLogs")}
 					hasAccess={permission.services?.read}
 				>
-					<Suspense fallback={<SkeletonTable />}>
-						<ReverseProxyEventsTable headingTarget={portalTarget} />
-					</Suspense>
+					<ServerPaginationProvider
+						url="/events/proxy"
+						defaultPageSize={25}
+						defaultFilters={defaultFilters}
+					>
+						<PeersProvider>
+							<Suspense fallback={<SkeletonTable />}>
+								<ReverseProxyEventsTable headingTarget={portalTarget} />
+							</Suspense>
+						</PeersProvider>
+					</ServerPaginationProvider>
 				</RestrictedAccess>
 			</div>
 		</PageContainer>

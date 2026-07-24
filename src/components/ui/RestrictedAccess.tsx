@@ -63,7 +63,8 @@ export const RestrictedAccess = ({
                       <h1
                         className={"text-3xl font-medium max-w-xl mx-auto mt-3"}
                       >
-                        {t("restrictedAccessHeading")} <br /> {page}
+                        {t("restrictedAccessHeading")} <br />
+                        {page ?? t("thisPage")}
                       </h1>
                       <Paragraph className={"justify-center my-3"}>
                         {t("restrictedAccessDescription")}

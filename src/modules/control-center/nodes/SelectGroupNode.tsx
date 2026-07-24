@@ -46,7 +46,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
     const peerCount = group?.peers_count || 0;
     const resourceCount = group?.resources_count || 0;
     if (resourceCount === 0) {
-      return t("nGroups", { n: peerCount });
+      return t("nPeers", { n: peerCount });
     }
     if (peerCount === 0) {
       return t("nResources", { n: resourceCount });

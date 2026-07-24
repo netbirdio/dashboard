@@ -23,7 +23,7 @@ export function DataTableMultiSelectPopup<T>({
   const t = useTranslations('table');
   const count = selectedItems?.length || 0;
   const defaultLabel = label ? `${count} ${label}` : t('selected', { count });
-  
+
   return (
     <AnimatePresence>
       {count > 0 && (
