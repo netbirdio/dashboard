@@ -107,10 +107,17 @@ const PickerContent = ({
       name: values.name,
       description: values.description,
     });
-    setTimeout(
-      () => assignResourceToNetwork({ resourceNodeId, networkNodeId }),
-      0,
-    );
+    // The frame reaches the ReactFlow store only after the next React
+    // commit — assigning immediately (or on a 0ms timeout) can run before
+    // it exists, silently leaving the resource unparented. Wait for it.
+    const tryAssign = (attempt = 0) => {
+      if (reactFlow.getNodes().some((n) => n.id === networkNodeId)) {
+        assignResourceToNetwork({ resourceNodeId, networkNodeId });
+        return;
+      }
+      if (attempt < 60) requestAnimationFrame(() => tryAssign(attempt + 1));
+    };
+    tryAssign();
     setCreating(false);
     onClose();
   };

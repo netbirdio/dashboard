@@ -356,6 +356,22 @@ export function useDraftNodeCreation() {
 
       reactFlow.setNodes((prev) => {
         const alreadyPresent = new Set(prev.map((n) => n.id));
+        // Everything that belongs inside the frame: the network's API
+        // resources already on the canvas, plus standalone DRAFT resources
+        // the user assigned to this network via the picker before the frame
+        // existed (their draftNetwork ref points at this network id).
+        const allChildIds = new Set(childIds);
+        prev.forEach((n) => {
+          if (
+            !n.parentId &&
+            !allChildIds.has(n.id) &&
+            n.type === NodeType.ResourceNode &&
+            (n.data as { draftNetwork?: { networkId?: string } })?.draftNetwork
+              ?.networkId === network.id
+          ) {
+            allChildIds.add(n.id);
+          }
+        });
         // A resource of this network already on the canvas (dropped standalone)
         // must be REPARENTED into the frame, not duplicated — same node id.
         const reparent = (n: Node, index: number): Node => ({
@@ -386,11 +402,16 @@ export function useDraftNodeCreation() {
         // requires parents to precede children): keep unrelated nodes, then
         // frame, then all its children (reparented existing + new).
         let idx = 0;
-        const others = prev.filter((n) => !childIds.has(n.id));
+        const others = prev.filter((n) => !allChildIds.has(n.id));
         const reparented = prev
-          .filter((n) => childIds.has(n.id))
+          .filter((n) => allChildIds.has(n.id))
           .map((n) => reparent(n, idx++));
         newChildren.forEach((n) => (n.position = getFrameChildPosition(idx++)));
+        // idx = total children — adopted draft resources grow the frame too.
+        frame.style = {
+          ...frame.style,
+          height: getNetworkFrameHeight(Math.max(idx, 1)),
+        };
         frame.zIndex = getTopZIndex(prev);
         return [...others, frame, ...reparented, ...newChildren];
       });
