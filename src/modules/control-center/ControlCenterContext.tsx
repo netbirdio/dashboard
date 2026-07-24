@@ -2,12 +2,14 @@
 
 import React, {
   createContext,
+  useCallback,
   useContext,
   useMemo,
   useRef,
   useState,
 } from "react";
 import {
+  applyNodeChanges,
   Edge,
   Node,
   OnEdgesChange,
@@ -31,6 +33,7 @@ import { useNetworkView } from "@/modules/control-center/hooks/views/useNetworkV
 import { useSelectNodeHandlers } from "@/modules/control-center/hooks/useSelectNodeHandlers";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { DestinationGroupPanel } from "@/modules/control-center/DestinationGroupPanel";
+import { ensureParentsBeforeChildren } from "@/modules/control-center/utils/helpers";
 
 // ---- Canvas State Context ----
 
@@ -135,7 +138,19 @@ export function CanvasStateProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [nodes, setNodes] = useNodesState<Node>([]);
+  // Controlled-flow change application (what useNodesState's onNodesChange
+  // does) PLUS the parents-before-children reconcile: applyNodeChanges keeps
+  // replaced nodes at their original index, so a reparent issued through
+  // `instance.setNodes` (frame drop adoption, assign-to-network) can leave a
+  // child in front of its frame — ReactFlow then drops the containment.
+  const onNodesChange: OnNodesChange<Node> = useCallback(
+    (changes) =>
+      setNodes((prev) =>
+        ensureParentsBeforeChildren(applyNodeChanges(changes, prev)),
+      ),
+    [setNodes],
+  );
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [layoutInitialized, setLayoutInitialized] = useState(false);
   const { loggedInUser } = useLoggedInUser();

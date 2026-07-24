@@ -20,6 +20,7 @@ import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPo
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import {
+  ensureParentsBeforeChildren,
   getFrameChildPosition,
   getLiveFrameGrid,
   isFrameNode,
@@ -111,7 +112,9 @@ export function useDraft() {
       // pending changes' canvas state.
       const persisted = loadDraftCanvas();
       if (persisted && (persisted.nodes.length > 0 || changeCount > 0)) {
-        setNodes(persisted.nodes);
+        // Snapshots saved before the parents-before-children reconcile can
+        // carry a child ahead of its frame — heal the order on restore.
+        setNodes(ensureParentsBeforeChildren(persisted.nodes));
         setEdges(persisted.edges);
         if (persisted.nodes.length > 0) {
           setTimeout(() => {

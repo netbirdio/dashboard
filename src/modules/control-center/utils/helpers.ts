@@ -457,6 +457,44 @@ export const isFrameNode = (node?: {
   (node.id.startsWith("network-new-") ||
     !!(node.data as { frame?: boolean } | undefined)?.frame);
 
+// ReactFlow requires parent nodes to PRECEDE their children in the nodes
+// array. Reparenting callers (frame drop adoption, assign-to-network) build a
+// correctly ordered array, but on a controlled flow `instance.setNodes`
+// round-trips through applyNodeChanges, which keeps replaced nodes at their
+// ORIGINAL index — a resource older than its frame silently stays in front of
+// it and renders unparented at frame-relative coordinates. Reconciles the
+// invariant: children re-emit right after their parent (stable otherwise).
+// Returns the SAME array when nothing is violated (per-change hot path).
+export const ensureParentsBeforeChildren = (
+  nodes: CanvasNode[],
+): CanvasNode[] => {
+  const indexOf = new Map(nodes.map((n, i) => [n.id, i]));
+  const violated = nodes.some((n, i) => {
+    const parentIdx = n.parentId ? indexOf.get(n.parentId) : undefined;
+    return parentIdx !== undefined && parentIdx > i;
+  });
+  if (!violated) return nodes;
+
+  const childrenOf = new Map<string, CanvasNode[]>();
+  const roots: CanvasNode[] = [];
+  nodes.forEach((n) => {
+    if (n.parentId && indexOf.has(n.parentId)) {
+      const siblings = childrenOf.get(n.parentId) ?? [];
+      siblings.push(n);
+      childrenOf.set(n.parentId, siblings);
+    } else {
+      roots.push(n);
+    }
+  });
+  const out: CanvasNode[] = [];
+  const emit = (n: CanvasNode) => {
+    out.push(n);
+    childrenOf.get(n.id)?.forEach(emit);
+  };
+  roots.forEach(emit);
+  return out;
+};
+
 // A frame for a network that does NOT exist yet — it's tracked as a
 // create-network change and is editable/removable as a draft. Existing
 // networks dropped as frames are not draft networks.

@@ -85,7 +85,8 @@ export function ControlCenterPolicyProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { policies, peers, networkResources, groups } = useControlCenterData();
+  const { policies, peers, networkResources, networks, groups } =
+    useControlCenterData();
   const { nodes, edges, setLayoutInitialized, refreshLiveViewRef } =
     useCanvasState();
   const { isDraft } = useDraftMode();
@@ -484,11 +485,23 @@ export function ControlCenterPolicyProvider({
         );
         if (resource) {
           const nodeId = `resource-${resource.id}`;
+          // Stamp the owning network (like the sidebar's resource drop) so
+          // the standalone card shows its name instead of "No Network".
+          const owningNetwork = networks?.find((n) =>
+            n.resources?.some((rid) => rid === resource.id),
+          );
           if (
             ensureNode(
               nodeId,
               "resourceNode",
-              { resource, enabled },
+              {
+                resource,
+                enabled,
+                showHandles: true,
+                draftNetwork: owningNetwork?.id
+                  ? { networkId: owningNetwork.id, name: owningNetwork.name }
+                  : undefined,
+              },
               nextDestPosition(),
             )
           ) {
@@ -696,6 +709,7 @@ export function ControlCenterPolicyProvider({
       isDraft,
       peers,
       networkResources,
+      networks,
     ],
   );
 
