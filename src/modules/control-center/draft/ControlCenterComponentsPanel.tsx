@@ -1248,8 +1248,13 @@ const PanelContent = React.memo(
                   // Virtuoso and the scroll area would keep their first,
                   // invisible-mount measurements (wrong scrollbar size, or
                   // none at all). Remount the list on every open for a
-                  // fresh measure of the now-visible container.
-                  key={open ? "panel-open" : "panel-closed"}
+                  // fresh measure of the now-visible container. Category /
+                  // search-mode changes remount too — Virtuoso keeps its
+                  // scroll offset across data swaps, so switching tabs would
+                  // otherwise land mid-list at the previous tab's position.
+                  key={`${open ? "open" : "closed"}-${
+                    isSearching ? "search" : category
+                  }`}
                   data={flatRows}
                   overscan={300}
                   // Exact row height (h-[52px]) — headings are shorter and
