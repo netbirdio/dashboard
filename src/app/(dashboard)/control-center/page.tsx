@@ -4,6 +4,7 @@ import "@xyflow/react/dist/style.css";
 import {
   Background,
   EdgeTypes,
+  type Edge as FlowEdge,
   type Node as FlowNode,
   NodeTypes,
   ReactFlow,
@@ -187,6 +188,21 @@ function ControlCenterCanvas() {
   const stableOnNodeDragStart = useStableHandler(onNodeDragStart);
   const stableOnNodeDrag = useStableHandler(onNodeDrag);
   const stableOnNodeDragStop = useStableHandler(onNodeDragStop);
+  // Backspace/Delete gate: live mode deletes NOTHING (the canvas mirrors the
+  // account); draft deletes nodes but never standalone connections — edges
+  // only disappear with their endpoints or through explicit actions.
+  const stableOnBeforeDelete = useStableHandler(
+    async ({ nodes, edges }: { nodes: FlowNode[]; edges: FlowEdge[] }) => {
+      if (!draft.isDraft) return false;
+      const nodeIds = new Set(nodes.map((n) => n.id));
+      return {
+        nodes,
+        edges: edges.filter(
+          (e) => nodeIds.has(e.source) || nodeIds.has(e.target),
+        ),
+      };
+    },
+  );
   const stableOnInit = useStableHandler(
     (instance: { setCenter: (x: number, y: number, o?: object) => unknown }) =>
       void instance.setCenter(0, 0, { zoom: EMPTY_STATE_ZOOM }),
@@ -213,6 +229,7 @@ function ControlCenterCanvas() {
         onEdgesChange={canvas.onEdgesChange}
         proOptions={PRO_OPTIONS}
         onConnect={stableOnConnect}
+        onBeforeDelete={stableOnBeforeDelete}
         connectionLineComponent={ConnectionLine}
         onNodeClick={stableOnNodeClick}
         onNodeContextMenu={stableOnNodeContextMenu}
