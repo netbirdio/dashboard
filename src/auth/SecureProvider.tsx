@@ -4,6 +4,7 @@ import * as React from "react";
 import { useEffect } from "react";
 
 const QUERY_PARAMS_KEY = "netbird-query-params";
+const PRESERVE_QUERY_PARAMS_PATHS = ["/peer/ssh", "/peer/rdp", "/peer/vnc"];
 
 type StoredQueryParams = { path: string; params: string };
 
@@ -21,6 +22,12 @@ const VALID_PARAMS = [
   "page_size",
   "user",
   "port",
+  "ip_version",
+  "mode",
+  "quality",
+  "scale",
+  "resize",
+  "cursor",
 ];
 
 function filterAllowedParams(raw: string): string {
@@ -30,6 +37,13 @@ function filterAllowedParams(raw: string): string {
     for (const v of input.getAll(key)) output.append(key, v);
   }
   return output.toString();
+}
+
+function storeQueryParams(path: string, rawParams: string) {
+  const filtered = filterAllowedParams(rawParams);
+  if (!filtered) return;
+  const data: StoredQueryParams = { path, params: filtered };
+  localStorage.setItem(QUERY_PARAMS_KEY, JSON.stringify(data));
 }
 
 type Props = {
@@ -42,6 +56,15 @@ export const SecureProvider = ({ children }: Props) => {
   useEffect(() => {
     if (isAuthenticated) {
       try {
+        const params = window.location.search.substring(1);
+        // Persist on every render while on a remote-access path. The OIDC
+        // library can fire a redirect synchronously when an access token
+        // expires, before the !isAuthenticated branch of this effect ever
+        // runs, so the peer id would be lost across the round-trip otherwise.
+        if (PRESERVE_QUERY_PARAMS_PATHS.includes(currentPath) && params) {
+          storeQueryParams(currentPath, params);
+          return;
+        }
         const stored = localStorage.getItem(QUERY_PARAMS_KEY);
         if (stored && !window.location.search) {
           const data: StoredQueryParams = JSON.parse(stored);
@@ -59,14 +82,7 @@ export const SecureProvider = ({ children }: Props) => {
       try {
         const params = window.location.search.substring(1);
         if (params) {
-          const filtered = filterAllowedParams(params);
-          if (filtered) {
-            const data: StoredQueryParams = {
-              path: currentPath,
-              params: filtered,
-            };
-            localStorage.setItem(QUERY_PARAMS_KEY, JSON.stringify(data));
-          }
+          storeQueryParams(currentPath, params);
         }
       } catch (e) {}
     }

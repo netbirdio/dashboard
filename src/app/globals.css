@@ -84,6 +84,31 @@ p {
 
 
 /**
+ * VNC viewport: noVNC writes the cursor inline on the canvas it creates
+ * inside our container, not on the container itself. When there's no
+ * remote sprite yet the inline value is `cursor: none`, and once a Cursor
+ * pseudo-encoded sprite arrives it becomes `cursor: url(...)`. The :not()
+ * rule below forces the browser default arrow as long as the inline
+ * style isn't using a url(), so the user has a visible pointer in the
+ * gap before any sprite is delivered and the remote sprite still wins
+ * once it shows up. Skip this for vnc-cursor-remote so the second rule
+ * below can actually hide the pointer when compositing is on.
+ */
+.vnc-cursor:not(.vnc-cursor-remote) canvas:not([style*="url("]) {
+    cursor: default !important;
+}
+
+/**
+ * In "show remote cursor" mode the server composites its cursor sprite
+ * directly into the captured framebuffer, so the local pointer must be
+ * hidden to avoid two stacked cursors. Matches both the empty/none and
+ * url() inline cases.
+ */
+.vnc-cursor-remote canvas {
+    cursor: none !important;
+}
+
+/**
  * Timescape Root element
  */
 .timescape {
