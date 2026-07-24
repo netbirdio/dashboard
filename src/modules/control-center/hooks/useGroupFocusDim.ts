@@ -21,11 +21,13 @@ export function useGroupFocusDim() {
 
   useEffect(() => {
     const clear = () => {
-      if (nodes.some((n) => n.className === "cc-dimmed")) {
+      // draggable: true is the focus-root marker (see below) — nothing else
+      // sets a per-node draggable, so clearing it can't clobber other state.
+      if (nodes.some((n) => n.className === "cc-dimmed" || n.draggable)) {
         setNodes((prev) =>
           prev.map((n) =>
-            n.className === "cc-dimmed"
-              ? { ...n, className: undefined }
+            n.className === "cc-dimmed" || n.draggable
+              ? { ...n, className: undefined, draggable: undefined }
               : n,
           ),
         );
@@ -92,9 +94,18 @@ export function useGroupFocusDim() {
       let changed = false;
       const next = prev.map((n) => {
         const cls = keep.has(n.id) ? undefined : "cc-dimmed";
-        if ((n.className ?? undefined) === cls) return n;
+        // Focus mode turns global nodesDraggable off (dragging pans), but
+        // the FOCUSED node itself stays draggable — per-node draggable
+        // overrides the global flag.
+        const drag = n.id === root.id ? true : undefined;
+        if (
+          (n.className ?? undefined) === cls &&
+          (n.draggable ?? undefined) === drag
+        ) {
+          return n;
+        }
         changed = true;
-        return { ...n, className: cls };
+        return { ...n, className: cls, draggable: drag };
       });
       return changed ? next : prev;
     });
