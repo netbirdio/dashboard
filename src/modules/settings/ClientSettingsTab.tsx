@@ -20,18 +20,19 @@ import { useTranslations } from "next-intl";
 import {
 	ClockFadingIcon,
 	ExternalLinkIcon,
-	FlaskConicalIcon,
 	MonitorSmartphoneIcon,
 	AlertTriangle,
 	RefreshCcw,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
@@ -68,12 +69,16 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
 function ClientSettingsTabContent({ account }: Readonly<Props>) {
 	const t = useTranslations("settings");
 	const { permission } = usePermissions();
+	const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
 	const { mutate } = useSWRConfig();
 	const saveRequest = useApiCall<Account>("/accounts/" + account.id, true);
 
 	const [lazyConnection, setLazyConnection] = useState(
 		account.settings?.lazy_connection_enabled ?? false,
+	);
+	const [agentNetworkOnly, setAgentNetworkOnly] = useState(
+		account.settings?.agent_network_only ?? false,
 	);
 
 	const autoUpdateSetting = account.settings?.auto_update_version;
@@ -205,6 +210,28 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 		});
 	};
 
+	const toggleAgentNetworkOnly = async (toggle: boolean) => {
+		notify({
+			title: "Agent Network Focused View",
+			description: `Agent Network focused view successfully ${
+				toggle ? "enabled" : "disabled"
+			}.`,
+			promise: saveRequest
+				.put({
+					id: account.id,
+					settings: {
+						...account.settings,
+						agent_network_only: toggle,
+					},
+				})
+				.then(() => {
+					setAgentNetworkOnly(toggle);
+					mutate("/accounts");
+				}),
+			loadingMessage: "Updating Agent Network focused view setting...",
+		});
+	};
+
 	return (
 		<Tabs.Content value={"clients"}>
 			<div className={"p-default py-6 max-w-2xl"}>
@@ -228,6 +255,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 						disabled={isSaveButtonDisabled}
 						onClick={saveChanges}
 						data-cy={"save-clients-settings"}
+						data-testid={"save-clients-settings"}
 					>
 						{t("saveChanges")}
 					</Button>
@@ -355,12 +383,12 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 
 					<div>
 						<Label>
-							<FlaskConicalIcon size={15} />
-							{t("experimental")}
+							<ClockFadingIcon size={15} />
+							{t("lazyConnections")}
 						</Label>
 
 						<HelpText>
-							{t("experimentalHelp")}{" "}
+							{t("lazyConnectionsHelp")} {" "}
 							<InlineLink
 								href={"https://docs.netbird.io/how-to/lazy-connection"}
 								target={"_blank"}
@@ -373,22 +401,37 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 							className={"mt-2"}
 							value={lazyConnection}
 							onChange={toggleLazyConnection}
-							label={
-								<>
-									<ClockFadingIcon size={15} />
-									{t("enableLazyConnections")}
-								</>
-							}
+							data-testid="lazy-connections"
+							label={t("enableLazyConnections")}
 							helpText={
 								<>
-									Allow to establish connections between peers only when
-									required. This requires NetBird client v0.45 or higher.
-									Changes will only take effect after restarting the clients.
+									{t("enableLazyConnectionsHelp")}
 								</>
 							}
 							disabled={!permission.settings.update}
 						/>
 					</div>
+
+					{agentNetworkEnabled && (
+						<div>
+							<Label>
+								<AgentNetworkIcon size={15} />
+								{t("agentNetwork")}
+							</Label>
+							<HelpText>
+								{t("agentNetworkHelp")}
+							</HelpText>
+							<FancyToggleSwitch
+								className={"mt-2"}
+								value={agentNetworkOnly}
+								onChange={toggleAgentNetworkOnly}
+								data-testid="agent-network-only"
+								label={t("agentNetworkFocusedView")}
+								helpText={t("agentNetworkFocusedViewHelp")}
+								disabled={!permission.settings.update}
+							/>
+						</div>
+					)}
 				</div>
 			</div>
 		</Tabs.Content>

@@ -12,7 +12,6 @@ import SquareIcon from "@components/SquareIcon";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import useFetchApi from "@utils/api";
-import { isAgentNetworkEnabled, isAgentNetworkOnly } from "@utils/netbird";
 import {
   Background,
   Edge,
@@ -54,6 +53,7 @@ import AIProvidersProvider, {
   useAIProviders,
 } from "@/modules/agent-network/AIProvidersProvider";
 import { AIProviderId } from "@/modules/agent-network/data/mockData";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { FlowSelector, FlowView } from "@/modules/control-center/FlowSelector";
 import { NetworkRoutingPeerCount } from "@/modules/control-center/NetworkRoutingPeerCount";
 import { ControlCenterCurrentUserBadge } from "@/modules/control-center/user/ControlCenterCurrentUserBadge";
@@ -90,6 +90,8 @@ function ControlCenterView() {
   const [layoutInitialized, setLayoutInitialized] = useState(false);
   const [forceLayoutChange, setForceLayoutChange] = useState(false);
   const { loggedInUser } = useLoggedInUser();
+  const { only: agentNetworkOnly, enabled: agentNetworkEnabled } =
+    useAgentNetworkMode();
 
   const queryParams = useSearchParams();
   const queryTab = queryParams.get("tab");
@@ -125,13 +127,13 @@ function ControlCenterView() {
     "/agent-network/providers",
     true,
     true,
-    isAgentNetworkEnabled(),
+    agentNetworkEnabled,
   );
   const { data: agentPolicies } = useFetchApi<APIPolicy[]>(
     "/agent-network/policies",
     true,
     true,
-    isAgentNetworkEnabled(),
+    agentNetworkEnabled,
   );
 
   // providerById lets the overlay look up a Provider's display payload
@@ -1995,7 +1997,7 @@ function ControlCenterView() {
               {/* Networks is dropped as a top-level pivot in the
                   agent-network repackaging — keep the dropdown + per-network
                   chrome for everyone else so flag-off behaviour is unchanged. */}
-              {!isAgentNetworkOnly() && currentView === "networks" && (
+              {!agentNetworkOnly && currentView === "networks" && (
                 <div className={"w-64"}>
                   <SelectDropdown
                     variant={"secondary"}
@@ -2011,7 +2013,7 @@ function ControlCenterView() {
                 </div>
               )}
 
-              {!isAgentNetworkOnly() && selectedNetwork && currentNetwork && (
+              {!agentNetworkOnly && selectedNetwork && currentNetwork && (
                 <NetworkRoutingPeerCount network={currentNetwork} />
               )}
             </div>

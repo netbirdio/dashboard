@@ -112,7 +112,7 @@ export const AgentNetworkOnboarding = ({
             "h-full w-screen fixed z-[50] left-0 top-0 bg-nb-gray-950 flex overflow-y-auto"
           }
         >
-          <div>
+          <div data-testid={"agent-network-onboarding"}>
             <VisuallyHidden asChild>
               <DialogTitle>Agent Network Onboarding</DialogTitle>
             </VisuallyHidden>
@@ -123,7 +123,11 @@ export const AgentNetworkOnboarding = ({
             >
               <NetBirdLogo size={"large"} mobile={false} />
 
-              <div className={"w-full flex flex-col items-center pb-10 mt-8 sm:mt-10"}>
+              <div
+                className={
+                  "w-full flex flex-col items-center pb-10 mt-8 sm:mt-10"
+                }
+              >
                 <Card
                   className={cn(
                     "w-full",
@@ -153,7 +157,10 @@ export const AgentNetworkOnboarding = ({
                       />
                     )}
                     {step === STEP.PROVIDER && (
-                      <OnboardingAgentProvider onBack={goBack} onNext={goNext} />
+                      <OnboardingAgentProvider
+                        onBack={goBack}
+                        onNext={goNext}
+                      />
                     )}
                     {step === STEP.POLICY && (
                       <OnboardingAgentPolicy onBack={goBack} onNext={goNext} />

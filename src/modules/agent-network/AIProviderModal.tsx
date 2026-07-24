@@ -2,6 +2,7 @@
 
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink from "@components/InlineLink";
@@ -27,10 +28,11 @@ import {
   MinusCircleIcon,
   PlusCircle,
   PlusIcon,
+  ShieldOffIcon,
   Sparkles,
   UploadIcon,
 } from "lucide-react";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import {
   ReverseProxyDomain,
@@ -109,6 +111,10 @@ function upstreamUrlPlaceholder(providerId: AIProviderId): string {
       return "https://your-litellm-host";
     case "portkey":
       return "https://api.portkey.ai";
+    case "vllm":
+      return "https://your-vllm-host:8000";
+    case "kimi_api":
+      return "https://api.moonshot.ai";
     case "custom":
       return "https://your-llm-host";
     default:
@@ -130,6 +136,8 @@ function upstreamUrlHelpText(providerId: AIProviderId): string {
       return "Vercel AI Gateway uses a fixed endpoint; only the API key varies by operator. Apps choose the upstream provider with the model prefix, e.g. openai/gpt-5.4 or anthropic/claude-opus-4.6.";
     case "openrouter":
       return "OpenRouter uses a fixed endpoint, openrouter.ai/api/v1; apps choose the upstream provider via the model prefix, e.g. anthropic/claude-* or openai/gpt-*.";
+    case "vllm":
+      return "Your local vLLM server's OpenAI-compatible base URL.";
     default:
       return "Where NetBird forwards the traffic.";
   }
@@ -208,8 +216,17 @@ export default function AIProviderModal({
   const [identityHeaderGroups, setIdentityHeaderGroups] = useState<string>(
     provider?.identityHeaderGroups ?? "",
   );
+  const [skipTlsVerification, setSkipTlsVerification] = useState<boolean>(
+    provider?.skipTlsVerification ?? false,
+  );
+  const [metadataDisabled, setMetadataDisabled] = useState<boolean>(
+    provider?.metadataDisabled ?? false,
+  );
 
   const catalog = getById(providerId);
+  // Custom-kind providers (the generic "Custom" entry and named self-hosted
+  // ones like vLLM) share the self-hosted extras, e.g. Skip TLS verification.
+  const isCustomKind = catalog?.kind === "custom";
   const customizableHeaderPair =
     catalog?.identity_injection?.header_pair?.customizable === true;
   const customizableJsonMetadata =
@@ -250,7 +267,8 @@ export default function AIProviderModal({
     providerId === "bifrost" ||
     providerId === "cloudflare_ai_gateway" ||
     providerId === "vercel_ai_gateway" ||
-    providerId === "openrouter";
+    providerId === "openrouter" ||
+    providerId === "bedrock_api";
 
   // If the user flips provider type while viewing the Mappings tab and
   // the new type doesn't show mappings, snap back to the Provider tab
@@ -327,6 +345,8 @@ export default function AIProviderModal({
       setExtraValues(provider.extraValues ?? {});
       setIdentityHeaderUserId(provider.identityHeaderUserId ?? "");
       setIdentityHeaderGroups(provider.identityHeaderGroups ?? "");
+      setSkipTlsVerification(provider.skipTlsVerification ?? false);
+      setMetadataDisabled(provider.metadataDisabled ?? false);
     } else {
       const fallback = getById("openai_api");
       setProviderId("openai_api");
@@ -340,6 +360,8 @@ export default function AIProviderModal({
       setExtraValues({});
       setIdentityHeaderUserId("");
       setIdentityHeaderGroups("");
+      setSkipTlsVerification(false);
+      setMetadataDisabled(false);
     }
   };
 
@@ -390,6 +412,8 @@ export default function AIProviderModal({
         models,
         extraValues: sanitizedExtraValues,
         ...identityOverrides,
+        skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+        metadataDisabled,
         // Only forward the API key when the user actually rotated it
         ...(apiKey && apiKey !== "••••••••" ? { apiKey } : {}),
       });
@@ -404,21 +428,22 @@ export default function AIProviderModal({
       apiKey,
       extraValues: sanitizedExtraValues,
       ...identityOverrides,
+      skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+      metadataDisabled,
       models,
       enabled: true,
     });
     handleClose();
   };
 
-  // providerOptions are sorted into three groups, gateways first, so
-  // the catalog Select makes the routing-layer entries (LiteLLM,
-  // Portkey) prominent. SelectDropdown renders section headers
-  // automatically when options carry a `group` value; the section
-  // order tracks first-occurrence in the array.
+  // providerOptions are sorted into three groups, first-party AI Providers
+  // first, then AI Gateways, then the self-hosted / custom catch-all.
+  // SelectDropdown renders section headers automatically when options carry a
+  // `group` value; the section order tracks first-occurrence in the array.
   const providerOptions = useMemo(() => {
     const groupRank: Record<string, number> = {
-      gateway: 0,
-      provider: 1,
+      provider: 0,
+      gateway: 1,
       custom: 2,
     };
     const groupLabel: Record<string, string> = {
@@ -594,7 +619,20 @@ export default function AIProviderModal({
               </FormRow>
 
               <FormRow
-                label={"Upstream URL"}
+                label={
+                  providerId === "kimi_api" ? (
+                    <>
+                      Upstream URL
+                      <HelpTooltip
+                        content={
+                          "Moonshot AI's international platform endpoint. Keep the bare host. Moonshot serves both API shapes with the same key: the path an agent calls rides through to Moonshot, so its base URL picks the shape (Claude Code appends /anthropic; Kimi CLI and OpenAI shaped callers use the bare endpoint). Mainland China accounts use api.moonshot.cn instead."
+                        }
+                      />
+                    </>
+                  ) : (
+                    "Upstream URL"
+                  )
+                }
                 helpText={upstreamUrlHelpText(providerId)}
               >
                 <Input
@@ -603,6 +641,43 @@ export default function AIProviderModal({
                   placeholder={upstreamUrlPlaceholder(providerId)}
                 />
               </FormRow>
+
+              {isCustomKind && (
+                <FancyToggleSwitch
+                  value={skipTlsVerification}
+                  onChange={setSkipTlsVerification}
+                  label={
+                    <>
+                      <ShieldOffIcon size={15} />
+                      Skip TLS Verification
+                      <span onClick={(e) => e.stopPropagation()}>
+                        <HelpTooltip
+                          interactive
+                          content={
+                            <>
+                              Skips certificate validation on requests to this
+                              provider. Useful for quick testing against
+                              endpoints with self-signed certificates. For
+                              production we recommend mounting trusted
+                              certificates on your proxy instances instead.{" "}
+                              <InlineLink
+                                href={
+                                  "https://docs.netbird.io/agent-network/providers#skip-tls-verification"
+                                }
+                                target={"_blank"}
+                              >
+                                Learn more
+                                <ExternalLinkIcon size={12} />
+                              </InlineLink>
+                            </>
+                          }
+                        />
+                      </span>
+                    </>
+                  }
+                  helpText={"Disable upstream TLS certificate validation."}
+                />
+              )}
 
               {providerId === "vertex_ai_api" ? (
                 <FormRow
@@ -678,7 +753,7 @@ export default function AIProviderModal({
                     onChange={(e) => setApiKey(e.target.value)}
                     customPrefix={<KeyRound size={14} />}
                     placeholder={
-                      providerId === "openai_api"
+                      providerId === "openai_api" || providerId === "kimi_api"
                         ? "sk-..."
                         : providerId === "anthropic_api"
                         ? "sk-ant-..."
@@ -733,6 +808,23 @@ export default function AIProviderModal({
           {showMappings && providerId === "litellm_proxy" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
               <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                {/* The forwarding toggle sits first: it gates the identity
+                    mappings described below, so turning it off makes the fixed
+                    mapping that follows moot. */}
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the identity mappings below onto LiteLLM requests."
+                  }
+                />
+
                 <div>
                   <Label>Identity Mappings</Label>
                   <HelpText className={"mb-0"}>
@@ -935,6 +1027,61 @@ export default function AIProviderModal({
             </TabsContent>
           )}
 
+          {showMappings && providerId === "bedrock_api" && (
+            <TabsContent value={"mappings"} className={"pb-8"}>
+              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                {/* The forwarding toggle sits first: it gates the identity
+                    metadata described below, so turning it off makes the fixed
+                    mapping that follows moot. */}
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the identity metadata below onto Bedrock requests."
+                  }
+                />
+
+                <div>
+                  <Label>Identity Metadata</Label>
+                  <HelpText className={"mb-0"}>
+                    NetBird stamps the caller&apos;s identity into the{" "}
+                    <InlineLink
+                      href={
+                        "https://docs.aws.amazon.com/bedrock/latest/userguide/cost-mgmt-request-metadata.html"
+                      }
+                      target={"_blank"}
+                    >
+                      <code
+                        className={
+                          "text-xs font-mono bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        }
+                      >
+                        X-Amzn-Bedrock-Request-Metadata
+                      </code>
+                    </InlineLink>{" "}
+                    header, so you can break Bedrock spend down by user and
+                    group. Client-supplied values are stripped and sanitized.
+                  </HelpText>
+                </div>
+
+                <div
+                  className={
+                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
+                  }
+                >
+                  <MappingRow header={"user"} sourceLabel={"User Email"} />
+                  <MappingRow header={"group"} sourceLabel={"Groups"} />
+                </div>
+              </div>
+            </TabsContent>
+          )}
+
           {showMappings && providerId === "vercel_ai_gateway" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
               <div className={"px-8 pt-3 flex-col flex gap-4"}>
@@ -1112,8 +1259,11 @@ export default function AIProviderModal({
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
               Learn more about
-              <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
-                Agent Network
+              <InlineLink
+                href={"https://docs.netbird.io/agent-network/providers"}
+                target={"_blank"}
+              >
+                Agent Network Providers
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
@@ -1227,6 +1377,18 @@ type CatalogModelOption = {
   output_per_1k: number;
 };
 
+// priceToInput renders a stored price as an editable string, always using "."
+// as the decimal separator regardless of the browser locale.
+function priceToInput(n: number): string {
+  return Number.isFinite(n) ? String(n) : "";
+}
+
+// priceFromInput parses an operator-typed price, accepting a "," as the decimal
+// separator (some keyboards/locales) and normalising it to a plain number.
+function priceFromInput(s: string): number {
+  return parseFloat(s.replace(/,/g, ".")) || 0;
+}
+
 function ModelRowEditor({
   row,
   catalogModels,
@@ -1244,6 +1406,29 @@ function ModelRowEditor({
   onChangeOutput: (n: number) => void;
   onRemove: () => void;
 }) {
+  // Editable text for the price fields. We keep the raw string locally so the
+  // operator can type intermediate values ("0.", "0,00") without the number
+  // round-trip clobbering the cursor. The number is propagated to the parent
+  // on every change; a "." is always shown even in comma-decimal locales.
+  const [inputStr, setInputStr] = useState(() => priceToInput(row.inputPer1k));
+  const [outputStr, setOutputStr] = useState(() =>
+    priceToInput(row.outputPer1k),
+  );
+  // Re-sync when the price is set from outside (e.g. picking a catalog model
+  // fills its prices), but not while the operator is mid-typing the same value.
+  useEffect(() => {
+    if (priceFromInput(inputStr) !== row.inputPer1k) {
+      setInputStr(priceToInput(row.inputPer1k));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row.inputPer1k]);
+  useEffect(() => {
+    if (priceFromInput(outputStr) !== row.outputPer1k) {
+      setOutputStr(priceToInput(row.outputPer1k));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row.outputPer1k]);
+
   // Whether this provider type ships a catalog of preset models.
   // Stable across keystrokes — we mustn't let this flip mid-typing or
   // React will unmount the input and steal focus.
@@ -1290,21 +1475,25 @@ function ModelRowEditor({
       <div className={"w-[120px] shrink-0"}>
         <Label>Input $/1k</Label>
         <Input
-          type={"number"}
-          step={"0.0001"}
-          min={"0"}
-          value={row.inputPer1k}
-          onChange={(e) => onChangeInput(parseFloat(e.target.value) || 0)}
+          type={"text"}
+          inputMode={"decimal"}
+          value={inputStr}
+          onChange={(e) => {
+            setInputStr(e.target.value);
+            onChangeInput(priceFromInput(e.target.value));
+          }}
         />
       </div>
       <div className={"w-[120px] shrink-0"}>
         <Label>Output $/1k</Label>
         <Input
-          type={"number"}
-          step={"0.0001"}
-          min={"0"}
-          value={row.outputPer1k}
-          onChange={(e) => onChangeOutput(parseFloat(e.target.value) || 0)}
+          type={"text"}
+          inputMode={"decimal"}
+          value={outputStr}
+          onChange={(e) => {
+            setOutputStr(e.target.value);
+            onChangeOutput(priceFromInput(e.target.value));
+          }}
         />
       </div>
       <Button

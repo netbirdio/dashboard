@@ -2,7 +2,6 @@
 
 import { notify } from "@components/Notification";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { isAgentNetworkEnabled } from "@utils/netbird";
 import React, {
   createContext,
   useCallback,
@@ -22,6 +21,7 @@ import {
   PolicyLimits,
   ProviderModel,
 } from "@/modules/agent-network/data/mockData";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 
 export type APIProviderModel = {
   id: string;
@@ -47,6 +47,12 @@ export type APIProvider = {
   // stored here land on the wire.
   identity_header_user_id?: string;
   identity_header_groups?: string;
+  // Skip TLS certificate verification on upstream requests (custom providers
+  // with self-signed certs). Off by default.
+  skip_tls_verification?: boolean;
+  // Disable identity metadata injection (caller user + authorizing group) on
+  // upstream requests. Off by default (metadata is sent).
+  metadata_disabled?: boolean;
   enabled: boolean;
   created_at: string;
   updated_at: string;
@@ -63,6 +69,8 @@ export type APIProviderRequest = {
   extra_values?: Record<string, string>;
   identity_header_user_id?: string;
   identity_header_groups?: string;
+  skip_tls_verification?: boolean;
+  metadata_disabled?: boolean;
   models: APIProviderModel[];
   enabled?: boolean;
 };
@@ -78,6 +86,10 @@ export type ProviderConnectInput = {
   extraValues?: Record<string, string>;
   identityHeaderUserId?: string;
   identityHeaderGroups?: string;
+  // Skip upstream TLS verification (custom providers with self-signed certs).
+  skipTlsVerification?: boolean;
+  // Disable identity metadata injection (user + authorizing group). Off by default.
+  metadataDisabled?: boolean;
   models: ProviderModel[];
   enabled?: boolean;
 };
@@ -90,6 +102,8 @@ export type ProviderUpdateInput = {
   extraValues?: Record<string, string>;
   identityHeaderUserId?: string;
   identityHeaderGroups?: string;
+  skipTlsVerification?: boolean;
+  metadataDisabled?: boolean;
   models?: ProviderModel[];
   enabled?: boolean;
 };
@@ -151,6 +165,8 @@ function fromAPI(p: APIProvider): AIProvider {
     extraValues: p.extra_values ?? {},
     identityHeaderUserId: p.identity_header_user_id,
     identityHeaderGroups: p.identity_header_groups,
+    skipTlsVerification: p.skip_tls_verification ?? false,
+    metadataDisabled: p.metadata_disabled ?? false,
     status: p.enabled ? "active" : "disabled",
     models,
     allowedGroups: [],
@@ -192,6 +208,8 @@ function toCreateRequest(input: ProviderConnectInput): APIProviderRequest {
     extra_values: input.extraValues,
     identity_header_user_id: input.identityHeaderUserId,
     identity_header_groups: input.identityHeaderGroups,
+    skip_tls_verification: input.skipTlsVerification,
+    metadata_disabled: input.metadataDisabled,
     models: toAPIModels(input.models),
     enabled: input.enabled,
   };
@@ -492,12 +510,13 @@ export function useAIProviders() {
 // which we still tolerate via ignoreError so older deploys don't surface
 // a spurious error in the empty state.
 export function useAgentNetworkSettings() {
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { data, error, isLoading, mutate } =
     useFetchApi<APIAgentNetworkSettings>(
       "/agent-network/settings",
       true,
       true,
-      isAgentNetworkEnabled(),
+      agentNetworkEnabled,
     );
   const settings = useMemo<AgentNetworkSettings | null>(
     () => (data ? settingsFromAPI(data) : null),
@@ -519,7 +538,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   // disabled — it can safely wrap surfaces like the Control Center
   // without hitting agent-network endpoints in deployments that don't
   // have the feature.
-  const agentNetworkEnabled = isAgentNetworkEnabled();
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
   const {
     data: apiProviders,
@@ -635,6 +654,10 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           updates.identityHeaderUserId ?? existing.identity_header_user_id,
         identity_header_groups:
           updates.identityHeaderGroups ?? existing.identity_header_groups,
+        skip_tls_verification:
+          updates.skipTlsVerification ?? existing.skip_tls_verification,
+        metadata_disabled:
+          updates.metadataDisabled ?? existing.metadata_disabled,
         models: updates.models
           ? toAPIModels(updates.models)
           : existing.models ?? [],

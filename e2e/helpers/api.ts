@@ -433,3 +433,53 @@ export async function deleteUserByEmail(page: Page, email: string) {
     await deleteUserById(page, user.id);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Agent Network
+// ---------------------------------------------------------------------------
+
+type AgentNetworkCatalogProvider = {
+  id: string;
+  name: string;
+};
+
+type AgentNetworkProvider = {
+  id: string;
+  name: string;
+  provider_id: string;
+};
+
+/** List the Agent Network provider catalog (server-defined provider types). */
+export async function listAgentNetworkCatalog(
+  page: Page,
+): Promise<AgentNetworkCatalogProvider[]> {
+  return apiGet<AgentNetworkCatalogProvider[]>(
+    page,
+    "/agent-network/catalog/providers",
+  );
+}
+
+/** List connected Agent Network providers. */
+export async function listAgentNetworkProviders(
+  page: Page,
+): Promise<AgentNetworkProvider[]> {
+  return apiGet<AgentNetworkProvider[]>(page, "/agent-network/providers");
+}
+
+/** Delete an Agent Network provider by ID. */
+export async function deleteAgentNetworkProviderById(page: Page, id: string) {
+  await apiDelete(page, `/agent-network/providers/${id}`);
+}
+
+/** Delete all Agent Network providers whose name starts with the prefix. */
+export async function deleteAgentNetworkProvidersByPrefix(
+  page: Page,
+  prefix: string,
+) {
+  const providers = await listAgentNetworkProviders(page);
+  for (const p of providers) {
+    if (p.name.startsWith(prefix)) {
+      await deleteAgentNetworkProviderById(page, p.id);
+    }
+  }
+}

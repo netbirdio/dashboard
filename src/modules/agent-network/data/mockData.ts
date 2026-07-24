@@ -12,12 +12,14 @@ export type AIProviderId =
   | "bedrock_api"
   | "vertex_ai_api"
   | "mistral_api"
+  | "kimi_api"
   | "litellm_proxy"
   | "portkey"
   | "bifrost"
   | "cloudflare_ai_gateway"
   | "vercel_ai_gateway"
   | "openrouter"
+  | "vllm"
   | "custom";
 
 export type AIProviderStatus = "active" | "warning" | "disabled";
@@ -60,6 +62,12 @@ export type AIProvider = {
   // the value stored here lands on the wire.
   identityHeaderUserId?: string;
   identityHeaderGroups?: string;
+  // Skip TLS certificate verification on upstream requests — for custom
+  // providers using self-signed certs. Off by default.
+  skipTlsVerification?: boolean;
+  // Disable identity metadata injection (caller user + authorizing group) on
+  // upstream requests, e.g. AWS Bedrock cost-allocation. Off by default.
+  metadataDisabled?: boolean;
   status: AIProviderStatus;
   models: ProviderModel[];
   allowedGroups: string[];
@@ -154,6 +162,10 @@ export type AIAccessLogEntry = {
   // (llm.resolved_provider_id metadata). Empty for legacy entries
   // and non-agent-network requests where the router didn't run.
   resolvedProviderId: string;
+  // Provider-side session id grouping related calls. A single user can make
+  // several separate requests that the provider ties to one session
+  // (llm.session_id metadata). Empty when the provider didn't return one.
+  sessionId: string;
   timestamp: string;
   user: string;
   userId: string;
@@ -182,6 +194,30 @@ export type AIAccessLogEntry = {
   // calls like "GET /v1/models" are self-explanatory.
   method: string;
   path: string;
+};
+
+// AIAccessLogSession is a session-grouped view of access-log entries: all
+// requests sharing a provider session id (or a single session-less request,
+// keyed by its own id) folded into one summary plus its ordered entries.
+export type AIAccessLogSession = {
+  // Stable row id for table expansion: the session id, or the singleton
+  // request's id when the session id is empty. Mirrors the backend group key.
+  id: string;
+  sessionId: string; // empty for a session-less (singleton) request
+  user: string;
+  userId: string;
+  userGroups: string[];
+  startedAt: string;
+  endedAt: string;
+  requestCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  costUsd: number;
+  providers: string[]; // distinct vendor ids seen in the session
+  models: string[]; // distinct models seen in the session
+  decision: AIAccessLogDecision;
+  entries: AIAccessLogEntry[];
 };
 
 // Short labels for the proxy's llm_policy.reason deny codes. Keyed by the bare

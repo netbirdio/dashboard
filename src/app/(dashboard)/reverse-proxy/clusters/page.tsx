@@ -11,7 +11,6 @@ import { useTranslations } from "next-intl";
 import { lazy, Suspense } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
 import { REVERSE_PROXY_CLUSTERS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -55,9 +54,7 @@ export default function ReverseProxyClustersPage() {
 					hasAccess={permission.services?.read}
 				>
 					<Suspense fallback={<SkeletonTable />}>
-						<ReverseProxiesProvider>
-							<ClustersTable headingTarget={portalTarget} />
-						</ReverseProxiesProvider>
+						<ClustersTable headingTarget={portalTarget} />
 					</Suspense>
 				</RestrictedAccess>
 			</div>

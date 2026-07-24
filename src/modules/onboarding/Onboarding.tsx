@@ -306,7 +306,7 @@ export const Onboarding = ({
             "h-full w-screen fixed z-[50] left-0 top-0 bg-nb-gray-950 flex overflow-y-auto"
           }
         >
-          <div>
+          <div data-testid={"regular-onboarding"}>
             <VisuallyHidden asChild>
               <DialogTitle>Onboarding</DialogTitle>
             </VisuallyHidden>

@@ -4,6 +4,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { VerticalTabs } from "@components/VerticalTabs";
 import {
 	AlertOctagonIcon,
+	ChartNoAxesCombined,
 	FingerprintIcon,
 	FolderGit2Icon,
 	KeyRound,
@@ -16,6 +17,11 @@ import {
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
+import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
+import {
+	CloudSettingsTabContent,
+	CloudSettingsTabTrigger,
+} from "@/cloud/settings/CloudSettings";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import PageContainer from "@/layouts/PageContainer";
@@ -25,6 +31,7 @@ import ClientSettingsTab from "@/modules/settings/ClientSettingsTab";
 import DangerZoneTab from "@/modules/settings/DangerZoneTab";
 import IdentityProvidersTab from "@/modules/settings/IdentityProvidersTab";
 import LanguageTab from "@/modules/settings/LanguageTab";
+import MetricsTab from "@/modules/settings/MetricsTab";
 import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
 import SetupKeysTab from "@/modules/settings/SetupKeysTab";
@@ -37,7 +44,8 @@ export default function NetBirdSettings() {
 	const { permission } = usePermissions();
 
 	const initialTab = useMemo(() => {
-		if (permission.settings.read) return "authentication";
+		if (permission?.settings?.read) return "authentication";
+		if (permission?.billing?.update) return "plans-and-billing";
 		return "authentication";
 	}, [permission]);
 
@@ -57,7 +65,7 @@ export default function NetBirdSettings() {
 				<VerticalTabs.List>
 					{permission.settings.read && (
 						<>
-							<VerticalTabs.Trigger value="authentication">
+							<VerticalTabs.Trigger value="authentication" data-testid="settings-tab-authentication">
 								<ShieldIcon size={14} />
 								{t("authentication")}
 							</VerticalTabs.Trigger>
@@ -74,34 +82,39 @@ export default function NetBirdSettings() {
 										{t("identityProviders")}
 									</VerticalTabs.Trigger>
 								)}
-							<VerticalTabs.Trigger value="groups">
+							<VerticalTabs.Trigger value="groups" data-testid="settings-tab-groups">
 								<FolderGit2Icon size={14} />
 								{t("groupsTab")}
 							</VerticalTabs.Trigger>
-							<VerticalTabs.Trigger value="permissions">
+							<VerticalTabs.Trigger value="permissions" data-testid="settings-tab-permissions">
 								<LockIcon size={14} />
 								{t("permissions")}
 							</VerticalTabs.Trigger>
-							<VerticalTabs.Trigger value="networks">
+							<VerticalTabs.Trigger value="networks" data-testid="settings-tab-networks">
 								<NetworkIcon size={14} />
 								{t("networksTab")}
 							</VerticalTabs.Trigger>
-							<VerticalTabs.Trigger value="clients">
+							<VerticalTabs.Trigger value="clients" data-testid="settings-tab-clients">
 								<MonitorSmartphoneIcon size={14} />
 								{t("clients")}
 							</VerticalTabs.Trigger>
-							<VerticalTabs.Trigger value="language">
+							<VerticalTabs.Trigger value="language" data-testid="settings-tab-language">
 								<LanguagesIcon size={14} />
 								{t("language")}
+							</VerticalTabs.Trigger>
+							<VerticalTabs.Trigger value="metrics" data-testid="settings-tab-metrics">
+								<ChartNoAxesCombined size={14} />
+								{t("metrics")}
 							</VerticalTabs.Trigger>
 						</>
 					)}
 
+					<CloudSettingsTabTrigger />
 					<DangerZoneTabTrigger />
 				</VerticalTabs.List>
 				<RestrictedAccess
 					page={t("title")}
-					hasAccess={permission.settings.read}
+					hasAccess={permission?.billing?.read || permission?.settings?.read}
 				>
 					<div className={"border-l border-nb-gray-930 w-full"}>
 						{account && <AuthenticationTab account={account} />}
@@ -113,7 +126,9 @@ export default function NetBirdSettings() {
 						{account && <NetworkSettingsTab account={account} />}
 						{account && <ClientSettingsTab account={account} />}
 						<LanguageTab />
+						{account && <MetricsTab account={account} />}
 						{account && <DangerZoneTab account={account} />}
+						<CloudSettingsTabContent />
 					</div>
 				</RestrictedAccess>
 			</VerticalTabs>
@@ -124,6 +139,8 @@ export default function NetBirdSettings() {
 const DangerZoneTabTrigger = () => {
 	const t = useTranslations("settings");
 	const { isOwner } = useLoggedInUser();
+	const { isAccountWithMSPParent } = useMSP();
+	if (isAccountWithMSPParent) return;
 
 	return (
 		isOwner && (

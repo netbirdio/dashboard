@@ -64,9 +64,11 @@ export default function PoliciesProvider({ children }: Props) {
       return created.id!;
     };
 
-    const sources = await Promise.all(
-      (rule.sources ?? []).map(resolveGroup),
-    ).then((ids) => ids.filter(Boolean) as string[]);
+    const sources = rule.sourceResource
+      ? undefined
+      : await Promise.all(
+          (rule.sources ?? []).map(resolveGroup),
+        ).then((ids) => ids.filter(Boolean) as string[]);
 
     const destinations = rule.destinationResource
       ? undefined

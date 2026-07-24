@@ -7,12 +7,7 @@ import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState, Table } from "@tanstack/react-table";
-import {
-  CreditCardIcon,
-  HelpCircle,
-  PlusCircle,
-  ReceiptTextIcon,
-} from "lucide-react";
+import { HelpCircle, PlusCircle, ReceiptTextIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React, { Fragment } from "react";
 import { useSWRConfig } from "swr";
@@ -265,27 +260,5 @@ const AddTenantButton = () => {
       <PlusCircle size={16} />
       Add Tenant
     </Button>
-  );
-};
-
-const TotalCost = () => {
-  return (
-    <div className={"flex items-center gap-3"}>
-      <div
-        className={
-          "h-10 w-10 rounded-full bg-nb-gray-910 flex items-center justify-center"
-        }
-      >
-        <CreditCardIcon size={16} className={"text-nb-gray-200"} />
-      </div>
-      <div className={"flex items-start justify-center text-left flex-col"}>
-        <span className={"text-xs text-nb-gray-300 font-medium block"}>
-          Total Cost / Month
-        </span>
-        <span className={"font-semibold text-base relative text-nb-gray-200"}>
-          $5,260
-        </span>
-      </div>
-    </div>
   );
 };

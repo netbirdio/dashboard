@@ -1078,8 +1078,18 @@ export default {
     experimentalHelp:
       "Lazy connections are an experimental feature. Functionality and behavior may evolve. Instead of maintaining always-on connections, NetBird activates them on-demand based on activity or signaling.",
     enableLazyConnections: "Enable Lazy Connections",
+    lazyConnections: "Lazy Connections",
+    lazyConnectionsHelp:
+      "Instead of maintaining always-on connections, NetBird activates them on-demand based on activity or signaling. This requires NetBird client v0.50.1 or higher.",
     enableLazyConnectionsHelp:
-      "Lazy connections activate on-demand based on activity or signaling instead of maintaining always-on connections.",
+      "Allow connections between peers to be established only when required. Changes will take effect after restarting the clients.",
+    agentNetwork: "Agent Network",
+    agentNetworkHelp:
+      "Focus the dashboard on the Agent Network surface and hide sections that are not relevant for it, such as Networks, DNS and Reverse Proxy.",
+    agentNetworkFocusedView: "Agent Network focused view",
+    agentNetworkFocusedViewHelp:
+      "When enabled, the dashboard shows only the Agent Network related sections. Disable it to bring back the full dashboard.",
+    metrics: "Metrics",
     enableGroupPropagation: "Enable user group propagation",
     groupPropagationHelp:
       "Allow group propagation from user's auto-groups to peers, sharing membership information.",
@@ -2043,7 +2053,9 @@ export default {
     desc_peer_group_add:
       "Group <Value>{group}</Value> was added to the peer with the NetBird IP <Value>{peer_ip}</Value>",
     desc_peer_login_expire:
-      "Login of the peer <Value>{name}</Value> is expired",
+      "Login of the peer <Value>{name}</Value> expired",
+    desc_peer_login_expire_with_reason:
+      "Login of the peer <Value>{name}</Value> expired due to <Value>{reason}</Value>",
     desc_peer_ssh_disable:
       "SSH Server of peer <Value>{name}</Value> was disabled",
     desc_peer_ssh_enable:

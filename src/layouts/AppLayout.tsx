@@ -22,6 +22,7 @@ import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
 import InstanceSetupProvider from "@/contexts/InstanceSetupProvider";
 import LocaleProvider from "@/contexts/LocaleProvider";
 import { NavigationEvents } from "@/contexts/NavigationEvents";
+import { useSignupSource } from "@/hooks/useSignupSource";
 
 const inter = localFont({
   src: "../assets/fonts/Inter.ttf",
@@ -40,6 +41,7 @@ export default function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   useAWSMarketplace();
+  useSignupSource();
 
   return (
     <html lang="en">

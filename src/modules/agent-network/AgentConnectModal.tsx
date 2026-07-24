@@ -2,9 +2,11 @@
 
 import Code from "@components/Code";
 import { Modal, ModalContent } from "@components/modal/Modal";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import Paragraph from "@components/Paragraph";
 import SmallParagraph from "@components/SmallParagraph";
 import SquareIcon from "@components/SquareIcon";
+import { SelectDropdown } from "@components/select/SelectDropdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Plug } from "lucide-react";
 import * as React from "react";
@@ -55,6 +57,7 @@ export function AgentConnectTabs({
   listClassName = "px-8",
   contentClassName = "px-6 py-2",
   defaultTab = "claude-code",
+  providerIds = [],
 }: {
   endpoint: string;
   listClassName?: string;
@@ -63,82 +66,209 @@ export function AgentConnectTabs({
   // matching tool (e.g. Anthropic → claude-code, OpenAI → curl). Keyed below
   // so a late-resolving defaultTab still re-initialises the tabs.
   defaultTab?: string;
+  // Catalog ids of the account's connected providers. Kimi-specific config
+  // surfaces (the Kimi CLI tab and the Kimi variant inside the Claude Code
+  // tab) only render when a kimi_api provider is actually connected —
+  // showing Moonshot setup against an endpoint that can't route to Kimi
+  // would just be a trap.
+  providerIds?: string[];
 }) {
   const baseUrl = `https://${endpoint}`;
   const openaiBase = `${baseUrl}/v1`;
+  const hasKimi = providerIds.includes("kimi_api");
   const [claudeMode, setClaudeMode] = React.useState<"config" | "shell">(
     "config",
   );
+  // Which backend the Claude Code config targets — Anthropic API direct,
+  // via Vertex AI / Bedrock, or Kimi (Moonshot AI, whose upstream speaks the
+  // Anthropic Messages API too). Switched in-tab instead of separate tabs.
+  // When Kimi is the only Anthropic-shaped provider connected, it's the only
+  // config that can work, so start there.
+  const kimiOnlyAnthropicShape =
+    hasKimi &&
+    !["anthropic_api", "vertex_ai_api", "bedrock_api"].some((id) =>
+      providerIds.includes(id),
+    );
+  const [claudeProvider, setClaudeProvider] = React.useState<
+    "anthropic" | "vertex" | "bedrock" | "kimi"
+  >(kimiOnlyAnthropicShape ? "kimi" : "anthropic");
 
   return (
     <Tabs key={defaultTab} defaultValue={defaultTab} className={"mt-2"}>
       <TabsList justify={"start"} className={listClassName}>
         <TabsTrigger value={"claude-code"}>Claude Code</TabsTrigger>
-        <TabsTrigger value={"claude-code-vertex"}>
-          Claude Code (Vertex AI)
-        </TabsTrigger>
         <TabsTrigger value={"codex"}>Codex</TabsTrigger>
+        {hasKimi && <TabsTrigger value={"kimi-cli"}>Kimi CLI</TabsTrigger>}
         <TabsTrigger value={"openai-sdk"}>OpenAI SDK</TabsTrigger>
         <TabsTrigger value={"curl"}>cURL</TabsTrigger>
       </TabsList>
 
       <TabsContent value={"claude-code"}>
         <div className={contentClassName}>
-          <div className={"flex items-center justify-between gap-3 mb-2"}>
-            <SmallParagraph className={"!mb-0"}>
-              {claudeMode === "config"
-                ? "Add to ~/.claude/settings.json:"
-                : "Run in your shell:"}
-            </SmallParagraph>
-            <button
-              type={"button"}
-              onClick={() =>
-                setClaudeMode(claudeMode === "config" ? "shell" : "config")
+          <div className={"mb-3"}>
+            <SelectDropdown
+              value={claudeProvider}
+              onChange={(v) =>
+                setClaudeProvider(
+                  v as "anthropic" | "vertex" | "bedrock" | "kimi",
+                )
               }
-              className={
-                "shrink-0 mr-2 text-[11px] text-white hover:underline underline-offset-2 cursor-pointer"
-              }
-            >
-              {claudeMode === "config" ? "Shell" : "JSON"}
-            </button>
+              options={[
+                { label: "Anthropic API", value: "anthropic" },
+                { label: "Vertex AI", value: "vertex" },
+                { label: "Bedrock", value: "bedrock" },
+                ...(hasKimi
+                  ? [{ label: "Kimi (Moonshot AI)", value: "kimi" }]
+                  : []),
+              ]}
+              showValues={false}
+              className={"!w-auto min-w-[160px]"}
+            />
           </div>
-          <Snippet
-            lines={
-              claudeMode === "config"
-                ? [
-                    `{`,
-                    `  "apiKeyHelper": "echo '-'",`,
-                    `  "env": {`,
-                    `    "ANTHROPIC_BASE_URL": "${baseUrl}"`,
-                    `  }`,
-                    `}`,
-                  ]
-                : [
-                    `export ANTHROPIC_BASE_URL=${baseUrl}`,
-                    `export ANTHROPIC_API_KEY=none`,
-                    `claude`,
-                  ]
-            }
-          />
-        </div>
-      </TabsContent>
 
-      <TabsContent value={"claude-code-vertex"}>
-        <div className={contentClassName}>
-          <Snippet
-            caption={"Add to ~/.claude/settings.json:"}
-            lines={[
-              `{`,
-              `  "env": {`,
-              `    "CLOUD_ML_REGION": "global",`,
-              `    "ANTHROPIC_VERTEX_PROJECT_ID": "<your-gcp-project-id>",`,
-              `    "CLAUDE_CODE_USE_VERTEX": "1",`,
-              `    "CLAUDE_CODE_SKIP_VERTEX_AUTH": "1",`,
-              `    "ANTHROPIC_VERTEX_BASE_URL": "${baseUrl}/v1"`,
-              `  }`,
-              `}`,
-            ]}
-          />
+          {claudeProvider === "anthropic" && (
+            <>
+              <div className={"flex items-center justify-between gap-3 mb-2"}>
+                <SmallParagraph className={"!mb-0"}>
+                  {claudeMode === "config"
+                    ? "Add to ~/.claude/settings.json:"
+                    : "Run in your shell:"}
+                </SmallParagraph>
+                <button
+                  type={"button"}
+                  onClick={() =>
+                    setClaudeMode(claudeMode === "config" ? "shell" : "config")
+                  }
+                  className={
+                    "shrink-0 mr-2 text-[11px] text-white hover:underline underline-offset-2 cursor-pointer"
+                  }
+                >
+                  {claudeMode === "config" ? "Shell" : "JSON"}
+                </button>
+              </div>
+              <Snippet
+                lines={
+                  claudeMode === "config"
+                    ? [
+                        `{`,
+                        `  "apiKeyHelper": "echo '-'",`,
+                        `  "env": {`,
+                        `    "ANTHROPIC_BASE_URL": "${baseUrl}"`,
+                        `  }`,
+                        `}`,
+                      ]
+                    : [
+                        `export ANTHROPIC_BASE_URL=${baseUrl}`,
+                        `export ANTHROPIC_API_KEY=none`,
+                        `claude`,
+                      ]
+                }
+              />
+            </>
+          )}
+
+          {claudeProvider === "vertex" && (
+            <Snippet
+              caption={"Add to ~/.claude/settings.json:"}
+              lines={[
+                `{`,
+                `  "env": {`,
+                `    "CLOUD_ML_REGION": "global",`,
+                `    "ANTHROPIC_VERTEX_PROJECT_ID": "<your-gcp-project-id>",`,
+                `    "CLAUDE_CODE_USE_VERTEX": "1",`,
+                `    "CLAUDE_CODE_SKIP_VERTEX_AUTH": "1",`,
+                `    "ANTHROPIC_VERTEX_BASE_URL": "${baseUrl}/v1"`,
+                `  }`,
+                `}`,
+              ]}
+            />
+          )}
+
+          {claudeProvider === "bedrock" && (
+            <Snippet
+              caption={"Add to ~/.claude/settings.json:"}
+              lines={[
+                `{`,
+                `  "env": {`,
+                `    "ANTHROPIC_MODEL": "<your-bedrock-model-id>",`,
+                `    "ANTHROPIC_BEDROCK_BASE_URL": "${baseUrl}/bedrock",`,
+                `    "CLAUDE_CODE_USE_BEDROCK": "1",`,
+                `    "CLAUDE_CODE_SKIP_BEDROCK_AUTH": "1"`,
+                `  }`,
+                `}`,
+              ]}
+            />
+          )}
+
+          {claudeProvider === "kimi" && (
+            <>
+              <div className={"flex items-center justify-between gap-3 mb-2"}>
+                <SmallParagraph className={"!mb-0"}>
+                  {claudeMode === "config"
+                    ? "Add to ~/.claude/settings.json:"
+                    : "Run in your shell:"}
+                </SmallParagraph>
+                <button
+                  type={"button"}
+                  onClick={() =>
+                    setClaudeMode(claudeMode === "config" ? "shell" : "config")
+                  }
+                  className={
+                    "shrink-0 mr-2 text-[11px] text-white hover:underline underline-offset-2 cursor-pointer"
+                  }
+                >
+                  {claudeMode === "config" ? "Shell" : "JSON"}
+                </button>
+              </div>
+              <Snippet
+                // Claude Code speaks the Anthropic Messages API, which
+                // Moonshot serves under the /anthropic path prefix. The
+                // prefix goes in the agent's base URL and rides through the
+                // endpoint to the bare https://api.moonshot.ai upstream, so
+                // one Kimi provider serves both API shapes. Every model slot
+                // Claude Code fills on its own (opus/sonnet/haiku tiers,
+                // subagents) is pinned to kimi-k3 so no Claude model names
+                // leak into requests the upstream can't serve, and tool
+                // search is off because Moonshot rejects its tool_reference
+                // blocks — both per Moonshot's Claude Code guide.
+                lines={
+                  claudeMode === "config"
+                    ? [
+                        `{`,
+                        `  "apiKeyHelper": "echo '-'",`,
+                        `  "env": {`,
+                        `    "ANTHROPIC_BASE_URL": "${baseUrl}/anthropic",`,
+                        `    "ANTHROPIC_MODEL": "kimi-k3",`,
+                        `    "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k3",`,
+                        `    "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k3",`,
+                        `    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k3",`,
+                        `    "CLAUDE_CODE_SUBAGENT_MODEL": "kimi-k3",`,
+                        `    "ENABLE_TOOL_SEARCH": "false"`,
+                        `  }`,
+                        `}`,
+                      ]
+                    : [
+                        `export ANTHROPIC_BASE_URL=${baseUrl}/anthropic`,
+                        `export ANTHROPIC_API_KEY=none`,
+                        `export ANTHROPIC_MODEL=kimi-k3`,
+                        `export ANTHROPIC_DEFAULT_OPUS_MODEL=kimi-k3`,
+                        `export ANTHROPIC_DEFAULT_SONNET_MODEL=kimi-k3`,
+                        `export ANTHROPIC_DEFAULT_HAIKU_MODEL=kimi-k3`,
+                        `export CLAUDE_CODE_SUBAGENT_MODEL=kimi-k3`,
+                        `export ENABLE_TOOL_SEARCH=false`,
+                        `claude`,
+                      ]
+                }
+              />
+              <SmallParagraph className={"mt-3"}>
+                Pairs with a Kimi provider keeping the default upstream URL{" "}
+                <code className={"font-mono"}>https://api.moonshot.ai</code>.
+                The <code className={"font-mono"}>/anthropic</code> suffix in
+                the base URL rides through the endpoint to Moonshot, which
+                serves the Anthropic Messages API under that path.
+              </SmallParagraph>
+            </>
+          )}
         </div>
       </TabsContent>
 
@@ -155,6 +285,38 @@ export function AgentConnectTabs({
               `wire_api = "responses"`,
             ]}
           />
+        </div>
+      </TabsContent>
+
+      <TabsContent value={"kimi-cli"}>
+        <div className={contentClassName} hidden={!hasKimi}>
+          <Snippet
+            // Kimi CLI reads providers from ~/.kimi/config.toml. Unlike
+            // Claude Code, its "anthropic" provider type needs the bare
+            // endpoint — no /anthropic prefix in base_url; api_key is a
+            // placeholder since NetBird injects the real key server-side.
+            caption={"Add to ~/.kimi/config.toml:"}
+            lines={[
+              `default_model = "kimi-k3"`,
+              ``,
+              `[providers.netbird]`,
+              `type = "anthropic"`,
+              `base_url = "${baseUrl}"`,
+              `api_key = "-"`,
+              ``,
+              `[models.kimi-k3]`,
+              `provider = "netbird"`,
+              `model = "kimi-k3"`,
+              `max_context_size = 1000000`,
+            ]}
+          />
+          <SmallParagraph className={"mt-3"}>
+            Pairs with a Kimi provider keeping the default upstream URL{" "}
+            <code className={"font-mono"}>https://api.moonshot.ai</code>. For
+            the OpenAI shape instead, use{" "}
+            <code className={"font-mono"}>type = &quot;openai_legacy&quot;</code>{" "}
+            with <code className={"font-mono"}>base_url = &quot;{openaiBase}&quot;</code>.
+          </SmallParagraph>
         </div>
       </TabsContent>
 
@@ -206,6 +368,9 @@ export default function AgentConnectModal({
   onOpenChange,
   endpoint,
 }: Readonly<Props>) {
+  // Rendered inside <AIProvidersProvider> (providers page); the connected
+  // provider ids gate which per-tool config variants the tabs offer.
+  const { providers } = useAIProviders();
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-2xl"}>
@@ -221,7 +386,10 @@ export default function AgentConnectModal({
           </Paragraph>
         </div>
 
-        <AgentConnectTabs endpoint={endpoint} />
+        <AgentConnectTabs
+          endpoint={endpoint}
+          providerIds={providers.map((p) => p.providerId)}
+        />
       </ModalContent>
     </Modal>
   );

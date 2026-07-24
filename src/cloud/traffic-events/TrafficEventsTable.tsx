@@ -5,19 +5,26 @@ import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import {
+  formatPeerResourceChip,
+  PeerResourceOption,
+  PeerResourcePicker,
+} from "@components/table/filters/PeerResourcePicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
-import NoResults from "@components/ui/NoResults";
-import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
+import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { ArrowLeftRightIcon, ExternalLinkIcon } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import React, { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
-import { useSWRConfig } from "swr";
 import {
+  getTrafficEventCounts,
   TrafficEvent,
   TrafficEventDirection,
   TrafficEventType,
@@ -29,53 +36,12 @@ import { TrafficEventsPortCell } from "@/cloud/traffic-events/table/TrafficEvent
 import { TrafficEventsReporterCell } from "@/cloud/traffic-events/table/TrafficEventsReporterCell";
 import { TrafficEventsTextCell } from "@/cloud/traffic-events/table/TrafficEventsTextCell";
 import { TrafficEventsTimeCell } from "@/cloud/traffic-events/table/TrafficEventsTimeCell";
-import { TrafficEventsConnectionTypeFilter } from "@/cloud/traffic-events/TrafficEventsConnectionTypeFilter";
 import { TRAFFIC_EVENTS_DOC_LINK } from "@/cloud/traffic-events/TrafficEventSetting";
-import { TrafficEventsFilter } from "@/cloud/traffic-events/TrafficEventsFilter";
 import { parseAddressPort } from "@/cloud/traffic-events/utils/parseAddress";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-import {
-  UsersDropdownSelector,
-  UserSelectOption,
-} from "@/modules/activity/UsersDropdownSelector";
-
-export type TrafficEventsTableProps = {
-  events?: TrafficEvent[];
-  isLoading: boolean;
-  headingTarget?: HTMLHeadingElement | null;
-  isSettingEnabled: boolean;
-  totalRecords?: number;
-  totalPages?: number;
-  onPaginationChange?: (pagination: {
-    pageIndex: number;
-    pageSize: number;
-  }) => void;
-  pagination?: { pageIndex: number; pageSize: number };
-  globalFilter?: string;
-  onGlobalFilterChange?: (value: string) => void;
-  onDateFilterChange?: (from?: Date, to?: Date) => void;
-  dateFrom?: string;
-  dateTo?: string;
-  filters?: {
-    type?: string[];
-    connection_type?: string;
-    direction?: string[];
-    protocol?: string[];
-  };
-  onFilterChange?: (filters: {
-    type?: string[];
-    connection_type?: string;
-    direction?: string[];
-    protocol?: string[];
-  }) => void;
-  users?: any[];
-  userId?: string;
-  onUserFilterChange?: (userId: string) => void;
-  onResetAllFilters?: () => void;
-  apiUrl?: string;
-  connectionTypeFilter?: string;
-  onConnectionTypeFilterChange?: (value: string) => void;
-};
+import { usePeers } from "@/contexts/PeersProvider";
+import { useServerPagination } from "@/contexts/ServerPaginationProvider";
+import { useUsers } from "@/contexts/UsersProvider";
+import { NetworkResource } from "@/interfaces/Network";
 
 export const getTrafficEventTypeText = (
   t: TrafficEventType,
@@ -247,216 +213,304 @@ export const TrafficEventsTableColumns: ColumnDef<TrafficEvent>[] = [
   },
 ];
 
-const defaultFromDate = dayjs().subtract(7, "day").startOf("day").toDate();
-const defaultToDate = dayjs().endOf("day").toDate();
+type Props = {
+  headingTarget?: HTMLHeadingElement | null;
+  isSettingEnabled: boolean;
+};
 
 export default function TrafficEventsTable({
-  events,
-  isLoading,
   headingTarget,
   isSettingEnabled,
-  totalRecords,
-  totalPages,
-  onPaginationChange,
-  pagination,
-  globalFilter,
-  onGlobalFilterChange,
-  onDateFilterChange,
-  dateFrom,
-  dateTo,
-  filters,
-  onFilterChange,
-  users,
-  userId,
-  onUserFilterChange,
-  onResetAllFilters,
-  apiUrl,
-  connectionTypeFilter,
-  onConnectionTypeFilterChange,
-}: Readonly<TrafficEventsTableProps>) {
-  useFetchApi("/peers");
-  const { mutate } = useSWRConfig();
-  const path = usePathname();
+}: Readonly<Props>) {
   const router = useRouter();
-
-  const [sorting, setSorting] = useLocalStorage<SortingState>(
-    "netbird-table-sort" + path,
-    [
-      {
-        id: "timestamp",
-        desc: true,
-      },
-    ],
+  const { users } = useUsers();
+  const { peers } = usePeers();
+  // Resources back the Resources tab of the source/destination picker. Errors
+  // are ignored so a missing networks permission just yields an empty tab.
+  const { data: resources } = useFetchApi<NetworkResource[]>(
+    "/networks/resources",
+    true,
   );
+  const {
+    data,
+    isLoading,
+    mutate,
+    setFilter,
+    getFilter,
+    ...paginationProps
+  } = useServerPagination<TrafficEvent[]>();
 
-  const userSelectOptions = useMemo(() => {
-    if (!users) return [];
-    return users.map((user) => {
-      return {
-        id: user.id || "",
-        name: user.name || "",
-        email: user.email || "NetBird",
-      } as UserSelectOption;
-    });
+  // `data` may resolve to a non-array (e.g. an error body) on locked /
+  // self-hosted deployments; guard so `.map` never throws. Rows are keyed by
+  // flow_id.
+  const events = useMemo(() => {
+    if (!Array.isArray(data)) return undefined;
+    return data.map((event) => ({ ...event, id: event.flow_id }));
+  }, [data]);
+
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "timestamp", desc: true },
+  ]);
+
+  const userOptions = useMemo<PeerResourceOption[]>(() => {
+    const map = new Map<string, PeerResourceOption>();
+    for (const user of users ?? []) {
+      if (!user.id || !user.email || user.is_service_user) continue;
+      map.set(user.id, {
+        id: user.id,
+        name: user.name || user.email,
+        sublabel: user.email,
+        kind: "user" as const,
+      });
+    }
+    return Array.from(map.values());
   }, [users]);
 
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
-    if (dateFrom || dateTo) {
-      return {
-        from: dateFrom ? dayjs(dateFrom).toDate() : undefined,
-        to: dateTo ? dayjs(dateTo).toDate() : undefined,
-      };
-    }
+  const dateRange = useMemo<DateRange | undefined>(() => {
+    const start = getFilter("start_date");
+    const end = getFilter("end_date");
+    if (!start && !end) return undefined;
     return {
-      from: defaultFromDate,
-      to: defaultToDate,
+      from: start ? dayjs(start).toDate() : undefined,
+      to: end ? dayjs(end).toDate() : undefined,
     };
-  });
+  }, [getFilter]);
 
   const handleDateFilterChange = useCallback(
     (range?: DateRange) => {
-      setDateRange(range);
-      if (range && onDateFilterChange) {
-        onDateFilterChange(range.from, range.to);
-      } else if (onDateFilterChange) {
-        onDateFilterChange(undefined, undefined);
-      }
-    },
-    [onDateFilterChange],
-  );
-
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      if (onGlobalFilterChange) {
-        onGlobalFilterChange(value);
-      }
-    },
-    [onGlobalFilterChange],
-  );
-
-  const handleFilterChange = useCallback(
-    (newFilters: {
-      type?: string[];
-      connection_type?: string;
-      direction?: string[];
-      protocol?: string[];
-    }) => {
-      if (onFilterChange) {
-        onFilterChange(newFilters);
-      }
-    },
-    [onFilterChange],
-  );
-
-  const handleUserFilterChange = useCallback(
-    (selectedUserEmail: string | undefined) => {
-      if (onUserFilterChange) {
-        const selectedUser = userSelectOptions.find(
-          (user) => user.email === selectedUserEmail,
-        );
-        onUserFilterChange(selectedUser?.id || "");
-      }
-    },
-    [onUserFilterChange, userSelectOptions],
-  );
-
-  const handleResetAllFilters = useCallback(() => {
-    setDateRange({
-      from: defaultFromDate,
-      to: defaultToDate,
-    });
-    onResetAllFilters?.();
-  }, [onResetAllFilters]);
-
-  const hasFiltersApplied = useMemo(() => {
-    return !!(
-      (globalFilter && globalFilter.trim() !== "") ||
-      (filters?.type && filters.type.length > 0) ||
-      (filters?.connection_type && filters.connection_type.length > 0) ||
-      (filters?.direction && filters.direction.length > 0) ||
-      (filters?.protocol && filters.protocol.length > 0) ||
-      userId ||
-      (dateFrom && dateFrom !== dayjs(defaultFromDate).format("YYYY-MM-DD")) ||
-      (dateTo && dateTo !== dayjs(defaultToDate).format("YYYY-MM-DD")) ||
-      connectionTypeFilter !== ""
-    );
-  }, [globalFilter, filters, userId, dateFrom, dateTo, connectionTypeFilter]);
-
-  const renderNoResults = () => {
-    if (!isSettingEnabled) {
-      return (
-        <GetStartedTest
-          icon={
-            <SquareIcon
-              icon={
-                <ArrowLeftRightIcon className={"text-nb-gray-200"} size={20} />
-              }
-              color={"gray"}
-              size={"large"}
-            />
-          }
-          title={"Traffic Events"}
-          description={
-            "Traffic Events help you understand the network activity in your organization. " +
-            "You can see which machines are connecting to each other, and what kind of traffic is flowing between them."
-          }
-          button={
-            <Button
-              variant={"primary"}
-              onClick={() => router.push("/settings?tab=networks")}
-            >
-              Enable Traffic Events
-            </Button>
-          }
-          learnMore={
-            <>
-              Learn more about
-              <InlineLink href={TRAFFIC_EVENTS_DOC_LINK} target={"_blank"}>
-                Traffic Events
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </>
-          }
-        />
+      setFilter(
+        "start_date",
+        range?.from ? dayjs(range.from).toISOString() : undefined,
       );
-    }
+      setFilter(
+        "end_date",
+        range?.to ? dayjs(range.to).toISOString() : undefined,
+      );
+    },
+    [setFilter],
+  );
 
-    return (
-      <NoResults
-        hasFiltersApplied={hasFiltersApplied}
-        onResetFilters={hasFiltersApplied ? handleResetAllFilters : undefined}
-        title={
-          hasFiltersApplied
-            ? "Could not find any results"
-            : "No traffic events yet"
-        }
-        description={
-          hasFiltersApplied
-            ? "We couldn't find any results. Please try a different search term or change your filters."
-            : "We haven't detected any traffic events yet. This could be because you just enabled the feature, or because there hasn't been any network activity."
-        }
-        className={"py-10"}
-      />
-    );
-  };
+  const peerOptions = useMemo<PeerResourceOption[]>(() => {
+    return (peers ?? [])
+      .filter((p) => p.id)
+      .map((p) => ({
+        id: p.id as string,
+        name: p.name,
+        sublabel: p.ip,
+        kind: "peer" as const,
+        connected: p.connected,
+      }));
+  }, [peers]);
+
+  const resourceOptions = useMemo<PeerResourceOption[]>(() => {
+    return (resources ?? [])
+      .filter((r) => r.id)
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        sublabel: r.address,
+        kind: "resource" as const,
+        resourceType: r.type,
+      }));
+  }, [resources]);
+
+  // Combined lookups so a chip can resolve a selected id to a name. The Source
+  // filter also resolves users (its third tab); Destination is peers/resources.
+  const destinationChipOptions = useMemo<PeerResourceOption[]>(
+    () => [...peerOptions, ...resourceOptions],
+    [peerOptions, resourceOptions],
+  );
+  const sourceChipOptions = useMemo<PeerResourceOption[]>(
+    () => [...destinationChipOptions, ...userOptions],
+    [destinationChipOptions, userOptions],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "source_id",
+        label: "Source",
+        renderPicker: (p) => (
+          <PeerResourcePicker
+            value={p.value as string | undefined}
+            onChange={(next) => {
+              p.onChange(next?.id);
+              // Peers/resources filter by source_id; users by user_id. The two
+              // API params are mutually exclusive within this merged control.
+              if (!next) {
+                setFilter("source_id", undefined);
+                setFilter("user_id", undefined);
+              } else if (next.kind === "user") {
+                setFilter("user_id", next.id);
+                setFilter("source_id", undefined);
+              } else {
+                setFilter("source_id", next.id);
+                setFilter("user_id", undefined);
+              }
+            }}
+            close={p.close}
+            peers={peerOptions}
+            resources={resourceOptions}
+            users={userOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatPeerResourceChip(v as string | undefined, sourceChipOptions),
+      },
+      {
+        id: "destination_id",
+        label: "Destination",
+        renderPicker: (p) => (
+          <PeerResourcePicker
+            value={p.value as string | undefined}
+            onChange={(next) => {
+              p.onChange(next?.id);
+              setFilter("destination_id", next?.id ?? undefined);
+            }}
+            close={p.close}
+            peers={peerOptions}
+            resources={resourceOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatPeerResourceChip(
+            v as string | undefined,
+            destinationChipOptions,
+          ),
+      },
+    ],
+    [
+      peerOptions,
+      resourceOptions,
+      userOptions,
+      sourceChipOptions,
+      destinationChipOptions,
+      setFilter,
+    ],
+  );
+
+  // Seed the column-filter chips from the active server query so the chips
+  // match what is fetched. The date lives in its own picker, not a chip.
+  const initialColumnFilters = useMemo<{ id: string; value: unknown }[]>(() => {
+    const filters: { id: string; value: unknown }[] = [];
+    // Source holds either a source_id (peer/resource) or a user_id (Users tab).
+    const sourceId = getFilter("source_id");
+    const userId = getFilter("user_id");
+    if (sourceId) filters.push({ id: "source_id", value: sourceId });
+    else if (userId) filters.push({ id: "source_id", value: userId });
+    const destinationId = getFilter("destination_id");
+    if (destinationId)
+      filters.push({ id: "destination_id", value: destinationId });
+    return filters;
+  }, [getFilter]);
+
+  // Hidden columns backing the Source / Destination filters. Filtering is
+  // server-side, so these only need to exist for the filter adapter/chips to
+  // read and write their value. Added locally so the shared column export stays
+  // untouched (the peer tab reuses it).
+  const columns = useMemo<ColumnDef<TrafficEvent>[]>(
+    () => [
+      ...TrafficEventsTableColumns,
+      {
+        id: "source_id",
+        accessorFn: (row) => row.source.id,
+        enableGlobalFilter: false,
+      },
+      {
+        id: "destination_id",
+        accessorFn: (row) => row.destination.id,
+        enableGlobalFilter: false,
+      },
+    ],
+    [],
+  );
+
+  const getStartedCard = !isSettingEnabled ? (
+    <GetStartedTest
+      icon={
+        <SquareIcon
+          icon={<ArrowLeftRightIcon className={"text-nb-gray-200"} size={20} />}
+          color={"gray"}
+          size={"large"}
+        />
+      }
+      title={"Traffic Events"}
+      description={
+        "Traffic Events help you understand the network activity in your organization. " +
+        "You can see which machines are connecting to each other, and what kind of traffic is flowing between them."
+      }
+      button={
+        <Button
+          variant={"primary"}
+          onClick={() => router.push("/settings?tab=networks")}
+        >
+          Enable Traffic Events
+        </Button>
+      }
+      learnMore={
+        <>
+          Learn more about
+          <InlineLink href={TRAFFIC_EVENTS_DOC_LINK} target={"_blank"}>
+            Traffic Events
+            <ExternalLinkIcon size={12} />
+          </InlineLink>
+        </>
+      }
+    />
+  ) : (
+    <GetStartedTest
+      icon={
+        <SquareIcon
+          icon={<ArrowLeftRightIcon className={"text-nb-gray-200"} size={20} />}
+          color={"gray"}
+          size={"large"}
+        />
+      }
+      title={"No traffic events yet"}
+      description={
+        "We haven't detected any traffic events yet. This could be because you just enabled the feature, or because there hasn't been any network activity."
+      }
+      learnMore={
+        <>
+          Learn more about
+          <InlineLink href={TRAFFIC_EVENTS_DOC_LINK} target={"_blank"}>
+            Traffic Events
+            <ExternalLinkIcon size={12} />
+          </InlineLink>
+        </>
+      }
+    />
+  );
+
+  // Keep the filter controls interactive whenever the feature is enabled, even
+  // before any events exist, so filters can be configured and exercised on an
+  // empty table.
+  const filtersDisabled = !isSettingEnabled;
 
   return (
     <DataTable
+      {...paginationProps}
+      serverSidePagination={false}
       headingTarget={headingTarget}
+      text={"Traffic Events"}
       isLoading={isLoading}
       tableCellClassName={"py-2"}
-      text={"Traffic Events"}
       sorting={sorting}
       setSorting={setSorting}
       rowClassName={"data-[accordion=opened]:!border-b-transparent"}
       renderExpandedRow={(e) => {
+        const { isAggregated } = getTrafficEventCounts(e);
+        if (isAggregated) {
+          if (!e.policy?.id) return undefined;
+          return <TrafficEventsDetailRow event={e} />;
+        }
         if (e.events.length < 2) return undefined;
         return <TrafficEventsDetailRow event={e} />;
       }}
-      columns={TrafficEventsTableColumns}
+      columns={columns}
+      initialFilters={initialColumnFilters}
       columnVisibility={{
         user: false,
-        search: false,
         source_port: false,
         destination_port: false,
         bytes_inbound: false,
@@ -464,73 +518,36 @@ export default function TrafficEventsTable({
         type: false,
         timestamp: false,
         policy: false,
+        source_id: false,
+        destination_id: false,
       }}
       data={events}
       searchPlaceholder={"Search by ip, port, peer or resource..."}
-      onFilterReset={handleResetAllFilters}
-      showResetFilterButton={false}
-      manualPagination={true}
-      manualFiltering={true}
-      keepStateInLocalStorage={false}
-      pageCount={totalPages}
-      pagination={pagination}
-      onPaginationChange={onPaginationChange}
-      totalRecords={totalRecords}
-      globalFilter={globalFilter}
-      onGlobalFilterChange={handleSearchChange}
-      getStartedCard={renderNoResults()}
+      aboveTable={(table) => (
+        <TableFilterChips table={table} filters={filterDefs} />
+      )}
+      getStartedCard={getStartedCard}
     >
-      {(table) => {
-        return (
-          <>
-            <TrafficEventsConnectionTypeFilter
-              value={connectionTypeFilter}
-              onChange={onConnectionTypeFilterChange}
-            />
+      {(table) => (
+        <>
+          <DatePickerWithRange
+            value={dateRange}
+            onChange={handleDateFilterChange}
+            disabled={filtersDisabled}
+          />
 
-            <DatePickerWithRange
-              value={dateRange}
-              onChange={(range) => {
-                handleDateFilterChange(range);
-              }}
-            />
+          <TableFiltersButton
+            table={table}
+            filters={filterDefs}
+            disabled={filtersDisabled}
+          />
 
-            <UsersDropdownSelector
-              options={userSelectOptions}
-              value={
-                userSelectOptions.find((user) => user.id === userId)?.email ||
-                ""
-              }
-              onChange={handleUserFilterChange}
-            />
-
-            <TrafficEventsFilter
-              table={table}
-              disabled={
-                !isSettingEnabled && !hasFiltersApplied && !events?.length
-              }
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              closeOnSelect={true}
-            />
-
-            <DataTableRowsPerPage table={table} disabled={!events?.length} />
-
-            <DataTableRefreshButton
-              isDisabled={false}
-              onClick={() => {
-                mutate(apiUrl ?? "/events/network-traffic").then();
-              }}
-            />
-
-            <DataTableResetFilterButton
-              table={table}
-              hasServerSideFilters={hasFiltersApplied}
-              onClick={handleResetAllFilters}
-            />
-          </>
-        );
-      }}
+          <DataTableRefreshButton
+            isDisabled={filtersDisabled}
+            onClick={() => mutate()}
+          />
+        </>
+      )}
     </DataTable>
   );
 }

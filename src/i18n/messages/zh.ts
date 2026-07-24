@@ -1028,8 +1028,18 @@ export default {
     experimentalHelp:
       "惰性连接是一个实验性功能。功能和行为可能会发展。NetBird 不再维护始终在线的连接，而是根据活动或信令按需激活它们。",
     enableLazyConnections: "启用惰性连接",
+    lazyConnections: "惰性连接",
+    lazyConnectionsHelp:
+      "NetBird 不再维护始终在线的连接，而是根据活动或信令按需激活连接。此功能要求 NetBird 客户端版本不低于 v0.50.1。",
     enableLazyConnectionsHelp:
-      "惰性连接根据活动或信令按需激活，而不是维护始终在线的连接。",
+      "仅在需要时建立节点之间的连接。更改将在客户端重启后生效。",
+    agentNetwork: "Agent Network",
+    agentNetworkHelp:
+      "将仪表板聚焦于 Agent Network，并隐藏与其无关的部分，例如网络、DNS 和反向代理。",
+    agentNetworkFocusedView: "Agent Network 聚焦视图",
+    agentNetworkFocusedViewHelp:
+      "启用后，仪表板将只显示与 Agent Network 相关的部分。禁用后可恢复完整仪表板。",
+    metrics: "指标",
     enableGroupPropagation: "启用用户组传播",
     groupPropagationHelp: "允许从用户的自动组向节点传播组，共享成员资格信息。",
     enableJwtGroupSync: "启用 JWT 组同步",
@@ -1949,6 +1959,8 @@ export default {
       "组 <Value>{group}</Value> 已添加到 NetBird IP 为 <Value>{peer_ip}</Value> 的节点",
     desc_peer_login_expire:
       "节点 <Value>{name}</Value> 的登录已过期",
+    desc_peer_login_expire_with_reason:
+      "节点 <Value>{name}</Value> 的登录已过期，原因是 <Value>{reason}</Value>",
     desc_peer_ssh_disable:
       "节点 <Value>{name}</Value> 的 SSH 服务器已禁用",
     desc_peer_ssh_enable:
