@@ -4,7 +4,8 @@ import { cn, singularize } from "@utils/helpers";
 import { type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
 import { Group } from "@/interfaces/Group";
-import { useCanvasUI } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasUI,
+} from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
@@ -41,13 +42,13 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
       className={
         // h-full + centering: the frame layout stamps a fixed slot height on
         // framed rows (deterministic grid — no measure-based re-layout).
-        "relative rounded-lg transition-all group/node w-full h-full flex flex-col justify-center"
+        "cc-frame-row relative rounded-lg transition-all group/node w-full h-full flex flex-col justify-center"
       }
     >
       <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
         <div
           className={cn(
-            "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 group-hover/node:bg-nb-gray-800 transition-all",
+            "cc-frame-row-icon h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 group-hover/node:bg-nb-gray-800 transition-all",
             // Rings live on the icon box, not the whole row: white only while a
             // connection drag actually hovers this node, sky halo for the
             // context menu (same as resource nodes).

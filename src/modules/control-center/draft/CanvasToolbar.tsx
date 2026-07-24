@@ -137,7 +137,7 @@ export const CanvasToolbar = () => {
     c: () => setComponentsPanelOpen(!componentsPanelOpen),
     v: () => setActiveTool(CanvasTool.Select),
     h: () => setActiveTool(CanvasTool.Hand),
-    f: handleFitView,
+    "1": handleFitView,
     a: handleArrange,
     "+": handleZoomIn,
     "-": handleZoomOut,
@@ -264,7 +264,7 @@ export const CanvasToolbar = () => {
         </ToolbarButton>
         <ToolbarButton
           tooltip="Fit to View"
-          shortcut="F"
+          shortcut="1"
           onClick={handleFitView}
           className="w-8"
         >

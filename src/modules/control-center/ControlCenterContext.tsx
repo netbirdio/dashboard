@@ -101,6 +101,11 @@ interface DestinationGroupState {
   // on either.
   focusedNodeId: string;
   setFocusedNodeId: (v: string) => void;
+  // Highlight-Connections tool: armed via the header button (or "H") — the
+  // next node click sets focusedNodeId; stays armed so further clicks
+  // re-target until the pill's X (or a pane click) exits.
+  highlightArmed: boolean;
+  setHighlightArmed: (v: boolean) => void;
 }
 
 const DestinationGroupContext = createContext<DestinationGroupState | null>(
@@ -174,6 +179,7 @@ export function CanvasStateProvider({
   const [selectedUser, setSelectedUser] = useState("");
   const [selectedDestinationGroup, setSelectedDestinationGroup] = useState("");
   const [focusedNodeId, setFocusedNodeId] = useState("");
+  const [highlightArmed, setHighlightArmed] = useState(false);
   const [contextMenuNodeId, setContextMenuNodeId] = useState("");
 
   const forceSingleGroupViewRef = useRef<(id: string) => void>(() => {});
@@ -242,8 +248,10 @@ export function CanvasStateProvider({
       setSelectedDestinationGroup,
       focusedNodeId,
       setFocusedNodeId,
+      highlightArmed,
+      setHighlightArmed,
     }),
-    [selectedDestinationGroup, focusedNodeId],
+    [selectedDestinationGroup, focusedNodeId, highlightArmed],
   );
 
   return (
@@ -292,7 +300,7 @@ export function ControlCenterUIProvider({
   const canvas = useCanvasState();
   const data = useControlCenterData();
   const { isDraft } = useDraftMode();
-  const { setFocusedNodeId } = useDestinationGroup();
+  const { setFocusedNodeId, setHighlightArmed } = useDestinationGroup();
 
   // Mode switches (draft ⇄ live) close the group panel and drop any node
   // selection/focus — both reference nodes of the mode being torn down.
@@ -302,6 +310,7 @@ export function ControlCenterUIProvider({
     prevDraftRef.current = isDraft;
     canvas.setSelectedDestinationGroup("");
     setFocusedNodeId("");
+    setHighlightArmed(false);
     canvas.setNodes((prev) =>
       prev.some((n) => n.selected)
         ? prev.map((n) => (n.selected ? { ...n, selected: false } : n))

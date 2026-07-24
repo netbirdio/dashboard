@@ -10,7 +10,6 @@ import {
 import * as React from "react";
 import {
   useCanvasUI,
-  useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
@@ -39,8 +38,7 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
 
   // Halo while the context menu targets this policy, and while it's the
   // focused node (left-click focus mode) — same ring the other nodes show.
-  const { focusedNodeId } = useDestinationGroup();
-  const showHalo = contextMenuNodeId === id || focusedNodeId === id;
+  const showHalo = contextMenuNodeId === id;
 
   return (
     <div

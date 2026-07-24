@@ -16,6 +16,7 @@ import {
   getResourcePolicyByGroups,
   packFrameGrid,
   SOURCE_NODE_HALF_HEIGHT,
+  orderFrameResources,
 } from "@/modules/control-center/utils/helpers";
 import { ViewResult } from "./types";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
@@ -274,6 +275,15 @@ export function useNetworkView() {
         });
       });
 
+      // Policy-reached resources sort to the top of the frame — shared rule
+      // with the draft build (orderFrameResources) so live and draft frames
+      // agree on the order.
+      const orderedResources = orderFrameResources(
+        childResources,
+        network.policies,
+        policiesOverride ?? policies,
+      );
+
       // Seed the frame with the SAME grid the reconciling layout produces
       // (2 cols, visible cap, fallback rows) — a mismatched seed made every
       // frame resize and its "+N more" cell shift right after mount.
@@ -296,7 +306,7 @@ export function useNetworkView() {
         position: { x: 0, y: 0 },
         style: { width: grid.width, height: grid.height },
       });
-      childResources.forEach((resource, idx) => {
+      orderedResources.forEach((resource, idx) => {
         // Group rows occupy the FIRST cells (same order as the draft build).
         const i = groupRows.length + idx;
         childNodes.push({

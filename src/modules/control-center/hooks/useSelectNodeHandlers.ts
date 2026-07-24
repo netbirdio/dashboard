@@ -13,6 +13,7 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
+import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { Policy } from "@/interfaces/Policy";
 
 interface UseSelectNodeHandlersParams {
@@ -74,7 +75,9 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     isLoading,
   } = useControlCenterData();
 
-  const { setFocusedNodeId } = useDestinationGroup();
+  const { setFocusedNodeId, highlightArmed, setHighlightArmed } =
+    useDestinationGroup();
+  const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const { isDraft } = useDraftMode();
 
   const {
@@ -370,11 +373,11 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   // toggle) — the panel only closes on a click outside (pane click / Esc).
   const onDestinationGroupSelect = useCallback(
     (groupId: string) => {
-      // One focus at a time — a group focus supersedes a peer focus.
-      setFocusedNodeId("");
+      // Focus Mode is sticky — opening a group's panel while focused keeps
+      // the focus (the dim stays keyed on the focused node).
       setSelectedDestinationGroup(groupId);
     },
-    [setSelectedDestinationGroup, setFocusedNodeId],
+    [setSelectedDestinationGroup],
   );
 
   // ---------------------------------------------------------------------------
@@ -412,6 +415,32 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         ? (_node.data as any)?.policy?.id ?? _node.id.replace("policy-", "")
         : "";
 
+      // Focus Mode armed: the click PICKS the focus target instead of its
+      // normal action, then picking disarms — the focus is sticky (clicking
+      // around doesn't re-target; Esc / the pill's X / the header button
+      // exit). A node with no edges has no path to trace, so it's ignored
+      // and the mode stays armed.
+      if (highlightArmed) {
+        // The view's selector nodes (pick a peer/group/user) aren't real
+        // entities — they can't be focused.
+        if (
+          _node.type === "selectPeerNode" ||
+          _node.type === "selectGroupNode" ||
+          _node.type === "selectUserNode"
+        ) {
+          return;
+        }
+        const hasConnections = reactFlow
+          .getEdges()
+          .some((e) => e.source === _node.id || e.target === _node.id);
+        if (!hasConnections) return;
+        // One focus at a time — the highlight supersedes a group focus.
+        setSelectedDestinationGroup("");
+        setFocusedNodeId(_node.id);
+        setHighlightArmed(false);
+        return;
+      }
+
       // Draft network clicks are handled by the node itself (frame
       // drill-down) — selecting a live network view there would leak a
       // draft-only id into the live selection.
@@ -428,33 +457,25 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         // side panel — the focus-dim effect highlights its path.
         onDestinationGroupSelect(groupId);
       }
-      // A node with no edges has no path to trace — focusing it would just
-      // dim the whole canvas, so skip focus mode entirely.
-      const hasConnections = reactFlow
-        .getEdges()
-        .some((e) => e.source === _node.id || e.target === _node.id);
-      // Resource cards (standalone / destination resources) focus their
-      // path like peers do — framed overview rows keep drilling into their
-      // network instead (handled above via frameChildNetworkId).
-      const isResourceNode =
-        _node.type === "resourceNode" ||
-        _node.type === "destinationResourceNode";
-      if (!isDraft && isResourceNode && !frameChildNetworkId && hasConnections) {
-        setFocusedNodeId(_node.id);
-      }
-      // Clicking a policy or a peer focuses its path (live AND draft) —
-      // policy editing moved to the node's context menu.
-      const isPeerNode =
-        _node.type === "peerNode" ||
-        _node.type === "sourcePeerNode" ||
-        _node.type === "expandedGroupPeer";
-      if ((policyId || isPeerNode) && hasConnections) {
-        // One focus at a time — this focus supersedes a group focus.
-        setSelectedDestinationGroup("");
-        setFocusedNodeId(_node.id);
+      // Clicking a policy opens it in the editor (live and draft alike; the
+      // modal saves via PUT in live, into the changeset in draft). The
+      // right-click context menu keeps Edit/Disable too.
+      if (policyId) {
+        setSelectedPolicy(policyId);
+        setPolicyModalOpen(true);
       }
     },
-    [onNetworkSelect, onDestinationGroupSelect, currentView, isDraft, setFocusedNodeId],
+    [
+      onNetworkSelect,
+      onDestinationGroupSelect,
+      currentView,
+      isDraft,
+      setFocusedNodeId,
+      highlightArmed,
+      setHighlightArmed,
+      setSelectedPolicy,
+      setPolicyModalOpen,
+    ],
   );
 
   // ---------------------------------------------------------------------------

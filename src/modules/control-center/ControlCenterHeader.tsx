@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import FullTooltip from "@components/FullTooltip";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   SelectDropdown,
@@ -9,10 +10,18 @@ import {
   LayoutGridIcon,
   NetworkIcon,
   PencilLineIcon,
+  SquareDashedMousePointerIcon,
+  XIcon,
 } from "lucide-react";
 import { sortBy } from "lodash";
 import React from "react";
-import { isFrameNode } from "@/modules/control-center/utils/helpers";
+import { cn } from "@utils/helpers";
+import { isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
+import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
+import {
+  isFrameNode,
+  useStructuralNodes,
+} from "@/modules/control-center/utils/helpers";
 import { FlowSelector, FlowView } from "@/modules/control-center/FlowSelector";
 import { NetworkRoutingPeerCount } from "@/modules/control-center/NetworkRoutingPeerCount";
 import { RoutingPeersBar } from "@/modules/control-center/RoutingPeersBar";
@@ -226,10 +235,159 @@ function HeaderTopLeft() {
   );
 }
 
+// Focus Mode tool: the button arms the mode ("H" toggles it too), the next
+// node click dims everything off that node's edge path, and the top-center
+// pill (below) names the mode and exits via its X.
+function FocusModeButton() {
+  const { highlightArmed, setHighlightArmed, focusedNodeId, setFocusedNodeId } =
+    useDestinationGroup();
+  const active = highlightArmed || focusedNodeId !== "";
+
+  const toggle = React.useCallback(() => {
+    if (highlightArmed || focusedNodeId !== "") {
+      setHighlightArmed(false);
+      setFocusedNodeId("");
+    } else {
+      setHighlightArmed(true);
+    }
+  }, [highlightArmed, focusedNodeId, setHighlightArmed, setFocusedNodeId]);
+
+  React.useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      // Escape exits the mode (pane clicks intentionally don't).
+      if (e.key === "Escape" && active && !e.defaultPrevented) {
+        setHighlightArmed(false);
+        setFocusedNodeId("");
+        return;
+      }
+      if (e.key.toLowerCase() !== "f") return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      if (isInputFocused()) return;
+      e.preventDefault();
+      toggle();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [toggle, active, setHighlightArmed, setFocusedNodeId]);
+
+  return (
+    <FullTooltip
+      content={
+        <span className="text-xs flex items-center gap-2">
+          Focus Mode
+          <kbd className="text-[0.67rem] font-mono text-nb-gray-400 ml-1 relative top-[1px]">
+            F
+          </kbd>
+        </span>
+      }
+      side="bottom"
+      sideOffset={10}
+      interactive={false}
+      contentClassName="!px-2 !py-1.5"
+      variant={"lighter"}
+    >
+      {/* Same shell as the Live/Draft switcher: outer container + inner
+          box that fills when active. */}
+      <div
+        className={"rounded-lg text-sm font-medium bg-nb-gray-930 p-1 border border-nb-gray-900"}
+      >
+        <button
+          onClick={toggle}
+          className={cn(
+            // Equal padding all around keeps the box square.
+            "p-[0.45rem] rounded-md transition-all flex items-center justify-center",
+            active
+              ? "bg-nb-gray-900 text-sky-400"
+              : "text-nb-gray-400 hover:bg-nb-gray-900/50",
+          )}
+          aria-label={"Focus Mode"}
+        >
+          <SquareDashedMousePointerIcon size={15} />
+        </button>
+      </div>
+    </FullTooltip>
+  );
+}
+
+// Top-center pill naming the active mode — armed it prompts for a node,
+// focused it names the mode; the X exits.
+function FocusModePill() {
+  const { highlightArmed, setHighlightArmed, focusedNodeId, setFocusedNodeId } =
+    useDestinationGroup();
+  const nodes = useStructuralNodes();
+  const show = highlightArmed || focusedNodeId !== "";
+
+  // Name of whatever is focused — peer, resource, group, policy or network.
+  const focusedName = React.useMemo(() => {
+    if (!focusedNodeId) return "";
+    const data = nodes.find((n) => n.id === focusedNodeId)?.data as
+      | {
+          peer?: { name?: string };
+          resource?: { name?: string };
+          group?: { name?: string };
+          policy?: { name?: string };
+          network?: { name?: string };
+        }
+      | undefined;
+    return (
+      data?.peer?.name ??
+      data?.resource?.name ??
+      data?.group?.name ??
+      data?.policy?.name ??
+      data?.network?.name ??
+      ""
+    );
+  }, [nodes, focusedNodeId]);
+
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          className={"absolute top-0 left-1/2 z-10"}
+          initial={{ x: "-50%", y: -40, opacity: 0 }}
+          animate={{ x: "-50%", y: 0, opacity: 1 }}
+          exit={{ x: "-50%", y: -40, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 400, damping: 32 }}
+        >
+          <div className={"py-4"}>
+            {/* Same surface as the Live/Draft switcher. */}
+            <div
+              className={
+                "flex items-center gap-2.5 pl-4 pr-2 py-2 rounded-full border border-nb-gray-900 bg-nb-gray-930 text-xs font-medium text-nb-gray-200"
+              }
+            >
+              <SquareDashedMousePointerIcon
+                size={14}
+                className={"text-sky-400 shrink-0"}
+              />
+              {focusedNodeId
+                ? `Focusing “${focusedName || "node"}”`
+                : "Select a node to highlight its connections"}
+              <button
+                onClick={() => {
+                  setHighlightArmed(false);
+                  setFocusedNodeId("");
+                }}
+                className={
+                  "p-1.5 rounded-full text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 transition-colors"
+                }
+                aria-label={"Exit Focus Mode"}
+              >
+                <XIcon size={15} />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 function HeaderTopRight() {
   return (
     <div className={"absolute right-0 top-0 z-10"}>
-      <div className={"px-6 py-4"}>
+      <div className={"px-6 py-4 flex items-center gap-3"}>
+        <FocusModeButton />
         <DraftModeSwitcher />
       </div>
     </div>
@@ -266,6 +424,7 @@ export function ControlCenterHeader() {
     <>
       <HeaderTopLeft />
       <HeaderTopRight />
+      <FocusModePill />
       <HeaderBottom />
     </>
   );

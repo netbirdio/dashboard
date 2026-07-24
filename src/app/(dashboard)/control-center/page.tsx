@@ -104,8 +104,11 @@ function ControlCenterCanvas() {
   // Focus mode (live group panel open + path highlight): node dragging is
   // disabled so dragging anywhere pans the canvas instead of accidentally
   // moving dimmed nodes.
-  const { selectedDestinationGroup, focusedNodeId, setFocusedNodeId } =
-    useDestinationGroup();
+  const {
+    selectedDestinationGroup,
+    focusedNodeId,
+    highlightArmed,
+  } = useDestinationGroup();
   // Focus mode applies in draft too — dims off-path nodes, locks node
   // dragging (dragging pans until the focus is dismissed).
   const focusMode = selectedDestinationGroup !== "" || focusedNodeId !== "";
@@ -156,17 +159,18 @@ function ControlCenterCanvas() {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
     setComponentsPanelOpen(false);
+    // Focus Mode intentionally SURVIVES pane clicks — it only exits via the
+    // pill's X or Escape (FocusModeButton).
     const guard = groupPanelCloseGuard.current;
     const closeGroupPanel = () => {
       canvas.setSelectedDestinationGroup("");
-      setFocusedNodeId("");
     };
     if (guard) {
       void guard().then((ok) => ok && closeGroupPanel());
     } else {
       closeGroupPanel();
     }
-  }, [canvas, setFocusedNodeId]);
+  }, [canvas]);
 
   const stableOnConnect = useStableHandler(draft.onNodeConnect);
   const stableOnNodeClick = useStableHandler(ui.onNodeClick);
@@ -235,7 +239,15 @@ function ControlCenterCanvas() {
       <DraftNetworkEditModal />
       <DraftLeaveGuard />
       <ReactFlow
-        className={draft.isSelectMode ? "select-mode" : undefined}
+        className={
+          [
+            draft.isSelectMode && "select-mode",
+            // Armed Focus Mode: nodes get the dashed sky hover halo.
+            highlightArmed && "cc-focus-armed",
+          ]
+            .filter(Boolean)
+            .join(" ") || undefined
+        }
         edges={canvas.edges}
         nodes={canvas.nodes}
         onNodesChange={canvas.onNodesChange}

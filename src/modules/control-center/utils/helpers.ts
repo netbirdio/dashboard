@@ -709,6 +709,39 @@ export const getLiveFrameGrid = (resourceCount: number) => {
 // always-mounted consumers (components panel, toolbars) that only derive
 // from node data, so node drags don't re-render them every tick. Positions
 // must be read imperatively (reactFlow.getNodes()) when needed.
+// Resources a policy actually reaches — directly (destinationResource) or
+// through a destination group — sort to the TOP of a network frame, so
+// connected resources stay visible above the "+N more" cap. SHARED by the
+// live networks overview and the draft build so both frames agree on the
+// order. Stable: each half keeps its relative order.
+export function orderFrameResources(
+  resources: NetworkResource[],
+  networkPolicyIds: string[] | undefined,
+  policies: Policy[] | undefined,
+): NetworkResource[] {
+  const relevant = (policies ?? []).filter((p) =>
+    (networkPolicyIds ?? []).includes(p.id ?? ""),
+  );
+  const directTargets = new Set<string>();
+  const destGroupIds = new Set<string>();
+  relevant.forEach((p) => {
+    const rule = p.rules?.[0];
+    if (!rule) return;
+    const dr = rule.destinationResource as { id?: string } | undefined;
+    if (dr?.id) directTargets.add(dr.id);
+    ((rule.destinations as (Group | string)[]) ?? []).forEach((g) => {
+      const id = typeof g === "string" ? g : g?.id;
+      if (id) destGroupIds.add(id);
+    });
+  });
+  const isTargeted = (r: NetworkResource) =>
+    directTargets.has(r.id) ||
+    ((r.groups ?? []) as (Group | string)[]).some((g) =>
+      destGroupIds.has(typeof g === "string" ? g : g?.id ?? ""),
+    );
+  return [...resources.filter(isTargeted), ...resources.filter((r) => !isTargeted(r))];
+}
+
 export function useStructuralNodes(options?: { selection?: boolean }) {
   const withSelection = options?.selection ?? false;
   return useStore(

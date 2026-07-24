@@ -18,7 +18,8 @@ import Button from "@components/Button";
 import * as React from "react";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { Network, NetworkResource } from "@/interfaces/Network";
-import { useCanvasUI } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasUI,
+} from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import {
   useDraftMode,

@@ -29,6 +29,7 @@ import {
   NETWORK_FRAME_FALLBACK_ROW,
   NETWORK_FRAME_PADDING_Y,
   NETWORK_FRAME_WIDTH,
+  orderFrameResources,
 } from "@/modules/control-center/utils/helpers";
 import { handleDraftConnect } from "@/modules/control-center/utils/draft-connect";
 import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
@@ -483,8 +484,14 @@ export function useDraft() {
         const frameId = `network-${network.id}`;
         if (allNodes.some((n) => n.id === frameId)) return;
 
-        const childResources = (networkResources ?? []).filter((r) =>
-          network.resources?.includes(r.id ?? ""),
+        // Same policy-targeted-first order as the live overview
+        // (orderFrameResources) — entering draft must not reshuffle rows.
+        const childResources = orderFrameResources(
+          (networkResources ?? []).filter((r) =>
+            network.resources?.includes(r.id ?? ""),
+          ),
+          network.policies,
+          policies,
         );
         // Seed with the CAPPED parent-view grid (same as the live overview):
         // an uncapped height (all resources) made big frames seed thousands

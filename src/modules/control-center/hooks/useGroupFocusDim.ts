@@ -10,9 +10,18 @@ import {
 // networks/destinations those reach stay lit, so "group X → policy →
 // network Y" reads at a glance. Applied via node/edge `className`
 // (`cc-dimmed`, globals.css); cleared when the focus ends.
+// Selector nodes (pick a peer/group/user) aren't real entities and can never
+// be focused.
+const SELECTOR_NODE_TYPES = new Set([
+  "selectPeerNode",
+  "selectGroupNode",
+  "selectUserNode",
+]);
+
 export function useGroupFocusDim() {
   const { nodes, edges, setNodes, setEdges } = useCanvasState();
-  const { selectedDestinationGroup, focusedNodeId } = useDestinationGroup();
+  const { selectedDestinationGroup, focusedNodeId, highlightArmed } =
+    useDestinationGroup();
 
   // Either a group (panel open) or a directly focused node (peer click in
   // the user view).
@@ -20,13 +29,14 @@ export function useGroupFocusDim() {
   const focusNode = focusedNodeId;
 
   useEffect(() => {
+    const MANAGED = new Set(["cc-dimmed", "cc-unfocusable", "cc-focus-root"]);
     const clear = () => {
       // draggable: true is the focus-root marker (see below) — nothing else
       // sets a per-node draggable, so clearing it can't clobber other state.
-      if (nodes.some((n) => n.className === "cc-dimmed" || n.draggable)) {
+      if (nodes.some((n) => MANAGED.has(n.className ?? "") || n.draggable)) {
         setNodes((prev) =>
           prev.map((n) =>
-            n.className === "cc-dimmed" || n.draggable
+            MANAGED.has(n.className ?? "") || n.draggable
               ? { ...n, className: undefined, draggable: undefined }
               : n,
           ),
@@ -44,6 +54,38 @@ export function useGroupFocusDim() {
     };
 
     if (!focusGroup && !focusNode) {
+      // Focus Mode armed but nothing targeted yet: mark the nodes that CAN'T
+      // be focused (selectors, nodes without a single edge) so the armed
+      // hover ring / pointer skips them (cc-unfocusable, globals.css).
+      if (highlightArmed) {
+        const connected = new Set<string>();
+        edges.forEach((e) => {
+          connected.add(e.source);
+          connected.add(e.target);
+        });
+        setNodes((prev) => {
+          let changed = false;
+          const next = prev.map((n) => {
+            const cls =
+              SELECTOR_NODE_TYPES.has(n.type ?? "") || !connected.has(n.id)
+                ? "cc-unfocusable"
+                : undefined;
+            // Built-in draggable:false (live frame rows) survives; only the
+            // focus-root true marker gets cleared.
+            const drag = n.draggable === false ? false : undefined;
+            if (
+              (n.className ?? undefined) === cls &&
+              (n.draggable ?? undefined) === drag
+            ) {
+              return n;
+            }
+            changed = true;
+            return { ...n, className: cls, draggable: drag };
+          });
+          return changed ? next : prev;
+        });
+        return;
+      }
       clear();
       return;
     }
@@ -99,11 +141,27 @@ export function useGroupFocusDim() {
     setNodes((prev) => {
       let changed = false;
       const next = prev.map((n) => {
-        const cls = keep.has(n.id) ? undefined : "cc-dimmed";
-        // Focus mode turns global nodesDraggable off (dragging pans), but
-        // the FOCUSED node itself stays draggable — per-node draggable
-        // overrides the global flag.
-        const drag = n.id === root.id ? true : undefined;
+        // The focused node itself wears its own persistent ring
+        // (cc-focus-root, globals.css) — distinct from the context-menu /
+        // panel halo. Only a REAL focus target gets it, not a group whose
+        // panel is merely open.
+        const cls =
+          focusNode && n.id === root.id
+            ? "cc-focus-root"
+            : keep.has(n.id)
+            ? undefined
+            : "cc-dimmed";
+        // Focus mode turns global nodesDraggable off, but every node ON the
+        // path stays movable/clickable — per-node draggable overrides the
+        // global flag. Dimmed nodes are locked (pointer-events none), and
+        // nodes built with an explicit draggable:false (live frame rows)
+        // keep it.
+        const drag =
+          n.draggable === false
+            ? false
+            : keep.has(n.id)
+            ? true
+            : undefined;
         if (
           (n.className ?? undefined) === cls &&
           (n.draggable ?? undefined) === drag
@@ -127,5 +185,5 @@ export function useGroupFocusDim() {
       return changed ? next : prev;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusGroup, focusNode, nodes, edges]);
+  }, [focusGroup, focusNode, highlightArmed, nodes, edges]);
 }

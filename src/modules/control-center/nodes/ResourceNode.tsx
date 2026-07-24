@@ -12,7 +12,8 @@ import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import { StandaloneResourceNode } from "@/modules/control-center/nodes/StandaloneResourceNode";
-import { useCanvasUI } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasUI,
+} from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
@@ -113,7 +114,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
     return (
       <div
         className={cn(
-          "relative rounded-lg transition-colors group/node w-full min-w-[185px]",
+          "cc-frame-row relative rounded-lg transition-colors group/node w-full min-w-[185px]",
           // h-full + centering: the frame layout stamps a fixed slot height
           // on framed rows (deterministic grid — no measure-based re-layout).
           "h-full flex flex-col justify-center",
@@ -130,7 +131,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
         <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
           <div
             className={cn(
-              "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 transition-all",
+              "cc-frame-row-icon h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 transition-all",
               "border border-nb-gray-850",
               isDraft &&
                 "group-hover/node:text-nb-gray-200 group-hover/node:bg-nb-gray-700 group-hover/node:border-nb-gray-700",
