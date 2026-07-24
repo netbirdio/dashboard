@@ -23,6 +23,8 @@ import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import {
   FRAME_GRID_BASE_X,
+  POLICY_NODE_HALF_HEIGHT,
+  SOURCE_NODE_HALF_HEIGHT,
   getFrameChildPosition,
   getLiveFrameGrid,
   isFrameNode,
@@ -683,17 +685,20 @@ export function useDraft() {
           (n.data as { peer?: { name?: string } })?.peer?.name ??
           ""
         ).toLowerCase();
-      if (sourceColumn.length > 1) {
+      if (sourceColumn.length > 1 || (carriesFrames && sourceColumn.length > 0)) {
         // Name-sorted like the live overview.
         sourceColumn.sort((a, b) =>
           draftDisplayName(a).localeCompare(draftDisplayName(b)),
         );
         // Same pitch as the destination column (100) so both sides share
-        // one rhythm; frame drafts keep the networks-overview pitch.
+        // one rhythm; frame drafts keep the networks-overview pitch AND its
+        // half-height offset (frames center on the midline, so top-anchored
+        // columns hang low without it).
         const sourcePitch = carriesFrames ? baseSpacing : 100;
+        const halfH = carriesFrames ? SOURCE_NODE_HALF_HEIGHT : 0;
         const colHeight = (sourceColumn.length - 1) * sourcePitch;
         sourceColumn.forEach((n, i) => {
-          n.position = { x: 0, y: -colHeight / 2 + i * sourcePitch };
+          n.position = { x: 0, y: -colHeight / 2 + i * sourcePitch - halfH };
         });
       }
       if (carriesFrames) {
@@ -703,7 +708,7 @@ export function useDraft() {
         const policyColumn = updatedNodes.filter(
           (n) => !n.parentId && n.type === "policyNode",
         );
-        if (policyColumn.length > 1) {
+        if (policyColumn.length > 0) {
           const policyName = (n: Node) =>
             ((n.data as { policy?: { name?: string } })?.policy?.name ?? "")
               .toLowerCase();
@@ -712,7 +717,10 @@ export function useDraft() {
           );
           const colHeight = (policyColumn.length - 1) * 90;
           policyColumn.forEach((n, i) => {
-            n.position = { x: 480, y: -colHeight / 2 + i * 90 };
+            n.position = {
+              x: 480,
+              y: -colHeight / 2 + i * 90 - POLICY_NODE_HALF_HEIGHT,
+            };
           });
         }
       } else {
@@ -768,7 +776,10 @@ export function useDraft() {
       // odd columns offset by half a cell so the policy edges flow through
       // the gaps between frames.
       const frames = updatedNodes.filter((n) => isFrameNode(n));
-      if (frames.length > 1) {
+      // Also for a SINGLE frame — otherwise it stays at the hierarchical
+      // layout's far column and the live-anchor shift below drags the
+      // source/policy columns out of line with it.
+      if (frames.length > 0) {
         // Same x-origin as the live overview (the hierarchical layout put
         // frames at its far column, which left a much wider policy → network
         // gap than live), centered on the vertical middle of the REST of the
@@ -785,7 +796,14 @@ export function useDraft() {
                   ...others.map(
                     (n) =>
                       n.position.y +
+                      // Fresh rebuild nodes aren't measured yet — fall back
+                      // to the live twin's measured height (the adoption
+                      // post-pass runs later), else the 80px guess skews the
+                      // frame-grid midline vs the columns by ~16px.
                       (n.measured?.height ??
+                        n.initialHeight ??
+                        liveNodes.find((l) => l.id === n.id)?.measured
+                          ?.height ??
                         (Number(n.style?.height) || 80)),
                   ),
                 )) /

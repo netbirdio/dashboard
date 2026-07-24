@@ -701,6 +701,14 @@ export const FRAME_GRID_BASE_X = 1050;
 export const FRAME_GRID_GAP_X = 280;
 export const FRAME_GRID_GAP_Y = 200;
 
+// The networks-view source/policy columns position node TOPS, while the
+// frame grid centers frames on the column midline — without compensating
+// for node height, a lone source peer or policy hangs visibly below its
+// frame. Half the typical node heights (peer/group card ≈ 60px, policy
+// pill ≈ 34px), SHARED by the live overview and the draft build.
+export const SOURCE_NODE_HALF_HEIGHT = 30;
+export const POLICY_NODE_HALF_HEIGHT = 17;
+
 export function packFrameGrid(
   frames: CanvasNode[],
   baseX: number,

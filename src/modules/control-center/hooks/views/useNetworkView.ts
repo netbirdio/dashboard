@@ -15,6 +15,8 @@ import {
   NETWORK_FRAME_FALLBACK_ROW,
   getResourcePolicyByGroups,
   packFrameGrid,
+  POLICY_NODE_HALF_HEIGHT,
+  SOURCE_NODE_HALF_HEIGHT,
 } from "@/modules/control-center/utils/helpers";
 import { ViewResult } from "./types";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
@@ -438,7 +440,10 @@ export function useNetworkView() {
     const SOURCE_SPACING = 160;
     const sourcesHeight = (sources.length - 1) * SOURCE_SPACING;
     sources.forEach((n, i) => {
-      n.position = { x: 0, y: -sourcesHeight / 2 + i * SOURCE_SPACING };
+      n.position = {
+        x: 0,
+        y: -sourcesHeight / 2 + i * SOURCE_SPACING - SOURCE_NODE_HALF_HEIGHT,
+      };
     });
     const policyName = (n: Node) =>
       ((n.data as { policy?: { name?: string } })?.policy?.name ?? "")
@@ -447,7 +452,10 @@ export function useNetworkView() {
     const POLICY_SPACING = 90;
     const policiesHeight = (policyNodes.length - 1) * POLICY_SPACING;
     policyNodes.forEach((n, i) => {
-      n.position = { x: 480, y: -policiesHeight / 2 + i * POLICY_SPACING };
+      n.position = {
+        x: 480,
+        y: -policiesHeight / 2 + i * POLICY_SPACING - POLICY_NODE_HALF_HEIGHT,
+      };
     });
     packFrameGrid(frames, FRAME_GRID_BASE_X, 0);
 
