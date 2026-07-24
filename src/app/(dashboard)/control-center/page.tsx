@@ -51,6 +51,7 @@ import {
   useControlCenterUI,
   useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
+import { groupPanelCloseGuard } from "@/modules/control-center/DestinationGroupPanel";
 import { ControlCenterPolicyProvider } from "@/modules/control-center/ControlCenterPolicyModals";
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
 import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
@@ -149,12 +150,22 @@ function ControlCenterCanvas() {
 
   // A click OUTSIDE dismisses everything at once — the context menu AND any
   // open panel/components picker — so the user never has to click twice.
+  // The group panel registers a discard-confirm guard while it has
+  // unassigned toggles; closing it waits for that dialog.
   const dismissCanvasOverlays = React.useCallback(() => {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
-    canvas.setSelectedDestinationGroup("");
-    setFocusedNodeId("");
     setComponentsPanelOpen(false);
+    const guard = groupPanelCloseGuard.current;
+    const closeGroupPanel = () => {
+      canvas.setSelectedDestinationGroup("");
+      setFocusedNodeId("");
+    };
+    if (guard) {
+      void guard().then((ok) => ok && closeGroupPanel());
+    } else {
+      closeGroupPanel();
+    }
   }, [canvas, setFocusedNodeId]);
 
   const stableOnConnect = useStableHandler(draft.onNodeConnect);

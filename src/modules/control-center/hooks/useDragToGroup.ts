@@ -57,6 +57,13 @@ export function groupContainsItem(groupNode: Node, itemId: string): boolean {
   const group = groupNode.data?.group as Group | undefined;
   if (!group) return false;
 
+  // A member removed in the draft no longer counts as contained — re-adding
+  // it reverts the removal.
+  const removedMembers = groupNode.data?.removedMembers as
+    | Set<string>
+    | undefined;
+  if (removedMembers?.has(itemId)) return false;
+
   // Check existing peers
   const peers = group.peers ?? [];
   const hasPeer = peers.some((p) =>
@@ -85,6 +92,122 @@ export function useDragToGroup() {
   const { assignResourceToNetwork } = useDraftNetworkActions();
   const { networkResources } = useControlCenterData();
   const reactFlow = useReactFlow();
+
+  // Adds a peer/resource to a group: updates every canvas instance of the
+  // group (counts + addedMembers, reverting a draft removal if present) and
+  // records the changeset entry. When the member arrives as a canvas node
+  // (draggedNodeId), the node and its edges leave the canvas and policies
+  // that referenced it follow it into the group. Also used by the group
+  // panel's drop zone (components-panel drags).
+  const addMemberToGroup = useCallback(
+    (
+      targetGroup: Node,
+      {
+        peer,
+        resource,
+        itemId: itemIdOverride,
+        draggedNodeId,
+      }: {
+        peer?: Peer;
+        resource?: NetworkResource;
+        itemId?: string;
+        draggedNodeId?: string;
+      },
+    ) => {
+      const itemId = itemIdOverride ?? peer?.id ?? resource?.id;
+      if (!itemId) return;
+      if (!peer && !resource) return;
+      if (groupContainsItem(targetGroup, itemId)) return;
+
+      const groupData = targetGroup.data.group as Group;
+
+      // Remove the dragged node and its edges
+      if (draggedNodeId) {
+        setNodes((prev) => prev.filter((n) => n.id !== draggedNodeId));
+        setEdges((prev) =>
+          prev.filter(
+            (e) => e.source !== draggedNodeId && e.target !== draggedNodeId,
+          ),
+        );
+      }
+
+      // Update counts and added members on EVERY canvas instance of the
+      // group — a group can appear twice (source node + destination copy),
+      // and both must reflect the new member.
+      setNodes((prev) =>
+        prev.map((n) => {
+          const g = n.data?.group as Group | undefined;
+          if (!g) return n;
+          const sameGroup = groupData.id
+            ? g.id === groupData.id
+            : !g.id && g.name === groupData.name;
+          if (!sameGroup) return n;
+          const group = { ...g };
+          const removedMembers = new Set(
+            (n.data.removedMembers as Set<string>) ?? [],
+          );
+          const addedMembers = new Set(
+            (n.data.addedMembers as Set<string>) ?? [],
+          );
+          // An existing member removed in the draft just comes back;
+          // anything else is a draft addition.
+          if (removedMembers.has(itemId)) removedMembers.delete(itemId);
+          else addedMembers.add(itemId);
+
+          if (peer) {
+            group.peers_count = (group.peers_count || 0) + 1;
+          }
+          if (resource) {
+            group.resources_count = (group.resources_count || 0) + 1;
+          }
+          return {
+            ...n,
+            data: { ...n.data, group, addedMembers, removedMembers },
+          };
+        }),
+      );
+
+      trackAddGroupMembers({
+        groupId: groupData.id,
+        groupName: groupData.name ?? "",
+        peerIds: peer?.id ? [peer.id] : [],
+        resourceIds: resource ? [resource.id] : [],
+      });
+
+      // Draft resources also carry the group on their own create change —
+      // deploy applies groups via the resource's `groups` field, since group
+      // changes run before the resource exists.
+      if (itemId.startsWith("new-") && resource) {
+        addGroupToDraftResource(itemId, groupData.id ?? groupData.name);
+      }
+
+      // Policies that referenced the dragged entity as their single
+      // source/destination follow it into the group.
+      if (draggedNodeId) {
+        const policyUpdates = getPolicyRegroupUpdates(
+          reactFlow.getNodes(),
+          new Set([itemId]),
+          groupData,
+        );
+        if (policyUpdates.length > 0) {
+          // Next tick — the node removal must be committed to the canvas
+          // before drawPolicyOnCanvas rebuilds the policies' edges.
+          setTimeout(
+            () => policyUpdates.forEach((p) => updateDraftPolicy(p)),
+            0,
+          );
+        }
+      }
+    },
+    [
+      setNodes,
+      setEdges,
+      trackAddGroupMembers,
+      addGroupToDraftResource,
+      updateDraftPolicy,
+      reactFlow,
+    ],
+  );
 
   // Dragging a resource contained in a network frame moves the WHOLE frame
   // (and everything in it): the child's displacement is transferred to the
@@ -387,12 +510,6 @@ export function useDragToGroup() {
       const itemId = getDraggedItemId(draggedNode);
       if (!itemId) return;
 
-      // Don't drop if item already belongs to this group
-      if (groupContainsItem(targetGroup, itemId)) return;
-
-      const groupData = targetGroup.data.group as Group;
-      const draggedId = draggedNode.id;
-
       const peer =
         (draggedNode.data?.peer as Peer | undefined) ??
         getPlaceholderPeer(draggedNode);
@@ -400,84 +517,23 @@ export function useDragToGroup() {
         | NetworkResource
         | undefined;
 
-      if (!peer && !resource) return;
-
-      // Remove the dragged node and its edges
-      setNodes((prev) => prev.filter((n) => n.id !== draggedId));
-      setEdges((prev) =>
-        prev.filter((e) => e.source !== draggedId && e.target !== draggedId),
-      );
-
-      // Update counts and added members on EVERY canvas instance of the
-      // group — a group can appear twice (source node + destination copy),
-      // and both must reflect the new member.
-      setNodes((prev) =>
-        prev.map((n) => {
-          const g = n.data?.group as Group | undefined;
-          if (!g) return n;
-          const sameGroup = groupData.id
-            ? g.id === groupData.id
-            : !g.id && g.name === groupData.name;
-          if (!sameGroup) return n;
-          const group = { ...g };
-          const addedMembers = new Set(
-            (n.data.addedMembers as Set<string>) ?? [],
-          );
-          addedMembers.add(itemId);
-
-          if (peer) {
-            group.peers_count = (group.peers_count || 0) + 1;
-          }
-          if (resource) {
-            group.resources_count = (group.resources_count || 0) + 1;
-          }
-          return {
-            ...n,
-            data: { ...n.data, group, addedMembers },
-          };
-        }),
-      );
-
-      trackAddGroupMembers({
-        groupId: groupData.id,
-        groupName: groupData.name ?? "",
-        peerIds: peer?.id ? [peer.id] : [],
-        resourceIds: resource ? [resource.id] : [],
+      addMemberToGroup(targetGroup, {
+        peer,
+        resource,
+        itemId,
+        draggedNodeId: draggedNode.id,
       });
-
-      // Draft resources also carry the group on their own create change —
-      // deploy applies groups via the resource's `groups` field, since group
-      // changes run before the resource exists.
-      if (itemId.startsWith("new-") && draggedId.startsWith("resource-")) {
-        addGroupToDraftResource(itemId, groupData.id ?? groupData.name);
-      }
-
-      // Policies that referenced the dragged entity as their single
-      // source/destination follow it into the group.
-      const policyUpdates = getPolicyRegroupUpdates(
-        reactFlow.getNodes(),
-        new Set([itemId]),
-        groupData,
-      );
-      if (policyUpdates.length > 0) {
-        // Next tick — the node removal must be committed to the canvas
-        // before drawPolicyOnCanvas rebuilds the policies' edges.
-        setTimeout(() => policyUpdates.forEach((p) => updateDraftPolicy(p)), 0);
-      }
     },
     [
       isDraft,
       reactFlow,
       setNodes,
-      setEdges,
-      trackAddGroupMembers,
-      addGroupToDraftResource,
       trackCreateResource,
       networkResources,
-      updateDraftPolicy,
       assignResourceToNetwork,
+      addMemberToGroup,
     ],
   );
 
-  return { onNodeDragStart, onNodeDrag, onNodeDragStop };
+  return { onNodeDragStart, onNodeDrag, onNodeDragStop, addMemberToGroup };
 }

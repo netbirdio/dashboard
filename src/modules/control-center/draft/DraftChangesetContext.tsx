@@ -41,6 +41,10 @@ export interface UpdateGroupChange {
   originalName: string;
   peerIds: string[];
   resourceIds: string[];
+  // EXISTING members removed in the draft (draft-added members that are
+  // removed again just leave the add lists above).
+  removedPeerIds?: string[];
+  removedResourceIds?: string[];
 }
 
 export interface DeleteGroupChange {
@@ -249,6 +253,11 @@ export const getChangeLabel = (
         parts.push(`renamed from “${change.originalName}”`);
       const count = change.peerIds.length + change.resourceIds.length;
       if (count > 0) parts.push(`+${count} member${count !== 1 ? "s" : ""}`);
+      const removed =
+        (change.removedPeerIds?.length ?? 0) +
+        (change.removedResourceIds?.length ?? 0);
+      if (removed > 0)
+        parts.push(`−${removed} member${removed !== 1 ? "s" : ""}`);
       return {
         title: `Update group “${change.name}”`,
         detail: parts.length > 0 ? parts.join(", ") : undefined,
@@ -397,6 +406,13 @@ interface DraftChangesetContextType {
       resourceIds?: string[];
     },
   ) => void;
+  trackRemoveGroupMembers: (
+    params: GroupRef & {
+      groupName: string;
+      peerIds?: string[];
+      resourceIds?: string[];
+    },
+  ) => void;
   trackDeleteGroup: (params: GroupRef & { name: string }) => void;
   // Removes a draft-only group's pending changes without deleting anything
   // (used when a new group is removed from the canvas).
@@ -438,6 +454,8 @@ interface DraftChangesetContextType {
   // create change — deploy applies groups via the resource's own `groups`
   // field (group changes deploy before resources exist).
   addGroupToDraftResource: (clientId: string, groupRef: string) => void;
+  // Inverse of addGroupToDraftResource.
+  removeGroupFromDraftResource: (clientId: string, groupRef: string) => void;
   trackCreateRouter: (params: Omit<CreateRouterChange, "id" | "type">) => void;
   // Drops a router change by its network + peer/group reference.
   untrackRouter: (params: {
@@ -570,7 +588,9 @@ export function DraftChangesetProvider({
             const reverted =
               to === existing.originalName &&
               existing.peerIds.length === 0 &&
-              existing.resourceIds.length === 0;
+              existing.resourceIds.length === 0 &&
+              (existing.removedPeerIds?.length ?? 0) === 0 &&
+              (existing.removedResourceIds?.length ?? 0) === 0;
             // Back to the original name with nothing else pending — the
             // update is a no-op and the change disappears.
             next = reverted
@@ -638,6 +658,14 @@ export function DraftChangesetProvider({
                   resourceIds: [
                     ...new Set([...existing.resourceIds, ...resourceIds]),
                   ],
+                  // Re-adding a member that was removed in the draft reverts
+                  // the removal.
+                  removedPeerIds: existing.removedPeerIds?.filter(
+                    (id) => !peerIds.includes(id),
+                  ),
+                  removedResourceIds: existing.removedResourceIds?.filter(
+                    (id) => !resourceIds.includes(id),
+                  ),
                 }
               : c,
           );
@@ -653,6 +681,92 @@ export function DraftChangesetProvider({
             peerIds,
             resourceIds,
           },
+        ];
+      });
+    },
+    [],
+  );
+
+  // Inverse of trackAddGroupMembers. Draft-added members simply leave the
+  // add lists; EXISTING members land in the removed lists (deploy drops them
+  // from the group's membership). A fully reverted update change disappears.
+  const trackRemoveGroupMembers = useCallback(
+    ({
+      groupId,
+      groupName,
+      peerIds = [],
+      resourceIds = [],
+    }: GroupRef & {
+      groupName: string;
+      peerIds?: string[];
+      resourceIds?: string[];
+    }) => {
+      setChanges((prev) => {
+        if (!groupId) {
+          // New group — members only exist in its create change.
+          return prev.map((c) =>
+            c.type === "create-group" && c.name === groupName
+              ? {
+                  ...c,
+                  peerIds: c.peerIds.filter((id) => !peerIds.includes(id)),
+                  resourceIds: c.resourceIds.filter(
+                    (id) => !resourceIds.includes(id),
+                  ),
+                }
+              : c,
+          );
+        }
+        const existing = prev.find(
+          (c): c is UpdateGroupChange =>
+            c.type === "update-group" && c.groupId === groupId,
+        );
+        const applyTo = (c: UpdateGroupChange): UpdateGroupChange => {
+          // Ids sitting in the add lists were draft-added — removing them is
+          // a pure revert. The rest are existing members → removed lists.
+          const next: UpdateGroupChange = {
+            ...c,
+            peerIds: c.peerIds.filter((id) => !peerIds.includes(id)),
+            resourceIds: c.resourceIds.filter(
+              (id) => !resourceIds.includes(id),
+            ),
+            removedPeerIds: [
+              ...new Set([
+                ...(c.removedPeerIds ?? []),
+                ...peerIds.filter((id) => !c.peerIds.includes(id)),
+              ]),
+            ],
+            removedResourceIds: [
+              ...new Set([
+                ...(c.removedResourceIds ?? []),
+                ...resourceIds.filter((id) => !c.resourceIds.includes(id)),
+              ]),
+            ],
+          };
+          return next;
+        };
+        if (existing) {
+          const updated = applyTo(existing);
+          const noop =
+            updated.name === updated.originalName &&
+            updated.peerIds.length === 0 &&
+            updated.resourceIds.length === 0 &&
+            (updated.removedPeerIds?.length ?? 0) === 0 &&
+            (updated.removedResourceIds?.length ?? 0) === 0;
+          return noop
+            ? prev.filter((c) => c.id !== existing.id)
+            : prev.map((c) => (c.id === existing.id ? updated : c));
+        }
+        return [
+          ...prev,
+          applyTo({
+            id: uid(),
+            type: "update-group",
+            groupId,
+            name: groupName,
+            originalName: groupName,
+            peerIds: [],
+            resourceIds: [],
+          }),
         ];
       });
     },
@@ -834,6 +948,19 @@ export function DraftChangesetProvider({
           c.clientId === clientId &&
           !c.groupIds.includes(groupRef)
             ? { ...c, groupIds: [...c.groupIds, groupRef] }
+            : c,
+        ),
+      );
+    },
+    [],
+  );
+
+  const removeGroupFromDraftResource = useCallback(
+    (clientId: string, groupRef: string) => {
+      setChanges((prev) =>
+        prev.map((c) =>
+          c.type === "create-resource" && c.clientId === clientId
+            ? { ...c, groupIds: c.groupIds.filter((g) => g !== groupRef) }
             : c,
         ),
       );
@@ -1056,6 +1183,7 @@ export function DraftChangesetProvider({
       trackCreateGroup,
       trackRenameGroup,
       trackAddGroupMembers,
+      trackRemoveGroupMembers,
       trackDeleteGroup,
       untrackNewGroup,
       replacePeerIdInGroups,
@@ -1067,6 +1195,7 @@ export function DraftChangesetProvider({
       trackUpdateResource,
       trackDeleteResource,
       addGroupToDraftResource,
+      removeGroupFromDraftResource,
       trackCreateRouter,
       untrackRouter,
       trackCreatePolicy,
@@ -1082,6 +1211,7 @@ export function DraftChangesetProvider({
       trackCreateGroup,
       trackRenameGroup,
       trackAddGroupMembers,
+      trackRemoveGroupMembers,
       trackDeleteGroup,
       untrackNewGroup,
       replacePeerIdInGroups,
@@ -1093,6 +1223,7 @@ export function DraftChangesetProvider({
       trackUpdateResource,
       trackDeleteResource,
       addGroupToDraftResource,
+      removeGroupFromDraftResource,
       trackCreateRouter,
       untrackRouter,
       trackCreatePolicy,

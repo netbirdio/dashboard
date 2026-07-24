@@ -60,6 +60,12 @@ export function useGroupFocusDim() {
       clear();
       return;
     }
+    // No edges = no path to trace — dimming the rest of the canvas would
+    // just gray everything out for nothing.
+    if (!edges.some((e) => e.source === root.id || e.target === root.id)) {
+      clear();
+      return;
+    }
 
     // Forward closure (everything the group's traffic reaches) PLUS the
     // backward closure (everything feeding it) — a destination group's path

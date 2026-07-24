@@ -64,6 +64,8 @@ export function useDraftGroupActions() {
     trackCreateGroup,
     trackRenameGroup,
     trackDeleteGroup,
+    trackRemoveGroupMembers,
+    removeGroupFromDraftResource,
     untrackNewGroup,
     untrackNetwork,
     untrackResource,
@@ -122,6 +124,70 @@ export function useDraftGroupActions() {
       trackRenameGroup({ groupId: group.id, from, to: newName });
     },
     [setNodes, trackRenameGroup],
+  );
+
+  // Removes a single member (peer or resource) from a group: updates every
+  // canvas instance of the group (counts + addedMembers/removedMembers) and
+  // records the changeset entry. Draft-added members simply revert their
+  // addition; existing members are removed on deploy.
+  const removeGroupMember = useCallback(
+    (
+      group: Group,
+      member: { peerId?: string; resourceId?: string },
+    ) => {
+      const itemId = member.peerId ?? member.resourceId;
+      if (!itemId) return;
+
+      setNodes((prev) =>
+        prev.map((n) => {
+          const g = getNodeGroup(n);
+          if (!g) return n;
+          const sameGroup = group.id
+            ? g.id === group.id
+            : !g.id && g.name === group.name;
+          if (!sameGroup) return n;
+          const addedMembers = new Set(
+            (n.data.addedMembers as Set<string>) ?? [],
+          );
+          const removedMembers = new Set(
+            (n.data.removedMembers as Set<string>) ?? [],
+          );
+          // Draft-added members revert; existing ones are marked removed.
+          if (addedMembers.has(itemId)) addedMembers.delete(itemId);
+          else removedMembers.add(itemId);
+          const updated = { ...g };
+          if (member.peerId) {
+            updated.peers_count = Math.max(0, (updated.peers_count || 0) - 1);
+          }
+          if (member.resourceId) {
+            updated.resources_count = Math.max(
+              0,
+              (updated.resources_count || 0) - 1,
+            );
+          }
+          return {
+            ...n,
+            data: { ...n.data, group: updated, addedMembers, removedMembers },
+          };
+        }),
+      );
+
+      trackRemoveGroupMembers({
+        groupId: group.id,
+        groupName: group.name ?? "",
+        peerIds: member.peerId ? [member.peerId] : [],
+        resourceIds: member.resourceId ? [member.resourceId] : [],
+      });
+
+      // Draft resources also carry the group on their own create change.
+      if (member.resourceId?.startsWith("new-")) {
+        removeGroupFromDraftResource(
+          member.resourceId,
+          group.id ?? group.name,
+        );
+      }
+    },
+    [setNodes, trackRemoveGroupMembers, removeGroupFromDraftResource],
   );
 
   const removeNodeWithEdges = useCallback(
@@ -434,6 +500,7 @@ export function useDraftGroupActions() {
   return {
     addNewGroup,
     renameGroup,
+    removeGroupMember,
     removeGroup,
     deleteGroup,
     confirmAndDeleteGroups,

@@ -26,6 +26,9 @@ type DeviceCardProps = {
   size?: DeviceCardSize;
   // Rendered inline after the name (e.g. the NEW badge for draft entities).
   badge?: React.ReactNode;
+  // Truncation width for the name — wider containers (e.g. the group panel
+  // lists) pass more room than the canvas-card default.
+  nameMaxWidth?: string;
 };
 
 export const DeviceCard = ({
@@ -34,6 +37,7 @@ export const DeviceCard = ({
   className,
   size = "default",
   badge,
+  nameMaxWidth,
 }: DeviceCardProps) => {
   if (!device && !resource) return;
 
@@ -83,7 +87,14 @@ export const DeviceCard = ({
           </div>
         )}
       </div>
-      <div className={"flex flex-col gap-0 justify-center leading-tight"}>
+      <div
+        className={cn(
+          "flex flex-col justify-center leading-tight",
+          // Peer subtitles sit tighter than resource ones — a hair less gap
+          // keeps resources from looking spaced out.
+          device ? "gap-0.5" : "gap-px",
+        )}
+      >
         <span
           className={cn(
             "font-normal text-nb-gray-100 flex items-center gap-2",
@@ -92,7 +103,7 @@ export const DeviceCard = ({
         >
           <TruncatedText
             text={device?.name || resource?.name || "Unknown"}
-            maxWidth={isSmall ? "120px" : "150px"}
+            maxWidth={nameMaxWidth ?? (isSmall ? "120px" : "150px")}
             hideTooltip={true}
           />
           {badge}

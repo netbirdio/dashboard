@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useState } from "react";
+import { cn } from "@utils/helpers";
 import { SegmentedTabs } from "@components/SegmentedTabs";
 import { GitPullRequestArrowIcon, PencilLineIcon } from "lucide-react";
 import CircleIcon from "@/assets/icons/CircleIcon";
@@ -27,7 +28,9 @@ export const DraftModeSwitcher = ({}: Props) => {
   };
 
   return (
-    <div className={"flex items-center gap-3"}>
+    // The id lets the group panel match its width to this action row
+    // (Cancel · Review & Deploy · Live/Draft) via ResizeObserver.
+    <div id={"cc-header-actions"} className={"flex items-center gap-3"}>
       {isDraft && (
         <>
           <Button

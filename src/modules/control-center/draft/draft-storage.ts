@@ -77,14 +77,16 @@ export function loadDraftCanvas(): DraftCanvas | null {
       return null;
     }
     parsed.nodes = parsed.nodes.map((n) => {
-      const addedMembers = (n.data as any)?.addedMembers;
-      if (Array.isArray(addedMembers)) {
-        return {
-          ...n,
-          data: { ...n.data, addedMembers: new Set(addedMembers) },
-        };
+      // Sets stored as arrays (see replacer) — restore them.
+      const data = { ...(n.data as any) };
+      let changed = false;
+      for (const key of ["addedMembers", "removedMembers"]) {
+        if (Array.isArray(data[key])) {
+          data[key] = new Set(data[key]);
+          changed = true;
+        }
       }
-      return n;
+      return changed ? { ...n, data } : n;
     });
     return parsed;
   } catch {

@@ -4,6 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -33,6 +34,7 @@ import { useNetworkView } from "@/modules/control-center/hooks/views/useNetworkV
 import { useSelectNodeHandlers } from "@/modules/control-center/hooks/useSelectNodeHandlers";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { DestinationGroupPanel } from "@/modules/control-center/DestinationGroupPanel";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ensureParentsBeforeChildren } from "@/modules/control-center/utils/helpers";
 
 // ---- Canvas State Context ----
@@ -289,6 +291,24 @@ export function ControlCenterUIProvider({
 }) {
   const canvas = useCanvasState();
   const data = useControlCenterData();
+  const { isDraft } = useDraftMode();
+  const { setFocusedNodeId } = useDestinationGroup();
+
+  // Mode switches (draft ⇄ live) close the group panel and drop any node
+  // selection/focus — both reference nodes of the mode being torn down.
+  const prevDraftRef = useRef(isDraft);
+  useEffect(() => {
+    if (prevDraftRef.current === isDraft) return;
+    prevDraftRef.current = isDraft;
+    canvas.setSelectedDestinationGroup("");
+    setFocusedNodeId("");
+    canvas.setNodes((prev) =>
+      prev.some((n) => n.selected)
+        ? prev.map((n) => (n.selected ? { ...n, selected: false } : n))
+        : prev,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDraft]);
 
   const { applySingleGroupView } = useGroupView();
   const { applyPeerView } = usePeerView();
@@ -337,12 +357,12 @@ export function ControlCenterUIProvider({
         {sidebar}
         <div className={"w-full h-full relative overflow-hidden"}>
           {children}
-          {canvas.selectedDestinationGroup && (
-            <DestinationGroupPanel
-              groupId={canvas.selectedDestinationGroup}
-              onClose={() => canvas.setSelectedDestinationGroup("")}
-            />
-          )}
+          {/* Always mounted (renders null while closed) — remounting per
+              open rebuilt the full peer/resource lists every time. */}
+          <DestinationGroupPanel
+            groupId={canvas.selectedDestinationGroup}
+            onClose={() => canvas.setSelectedDestinationGroup("")}
+          />
         </div>
       </div>
     </ControlCenterUIContext.Provider>

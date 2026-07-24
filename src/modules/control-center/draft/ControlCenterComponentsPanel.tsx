@@ -783,7 +783,7 @@ const PanelContent = React.memo(
               >
                 <ShieldIcon size={14} />
               </div>
-              <div className={"flex flex-col leading-tight min-w-0"}>
+              <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
                 <span
                   className={
                     "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
@@ -816,7 +816,7 @@ const PanelContent = React.memo(
             >
               <NetworkIcon size={14} />
             </div>
-            <div className={"flex flex-col leading-tight min-w-0"}>
+            <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
               <span
                 className={
                   "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
@@ -857,7 +857,7 @@ const PanelContent = React.memo(
               >
                 <NetworkIcon size={14} />
               </div>
-              <div className={"flex flex-col leading-tight min-w-0"}>
+              <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
                 <span
                   className={
                     "text-xs text-nb-gray-100 flex items-center min-w-0"
@@ -931,7 +931,7 @@ const PanelContent = React.memo(
             >
               <GroupBadgeIcon size={14} />
             </div>
-            <div className={"flex flex-col leading-tight min-w-0"}>
+            <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
               <span
                 className={
                   "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
@@ -971,7 +971,7 @@ const PanelContent = React.memo(
               >
                 <GroupBadgeIcon id={group.id} issued={group.issued} size={14} />
               </div>
-              <div className={"flex flex-col leading-tight min-w-0"}>
+              <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
                 <span
                   className={
                     "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
@@ -1020,7 +1020,7 @@ const PanelContent = React.memo(
               >
                 <ShieldIcon size={14} />
               </div>
-              <div className={"flex flex-col leading-tight min-w-0"}>
+              <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
                 <span
                   className={
                     "text-xs text-nb-gray-100 flex items-center min-w-0"
@@ -1161,8 +1161,9 @@ const PanelContent = React.memo(
           }}
           className={cn(
             !open && "pointer-events-none",
-            // Node picker floating above the bottom toolbar.
-            "absolute bottom-[80px] left-1/2 z-20",
+            // Node picker floating above the bottom toolbar — and above the
+            // group panel (z-20), which must never cover it.
+            "absolute bottom-[80px] left-1/2 z-30",
             "w-[480px] max-w-[calc(100%-48px)] h-[420px] max-h-[calc(100%-170px)]",
             "border border-nb-gray-910 rounded-lg flex flex-col overflow-hidden",
             "bg-nb-gray-935 shadow-xl",
@@ -1355,7 +1356,7 @@ const TemplateItem = React.memo(
           >
             {iconNode ?? (Icon && <Icon size={14} />)}
           </div>
-          <div className={"flex flex-col leading-tight min-w-0"}>
+          <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
             <span className={"text-xs text-nb-gray-100"}>{label}</span>
             <span className={"text-[0.7rem] text-nb-gray-400"}>
               {description}

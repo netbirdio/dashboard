@@ -179,6 +179,8 @@ export function useDeployChangeset() {
           change.resourceIds.forEach(
             (id) => !id.startsWith("new-") && resources.add(id),
           );
+          change.removedPeerIds?.forEach((id) => peers.delete(id));
+          change.removedResourceIds?.forEach((id) => resources.delete(id));
           const updated = await groupRequest.put(
             {
               name: change.name,

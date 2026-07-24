@@ -428,13 +428,18 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         // side panel — the focus-dim effect highlights its path.
         onDestinationGroupSelect(groupId);
       }
+      // A node with no edges has no path to trace — focusing it would just
+      // dim the whole canvas, so skip focus mode entirely.
+      const hasConnections = reactFlow
+        .getEdges()
+        .some((e) => e.source === _node.id || e.target === _node.id);
       // Resource cards (standalone / destination resources) focus their
       // path like peers do — framed overview rows keep drilling into their
       // network instead (handled above via frameChildNetworkId).
       const isResourceNode =
         _node.type === "resourceNode" ||
         _node.type === "destinationResourceNode";
-      if (!isDraft && isResourceNode && !frameChildNetworkId) {
+      if (!isDraft && isResourceNode && !frameChildNetworkId && hasConnections) {
         setFocusedNodeId(_node.id);
       }
       // Clicking a policy or a peer focuses its path (live AND draft) —
@@ -443,7 +448,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         _node.type === "peerNode" ||
         _node.type === "sourcePeerNode" ||
         _node.type === "expandedGroupPeer";
-      if (policyId || isPeerNode) {
+      if ((policyId || isPeerNode) && hasConnections) {
         // One focus at a time — this focus supersedes a group focus.
         setSelectedDestinationGroup("");
         setFocusedNodeId(_node.id);
