@@ -20,10 +20,12 @@ import {
 } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftHistory } from "@/modules/control-center/draft/DraftHistoryContext";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
+import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
 import {
-  applyDraftArrangeLayout,
-  DEFAULT_MIN_ZOOM,
-} from "@/modules/control-center/utils/layouts";
+  applyDrilledLayout,
+  getDrilledFrameAnchor,
+} from "@/modules/control-center/utils/drilled-layout";
 import { isMac } from "@hooks/useOperatingSystem";
 
 // Undo/redo shortcut badges: ⌘ icon on macOS, "Ctrl" text on Windows/Linux;
@@ -66,6 +68,7 @@ export const CanvasToolbar = () => {
     setActiveTool,
     componentsPanelOpen,
     setComponentsPanelOpen,
+    drillDownNetworkNodeId,
   } = useDraftMode();
   const reactFlow = useReactFlow();
   const { undo, redo, canUndo, canRedo } = useDraftHistory();
@@ -78,27 +81,56 @@ export const CanvasToolbar = () => {
   const handleFitView = () =>
     reactFlow.fitView({ padding: 0.1, duration: 500, maxZoom: 0.8 });
 
-  // Re-arranges the current graph by connectivity (sources → policies →
-  // destinations), tidying up manually dragged nodes.
+  // Re-arranges the current graph with THE same layout the canvas got when
+  // the draft was entered (applyDraftBuildLayout / applyDrilledLayout) —
+  // arranging an untouched canvas reproduces the initial positions exactly
+  // instead of drifting to a slightly different rhythm.
   const handleArrange = () => {
     const nodes = reactFlow.getNodes();
     const edges = reactFlow.getEdges();
     if (nodes.length === 0) return;
-    const { updatedNodes, updatedEdges } = applyDraftArrangeLayout(
-      nodes,
-      edges,
-    );
+
+    const refit = (arranged: typeof nodes) => {
+      setTimeout(() => {
+        reactFlow.fitView({
+          nodes: arranged.filter((n) => !n.hidden),
+          padding: 0.1,
+          duration: 500,
+          maxZoom: 0.8,
+          minZoom: DEFAULT_MIN_ZOOM,
+        });
+      }, 50);
+    };
+
+    // Drilled into a network: re-run the shared single-network layout, with
+    // the frame re-anchored so the resource grid lands on the layout's
+    // resource column (same math as useNetworkDrillDown).
+    if (drillDownNetworkNodeId) {
+      const frameId = drillDownNetworkNodeId;
+      const keptTop = nodes
+        .filter((n) => !n.hidden && !n.parentId)
+        .map((n) => ({ ...n }));
+      const keptIds = new Set(keptTop.map((n) => n.id));
+      const keptEdges = edges.filter(
+        (e) => keptIds.has(e.source) && keptIds.has(e.target),
+      );
+      const { updatedNodes } = applyDrilledLayout(keptTop, keptEdges);
+      const drilledPos = new Map(updatedNodes.map((n) => [n.id, n.position]));
+      const childCount = nodes.filter((n) => n.parentId === frameId).length;
+      drilledPos.set(frameId, getDrilledFrameAnchor(childCount));
+      const arranged = nodes.map((n) => {
+        const position = drilledPos.get(n.id);
+        return position ? { ...n, position } : n;
+      });
+      setNodes(arranged);
+      refit(arranged);
+      return;
+    }
+
+    const { updatedNodes, updatedEdges } = applyDraftBuildLayout(nodes, edges);
     setNodes(updatedNodes);
     setEdges(updatedEdges);
-    setTimeout(() => {
-      reactFlow.fitView({
-        nodes: updatedNodes,
-        padding: 0.1,
-        duration: 500,
-        maxZoom: 0.8,
-        minZoom: DEFAULT_MIN_ZOOM,
-      });
-    }, 50);
+    refit(updatedNodes);
   };
 
   useControlCenterShortcuts({

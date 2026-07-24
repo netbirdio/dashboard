@@ -279,152 +279,19 @@ export const applyD3HierarchicalLayout = (
   return { updatedNodes, updatedEdges };
 };
 
-// Auto-arrange for the draft canvas. Unlike applyD3HierarchicalLayout it
-// classifies nodes by connectivity, not node type (a sidebar-dropped group is
-// a `groupNode` even when it's only used as a destination): policy sources go
-// to the left column, policies to the middle, destinations to the right, and
-// nodes without any policy connection into their own column on the far left.
-// Columns are ordered by the average index of their policy neighbors to
-// reduce edge crossings.
-export const applyDraftArrangeLayout = (nodes: Node[], edges: Edge[]) => {
-  const simulationNodes: SimulationNode[] = nodes.map((node) => ({
-    ...node,
-    x: node.position?.x || 0,
-    y: node.position?.y || 0,
-  }));
-  const byId = new Map(simulationNodes.map((n) => [n.id, n]));
-  const isPolicy = (id: string) => byId.get(id)?.type === "policyNode";
-  // Children of network frames don't move themselves (relative positions) —
-  // their connectivity counts for the frame instead.
-  const resolveToParent = (id: string) => byId.get(id)?.parentId ?? id;
-
-  const policies = simulationNodes.filter((n) => n.type === "policyNode");
-  const policyIndex = new Map(policies.map((p, i) => [p.id, i]));
-
-  // node id → indices of the policies it connects to
-  const sourceLinks = new Map<string, number[]>();
-  const destLinks = new Map<string, number[]>();
-  edges.forEach((e) => {
-    if (isPolicy(e.target) && !isPolicy(e.source) && byId.has(e.source)) {
-      const key = resolveToParent(e.source);
-      const list = sourceLinks.get(key) ?? [];
-      list.push(policyIndex.get(e.target) ?? 0);
-      sourceLinks.set(key, list);
-    }
-    if (isPolicy(e.source) && !isPolicy(e.target) && byId.has(e.target)) {
-      const key = resolveToParent(e.target);
-      const list = destLinks.get(key) ?? [];
-      list.push(policyIndex.get(e.source) ?? 0);
-      destLinks.set(key, list);
-    }
-  });
-
-  const positionable = simulationNodes.filter((n) => !n.parentId);
-  const sources = positionable.filter((n) => sourceLinks.has(n.id));
-  const destinations = positionable.filter(
-    (n) => destLinks.has(n.id) && !sourceLinks.has(n.id),
-  );
-  const unconnected = positionable.filter(
-    (n) =>
-      n.type !== "policyNode" &&
-      !sourceLinks.has(n.id) &&
-      !destLinks.has(n.id),
-  );
-
-  const avg = (list?: number[]) =>
-    list && list.length > 0
-      ? list.reduce((a, b) => a + b, 0) / list.length
-      : 0;
-  sources.sort(
-    (a, b) => avg(sourceLinks.get(a.id)) - avg(sourceLinks.get(b.id)),
-  );
-  destinations.sort(
-    (a, b) => avg(destLinks.get(a.id)) - avg(destLinks.get(b.id)),
-  );
-
-  // Column x positions mirror the draft build layout
-  // (applyD3HierarchicalLayout with DEFAULT_LAYOUT_CONFIG); vertical spacing
-  // is roomier so nodes with floating Install buttons don't crowd each other.
-  centerNodesVertically(unconnected, -450, 160, 0, true, true);
-  centerNodesVertically(sources, 0, 160, 0, true, true);
-  centerNodesVertically(policies, 500, 80, 14, true, true);
-  centerNodesVertically(destinations, 1000, 160, 0, true, true);
-
-  const updatedNodes: Node[] = simulationNodes.map((node) => ({
-    ...node,
-    position: { x: node.x, y: node.y },
-  }));
-
-  const updatedEdges: Edge[] = edges.map((edge) => {
-    const sourceNode = byId.get(edge.source);
-    const targetNode = byId.get(edge.target);
-    return {
-      ...edge,
-      data: {
-        ...edge.data,
-        points:
-          sourceNode && targetNode
-            ? [
-                { x: sourceNode.x, y: sourceNode.y },
-                { x: targetNode.x, y: targetNode.y },
-              ]
-            : undefined,
-      },
-    };
-  });
-
-  return { updatedNodes, updatedEdges };
-};
-
-// Measured/styled height of a node — network frames are much taller than peer
-// or group nodes (and vary with their resource count), so a fixed row pitch
-// makes them overlap their neighbours.
-const getNodeHeight = (node: SimulationNode) => {
-  const measured = node.measured?.height;
-  if (typeof measured === "number" && measured > 0) return measured;
-  const styled = node.style?.height;
-  if (typeof styled === "number" && styled > 0) return styled;
-  return 0;
-};
-
 const centerNodesVertically = (
   nodesList: SimulationNode[],
   x: number,
   nodeSpacing: number,
   centerY: number,
   enable = true,
-  // Height-aware pitch is opt-in (draft auto-arrange only) — the live
-  // hierarchical layout uses a fixed pitch so equal-height nodes stay aligned
-  // in a straight column.
-  heightAware = false,
 ) => {
   if (nodesList.length === 0) return;
 
-  if (!heightAware) {
-    const totalHeight = (nodesList.length - 1) * nodeSpacing;
-    const startY = centerY - totalHeight / 2;
-    nodesList.forEach((node, index) => {
-      node.x = x;
-      node.y = (enable ? startY : 0) + index * nodeSpacing;
-    });
-    return;
-  }
-
-  // Each node claims a row at least `nodeSpacing` tall, but a taller node
-  // (e.g. a network frame) claims its own height plus a gap so the next node
-  // clears it — the gap is generous because frames carry floating controls
-  // above them (routing bar) that sit outside the measured box.
-  const GAP = 84;
-  const pitches = nodesList.map((node) =>
-    Math.max(nodeSpacing, getNodeHeight(node) + GAP),
-  );
-  const totalHeight = pitches.reduce((a, b) => a + b, 0);
+  const totalHeight = (nodesList.length - 1) * nodeSpacing;
   const startY = centerY - totalHeight / 2;
-
-  let cursor = enable ? startY : 0;
   nodesList.forEach((node, index) => {
     node.x = x;
-    node.y = cursor;
-    cursor += pitches[index];
+    node.y = (enable ? startY : 0) + index * nodeSpacing;
   });
 };
