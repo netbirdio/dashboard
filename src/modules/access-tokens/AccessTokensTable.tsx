@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
@@ -22,49 +23,58 @@ type Props = {
   user: User;
 };
 
-export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+export function AccessTokensTableColumns(
+  t: ReturnType<typeof useTranslations>,
+): ColumnDef<AccessToken>[] {
+  return [
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("name")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => {
+        const isValid = dayjs(row.original.expiration_date).isAfter(dayjs());
+        return <SetupKeyNameCell name={row.original.name} valid={isValid} />;
+      },
     },
-    sortingFn: "text",
-    cell: ({ row }) => {
-      const isValid = dayjs(row.original.expiration_date).isAfter(dayjs());
-      return <SetupKeyNameCell name={row.original.name} valid={isValid} />;
+    {
+      accessorKey: "expiration_date",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader column={column}>{t("expires")}</DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <ExpirationDateRow date={row.original.expiration_date} />
+      ),
     },
-  },
-  {
-    accessorKey: "expiration_date",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Expires</DataTableHeader>;
+    {
+      accessorKey: "last_used",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader column={column}>{t("lastUsed")}</DataTableHeader>
+        );
+      },
+      sortingFn: "datetime",
+      cell: ({ row }) => {
+        return typeof row.original.last_used === "undefined" ? (
+          <EmptyRow />
+        ) : (
+          <LastTimeRow date={row.original.last_used} text={t("lastUsedOn")} />
+        );
+      },
     },
-    cell: ({ row }) => (
-      <ExpirationDateRow date={row.original.expiration_date} />
-    ),
-  },
-  {
-    accessorKey: "last_used",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Last used</DataTableHeader>;
+    {
+      accessorKey: "id",
+      header: "",
+      cell: ({ row }) => <AccessTokenActionCell access_token={row.original} />,
     },
-    sortingFn: "datetime",
-    cell: ({ row }) => {
-      return typeof row.original.last_used === "undefined" ? (
-        <EmptyRow />
-      ) : (
-        <LastTimeRow date={row.original.last_used} text={"Last used on"} />
-      );
-    },
-  },
-  {
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => <AccessTokenActionCell access_token={row.original} />,
-  },
-];
+  ];
+}
 
 export default function AccessTokensTable({ user }: Readonly<Props>) {
+  const t = useTranslations("common");
   const { data: tokens } = useFetchApi<AccessToken[]>(
     `/users/${user.id}/tokens`,
     true,
@@ -88,24 +98,22 @@ export default function AccessTokensTable({ user }: Readonly<Props>) {
       <Card className={"mt-5 w-full"}>
         {tokens && tokens.length > 0 ? (
           <DataTable
-            text={"Access Tokens"}
+            text={t("accessTokens")}
             tableClassName={"mt-0"}
             minimal={true}
             showSearchAndFilters={false}
             inset={false}
             sorting={sorting}
             setSorting={setSorting}
-            columns={AccessTokensTableColumns}
+            columns={AccessTokensTableColumns(t)}
             data={tokens}
           />
         ) : (
           <div className={"bg-nb-gray-950 overflow-hidden"}>
             <NoResults
               className={"py-3"}
-              title={"No access tokens"}
-              description={
-                "You don't have any access tokens yet. You can add a token to access the NetBird API."
-              }
+              title={t("noAccessTokens")}
+              description={t("noAccessTokensDesc")}
               icon={<IconApi size={20} className={"fill-nb-gray-300"} />}
             />
           </div>

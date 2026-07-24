@@ -1,7 +1,10 @@
+"use client";
+
 import Badge from "@components/Badge";
 import MultipleGroups, {
   TransparentEditIconButton,
 } from "@components/ui/MultipleGroups";
+import { useTranslations } from "next-intl";
 import { IconCirclePlus } from "@tabler/icons-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -13,6 +16,7 @@ type Props = {
   resource?: NetworkResource;
 };
 export const ResourceGroupCell = ({ resource }: Props) => {
+  const t = useTranslations("networks");
   const { permission } = usePermissions();
 
   const { network, openResourceGroupModal } = useNetworksContext();
@@ -45,7 +49,7 @@ export const ResourceGroupCell = ({ resource }: Props) => {
           disabled={!permission.networks.update}
         >
           <IconCirclePlus size={14} />
-          Add
+          {t("addResourceBtn")}
         </Badge>
       )}
     </button>

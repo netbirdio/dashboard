@@ -79,6 +79,7 @@ interface MultiSelectProps {
   showRoutes?: boolean;
   disabledGroups?: Group[];
   "data-testid"?: string;
+  dataCy?: string;
   showResourceCounter?: boolean;
   showResources?: boolean;
   showPeers?: boolean;
@@ -120,6 +121,7 @@ export function PeerGroupSelector({
   showRoutes = false,
   disabledGroups,
   "data-testid": dataTestId = "group-selector-dropdown",
+  dataCy,
   showResourceCounter = true,
   showResources = false,
   showPeers = false,
@@ -394,6 +396,7 @@ export function PeerGroupSelector({
             )}
             disabled={disabled}
             data-testid={dataTestId}
+            data-cy={dataCy}
             ref={inputRef}
           >
             <div

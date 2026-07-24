@@ -1,6 +1,7 @@
 import { cn } from "@utils/helpers";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useState } from "react";
 
@@ -137,6 +138,7 @@ export const SlidingTabsBackTrigger = ({
 }: {
   children: React.ReactNode;
 }) => {
+  const t = useTranslations("common");
   const { back } = useSlidingTabContext();
   return (
     <div
@@ -148,7 +150,7 @@ export const SlidingTabsBackTrigger = ({
       className={"flex gap-2 items-center select-none cursor-pointer"}
     >
       <ChevronLeft size={18} />
-      Back
+      {t("back")}
     </div>
   );
 };

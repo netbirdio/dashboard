@@ -13,6 +13,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { IconSettings2 } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
@@ -26,124 +27,128 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { useGroupIdsToGroups } from "@/modules/groups/useGroupIdsToGroups";
 
 export default function NameServerSettings() {
-  const { permission } = usePermissions();
+	const t = useTranslations("dns");
+	const tCommon = useTranslations("common");
+	const { permission } = usePermissions();
 
-  const { data: settings, isLoading } =
-    useFetchApi<NameserverSettings>("/dns/settings");
+	const { data: settings, isLoading } =
+		useFetchApi<NameserverSettings>("/dns/settings");
 
-  const initialDNSGroups = useGroupIdsToGroups(
-    settings?.disabled_management_groups,
-  );
+	const initialDNSGroups = useGroupIdsToGroups(
+		settings?.disabled_management_groups,
+	);
 
-  return (
-    <PageContainer>
-      <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/dns"}
-            label={"DNS"}
-            icon={<DNSIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/dns/settings"}
-            label={"DNS Settings"}
-            active
-            icon={<IconSettings2 size={15} />}
-          />
-        </Breadcrumbs>
-        <h1>DNS Settings</h1>
-        <Paragraph>
-          {"Manage your account's DNS settings."}{" "}
-          <InlineLink
-            href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
-            target={"_blank"}
-          >
-            Learn more
-            <ExternalLinkIcon size={12} />
-          </InlineLink>
-        </Paragraph>
-        <RestrictedAccess page={"DNS Settings"} hasAccess={permission.dns.read}>
-          {!isLoading && initialDNSGroups !== undefined ? (
-            <SettingDisabledManagementGroups initialGroups={initialDNSGroups} />
-          ) : (
-            <div>
-              <Skeleton
-                width={"100%"}
-                className={"mt-8 max-w-xl"}
-                height={240}
-              />
-            </div>
-          )}
-        </RestrictedAccess>
-      </div>
-    </PageContainer>
-  );
+	return (
+		<PageContainer>
+			<div className={"p-default py-6"}>
+				<Breadcrumbs>
+					<Breadcrumbs.Item
+						href={"/dns"}
+						label={t("title")}
+						icon={<DNSIcon size={13} />}
+					/>
+					<Breadcrumbs.Item
+						href={"/dns/settings"}
+						label={t("dnsSettings")}
+						active
+						icon={<IconSettings2 size={15} />}
+					/>
+				</Breadcrumbs>
+				<h1>{t("dnsSettings")}</h1>
+				<Paragraph>
+					{t("dnsSettingsDescription")}{" "}
+					<InlineLink
+						href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
+						target={"_blank"}
+					>
+						{tCommon("learnMore")}
+						<ExternalLinkIcon size={12} />
+					</InlineLink>
+				</Paragraph>
+				<RestrictedAccess
+					page={t("dnsSettings")}
+					hasAccess={permission.dns.read}
+				>
+					{!isLoading && initialDNSGroups !== undefined ? (
+						<SettingDisabledManagementGroups initialGroups={initialDNSGroups} />
+					) : (
+						<div>
+							<Skeleton
+								width={"100%"}
+								className={"mt-8 max-w-xl"}
+								height={240}
+							/>
+						</div>
+					)}
+				</RestrictedAccess>
+			</div>
+		</PageContainer>
+	);
 }
 
 const SettingDisabledManagementGroups = ({
-  initialGroups,
+	initialGroups,
 }: {
-  initialGroups: Group[];
+	initialGroups: Group[];
 }) => {
-  const settingRequest = useApiCall<NameserverSettings>("/dns/settings");
-  const { mutate } = useSWRConfig();
-  const { permission } = usePermissions();
+	const t = useTranslations("dns");
+	const settingRequest = useApiCall<NameserverSettings>("/dns/settings");
+	const { mutate } = useSWRConfig();
+	const { permission } = usePermissions();
 
-  const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
-    useGroupHelper({
-      initial: initialGroups,
-    });
+	const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
+		useGroupHelper({
+			initial: initialGroups,
+		});
 
-  const { hasChanges, updateRef: updateChangesRef } = useHasChanges([
-    selectedGroups,
-  ]);
+	const { hasChanges, updateRef: updateChangesRef } = useHasChanges([
+		selectedGroups,
+	]);
 
-  const saveSettings = async () => {
-    const savedGroups = await saveGroups();
-    notify({
-      title: "DNS Settings",
-      description: "Settings saved successfully.",
-      promise: settingRequest
-        .put({
-          disabled_management_groups: savedGroups.map((g) => g.id),
-        })
-        .then(() => {
-          mutate("/dns/settings");
-          updateChangesRef([selectedGroups]);
-        }),
-      loadingMessage: "Saving the settings...",
-    });
-  };
+	const saveSettings = async () => {
+		const savedGroups = await saveGroups();
+		notify({
+			title: t("dnsSettings"),
+			description: t("settingsSaved"),
+			promise: settingRequest
+				.put({
+					disabled_management_groups: savedGroups.map((g) => g.id),
+				})
+				.then(() => {
+					mutate("/dns/settings");
+					updateChangesRef([selectedGroups]);
+				}),
+			loadingMessage: t("settingsSaving"),
+		});
+	};
 
-  return (
-    <Card className={"mt-8 max-w-xl"}>
-      <div className={"px-8 py-8"}>
-        <Label>Disable DNS management for these groups</Label>
-        <HelpText>
-          Peers in these groups will require manual domain name resolution
-        </HelpText>
-        <PeerGroupSelector
-          data-testid={"dns-groups-selector"}
-          onChange={setSelectedGroups}
-          values={selectedGroups}
-          disabled={!permission.dns.update}
-        />
-      </div>
-      <div
-        className={
-          "flex justify-end bg-nb-gray-900/20 border-t border-nb-gray-900 px-8 py-5"
-        }
-      >
-        <Button
-          variant={"primary"}
-          size={"sm"}
-          onClick={saveSettings}
-          disabled={!hasChanges || !permission.dns.update}
-          data-testid={"save-changes"}
-        >
-          Save Changes
-        </Button>
-      </div>
-    </Card>
-  );
+return (
+		<Card className={"mt-8 max-w-xl"}>
+			<div className={"px-8 py-8"}>
+				<Label>{t("disabledManagementGroup")}</Label>
+				<HelpText>{t("disabledManagementGroupHelp")}</HelpText>
+				<PeerGroupSelector
+					data-testid={"dns-groups-selector"}
+					onChange={setSelectedGroups}
+					values={selectedGroups}
+					disabled={!permission.dns.update}
+				/>
+			</div>
+			<div
+				className={
+					"flex justify-end bg-nb-gray-900/20 border-t border-nb-gray-900 px-8 py-5"
+				}
+			>
+				<Button
+					variant={"primary"}
+					size={"sm"}
+					onClick={saveSettings}
+					disabled={!hasChanges || !permission.dns.update}
+					data-testid={"save-changes"}
+				>
+					{t("saveChanges")}
+				</Button>
+			</div>
+		</Card>
+	);
 };

@@ -14,6 +14,7 @@ import {
   TableWrapper,
 } from "@components/table/Table";
 import NoResults from "@components/ui/NoResults";
+import { useTranslations } from 'next-intl';
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import {
   ColumnDef,
@@ -197,12 +198,12 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   children,
-  searchPlaceholder = "Search...",
+  searchPlaceholder,
   columnVisibility = {},
   setColumnVisibility,
   sorting = [],
   setSorting,
-  text = "rows",
+  text,
   onRowClick,
   getStartedCard,
   renderExpandedRow,
@@ -253,8 +254,12 @@ export function DataTable<TData, TValue>({
   initialSearch,
   onSearchClick,
 }: Readonly<DataTableProps<TData, TValue>>) {
+  const t = useTranslations('table');
   const path = usePathname();
   const isInitialRender = useRef(true);
+
+  const resolvedSearchPlaceholder = searchPlaceholder || t('search');
+  const resolvedText = text || t('rows');
 
   const [showOverlay, setShowOverlay] = useState(false);
   const overlayTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -465,7 +470,7 @@ export function DataTable<TData, TValue>({
               }
               resetRowSelectionOnSearch && setRowSelection?.({});
             }}
-            placeholder={searchPlaceholder}
+            placeholder={resolvedSearchPlaceholder}
           />
           {children?.(table)}
           {showResetFilterButton && (
@@ -638,7 +643,7 @@ export function DataTable<TData, TValue>({
       <div className={paginationClassName}>
         <DataTablePagination
           table={table}
-          text={text}
+          text={resolvedText}
           paginationPadding={paginationPaddingClassName}
           totalRecords={totalRecords}
         />

@@ -8,6 +8,7 @@ import { useSearch } from "@hooks/useSearch";
 import { Table } from "@tanstack/react-table";
 import { concat, sortBy, uniqBy } from "lodash";
 import { FilterIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useCallback, useMemo, useState } from "react";
 
@@ -74,6 +75,7 @@ export function DataTableFilter<TData>({
   filters,
   disabled = false,
 }: Readonly<Props<TData>>) {
+  const t = useTranslations("table");
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -191,7 +193,9 @@ export function DataTableFilter<TData>({
             <span className={"text-white"}>
               {activeFiltersCount > 0 && activeFiltersCount}
             </span>
-            {activeFiltersCount > 0 ? ` Filter(s)` : "Filter"}
+            {activeFiltersCount > 0
+              ? t("filterCount", { count: activeFiltersCount })
+              : t("filter")}
           </span>
         </Button>
       </PopoverTrigger>
@@ -210,13 +214,13 @@ export function DataTableFilter<TData>({
             ref={searchRef}
             value={search}
             onChange={setSearch}
-            placeholder={"Search filters..."}
+            placeholder={t("searchFilters")}
             hideEnterIcon={true}
           />
 
           {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText className={"mb-4"}>
-              There are no filters matching your search.
+              {t("noMatchingFilters")}
             </DropdownInfoText>
           )}
 

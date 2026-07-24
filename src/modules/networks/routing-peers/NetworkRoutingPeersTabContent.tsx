@@ -1,6 +1,9 @@
+"use client";
+
 import SkeletonTable, {
   SkeletonTableHeader,
 } from "@components/skeletons/SkeletonTable";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { Suspense, useMemo } from "react";
 import { NetworkRouter } from "@/interfaces/Network";
@@ -20,6 +23,7 @@ export const NetworkRoutingPeersTabContent = ({
   routers?: NetworkRouter[];
   isLoading: boolean;
 }) => {
+  const t = useTranslations("networks");
   const { groups } = useGroups();
   const { users } = useUsers();
   const { data: peers } = useFetchApi<Peer[]>(`/peers`);
@@ -44,15 +48,17 @@ export const NetworkRoutingPeersTabContent = ({
       <div className={"flex justify-between items-center mb-5"}>
         <div>
           <Paragraph>
-            Add routing peers to this network to access resources inside this
-            network.{" "}
-            <InlineLink
-              href={"https://docs.netbird.io/manage/networks#routing-peers"}
-              target={"_blank"}
-            >
-              Learn more
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            {t.rich("routingPeersTabDescription", {
+              link: (chunks) => (
+                <InlineLink
+                  href={"https://docs.netbird.io/manage/networks#routing-peers"}
+                  target={"_blank"}
+                >
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+            })}
           </Paragraph>
         </div>
       </div>

@@ -1,8 +1,9 @@
 import * as React from "react";
 import { Suspense, useMemo } from "react";
 import { usePortalElement } from "@hooks/usePortalElement";
+import { useTranslations } from "next-intl";
 import SkeletonTable, {
-  SkeletonTableHeader,
+	SkeletonTableHeader,
 } from "@components/skeletons/SkeletonTable";
 import { User } from "@/interfaces/User";
 import useFetchApi from "@utils/api";
@@ -13,61 +14,61 @@ import PeerIcon from "@/assets/icons/PeerIcon";
 import Paragraph from "@components/Paragraph";
 
 type Props = {
-  user: User;
+	user: User;
 };
 
 export const UserPeersSection = ({ user }: Props) => {
-  const { ref: headingRef, portalTarget } =
-    usePortalElement<HTMLHeadingElement>();
+	const t = useTranslations("peers");
+	const tUsers = useTranslations("users");
+	const { ref: headingRef, portalTarget } =
+		usePortalElement<HTMLHeadingElement>();
 
-  const { data: peers, isLoading: isPeersLoading } =
-    useFetchApi<Peer[]>("/peers");
+	const { data: peers, isLoading: isPeersLoading } =
+		useFetchApi<Peer[]>("/peers");
 
-  const userPeers = useMemo(() => {
-    return (
-      peers?.filter((peer) => {
-        return peer?.user_id === user.id;
-      }) || []
-    );
-  }, [user, peers]);
+	const userPeers = useMemo(() => {
+		return (
+			peers?.filter((peer) => {
+				return peer?.user_id === user.id;
+			}) || []
+		);
+	}, [user, peers]);
 
-  return (
-    <div className={"pb-10 px-8"}>
-      <div className={"max-w-6xl"}>
-        <div className={"flex justify-between items-center mb-5"}>
-          <div>
-            <h2 ref={headingRef}>Peers</h2>
-            <Paragraph>View all peers registered by this user.</Paragraph>
-          </div>
-        </div>
+	return (
+		<div className={"pb-10 px-8"}>
+			<div className={"max-w-6xl"}>
+				<div className={"flex justify-between items-center mb-5"}>
+					<div>
+						<h2 ref={headingRef}>{t("title")}</h2>
+						<Paragraph>{t("userPeersDescription")}</Paragraph>
+					</div>
+				</div>
 
-        <Suspense
-          fallback={
-            <div>
-              <SkeletonTableHeader className={"!p-0"} />
-              <div className={"mt-8 w-full"}>
-                <SkeletonTable withHeader={false} />
-              </div>
-            </div>
-          }
-        >
-          <MinimalPeersTable
-            isLoading={isPeersLoading}
-            peers={userPeers}
-            headingTarget={portalTarget}
-            getStartedCard={
-              <NoResults
-                className={"py-4"}
-                title={"This user has no registered peers"}
-                description={
-                  "Install NetBird and sign in as this user to register peers."
-                }
-                icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
-              />
-            }
-          />
-        </Suspense>
-      </div>
-    </div>
-  );
+				<Suspense
+					fallback={
+						<div>
+							<SkeletonTableHeader className={"!p-0"} />
+							<div className={"mt-8 w-full"}>
+								<SkeletonTable withHeader={false} />
+							</div>
+						</div>
+					}
+				>
+					<MinimalPeersTable
+						isLoading={isPeersLoading}
+						peers={userPeers}
+						headingTarget={portalTarget}
+						getStartedCard={
+							<NoResults
+								className={"py-4"}
+								title={tUsers("noRegisteredPeers")}
+								description={tUsers("noRegisteredPeersDesc")}
+								icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
+							/>
+						}
+					/>
+				</Suspense>
+			</div>
+		</div>
+	);
 };

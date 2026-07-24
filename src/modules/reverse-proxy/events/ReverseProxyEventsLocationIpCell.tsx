@@ -4,6 +4,7 @@ import { cn } from "@utils/helpers";
 import { isEmpty } from "lodash";
 import { FlagIcon, GlobeIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { useCountries } from "@/contexts/CountryProvider";
@@ -16,6 +17,7 @@ type Props = {
 };
 
 export const ReverseProxyEventsLocationIpCell = ({ event }: Props) => {
+  const t = useTranslations("reverseProxy");
   const { getRegionText, isLoading } = useCountries();
 
   const region = useMemo(() => {
@@ -49,14 +51,14 @@ export const ReverseProxyEventsLocationIpCell = ({ event }: Props) => {
         >
           <ListItem
             icon={<FlagIcon size={14} />}
-            label={"Region"}
+            label={t("region")}
             value={
               isLoading && !region ? (
                 <Skeleton width={100} />
               ) : (
                 <CopyToClipboardText
                   iconAlignment={"right"}
-                  message={"Region has been copied to your clipboard"}
+                  message={t("regionCopied")}
                   alwaysShowIcon={true}
                 >
                   {region}
@@ -84,7 +86,7 @@ export const ReverseProxyEventsLocationIpCell = ({ event }: Props) => {
           )}
         </div>
         <CopyToClipboardText
-          message={"IP address has been copied to your clipboard"}
+          message={t("ipAddressCopied")}
         >
           <span className={"text-nb-gray-200 font-mono text-[0.82rem]"}>
             {event.source_ip}

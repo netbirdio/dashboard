@@ -166,9 +166,23 @@ sed -i "s|add_header Content-Security-Policy \"[^\"]*\" always;|$CSP_HEADER|g" /
 ENV_STR="\$\$USE_AUTH0 \$\$AUTH_AUDIENCE \$\$AUTH_AUTHORITY \$\$AUTH_CLIENT_ID \$\$AUTH_CLIENT_SECRET \$\$AUTH_SUPPORTED_SCOPES \$\$NETBIRD_MGMT_API_ENDPOINT \$\$NETBIRD_MGMT_GRPC_API_ENDPOINT \$\$NETBIRD_HOTJAR_TRACK_ID \$\$NETBIRD_GOOGLE_ANALYTICS_ID \$\$NETBIRD_GOOGLE_TAG_MANAGER_ID \$\$AUTH_REDIRECT_URI \$\$AUTH_SILENT_REDIRECT_URI \$\$NETBIRD_TOKEN_SOURCE \$\$NETBIRD_DRAG_QUERY_PARAMS \$\$NETBIRD_AUTH_SERVICE_URL \$\$NETBIRD_WASM_PATH \$\$NETBIRD_LICENSED \$\$NETBIRD_CLOUD \$\$NETBIRD_AGENT_NETWORK_ONLY \$\$NETBIRD_AGENT_NETWORK_ENABLED \$\$NETBIRD_HUBSPOT_PORTAL_ID \$\$NETBIRD_HUBSPOT_SIGNUP_FORM_ID \$\$NETBIRD_HUBSPOT_ONBOARDING_FORM_ID \$\$NETBIRD_HUBSPOT_SURVEY_FORM_ID \$\$NETBIRD_ANALYTICS_EXCLUDED_EMAILS"
 
 OIDC_TRUSTED_DOMAINS="/usr/share/nginx/html/OidcTrustedDomains.js"
-envsubst "$ENV_STR" < "$OIDC_TRUSTED_DOMAINS".tmpl > "$OIDC_TRUSTED_DOMAINS"
+normalize_placeholders() {
+    local source_file="$1"
+    local normalized_file="$2"
+
+    cp "$source_file" "$normalized_file"
+    for key in $(printf '%s\n' "$ENV_STR" | grep -oE '[A-Z][A-Z0-9_]+' | sort -u); do
+        # Some generated assets contain $VAR while older templates contain
+        # $$VAR. Normalize the latter before envsubst so both forms resolve.
+        sed -i 's/\$\$'"$key"'/\$'"$key"'/g' "$normalized_file"
+    done
+}
+
+normalize_placeholders "$OIDC_TRUSTED_DOMAINS".tmpl "$OIDC_TRUSTED_DOMAINS".copy
+envsubst "$ENV_STR" < "$OIDC_TRUSTED_DOMAINS".copy > "$OIDC_TRUSTED_DOMAINS"
+rm "$OIDC_TRUSTED_DOMAINS".copy
 for f in $(grep -R -l AUTH_SUPPORTED_SCOPES /usr/share/nginx/html); do
-    cp "$f" "$f".copy
+    normalize_placeholders "$f" "$f".copy
     envsubst "$ENV_STR" < "$f".copy > "$f"
     rm "$f".copy
 done

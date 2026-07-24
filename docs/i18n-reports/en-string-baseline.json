@@ -1,0 +1,1064 @@
+{
+  "total_files": 225,
+  "total_strings": 596,
+  "modules": {
+    "app": {
+      "app/(dashboard)/(cloud)/customers/layout.tsx": [
+        "Customers -"
+      ],
+      "app/(dashboard)/(cloud)/customers/page.tsx": [
+        "Customers"
+      ],
+      "app/(dashboard)/(cloud)/integrations/layout.tsx": [
+        "Integrations -"
+      ],
+      "app/(dashboard)/(cloud)/msp/page.tsx": [
+        "Processing your invitation...",
+        "Successfully joined as an Managed Service Provider"
+      ],
+      "app/(dashboard)/(cloud)/plans/cancel/layout.tsx": [
+        "Plans -"
+      ],
+      "app/(dashboard)/(cloud)/plans/layout.tsx": [
+        "Plans -"
+      ],
+      "app/(dashboard)/(cloud)/plans/success/layout.tsx": [
+        "Plans -"
+      ],
+      "app/(dashboard)/(cloud)/tenants/layout.tsx": [
+        "Tenants -"
+      ],
+      "app/(dashboard)/(cloud)/tenants/page.tsx": [
+        "Tenants"
+      ],
+      "app/(dashboard)/(deprecated)/activity/layout.tsx": [
+        "Activity Events -"
+      ],
+      "app/(dashboard)/access-control/layout.tsx": [
+        "Access Control -"
+      ],
+      "app/(dashboard)/control-center/layout.tsx": [
+        "Control Center -"
+      ],
+      "app/(dashboard)/dns/nameservers/layout.tsx": [
+        "Nameservers - DNS -"
+      ],
+      "app/(dashboard)/dns/settings/layout.tsx": [
+        "Settings - DNS -"
+      ],
+      "app/(dashboard)/dns/zones/layout.tsx": [
+        "Zones - DNS -"
+      ],
+      "app/(dashboard)/events/audit/layout.tsx": [
+        "Audit Events - Activity -"
+      ],
+      "app/(dashboard)/events/traffic/layout.tsx": [
+        "Traffic Events - Activity -"
+      ],
+      "app/(dashboard)/events/traffic/page.tsx": [
+        "Activity",
+        "Traffic Events"
+      ],
+      "app/(dashboard)/group/layout.tsx": [
+        "Group -"
+      ],
+      "app/(dashboard)/groups/layout.tsx": [
+        "Groups -"
+      ],
+      "app/(dashboard)/network-routes/layout.tsx": [
+        "Network Routes -"
+      ],
+      "app/(dashboard)/network/layout.tsx": [
+        "Network - Networks -"
+      ],
+      "app/(dashboard)/networks/layout.tsx": [
+        "Networks -"
+      ],
+      "app/(dashboard)/peer/layout.tsx": [
+        "Peer - Peers -"
+      ],
+      "app/(dashboard)/peers/layout.tsx": [
+        "Peers -"
+      ],
+      "app/(dashboard)/peers/servers/layout.tsx": [
+        "Servers -"
+      ],
+      "app/(dashboard)/peers/users/layout.tsx": [
+        "User Devices -"
+      ],
+      "app/(dashboard)/posture-checks/layout.tsx": [
+        "Posture Checks -"
+      ],
+      "app/(dashboard)/reverse-proxy/clusters/layout.tsx": [
+        "Clusters - Reverse Proxy -"
+      ],
+      "app/(dashboard)/reverse-proxy/custom-domains/layout.tsx": [
+        "Custom Domains - Reverse Proxy -"
+      ],
+      "app/(dashboard)/reverse-proxy/logs/layout.tsx": [
+        "Access Logs - Reverse Proxy -"
+      ],
+      "app/(dashboard)/reverse-proxy/services/layout.tsx": [
+        "Services - Reverse Proxy -"
+      ],
+      "app/(dashboard)/settings/layout.tsx": [
+        "Settings -"
+      ],
+      "app/(dashboard)/setup-keys/layout.tsx": [
+        "Setup Keys -"
+      ],
+      "app/(dashboard)/team/service-users/layout.tsx": [
+        "Service Users - Team -"
+      ],
+      "app/(dashboard)/team/user/layout.tsx": [
+        "User - Team -"
+      ],
+      "app/(dashboard)/team/user/page.tsx": [
+        "Auto-assigned groups"
+      ],
+      "app/(dashboard)/team/users/layout.tsx": [
+        "Users - Team -"
+      ],
+      "app/(remote-access)/peer/ssh/page.tsx": [
+        "Connecting to @..."
+      ],
+      "app/install/layout.tsx": [
+        "Installation -"
+      ],
+      "app/invite/layout.tsx": [
+        "Accept Invite -"
+      ],
+      "app/invite/page.tsx": [
+        "At least 8 characters",
+        "Confirm Password",
+        "One lowercase letter",
+        "One number",
+        "One uppercase letter",
+        "Password"
+      ],
+      "app/setup/layout.tsx": [
+        "Instance Setup -"
+      ]
+    },
+    "cloud": {
+      "cloud/distributor/DistributorCustomerModal.tsx": [
+        "Add  customer",
+        "Cancel",
+        "Company",
+        "Customer ID (optional)",
+        "Domain",
+        "Update"
+      ],
+      "cloud/distributor/DistributorSubscriptionModal.tsx": [
+        "Select the plan that best fits your customer's needs."
+      ],
+      "cloud/distributor/DistributorTransferAccountModal.tsx": [
+        "Are you sure you want to grant access? This action cannot be undone.",
+        "Grant access to distributor?"
+      ],
+      "cloud/distributor/contexts/CustomersProvider.tsx": [
+        "Request Account Access",
+        "Successfully unlinked  ()",
+        "Unlink ''?",
+        "Unlinking",
+        "Unlinking ..."
+      ],
+      "cloud/distributor/hooks/useCustomerPlan.ts": [
+        "Subscribing to ...",
+        "Subscription Plan",
+        "Successfully subscribed to the  plan."
+      ],
+      "cloud/distributor/table/DistributorCustomersTable.tsx": [
+        "Customer",
+        "Customer ID",
+        "Customer ID copied to clipboard",
+        "Plan",
+        "Tenants"
+      ],
+      "cloud/invoices/table/InvoicesActionCell.tsx": [
+        "Downloading .csv..."
+      ],
+      "cloud/mfa/AccountMFASettings.tsx": [
+        "MFA is now  for your account"
+      ],
+      "cloud/mfa/UserMFAListItem.tsx": [
+        "Reset Multi-factor Authentication?"
+      ],
+      "cloud/msp/MSPDomainVerificationModal.tsx": [
+        "TXT record"
+      ],
+      "cloud/msp/MSPNavigationItem.tsx": [
+        "Tenants"
+      ],
+      "cloud/msp/MSPTenantModal.tsx": [
+        "Add  account",
+        "Cancel",
+        "Domain",
+        "Enter the primary domain of the tenant.",
+        "Name",
+        "Primary domain of the tenant.",
+        "Update  account",
+        "Update Tenant"
+      ],
+      "cloud/msp/MSPTenantPermissionsTab.tsx": [
+        "Permissions (required)"
+      ],
+      "cloud/msp/MSPTenantsTable.tsx": [
+        "Peers",
+        "Permission Groups",
+        "Plan",
+        "Tenant",
+        "Users"
+      ],
+      "cloud/msp/MSPTransferAccountModal.tsx": [
+        "Are you sure you want to grant access? This action cannot be undone.",
+        "Granting access to",
+        "Granting access to ?"
+      ],
+      "cloud/msp/MSPUnlinkModal.tsx": [
+        "Cancel",
+        "New Owner"
+      ],
+      "cloud/msp/contexts/TenantsProvider.tsx": [
+        "Delete ''?",
+        "Deleting",
+        "Deleting ...",
+        "Request Account Access",
+        "Subscribing to ...",
+        "Subscription for",
+        "Successfully deleted  ()",
+        "Successfully subscribed to the  plan.",
+        "Successfully unlinked  ()",
+        "Unlinking",
+        "Unlinking ...",
+        "Verification of",
+        "Verifying ownership of"
+      ],
+      "cloud/notifications/channels/NotificationSlackChannel.tsx": [
+        "Slack",
+        "Slack ."
+      ],
+      "cloud/notifications/channels/NotificationSlackModal.tsx": [
+        "Activate Incoming Webhooks",
+        "Add New Webhook",
+        "Allow",
+        "Create App",
+        "Create an app",
+        "Incoming Webhooks",
+        "Webhook URL"
+      ],
+      "cloud/notifications/channels/NotificationWebhookChannel.tsx": [
+        "Webhook ."
+      ],
+      "cloud/traffic-events/TrafficEventSetting.tsx": [
+        "Enable Traffic Reporting (Kernel)",
+        "Limit To Specific Groups",
+        "Traffic events successfully .",
+        "Traffic reporting successfully ."
+      ],
+      "cloud/traffic-events/TrafficEventsFilter.tsx": [
+        "Connection"
+      ],
+      "cloud/traffic-events/TrafficEventsTable.tsx": [
+        "Destination",
+        "Event",
+        "Router",
+        "Source",
+        "Time",
+        "Traffic"
+      ],
+      "cloud/traffic-events/misc/TrafficEventDetails.tsx": [
+        "Access Control Policy XYZ passed",
+        "Peer 2 accepted the connection request",
+        "Posture Check XYZ passed"
+      ],
+      "cloud/traffic-events/table/TrafficEventDescription.tsx": [
+        "Unknown"
+      ],
+      "cloud/webhooks/useWebhookConfig.tsx": [
+        "Bearer"
+      ]
+    },
+    "components": {
+      "components/NetworkRouteSelector.tsx": [
+        "Select an existing network..."
+      ],
+      "components/Notification.tsx": [
+        "Code :"
+      ],
+      "components/PeerGroupSelector.tsx": [
+        "Networks",
+        "Peers"
+      ],
+      "components/PortSelector.tsx": [
+        "Select ports..."
+      ],
+      "components/VersionInfo.tsx": [
+        "Management",
+        "Update available"
+      ],
+      "components/modal/Modal.tsx": [
+        "Close",
+        "Dialog"
+      ],
+      "components/table/filters/CheckboxListPicker.tsx": [
+        "N {plural}"
+      ],
+      "components/ui/LocaleSwitcher.tsx": [
+        "NEXT_LOCALE"
+      ]
+    },
+    "contexts": {
+      "contexts/BillingProvider.tsx": [
+        "Subscription  to  ()",
+        "Successfully subscribed to the  plan"
+      ],
+      "contexts/ErrorBoundary.tsx": [
+        "Request failed with status code"
+      ],
+      "contexts/GroupProvider.tsx": [
+        "Add User to Group",
+        "Add Users to Group",
+        "Delete ''?",
+        "Peers were successfully added to .",
+        "Rename Group",
+        "User '' was successfully added to group ''.",
+        "Users were successfully added to group ''."
+      ],
+      "contexts/PeerProvider.tsx": [
+        "Delete ''?"
+      ],
+      "contexts/ReverseProxiesProvider.tsx": [
+        "Delete ''?",
+        "Delete target?",
+        "Reverse proxy",
+        "Target"
+      ]
+    },
+    "hooks": {
+      "hooks/useLocalStorage.tsx": [
+        "Error reading localStorage key “”:",
+        "Error setting localStorage key “”:",
+        "Tried setting localStorage key “” even though environment is not a client"
+      ],
+      "hooks/useTimeFormatter.tsx": [
+        "Invalid time unit:"
+      ]
+    },
+    "modules": {
+      "modules/access-tokens/AccessTokenActionCell.tsx": [
+        "Delete ''?"
+      ],
+      "modules/billing/PlanCurrentPlan.tsx": [
+        "Trial ends in  days"
+      ],
+      "modules/billing/PlansAndBillingTab.tsx": [
+        "Select currency..."
+      ],
+      "modules/billing/locked-feature/LockedFeatureContent.tsx": [
+        "Upgrade your  plan to access this feature."
+      ],
+      "modules/billing/trial/TrialNavigationInfoCard.tsx": [
+        "Free Trial"
+      ],
+      "modules/billing/trial/TrialSuccessModal.tsx": [
+        "What's next?"
+      ],
+      "modules/firewall-gpt/FirewallGPTAccessForm.tsx": [
+        "Smart Firewall translates natural language prompts into network\n            policies. You can describe your access needs in plain language, and\n            AI will handle the rest. If you're interested in early access,\n            please fill out the form below."
+      ],
+      "modules/firewall-gpt/FirewallGPTAccessFormSuccessModal.tsx": [
+        "Thank you for signing up!"
+      ],
+      "modules/firewall-gpt/FirewallGPTModal.tsx": [
+        "Hello , I'm here to help you configure your access control rules securely and efficiently. How can I assist you today?"
+      ],
+      "modules/firewall-gpt/FirewallGPTNotApproved.tsx": [
+        "We will notify you by email as soon as it's available for your account."
+      ],
+      "modules/firewall-gpt/FirewallGPTPolicyPreview.tsx": [
+        "Policy  was successfully created.",
+        "Posture Check failed to create."
+      ],
+      "modules/firewall-gpt/FirewallGPTResponseMessage.tsx": [
+        "It's configured to allow connections",
+        "It's configured to allow connections through"
+      ],
+      "modules/groups/AssignPeerToGroupModal.tsx": [
+        "Address",
+        "Name"
+      ],
+      "modules/groups/AssignUserToGroupModal.tsx": [
+        "Name",
+        "Role",
+        "Status"
+      ],
+      "modules/groups/details/GroupPeersSection.tsx": [
+        "Address",
+        "Name"
+      ],
+      "modules/groups/details/GroupResourcesSection.tsx": [
+        "Address",
+        "Groups",
+        "Policies",
+        "Resource"
+      ],
+      "modules/groups/details/GroupUsersSection.tsx": [
+        "Name",
+        "Role",
+        "Status"
+      ],
+      "modules/groups/table/GroupsNameCell.tsx": [
+        "View details of group"
+      ],
+      "modules/instance-setup/InstanceSetupWizard.tsx": [
+        "Email",
+        "Enter a strong password",
+        "Name",
+        "Password",
+        "Your name"
+      ],
+      "modules/integrations/edr/crowdstrike/CrowdStrike.tsx": [
+        "CrowdStrike is a cloud-native platform for protecting endpoints, cloud workloads, identities and data.",
+        "CrowdStrike was successfully",
+        "Disable CrowdStrike?"
+      ],
+      "modules/integrations/edr/crowdstrike/CrowdStrikeConfiguration.tsx": [
+        "CrowdStrike Integration was successfully deleted",
+        "CrowdStrike Integration was successfully updated",
+        "Delete integration?"
+      ],
+      "modules/integrations/edr/crowdstrike/CrowdStrikeSetup.tsx": [
+        "Client ID",
+        "Create",
+        "Create API client",
+        "Hosts (Read)",
+        "Secret",
+        "Zero Trust Assessment (Read)"
+      ],
+      "modules/integrations/edr/crowdstrike/CrowdStrikeZtaScoreInput.tsx": [
+        "Score Threshold"
+      ],
+      "modules/integrations/edr/fleetdm/FleetDM.tsx": [
+        "Are you sure you want to disable the FleetDM integration?",
+        "Disable FleetDM?",
+        "FleetDM was successfully",
+        "Open-source device management platform for macOS, Windows, and Linux with osquery-based compliance policies."
+      ],
+      "modules/integrations/edr/fleetdm/FleetDMConfiguration.tsx": [
+        "Delete integration?",
+        "FleetDM was successfully deleted",
+        "FleetDM was successfully updated"
+      ],
+      "modules/integrations/edr/fleetdm/FleetDMSetup.tsx": [
+        "Navigate to your FleetDM Management Console."
+      ],
+      "modules/integrations/edr/huntress/Huntress.tsx": [
+        "Are you sure you want to disable the Huntress integration?",
+        "Disable Huntress?",
+        "Huntress was successfully"
+      ],
+      "modules/integrations/edr/huntress/HuntressConfiguration.tsx": [
+        "Delete integration?",
+        "Huntress was successfully deleted",
+        "Huntress was successfully updated"
+      ],
+      "modules/integrations/edr/huntress/HuntressSetup.tsx": [
+        "API Credentials",
+        "API Key",
+        "API Secret",
+        "Enter your API Credentials"
+      ],
+      "modules/integrations/edr/intune/Intune.tsx": [
+        "Disable Intune?",
+        "Intune was successfully",
+        "Microsoft Intune is a cloud-based unified endpoint management for your organization."
+      ],
+      "modules/integrations/edr/intune/IntuneConfiguration.tsx": [
+        "Delete integration?",
+        "Intune was successfully deleted",
+        "Intune was successfully updated"
+      ],
+      "modules/integrations/edr/intune/IntuneSetup.tsx": [
+        "API permissions",
+        "Add a permission",
+        "Add permissions",
+        "App Registrations",
+        "Application (client) ID",
+        "Application permissions",
+        "DeviceManagementManagedDevices.Read.All",
+        "Directory (tenant) ID",
+        "Microsoft Graph",
+        "Register",
+        "Select permissions",
+        "Value"
+      ],
+      "modules/integrations/edr/sentinel-one/SentinelOne.tsx": [
+        "AI-powered endpoint protection platform for real-time threat detection and automated response.",
+        "Are you sure you want to disable the SentinelOne integration?",
+        "Disable SentinelOne?",
+        "SentinelOne was successfully"
+      ],
+      "modules/integrations/edr/sentinel-one/SentinelOneConfiguration.tsx": [
+        "Delete integration?",
+        "SentinelOne was successfully deleted",
+        "SentinelOne was successfully updated"
+      ],
+      "modules/integrations/edr/sentinel-one/SentinelOneSetup.tsx": [
+        "Create Service User",
+        "Create User",
+        "Navigate to your SentinelOne Management Console.",
+        "Next",
+        "Viewer"
+      ],
+      "modules/integrations/event-streaming/EventStreamingTab.tsx": [
+        "Event Streaming"
+      ],
+      "modules/integrations/event-streaming/amazon/firehose/Firehose.tsx": [
+        "Amazon Data Firehose was successfully disconnected",
+        "Disconnect Amazon Data Firehose?"
+      ],
+      "modules/integrations/event-streaming/amazon/firehose/FirehoseSetup.tsx": [
+        "Create Firehose stream",
+        "Create access key",
+        "Destination",
+        "Direct PUT",
+        "Enter your Access-Key",
+        "Enter your Firehose stream name",
+        "Enter your Secret-Key",
+        "Security Credentials",
+        "Source",
+        "You can transform and convert the event messages to fit your needs."
+      ],
+      "modules/integrations/event-streaming/amazon/s3/S3.tsx": [
+        "Amazon S3 is a scalable storage in the cloud.",
+        "Disconnect S3?"
+      ],
+      "modules/integrations/event-streaming/amazon/s3/S3Setup.tsx": [
+        "Create access key",
+        "Create bucket",
+        "Enter your Access-Key",
+        "Enter your S3 Bucket name",
+        "Enter your Secret-Key",
+        "Security Credentials"
+      ],
+      "modules/integrations/event-streaming/datadog/Datadog.tsx": [
+        "Datadog is a monitoring service for cloud-scale applications.",
+        "Datadog was successfully disconnected",
+        "Disconnect Datadog?"
+      ],
+      "modules/integrations/event-streaming/datadog/DatadogSetup.tsx": [
+        "Create Key",
+        "Enter your API-Key",
+        "Navigate to Datadogs API Keys page",
+        "When creating a new Datadog API key, it could take up to 5 minutes for the key to be available for use."
+      ],
+      "modules/integrations/event-streaming/generic-http/GenericHTTP.tsx": [
+        "Generic HTTP Integration",
+        "HTTP Integration was successfully ."
+      ],
+      "modules/integrations/event-streaming/generic-http/GenericHTTPModal.tsx": [
+        "Cancel",
+        "Delete Generic HTTP Integration?",
+        "Generic HTTP was successfully deleted"
+      ],
+      "modules/integrations/idp-sync/EmbeddedIdentityProviderSelect.tsx": [
+        "Identity Provider",
+        "Select your identity provider...",
+        "Settings › Identity Providers"
+      ],
+      "modules/integrations/idp-sync/GroupPrefixHelpText.tsx": [
+        "All Groups",
+        "All Users"
+      ],
+      "modules/integrations/idp-sync/IdentityProviderTab.tsx": [
+        "Identity Provider Sync"
+      ],
+      "modules/integrations/idp-sync/azure-ad/AzureAD.tsx": [
+        "Entra ID (API) was successfully",
+        "Entra ID (API) was successfully synced",
+        "Microsoft Entra ID is a cloud-based identity and access management solution."
+      ],
+      "modules/integrations/idp-sync/azure-ad/AzureADConfiguration.tsx": [
+        "Delete integration?",
+        "Entra ID (API) was successfully deleted",
+        "Entra ID (API) was successfully updated",
+        "Sync Interval"
+      ],
+      "modules/integrations/idp-sync/azure-ad/AzureADSetup.tsx": [
+        "API permissions",
+        "Add a permission",
+        "Add permissions",
+        "App Registrations",
+        "Application (client) ID",
+        "Application permissions",
+        "Directory (tenant) ID",
+        "Group.Read.All",
+        "Microsoft Graph",
+        "Register",
+        "Select permissions",
+        "User.Read.All",
+        "Value"
+      ],
+      "modules/integrations/idp-sync/entra-scim/EntraSCIMSetup.tsx": [
+        "Assign",
+        "Attribute mapping",
+        "Connect your application",
+        "Continue with Entra ID",
+        "Create",
+        "Delete",
+        "Edit",
+        "Enterprise applications",
+        "Finish Setup",
+        "Get started",
+        "Provision Microsoft Entra ID Groups",
+        "Provision Microsoft Entra ID Users",
+        "Provision User Accounts",
+        "Save",
+        "Source attribute",
+        "Start provisioning",
+        "Test Connection",
+        "Users and groups"
+      ],
+      "modules/integrations/idp-sync/generic-scim/GenericSCIMConfiguration.tsx": [
+        "Auth token was successfully regenerated",
+        "Delete integration?",
+        "Regenerate Auth Token?"
+      ],
+      "modules/integrations/idp-sync/google-workspace/GoogleWorkspace.tsx": [
+        "A flexible, innovative solution for people and organizations to achieve more.",
+        "Google Workspace was successfully",
+        "Google Workspace was successfully synced"
+      ],
+      "modules/integrations/idp-sync/google-workspace/GoogleWorkspaceConfiguration.tsx": [
+        "Delete integration?",
+        "Google Workspace was successfully deleted",
+        "Google Workspace was successfully updated",
+        "Sync Interval"
+      ],
+      "modules/integrations/idp-sync/google-workspace/GoogleWorkspaceSetup.tsx": [
+        "ASSIGN ROLE",
+        "Account",
+        "Add key",
+        "Assign service accounts",
+        "CREATE CREDENTIALS",
+        "CREATE ROLE",
+        "Create",
+        "Create new key",
+        "Create new role",
+        "Customer ID",
+        "DONE",
+        "E-Mail",
+        "JSON",
+        "Keys",
+        "Service account"
+      ],
+      "modules/integrations/idp-sync/jumpcloud/Jumpcloud.tsx": [
+        "Jumpcloud is a unified identity, device, and access management platform.",
+        "Jumpcloud was successfully"
+      ],
+      "modules/integrations/idp-sync/jumpcloud/JumpcloudConfiguration.tsx": [
+        "Auth token for Jumpcloud was successfully regenerated",
+        "Delete integration?",
+        "Jumpcloud was successfully deleted",
+        "Jumpcloud was successfully updated",
+        "Regenerate Auth Token?"
+      ],
+      "modules/integrations/idp-sync/jumpcloud/JumpcloudSetup.tsx": [
+        "Activate",
+        "Credentials Details",
+        "Identity Management",
+        "Jumpcloud was successfully set up",
+        "Test Connection"
+      ],
+      "modules/integrations/idp-sync/okta-scim/Okta.tsx": [
+        "Okta is a platform to provision and manage user accounts in cloud-based applications.",
+        "Okta was successfully"
+      ],
+      "modules/integrations/idp-sync/okta-scim/OktaConfiguration.tsx": [
+        "Auth token for Okta was successfully regenerated",
+        "Delete integration?",
+        "Okta was successfully deleted",
+        "Okta was successfully updated",
+        "Regenerate Auth Token?"
+      ],
+      "modules/integrations/idp-sync/okta-scim/OktaSetup.tsx": [
+        "API Token",
+        "Application username format",
+        "Assign",
+        "Assign to Groups",
+        "Assign to People",
+        "Assignments",
+        "Client ID",
+        "Client secret",
+        "Configure API Integration",
+        "Create Users",
+        "Credentials Details",
+        "Deactivate Users",
+        "Done",
+        "Edit",
+        "Email",
+        "Enable API integration",
+        "Find groups by name",
+        "Integration",
+        "Okta account domain",
+        "Primary email domain",
+        "Provisioning",
+        "Push Groups",
+        "Save",
+        "Save and Go Back",
+        "Test API Credentials",
+        "Update User Attributes"
+      ],
+      "modules/integrations/sso/DomainVerificationModal.tsx": [
+        "TXT record",
+        "Verification for  has started",
+        "Verify Later"
+      ],
+      "modules/integrations/sso/SSOTab.tsx": [
+        "Single Sign-On"
+      ],
+      "modules/integrations/sso/oidc/OidcIntegrationCard.tsx": [
+        "Okta was successfully"
+      ],
+      "modules/integrations/sso/oidc/OidcSetupModal.tsx": [
+        "Cancel",
+        "Client ID",
+        "Client Secret",
+        "OpenID Connect Discovery",
+        "Primary E-Mail Domain",
+        "Use  as a Single Sign-On provider to authenticate users. Follow the steps below to get started."
+      ],
+      "modules/integrations/sso/okta/DomainVerificationTable.tsx": [
+        "Domain",
+        "Last Check",
+        "Status"
+      ],
+      "modules/integrations/sso/okta/OktaSSOIntegrationCard.tsx": [
+        "Okta is a platform to provision and manage user accounts in cloud-based applications.",
+        "Okta was successfully"
+      ],
+      "modules/integrations/sso/okta/OktaSSOSettings.tsx": [
+        "Delete Integration?",
+        "Okta was successfully deleted"
+      ],
+      "modules/integrations/sso/okta/OktaSSOSetup.tsx": [
+        "Assign",
+        "Assign to People",
+        "Assignments",
+        "Client ID",
+        "Client Secret",
+        "Done",
+        "Okta account domain",
+        "Primary E-Mail Domain"
+      ],
+      "modules/jobs/CreateDebugJobModal.tsx": [
+        "Debug Bundle",
+        "Generate a debug bundle on this peer with logs and diagnostics. Useful for troubleshooting without CLI access."
+      ],
+      "modules/jobs/table/JobTypeCell.tsx": [
+        "Debug Bundle"
+      ],
+      "modules/jobs/table/PeerRemoteJobsTable.tsx": [
+        "Completed",
+        "Completed at",
+        "Created",
+        "Created at",
+        "Output",
+        "Parameters",
+        "Status",
+        "Type"
+      ],
+      "modules/networks/routing-peers/NetworkRoutingPeerModal.tsx": [
+        "Create a Setup Key?",
+        "Metric",
+        "Route traffic to ''",
+        "Routing Peer ()",
+        "Save Changes"
+      ],
+      "modules/onboarding/Onboarding.tsx": [
+        "Onboarding"
+      ],
+      "modules/onboarding/OnboardingDevices.tsx": [
+        "Network"
+      ],
+      "modules/onboarding/OnboardingEnd.tsx": [
+        "Congratulations, !"
+      ],
+      "modules/onboarding/OnboardingProvider.tsx": [
+        "Skipped Onboarding -  (Step )",
+        "Troubleshooting -"
+      ],
+      "modules/onboarding/networks/OnboardingAddResource.tsx": [
+        "Allows access to this ${\n\t\t\t\tisSubnet ?",
+        "Users to"
+      ],
+      "modules/onboarding/networks/OnboardingExplainPolicy.tsx": [
+        "Set the rules. You're in control"
+      ],
+      "modules/onboarding/networks/OnboardingTestResource.tsx": [
+        "Let's put that connection to the test",
+        "Nice work connecting your client device! Now, let’s have a little fun and test if it can reach your resource."
+      ],
+      "modules/onboarding/p2p/OnboardingExplainDefaultPolicy.tsx": [
+        "Set the rules. You're in control"
+      ],
+      "modules/onboarding/p2p/OnboardingFirstDevice.tsx": [
+        "Let's get your first device online"
+      ],
+      "modules/onboarding/p2p/OnboardingSecondDevice.tsx": [
+        "Create a Setup Key?",
+        "Share Link",
+        "Time to bring in your second device"
+      ],
+      "modules/onboarding/p2p/OnboardingTestP2P.tsx": [
+        "Let's put that connection to the test"
+      ],
+      "modules/peer/PeerSSHInstructions.tsx": [
+        "Allow SSH",
+        "Settings"
+      ],
+      "modules/peers/PeerMultiSelect.tsx": [
+        "Are you sure you want to delete these peers? This action cannot be undone.",
+        "Are you sure you want to overwrite the existing groups of your  selected peer(s)? This action cannot be undone.",
+        "Cancel",
+        "Delete '' ?",
+        "Delete All",
+        "Overwrite existing groups?"
+      ],
+      "modules/posture-checks/checks/tooltips/GeoLocationTooltip.tsx": [
+        "Block"
+      ],
+      "modules/posture-checks/checks/tooltips/NetBirdVersionTooltip.tsx": [
+        "Min. Client Version"
+      ],
+      "modules/posture-checks/checks/tooltips/PeerNetworkRangeTooltip.tsx": [
+        "Block"
+      ],
+      "modules/posture-checks/checks/tooltips/ProcessTooltip.tsx": [
+        "Allow only"
+      ],
+      "modules/posture-checks/table/PostureCheckBrowseTable.tsx": [
+        "Checks",
+        "Name"
+      ],
+      "modules/posture-checks/table/PostureCheckTable.tsx": [
+        "Checks",
+        "Name",
+        "Policies"
+      ],
+      "modules/posture-checks/table/cells/PostureCheckActionCell.tsx": [
+        "Delete ''?"
+      ],
+      "modules/posture-checks/ui/PostureCheckCard.tsx": [
+        "Disable this check?"
+      ],
+      "modules/posture-checks/usePostureCheck.ts": [
+        "Posture Check",
+        "Posture Check was  successfully."
+      ],
+      "modules/remote-access/rdp/RDPCertificateModal.tsx": [
+        "Certificate Details"
+      ],
+      "modules/remote-access/rdp/RDPCredentialsModal.tsx": [
+        "Connect to  via RDP",
+        "Port"
+      ],
+      "modules/remote-access/rdp/RDPTooltip.tsx": [
+        "This peer is offline and cannot be accessed via RDP."
+      ],
+      "modules/remote-access/rdp/ironrdp-wasm-bridge.ts": [
+        "Connection failed:  (WSA )",
+        "Connection failed: HTTP",
+        "IronRDP connection failed:"
+      ],
+      "modules/remote-access/rdp/rdp-certificate-handler.ts": [
+        "Accept",
+        "Certificate for  has changed!",
+        "Do you trust this certificate?",
+        "Issuer:",
+        "New certificate for  - requesting user acceptance",
+        "RDP Certificate Verification",
+        "Reject",
+        "SHA-256:",
+        "Serial:",
+        "Subject:",
+        "The server"
+      ],
+      "modules/remote-access/rdp/useRDPCertificateHandler.ts": [
+        "Certificate for  has changed!"
+      ],
+      "modules/remote-access/rdp/websocket-proxy.ts": [
+        "RDCleanPath WebSocket handler not available for proxy"
+      ],
+      "modules/remote-access/ssh/SSHCredentialsModal.tsx": [
+        "Connect to  via SSH"
+      ],
+      "modules/remote-access/ssh/SSHTooltip.tsx": [
+        "Connecting via SSH is only available when the peer is online."
+      ],
+      "modules/reverse-proxy/ReverseProxyCrowdSecIPReputation.tsx": [
+        "CrowdSec IP Reputation",
+        "Enforce",
+        "Observe"
+      ],
+      "modules/reverse-proxy/ReverseProxyHTTPTargets.tsx": [
+        "HTTPS Targets"
+      ],
+      "modules/reverse-proxy/ReverseProxyServiceModeSelector.tsx": [
+        "Select type...",
+        "Service Type"
+      ],
+      "modules/reverse-proxy/auth/AuthHeaderModal.tsx": [
+        "Bearer",
+        "HTTP Headers",
+        "Header",
+        "Header  -",
+        "Name",
+        "Password",
+        "Require specific HTTP headers to access this service.",
+        "Username",
+        "Value"
+      ],
+      "modules/reverse-proxy/auth/AuthPasswordModal.tsx": [
+        "Enter password...",
+        "Password",
+        "Require a password to access this service."
+      ],
+      "modules/reverse-proxy/auth/AuthPinModal.tsx": [
+        "PIN Code",
+        "Require a numeric PIN code to access this service."
+      ],
+      "modules/reverse-proxy/auth/AuthSSOModal.tsx": [
+        "Require users to authenticate via SSO to access this service.",
+        "SSO (Single Sign-On)"
+      ],
+      "modules/reverse-proxy/clusters/ClusterTypeIndicator.tsx": [
+        "Account cluster.",
+        "Shared cluster."
+      ],
+      "modules/reverse-proxy/clusters/ClustersActionCell.tsx": [
+        "Delete ''?"
+      ],
+      "modules/reverse-proxy/clusters/ClustersFeaturesCell.tsx": [
+        "Proxy Cluster"
+      ],
+      "modules/reverse-proxy/clusters/ClustersModal.tsx": [
+        "CNAME",
+        "Cancel",
+        "Configure DNS",
+        "Content",
+        "Docker",
+        "Domain",
+        "Name",
+        "Type"
+      ],
+      "modules/reverse-proxy/clusters/ClustersTable.tsx": [
+        "Cluster",
+        "Connected Proxies",
+        "Features"
+      ],
+      "modules/reverse-proxy/domain/CustomDomainModal.tsx": [
+        "Cancel",
+        "Domain",
+        "Target Proxy Cluster"
+      ],
+      "modules/reverse-proxy/domain/CustomDomainSelector.tsx": [
+        "Account",
+        "Add Custom Domain",
+        "Custom",
+        "Select domain...",
+        "Shared"
+      ],
+      "modules/reverse-proxy/domain/CustomDomainVerificationModal.tsx": [
+        "CNAME record"
+      ],
+      "modules/reverse-proxy/domain/CustomDomainsTable.tsx": [
+        "Cluster",
+        "Domain",
+        "Status"
+      ],
+      "modules/reverse-proxy/domain/ReverseProxyDomainInput.tsx": [
+        "Domain"
+      ],
+      "modules/reverse-proxy/events/ReverseProxyEventsAuthMethodCell.tsx": [
+        "Auth:"
+      ],
+      "modules/reverse-proxy/events/ReverseProxyEventsBytesCell.tsx": [
+        "Download:",
+        "Upload:"
+      ],
+      "modules/reverse-proxy/events/ReverseProxyEventsStatusCell.tsx": [
+        "Reason:"
+      ],
+      "modules/reverse-proxy/table/ReverseProxyClusterCell.tsx": [
+        "Cluster:"
+      ],
+      "modules/reverse-proxy/table/ReverseProxyTable.tsx": [
+        "Domain",
+        "Target(s)",
+        "Type"
+      ],
+      "modules/reverse-proxy/targets/ReverseProxyAddressInput.tsx": [
+        "Enter an IP address within"
+      ],
+      "modules/reverse-proxy/targets/ReverseProxyTargetCustomHeaders.tsx": [
+        "Header, e.g., Authorization",
+        "Value, e.g., Bearer eyJhbGci..."
+      ],
+      "modules/reverse-proxy/targets/ReverseProxyTargetModal.tsx": [
+        "Configure the target for your reverse proxy.",
+        "Location (Optional)",
+        "Request Timeout",
+        "Session Idle Timeout"
+      ],
+      "modules/reverse-proxy/targets/ReverseProxyTargetSelector.tsx": [
+        "Networks"
+      ],
+      "modules/reverse-proxy/targets/ReverseProxyTargetsTable.tsx": [
+        "Destination",
+        "Location",
+        "Resource"
+      ],
+      "modules/reverse-proxy/targets/flat/ReverseProxyFlatTargetsTable.tsx": [
+        "Destination",
+        "Resource",
+        "Service"
+      ],
+      "modules/search/GlobalSearchModal.tsx": [
+        "Close",
+        "Navigate",
+        "Networks ()",
+        "Open",
+        "Resources ()"
+      ],
+      "modules/settings/AuthenticationTab.tsx": [
+        "Authentication",
+        "Select interval..."
+      ],
+      "modules/settings/ClientSettingsTab.tsx": [
+        "Client settings successfully updated.",
+        "Lazy Connections successfully ."
+      ],
+      "modules/settings/GroupsSettings.tsx": [
+        "Access Control › Groups"
+      ],
+      "modules/settings/IdentityProviderModal.tsx": [
+        "Select provider type..."
+      ],
+      "modules/settings/IdentityProvidersTab.tsx": [
+        "Delete ''?"
+      ],
+      "modules/settings/NetworkSettingsTab.tsx": [
+        "DNS Wildcard Routing successfully .",
+        "Network settings successfully updated."
+      ],
+      "modules/setup-keys/SetupKeyModal.tsx": [
+        "Auto-assigned groups"
+      ],
+      "modules/setup-keys/SetupKeyUsageCell.tsx": [
+        "Unlimited"
+      ]
+    }
+  }
+}

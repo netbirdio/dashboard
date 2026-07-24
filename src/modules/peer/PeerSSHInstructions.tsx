@@ -22,6 +22,7 @@ import { SegmentedTabs } from "@components/SegmentedTabs";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { Peer } from "@/interfaces/Peer";
 import { PeerSSHPolicyModal } from "@/modules/peer/PeerSSHPolicyModal";
+import { useTranslations } from "next-intl";
 
 type Props = {
   open?: boolean;
@@ -36,6 +37,7 @@ export const PeerSSHInstructions = ({
   onSuccess,
   peer,
 }: Props) => {
+  const t = useTranslations("common");
   const [client, setClient] = useState("cli");
   const [policyModal, setPolicyModal] = useState(false);
 
@@ -136,7 +138,7 @@ export const PeerSSHInstructions = ({
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("cancel")}</Button>
             </ModalClose>
 
             <Button variant={"primary"} onClick={onSuccess}>
