@@ -3,8 +3,6 @@ import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layout
 import { DEFAULT_LAYOUT_CONFIG } from "@/modules/control-center/utils/graph-builder";
 import {
   FRAME_GRID_BASE_X,
-  POLICY_NODE_HALF_HEIGHT,
-  SOURCE_NODE_HALF_HEIGHT,
   isFrameNode,
   packFrameGrid,
 } from "@/modules/control-center/utils/helpers";
@@ -76,7 +74,7 @@ export const resolveNodeOverlaps = (nodes: Node[]) => {
 // arranging an untouched draft reproduces the entry layout exactly instead
 // of drifting to a slightly different rhythm. Mirrors whatever LIVE view the
 // draft was entered from: drafts carrying network frames mirror the networks
-// overview (sources 160 pitch, policies at x 480 / 90 pitch, staggered frame
+// overview (sources 160 pitch, policies at x 500 / 90 pitch, staggered frame
 // grid); frameless drafts mirror the peer/group/user views' shared layout
 // (spacing 120, DEFAULT_LAYOUT_CONFIG — policies 500/60, destinations
 // 1000/100).
@@ -103,7 +101,7 @@ export const applyDraftBuildLayout = (
     baseSpacing,
     "peer",
     carriesFrames
-      ? { ...DEFAULT_LAYOUT_CONFIG, policy: { width: 480, spacing: 90 } }
+      ? { ...DEFAULT_LAYOUT_CONFIG, policy: { width: 500, spacing: 90 } }
       : DEFAULT_LAYOUT_CONFIG,
   );
   // Edge direction tells a node's side: node → policy = source,
@@ -141,15 +139,14 @@ export const applyDraftBuildLayout = (
     sourceColumn.sort((a, b) =>
       draftDisplayName(a).localeCompare(draftDisplayName(b)),
     );
-    // Same pitch as the destination column (100) so both sides share
-    // one rhythm; frame drafts keep the networks-overview pitch AND its
-    // half-height offset (frames center on the midline, so top-anchored
-    // columns hang low without it).
+    // Same pitch as the destination column (100) so both sides share one
+    // rhythm; frame drafts keep the networks-overview pitch. Top-anchored
+    // at x 0 like every live view — the frame grid centers on the columns'
+    // midline instead (othersMid below), so nothing hangs low.
     const sourcePitch = carriesFrames ? baseSpacing : 100;
-    const halfH = carriesFrames ? SOURCE_NODE_HALF_HEIGHT : 0;
     const colHeight = (sourceColumn.length - 1) * sourcePitch;
     sourceColumn.forEach((n, i) => {
-      n.position = { x: 0, y: -colHeight / 2 + i * sourcePitch - halfH };
+      n.position = { x: 0, y: -colHeight / 2 + i * sourcePitch };
     });
   }
   if (carriesFrames) {
@@ -167,8 +164,8 @@ export const applyDraftBuildLayout = (
       const colHeight = (policyColumn.length - 1) * 90;
       policyColumn.forEach((n, i) => {
         n.position = {
-          x: 480,
-          y: -colHeight / 2 + i * 90 - POLICY_NODE_HALF_HEIGHT,
+          x: 500,
+          y: -colHeight / 2 + i * 90 + 14,
         };
       });
     }

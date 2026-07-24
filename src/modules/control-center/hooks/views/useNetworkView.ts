@@ -15,7 +15,6 @@ import {
   NETWORK_FRAME_FALLBACK_ROW,
   getResourcePolicyByGroups,
   packFrameGrid,
-  POLICY_NODE_HALF_HEIGHT,
   SOURCE_NODE_HALF_HEIGHT,
 } from "@/modules/control-center/utils/helpers";
 import { ViewResult } from "./types";
@@ -437,12 +436,16 @@ export function useNetworkView() {
         ""
       ).toLowerCase();
     sources.sort((a, b) => displayName(a).localeCompare(displayName(b)));
+    // Same anchors as the peer/group/user views (sources top-anchored at
+    // x 0, policies at x 500 / +14) so a policy and its source keep their
+    // position when switching views; the frame grid centers on the source
+    // column's midline (+half height) instead of shifting the columns up.
     const SOURCE_SPACING = 160;
     const sourcesHeight = (sources.length - 1) * SOURCE_SPACING;
     sources.forEach((n, i) => {
       n.position = {
         x: 0,
-        y: -sourcesHeight / 2 + i * SOURCE_SPACING - SOURCE_NODE_HALF_HEIGHT,
+        y: -sourcesHeight / 2 + i * SOURCE_SPACING,
       };
     });
     const policyName = (n: Node) =>
@@ -453,11 +456,11 @@ export function useNetworkView() {
     const policiesHeight = (policyNodes.length - 1) * POLICY_SPACING;
     policyNodes.forEach((n, i) => {
       n.position = {
-        x: 480,
-        y: -policiesHeight / 2 + i * POLICY_SPACING - POLICY_NODE_HALF_HEIGHT,
+        x: 500,
+        y: -policiesHeight / 2 + i * POLICY_SPACING + 14,
       };
     });
-    packFrameGrid(frames, FRAME_GRID_BASE_X, 0);
+    packFrameGrid(frames, FRAME_GRID_BASE_X, SOURCE_NODE_HALF_HEIGHT);
 
     return {
       updatedNodes: [...allNodes, ...childNodes],
