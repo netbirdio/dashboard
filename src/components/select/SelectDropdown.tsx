@@ -55,6 +55,10 @@ interface SelectDropdownProps {
   iconSize?: number;
   truncate?: boolean;
   compact?: boolean;
+  // Pinned content below the scrollable options (e.g. a "create new" action)
+  // — always visible regardless of scroll or search. Receives a callback
+  // that closes the popover.
+  footer?: (close: () => void) => React.ReactNode;
   "data-testid"?: string;
 }
 
@@ -79,6 +83,7 @@ export function SelectDropdown({
   iconSize = 14,
   truncate = false,
   compact = false,
+  footer,
   "data-testid": dataTestId,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
@@ -311,6 +316,11 @@ export function SelectDropdown({
                 )}
               </CommandGroup>
             </ScrollArea>
+            {footer && (
+              <div className={"border-t dark:border-nb-gray-800/70"}>
+                {footer(() => setOpen(false))}
+              </div>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

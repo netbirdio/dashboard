@@ -19,8 +19,6 @@ import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftN
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { NetworkModalContent } from "@/modules/networks/NetworkModal";
 
-const CREATE_NEW = "__create_new__";
-
 // "No Network" picker for a standalone draft resource: assign it to an
 // existing network (a draft frame on canvas or a real API network) or create
 // a new draft network (name + description via the networks-page modal) and
@@ -57,9 +55,10 @@ const PickerContent = ({
   const [creating, setCreating] = React.useState(false);
   const [selected, setSelected] = React.useState("");
 
-  // Network dropdown options — draft frames on canvas + every real network,
-  // and a "Create New Network" item at the bottom (like the draft selector's
-  // "Create New Draft"). Values are prefixed so the pick can tell them apart.
+  // Network dropdown options — draft frames on canvas + every real network.
+  // Values are prefixed so the pick can tell them apart. Creating a new
+  // network lives OUTSIDE the select (a dedicated button below) so it can't
+  // scroll away or get filtered out with many networks.
   const options: SelectOption[] = React.useMemo(() => {
     const frameNodes = reactFlow.getNodes().filter(isFrameNode);
     const frames = frameNodes.map((n) => ({
@@ -79,24 +78,8 @@ const PickerContent = ({
         label: n.name,
         icon: ({ size }: { size?: number }) => <NetworkIcon size={size} />,
       }));
-    return [
-      ...frames,
-      ...api,
-      {
-        value: CREATE_NEW,
-        label: "Create New Network",
-        icon: ({ size }: { size?: number }) => <PlusCircle size={size} />,
-      },
-    ];
+    return [...frames, ...api];
   }, [reactFlow, networks]);
-
-  const onChange = (value: string) => {
-    if (value === CREATE_NEW) {
-      setCreating(true);
-      return;
-    }
-    setSelected(value);
-  };
 
   const save = () => {
     if (!selected) return;
@@ -128,45 +111,78 @@ const PickerContent = ({
       () => assignResourceToNetwork({ resourceNodeId, networkNodeId }),
       0,
     );
+    setCreating(false);
     onClose();
   };
 
-  if (creating) {
-    return (
-      <NetworkModalContent
-        network={undefined}
-        useSave={false}
-        onSaved={createAndAssign}
-      />
-    );
-  }
-
   return (
-    <ModalContent maxWidthClass={"max-w-lg"}>
-      <ModalHeader
-        icon={<NetworkRoutesIcon className={"fill-netbird"} />}
-        title={"Assign a network"}
-        description={"Pick a network for this resource or create a new one."}
-        color={"netbird"}
-      />
-      <Separator />
-      <div className={"px-8 py-6"}>
-        <SelectDropdown
-          value={selected}
-          onChange={onChange}
-          options={options}
-          placeholder={"Select a network..."}
-          popoverWidth={"content"}
+    <>
+      <ModalContent maxWidthClass={"max-w-lg"}>
+        <ModalHeader
+          icon={<NetworkRoutesIcon className={"fill-netbird"} />}
+          title={"Assign a network"}
+          description={"Pick a network for this resource or create a new one."}
+          color={"netbird"}
         />
-      </div>
-      <ModalFooter className={"sm:justify-end gap-3"}>
-        <ModalClose asChild={true}>
-          <Button variant={"secondary"}>Cancel</Button>
-        </ModalClose>
-        <Button variant={"primary"} disabled={!selected} onClick={save}>
-          Save
-        </Button>
-      </ModalFooter>
-    </ModalContent>
+        <Separator />
+        <div className={"px-8 py-6"}>
+          <SelectDropdown
+            value={selected}
+            onChange={setSelected}
+            options={options}
+            showSearch={true}
+            searchPlaceholder={"Search networks..."}
+            placeholder={"Select or create a network..."}
+            maxHeight={190}
+            // "Create New Network" pinned below the options — always visible
+            // regardless of scroll or search.
+            footer={(close) => (
+              <div className={"p-2"}>
+                <button
+                  type={"button"}
+                  className={
+                    "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium text-nb-gray-200 hover:bg-nb-gray-800/60 w-full transition-colors"
+                  }
+                  onClick={() => {
+                    close();
+                    setCreating(true);
+                  }}
+                >
+                  <PlusCircle size={14} />
+                  Create New Network
+                </button>
+              </div>
+            )}
+          />
+        </div>
+        {/* Same separator color as the header (the footer's built-in border
+            is a slightly different gray). */}
+        <Separator />
+        <ModalFooter className={"items-center"} separator={false}>
+          <div className={"flex gap-3 w-full justify-end"}>
+            <ModalClose asChild={true}>
+              <Button variant={"secondary"}>Cancel</Button>
+            </ModalClose>
+            <Button variant={"primary"} disabled={!selected} onClick={save}>
+              Assign Network
+            </Button>
+          </div>
+        </ModalFooter>
+      </ModalContent>
+      {/* "Create New Network" opens ON TOP of the picker — Cancel there
+          returns to the picker instead of dismissing everything. */}
+      <Modal
+        open={creating}
+        onOpenChange={(open) => !open && setCreating(false)}
+      >
+        {creating && (
+          <NetworkModalContent
+            network={undefined}
+            useSave={false}
+            onSaved={createAndAssign}
+          />
+        )}
+      </Modal>
+    </>
   );
 };
