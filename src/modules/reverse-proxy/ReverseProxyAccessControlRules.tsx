@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Label } from "@components/Label";
 import HelpText from "@components/HelpText";
+import FullTooltip from "@components/FullTooltip";
+import { ToggleSwitch } from "@components/ToggleSwitch";
 import Button from "@components/Button";
 import { Input } from "@components/Input";
 import cidr from "ip-cidr";
 import { hostSuffixFor, isIPv6 } from "@utils/ip";
 import {
   FlagIcon,
+  InfoIcon,
   MinusCircleIcon,
   NetworkIcon,
   PlusIcon,
@@ -19,7 +22,11 @@ import {
   SelectOption,
 } from "@components/select/SelectDropdown";
 import { CountrySelector } from "@/components/ui/CountrySelector";
-import { AccessRestrictions, CrowdSecMode } from "@/interfaces/ReverseProxy";
+import {
+  AccessRestrictions,
+  AllowMatch,
+  CrowdSecMode,
+} from "@/interfaces/ReverseProxy";
 import { ReverseProxyCrowdSecIPReputation } from "@/modules/reverse-proxy/ReverseProxyCrowdSecIPReputation";
 
 type AccessAction = "allow" | "block";
@@ -118,9 +125,33 @@ function restrictionsToRules(
   return rules;
 }
 
+// allowSpansCategories reports whether the allow rules cover both a location
+// (country) and an IP/CIDR category. The all-vs-any combine mode only changes
+// the outcome in that case, so allow_match is only persisted then.
+//
+// requireValue distinguishes the two callers: persistence needs a real value
+// (an empty rule contributes no allowlist), while the toggle's visibility keys
+// off the selected type alone so it appears as soon as a category is chosen,
+// before the user finishes typing.
+function allowSpansCategories(
+  rules: AccessRule[],
+  requireValue: boolean,
+): boolean {
+  let hasCountry = false;
+  let hasCidr = false;
+  for (const rule of rules) {
+    if (rule.action !== "allow") continue;
+    if (requireValue && !rule.value) continue;
+    if (rule.type === "country") hasCountry = true;
+    else hasCidr = true;
+  }
+  return hasCountry && hasCidr;
+}
+
 function rulesToRestrictions(
   rules: AccessRule[],
   crowdsecMode?: CrowdSecMode,
+  allowMatch?: AllowMatch,
 ): AccessRestrictions | undefined {
   const allowed_countries: string[] = [];
   const blocked_countries: string[] = [];
@@ -153,12 +184,19 @@ function rulesToRestrictions(
 
   if (!hasAny) return undefined;
 
+  // Only emit allow_match when "any" is selected and the allow rules actually
+  // span both categories; otherwise the mode is a no-op and the backend
+  // defaults to "all".
+  const emitAllowMatch =
+    allowMatch === AllowMatch.ANY && allowSpansCategories(rules, true);
+
   return {
     ...(allowed_countries.length > 0 && { allowed_countries }),
     ...(blocked_countries.length > 0 && { blocked_countries }),
     ...(allowed_cidrs.length > 0 && { allowed_cidrs }),
     ...(blocked_cidrs.length > 0 && { blocked_cidrs }),
     ...(hasCrowdSec && { crowdsec_mode: crowdsecMode }),
+    ...(emitAllowMatch && { allow_match: AllowMatch.ANY }),
   };
 }
 
@@ -167,6 +205,10 @@ type Props = {
   onChange: (value: AccessRestrictions | undefined) => void;
   onValidationChange?: (hasErrors: boolean) => void;
   supportsCrowdSec?: boolean;
+  // isNewService selects the default allow-combine mode: new services default
+  // to "any" (OR across categories), while existing services without a stored
+  // allow_match keep "all" (AND) for backward compatibility.
+  isNewService?: boolean;
 };
 
 function validateRule(rule: AccessRule): string {
@@ -193,6 +235,7 @@ export const ReverseProxyAccessControlRules = ({
   onChange,
   onValidationChange,
   supportsCrowdSec,
+  isNewService,
 }: Props) => {
   const [rules, dispatch] = useReducer(
     rulesReducer,
@@ -202,6 +245,15 @@ export const ReverseProxyAccessControlRules = ({
 
   const [crowdsecMode, setCrowdsecMode] = useState<CrowdSecMode>(
     value?.crowdsec_mode ?? CrowdSecMode.OFF,
+  );
+
+  const [allowMatch, setAllowMatch] = useState<AllowMatch>(
+    value?.allow_match ?? (isNewService ? AllowMatch.ANY : AllowMatch.ALL),
+  );
+
+  const showAllowMatch = useMemo(
+    () => allowSpansCategories(rules, false),
+    [rules],
   );
 
   const errors = useMemo(
@@ -227,8 +279,8 @@ export const ReverseProxyAccessControlRules = ({
   }, [supportsCrowdSec]);
 
   useEffect(() => {
-    onChangeRef.current(rulesToRestrictions(rules, crowdsecMode));
-  }, [rules, crowdsecMode]);
+    onChangeRef.current(rulesToRestrictions(rules, crowdsecMode, allowMatch));
+  }, [rules, crowdsecMode, allowMatch]);
 
   useEffect(() => {
     onValidationChangeRef.current?.(hasErrors);
@@ -242,6 +294,42 @@ export const ReverseProxyAccessControlRules = ({
           onChange={setCrowdsecMode}
         />
       )}
+      <div
+        className={`flex items-center justify-between gap-4 mb-4 ${
+          showAllowMatch ? "" : "opacity-60"
+        }`}
+        data-testid="allow-match"
+      >
+        <div>
+          <Label className="flex items-center gap-2">
+            Require all allow rules
+            <FullTooltip
+              content={
+                <div className="text-xs max-w-xs">
+                  When on, a connection must match every allow category (an
+                  allowed country and an allowed IP/CIDR). When off, matching
+                  any one is enough. Block rules always take priority.
+                </div>
+              }
+            >
+              <InfoIcon size={14} className="text-nb-gray-500" />
+            </FullTooltip>
+          </Label>
+          <HelpText margin={false}>
+            {showAllowMatch
+              ? "Off: match any allow rule. On: match all of them."
+              : "Applies once you have both a country and an IP/CIDR allow rule."}
+          </HelpText>
+        </div>
+        <ToggleSwitch
+          checked={allowMatch === AllowMatch.ALL}
+          onCheckedChange={(checked) =>
+            setAllowMatch(checked ? AllowMatch.ALL : AllowMatch.ANY)
+          }
+          disabled={!showAllowMatch}
+          data-testid="allow-match-toggle"
+        />
+      </div>
       <div>
         <Label>Access Control Rules</Label>
         <HelpText>
