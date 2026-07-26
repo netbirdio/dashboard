@@ -380,15 +380,23 @@ function ConsumptionByDayChart({
                       ctx.parsed.y,
                     ).toLocaleString()}`,
               // Surface the day's prompt-cache share on hover without adding chart series.
+              // Gate on the figure this metric actually shows: a day with cache
+              // tokens but no cache spend (unpriced model) would otherwise
+              // render "Cache: $0.00", implying a priced-but-free day.
               afterBody: (items) => {
                 const d = daily[items[0]?.dataIndex ?? -1];
-                if (!d || d.cacheRead + d.cacheWrite <= 0) return [];
-                return metric === "cost"
-                  ? [`Cache: $${d.cacheCost.toFixed(2)}`]
-                  : [
+                if (!d) return [];
+                if (metric === "cost") {
+                  return d.cacheCost > 0
+                    ? [`Cache: $${d.cacheCost.toFixed(2)}`]
+                    : [];
+                }
+                return d.cacheRead + d.cacheWrite > 0
+                  ? [
                       `Cache read: ${d.cacheRead.toLocaleString()}`,
                       `Cache write: ${d.cacheWrite.toLocaleString()}`,
-                    ];
+                    ]
+                  : [];
               },
             },
           },

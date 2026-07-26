@@ -11,7 +11,7 @@
  * passes against management builds that predate the cache fields.
  */
 import { test, expect, type Browser, type Page } from "@playwright/test";
-import { loginToApp } from "../helpers/auth";
+import { loginToApp, navigateTo } from "../helpers/auth";
 
 const AGENT_NETWORK_CONFIG_KEY = "netbird-test-agent-network";
 
@@ -115,13 +115,22 @@ function tooltip(page: Page) {
   return page.getByRole("tooltip");
 }
 
+// Radix keeps a tooltip mounted until the pointer leaves its trigger, and
+// hovering straight from one cell to the next in the same row can leave both
+// open — which makes tooltip() match two elements. Park the pointer off the
+// table and wait for the open one to unmount before the next hover.
+async function hoverAway(page: Page) {
+  await page.mouse.move(0, 0);
+  await expect(tooltip(page)).toHaveCount(0);
+}
+
 test.describe.serial("Agent Network cache accounting @agent-network", () => {
   test("access-log hover breaks out prompt-cache tokens and cost", async ({
     browser,
   }) => {
     const { page, close } = await newUsagePage(browser);
     try {
-      await page.goto("/agent-network/usage?tab=access-logs");
+      await navigateTo(page, "/agent-network/usage?tab=access-logs");
 
       const writeRow = page.getByRole("row").filter({ hasText: "$0.1425" });
       await expect(writeRow).toBeVisible();
@@ -135,6 +144,7 @@ test.describe.serial("Agent Network cache accounting @agent-network", () => {
       // Cost tooltip: all four buckets are listed plus the total, including
       // buckets that cost nothing — this request wrote the cache but never read
       // it, so "cache read" is present with a $0.0000 amount.
+      await hoverAway(page);
       await writeRow.getByText("$0.1425").hover();
       await expect(tooltip(page)).toContainText("input");
       await expect(tooltip(page)).toContainText("cache read");
@@ -149,6 +159,7 @@ test.describe.serial("Agent Network cache accounting @agent-network", () => {
       // bucket still listed as a zero row.
       // No exact match: the output count renders behind an sr-only "Output:" prefix.
       const readRow = page.getByRole("row").filter({ hasText: "$0.0217" });
+      await hoverAway(page);
       await readRow.getByText("800").hover();
       await expect(tooltip(page)).toContainText("cache read");
       await expect(tooltip(page)).toContainText("32,919");
@@ -163,7 +174,7 @@ test.describe.serial("Agent Network cache accounting @agent-network", () => {
   }) => {
     const { page, close } = await newUsagePage(browser);
     try {
-      await page.goto("/agent-network/usage");
+      await navigateTo(page, "/agent-network/usage");
 
       // Total Tokens includes the additive cache buckets; hover splits them.
       await expect(page.getByText("66,510")).toBeVisible();
@@ -172,6 +183,7 @@ test.describe.serial("Agent Network cache accounting @agent-network", () => {
       await expect(tooltip(page)).toContainText("cache write: 32,109");
 
       // Cost hover shows the cache share of the day's spend.
+      await hoverAway(page);
       await page.getByText("$0.16", { exact: true }).hover();
       await expect(tooltip(page)).toContainText("cache: $0.13");
     } finally {
