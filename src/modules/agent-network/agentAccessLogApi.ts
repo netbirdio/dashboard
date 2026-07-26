@@ -24,6 +24,10 @@ export type APIAgentNetworkAccessLog = {
   output_tokens: number;
   total_tokens: number;
   cost_usd: number;
+  // Prompt-cache accounting. Optional — absent on older management servers.
+  cached_input_tokens?: number;
+  cache_creation_tokens?: number;
+  cache_cost_usd?: number;
   user_id?: string;
   source_ip?: string;
   method?: string;
@@ -63,6 +67,9 @@ export type APIAgentNetworkAccessLogSession = {
   output_tokens: number;
   total_tokens: number;
   cost_usd: number;
+  cached_input_tokens?: number;
+  cache_creation_tokens?: number;
+  cache_cost_usd?: number;
   providers?: string[];
   models?: string[];
   decision: string;
@@ -77,6 +84,9 @@ export type APIAgentNetworkUsageBucket = {
   output_tokens: number;
   total_tokens: number;
   cost_usd: number;
+  cached_input_tokens?: number;
+  cache_creation_tokens?: number;
+  cache_cost_usd?: number;
 };
 
 export type UsageGranularity = "day" | "week" | "month";
@@ -185,7 +195,10 @@ export function accessLogFromAgentAPI(
     model: entry.model ?? "",
     inputTokens: entry.input_tokens ?? 0,
     outputTokens: entry.output_tokens ?? 0,
+    cachedInputTokens: entry.cached_input_tokens ?? 0,
+    cacheCreationTokens: entry.cache_creation_tokens ?? 0,
     costUsd: entry.cost_usd ?? 0,
+    cacheCostUsd: entry.cache_cost_usd ?? 0,
     durationMs: entry.duration_ms,
     decision,
     denyReason: decision === "deny" ? entry.deny_reason : undefined,
@@ -228,7 +241,10 @@ export function accessLogSessionFromAgentAPI(
     inputTokens: session.input_tokens ?? 0,
     outputTokens: session.output_tokens ?? 0,
     totalTokens: session.total_tokens ?? 0,
+    cachedInputTokens: session.cached_input_tokens ?? 0,
+    cacheCreationTokens: session.cache_creation_tokens ?? 0,
     costUsd: session.cost_usd ?? 0,
+    cacheCostUsd: session.cache_cost_usd ?? 0,
     providers: session.providers ?? [],
     models: session.models ?? [],
     decision,

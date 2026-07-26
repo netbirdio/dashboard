@@ -175,7 +175,11 @@ export type AIAccessLogEntry = {
   model: string;
   inputTokens: number;
   outputTokens: number;
+  // Prompt-cache buckets: read/write token counts and the cache share of costUsd. Optional — absent on older management servers.
+  cachedInputTokens?: number;
+  cacheCreationTokens?: number;
   costUsd: number;
+  cacheCostUsd?: number;
   durationMs: number;
   decision: AIAccessLogDecision;
   denyReason?: string;
@@ -213,7 +217,10 @@ export type AIAccessLogSession = {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
+  cachedInputTokens?: number;
+  cacheCreationTokens?: number;
   costUsd: number;
+  cacheCostUsd?: number;
   providers: string[]; // distinct vendor ids seen in the session
   models: string[]; // distinct models seen in the session
   decision: AIAccessLogDecision;

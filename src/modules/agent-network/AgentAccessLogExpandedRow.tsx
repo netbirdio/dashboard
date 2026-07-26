@@ -26,17 +26,26 @@ export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
   const hasBody = hasPrompt || hasCompletion;
   const denyReason = formatDenyReason(entry.denyReason);
 
+  const cacheRead = entry.cachedInputTokens ?? 0;
+  const cacheWrite = entry.cacheCreationTokens ?? 0;
   const metadata: Record<string, string> = {
     "plg.llm.provider": entry.providerId,
     "plg.llm.model": entry.model,
     "plg.llm.input_tokens": String(entry.inputTokens),
     "plg.llm.output_tokens": String(entry.outputTokens),
-    "plg.llm.total_tokens": String(entry.inputTokens + entry.outputTokens),
+    "plg.llm.total_tokens": String(
+      entry.inputTokens + entry.outputTokens + cacheRead + cacheWrite,
+    ),
     "plg.llm.cost_usd": entry.costUsd.toFixed(6),
     "plg.llm.stream": entry.stream ? "true" : "false",
     "plg.agentnetwork.policy_name": entry.policyName,
     "plg.agentnetwork.user_groups": (entry.userGroups ?? []).join(", "),
   };
+  if (cacheRead > 0 || cacheWrite > 0) {
+    metadata["plg.llm.cached_input_tokens"] = String(cacheRead);
+    metadata["plg.llm.cache_creation_tokens"] = String(cacheWrite);
+    metadata["plg.cost.usd_cache"] = (entry.cacheCostUsd ?? 0).toFixed(6);
+  }
   if (isDeny) {
     metadata["plg.llm_policy.decision"] = "deny";
     metadata["plg.llm_policy.reason"] = entry.denyReason ?? "unknown";

@@ -40,6 +40,8 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
   ChevronRight,
+  DatabaseIcon,
+  DatabaseZapIcon,
   ExternalLinkIcon,
   ShieldCheckIcon,
 } from "lucide-react";
@@ -261,13 +263,10 @@ export default function AgentAccessLogTable({
           </DataTableHeader>
         ),
         cell: ({ row }) => (
-          <span
-            className={
-              "text-nb-gray-300 text-[0.82rem] px-3 py-2 font-mono whitespace-nowrap"
-            }
-          >
-            ${row.original.costUsd.toFixed(4)}
-          </span>
+          <CostCell
+            costUsd={row.original.costUsd}
+            cacheCostUsd={row.original.cacheCostUsd}
+          />
         ),
       },
       {
@@ -409,6 +408,8 @@ export default function AgentAccessLogTable({
               {
                 inputTokens: row.original.inputTokens,
                 outputTokens: row.original.outputTokens,
+                cachedInputTokens: row.original.cachedInputTokens,
+                cacheCreationTokens: row.original.cacheCreationTokens,
               } as AIAccessLogEntry
             }
           />
@@ -423,13 +424,10 @@ export default function AgentAccessLogTable({
           </DataTableHeader>
         ),
         cell: ({ row }) => (
-          <span
-            className={
-              "text-nb-gray-300 text-[0.82rem] px-3 py-2 font-mono whitespace-nowrap"
-            }
-          >
-            ${row.original.costUsd.toFixed(4)}
-          </span>
+          <CostCell
+            costUsd={row.original.costUsd}
+            cacheCostUsd={row.original.cacheCostUsd}
+          />
         ),
       },
       {
@@ -999,7 +997,14 @@ function TokensCell({ entry }: { entry: AIAccessLogEntry }) {
   ) {
     return <EmptyRow />;
   }
-  const total = (entry.inputTokens ?? 0) + (entry.outputTokens ?? 0);
+  const cacheRead = entry.cachedInputTokens ?? 0;
+  const cacheWrite = entry.cacheCreationTokens ?? 0;
+  // Anthropic-shape cache buckets are additive to input tokens, so they count toward the total.
+  const total =
+    (entry.inputTokens ?? 0) +
+    (entry.outputTokens ?? 0) +
+    cacheRead +
+    cacheWrite;
   return (
     <FullTooltip
       content={
@@ -1018,6 +1023,27 @@ function TokensCell({ entry }: { entry: AIAccessLogEntry }) {
             </span>
             <span className={"text-nb-gray-400"}>output</span>
           </div>
+          {cacheRead > 0 && (
+            <div className={"flex items-center gap-2 whitespace-nowrap"}>
+              <DatabaseIcon size={12} className={"text-amber-400 shrink-0"} />
+              <span className={"font-medium"}>
+                {cacheRead.toLocaleString()}
+              </span>
+              <span className={"text-nb-gray-400"}>cache read</span>
+            </div>
+          )}
+          {cacheWrite > 0 && (
+            <div className={"flex items-center gap-2 whitespace-nowrap"}>
+              <DatabaseZapIcon
+                size={12}
+                className={"text-amber-400 shrink-0"}
+              />
+              <span className={"font-medium"}>
+                {cacheWrite.toLocaleString()}
+              </span>
+              <span className={"text-nb-gray-400"}>cache write</span>
+            </div>
+          )}
           <div
             className={
               "border-t border-nb-gray-800 mt-0.5 pt-1 flex items-center gap-2 text-nb-gray-400 whitespace-nowrap"
@@ -1046,6 +1072,58 @@ function TokensCell({ entry }: { entry: AIAccessLogEntry }) {
           {entry.outputTokens.toLocaleString()}
         </div>
       </div>
+    </FullTooltip>
+  );
+}
+
+// CostCell renders the metered USD cost with a hover breakdown of how much of
+// it was billed for prompt-cache usage (cache read + write buckets).
+function CostCell({
+  costUsd,
+  cacheCostUsd,
+}: {
+  costUsd: number;
+  cacheCostUsd?: number;
+}) {
+  const cache = cacheCostUsd ?? 0;
+  const display = (
+    <span
+      className={
+        "text-nb-gray-300 text-[0.82rem] px-3 py-2 font-mono whitespace-nowrap"
+      }
+    >
+      ${costUsd.toFixed(4)}
+    </span>
+  );
+  if (cache <= 0) return display;
+  return (
+    <FullTooltip
+      content={
+        <div className={"text-xs flex flex-col gap-1 font-mono"}>
+          <div className={"flex items-center gap-2 whitespace-nowrap"}>
+            <span className={"font-medium"}>
+              ${(costUsd - cache).toFixed(4)}
+            </span>
+            <span className={"text-nb-gray-400 font-sans"}>input + output</span>
+          </div>
+          <div className={"flex items-center gap-2 whitespace-nowrap"}>
+            <span className={"font-medium"}>${cache.toFixed(4)}</span>
+            <span className={"text-nb-gray-400 font-sans"}>cache</span>
+          </div>
+          <div
+            className={
+              "border-t border-nb-gray-800 mt-0.5 pt-1 flex items-center gap-2 text-nb-gray-400 whitespace-nowrap"
+            }
+          >
+            <span className={"font-medium text-nb-gray-200"}>
+              ${costUsd.toFixed(4)}
+            </span>
+            <span className={"font-sans"}>total</span>
+          </div>
+        </div>
+      }
+    >
+      {display}
     </FullTooltip>
   );
 }

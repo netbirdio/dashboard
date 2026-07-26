@@ -1,6 +1,7 @@
 "use client";
 
 import ButtonGroup from "@components/ButtonGroup";
+import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -42,6 +43,10 @@ type DayBucket = {
   input: number;
   output: number;
   cost: number;
+  // Prompt-cache accounting: read/write token buckets and the cache share of cost.
+  cacheRead: number;
+  cacheWrite: number;
+  cacheCost: number;
 };
 
 // AgentOverviewPanel shows account consumption over time as a per-day bar
@@ -206,13 +211,30 @@ function DailyBreakdownTable({ daily }: { daily: DayBucket[] }) {
       },
       {
         id: "total",
-        accessorFn: (row) => row.input + row.output,
+        accessorFn: (row) =>
+          row.input + row.output + row.cacheRead + row.cacheWrite,
         header: ({ column }) => (
           <DataTableHeader column={column}>Total Tokens</DataTableHeader>
         ),
-        cell: ({ row }) => (
-          <NumberCell value={row.original.input + row.original.output} />
-        ),
+        // Total includes the additive prompt-cache buckets; hover breaks them out.
+        cell: ({ row }) => {
+          const d = row.original;
+          const total = d.input + d.output + d.cacheRead + d.cacheWrite;
+          if (d.cacheRead + d.cacheWrite <= 0)
+            return <NumberCell value={total} />;
+          return (
+            <FullTooltip
+              content={
+                <div className={"text-xs flex flex-col gap-1 font-mono"}>
+                  <span>{`cache read: ${d.cacheRead.toLocaleString()}`}</span>
+                  <span>{`cache write: ${d.cacheWrite.toLocaleString()}`}</span>
+                </div>
+              }
+            >
+              <NumberCell value={total} />
+            </FullTooltip>
+          );
+        },
       },
       {
         id: "cost",
@@ -220,13 +242,30 @@ function DailyBreakdownTable({ daily }: { daily: DayBucket[] }) {
         header: ({ column }) => (
           <DataTableHeader column={column}>Cost</DataTableHeader>
         ),
-        cell: ({ row }) => (
-          <span
-            className={"text-nb-gray-300 px-3 py-2 font-mono whitespace-nowrap"}
-          >
-            ${row.original.cost.toFixed(2)}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const d = row.original;
+          const display = (
+            <span
+              className={
+                "text-nb-gray-300 px-3 py-2 font-mono whitespace-nowrap"
+              }
+            >
+              ${d.cost.toFixed(2)}
+            </span>
+          );
+          if (d.cacheCost <= 0) return display;
+          return (
+            <FullTooltip
+              content={
+                <span className={"text-xs font-mono"}>
+                  {`cache: $${d.cacheCost.toFixed(2)}`}
+                </span>
+              }
+            >
+              {display}
+            </FullTooltip>
+          );
+        },
       },
     ],
     [],
@@ -340,6 +379,17 @@ function ConsumptionByDayChart({
                   : `${ctx.dataset.label}: ${Number(
                       ctx.parsed.y,
                     ).toLocaleString()}`,
+              // Surface the day's prompt-cache share on hover without adding chart series.
+              afterBody: (items) => {
+                const d = daily[items[0]?.dataIndex ?? -1];
+                if (!d || d.cacheRead + d.cacheWrite <= 0) return [];
+                return metric === "cost"
+                  ? [`Cache: $${d.cacheCost.toFixed(2)}`]
+                  : [
+                      `Cache read: ${d.cacheRead.toLocaleString()}`,
+                      `Cache write: ${d.cacheWrite.toLocaleString()}`,
+                    ];
+              },
             },
           },
         },
@@ -394,6 +444,9 @@ function toDailyBuckets(buckets: APIAgentNetworkUsageBucket[]): DayBucket[] {
       input: b.input_tokens ?? 0,
       output: b.output_tokens ?? 0,
       cost: b.cost_usd ?? 0,
+      cacheRead: b.cached_input_tokens ?? 0,
+      cacheWrite: b.cache_creation_tokens ?? 0,
+      cacheCost: b.cache_cost_usd ?? 0,
     });
   }
 
@@ -406,7 +459,17 @@ function toDailyBuckets(buckets: APIAgentNetworkUsageBucket[]): DayBucket[] {
   // Cap at a year of days as a defensive bound against a bad range.
   for (let i = 0; i < 366 && !cur.isAfter(end); i++) {
     const key = cur.format("YYYY-MM-DD");
-    out.push(map.get(key) ?? { key, input: 0, output: 0, cost: 0 });
+    out.push(
+      map.get(key) ?? {
+        key,
+        input: 0,
+        output: 0,
+        cost: 0,
+        cacheRead: 0,
+        cacheWrite: 0,
+        cacheCost: 0,
+      },
+    );
     cur = cur.add(1, "day");
   }
   return out;
