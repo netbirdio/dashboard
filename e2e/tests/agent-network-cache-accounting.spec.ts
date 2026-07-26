@@ -182,16 +182,30 @@ test.describe.serial("Agent Network cache accounting @agent-network", () => {
     try {
       await navigateTo(page, "/agent-network/usage");
 
-      // Total Tokens includes the additive cache buckets; hover splits them.
-      await expect(page.getByText("66,510")).toBeVisible();
-      await page.getByText("66,510").hover();
-      await expect(tooltip(page)).toContainText("cache read: 32,109");
-      await expect(tooltip(page)).toContainText("cache write: 32,109");
+      // Row-scoped on purpose: the hovers now repeat the cell's own figure on
+      // their total row, and FullTooltip force-mounts that content, so a
+      // page-wide getByText would match the cell and the tooltip both. Radix
+      // portals tooltip content to <body>, outside the row.
+      const dayRow = page.getByRole("row").filter({ hasText: "$0.16" });
 
-      // Cost hover shows the cache share of the day's spend.
+      // Total Tokens includes the additive cache buckets; hover splits them out
+      // in the same value-then-label rows the access-log table uses.
+      await expect(dayRow.getByText("66,510")).toBeVisible();
+      await dayRow.getByText("66,510").hover();
+      await expect(tooltip(page)).toContainText(/20\s*input/);
+      await expect(tooltip(page)).toContainText(/2,272\s*output/);
+      await expect(tooltip(page)).toContainText(/32,109\s*cache read/);
+      await expect(tooltip(page)).toContainText(/32,109\s*cache write/);
+      await expect(tooltip(page)).toContainText(/66,510\s*total/);
+
+      // Cost hover breaks the day into the same four billed buckets.
       await closeTooltip(page);
-      await page.getByText("$0.16", { exact: true }).hover();
-      await expect(tooltip(page)).toContainText("cache: $0.13");
+      await dayRow.getByText("$0.16", { exact: true }).hover();
+      await expect(tooltip(page)).toContainText(/\$0\.0001\s*input/);
+      await expect(tooltip(page)).toContainText(/\$0\.0341\s*output/);
+      await expect(tooltip(page)).toContainText(/\$0\.0096\s*cache read/);
+      await expect(tooltip(page)).toContainText(/\$0\.1204\s*cache write/);
+      await expect(tooltip(page)).toContainText(/\$0\.1642\s*total/);
     } finally {
       await close();
     }

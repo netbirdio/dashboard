@@ -17,6 +17,7 @@ import {
   Tooltip,
 } from "chart.js";
 import useFetchApi from "@utils/api";
+import { cn } from "@utils/helpers";
 import dayjs from "dayjs";
 import { ActivityIcon, ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
@@ -47,6 +48,14 @@ type DayBucket = {
   cacheRead: number;
   cacheWrite: number;
   cacheCost: number;
+  // Per-bucket cost split, so the Cost hover can break the day down the same
+  // way the access log breaks down a request. Undefined on older management
+  // servers that send only the two cost aggregates — undefined and zero mean
+  // different things here, so these stay optional.
+  inputCost?: number;
+  outputCost?: number;
+  cacheReadCost?: number;
+  cacheWriteCost?: number;
 };
 
 // AgentOverviewPanel shows account consumption over time as a per-day bar
@@ -220,14 +229,27 @@ function DailyBreakdownTable({ daily }: { daily: DayBucket[] }) {
         cell: ({ row }) => {
           const d = row.original;
           const total = d.input + d.output + d.cacheRead + d.cacheWrite;
-          if (d.cacheRead + d.cacheWrite <= 0)
-            return <NumberCell value={total} />;
           return (
             <FullTooltip
               content={
-                <div className={"text-xs flex flex-col gap-1 font-mono"}>
-                  <span>{`cache read: ${d.cacheRead.toLocaleString()}`}</span>
-                  <span>{`cache write: ${d.cacheWrite.toLocaleString()}`}</span>
+                <div className={"text-xs flex flex-col gap-1"}>
+                  <BreakdownRow
+                    value={d.input.toLocaleString()}
+                    label={"input"}
+                  />
+                  <BreakdownRow
+                    value={d.output.toLocaleString()}
+                    label={"output"}
+                  />
+                  <BreakdownRow
+                    value={d.cacheRead.toLocaleString()}
+                    label={"cache read"}
+                  />
+                  <BreakdownRow
+                    value={d.cacheWrite.toLocaleString()}
+                    label={"cache write"}
+                  />
+                  <BreakdownTotal value={total.toLocaleString()} />
                 </div>
               }
             >
@@ -242,8 +264,14 @@ function DailyBreakdownTable({ daily }: { daily: DayBucket[] }) {
         header: ({ column }) => (
           <DataTableHeader column={column}>Cost</DataTableHeader>
         ),
+        // Mirrors the access log's Cost hover: one row per bucket the provider
+        // bills separately when the server sends the split, otherwise the coarse
+        // cache-vs-rest split derivable from the two aggregates. The shapes are
+        // told apart by whether inputCost is defined, not by whether it is zero.
         cell: ({ row }) => {
           const d = row.original;
+          const hasBreakdown =
+            d.inputCost !== undefined || d.outputCost !== undefined;
           const display = (
             <span
               className={
@@ -253,13 +281,51 @@ function DailyBreakdownTable({ daily }: { daily: DayBucket[] }) {
               ${d.cost.toFixed(2)}
             </span>
           );
-          if (d.cacheCost <= 0) return display;
+          // Nothing to break out: no cache spend and no per-bucket split.
+          if (d.cacheCost <= 0 && !hasBreakdown) return display;
           return (
             <FullTooltip
               content={
-                <span className={"text-xs font-mono"}>
-                  {`cache: $${d.cacheCost.toFixed(2)}`}
-                </span>
+                <div className={"text-xs flex flex-col gap-1 font-mono"}>
+                  {hasBreakdown ? (
+                    <>
+                      <BreakdownRow
+                        mono={true}
+                        value={usd(d.inputCost ?? 0)}
+                        label={"input"}
+                      />
+                      <BreakdownRow
+                        mono={true}
+                        value={usd(d.outputCost ?? 0)}
+                        label={"output"}
+                      />
+                      <BreakdownRow
+                        mono={true}
+                        value={usd(d.cacheReadCost ?? 0)}
+                        label={"cache read"}
+                      />
+                      <BreakdownRow
+                        mono={true}
+                        value={usd(d.cacheWriteCost ?? 0)}
+                        label={"cache write"}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <BreakdownRow
+                        mono={true}
+                        value={usd(d.cost - d.cacheCost)}
+                        label={"input + output"}
+                      />
+                      <BreakdownRow
+                        mono={true}
+                        value={usd(d.cacheCost)}
+                        label={"cache"}
+                      />
+                    </>
+                  )}
+                  <BreakdownTotal mono={true} value={usd(d.cost)} />
+                </div>
               }
             >
               {display}
@@ -316,6 +382,59 @@ function NumberCell({ value }: { value: number }) {
     <span className={"text-nb-gray-300 px-3 py-2 font-mono whitespace-nowrap"}>
       {value.toLocaleString()}
     </span>
+  );
+}
+
+// The two hover breakdowns below follow the access-log table's Tokens and Cost
+// hovers: one "<value> <label>" row per bucket, then the day's aggregate on a
+// separated total row. Buckets are listed even when zero — a zero cache-read
+// line says the day never hit the cache, and a fixed set of rows keeps the
+// hover comparable between days.
+
+// usd renders a breakdown amount at the precision the router meters at. The
+// Cost column rounds a whole day to cents, but the hover is there for the
+// detail — prompt-cache reads in particular are routinely sub-cent.
+function usd(amount: number): string {
+  return `$${amount.toFixed(4)}`;
+}
+
+// mono keeps cost figures aligned digit-for-digit; labels stay in the body face
+// so they don't read as data.
+function BreakdownRow({
+  value,
+  label,
+  mono = false,
+}: {
+  value: string;
+  label: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className={"flex items-center gap-2 whitespace-nowrap"}>
+      <span className={"font-medium"}>{value}</span>
+      <span className={cn("text-nb-gray-400", mono && "font-sans")}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function BreakdownTotal({
+  value,
+  mono = false,
+}: {
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div
+      className={
+        "border-t border-nb-gray-800 mt-0.5 pt-1 flex items-center gap-2 text-nb-gray-400 whitespace-nowrap"
+      }
+    >
+      <span className={"font-medium text-nb-gray-200"}>{value}</span>
+      <span className={cn(mono && "font-sans")}>total</span>
+    </div>
   );
 }
 
@@ -455,6 +574,10 @@ function toDailyBuckets(buckets: APIAgentNetworkUsageBucket[]): DayBucket[] {
       cacheRead: b.cached_input_tokens ?? 0,
       cacheWrite: b.cache_creation_tokens ?? 0,
       cacheCost: b.cache_cost_usd ?? 0,
+      inputCost: b.input_cost_usd,
+      outputCost: b.output_cost_usd,
+      cacheReadCost: b.cached_input_cost_usd,
+      cacheWriteCost: b.cache_creation_cost_usd,
     });
   }
 
