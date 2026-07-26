@@ -3,9 +3,10 @@
  *
  * Drives the Usage & Logs page against mocked agent-network endpoints whose
  * rows carry the cache fields (cached_input_tokens / cache_creation_tokens /
- * cache_cost_usd) and verifies the hover breakdowns: the access-log Tokens
- * tooltip gains cache read/write rows and a cache-aware total, the Cost
- * tooltip splits out the cache share, and the usage overview's daily table
+ * cache_cost_usd) plus the per-bucket cost breakdown, and verifies the hover
+ * breakdowns: the access-log Tokens tooltip gains cache read/write rows and a
+ * cache-aware total, the Cost tooltip lists one line per billed bucket, and
+ * the usage overview's daily table
  * surfaces the day's cache buckets. Route mocks keep the spec hermetic, so it
  * passes against management builds that predate the cache fields.
  */
@@ -29,6 +30,10 @@ const writeEntry = {
   cache_creation_tokens: 32109,
   cost_usd: 0.142519,
   cache_cost_usd: 0.120409,
+  input_cost_usd: 0.00003,
+  cached_input_cost_usd: 0,
+  cache_creation_cost_usd: 0.120409,
+  output_cost_usd: 0.02208,
   provider: "bedrock",
   model: "anthropic.claude-sonnet-4-5",
   session_id: "sess-cache-write",
@@ -45,6 +50,10 @@ const readEntry = {
   cache_creation_tokens: 0,
   cost_usd: 0.021663,
   cache_cost_usd: 0.009633,
+  input_cost_usd: 0.00003,
+  cached_input_cost_usd: 0.009633,
+  cache_creation_cost_usd: 0,
+  output_cost_usd: 0.012,
   session_id: "sess-cache-read",
 };
 
@@ -57,6 +66,10 @@ const todayBucket = {
   cache_creation_tokens: 32109,
   cost_usd: 0.164182,
   cache_cost_usd: 0.130042,
+  input_cost_usd: 0.00006,
+  cached_input_cost_usd: 0.009633,
+  cache_creation_cost_usd: 0.120409,
+  output_cost_usd: 0.03408,
 };
 
 async function mockCacheUsage(page: Page) {
@@ -119,19 +132,27 @@ test.describe.serial("Agent Network cache accounting @agent-network", () => {
       await expect(tooltip(page)).toContainText("cache write");
       await expect(tooltip(page)).toContainText("33,591");
 
-      // Cost tooltip: base vs cache vs total split.
+      // Cost tooltip: all four buckets are listed plus the total, including
+      // buckets that cost nothing — this request wrote the cache but never read
+      // it, so "cache read" is present with a $0.0000 amount.
       await writeRow.getByText("$0.1425").hover();
-      await expect(tooltip(page)).toContainText("$0.0221");
+      await expect(tooltip(page)).toContainText("input");
+      await expect(tooltip(page)).toContainText("cache read");
+      await expect(tooltip(page)).toContainText("cache write");
+      await expect(tooltip(page)).toContainText("output");
       await expect(tooltip(page)).toContainText("$0.1204");
-      await expect(tooltip(page)).toContainText("cache");
+      await expect(tooltip(page)).toContainText("$0.0221");
+      await expect(tooltip(page)).toContainText("$0.0000");
+      await expect(tooltip(page)).toContainText("total");
 
-      // The follow-up request reads the cache back: read bucket, no write row.
+      // The follow-up request reads the cache back: read bucket filled, write
+      // bucket still listed as a zero row.
       // No exact match: the output count renders behind an sr-only "Output:" prefix.
       const readRow = page.getByRole("row").filter({ hasText: "$0.0217" });
       await readRow.getByText("800").hover();
       await expect(tooltip(page)).toContainText("cache read");
       await expect(tooltip(page)).toContainText("32,919");
-      await expect(tooltip(page)).not.toContainText("cache write");
+      await expect(tooltip(page)).toContainText(/0\s*cache write/);
     } finally {
       await close();
     }

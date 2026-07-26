@@ -46,6 +46,19 @@ export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
     metadata["plg.llm.cache_creation_tokens"] = String(cacheWrite);
     metadata["plg.cost.usd_cache"] = (entry.cacheCostUsd ?? 0).toFixed(6);
   }
+  // Per-bucket cost keys mirror the proxy's cost.usd_* metadata. Emitted only
+  // when the server sent the breakdown, so a row from an older management
+  // server shows no misleading zeros.
+  if (entry.inputCostUsd !== undefined || entry.outputCostUsd !== undefined) {
+    metadata["plg.cost.usd_input"] = (entry.inputCostUsd ?? 0).toFixed(6);
+    metadata["plg.cost.usd_cached_input"] = (
+      entry.cachedInputCostUsd ?? 0
+    ).toFixed(6);
+    metadata["plg.cost.usd_cache_creation"] = (
+      entry.cacheCreationCostUsd ?? 0
+    ).toFixed(6);
+    metadata["plg.cost.usd_output"] = (entry.outputCostUsd ?? 0).toFixed(6);
+  }
   if (isDeny) {
     metadata["plg.llm_policy.decision"] = "deny";
     metadata["plg.llm_policy.reason"] = entry.denyReason ?? "unknown";

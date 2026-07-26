@@ -180,6 +180,12 @@ export type AIAccessLogEntry = {
   cacheCreationTokens?: number;
   costUsd: number;
   cacheCostUsd?: number;
+  // Per-bucket cost breakdown. Undefined (not 0) when the server predates the
+  // breakdown, so the UI can tell "no split available" from "split is zero".
+  inputCostUsd?: number;
+  cachedInputCostUsd?: number;
+  cacheCreationCostUsd?: number;
+  outputCostUsd?: number;
   durationMs: number;
   decision: AIAccessLogDecision;
   denyReason?: string;
@@ -221,6 +227,12 @@ export type AIAccessLogSession = {
   cacheCreationTokens?: number;
   costUsd: number;
   cacheCostUsd?: number;
+  // Per-bucket cost breakdown. Undefined (not 0) when the server predates the
+  // breakdown, so the UI can tell "no split available" from "split is zero".
+  inputCostUsd?: number;
+  cachedInputCostUsd?: number;
+  cacheCreationCostUsd?: number;
+  outputCostUsd?: number;
   providers: string[]; // distinct vendor ids seen in the session
   models: string[]; // distinct models seen in the session
   decision: AIAccessLogDecision;

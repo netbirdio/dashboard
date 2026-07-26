@@ -28,6 +28,13 @@ export type APIAgentNetworkAccessLog = {
   cached_input_tokens?: number;
   cache_creation_tokens?: number;
   cache_cost_usd?: number;
+  // Per-bucket cost breakdown — the base of the cost fields; cost_usd is their
+  // sum and cache_cost_usd the cache pair. Optional — absent on older
+  // management servers, where only the two aggregates are available.
+  input_cost_usd?: number;
+  cached_input_cost_usd?: number;
+  cache_creation_cost_usd?: number;
+  output_cost_usd?: number;
   user_id?: string;
   source_ip?: string;
   method?: string;
@@ -70,6 +77,13 @@ export type APIAgentNetworkAccessLogSession = {
   cached_input_tokens?: number;
   cache_creation_tokens?: number;
   cache_cost_usd?: number;
+  // Per-bucket cost breakdown — the base of the cost fields; cost_usd is their
+  // sum and cache_cost_usd the cache pair. Optional — absent on older
+  // management servers, where only the two aggregates are available.
+  input_cost_usd?: number;
+  cached_input_cost_usd?: number;
+  cache_creation_cost_usd?: number;
+  output_cost_usd?: number;
   providers?: string[];
   models?: string[];
   decision: string;
@@ -87,6 +101,13 @@ export type APIAgentNetworkUsageBucket = {
   cached_input_tokens?: number;
   cache_creation_tokens?: number;
   cache_cost_usd?: number;
+  // Per-bucket cost breakdown — the base of the cost fields; cost_usd is their
+  // sum and cache_cost_usd the cache pair. Optional — absent on older
+  // management servers, where only the two aggregates are available.
+  input_cost_usd?: number;
+  cached_input_cost_usd?: number;
+  cache_creation_cost_usd?: number;
+  output_cost_usd?: number;
 };
 
 export type UsageGranularity = "day" | "week" | "month";
@@ -199,6 +220,10 @@ export function accessLogFromAgentAPI(
     cacheCreationTokens: entry.cache_creation_tokens ?? 0,
     costUsd: entry.cost_usd ?? 0,
     cacheCostUsd: entry.cache_cost_usd ?? 0,
+    inputCostUsd: entry.input_cost_usd,
+    cachedInputCostUsd: entry.cached_input_cost_usd,
+    cacheCreationCostUsd: entry.cache_creation_cost_usd,
+    outputCostUsd: entry.output_cost_usd,
     durationMs: entry.duration_ms,
     decision,
     denyReason: decision === "deny" ? entry.deny_reason : undefined,
@@ -245,6 +270,10 @@ export function accessLogSessionFromAgentAPI(
     cacheCreationTokens: session.cache_creation_tokens ?? 0,
     costUsd: session.cost_usd ?? 0,
     cacheCostUsd: session.cache_cost_usd ?? 0,
+    inputCostUsd: session.input_cost_usd,
+    cachedInputCostUsd: session.cached_input_cost_usd,
+    cacheCreationCostUsd: session.cache_creation_cost_usd,
+    outputCostUsd: session.output_cost_usd,
     providers: session.providers ?? [],
     models: session.models ?? [],
     decision,
