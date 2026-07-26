@@ -126,8 +126,9 @@ test.describe.serial("Agent Network cache accounting @agent-network", () => {
       await expect(tooltip(page)).toContainText("cache");
 
       // The follow-up request reads the cache back: read bucket, no write row.
+      // No exact match: the output count renders behind an sr-only "Output:" prefix.
       const readRow = page.getByRole("row").filter({ hasText: "$0.0217" });
-      await readRow.getByText("800", { exact: true }).hover();
+      await readRow.getByText("800").hover();
       await expect(tooltip(page)).toContainText("cache read");
       await expect(tooltip(page)).toContainText("32,919");
       await expect(tooltip(page)).not.toContainText("cache write");
