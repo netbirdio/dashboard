@@ -20,7 +20,7 @@ import { useMemo } from "react";
 import { useCountries } from "@/contexts/CountryProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { CrowdSecMode, ReverseProxy } from "@/interfaces/ReverseProxy";
+import { AppSecMode, CrowdSecMode, ReverseProxy } from "@/interfaces/ReverseProxy";
 
 type RuleEntry = {
   key: string;
@@ -44,21 +44,35 @@ export default function ReverseProxyAccessControlCell({
   const canConfigure = !!permission?.services?.update;
   const restrictions = reverseProxy.access_restrictions;
 
-  const supportsCrowdSec = domains?.find(
-    (d) => d.domain === reverseProxy.proxy_cluster,
-  )?.supports_crowdsec;
+  // Services on a custom domain carry its target_cluster in proxy_cluster, so
+  // matching on domain alone misses them and reports no capability.
+  const clusterDomain = domains?.find(
+    (d) =>
+      d.domain === reverseProxy.proxy_cluster ||
+      d.target_cluster === reverseProxy.proxy_cluster,
+  );
+
+  const supportsCrowdSec = clusterDomain?.supports_crowdsec;
 
   const hasCrowdSec =
     supportsCrowdSec &&
     restrictions?.crowdsec_mode != null &&
     restrictions.crowdsec_mode !== CrowdSecMode.OFF;
 
+  const supportsAppSec = clusterDomain?.supports_appsec;
+
+  const hasAppSec =
+    supportsAppSec &&
+    restrictions?.appsec_mode != null &&
+    restrictions.appsec_mode !== AppSecMode.OFF;
+
   const ruleCount =
     (restrictions?.allowed_cidrs?.length ?? 0) +
     (restrictions?.blocked_cidrs?.length ?? 0) +
     (restrictions?.allowed_countries?.length ?? 0) +
     (restrictions?.blocked_countries?.length ?? 0) +
-    (hasCrowdSec ? 1 : 0);
+    (hasCrowdSec ? 1 : 0) +
+    (hasAppSec ? 1 : 0);
 
   const rulesBadge = (
     <Badge
@@ -163,8 +177,20 @@ export default function ReverseProxyAccessControlCell({
       });
     }
 
+    if (hasAppSec) {
+      entries.push({
+        key: "appsec",
+        label: "AppSec (WAF)",
+        Icon: ShieldAlert,
+        value:
+          restrictions?.appsec_mode === AppSecMode.ENFORCE
+            ? "Enforce"
+            : "Observe",
+      });
+    }
+
     return entries;
-  }, [restrictions, countries, hasCrowdSec]);
+  }, [restrictions, countries, hasCrowdSec, hasAppSec]);
 
   const showRulesHover = ruleGroups.length > 0;
 
