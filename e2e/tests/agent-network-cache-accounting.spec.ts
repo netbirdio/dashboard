@@ -110,17 +110,23 @@ async function newUsagePage(browser: Browser): Promise<{
   return { page, close: () => context.close() };
 }
 
-// Only the open tooltip carries role=tooltip, so this resolves to the hovered one.
+// FullTooltip force-mounts its content, so a tooltip keeps its role=tooltip
+// element in the DOM after closing — a bare getByRole("tooltip") accumulates
+// every tooltip the test has ever opened. Radix puts role=tooltip on a
+// visually-hidden span and the open/closed flag on that span's parent
+// ("delayed-open"/"instant-open" vs "closed"), so match the parent that is
+// currently open. Its text covers both the visible copy and the hidden one.
 function tooltip(page: Page) {
-  return page.getByRole("tooltip");
+  return page.locator(
+    '[data-state="delayed-open"]:has(> [role="tooltip"]), [data-state="instant-open"]:has(> [role="tooltip"])',
+  );
 }
 
-// Radix keeps a tooltip mounted until the pointer leaves its trigger, and
-// hovering straight from one cell to the next in the same row can leave both
-// open — which makes tooltip() match two elements. Park the pointer off the
-// table and wait for the open one to unmount before the next hover.
-async function hoverAway(page: Page) {
-  await page.mouse.move(0, 0);
+// Radix's hoverable content holds a tooltip open while the pointer travels
+// toward it, so moving straight to the next cell can leave two open at once.
+// Escape dismisses the open one deterministically, wherever the pointer sits.
+async function closeTooltip(page: Page) {
+  await page.keyboard.press("Escape");
   await expect(tooltip(page)).toHaveCount(0);
 }
 
@@ -144,7 +150,7 @@ test.describe.serial("Agent Network cache accounting @agent-network", () => {
       // Cost tooltip: all four buckets are listed plus the total, including
       // buckets that cost nothing — this request wrote the cache but never read
       // it, so "cache read" is present with a $0.0000 amount.
-      await hoverAway(page);
+      await closeTooltip(page);
       await writeRow.getByText("$0.1425").hover();
       await expect(tooltip(page)).toContainText("input");
       await expect(tooltip(page)).toContainText("cache read");
@@ -159,7 +165,7 @@ test.describe.serial("Agent Network cache accounting @agent-network", () => {
       // bucket still listed as a zero row.
       // No exact match: the output count renders behind an sr-only "Output:" prefix.
       const readRow = page.getByRole("row").filter({ hasText: "$0.0217" });
-      await hoverAway(page);
+      await closeTooltip(page);
       await readRow.getByText("800").hover();
       await expect(tooltip(page)).toContainText("cache read");
       await expect(tooltip(page)).toContainText("32,919");
@@ -183,7 +189,7 @@ test.describe.serial("Agent Network cache accounting @agent-network", () => {
       await expect(tooltip(page)).toContainText("cache write: 32,109");
 
       // Cost hover shows the cache share of the day's spend.
-      await hoverAway(page);
+      await closeTooltip(page);
       await page.getByText("$0.16", { exact: true }).hover();
       await expect(tooltip(page)).toContainText("cache: $0.13");
     } finally {
