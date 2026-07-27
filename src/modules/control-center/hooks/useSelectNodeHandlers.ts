@@ -78,8 +78,12 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     isLoading,
   } = useControlCenterData();
 
-  const { setFocusedNodeId, highlightArmed, setHighlightArmed } =
-    useDestinationGroup();
+  const {
+    setFocusedNodeId,
+    highlightArmed,
+    setHighlightArmed,
+    setSelectedPeerPanel,
+  } = useDestinationGroup();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const { isDraft } = useDraftMode();
 
@@ -377,10 +381,12 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   const onDestinationGroupSelect = useCallback(
     (groupId: string) => {
       // Focus Mode is sticky — opening a group's panel while focused keeps
-      // the focus (the dim stays keyed on the focused node).
+      // the focus (the dim stays keyed on the focused node). One panel at a
+      // time: the group panel supersedes the peer panel.
+      setSelectedPeerPanel("");
       setSelectedDestinationGroup(groupId);
     },
-    [setSelectedDestinationGroup],
+    [setSelectedDestinationGroup, setSelectedPeerPanel],
   );
 
   // ---------------------------------------------------------------------------
@@ -469,6 +475,17 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         setSelectedPolicy(policyId);
         setPolicyModalOpen(true);
       }
+      // Clicking a peer opens its groups panel (the peer-side twin of the
+      // group panel) — real peers only; placeholders have no memberships.
+      const isPeerNode =
+        _node.type === "peerNode" ||
+        _node.type === "sourcePeerNode" ||
+        _node.type === "expandedGroupPeer";
+      const peerId = (_node.data as { peer?: { id?: string } })?.peer?.id;
+      if (isPeerNode && peerId && !peerId.startsWith("draft-")) {
+        setSelectedDestinationGroup("");
+        setSelectedPeerPanel(peerId);
+      }
     },
     [
       onNetworkSelect,
@@ -480,6 +497,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       setHighlightArmed,
       setSelectedPolicy,
       setPolicyModalOpen,
+      setSelectedPeerPanel,
     ],
   );
 

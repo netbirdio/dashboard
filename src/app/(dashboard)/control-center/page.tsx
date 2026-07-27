@@ -108,6 +108,7 @@ function ControlCenterCanvas() {
     selectedDestinationGroup,
     focusedNodeId,
     highlightArmed,
+    setSelectedPeerPanel,
   } = useDestinationGroup();
   // Focus mode applies in draft too — dims off-path nodes, locks node
   // dragging (dragging pans until the focus is dismissed).
@@ -149,7 +150,7 @@ function ControlCenterCanvas() {
   const closeNodeContextMenu = React.useCallback(() => {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
-  }, [canvas]);
+  }, [canvas, setSelectedPeerPanel]);
 
   // A click OUTSIDE dismisses everything at once — the context menu AND any
   // open panel/components picker — so the user never has to click twice.
@@ -164,13 +165,14 @@ function ControlCenterCanvas() {
     const guard = groupPanelCloseGuard.current;
     const closeGroupPanel = () => {
       canvas.setSelectedDestinationGroup("");
+      setSelectedPeerPanel("");
     };
     if (guard) {
       void guard().then((ok) => ok && closeGroupPanel());
     } else {
       closeGroupPanel();
     }
-  }, [canvas]);
+  }, [canvas, setSelectedPeerPanel]);
 
   const stableOnConnect = useStableHandler(draft.onNodeConnect);
   const stableOnNodeClick = useStableHandler(ui.onNodeClick);

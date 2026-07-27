@@ -34,6 +34,7 @@ import { useNetworkView } from "@/modules/control-center/hooks/views/useNetworkV
 import { useSelectNodeHandlers } from "@/modules/control-center/hooks/useSelectNodeHandlers";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { DestinationGroupPanel } from "@/modules/control-center/DestinationGroupPanel";
+import { PeerGroupsPanel } from "@/modules/control-center/PeerGroupsPanel";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ensureParentsBeforeChildren } from "@/modules/control-center/utils/helpers";
 
@@ -106,6 +107,12 @@ interface DestinationGroupState {
   // re-target until the pill's X (or a pane click) exits.
   highlightArmed: boolean;
   setHighlightArmed: (v: boolean) => void;
+  // Peer whose groups panel is open (real peer id) — the peer-side twin of
+  // selectedDestinationGroup; only one of the two panels shows at a time.
+  // Lives here (narrow context) so PeerNode can ring the selected peer
+  // without subscribing to CanvasState.
+  selectedPeerPanel: string;
+  setSelectedPeerPanel: (v: string) => void;
 }
 
 const DestinationGroupContext = createContext<DestinationGroupState | null>(
@@ -178,6 +185,7 @@ export function CanvasStateProvider({
   const [selectedPeer, setSelectedPeer] = useState("");
   const [selectedUser, setSelectedUser] = useState("");
   const [selectedDestinationGroup, setSelectedDestinationGroup] = useState("");
+  const [selectedPeerPanel, setSelectedPeerPanel] = useState("");
   const [focusedNodeId, setFocusedNodeId] = useState("");
   const [highlightArmed, setHighlightArmed] = useState(false);
   const [contextMenuNodeId, setContextMenuNodeId] = useState("");
@@ -250,8 +258,10 @@ export function CanvasStateProvider({
       setFocusedNodeId,
       highlightArmed,
       setHighlightArmed,
+      selectedPeerPanel,
+      setSelectedPeerPanel,
     }),
-    [selectedDestinationGroup, focusedNodeId, highlightArmed],
+    [selectedDestinationGroup, focusedNodeId, highlightArmed, selectedPeerPanel],
   );
 
   return (
@@ -300,7 +310,12 @@ export function ControlCenterUIProvider({
   const canvas = useCanvasState();
   const data = useControlCenterData();
   const { isDraft } = useDraftMode();
-  const { setFocusedNodeId, setHighlightArmed } = useDestinationGroup();
+  const {
+    setFocusedNodeId,
+    setHighlightArmed,
+    selectedPeerPanel,
+    setSelectedPeerPanel,
+  } = useDestinationGroup();
 
   // Mode switches (draft ⇄ live) close the group panel and drop any node
   // selection/focus — both reference nodes of the mode being torn down.
@@ -309,6 +324,7 @@ export function ControlCenterUIProvider({
     if (prevDraftRef.current === isDraft) return;
     prevDraftRef.current = isDraft;
     canvas.setSelectedDestinationGroup("");
+    setSelectedPeerPanel("");
     setFocusedNodeId("");
     setHighlightArmed(false);
     canvas.setNodes((prev) =>
@@ -371,6 +387,10 @@ export function ControlCenterUIProvider({
           <DestinationGroupPanel
             groupId={canvas.selectedDestinationGroup}
             onClose={() => canvas.setSelectedDestinationGroup("")}
+          />
+          <PeerGroupsPanel
+            peerId={selectedPeerPanel}
+            onClose={() => setSelectedPeerPanel("")}
           />
         </div>
       </div>

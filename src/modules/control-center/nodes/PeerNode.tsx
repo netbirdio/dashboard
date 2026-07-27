@@ -21,6 +21,7 @@ import { useAccount } from "@/modules/account/useAccount";
 import {
   useCanvasState,
   useCanvasUI,
+  useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import {
@@ -81,11 +82,14 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
     (c) => c.inProgress && c.fromNode.id !== id,
   );
   const { contextMenuNodeId } = useCanvasUI();
+  const { selectedPeerPanel } = useDestinationGroup();
   const { setInstallModal } = useDraftMode();
   const account = useAccount();
-  // Ring while the context menu targets this peer or while it's the focused
-  // node (left-click focus mode) — same halo the other nodes show.
-  const showHalo = contextMenuNodeId === id;
+  // Ring while the context menu targets this peer or while its groups panel
+  // is open — same halo the group panel puts on its group node.
+  const showHalo =
+    contextMenuNodeId === id ||
+    (!!selectedPeerPanel && selectedPeerPanel === data.peer?.id);
 
   if (placeholderKind === "user-device") {
     return (

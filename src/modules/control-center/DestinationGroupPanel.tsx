@@ -38,7 +38,7 @@ interface DestinationGroupPanelProps {
   onClose: () => void;
 }
 
-const MIN_PANEL_WIDTH = 398;
+export const MIN_PANEL_WIDTH = 398;
 
 // Close guard: while the panel holds unassigned toggles it registers a
 // confirm function here. External close paths (the canvas pane click in
@@ -52,7 +52,7 @@ export const groupPanelCloseGuard: {
 // row above it (Cancel · Review & Deploy · Live/Draft — both are right-6
 // anchored), so the width tracks that row live: it grows with the
 // change-count badge and shrinks back to the Live/Draft tabs outside draft.
-function usePanelWidth() {
+export function usePanelWidth() {
   const [width, setWidth] = useState(MIN_PANEL_WIDTH);
   useEffect(() => {
     const el = document.getElementById("cc-header-actions");
@@ -69,7 +69,7 @@ function usePanelWidth() {
 
 // Same row treatment as the components panel's PanelListItem; in draft it
 // carries a PeerGroupSelector-style membership checkbox.
-const MemberRow = ({
+export const MemberRow = ({
   children,
   checked,
   onToggle,
