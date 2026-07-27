@@ -6,7 +6,9 @@ import { useSWRConfig } from "swr";
 import { useApiCall } from "@utils/api";
 import { useDialog } from "@/contexts/DialogProvider";
 import Button from "@components/Button";
-import { ScrollArea } from "@components/ScrollArea";
+import { cn } from "@utils/helpers";
+import { MemoizedScrollArea } from "@components/ScrollArea";
+import { Virtuoso } from "react-virtuoso";
 import { DropdownInfoText } from "@components/DropdownInfoText";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
@@ -30,6 +32,7 @@ import {
 import {
   groupPanelCloseGuard,
   MemberRow,
+  PanelVirtuosoScroller,
   usePanelWidth,
 } from "@/modules/control-center/DestinationGroupPanel";
 
@@ -258,8 +261,12 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   panelWidthRef.current = panelWidth;
 
   useEffect(() => {
-    setPlacement(null);
-    if (!peerId) return;
+    if (!peerId) {
+      setPlacement(null);
+      return;
+    }
+    // Switching peers keeps the mounted panel (no unmount frame / replayed
+    // slide-in) — only the box refreshes.
     const timer = window.setTimeout(() => {
       const container = document
         .querySelector(".react-flow")
@@ -320,8 +327,9 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   if (!peerId || !placement) return null;
 
   return (
+    // NO key: switching peers swaps the data in the same mounted panel —
+    // the entry animation only plays when opening from closed.
     <motion.div
-      key={peerId}
       id={"cc-group-panel"}
       initial={{ opacity: 0, x: 48, y: 0 }}
       animate={{ opacity: 1, x: 0, y: 0 }}
@@ -383,53 +391,72 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
         </div>
 
         <TabsContent value={"groups"} className={"flex-1 min-h-0 m-0 p-0"}>
-          <ScrollArea className={"h-full"}>
-            <div className="px-3 pt-3 pb-2 flex flex-col gap-0.5">
-              {groupRows.map((g) => (
-                <MemberRow
-                  key={groupRef(g)}
-                  checked={selectedRefs.has(groupRef(g))}
-                  onToggle={peer ? () => toggleGroup(g) : undefined}
-                >
-                  <div className={"flex items-center gap-2 pl-2 py-0.5"}>
-                    <div
-                      className={
-                        "h-8 w-8 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0"
-                      }
+          {/* Virtualized (react-virtuoso) — accounts with many groups render
+              only the visible slice. */}
+          {groupRows.length > 0 ? (
+            <MemoizedScrollArea withoutViewport={true} className={"h-full"}>
+              <Virtuoso
+                // Remount per peer: Virtuoso keeps its scroll offset across
+                // data swaps — switching peers would land mid-list.
+                key={`${peerId}-groups`}
+                data={groupRows}
+                overscan={300}
+                defaultItemHeight={54}
+                computeItemKey={(index) => groupRef(groupRows[index])}
+                itemContent={(index, g) => (
+                  <div className={cn("px-3 pb-0.5", index === 0 && "pt-3")}>
+                    <MemberRow
+                      checked={selectedRefs.has(groupRef(g))}
+                      onToggle={peer ? () => toggleGroup(g) : undefined}
                     >
-                      <GroupBadgeIcon id={g.id} issued={g.issued} size={14} />
-                    </div>
-                    <div
-                      className={
-                        "flex flex-col gap-0.5 justify-center leading-tight min-w-0"
-                      }
-                    >
-                      <span
-                        className={
-                          "text-xs text-nb-gray-100 flex items-center gap-2"
-                        }
-                      >
-                        <span className={"truncate max-w-[240px]"}>
-                          {g.name}
-                        </span>
-                        {!g.id && <SmallBadge />}
-                      </span>
-                      <span className={"text-[0.72rem] text-nb-gray-400"}>
-                        {getGroupCountLabel(g)}
-                      </span>
-                    </div>
+                      <div className={"flex items-center gap-2 pl-2 py-0.5"}>
+                        <div
+                          className={
+                            "h-8 w-8 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0"
+                          }
+                        >
+                          <GroupBadgeIcon
+                            id={g.id}
+                            issued={g.issued}
+                            size={14}
+                          />
+                        </div>
+                        <div
+                          className={
+                            "flex flex-col gap-0.5 justify-center leading-tight min-w-0"
+                          }
+                        >
+                          <span
+                            className={
+                              "text-xs text-nb-gray-100 flex items-center gap-2"
+                            }
+                          >
+                            <span className={"truncate max-w-[240px]"}>
+                              {g.name}
+                            </span>
+                            {!g.id && <SmallBadge />}
+                          </span>
+                          <span className={"text-[0.72rem] text-nb-gray-400"}>
+                            {getGroupCountLabel(g)}
+                          </span>
+                        </div>
+                      </div>
+                    </MemberRow>
                   </div>
-                </MemberRow>
-              ))}
-              {groupRows.length === 0 && (
-                <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
-                  {query
-                    ? "There are no groups matching your search. Please try a different search term."
-                    : "There are no groups yet."}
-                </DropdownInfoText>
-              )}
+                )}
+                components={{ Scroller: PanelVirtuosoScroller }}
+                style={{ height: "100%" }}
+              />
+            </MemoizedScrollArea>
+          ) : (
+            <div className={"px-3 pt-3"}>
+              <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
+                {query
+                  ? "There are no groups matching your search. Please try a different search term."
+                  : "There are no groups yet."}
+              </DropdownInfoText>
             </div>
-          </ScrollArea>
+          )}
         </TabsContent>
       </Tabs>
 

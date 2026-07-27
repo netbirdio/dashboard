@@ -15,7 +15,11 @@ import { useReactFlow } from "@xyflow/react";
 import { useApiCall } from "@utils/api";
 import { useDialog } from "@/contexts/DialogProvider";
 import Button from "@components/Button";
-import { ScrollArea } from "@components/ScrollArea";
+import {
+  MemoizedScrollArea,
+  ScrollAreaViewport,
+} from "@components/ScrollArea";
+import { Virtuoso } from "react-virtuoso";
 import { Checkbox } from "@components/Checkbox";
 import { DropdownInfoText } from "@components/DropdownInfoText";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
@@ -52,6 +56,15 @@ interface DestinationGroupPanelProps {
 }
 
 export const MIN_PANEL_WIDTH = 398;
+
+// Bridges Virtuoso's scroll container into the styled ScrollArea viewport
+// (same pattern as the components panel / PeerSelector).
+export const PanelVirtuosoScroller = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>((props, ref) => <ScrollAreaViewport ref={ref} {...props} />);
+PanelVirtuosoScroller.displayName = "PanelVirtuosoScroller";
+
 
 // Close guard: while the panel holds unassigned toggles it registers a
 // confirm function here. External close paths (the canvas pane click in
@@ -671,10 +684,14 @@ export const DestinationGroupPanel = ({
   panelWidthRef.current = panelWidth;
 
   useEffect(() => {
-    setPlacement(null);
-    if (!groupId) return;
+    if (!groupId) {
+      setPlacement(null);
+      return;
+    }
     // Post-layout: the panel width settles via ResizeObserver a frame after
-    // mount, so measure after that.
+    // mount, so measure after that. Switching from one group to another
+    // keeps the CURRENT placement mounted (no unmount frame, no replayed
+    // slide-in) — only the box is refreshed and the pan below runs.
     const timer = window.setTimeout(() => {
       const container = document
         .querySelector(".react-flow")
@@ -683,8 +700,11 @@ export const DestinationGroupPanel = ({
       const height = container.height - TOP - BOTTOM;
       const left = container.width - panelWidthRef.current - MARGIN;
       // Anchored to the right side, sliding in from the right (like the
-      // bottom toolbar slides up from the bottom).
-      setPlacement({ left, top: TOP, height, dx: 48, dy: 0 });
+      // bottom toolbar slides up from the bottom) — but only on a fresh
+      // open; while already open just update the box in place.
+      setPlacement((p) =>
+        p ? { ...p, left, top: TOP, height } : { left, top: TOP, height, dx: 48, dy: 0 },
+      );
 
       // If the panel covers the selected group's node, pan the canvas left
       // just far enough that the node clears the panel (small margin).
@@ -769,8 +789,10 @@ export const DestinationGroupPanel = ({
   if (!groupId || !placement) return null;
 
   return (
+    // NO key: switching groups swaps the data inside the SAME panel element
+    // (no exit/enter animation, no subtree rebuild) — the entry animation
+    // only plays when the panel opens from closed (mounts from null).
     <motion.div
-      key={groupId}
       id={"cc-group-panel"}
       initial={{ opacity: 0, x: placement.dx, y: placement.dy }}
       animate={{ opacity: 1, x: 0, y: 0 }}
@@ -868,101 +890,134 @@ export const DestinationGroupPanel = ({
         </div>
 
         <TabsContent value={"peers"} className={"flex-1 min-h-0 m-0 p-0"}>
-          <ScrollArea className={"h-full"}>
-            <div className="px-3 pt-3 pb-2 flex flex-col gap-0.5">
-              {peerRows.map((peer) => (
-                <MemberRow
-                  key={peer.id}
-                  checked={selectedPeerIds.has(peer.id ?? "")}
-                  onToggle={canEditMembers ? () => togglePeer(peer) : undefined}
-                >
-                  <DeviceCard
-                    // Draft peers show the same dimmed "assigned on install"
-                    // IP placeholder as their canvas card.
-                    device={
-                      peer.id?.startsWith("draft-")
-                        ? {
-                            ...peer,
-                            ip: getIpPlaceholderFromRange(
-                              account?.settings?.network_range,
-                            ),
-                          }
-                        : peer
-                    }
-                    size="small"
-                    className="flex-1"
-                    nameMaxWidth="260px"
-                    // Draft peers wear the same NEW badge as on the canvas.
-                    badge={
-                      peer.id?.startsWith("draft-") ? <SmallBadge /> : undefined
-                    }
-                  />
-                  {isDraft && peer.id?.startsWith("draft-") && (
-                    <DraftPeerRowActions draftPeer={peer} />
-                  )}
-                </MemberRow>
-              ))}
-              {peerRows.length === 0 && (
-                <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
-                  {query
-                    ? "There are no peers matching your search. Please try a different search term."
-                    : "There are no peers in this group yet."}
-                </DropdownInfoText>
-              )}
-            </div>
-          </ScrollArea>
-        </TabsContent>
-        <TabsContent value={"resources"} className={"flex-1 min-h-0 m-0 p-0"}>
-          <ScrollArea className={"h-full"}>
-            <div className="px-3 pt-3 pb-2 flex flex-col gap-0.5">
-              {resourceRows.map((resource) => (
-                <MemberRow
-                  key={resource.id}
-                  checked={selectedResourceIds.has(resource.id)}
-                  onToggle={
-                    canEditMembers ? () => toggleResource(resource) : undefined
-                  }
-                >
-                  <DeviceCard
-                    // Draft resources without an address show the same
-                    // dimmed placeholder as their canvas card.
-                    resource={
-                      resource.id?.startsWith("new-") && !resource.address
-                        ? { ...resource, address: "IP, CIDR or Domain" }
-                        : resource
-                    }
-                    size="small"
-                    className="flex-1"
-                    nameMaxWidth="260px"
-                    badge={
-                      resource.id?.startsWith("new-") ? (
-                        <SmallBadge />
-                      ) : undefined
-                    }
-                  />
-                  {isDraft &&
-                    resource.id?.startsWith("new-") &&
-                    !(resource as { draftNetwork?: unknown }).draftNetwork && (
-                      <DraftStatusChip
-                        label={"No network"}
-                        onClick={() =>
-                          setResourceNetworkPicker({
-                            nodeId: `resource-${resource.id}`,
-                          })
+          {/* Virtualized (react-virtuoso) — big accounts render only the
+              visible slice instead of every peer row. */}
+          {peerRows.length > 0 ? (
+            <MemoizedScrollArea withoutViewport={true} className={"h-full"}>
+              <Virtuoso
+                // Remount per group: Virtuoso keeps its scroll offset across
+                // data swaps — switching groups would land mid-list.
+                key={`${groupId}-peers`}
+                data={peerRows}
+                overscan={300}
+                defaultItemHeight={54}
+                computeItemKey={(index) => peerRows[index].id ?? String(index)}
+                itemContent={(index, peer) => (
+                  <div className={cn("px-3 pb-0.5", index === 0 && "pt-3")}>
+                    <MemberRow
+                      checked={selectedPeerIds.has(peer.id ?? "")}
+                      onToggle={
+                        canEditMembers ? () => togglePeer(peer) : undefined
+                      }
+                    >
+                      <DeviceCard
+                        // Draft peers show the same dimmed "assigned on
+                        // install" IP placeholder as their canvas card.
+                        device={
+                          peer.id?.startsWith("draft-")
+                            ? {
+                                ...peer,
+                                ip: getIpPlaceholderFromRange(
+                                  account?.settings?.network_range,
+                                ),
+                              }
+                            : peer
+                        }
+                        size="small"
+                        className="flex-1"
+                        nameMaxWidth="260px"
+                        // Draft peers wear the same NEW badge as on canvas.
+                        badge={
+                          peer.id?.startsWith("draft-") ? (
+                            <SmallBadge />
+                          ) : undefined
                         }
                       />
-                    )}
-                </MemberRow>
-              ))}
-              {resourceRows.length === 0 && (
-                <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
-                  {query
-                    ? "There are no resources matching your search. Please try a different search term."
-                    : "There are no resources in this group yet."}
-                </DropdownInfoText>
-              )}
+                      {isDraft && peer.id?.startsWith("draft-") && (
+                        <DraftPeerRowActions draftPeer={peer} />
+                      )}
+                    </MemberRow>
+                  </div>
+                )}
+                components={{ Scroller: PanelVirtuosoScroller }}
+                style={{ height: "100%" }}
+              />
+            </MemoizedScrollArea>
+          ) : (
+            <div className={"px-3 pt-3"}>
+              <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
+                {query
+                  ? "There are no peers matching your search. Please try a different search term."
+                  : "There are no peers in this group yet."}
+              </DropdownInfoText>
             </div>
-          </ScrollArea>
+          )}
+        </TabsContent>
+        <TabsContent value={"resources"} className={"flex-1 min-h-0 m-0 p-0"}>
+          {resourceRows.length > 0 ? (
+            <MemoizedScrollArea withoutViewport={true} className={"h-full"}>
+              <Virtuoso
+                key={`${groupId}-resources`}
+                data={resourceRows}
+                overscan={300}
+                defaultItemHeight={54}
+                computeItemKey={(index) => resourceRows[index].id}
+                itemContent={(index, resource) => (
+                  <div className={cn("px-3 pb-0.5", index === 0 && "pt-3")}>
+                    <MemberRow
+                      checked={selectedResourceIds.has(resource.id)}
+                      onToggle={
+                        canEditMembers
+                          ? () => toggleResource(resource)
+                          : undefined
+                      }
+                    >
+                      <DeviceCard
+                        // Draft resources without an address show the same
+                        // dimmed placeholder as their canvas card.
+                        resource={
+                          resource.id?.startsWith("new-") && !resource.address
+                            ? { ...resource, address: "IP, CIDR or Domain" }
+                            : resource
+                        }
+                        size="small"
+                        className="flex-1"
+                        nameMaxWidth="260px"
+                        badge={
+                          resource.id?.startsWith("new-") ? (
+                            <SmallBadge />
+                          ) : undefined
+                        }
+                      />
+                      {isDraft &&
+                        resource.id?.startsWith("new-") &&
+                        !(resource as { draftNetwork?: unknown })
+                          .draftNetwork && (
+                          <DraftStatusChip
+                            label={"No network"}
+                            onClick={() =>
+                              setResourceNetworkPicker({
+                                nodeId: `resource-${resource.id}`,
+                              })
+                            }
+                          />
+                        )}
+                    </MemberRow>
+                  </div>
+                )}
+                components={{ Scroller: PanelVirtuosoScroller }}
+                style={{ height: "100%" }}
+              />
+            </MemoizedScrollArea>
+          ) : (
+            <div className={"px-3 pt-3"}>
+              <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
+                {query
+                  ? "There are no resources matching your search. Please try a different search term."
+                  : "There are no resources in this group yet."}
+              </DropdownInfoText>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
