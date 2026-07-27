@@ -18,15 +18,35 @@ export const DRILLED_LAYOUT_CONFIG = {
   },
 };
 
-export const applyDrilledLayout = (nodes: Node[], edges: Edge[]) =>
-  applyD3HierarchicalLayout(
-    nodes,
+export const applyDrilledLayout = (nodes: Node[], edges: Edge[]) => {
+  // The layout stacks each column in ARRAY order, and live vs draft build
+  // their arrays differently (policy iteration vs draft canvas order) — sort
+  // the group columns by name so both views agree. In-place slot swap: only
+  // group nodes move relative to each other, everything else keeps its index
+  // (parents stay before children).
+  const groupName = (n: Node) =>
+    (n.data as { group?: { name?: string } })?.group?.name ?? "";
+  const arranged = [...nodes];
+  for (const type of ["groupNode", "destinationGroupNode"]) {
+    const slots = arranged
+      .map((n, i) => ({ n, i }))
+      .filter((x) => x.n.type === type);
+    const sorted = [...slots].sort((a, b) =>
+      groupName(a.n).localeCompare(groupName(b.n)),
+    );
+    slots.forEach((slot, k) => {
+      arranged[slot.i] = sorted[k].n;
+    });
+  }
+  return applyD3HierarchicalLayout(
+    arranged,
     edges,
     400,
     120,
     "network",
     DRILLED_LAYOUT_CONFIG,
   );
+};
 
 // Where the (hidden) frame must sit so its FIRST child cell lands exactly on
 // the layout's resource-column start — the draft drill-down places resources

@@ -709,6 +709,32 @@ export const getLiveFrameGrid = (resourceCount: number) => {
 // always-mounted consumers (components panel, toolbars) that only derive
 // from node data, so node drags don't re-render them every tick. Positions
 // must be read imperatively (reactFlow.getNodes()) when needed.
+// Focus Mode is only offered where it actually declutters: the node needs a
+// BUSY neighborhood — at least 4 incident edges and at least 2 policies
+// involved (the node itself counts when it IS a policy). Below that the
+// path is readable without dimming anything.
+export function isFocusWorthy(
+  nodeId: string,
+  nodes: { id: string; type?: string }[],
+  edges: { source: string; target: string }[],
+): boolean {
+  const incident = edges.filter(
+    (e) => e.source === nodeId || e.target === nodeId,
+  );
+  if (incident.length < 4) return false;
+  const policyIds = new Set(
+    nodes.filter((n) => n.type === "policyNode").map((n) => n.id),
+  );
+  const neighbors = new Set(
+    incident.map((e) => (e.source === nodeId ? e.target : e.source)),
+  );
+  let policyCount = policyIds.has(nodeId) ? 1 : 0;
+  neighbors.forEach((id) => {
+    if (policyIds.has(id)) policyCount++;
+  });
+  return policyCount >= 2;
+}
+
 // Resources a policy actually reaches — directly (destinationResource) or
 // through a destination group — sort to the TOP of a network frame, so
 // connected resources stay visible above the "+N more" cap. SHARED by the

@@ -176,10 +176,22 @@ function ControlCenterCanvas() {
   const stableOnNodeClick = useStableHandler(ui.onNodeClick);
   const stableOnNodeContextMenu = useStableHandler(
     (event: React.MouseEvent, node: FlowNode) => {
-      // Live mode keeps the browser's default context menu — except on
-      // policy nodes, which get Edit / Disable / Delete (acting on the
-      // real account, behind confirmations).
-      if (!draft.isDraft && node.type !== "policyNode") return;
+      // Live mode context menus: policies (Edit / Disable behind
+      // confirmations), groups (Details / Rename / Delete), and peers and
+      // resources (Focus, when the neighborhood is busy enough). Everything
+      // else keeps the browser menu.
+      const LIVE_MENU_TYPES = new Set([
+        "policyNode",
+        "groupNode",
+        "sourceGroupNode",
+        "destinationGroupNode",
+        "peerNode",
+        "sourcePeerNode",
+        "expandedGroupPeer",
+        "resourceNode",
+        "destinationResourceNode",
+      ]);
+      if (!draft.isDraft && !LIVE_MENU_TYPES.has(node.type ?? "")) return;
       event.preventDefault();
       setNodeContextMenuPos({ x: event.clientX, y: event.clientY });
       canvas.setContextMenuNodeId(node.id);

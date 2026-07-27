@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import {
   CircleMinusIcon,
+  SquareDashedMousePointerIcon,
   ListIcon,
   WorkflowIcon,
   PencilLineIcon,
@@ -19,11 +20,16 @@ import {
 import { Node } from "@xyflow/react";
 import { cn } from "@utils/helpers";
 import { mutate } from "swr";
+import { useApiCall } from "@utils/api";
+import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import {
+  useCanvasState,
+  useDestinationGroup,
+} from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -45,6 +51,7 @@ import {
   DraftNetworkRef,
   getPlaceholderPeer,
   isDraftNetworkNode,
+  isFocusWorthy,
   isFrameNode,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
@@ -83,12 +90,15 @@ export const NodeContextMenu = ({
   const menuPosition = useEdgeAwareMenuPosition(position, menuRef);
   const {
     nodes,
+    edges,
     setNodes,
     setEdges,
     setSelectedDestinationGroup,
     refreshLiveViewRef,
   } = useCanvasState();
+  const { setFocusedNodeId } = useDestinationGroup();
   const { updatePolicy, serializeRules } = usePolicies();
+  const groupRequest = useApiCall<Group>("/groups", true);
   const { permission } = usePermissions();
   const { isDraft, setResourceEditor, setRoutingPeerModal, setNetworkEditor } =
     useDraftMode();
@@ -466,6 +476,113 @@ export const NodeContextMenu = ({
     );
   }, [livePolicy, confirm, updatePolicy, serializeRules, refreshLiveViewRef]);
 
+  // "Focus" (live AND draft): enters Focus Mode on this node — dims
+  // everything off its edge path. Only shown where it declutters
+  // (isFocusWorthy: 4+ edges, 2+ policies in the neighborhood).
+  const focusItems = useCallback(
+    (n: Node): MenuItem[] => {
+      if (!isFocusWorthy(n.id, nodes, edges)) return [];
+      return [
+        {
+          label: "Focus",
+          icon: <SquareDashedMousePointerIcon size={14} />,
+          onClick: () => setFocusedNodeId(n.id),
+        },
+      ];
+    },
+    [nodes, edges, setFocusedNodeId],
+  );
+
+  // ---- Live group actions (rename / delete) — like the live policy
+  // actions, every one confirms first since it hits the real account. ----
+
+  const handleLiveRenameGroup = useCallback(
+    async (target: Node) => {
+      const group = getNodeGroup(target);
+      if (!group?.id) return;
+      const choice = await confirm({
+        title: `Rename group “${group.name}”?`,
+        description:
+          "You are in live mode — saving your changes will apply them to your account immediately.",
+        confirmText: "Rename",
+        cancelText: "Cancel",
+        type: "warning",
+      });
+      if (!choice) return;
+      openRename(target);
+    },
+    [confirm, openRename],
+  );
+
+  // The actual PUT once the rename modal saves (live mode only).
+  const liveRenameGroup = useCallback(
+    async (target: Node, name: string) => {
+      const groupId = getNodeGroup(target)?.id;
+      const group = groups?.find((g) => g.id === groupId);
+      if (!group?.id) return;
+      const toIds = (list?: (string | { id?: string })[]) =>
+        (list ?? []).map((x) => (typeof x === "string" ? x : x.id ?? ""));
+      await groupRequest.put(
+        {
+          name,
+          peers: toIds(group.peers),
+          resources: toIds(group.resources as (string | { id?: string })[]),
+        },
+        `/${group.id}`,
+      );
+      // Canvas nodes carry the group in their data — patch the name in
+      // place so the rename shows without a view rebuild.
+      setNodes((prev) =>
+        prev.map((n) => {
+          const g = getNodeGroup(n);
+          if (!g || g.id !== group.id) return n;
+          return { ...n, data: { ...n.data, group: { ...g, name } } };
+        }),
+      );
+      await mutate("/groups");
+    },
+    [groups, groupRequest, setNodes],
+  );
+
+  const handleLiveDeleteGroup = useCallback(
+    async (target: Node) => {
+      const group = getNodeGroup(target);
+      if (!group?.id) return;
+      const choice = await confirm({
+        title: `Delete group “${group.name}”?`,
+        description:
+          "You are in live mode — the group will be deleted from your account immediately.",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        type: "danger",
+      });
+      if (!choice) return;
+      await groupRequest.del("", `/${group.id}`);
+      // Drop every canvas instance of the group (and its edges).
+      const instanceIds = new Set(
+        nodes
+          .filter((n) => isGroupNode(n) && getNodeGroup(n)?.id === group.id)
+          .map((n) => n.id),
+      );
+      setNodes((prev) => prev.filter((n) => !instanceIds.has(n.id)));
+      setEdges((prev) =>
+        prev.filter(
+          (e) => !instanceIds.has(e.source) && !instanceIds.has(e.target),
+        ),
+      );
+      setSelectedDestinationGroup("");
+      await mutate("/groups");
+    },
+    [
+      confirm,
+      groupRequest,
+      nodes,
+      setNodes,
+      setEdges,
+      setSelectedDestinationGroup,
+    ],
+  );
+
   // ---- Menu items ----
 
   const items: MenuItem[] = useMemo(() => {
@@ -475,25 +592,58 @@ export const NodeContextMenu = ({
     // Edit and Disable/Enable act on the real account behind confirmations.
     // No Delete in live; deleting stays a draft/deploy flow.
     if (!isDraft) {
-      if (node.type !== "policyNode" || !nodePolicy?.id) return [];
-      if (!permission.policies.update) return [];
-      const enabled = livePolicy?.enabled ?? true;
-      return [
-        {
-          label: "Edit",
-          icon: <SquarePenIcon size={14} />,
-          onClick: () => void handleLiveEditPolicy(),
-        },
-        {
-          label: enabled ? "Disable" : "Enable",
-          icon: enabled ? <PowerOffIcon size={14} /> : <PowerIcon size={14} />,
-          onClick: () => void handleLiveTogglePolicy(),
-        },
-      ];
+      if (node.type === "policyNode") {
+        if (!nodePolicy?.id || !permission.policies.update) return [];
+        const enabled = livePolicy?.enabled ?? true;
+        return [
+          ...focusItems(node),
+          {
+            label: "Edit",
+            icon: <SquarePenIcon size={14} />,
+            onClick: () => void handleLiveEditPolicy(),
+          },
+          {
+            label: enabled ? "Disable" : "Enable",
+            icon: enabled ? <PowerOffIcon size={14} /> : <PowerIcon size={14} />,
+            onClick: () => void handleLiveTogglePolicy(),
+          },
+        ];
+      }
+      // Groups: panel + rename/delete (both behind live-mode warnings, like
+      // the policy actions). "All" is managed by the system.
+      if (isGroupNode(node)) {
+        const group = getNodeGroup(node);
+        const items: MenuItem[] = [
+          ...focusItems(node),
+          {
+            label: "Details",
+            icon: <ListIcon size={14} />,
+            onClick: () => setSelectedDestinationGroup(group?.id || node.id),
+          },
+        ];
+        if (!isAllGroup(group)) {
+          if (canRenameGroup(group)) {
+            items.push({
+              label: "Rename",
+              icon: <PencilLineIcon size={14} />,
+              onClick: () => void handleLiveRenameGroup(node),
+            });
+          }
+          items.push({
+            label: "Delete",
+            icon: <TrashIcon size={14} />,
+            onClick: () => void handleLiveDeleteGroup(node),
+            danger: true,
+          });
+        }
+        return items;
+      }
+      return focusItems(node);
     }
 
     if (isGroupNode(node)) {
       const group = getNodeGroup(node);
+      const focus = focusItems(node);
       const remove: MenuItem = {
         label: "Remove",
         icon: <CircleMinusIcon size={14} />,
@@ -507,9 +657,9 @@ export const NodeContextMenu = ({
         onClick: () => setSelectedDestinationGroup(group?.id || node.id),
       };
       // "All" can neither be renamed nor deleted.
-      if (isAllGroup(group)) return [edit, remove];
+      if (isAllGroup(group)) return [...focus, edit, remove];
 
-      const items: MenuItem[] = [edit];
+      const items: MenuItem[] = [...focus, edit];
       if (canRenameGroup(group)) {
         items.push({
           label: "Rename",
@@ -531,6 +681,7 @@ export const NodeContextMenu = ({
 
     if (node.type === "policyNode") {
       return [
+        ...focusItems(node),
         {
           label: "Edit",
           icon: <SquarePenIcon size={14} />,
@@ -575,6 +726,7 @@ export const NodeContextMenu = ({
     // it falls through to the plain Remove below.
     if (canRenamePeerNode(node)) {
       return [
+        ...focusItems(node),
         {
           label: "Rename",
           icon: <PencilLineIcon size={14} />,
@@ -652,6 +804,7 @@ export const NodeContextMenu = ({
       const resEnabled =
         (node.data as { enabled?: boolean }).enabled ?? true;
       const items: MenuItem[] = [
+        ...focusItems(node),
         {
           label: "Edit",
           icon: <SquarePenIcon size={14} />,
@@ -693,6 +846,7 @@ export const NodeContextMenu = ({
     }
 
     return [
+      ...focusItems(node),
       {
         label: "Remove",
         icon: <CircleMinusIcon size={14} />,
@@ -702,6 +856,9 @@ export const NodeContextMenu = ({
   }, [
     isDraft,
     node,
+    focusItems,
+    handleLiveRenameGroup,
+    handleLiveDeleteGroup,
     nodeId,
     nodePolicy,
     livePolicy,
@@ -825,6 +982,7 @@ export const NodeContextMenu = ({
           if (renameTarget) {
             if (isPlaceholderRename) renamePlaceholder(renameTarget.id, name);
             else if (isResourceRename) renameResource(renameTarget.id, name);
+            else if (!isDraft) void liveRenameGroup(renameTarget, name);
             else renameGroup(renameTarget, name);
           }
           setRenameOpen(false);

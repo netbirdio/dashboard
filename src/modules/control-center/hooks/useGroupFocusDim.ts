@@ -3,6 +3,7 @@ import {
   useCanvasState,
   useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
+import { isFocusWorthy } from "@/modules/control-center/utils/helpers";
 
 // Focus highlight (live AND draft): while a group's side panel is open (or
 // a peer/resource is focused), everything that is NOT on the node's path
@@ -58,16 +59,12 @@ export function useGroupFocusDim() {
       // be focused (selectors, nodes without a single edge) so the armed
       // hover ring / pointer skips them (cc-unfocusable, globals.css).
       if (highlightArmed) {
-        const connected = new Set<string>();
-        edges.forEach((e) => {
-          connected.add(e.source);
-          connected.add(e.target);
-        });
         setNodes((prev) => {
           let changed = false;
           const next = prev.map((n) => {
             const cls =
-              SELECTOR_NODE_TYPES.has(n.type ?? "") || !connected.has(n.id)
+              SELECTOR_NODE_TYPES.has(n.type ?? "") ||
+              !isFocusWorthy(n.id, prev, edges)
                 ? "cc-unfocusable"
                 : undefined;
             // Built-in draggable:false (live frame rows) survives; only the

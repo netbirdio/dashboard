@@ -8,7 +8,10 @@ import {
 import React, { useCallback, useEffect } from "react";
 import { FlowView } from "@/modules/control-center/FlowSelector";
 import { DEFAULT_MIN_ZOOM, EMPTY_STATE_ZOOM } from "@/modules/control-center/utils/layouts";
-import { getFirstGroup } from "@/modules/control-center/utils/helpers";
+import {
+  getFirstGroup,
+  isFocusWorthy,
+} from "@/modules/control-center/utils/helpers";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -430,10 +433,12 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         ) {
           return;
         }
-        const hasConnections = reactFlow
-          .getEdges()
-          .some((e) => e.source === _node.id || e.target === _node.id);
-        if (!hasConnections) return;
+        // Only busy nodes are worth focusing (4+ edges, 2+ policies).
+        if (
+          !isFocusWorthy(_node.id, reactFlow.getNodes(), reactFlow.getEdges())
+        ) {
+          return;
+        }
         // One focus at a time — the highlight supersedes a group focus.
         setSelectedDestinationGroup("");
         setFocusedNodeId(_node.id);

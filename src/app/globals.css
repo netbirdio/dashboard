@@ -270,21 +270,16 @@ p {
     pointer-events: none;
 }
 
-/* The FOCUSED node keeps its own ring for the whole focus session — a
-   lighter sky than the context-menu halo, with a soft glow, so it reads as
-   "this is the focus target" even while panels/menus add their own rings. */
+/* The FOCUSED node keeps its own ring for the whole focus session — the
+   focus-mode sky accent (no glow). */
 .react-flow__node.cc-focus-root > * {
-    box-shadow:
-        0 0 0 2px rgb(56 189 248),
-        0 0 16px rgb(56 189 248 / 0.35); /* sky-400 + glow */
+    box-shadow: 0 0 0 2px rgb(56 189 248); /* sky-400 */
 }
 .react-flow__node.cc-focus-root > .cc-frame-row {
     box-shadow: none;
 }
 .react-flow__node.cc-focus-root > .cc-frame-row .cc-frame-row-icon {
-    box-shadow:
-        0 0 0 2px rgb(56 189 248),
-        0 0 16px rgb(56 189 248 / 0.35);
+    box-shadow: 0 0 0 2px rgb(250 204 21);
 }
 
 /* Unfocusable nodes (selectors, nodes without edges) are marked with
@@ -295,7 +290,7 @@ p {
 .cc-focus-armed .react-flow__node:not(.cc-unfocusable):hover > * {
     /* Ring on the node's own card element so it follows THAT element's
        border-radius (policy pills are rounded-full, cards rounded-md, …). */
-    box-shadow: 0 0 0 2px rgb(14 165 233); /* sky-500, like ring-2 */
+    box-shadow: 0 0 0 2px rgb(56 189 248); /* sky-400 */
 }
 /* Rows INSIDE a network frame carry their rings on the icon box (same as
    the context-menu halo) — not on the full-width row. */
@@ -306,5 +301,5 @@ p {
     .react-flow__node:not(.cc-unfocusable):hover
     > .cc-frame-row
     .cc-frame-row-icon {
-    box-shadow: 0 0 0 2px rgb(14 165 233);
+    box-shadow: 0 0 0 2px rgb(250 204 21);
 }

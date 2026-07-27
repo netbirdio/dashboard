@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { sortBy } from "lodash";
 import React from "react";
-import { cn } from "@utils/helpers";
 import { isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
 import {
@@ -235,27 +234,18 @@ function HeaderTopLeft() {
   );
 }
 
-// Focus Mode tool: the button arms the mode ("H" toggles it too), the next
-// node click dims everything off that node's edge path, and the top-center
-// pill (below) names the mode and exits via its X.
-function FocusModeButton() {
+// Top-center pill naming the active mode — armed it prompts for a node,
+// focused it names the target; the X exits.
+function FocusModePill() {
   const { highlightArmed, setHighlightArmed, focusedNodeId, setFocusedNodeId } =
     useDestinationGroup();
-  const active = highlightArmed || focusedNodeId !== "";
+  const nodes = useStructuralNodes();
+  const show = highlightArmed || focusedNodeId !== "";
 
-  const toggle = React.useCallback(() => {
-    if (highlightArmed || focusedNodeId !== "") {
-      setHighlightArmed(false);
-      setFocusedNodeId("");
-    } else {
-      setHighlightArmed(true);
-    }
-  }, [highlightArmed, focusedNodeId, setHighlightArmed, setFocusedNodeId]);
-
+  // "F" arms/exits the mode, Escape exits (pane clicks intentionally don't).
   React.useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      // Escape exits the mode (pane clicks intentionally don't).
-      if (e.key === "Escape" && active && !e.defaultPrevented) {
+      if (e.key === "Escape" && show && !e.defaultPrevented) {
         setHighlightArmed(false);
         setFocusedNodeId("");
         return;
@@ -264,58 +254,16 @@ function FocusModeButton() {
       if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
       if (isInputFocused()) return;
       e.preventDefault();
-      toggle();
+      if (show) {
+        setHighlightArmed(false);
+        setFocusedNodeId("");
+      } else {
+        setHighlightArmed(true);
+      }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [toggle, active, setHighlightArmed, setFocusedNodeId]);
-
-  return (
-    <FullTooltip
-      content={
-        <span className="text-xs flex items-center gap-2">
-          Focus Mode
-          <kbd className="text-[0.67rem] font-mono text-nb-gray-400 ml-1 relative top-[1px]">
-            F
-          </kbd>
-        </span>
-      }
-      side="bottom"
-      sideOffset={10}
-      interactive={false}
-      contentClassName="!px-2 !py-1.5"
-      variant={"lighter"}
-    >
-      {/* Same shell as the Live/Draft switcher: outer container + inner
-          box that fills when active. */}
-      <div
-        className={"rounded-lg text-sm font-medium bg-nb-gray-930 p-1 border border-nb-gray-900"}
-      >
-        <button
-          onClick={toggle}
-          className={cn(
-            // Equal padding all around keeps the box square.
-            "p-[0.45rem] rounded-md transition-all flex items-center justify-center",
-            active
-              ? "bg-nb-gray-900 text-sky-400"
-              : "text-nb-gray-400 hover:bg-nb-gray-900/50",
-          )}
-          aria-label={"Focus Mode"}
-        >
-          <SquareDashedMousePointerIcon size={15} />
-        </button>
-      </div>
-    </FullTooltip>
-  );
-}
-
-// Top-center pill naming the active mode — armed it prompts for a node,
-// focused it names the mode; the X exits.
-function FocusModePill() {
-  const { highlightArmed, setHighlightArmed, focusedNodeId, setFocusedNodeId } =
-    useDestinationGroup();
-  const nodes = useStructuralNodes();
-  const show = highlightArmed || focusedNodeId !== "";
+  }, [show, setHighlightArmed, setFocusedNodeId]);
 
   // Name of whatever is focused — peer, resource, group, policy or network.
   const focusedName = React.useMemo(() => {
@@ -353,11 +301,11 @@ function FocusModePill() {
             {/* Same surface as the Live/Draft switcher. */}
             <div
               className={
-                "flex items-center gap-2.5 pl-4 pr-2 py-2 rounded-full border border-nb-gray-900 bg-nb-gray-930 text-xs font-medium text-nb-gray-200"
+                "flex items-center gap-2 pl-3.5 pr-1.5 py-1.5 rounded-full border border-nb-gray-900 bg-nb-gray-930 text-xs font-medium text-nb-gray-200"
               }
             >
               <SquareDashedMousePointerIcon
-                size={14}
+                size={13}
                 className={"text-sky-400 shrink-0"}
               />
               {focusedNodeId
@@ -387,7 +335,6 @@ function HeaderTopRight() {
   return (
     <div className={"absolute right-0 top-0 z-10"}>
       <div className={"px-6 py-4 flex items-center gap-3"}>
-        <FocusModeButton />
         <DraftModeSwitcher />
       </div>
     </div>
