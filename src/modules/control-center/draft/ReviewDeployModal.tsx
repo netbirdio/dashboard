@@ -17,6 +17,7 @@ import {
   FolderGit2,
   GitPullRequestArrowIcon,
   ListChecksIcon,
+  MonitorDownIcon,
   ShieldIcon,
   SquareMinusIcon,
   SquarePenIcon,
@@ -31,11 +32,13 @@ import { Group } from "@/interfaces/Group";
 import {
   ChangeKind,
   DraftChange,
+  getCanvasWarnings,
   getChangeKind,
   getDraftWarnings,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
+import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
 
 type Props = {
   open: boolean;
@@ -61,6 +64,8 @@ const changeIcon = (change: DraftChange) => {
       return <WorkflowIcon size={14} />;
     case "create-router":
       return <WaypointsIcon size={14} />;
+    case "install-peer":
+      return <MonitorDownIcon size={14} />;
   }
 };
 
@@ -83,6 +88,10 @@ const entityTitle = (change: DraftChange) => {
       return change.peerId
         ? `Routing peer “${change.peerName ?? change.peerId}” for “${change.networkName}”`
         : `Routing peer group “${change.groupName ?? change.groupId}” for “${change.networkName}”`;
+    case "install-peer":
+      return change.kind === "user-device"
+        ? `Peer “${change.name}”: select an existing peer or install a new one`
+        : `Peer “${change.name}”: install it with a setup key to complete this draft`;
   }
 };
 
@@ -105,6 +114,13 @@ const KIND_BADGES: Record<
     label: "Delete",
     icon: <SquareMinusIcon size={11} />,
     className: "bg-red-900/30 text-red-400 border-red-500/20",
+  },
+  // Not an API call — a step the USER performs (install / select the peer).
+  // Deploy leaves these pending; amber signals action required.
+  install: {
+    label: "Install",
+    icon: <TriangleAlertIcon size={11} />,
+    className: "bg-amber-900/30 text-amber-400 border-amber-500/20",
   },
 };
 
@@ -156,7 +172,16 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   const { deploy, isDeploying } = useDeployChangeset();
 
   const count = changes.length;
-  const warnings = useMemo(() => getDraftWarnings(changes), [changes]);
+  // install-peer rows are user steps, not API calls — Deploy needs at least
+  // one actual change.
+  const deployableCount = changes.filter(
+    (c) => c.type !== "install-peer",
+  ).length;
+  const nodes = useStructuralNodes();
+  const warnings = useMemo(
+    () => [...getDraftWarnings(changes), ...getCanvasWarnings(nodes, changes)],
+    [changes, nodes],
+  );
 
   // Policies that reference draft-created groups become parents: every group
   // creation the policy requires nests under it. A group required by several
@@ -195,26 +220,38 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
     });
 
     return changes
-      .filter((c) => !claimed.has(c.id))
+      .filter((c) => !claimed.has(c.id) && c.type !== "install-peer")
       .map((c) => ({
         change: c,
         children: childrenByPolicy.get(c.id) ?? [],
       }));
   }, [changes]);
 
+  // Pending installs get their own section above the API changes — they're
+  // steps the USER performs, not part of the deploy.
+  const installSteps = useMemo(
+    () => changes.filter((c) => c.type === "install-peer"),
+    [changes],
+  );
+
   const description = useMemo(
     () => (
       <span className={"text-xs"}>
-        {count} change{count !== 1 ? "s" : ""} will be applied to your network.
+        {deployableCount} change{deployableCount !== 1 ? "s" : ""} will be
+        applied to your network.
       </span>
     ),
-    [count],
+    [deployableCount],
   );
 
   const handleDeploy = async () => {
     const ok = await deploy();
+    // A partial failure keeps the modal open: applied changes were already
+    // removed from the list, so what remains is exactly what still needs to
+    // deploy — the user can fix the cause and hit Deploy again to resume.
+    if (!ok) return;
     onOpenChange(false);
-    if (ok) onDeployed();
+    onDeployed();
   };
 
   return (
@@ -246,6 +283,32 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                   {warning}
                 </div>
               ))}
+            </div>
+          )}
+          {installSteps.length > 0 && (
+            <div
+              className={
+                "rounded-md border border-nb-gray-910 bg-nb-gray-930/40 overflow-hidden mb-3"
+              }
+            >
+              <div
+                className={
+                  "flex items-center gap-2 px-3.5 py-2.5 border-b border-nb-gray-910 text-xs font-medium text-nb-gray-200"
+                }
+              >
+                <MonitorDownIcon size={14} className={"text-nb-gray-300"} />
+                Install
+              </div>
+              <div className={"p-1.5 w-0 min-w-full"}>
+                {installSteps.map((change) => (
+                  <ChangeRow
+                    key={change.id}
+                    change={change}
+                    onDiscard={() => removeChange(change.id)}
+                    disabled={isDeploying}
+                  />
+                ))}
+              </div>
             </div>
           )}
           <div
@@ -285,7 +348,7 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                   />
                 </div>
               ))}
-              {count === 0 && (
+              {deployableCount === 0 && (
                 <div className={"text-sm text-nb-gray-400 text-center py-8"}>
                   No pending changes.
                 </div>
@@ -317,8 +380,9 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
             </ModalClose>
             <Button
               variant={"primary"}
-              disabled={count === 0 || isDeploying}
+              disabled={deployableCount === 0 || isDeploying}
               onClick={handleDeploy}
+              data-testid={"cc-deploy"}
             >
               <CloudUploadIcon size={16} />
               {isDeploying ? "Deploying..." : "Deploy"}

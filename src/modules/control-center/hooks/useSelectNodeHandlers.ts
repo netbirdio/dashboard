@@ -10,6 +10,7 @@ import { FlowView } from "@/modules/control-center/FlowSelector";
 import { DEFAULT_MIN_ZOOM, EMPTY_STATE_ZOOM } from "@/modules/control-center/utils/layouts";
 import {
   getFirstGroup,
+  getPlaceholderPeer,
   isFocusWorthy,
 } from "@/modules/control-center/utils/helpers";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
@@ -511,13 +512,16 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         }
       }
       // Clicking a peer opens its groups panel (the peer-side twin of the
-      // group panel) — real peers only; placeholders have no memberships.
+      // group panel) — placeholders included: their assignments become the
+      // setup key's auto-assigned groups and deploy once the peer installs.
       const isPeerNode =
         _node.type === "peerNode" ||
         _node.type === "sourcePeerNode" ||
         _node.type === "expandedGroupPeer";
-      const peerId = (_node.data as { peer?: { id?: string } })?.peer?.id;
-      if (isPeerNode && peerId && !peerId.startsWith("draft-")) {
+      const peerId =
+        (_node.data as { peer?: { id?: string } })?.peer?.id ??
+        getPlaceholderPeer(_node)?.id;
+      if (isPeerNode && peerId) {
         setSelectedDestinationGroup("");
         setSelectedPeerPanel(peerId);
       }

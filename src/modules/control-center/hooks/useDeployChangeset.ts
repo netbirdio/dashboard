@@ -169,7 +169,14 @@ export function useDeployChangeset() {
           return;
         }
         case "update-group": {
-          const base = groups?.find((g) => g.id === change.groupId);
+          // Merge membership against the group's CURRENT state — the SWR
+          // snapshot may be stale (or outdated by earlier steps of this same
+          // deploy run), which would silently drop members added elsewhere.
+          const base =
+            (await groupRequest
+              .get(`/${change.groupId}`)
+              .catch(() => undefined)) ??
+            groups?.find((g) => g.id === change.groupId);
           if (!base) throw new Error("Group no longer exists.");
           const peers = new Set(toIds(base.peers));
           const resources = new Set(toIds(base.resources));
@@ -297,9 +304,11 @@ export function useDeployChangeset() {
       "delete-resource",
       "delete-group",
     ];
-    const ordered = [...changes].sort(
-      (a, b) => order.indexOf(a.type) - order.indexOf(b.type),
-    );
+    // install-peer entries aren't API calls — the user performs them by
+    // installing/selecting the peer. They stay pending through a deploy.
+    const ordered = changes
+      .filter((c) => c.type !== "install-peer")
+      .sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
 
     const run = async () => {
       for (const change of ordered) {

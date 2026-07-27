@@ -15,6 +15,7 @@ import { Group } from "@/interfaces/Group";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   getGroupCountLabel,
+  getPlaceholderPeer,
   useStructuralNodes,
 } from "@/modules/control-center/utils/helpers";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -55,8 +56,14 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   const panelWidth = usePanelWidth();
 
   const peer = useMemo(
-    () => peers?.find((p) => p.id === peerId),
-    [peers, peerId],
+    () =>
+      peers?.find((p) => p.id === peerId) ??
+      // Placeholder peers (draft-…) aren't in the API list — resolve them
+      // from their canvas node so groups can be assigned pre-install
+      // (assignments become the setup key's auto-groups / deploy after the
+      // peer registers).
+      getPlaceholderPeer(nodes.find((n) => n.id === `peer-${peerId}`)),
+    [peers, peerId, nodes],
   );
 
   // Assignable groups: API groups plus draft-created ones (create-group
@@ -407,7 +414,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
                         </span>
                         {!g.id && <SmallBadge />}
                       </span>
-                      <span className={"text-[0.7rem] text-nb-gray-400"}>
+                      <span className={"text-[0.72rem] text-nb-gray-400"}>
                         {getGroupCountLabel(g)}
                       </span>
                     </div>

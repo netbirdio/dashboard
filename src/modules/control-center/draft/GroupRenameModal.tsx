@@ -84,6 +84,7 @@ export const GroupRenameModal = ({
             onKeyDown={(e) => e.key === "Enter" && submit()}
             error={error}
             autoFocus
+            data-testid="cc-rename-input"
           />
         </div>
         <ModalFooter className={"items-center"} separator={false}>
@@ -98,6 +99,7 @@ export const GroupRenameModal = ({
               className={"w-full"}
               disabled={isDisabled}
               onClick={submit}
+              data-testid="cc-rename-submit"
             >
               Rename
             </Button>

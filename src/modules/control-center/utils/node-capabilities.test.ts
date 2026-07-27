@@ -153,8 +153,10 @@ describe("Resource nodes", () => {
     expect(getGroupableEntityId(resourceNode)).toBe("r1");
   });
 
-  it("an incomplete draft resource cannot join a group (its data lives on the node)", () => {
-    expect(getGroupableEntityId(blankResourceNode)).toBe(undefined);
+  it("an incomplete draft resource joins a group too (shown as No Network)", () => {
+    expect(getGroupableEntityId(blankResourceNode)).toBe(
+      blankResourceNode.id.replace("resource-", ""),
+    );
   });
 
   it("a complete draft resource joins a group with its new-… id", () => {

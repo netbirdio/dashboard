@@ -34,6 +34,7 @@ import { CanvasContextMenu } from "@/modules/control-center/CanvasContextMenu";
 import { NodeContextMenu } from "@/modules/control-center/NodeContextMenu";
 import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
 import { DraftInstallPeerModal } from "@/modules/control-center/draft/DraftInstallPeerModal";
+import { DraftUserDeviceModal } from "@/modules/control-center/draft/DraftUserDeviceModal";
 import { DraftResourceEditorModal } from "@/modules/control-center/draft/DraftResourceEditorModal";
 import { DraftResourceNetworkModal } from "@/modules/control-center/draft/DraftResourceNetworkModal";
 import { DraftNetworkDestinationModal } from "@/modules/control-center/draft/DraftNetworkDestinationModal";
@@ -42,6 +43,7 @@ import { DraftRoutingPeerModal } from "@/modules/control-center/draft/DraftRouti
 import { DraftEmptyCanvas } from "@/modules/control-center/draft/DraftEmptyCanvas";
 import { DraftLeaveGuard } from "@/modules/control-center/draft/DraftLeaveGuard";
 import { useDraft } from "@/modules/control-center/hooks/useDraft";
+import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
 import { ControlCenterHeader } from "@/modules/control-center/ControlCenterHeader";
 import { ControlCenterEmptyStates } from "@/modules/control-center/ControlCenterEmptyStates";
 import {
@@ -101,18 +103,13 @@ function ControlCenterCanvas() {
   const ui = useControlCenterUI();
   const draft = useDraft();
   const { componentsPanelOpen, setComponentsPanelOpen } = useDraftMode();
-  // Focus mode (live group panel open + path highlight): node dragging is
-  // disabled so dragging anywhere pans the canvas instead of accidentally
-  // moving dimmed nodes.
-  const {
-    selectedDestinationGroup,
-    focusedNodeId,
-    highlightArmed,
-    setSelectedPeerPanel,
-  } = useDestinationGroup();
-  // Focus mode applies in draft too — dims off-path nodes, locks node
-  // dragging (dragging pans until the focus is dismissed).
-  const focusMode = selectedDestinationGroup !== "" || focusedNodeId !== "";
+  // Focus mode (explicit, via a node's context-menu Focus item or the header
+  // tool — NOT a mere left-click panel open): node dragging is disabled so
+  // dragging anywhere pans the canvas instead of accidentally moving dimmed
+  // nodes. Applies in live and draft alike.
+  const { focusedNodeId, highlightArmed, setSelectedPeerPanel } =
+    useDestinationGroup();
+  const focusMode = focusedNodeId !== "";
   const { setHoveredNetworkNodeId } = useNetworkHover();
   const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragToGroup();
   useDrillDownBrowserHistory();
@@ -220,18 +217,16 @@ function ControlCenterCanvas() {
   const stableOnNodeDrag = useStableHandler(onNodeDrag);
   const stableOnNodeDragStop = useStableHandler(onNodeDragStop);
   // Backspace/Delete gate: live mode deletes NOTHING (the canvas mirrors the
-  // account); draft deletes nodes but never standalone connections — edges
-  // only disappear with their endpoints or through explicit actions.
+  // account). In draft the keys act exactly like the context menu's Remove —
+  // routed through useNodeRemoval so the changeset bookkeeping (cancelled
+  // creates, policy disconnects, group refs) happens; React Flow's raw
+  // deletion is always blocked. Nodes without a Remove action (existing
+  // framed resources) are skipped, and standalone edges never delete.
+  const { removeNode } = useNodeRemoval();
   const stableOnBeforeDelete = useStableHandler(
-    async ({ nodes, edges }: { nodes: FlowNode[]; edges: FlowEdge[] }) => {
-      if (!draft.isDraft) return false;
-      const nodeIds = new Set(nodes.map((n) => n.id));
-      return {
-        nodes,
-        edges: edges.filter(
-          (e) => nodeIds.has(e.source) || nodeIds.has(e.target),
-        ),
-      };
+    async ({ nodes }: { nodes: FlowNode[]; edges: FlowEdge[] }) => {
+      if (draft.isDraft) nodes.forEach((n) => removeNode(n));
+      return false;
     },
   );
   const stableOnInit = useStableHandler(
@@ -246,6 +241,7 @@ function ControlCenterCanvas() {
       <ControlCenterHeader />
       <PeersToolbar />
       <DraftInstallPeerModal />
+      <DraftUserDeviceModal />
       <DraftResourceEditorModal />
       <DraftResourceNetworkModal />
       <DraftRoutingPeerModal />

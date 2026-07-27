@@ -345,17 +345,32 @@ export const getPlaceholderHostname = (
       .replace(/[^a-z0-9-]+/g, "-")
       .replace(/^-+|-+$/g, "");
   const taken = new Set<string>();
+  const seenIds = new Set<string>();
   let result: string | undefined;
-  nodes.forEach((n) => {
-    // Skips non-placeholders and user-device selects that picked a peer.
-    const peer = getPlaceholderPeer(n);
-    if (!peer) return;
-    const base = sanitize(peer.name ?? "") || "peer";
+  const assign = (name: string, forNodeId: string) => {
+    const base = sanitize(name) || "peer";
     let candidate = base;
     let suffix = 1;
     while (taken.has(candidate)) candidate = `${base}-${suffix++}`;
     taken.add(candidate);
-    if (n.id === nodeId) result = candidate;
+    if (forNodeId === nodeId) result = candidate;
+  };
+  nodes.forEach((n) => {
+    // Skips non-placeholders and user-device selects that picked a peer.
+    const peer = getPlaceholderPeer(n);
+    if (peer?.id && !seenIds.has(peer.id)) {
+      seenIds.add(peer.id);
+      assign(peer.name ?? "", n.id);
+      return;
+    }
+    // Placeholders absorbed into a group live on the group node instead
+    // (data.draftPeers) — a group can appear twice, dedup by id.
+    const held = (n.data as { draftPeers?: Peer[] })?.draftPeers;
+    held?.forEach((p) => {
+      if (!p.id || seenIds.has(p.id)) return;
+      seenIds.add(p.id);
+      assign(p.name ?? "", `peer-${p.id}`);
+    });
   });
   return result;
 };

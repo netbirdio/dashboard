@@ -9,6 +9,10 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import {
+  patchGroupInPolicies,
+  sameGroupMatcher,
+} from "@/modules/control-center/utils/policy-group-sync";
+import {
   getTopZIndex,
   isDraftNetworkNode,
   isFrameNode,
@@ -70,6 +74,7 @@ export function useDraftGroupActions() {
     untrackNetwork,
     untrackResource,
     untrackRouter,
+    untrackInstallPeer,
   } = useDraftChangeset();
 
   // Drops a fresh draft group ("Group", "Group (1)", …) and records
@@ -105,25 +110,38 @@ export function useDraftGroupActions() {
   );
 
   // Renames a group everywhere on the canvas (source node + destination
-  // copies share the same group) and records the change.
+  // copies share the same group), follows the rename into the group copies
+  // held by policy nodes/edges (they seed the policy edit modal), and
+  // records the change.
   const renameGroup = useCallback(
     (node: Node, newName: string) => {
       const group = getNodeGroup(node);
       if (!group || group.name === newName) return;
       const from = group.name;
+      const matches = (g: Group) =>
+        group.id ? g.id === group.id : !g.id && g.name === from;
+      const rename = (g: Group) => ({ ...g, name: newName });
 
       setNodes((prev) =>
-        prev.map((n) => {
-          const g = getNodeGroup(n);
-          if (!g || g.name !== from) return n;
-          if (group.id ? g.id !== group.id : !!g.id) return n;
-          return { ...n, data: { ...n.data, group: { ...g, name: newName } } };
-        }),
+        patchGroupInPolicies(
+          prev.map((n) => {
+            const g = getNodeGroup(n);
+            if (!g || g.name !== from) return n;
+            if (group.id ? g.id !== group.id : !!g.id) return n;
+            return {
+              ...n,
+              data: { ...n.data, group: { ...g, name: newName } },
+            };
+          }),
+          matches,
+          rename,
+        ),
       );
+      setEdges((prev) => patchGroupInPolicies(prev, matches, rename));
 
       trackRenameGroup({ groupId: group.id, from, to: newName });
     },
-    [setNodes, trackRenameGroup],
+    [setNodes, setEdges, trackRenameGroup],
   );
 
   // Removes a single member (peer or resource) from a group: updates every
@@ -138,38 +156,50 @@ export function useDraftGroupActions() {
       const itemId = member.peerId ?? member.resourceId;
       if (!itemId) return;
 
+      const dropCounts = (g: Group): Group => ({
+        ...g,
+        peers_count: member.peerId
+          ? Math.max(0, (g.peers_count || 0) - 1)
+          : g.peers_count,
+        resources_count: member.resourceId
+          ? Math.max(0, (g.resources_count || 0) - 1)
+          : g.resources_count,
+      });
+
       setNodes((prev) =>
-        prev.map((n) => {
-          const g = getNodeGroup(n);
-          if (!g) return n;
-          const sameGroup = group.id
-            ? g.id === group.id
-            : !g.id && g.name === group.name;
-          if (!sameGroup) return n;
-          const addedMembers = new Set(
-            (n.data.addedMembers as Set<string>) ?? [],
-          );
-          const removedMembers = new Set(
-            (n.data.removedMembers as Set<string>) ?? [],
-          );
-          // Draft-added members revert; existing ones are marked removed.
-          if (addedMembers.has(itemId)) addedMembers.delete(itemId);
-          else removedMembers.add(itemId);
-          const updated = { ...g };
-          if (member.peerId) {
-            updated.peers_count = Math.max(0, (updated.peers_count || 0) - 1);
-          }
-          if (member.resourceId) {
-            updated.resources_count = Math.max(
-              0,
-              (updated.resources_count || 0) - 1,
+        patchGroupInPolicies(
+          prev.map((n) => {
+            const g = getNodeGroup(n);
+            if (!g) return n;
+            const sameGroup = group.id
+              ? g.id === group.id
+              : !g.id && g.name === group.name;
+            if (!sameGroup) return n;
+            const addedMembers = new Set(
+              (n.data.addedMembers as Set<string>) ?? [],
             );
-          }
-          return {
-            ...n,
-            data: { ...n.data, group: updated, addedMembers, removedMembers },
-          };
-        }),
+            const removedMembers = new Set(
+              (n.data.removedMembers as Set<string>) ?? [],
+            );
+            // Draft-added members revert; existing ones are marked removed.
+            if (addedMembers.has(itemId)) addedMembers.delete(itemId);
+            else removedMembers.add(itemId);
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                group: dropCounts(g),
+                addedMembers,
+                removedMembers,
+              },
+            };
+          }),
+          sameGroupMatcher(group),
+          dropCounts,
+        ),
+      );
+      setEdges((prev) =>
+        patchGroupInPolicies(prev, sameGroupMatcher(group), dropCounts),
       );
 
       trackRemoveGroupMembers({
@@ -187,7 +217,7 @@ export function useDraftGroupActions() {
         );
       }
     },
-    [setNodes, trackRemoveGroupMembers, removeGroupFromDraftResource],
+    [setNodes, setEdges, trackRemoveGroupMembers, removeGroupFromDraftResource],
   );
 
   const removeNodeWithEdges = useCallback(
@@ -211,6 +241,12 @@ export function useDraftGroupActions() {
           : nodeId.startsWith("resource-new-")
           ? nodeId.replace("resource-", "")
           : undefined);
+
+      // An uninstalled placeholder leaving the canvas takes its pending
+      // install-peer entry with it (installed ones no longer have one).
+      if (data?.placeholderKind && nodeId.startsWith("peer-draft-")) {
+        untrackInstallPeer(nodeId.replace("peer-", ""));
+      }
 
       // Router changes whose routing edge passes through this node go too.
       reactFlow
@@ -399,6 +435,7 @@ export function useDraftGroupActions() {
       untrackNetwork,
       untrackResource,
       untrackRouter,
+      untrackInstallPeer,
     ],
   );
 

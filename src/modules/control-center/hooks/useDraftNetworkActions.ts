@@ -208,6 +208,70 @@ export function useDraftNetworkActions() {
     [reactFlow, syncDraftResource],
   );
 
+  // Assigns a network to a draft resource held INSIDE a group (no canvas
+  // node — it was absorbed as a member): stamps the ref on every stored
+  // copy (the group panel's "No network" chip disappears) and, once the
+  // resource is complete (name + address), records its create-resource
+  // change with the holding groups as membership.
+  const assignHeldResourceToNetwork = useCallback(
+    ({
+      resourceId,
+      networkRef,
+    }: {
+      resourceId: string;
+      networkRef: DraftNetworkRef;
+    }) => {
+      if (!resourceId.startsWith("new-")) return;
+      const holders: string[] = [];
+      let held: NetworkResource | undefined;
+      reactFlow.getNodes().forEach((n) => {
+        const list = (n.data as { draftResources?: NetworkResource[] })
+          ?.draftResources;
+        if (!list?.some((r) => r.id === resourceId)) return;
+        const g = (n.data as { group?: { id?: string; name?: string } })
+          ?.group;
+        const ref = g?.id ?? g?.name;
+        if (ref && ref !== "All" && !holders.includes(ref)) holders.push(ref);
+        held = held ?? list.find((r) => r.id === resourceId);
+      });
+      if (!held) return;
+
+      reactFlow.setNodes((prev) =>
+        prev.map((n) => {
+          const list = (n.data as { draftResources?: NetworkResource[] })
+            ?.draftResources;
+          if (!list?.some((r) => r.id === resourceId)) return n;
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              draftResources: list.map((r) =>
+                r.id === resourceId
+                  ? ({ ...r, draftNetwork: networkRef } as NetworkResource)
+                  : r,
+              ),
+            },
+          };
+        }),
+      );
+
+      if (held.name && held.address) {
+        trackCreateResource({
+          clientId: resourceId,
+          name: held.name,
+          address: held.address,
+          description: held.description,
+          networkId: networkRef.networkId,
+          networkClientId: networkRef.networkClientId,
+          networkName: networkRef.name ?? "",
+          groupIds: holders,
+          enabled: true,
+        });
+      }
+    },
+    [reactFlow, trackCreateResource],
+  );
+
   // Assigns a standalone draft resource to an EXISTING (API) network that
   // isn't a frame on the canvas — just stamps the network ref onto the node
   // (the card keeps showing the network's name) and re-syncs the changeset.
@@ -423,6 +487,7 @@ export function useDraftNetworkActions() {
     addRouterFromSelection,
     assignResourceToNetwork,
     assignResourceToExistingNetwork,
+    assignHeldResourceToNetwork,
     saveDraftResource,
     syncDraftResource,
     renameDraftNetwork,

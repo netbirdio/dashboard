@@ -73,7 +73,7 @@ const getNextUniqueName = (base: string, taken: Set<string>) => {
 export function useDraftNodeCreation() {
   const reactFlow = useReactFlow();
   const { policies, networks, networkResources } = useControlCenterData();
-  const { trackCreateNetwork } = useDraftChangeset();
+  const { trackCreateNetwork, trackInstallPeer } = useDraftChangeset();
 
   // Places a node roughly centered under the given flow position, on top of
   // everything already on the canvas (frames elevate their z — a peer dropped
@@ -91,10 +91,12 @@ export function useDraftNodeCreation() {
   );
 
   // No setup key is created here — the key is generated inside the install
-  // modal, only when the user actually installs.
+  // modal, only when the user actually installs. The pending install itself
+  // IS tracked so Review & Deploy tells the user this step is on them.
   const addPeerPlaceholder = useCallback(
     (kind: PeerPlaceholderKind, position?: XYPosition) => {
       const nodeId = `peer-draft-${uid()}`;
+      const name = getNextPlaceholderName(kind, reactFlow.getNodes());
       placeNode(
         {
           id: nodeId,
@@ -102,19 +104,17 @@ export function useDraftNodeCreation() {
           position: { x: 0, y: 0 },
           data: {
             placeholderKind: kind,
-            placeholderName: getNextPlaceholderName(
-              kind,
-              reactFlow.getNodes(),
-            ),
+            placeholderName: name,
             showHandles: true,
             enabled: true,
           },
         },
         position,
       );
+      trackInstallPeer({ clientId: nodeId.replace("peer-", ""), name, kind });
       return nodeId;
     },
-    [placeNode, reactFlow],
+    [placeNode, reactFlow, trackInstallPeer],
   );
 
   // Drops a blank policy node — no modal, no changeset entry. A policy

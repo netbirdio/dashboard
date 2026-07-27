@@ -98,7 +98,7 @@ export const DeviceCard = ({
         <span
           className={cn(
             "font-normal text-nb-gray-100 flex items-center gap-2",
-            isSmall ? "text-xs" : "mb-1.5 text-[0.85rem] mt-2",
+            isSmall ? "text-[0.72rem]" : "mb-1.5 text-[0.85rem] mt-2",
           )}
         >
           <TruncatedText
@@ -112,7 +112,7 @@ export const DeviceCard = ({
           className={cn(
             "font-normal text-nb-gray-400 relative",
             isSmall
-              ? "text-[0.7rem]"
+              ? "text-[0.72rem]"
               : "text-sm -top-[0.3rem]",
           )}
         >

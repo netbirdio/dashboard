@@ -2,7 +2,6 @@ import { Node } from "@xyflow/react";
 import {
   getDraftResource,
   getPlaceholderPeer,
-  isCompleteDraftResource,
 } from "@/modules/control-center/utils/helpers";
 
 // Capability predicates for canvas nodes — the single place that answers
@@ -50,9 +49,10 @@ export const getGroupableEntityId = (node?: Node): string | undefined => {
     data?.peer?.id ??
     getPlaceholderPeer(node)?.id ??
     data?.resource?.id ??
-    // Complete draft resources join with their "new-…" ids; incomplete ones
-    // can't — their data lives on the node, which leaves the canvas on drop.
-    (isCompleteDraftResource(node) ? getDraftResource(node)?.id : undefined)
+    // Draft resources join with their "new-…" ids — even incomplete ones
+    // (no network yet): the drop stores their object on the group node, and
+    // the group panel shows them as "No Network" until assigned.
+    getDraftResource(node)?.id
   );
 };
 

@@ -58,6 +58,11 @@ type DraftModeContextType = {
   setComponentsPanelOpen: (value: boolean) => void;
   installModal: InstallModalState | null;
   setInstallModal: (value: InstallModalState | null) => void;
+  // User-device setup stepper (install NetBird → select the registered
+  // peer). Opened from the placeholder node or a group-panel row; nodeId is
+  // the placeholder's canvas id (peer-draft-…), name its canvas label.
+  userDeviceModal: { nodeId: string; name: string } | null;
+  setUserDeviceModal: (value: { nodeId: string; name: string } | null) => void;
   // Draft resource editor (pure-data modal) — edits an existing resource
   // node, OR creates a new one into a frame (the frame header's "Add
   // Resource" button / context menu).
@@ -115,6 +120,8 @@ const DraftModeContext = createContext<DraftModeContextType>({
   setComponentsPanelOpen: () => {},
   installModal: null,
   setInstallModal: () => {},
+  userDeviceModal: null,
+  setUserDeviceModal: () => {},
   resourceEditor: null,
   setResourceEditor: () => {},
   resourceNetworkPicker: null,
@@ -140,6 +147,10 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
   const [installModal, setInstallModal] = useState<InstallModalState | null>(
     null,
   );
+  const [userDeviceModal, setUserDeviceModal] = useState<{
+    nodeId: string;
+    name: string;
+  } | null>(null);
   const [resourceEditor, setResourceEditor] =
     useState<ResourceEditorState | null>(null);
   const [resourceNetworkPicker, setResourceNetworkPicker] = useState<{
@@ -180,6 +191,8 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
       setComponentsPanelOpen,
       installModal,
       setInstallModal,
+      userDeviceModal,
+      setUserDeviceModal,
       resourceEditor,
       setResourceEditor,
       resourceNetworkPicker,
@@ -200,6 +213,7 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
       activeTool,
       componentsPanelOpen,
       installModal,
+      userDeviceModal,
       resourceEditor,
       resourceNetworkPicker,
       routingPeerModal,

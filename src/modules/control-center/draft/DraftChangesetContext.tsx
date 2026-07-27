@@ -164,6 +164,20 @@ export interface DeleteResourceChange {
   networkName: string; // display-only (labels)
 }
 
+// A placeholder peer on the canvas (user device / server / agent). Not an
+// API call — the peer comes into existence by INSTALLING it (or, for a user
+// device, selecting an existing peer). Listed in Review & Deploy as a
+// pending action so drafts that depend on it aren't silently incomplete;
+// resolved (removed) by the placeholder upgrade once the real peer exists.
+export interface InstallPeerChange {
+  id: string;
+  type: "install-peer";
+  // The placeholder's draft peer id ("draft-<uuid>").
+  clientId: string;
+  name: string;
+  kind: "user-device" | "server" | "agent";
+}
+
 export type DraftChange =
   | CreateGroupChange
   | UpdateGroupChange
@@ -175,10 +189,12 @@ export type DraftChange =
   | CreateResourceChange
   | CreateRouterChange
   | UpdateResourceChange
-  | DeleteResourceChange;
+  | DeleteResourceChange
+  | InstallPeerChange;
 
-// Git-style classification for diff coloring (+ green, ~ orange, − red).
-export type ChangeKind = "add" | "update" | "remove";
+// Git-style classification for diff coloring (+ green, ~ orange, − red,
+// install = pending action, blue).
+export type ChangeKind = "add" | "update" | "remove" | "install";
 
 export const getChangeKind = (change: DraftChange): ChangeKind => {
   switch (change.type) {
@@ -196,6 +212,8 @@ export const getChangeKind = (change: DraftChange): ChangeKind => {
     case "update-policy":
     case "update-resource":
       return "update";
+    case "install-peer":
+      return "install";
   }
 };
 
@@ -223,6 +241,9 @@ export const getChangeApiCall = (change: DraftChange): string => {
       return `PUT /networks/${change.networkId}/resources/${change.resourceId}`;
     case "delete-resource":
       return `DELETE /networks/${change.networkId}/resources/${change.resourceId}`;
+    case "install-peer":
+      // Not an API call — the peer registers itself when installed.
+      return "peer install";
   }
 };
 
@@ -322,6 +343,14 @@ export const getChangeLabel = (
       return {
         title: `Delete resource “${change.name}” from “${change.networkName}”`,
       };
+    case "install-peer":
+      return {
+        title: `Install peer “${change.name}”`,
+        detail:
+          change.kind === "user-device"
+            ? "select an existing peer or install a new one"
+            : "install to complete the draft changes that reference it",
+      };
   }
 };
 
@@ -347,7 +376,7 @@ export const getDraftWarnings = (changes: DraftChange[]): string[] => {
     const hasRouter = routers.some((r) => r.networkClientId === n.clientId);
     if (hasResources && !hasRouter) {
       warnings.push(
-        `Network “${n.name}” has no routing peers — its resources won't be reachable.`,
+        `Network “${n.name}” has no routing peers, so its resources won't be reachable.`,
       );
     }
   });
@@ -361,16 +390,79 @@ export const getDraftWarnings = (changes: DraftChange[]): string[] => {
       (p) => p.policy.rules?.[0]?.destinationResource?.id === res.clientId,
     );
     const viaGroup = policyChanges.some((p) => {
-      const destinations = (p.policy.rules?.[0]?.destinations as Group[]) ?? [];
-      return destinations.some(
-        (g) =>
-          typeof g !== "string" && res.groupIds.includes(g.id ?? g.name),
+      const destinations =
+        (p.policy.rules?.[0]?.destinations as (Group | string)[]) ?? [];
+      // res.groupIds mixes API ids and draft-group names; destinations mix
+      // group objects and raw id strings — match on whichever form is there.
+      return destinations.some((g) =>
+        typeof g === "string"
+          ? res.groupIds.includes(g)
+          : res.groupIds.includes(g.name) ||
+            (!!g.id && res.groupIds.includes(g.id)),
       );
     });
     if (!direct && !viaGroup) {
       warnings.push(
-        `Resource “${res.name}” is not referenced by any policy — no peer will have access.`,
+        `Resource “${res.name}” is not referenced by any policy, so no peer will have access.`,
       );
+    }
+  });
+
+  return warnings;
+};
+
+// Canvas-only states that silently withhold changes from deploy — surfaced in
+// Review & Deploy so the user learns WHY something they built isn't listed:
+// policies referencing uninstalled placeholder peers (hard requirement — the
+// peer must exist before the policy can) and draft resources that never became
+// complete (no network assigned), which never reached the changeset.
+export const getCanvasWarnings = (
+  nodes: {
+    id: string;
+    type?: string;
+    data?: Record<string, unknown>;
+  }[],
+  changes: DraftChange[],
+): string[] => {
+  const warnings: string[] = [];
+  const trackedResourceIds = new Set(
+    changes
+      .filter((c): c is CreateResourceChange => c.type === "create-resource")
+      .map((c) => c.clientId),
+  );
+
+  nodes.forEach((n) => {
+    if (n.type === "policyNode") {
+      const policy = n.data?.policy as Policy | undefined;
+      const rule = policy?.rules?.[0];
+      if (!rule) return;
+      const hasBothSides =
+        ((rule.sources?.length ?? 0) > 0 || !!rule.sourceResource) &&
+        ((rule.destinations?.length ?? 0) > 0 || !!rule.destinationResource);
+      if (!hasBothSides) return; // incomplete policies are visibly unfinished
+      const refs = [rule.sourceResource, rule.destinationResource];
+      if (refs.some((r) => r?.id?.startsWith("draft-"))) {
+        warnings.push(
+          `Policy “${policy?.name ?? "Policy"}” references a peer that isn't installed yet and won't deploy until it is.`,
+        );
+      } else if (
+        refs.some(
+          (r) => r?.id?.startsWith("new-") && !trackedResourceIds.has(r.id),
+        )
+      ) {
+        warnings.push(
+          `Policy “${policy?.name ?? "Policy"}” references a resource without a network and won't deploy until it is assigned to one.`,
+        );
+      }
+    }
+    if (n.id.startsWith("resource-new-")) {
+      const clientId = n.id.replace("resource-", "");
+      if (!trackedResourceIds.has(clientId)) {
+        const resource = n.data?.resource as { name?: string } | undefined;
+        warnings.push(
+          `Resource “${resource?.name ?? "Resource"}” has no network assigned and won't deploy.`,
+        );
+      }
     }
   });
 
@@ -477,6 +569,15 @@ interface DraftChangesetContextType {
     policy: Policy;
   }) => void;
   trackDeletePolicy: (params: { policyId: string; name: string }) => void;
+  // Placeholder peers: pending installs listed in Review & Deploy. Upserted
+  // by clientId (renames update the entry), resolved on placeholder upgrade
+  // or canvas removal.
+  trackInstallPeer: (params: {
+    clientId: string;
+    name: string;
+    kind: InstallPeerChange["kind"];
+  }) => void;
+  untrackInstallPeer: (clientId: string) => void;
   removeChange: (id: string) => void;
   clearChanges: () => void;
   // Wholesale restore — used by draft undo/redo history.
@@ -1143,6 +1244,44 @@ export function DraftChangesetProvider({
     [],
   );
 
+  const trackInstallPeer = useCallback(
+    ({
+      clientId,
+      name,
+      kind,
+    }: {
+      clientId: string;
+      name: string;
+      kind: InstallPeerChange["kind"];
+    }) => {
+      setChanges((prev) => {
+        const existing = prev.find(
+          (c): c is InstallPeerChange =>
+            c.type === "install-peer" && c.clientId === clientId,
+        );
+        if (existing) {
+          if (existing.name === name && existing.kind === kind) return prev;
+          return prev.map((c) =>
+            c.id === existing.id ? { ...existing, name, kind } : c,
+          );
+        }
+        return [
+          ...prev,
+          { id: uid(), type: "install-peer", clientId, name, kind },
+        ];
+      });
+    },
+    [],
+  );
+
+  const untrackInstallPeer = useCallback((clientId: string) => {
+    setChanges((prev) =>
+      prev.filter(
+        (c) => !(c.type === "install-peer" && c.clientId === clientId),
+      ),
+    );
+  }, []);
+
   const trackDeletePolicy = useCallback(
     ({ policyId, name }: { policyId: string; name: string }) => {
       setChanges((prev) => {
@@ -1202,6 +1341,8 @@ export function DraftChangesetProvider({
       trackUpdatePolicy,
       trackSetPolicyEnabled,
       trackDeletePolicy,
+      trackInstallPeer,
+      untrackInstallPeer,
       removeChange,
       clearChanges,
       replaceChanges,
@@ -1230,6 +1371,8 @@ export function DraftChangesetProvider({
       trackUpdatePolicy,
       trackSetPolicyEnabled,
       trackDeletePolicy,
+      trackInstallPeer,
+      untrackInstallPeer,
       removeChange,
       clearChanges,
       replaceChanges,

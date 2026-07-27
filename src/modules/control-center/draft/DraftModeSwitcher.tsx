@@ -39,6 +39,7 @@ export const DraftModeSwitcher = ({}: Props) => {
             size={"xs"}
             onClick={() => void discardAndExit()}
             className={"h-[39px] px-4.5"}
+            data-testid={"cc-draft-cancel"}
           >
             Cancel
           </Button>
@@ -50,6 +51,7 @@ export const DraftModeSwitcher = ({}: Props) => {
             }
             disabled={changeCount === 0}
             onClick={() => setReviewOpen(true)}
+            data-testid={"cc-draft-review"}
           >
             <GitPullRequestArrowIcon size={14} />
             Review & Deploy
@@ -74,6 +76,7 @@ export const DraftModeSwitcher = ({}: Props) => {
           <SegmentedTabs.Trigger
             value={"live"}
             className={"text-xs px-3 py-[0.45rem]"}
+            data-testid={"cc-mode-live"}
           >
             <CircleIcon active={true} size={8} className={"shrink-0"} />
             Live
@@ -81,6 +84,7 @@ export const DraftModeSwitcher = ({}: Props) => {
           <SegmentedTabs.Trigger
             value={"draft"}
             className={"text-xs px-3 py-[0.45rem] whitespace-nowrap"}
+            data-testid={"cc-mode-draft"}
           >
             <PencilLineIcon size={12} />
             Draft

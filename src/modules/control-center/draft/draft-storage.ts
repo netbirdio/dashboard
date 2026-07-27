@@ -21,6 +21,7 @@ const KNOWN_CHANGE_TYPES = new Set([
   "create-router",
   "update-resource",
   "delete-resource",
+  "install-peer",
 ]);
 
 export function loadDraftChanges(): DraftChange[] {

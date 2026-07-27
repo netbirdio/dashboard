@@ -1,5 +1,12 @@
 import { cn } from "@utils/helpers";
-import { Layers3Icon, MonitorSmartphoneIcon, SearchIcon } from "lucide-react";
+import {
+  DownloadIcon,
+  Layers3Icon,
+  MonitorSmartphoneIcon,
+  SearchIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
+import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -22,7 +29,13 @@ import {
 } from "@/modules/control-center/utils/graph-builder";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
+import {
+  getIpPlaceholderFromRange,
+  getPlaceholderPeer,
+  useStructuralNodes,
+} from "@/modules/control-center/utils/helpers";
+import { useAccount } from "@/modules/account/useAccount";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import {
@@ -82,7 +95,10 @@ export const MemberRow = ({
     onClick={onToggle}
     className={cn(
       "flex items-center h-[52px] rounded-md px-1 transition-colors",
-      onToggle && "hover:bg-nb-gray-900/50 cursor-pointer",
+      // Row hover, EXCEPT while an inline action (the "Not installed" /
+      // "No Network" chip) is hovered — the chip is its own click target.
+      onToggle &&
+        "hover:bg-nb-gray-900/50 [&:has(.cc-row-action:hover)]:bg-transparent cursor-pointer",
     )}
   >
     <div className={"flex items-center flex-1 min-w-0"}>{children}</div>
@@ -94,6 +110,66 @@ export const MemberRow = ({
   </div>
 );
 
+// Alert control on draft rows ("Not installed" / "No Network") — the exact
+// treatment of a standalone resource's floating "No Network" button. A CTA
+// when a flow resolves the state.
+const DraftStatusChip = ({
+  label,
+  icon,
+  onClick,
+}: {
+  label: string;
+  icon?: React.ReactNode;
+  onClick?: () => void;
+}) => (
+  <Button
+    variant={"secondary"}
+    size={"xs"}
+    className={cn(
+      "cc-row-action shrink-0 ml-2 mr-4 !px-2.5 !text-nb-gray-300",
+      !onClick && "cursor-default",
+    )}
+    onClick={(e) => {
+      // Don't toggle the row's checkbox.
+      e.stopPropagation();
+      onClick?.();
+    }}
+  >
+    {icon ?? <TriangleAlertIcon size={12} className={"text-yellow-400"} />}
+    {label}
+  </Button>
+);
+
+// Draft peer row action: user devices open the setup stepper ("Setup
+// Device"), servers/agents the install modal ("Install").
+const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
+  const { setInstallModal, setUserDeviceModal } = useDraftMode();
+  const isUserDevice = draftPeer.os === "draft-user-device";
+  const kind = (draftPeer.os?.replace("draft-", "") ??
+    "server") as PeerPlaceholderKind;
+  const nodeId = `peer-${draftPeer.id}`;
+
+  return (
+    <DraftStatusChip
+      label={isUserDevice ? "Install or assign" : "Install"}
+      icon={
+        isUserDevice ? undefined : (
+          <DownloadIcon size={12} className={"text-yellow-400"} />
+        )
+      }
+      onClick={() =>
+        isUserDevice
+          ? setUserDeviceModal({ nodeId, name: draftPeer.name ?? "Device" })
+          : setInstallModal({
+              isUserDevice: false,
+              placeholderKind: kind,
+              nodeId,
+            })
+      }
+    />
+  );
+};
+
 export const DestinationGroupPanel = ({
   groupId,
   onClose,
@@ -104,7 +180,7 @@ export const DestinationGroupPanel = ({
   // every canvas update while open.
   const nodes = useStructuralNodes();
   const { setNodes } = useCanvasState();
-  const { isDraft } = useDraftMode();
+  const { isDraft, setResourceNetworkPicker } = useDraftMode();
   const { removeGroupMember } = useDraftGroupActions();
   const { addMemberToGroup } = useDragToGroup();
   const { confirm } = useDialog();
@@ -112,6 +188,7 @@ export const DestinationGroupPanel = ({
   const groupRequest = useApiCall<Group>("/groups", true);
   const panelWidth = usePanelWidth();
   const reactFlow = useReactFlow();
+  const account = useAccount();
 
   // In draft the canvas node is the source of truth (it carries renames and
   // drag-added members); the API group is the live-mode fallback. A group can
@@ -152,30 +229,70 @@ export const DestinationGroupPanel = ({
     return removed;
   }, [groupNodes]);
 
+  // Draft members (placeholder peers, draft resources) aren't in the API
+  // lists — their objects ride on the group node, stored at drop time.
+  const draftMemberPeers = useMemo(() => {
+    const byId = new Map<string, Peer>();
+    groupNodes.forEach((n) => {
+      (n.data?.draftPeers as Peer[] | undefined)?.forEach((p) => {
+        if (p.id && addedMembers.has(p.id)) byId.set(p.id, p);
+      });
+    });
+    return [...byId.values()];
+  }, [groupNodes, addedMembers]);
+  const draftMemberResources = useMemo(() => {
+    const byId = new Map<string, NetworkResource>();
+    groupNodes.forEach((n) => {
+      (n.data?.draftResources as NetworkResource[] | undefined)?.forEach(
+        (r) => {
+          if (r.id && addedMembers.has(r.id)) byId.set(r.id, r);
+        },
+      );
+    });
+    return [...byId.values()];
+  }, [groupNodes, addedMembers]);
+
+  // Placeholder peers still ON the canvas are assignable from the panel too
+  // (checking one absorbs its node, exactly like dropping it on the group).
+  const canvasPlaceholderPeers = useMemo(() => {
+    const byId = new Map<string, { peer: Peer; nodeId: string }>();
+    nodes.forEach((n) => {
+      const p = getPlaceholderPeer(n);
+      if (p?.id) byId.set(p.id, { peer: p, nodeId: n.id });
+    });
+    return byId;
+  }, [nodes]);
+
   const groupPeers = useMemo(() => {
-    if (!peers) return [];
-    const existing = realGroupId ? getGroupPeers(peers, realGroupId) : [];
-    const addedPeers = peers.filter(
+    const existing =
+      peers && realGroupId ? getGroupPeers(peers, realGroupId) : [];
+    const addedPeers = (peers ?? []).filter(
       (p) =>
         p.id && addedMembers.has(p.id) && !existing.some((e) => e.id === p.id),
     );
-    return [...existing, ...addedPeers].filter(
+    return [...existing, ...addedPeers, ...draftMemberPeers].filter(
       (p) => !removedMembers.has(p.id ?? ""),
     );
-  }, [peers, realGroupId, addedMembers, removedMembers]);
+  }, [peers, realGroupId, addedMembers, removedMembers, draftMemberPeers]);
 
   const resources = useMemo(() => {
-    if (!networkResources) return [];
-    const existing = realGroupId
-      ? getGroupResources(networkResources, realGroupId)
-      : [];
-    const addedResources = networkResources.filter(
+    const existing =
+      networkResources && realGroupId
+        ? getGroupResources(networkResources, realGroupId)
+        : [];
+    const addedResources = (networkResources ?? []).filter(
       (r) => addedMembers.has(r.id) && !existing.some((e) => e.id === r.id),
     );
-    return [...existing, ...addedResources].filter(
+    return [...existing, ...addedResources, ...draftMemberResources].filter(
       (r) => !removedMembers.has(r.id),
     );
-  }, [networkResources, realGroupId, addedMembers, removedMembers]);
+  }, [
+    networkResources,
+    realGroupId,
+    addedMembers,
+    removedMembers,
+    draftMemberResources,
+  ]);
 
   // ---- Membership editing ("All" membership is automatic) ----
   // Checking/unchecking only edits a LOCAL selection (the node's count text
@@ -356,6 +473,25 @@ export const DestinationGroupPanel = ({
           removeGroupMember(group, { resourceId: r.id });
         }
       });
+      // Draft members only appear as rows while they ARE members — the only
+      // possible edit is unassigning them.
+      draftMemberPeers.forEach((p) => {
+        if (p.id && !selectedPeerIds.has(p.id)) {
+          removeGroupMember(group, { peerId: p.id });
+        }
+      });
+      draftMemberResources.forEach((r) => {
+        if (!selectedResourceIds.has(r.id)) {
+          removeGroupMember(group, { resourceId: r.id });
+        }
+      });
+      // Checked canvas placeholders join the group — their node is absorbed,
+      // exactly like a drop.
+      canvasPlaceholderPeers.forEach(({ peer, nodeId }, id) => {
+        if (selectedPeerIds.has(id) && !memberPeerIds.has(id)) {
+          addMemberToGroup(groupNode, { peer, draggedNodeId: nodeId });
+        }
+      });
       // Applying closes the panel. The unmount cleanup restores the counts
       // snapshot — point it at the just-applied selection so it doesn't
       // revert the apply.
@@ -438,9 +574,16 @@ export const DestinationGroupPanel = ({
   // checkbox doubles as assign/unassign — same pattern as PeerGroupSelector.
   // Live: members only.
   const peerRows = useMemo(() => {
+    // Draft members (placeholder peers) aren't in the API list — they lead
+    // the member section so the row count matches the group's counter.
     const all = canEditMembers
       ? [
+          ...draftMemberPeers,
           ...(peers ?? []).filter((p) => p.id && peerOrder.has(p.id)),
+          // Canvas placeholders not yet in the group are assignable.
+          ...[...canvasPlaceholderPeers.values()]
+            .map(({ peer }) => peer)
+            .filter((p) => p.id && !addedMembers.has(p.id)),
           ...(peers ?? []).filter((p) => p.id && !peerOrder.has(p.id)),
         ]
       : groupPeers;
@@ -451,11 +594,12 @@ export const DestinationGroupPanel = ({
         p.ip?.toLowerCase().includes(query) ||
         p.dns_label?.toLowerCase().includes(query),
     );
-  }, [canEditMembers, groupPeers, peers, peerOrder, query]);
+  }, [canEditMembers, groupPeers, peers, peerOrder, draftMemberPeers, query]);
 
   const resourceRows = useMemo(() => {
     const all = canEditMembers
       ? [
+          ...draftMemberResources,
           ...(networkResources ?? []).filter((r) => resourceOrder.has(r.id)),
           ...(networkResources ?? []).filter((r) => !resourceOrder.has(r.id)),
         ]
@@ -466,11 +610,23 @@ export const DestinationGroupPanel = ({
         r.name?.toLowerCase().includes(query) ||
         r.address?.toLowerCase().includes(query),
     );
-  }, [canEditMembers, resources, networkResources, resourceOrder, query]);
+  }, [
+    canEditMembers,
+    resources,
+    networkResources,
+    resourceOrder,
+    draftMemberResources,
+    query,
+  ]);
 
   // Footer count — total assignable entities per tab.
-  const totalPeers = (peers ?? []).filter((p) => p.id).length;
-  const totalResources = (networkResources ?? []).length;
+  const totalPeers =
+    (peers ?? []).filter((p) => p.id).length +
+    draftMemberPeers.length +
+    [...canvasPlaceholderPeers.keys()].filter((id) => !addedMembers.has(id))
+      .length;
+  const totalResources =
+    (networkResources ?? []).length + draftMemberResources.length;
 
   // ---- Placement: open NEXT TO the clicked group node, not glued to the
   // right edge. Node on the right half → panel opens to its left (and vice
@@ -721,11 +877,29 @@ export const DestinationGroupPanel = ({
                   onToggle={canEditMembers ? () => togglePeer(peer) : undefined}
                 >
                   <DeviceCard
-                    device={peer}
+                    // Draft peers show the same dimmed "assigned on install"
+                    // IP placeholder as their canvas card.
+                    device={
+                      peer.id?.startsWith("draft-")
+                        ? {
+                            ...peer,
+                            ip: getIpPlaceholderFromRange(
+                              account?.settings?.network_range,
+                            ),
+                          }
+                        : peer
+                    }
                     size="small"
                     className="flex-1"
                     nameMaxWidth="260px"
+                    // Draft peers wear the same NEW badge as on the canvas.
+                    badge={
+                      peer.id?.startsWith("draft-") ? <SmallBadge /> : undefined
+                    }
                   />
+                  {isDraft && peer.id?.startsWith("draft-") && (
+                    <DraftPeerRowActions draftPeer={peer} />
+                  )}
                 </MemberRow>
               ))}
               {peerRows.length === 0 && (
@@ -750,11 +924,34 @@ export const DestinationGroupPanel = ({
                   }
                 >
                   <DeviceCard
-                    resource={resource}
+                    // Draft resources without an address show the same
+                    // dimmed placeholder as their canvas card.
+                    resource={
+                      resource.id?.startsWith("new-") && !resource.address
+                        ? { ...resource, address: "IP, CIDR or Domain" }
+                        : resource
+                    }
                     size="small"
                     className="flex-1"
                     nameMaxWidth="260px"
+                    badge={
+                      resource.id?.startsWith("new-") ? (
+                        <SmallBadge />
+                      ) : undefined
+                    }
                   />
+                  {isDraft &&
+                    resource.id?.startsWith("new-") &&
+                    !(resource as { draftNetwork?: unknown }).draftNetwork && (
+                      <DraftStatusChip
+                        label={"No network"}
+                        onClick={() =>
+                          setResourceNetworkPicker({
+                            nodeId: `resource-${resource.id}`,
+                          })
+                        }
+                      />
+                    )}
                 </MemberRow>
               ))}
               {resourceRows.length === 0 && (

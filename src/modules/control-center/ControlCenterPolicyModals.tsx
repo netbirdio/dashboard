@@ -254,7 +254,9 @@ export function ControlCenterPolicyProvider({
     // Anchor for nodes that don't exist yet: sources stack to the left of it,
     // destinations to the right (used when dropping a policy from the
     // sidebar; connect-created policies always have their endpoints already).
-    const base = fallbackPosition ?? { x: 0, y: 0 };
+    // When editing a policy already on canvas, its own position is the anchor.
+    const base = fallbackPosition ??
+      findNode(policyNodeId)?.position ?? { x: 0, y: 0 };
     let newSourceCount = 0;
     let newDestCount = 0;
 
@@ -278,14 +280,6 @@ export function ControlCenterPolicyProvider({
       return false;
     };
 
-    const nextSourcePosition = () => ({
-      x: base.x - 450,
-      y: base.y + newSourceCount * 110,
-    });
-    const nextDestPosition = () => ({
-      x: base.x + 450,
-      y: base.y + newDestCount * 110,
-    });
 
     // All of the policy's edges are rebuilt — stale ones are dropped when the
     // canvas is updated below.
@@ -330,6 +324,44 @@ export function ControlCenterPolicyProvider({
       }
       return undefined;
     };
+
+    // New side nodes join the EXISTING column: aligned to its x, stacked
+    // below its lowest node — what Auto Arrange would produce — instead of
+    // landing at the anchor, which put new sources above the source column
+    // and new destinations below the policy when editing a policy in place.
+    const sideColumnPositions = (groups: (Group | string)[] | undefined) => {
+      const positions: XYPosition[] = [];
+      for (const g of groups ?? []) {
+        const gid = groupKey(g);
+        if (!gid) continue;
+        const nodeId = findGroupNode(
+          gid,
+          typeof g === "string" ? undefined : g.name,
+        );
+        const node = nodeId ? findNode(nodeId) : undefined;
+        if (node) positions.push(node.position);
+      }
+      return positions;
+    };
+    const sourceColumn = sideColumnPositions(rule.sources as Group[]);
+    const destColumn = sideColumnPositions(rule.destinations as Group[]);
+
+    const nextInColumn = (
+      column: XYPosition[],
+      newCount: number,
+      fallbackX: number,
+    ): XYPosition =>
+      column.length
+        ? {
+            x: Math.min(...column.map((p) => p.x)),
+            y: Math.max(...column.map((p) => p.y)) + (newCount + 1) * 110,
+          }
+        : { x: fallbackX, y: base.y + newCount * 110 };
+
+    const nextSourcePosition = () =>
+      nextInColumn(sourceColumn, newSourceCount, base.x - 450);
+    const nextDestPosition = () =>
+      nextInColumn(destColumn, newDestCount, base.x + 450);
 
     // --- Source nodes ---
     const sourceNodeIds: string[] = [];

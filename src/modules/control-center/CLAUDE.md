@@ -3,6 +3,7 @@
 Canvas-based network topology editor built on [ReactFlow](https://reactflow.dev/) (xyflow v12). Peers, groups, policies, and networks are nodes; policies connect them. Live mode shows the real account; Draft mode is a local editor whose changes deploy as a batch.
 
 > Keep this file in sync when the architecture or the rules below change — but keep it SHORT. Details live in the code.
+> The full node-interaction matrix (connects, drops, menus, rename/delete rules) lives in `specs/interaction-matrix.md` — update it when interaction behavior changes; the control-center e2e suites are generated from it.
 
 ## Architecture
 
@@ -30,7 +31,7 @@ Key directories under `control-center/`: `hooks/` (data, views, draft logic, lay
 
 Peer / Group / User: select node on the left → policies (x500, 60 pitch) → destinations (groups + resources as ONE column, x1000, 100 pitch). Built with `applyD3HierarchicalLayout(nodes, edges, 400, 120, view, DEFAULT_LAYOUT_CONFIG)`. Policies sorted by enabled; the GROUP view additionally name-sorts each policy's destinations/sources. GROUP view also shows policies where the selected group is only a DESTINATION, mirrored to the left (sources at x-1000 → policy at x-500 → selected group); those policy nodes carry `data.side === "left"`, which the layout uses to split the policy column.
 
-Networks: all networks as interactive frames (resources as child rows, capped at 6 with a "+N more" cell) — sources column (160 pitch) → policy nodes (x500 +14, 90 pitch — same anchor as the other views so policies don't jump on view switch) → staggered frame grid (`packFrameGrid`, centered on the columns' midline). Clicking a frame drills into the single-network view (`drilled-layout.ts`, shared with draft). Focus mode (click a group, policy, peer, or standalone resource — live AND draft) dims everything off the node's edge path via `cc-dimmed` and rings the focused node; policy editing lives in the node's right-click menu (live: Edit + Disable/Enable only, behind "you are in live mode" confirmations via `usePolicies` + `refreshLiveViewRef`).
+Networks: all networks as interactive frames (resources as child rows, capped at 6 with a "+N more" cell) — sources column (160 pitch) → policy nodes (x500 +14, 90 pitch — same anchor as the other views so policies don't jump on view switch) → staggered frame grid (`packFrameGrid`, centered on the columns' midline). Clicking a frame drills into the single-network view (`drilled-layout.ts`, shared with draft). Focus mode is EXPLICIT (a node's context-menu Focus item or the header's armed Focus tool — live AND draft; left-clicking a group only opens its panel, no dim) and dims everything off the node's edge path via `cc-dimmed` and rings the focused node; policy editing lives in the node's right-click menu (live: Edit + Disable/Enable only, behind "you are in live mode" confirmations via `usePolicies` + `refreshLiveViewRef`).
 
 ## Draft mode
 

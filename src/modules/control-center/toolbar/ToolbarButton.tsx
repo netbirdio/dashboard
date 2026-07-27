@@ -12,6 +12,7 @@ interface ToolbarButtonProps {
   className?: string;
   variant?: "default" | "primary";
   onClick?: () => void;
+  "data-testid"?: string;
 }
 
 export const ToolbarButton = ({
@@ -23,11 +24,13 @@ export const ToolbarButton = ({
   className,
   variant = "default",
   onClick,
+  "data-testid": dataTestId,
 }: ToolbarButtonProps) => {
   const button = (
     <button
       onClick={onClick}
       disabled={disabled}
+      data-testid={dataTestId}
       className={cn(
         "h-8 flex items-center justify-center rounded-md transition-colors",
         variant === "default" &&

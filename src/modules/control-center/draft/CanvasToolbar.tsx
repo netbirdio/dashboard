@@ -178,6 +178,7 @@ export const CanvasToolbar = () => {
       <ToolbarGroup position="first" className="pl-2 py-1.5">
         <ToolbarButton
           tooltip="Add Components"
+          data-testid="cc-toolbar-add"
           shortcut="C"
           variant="primary"
           active={componentsPanelOpen}
@@ -226,6 +227,7 @@ export const CanvasToolbar = () => {
         <ToolbarButton
           disabled={!canUndo}
           tooltip="Undo"
+          data-testid="cc-toolbar-undo"
           shortcut={UndoShortcut}
           onClick={undo}
           className="w-8"
@@ -235,6 +237,7 @@ export const CanvasToolbar = () => {
         <ToolbarButton
           disabled={!canRedo}
           tooltip="Redo"
+          data-testid="cc-toolbar-redo"
           shortcut={RedoShortcut}
           onClick={redo}
           className="w-8"
@@ -264,6 +267,7 @@ export const CanvasToolbar = () => {
         </ToolbarButton>
         <ToolbarButton
           tooltip="Fit to View"
+          data-testid="cc-toolbar-fit"
           shortcut="1"
           onClick={handleFitView}
           className="w-8"

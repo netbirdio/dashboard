@@ -15,7 +15,10 @@ import { Network } from "@/interfaces/Network";
 import { isFrameNode } from "@/modules/control-center/utils/helpers";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
+import {
+  getNetworkRef,
+  useDraftNetworkActions,
+} from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { NetworkModalContent } from "@/modules/networks/NetworkModal";
 
@@ -49,8 +52,11 @@ const PickerContent = ({
 }) => {
   const reactFlow = useReactFlow();
   const { networks } = useControlCenterData();
-  const { assignResourceToNetwork, assignResourceToExistingNetwork } =
-    useDraftNetworkActions();
+  const {
+    assignResourceToNetwork,
+    assignResourceToExistingNetwork,
+    assignHeldResourceToNetwork,
+  } = useDraftNetworkActions();
   const { addDraftNetwork } = useDraftNodeCreation();
   const [creating, setCreating] = React.useState(false);
   const [selected, setSelected] = React.useState("");
@@ -81,21 +87,43 @@ const PickerContent = ({
     return [...frames, ...api];
   }, [reactFlow, networks]);
 
+  // The resource may have no canvas node anymore (absorbed into a group as
+  // a member) — those assign through the group-held path instead.
+  const isHeld = !reactFlow.getNodes().some((n) => n.id === resourceNodeId);
+  const heldResourceId = resourceNodeId.replace("resource-", "");
+
   const save = () => {
     if (!selected) return;
     if (selected.startsWith("frame:")) {
-      assignResourceToNetwork({
-        resourceNodeId,
-        networkNodeId: selected.slice("frame:".length),
-      });
+      const networkNodeId = selected.slice("frame:".length);
+      if (isHeld) {
+        const frame = reactFlow.getNodes().find((n) => n.id === networkNodeId);
+        const networkRef = getNetworkRef(frame);
+        if (networkRef) {
+          assignHeldResourceToNetwork({
+            resourceId: heldResourceId,
+            networkRef,
+          });
+        }
+      } else {
+        assignResourceToNetwork({ resourceNodeId, networkNodeId });
+      }
     } else if (selected.startsWith("api:")) {
       const id = selected.slice("api:".length);
       const net = networks?.find((n) => n.id === id);
-      if (net?.id)
-        assignResourceToExistingNetwork({
-          resourceNodeId,
-          network: { id: net.id, name: net.name },
-        });
+      if (net?.id) {
+        if (isHeld) {
+          assignHeldResourceToNetwork({
+            resourceId: heldResourceId,
+            networkRef: { networkId: net.id, name: net.name },
+          });
+        } else {
+          assignResourceToExistingNetwork({
+            resourceNodeId,
+            network: { id: net.id, name: net.name },
+          });
+        }
+      }
     }
     onClose();
   };
@@ -111,8 +139,19 @@ const PickerContent = ({
     // commit — assigning immediately (or on a 0ms timeout) can run before
     // it exists, silently leaving the resource unparented. Wait for it.
     const tryAssign = (attempt = 0) => {
-      if (reactFlow.getNodes().some((n) => n.id === networkNodeId)) {
-        assignResourceToNetwork({ resourceNodeId, networkNodeId });
+      const frame = reactFlow.getNodes().find((n) => n.id === networkNodeId);
+      if (frame) {
+        if (isHeld) {
+          const networkRef = getNetworkRef(frame);
+          if (networkRef) {
+            assignHeldResourceToNetwork({
+              resourceId: heldResourceId,
+              networkRef,
+            });
+          }
+        } else {
+          assignResourceToNetwork({ resourceNodeId, networkNodeId });
+        }
         return;
       }
       if (attempt < 60) requestAnimationFrame(() => tryAssign(attempt + 1));

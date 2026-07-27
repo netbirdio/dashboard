@@ -5,12 +5,13 @@ import {
 } from "@/modules/control-center/ControlCenterContext";
 import { isFocusWorthy } from "@/modules/control-center/utils/helpers";
 
-// Focus highlight (live AND draft): while a group's side panel is open (or
-// a peer/resource is focused), everything that is NOT on the node's path
-// dims to grayscale — the node, the policies it feeds, and the
-// networks/destinations those reach stay lit, so "group X → policy →
-// network Y" reads at a glance. Applied via node/edge `className`
-// (`cc-dimmed`, globals.css); cleared when the focus ends.
+// Focus highlight (live AND draft): while a node is explicitly focused (via
+// its context menu's Focus item or the header's armed Focus tool), everything
+// that is NOT on the node's path dims to grayscale — the node, the policies
+// it feeds, and the networks/destinations those reach stay lit, so "group X →
+// policy → network Y" reads at a glance. Applied via node/edge `className`
+// (`cc-dimmed`, globals.css); cleared when the focus ends. Merely opening a
+// group's side panel (left click) does NOT focus — focus is an explicit tool.
 // Selector nodes (pick a peer/group/user) aren't real entities and can never
 // be focused.
 const SELECTOR_NODE_TYPES = new Set([
@@ -21,12 +22,8 @@ const SELECTOR_NODE_TYPES = new Set([
 
 export function useGroupFocusDim() {
   const { nodes, edges, setNodes, setEdges } = useCanvasState();
-  const { selectedDestinationGroup, focusedNodeId, highlightArmed } =
-    useDestinationGroup();
+  const { focusedNodeId, highlightArmed } = useDestinationGroup();
 
-  // Either a group (panel open) or a directly focused node (peer click in
-  // the user view).
-  const focusGroup = selectedDestinationGroup;
   const focusNode = focusedNodeId;
 
   useEffect(() => {
@@ -54,7 +51,7 @@ export function useGroupFocusDim() {
       }
     };
 
-    if (!focusGroup && !focusNode) {
+    if (!focusNode) {
       // Focus Mode armed but nothing targeted yet: mark the nodes that CAN'T
       // be focused (selectors, nodes without a single edge) so the armed
       // hover ring / pointer skips them (cc-unfocusable, globals.css).
@@ -86,15 +83,7 @@ export function useGroupFocusDim() {
       clear();
       return;
     }
-    const root = focusNode
-      ? nodes.find((n) => n.id === focusNode)
-      : nodes.find(
-          (n) =>
-            (n.data as { group?: { id?: string } })?.group?.id ===
-              focusGroup ||
-            n.id === focusGroup ||
-            n.id === `group-${focusGroup}`,
-        );
+    const root = nodes.find((n) => n.id === focusNode);
     if (!root) {
       clear();
       return;
@@ -182,5 +171,5 @@ export function useGroupFocusDim() {
       return changed ? next : prev;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusGroup, focusNode, highlightArmed, nodes, edges]);
+  }, [focusNode, highlightArmed, nodes, edges]);
 }

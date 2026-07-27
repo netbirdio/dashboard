@@ -10,6 +10,7 @@ import {
 } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import {
   canDropGroupIntoNetwork,
+  getDraftResource,
   getFrameChildPosition,
   getPlaceholderPeer,
   getTopZIndex,
@@ -26,6 +27,10 @@ import {
 import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
+import {
+  patchGroupInPolicies,
+  sameGroupMatcher,
+} from "@/modules/control-center/utils/policy-group-sync";
 
 const GROUP_NODE_TYPES = new Set([
   "groupNode",
@@ -120,6 +125,9 @@ export function useDragToGroup() {
       if (groupContainsItem(targetGroup, itemId)) return;
 
       const groupData = targetGroup.data.group as Group;
+      // "All" is system-managed (every peer is in it implicitly) — manual
+      // membership makes no sense.
+      if (groupData.name === "All") return;
 
       // Remove the dragged node and its edges
       if (draggedNodeId) {
@@ -131,18 +139,61 @@ export function useDragToGroup() {
         );
       }
 
+      const bumpCounts = (g: Group): Group => ({
+        ...g,
+        peers_count: peer ? (g.peers_count || 0) + 1 : g.peers_count,
+        resources_count: resource
+          ? (g.resources_count || 0) + 1
+          : g.resources_count,
+      });
+
+      // A draft peer joining any group will also be in the system "All"
+      // group once installed — the canvas's All node mirrors that (count +
+      // Details list). Real peers are already in All's API counts, and All
+      // membership is implicit, so no changeset entry is ever recorded.
+      const bumpsAll = !!peer && itemId.startsWith("draft-");
+      const isAllMatcher = (g: Group) => g.name === "All";
+
+      // Draft members aren't in the API lists the group Details panel reads
+      // — keep their full objects on the group node so the panel can list
+      // them after the dropped node leaves the canvas.
+      const draftPeerMember =
+        peer && itemId.startsWith("draft-") ? peer : undefined;
+      const draftResourceMember =
+        resource && itemId.startsWith("new-") ? resource : undefined;
+      const withDraftMembers = (data: Record<string, unknown>) => {
+        if (draftPeerMember) {
+          const held = (data.draftPeers as Peer[] | undefined) ?? [];
+          if (!held.some((p) => p.id === itemId)) {
+            data.draftPeers = [...held, draftPeerMember];
+          }
+        }
+        if (draftResourceMember) {
+          const held = (data.draftResources as NetworkResource[]) ?? [];
+          if (!held.some((r) => r.id === itemId)) {
+            data.draftResources = [...held, draftResourceMember];
+          }
+        }
+        return data;
+      };
+
       // Update counts and added members on EVERY canvas instance of the
       // group — a group can appear twice (source node + destination copy),
-      // and both must reflect the new member.
-      setNodes((prev) =>
-        prev.map((n) => {
+      // and both must reflect the new member. Policy nodes/edges hold their
+      // own group copies (they seed the edit modal), so those follow too.
+      setNodes((prev) => {
+        let next = prev.map((n) => {
           const g = n.data?.group as Group | undefined;
           if (!g) return n;
           const sameGroup = groupData.id
             ? g.id === groupData.id
             : !g.id && g.name === groupData.name;
-          if (!sameGroup) return n;
-          const group = { ...g };
+          const allBystander =
+            !sameGroup &&
+            bumpsAll &&
+            g.name === "All" &&
+            !groupContainsItem(n, itemId);
+          if (!sameGroup && !allBystander) return n;
           const removedMembers = new Set(
             (n.data.removedMembers as Set<string>) ?? [],
           );
@@ -154,18 +205,37 @@ export function useDragToGroup() {
           if (removedMembers.has(itemId)) removedMembers.delete(itemId);
           else addedMembers.add(itemId);
 
-          if (peer) {
-            group.peers_count = (group.peers_count || 0) + 1;
-          }
-          if (resource) {
-            group.resources_count = (group.resources_count || 0) + 1;
-          }
           return {
             ...n,
-            data: { ...n.data, group, addedMembers, removedMembers },
+            data: withDraftMembers({
+              ...n.data,
+              group: bumpCounts(g),
+              addedMembers,
+              removedMembers,
+            }),
           };
-        }),
-      );
+        });
+        next = patchGroupInPolicies(
+          next,
+          sameGroupMatcher(groupData),
+          bumpCounts,
+        );
+        if (bumpsAll) {
+          next = patchGroupInPolicies(next, isAllMatcher, bumpCounts);
+        }
+        return next;
+      });
+      setEdges((prev) => {
+        let next = patchGroupInPolicies(
+          prev,
+          sameGroupMatcher(groupData),
+          bumpCounts,
+        );
+        if (bumpsAll) {
+          next = patchGroupInPolicies(next, isAllMatcher, bumpCounts);
+        }
+        return next;
+      });
 
       trackAddGroupMembers({
         groupId: groupData.id,
@@ -226,6 +296,31 @@ export function useDragToGroup() {
       frameDrag.current = null;
       lastHighlightCheck.current = null;
       if (!isDraft) return;
+
+      // While a peer/resource drags, every group it could drop into gets a
+      // white border (dropEligible → GroupNode); the one under the pointer
+      // upgrades to the stronger dropTarget ring via the drag-tick highlight.
+      if (
+        DROPPABLE_NODE_TYPES.has(draggedNode.type ?? "") &&
+        !draggedNode.parentId
+      ) {
+        const itemId = getDraggedItemId(draggedNode);
+        if (itemId) {
+          setNodes((prev) => {
+            let changed = false;
+            const next = prev.map((n) => {
+              if (n.id === draggedNode.id) return n;
+              if (!GROUP_NODE_TYPES.has(n.type ?? "")) return n;
+              if ((n.data?.group as Group)?.name === "All") return n;
+              if (groupContainsItem(n, itemId)) return n;
+              changed = true;
+              return { ...n, data: { ...n.data, dropEligible: true } };
+            });
+            return changed ? next : prev;
+          });
+        }
+      }
+
       const parentId = draggedNode.parentId;
       if (!parentId?.startsWith("network-")) return;
       const frame = reactFlow.getNodes().find((n) => n.id === parentId);
@@ -343,9 +438,13 @@ export function useDragToGroup() {
       const targetGroup = getIntersectingGroup(draggedNode, reactFlow);
       const itemId = getDraggedItemId(draggedNode);
 
-      // Don't highlight if item already belongs to this group
+      // Don't highlight if the item already belongs to this group, or for
+      // the system-managed "All" group (manual membership makes no sense).
       const canDrop =
-        targetGroup && itemId && !groupContainsItem(targetGroup, itemId);
+        targetGroup &&
+        itemId &&
+        (targetGroup.data.group as Group)?.name !== "All" &&
+        !groupContainsItem(targetGroup, itemId);
 
       setNodes((prev) => {
         let changed = false;
@@ -366,14 +465,19 @@ export function useDragToGroup() {
     (_event: React.MouseEvent, draggedNode: Node) => {
       if (!isDraft) return;
 
-      // Always clear frame drop-target highlights first, regardless of where
-      // the drag ends (the branches below return early).
+      // Always clear frame drop-target highlights and the drop-eligible
+      // borders first, regardless of where the drag ends (the branches
+      // below return early).
       setNodes((prev) => {
         let changed = false;
         const next = prev.map((n) => {
-          if (!(isFrameNode(n) && n.data.dropTarget)) return n;
+          const clearFrame = isFrameNode(n) && n.data.dropTarget;
+          if (!clearFrame && !n.data.dropEligible) return n;
           changed = true;
-          return { ...n, data: { ...n.data, dropTarget: false } };
+          return {
+            ...n,
+            data: { ...n.data, dropTarget: false, dropEligible: false },
+          };
         });
         return changed ? next : prev;
       });
@@ -513,9 +617,11 @@ export function useDragToGroup() {
       const peer =
         (draggedNode.data?.peer as Peer | undefined) ??
         getPlaceholderPeer(draggedNode);
-      const resource = draggedNode.data?.resource as
-        | NetworkResource
-        | undefined;
+      // Draft resources go through getDraftResource so the stored object
+      // always has its "new-…" id and name — the raw node data may be blank.
+      const resource = draggedNode.id.startsWith("resource-new-")
+        ? getDraftResource(draggedNode)
+        : (draggedNode.data?.resource as NetworkResource | undefined);
 
       addMemberToGroup(targetGroup, {
         peer,

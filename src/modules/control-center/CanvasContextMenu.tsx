@@ -216,6 +216,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   return createPortal(
     <div
       ref={menuRef}
+      data-testid="cc-canvas-context-menu"
       className="fixed z-50 min-w-[210px] rounded-md border border-nb-gray-900 bg-nb-gray-940 p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
       style={{
         top: (menuPosition ?? position).y,

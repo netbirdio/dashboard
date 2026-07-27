@@ -218,6 +218,7 @@ await visitByNavigation(page, "Policies");         // Click child
 | Notifications | `settings-notifications-email.spec.ts`, `settings-notifications-slack.spec.ts`, `settings-notifications-webhook.spec.ts` | `@notifications` |
 | Team | `team-users.spec.ts`, `team-service-users.spec.ts`, `team-users-approval-and-billing.spec.ts` | `@team` |
 | Setup Keys | `setup-keys.spec.ts` | `@setup-keys` |
+| Control Center | `control-center-draft.spec.ts`, `control-center-draft-connections.spec.ts`, `control-center-draft-matrix.spec.ts` | `@control-center` |
 
 ## Debugging
 

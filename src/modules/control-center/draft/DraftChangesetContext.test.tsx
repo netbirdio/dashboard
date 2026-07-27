@@ -5,6 +5,7 @@ import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
 import {
   DraftChangesetProvider,
+  getCanvasWarnings,
   useDraftChangeset,
 } from "./DraftChangesetContext";
 
@@ -444,5 +445,81 @@ describe("network / resource / router changes", () => {
     expect(
       result.current.changes.find((c) => c.type === "create-router"),
     ).toMatchObject({ groupId: "G2", groupName: "G2" });
+  });
+});
+
+describe("canvas warnings", () => {
+  const policyNode = (id: string, rule: Partial<Policy["rules"][number]>) => ({
+    id: `policy-${id}`,
+    type: "policyNode",
+    data: { policy: makePolicy(id, rule) },
+  });
+
+  it("warns about a complete-looking policy referencing a placeholder peer", () => {
+    const nodes = [
+      policyNode("new-1", {
+        sources: [{ id: "g1", name: "Ops" } as Group],
+        destinationResource: { id: "draft-abc", type: "host" },
+      }),
+    ];
+    const warnings = getCanvasWarnings(nodes, []);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("isn't installed yet");
+  });
+
+  it("stays silent for visibly incomplete policies", () => {
+    const nodes = [
+      policyNode("new-1", {
+        destinationResource: { id: "draft-abc", type: "host" },
+      }),
+    ];
+    expect(getCanvasWarnings(nodes, [])).toHaveLength(0);
+  });
+
+  it("warns about a standalone draft resource that never became trackable", () => {
+    const nodes = [
+      {
+        id: "resource-new-1",
+        type: "resourceNode",
+        data: { resource: { name: "Internal API" } },
+      },
+    ];
+    const warnings = getCanvasWarnings(nodes, []);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("no network assigned");
+  });
+
+  it("does not warn about a tracked draft resource", () => {
+    const nodes = [
+      {
+        id: "resource-new-1",
+        type: "resourceNode",
+        data: { resource: { name: "Internal API" } },
+      },
+    ];
+    const changes = [
+      {
+        id: "c1",
+        type: "create-resource",
+        clientId: "new-1",
+        name: "Internal API",
+        address: "10.0.0.1",
+        networkName: "Net",
+        groupIds: [],
+      },
+    ] as any;
+    expect(getCanvasWarnings(nodes, changes)).toHaveLength(0);
+  });
+
+  it("warns about a policy referencing an untracked draft resource", () => {
+    const nodes = [
+      policyNode("new-1", {
+        sources: [{ id: "g1", name: "Ops" } as Group],
+        destinationResource: { id: "new-x", type: "host" },
+      }),
+    ];
+    const warnings = getCanvasWarnings(nodes, []);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("resource without a network");
   });
 });

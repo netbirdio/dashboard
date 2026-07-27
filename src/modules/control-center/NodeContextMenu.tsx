@@ -43,6 +43,7 @@ import {
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
@@ -112,6 +113,7 @@ export const NodeContextMenu = ({
     trackDeletePolicy,
     trackUpdateResource,
     trackDeleteResource,
+    trackInstallPeer,
   } = useDraftChangeset();
   const { confirm } = useDialog();
   const {
@@ -164,6 +166,21 @@ export const NodeContextMenu = ({
     [nodes, renameTarget],
   );
 
+  // Group names must be unique across API groups AND the draft groups on the
+  // canvas (name-based matching becomes ambiguous otherwise), and "All" is
+  // reserved for the system group.
+  const groupTakenNames = useMemo(() => {
+    const currentGroup = getNodeGroup(renameTarget ?? undefined);
+    const names = new Set<string>(["All"]);
+    groups?.forEach((g) => names.add(g.name));
+    nodes.forEach((n) => {
+      const g = getNodeGroup(n);
+      if (g?.name && g.name !== currentGroup?.name) names.add(g.name);
+    });
+    names.delete(currentGroup?.name ?? "");
+    return Array.from(names);
+  }, [groups, nodes, renameTarget]);
+
   // Placeholder names live only on the canvas node — the real name comes from
   // the machine once the peer is installed.
   const renamePlaceholder = useCallback(
@@ -175,8 +192,17 @@ export const NodeContextMenu = ({
             : n,
         ),
       );
+      // The pending install-peer entry follows the rename.
+      const kind = nodes.find((n) => n.id === id)?.data?.placeholderKind as
+        | "user-device"
+        | "server"
+        | "agent"
+        | undefined;
+      if (kind) {
+        trackInstallPeer({ clientId: id.replace("peer-", ""), name, kind });
+      }
     },
-    [setNodes],
+    [setNodes, nodes, trackInstallPeer],
   );
 
   // Rename a draft resource node (canvas + changeset re-sync for saved ones).
@@ -347,52 +373,12 @@ export const NodeContextMenu = ({
     setEdges,
   ]);
 
-  // Remove a policy from the CANVAS (no confirm, nothing deleted): the
-  // policy node and its edges go away; its source and destination nodes STAY
-  // on the canvas. The policy itself loses its sources/destinations: a
-  // draft-created policy drops its pending create, an existing policy records
-  // an update-policy change with emptied sides (superseding any pending
-  // update/toggle) so the disconnect deploys.
+  // Canvas-only policy removal — shared with the Delete/Backspace keys via
+  // useNodeRemoval (see the hook for the changeset semantics).
+  const { removePolicyFromCanvas } = useNodeRemoval();
   const handleRemovePolicyFromCanvas = useCallback(() => {
-    if (!nodePolicy) return;
-
-    if (nodeId.startsWith("policy-new-")) {
-      // Cancels the pending create (changeset semantics for "new-" ids).
-      trackDeletePolicy({
-        policyId: policyClientId,
-        name: nodePolicy.name ?? "Policy",
-      });
-    } else {
-      const rule = nodePolicy.rules?.[0];
-      trackUpdatePolicy({
-        policyId: policyClientId,
-        policy: {
-          ...nodePolicy,
-          rules: rule
-            ? [
-                {
-                  ...rule,
-                  sources: [],
-                  destinations: [],
-                  sourceResource: undefined,
-                  destinationResource: undefined,
-                },
-                ...(nodePolicy.rules?.slice(1) ?? []),
-              ]
-            : nodePolicy.rules,
-        },
-      });
-    }
-
-    removeNodeWithEdges(nodeId);
-  }, [
-    nodePolicy,
-    nodeId,
-    policyClientId,
-    trackDeletePolicy,
-    trackUpdatePolicy,
-    removeNodeWithEdges,
-  ]);
+    if (node) removePolicyFromCanvas(node);
+  }, [node, removePolicyFromCanvas]);
 
   // Delete an EXISTING policy: confirm, record the delete-policy change, then
   // take it off the canvas.
@@ -585,15 +571,18 @@ export const NodeContextMenu = ({
   );
 
   // "Details" for peers (live AND draft): opens the peer's groups panel —
-  // the same panel a left-click opens. Real peers only.
+  // the same panel a left-click opens. Placeholders included: their group
+  // assignments become the setup key's auto-groups.
   const peerDetailsItems = useCallback(
     (n: Node): MenuItem[] => {
       const isPeer =
         n.type === "peerNode" ||
         n.type === "sourcePeerNode" ||
         n.type === "expandedGroupPeer";
-      const peerId = (n.data as { peer?: { id?: string } })?.peer?.id;
-      if (!isPeer || !peerId || peerId.startsWith("draft-")) return [];
+      const peerId =
+        (n.data as { peer?: { id?: string } })?.peer?.id ??
+        getPlaceholderPeer(n)?.id;
+      if (!isPeer || !peerId) return [];
       return [
         {
           label: "Details",
@@ -817,12 +806,14 @@ export const NodeContextMenu = ({
       ];
     }
 
-    // Placeholder peers (Server / Agent / User Device) — canvas-only rename.
+    // Placeholder peers (Server / Agent / User Device) — canvas-only rename,
+    // plus Details (group assignments become the setup key's auto-groups).
     // A user-device select node with a peer chosen is that peer already, so
     // it falls through to the plain Remove below.
     if (canRenamePeerNode(node)) {
       return [
         ...focusItems(node),
+        ...peerDetailsItems(node),
         {
           label: "Rename",
           icon: <PencilLineIcon size={14} />,
@@ -1002,6 +993,7 @@ export const NodeContextMenu = ({
       {position && items.length > 0 && (
         <div
           ref={menuRef}
+          data-testid="cc-node-context-menu"
           className="fixed z-50 min-w-[180px] rounded-md border border-nb-gray-900 bg-nb-gray-940 p-1 shadow-lg animate-in fade-in-0 zoom-in-95"
           style={{
             top: (menuPosition ?? position).y,
@@ -1071,7 +1063,7 @@ export const NodeContextMenu = ({
             ? placeholderTakenNames
             : isResourceRename
             ? resourceTakenNames
-            : undefined
+            : groupTakenNames
         }
         duplicateError={
           isPlaceholderRename || isResourceRename

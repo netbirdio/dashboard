@@ -1,16 +1,10 @@
-import {
-  SelectDropdown,
-  SelectOption,
-} from "@components/select/SelectDropdown";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import TruncatedText from "@components/ui/TruncatedText";
-import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
 import { type Node, Position, useConnection } from "@xyflow/react";
-import { sortBy } from "lodash";
 import {
+  AlertTriangleIcon,
   BotIcon,
-  ChevronsUpDown,
   DownloadIcon,
   MonitorSmartphoneIcon,
   ServerIcon,
@@ -19,7 +13,6 @@ import * as React from "react";
 import type { Peer } from "@/interfaces/Peer";
 import { useAccount } from "@/modules/account/useAccount";
 import {
-  useCanvasState,
   useCanvasUI,
   useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
@@ -32,8 +25,6 @@ import {
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { usePlaceholderUpgrade } from "@/modules/control-center/hooks/useDraftPeerUpgrade";
-import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 import Button from "@components/Button";
 
 // A not-yet-installed peer dropped from the components sidebar. Server/Agent
@@ -83,7 +74,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
   );
   const { contextMenuNodeId } = useCanvasUI();
   const { selectedPeerPanel } = useDestinationGroup();
-  const { setInstallModal } = useDraftMode();
+  const { setInstallModal, setUserDeviceModal } = useDraftMode();
   const account = useAccount();
   // Ring while the context menu targets this peer or while its groups panel
   // is open — same halo the group panel puts on its group node.
@@ -91,19 +82,17 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
     contextMenuNodeId === id ||
     (!!selectedPeerPanel && selectedPeerPanel === data.peer?.id);
 
-  if (placeholderKind === "user-device") {
-    return (
-      <UserDeviceSelectNode
-        id={id}
-        data={data}
-        isTarget={isTarget}
-        showHalo={showHalo}
-      />
-    );
-  }
-
-  if (placeholderKind) {
-    const Icon = placeholderKind === "agent" ? BotIcon : ServerIcon;
+  // A user-device placeholder that picked its peer IS that peer (plain card
+  // below); un-picked placeholders of every kind render the placeholder card
+  // — user devices get "Set up" (the install+select stepper modal) instead
+  // of the inline select they used to carry.
+  if (placeholderKind && !peer) {
+    const Icon =
+      placeholderKind === "agent"
+        ? BotIcon
+        : placeholderKind === "user-device"
+        ? MonitorSmartphoneIcon
+        : ServerIcon;
     // Drops always assign a unique placeholderName ("Agent", "Agent (1)", …);
     // the fallback only covers drafts persisted before names existed.
     const label = placeholderName || PLACEHOLDER_BASE_NAMES[placeholderKind];
@@ -114,29 +103,40 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
       <div
         className={cn(
           "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-850",
-          "hover:bg-nb-gray-930 hover:border-nb-gray-800 pr-5 pl-3 py-1",
+          // Same card metrics as StandaloneResourceNode / GroupNode so all
+          // draft cards line up at one height.
+          "hover:bg-nb-gray-930 hover:border-nb-gray-800 pr-5 pl-3 py-2.5",
           isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
           showHalo && "ring-2 ring-sky-500",
         )}
       >
         {/* Floating Install — top-left above the node, zooms with the
             canvas (positioned inside the node, not a NodeToolbar portal). */}
-        <div className={"absolute bottom-full left-0 mb-3"}>
+        {/* Same alert treatment as a standalone resource's "No Network"
+            control — a CTA, not a plain label: user devices open the setup
+            stepper, servers/agents the install modal. */}
+        <div className={"absolute bottom-full left-0 mb-3 nodrag"}>
           <Button
             variant={"secondary"}
             size={"xs"}
             onClick={() =>
-              setInstallModal({
-                isUserDevice: false,
-                setupKey,
-                placeholderKind,
-                nodeId: id,
-              })
+              placeholderKind === "user-device"
+                ? setUserDeviceModal({ nodeId: id, name: label })
+                : setInstallModal({
+                    isUserDevice: false,
+                    setupKey,
+                    placeholderKind,
+                    nodeId: id,
+                  })
             }
-            className={"!px-3"}
+            className={"!px-3 !text-nb-gray-300"}
           >
-            <DownloadIcon size={12} />
-            Install
+            {placeholderKind === "user-device" ? (
+              <AlertTriangleIcon size={12} className={"text-yellow-400"} />
+            ) : (
+              <DownloadIcon size={12} className={"text-yellow-400"} />
+            )}
+            {placeholderKind === "user-device" ? "Install or assign" : "Install"}
           </Button>
         </div>
         <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
@@ -150,7 +150,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
           <div className={"flex flex-col gap-0 justify-center leading-tight"}>
             <span
               className={
-                "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1.5 mt-2"
+                "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1 mt-1 relative top-[0.05rem]"
               }
             >
               <TruncatedText text={label} maxWidth={"150px"} hideTooltip />
@@ -161,7 +161,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
                 the account's peer network range. */}
             <span
               className={
-                "font-normal text-sm text-nb-gray-500 relative -top-[0.3rem]"
+                "font-normal text-sm text-nb-gray-500 relative -top-[0.1rem]"
               }
             >
               {getIpPlaceholderFromRange(account?.settings?.network_range)}
@@ -203,156 +203,6 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
       <AllHandles />
       {showHandles && (
         <>
-          <ConnectHandle type={"source"} position={Position.Left} />
-          <ConnectHandle type={"source"} position={Position.Right} />
-        </>
-      )}
-    </div>
-  );
-};
-
-// Draft "User Device" placeholder: a select node like the live-mode peer
-// picker. Before a peer is chosen it shows "Select existing device..." with a
-// floating Install button (top-left, like the peers toolbar); choosing a
-// peer upgrades the node in place via usePlaceholderUpgrade — edges are
-// rewired and draft policies referencing it follow the selection.
-const UserDeviceSelectNode = ({
-  id,
-  data,
-  isTarget,
-  showHalo,
-}: {
-  id: string;
-  data: PeerNodeType["data"];
-  isTarget: boolean;
-  showHalo: boolean;
-}) => {
-  const { peer, placeholderName, setupKey, showHandles = true } = data;
-  const { data: peers } = useFetchApi<Peer[]>("/peers");
-  const { nodes: canvasNodes } = useCanvasState();
-  const { setInstallModal } = useDraftMode();
-  const upgrade = usePlaceholderUpgrade();
-
-  const label = placeholderName || PLACEHOLDER_BASE_NAMES["user-device"];
-
-  // Peers already on the canvas can't be picked twice — except the one this
-  // node currently shows.
-  const options: SelectOption[] = React.useMemo(
-    () =>
-      sortBy(
-        (peers ?? [])
-          .filter(
-            (p) =>
-              p.id === peer?.id ||
-              !canvasNodes.some((n) => n.id === `peer-${p.id}`),
-          )
-          .map(
-            (p) =>
-              ({
-                value: p.id,
-                label: p.name,
-                icon: () => <PeerOperatingSystemIcon os={p.os} />,
-              }) as SelectOption,
-          ),
-        ["label", "value"],
-      ),
-    [peers, canvasNodes, peer],
-  );
-
-  const onPeerChange = (peerId: string) => {
-    const selected = peers?.find((p) => p.id === peerId);
-    if (!selected?.id || selected.id === peer?.id) return;
-    upgrade([{ nodeId: id, peer: selected }]);
-  };
-
-  return (
-    <div
-      className={cn(
-        "relative rounded-lg transition-all group/node border bg-nb-gray-930 border-nb-gray-800",
-        "hover:bg-nb-gray-910 cursor-pointer",
-        isTarget && "hover:bg-nb-gray-910 hover:ring-2 ring-white",
-        showHalo && "ring-2 ring-sky-500",
-      )}
-    >
-      {/* Floating Install — top-left above the node, like the peers toolbar.
-          Positioned inside the node (not a NodeToolbar portal) so it zooms
-          with the canvas. Hidden once a peer is selected (the device already
-          exists). */}
-      {!peer && (
-        <div className={"absolute bottom-full left-0 mb-3"}>
-          <Button
-            variant={"secondary"}
-            size={"xs"}
-            onClick={() =>
-              setInstallModal({
-                isUserDevice: true,
-                setupKey,
-                placeholderKind: "user-device",
-                nodeId: id,
-              })
-            }
-            className={"!px-3"}
-          >
-            <DownloadIcon size={12} />
-            Install
-          </Button>
-        </div>
-      )}
-
-      <SelectDropdown
-        variant={"secondary"}
-        value={peer?.id ?? ""}
-        onChange={onPeerChange}
-        options={options}
-        showSearch={true}
-        searchPlaceholder={"Search peers..."}
-        popoverWidth={280}
-        className={
-          "!bg-nb-gray-920 !hover:bg-nb-gray-925 !text-nb-gray-300 rounded-lg"
-        }
-        size={"xs"}
-        maxHeight={300}
-      >
-        <div className={"flex items-center justify-between gap-6 pr-3"}>
-          {peer ? (
-            <DeviceCard device={peer} />
-          ) : (
-            <div className={"flex items-center gap-2.5 pl-3 py-1 text-left"}>
-              <div
-                className={
-                  "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 text-nb-gray-300 group-hover/node:bg-nb-gray-800 transition-all"
-                }
-              >
-                <MonitorSmartphoneIcon size={16} />
-              </div>
-              <div
-                className={"flex flex-col gap-0 justify-center leading-tight"}
-              >
-                <span
-                  className={
-                    "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1.5 mt-2"
-                  }
-                >
-                  <span className={"truncate max-w-[150px]"}>{label}</span>
-                  <SmallBadge />
-                </span>
-                <span
-                  className={
-                    "font-normal text-sm text-nb-gray-500 relative -top-[0.3rem]"
-                  }
-                >
-                  Select user device...
-                </span>
-              </div>
-            </div>
-          )}
-          <ChevronsUpDown size={18} className={"shrink-0"} />
-        </div>
-      </SelectDropdown>
-
-      {showHandles && (
-        <>
-          <AllHandles />
           <ConnectHandle type={"source"} position={Position.Left} />
           <ConnectHandle type={"source"} position={Position.Right} />
         </>

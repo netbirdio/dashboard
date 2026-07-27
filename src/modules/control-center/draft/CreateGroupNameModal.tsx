@@ -16,6 +16,9 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   onSuccess: (name: string) => void;
   groups: Group[] | undefined;
+  // Extra names to reject (e.g. draft groups already on the canvas that are
+  // not part of `groups` yet).
+  takenNames?: string[];
 };
 
 export const CreateGroupNameModal = ({
@@ -23,6 +26,7 @@ export const CreateGroupNameModal = ({
   onOpenChange,
   onSuccess,
   groups,
+  takenNames,
 }: Props) => {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -34,12 +38,19 @@ export const CreateGroupNameModal = ({
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
-    const exists = groups?.find((g) => g.name === newName);
-    setError(
-      exists
-        ? "This group already exists. Please choose another name."
-        : "",
-    );
+    const trimmed = trim(newName);
+    // "All" is the system group — a user group with that name would be
+    // misidentified by every name-based system-group check.
+    if (trimmed === "All") {
+      setError('The name "All" is reserved. Please choose another name.');
+    } else {
+      const exists =
+        groups?.some((g) => g.name === trimmed) ||
+        takenNames?.includes(trimmed);
+      setError(
+        exists ? "This group already exists. Please choose another name." : "",
+      );
+    }
     setName(newName);
   };
 

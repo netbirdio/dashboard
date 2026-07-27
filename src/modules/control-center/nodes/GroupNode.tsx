@@ -22,6 +22,7 @@ type GroupNodeProps = Node<
     enabled?: boolean;
     hoverable?: boolean;
     dropTarget?: boolean;
+    dropEligible?: boolean;
     showHandles?: boolean;
     onClick?: (g: Group) => void;
   },
@@ -34,6 +35,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
     group,
     hoverable = true,
     dropTarget,
+    dropEligible,
     showHandles = false,
     onClick,
   } = data;
@@ -63,8 +65,12 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
     <div
       className={cn(
         "relative cc-group-node bg-nb-gray-940 border rounded-lg transition-all group/node",
+        // Mid-drag: every group the dragged peer/resource could drop into
+        // shows a white border; the one under the pointer gets the ring.
         dropTarget
           ? "border-white ring-2 ring-white/20 bg-nb-gray-930"
+          : dropEligible
+          ? "border-white/60"
           : "border-nb-gray-850",
         !isEnabled && "opacity-60",
         hoverable &&

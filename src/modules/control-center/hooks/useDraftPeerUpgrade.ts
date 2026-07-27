@@ -29,7 +29,8 @@ const uid = () =>
 export function usePlaceholderUpgrade() {
   const reactFlow = useReactFlow();
   const { updateDraftPolicy } = useControlCenterPolicy();
-  const { replacePeerIdInGroups, trackCreateRouter } = useDraftChangeset();
+  const { replacePeerIdInGroups, trackCreateRouter, untrackInstallPeer } =
+    useDraftChangeset();
 
   return useCallback(
     (upgrades: PlaceholderUpgrade[]) => {
@@ -38,6 +39,10 @@ export function usePlaceholderUpgrade() {
         ...u,
         oldId: u.nodeId.replace("peer-", ""),
       }));
+
+      // The peer now exists (installed / selected) — its pending
+      // install-peer step is resolved.
+      withOldIds.forEach((u) => untrackInstallPeer(u.oldId));
 
       // Routing edges from upgraded placeholders become deployable — record
       // their create-router changes with the real peer id. (Read pre-swap:
@@ -73,43 +78,52 @@ export function usePlaceholderUpgrade() {
         prev.map((n) => {
           const up = withOldIds.find((u) => u.nodeId === n.id);
           if (up) {
-            const data = n.data as {
-              placeholderKind?: string;
-              placeholderName?: string;
-            };
-            const keepSelect = data?.placeholderKind === "user-device";
+            // Every upgraded placeholder becomes a plain peer card — user
+            // devices included (re-selection now lives in the setup modal,
+            // not on the node).
             return {
               ...n,
               id: `peer-${up.peer.id}`,
-              data: keepSelect
-                ? {
-                    placeholderKind: "user-device",
-                    placeholderName: data.placeholderName,
-                    peer: up.peer,
-                    enabled: true,
-                    showHandles: true,
-                  }
-                : {
-                    peer: up.peer,
-                    enabled: true,
-                    showHandles: true,
-                    variant: "card",
-                  },
+              data: {
+                peer: up.peer,
+                enabled: true,
+                showHandles: true,
+                variant: "card",
+              },
             };
           }
           // Group nodes tracking the placeholder as an added member (it was
           // grouped before installing) follow the rename to the real id.
           const members = n.data?.addedMembers as Set<string> | undefined;
-          if (members) {
-            const hits = withOldIds.filter((u) => members.has(u.oldId));
-            if (hits.length > 0) {
-              const next = new Set(members);
-              hits.forEach((u) => {
-                next.delete(u.oldId);
-                next.add(u.peer.id as string);
-              });
-              return { ...n, data: { ...n.data, addedMembers: next } };
-            }
+          const held = n.data?.draftPeers as Peer[] | undefined;
+          const heldHits =
+            held?.some((p) => withOldIds.some((u) => u.oldId === p.id)) ??
+            false;
+          const memberHits = members
+            ? withOldIds.filter((u) => members.has(u.oldId))
+            : [];
+          if (memberHits.length > 0 || heldHits) {
+            const next = new Set(members ?? []);
+            memberHits.forEach((u) => {
+              next.delete(u.oldId);
+              next.add(u.peer.id as string);
+            });
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                addedMembers: next,
+                // The real peer is in the API list now — the held draft
+                // object is obsolete.
+                ...(heldHits
+                  ? {
+                      draftPeers: held!.filter(
+                        (p) => !withOldIds.some((u) => u.oldId === p.id),
+                      ),
+                    }
+                  : {}),
+              },
+            };
           }
           return n;
         }),
@@ -165,7 +179,13 @@ export function usePlaceholderUpgrade() {
         setTimeout(() => policyUpdates.forEach((p) => updateDraftPolicy(p)), 0);
       }
     },
-    [reactFlow, updateDraftPolicy, replacePeerIdInGroups, trackCreateRouter],
+    [
+      reactFlow,
+      updateDraftPolicy,
+      replacePeerIdInGroups,
+      trackCreateRouter,
+      untrackInstallPeer,
+    ],
   );
 }
 
@@ -188,20 +208,36 @@ export function useDraftPeerUpgrade() {
     const onCanvas = new Set(nodes.map((n) => n.id));
     const upgrades: PlaceholderUpgrade[] = [];
 
+    const findMatch = (installHostname: string) =>
+      peers.find(
+        (p) =>
+          (p.hostname === installHostname || p.name === installHostname) &&
+          !onCanvas.has(`peer-${p.id}`),
+      );
+
     nodes.forEach((node) => {
       const data = node.data as {
         placeholderKind?: string;
         installHostname?: string;
         peer?: Peer;
+        draftPeers?: (Peer & { installHostname?: string })[];
       };
+
+      // Placeholders absorbed into a group (no own node anymore) install
+      // from the group panel — their pending entries ride on the group node.
+      data?.draftPeers?.forEach((p) => {
+        if (!p.id || !p.installHostname) return;
+        const pseudoNodeId = `peer-${p.id}`;
+        if (upgraded.current.has(pseudoNodeId)) return;
+        const match = findMatch(p.installHostname);
+        if (!match?.id) return;
+        upgraded.current.add(pseudoNodeId);
+        upgrades.push({ nodeId: pseudoNodeId, peer: match });
+      });
+
       if (!data?.placeholderKind || !data.installHostname || data.peer) return;
       if (upgraded.current.has(node.id)) return;
-      const match = peers.find(
-        (p) =>
-          (p.hostname === data.installHostname ||
-            p.name === data.installHostname) &&
-          !onCanvas.has(`peer-${p.id}`),
-      );
+      const match = findMatch(data.installHostname);
       if (!match?.id) return;
       upgraded.current.add(node.id);
       upgrades.push({ nodeId: node.id, peer: match });

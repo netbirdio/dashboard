@@ -697,6 +697,7 @@ const PanelContent = React.memo(
           description={tpl.description}
           draggable
           onPointerDown={(e) => handlePeerTemplateDragStart(e, tpl)}
+          data-testid={`cc-template-peer-${tpl.key}`}
         />
       ));
 
@@ -710,6 +711,7 @@ const PanelContent = React.memo(
               description={"Control access between sources and destinations"}
               draggable
               onPointerDown={(e) => handlePolicyDragStart(e)}
+              data-testid={"cc-template-policy"}
             />,
           ]
         : [];
@@ -723,6 +725,7 @@ const PanelContent = React.memo(
           description={tpl.description}
           draggable
           onPointerDown={(e) => handleBlankDragStart(e, tpl.kind)}
+          data-testid={`cc-template-${tpl.kind}`}
         />
       ));
 
@@ -735,6 +738,7 @@ const PanelContent = React.memo(
           description={tpl.description}
           draggable
           onPointerDown={(e) => handleBlankDragStart(e, tpl.kind)}
+          data-testid={`cc-template-${tpl.kind}`}
         />
       ));
 
@@ -747,6 +751,7 @@ const PanelContent = React.memo(
             disabled={onCanvas}
             onCanvas={onCanvas}
             onPointerDown={(e) => handleDragStart(e, NodeType.PeerNode, peer)}
+            data-testid={`cc-panel-peer-${peer.id}`}
           >
             <DeviceCard device={peer} size="small" className="flex-1" />
           </PanelListItem>
@@ -796,7 +801,7 @@ const PanelContent = React.memo(
                   />
                   <SmallBadge />
                 </span>
-                <span className={"text-[0.7rem] text-nb-gray-400 truncate"}>
+                <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
                   {protocolLabel || "All"}
                 </span>
               </div>
@@ -829,7 +834,7 @@ const PanelContent = React.memo(
                 />
                 <SmallBadge />
               </span>
-              <span className={"text-[0.7rem] text-nb-gray-400 truncate"}>
+              <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
                 {singularize("Resources", resourceCount, true)}
               </span>
             </div>
@@ -848,6 +853,7 @@ const PanelContent = React.memo(
             onPointerDown={(e) =>
               handleDragStart(e, NodeType.NetworkNode, network)
             }
+            data-testid={`cc-panel-network-${network.id}`}
           >
             <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
               <div
@@ -869,7 +875,7 @@ const PanelContent = React.memo(
                     hideTooltip={true}
                   />
                 </span>
-                <span className={"text-[0.7rem] text-nb-gray-400 truncate"}>
+                <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
                   {singularize("Resources", network.resources?.length ?? 0, true)}
                 </span>
               </div>
@@ -898,6 +904,7 @@ const PanelContent = React.memo(
             onPointerDown={(e) =>
               handleDragStart(e, NodeType.ResourceNode, resource)
             }
+            data-testid={`cc-panel-resource-${resource.id}`}
           >
             <DeviceCard
               resource={displayResource}
@@ -944,7 +951,7 @@ const PanelContent = React.memo(
                 />
                 <SmallBadge />
               </span>
-              <span className={"text-[0.7rem] text-nb-gray-400"}>
+              <span className={"text-[0.72rem] text-nb-gray-400"}>
                 {getGroupCountLabel(group)}
               </span>
             </div>
@@ -962,6 +969,7 @@ const PanelContent = React.memo(
             disabled={onCanvas || pendingDelete}
             onCanvas={onCanvas}
             onPointerDown={(e) => handleDragStart(e, NodeType.GroupNode, group)}
+            data-testid={`cc-panel-group-${group.id}`}
           >
             <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
               <div
@@ -992,7 +1000,7 @@ const PanelContent = React.memo(
                     </span>
                   )}
                 </span>
-                <span className={"text-[0.7rem] text-nb-gray-400"}>
+                <span className={"text-[0.72rem] text-nb-gray-400"}>
                   {getGroupCountLabel(group)}
                 </span>
               </div>
@@ -1011,6 +1019,7 @@ const PanelContent = React.memo(
             disabled={onCanvas}
             onCanvas={onCanvas}
             onPointerDown={(e) => handlePolicyDragStart(e, policy)}
+            data-testid={`cc-panel-policy-${policy.id}`}
           >
             <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
               <div
@@ -1032,7 +1041,7 @@ const PanelContent = React.memo(
                     hideTooltip={true}
                   />
                 </span>
-                <span className={"text-[0.7rem] text-nb-gray-400 truncate"}>
+                <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
                   {/* Same fallback as PolicyNode: empty label = all protocols */}
                   {protocolLabel || "All"}
                 </span>
@@ -1270,7 +1279,7 @@ const PanelContent = React.memo(
                       {row.kind === "heading" ? (
                         <div
                           className={
-                            "text-[0.7rem] font-medium text-nb-gray-400 uppercase tracking-wider px-3 pt-1.5 pb-1"
+                            "text-xs font-medium text-nb-gray-400 uppercase tracking-wider px-3 pt-1.5 pb-1"
                           }
                         >
                           {row.title}
@@ -1330,6 +1339,7 @@ const TemplateItem = React.memo(
     draggable,
     onPointerDown,
     onClick,
+    "data-testid": dataTestId,
   }: {
     icon?: LucideIcon;
     iconNode?: React.ReactNode;
@@ -1338,11 +1348,13 @@ const TemplateItem = React.memo(
     draggable?: boolean;
     onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
     onClick?: () => void;
+    "data-testid"?: string;
   }) => {
     return (
       <div
         onPointerDown={onPointerDown}
         onClick={onClick}
+        data-testid={dataTestId}
         className={cn(
           "group/item flex items-center h-[52px] rounded-md px-1 transition-colors hover:bg-nb-gray-900/50",
           draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
@@ -1358,7 +1370,7 @@ const TemplateItem = React.memo(
           </div>
           <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
             <span className={"text-xs text-nb-gray-100"}>{label}</span>
-            <span className={"text-[0.7rem] text-nb-gray-400"}>
+            <span className={"text-[0.72rem] text-nb-gray-400"}>
               {description}
             </span>
           </div>
@@ -1388,15 +1400,18 @@ const PanelListItem = React.memo(
     onPointerDown,
     disabled,
     onCanvas,
+    "data-testid": dataTestId,
   }: PropsWithChildren<{
     className?: string;
     onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
     disabled?: boolean;
     onCanvas?: boolean;
+    "data-testid"?: string;
   }>) => {
     return (
       <div
         onPointerDown={disabled ? undefined : onPointerDown}
+        data-testid={dataTestId}
         className={cn(
           "group/item flex items-center h-[52px] rounded-md px-1 transition-colors",
           disabled

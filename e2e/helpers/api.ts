@@ -89,9 +89,23 @@ async function apiDelete(page: Page, path: string): Promise<void> {
   });
 }
 
+async function apiPost<T>(page: Page, path: string, data: unknown): Promise<T> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.post(`${origin}/api${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data,
+  });
+  return resp.json();
+}
+
 /** List all groups. */
 export async function listGroups(page: Page): Promise<Group[]> {
   return apiGet<Group[]>(page, "/groups");
+}
+
+/** Create a group directly via the API (test setup). */
+export async function createGroup(page: Page, name: string): Promise<Group> {
+  return apiPost<Group>(page, "/groups", { name, peers: [] });
 }
 
 /** Delete a group by ID. */

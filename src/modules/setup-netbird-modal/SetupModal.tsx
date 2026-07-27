@@ -59,6 +59,9 @@ type Props = {
   hostname?: string;
   // Options for the in-modal key generator (server flow without a key).
   ephemeralKey?: boolean;
+  // Group ids auto-assigned to peers registering with the generated key
+  // (e.g. a draft placeholder's group memberships).
+  autoGroups?: string[];
   onSetupKeyGenerated?: (key: SetupKey) => void;
 };
 
@@ -72,6 +75,7 @@ export default function SetupModal({
   isUserDevice,
   hostname,
   ephemeralKey,
+  autoGroups,
   onSetupKeyGenerated,
 }: Readonly<Props>) {
   return (
@@ -91,6 +95,7 @@ export default function SetupModal({
         isUserDevice={isUserDevice}
         hostname={hostname}
         ephemeralKey={ephemeralKey}
+        autoGroups={autoGroups}
         onSetupKeyGenerated={onSetupKeyGenerated}
       />
     </ModalContent>
@@ -108,6 +113,7 @@ type SetupModalContentProps = {
   hostname?: string;
   isUserDevice?: boolean;
   ephemeralKey?: boolean;
+  autoGroups?: string[];
   onSetupKeyGenerated?: (key: SetupKey) => void;
 };
 
@@ -122,6 +128,7 @@ export function SetupModalContent({
   hostname,
   isUserDevice,
   ephemeralKey,
+  autoGroups,
   onSetupKeyGenerated,
 }: Readonly<SetupModalContentProps>) {
   const os = useOperatingSystem();
@@ -179,6 +186,7 @@ export function SetupModalContent({
       <SetupKeyGenerator
         generatedKey={generatedKey}
         ephemeral={ephemeralKey}
+        autoGroups={autoGroups}
         onGenerated={(key) => {
           setGeneratedKey(key);
           onSetupKeyGenerated?.(key);
@@ -487,6 +495,8 @@ type SetupKeyGeneratorProps = {
   onGenerated: (key: SetupKey) => void;
   // Ephemeral peers (agents) disappear when offline for a while.
   ephemeral?: boolean;
+  // Group ids auto-assigned to peers registering with this key.
+  autoGroups?: string[];
 };
 
 // SetupKeyGenerator renders the inline banner that lets the operator
@@ -497,22 +507,23 @@ function SetupKeyGenerator({
   generatedKey,
   onGenerated,
   ephemeral = false,
+  autoGroups,
 }: SetupKeyGeneratorProps) {
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const generate = () => {
     setIsGenerating(true);
-    // No auto_groups: the "All" group can't be a setup-key auto-group,
-    // and we don't want to invent a default group on the operator's
-    // behalf here. They can edit the key afterwards if they want.
+    // auto_groups only when the caller supplies them (a draft placeholder's
+    // group memberships) — otherwise none: the "All" group can't be a
+    // setup-key auto-group, and we don't invent a default group here.
     const request = setupKeyRequest
       .post({
         name: `Install setup key (${new Date().toLocaleString()})`,
         type: "one-off",
         expires_in: 24 * 60 * 60,
         revoked: false,
-        auto_groups: [],
+        auto_groups: autoGroups ?? [],
         usage_limit: 1,
         ephemeral,
         allow_extra_dns_labels: false,
