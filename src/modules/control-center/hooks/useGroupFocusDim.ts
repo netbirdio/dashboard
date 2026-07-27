@@ -127,16 +127,8 @@ export function useGroupFocusDim() {
     setNodes((prev) => {
       let changed = false;
       const next = prev.map((n) => {
-        // The focused node itself wears its own persistent ring
-        // (cc-focus-root, globals.css) — distinct from the context-menu /
-        // panel halo. Only a REAL focus target gets it, not a group whose
-        // panel is merely open.
-        const cls =
-          focusNode && n.id === root.id
-            ? "cc-focus-root"
-            : keep.has(n.id)
-            ? undefined
-            : "cc-dimmed";
+        // No ring on the focused node — the dim around it is signal enough.
+        const cls = keep.has(n.id) ? undefined : "cc-dimmed";
         // Focus mode turns global nodesDraggable off, but every node ON the
         // path stays movable/clickable — per-node draggable overrides the
         // global flag. Dimmed nodes are locked (pointer-events none), and

@@ -636,6 +636,24 @@ export function useDraft() {
         }
       }
 
+      // React Flow hides unmeasured nodes for one frame — with all-new node
+      // objects that blanks the whole canvas on the mode switch. Most draft
+      // nodes have a live twin with the same id (or an alias handled by
+      // liveDims above); adopt its measured size so the swap paints
+      // immediately. This MUST happen before the layout below: its overlap
+      // pass measures nodes, and unmeasured ones fall back to an 80px-tall
+      // guess that falsely "overlaps" at the 60px policy pitch and shoves
+      // the column apart (huge gaps until Auto Arrange re-ran on measured
+      // nodes).
+      allNodes.forEach((n) => {
+        if (n.initialWidth) return;
+        const m = liveNodes.find((l) => l.id === n.id)?.measured;
+        if (m?.width && m?.height) {
+          n.initialWidth = m.width;
+          n.initialHeight = m.height;
+        }
+      });
+
       // Apply THE shared draft parent-view layout (also used by the
       // toolbar's Auto Arrange, so arranging an untouched draft reproduces
       // this exact layout): sources → policies → destinations, mirroring
@@ -645,19 +663,6 @@ export function useDraft() {
         allEdges,
         liveNodes,
       );
-      // React Flow hides unmeasured nodes for one frame — with all-new node
-      // objects that blanks the whole canvas on the mode switch. Most draft
-      // nodes have a live twin with the same id (or an alias handled by
-      // liveDims above); adopt its measured size so the swap paints
-      // immediately.
-      updatedNodes.forEach((n) => {
-        if (n.initialWidth) return;
-        const m = liveNodes.find((l) => l.id === n.id)?.measured;
-        if (m?.width && m?.height) {
-          n.initialWidth = m.width;
-          n.initialHeight = m.height;
-        }
-      });
 
       // From the live drilled view, enter the draft drill-down of the same
       // network in the SAME commit: the hidden flags are pre-applied so the

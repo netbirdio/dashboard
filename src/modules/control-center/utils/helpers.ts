@@ -733,20 +733,13 @@ export function isFocusWorthy(
   nodes: { id: string; type?: string }[],
   edges: { source: string; target: string }[],
 ): boolean {
-  const incident = edges.filter(
-    (e) => e.source === nodeId || e.target === nodeId,
-  );
-  if (incident.length < 4) return false;
-  const policyIds = new Set(
-    nodes.filter((n) => n.type === "policyNode").map((n) => n.id),
-  );
-  const neighbors = new Set(
-    incident.map((e) => (e.source === nodeId ? e.target : e.source)),
-  );
-  let policyCount = policyIds.has(nodeId) ? 1 : 0;
-  neighbors.forEach((id) => {
-    if (policyIds.has(id)) policyCount++;
-  });
+  // Focus only pays off when there is something to dim AWAY: at least two
+  // policies on the canvas (with one, everything is on the one path). The
+  // node itself just needs a path to trace — a single edge suffices.
+  if (!edges.some((e) => e.source === nodeId || e.target === nodeId)) {
+    return false;
+  }
+  const policyCount = nodes.filter((n) => n.type === "policyNode").length;
   return policyCount >= 2;
 }
 

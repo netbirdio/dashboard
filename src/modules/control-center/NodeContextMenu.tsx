@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import {
   CircleMinusIcon,
-  SquareDashedMousePointerIcon,
+  WaypointsIcon,
   ListIcon,
   WorkflowIcon,
   PencilLineIcon,
@@ -101,7 +101,8 @@ export const NodeContextMenu = ({
     refreshLiveViewRef,
     setLiveResourceEditor,
   } = useCanvasState();
-  const { setFocusedNodeId, setSelectedPeerPanel } = useDestinationGroup();
+  const { focusedNodeId, setFocusedNodeId, setSelectedPeerPanel } =
+    useDestinationGroup();
   const { updatePolicy, serializeRules } = usePolicies();
   const groupRequest = useApiCall<Group>("/groups", true);
   const peerRequest = useApiCall<Peer>("/peers", true);
@@ -562,16 +563,18 @@ export const NodeContextMenu = ({
   // (isFocusWorthy: 4+ edges, 2+ policies in the neighborhood).
   const focusItems = useCallback(
     (n: Node): MenuItem[] => {
+      // Already focused → no Focus entry on the focused node itself.
+      if (focusedNodeId === n.id) return [];
       if (!isFocusWorthy(n.id, nodes, edges)) return [];
       return [
         {
-          label: "Focus",
-          icon: <SquareDashedMousePointerIcon size={14} />,
+          label: "Highlight Connections",
+          icon: <WaypointsIcon size={14} />,
           onClick: () => setFocusedNodeId(n.id),
         },
       ];
     },
-    [nodes, edges, setFocusedNodeId],
+    [nodes, edges, focusedNodeId, setFocusedNodeId],
   );
 
   const [peerRenameTarget, setPeerRenameTarget] = useState<Peer | null>(null);

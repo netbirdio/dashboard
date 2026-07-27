@@ -259,6 +259,14 @@ p {
     opacity: 0.12;
     filter: grayscale(1);
     transition: opacity 150ms ease, filter 150ms ease;
+    /* Dimmed edges aren't interactive either — their (wide) hit area would
+       otherwise swallow drag-to-pan while the highlight is active. */
+    pointer-events: none !important;
+}
+/* The invisible interaction path sets its own pointer-events — override it
+   too, or it still catches the drag. */
+.react-flow__edge.cc-dimmed .react-flow__edge-interaction {
+    pointer-events: none !important;
 }
 
 /* Focus Mode armed (control-center): every node is a pick target — hovering

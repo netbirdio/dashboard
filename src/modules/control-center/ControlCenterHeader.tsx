@@ -10,7 +10,7 @@ import {
   LayoutGridIcon,
   NetworkIcon,
   PencilLineIcon,
-  SquareDashedMousePointerIcon,
+  WaypointsIcon,
   XIcon,
 } from "lucide-react";
 import { sortBy } from "lodash";
@@ -324,12 +324,9 @@ function FocusModePill() {
                 "flex items-center gap-2 pl-3.5 pr-1.5 py-1.5 rounded-full border border-nb-gray-900 bg-nb-gray-930 text-xs font-medium text-nb-gray-200"
               }
             >
-              <SquareDashedMousePointerIcon
-                size={13}
-                className={"text-sky-400 shrink-0"}
-              />
+              <WaypointsIcon size={13} className={"text-sky-400 shrink-0"} />
               {focusedNodeId
-                ? `Focusing “${focusedName || "node"}”`
+                ? `Highlighting connections for “${focusedName || "node"}”`
                 : "Select a node to highlight its connections"}
               <button
                 onClick={() => {
@@ -339,7 +336,7 @@ function FocusModePill() {
                 className={
                   "p-1.5 rounded-full text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 transition-colors"
                 }
-                aria-label={"Exit Focus Mode"}
+                aria-label={"Exit Highlight Mode"}
               >
                 <XIcon size={15} />
               </button>
