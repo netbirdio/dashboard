@@ -101,7 +101,9 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
       <StandaloneResourceNode
         id={id}
         data={data}
-        hideNetwork={isDrilledChild || !isDraft}
+        // Drilled views name the network in the header; everywhere else —
+        // live destination cards included — it shows inline after the name.
+        hideNetwork={isDrilledChild}
       />
     );
   }
@@ -179,7 +181,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
         // standalone (live peer/group/user destinations): the same card
         // surface as PeerNode's card variant instead of a transparent row.
         data.standalone
-          ? "bg-nb-gray-940 border-nb-gray-850 pr-5 pl-3 py-1"
+          ? "bg-nb-gray-940 border-nb-gray-850 pr-5 pl-3 h-[64px] flex items-center"
           : "border-transparent",
         "hover:bg-nb-gray-930 hover:border-nb-gray-800",
         isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
