@@ -31,6 +31,18 @@ import { useCanvasState, useControlCenterUI } from "@/modules/control-center/Con
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
+// Width for the network selector: sized to its LONGEST option label
+// (~6.5px/char at the trigger's text-xs medium, plus icon/chevron/padding
+// chrome), clamped to the old fixed width (256px) as the max — short network
+// names don't need the full column.
+const networkSelectorWidth = (labels: unknown[]) => {
+  const longest = labels.reduce<number>(
+    (m, l) => Math.max(m, typeof l === "string" ? l.length : 0),
+    0,
+  );
+  return Math.min(256, Math.max(150, 86 + longest * 6.5));
+};
+
 // Shown while a network frame is drilled into (single-network draft view),
 // mirroring the live single-network header 1:1: back arrow, the network
 // SELECT (switches the drill-down between the frames on the canvas), the
@@ -79,7 +91,10 @@ function DraftDrillDownHeader() {
   if (!drillDownNetworkNodeId) {
     if (frameOptions.length <= 1) return null;
     return (
-      <div key={"draft-network-select"} className={"w-64"}>
+      <div
+        key={"draft-network-select"}
+        style={{ width: networkSelectorWidth(frameOptions.map((o) => o.label)) }}
+      >
         <SelectDropdown
           variant={"secondary"}
           value={""}
@@ -206,7 +221,12 @@ function HeaderTopLeft() {
           {/* {isDraft && <DraftModeTitle />} */}
 
           {!isDraft && currentView === "networks" && hasNetworks && (
-            <div key={"network-select"} className={"w-64"}>
+            <div
+              key={"network-select"}
+              style={{
+                width: networkSelectorWidth(networkOptions.map((o) => o.label)),
+              }}
+            >
               <SelectDropdown
                 variant={"secondary"}
                 value={selectedNetwork}

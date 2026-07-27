@@ -119,12 +119,17 @@ export function useNetworkView() {
       }
     });
 
-    const resources = network.resources || [];
+    // Same policy-targeted-first order as the frames (orderFrameResources) —
+    // the drilled view and the draft drill-down must agree on the column.
+    const resources = orderFrameResources(
+      (network.resources || [])
+        .map((r) => networkResources?.find((n) => n.id === r))
+        .filter(Boolean) as NonNullable<typeof networkResources>,
+      network.policies,
+      effectivePolicies,
+    );
 
-    resources.forEach((r) => {
-      const resource = networkResources?.find((n) => n.id === r);
-      if (!resource) return;
-
+    resources.forEach((resource) => {
       addNode(allNodes, {
         id: `resource-${resource.id}`,
         type: "resourceNode",
