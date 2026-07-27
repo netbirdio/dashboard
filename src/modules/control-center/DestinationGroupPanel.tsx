@@ -742,10 +742,12 @@ export const DestinationGroupPanel = ({
   const confirmDiscard = async () => {
     if (!dirty || !canEditMembers) return true;
     return !!(await confirm({
-      title: `Discard changes to “${group?.name ?? "group"}”?`,
-      description: `You have unassigned changes that haven't been ${
+      title: "You have unsaved member changes",
+      description: `The members you toggled for “${
+        group?.name ?? "this group"
+      }” haven't been ${
         isDraft ? "applied" : "saved"
-      }.`,
+      } yet. Closing the panel will lose them.`,
       confirmText: "Discard",
       cancelText: "Keep editing",
       type: "warning",
