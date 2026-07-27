@@ -22,6 +22,7 @@ import { cn } from "@utils/helpers";
 import { mutate } from "swr";
 import { useApiCall } from "@utils/api";
 import { Group } from "@/interfaces/Group";
+import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -46,7 +47,9 @@ import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNod
 import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
+import { Modal } from "@components/modal/Modal";
 import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
+import { EditPeerNameModal } from "@/modules/peers/EditPeerNameModal";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
 import {
   DraftNetworkRef,
@@ -101,6 +104,7 @@ export const NodeContextMenu = ({
   const { setFocusedNodeId, setSelectedPeerPanel } = useDestinationGroup();
   const { updatePolicy, serializeRules } = usePolicies();
   const groupRequest = useApiCall<Group>("/groups", true);
+  const peerRequest = useApiCall<Peer>("/peers", true);
   const resourceRequest = useApiCall<NetworkResource>("/networks", true);
   const { permission } = usePermissions();
   const { isDraft, setResourceEditor, setRoutingPeerModal, setNetworkEditor } =
@@ -570,6 +574,8 @@ export const NodeContextMenu = ({
     [nodes, edges, setFocusedNodeId],
   );
 
+  const [peerRenameTarget, setPeerRenameTarget] = useState<Peer | null>(null);
+
   // "Details" for peers (live AND draft): opens the peer's groups panel —
   // the same panel a left-click opens. Placeholders included: their group
   // assignments become the setup key's auto-groups.
@@ -583,7 +589,7 @@ export const NodeContextMenu = ({
         (n.data as { peer?: { id?: string } })?.peer?.id ??
         getPlaceholderPeer(n)?.id;
       if (!isPeer || !peerId) return [];
-      return [
+      const items: MenuItem[] = [
         {
           label: "Details",
           icon: <ListIcon size={14} />,
@@ -593,8 +599,45 @@ export const NodeContextMenu = ({
           },
         },
       ];
+      // Existing peers rename through the peers page's Edit Peer Name modal
+      // (a real PUT — peer names aren't draft-managed). Placeholders keep
+      // their canvas-only rename.
+      const realPeer = (n.data as { peer?: Peer })?.peer;
+      if (realPeer?.id && permission.peers.update) {
+        items.push({
+          label: "Rename",
+          icon: <PencilLineIcon size={14} />,
+          onClick: () => setPeerRenameTarget(realPeer),
+        });
+      }
+      return items;
     },
-    [setSelectedDestinationGroup, setSelectedPeerPanel],
+    [setSelectedDestinationGroup, setSelectedPeerPanel, permission],
+  );
+
+  // Renames an existing peer (PUT, same payload shape as the peer page) and
+  // patches every canvas node carrying it so the rename shows immediately.
+  const renameLivePeer = useCallback(
+    async (peer: Peer, name: string) => {
+      await peerRequest.put(
+        {
+          name,
+          ssh_enabled: peer.ssh_enabled,
+          login_expiration_enabled: peer.login_expiration_enabled,
+          inactivity_expiration_enabled: peer.inactivity_expiration_enabled,
+        },
+        `/${peer.id}`,
+      );
+      setNodes((prev) =>
+        prev.map((n) => {
+          const p = (n.data as { peer?: Peer })?.peer;
+          if (!p || p.id !== peer.id) return n;
+          return { ...n, data: { ...n.data, peer: { ...p, name } } };
+        }),
+      );
+      await mutate("/peers");
+    },
+    [peerRequest, setNodes],
   );
 
   // ---- Live group actions (rename / delete) — like the live policy
@@ -1080,6 +1123,24 @@ export const NodeContextMenu = ({
           setRenameOpen(false);
         }}
       />
+
+      {/* Existing peers rename through the peers page's modal — a real PUT,
+          not a draft change. */}
+      <Modal
+        open={!!peerRenameTarget}
+        onOpenChange={(open) => !open && setPeerRenameTarget(null)}
+      >
+        {peerRenameTarget && (
+          <EditPeerNameModal
+            peer={peerRenameTarget}
+            initialName={peerRenameTarget.name ?? ""}
+            onSuccess={(name) => {
+              void renameLivePeer(peerRenameTarget, name);
+              setPeerRenameTarget(null);
+            }}
+          />
+        )}
+      </Modal>
     </>
   );
 };

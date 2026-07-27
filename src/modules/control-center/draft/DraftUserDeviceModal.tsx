@@ -91,7 +91,7 @@ const StepperContent = ({
       <ModalHeader
         icon={<MonitorSmartphoneIcon size={18} className={"text-netbird"} />}
         title={`Set up “${name}”`}
-        description={"Install NetBird and select the registered peer."}
+        description={"Install NetBird and assign the registered peer."}
         color={"netbird"}
       />
       <Separator />
@@ -122,7 +122,7 @@ const StepperContent = ({
           </Steps.Step>
           <Steps.Step step={2} line={false}>
             <p className={"text-sm font-normal"}>
-              Select the peer this device registered as
+              Assign the peer this device registered as
             </p>
             <SelectDropdown
               variant={"secondary"}
@@ -151,7 +151,7 @@ const StepperContent = ({
             onClick={apply}
             data-testid={"cc-user-device-select"}
           >
-            Select
+            Assign
           </Button>
         </div>
       </ModalFooter>
