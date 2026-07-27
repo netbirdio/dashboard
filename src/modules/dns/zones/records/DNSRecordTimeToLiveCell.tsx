@@ -1,13 +1,17 @@
+"use client";
+
 import { ClockIcon } from "lucide-react";
 import * as React from "react";
 import { DNSRecord } from "@/interfaces/DNS";
 import { getTTLLabel } from "@/modules/dns/zones/DNSRecordModal";
+import { useTranslations } from "next-intl";
 
 type Props = {
   record: DNSRecord;
 };
 
 export const DNSRecordTimeToLiveCell = ({ record }: Props) => {
+  const t = useTranslations("dns");
   return (
     <div
       className={
@@ -15,7 +19,7 @@ export const DNSRecordTimeToLiveCell = ({ record }: Props) => {
       }
     >
       <ClockIcon size={14} />
-      {getTTLLabel(record.ttl)}
+      {getTTLLabel(record.ttl, t)}
     </div>
   );
 };

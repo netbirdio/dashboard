@@ -1,3 +1,5 @@
+"use client";
+
 import Badge from "@components/Badge";
 import FullTooltip from "@components/FullTooltip";
 import {
@@ -11,6 +13,7 @@ import React, { useMemo } from "react";
 import { Policy } from "@/interfaces/Policy";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import { parsePortsToStrings } from "@/modules/access-control/useAccessControl";
+import { useTranslations } from "next-intl";
 
 // AccessControlProtoPortsCell — single column combining the protocol
 // and ports indicators. Protocol is always shown. Ports rendering:
@@ -24,6 +27,8 @@ type Props = {
 export default function AccessControlProtoPortsCell({
   policy,
 }: Readonly<Props>) {
+  const t = useTranslations("policies");
+  const tCommon = useTranslations("common");
   const rule = useMemo(() => {
     if (policy.rules.length > 0) return policy.rules[0];
     return undefined;
@@ -52,7 +57,7 @@ export default function AccessControlProtoPortsCell({
         <FullTooltip
           interactive={false}
           content={
-            <span className={"text-xs text-nb-gray-100"}>NETBIRD-SSH</span>
+            <span className={"text-xs text-nb-gray-100"}>{t("netbirdSshTooltip")}</span>
           }
         >
           <span className={"cursor-help"}>{protocolBadge}</span>
@@ -70,7 +75,7 @@ export default function AccessControlProtoPortsCell({
                   variant={"gray"}
                   className={"uppercase tracking-wider font-medium"}
                 >
-                  All
+                  {tCommon("all")}
                 </Badge>
               )}
 
@@ -92,7 +97,7 @@ export default function AccessControlProtoPortsCell({
                     "px-3 whitespace-nowrap uppercase tracking-wider font-medium"
                   }
                 >
-                  {allPorts.length} Ports
+                  {t("nPorts", { count: allPorts.length })}
                 </Badge>
               )}
             </div>

@@ -24,6 +24,7 @@ import { ExternalLinkIcon, ShieldCheck } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "next-intl";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Policy } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
@@ -47,7 +48,8 @@ const Columns: ColumnDef<PostureCheck>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      const tCommon = useTranslations("common");
+      return <DataTableHeader column={column}>{tCommon("name")}</DataTableHeader>;
     },
     cell: ({ row }) => <PostureCheckNameCell check={row.original} />,
   },
@@ -60,14 +62,16 @@ const Columns: ColumnDef<PostureCheck>[] = [
     id: "checks",
     accessorFn: (row) => Object.keys(row.checks).length,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Checks</DataTableHeader>;
+      const t = useTranslations("postureChecks");
+      return <DataTableHeader column={column}>{t("checks")}</DataTableHeader>;
     },
     cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
   },
   {
     id: "access_control_usage",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Policies</DataTableHeader>;
+      const tCommon = useTranslations("common");
+      return <DataTableHeader column={column}>{tCommon("policies")}</DataTableHeader>;
     },
     cell: ({ row }) => <PostureCheckPolicyUsageCell check={row.original} />,
   },
@@ -88,6 +92,8 @@ export default function PostureCheckTable({
   const { data: policies } = useFetchApi<Policy[]>("/policies");
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const t = useTranslations("postureChecks");
+  const tCommon = useTranslations("common");
 
   const data = useMemo(() => {
     if (!postureChecks) return [];
@@ -125,18 +131,18 @@ export default function PostureCheckTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      { value: undefined, label: tCommon("all"), dotClass: "bg-nb-gray-500" },
+      { value: true, label: tCommon("active"), dotClass: "bg-green-500" },
+      { value: false, label: tCommon("inactive"), dotClass: "bg-nb-gray-700" },
     ],
-    [],
+    [tCommon],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "active",
-        label: "Status",
+        label: tCommon("status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -149,7 +155,7 @@ export default function PostureCheckTable({
           formatRadioChip(v as boolean | undefined, statusOptions),
       },
     ],
-    [statusOptions],
+    [statusOptions, tCommon],
   );
 
   return (
@@ -166,7 +172,7 @@ export default function PostureCheckTable({
 
       <LockedFeatureInfoCard
         className={"px-4 sm:px-6 md:px-8 mt-0 mb-8"}
-        featureText={"Posture Checks"}
+        featureText={t("title")}
         feature={"POSTURE_CHECKS"}
       />
 
@@ -178,7 +184,7 @@ export default function PostureCheckTable({
           <DataTable
             headingTarget={headingTarget}
             isLoading={isLoading}
-            text={"Posture Check"}
+            text={t("postureCheck")}
             sorting={sorting}
             wrapperClassName={""}
             setSorting={setSorting}
@@ -198,7 +204,7 @@ export default function PostureCheckTable({
               setCurrentCellClicked(cell);
             }}
             data={data}
-            searchPlaceholder={"Search by name and description..."}
+            searchPlaceholder={t("searchByNameAndDescription")}
             rightSide={() => (
               <>
                 {data && data?.length > 0 && (
@@ -214,7 +220,7 @@ export default function PostureCheckTable({
                     }}
                   >
                     <IconCirclePlus size={16} />
-                    Add Posture Check
+                    {t("newPostureCheck")}
                   </Button>
                 )}
               </>
@@ -228,10 +234,8 @@ export default function PostureCheckTable({
                     size={"large"}
                   />
                 }
-                title={"Create Posture Check"}
-                description={
-                  "Add posture checks to further restrict access in your network. E.g., only clients with a specific NetBird client version, operating system or location are allowed to connect."
-                }
+                title={t("createPostureCheck")}
+                description={t("noChecksDescription")}
                 button={
                   <Button
                     variant={"primary"}
@@ -242,19 +246,19 @@ export default function PostureCheckTable({
                     onClick={() => setPostureCheckModal(true)}
                   >
                     <IconCirclePlus size={16} />
-                    Create Posture Check
+                    {t("createPostureCheck")}
                   </Button>
                 }
                 learnMore={
                   <>
-                    Learn more about
+                    {t("learnMoreAbout")}
                     <InlineLink
                       href={
                         "https://docs.netbird.io/how-to/manage-posture-checks"
                       }
                       target={"_blank"}
                     >
-                      Posture Checks
+                      {t("title")}
                       <ExternalLinkIcon size={12} />
                     </InlineLink>
                   </>

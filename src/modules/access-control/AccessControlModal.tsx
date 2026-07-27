@@ -8,40 +8,41 @@ import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import {
-  Modal,
-  ModalClose,
-  ModalContent,
-  ModalFooter,
-  ModalTrigger,
+	Modal,
+	ModalClose,
+	ModalContent,
+	ModalFooter,
+	ModalTrigger,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { PortSelector } from "@components/PortSelector";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@components/Select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
 import PolicyDirection from "@components/ui/PolicyDirection";
 import { cn } from "@utils/helpers";
 import {
-  AlertCircleIcon,
-  ArrowRightLeft,
-  ExternalLinkIcon,
-  FolderDown,
-  FolderInput,
-  PlusCircle,
-  Power,
-  Share2,
-  Shield,
-  SquareTerminalIcon,
-  Text,
+	AlertCircleIcon,
+	ArrowRightLeft,
+	ExternalLinkIcon,
+	FolderDown,
+	FolderInput,
+	PlusCircle,
+	Power,
+	Share2,
+	Shield,
+	SquareTerminalIcon,
+	Text,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -58,607 +59,558 @@ import { useUsers } from "@/contexts/UsersProvider";
 import { HelpTooltip } from "@components/HelpTooltip";
 
 type Props = {
-  children?: React.ReactNode;
+	children?: React.ReactNode;
 };
 
 type UpdateModalProps = {
-  policy: Policy;
-  open: boolean;
-  onOpenChange?: (open: boolean) => void;
-  cell?: string;
-  postureCheckTemplates?: PostureCheck[];
-  onSuccess?: (policy: Policy) => void;
-  useSave?: boolean;
-  allowEditPeers?: boolean;
+	policy: Policy;
+	open: boolean;
+	onOpenChange?: (open: boolean) => void;
+	cell?: string;
+	postureCheckTemplates?: PostureCheck[];
+	onSuccess?: (policy: Policy) => void;
+	useSave?: boolean;
+	allowEditPeers?: boolean;
 };
 
 export default function AccessControlModal({ children }: Readonly<Props>) {
-  const [modal, setModal] = useState(false);
+	const [modal, setModal] = useState(false);
 
-  return (
-    <Modal open={modal} onOpenChange={setModal} key={modal ? 1 : 0}>
-      {children && <ModalTrigger asChild>{children}</ModalTrigger>}
-      {modal && <AccessControlModalContent onSuccess={() => setModal(false)} />}
-    </Modal>
-  );
+	return (
+		<Modal open={modal} onOpenChange={setModal} key={modal ? 1 : 0}>
+			{children && <ModalTrigger asChild>{children}</ModalTrigger>}
+			{modal && <AccessControlModalContent onSuccess={() => setModal(false)} />}
+		</Modal>
+	);
 }
 
 export function AccessControlUpdateModal({
-  policy,
-  open,
-  onOpenChange,
-  cell,
-  postureCheckTemplates,
-  onSuccess,
-  useSave = true,
-  allowEditPeers,
+	policy,
+	open,
+	onOpenChange,
+	cell,
+	postureCheckTemplates,
+	onSuccess,
+	useSave = true,
+	allowEditPeers,
 }: Readonly<UpdateModalProps>) {
-  return (
-    <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
-      {open && (
-        <AccessControlModalContent
-          onSuccess={(p) => {
-            onOpenChange && onOpenChange(false);
-            onSuccess && onSuccess(p);
-          }}
-          policy={policy}
-          cell={cell}
-          postureCheckTemplates={postureCheckTemplates}
-          useSave={useSave}
-          allowEditPeers={allowEditPeers}
-        />
-      )}
-    </Modal>
-  );
+	return (
+		<Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
+			{open && (
+				<AccessControlModalContent
+					onSuccess={(p) => {
+						onOpenChange && onOpenChange(false);
+						onSuccess && onSuccess(p);
+					}}
+					policy={policy}
+					cell={cell}
+					postureCheckTemplates={postureCheckTemplates}
+					useSave={useSave}
+					allowEditPeers={allowEditPeers}
+				/>
+			)}
+		</Modal>
+	);
 }
 
 type ModalProps = {
-  onSuccess?: (p: Policy) => void;
-  policy?: Policy;
-  initialDestinationGroups?: Group[] | string[];
-  initialName?: string;
-  initialDescription?: string;
-  cell?: string;
-  postureCheckTemplates?: PostureCheck[];
-  useSave?: boolean;
-  allowEditPeers?: boolean;
-  initialProtocol?: Protocol;
-  initialPorts?: number[];
-  initialDestinationResource?: PolicyRuleResource;
-  initialTab?: string;
-  disableDestinationSelector?: boolean;
-  additionalResources?: NetworkResource[];
+	onSuccess?: (p: Policy) => void;
+	policy?: Policy;
+	initialDestinationGroups?: Group[] | string[];
+	initialName?: string;
+	initialDescription?: string;
+	cell?: string;
+	postureCheckTemplates?: PostureCheck[];
+	useSave?: boolean;
+	allowEditPeers?: boolean;
+	initialProtocol?: Protocol;
+	initialPorts?: number[];
+	initialDestinationResource?: PolicyRuleResource;
+	initialTab?: string;
+	disableDestinationSelector?: boolean;
+	additionalResources?: NetworkResource[];
 };
 
 export function AccessControlModalContent({
-  onSuccess,
-  policy,
-  cell,
-  postureCheckTemplates,
-  useSave = true,
-  allowEditPeers = false,
-  initialDestinationGroups,
-  initialName,
-  initialDescription,
-  initialProtocol,
-  initialPorts,
-  initialDestinationResource,
-  initialTab,
-  disableDestinationSelector = false,
-  additionalResources,
+	onSuccess,
+	policy,
+	cell,
+	postureCheckTemplates,
+	useSave = true,
+	allowEditPeers = false,
+	initialDestinationGroups,
+	initialName,
+	initialDescription,
+	initialProtocol,
+	initialPorts,
+	initialDestinationResource,
+	initialTab,
+	disableDestinationSelector = false,
+	additionalResources,
 }: Readonly<ModalProps>) {
-  const { permission } = usePermissions();
-  const { users } = useUsers();
+	const t = useTranslations("policies");
+	const tCommon = useTranslations("common");
+	const { permission } = usePermissions();
+	const { users } = useUsers();
 
-  const {
-    portDisabled,
-    destinationGroups,
-    direction,
-    ports,
-    sourceGroups,
-    destinationHasResources,
-    destinationOnlyResources,
-    setSourceGroups,
-    setDestinationGroups,
-    setPorts,
-    setDirection,
-    setProtocol,
-    enabled,
-    setEnabled,
-    setName,
-    setDescription,
-    setPostureChecks,
-    name,
-    protocol,
-    description,
-    postureChecks,
-    submit,
-    isPostureChecksLoading,
-    getPolicyData,
-    sourceResource,
-    setSourceResource,
-    destinationResource,
-    setDestinationResource,
-    portRanges,
-    setPortRanges,
-    hasPortSupport,
-    sshAccessType,
-    setSshAccessType,
-    sshAuthorizedGroups,
-    setSshAuthorizedGroups,
-  } = useAccessControl({
-    policy,
-    postureCheckTemplates,
-    onSuccess,
-    initialDestinationGroups,
-    initialName,
-    initialDescription,
-    initialPorts,
-    initialProtocol,
-    initialDestinationResource,
-  });
+	const {
+		portDisabled,
+		destinationGroups,
+		direction,
+		ports,
+		sourceGroups,
+		destinationHasResources,
+		destinationOnlyResources,
+		setSourceGroups,
+		setDestinationGroups,
+		setPorts,
+		setDirection,
+		setProtocol,
+		enabled,
+		setEnabled,
+		setName,
+		setDescription,
+		setPostureChecks,
+		name,
+		protocol,
+		description,
+		postureChecks,
+		submit,
+		isPostureChecksLoading,
+		getPolicyData,
+		sourceResource,
+		setSourceResource,
+		destinationResource,
+		setDestinationResource,
+		portRanges,
+		setPortRanges,
+		hasPortSupport,
+		sshAccessType,
+		setSshAccessType,
+		sshAuthorizedGroups,
+		setSshAuthorizedGroups,
+	} = useAccessControl({
+		policy,
+		postureCheckTemplates,
+		onSuccess,
+		initialDestinationGroups,
+		initialName,
+		initialDescription,
+		initialPorts,
+		initialProtocol,
+		initialDestinationResource,
+	});
 
-  const [tab, setTab] = useState(() => {
-    if (initialTab && initialTab !== "") return initialTab;
-    if (!cell) return "policy";
-    if (cell == "posture_checks") return "posture_checks";
-    return "policy";
-  });
+	const [tab, setTab] = useState(() => {
+		if (initialTab && initialTab !== "") return initialTab;
+		if (!cell) return "policy";
+		if (cell == "posture_checks") return "posture_checks";
+		return "policy";
+	});
 
-  const canContinueToPostureChecks = useMemo(() => {
-    const hasSource = sourceGroups.length > 0 || !!sourceResource;
-    const hasDestination =
-      destinationGroups.length > 0 || !!destinationResource;
-    return hasSource && hasDestination;
-  }, [sourceGroups, destinationGroups, destinationResource, sourceResource]);
+	const canContinueToPostureChecks = useMemo(() => {
+		const hasSource = sourceGroups.length > 0 || !!sourceResource;
+		const hasDestination =
+			destinationGroups.length > 0 || !!destinationResource;
+		return hasSource && hasDestination;
+	}, [sourceGroups, destinationGroups, destinationResource, sourceResource]);
 
-  const submitDisabled = useMemo(() => {
-    if (name.length == 0) return true;
-    if (!canContinueToPostureChecks) return true;
-  }, [name, canContinueToPostureChecks]);
+	const submitDisabled = useMemo(() => {
+		if (name.length == 0) return true;
+		if (!canContinueToPostureChecks) return true;
+	}, [name, canContinueToPostureChecks]);
 
-  const handleProtocolChange = (p: Protocol) => {
-    setProtocol(p);
-    if (!hasPortSupport(p)) {
-      setPorts([]);
-      setPortRanges([]);
-    }
-  };
+	const handleProtocolChange = (p: Protocol) => {
+		setProtocol(p);
+		if (!hasPortSupport(p)) {
+			setPorts([]);
+			setPortRanges([]);
+		}
+	};
 
-  const close = () => {
-    const data = getPolicyData();
-    onSuccess && onSuccess(data);
-  };
+	const close = () => {
+		const data = getPolicyData();
+		onSuccess && onSuccess(data);
+	};
 
-  return (
-    <ModalContent maxWidthClass={"max-w-3xl"}>
-      <ModalHeader
-        icon={<AccessControlIcon className={"fill-netbird"} />}
-        title={
-          policy
-            ? "Update Access Control Policy"
-            : "Create New Access Control Policy"
-        }
-        description={
-          "Use this policy to restrict access to groups of resources."
-        }
-        color={"netbird"}
-      />
+	return (
+		<ModalContent maxWidthClass={"max-w-3xl"}>
+			<ModalHeader
+				icon={<AccessControlIcon className={"fill-netbird"} />}
+				title={policy ? t("updatePolicy") : t("createNewPolicy")}
+				description={t("modalDescription")}
+				color={"netbird"}
+			/>
 
-      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
-        <TabsList justify={"start"} className={"px-8"}>
-          <TabsTrigger value={"policy"}>
-            <ArrowRightLeft size={16} />
-            Policy
-          </TabsTrigger>
-          <PostureCheckTabTrigger disabled={!canContinueToPostureChecks} />
-          <TabsTrigger value={"general"} disabled={!canContinueToPostureChecks}>
-            <Text
-              size={16}
-              className={
-                "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
-              }
-            />
-            Name & Description
-          </TabsTrigger>
-        </TabsList>
+			<Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
+				<TabsList justify={"start"} className={"px-8"}>
+					<TabsTrigger value={"policy"}>
+						<ArrowRightLeft size={16} />
+						{t("tabPolicy")}
+					</TabsTrigger>
+					<PostureCheckTabTrigger disabled={!canContinueToPostureChecks} />
+					<TabsTrigger value={"general"} disabled={!canContinueToPostureChecks}>
+						<Text
+							size={16}
+							className={
+								"text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+							}
+						/>
+						{t("tabNameDescription")}
+					</TabsTrigger>
+				</TabsList>
 
-        <TabsContent value={"policy"} className={"pb-8"}>
-          <div className={"px-8 flex-col flex gap-6"}>
-            <div
-              className={"flex justify-between items-center gap-10"}
-              data-testid={"protocol-wrapper"}
-            >
-              <div className={"w-full"}>
-                <Label>Protocol</Label>
-                <HelpText className={"max-w-sm"}>
-                  Allow only specified network protocols. To change traffic
-                  direction and ports, select{" "}
-                  <b className={"text-white"}>TCP</b> or{" "}
-                  <b className={"text-white"}>UDP</b> protocol.
-                </HelpText>
-              </div>
-              <Select
-                value={protocol}
-                onValueChange={(v) => handleProtocolChange(v as Protocol)}
-                disabled={
-                  !permission.policies.update || !permission.policies.create
-                }
-              >
-                <SelectTrigger className="w-[280px]">
-                  <div
-                    className={"flex items-center gap-3"}
-                    data-testid={"protocol-select-button"}
-                  >
-                    <Share2 size={15} className={"text-nb-gray-300"} />
-                    <SelectValue placeholder="Select protocol..." />
-                  </div>
-                </SelectTrigger>
-                <SelectContent data-testid={"protocol-selection"}>
-                  <SelectItem value="all">ALL</SelectItem>
-                  <SelectItem value="tcp">TCP</SelectItem>
-                  <SelectItem value="udp">UDP</SelectItem>
-                  <SelectItem value="icmp">ICMP</SelectItem>
-                  <SelectItem
-                    value="netbird-ssh"
-                    extra={
-                      <HelpTooltip
-                        triggerClassName={"ml-[0.01rem]"}
-                        align={"center"}
-                        side={"right"}
-                        content={
-                          <>
-                            Select NetBird SSH for SSH-specific policies with
-                            fine-grained access control, or use TCP with port 22
-                            for basic network-level SSH access
-                          </>
-                        }
-                      />
-                    }
-                  >
-                    NetBird SSH
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+				<TabsContent value={"policy"} className={"pb-8"}>
+					<div className={"px-8 flex-col flex gap-6"}>
+						<div
+							className={"flex justify-between items-center gap-10"}
+							data-cy={"protocol-wrapper"}
+						>
+							<div className={"w-full"}>
+								<Label>{t("protocol")}</Label>
+								<HelpText className={"max-w-sm"}>{t("protocolHelp")}</HelpText>
+							</div>
+							<Select
+								value={protocol}
+								onValueChange={(v) => handleProtocolChange(v as Protocol)}
+								disabled={
+									!permission.policies.update || !permission.policies.create
+								}
+							>
+								<SelectTrigger className="w-[280px]">
+									<div
+										className={"flex items-center gap-3"}
+										data-cy={"protocol-select-button"}
+									>
+										<Share2 size={15} className={"text-nb-gray-300"} />
+										<SelectValue placeholder={t("selectProtocol")} />
+									</div>
+								</SelectTrigger>
+								<SelectContent data-cy={"protocol-selection"}>
+									<SelectItem value="all">{t("all")}</SelectItem>
+									<SelectItem value="tcp">{t("tcp")}</SelectItem>
+									<SelectItem value="udp">{t("udp")}</SelectItem>
+									<SelectItem value="icmp">{t("icmp")}</SelectItem>
+									<SelectItem
+										value="netbird-ssh"
+										extra={
+											<HelpTooltip
+												triggerClassName={"ml-[0.01rem]"}
+												align={"center"}
+												side={"right"}
+												content={<>{t("netbirdSshHelp")}</>}
+											/>
+										}
+									>
+										{t("netbirdSsh")}
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 
-            <div className={"flex gap-6 items-center"}>
-              <div className={"w-full self-start"}>
-                <Label className={"mb-2"}>
-                  <FolderDown size={15} />
-                  Source
-                  <HelpTooltip
-                    content={
-                      <>
-                        Typically a group of user devices (e.g., Developers,
-                        Marketing) or individual devices in peer-to-peer
-                        connections that will access the destination.
-                      </>
-                    }
-                  />
-                </Label>
-                <PeerGroupSelector
-                  data-testid={"source-group-selector"}
-                  popoverWidth={500}
-                  placeholder={"Select source(s)..."}
-                  showRoutes={protocol !== "netbird-ssh"}
-                  showResources={false}
-                  showPeers={protocol !== "netbird-ssh"}
-                  showResourceCounter={false}
-                  showPeerCount={allowEditPeers}
-                  disableInlineRemoveGroup={false}
-                  values={sourceGroups}
-                  onChange={setSourceGroups}
-                  users={protocol === "netbird-ssh" ? users : undefined}
-                  resource={sourceResource}
-                  onResourceChange={setSourceResource}
-                  saveGroupAssignments={useSave}
-                  disabled={
-                    !permission.policies.update || !permission.policies.create
-                  }
-                />
-              </div>
-              <PolicyDirection
-                value={direction}
-                onChange={setDirection}
-                disabled={destinationOnlyResources}
-                protocol={protocol}
-                destinationResource={destinationResource}
-              />
+						<div className={"flex gap-6 items-center"}>
+							<div className={"w-full self-start"}>
+								<Label className={"mb-2"}>
+									<FolderDown size={15} />
+									{t("source")}
+									<HelpTooltip content={<>{t("sourceHelp")}</>} />
+								</Label>
+								<PeerGroupSelector
+									dataCy={"source-group-selector"}
+									popoverWidth={500}
+									placeholder={t("selectSource")}
+									showRoutes={protocol !== "netbird-ssh"}
+									showResources={false}
+									showPeers={protocol !== "netbird-ssh"}
+									showResourceCounter={false}
+									showPeerCount={allowEditPeers}
+									disableInlineRemoveGroup={false}
+									values={sourceGroups}
+									onChange={setSourceGroups}
+									users={protocol === "netbird-ssh" ? users : undefined}
+									resource={sourceResource}
+									onResourceChange={setSourceResource}
+									saveGroupAssignments={useSave}
+									disabled={
+										!permission.policies.update || !permission.policies.create
+									}
+								/>
+							</div>
+							<PolicyDirection
+								value={direction}
+								onChange={setDirection}
+								disabled={destinationOnlyResources}
+								protocol={protocol}
+								destinationResource={destinationResource}
+							/>
 
-              <div className={"w-full self-start"}>
-                <Label className={"mb-2"}>
-                  <FolderInput size={15} />
-                  Destination
-                  <HelpTooltip
-                    content={
-                      <>
-                        Typically a group of peers or resources (e.g., Servers,
-                        Databases, Internal Services) that will be accessed by
-                        the source. Can also be an individual peer or resource.
-                      </>
-                    }
-                  />
-                </Label>
-                <PeerGroupSelector
-                  data-testid={"destination-group-selector"}
-                  popoverWidth={500}
-                  placeholder={"Select destination(s)..."}
-                  showRoutes={true}
-                  showResources={protocol !== "netbird-ssh"}
-                  showPeers={true}
-                  showResourceCounter={true}
-                  showPeerCount={allowEditPeers}
-                  disableInlineRemoveGroup={false}
-                  values={destinationGroups}
-                  onChange={setDestinationGroups}
-                  resource={destinationResource}
-                  onResourceChange={setDestinationResource}
-                  saveGroupAssignments={useSave}
-                  additionalResources={additionalResources}
-                  disabled={
-                    disableDestinationSelector ||
-                    !permission.policies.update ||
-                    !permission.policies.create
-                  }
-                />
-              </div>
-            </div>
+							<div className={"w-full self-start"}>
+								<Label className={"mb-2"}>
+									<FolderInput size={15} />
+									{t("destination")}
+									<HelpTooltip content={<>{t("destinationHelp")}</>} />
+								</Label>
+								<PeerGroupSelector
+									dataCy={"destination-group-selector"}
+									popoverWidth={500}
+									placeholder={t("selectDestination")}
+									showRoutes={true}
+									showResources={protocol !== "netbird-ssh"}
+									showPeers={true}
+									showResourceCounter={true}
+									showPeerCount={allowEditPeers}
+									disableInlineRemoveGroup={false}
+									values={destinationGroups}
+									onChange={setDestinationGroups}
+									resource={destinationResource}
+									onResourceChange={setDestinationResource}
+									saveGroupAssignments={useSave}
+									additionalResources={additionalResources}
+									disabled={
+										disableDestinationSelector ||
+										!permission.policies.update ||
+										!permission.policies.create
+									}
+								/>
+							</div>
+						</div>
 
-            {destinationHasResources &&
-              !destinationOnlyResources &&
-              direction === "bi" && (
-                <Callout
-                  variant={"warning"}
-                  icon={
-                    <AlertCircleIcon
-                      size={14}
-                      className={"shrink-0 relative top-[3px] text-netbird"}
-                    />
-                  }
-                  className="mb-4"
-                >
-                  Some destination groups contain resources. Resources only
-                  support incoming traffic and cannot initiate connections.
-                </Callout>
-              )}
+						{destinationHasResources &&
+							!destinationOnlyResources &&
+							direction === "bi" && (
+								<Callout
+									variant={"warning"}
+									icon={
+										<AlertCircleIcon
+											size={14}
+											className={"shrink-0 relative top-[3px] text-netbird"}
+										/>
+									}
+									className="mb-4"
+								>
+									{t("resourcesBidirectionalWarning")}
+								</Callout>
+							)}
 
-            {protocol === "netbird-ssh" ? (
-              <div>
-                {destinationHasResources && (
-                  <Callout
-                    variant={"warning"}
-                    icon={
-                      <AlertCircleIcon
-                        size={14}
-                        className={"shrink-0 relative top-[3px] text-netbird"}
-                      />
-                    }
-                    className="mb-6"
-                  >
-                    SSH access only works on peers, not on routed resources.
-                    Please ensure your destination groups contain peers for SSH
-                    connectivity.
-                  </Callout>
-                )}
-                <div
-                  className={"flex justify-between items-center gap-10 mt-2"}
-                >
-                  <div className={"w-full"}>
-                    <Label className={"flex items-center gap-2"}>
-                      <SquareTerminalIcon size={15} />
-                      SSH Access
-                    </Label>
-                    <HelpText>
-                      Select {`'Full Access'`} to allow SSH as any local user,
-                      or {`'Limited Access'`} to specify which local users each
-                      group is allowed to use.
-                    </HelpText>
-                  </div>
-                  <SSHAccessType
-                    value={sshAccessType}
-                    onChange={setSshAccessType}
-                  />
-                </div>
-                <SSHAuthorizedGroups
-                  sourceGroups={sourceGroups}
-                  authorizedGroups={sshAuthorizedGroups}
-                  setAuthorizedGroups={setSshAuthorizedGroups}
-                  accessType={sshAccessType}
-                />
-              </div>
-            ) : (
-              <div
-                className={cn(
-                  "mb-2 mt-2",
-                  portDisabled && "opacity-30 pointer-events-none",
-                )}
-              >
-                <div>
-                  <Label className={"flex items-center gap-2"}>
-                    <Shield size={14} />
-                    Ports
-                  </Label>
-                  <HelpText>
-                    Allow network traffic and access only to specified ports.
-                    Select ports or port ranges between 1 and 65535.
-                  </HelpText>
-                </div>
-                <div className={""}>
-                  <PortSelector
-                    showAll={true}
-                    ports={ports}
-                    onPortsChange={setPorts}
-                    portRanges={portRanges}
-                    onPortRangesChange={setPortRanges}
-                    disabled={portDisabled}
-                  />
-                </div>
-              </div>
-            )}
+						{protocol === "netbird-ssh" ? (
+							<div>
+								{destinationHasResources && (
+									<Callout
+										variant={"warning"}
+										icon={
+											<AlertCircleIcon
+												size={14}
+												className={"shrink-0 relative top-[3px] text-netbird"}
+											/>
+										}
+										className="mb-6"
+									>
+										{t("sshResourceWarning")}
+									</Callout>
+								)}
+								<div
+									className={"flex justify-between items-center gap-10 mt-2"}
+								>
+									<div className={"w-full"}>
+										<Label className={"flex items-center gap-2"}>
+											<SquareTerminalIcon size={15} />
+											{t("sshAccess")}
+										</Label>
+										<HelpText>{t("sshAccessHelp")}</HelpText>
+									</div>
+									<SSHAccessType
+										value={sshAccessType}
+										onChange={setSshAccessType}
+									/>
+								</div>
+								<SSHAuthorizedGroups
+									sourceGroups={sourceGroups}
+									authorizedGroups={sshAuthorizedGroups}
+									setAuthorizedGroups={setSshAuthorizedGroups}
+									accessType={sshAccessType}
+								/>
+							</div>
+						) : (
+							<div
+								className={cn(
+									"mb-2 mt-2",
+									portDisabled && "opacity-30 pointer-events-none",
+								)}
+							>
+								<div>
+									<Label className={"flex items-center gap-2"}>
+										<Shield size={14} />
+										{t("ports")}
+									</Label>
+									<HelpText>{t("portsHelp")}</HelpText>
+								</div>
+								<div className={""}>
+									<PortSelector
+										showAll={true}
+										ports={ports}
+										onPortsChange={setPorts}
+										portRanges={portRanges}
+										onPortRangesChange={setPortRanges}
+										disabled={portDisabled}
+									/>
+								</div>
+							</div>
+						)}
 
-            <FancyToggleSwitch
-              value={enabled}
-              onChange={setEnabled}
-              disabled={
-                !permission.policies.update || !permission.policies.create
-              }
-              label={
-                <>
-                  <Power size={15} />
-                  Enable Policy
-                </>
-              }
-              helpText={"Use this switch to enable or disable the policy."}
-            />
-          </div>
-        </TabsContent>
-        <PostureCheckTab
-          isLoading={isPostureChecksLoading}
-          postureChecks={postureChecks}
-          setPostureChecks={setPostureChecks}
-        />
-        <TabsContent value={"general"} className={"px-8 pb-6"}>
-          <div className={"flex flex-col gap-6"}>
-            <div>
-              <Label>Name of the Rule</Label>
-              <HelpText>
-                Set an easily identifiable name for your policy.
-              </HelpText>
-              <Input
-                autoFocus={true}
-                tabIndex={0}
-                value={name}
-                data-testid={"policy-name"}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={"e.g., Devs to Servers"}
-                disabled={
-                  !permission.policies.update || !permission.policies.create
-                }
-              />
-            </div>
-            <div>
-              <Label>Description (optional)</Label>
-              <HelpText>
-                Write a short description to add more context to this policy.
-              </HelpText>
-              <Textarea
-                value={description}
-                data-testid={"policy-description"}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={
-                  "e.g., Devs are allowed to access servers and servers are allowed to access Devs."
-                }
-                rows={3}
-                disabled={
-                  !permission.policies.update || !permission.policies.create
-                }
-              />
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+						<FancyToggleSwitch
+							value={enabled}
+							onChange={setEnabled}
+							disabled={
+								!permission.policies.update || !permission.policies.create
+							}
+							label={
+								<>
+									<Power size={15} />
+									{t("enablePolicy")}
+								</>
+							}
+							helpText={t("enablePolicyHelp")}
+						/>
+					</div>
+				</TabsContent>
+				<PostureCheckTab
+					isLoading={isPostureChecksLoading}
+					postureChecks={postureChecks}
+					setPostureChecks={setPostureChecks}
+				/>
+				<TabsContent value={"general"} className={"px-8 pb-6"}>
+					<div className={"flex flex-col gap-6"}>
+						<div>
+							<Label>{t("ruleName")}</Label>
+							<HelpText>{t("ruleNameHelp")}</HelpText>
+							<Input
+								autoFocus={true}
+								tabIndex={0}
+								value={name}
+								data-cy={"policy-name"}
+								onChange={(e) => setName(e.target.value)}
+								placeholder={t("ruleNamePlaceholder")}
+								disabled={
+									!permission.policies.update || !permission.policies.create
+								}
+							/>
+						</div>
+						<div>
+							<Label>{t("policyDescriptionLabel")}</Label>
+							<HelpText>{t("policyDescriptionHelp")}</HelpText>
+							<Textarea
+								value={description}
+								data-cy={"policy-description"}
+								onChange={(e) => setDescription(e.target.value)}
+								placeholder={t("policyDescriptionPlaceholder")}
+								rows={3}
+								disabled={
+									!permission.policies.update || !permission.policies.create
+								}
+							/>
+						</div>
+					</div>
+				</TabsContent>
+			</Tabs>
 
-      <ModalFooter className={"items-center"}>
-        <div className={"w-full"}>
-          <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
-            <InlineLink
-              href={"https://docs.netbird.io/how-to/manage-network-access"}
-              target={"_blank"}
-            >
-              Access Controls
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
-          </Paragraph>
-        </div>
-        <div className={"flex gap-3 w-full justify-end"}>
-          {!policy ? (
-            <>
-              {tab == "policy" && (
-                <>
-                  <ModalClose asChild={true}>
-                    <Button variant={"secondary"}>Cancel</Button>
-                  </ModalClose>
-                  <Button
-                    variant={"primary"}
-                    onClick={() => setTab("posture_checks")}
-                    disabled={!canContinueToPostureChecks}
-                    data-testid="policy-continue"
-                  >
-                    Continue
-                  </Button>
-                </>
-              )}
+			<ModalFooter className={"items-center"}>
+				<div className={"w-full"}>
+					<Paragraph className={"text-sm mt-auto"}>
+						{t("learnMoreAbout")}
+						<InlineLink
+							href={"https://docs.netbird.io/how-to/manage-network-access"}
+							target={"_blank"}
+						>
+							{t("accessControls")}
+							<ExternalLinkIcon size={12} />
+						</InlineLink>
+					</Paragraph>
+				</div>
+				<div className={"flex gap-3 w-full justify-end"}>
+					{!policy ? (
+						<>
+							{tab == "policy" && (
+								<>
+									<ModalClose asChild={true}>
+										<Button variant={"secondary"}>{tCommon("cancel")}</Button>
+									</ModalClose>
+									<Button
+										variant={"primary"}
+										onClick={() => setTab("posture_checks")}
+										disabled={!canContinueToPostureChecks}
+									>
+										{tCommon("next")}
+									</Button>
+								</>
+							)}
 
-              {tab == "posture_checks" && (
-                <>
-                  <Button
-                    variant={"secondary"}
-                    onClick={() => setTab("policy")}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    variant={"primary"}
-                    onClick={() => setTab("general")}
-                    disabled={!canContinueToPostureChecks}
-                    data-testid="policy-continue"
-                  >
-                    Continue
-                  </Button>
-                </>
-              )}
+							{tab == "posture_checks" && (
+								<>
+									<Button
+										variant={"secondary"}
+										onClick={() => setTab("policy")}
+									>
+										{tCommon("back")}
+									</Button>
+									<Button
+										variant={"primary"}
+										onClick={() => setTab("general")}
+										disabled={!canContinueToPostureChecks}
+									>
+										{tCommon("next")}
+									</Button>
+								</>
+							)}
 
-              {tab == "general" && (
-                <>
-                  <Button
-                    variant={"secondary"}
-                    onClick={() => setTab("posture_checks")}
-                  >
-                    Back
-                  </Button>
+							{tab == "general" && (
+								<>
+									<Button
+										variant={"secondary"}
+										onClick={() => setTab("posture_checks")}
+									>
+										{tCommon("back")}
+									</Button>
 
-                  <Button
-                    variant={"primary"}
-                    disabled={submitDisabled || !permission.policies.create}
-                    onClick={() => {
-                      if (useSave) {
-                        submit();
-                      } else {
-                        close();
-                      }
-                    }}
-                    data-testid={"submit-policy"}
-                  >
-                    <PlusCircle size={16} />
-                    Add Policy
-                  </Button>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
-              </ModalClose>
-              <Button
-                variant={"primary"}
-                disabled={submitDisabled || !permission.policies.update}
-                onClick={() => {
-                  if (useSave) {
-                    submit();
-                  } else {
-                    close();
-                  }
-                }}
-              >
-                Save Changes
-              </Button>
-            </>
-          )}
-        </div>
-      </ModalFooter>
-    </ModalContent>
-  );
+									<Button
+										variant={"primary"}
+										disabled={submitDisabled || !permission.policies.create}
+										onClick={() => {
+											if (useSave) {
+												submit();
+											} else {
+												close();
+											}
+										}}
+										data-cy={"submit-policy"}
+									>
+										<PlusCircle size={16} />
+										{t("addPolicy")}
+									</Button>
+								</>
+							)}
+						</>
+					) : (
+						<>
+							<ModalClose asChild={true}>
+								<Button variant={"secondary"}>{tCommon("cancel")}</Button>
+							</ModalClose>
+							<Button
+								variant={"primary"}
+								disabled={submitDisabled || !permission.policies.update}
+								onClick={() => {
+									if (useSave) {
+										submit();
+									} else {
+										close();
+									}
+								}}
+							>
+								{tCommon("save")}
+							</Button>
+						</>
+					)}
+				</div>
+			</ModalFooter>
+		</ModalContent>
+	);
 }

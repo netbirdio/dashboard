@@ -20,6 +20,7 @@ import DialogProvider from "@/contexts/DialogProvider";
 import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
 import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
 import InstanceSetupProvider from "@/contexts/InstanceSetupProvider";
+import LocaleProvider from "@/contexts/LocaleProvider";
 import { NavigationEvents } from "@/contexts/NavigationEvents";
 import { useSignupSource } from "@/hooks/useSignupSource";
 
@@ -48,34 +49,36 @@ export default function AppLayout({
         <GoogleTagManagerHeadScript />
       </head>
       <body className={cn(inter.className)}>
-        <Suspense fallback={<FullScreenLoading />}>
-          <AnalyticsProvider>
-            <DialogProvider>
-              <GlobalThemeProvider>
-                <ErrorBoundaryProvider>
-                  <InstanceSetupProvider>
-                    <OIDCProvider>
-                      <TooltipProvider delayDuration={0}>
-                        {children}
-                      </TooltipProvider>
-                    </OIDCProvider>
-                  </InstanceSetupProvider>
-                </ErrorBoundaryProvider>
-              </GlobalThemeProvider>
-            </DialogProvider>
-            <Toaster
-              position="top-center"
-              duration={3000}
-              toastOptions={{ unstyled: true }}
-              style={{ "--width": "28rem" } as React.CSSProperties}
-              gap={0}
-              visibleToasts={5}
-              offset="12px"
-            />
-            <NavigationEvents />
-            <DisableDarkReader />
-          </AnalyticsProvider>
-        </Suspense>
+        <LocaleProvider>
+          <Suspense fallback={<FullScreenLoading />}>
+            <AnalyticsProvider>
+              <DialogProvider>
+                <GlobalThemeProvider>
+                  <ErrorBoundaryProvider>
+                    <InstanceSetupProvider>
+                      <OIDCProvider>
+                        <TooltipProvider delayDuration={0}>
+                          {children}
+                        </TooltipProvider>
+                      </OIDCProvider>
+                    </InstanceSetupProvider>
+                  </ErrorBoundaryProvider>
+                </GlobalThemeProvider>
+              </DialogProvider>
+              <Toaster
+                position="top-center"
+                duration={3000}
+                toastOptions={{ unstyled: true }}
+                style={{ "--width": "28rem" } as React.CSSProperties}
+                gap={0}
+                visibleToasts={5}
+                offset="12px"
+              />
+              <NavigationEvents />
+              <DisableDarkReader />
+            </AnalyticsProvider>
+          </Suspense>
+        </LocaleProvider>
       </body>
     </html>
   );

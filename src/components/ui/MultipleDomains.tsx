@@ -6,12 +6,15 @@ import {
   TooltipTrigger,
 } from "@components/Tooltip";
 import { GlobeIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 
 type Props = {
   domains: string[];
 };
 export default function MultipleDomains({ domains }: Props) {
+  const t = useTranslations("common");
+
   if (domains.length === 0) {
     return (
       <Badge
@@ -19,7 +22,7 @@ export default function MultipleDomains({ domains }: Props) {
         className={"uppercase tracking-wider font-medium"}
       >
         <GlobeIcon size={10} />
-        All
+        {t("allDomains")}
       </Badge>
     );
   }
@@ -31,7 +34,7 @@ export default function MultipleDomains({ domains }: Props) {
           <TooltipTrigger asChild={true}>
             <Badge variant={"blue-darker"} className={"cursor-help"}>
               <GlobeIcon size={10} />
-              {domains.length} Domains
+              {t("domainCount", { count: domains.length })}
             </Badge>
           </TooltipTrigger>
           <TooltipContent className={"p-3"}>

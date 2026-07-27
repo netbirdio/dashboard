@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
 import { Input } from "@components/Input";
@@ -22,35 +23,6 @@ interface PeerEditIPModalProps {
   version: IPVersion;
 }
 
-const config: Record<
-  IPVersion,
-  {
-    title: string;
-    description: string;
-    placeholder: string;
-    errorMessage: string;
-    validate: (ip: string) => boolean;
-  }
-> = {
-  v4: {
-    title: "Edit Peer IP Address",
-    description: "Update the NetBird IP address for this peer.",
-    placeholder: "e.g., 100.64.0.15",
-    errorMessage: "Please enter a valid IP, e.g., 100.64.0.15",
-    validate: (ip: string) =>
-      /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
-        ip,
-      ),
-  },
-  v6: {
-    title: "Edit Peer IPv6 Address",
-    description: "Update the NetBird IPv6 address for this peer.",
-    placeholder: "e.g., fd00:1234::1",
-    errorMessage: "Please enter a valid IPv6 address, e.g., fd00:1234::1",
-    validate: (ip: string) => cidr.isValidAddress(ip) && ip.includes(":"),
-  },
-};
-
 export function PeerEditIPModal({
   open,
   onOpenChange,
@@ -58,6 +30,43 @@ export function PeerEditIPModal({
   currentIP,
   version,
 }: Readonly<PeerEditIPModalProps>) {
+  const t = useTranslations("peers");
+  const tc = useTranslations("common");
+
+  const config = useMemo<
+    Record<
+      IPVersion,
+      {
+        title: string;
+        description: string;
+        placeholder: string;
+        errorMessage: string;
+        validate: (ip: string) => boolean;
+      }
+    >
+  >(
+    () => ({
+      v4: {
+        title: t("editPeerIPAddress"),
+        description: t("updatePeerIPDescription"),
+        placeholder: t("editPeerIPPlaceholder"),
+        errorMessage: t("editPeerIPErrorMessage"),
+        validate: (ip: string) =>
+          /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(
+            ip,
+          ),
+      },
+      v6: {
+        title: t("editPeerIPv6Address"),
+        description: t("updatePeerIPv6Description"),
+        placeholder: t("editPeerIPv6Placeholder"),
+        errorMessage: t("editPeerIPv6ErrorMessage"),
+        validate: (ip: string) => cidr.isValidAddress(ip) && ip.includes(":"),
+      },
+    }),
+    [t, version],
+  );
+
   const { title, description, placeholder, errorMessage, validate } =
     config[version];
   const [ip, setIP] = useState(currentIP);
@@ -90,14 +99,14 @@ export function PeerEditIPModal({
               />
             </div>
 
-            <Callout>Changes take effect when the peer reconnects.</Callout>
+            <Callout>{t("changesTakeEffect")}</Callout>
           </div>
 
           <ModalFooter className={"items-center"} separator={false}>
             <div className={"flex gap-3 w-full justify-end"}>
               <ModalClose asChild={true}>
                 <Button variant={"secondary"} className={"w-full"}>
-                  Cancel
+                  {tc("cancel")}
                 </Button>
               </ModalClose>
 
@@ -107,7 +116,7 @@ export function PeerEditIPModal({
                 onClick={() => onSave(trim(ip))}
                 disabled={isDisabled}
               >
-                Save
+                {tc("save")}
               </Button>
             </div>
           </ModalFooter>

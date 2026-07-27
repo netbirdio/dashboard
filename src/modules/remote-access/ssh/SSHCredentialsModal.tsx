@@ -25,6 +25,7 @@ import { useMemo, useState } from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { SSH_DOCS_LINK } from "@/modules/remote-access/ssh/useSSH";
+import { useTranslations } from "next-intl";
 
 type Props = {
   open: boolean;
@@ -33,6 +34,7 @@ type Props = {
 };
 
 export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
+  const t = useTranslations("common");
   const [username, setUsername] = useState(
     getOperatingSystem(peer.os) === OperatingSystem.WINDOWS
       ? "Administrator"
@@ -43,6 +45,7 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
   const [port, setPort] = useState(initialPort);
 
   const userNameError = useMemo(() => {
+
     if (username?.length === 0) return "Username cannot be empty";
   }, [username]);
 
@@ -136,7 +139,7 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("cancel")}</Button>
             </ModalClose>
 
             <Button

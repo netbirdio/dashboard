@@ -1,9 +1,12 @@
+"use client";
+
 import Button from "@components/Button";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import { Trash2 } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "next-intl";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { GroupedRoute, Route } from "@/interfaces/Route";
@@ -12,6 +15,8 @@ type Props = {
   groupedRoute: GroupedRoute;
 };
 export default function GroupedRouteActionCell({ groupedRoute }: Props) {
+  const t = useTranslations("routes");
+  const tCommon = useTranslations("common");
   const { permission } = usePermissions();
 
   const { confirm } = useDialog();
@@ -26,22 +31,21 @@ export default function GroupedRouteActionCell({ groupedRoute }: Props) {
     });
 
     notify({
-      title: "Delete Network " + groupedRoute.network_id,
-      description: "Network was successfully removed",
+      title: t("deleteNetworkNotify", { network_id: groupedRoute.network_id }),
+      description: t("networkRemoved"),
       promise: Promise.all(batch).then(() => {
         mutate("/routes");
       }),
-      loadingMessage: "Deleting the network...",
+      loadingMessage: t("deletingNetwork"),
     });
   };
 
   const handleConfirm = async () => {
     const choice = await confirm({
-      title: `Delete network '${groupedRoute.network_id}'?`,
-      description:
-        "Are you sure you want to delete this network? All routes inside this network will be deleted. This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("deleteNetworkConfirmTitle", { name: groupedRoute.network_id }),
+      description: t("deleteNetworkConfirmDescription"),
+      confirmText: t("deleteDialogConfirm"),
+      cancelText: tCommon("cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -57,7 +61,7 @@ export default function GroupedRouteActionCell({ groupedRoute }: Props) {
         disabled={!permission.routes.delete}
       >
         <Trash2 size={16} />
-        Delete
+        {t("deleteDialogConfirm")}
       </Button>
     </div>
   );

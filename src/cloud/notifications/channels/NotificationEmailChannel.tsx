@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useRef, useState } from "react";
 import Breadcrumbs from "@components/Breadcrumbs";
@@ -39,6 +40,8 @@ export const NotificationEmailChannel = ({ channel }: Props) => {
   const canUpdate = permission?.settings?.update ?? false;
   const [emailInput, setEmailInput] = useState("");
   const emailInputRef = useRef<HTMLInputElement>(null);
+  const t = useTranslations("notifications");
+  const tc = useTranslations("common");
 
   const target = channel.target as EmailTarget | undefined;
   const emails = target?.emails ?? [];
@@ -53,14 +56,14 @@ export const NotificationEmailChannel = ({ channel }: Props) => {
     const trimmed = emailInput.trim();
     if (!trimmed || emails.includes(trimmed)) return;
     notify({
-      title: "Email Notifications",
-      description: `${trimmed} has been successfully added`,
+      title: t("emailNotifications"),
+      description: `${trimmed} ${t("addedSuccessfully")}`,
       promise: updateChannel({
         ...channel,
         target: { emails: [...emails, trimmed] },
       }),
-      loadingTitle: "Email Notifications",
-      loadingMessage: `Adding ${trimmed}...`,
+      loadingTitle: t("emailNotifications"),
+      loadingMessage: `${t("adding")} ${trimmed}...`,
     });
     setEmailInput("");
   };
@@ -68,14 +71,14 @@ export const NotificationEmailChannel = ({ channel }: Props) => {
   const handleRemoveEmail = (email: string) => {
     const remaining = emails.filter((e) => e !== email);
     notify({
-      title: "Email Notifications",
-      description: `${email} has been successfully removed`,
+      title: t("emailNotifications"),
+      description: `${email} ${t("removedSuccessfully")}`,
       promise: updateChannel({
         ...channel,
         target: remaining.length > 0 ? { emails: remaining } : undefined,
       }),
-      loadingTitle: "Email Notifications",
-      loadingMessage: `Removing ${email}...`,
+      loadingTitle: t("emailNotifications"),
+      loadingMessage: `${t("removing")} ${email}...`,
     });
   };
 
@@ -88,24 +91,24 @@ export const NotificationEmailChannel = ({ channel }: Props) => {
       <Breadcrumbs>
         <Breadcrumbs.Item
           href={"/settings"}
-          label={"Settings"}
+          label={tc("settings")}
           icon={<SettingsIcon size={13} />}
         />
         <Breadcrumbs.Item
           href={"/settings?tab=notifications"}
-          label={"Notifications"}
+          label={t("title")}
           icon={<MessageSquareDot size={14} />}
         />
         <Breadcrumbs.Item
           href={"/settings?tab=notifications&channel=email"}
-          label={"Email"}
+          label={t("email")}
           icon={<MailIcon size={14} />}
           active
         />
       </Breadcrumbs>
       <div className={"flex items-start justify-between"}>
         <div className={"flex gap-3 items-center"}>
-          <h1>Email</h1>
+          <h1>{t("email")}</h1>
         </div>
       </div>
       <div className={"flex flex-col gap-8 mt-4"}>
@@ -117,25 +120,23 @@ export const NotificationEmailChannel = ({ channel }: Props) => {
           label={
             <>
               <Power size={15} />
-              Enable Email Channel
+              {t("enableEmailChannel")}
             </>
           }
-          helpText={
-            "Enable or disable all email notifications for your account"
-          }
+          helpText={t("enableEmailChannelHelp")}
         />
         <div className={"flex flex-col relative w-full"}>
           <Label>
             <MailIcon size={14} />
-            Email Addresses
+            {t("emailAddresses")}
           </Label>
           <HelpText>
-            Add one or more email addresses that should receive notifications
+            {t("emailAddressesHelp")}
           </HelpText>
           <div className={"flex gap-3"}>
             <Input
               ref={emailInputRef}
-              placeholder={"e.g. hello@company.com"}
+              placeholder={t("emailPlaceholder")}
               maxWidthClass={"w-full"}
               disabled={!canUpdate}
               value={emailInput}
@@ -155,7 +156,7 @@ export const NotificationEmailChannel = ({ channel }: Props) => {
               data-testid="notification-email-add"
             >
               <PlusCircle size={14} />
-              Add
+              {t("add")}
             </Button>
           </div>
 

@@ -1,5 +1,8 @@
+"use client";
+
 import { notify } from "@components/Notification";
 import { ToggleSwitch } from "@components/ToggleSwitch";
+import { useTranslations } from "next-intl";
 import { useApiCall } from "@utils/api";
 import * as React from "react";
 import { useMemo } from "react";
@@ -12,6 +15,7 @@ type Props = {
   router: NetworkRouter;
 };
 export const RoutingPeersEnabledCell = ({ router }: Props) => {
+  const t = useTranslations("networks");
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const { network } = useNetworksContext();
@@ -22,9 +26,9 @@ export const RoutingPeersEnabledCell = ({ router }: Props) => {
 
   const toggle = async (enabled: boolean) => {
     notify({
-      title: "Network Routing Peer",
-      description: `Routing peer is now ${enabled ? "enabled" : "disabled"}`,
-      loadingMessage: "Updating routing peer...",
+      title: t("networkRoutingPeer"),
+      description: enabled ? t("routingPeerEnabled") : t("routingPeerDisabled"),
+      loadingMessage: t("updatingRoutingPeer"),
       promise: update({
         ...router,
         enabled,

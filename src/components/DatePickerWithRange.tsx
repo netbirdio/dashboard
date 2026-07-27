@@ -8,6 +8,7 @@ import { cn } from "@utils/helpers";
 import dayjs from "dayjs";
 import { debounce } from "lodash";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 
@@ -64,15 +65,16 @@ const isEqualDateRange = (a: DateRange | undefined, b: DateRange) => {
 // way as the picker's own button.
 export function dateRangePresetLabel(
   value: DateRange | undefined,
+  translate?: (key: string) => string,
 ): string | null {
   if (!value?.from && !value?.to) return null;
-  if (isEqualDateRange(value, defaultRanges.allTime)) return "All Time";
-  if (isEqualDateRange(value, defaultRanges.lastMonth)) return "Last Month";
-  if (isEqualDateRange(value, defaultRanges.last14Days)) return "Last 14 Days";
-  if (isEqualDateRange(value, defaultRanges.last2Days)) return "Last 2 Days";
-  if (isEqualDateRange(value, defaultRanges.last7Days)) return "Last 7 Days";
-  if (isEqualDateRange(value, defaultRanges.yesterday)) return "Yesterday";
-  if (isEqualDateRange(value, defaultRanges.today)) return "Today";
+  if (isEqualDateRange(value, defaultRanges.allTime)) return translate?.("allTime") ?? "All Time";
+  if (isEqualDateRange(value, defaultRanges.lastMonth)) return translate?.("lastMonth") ?? "Last Month";
+  if (isEqualDateRange(value, defaultRanges.last14Days)) return translate?.("last14Days") ?? "Last 14 Days";
+  if (isEqualDateRange(value, defaultRanges.last2Days)) return translate?.("last2Days") ?? "Last 2 Days";
+  if (isEqualDateRange(value, defaultRanges.last7Days)) return translate?.("last7Days") ?? "Last 7 Days";
+  if (isEqualDateRange(value, defaultRanges.yesterday)) return translate?.("yesterday") ?? "Yesterday";
+  if (isEqualDateRange(value, defaultRanges.today)) return translate?.("today") ?? "Today";
   return null;
 }
 
@@ -82,6 +84,7 @@ export function DatePickerWithRange({
   onChange,
   disabled = false,
 }: Readonly<Props>) {
+  const t = useTranslations("dateRange");
   const isActive = useMemo(() => {
     return {
       today: isEqualDateRange(value, defaultRanges.today),
@@ -95,16 +98,16 @@ export function DatePickerWithRange({
   }, [value]);
 
   const displayDateValue = useMemo(() => {
-    if (!value) return "Select date range";
+    if (!value) return t("selectDateRange");
 
-    const preset = dateRangePresetLabel(value);
+    const preset = dateRangePresetLabel(value, t);
     if (preset) return preset;
 
     if (!value.to) return dayjs(value.from).format("MMM DD, YYYY").toString();
     return `${dayjs(value.from).format("MMM DD, YYYY")} - ${dayjs(
       value.to,
     ).format("MMM DD, YYYY")}`;
-  }, [value]);
+  }, [t, value]);
 
   const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -159,7 +162,7 @@ export function DatePickerWithRange({
                 label={
                   <>
                     <CalendarIcon size={14} className={"shrink-0"} />
-                    All Time
+                    {t("allTime")}
                   </>
                 }
                 active={isActive.allTime}
@@ -168,22 +171,22 @@ export function DatePickerWithRange({
             </div>
             <div className={"flex gap-2 flex-wrap"}>
               <CalendarButton
-                label={"Last Month"}
+                label={t("lastMonth")}
                 active={isActive.lastMonth}
                 onClick={() => updateRangeAndClose(defaultRanges.lastMonth)}
               />
               <CalendarButton
-                label={"Last 14 Days"}
+                label={t("last14Days")}
                 active={isActive.last14Days}
                 onClick={() => updateRangeAndClose(defaultRanges.last14Days)}
               />
               <CalendarButton
-                label={"Yesterday"}
+                label={t("yesterday")}
                 active={isActive.yesterday}
                 onClick={() => updateRangeAndClose(defaultRanges.yesterday)}
               />
               <CalendarButton
-                label={"Today"}
+                label={t("today")}
                 active={isActive.today}
                 onClick={() => updateRangeAndClose(defaultRanges.today)}
               />

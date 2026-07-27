@@ -1,5 +1,8 @@
+"use client";
+
 import Badge from "@components/Badge";
 import Button from "@components/Button";
+import { useTranslations } from "next-intl";
 import { LayersIcon, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -12,6 +15,7 @@ type Props = {
 };
 
 export const NetworkResourceCell = ({ network }: Props) => {
+  const t = useTranslations("networks");
   const { permission } = usePermissions();
 
   const { openResourceModal } = useNetworksContext();
@@ -42,7 +46,7 @@ export const NetworkResourceCell = ({ network }: Props) => {
         data-testid={"add-resource"}
       >
         <PlusCircle size={12} />
-        Add
+        {t("addResourceBtn")}
       </Button>
     </div>
   ) : (
@@ -55,7 +59,7 @@ export const NetworkResourceCell = ({ network }: Props) => {
         data-testid={"add-resource"}
       >
         <PlusCircle size={12} />
-        Add
+        {t("addResourceBtn")}
       </Button>
     </>
   );

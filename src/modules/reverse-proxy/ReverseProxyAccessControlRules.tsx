@@ -4,362 +4,363 @@ import HelpText from "@components/HelpText";
 import Button from "@components/Button";
 import { Input } from "@components/Input";
 import cidr from "ip-cidr";
-import { hostSuffixFor, isIPv6 } from "@utils/ip";
+import { isIPv6 } from "@utils/ip";
 import {
-  FlagIcon,
-  MinusCircleIcon,
-  NetworkIcon,
-  PlusIcon,
-  ShieldCheckIcon,
-  ShieldXIcon,
-  WorkflowIcon,
+	FlagIcon,
+	MinusCircleIcon,
+	NetworkIcon,
+	PlusIcon,
+	ShieldCheckIcon,
+	ShieldXIcon,
+	WorkflowIcon,
 } from "lucide-react";
 import {
-  SelectDropdown,
-  SelectOption,
+	SelectDropdown,
+	SelectOption,
 } from "@components/select/SelectDropdown";
 import { CountrySelector } from "@/components/ui/CountrySelector";
 import { AccessRestrictions, CrowdSecMode } from "@/interfaces/ReverseProxy";
 import { ReverseProxyCrowdSecIPReputation } from "@/modules/reverse-proxy/ReverseProxyCrowdSecIPReputation";
+import { useTranslations } from "next-intl";
 
 type AccessAction = "allow" | "block";
 type AccessRuleType = "country" | "ip" | "cidr";
 
 const ACTION_OPTIONS: SelectOption[] = [
-  {
-    label: "Allow Only",
-    value: "allow",
-    icon: (props) => <ShieldCheckIcon {...props} className="text-green-500" />,
-  },
-  {
-    label: "Block Only",
-    value: "block",
-    icon: (props) => <ShieldXIcon {...props} className="text-red-500" />,
-  },
+	{
+		label: "Allow Only",
+		value: "allow",
+		icon: (props) => <ShieldCheckIcon {...props} className="text-green-500" />,
+	},
+	{
+		label: "Block Only",
+		value: "block",
+		icon: (props) => <ShieldXIcon {...props} className="text-red-500" />,
+	},
 ];
 
 const TYPE_OPTIONS: SelectOption[] = [
-  {
-    label: "Country",
-    value: "country",
-    icon: (props) => <FlagIcon {...props} />,
-  },
-  {
-    label: "IP Address",
-    value: "ip",
-    icon: (props) => <WorkflowIcon {...props} />,
-  },
-  {
-    label: "CIDR Block",
-    value: "cidr",
-    icon: (props) => <NetworkIcon {...props} />,
-  },
+	{
+		label: "Country",
+		value: "country",
+		icon: (props) => <FlagIcon {...props} />,
+	},
+	{
+		label: "IP Address",
+		value: "ip",
+		icon: (props) => <WorkflowIcon {...props} />,
+	},
+	{
+		label: "CIDR Block",
+		value: "cidr",
+		icon: (props) => <NetworkIcon {...props} />,
+	},
 ];
 
 type AccessRule = {
-  id: string;
-  action: AccessAction;
-  type: AccessRuleType;
-  value: string;
+	id: string;
+	action: AccessAction;
+	type: AccessRuleType;
+	value: string;
 };
 
 type RulesAction =
-  | { type: "add" }
-  | { type: "remove"; id: string }
-  | {
-      type: "update";
-      id: string;
-      field: "action" | "type" | "value";
-      value: string;
-    };
+	| { type: "add" }
+	| { type: "remove"; id: string }
+	| {
+			type: "update";
+			id: string;
+			field: "action" | "type" | "value";
+			value: string;
+	  };
 
 const nextId = () => crypto.randomUUID();
 
 function rulesReducer(state: AccessRule[], action: RulesAction): AccessRule[] {
-  switch (action.type) {
-    case "add":
-      return [
-        ...state,
-        { id: nextId(), action: "allow", type: "country", value: "" },
-      ];
-    case "remove":
-      return state.filter((r) => r.id !== action.id);
-    case "update":
-      return state.map((r) => {
-        if (r.id !== action.id) return r;
-        if (action.field === "type") {
-          return { ...r, type: action.value as AccessRuleType, value: "" };
-        }
-        return { ...r, [action.field]: action.value };
-      });
-  }
+	switch (action.type) {
+		case "add":
+			return [
+				...state,
+				{ id: nextId(), action: "allow", type: "country", value: "" },
+			];
+		case "remove":
+			return state.filter((r) => r.id !== action.id);
+		case "update":
+			return state.map((r) => {
+				if (r.id !== action.id) return r;
+				if (action.field === "type") {
+					return { ...r, type: action.value as AccessRuleType, value: "" };
+				}
+				return { ...r, [action.field]: action.value };
+			});
+	}
+}
+
+function pushCidrRules(
+	rules: AccessRule[],
+	values: string[] | undefined,
+	action: AccessAction,
+) {
+	values?.forEach((v) => {
+		const isIp = v.includes(":") ? v.endsWith("/128") : v.endsWith("/32");
+		rules.push({
+			id: nextId(),
+			action,
+			type: isIp ? "ip" : "cidr",
+			value: isIp ? v.replace(/\/(32|128)$/, "") : v,
+		});
+	});
 }
 
 function restrictionsToRules(
-  restrictions: AccessRestrictions | undefined,
+	restrictions: AccessRestrictions | undefined,
 ): AccessRule[] {
-  if (!restrictions) return [];
-  const rules: AccessRule[] = [];
-  restrictions.allowed_countries?.forEach((v) =>
-    rules.push({ id: nextId(), action: "allow", type: "country", value: v }),
-  );
-  restrictions.blocked_countries?.forEach((v) =>
-    rules.push({ id: nextId(), action: "block", type: "country", value: v }),
-  );
-  const cidrToRule = (v: string, action: AccessAction) => {
-    const isHostV4 = v.endsWith("/32");
-    const isHostV6 = v.endsWith("/128");
-    const isIp = isHostV4 || isHostV6;
-    const value = isHostV4 ? v.slice(0, -3) : isHostV6 ? v.slice(0, -4) : v;
-    rules.push({ id: nextId(), action, type: isIp ? "ip" : "cidr", value });
-  };
-  restrictions.allowed_cidrs?.forEach((v) => cidrToRule(v, "allow"));
-  restrictions.blocked_cidrs?.forEach((v) => cidrToRule(v, "block"));
-  return rules;
+	if (!restrictions) return [];
+	const rules: AccessRule[] = [];
+	pushCidrRules(rules, restrictions.blocked_cidrs, "block");
+	restrictions.blocked_countries?.forEach((v) =>
+		rules.push({ id: nextId(), action: "block", type: "country", value: v }),
+	);
+	pushCidrRules(rules, restrictions.allowed_cidrs, "allow");
+	restrictions.allowed_countries?.forEach((v) =>
+		rules.push({ id: nextId(), action: "allow", type: "country", value: v }),
+	);
+	return rules;
 }
 
 function rulesToRestrictions(
-  rules: AccessRule[],
-  crowdsecMode?: CrowdSecMode,
+	rules: AccessRule[],
+	crowdsecMode?: CrowdSecMode,
 ): AccessRestrictions | undefined {
-  const allowed_countries: string[] = [];
-  const blocked_countries: string[] = [];
-  const allowed_cidrs: string[] = [];
-  const blocked_cidrs: string[] = [];
+	const allowed_countries: string[] = [];
+	const blocked_countries: string[] = [];
+	const allowed_cidrs: string[] = [];
+	const blocked_cidrs: string[] = [];
 
-  for (const rule of rules) {
-    if (!rule.value) continue;
-    if (rule.type === "country") {
-      if (rule.action === "allow") allowed_countries.push(rule.value);
-      else blocked_countries.push(rule.value);
-    } else {
-      let value = rule.value;
-      if (rule.type === "ip" && !value.includes("/")) {
-        const suffix = hostSuffixFor(value);
-        if (suffix !== null) value = `${value}/${suffix}`;
-      }
-      if (rule.action === "allow") allowed_cidrs.push(value);
-      else blocked_cidrs.push(value);
-    }
-  }
+	for (const rule of rules) {
+		if (!rule.value) continue;
+		if (rule.type === "country") {
+			if (rule.action === "allow") allowed_countries.push(rule.value);
+			else blocked_countries.push(rule.value);
+		} else {
+			const suffix = rule.value.includes(":") ? "/128" : "/32";
+			const value =
+				rule.type === "ip" && !rule.value.includes("/")
+					? `${rule.value}${suffix}`
+					: rule.value;
+			if (rule.action === "allow") allowed_cidrs.push(value);
+			else blocked_cidrs.push(value);
+		}
+	}
 
-  const hasCrowdSec = crowdsecMode != null && crowdsecMode !== CrowdSecMode.OFF;
-  const hasAny =
-    allowed_countries.length > 0 ||
-    blocked_countries.length > 0 ||
-    allowed_cidrs.length > 0 ||
-    blocked_cidrs.length > 0 ||
-    hasCrowdSec;
+	const hasCrowdSec = crowdsecMode != null && crowdsecMode !== CrowdSecMode.OFF;
+	const hasAny =
+		allowed_countries.length > 0 ||
+		blocked_countries.length > 0 ||
+		allowed_cidrs.length > 0 ||
+		blocked_cidrs.length > 0 ||
+		hasCrowdSec;
 
-  if (!hasAny) return undefined;
+	if (!hasAny) return undefined;
 
-  return {
-    ...(allowed_countries.length > 0 && { allowed_countries }),
-    ...(blocked_countries.length > 0 && { blocked_countries }),
-    ...(allowed_cidrs.length > 0 && { allowed_cidrs }),
-    ...(blocked_cidrs.length > 0 && { blocked_cidrs }),
-    ...(hasCrowdSec && { crowdsec_mode: crowdsecMode }),
-  };
+	return {
+		...(allowed_countries.length > 0 && { allowed_countries }),
+		...(blocked_countries.length > 0 && { blocked_countries }),
+		...(allowed_cidrs.length > 0 && { allowed_cidrs }),
+		...(blocked_cidrs.length > 0 && { blocked_cidrs }),
+		...(hasCrowdSec && { crowdsec_mode: crowdsecMode }),
+	};
 }
 
 type Props = {
-  value: AccessRestrictions | undefined;
-  onChange: (value: AccessRestrictions | undefined) => void;
-  onValidationChange?: (hasErrors: boolean) => void;
-  supportsCrowdSec?: boolean;
+	value: AccessRestrictions | undefined;
+	onChange: (value: AccessRestrictions | undefined) => void;
+	onValidationChange?: (hasErrors: boolean) => void;
+	supportsCrowdSec?: boolean;
 };
 
 function validateRule(rule: AccessRule): string {
-  if (rule.type === "country" || !rule.value) return "";
-  if (rule.type === "ip") {
-    let val = rule.value;
-    if (!val.includes("/")) {
-      const suffix = isIPv6(val) ? 128 : 32;
-      val = `${val}/${suffix}`;
-    }
-    if (!cidr.isValidAddress(val)) {
-      return "Please enter a valid IP address, e.g., 85.203.15.42 or 2001:db8::1";
-    }
-  } else {
-    if (!rule.value.includes("/") || !cidr.isValidAddress(rule.value)) {
-      return "Please enter a valid CIDR block, e.g., 74.125.0.0/16 or 2001:db8::/64";
-    }
-  }
-  return "";
+	if (rule.type === "country" || !rule.value) return "";
+	if (rule.type === "ip") {
+		let val = rule.value;
+		if (!val.includes("/")) {
+			const suffix = isIPv6(val) ? 128 : 32;
+			val = `${val}/${suffix}`;
+		}
+		if (!cidr.isValidAddress(val)) {
+			return "Please enter a valid IP address, e.g., 85.203.15.42 or 2001:db8::1";
+		}
+	} else {
+		if (!rule.value.includes("/") || !cidr.isValidAddress(rule.value)) {
+			return "Please enter a valid CIDR block, e.g., 74.125.0.0/16 or 2001:db8::/64";
+		}
+	}
+	return "";
 }
 
 export const ReverseProxyAccessControlRules = ({
-  value,
-  onChange,
-  onValidationChange,
-  supportsCrowdSec,
+	value,
+	onChange,
+	onValidationChange,
+	supportsCrowdSec,
 }: Props) => {
-  const [rules, dispatch] = useReducer(
-    rulesReducer,
-    value,
-    restrictionsToRules,
-  );
+	const t = useTranslations("common");
+	const [rules, dispatch] = useReducer(
+		rulesReducer,
+		value,
+		restrictionsToRules,
+	);
 
-  const [crowdsecMode, setCrowdsecMode] = useState<CrowdSecMode>(
-    value?.crowdsec_mode ?? CrowdSecMode.OFF,
-  );
+	const [crowdsecMode, setCrowdsecMode] = useState<CrowdSecMode>(
+		value?.crowdsec_mode ?? CrowdSecMode.OFF,
+	);
 
-  const errors = useMemo(
-    () => Object.fromEntries(rules.map((r) => [r.id, validateRule(r)])),
-    [rules],
-  );
+	const errors = useMemo(
+		() => Object.fromEntries(rules.map((r) => [r.id, validateRule(r)])),
+		[rules],
+	);
 
-  const hasErrors = useMemo(
-    () => Object.values(errors).some((e) => e !== ""),
-    [errors],
-  );
+	const hasErrors = useMemo(
+		() => Object.values(errors).some((e) => e !== ""),
+		[errors],
+	);
 
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
+	const onChangeRef = useRef(onChange);
+	onChangeRef.current = onChange;
 
-  const onValidationChangeRef = useRef(onValidationChange);
-  onValidationChangeRef.current = onValidationChange;
+	const onValidationChangeRef = useRef(onValidationChange);
+	onValidationChangeRef.current = onValidationChange;
 
-  useEffect(() => {
-    if (!supportsCrowdSec) {
-      setCrowdsecMode(CrowdSecMode.OFF);
-    }
-  }, [supportsCrowdSec]);
+	useEffect(() => {
+		if (!supportsCrowdSec) {
+			setCrowdsecMode(CrowdSecMode.OFF);
+		}
+	}, [supportsCrowdSec]);
 
-  useEffect(() => {
-    onChangeRef.current(rulesToRestrictions(rules, crowdsecMode));
-  }, [rules, crowdsecMode]);
+	useEffect(() => {
+		onChangeRef.current(rulesToRestrictions(rules, crowdsecMode));
+	}, [rules, crowdsecMode]);
 
-  useEffect(() => {
-    onValidationChangeRef.current?.(hasErrors);
-  }, [hasErrors]);
+	useEffect(() => {
+		onValidationChangeRef.current?.(hasErrors);
+	}, [hasErrors]);
 
-  return (
-    <div className={"flex-col flex"}>
-      {supportsCrowdSec && (
-        <ReverseProxyCrowdSecIPReputation
-          value={crowdsecMode}
-          onChange={setCrowdsecMode}
-        />
-      )}
-      <div>
-        <Label>Access Control Rules</Label>
-        <HelpText>
-          Define rules to allow or block traffic based on country, IP address,
-          or CIDR block.
-          <br />
-          Block rules always take priority over allow rules.
-        </HelpText>
-      </div>
-      {rules.length > 0 && (
-        <div className="flex flex-col gap-3 mt-1 mb-4">
-          {rules.map((rule, ruleIndex) => (
-            <div
-              key={rule.id}
-              className="flex items-center"
-              data-testid={`access-rule-${ruleIndex}`}
-            >
-              <div
-                className="w-[160px] shrink-0 [&_button]:rounded-r-none [&_button]:w-[160px]"
-                data-testid={"access-rule-action"}
-              >
-                <SelectDropdown
-                  value={rule.action}
-                  onChange={(v) =>
-                    dispatch({
-                      type: "update",
-                      id: rule.id,
-                      field: "action",
-                      value: v,
-                    })
-                  }
-                  options={ACTION_OPTIONS}
-                  compact
-                />
-              </div>
+	return (
+		<div className={"flex-col flex"}>
+			{supportsCrowdSec && (
+				<ReverseProxyCrowdSecIPReputation
+					value={crowdsecMode}
+					onChange={setCrowdsecMode}
+				/>
+			)}
 
-              <div
-                className="w-[160px] shrink-0 -ml-px [&_button]:rounded-none [&_button]:w-[160px]"
-                data-testid={"access-rule-type"}
-              >
-                <SelectDropdown
-                  value={rule.type}
-                  onChange={(v) =>
-                    dispatch({
-                      type: "update",
-                      id: rule.id,
-                      field: "type",
-                      value: v,
-                    })
-                  }
-                  options={TYPE_OPTIONS}
-                  compact
-                />
-              </div>
+			<div>
+				<Label>{t("accessControlRules")}</Label>
+				<HelpText>
+					Define rules to allow or block traffic based on country, IP address,
+					or CIDR block.
+					<br />
+					Block rules always take priority over allow rules.
+				</HelpText>
+			</div>
+			{rules.length > 0 && (
+				<div className="flex flex-col gap-3 mt-1 mb-4">
+					{rules.map((rule) => (
+						<div key={rule.id} className="flex items-center">
+							<div className="w-[160px] shrink-0 [&_button]:rounded-r-none [&_button]:w-[160px]">
+								<SelectDropdown
+									value={rule.action}
+									onChange={(v) =>
+										dispatch({
+											type: "update",
+											id: rule.id,
+											field: "action",
+											value: v,
+										})
+									}
+									options={ACTION_OPTIONS}
+									compact
+								/>
+							</div>
 
-              <div className="flex-1 min-w-0 -ml-px [&_button]:rounded-l-none [&_input]:rounded-l-none">
-                {rule.type === "country" ? (
-                  <CountrySelector
-                    iconSize={16}
-                    popoverWidth={350}
-                    truncate
-                    value={rule.value}
-                    onChange={(v) =>
-                      dispatch({
-                        type: "update",
-                        id: rule.id,
-                        field: "value",
-                        value: v,
-                      })
-                    }
-                  />
-                ) : (
-                  <Input
-                    placeholder={
-                      rule.type === "ip"
-                        ? "e.g., 85.203.15.42 or 2001:db8::1"
-                        : "e.g., 74.125.0.0/16 or 2001:db8::/64"
-                    }
-                    value={rule.value}
-                    onChange={(e) =>
-                      dispatch({
-                        type: "update",
-                        id: rule.id,
-                        field: "value",
-                        value: e.target.value,
-                      })
-                    }
-                    error={errors[rule.id]}
-                    errorTooltip={true}
-                    maxWidthClass="w-full"
-                    data-testid="access-rule-value"
-                  />
-                )}
-              </div>
+							<div className="w-[160px] shrink-0 -ml-px [&_button]:rounded-none [&_button]:w-[160px]">
+								<SelectDropdown
+									value={rule.type}
+									onChange={(v) =>
+										dispatch({
+											type: "update",
+											id: rule.id,
+											field: "type",
+											value: v,
+										})
+									}
+									options={TYPE_OPTIONS}
+									compact
+								/>
+							</div>
 
-              <Button
-                variant="default-outline"
-                className="h-[42px] w-[42px] !px-0 shrink-0 ml-2"
-                onClick={() => dispatch({ type: "remove", id: rule.id })}
-                aria-label="Remove rule"
-                data-testid="remove-access-rule"
-              >
-                <MinusCircleIcon size={14} />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
-      <Button
-        variant="dotted"
-        className="w-full"
-        size="sm"
-        onClick={() => dispatch({ type: "add" })}
-        data-testid="add-access-rule"
-      >
-        <PlusIcon size={14} />
-        Add Rule
-      </Button>
-    </div>
-  );
+							<div className="flex-1 min-w-0 -ml-px [&_button]:rounded-l-none [&_input]:rounded-l-none">
+								{rule.type === "country" ? (
+									<CountrySelector
+										iconSize={16}
+										popoverWidth={350}
+										truncate
+										value={rule.value}
+										onChange={(v) =>
+											dispatch({
+												type: "update",
+												id: rule.id,
+												field: "value",
+												value: v,
+											})
+										}
+									/>
+								) : (
+									<Input
+										placeholder={
+											rule.type === "ip"
+												? "e.g., 85.203.15.42 or 2001:db8::1"
+												: "e.g., 74.125.0.0/16 or 2001:db8::/64"
+										}
+										value={rule.value}
+										onChange={(e) =>
+											dispatch({
+												type: "update",
+												id: rule.id,
+												field: "value",
+												value: e.target.value,
+											})
+										}
+										error={errors[rule.id]}
+										errorTooltip={true}
+										maxWidthClass="w-full"
+									/>
+								)}
+							</div>
+
+							<Button
+								variant="default-outline"
+								className="h-[42px] w-[42px] !px-0 shrink-0 ml-2"
+								onClick={() => dispatch({ type: "remove", id: rule.id })}
+								aria-label={t("removeRule")}
+							>
+								<MinusCircleIcon size={14} />
+							</Button>
+						</div>
+					))}
+				</div>
+			)}
+			<div className="flex gap-2">
+				<Button
+					variant="dotted"
+					className="flex-1"
+					size="sm"
+					onClick={() => dispatch({ type: "add" })}
+				>
+					<PlusIcon size={14} />
+					Add Rule
+				</Button>
+			</div>
+		</div>
+	);
 };

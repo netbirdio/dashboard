@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { UserIcon, UsersIcon } from "lucide-react";
 import React from "react";
 import { useDistributor } from "@/cloud/distributor/contexts/DistributorProvider";
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export default function InvoicesTypeCell({ invoice }: Readonly<Props>) {
+  const t = useTranslations("invoices");
   const { isActive: isDistributor } = useDistributor();
   const { type } = invoice;
   return (
@@ -15,12 +17,12 @@ export default function InvoicesTypeCell({ invoice }: Readonly<Props>) {
       {type == "account" ? (
         <>
           <UserIcon size={14} />
-          Account
+          {t("account")}
         </>
       ) : (
         <>
           <UsersIcon size={14} />
-          {isDistributor ? "Customers" : "Tenants"}
+          {isDistributor ? t("customers") : t("tenants")}
         </>
       )}
     </div>

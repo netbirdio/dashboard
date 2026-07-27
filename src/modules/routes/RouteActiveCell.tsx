@@ -1,6 +1,9 @@
+"use client";
+
 import { ToggleSwitch } from "@components/ToggleSwitch";
 import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "next-intl";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useRoutes } from "@/contexts/RoutesProvider";
 import { Route } from "@/interfaces/Route";
@@ -9,6 +12,7 @@ type Props = {
   route: Route;
 };
 export default function RouteActiveCell({ route }: Readonly<Props>) {
+  const t = useTranslations("routes");
   const { permission } = usePermissions();
 
   const { updateRoute } = useRoutes();
@@ -22,8 +26,8 @@ export default function RouteActiveCell({ route }: Readonly<Props>) {
         mutate("/routes");
       },
       enabled
-        ? "The network route was successfully enabled"
-        : "The network route was successfully disabled",
+        ? t("routeEnabledSuccess")
+        : t("routeDisabledSuccess"),
     );
   };
 

@@ -4,6 +4,7 @@ import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { cn, generateColorFromUser } from "@utils/helpers";
 import dayjs from "dayjs";
 import { AlertCircle, ArrowUpRight, Cog, PlusIcon, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useMemo } from "react";
 import { useUsers } from "@/contexts/UsersProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
@@ -23,6 +24,7 @@ const ActionIcons: Record<ActionColor, React.ReactNode> = {
 
 export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
   const { users } = useUsers();
+  const t = useTranslations("activity");
 
   const getActivityUser = () => {
     let user;
@@ -95,7 +97,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
 
               <span className={"text-sm text-nb-gray-200"}>
                 <TextWithTooltip
-                  text={user?.name || user?.id || "System"}
+                  text={user?.name || user?.id || t("system")}
                   maxChars={20}
                 />
               </span>
@@ -105,7 +107,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
               {isExternal && (
                 <span className={"flex items-center"}>
                   <SmallBadge
-                    text={"External"}
+                    text={t("external")}
                     variant={"sky"}
                     className={
                       "text-[10px] py-[0.2rem] px-1.5 rounded-full leading-none -top-0"

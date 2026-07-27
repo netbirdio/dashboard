@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Breadcrumbs from "@components/Breadcrumbs";
 import * as Tabs from "@radix-ui/react-tabs";
 import { ExternalLinkIcon, MessageSquareDot } from "lucide-react";
@@ -32,6 +33,8 @@ const NotificationsOverview = ({
   const { getFirstChannelByType } = useNotifications();
   const { permission } = usePermissions();
   const canUpdate = permission?.settings?.update ?? false;
+  const t = useTranslations("notifications");
+  const tc = useTranslations("common");
 
   const emailChannel = getFirstChannelByType(NotificationChannelType.Email);
   const webhookChannel = getFirstChannelByType(NotificationChannelType.Webhook);
@@ -42,33 +45,32 @@ const NotificationsOverview = ({
       <Breadcrumbs>
         <Breadcrumbs.Item
           href={"/settings"}
-          label={"Settings"}
+          label={tc("settings")}
           icon={<SettingsIcon size={13} />}
         />
         <Breadcrumbs.Item
           href={"/settings?tab=notifications"}
-          label={"Notifications"}
+          label={t("title")}
           icon={<MessageSquareDot size={14} />}
           active
         />
       </Breadcrumbs>
       <div className={"flex items-start justify-between"}>
         <div>
-          <h1>Notifications</h1>
+          <h1>{t("title")}</h1>
           <Paragraph>
-            Choose how to be notified when important events occur in your
-            account.
+            {t("description")}
           </Paragraph>
           <Paragraph>
-            Learn more about{" "}
+            {t("learnMore")}{" "}
             <InlineLink
               href={NOTIFICATION_CHANNELS_DOCS_LINK}
               target={"_blank"}
             >
-              Notification Channels
+              {t("notificationChannels")}
               <ExternalLinkIcon size={12} />
-            </InlineLink>
-            in our documentation.
+            </InlineLink>{" "}
+            {t("inOurDocumentation")}
           </Paragraph>
         </div>
       </div>
@@ -172,6 +174,7 @@ const NotificationSlackChannelPage = () => {
 export const NotificationsTabTrigger = () => {
   const { permission } = usePermissions();
   const { isLicensed } = useIsLicensed();
+  const t = useTranslations("notifications");
 
   const canView = permission?.settings?.read && isLicensed;
   if (!canView) return;
@@ -179,9 +182,9 @@ export const NotificationsTabTrigger = () => {
   return (
     <VerticalTabs.Trigger value="notifications">
       <MessageSquareDot size={14} />
-      Notifications
+      {t("title")}
       <SmallBadge
-        text={"Beta"}
+        text={t("beta")}
         variant={"sky"}
         className={"text-[8px] leading-none py-[3px] px-[5px]"}
         textClassName={"top-0"}

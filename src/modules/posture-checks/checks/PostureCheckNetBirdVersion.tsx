@@ -13,121 +13,119 @@ import { useMemo, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { NetBirdVersionCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
+import { useTranslations } from "next-intl";
 
 type Props = {
-  value?: NetBirdVersionCheck;
-  onChange: (value: NetBirdVersionCheck | undefined) => void;
-  disabled?: boolean;
+	value?: NetBirdVersionCheck;
+	onChange: (value: NetBirdVersionCheck | undefined) => void;
+	disabled?: boolean;
 };
 
 export const PostureCheckNetBirdVersion = ({
-  value,
-  onChange,
-  disabled,
+	value,
+	onChange,
+	disabled,
 }: Props) => {
-  const [open, setOpen] = useState(false);
+	const t = useTranslations("postureChecks");
+	const [open, setOpen] = useState(false);
 
-  return (
-    <PostureCheckCard
-      open={open}
-      setOpen={setOpen}
-      key={open ? 1 : 0}
-      active={value?.min_version !== undefined}
-      title={"NetBird Client Version"}
-      description={
-        "Restrict access to peers with a specific NetBird client version."
-      }
-      icon={<NetBirdIcon size={18} />}
-      modalWidthClass={"max-w-lg"}
-      onReset={() => onChange(undefined)}
-    >
-      <CheckContent
-        value={value}
-        onChange={(v) => {
-          onChange(v);
-          setOpen(false);
-        }}
-        disabled={disabled}
-      />
-    </PostureCheckCard>
-  );
+	return (
+		<PostureCheckCard
+			open={open}
+			setOpen={setOpen}
+			key={open ? 1 : 0}
+			active={value?.min_version !== undefined}
+			title={t("netBirdClientVersion")}
+			description={t("netBirdClientVersionHelp")}
+			icon={<NetBirdIcon size={18} />}
+			modalWidthClass={"max-w-lg"}
+			onReset={() => onChange(undefined)}
+		>
+			<CheckContent
+				value={value}
+				onChange={(v) => {
+					onChange(v);
+					setOpen(false);
+				}}
+				disabled={disabled}
+			/>
+		</PostureCheckCard>
+	);
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
-  const [version, setVersion] = useState(value?.min_version || "");
+	const t = useTranslations("postureChecks");
+	const tCommon = useTranslations("common");
+	const [version, setVersion] = useState(value?.min_version || "");
 
-  const versionError = useMemo(() => {
-    if (version == "") return "";
-    const validSemver = validator.isValidVersion(version);
-    if (!validSemver)
-      return "Please enter a valid version, e.g., 0.2, 0.2.0, 0.2.0-alpha.1";
-  }, [version]);
+	const versionError = useMemo(() => {
+		if (version == "") return "";
+		const validSemver = validator.isValidVersion(version);
+		if (!validSemver) return t("minimumRequiredVersionError");
+	}, [version]);
 
-  const canSave = useMemo(() => {
-    return (
-      !versionError &&
-      version !== value?.min_version &&
-      !isEmpty(version) &&
-      !disabled
-    );
-  }, [version, versionError, value, disabled]);
+	const canSave = useMemo(() => {
+		return (
+			!versionError &&
+			version !== value?.min_version &&
+			!isEmpty(version) &&
+			!disabled
+		);
+	}, [version, versionError, value, disabled]);
 
-  return (
-    <>
-      <div className={"flex flex-col px-8 gap-3 pb-6"}>
-        <div>
-          <Label>Minimum required version</Label>
-          <HelpText>
-            Only peers with the minimum specified NetBird client version will
-            have access to the network.
-          </HelpText>
-          <div>
-            <Input
-              className={"max-w-[200px]"}
-              value={version}
-              onChange={(e) => setVersion(e.target.value)}
-              placeholder={"e.g., 0.25.0"}
-              error={versionError}
-              customPrefix={"Version"}
-              disabled={disabled}
-            />
-          </div>
-        </div>
-      </div>
-      <ModalFooter className={"items-center"}>
-        <div className={"w-full"}>
-          <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
-            <InlineLink
-              href={
-                "https://docs.netbird.io/how-to/manage-posture-checks#net-bird-client-version-check"
-              }
-              target={"_blank"}
-            >
-              Client Version Check
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
-          </Paragraph>
-        </div>
-        <div className={"flex gap-3 w-full justify-end"}>
-          <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
-          </ModalClose>
-          <Button
-            variant={"primary"}
-            disabled={!canSave}
-            onClick={() => {
-              if (isEmpty(version)) {
-                onChange(undefined);
-              } else {
-                onChange({ min_version: version });
-              }
-            }}
-          >
-            Save
-          </Button>
-        </div>
-      </ModalFooter>
-    </>
-  );
+	return (
+		<>
+			<div className={"flex flex-col px-8 gap-3 pb-6"}>
+				<div>
+					<Label>{t("minimumRequiredVersion")}</Label>
+					<HelpText>{t("minimumRequiredVersionHelp")}</HelpText>
+					<div>
+						<Input
+							className={"max-w-[200px]"}
+							value={version}
+							onChange={(e) => setVersion(e.target.value)}
+							placeholder={t("minimumRequiredVersionPlaceholder")}
+							error={versionError}
+							customPrefix={t("version")}
+							disabled={disabled}
+						/>
+					</div>
+				</div>
+			</div>
+			<ModalFooter className={"items-center"}>
+				<div className={"w-full"}>
+					<Paragraph className={"text-sm mt-auto"}>
+						{t("learnMoreAbout")}
+						<InlineLink
+							href={
+								"https://docs.netbird.io/how-to/manage-posture-checks#net-bird-client-version-check"
+							}
+							target={"_blank"}
+						>
+							{t("netBirdClientVersionCheck")}
+							<ExternalLinkIcon size={12} />
+						</InlineLink>
+					</Paragraph>
+				</div>
+				<div className={"flex gap-3 w-full justify-end"}>
+					<ModalClose asChild={true}>
+						<Button variant={"secondary"}>{tCommon("cancel")}</Button>
+					</ModalClose>
+					<Button
+						variant={"primary"}
+						disabled={!canSave}
+						onClick={() => {
+							if (isEmpty(version)) {
+								onChange(undefined);
+							} else {
+								onChange({ min_version: version });
+							}
+						}}
+					>
+						{tCommon("save")}
+					</Button>
+				</div>
+			</ModalFooter>
+		</>
+	);
 };

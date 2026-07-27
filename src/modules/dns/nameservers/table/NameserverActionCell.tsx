@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import {
   DropdownMenu,
@@ -15,6 +17,7 @@ import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NameserverGroup } from "@/interfaces/Nameserver";
+import { useTranslations } from "next-intl";
 
 type Props = {
   ns: NameserverGroup;
@@ -25,6 +28,8 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
   const [open, setOpen] = useState(false);
+  const t = useTranslations("dns");
+  const tCommon = useTranslations("common");
 
   const canUpdate = permission.nameservers.update;
   const canDelete = permission.nameservers.delete;
@@ -33,11 +38,10 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
     const enabled = !ns.enabled;
     notify({
       title: ns.name,
-      description:
-        "Nameserver was successfully" +
-        (enabled ? " enabled" : " disabled") +
-        ".",
-      loadingMessage: "Updating your nameserver...",
+      description: t("nameserverToggleSuccess", {
+        status: enabled ? tCommon("enabled").toLowerCase() : tCommon("disabled").toLowerCase(),
+      }),
+      loadingMessage: t("nameserverToggleLoading"),
       promise: nsRequest
         .put(
           {
@@ -60,22 +64,21 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
 
   const deleteRule = async () => {
     notify({
-      title: "Nameserver " + ns.name,
-      description: "The nameserver was successfully removed.",
+      title: tCommon("delete") + " " + ns.name,
+      description: t("nameserverDeletedSuccess"),
       promise: nsRequest.del("", `/${ns.id}`).then(() => {
         mutate("/dns/nameservers");
       }),
-      loadingMessage: "Deleting the nameserver...",
+      loadingMessage: t("deletingNameserver"),
     });
   };
 
   const openConfirm = async () => {
     const choice = await confirm({
-      title: `Delete '${ns.name}'?`,
-      description:
-        "Are you sure you want to delete this nameserver? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("confirmDeleteNameserverTitle", { name: ns.name }),
+      description: t("confirmDeleteNameserver"),
+      confirmText: tCommon("delete"),
+      cancelText: tCommon("cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -95,7 +98,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
           <Button
             variant={"secondary"}
             className={"!px-3"}
-            aria-label={"Nameserver actions"}
+            aria-label={t("nameserverActionsAria")}
             data-testid={"nameserver-actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
@@ -112,7 +115,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
-              {ns.enabled ? "Disable" : "Enable"}
+              {ns.enabled ? t("disable") : t("enable")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -124,7 +127,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {tCommon("delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

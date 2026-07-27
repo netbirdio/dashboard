@@ -4,6 +4,7 @@ import ModalHeader from "@components/modal/ModalHeader";
 import PinCodeInput from "@components/PinCodeInput";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 
 type Props = {
   open: boolean;
@@ -22,6 +23,7 @@ export default function AuthPinModal({
   onSave,
   onRemove,
 }: Readonly<Props>) {
+  const t = useTranslations("common");
   const [pin, setPin] = useState(currentPin);
   const [isMasked, setIsMasked] = useState(isEnabled && currentPin === "");
   const isEditing = isEnabled;
@@ -73,7 +75,7 @@ export default function AuthPinModal({
                 </Button>
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
@@ -89,7 +91,7 @@ export default function AuthPinModal({
                 <div />
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"

@@ -7,6 +7,7 @@ import { Group } from "@/interfaces/Group";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import GroupsRow from "@/modules/common-table-rows/GroupsRow";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
+import { useTranslations } from "next-intl";
 
 type Props = {
   zone: DNSZone;
@@ -43,12 +44,12 @@ export const DNSZonesGroupCell = ({ zone }: Props) => {
 
   if (!zone?.distribution_groups) return <EmptyRow />;
 
+  const t = useTranslations("dns");
+
   return (
     <GroupsRow
-      label={"Distribution Groups"}
-      description={
-        "Advertise this zone to peers that belong to the following groups"
-      }
+      label={t("distributionGroupsLabel")}
+      description={t("zoneGroupsHelp")}
       groups={groupIDs || []}
       hideAllGroup={false}
       disabled={!permission?.dns?.update}

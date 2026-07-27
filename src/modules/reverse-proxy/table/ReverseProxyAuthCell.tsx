@@ -28,6 +28,7 @@ import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { Group } from "@/interfaces/Group";
 import { isL4Mode, ReverseProxy } from "@/interfaces/ReverseProxy";
 import FullTooltip from "@components/FullTooltip";
+import { useTranslations } from "next-intl";
 
 const AUTH_METHODS: {
   key: "password_auth" | "pin_auth" | "bearer_auth";
@@ -69,6 +70,8 @@ type Props = {
 export default function ReverseProxyAuthCell({
   reverseProxy,
 }: Readonly<Props>) {
+  const t = useTranslations("common");
+
   const { permission } = usePermissions();
   const { openModal } = useReverseProxies();
   const { groups } = useGroups();
@@ -242,7 +245,7 @@ export default function ReverseProxyAuthCell({
             openModal({ proxy: reverseProxy, initialTab: "auth" });
           }}
           disabled={!permission?.services?.update}
-          aria-label="Configure authentication"
+          aria-label={t("configureAuthentication")}
         >
           <Settings size={12} />
         </Button>

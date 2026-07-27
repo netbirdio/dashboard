@@ -9,63 +9,65 @@ import AddRouteDropdownButton from "@/modules/peer/AddRouteDropdownButton";
 import usePeerRoutes from "@/modules/peer/usePeerRoutes";
 import InlineLink from "@components/InlineLink";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const PeerRoutesTable = lazy(() => import("@/modules/peer/PeerRoutesTable"));
 
 type Props = {
-  peer: Peer;
+	peer: Peer;
 };
 
 export const PeerNetworkRoutesSection = ({ peer }: Props) => {
-  const { peerRoutes, isLoading } = usePeerRoutes({ peer });
-  const exitNodeInfo = useHasExitNodes(peer);
+	const t = useTranslations("peers");
+	const tCommon = useTranslations("common");
+	const { peerRoutes, isLoading } = usePeerRoutes({ peer });
+	const exitNodeInfo = useHasExitNodes(peer);
 
-  return (
-    <div className={"pb-10 px-8"}>
-      <div className={""}>
-        <div className={"flex justify-between items-center mb-5"}>
-          <div>
-            <Paragraph>
-              Access other networks without installing NetBird on every
-              resource.{" "}
-              <InlineLink
-                href={
-                  "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
-                }
-                target={"_blank"}
-              >
-                Learn more
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </Paragraph>
-          </div>
-          <div className={"inline-flex gap-4 justify-end"}>
-            <div className={"gap-4 flex"}>
-              <AddExitNodeButton
-                peer={peer}
-                firstTime={!exitNodeInfo.hasExitNode}
-              />
-              <AddRouteDropdownButton />
-            </div>
-          </div>
-        </div>
+	return (
+		<div className={"pb-10 px-8"}>
+			<div className={""}>
+				<div className={"flex justify-between items-center mb-5"}>
+					<div>
+						<Paragraph>
+							{t("networkRoutesDesc")}{" "}
+							<InlineLink
+								href={
+									"https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+								}
+								target={"_blank"}
+							>
+								{tCommon("learnMore")}
+								<ExternalLinkIcon size={12} />
+							</InlineLink>
+						</Paragraph>
+					</div>
+					<div className={"inline-flex gap-4 justify-end"}>
+						<div className={"gap-4 flex"}>
+							<AddExitNodeButton
+								peer={peer}
+								firstTime={!exitNodeInfo.hasExitNode}
+							/>
+							<AddRouteDropdownButton />
+						</div>
+					</div>
+				</div>
 
-        <Suspense
-          fallback={
-            <div>
-              <div className={"mt-0 w-full"}>
-                <SkeletonTable withHeader={false} />
-              </div>
-            </div>
-          }
-        >
-          <PeerRoutesTable
-            peer={peer}
-            isLoading={isLoading}
-            peerRoutes={peerRoutes}
-          />
-        </Suspense>
-      </div>
-    </div>
-  );
+				<Suspense
+					fallback={
+						<div>
+							<div className={"mt-0 w-full"}>
+								<SkeletonTable withHeader={false} />
+							</div>
+						</div>
+					}
+				>
+					<PeerRoutesTable
+						peer={peer}
+						isLoading={isLoading}
+						peerRoutes={peerRoutes}
+					/>
+				</Suspense>
+			</div>
+		</div>
+	);
 };

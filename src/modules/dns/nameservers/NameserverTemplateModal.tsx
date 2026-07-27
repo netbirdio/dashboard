@@ -1,3 +1,5 @@
+"use client";
+
 import InlineLink from "@components/InlineLink";
 import { Modal, ModalContent, ModalTrigger } from "@components/modal/Modal";
 import { cn } from "@utils/helpers";
@@ -10,6 +12,7 @@ import Quad9Logo from "@/assets/nameservers/quad9.svg";
 import { Group } from "@/interfaces/Group";
 import { NameserverGroup, NameserverPresets } from "@/interfaces/Nameserver";
 import NameserverModal from "@/modules/dns/nameservers/NameserverModal";
+import { useTranslations } from "next-intl";
 
 type Props = {
   children: React.ReactNode;
@@ -63,6 +66,9 @@ type ModalProps = {
 export function NameserverTemplateModalContent({
   onePresetSelection,
 }: Readonly<ModalProps>) {
+  const t = useTranslations("dns");
+  const tCommon = useTranslations("common");
+
   return (
     <ModalContent maxWidthClass={"max-w-xl"} showClose={true}>
       <div className={"px-8 py-3 flex flex-col gap-6 mt-4"}>
@@ -100,10 +106,8 @@ export function NameserverTemplateModalContent({
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Default)}
             icon={<GlobeIcon size={30} className={"text-netbird"} />}
-            title={"Custom DNS"}
-            description={
-              "Use custom nameservers to resolve domains in your network. You can either use a public DNS or your own nameservers."
-            }
+            title={t("customDNS")}
+            description={t("customDNSDescription")}
             data-testid="nameserver-preset-custom"
           />
         </div>
@@ -131,6 +135,7 @@ function NameserverTemplate({
   hrefTitle?: string;
   "data-testid"?: string;
 }>) {
+  const tCommon = useTranslations("common");
   return (
     <button
       className={
@@ -165,7 +170,7 @@ function NameserverTemplate({
                 e.stopPropagation();
               }}
             >
-              {hrefTitle || "Learn more"}
+              {hrefTitle || tCommon("learnMore")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </div>

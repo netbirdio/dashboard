@@ -1,6 +1,9 @@
+"use client";
+
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
+import { useTranslations } from "next-intl";
 import { validator } from "@utils/helpers";
 import cidr from "ip-cidr";
 import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
@@ -20,13 +23,18 @@ type Props = {
 export const ResourceSingleAddressInput = ({
   value,
   onChange,
-  label = "Address",
+  label,
   className = "",
   onError,
-  description = "Enter a single IP address, CIDR block or domain name",
-  placeholder = "Address (IP, CIDR or Domain)",
+  description,
+  placeholder,
   autoFocus,
 }: Props) => {
+  const t = useTranslations("networks");
+  const resolvedLabel = label || t("addressLabel");
+  const resolvedDescription = description || t("addressDescription");
+  const resolvedPlaceholder = placeholder || t("addressPlaceholder");
+
   const hasChars = useMemo(() => {
     return !!value.match(/[a-z*]/i);
   }, [value]);
@@ -51,18 +59,18 @@ export const ResourceSingleAddressInput = ({
         !value.includes(".") ||
         value.endsWith(".")
       ) {
-        return "Please enter a valid domain, e.g. service.internal, example.com or *.example.com";
+        return t("domainError");
       }
       return ""; // Valid domain
     }
 
     // Case 2: If it's not a valid domain, check if it's a valid CIDR
     if (!cidr.isValidAddress(value)) {
-      return "Please enter a valid IP or CIDR, e.g., 10.0.0.21, 192.168.1.0/24, 2001:db8::1 or 2001:db8::/64";
+      return t("ipCidrError");
     }
 
     return ""; // Valid CIDR
-  }, [value, hasChars, isCIDRBlock]);
+  }, [value, hasChars, isCIDRBlock, t]);
 
   useEffect(() => {
     onError?.(error);
@@ -70,14 +78,14 @@ export const ResourceSingleAddressInput = ({
 
   return (
     <div className={className}>
-      <Label>{label}</Label>
-      <HelpText>{description}</HelpText>
+      <Label>{resolvedLabel}</Label>
+      <HelpText>{resolvedDescription}</HelpText>
       <Input
         autoFocus={autoFocus}
         data-testid="resource-address-input"
         customPrefix={PrefixIcon}
         error={error}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

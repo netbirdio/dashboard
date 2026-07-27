@@ -8,12 +8,13 @@ import {
 import { CalendarClockIcon, CalendarIcon, Check } from "lucide-react";
 import Image from "next/image";
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import Avatar from "@/assets/avatars/jack.jpeg";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { useExperiment } from "@/cloud/cloud-hooks/useExperiment";
 import { useAnalytics } from "@/contexts/AnalyticsProvider";
-import { useAccount } from "@/modules/account/useAccount";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useAccount } from "@/modules/account/useAccount";
 
 type Props = {
   open: boolean;
@@ -28,83 +29,58 @@ export const OnboardingDemoCall = ({ open, onOpenChange }: Props) => {
   const { trackEventV2 } = useAnalytics();
   const account = useAccount();
   const { loggedInUser } = useLoggedInUser();
+  const t = useTranslations("onboarding");
 
   const [variant, variantKey] = useExperiment("onboarding-call", {
     v1: {
-      title: "Book a Technical Overview (Not a Sales Call)",
-      desc: "You’ll meet with a solutions engineer who will walk through how NetBird works, answer your implementation questions - no slides, no hard sell.",
+      title: t("demoCall.v1.title"),
+      desc: t("demoCall.v1.desc"),
       features: [
-        "Live walkthrough of setup and architecture",
-        "Implementation of use case, for your stack",
-        "Best practices and general overview",
+        t("demoCall.v1.feature1"),
+        t("demoCall.v1.feature2"),
+        t("demoCall.v1.feature3"),
       ],
-      cta: "Book Now",
-      cancel: "No Thanks",
+      cta: t("demoCall.v1.cta"),
+      cancel: t("demoCall.v1.cancel"),
     },
     v2: {
-      title: "Talk to our Solutions Engineer",
-      desc: (
-        <>
-          Get a 30-min technical overview. We’ll go over your specific use-case
-          and answer any technical questions you might have. <br /> We’re
-          offering this as a technical onboard support for you. <br /> This is
-          NOT a sales call.
-        </>
-      ),
+      title: t("demoCall.v2.title"),
+      desc: t.rich("demoCall.v2.desc", { br: () => <br /> }),
       features: [],
-      cta: "Book Now",
-      cancel: "No Thanks",
+      cta: t("demoCall.v2.cta"),
+      cancel: t("demoCall.v2.cancel"),
     },
     v3: {
-      title: "Book a Technical Overview (Not a Sales Call)",
-      desc: (
-        <>
-          Get a 30-min technical overview. We’ll go over your specific use-case
-          and answer any technical questions you might have. <br /> We’re
-          offering this as a technical onboard support for you. <br /> This is
-          NOT a sales call.
-        </>
-      ),
+      title: t("demoCall.v3.title"),
+      desc: t.rich("demoCall.v3.desc", { br: () => <br /> }),
       features: [],
-      cta: "Book Now",
-      cancel: "No Thanks",
+      cta: t("demoCall.v3.cta"),
+      cancel: t("demoCall.v3.cancel"),
     },
     v4: {
-      title: "Book a Technical Overview",
-      desc: "You’ll meet with a solutions engineer who will walk through how NetBird works, answer your implementation questions - no slides, no hard sell.",
+      title: t("demoCall.v4.title"),
+      desc: t("demoCall.v4.desc"),
       features: [
-        "Live walkthrough of setup and architecture",
-        "Implementation of use case, for your stack",
-        "Best practices and general overview",
+        t("demoCall.v4.feature1"),
+        t("demoCall.v4.feature2"),
+        t("demoCall.v4.feature3"),
       ],
-      cta: "Book Now",
-      cancel: "No Thanks",
+      cta: t("demoCall.v4.cta"),
+      cancel: t("demoCall.v4.cancel"),
     },
     v5: {
-      title: "Talk to our Solutions Engineer",
-      desc: (
-        <>
-          Get a 30-min technical overview. We’ll go over your specific use-case
-          and answer any technical questions you might have. <br /> We’re
-          offering this as a technical onboard support for you.
-        </>
-      ),
+      title: t("demoCall.v5.title"),
+      desc: t.rich("demoCall.v5.desc", { br: () => <br /> }),
       features: [],
-      cta: "Book Now",
-      cancel: "No Thanks",
+      cta: t("demoCall.v5.cta"),
+      cancel: t("demoCall.v5.cancel"),
     },
     v6: {
-      title: "Book a Technical Overview",
-      desc: (
-        <>
-          Get a 30-min technical overview. We’ll go over your specific use-case
-          and answer any technical questions you might have. <br /> We’re
-          offering this as a technical onboard support for you.
-        </>
-      ),
+      title: t("demoCall.v6.title"),
+      desc: t.rich("demoCall.v6.desc", { br: () => <br /> }),
       features: [],
-      cta: "Book Now",
-      cancel: "No Thanks",
+      cta: t("demoCall.v6.cta"),
+      cancel: t("demoCall.v6.cancel"),
     },
   });
 
@@ -251,8 +227,7 @@ export const OnboardingDemoCall = ({ open, onOpenChange }: Props) => {
         >
           <CalendarClockIcon size={12} />
           <div>
-            The call usually takes around
-            <span className={"font-medium"}> 30 minutes</span>
+            {t("demoCall.duration", { duration: 30 })}
           </div>
         </div>
       </ModalContent>

@@ -2,6 +2,7 @@ import Card from "@components/Card";
 import Paragraph from "@components/Paragraph";
 import SquareIcon from "@components/SquareIcon";
 import { LockIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import Skeleton from "react-loading-skeleton";
 
@@ -14,8 +15,9 @@ type Props = {
 export const RestrictedAccess = ({
   children,
   hasAccess = false,
-  page = "this page",
+  page,
 }: Props) => {
+  const t = useTranslations("common");
   if (hasAccess) return children;
 
   return (
@@ -61,12 +63,11 @@ export const RestrictedAccess = ({
                       <h1
                         className={"text-3xl font-medium max-w-xl mx-auto mt-3"}
                       >
-                        {"You don't have access to"} <br /> {page}
+                        {t("restrictedAccessHeading")} <br />
+                        {page ?? t("thisPage")}
                       </h1>
                       <Paragraph className={"justify-center my-3"}>
-                        {
-                          "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information."
-                        }
+                        {t("restrictedAccessDescription")}
                       </Paragraph>
                     </div>
                   </div>
