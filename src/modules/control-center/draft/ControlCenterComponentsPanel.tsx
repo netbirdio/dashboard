@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import TruncatedText from "@components/ui/TruncatedText";
 import { MemoizedScrollArea, ScrollAreaViewport } from "@components/ScrollArea";
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
@@ -182,6 +182,14 @@ const PanelContent = React.memo(
     const isSearching = search.trim().length > 0;
     const searchRef = useRef<HTMLInputElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
+    const listRef = useRef<VirtuosoHandle>(null);
+
+    // Virtuoso keeps its scroll offset across data swaps — reset to the top
+    // when the tab or search mode changes. Imperative reset instead of a
+    // remount key: remounting blanked the list for a frame (visible blink).
+    React.useEffect(() => {
+      listRef.current?.scrollTo({ top: 0 });
+    }, [category, isSearching]);
 
     // autoFocus only fires on mount — focus explicitly on every open.
     // Closing clears the search so the panel reopens fresh, and releases
@@ -1254,17 +1262,15 @@ const PanelContent = React.memo(
                 className={"flex-1 min-h-0"}
               >
                 <Virtuoso
+                  ref={listRef}
                   // The panel stays mounted while closed (it only fades) —
                   // Virtuoso and the scroll area would keep their first,
                   // invisible-mount measurements (wrong scrollbar size, or
                   // none at all). Remount the list on every open for a
-                  // fresh measure of the now-visible container. Category /
-                  // search-mode changes remount too — Virtuoso keeps its
-                  // scroll offset across data swaps, so switching tabs would
-                  // otherwise land mid-list at the previous tab's position.
-                  key={`${open ? "open" : "closed"}-${
-                    isSearching ? "search" : category
-                  }`}
+                  // fresh measure of the now-visible container. Tab/search
+                  // switches only scroll back to the top (see the effect
+                  // above) — remounting per tab blinked the list.
+                  key={open ? "open" : "closed"}
                   data={flatRows}
                   overscan={300}
                   // Exact row height (h-[52px]) — headings are shorter and
