@@ -103,9 +103,8 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
       <div
         className={cn(
           "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-850",
-          // Same card metrics as StandaloneResourceNode / GroupNode so all
-          // draft cards line up at one height.
-          "hover:bg-nb-gray-930 hover:border-nb-gray-800 pr-5 pl-3 py-2.5",
+          // Same fixed height as real peer nodes / GroupNode (64px inner).
+          "hover:bg-nb-gray-930 hover:border-nb-gray-800 pr-5 pl-3 h-[64px] flex items-center",
           isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
           showHalo && "ring-2 ring-sky-500",
         )}
@@ -182,7 +181,9 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
   return (
     <div
       className={cn(
-        "relative rounded-lg transition-all group/node pr-5 pl-3 py-1 border",
+        // Fixed height matching GroupNode (h-9 icon + py-3.5 = 64px inner)
+        // so peers, selects, and groups all line up.
+        "relative rounded-lg transition-all group/node pr-5 pl-3 h-[64px] flex items-center border",
         variant === "card" &&
           "bg-nb-gray-940 border-nb-gray-850 hover:bg-nb-gray-930 hover:border-nb-gray-800",
         variant === "default" && "border-transparent",

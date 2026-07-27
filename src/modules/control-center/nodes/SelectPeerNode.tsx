@@ -78,7 +78,7 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
         size={"xs"}
         maxHeight={300}
       >
-        <div className={"flex items-center justify-between gap-8 pr-3"}>
+        <div className={"flex items-center justify-between gap-8 pr-3 h-[64px]"}>
           {peer && <DeviceCard device={peer} />}
           <ChevronsUpDown size={18} className={"shrink-0"} />
         </div>

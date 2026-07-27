@@ -95,8 +95,9 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
         size={"xs"}
         maxHeight={300}
       >
+        {/* Same height as GroupNode (h-9 icon box + py-3.5 = 64px inner). */}
         <div
-          className={"flex items-center justify-between gap-8 pr-3 py-2 pl-3"}
+          className={"flex items-center justify-between gap-8 pr-3 pl-3 h-[64px]"}
         >
           {user && <SelectedUser user={user} />}
           <ChevronsUpDown size={18} className={"shrink-0"} />
@@ -136,7 +137,7 @@ export const SelectedUser = ({
     <div className={cn("flex items-center justify-center gap-2.5", className)}>
       <div
         className={
-          "w-8 h-8 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"
+          "w-8 h-8 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-850"
         }
         style={{
           color: generateColorFromUser(user),

@@ -91,14 +91,19 @@ export const DeviceCard = ({
         className={cn(
           "flex flex-col justify-center leading-tight",
           // Peer subtitles sit tighter than resource ones — a hair less gap
-          // keeps resources from looking spaced out.
-          device ? "gap-0.5" : "gap-px",
+          // keeps resources from looking spaced out. Default-size peers use
+          // no gap at all (the placeholder card's metrics).
+          device ? (isSmall ? "gap-0.5" : "gap-0") : "gap-px",
         )}
       >
         <span
           className={cn(
             "font-normal text-nb-gray-100 flex items-center gap-2",
-            isSmall ? "text-[0.72rem]" : "mb-1.5 text-[0.85rem] mt-2",
+            // Default metrics match the placeholder peer card so installed
+            // and not-yet-installed peers share the title/subtitle gap.
+            isSmall
+              ? "text-[0.72rem]"
+              : "mb-1 mt-1 text-[0.85rem] relative top-[0.05rem]",
           )}
         >
           <TruncatedText
@@ -111,9 +116,7 @@ export const DeviceCard = ({
         <span
           className={cn(
             "font-normal text-nb-gray-400 relative",
-            isSmall
-              ? "text-[0.72rem]"
-              : "text-sm -top-[0.3rem]",
+            isSmall ? "text-[0.72rem]" : "text-sm -top-[0.1rem]",
           )}
         >
           {device?.ip || resource?.address}
