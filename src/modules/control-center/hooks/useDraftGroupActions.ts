@@ -488,6 +488,7 @@ export function useDraftGroupActions() {
         confirmText: "Delete",
         cancelText: "Cancel",
         type: "danger",
+        dismissOnOutsideClick: true,
       });
       if (!choice) return false;
 

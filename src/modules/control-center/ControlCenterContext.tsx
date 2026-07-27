@@ -35,6 +35,8 @@ import { useSelectNodeHandlers } from "@/modules/control-center/hooks/useSelectN
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { DestinationGroupPanel } from "@/modules/control-center/DestinationGroupPanel";
 import { PeerGroupsPanel } from "@/modules/control-center/PeerGroupsPanel";
+import NetworkResourceModal from "@/modules/networks/resources/NetworkResourceModal";
+import { mutate } from "swr";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ensureParentsBeforeChildren } from "@/modules/control-center/utils/helpers";
 
@@ -61,6 +63,12 @@ interface CanvasState {
   setSelectedUser: (v: string) => void;
   selectedDestinationGroup: string;
   setSelectedDestinationGroup: (v: string) => void;
+  // Live-mode resource editor target (real ids) — opens the networks page's
+  // resource modal; its save PUTs immediately (behind a warning confirm).
+  liveResourceEditor: { resourceId: string; networkId: string } | null;
+  setLiveResourceEditor: (
+    v: { resourceId: string; networkId: string } | null,
+  ) => void;
   contextMenuNodeId: string;
   setContextMenuNodeId: (v: string) => void;
   loggedInUser: User | undefined;
@@ -186,6 +194,10 @@ export function CanvasStateProvider({
   const [selectedUser, setSelectedUser] = useState("");
   const [selectedDestinationGroup, setSelectedDestinationGroup] = useState("");
   const [selectedPeerPanel, setSelectedPeerPanel] = useState("");
+  const [liveResourceEditor, setLiveResourceEditor] = useState<{
+    resourceId: string;
+    networkId: string;
+  } | null>(null);
   const [focusedNodeId, setFocusedNodeId] = useState("");
   const [highlightArmed, setHighlightArmed] = useState(false);
   const [contextMenuNodeId, setContextMenuNodeId] = useState("");
@@ -216,6 +228,8 @@ export function CanvasStateProvider({
       setSelectedUser,
       selectedDestinationGroup,
       setSelectedDestinationGroup,
+      liveResourceEditor,
+      setLiveResourceEditor,
       contextMenuNodeId,
       setContextMenuNodeId,
       loggedInUser,
@@ -236,6 +250,7 @@ export function CanvasStateProvider({
       selectedPeer,
       selectedUser,
       selectedDestinationGroup,
+      liveResourceEditor,
       contextMenuNodeId,
       loggedInUser,
     ],
@@ -392,6 +407,50 @@ export function ControlCenterUIProvider({
             peerId={selectedPeerPanel}
             onClose={() => setSelectedPeerPanel("")}
           />
+          {/* Live resource editor — the networks page's modal, PUTs on
+              save. The canvas node is patched from the response. */}
+          {canvas.liveResourceEditor &&
+            (() => {
+              const network = data.networks?.find(
+                (n) => n.id === canvas.liveResourceEditor?.networkId,
+              );
+              const resource = data.networkResources?.find(
+                (r) => r.id === canvas.liveResourceEditor?.resourceId,
+              );
+              if (!network || !resource) return null;
+              return (
+                <NetworkResourceModal
+                  open={true}
+                  setOpen={(open) =>
+                    !open && canvas.setLiveResourceEditor(null)
+                  }
+                  network={network}
+                  resource={resource}
+                  onUpdated={(r) => {
+                    // Patch every canvas node carrying this resource.
+                    canvas.setNodes((prev) =>
+                      prev.map((n) => {
+                        const res = n.data?.resource as
+                          | { id?: string }
+                          | undefined;
+                        if (!res || res.id !== r.id) return n;
+                        return {
+                          ...n,
+                          data: {
+                            ...n.data,
+                            resource: r,
+                            enabled: r.enabled !== false,
+                          },
+                        };
+                      }),
+                    );
+                    void mutate("/networks/resources");
+                    void mutate("/groups");
+                    canvas.setLiveResourceEditor(null);
+                  }}
+                />
+              );
+            })()}
         </div>
       </div>
     </ControlCenterUIContext.Provider>

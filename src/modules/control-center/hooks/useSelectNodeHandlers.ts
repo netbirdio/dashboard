@@ -18,6 +18,7 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { Policy } from "@/interfaces/Policy";
+import { useDialog } from "@/contexts/DialogProvider";
 
 interface UseSelectNodeHandlersParams {
   views: {
@@ -65,6 +66,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setSelectedUser,
     setSelectedDestinationGroup,
     selectedDestinationGroup,
+    setLiveResourceEditor,
     loggedInUser,
   } = useCanvasState();
 
@@ -86,6 +88,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   } = useDestinationGroup();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const { isDraft } = useDraftMode();
+  const { confirm } = useDialog();
 
   const {
     views: {
@@ -475,6 +478,38 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         setSelectedPolicy(policyId);
         setPolicyModalOpen(true);
       }
+      // Live resources open the real editor (networks page modal) — its
+      // save PUTs, so confirm first, like the live policy actions. Framed
+      // overview rows keep drilling into their network instead.
+      const isResourceNode =
+        _node.type === "resourceNode" ||
+        _node.type === "destinationResourceNode";
+      if (!isDraft && isResourceNode && !frameChildNetworkId) {
+        const resource = (_node.data as { resource?: { id?: string; name?: string } })
+          ?.resource;
+        const resNetworkId =
+          (_node.data as { draftNetwork?: { networkId?: string } })
+            ?.draftNetwork?.networkId ??
+          _node.parentId?.replace("network-", "");
+        if (resource?.id && resNetworkId) {
+          void (async () => {
+            const choice = await confirm({
+              title: `Edit resource “${resource.name ?? "Resource"}”?`,
+              description:
+                "You are in live mode — saving your changes will apply them to your account immediately.",
+              confirmText: "Edit",
+              cancelText: "Cancel",
+              type: "warning",
+              dismissOnOutsideClick: true,
+            });
+            if (!choice) return;
+            setLiveResourceEditor({
+              resourceId: resource.id!,
+              networkId: resNetworkId,
+            });
+          })();
+        }
+      }
       // Clicking a peer opens its groups panel (the peer-side twin of the
       // group panel) — real peers only; placeholders have no memberships.
       const isPeerNode =
@@ -498,6 +533,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       setSelectedPolicy,
       setPolicyModalOpen,
       setSelectedPeerPanel,
+      setLiveResourceEditor,
+      confirm,
     ],
   );
 

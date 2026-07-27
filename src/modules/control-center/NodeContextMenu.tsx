@@ -95,10 +95,12 @@ export const NodeContextMenu = ({
     setEdges,
     setSelectedDestinationGroup,
     refreshLiveViewRef,
+    setLiveResourceEditor,
   } = useCanvasState();
-  const { setFocusedNodeId } = useDestinationGroup();
+  const { setFocusedNodeId, setSelectedPeerPanel } = useDestinationGroup();
   const { updatePolicy, serializeRules } = usePolicies();
   const groupRequest = useApiCall<Group>("/groups", true);
+  const resourceRequest = useApiCall<NetworkResource>("/networks", true);
   const { permission } = usePermissions();
   const { isDraft, setResourceEditor, setRoutingPeerModal, setNetworkEditor } =
     useDraftMode();
@@ -259,6 +261,7 @@ export const NodeContextMenu = ({
         confirmText: "Delete",
         cancelText: "Cancel",
         type: "danger",
+        dismissOnOutsideClick: true,
       });
       if (!choice) return;
       const resource = (target?.data as { resource?: NetworkResource })
@@ -402,6 +405,7 @@ export const NodeContextMenu = ({
       confirmText: "Delete",
       cancelText: "Cancel",
       type: "danger",
+      dismissOnOutsideClick: true,
     });
     if (!choice) return;
     trackDeletePolicy({
@@ -440,6 +444,7 @@ export const NodeContextMenu = ({
       confirmText: "Edit",
       cancelText: "Cancel",
       type: "warning",
+      dismissOnOutsideClick: true,
     });
     if (!choice) return;
     setSelectedPolicy(livePolicy.id);
@@ -459,6 +464,7 @@ export const NodeContextMenu = ({
       confirmText: enabled ? "Enable" : "Disable",
       cancelText: "Cancel",
       type: "warning",
+      dismissOnOutsideClick: true,
     });
     if (!choice) return;
     updatePolicy(
@@ -475,6 +481,91 @@ export const NodeContextMenu = ({
         : "The policy was successfully disabled",
     );
   }, [livePolicy, confirm, updatePolicy, serializeRules, refreshLiveViewRef]);
+
+  // ---- Live resource actions (edit / disable) — confirmed like every
+  // live action. The node carries the resource + its network ref. ----
+
+  const liveResourceOf = useCallback(
+    (n: Node) => {
+      const resource = (n.data as { resource?: NetworkResource })?.resource;
+      const networkId =
+        (n.data as { draftNetwork?: { networkId?: string } })?.draftNetwork
+          ?.networkId ?? n.parentId?.replace("network-", "");
+      return resource?.id && networkId ? { resource, networkId } : null;
+    },
+    [],
+  );
+
+  const handleLiveEditResource = useCallback(
+    async (n: Node) => {
+      const ref = liveResourceOf(n);
+      if (!ref) return;
+      const choice = await confirm({
+        title: `Edit resource “${ref.resource.name ?? "Resource"}”?`,
+        description:
+          "You are in live mode — saving your changes will apply them to your account immediately.",
+        confirmText: "Edit",
+        cancelText: "Cancel",
+        type: "warning",
+        dismissOnOutsideClick: true,
+      });
+      if (!choice) return;
+      setLiveResourceEditor({
+        resourceId: ref.resource.id!,
+        networkId: ref.networkId,
+      });
+    },
+    [liveResourceOf, confirm, setLiveResourceEditor],
+  );
+
+  const handleLiveToggleResource = useCallback(
+    async (n: Node) => {
+      const ref = liveResourceOf(n);
+      if (!ref) return;
+      const enabled = !(ref.resource.enabled ?? true);
+      const choice = await confirm({
+        title: `${enabled ? "Enable" : "Disable"} resource “${
+          ref.resource.name ?? "Resource"
+        }”?`,
+        description: `You are in live mode — the resource will be ${
+          enabled ? "enabled" : "disabled"
+        } immediately.`,
+        confirmText: enabled ? "Enable" : "Disable",
+        cancelText: "Cancel",
+        type: "warning",
+        dismissOnOutsideClick: true,
+      });
+      if (!choice) return;
+      const toIds = (list?: (string | { id?: string })[]) =>
+        (list ?? []).map((x) => (typeof x === "string" ? x : x.id ?? ""));
+      const updated = await resourceRequest.put(
+        {
+          name: ref.resource.name,
+          description: ref.resource.description ?? "",
+          address: ref.resource.address,
+          groups: toIds(ref.resource.groups as (string | { id?: string })[]),
+          enabled,
+        },
+        `/${ref.networkId}/resources/${ref.resource.id}`,
+      );
+      setNodes((prev) =>
+        prev.map((node) => {
+          const res = node.data?.resource as { id?: string } | undefined;
+          if (!res || res.id !== ref.resource.id) return node;
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              resource: updated ?? { ...ref.resource, enabled },
+              enabled,
+            },
+          };
+        }),
+      );
+      await mutate("/networks/resources");
+    },
+    [liveResourceOf, confirm, resourceRequest, setNodes],
+  );
 
   // "Focus" (live AND draft): enters Focus Mode on this node — dims
   // everything off its edge path. Only shown where it declutters
@@ -493,6 +584,30 @@ export const NodeContextMenu = ({
     [nodes, edges, setFocusedNodeId],
   );
 
+  // "Details" for peers (live AND draft): opens the peer's groups panel —
+  // the same panel a left-click opens. Real peers only.
+  const peerDetailsItems = useCallback(
+    (n: Node): MenuItem[] => {
+      const isPeer =
+        n.type === "peerNode" ||
+        n.type === "sourcePeerNode" ||
+        n.type === "expandedGroupPeer";
+      const peerId = (n.data as { peer?: { id?: string } })?.peer?.id;
+      if (!isPeer || !peerId || peerId.startsWith("draft-")) return [];
+      return [
+        {
+          label: "Details",
+          icon: <ListIcon size={14} />,
+          onClick: () => {
+            setSelectedDestinationGroup("");
+            setSelectedPeerPanel(peerId);
+          },
+        },
+      ];
+    },
+    [setSelectedDestinationGroup, setSelectedPeerPanel],
+  );
+
   // ---- Live group actions (rename / delete) — like the live policy
   // actions, every one confirms first since it hits the real account. ----
 
@@ -507,6 +622,7 @@ export const NodeContextMenu = ({
         confirmText: "Rename",
         cancelText: "Cancel",
         type: "warning",
+        dismissOnOutsideClick: true,
       });
       if (!choice) return;
       openRename(target);
@@ -542,45 +658,6 @@ export const NodeContextMenu = ({
       await mutate("/groups");
     },
     [groups, groupRequest, setNodes],
-  );
-
-  const handleLiveDeleteGroup = useCallback(
-    async (target: Node) => {
-      const group = getNodeGroup(target);
-      if (!group?.id) return;
-      const choice = await confirm({
-        title: `Delete group “${group.name}”?`,
-        description:
-          "You are in live mode — the group will be deleted from your account immediately.",
-        confirmText: "Delete",
-        cancelText: "Cancel",
-        type: "danger",
-      });
-      if (!choice) return;
-      await groupRequest.del("", `/${group.id}`);
-      // Drop every canvas instance of the group (and its edges).
-      const instanceIds = new Set(
-        nodes
-          .filter((n) => isGroupNode(n) && getNodeGroup(n)?.id === group.id)
-          .map((n) => n.id),
-      );
-      setNodes((prev) => prev.filter((n) => !instanceIds.has(n.id)));
-      setEdges((prev) =>
-        prev.filter(
-          (e) => !instanceIds.has(e.source) && !instanceIds.has(e.target),
-        ),
-      );
-      setSelectedDestinationGroup("");
-      await mutate("/groups");
-    },
-    [
-      confirm,
-      groupRequest,
-      nodes,
-      setNodes,
-      setEdges,
-      setSelectedDestinationGroup,
-    ],
   );
 
   // ---- Menu items ----
@@ -621,24 +698,43 @@ export const NodeContextMenu = ({
             onClick: () => setSelectedDestinationGroup(group?.id || node.id),
           },
         ];
-        if (!isAllGroup(group)) {
-          if (canRenameGroup(group)) {
-            items.push({
-              label: "Rename",
-              icon: <PencilLineIcon size={14} />,
-              onClick: () => void handleLiveRenameGroup(node),
-            });
-          }
+        if (!isAllGroup(group) && canRenameGroup(group)) {
           items.push({
-            label: "Delete",
-            icon: <TrashIcon size={14} />,
-            onClick: () => void handleLiveDeleteGroup(node),
-            danger: true,
+            label: "Rename",
+            icon: <PencilLineIcon size={14} />,
+            onClick: () => void handleLiveRenameGroup(node),
           });
         }
         return items;
       }
-      return focusItems(node);
+      // Resources: Edit + Disable/Enable (no Delete in live) — the same
+      // confirmations as the other live actions.
+      const isResourceNode =
+        node.type === "resourceNode" ||
+        node.type === "destinationResourceNode";
+      if (isResourceNode && liveResourceOf(node)) {
+        const resEnabled =
+          ((node.data as { resource?: { enabled?: boolean } })?.resource
+            ?.enabled ?? true) !== false;
+        return [
+          ...focusItems(node),
+          {
+            label: "Edit",
+            icon: <SquarePenIcon size={14} />,
+            onClick: () => void handleLiveEditResource(node),
+          },
+          {
+            label: resEnabled ? "Disable" : "Enable",
+            icon: resEnabled ? (
+              <PowerOffIcon size={14} />
+            ) : (
+              <PowerIcon size={14} />
+            ),
+            onClick: () => void handleLiveToggleResource(node),
+          },
+        ];
+      }
+      return [...focusItems(node), ...peerDetailsItems(node)];
     }
 
     if (isGroupNode(node)) {
@@ -847,6 +943,7 @@ export const NodeContextMenu = ({
 
     return [
       ...focusItems(node),
+      ...peerDetailsItems(node),
       {
         label: "Remove",
         icon: <CircleMinusIcon size={14} />,
@@ -857,8 +954,11 @@ export const NodeContextMenu = ({
     isDraft,
     node,
     focusItems,
+    peerDetailsItems,
+    liveResourceOf,
+    handleLiveEditResource,
+    handleLiveToggleResource,
     handleLiveRenameGroup,
-    handleLiveDeleteGroup,
     nodeId,
     nodePolicy,
     livePolicy,

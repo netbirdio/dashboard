@@ -39,6 +39,7 @@ export function useDiscardDraft() {
         confirmText: "Discard",
         cancelText: "Cancel",
         type: "danger",
+        dismissOnOutsideClick: true,
       });
       if (!choice) return false;
     }
@@ -56,6 +57,7 @@ export function useDiscardDraft() {
         confirmText: "New Draft",
         cancelText: "Cancel",
         type: "warning",
+        dismissOnOutsideClick: true,
       });
       if (!choice) return false;
     }

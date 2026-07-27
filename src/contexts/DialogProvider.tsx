@@ -29,6 +29,9 @@ type DialogOptions = {
   maxWidthClass?: string;
   hideIcon?: boolean;
   center?: boolean;
+  // Clicking the overlay dismisses the dialog (resolves false) — opt-in,
+  // used by the control-center's live-mode warning confirms.
+  dismissOnOutsideClick?: boolean;
 };
 
 export default function DialogProvider({ children }: Props) {
@@ -68,8 +71,12 @@ export default function DialogProvider({ children }: Props) {
           <ModalContent
             maxWidthClass={dialogOptions.maxWidthClass || "max-w-[400px]"}
             showClose={false}
-            onInteractOutside={(e) => e.preventDefault()}
-            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) =>
+              !dialogOptions.dismissOnOutsideClick && e.preventDefault()
+            }
+            onPointerDownOutside={(e) =>
+              !dialogOptions.dismissOnOutsideClick && e.preventDefault()
+            }
           >
             <ModalHeader
               center={dialogOptions.center ?? dialogOptions.type == "center"}

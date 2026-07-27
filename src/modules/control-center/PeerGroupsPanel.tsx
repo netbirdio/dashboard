@@ -164,6 +164,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
       confirmText: "Save",
       cancelText: "Cancel",
       type: "warning",
+      dismissOnOutsideClick: true,
     });
     if (!choice) return;
     setSaving(true);
@@ -279,6 +280,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
       confirmText: "Discard",
       cancelText: "Keep editing",
       type: "warning",
+      dismissOnOutsideClick: true,
     }));
   };
   const requestClose = async () => {

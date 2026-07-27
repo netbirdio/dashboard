@@ -377,6 +377,7 @@ export const DestinationGroupPanel = ({
       confirmText: "Save",
       cancelText: "Cancel",
       type: "warning",
+      dismissOnOutsideClick: true,
     });
     if (!choice) return;
     setSaving(true);
@@ -572,6 +573,7 @@ export const DestinationGroupPanel = ({
       confirmText: "Discard",
       cancelText: "Keep editing",
       type: "warning",
+      dismissOnOutsideClick: true,
     }));
   };
   const requestClose = async () => {
