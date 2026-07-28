@@ -69,6 +69,25 @@ test.describe("Setup modal Linux distro instructions", () => {
     );
   });
 
+  test("imports the repository GPG key on openSUSE", async ({ page }) => {
+    await openLinuxManualInstall(page);
+    const modal = page.getByTestId("setup-netbird-modal");
+
+    await selectDistro(page, "openSUSE (Zypper)");
+    await expect(modal).toContainText(
+      "sudo zypper --non-interactive addrepo -f -g https://pkgs.netbird.io/yum/ netbird",
+    );
+    await expect(modal).toContainText(
+      "sudo zypper --gpg-auto-import-keys refresh netbird",
+    );
+    await expect(modal).toContainText("sudo zypper install netbird");
+    await expect(modal).toContainText(
+      "sudo zypper install netbird-ui libgtk-4-1 libwebkitgtk-6_0-4 xdg-utils",
+    );
+    // Zypper ignores gpgkey= in a .repo file, so that snippet must not appear
+    await expect(modal).not.toContainText("/etc/yum.repos.d/netbird.repo");
+  });
+
   test("offers CLI only on Amazon Linux", async ({ page }) => {
     await openLinuxManualInstall(page);
     const modal = page.getByTestId("setup-netbird-modal");
