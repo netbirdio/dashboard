@@ -37,7 +37,7 @@ import {
   getDraftWarnings,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
+import { useNetcodeDraft } from "@/modules/control-center/netcode/NetcodeDraftContext";
 import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
 
 type Props = {
@@ -169,7 +169,7 @@ const ChangeRow = ({
 
 export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => {
   const { changes, removeChange } = useDraftChangeset();
-  const { deploy, isDeploying } = useDeployChangeset();
+  const { deployDraft, isDeploying } = useNetcodeDraft();
 
   const count = changes.length;
   // install-peer rows are user steps, not API calls — Deploy needs at least
@@ -245,10 +245,10 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   );
 
   const handleDeploy = async () => {
-    const ok = await deploy();
-    // A partial failure keeps the modal open: applied changes were already
-    // removed from the list, so what remains is exactly what still needs to
-    // deploy — the user can fix the cause and hit Deploy again to resume.
+    // Deploys through the netcode changeset backend: the draft is saved as a
+    // changeset, validated server-side, and committed — the backend applies
+    // the desired state. On failure the changeset stays pending for a retry.
+    const ok = await deployDraft();
     if (!ok) return;
     onOpenChange(false);
     onDeployed();

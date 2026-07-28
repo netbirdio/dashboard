@@ -10,14 +10,28 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDiscardDraft } from "@/modules/control-center/draft/useDiscardDraft";
 import { ReviewDeployModal } from "@/modules/control-center/draft/ReviewDeployModal";
+import { DraftNameModal } from "@/modules/control-center/draft/DraftNameModal";
+import { useNetcodeDraft } from "@/modules/control-center/netcode/NetcodeDraftContext";
 
 type Props = {};
 export const DraftModeSwitcher = ({}: Props) => {
   const { isDraft, setIsDraft } = useDraftMode();
   const { changeCount } = useDraftChangeset();
   const { discardAndExit, exitAfterDeploy } = useDiscardDraft();
+  const { activeDraft, draftName, saveDraft, isSaving, isDeploying } =
+    useNetcodeDraft();
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [nameModalOpen, setNameModalOpen] = useState(false);
   const mode = isDraft ? "draft" : "live";
+
+  const handleSave = () => {
+    // First save of an unnamed draft asks for a name; later saves reuse it.
+    if (!activeDraft) {
+      setNameModalOpen(true);
+      return;
+    }
+    void saveDraft();
+  };
 
   const handleSwitch = (v: string) => {
     if (v === "draft") {
@@ -42,6 +56,16 @@ export const DraftModeSwitcher = ({}: Props) => {
             data-testid={"cc-draft-cancel"}
           >
             Cancel
+          </Button>
+          <Button
+            variant={"secondary"}
+            size={"xs"}
+            onClick={handleSave}
+            disabled={isSaving || isDeploying || changeCount === 0}
+            className={"h-[39px] px-4.5"}
+            data-testid={"cc-draft-save"}
+          >
+            {isSaving ? "Saving..." : "Save Draft"}
           </Button>
           <Button
             variant={"primary"}
@@ -103,6 +127,14 @@ export const DraftModeSwitcher = ({}: Props) => {
         open={reviewOpen}
         onOpenChange={setReviewOpen}
         onDeployed={exitAfterDeploy}
+      />
+
+      <DraftNameModal
+        open={nameModalOpen}
+        onOpenChange={setNameModalOpen}
+        title={"Save Draft"}
+        initialName={draftName === "Untitled Draft" ? "" : draftName}
+        onSuccess={(name) => void saveDraft(name)}
       />
     </div>
   );

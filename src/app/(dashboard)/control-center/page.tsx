@@ -57,6 +57,7 @@ import { groupPanelCloseGuard } from "@/modules/control-center/DestinationGroupP
 import { ControlCenterPolicyProvider } from "@/modules/control-center/ControlCenterPolicyModals";
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
 import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
+import { NetcodeDraftProvider } from "@/modules/control-center/netcode/NetcodeDraftContext";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import { useDrillDownBrowserHistory } from "@/modules/control-center/hooks/useDrillDownBrowserHistory";
 import { useGroupFocusDim } from "@/modules/control-center/hooks/useGroupFocusDim";
@@ -74,6 +75,7 @@ export default function ControlCenter() {
                 <GroupsProvider>
                 <DraftChangesetProvider>
                   <DraftHistoryProvider>
+                  <NetcodeDraftProvider>
                   <ControlCenterPolicyProvider>
                   <PageContainer>
                     <ControlCenterUIProvider
@@ -83,6 +85,7 @@ export default function ControlCenter() {
                     </ControlCenterUIProvider>
                   </PageContainer>
                   </ControlCenterPolicyProvider>
+                  </NetcodeDraftProvider>
                   </DraftHistoryProvider>
                 </DraftChangesetProvider>
                 </GroupsProvider>

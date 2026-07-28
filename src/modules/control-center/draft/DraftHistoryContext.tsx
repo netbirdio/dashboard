@@ -94,12 +94,14 @@ export function DraftHistoryProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { isDraft } = useDraftMode();
+  const { isDraft, draftSession } = useDraftMode();
   const { nodes, edges, setNodes, setEdges } = useCanvasState();
   const { changes, replaceChanges } = useDraftChangeset();
 
   const undoStack = useRef<Snapshot[]>([]);
   const redoStack = useRef<Snapshot[]>([]);
+  // Opening another draft (or starting a new one) begins a fresh history.
+  const sessionRef = useRef(draftSession);
   // The last committed snapshot — what undo returns to.
   const committed = useRef<Snapshot | null>(null);
   // Cached signature of `committed` (see the capture effect).
@@ -122,13 +124,18 @@ export function DraftHistoryProvider({
   // draft state actually changed. Applying a snapshot sets `committed`
   // synchronously, so undo/redo itself never records a history entry.
   useEffect(() => {
-    if (!isDraft) {
+    // Undoing across a draft switch would restore the previous draft's canvas
+    // and changes, which the next save would persist under the newly active
+    // draft's changeset — so a session change resets the stacks too.
+    const sessionChanged = sessionRef.current !== draftSession;
+    sessionRef.current = draftSession;
+    if (!isDraft || sessionChanged) {
       undoStack.current = [];
       redoStack.current = [];
       committed.current = null;
       committedSig.current = null;
       setVersion((v) => v + 1);
-      return;
+      if (!isDraft) return;
     }
     // Never capture mid-drag — the signature stringifies the whole canvas,
     // which froze the drag whenever the debounce elapsed while moving. The
@@ -179,7 +186,7 @@ export function DraftHistoryProvider({
       setVersion((v) => v + 1);
     }, CAPTURE_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [isDraft, nodes, edges, changes]);
+  }, [isDraft, draftSession, nodes, edges, changes]);
 
   const undo = useCallback(() => {
     const prev = undoStack.current.pop();

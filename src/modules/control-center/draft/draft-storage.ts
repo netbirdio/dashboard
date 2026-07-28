@@ -6,6 +6,9 @@ import type { DraftChange } from "@/modules/control-center/draft/DraftChangesetC
 // on Cancel / Deploy / switch-to-live via clearDraftStorage().
 const CHANGES_KEY = "netbird-control-center-draft-changes";
 const CANVAS_KEY = "netbird-control-center-draft-canvas";
+// Binds the persisted draft to its server-side changeset so a reload resumes
+// the same named draft instead of forking a duplicate on the next save.
+const ACTIVE_KEY = "netbird-control-center-draft-active";
 
 // Kept in sync with the DraftChange union — persisted entries with unknown
 // (e.g. outdated) types are dropped on load.
@@ -95,11 +98,39 @@ export function loadDraftCanvas(): DraftCanvas | null {
   }
 }
 
+export type ActiveDraftRef = { id: string; name: string };
+
+export function loadActiveDraft(): ActiveDraftRef | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const parsed = JSON.parse(
+      window.localStorage.getItem(ACTIVE_KEY) ?? "null",
+    );
+    return typeof parsed?.id === "string" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveActiveDraft(ref: ActiveDraftRef | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (ref) {
+      window.localStorage.setItem(ACTIVE_KEY, JSON.stringify(ref));
+    } else {
+      window.localStorage.removeItem(ACTIVE_KEY);
+    }
+  } catch {
+    // Storage full/unavailable — the binding simply won't survive a reload.
+  }
+}
+
 export function clearDraftStorage() {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(CHANGES_KEY);
     window.localStorage.removeItem(CANVAS_KEY);
+    window.localStorage.removeItem(ACTIVE_KEY);
   } catch {
     // Nothing to clean up if storage is unavailable.
   }

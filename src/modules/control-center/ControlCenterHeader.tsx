@@ -26,6 +26,7 @@ import { NetworkRoutingPeerCount } from "@/modules/control-center/NetworkRouting
 import { RoutingPeersBar } from "@/modules/control-center/RoutingPeersBar";
 import { useFrameRouterRows } from "@/modules/control-center/hooks/useFrameRouterRows";
 import { DraftModeSwitcher } from "@/modules/control-center/draft/DraftModeSwitcher";
+import { DraftModeTitle } from "@/modules/control-center/draft/DraftModeTitle";
 import { CanvasToolbar } from "@/modules/control-center/draft/CanvasToolbar";
 import { useCanvasState, useControlCenterUI } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -217,8 +218,7 @@ function HeaderTopLeft() {
               in the DraftModeSwitcher. */}
           {isDraft && <DraftDrillDownHeader />}
 
-          {/* Draft title (Untitled Draft dropdown + three-dots menu) hidden for now */}
-          {/* {isDraft && <DraftModeTitle />} */}
+          {isDraft && <DraftModeTitle />}
 
           {!isDraft && currentView === "networks" && hasNetworks && (
             <div

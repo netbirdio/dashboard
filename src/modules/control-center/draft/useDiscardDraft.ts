@@ -3,6 +3,7 @@ import { useDialog } from "@/contexts/DialogProvider";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { clearDraftStorage } from "@/modules/control-center/draft/draft-storage";
+import { useNetcodeDraft } from "@/modules/control-center/netcode/NetcodeDraftContext";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 
 // Leaving draft mode (Cancel, back arrow, Live tab) destroys the changeset —
@@ -12,14 +13,18 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 export function useDiscardDraft() {
   const { setIsDraft, newDraftSession } = useDraftMode();
   const { changeCount, clearChanges } = useDraftChangeset();
+  const { clearActiveDraft } = useNetcodeDraft();
   const { setLayoutInitialized } = useCanvasState();
   const { confirm } = useDialog();
 
   const exitDraft = useCallback(() => {
     clearChanges();
     clearDraftStorage();
+    // Unbind the server draft too — otherwise the next, unrelated draft would
+    // silently save over the one that was open here.
+    clearActiveDraft();
     setIsDraft(false);
-  }, [clearChanges, setIsDraft]);
+  }, [clearChanges, clearActiveDraft, setIsDraft]);
 
   // After a deploy the live data changed — force the live view to rebuild
   // instead of restoring the stale pre-draft canvas.
@@ -63,9 +68,10 @@ export function useDiscardDraft() {
     }
     clearChanges();
     clearDraftStorage();
+    clearActiveDraft();
     newDraftSession();
     return true;
-  }, [changeCount, confirm, clearChanges, newDraftSession]);
+  }, [changeCount, confirm, clearChanges, clearActiveDraft, newDraftSession]);
 
   return { discardAndExit, exitAfterDeploy, startNewDraft };
 }
