@@ -96,6 +96,21 @@ const DISTROS: Distro[] = [
     note: "The desktop app needs version 10 or newer with EPEL enabled, which provides WebKitGTK 6.0. On version 9 install the CLI only.",
   },
   {
+    label: "openSUSE (Zypper)",
+    value: "opensuse",
+    // Zypper does not read gpgkey= from a .repo file, so the repository key is
+    // imported by an explicit refresh instead of the YUM_REPOSITORY snippet.
+    repository: [
+      "sudo zypper --non-interactive addrepo -f -g https://pkgs.netbird.io/yum/ netbird",
+      "sudo zypper --gpg-auto-import-keys refresh netbird",
+    ],
+    cli: "sudo zypper install netbird",
+    desktopApp: [
+      "sudo zypper install netbird-ui libgtk-4-1 libwebkitgtk-6_0-4 xdg-utils",
+    ],
+    note: "The desktop app needs Tumbleweed or Leap 15.6 and newer. On earlier releases install the CLI only.",
+  },
+  {
     label: "Amazon Linux (YUM)",
     value: "amazon",
     repository: YUM_REPOSITORY,
