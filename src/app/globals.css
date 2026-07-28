@@ -311,3 +311,76 @@ p {
     .cc-frame-row-icon {
     box-shadow: 0 0 0 2px rgb(250 204 21);
 }
+
+/* Configuration history timeline — Time Machine-style depth cues. Ambient
+   motion runs in CSS so scrubbing never competes with the canvas for frames. */
+@keyframes cc-time-drift {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: -1200px 0, -600px 0;
+  }
+}
+
+.cc-time-starfield {
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.22) 50%, transparent 50%),
+    radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 255, 0.14) 50%, transparent 50%);
+  background-size: 300px 160px, 220px 120px;
+  animation: cc-time-drift 90s linear infinite;
+}
+
+@keyframes cc-time-pulse {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1.12);
+  }
+}
+
+.cc-time-playhead {
+  animation: cc-time-pulse 2.4s ease-in-out infinite;
+}
+
+/* The canvas recedes into the past: a vignette plus a cool cast, no blur, so
+   ReactFlow keeps compositing cheaply. */
+.cc-time-vignette {
+  background:
+    radial-gradient(120% 90% at 50% 55%, transparent 45%, rgba(8, 12, 24, 0.72) 100%),
+    linear-gradient(180deg, rgba(56, 96, 190, 0.12) 0%, transparent 35%, rgba(56, 96, 190, 0.1) 100%);
+}
+
+/* Range input styled as a rail the playhead rides on. */
+.cc-timeline-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+.cc-timeline-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 22px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffffff 0%, #cfe0ff 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 0 12px 2px rgba(120, 170, 255, 0.65);
+  cursor: grab;
+}
+.cc-timeline-range:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+.cc-timeline-range::-moz-range-thumb {
+  width: 14px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffffff 0%, #cfe0ff 100%);
+  box-shadow: 0 0 12px 2px rgba(120, 170, 255, 0.65);
+  cursor: grab;
+}

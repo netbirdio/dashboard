@@ -10,17 +10,22 @@ import { ExternalLinkIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useNetcodeTimeline } from "@/modules/control-center/netcode/NetcodeTimelineContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
 export function ControlCenterEmptyStates() {
   const { currentView } = useCanvasState();
   const { isDraft } = useDraftMode();
+  const { isTimeTravel } = useNetcodeTimeline();
   const { isPeersLoading, isNetworksLoading, peers, networks } =
     useControlCenterData();
   const router = useRouter();
   const { permission } = usePermissions();
 
   if (isDraft) return null;
+  // These read live SWR counts, not the canvas — an empty account would
+  // otherwise cover a historical view that legitimately has content.
+  if (isTimeTravel) return null;
 
   return (
     <>

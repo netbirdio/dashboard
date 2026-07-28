@@ -263,7 +263,7 @@ export function useApiErrorHandling(ignoreError = false) {
   };
 }
 
-function mergeUrlParams(url: string, params?: Params): string {
+export function mergeUrlParams(url: string, params?: Params): string {
   try {
     // Split the URL and query parts
     const [basePath, existingQuery] = url.split("?");

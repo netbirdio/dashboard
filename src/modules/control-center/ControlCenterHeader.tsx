@@ -7,12 +7,14 @@ import {
 } from "@components/select/SelectDropdown";
 import {
   ArrowLeftIcon,
+  HistoryIcon,
   LayoutGridIcon,
   NetworkIcon,
   PencilLineIcon,
   WaypointsIcon,
   XIcon,
 } from "lucide-react";
+import { cn } from "@utils/helpers";
 import { sortBy } from "lodash";
 import React from "react";
 import { isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
@@ -27,6 +29,9 @@ import { RoutingPeersBar } from "@/modules/control-center/RoutingPeersBar";
 import { useFrameRouterRows } from "@/modules/control-center/hooks/useFrameRouterRows";
 import { DraftModeSwitcher } from "@/modules/control-center/draft/DraftModeSwitcher";
 import { DraftModeTitle } from "@/modules/control-center/draft/DraftModeTitle";
+import { NetcodeMenu, useNetcodeStaging } from "@/modules/control-center/netcode/NetcodeMenu";
+import { HistoryTimeline } from "@/modules/control-center/netcode/HistoryTimeline";
+import { useNetcodeTimeline } from "@/modules/control-center/netcode/NetcodeTimelineContext";
 import { CanvasToolbar } from "@/modules/control-center/draft/CanvasToolbar";
 import { useCanvasState, useControlCenterUI } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -220,6 +225,12 @@ function HeaderTopLeft() {
 
           {isDraft && <DraftModeTitle />}
 
+          {/* Configuration history / rollback / file import-export are
+              account-level — reachable without entering draft mode. */}
+          {selectedNetwork === "" && <HistoryButton />}
+
+          {!isDraft && selectedNetwork === "" && <NetcodeMenu />}
+
           {!isDraft && currentView === "networks" && hasNetworks && (
             <div
               key={"network-select"}
@@ -358,27 +369,60 @@ function HeaderTopRight() {
   );
 }
 
-function HeaderBottom() {
-  const { isDraft } = useDraftMode();
-
-  // Always visible in draft (slides in/out with draft via framer-motion).
-  const showToolbar = isDraft;
+function HistoryButton() {
+  const { isOpen, open, close } = useNetcodeTimeline();
 
   return (
-    <AnimatePresence>
-      {showToolbar && (
-        <motion.div
-          className={"absolute bottom-0 left-1/2 z-10"}
-          initial={{ x: "-50%", y: 80, opacity: 0 }}
-          animate={{ x: "-50%", y: 0, opacity: 1 }}
-          exit={{ x: "-50%", y: 80, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 400, damping: 32 }}
-        >
-          <div className={"py-4"}>
-            <CanvasToolbar />
-          </div>
-        </motion.div>
-      )}
+    <FullTooltip
+      content={
+        <span className={"text-xs"}>Scrub the configuration history</span>
+      }
+      interactive={false}
+    >
+      <Button
+        variant={isOpen ? "primary" : "secondary"}
+        size={"xs"}
+        className={cn("h-[40px] px-3", !isOpen && "!bg-nb-gray-930")}
+        onClick={() => (isOpen ? close() : open())}
+        data-testid={"cc-history-toggle"}
+      >
+        <HistoryIcon size={14} />
+        History
+      </Button>
+    </FullTooltip>
+  );
+}
+
+const BottomSlot = ({ children }: React.PropsWithChildren) => (
+  <motion.div
+    className={"absolute bottom-0 left-1/2 z-10"}
+    initial={{ x: "-50%", y: 80, opacity: 0 }}
+    animate={{ x: "-50%", y: 0, opacity: 1 }}
+    exit={{ x: "-50%", y: 80, opacity: 0 }}
+    transition={{ type: "spring", stiffness: 400, damping: 32 }}
+  >
+    <div className={"py-4"}>{children}</div>
+  </motion.div>
+);
+
+function HeaderBottom() {
+  const { isDraft } = useDraftMode();
+  const { isOpen: timelineOpen } = useNetcodeTimeline();
+  const { setStagedChangesetId } = useNetcodeStaging();
+
+  // The timeline takes the slot over from the draft toolbar — distinct keys let
+  // AnimatePresence slide one out while the other slides in.
+  return (
+    <AnimatePresence mode={"wait"}>
+      {timelineOpen ? (
+        <BottomSlot key={"timeline"}>
+          <HistoryTimeline onRollbackStaged={setStagedChangesetId} />
+        </BottomSlot>
+      ) : isDraft ? (
+        <BottomSlot key={"toolbar"}>
+          <CanvasToolbar />
+        </BottomSlot>
+      ) : null}
     </AnimatePresence>
   );
 }

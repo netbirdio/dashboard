@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Button from "@components/Button";
 import {
   Modal,
@@ -14,6 +14,7 @@ import { cn } from "@utils/helpers";
 import {
   CloudUploadIcon,
   ExternalLinkIcon,
+  FileDiffIcon,
   FolderGit2,
   GitPullRequestArrowIcon,
   ListChecksIcon,
@@ -38,6 +39,8 @@ import {
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useNetcodeDraft } from "@/modules/control-center/netcode/NetcodeDraftContext";
+import { DiffViewer } from "@/modules/control-center/netcode/DiffViewer";
+import { useNetcodeApi } from "@/modules/control-center/netcode/useNetcodeApi";
 import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
 
 type Props = {
@@ -169,7 +172,33 @@ const ChangeRow = ({
 
 export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => {
   const { changes, removeChange } = useDraftChangeset();
-  const { deployDraft, isDeploying } = useNetcodeDraft();
+  const { deployDraft, isDeploying, activeDraft, saveDraft } =
+    useNetcodeDraft();
+  const { getChangesetDiff } = useNetcodeApi();
+  const [diff, setDiff] = useState<string | null>(null);
+  const [diffLoading, setDiffLoading] = useState(false);
+
+  // The diff is computed server-side from the saved changeset, so previewing
+  // an unsaved draft has to save it first. Fetched on demand only — never on
+  // mount — so opening the modal costs nothing.
+  const loadDiff = async () => {
+    setDiffLoading(true);
+    try {
+      const changeset = activeDraft ?? (await saveDraft());
+      if (!changeset) return;
+      const result = await getChangesetDiff(changeset.id);
+      setDiff(result.diff ?? "");
+    } catch {
+      setDiff(null);
+    } finally {
+      setDiffLoading(false);
+    }
+  };
+
+  // A changed draft invalidates a previously shown diff.
+  useEffect(() => {
+    setDiff(null);
+  }, [changes]);
 
   const count = changes.length;
   // install-peer rows are user steps, not API calls — Deploy needs at least
@@ -356,6 +385,32 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
               </div>
             </ScrollArea>
           </div>
+
+          {diff === null ? (
+            <Button
+              variant={"secondary"}
+              size={"xs"}
+              className={"mt-3 w-full"}
+              disabled={diffLoading || isDeploying || deployableCount === 0}
+              onClick={() => void loadDiff()}
+              data-testid={"cc-show-diff"}
+            >
+              <FileDiffIcon size={14} />
+              {diffLoading
+                ? "Computing diff..."
+                : activeDraft
+                ? "Show configuration diff"
+                : "Save draft & show configuration diff"}
+            </Button>
+          ) : (
+            <DiffViewer
+              diff={diff}
+              className={"mt-3"}
+              emptyMessage={
+                "No configuration changes — the draft matches the live account."
+              }
+            />
+          )}
         </div>
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>

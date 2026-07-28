@@ -16,6 +16,7 @@ import {
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useNetcodeTimeline } from "@/modules/control-center/netcode/NetcodeTimelineContext";
 import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { Policy } from "@/interfaces/Policy";
@@ -88,6 +89,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setSelectedPeerPanel,
   } = useDestinationGroup();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
+  const { isTimeTravel } = useNetcodeTimeline();
   const { isDraft } = useDraftMode();
   const { confirm } = useDialog();
 
@@ -549,8 +551,11 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   useEffect(() => {
     if (isLoading) return;
     // Draft mode manages its own canvas (useDraft); don't let the live view
-    // initialization run/fitView while drafting.
+    // initialization run/fitView while drafting. Time travel is a third owner
+    // with the same contract — a header control that resets layoutInitialized
+    // would otherwise rebuild live data over the historical canvas.
     if (isDraft) return;
+    if (isTimeTravel) return;
     if (layoutInitialized) return;
 
     switch (currentView) {
@@ -675,6 +680,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     isLoading,
     layoutInitialized,
     isDraft,
+    isTimeTravel,
   ]);
 
   return {

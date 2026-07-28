@@ -63,7 +63,18 @@ export interface NetCodeNetworkRouter {
   enabled: boolean;
 }
 
+export interface NetCodeSpecPeer {
+  id: string;
+  name: string;
+  hostname?: string;
+  ip?: string;
+  dnsLabel?: string;
+  userId?: string;
+  location?: { countryCode?: string; cityName?: string } | null;
+}
+
 export interface NetCodeAccountSpec {
+  peers?: NetCodeSpecPeer[] | null;
   groups?: NetCodeGroup[] | null;
   policies?: NetCodePolicy[] | null;
   networks?: NetCodeNetwork[] | null;
@@ -91,6 +102,7 @@ export interface NetCodeOperation {
   resource_name: string;
   path?: string;
   data?: unknown;
+  old_value?: unknown;
   new_value?: unknown;
 }
 
@@ -124,12 +136,66 @@ export interface NetCodeImportResult {
   summary: NetCodeDiffSummary;
 }
 
+export interface NetCodeCommitAuthor {
+  user_id: string;
+  name: string;
+  email: string;
+}
+
+export interface NetCodeCommitStats {
+  insertions: number;
+  deletions: number;
+  files_changed: number;
+}
+
 export interface NetCodeCommit {
   id: string;
+  account_id?: string;
+  parent_id?: string;
+  object_id?: string;
   message: string;
+  description?: string;
+  author?: NetCodeCommitAuthor;
   timestamp: string;
+  stats?: NetCodeCommitStats;
+  tags?: string[] | null;
+  operations?: NetCodeOperation[] | null;
+  diff_data?: string;
+}
+
+export interface NetCodeDiffReference {
+  type: string;
+  id: string;
+  timestamp: string;
+}
+
+export interface NetCodeDiffResult {
+  from: NetCodeDiffReference;
+  to: NetCodeDiffReference;
+  diff: string;
+  summary: NetCodeDiffSummary;
+}
+
+export interface NetCodePagination {
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 export interface NetCodeChangesetListResponse {
   changesets: NetCodeChangeset[] | null;
+  pagination?: NetCodePagination;
+}
+
+export interface NetCodeCommitListResponse {
+  commits: NetCodeCommit[] | null;
+  pagination?: NetCodePagination;
+}
+
+export interface NetCodeStatus {
+  accountId: string;
+  latestCommit: NetCodeCommit | null;
+  pendingChangesets: number;
+  uncommittedChanges: boolean;
+  lastExportedAt: string;
 }

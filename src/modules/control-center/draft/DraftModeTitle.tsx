@@ -7,15 +7,13 @@ import { useNetcodeDraft } from "@/modules/control-center/netcode/NetcodeDraftCo
 import { DraftNameModal } from "@/modules/control-center/draft/DraftNameModal";
 import { SelectDropdown, SelectOption } from "@components/select/SelectDropdown";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import Button from "@components/Button";
 import { useDialog } from "@/contexts/DialogProvider";
-import { FilePenIcon, MoreVertical, PencilLineIcon, PlusCircle, Trash2 } from "lucide-react";
+import { FilePenIcon, PencilLineIcon, PlusCircle, Trash2 } from "lucide-react";
+import { NetcodeMenu } from "@/modules/control-center/netcode/NetcodeMenu";
 
 const LOCAL_DRAFT = "__local__";
 const CREATE_NEW = "__create_new__";
@@ -116,36 +114,29 @@ export const DraftModeTitle = () => {
         className={"!bg-nb-gray-930 min-w-[180px] h-[40px]"}
         popoverWidth={280}
       />
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant={"secondary"}
-            size={"xs"}
-            className={"!px-0 !bg-nb-gray-930 h-[40px] !w-[40px] !min-w-[40px]"}
-          >
-            <MoreVertical size={14} />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-[180px]">
-          <DropdownMenuItem onClick={() => setRenameModalOpen(true)}>
-            <div className={"flex gap-3 items-center"}>
-              <PencilLineIcon size={14} className={"shrink-0"} />
-              Rename
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => void handleDelete()}
-            variant={"danger"}
-            disabled={!activeDraft}
-          >
-            <div className={"flex gap-3 items-center"}>
-              <Trash2 size={14} className={"shrink-0"} />
-              Delete
-            </div>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <NetcodeMenu
+        leadingItems={
+          <>
+            <DropdownMenuItem onClick={() => setRenameModalOpen(true)}>
+              <div className={"flex gap-3 items-center"}>
+                <PencilLineIcon size={14} className={"shrink-0"} />
+                Rename draft
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => void handleDelete()}
+              variant={"danger"}
+              disabled={!activeDraft}
+            >
+              <div className={"flex gap-3 items-center"}>
+                <Trash2 size={14} className={"shrink-0"} />
+                Delete draft
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        }
+      />
 
       <DraftNameModal
         open={renameModalOpen}
@@ -154,6 +145,7 @@ export const DraftModeTitle = () => {
         title={"Rename Draft"}
         onSuccess={handleRename}
       />
+
     </div>
   );
 };

@@ -58,7 +58,11 @@ import { ControlCenterPolicyProvider } from "@/modules/control-center/ControlCen
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
 import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
 import { NetcodeDraftProvider } from "@/modules/control-center/netcode/NetcodeDraftContext";
+import { NetcodeTimelineProvider } from "@/modules/control-center/netcode/NetcodeTimelineContext";
+import { NetcodeStagingProvider } from "@/modules/control-center/netcode/NetcodeMenu";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
+import { useNetcodeTimeline } from "@/modules/control-center/netcode/NetcodeTimelineContext";
+import { TimeTravelOverlay } from "@/modules/control-center/netcode/TimeTravelOverlay";
 import { useDrillDownBrowserHistory } from "@/modules/control-center/hooks/useDrillDownBrowserHistory";
 import { useGroupFocusDim } from "@/modules/control-center/hooks/useGroupFocusDim";
 import { isFrameNode } from "@/modules/control-center/utils/helpers";
@@ -76,6 +80,8 @@ export default function ControlCenter() {
                 <DraftChangesetProvider>
                   <DraftHistoryProvider>
                   <NetcodeDraftProvider>
+                  <NetcodeTimelineProvider>
+                  <NetcodeStagingProvider>
                   <ControlCenterPolicyProvider>
                   <PageContainer>
                     <ControlCenterUIProvider
@@ -85,6 +91,8 @@ export default function ControlCenter() {
                     </ControlCenterUIProvider>
                   </PageContainer>
                   </ControlCenterPolicyProvider>
+                  </NetcodeStagingProvider>
+                  </NetcodeTimelineProvider>
                   </NetcodeDraftProvider>
                   </DraftHistoryProvider>
                 </DraftChangesetProvider>
@@ -103,6 +111,7 @@ const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: EMPTY_STATE_ZOOM };
 
 function ControlCenterCanvas() {
   const canvas = useCanvasState();
+  const { isTimeTravel } = useNetcodeTimeline();
   const ui = useControlCenterUI();
   const draft = useDraft();
   const { componentsPanelOpen, setComponentsPanelOpen } = useDraftMode();
@@ -143,7 +152,10 @@ function ControlCenterCanvas() {
   // screen) — lock canvas interactions. Once the user starts (opens the
   // components panel) the empty canvas becomes interactive again.
   const emptyState = canvas.nodes.length === 0 && !componentsPanelOpen;
-  const canInteract = !anyMenuOpen && !draft.isSelectMode && !emptyState;
+  // Time travel keeps pan/zoom but nothing that could edit: an empty historical
+  // snapshot must not freeze the canvas either, hence the isTimeTravel escape.
+  const canInteract =
+    !anyMenuOpen && !draft.isSelectMode && (!emptyState || isTimeTravel);
 
   // Closes just the context menu — used after picking a menu item (so an
   // action like "Details", which opens the group panel, isn't undone).
@@ -239,6 +251,7 @@ function ControlCenterCanvas() {
 
   return (
     <>
+      <TimeTravelOverlay />
       <ControlCenterEmptyStates />
       <DraftEmptyCanvas />
       <ControlCenterHeader />
@@ -266,11 +279,11 @@ function ControlCenterCanvas() {
         onNodesChange={canvas.onNodesChange}
         onEdgesChange={canvas.onEdgesChange}
         proOptions={PRO_OPTIONS}
-        onConnect={stableOnConnect}
+        onConnect={isTimeTravel ? undefined : stableOnConnect}
         onBeforeDelete={stableOnBeforeDelete}
         connectionLineComponent={ConnectionLine}
-        onNodeClick={stableOnNodeClick}
-        onNodeContextMenu={stableOnNodeContextMenu}
+        onNodeClick={isTimeTravel ? undefined : stableOnNodeClick}
+        onNodeContextMenu={isTimeTravel ? undefined : stableOnNodeContextMenu}
         onPaneClick={stableOnPaneClick}
         onNodeMouseEnter={stableOnNodeMouseEnter}
         onNodeMouseLeave={stableOnNodeMouseLeave}
@@ -296,9 +309,11 @@ function ControlCenterCanvas() {
         zoomOnScroll={canInteract}
         zoomOnPinch={canInteract}
         zoomOnDoubleClick={canInteract}
-        nodesDraggable={!anyMenuOpen && !emptyState && !focusMode}
-        nodesConnectable={!anyMenuOpen && !emptyState}
-        elementsSelectable={!anyMenuOpen && !emptyState}
+        nodesDraggable={
+          !anyMenuOpen && !emptyState && !focusMode && !isTimeTravel
+        }
+        nodesConnectable={!anyMenuOpen && !emptyState && !isTimeTravel}
+        elementsSelectable={!anyMenuOpen && !emptyState && !isTimeTravel}
         selectionOnDrag={draft.isSelectMode && !emptyState}
         selectionMode={SelectionMode.Partial}
       >
