@@ -27,6 +27,13 @@ export type APIProviderModel = {
   id: string;
   input_per_1k: number;
   output_per_1k: number;
+  // Optional cache rates. Omitted on the wire = inherit NetBird's
+  // default rate for this model (the backend folds it in at synthesis
+  // time); explicit 0 = no discount (bucket bills at the input rate).
+  // Never coerce undefined to 0 — the two mean different things.
+  cached_input_per_1k?: number;
+  cache_read_per_1k?: number;
+  cache_creation_per_1k?: number;
 };
 
 export type APIProvider = {
@@ -156,6 +163,9 @@ function fromAPI(p: APIProvider): AIProvider {
     id: m.id,
     inputPer1k: m.input_per_1k,
     outputPer1k: m.output_per_1k,
+    cachedInputPer1k: m.cached_input_per_1k,
+    cacheReadPer1k: m.cache_read_per_1k,
+    cacheCreationPer1k: m.cache_creation_per_1k,
   }));
   return {
     id: p.id,
@@ -191,10 +201,16 @@ function fromAPI(p: APIProvider): AIProvider {
 }
 
 function toAPIModels(models: ProviderModel[]): APIProviderModel[] {
+  // undefined cache rates stay undefined so JSON.stringify omits the
+  // key: an omitted rate inherits NetBird's default, an explicit 0
+  // disables the discount. Coercing here would change billing.
   return models.map((m) => ({
     id: m.id,
     input_per_1k: m.inputPer1k,
     output_per_1k: m.outputPer1k,
+    cached_input_per_1k: m.cachedInputPer1k,
+    cache_read_per_1k: m.cacheReadPer1k,
+    cache_creation_per_1k: m.cacheCreationPer1k,
   }));
 }
 

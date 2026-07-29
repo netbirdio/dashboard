@@ -23,8 +23,10 @@ import {
   AlertCircleIcon,
   ArrowRightLeft,
   Boxes,
+  ChevronRightIcon,
   ExternalLinkIcon,
   KeyRound,
+  ListIcon,
   MinusCircleIcon,
   PlusCircle,
   PlusIcon,
@@ -393,6 +395,13 @@ export default function AIProviderModal({
 
   const handleSubmit = async () => {
     if (!catalog) return;
+    // Drop rows the operator never filled in (an added-but-empty custom
+    // row, or the empty fallback row when the catalog is exhausted) —
+    // the API rejects models without an id, which would fail the whole
+    // save over a leftover blank line.
+    const submittedModels = models
+      .map((m) => ({ ...m, id: m.id.trim() }))
+      .filter((m) => m.id !== "");
     // Identity overrides are only forwarded when the catalog entry
     // flags either shape (HeaderPair or JSONMetadata) as customizable.
     // Sending them on a non-customizable provider would be a no-op
@@ -409,7 +418,7 @@ export default function AIProviderModal({
         providerId,
         name,
         upstreamUrl,
-        models,
+        models: submittedModels,
         extraValues: sanitizedExtraValues,
         ...identityOverrides,
         skipTlsVerification: isCustomKind ? skipTlsVerification : false,
@@ -430,7 +439,7 @@ export default function AIProviderModal({
       ...identityOverrides,
       skipTlsVerification: isCustomKind ? skipTlsVerification : false,
       metadataDisabled,
-      models,
+      models: submittedModels,
       enabled: true,
     });
     handleClose();
@@ -493,6 +502,9 @@ export default function AIProviderModal({
           id: next.id,
           inputPer1k: next.input_per_1k,
           outputPer1k: next.output_per_1k,
+          cachedInputPer1k: next.cached_input_per_1k,
+          cacheReadPer1k: next.cache_read_per_1k,
+          cacheCreationPer1k: next.cache_creation_per_1k,
         },
       ]);
       return;
@@ -500,6 +512,20 @@ export default function AIProviderModal({
     // No catalog match left — append an empty row the operator can fill.
     setModels((prev) => [...prev, { id: "", inputPer1k: 0, outputPer1k: 0 }]);
   };
+
+  // Which cache-rate fields apply to this provider's models, derived
+  // from the catalog's pricing surfaces: "openai" bills cached prompt
+  // tokens as a discounted SUBSET of input (one rate), "anthropic" /
+  // "bedrock" bill two ADDITIVE buckets (cache read + cache write).
+  // Gateways/custom entries (and older backends) declare no surfaces —
+  // NetBird can't know the upstream shape, so every field is offered.
+  const pricingSurfaces = catalog?.pricing_surfaces ?? [];
+  const showCachedInputRate =
+    pricingSurfaces.length === 0 || pricingSurfaces.includes("openai");
+  const showCacheBucketRates =
+    pricingSurfaces.length === 0 ||
+    pricingSurfaces.includes("anthropic") ||
+    pricingSurfaces.includes("bedrock");
 
   return (
     <Modal open={open} onOpenChange={(o) => (o ? null : handleClose())}>
@@ -1212,7 +1238,9 @@ export default function AIProviderModal({
                 <HelpText>
                   Models exposed through this endpoint, with the per-1k
                   input/output prices used for cost tracking. Empty = all
-                  catalog models allowed at catalog prices.
+                  catalog models allowed at catalog prices. Cache rates
+                  left empty fall back to NetBird&apos;s defaults for the
+                  model; 0 bills cached tokens at the input rate.
                 </HelpText>
               </div>
 
@@ -1231,6 +1259,9 @@ export default function AIProviderModal({
                         id,
                         inputPer1k: fromCatalog.input_per_1k,
                         outputPer1k: fromCatalog.output_per_1k,
+                        cachedInputPer1k: fromCatalog.cached_input_per_1k,
+                        cacheReadPer1k: fromCatalog.cache_read_per_1k,
+                        cacheCreationPer1k: fromCatalog.cache_creation_per_1k,
                       });
                     } else {
                       updateModel(idx, { id });
@@ -1238,6 +1269,17 @@ export default function AIProviderModal({
                   }}
                   onChangeInput={(n) => updateModel(idx, { inputPer1k: n })}
                   onChangeOutput={(n) => updateModel(idx, { outputPer1k: n })}
+                  showCachedInputRate={showCachedInputRate}
+                  showCacheBucketRates={showCacheBucketRates}
+                  onChangeCachedInput={(n) =>
+                    updateModel(idx, { cachedInputPer1k: n })
+                  }
+                  onChangeCacheRead={(n) =>
+                    updateModel(idx, { cacheReadPer1k: n })
+                  }
+                  onChangeCacheCreation={(n) =>
+                    updateModel(idx, { cacheCreationPer1k: n })
+                  }
                   onRemove={() => removeModel(idx)}
                 />
               ))}
@@ -1370,11 +1412,20 @@ function FormRow({
   );
 }
 
+// CUSTOM_MODEL_OPTION is the sentinel value of the "Custom model…"
+// dropdown entry. Never a real model id (vendors don't use NUL-ish
+// double-underscore namespacing), never sent to the API — selecting it
+// only flips the row into free-text mode.
+const CUSTOM_MODEL_OPTION = "__netbird_custom_model__";
+
 type CatalogModelOption = {
   id: string;
   label: string;
   input_per_1k: number;
   output_per_1k: number;
+  cached_input_per_1k?: number;
+  cache_read_per_1k?: number;
+  cache_creation_per_1k?: number;
 };
 
 // priceToInput renders a stored price as an editable string, always using "."
@@ -1389,6 +1440,51 @@ function priceFromInput(s: string): number {
   return parseFloat(s.replace(/,/g, ".")) || 0;
 }
 
+// OptionalPriceField is a price input whose EMPTY state is meaningful:
+// empty = undefined = "inherit NetBird's default rate for this model",
+// while an explicit 0 disables the cache discount. It must never coerce
+// one into the other, so it keeps its own string state and only reports
+// undefined for a blank box.
+function OptionalPriceField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | undefined;
+  onChange: (n: number | undefined) => void;
+}) {
+  const [str, setStr] = useState(() =>
+    value === undefined ? "" : priceToInput(value),
+  );
+  // Re-sync when the value is set from outside (catalog model pick),
+  // but not while the operator is mid-typing the same value.
+  useEffect(() => {
+    const parsed = str.trim() === "" ? undefined : priceFromInput(str);
+    if (parsed !== value) {
+      setStr(value === undefined ? "" : priceToInput(value));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <div className={"flex-1 min-w-0"}>
+      <Label>{label}</Label>
+      <Input
+        type={"text"}
+        inputMode={"decimal"}
+        value={str}
+        placeholder={"default"}
+        onChange={(e) => {
+          setStr(e.target.value);
+          const t = e.target.value.trim();
+          onChange(t === "" ? undefined : priceFromInput(t));
+        }}
+      />
+    </div>
+  );
+}
+
 function ModelRowEditor({
   row,
   catalogModels,
@@ -1396,6 +1492,11 @@ function ModelRowEditor({
   onChangeId,
   onChangeInput,
   onChangeOutput,
+  showCachedInputRate,
+  showCacheBucketRates,
+  onChangeCachedInput,
+  onChangeCacheRead,
+  onChangeCacheCreation,
   onRemove,
 }: {
   row: ProviderModel;
@@ -1404,6 +1505,13 @@ function ModelRowEditor({
   onChangeId: (id: string) => void;
   onChangeInput: (n: number) => void;
   onChangeOutput: (n: number) => void;
+  // Which cache-rate fields apply to this provider's billing shape;
+  // see the pricing_surfaces derivation in the modal body.
+  showCachedInputRate: boolean;
+  showCacheBucketRates: boolean;
+  onChangeCachedInput: (n: number | undefined) => void;
+  onChangeCacheRead: (n: number | undefined) => void;
+  onChangeCacheCreation: (n: number | undefined) => void;
   onRemove: () => void;
 }) {
   // Editable text for the price fields. We keep the raw string locally so the
@@ -1434,75 +1542,175 @@ function ModelRowEditor({
   // React will unmount the input and steal focus.
   const hasCatalog = catalogModels.length > 0;
 
-  // Catalog options excluding the ones already on other rows. The
-  // current row's own id stays in the list so the dropdown can render
-  // its label.
+  // Custom-model entry: catalog providers get a "Custom model…" option
+  // that swaps the dropdown for a free-text input, so operators can add
+  // models NetBird doesn't list yet (e.g. a model released after this
+  // build). Rows loaded with an id the catalog doesn't know start in
+  // custom mode so their id is editable rather than trapped in a
+  // single-option dropdown.
+  const [customMode, setCustomMode] = useState(
+    () =>
+      hasCatalog && row.id !== "" && !catalogModels.some((m) => m.id === row.id),
+  );
+
+  // Catalog options excluding the ones already on other rows, plus the
+  // custom-model escape hatch.
   const dropdownOptions = useMemo(() => {
     const visible = catalogModels.filter(
       (m) => m.id === row.id || !usedIds.has(m.id),
     );
-    const seen = new Set(visible.map((m) => m.id));
     const opts = visible.map((m) => ({ value: m.id, label: m.label }));
-    if (row.id && !seen.has(row.id)) {
-      opts.unshift({ value: row.id, label: row.id });
-    }
+    opts.push({ value: CUSTOM_MODEL_OPTION, label: "Custom model…" });
     return opts;
   }, [catalogModels, usedIds, row.id]);
+
+  const showCacheLine = showCachedInputRate || showCacheBucketRates;
+  const hasCacheValues =
+    row.cachedInputPer1k !== undefined ||
+    row.cacheReadPer1k !== undefined ||
+    row.cacheCreationPer1k !== undefined;
+  // Cache rates live behind a per-row disclosure, collapsed by default:
+  // most operators keep NetBird's defaults, so the row stays compact.
+  // The collapsed summary ("· custom" vs "· default") signals when a
+  // row carries stored rates worth expanding.
+  const [cacheOpen, setCacheOpen] = useState(false);
 
   return (
     <div
       className={
-        "flex items-end gap-2 p-3 rounded border border-nb-gray-800 bg-nb-gray-900/20"
+        "flex flex-col gap-2 p-3 rounded border border-nb-gray-800 bg-nb-gray-900/20"
       }
     >
-      <div className={"flex-1 min-w-0"}>
-        <Label>Model</Label>
-        {hasCatalog ? (
-          <SelectDropdown
-            value={row.id}
-            onChange={onChangeId}
-            options={dropdownOptions}
-            placeholder={"Select a model..."}
-          />
-        ) : (
+      <div className={"flex items-end gap-2"}>
+        <div className={"flex-1 min-w-0"}>
+          <Label>Model</Label>
+          {hasCatalog && !customMode ? (
+            <SelectDropdown
+              value={row.id}
+              onChange={(v) => {
+                if (v === CUSTOM_MODEL_OPTION) {
+                  setCustomMode(true);
+                  onChangeId("");
+                  return;
+                }
+                onChangeId(v);
+              }}
+              options={dropdownOptions}
+              placeholder={"Select a model..."}
+            />
+          ) : hasCatalog ? (
+            <div className={"flex gap-2"}>
+              <Input
+                value={row.id}
+                onChange={(e) => onChangeId(e.target.value)}
+                placeholder={"e.g. claude-fable-6"}
+                autoFocus={row.id === ""}
+              />
+              <Button
+                variant={"default-outline"}
+                className={"h-[42px] !px-3 shrink-0"}
+                title={"Pick from catalog instead"}
+                onClick={() => {
+                  setCustomMode(false);
+                  onChangeId("");
+                }}
+              >
+                <ListIcon size={15} />
+              </Button>
+            </div>
+          ) : (
+            <Input
+              value={row.id}
+              onChange={(e) => onChangeId(e.target.value)}
+              placeholder={"e.g. gpt-4o-mini"}
+            />
+          )}
+        </div>
+        <div className={"w-[120px] shrink-0"}>
+          <Label>Input $/1k</Label>
           <Input
-            value={row.id}
-            onChange={(e) => onChangeId(e.target.value)}
-            placeholder={"e.g. gpt-4o-mini"}
+            type={"text"}
+            inputMode={"decimal"}
+            value={inputStr}
+            onChange={(e) => {
+              setInputStr(e.target.value);
+              onChangeInput(priceFromInput(e.target.value));
+            }}
           />
-        )}
+        </div>
+        <div className={"w-[120px] shrink-0"}>
+          <Label>Output $/1k</Label>
+          <Input
+            type={"text"}
+            inputMode={"decimal"}
+            value={outputStr}
+            onChange={(e) => {
+              setOutputStr(e.target.value);
+              onChangeOutput(priceFromInput(e.target.value));
+            }}
+          />
+        </div>
+        <Button
+          variant={"default-outline"}
+          className={"h-[42px] !px-3"}
+          onClick={onRemove}
+        >
+          <MinusCircleIcon size={15} />
+        </Button>
       </div>
-      <div className={"w-[120px] shrink-0"}>
-        <Label>Input $/1k</Label>
-        <Input
-          type={"text"}
-          inputMode={"decimal"}
-          value={inputStr}
-          onChange={(e) => {
-            setInputStr(e.target.value);
-            onChangeInput(priceFromInput(e.target.value));
-          }}
-        />
-      </div>
-      <div className={"w-[120px] shrink-0"}>
-        <Label>Output $/1k</Label>
-        <Input
-          type={"text"}
-          inputMode={"decimal"}
-          value={outputStr}
-          onChange={(e) => {
-            setOutputStr(e.target.value);
-            onChangeOutput(priceFromInput(e.target.value));
-          }}
-        />
-      </div>
-      <Button
-        variant={"default-outline"}
-        className={"h-[42px] !px-3"}
-        onClick={onRemove}
-      >
-        <MinusCircleIcon size={15} />
-      </Button>
+      {showCacheLine && (
+        <>
+          <button
+            type={"button"}
+            onClick={() => setCacheOpen((v) => !v)}
+            className={
+              "flex items-center gap-1 text-xs text-nb-gray-400 hover:text-nb-gray-200 transition-colors w-fit"
+            }
+          >
+            <ChevronRightIcon
+              size={13}
+              className={
+                "transition-transform " + (cacheOpen ? "rotate-90" : "")
+              }
+            />
+            Cache pricing
+            {!cacheOpen && (
+              <span className={"text-nb-gray-500"}>
+                {hasCacheValues ? "· custom" : "· default"}
+              </span>
+            )}
+          </button>
+          {cacheOpen && (
+            <div
+              className={
+                "flex items-end gap-2 pt-2 border-t border-nb-gray-900"
+              }
+            >
+              {showCachedInputRate && (
+                <OptionalPriceField
+                  label={"Cached input $/1k"}
+                  value={row.cachedInputPer1k}
+                  onChange={onChangeCachedInput}
+                />
+              )}
+              {showCacheBucketRates && (
+                <>
+                  <OptionalPriceField
+                    label={"Cache read $/1k"}
+                    value={row.cacheReadPer1k}
+                    onChange={onChangeCacheRead}
+                  />
+                  <OptionalPriceField
+                    label={"Cache write $/1k"}
+                    value={row.cacheCreationPer1k}
+                    onChange={onChangeCacheCreation}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

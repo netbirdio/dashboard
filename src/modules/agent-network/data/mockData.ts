@@ -43,6 +43,17 @@ export type ProviderModel = {
   id: string;
   inputPer1k: number;
   outputPer1k: number;
+  // Optional prompt-cache rates (USD per 1k tokens). undefined means
+  // "inherit NetBird's default rate for this model" — the backend folds
+  // the default in at synthesis time; an explicit 0 means "no discount,
+  // bill this cache bucket at the input rate". Keep undefined distinct
+  // from 0 when round-tripping.
+  // OpenAI shape: cached prompt tokens (a subset of input tokens).
+  cachedInputPer1k?: number;
+  // Anthropic shape: the two additive cache buckets (read ≈0.1x input,
+  // creation ≈1.25x input).
+  cacheReadPer1k?: number;
+  cacheCreationPer1k?: number;
 };
 
 export type AIProvider = {
