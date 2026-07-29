@@ -398,10 +398,18 @@ export default function AIProviderModal({
     // Drop rows the operator never filled in (an added-but-empty custom
     // row, or the empty fallback row when the catalog is exhausted) —
     // the API rejects models without an id, which would fail the whole
-    // save over a leftover blank line.
+    // save over a leftover blank line. Duplicate ids are collapsed to the
+    // first row too: the catalog dropdown can't offer an id twice, but two
+    // custom rows can be typed with the same id, and shipping both would
+    // send an ambiguous price for the model.
+    const seenModelIds = new Set<string>();
     const submittedModels = models
       .map((m) => ({ ...m, id: m.id.trim() }))
-      .filter((m) => m.id !== "");
+      .filter((m) => {
+        if (m.id === "" || seenModelIds.has(m.id)) return false;
+        seenModelIds.add(m.id);
+        return true;
+      });
     // Identity overrides are only forwarded when the catalog entry
     // flags either shape (HeaderPair or JSONMetadata) as customizable.
     // Sending them on a non-customizable provider would be a no-op
@@ -1440,6 +1448,17 @@ function priceFromInput(s: string): number {
   return parseFloat(s.replace(/,/g, ".")) || 0;
 }
 
+// optionalPriceFromInput parses a price whose empty state is meaningful. It
+// reports undefined for anything that isn't a number ("", "abc") instead of
+// falling back to 0 — for cache rates an explicit 0 is a real setting ("bill
+// cached tokens at the input rate"), so a typo must not silently become one.
+function optionalPriceFromInput(s: string): number | undefined {
+  const t = s.trim();
+  if (t === "") return undefined;
+  const n = parseFloat(t.replace(/,/g, "."));
+  return Number.isFinite(n) ? n : undefined;
+}
+
 // OptionalPriceField is a price input whose EMPTY state is meaningful:
 // empty = undefined = "inherit NetBird's default rate for this model",
 // while an explicit 0 disables the cache discount. It must never coerce
@@ -1460,7 +1479,7 @@ function OptionalPriceField({
   // Re-sync when the value is set from outside (catalog model pick),
   // but not while the operator is mid-typing the same value.
   useEffect(() => {
-    const parsed = str.trim() === "" ? undefined : priceFromInput(str);
+    const parsed = optionalPriceFromInput(str);
     if (parsed !== value) {
       setStr(value === undefined ? "" : priceToInput(value));
     }
@@ -1477,8 +1496,7 @@ function OptionalPriceField({
         placeholder={"default"}
         onChange={(e) => {
           setStr(e.target.value);
-          const t = e.target.value.trim();
-          onChange(t === "" ? undefined : priceFromInput(t));
+          onChange(optionalPriceFromInput(e.target.value));
         }}
       />
     </div>
@@ -1552,6 +1570,16 @@ function ModelRowEditor({
     () =>
       hasCatalog && row.id !== "" && !catalogModels.some((m) => m.id === row.id),
   );
+  // The catalog is fetched async, so an edit-modal row can mount before it
+  // arrives — the initializer then sees no catalog and leaves customMode off,
+  // trapping an unknown id in a dropdown that can't represent it. Re-evaluate
+  // once the catalog lands. Keyed on hasCatalog only: later catalog/row churn
+  // must not undo the operator's own custom-mode choice.
+  useEffect(() => {
+    if (!hasCatalog || row.id === "") return;
+    if (!catalogModels.some((m) => m.id === row.id)) setCustomMode(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasCatalog]);
 
   // Catalog options excluding the ones already on other rows, plus the
   // custom-model escape hatch.
