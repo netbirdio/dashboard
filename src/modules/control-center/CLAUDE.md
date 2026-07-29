@@ -20,7 +20,7 @@ DraftModeProvider → DragAndDropProvider → ReactFlowProvider → PoliciesProv
 - `useControlCenterUI()` — navigation, onNodeClick, network options.
 - `useControlCenterPolicy()` — policy modal state + `addPolicyEdge`.
 - `useDraftMode()` — isDraft, active tool, draft modals/drill-down state.
-- `useDraftChangeset()` — tracked draft changes (localStorage-backed).
+- `useDraftChangeset()` — tracked draft changes (React state only; not persisted).
 - `useGroups()` — group CRUD + dropdown options.
 
 Data flow: `useControlCenterData()` fetches everything (SWR) → view hooks (`usePeerView`, `useGroupView`, `useUserView`, `useNetworkView`) build node/edge graphs → `useSelectNodeHandlers({ views })` owns navigation, the view-init effect, and the shared `fitView` → `ControlCenterUIProvider` wires it together. Circular deps (node onClick → handlers → view builders) resolve via refs on CanvasStateProvider (`forceSingleGroupViewRef`, `refreshLiveViewRef`).
@@ -37,10 +37,10 @@ Networks: all networks as interactive frames (resources as child rows, capped at
 
 - Entering draft rebuilds the canvas from the policies visible in the live view (`useDraft`): source groups/peers → policy → destinations. Live network frames carry over as existing-network frames; destination groups whose resources live in exactly one carried network fold into that frame as `resourceGroupNode` rows.
 - **Layout parity**: the draft build mirrors the live view it was entered from (same column x/pitch, same sort — see Views). The build layout lives in `utils/draft-build-layout.ts` (`applyDraftBuildLayout`), shared with the toolbar's Auto Arrange so arranging an untouched draft reproduces the entry layout exactly (drill-downs re-run `applyDrilledLayout`). Destinations restack as one column with sides resolved by edge direction, ordered by first policy edge; existing destination resources get `draftNetwork` stamped so they don't show "No Network". Draft nodes adopt their live twin's measured size (`initialWidth/Height`, incl. renamed ids like self-ref `dest-group-…` clones) — React Flow hides unmeasured nodes for a frame, which read as flicker on the mode switch.
-- Changes are tracked as CRUD-shaped entries in `DraftChangesetContext` (groups/policies/resources: create+update+delete; networks/routers: create only), coalesced per entity, persisted to localStorage together with a canvas snapshot (reload restores instead of rebuilding). Only complete policies enter the changeset (`isCompletePolicy` — both sides set, no uninstalled placeholder peers).
+- Changes are tracked as CRUD-shaped entries in `DraftChangesetContext` (groups/policies/resources: create+update+delete; networks/routers: create only), coalesced per entity. Draft state (the changeset and the canvas) lives only in React context for the lifetime of the draft session — nothing is persisted, so a reload rebuilds from live rather than restoring. Only complete policies enter the changeset (`isCompletePolicy` — both sides set, no uninstalled placeholder peers).
 - Deploy (`useDeployChangeset`) runs in dependency order: group creates/updates → networks → resources → routers → policies → deletes (policy, resource, group); client ids (`new-…`) resolve to real ids as creates succeed.
 - Placeholder peers ("User Device"/"Server"/"Agent") are canvas-only until installed/selected; `usePlaceholderUpgrade` swaps them in place and re-records referencing changes with the real peer id.
-- Pure draft logic is factored for unit tests (`npm run test:unit`): `utils/draft-connect.ts`, `utils/node-capabilities.ts`, `utils/frame-view.ts`, `utils/helpers.ts`, changeset + storage tests.
+- Pure draft logic is factored for unit tests (`npm run test:unit`): `utils/draft-connect.ts`, `utils/node-capabilities.ts`, `utils/frame-view.ts`, `utils/helpers.ts`, changeset tests.
 
 ## Rules & gotchas (hard-won — don't regress these)
 

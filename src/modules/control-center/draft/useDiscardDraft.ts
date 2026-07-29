@@ -2,7 +2,6 @@ import { useCallback } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { clearDraftStorage } from "@/modules/control-center/draft/draft-storage";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 
 // Leaving draft mode (Cancel, back arrow, Live tab) destroys the changeset —
@@ -17,7 +16,6 @@ export function useDiscardDraft() {
 
   const exitDraft = useCallback(() => {
     clearChanges();
-    clearDraftStorage();
     setIsDraft(false);
   }, [clearChanges, setIsDraft]);
 
@@ -62,7 +60,6 @@ export function useDiscardDraft() {
       if (!choice) return false;
     }
     clearChanges();
-    clearDraftStorage();
     newDraftSession();
     return true;
   }, [changeCount, confirm, clearChanges, newDraftSession]);

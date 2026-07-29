@@ -4,16 +4,11 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
-import {
-  loadDraftChanges,
-  saveDraftChanges,
-} from "@/modules/control-center/draft/draft-storage";
 
 // Every draft action is recorded as a change describing the API call needed on
 // deploy. Nothing hits the API until the changeset is deployed. Changes are
@@ -641,13 +636,9 @@ export function DraftChangesetProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [changes, setChanges] = useState<DraftChange[]>(() =>
-    loadDraftChanges(),
-  );
-
-  useEffect(() => {
-    saveDraftChanges(changes);
-  }, [changes]);
+  // Draft changes live only in React state — they exist for the lifetime of
+  // the draft session and are gone on reload (no persistence).
+  const [changes, setChanges] = useState<DraftChange[]>([]);
 
   const trackCreateGroup = useCallback(
     ({

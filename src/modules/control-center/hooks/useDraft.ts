@@ -2,11 +2,6 @@ import { useEffect, useRef } from "react";
 import { orderBy, sortBy } from "lodash";
 import { FlowView } from "@/modules/control-center/FlowSelector";
 import { Connection, Edge, Node, useReactFlow } from "@xyflow/react";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import {
-  loadDraftCanvas,
-  saveDraftCanvas,
-} from "@/modules/control-center/draft/draft-storage";
 import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
 import { NodeType } from "@/modules/control-center/utils/nodes";
@@ -20,7 +15,6 @@ import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPo
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import {
-  ensureParentsBeforeChildren,
   getFrameChildPosition,
   getLiveFrameGrid,
   isFrameNode,
@@ -86,7 +80,6 @@ export function useDraft() {
     setPolicyDestinationScope,
     updateDraftPolicy,
   } = useControlCenterPolicy();
-  const { changeCount } = useDraftChangeset();
   const reactFlow = useReactFlow();
   const liveStateRef = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
   const wasDraftRef = useRef(false);
@@ -107,29 +100,6 @@ export function useDraft() {
       // Rebuilds triggered while already drafting ("New Draft") must derive
       // from the saved live canvas, not the current draft nodes.
       const liveNodes = liveStateRef.current?.nodes ?? nodes;
-
-      // A persisted draft (e.g. the page was reloaded mid-draft) takes
-      // precedence over rebuilding from live policies — it carries the
-      // pending changes' canvas state.
-      const persisted = loadDraftCanvas();
-      if (persisted && (persisted.nodes.length > 0 || changeCount > 0)) {
-        // Snapshots saved before the parents-before-children reconcile can
-        // carry a child ahead of its frame — heal the order on restore.
-        setNodes(ensureParentsBeforeChildren(persisted.nodes));
-        setEdges(persisted.edges);
-        if (persisted.nodes.length > 0) {
-          setTimeout(() => {
-            reactFlow.fitView({
-              nodes: persisted.nodes,
-              padding: 0.1,
-              duration: 500,
-              maxZoom: 0.8,
-              minZoom: DEFAULT_MIN_ZOOM,
-            });
-          }, 100);
-        }
-        return;
-      }
 
       // Build a lookup of group members from API data
       const groupMembers = new Map<string, Set<string>>();
@@ -748,46 +718,9 @@ export function useDraft() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDraft, draftSession]);
 
-  // Persist the draft canvas (debounced) so a reload doesn't lose the draft.
-  // Cancel / Deploy / switch-to-live clear it via clearDraftStorage().
-  // NEVER while a node is dragging: the stringify + synchronous
-  // localStorage write scale with the canvas and visibly froze the drag
-  // (and every edge animation) whenever the debounce elapsed mid-drag —
-  // the drag-stop commit clears the dragging flag and saves then.
-  // Cheap structural pre-check (O(N) reference compares) — selection
-  // clicks and hover elevations must NOT trigger the expensive stringify +
-  // write (a visible main-thread freeze on big canvases).
-  const lastSavedRef = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
-  useEffect(() => {
-    if (!isDraft) {
-      lastSavedRef.current = null;
-      return;
-    }
-    if (nodes.some((n) => n.dragging)) return;
-    const prev = lastSavedRef.current;
-    const unchanged =
-      !!prev &&
-      prev.edges === edges &&
-      prev.nodes.length === nodes.length &&
-      prev.nodes.every((p, i) => {
-        const n = nodes[i];
-        return (
-          p.id === n.id &&
-          p.data === n.data &&
-          p.parentId === n.parentId &&
-          p.hidden === n.hidden &&
-          p.style === n.style &&
-          p.position.x === n.position.x &&
-          p.position.y === n.position.y
-        );
-      });
-    if (unchanged) return;
-    const timer = setTimeout(() => {
-      lastSavedRef.current = { nodes, edges };
-      saveDraftCanvas(nodes, edges);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [isDraft, nodes, edges]);
+  // The draft canvas lives only in React state (CanvasStateProvider) for the
+  // lifetime of the draft session — no persistence, so a reload rebuilds from
+  // live instead of restoring.
 
   // Connect rules live in utils/draft-connect.ts (pure, unit-tested) — this
   // just injects the live dependencies.
