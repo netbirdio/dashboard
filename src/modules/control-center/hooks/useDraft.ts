@@ -66,6 +66,8 @@ export function useDraft() {
     activeTool,
     setActiveTool,
     draftSession,
+    blankDraftRef,
+    startedBlank,
     setNetworkDestinationPicker,
     drillDownNetworkNodeId,
     setDrillDownNetworkNodeId,
@@ -97,6 +99,16 @@ export function useDraft() {
         liveStateRef.current = { nodes, edges };
       }
       wasDraftRef.current = true;
+
+      // "New Draft" enters on an empty canvas instead of rebuilding from the
+      // live view. The live snapshot saved above still restores on exit.
+      if (blankDraftRef.current) {
+        blankDraftRef.current = false;
+        setNodes([]);
+        setEdges([]);
+        return;
+      }
+
       // Rebuilds triggered while already drafting ("New Draft") must derive
       // from the saved live canvas, not the current draft nodes.
       const liveNodes = liveStateRef.current?.nodes ?? nodes;
@@ -750,6 +762,7 @@ export function useDraft() {
     activeTool,
     setActiveTool,
     isSelectMode,
+    startedBlank,
     onNodeConnect,
   };
 }

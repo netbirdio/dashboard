@@ -13,15 +13,19 @@ export async function openControlCenter(page: Page) {
 
 export async function enterDraft(page: Page) {
   await page.getByTestId("cc-mode-draft").click();
+  // The start dialog asks blank vs. current view — keep the current view so
+  // the draft mirrors live (what the control-center suites assert against).
+  await page.getByTestId("cc-draft-use-current-option").click();
   // The toolbar slides in with a spring animation — waiting for the Add
   // button also guarantees draft mode is fully active.
   await expect(page.getByTestId("cc-toolbar-add")).toBeVisible();
 }
 
 export async function exitDraftDiscarding(page: Page) {
-  const draftTab = page.getByTestId("cc-mode-draft");
-  if ((await draftTab.getAttribute("data-state")) !== "active") return;
-  await page.getByTestId("cc-mode-live").click();
+  // The Live tab is hidden — Cancel is the way back to live.
+  const cancel = page.getByTestId("cc-draft-cancel");
+  if (!(await cancel.isVisible().catch(() => false))) return;
+  await cancel.click();
   const confirm = page.getByTestId("confirmation.confirm");
   if (await confirm.isVisible({ timeout: 1000 }).catch(() => false)) {
     await confirm.click();

@@ -6,12 +6,22 @@ import React from "react";
 type Props = {
   value?: string;
   onChange?: (value: string) => void;
+  // "automatic" (default) activates a tab on focus; "manual" only on
+  // click/Enter. Use "manual" when onChange drives side effects (e.g. opening
+  // a popover) that must not fire on hover/focus.
+  activationMode?: "automatic" | "manual";
   children: React.ReactNode;
 };
-function SegmentedTabs({ value, onChange, children }: Props) {
+function SegmentedTabs({
+  value,
+  onChange,
+  activationMode = "automatic",
+  children,
+}: Props) {
   return (
     <TabContext.Provider value={value || ""}>
       <Tabs
+        activationMode={activationMode}
         onValueChange={(value) => onChange && onChange(value)}
         value={value}
       >

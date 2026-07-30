@@ -1,9 +1,11 @@
 import {
   createContext,
+  MutableRefObject,
   PropsWithChildren,
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { Network, NetworkRouter } from "@/interfaces/Network";
@@ -91,6 +93,16 @@ type DraftModeContextType = {
   // Bumped by "New Draft" — forces the draft canvas to rebuild from live.
   draftSession: number;
   newDraftSession: () => void;
+  // Enters draft mode with an empty canvas (the "Blank Canvas" option) instead
+  // of rebuilding from the live view. The flag is consumed by the draft-build
+  // effect on the next entry; read it there via blankDraftRef.
+  startBlankDraft: () => void;
+  // Enters draft mode rebuilt from the current live view ("Current Canvas").
+  startCurrentDraft: () => void;
+  blankDraftRef: MutableRefObject<boolean>;
+  // True for the lifetime of a blank draft — the empty-canvas start screen is
+  // suppressed then (the user explicitly chose an empty canvas).
+  startedBlank: boolean;
 };
 
 // Frame under the pointer (incl. its children — they're separate canvas
@@ -136,6 +148,10 @@ const DraftModeContext = createContext<DraftModeContextType>({
   setDrillDownNetworkNodeId: () => {},
   draftSession: 0,
   newDraftSession: () => {},
+  startBlankDraft: () => {},
+  startCurrentDraft: () => {},
+  blankDraftRef: { current: false },
+  startedBlank: false,
 });
 
 export const useDraftMode = () => useContext(DraftModeContext);
@@ -172,6 +188,21 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
   const [draftSession, setDraftSession] = useState(0);
   const newDraftSession = useCallback(() => setDraftSession((s) => s + 1), []);
 
+  const [startedBlank, setStartedBlank] = useState(false);
+
+  // A ref (not state) so flipping it never re-renders the whole consumer tree
+  // — it's read once by the draft-build effect when isDraft flips true.
+  const blankDraftRef = useRef(false);
+  const startBlankDraft = useCallback(() => {
+    blankDraftRef.current = true;
+    setStartedBlank(true);
+    setIsDraft(true);
+  }, []);
+  const startCurrentDraft = useCallback(() => {
+    setStartedBlank(false);
+    setIsDraft(true);
+  }, []);
+
   const hoverValue = useMemo(
     () => ({ hoveredNetworkNodeId, setHoveredNetworkNodeId }),
     [hoveredNetworkNodeId],
@@ -207,6 +238,10 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
       setDrillDownNetworkNodeId,
       draftSession,
       newDraftSession,
+      startBlankDraft,
+      startCurrentDraft,
+      blankDraftRef,
+      startedBlank,
     }),
     [
       isDraft,
@@ -222,6 +257,9 @@ export const DraftModeProvider = ({ children }: PropsWithChildren) => {
       drillDownNetworkNodeId,
       draftSession,
       newDraftSession,
+      startBlankDraft,
+      startCurrentDraft,
+      startedBlank,
     ],
   );
 

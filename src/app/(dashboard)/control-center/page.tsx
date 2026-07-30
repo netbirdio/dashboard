@@ -138,8 +138,12 @@ function ControlCenterCanvas() {
   const anyMenuOpen = contextMenuOpen || nodeContextMenuOpen;
   // An empty state overlay is up (live peers/networks empty, or the draft start
   // screen) — lock canvas interactions. Once the user starts (opens the
-  // components panel) the empty canvas becomes interactive again.
-  const emptyState = canvas.nodes.length === 0 && !componentsPanelOpen;
+  // components panel) the empty canvas becomes interactive again. A blank draft
+  // shows no overlay, so its empty canvas stays interactive (pannable).
+  const emptyState =
+    canvas.nodes.length === 0 &&
+    !componentsPanelOpen &&
+    !(draft.isDraft && draft.startedBlank);
   const canInteract = !anyMenuOpen && !draft.isSelectMode && !emptyState;
 
   // Closes just the context menu — used after picking a menu item (so an
