@@ -451,6 +451,7 @@ function VNCSession({
               : vnc.setShowRemoteCursor
           }
           viewOnly={vnc.viewOnly}
+          onDisconnect={vnc.disconnect}
         />
       )}
 

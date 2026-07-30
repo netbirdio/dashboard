@@ -3,6 +3,10 @@ import React, { useEffect, useRef, useState } from "react";
 interface Props {
   onCtrlAltDel?: () => void;
   onPaste?: () => void;
+  // onDisconnect ends this client's own session. The host is not asked and
+  // nothing on the peer changes: the page falls through to its disconnected
+  // screen, from where Reconnect starts a new session.
+  onDisconnect?: () => void;
   showRemoteCursor: boolean;
   onToggleRemoteCursor?: (enable: boolean) => void;
   // viewOnly hides input actions and shows a "View-only" badge.
@@ -14,6 +18,7 @@ const STORAGE_KEY = "netbird.vnc.toolbarX";
 export default function VNCToolbar({
   onCtrlAltDel,
   onPaste,
+  onDisconnect,
   showRemoteCursor,
   onToggleRemoteCursor,
   viewOnly,
@@ -118,6 +123,21 @@ export default function VNCToolbar({
             >
               Remote cursor
             </button>
+          )}
+          {onDisconnect && (
+            <>
+              <span
+                aria-hidden={true}
+                className="self-stretch w-px bg-nb-gray-700 mx-0.5"
+              />
+              <button
+                onClick={onDisconnect}
+                className="text-xs text-red-400 hover:text-red-300 px-3 py-1 rounded hover:bg-red-500/10 transition-colors whitespace-nowrap"
+                title="End your session. The remote machine keeps running and you can reconnect afterwards."
+              >
+                End session
+              </button>
+            </>
           )}
         </div>
       </div>
