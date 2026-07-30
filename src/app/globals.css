@@ -245,6 +245,20 @@ p {
     transition: opacity 120ms ease;
 }
 
+/* Just-assigned network frame (draft control-center): a resource dropped into
+   a network zooms to the frame and pulses its border for a couple of seconds.
+   Ring drawn as an expanding box-shadow so it hugs the frame without shifting
+   layout; rounded to match the frame's corners. */
+@keyframes cc-node-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.55); }
+    70%  { box-shadow: 0 0 0 14px rgba(56, 189, 248, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+}
+.react-flow__node.cc-node-pulse {
+    border-radius: 14px;
+    animation: cc-node-pulse 1.1s ease-out 2;
+}
+
 /* Group focus highlight (live control-center): nodes/edges off the selected
    group's path fade to grayscale while its panel is open. */
 .react-flow__node.cc-dimmed {

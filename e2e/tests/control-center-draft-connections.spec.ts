@@ -67,7 +67,7 @@ test.describe.serial(
         x: pane.x + pane.width * 0.45,
         y: pane.y + pane.height * 0.35,
       });
-      await dragTemplateToCanvas(page, "cc-template-peer-user-device", {
+      await dragTemplateToCanvas(page, "cc-template-peer-server", {
         x: pane.x + pane.width * 0.75,
         y: pane.y + pane.height * 0.65,
       });
@@ -256,7 +256,7 @@ test.describe.serial(
         x: pane.x + pane.width * 0.45,
         y: pane.y + pane.height * 0.35,
       });
-      await dragTemplateToCanvas(page, "cc-template-peer-user-device", {
+      await dragTemplateToCanvas(page, "cc-template-peer-server", {
         x: pane.x + pane.width * 0.75,
         y: pane.y + pane.height * 0.65,
       });
@@ -283,7 +283,7 @@ test.describe.serial(
       // though it isn't in the API peer list.
       await clickContextMenuItem(page, group, "Details");
       await expect(
-        page.getByText("User Device", { exact: false }).last(),
+        page.getByText("Server", { exact: false }).last(),
       ).toBeVisible();
       await page.keyboard.press("Escape");
     });

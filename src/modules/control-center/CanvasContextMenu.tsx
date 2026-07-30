@@ -4,7 +4,6 @@ import {
   BotIcon,
   FolderGit2,
   WorkflowIcon,
-  MonitorSmartphoneIcon,
   NetworkIcon,
   OptionIcon,
   ServerIcon,
@@ -68,21 +67,15 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     () => [
       [
         {
-          label: "New User Device",
-          icon: <MonitorSmartphoneIcon size={14} />,
-          shortcut: shortcutLabel(1),
-          action: (pos) => addPeerPlaceholder("user-device", pos),
-        },
-        {
           label: "New Server",
           icon: <ServerIcon size={14} />,
-          shortcut: shortcutLabel(2),
+          shortcut: shortcutLabel(1),
           action: (pos) => addPeerPlaceholder("server", pos),
         },
         {
           label: "New Agent",
           icon: <BotIcon size={14} />,
-          shortcut: shortcutLabel(3),
+          shortcut: shortcutLabel(2),
           action: (pos) => addPeerPlaceholder("agent", pos),
         },
       ],
@@ -90,13 +83,13 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
         {
           label: "New Policy",
           icon: <ShieldIcon size={14} />,
-          shortcut: shortcutLabel(4),
+          shortcut: shortcutLabel(3),
           action: (pos) => addBlankPolicy(pos),
         },
         {
           label: "New Group",
           icon: <FolderGit2 size={14} />,
-          shortcut: shortcutLabel(5),
+          shortcut: shortcutLabel(4),
           action: (pos) => addNewGroup({ x: pos.x - 100, y: pos.y - 30 }),
         },
       ],
@@ -104,13 +97,13 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
         {
           label: "New Network",
           icon: <NetworkIcon size={14} />,
-          shortcut: shortcutLabel(6),
+          shortcut: shortcutLabel(5),
           action: (pos) => addBlankNode("network", pos),
         },
         {
           label: "New Resource",
           icon: <WorkflowIcon size={14} />,
-          shortcut: shortcutLabel(7),
+          shortcut: shortcutLabel(6),
           action: (pos) => addBlankNode("resource", pos),
         },
       ],

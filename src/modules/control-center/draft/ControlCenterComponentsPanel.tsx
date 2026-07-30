@@ -80,12 +80,6 @@ type PeerTemplate = {
 
 const PEER_TEMPLATES: PeerTemplate[] = [
   {
-    key: "user-device",
-    label: "User Device",
-    description: "Install on a computer or phone",
-    icon: MonitorSmartphoneIcon,
-  },
-  {
     key: "server",
     label: "Server",
     description: "Install on a server or VM",

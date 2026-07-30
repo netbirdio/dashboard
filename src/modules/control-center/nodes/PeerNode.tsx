@@ -77,10 +77,14 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
   const { setInstallModal, setUserDeviceModal } = useDraftMode();
   const account = useAccount();
   // Ring while the context menu targets this peer or while its groups panel
-  // is open — same halo the group panel puts on its group node.
+  // is open — same halo the group panel puts on its group node. Placeholder
+  // peers have no data.peer.id: they're keyed on the node id (matching how
+  // onNodeClick/getPlaceholderPeer derive the panel id), so fall back to that
+  // or the ring never shows when a placeholder's panel is selected.
   const showHalo =
     contextMenuNodeId === id ||
-    (!!selectedPeerPanel && selectedPeerPanel === data.peer?.id);
+    (!!selectedPeerPanel &&
+      selectedPeerPanel === (data.peer?.id ?? id.replace("peer-", "")));
 
   // A user-device placeholder that picked its peer IS that peer (plain card
   // below); un-picked placeholders of every kind render the placeholder card

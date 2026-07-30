@@ -114,7 +114,7 @@ via the `networks`/`resources` category keywords. Changes:
   auto-name `"New Resource (n)"` and opens the **draft resource editor**
   immediately. Unlike networks, a bare resource is not deployable (needs
   address + network), so the editor-on-drop front-loads the required fields —
-  same precedent as the User Device template opening its modal on drop.
+  same precedent as a placeholder-peer template opening its modal on drop.
 - **Draft resource editor**: a pure-data modal (policy-modal style,
   `useSave={false}` — no API call) built from the live
   `NetworkResourceModal` fields:

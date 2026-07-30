@@ -227,7 +227,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const menu = page.getByTestId("cc-canvas-context-menu");
     await expect(menu).toBeVisible();
     for (const label of [
-      "New User Device",
       "New Server",
       "New Agent",
       "New Policy",

@@ -56,6 +56,61 @@ export function useDraftNetworkActions() {
     updateDraftNetwork,
   } = useDraftChangeset();
 
+  // Frames a network node and pulses its border for a couple of seconds so a
+  // just-assigned resource is easy to spot landing in it. Runs after a short
+  // delay so the frame has resized and the layout reconciler has settled
+  // before we fit to it.
+  const highlightNetworkNode = useCallback(
+    (networkNodeId: string) => {
+      const PULSE_MS = 2200;
+      window.setTimeout(() => {
+        reactFlow.fitView({
+          nodes: [{ id: networkNodeId }],
+          duration: 500,
+          padding: 0.35,
+          maxZoom: 1,
+        });
+        reactFlow.setNodes((prev) =>
+          prev.map((n) =>
+            n.id === networkNodeId
+              ? { ...n, className: `${n.className ?? ""} cc-node-pulse`.trim() }
+              : n,
+          ),
+        );
+        window.setTimeout(() => {
+          reactFlow.setNodes((prev) =>
+            prev.map((n) =>
+              n.id === networkNodeId && n.className?.includes("cc-node-pulse")
+                ? {
+                    ...n,
+                    className:
+                      n.className.replace(/\s*cc-node-pulse/g, "").trim() ||
+                      undefined,
+                  }
+                : n,
+            ),
+          );
+        }, PULSE_MS);
+      }, 180);
+    },
+    [reactFlow],
+  );
+
+  // The id of the on-canvas frame for a network ref (real id or client id),
+  // or undefined when that network isn't on the canvas.
+  const findNetworkNodeIdForRef = useCallback(
+    (ref: DraftNetworkRef) =>
+      reactFlow.getNodes().find((n) => {
+        if (!isFrameNode(n)) return false;
+        const net = (n.data as { network?: Network })?.network;
+        if (!net) return false;
+        return ref.networkId
+          ? net.id === ref.networkId
+          : n.id.replace("network-", "") === ref.networkClientId;
+      })?.id,
+    [reactFlow],
+  );
+
   // Re-records the create-resource change from a draft resource node's
   // current data — only complete resources are changeset-worthy. Policies
   // referencing the resource are re-run so ones held back by an incomplete
@@ -204,8 +259,10 @@ export function useDraftNetworkActions() {
           : kept.concat(makeMembershipEdge(resourceNodeId, networkNodeId));
       });
       setTimeout(() => syncDraftResource(resourceNodeId), 0);
+      // The network is on the canvas by definition here — draw the eye to it.
+      highlightNetworkNode(networkNodeId);
     },
-    [reactFlow, syncDraftResource],
+    [reactFlow, syncDraftResource, highlightNetworkNode],
   );
 
   // Assigns a network to a draft resource held INSIDE a group (no canvas
@@ -268,8 +325,11 @@ export function useDraftNetworkActions() {
           enabled: true,
         });
       }
+      // If that network has a frame on the canvas, zoom to it and pulse.
+      const nodeId = findNetworkNodeIdForRef(networkRef);
+      if (nodeId) highlightNetworkNode(nodeId);
     },
-    [reactFlow, trackCreateResource],
+    [reactFlow, trackCreateResource, findNetworkNodeIdForRef, highlightNetworkNode],
   );
 
   // Assigns a standalone draft resource to an EXISTING (API) network that
@@ -303,8 +363,15 @@ export function useDraftNetworkActions() {
         prev.filter((e) => !e.id.startsWith(`member-${resourceNodeId}-`)),
       );
       setTimeout(() => syncDraftResource(resourceNodeId), 0);
+      // Usually not a frame on canvas (that's this path's whole point), but if
+      // one happens to be, highlight it.
+      const nodeId = findNetworkNodeIdForRef({
+        networkId: network.id,
+        name: network.name,
+      });
+      if (nodeId) highlightNetworkNode(nodeId);
     },
-    [reactFlow, syncDraftResource],
+    [reactFlow, syncDraftResource, findNetworkNodeIdForRef, highlightNetworkNode],
   );
 
   // Saves the draft resource editor: node data (name/address/description,

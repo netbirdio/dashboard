@@ -21,6 +21,7 @@ import {
 } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { NetworkModalContent } from "@/modules/networks/NetworkModal";
+import { SmallBadge } from "@components/ui/SmallBadge";
 
 // "No Network" picker for a standalone draft resource: assign it to an
 // existing network (a draft frame on canvas or a real API network) or create
@@ -67,13 +68,27 @@ const PickerContent = ({
   // scroll away or get filtered out with many networks.
   const options: SelectOption[] = React.useMemo(() => {
     const frameNodes = reactFlow.getNodes().filter(isFrameNode);
-    const frames = frameNodes.map((n) => ({
-      value: `frame:${n.id}`,
-      label:
+    const frames = frameNodes.map((n) => {
+      const name =
         (n.data as { network?: { name?: string } })?.network?.name ??
-        "Network",
-      icon: ({ size }: { size?: number }) => <NetworkIcon size={size} />,
-    }));
+        "Network";
+      // A draft-created network (not deployed yet) — flag it like everywhere
+      // else draft-only entities are listed.
+      const isNew = n.id.startsWith("network-new-");
+      return {
+        value: `frame:${n.id}`,
+        searchValue: name,
+        label: isNew ? (
+          <span className={"flex items-center gap-2"}>
+            {name}
+            <SmallBadge />
+          </span>
+        ) : (
+          name
+        ),
+        icon: ({ size }: { size?: number }) => <NetworkIcon size={size} />,
+      };
+    });
     // API networks not already present on the canvas as a frame (avoid dupes).
     const framedIds = new Set(frameNodes.map((n) => n.id));
     const api = (networks ?? [])

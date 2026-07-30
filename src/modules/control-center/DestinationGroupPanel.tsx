@@ -41,6 +41,7 @@ import {
 import { useAccount } from "@/modules/account/useAccount";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import {
   getNodeGroup,
@@ -194,6 +195,7 @@ export const DestinationGroupPanel = ({
   const nodes = useStructuralNodes();
   const { setNodes } = useCanvasState();
   const { isDraft, setResourceNetworkPicker } = useDraftMode();
+  const { changes } = useDraftChangeset();
   const { removeGroupMember } = useDraftGroupActions();
   const { addMemberToGroup } = useDragToGroup();
   const { confirm } = useDialog();
@@ -224,23 +226,50 @@ export const DestinationGroupPanel = ({
 
   const realGroupId = group?.id ?? "";
 
-  // Draft membership edits live on the canvas nodes, not in the API data yet.
+  // Draft membership edits live on the canvas nodes AND in the changeset. The
+  // changeset is authoritative: node data (addedMembers/removedMembers Sets) is
+  // transient — a canvas rebuild or an SWR mutate of /peers|/networks/resources
+  // drops it, which used to resurrect a removed member here even though the
+  // changeset still recorded the removal. Folding the changeset in makes the
+  // displayed membership survive both. Matches PeerGroupsPanel's derivation.
   const addedMembers = useMemo(() => {
     const added = new Set<string>();
     groupNodes.forEach((n) => {
       const members = n.data?.addedMembers as Set<string> | undefined;
       members?.forEach((id) => added.add(id));
     });
+    if (isDraft) {
+      changes.forEach((c) => {
+        const matches =
+          (c.type === "create-group" && c.name === group?.name) ||
+          (c.type === "update-group" && c.groupId === realGroupId);
+        if (c.type === "create-group" && matches) {
+          c.peerIds.forEach((id) => added.add(id));
+          c.resourceIds.forEach((id) => added.add(id));
+        } else if (c.type === "update-group" && matches) {
+          c.peerIds.forEach((id) => added.add(id));
+          c.resourceIds.forEach((id) => added.add(id));
+        }
+      });
+    }
     return added;
-  }, [groupNodes]);
+  }, [groupNodes, isDraft, changes, group?.name, realGroupId]);
   const removedMembers = useMemo(() => {
     const removed = new Set<string>();
     groupNodes.forEach((n) => {
       const members = n.data?.removedMembers as Set<string> | undefined;
       members?.forEach((id) => removed.add(id));
     });
+    if (isDraft) {
+      changes.forEach((c) => {
+        if (c.type === "update-group" && c.groupId === realGroupId) {
+          c.removedPeerIds?.forEach((id) => removed.add(id));
+          c.removedResourceIds?.forEach((id) => removed.add(id));
+        }
+      });
+    }
     return removed;
-  }, [groupNodes]);
+  }, [groupNodes, isDraft, changes, realGroupId]);
 
   // Draft members (placeholder peers, draft resources) aren't in the API
   // lists — their objects ride on the group node, stored at drop time.
@@ -742,15 +771,15 @@ export const DestinationGroupPanel = ({
   const confirmDiscard = async () => {
     if (!dirty || !canEditMembers) return true;
     return !!(await confirm({
-      title: "You have unsaved member changes",
+      title: "Unsaved Changes",
       description: `The members you toggled for “${
         group?.name ?? "this group"
       }” haven't been ${
         isDraft ? "applied" : "saved"
       } yet. Closing the panel will lose them.`,
       confirmText: "Discard",
-      cancelText: "Keep editing",
-      type: "warning",
+      cancelText: "Cancel",
+      type: "danger",
       dismissOnOutsideClick: true,
     }));
   };

@@ -9,7 +9,7 @@ Draft mode unless noted; live-mode differences called out inline.
 
 | Node | Id pattern | Variants |
 |---|---|---|
-| Peer | `peer-<id>` / `peer-draft-<uuid>` | real · placeholder server/agent · user-device (placeholder until picked) |
+| Peer | `peer-<id>` / `peer-draft-<uuid>` | real · placeholder server/agent (user-device is hidden from creation for now) |
 | Group | `group-<id>` / `group-new-<uuid>` / `dest-group-<gid>-<pid>` | existing · draft-new · "All" (system) · self-ref destination copy |
 | Policy | `policy-<id>` / `policy-new-<uuid>` | existing · new (may be incomplete) · enabled/disabled |
 | Network | `network-<id>` / `network-new-<uuid>` | existing frame (read-only name) · draft frame (editable) |
@@ -65,7 +65,7 @@ framed resources, live mode entirely) are unaffected. Standalone edges never del
 | Real peer | Details/groups panel | Focus · Details · Remove | live: no Remove |
 | Network frame | drill-down | Edit⁴ · Add Resource · Add Resource Group · Add Routing Peer · Remove | live: drill-down only |
 | Resource | — (live: editor behind confirm) | Focus · Edit · Rename⁴ · Disable/Enable · Delete (existing+framed) / Remove (draft or unframed) | live: no Delete/Remove |
-| Canvas pane | — | New User Device/Server/Agent (⌥1-3) · New Policy (⌥4) · New Group (⌥5) · New Network (⌥6) · New Resource (⌥7) | draft only |
+| Canvas pane | — | New Server/Agent (⌥1-2) · New Policy (⌥3) · New Group (⌥4) · New Network (⌥5) · New Resource (⌥6) | draft only (User Device hidden for now) |
 
 ¹ not for "All" or IdP/JWT-issued groups. ² only for existing (API) entities, always confirmed
 ("marked for deletion…"). ³ Remove is canvas-only, never confirms: draft entity → pending create
@@ -124,10 +124,9 @@ completed changes are already removed, so Deploy resumes.
    placeholders included (hostname matching scans `draftPeers` too). Incomplete
    (no-network) draft resources are droppable too and show a "No Network" alert row.
 10. All placeholder kinds show the same "⚠ Not installed" alert CTA (canvas node and
-    panel rows) — servers/agents open the install modal; user devices open the setup
-    stepper modal (`DraftUserDeviceModal`: install NetBird → select device). The
-    user-device canvas node no longer carries an inline peer select; upgraded
-    placeholders always become plain peer cards.
+    panel rows) — servers/agents open the install modal. (The user-device kind and its
+    setup-stepper modal `DraftUserDeviceModal` still exist in code but are hidden from
+    creation for now; upgraded placeholders always become plain peer cards.)
 11. Clicking a placeholder peer opens its groups panel (like real peers). Assigned
     EXISTING groups become the setup key's `auto_groups` (peer registers pre-grouped);
     draft-group memberships can't ride on the key (no API id yet) — they deploy with the
