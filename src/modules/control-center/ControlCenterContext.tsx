@@ -324,7 +324,7 @@ export function ControlCenterUIProvider({
 }) {
   const canvas = useCanvasState();
   const data = useControlCenterData();
-  const { isDraft } = useDraftMode();
+  const { isDraft, drillDownNetworkNodeId } = useDraftMode();
   const {
     setFocusedNodeId,
     setHighlightArmed,
@@ -349,6 +349,24 @@ export function ControlCenterUIProvider({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDraft]);
+
+  // Entering a network — drilling into a frame (draft) or the single-network
+  // view (live) — closes any open group/peer panel: it belongs to the view
+  // just left. Only on the transition IN, so a panel opened while inside a
+  // network isn't force-closed.
+  const enteredNetwork = isDraft
+    ? !!drillDownNetworkNodeId
+    : !!canvas.selectedNetwork;
+  const prevEnteredRef = useRef(enteredNetwork);
+  useEffect(() => {
+    const wasEntered = prevEnteredRef.current;
+    prevEnteredRef.current = enteredNetwork;
+    if (enteredNetwork && !wasEntered) {
+      canvas.setSelectedDestinationGroup("");
+      setSelectedPeerPanel("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enteredNetwork]);
 
   const { applySingleGroupView } = useGroupView();
   const { applyPeerView } = usePeerView();
