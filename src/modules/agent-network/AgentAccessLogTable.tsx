@@ -445,12 +445,13 @@ export default function AgentAccessLogTable({
           </DataTableHeader>
         ),
         // Same Reason cell as the flat view (deny reason, or the authorising
-        // policy link). A session is one policy decision in practice; surface a
-        // denied request when present, otherwise the first entry.
+        // policy link). Prefer an allowed request so a session that succeeded
+        // shows the authorising policy rather than an incidental deny reason;
+        // only surface a deny reason when every request was denied.
         cell: ({ row }) => {
           const entries = row.original.entries;
           const representative =
-            entries.find((e) => e.decision === "deny") ?? entries[0];
+            entries.find((e) => e.decision === "allow") ?? entries[0];
           return representative ? (
             <ReasonCell entry={representative} />
           ) : (
