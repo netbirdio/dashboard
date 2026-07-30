@@ -48,7 +48,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   // `position` stays the raw click point so actions create nodes there.
   const menuPosition = useEdgeAwareMenuPosition(position, menuRef);
   const reactFlow = useReactFlow();
-  const { isDraft, setComponentsPanelOpen } = useDraftMode();
+  const { isDraft, setComponentsPanelOpen, setResourceEditor } = useDraftMode();
   const { addNewGroup } = useDraftGroupActions();
   const { addPeerPlaceholder, addBlankNode, addBlankPolicy } =
     useDraftNodeCreation();
@@ -104,11 +104,19 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
           label: "New Resource",
           icon: <WorkflowIcon size={14} />,
           shortcut: shortcutLabel(6),
-          action: (pos) => addBlankNode("resource", pos),
+          // Open the editor first — a resource must have an IP/CIDR/domain;
+          // the card is created at this spot only once the modal saves.
+          action: (pos) => setResourceEditor({ createStandaloneAt: pos }),
         },
       ],
     ],
-    [addNewGroup, addBlankPolicy, addPeerPlaceholder, addBlankNode],
+    [
+      addNewGroup,
+      addBlankPolicy,
+      addPeerPlaceholder,
+      addBlankNode,
+      setResourceEditor,
+    ],
   );
 
   // Alt/⌥+1…7 create at the viewport center (draft-only, input-aware).

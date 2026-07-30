@@ -433,6 +433,14 @@ export function useDraftNetworkActions() {
         return;
       }
 
+      // Standalone create with no network chosen yet — leave draftNetwork
+      // unset so the card reads "No Network"; syncDraftResource keeps it out
+      // of the changeset until a network is assigned.
+      if (!network.networkClientId && !network.networkId) {
+        setTimeout(() => syncDraftResource(nodeId), 0);
+        return;
+      }
+
       // Containment / membership when the parent network is on the canvas
       // (assign also stamps draftNetwork + syncs the change).
       const networkNodeId = network.networkClientId

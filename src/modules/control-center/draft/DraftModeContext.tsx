@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { XYPosition } from "@xyflow/react";
 import type { Network, NetworkRouter } from "@/interfaces/Network";
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 
@@ -36,9 +37,18 @@ export type NetworkDestinationPickerState = {
   policyNodeId: string;
 };
 
+// Three shapes: EDIT an existing resource node (nodeId), CREATE one into a
+// frame (createInNetworkNodeId), or CREATE a standalone "No Network" resource
+// at a canvas position (createStandaloneAt). Both create shapes defer the
+// node's creation until the modal saves — cancelling leaves nothing behind.
 export type ResourceEditorState =
-  | { nodeId: string; createInNetworkNodeId?: never }
-  | { nodeId?: never; createInNetworkNodeId: string };
+  | { nodeId: string; createInNetworkNodeId?: never; createStandaloneAt?: never }
+  | { nodeId?: never; createInNetworkNodeId: string; createStandaloneAt?: never }
+  | {
+      nodeId?: never;
+      createInNetworkNodeId?: never;
+      createStandaloneAt: XYPosition | null;
+    };
 
 // Routing-peer modal target: a network frame (or a direct network, for the
 // live header where no frame node exists). editChangeId opens an existing
@@ -66,8 +76,10 @@ type DraftModeContextType = {
   userDeviceModal: { nodeId: string; name: string } | null;
   setUserDeviceModal: (value: { nodeId: string; name: string } | null) => void;
   // Draft resource editor (pure-data modal) — edits an existing resource
-  // node, OR creates a new one into a frame (the frame header's "Add
-  // Resource" button / context menu).
+  // node, creates a new one into a frame (the frame's "Add Resource" button /
+  // context menu), or creates a standalone one (canvas "New Resource" /
+  // dropping the Resource template). Adding a resource always goes through
+  // this modal so an IP/CIDR/domain is entered up front.
   resourceEditor: ResourceEditorState | null;
   setResourceEditor: (value: ResourceEditorState | null) => void;
   // "No Network" picker for a standalone draft resource — pick an existing

@@ -74,8 +74,8 @@ category already carries both create templates (`BLANK_TEMPLATES`), searchable
 via the `networks`/`resources` category keywords. Changes:
 
 - **Add New → Network** — drop/click places a network node (behavior in §4.1).
-- **Add New → Resource** — drop/click places a resource node and opens the
-  draft resource editor (§4.2).
+- **Add New → Resource** — drop/click opens the draft resource editor first;
+  the resource node is created only on save (§4.2).
 - **Existing Resources** — unchanged (droppable, disabled + ON CANVAS when
   present).
 - **Draft resources** created in this draft are listed under Existing
@@ -110,11 +110,16 @@ via the `networks`/`resources` category keywords. Changes:
 
 ### 4.2 Resource node (draft-created)
 
-- **Drop** places a `resourceNode` (`resource-new-<uuid>`) with unique
-  auto-name `"New Resource (n)"` and opens the **draft resource editor**
-  immediately. Unlike networks, a bare resource is not deployable (needs
-  address + network), so the editor-on-drop front-loads the required fields —
-  same precedent as a placeholder-peer template opening its modal on drop.
+- **Adding a resource always opens the editor first.** Every entry point —
+  dropping or clicking the Resource template, the canvas "New Resource" menu,
+  a frame's "Add Resource" button, and a frame's context-menu "Add Resource" —
+  opens the **draft resource editor** before anything lands on the canvas.
+  Unlike networks, a bare resource is not deployable (needs an address), so
+  front-loading the IP/CIDR/domain is required — same precedent as a
+  placeholder-peer template opening its modal on drop. The `resourceNode`
+  (`resource-new-<uuid>`) is created only on **Save**: as a child of the frame
+  when added from one, otherwise a standalone "No Network" card at the
+  drop/click position.
 - **Draft resource editor**: a pure-data modal (policy-modal style,
   `useSave={false}` — no API call) built from the live
   `NetworkResourceModal` fields:
@@ -127,14 +132,19 @@ via the `networks`/`resources` category keywords. Changes:
   - Optional: description, resource groups (`PeerGroupSelector`, may create
     draft groups).
   - No Access Control tab — policies are drawn on the canvas in draft.
-- **Save** → records/updates the `create-resource` change and stamps the node
-  data. **Cancel** → the blank node stays on canvas as an *incomplete*
-  visual placeholder (today's behavior), configurable later.
-- **Incomplete resources** (missing name/address/network) render an amber
-  "Set up" affordance on the node (styling of the placeholder-peer Install
-  button); clicking the node or the affordance reopens the editor. Incomplete
-  resources have **no changeset entry** and gate any policy referencing them
-  (§5.2) — the exact pattern of blank policies / `isCompletePolicy`.
+- **Save** → creates the node (into its frame, or standalone), stamps the node
+  data, and records the `create-resource` change once it has an address + a
+  network. A standalone card is created "No Network" and stays out of the
+  changeset until a network is assigned via the "No Network" picker. **Cancel**
+  → nothing is created (the node is born on save), so cancelling an add leaves
+  the canvas unchanged.
+- **Incomplete resources** — because the editor requires an address, the only
+  reachable incomplete state is a standalone card **missing a network**, which
+  renders the amber "No Network" affordance (styling of the placeholder-peer
+  Install button); clicking it opens the network picker, clicking the card
+  reopens the editor. Incomplete resources have **no changeset entry** and gate
+  any policy referencing them (§5.2) — the exact pattern of blank policies /
+  `isCompletePolicy`.
 - **Rendering**: existing `ResourceNode`/`DeviceCard`, NEW badge while
   id-less; subtitle shows `address` and the parent network name once set.
 - **Context menu**: Edit (reopens editor), Rename, Remove (drops the pending

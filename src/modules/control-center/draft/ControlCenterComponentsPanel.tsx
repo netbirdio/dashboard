@@ -154,8 +154,12 @@ const CATEGORIES: {
 ];
 
 export const ControlCenterComponentsPanel = () => {
-  const { isDraft, componentsPanelOpen, setComponentsPanelOpen } =
-    useDraftMode();
+  const {
+    isDraft,
+    componentsPanelOpen,
+    setComponentsPanelOpen,
+    setResourceEditor,
+  } = useDraftMode();
 
   // Stays mounted for the whole draft session — opening only toggles
   // visibility, so there is no mount cost while the animation runs.
@@ -165,12 +169,23 @@ export const ControlCenterComponentsPanel = () => {
     <PanelContent
       open={componentsPanelOpen}
       onClose={() => setComponentsPanelOpen(false)}
+      setResourceEditor={setResourceEditor}
     />
   );
 };
 
 const PanelContent = React.memo(
-  ({ open, onClose }: { open: boolean; onClose: () => void }) => {
+  ({
+    open,
+    onClose,
+    setResourceEditor,
+  }: {
+    open: boolean;
+    onClose: () => void;
+    // Passed down (not read via useDraftMode) so PanelContent — mounted for
+    // the whole session — doesn't re-render on every draft-context change.
+    setResourceEditor: ReturnType<typeof useDraftMode>["setResourceEditor"];
+  }) => {
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState<PanelCategory>("peers");
     const isSearching = search.trim().length > 0;
@@ -207,7 +222,6 @@ const PanelContent = React.memo(
       placeNode: placeDroppedNode,
       addPeerPlaceholder,
       addBlankNode: addBlankPlaceholderNode,
-      addResourceToFrame,
       addBlankPolicy,
       dropExistingNetworkFrame,
     } = useDraftNodeCreation();
@@ -330,17 +344,22 @@ const PanelContent = React.memo(
           addNewGroup(pos);
           return;
         }
-        // A resource dropped onto a network frame is added INTO it; otherwise
-        // it lands as a standalone "No Network" card. (targetNodeId is already
-        // resolved to the frame id by the drop provider; every network- node on
-        // the draft canvas is a frame.)
-        if (kind === "resource" && targetNodeId?.startsWith("network-")) {
-          addResourceToFrame(targetNodeId);
+        // A resource always opens the editor first so an IP/CIDR/domain is
+        // entered; the card is created only on save. Dropped onto a network
+        // frame it's created INTO it, otherwise standalone at the drop point.
+        // (targetNodeId is already resolved to the frame id by the drop
+        // provider; every network- node on the draft canvas is a frame.)
+        if (kind === "resource") {
+          if (targetNodeId?.startsWith("network-")) {
+            setResourceEditor({ createInNetworkNodeId: targetNodeId });
+          } else {
+            setResourceEditor({ createStandaloneAt: position ?? null });
+          }
           return;
         }
         addBlankPlaceholderNode(kind, position);
       },
-      [addBlankPlaceholderNode, addResourceToFrame, addNewGroup],
+      [addBlankPlaceholderNode, setResourceEditor, addNewGroup],
     );
 
     const handleBlankDragStart = useCallback(

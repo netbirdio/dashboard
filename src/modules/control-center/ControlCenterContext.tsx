@@ -32,7 +32,6 @@ import { usePeerView } from "@/modules/control-center/hooks/views/usePeerView";
 import { useUserView } from "@/modules/control-center/hooks/views/useUserView";
 import { useNetworkView } from "@/modules/control-center/hooks/views/useNetworkView";
 import { useSelectNodeHandlers } from "@/modules/control-center/hooks/useSelectNodeHandlers";
-import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { DestinationGroupPanel } from "@/modules/control-center/DestinationGroupPanel";
 import { PeerGroupsPanel } from "@/modules/control-center/PeerGroupsPanel";
 import NetworkResourceModal from "@/modules/networks/resources/NetworkResourceModal";
@@ -89,11 +88,6 @@ const CanvasStateContext = createContext<CanvasState | null>(null);
 interface CanvasUIState {
   contextMenuNodeId: string;
   setContextMenuNodeId: (v: string) => void;
-  // Draft frames' "Add Resource" action — wired once from
-  // ControlCenterUIProvider (useDraftNodeCreation pulls six SWR
-  // subscriptions; mounting it per frame lagged big drafts). Lives HERE
-  // (stable context) so the per-frame button doesn't subscribe to nodes.
-  addResourceToFrameRef: React.MutableRefObject<(nodeId: string) => void>;
 }
 
 const CanvasUIContext = createContext<CanvasUIState | null>(null);
@@ -204,7 +198,6 @@ export function CanvasStateProvider({
 
   const forceSingleGroupViewRef = useRef<(id: string) => void>(() => {});
   const refreshLiveViewRef = useRef<(policy: Policy) => void>(() => {});
-  const addResourceToFrameRef = useRef<(nodeId: string) => void>(() => {});
 
   const value = useMemo(
     () => ({
@@ -260,7 +253,6 @@ export function CanvasStateProvider({
     () => ({
       contextMenuNodeId,
       setContextMenuNodeId,
-      addResourceToFrameRef,
     }),
     [contextMenuNodeId],
   );
@@ -386,8 +378,6 @@ export function ControlCenterUIProvider({
   // Wire up circular dependency refs
   canvas.forceSingleGroupViewRef.current = handlers.forceSingleGroupView;
   canvas.refreshLiveViewRef.current = handlers.refreshLiveView;
-  const { addResourceToFrame } = useDraftNodeCreation();
-  useCanvasUI().addResourceToFrameRef.current = addResourceToFrame;
 
   const value = useMemo(
     () => ({

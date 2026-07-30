@@ -62,7 +62,7 @@ const EditorContent = ({
   const { groups: apiGroups } = useControlCenterData();
   const { changes, trackCreateGroup } = useDraftChangeset();
   const { saveDraftResource } = useDraftNetworkActions();
-  const { addResourceToFrame } = useDraftNodeCreation();
+  const { addResourceToFrame, addDraftResource } = useDraftNodeCreation();
 
   const isCreate = !editor.nodeId;
   const node = editor.nodeId
@@ -76,14 +76,17 @@ const EditorContent = ({
   const draftResource =
     getDraftResource(node) ??
     (node?.data as { resource?: NetworkResource })?.resource;
-  const network: DraftNetworkRef | undefined = isCreate
+  const network: DraftNetworkRef | undefined = editor.createInNetworkNodeId
     ? {
-        networkClientId: editor.createInNetworkNodeId!.replace("network-", ""),
+        networkClientId: editor.createInNetworkNodeId.replace("network-", ""),
         name:
           (frame?.data as { network?: { name?: string } })?.network?.name ??
           "",
       }
-    : (node?.data as { draftNetwork?: DraftNetworkRef })?.draftNetwork;
+    : isCreate
+      ? // Standalone create — no network yet; assigned later via "No Network".
+        undefined
+      : (node?.data as { draftNetwork?: DraftNetworkRef })?.draftNetwork;
   const groupIds =
     (node?.data as { resourceGroupIds?: string[] })?.resourceGroupIds ?? [];
 
@@ -119,7 +122,11 @@ const EditorContent = ({
       });
 
     if (isCreate) {
-      const nodeId = addResourceToFrame(editor.createInNetworkNodeId!);
+      // The node is only born now, on save — into its frame, or standalone at
+      // the drop/click position (a plain "No Network" card until assigned).
+      const nodeId = editor.createInNetworkNodeId
+        ? addResourceToFrame(editor.createInNetworkNodeId)
+        : addDraftResource(editor.createStandaloneAt ?? undefined);
       // Next tick — the freshly created node must be committed to the
       // canvas before saveDraftResource stamps its data.
       if (nodeId) setTimeout(() => save(nodeId), 0);

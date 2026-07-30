@@ -365,11 +365,7 @@ const FrameAddResourceButton = ({
   setHoveredNetworkNodeId: (v: string | null) => void;
   setControlsHovered: (v: boolean) => void;
 }) => {
-  // Action via the canvas-UI ref — useDraftNodeCreation pulls
-  // useControlCenterData (six SWR subscriptions), and mounting that per
-  // frame lagged big drafts. Wired once in ControlCenterUIProvider.
-  const { addResourceToFrameRef } = useCanvasUI();
-  const { isDraft, setResourceEditor } = useDraftMode();
+  const { setResourceEditor } = useDraftMode();
   return (
     <div
       // Wrapper spans the body but stays click-through (pointer-events-none)
@@ -390,15 +386,13 @@ const FrameAddResourceButton = ({
           "!px-3 !py-0 h-9 nodrag pointer-events-auto",
           frameCellCount > 0 && "w-full",
         )}
-        // Drops a blank resource row straight into the frame — same as
-        // the context menu's "Add Resource" (the editor opens on click).
-        // Draft drops a blank resource row (editor opens on click); live
-        // opens the resource modal against the real network. Clicks must
-        // not bubble into the frame (live frame click drills).
+        // Always open the resource modal (draft: pure-data; live: real
+        // network) so an IP/CIDR/domain is entered — the row is only created
+        // into the frame once the modal saves. Clicks must not bubble into
+        // the frame (live frame click drills).
         onClick={(e) => {
           e.stopPropagation();
-          if (isDraft) addResourceToFrameRef.current(id);
-          else setResourceEditor({ createInNetworkNodeId: id });
+          setResourceEditor({ createInNetworkNodeId: id });
         }}
         onMouseEnter={() => {
           setHoveredNetworkNodeId(null);

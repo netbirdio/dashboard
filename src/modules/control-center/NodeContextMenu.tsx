@@ -132,7 +132,7 @@ export const NodeContextMenu = ({
     confirmAndDeleteGroups,
     removeNodeWithEdges,
   } = useDraftGroupActions();
-  const { addResourceToFrame, addResourceGroupToFrame } = useDraftNodeCreation();
+  const { addResourceGroupToFrame } = useDraftNodeCreation();
   const { syncDraftResource } = useDraftNetworkActions();
 
   // The rename modal must survive the menu closing (position → null), so the
@@ -922,7 +922,9 @@ export const NodeContextMenu = ({
         {
           label: "Add Resource",
           icon: <WorkflowIcon size={14} />,
-          onClick: () => addResourceToFrame(nodeId),
+          // Open the editor so an IP/CIDR/domain is entered; the row is
+          // created into the frame only on save.
+          onClick: () => setResourceEditor({ createInNetworkNodeId: nodeId }),
         },
         {
           label: "Add Resource Group",
@@ -1050,7 +1052,6 @@ export const NodeContextMenu = ({
     openRename,
     toggleResourceEnabled,
     deleteResource,
-    addResourceToFrame,
     addResourceGroupToFrame,
   ]);
 
