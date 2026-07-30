@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import Button from "@components/Button";
 import {
   Modal,
@@ -7,38 +7,25 @@ import {
   ModalFooter,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import { ScrollArea } from "@components/ScrollArea";
+import { Accordion } from "@components/Accordion";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
-import { cn } from "@utils/helpers";
 import {
-  CloudUploadIcon,
   ExternalLinkIcon,
-  FolderGit2,
   GitPullRequestArrowIcon,
-  ListChecksIcon,
-  MonitorDownIcon,
-  ShieldIcon,
-  SquareMinusIcon,
-  SquarePenIcon,
-  SquarePlusIcon,
-  WorkflowIcon,
-  NetworkIcon,
+  ListTodoIcon,
   TriangleAlertIcon,
-  WaypointsIcon,
-  XIcon,
 } from "lucide-react";
-import { Group } from "@/interfaces/Group";
 import {
-  ChangeKind,
-  DraftChange,
   getCanvasWarnings,
-  getChangeKind,
   getDraftWarnings,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
+import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
+import { FieldLiveData } from "@/modules/control-center/utils/changeset-fields";
 
 type Props = {
   open: boolean;
@@ -47,131 +34,28 @@ type Props = {
   onDeployed: () => void;
 };
 
-// Entity icon — the verb lives in the badge.
-const changeIcon = (change: DraftChange) => {
-  switch (change.type) {
-    case "create-group":
-    case "update-group":
-    case "delete-group":
-      return <FolderGit2 size={14} />;
-    case "create-policy":
-    case "update-policy":
-    case "delete-policy":
-      return <ShieldIcon size={14} />;
-    case "create-network":
-      return <NetworkIcon size={14} />;
-    case "create-resource":
-      return <WorkflowIcon size={14} />;
-    case "create-router":
-      return <WaypointsIcon size={14} />;
-    case "install-peer":
-      return <MonitorDownIcon size={14} />;
-  }
-};
-
-// Entity title without the verb (the badge already says Create/Update/Delete).
-const entityTitle = (change: DraftChange) => {
-  switch (change.type) {
-    case "create-group":
-    case "update-group":
-    case "delete-group":
-      return `Group “${change.name}”`;
-    case "create-policy":
-    case "update-policy":
-    case "delete-policy":
-      return `Policy “${change.name}”`;
-    case "create-network":
-      return `Network “${change.name}”`;
-    case "create-resource":
-      return `Resource “${change.name}” in “${change.networkName}”`;
-    case "create-router":
-      return change.peerId
-        ? `Routing peer “${change.peerName ?? change.peerId}” for “${change.networkName}”`
-        : `Routing peer group “${change.groupName ?? change.groupId}” for “${change.networkName}”`;
-    case "install-peer":
-      return change.kind === "user-device"
-        ? `Peer “${change.name}”: select an existing peer or install a new one`
-        : `Peer “${change.name}”: install it with a setup key to complete this draft`;
-  }
-};
-
-// Action badge at the start of each card: icon + label.
-const KIND_BADGES: Record<
-  ChangeKind,
-  { label: string; icon: React.ReactNode; className: string }
-> = {
-  add: {
-    label: "Create",
-    icon: <SquarePlusIcon size={11} />,
-    className: "bg-green-900/30 text-green-400 border-green-500/20",
-  },
-  update: {
-    label: "Update",
-    icon: <SquarePenIcon size={11} />,
-    className: "bg-orange-900/30 text-orange-400 border-orange-500/20",
-  },
-  remove: {
-    label: "Delete",
-    icon: <SquareMinusIcon size={11} />,
-    className: "bg-red-900/30 text-red-400 border-red-500/20",
-  },
-  // Not an API call — a step the USER performs (install / select the peer).
-  // Deploy leaves these pending; amber signals action required.
-  install: {
-    label: "Install",
-    icon: <TriangleAlertIcon size={11} />,
-    className: "bg-amber-900/30 text-amber-400 border-amber-500/20",
-  },
-};
-
-const ChangeRow = ({
-  change,
-  onDiscard,
-  disabled,
-}: {
-  change: DraftChange;
-  onDiscard: () => void;
-  disabled: boolean;
-}) => {
-  const badge = KIND_BADGES[getChangeKind(change)];
-  return (
-    <div
-      className={
-        "group flex items-center gap-2.5 rounded-md px-2 py-1.5 hover:bg-nb-gray-930/80 transition-colors"
-      }
-    >
-      <span
-        className={cn(
-          "w-[64px] flex items-center justify-center gap-1 text-[0.65rem] leading-none font-medium px-1.5 py-1 rounded border shrink-0",
-          badge.className,
-        )}
-      >
-        {badge.icon}
-        {badge.label}
-      </span>
-      <span className={"text-nb-gray-200 shrink-0"}>{changeIcon(change)}</span>
-      <span className={"text-xs text-nb-gray-200 truncate min-w-0 flex-1"}>
-        {entityTitle(change)}
-      </span>
-      <button
-        onClick={onDiscard}
-        disabled={disabled}
-        className={
-          "p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-nb-gray-800 text-nb-gray-400 hover:text-nb-gray-200 transition-all shrink-0"
-        }
-        aria-label={"Discard change"}
-      >
-        <XIcon size={13} />
-      </button>
-    </div>
-  );
-};
-
 export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => {
   const { changes, removeChange } = useDraftChangeset();
   const { deploy, isDeploying } = useDeployChangeset();
+  const { policies, groups, networks, networkResources, peers } =
+    useControlCenterData();
 
-  const count = changes.length;
+  const live: FieldLiveData = useMemo(
+    () => ({ policies, groups, networks, networkResources, peers }),
+    [policies, groups, networks, networkResources, peers],
+  );
+
+  // Visual view is hidden for now — every change shows its Diff.
+  const view = "code";
+
+  // Remount the accordion (re-opening the first change) only when the modal
+  // OPENS — never on close, which would otherwise flash the first accordion
+  // open during the dialog's fade-out.
+  const openKeyRef = useRef(0);
+  const wasOpenRef = useRef(false);
+  if (open && !wasOpenRef.current) openKeyRef.current += 1;
+  wasOpenRef.current = open;
+
   // install-peer rows are user steps, not API calls — Deploy needs at least
   // one actual change.
   const deployableCount = changes.filter(
@@ -183,64 +67,11 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
     [changes, nodes],
   );
 
-  // Policies that reference draft-created groups become parents: every group
-  // creation the policy requires nests under it. A group required by several
-  // policies is shown once, under the first one.
-  const rows = useMemo(() => {
-    const createGroupByName = new Map<string, DraftChange>();
-    changes.forEach((c) => {
-      if (c.type === "create-group") createGroupByName.set(c.name, c);
-    });
-
-    const requiredGroups = (change: DraftChange): DraftChange[] => {
-      if (change.type !== "create-policy" && change.type !== "update-policy")
-        return [];
-      const rule = change.policy.rules?.[0];
-      const referenced = [
-        ...(((rule?.sources as (Group | string)[]) ?? []) || []),
-        ...(((rule?.destinations as (Group | string)[]) ?? []) || []),
-      ];
-      const deps: DraftChange[] = [];
-      referenced.forEach((g) => {
-        if (typeof g === "string" || g.id) return;
-        const dep = createGroupByName.get(g.name);
-        if (dep && !deps.includes(dep)) deps.push(dep);
-      });
-      return deps;
-    };
-
-    // Attach each required group to the first policy that references it.
-    const claimed = new Set<string>();
-    const childrenByPolicy = new Map<string, DraftChange[]>();
-    changes.forEach((c) => {
-      const deps = requiredGroups(c).filter((d) => !claimed.has(d.id));
-      if (deps.length === 0) return;
-      deps.forEach((d) => claimed.add(d.id));
-      childrenByPolicy.set(c.id, deps);
-    });
-
-    return changes
-      .filter((c) => !claimed.has(c.id) && c.type !== "install-peer")
-      .map((c) => ({
-        change: c,
-        children: childrenByPolicy.get(c.id) ?? [],
-      }));
-  }, [changes]);
-
-  // Pending installs get their own section above the API changes — they're
-  // steps the USER performs, not part of the deploy.
-  const installSteps = useMemo(
-    () => changes.filter((c) => c.type === "install-peer"),
-    [changes],
-  );
-
   const description = useMemo(
-    () => (
-      <span className={"text-xs"}>
-        {deployableCount} change{deployableCount !== 1 ? "s" : ""} will be
-        applied to your network.
-      </span>
-    ),
+    () =>
+      `Review ${deployableCount} change${
+        deployableCount !== 1 ? "s" : ""
+      } before deploying to your network.`,
     [deployableCount],
   );
 
@@ -256,15 +87,17 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent maxWidthClass={"max-w-xl"}>
+      <ModalContent maxWidthClass={"max-w-[45rem]"}>
         <ModalHeader
           icon={<GitPullRequestArrowIcon size={18} className={"text-netbird"} />}
           title={"Review & Deploy"}
           description={description}
+          color={"netbird"}
         />
-        <div className={"px-8 pt-2 pb-8"}>
-          {/* Non-blocking warnings — deploying is still allowed (mirrors the
-              live "no access control policies" confirmation). */}
+
+        {/* min-w-0: this is a grid item of ModalContent; without it the item
+            grows to the code's min-content width and overflows the modal. */}
+        <div className={"px-8 pb-6 border-t border-nb-gray-910 pt-6 min-w-0"}>
           {warnings.length > 0 && (
             <div
               className={
@@ -276,98 +109,53 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                   key={warning}
                   className={"flex items-start gap-2 text-xs text-amber-300"}
                 >
-                  <TriangleAlertIcon
-                    size={13}
-                    className={"shrink-0 mt-[1px]"}
-                  />
+                  <TriangleAlertIcon size={13} className={"shrink-0 mt-[1px]"} />
                   {warning}
                 </div>
               ))}
             </div>
           )}
-          {installSteps.length > 0 && (
-            <div
-              className={
-                "rounded-md border border-nb-gray-910 bg-nb-gray-930/40 overflow-hidden mb-3"
-              }
-            >
-              <div
-                className={
-                  "flex items-center gap-2 px-3.5 py-2.5 border-b border-nb-gray-910 text-xs font-medium text-nb-gray-200"
-                }
-              >
-                <MonitorDownIcon size={14} className={"text-nb-gray-300"} />
-                Install
-              </div>
-              <div className={"p-1.5 w-0 min-w-full"}>
-                {installSteps.map((change) => (
-                  <ChangeRow
-                    key={change.id}
-                    change={change}
-                    onDiscard={() => removeChange(change.id)}
-                    disabled={isDeploying}
-                  />
-                ))}
-              </div>
+
+          {/* No inner scroll box — the modal auto-sizes to its content and the
+              overlay scrolls when it's taller than the viewport. */}
+          {changes.length === 0 ? (
+            <div className={"text-sm text-nb-gray-400 text-center py-10"}>
+              No pending changes.
             </div>
-          )}
-          <div
-            className={
-              "rounded-md border border-nb-gray-910 bg-nb-gray-930/40 overflow-hidden"
-            }
-          >
-            <div
-              className={
-                "flex items-center gap-2 px-3.5 py-2.5 border-b border-nb-gray-910 text-xs font-medium text-nb-gray-200"
-              }
+          ) : (
+            <Accordion
+              // Remount when the modal (re)opens so the first change is
+              // expanded by default every time (but not on close — see above).
+              key={openKeyRef.current}
+              type={"multiple"}
+              defaultValue={changes[0] ? [changes[0].id] : []}
+              className={"flex flex-col gap-3"}
             >
-              <ListChecksIcon size={14} className={"text-nb-gray-300"} />
-              Changes
-            </div>
-            <ScrollArea className={"max-h-[340px]"}>
-              {/* w-0 min-w-full defeats the viewport's table sizing so long
-                  titles truncate instead of widening the modal. */}
-              <div className={"p-1.5 w-0 min-w-full"}>
-              {rows.map(({ change, children }) => (
-                // Related changes cluster as a tight block (required groups
-                // first, their policy last — deploy order); the larger gap
-                // between blocks conveys what belongs together.
-                <div key={change.id} className={"mb-2 last:mb-0"}>
-                  {children.map((child) => (
-                    <ChangeRow
-                      key={child.id}
-                      change={child}
-                      onDiscard={() => removeChange(child.id)}
-                      disabled={isDeploying}
-                    />
-                  ))}
-                  <ChangeRow
-                    change={change}
-                    onDiscard={() => removeChange(change.id)}
-                    disabled={isDeploying}
-                  />
-                </div>
+              {changes.map((change) => (
+                <ChangeAccordionItem
+                  key={change.id}
+                  change={change}
+                  live={live}
+                  view={view}
+                  onDiscard={() => removeChange(change.id)}
+                  disabled={isDeploying}
+                />
               ))}
-              {deployableCount === 0 && (
-                <div className={"text-sm text-nb-gray-400 text-center py-8"}>
-                  No pending changes.
-                </div>
-              )}
-              </div>
-            </ScrollArea>
-          </div>
+            </Accordion>
+          )}
         </div>
+
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
               Learn more about
               <InlineLink
-                // TODO: point at the Control Center / changeset docs page
-                // once it exists.
+                // TODO: point at the Control Center / Review & Deploy docs
+                // page once it exists.
                 href={"https://docs.netbird.io/"}
                 target={"_blank"}
               >
-                Changesets
+                Review & Deploy
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
@@ -384,8 +172,8 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
               onClick={handleDeploy}
               data-testid={"cc-deploy"}
             >
-              <CloudUploadIcon size={16} />
-              {isDeploying ? "Deploying..." : "Deploy"}
+              <ListTodoIcon size={16} />
+              {isDeploying ? "Deploying..." : "Approve & Deploy"}
             </Button>
           </div>
         </ModalFooter>

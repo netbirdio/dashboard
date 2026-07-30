@@ -5,7 +5,7 @@ import { cn } from "@utils/helpers";
 import {
   ChevronRightIcon,
   CirclePlusIcon,
-  FrameIcon,
+  GroupIcon,
   LucideIcon,
 } from "lucide-react";
 
@@ -58,15 +58,15 @@ export const DraftStartPopover = ({
         <div className={"p-1.5"}>
           <StartOption
             icon={CirclePlusIcon}
-            label={"Blank Canvas"}
-            description={"Start empty and build it yourself"}
+            label={"New Empty Draft"}
+            description={"Start from a blank canvas"}
             onClick={() => choose(onStartBlank)}
             data-testid={"cc-draft-start-blank-option"}
           />
           <StartOption
-            icon={FrameIcon}
-            label={"Current Canvas"}
-            description={"Edit what's currently on the canvas"}
+            icon={GroupIcon}
+            label={"From Current View"}
+            description={"Start from the current canvas"}
             onClick={() => choose(onUseCurrent)}
             data-testid={"cc-draft-use-current-option"}
           />
@@ -101,7 +101,7 @@ const StartOption = ({
     <div className={"flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5"}>
       <div
         className={
-          "h-8 w-8 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 text-nb-gray-300"
+          "h-8 w-8 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 text-nb-gray-200"
         }
       >
         <Icon size={14} />

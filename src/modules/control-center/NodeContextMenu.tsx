@@ -21,7 +21,7 @@ import { Node } from "@xyflow/react";
 import { cn } from "@utils/helpers";
 import { mutate } from "swr";
 import { useApiCall } from "@utils/api";
-import { Group } from "@/interfaces/Group";
+import { Group, GroupIssued } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -33,6 +33,7 @@ import {
 } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import useGroupsUsage from "@/modules/groups/useGroupsUsage";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
@@ -112,6 +113,10 @@ export const NodeContextMenu = ({
     useDraftMode();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const { groups, policies } = useControlCenterData();
+  // Group deletability mirrors the Groups page: an IdP-issued group can't be
+  // deleted, it needs the delete permission, and it must be unused everywhere
+  // (policies, DNS, routes, setup keys, users, resources, peers).
+  const { data: groupsUsage } = useGroupsUsage();
   const {
     trackSetPolicyEnabled,
     trackUpdatePolicy,
@@ -315,6 +320,30 @@ export const NodeContextMenu = ({
   const node = useMemo(
     () => nodes.find((n) => n.id === nodeId),
     [nodes, nodeId],
+  );
+
+  // Whether a group can actually be deleted via the API — same rule as the
+  // Groups page's action menu (see GroupsActionCell / GroupProvider). Delete is
+  // only offered when this is true so we never surface an action that fails.
+  const canDeleteGroup = useCallback(
+    (group?: Group) => {
+      if (!group?.id) return false;
+      if (group.issued === GroupIssued.INTEGRATION) return false;
+      if (!permission.groups.delete) return false;
+      const usage = groupsUsage?.find((g) => g.id === group.id);
+      if (!usage) return false;
+      const inUse =
+        (usage.peers_count ?? 0) > 0 ||
+        (usage.policies_count ?? 0) > 0 ||
+        (usage.nameservers_count ?? 0) > 0 ||
+        (usage.zones_count ?? 0) > 0 ||
+        (usage.routes_count ?? 0) > 0 ||
+        (usage.setup_keys_count ?? 0) > 0 ||
+        (usage.users_count ?? 0) > 0 ||
+        (usage.resources_count ?? 0) > 0;
+      return !inUse;
+    },
+    [groupsUsage, permission.groups.delete],
   );
 
   const handleRemove = useCallback(() => {
@@ -799,7 +828,9 @@ export const NodeContextMenu = ({
         });
       }
       items.push(remove);
-      if (!isNewGroup(group)) {
+      // Only offer Delete when the group can really be deleted (unused,
+      // not IdP-issued, permitted) — matches the Groups page.
+      if (!isNewGroup(group) && canDeleteGroup(group)) {
         items.push({
           label: "Delete",
           icon: <TrashIcon size={14} />,
@@ -1007,6 +1038,7 @@ export const NodeContextMenu = ({
     removeGroup,
     setSelectedDestinationGroup,
     confirmAndDeleteGroups,
+    canDeleteGroup,
     handleTogglePolicy,
     handleDeletePolicy,
     handleRemovePolicyFromCanvas,
