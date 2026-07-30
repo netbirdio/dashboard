@@ -105,7 +105,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
     peerInactivityExpirationEnabled,
     setPeerInactivityExpirationEnabled,
     peerInactivityExpiresIn,
+    setPeerInactivityExpiresIn,
     peerInactivityExpireInterval,
+    setPeerInactivityExpireInterval,
   ] = useExpirationState({
     enabled: account.settings.peer_inactivity_expiration_enabled,
     expirationInSeconds: account.settings.peer_inactivity_expiration || 600,
@@ -131,6 +133,10 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 
   const saveChanges = async () => {
     const expiration = convertToSeconds(expiresIn, expireInterval);
+    const inactivityExpiration = convertToSeconds(
+      peerInactivityExpiresIn,
+      peerInactivityExpireInterval,
+    );
 
     notify({
       title: "Save Authentication Settings",
@@ -145,7 +151,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             peer_inactivity_expiration_enabled: loginExpiration
               ? peerInactivityExpirationEnabled
               : false,
-            peer_inactivity_expiration: 600,
+            peer_inactivity_expiration: peerInactivityExpirationEnabled
+              ? inactivityExpiration
+              : account.settings.peer_inactivity_expiration || 600,
             extra: {
               ...account.settings?.extra,
               peer_approval_enabled: isAnyIntegrationEnabled
@@ -412,10 +420,76 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                 helpText={
                   <>
                     Enable to require authentication after users disconnect from
-                    management for 10 minutes.
+                    management for the configured period of time.
                   </>
                 }
               />
+              <div
+                className={cn(
+                  "flex justify-between gap-10",
+                  !peerInactivityExpirationEnabled &&
+                    "opacity-50 pointer-events-none",
+                )}
+              >
+                <div className={"w-full"}>
+                  <Label>Inactivity Expiration</Label>
+                  <HelpText>
+                    Time a peer can stay disconnected from management before
+                    re-authentication is required.
+                  </HelpText>
+                </div>
+                <div className={"w-full flex gap-3"}>
+                  <Input
+                    placeholder={"10"}
+                    maxWidthClass={"min-w-[100px]"}
+                    min={1}
+                    disabled={
+                      !loginExpiration ||
+                      !peerInactivityExpirationEnabled ||
+                      !permission.settings.update
+                    }
+                    data-testid={"peer-inactivity-expiration-input"}
+                    className={"w-full"}
+                    value={peerInactivityExpiresIn}
+                    type={"number"}
+                    onChange={(e) => setPeerInactivityExpiresIn(e.target.value)}
+                  />
+                  <Select
+                    disabled={
+                      !loginExpiration ||
+                      !peerInactivityExpirationEnabled ||
+                      !permission.settings.update
+                    }
+                    value={peerInactivityExpireInterval}
+                    onValueChange={(v) => setPeerInactivityExpireInterval(v)}
+                  >
+                    <SelectTrigger
+                      className="w-full"
+                      data-testid={"peer-inactivity-expiration-select"}
+                    >
+                      <div className={"flex items-center gap-3"}>
+                        <CalendarClock
+                          size={15}
+                          className={"text-nb-gray-300"}
+                        />
+                        <SelectValue
+                          placeholder="Select interval..."
+                          data-testid={
+                            "peer-inactivity-expiration-select-value"
+                          }
+                        />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent
+                      data-testid={"peer-inactivity-expiration-select-content"}
+                    >
+                      <SelectItem value="days">Days</SelectItem>
+                      <SelectItem value="hours">Hours</SelectItem>
+                      <SelectItem value="minutes">Minutes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
         </div>
