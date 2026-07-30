@@ -110,7 +110,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
     setPeerInactivityExpireInterval,
   ] = useExpirationState({
     enabled: account.settings.peer_inactivity_expiration_enabled,
-    expirationInSeconds: account.settings.peer_inactivity_expiration || 600,
+    expirationInSeconds: account.settings.peer_inactivity_expiration ?? 600,
     timeRange: ["minutes", "hours", "days"],
   });
 
@@ -131,12 +131,20 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
     isLocalMFAEnabled,
   ]);
 
+  // An empty/cleared input converts to NaN; block saving until it's a
+  // positive number so the API never receives an invalid duration.
+  const inactivityExpirationSeconds = convertToSeconds(
+    peerInactivityExpiresIn,
+    peerInactivityExpireInterval,
+  );
+  const isInactivityExpirationInvalid =
+    loginExpiration &&
+    peerInactivityExpirationEnabled &&
+    (!Number.isFinite(inactivityExpirationSeconds) ||
+      inactivityExpirationSeconds <= 0);
+
   const saveChanges = async () => {
     const expiration = convertToSeconds(expiresIn, expireInterval);
-    const inactivityExpiration = convertToSeconds(
-      peerInactivityExpiresIn,
-      peerInactivityExpireInterval,
-    );
 
     notify({
       title: "Save Authentication Settings",
@@ -152,8 +160,8 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
               ? peerInactivityExpirationEnabled
               : false,
             peer_inactivity_expiration: peerInactivityExpirationEnabled
-              ? inactivityExpiration
-              : account.settings.peer_inactivity_expiration || 600,
+              ? inactivityExpirationSeconds
+              : account.settings.peer_inactivity_expiration ?? 600,
             extra: {
               ...account.settings?.extra,
               peer_approval_enabled: isAnyIntegrationEnabled
@@ -227,7 +235,11 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 
           <Button
             variant={"primary"}
-            disabled={!hasChanges || !permission.settings.update}
+            disabled={
+              !hasChanges ||
+              !permission.settings.update ||
+              isInactivityExpirationInvalid
+            }
             onClick={saveChanges}
             data-testid={"save-authentication-settings"}
           >
