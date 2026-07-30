@@ -103,7 +103,7 @@ export const StandaloneResourceNode = ({
             }}
           >
             <AlertTriangleIcon size={12} className={"text-yellow-400"} />
-            No network
+            No Network
           </Button>
         </div>
       )}

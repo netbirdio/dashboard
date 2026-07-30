@@ -133,18 +133,17 @@ via the `networks`/`resources` category keywords. Changes:
     draft groups).
   - No Access Control tab — policies are drawn on the canvas in draft.
 - **Save** → creates the node (into its frame, or standalone), stamps the node
-  data, and records the `create-resource` change once it has an address + a
-  network. A standalone card is created "No Network" and stays out of the
-  changeset until a network is assigned via the "No Network" picker. **Cancel**
-  → nothing is created (the node is born on save), so cancelling an add leaves
-  the canvas unchanged.
-- **Incomplete resources** — because the editor requires an address, the only
-  reachable incomplete state is a standalone card **missing a network**, which
-  renders the amber "No Network" affordance (styling of the placeholder-peer
-  Install button); clicking it opens the network picker, clicking the card
-  reopens the editor. Incomplete resources have **no changeset entry** and gate
-  any policy referencing them (§5.2) — the exact pattern of blank policies /
-  `isCompletePolicy`.
+  data, and records the `create-resource` change (the editor requires an
+  address). A standalone card is created "No Network"; its change is recorded
+  **with no networkId/networkClientId**, which makes it a **blocking issue**
+  (`getChangeIssue` → "No Network", §7) until a network is assigned via the "No
+  Network" picker. **Cancel** → nothing is created (the node is born on save),
+  so cancelling an add leaves the canvas unchanged.
+- **No-network resources** render the amber "No Network" affordance on the card
+  (styling of the placeholder-peer Install button); clicking it opens the
+  network picker, clicking the card reopens the editor. They **are in the
+  changeset** but as a hard issue that blocks deploy until resolved (§7). Only
+  an address-less resource (unreachable via the editor) stays out entirely.
 - **Rendering**: existing `ResourceNode`/`DeviceCard`, NEW badge while
   id-less; subtitle shows `address` and the parent network name once set.
 - **Context menu**: Edit (reopens editor), Rename, Remove (drops the pending
@@ -261,10 +260,11 @@ Labels / API-call descriptions (`getChangeLabel` / `getChangeApiCall`):
 
 ### 5.2 Deployability gating (extends `isDeployablePolicy` pattern)
 
-- `isCompleteResource(change)`: name + valid address + network reference.
-  Incomplete resources are never in the changeset (the editor only records on
-  save with all required fields, so this is an invariant, not a runtime
-  filter).
+- A resource enters the changeset once it has a name + valid address (the
+  editor requires both). A **missing network** does NOT withhold it — it's
+  recorded with no network reference and flagged as a hard issue
+  (`getChangeIssue` → "No Network") that blocks deploy until assigned (§7).
+  Only an address-less resource stays out of the changeset entirely.
 - **Policies referencing a draft resource** are deployable — deploy order
   creates the resource first and resolves the id (§6.2). They are gated only
   while the referenced resource is *incomplete/untracked*: extend
@@ -363,13 +363,26 @@ revalidation set).
 - New changes render with the labels/API calls of §5.1 and the standard
   green "add" kind; individually discardable (discarding a `create-network`
   cascades per §5.3).
-- **Warnings block** (new, non-blocking, above the change list):
-  - *"Network 'X' has no routing peers — its resources won't be reachable."*
-    for any draft network with ≥ 1 resource and 0 routers.
-  - *"Resource 'Y' is not referenced by any policy — no peer will have
-    access."* for draft resources with no policy referencing them directly or
-    via one of their groups (draft equivalent of the live modal's
-    `confirmMissingPolicies`).
+- **Hard issues** (blocking) — `getChangeIssue(change)`. A change that can't
+  be POSTed / completed as-is. Two today: a `create-resource` with no network
+  ("No Network"), and an uninstalled placeholder peer / `install-peer`
+  ("Install"). Presentation (no summary callout — the row itself is the fix):
+  - Its row shows an amber **issue badge** ("No Network" / "Install") in place
+    of the diffstat/kind badge. **Clicking the badge opens the fix**: the
+    network picker (`setResourceNetworkPicker`, same as the resource node) for
+    "No Network"; the install/setup modal (`setInstallModal` /
+    `setUserDeviceModal`) for "Install". It closes the review modal so the fix
+    isn't stacked on top.
+  - Sort order puts **install steps first**, then other issues, then the rest
+    (the first row is expanded by default). An `install-peer` row's body shows
+    inline install steps + an "Install NetBird" button (the OS-specific
+    commands / key generation live in the setup modal it opens).
+  - **Approve & Deploy is disabled** while any issue exists
+    (`hasBlockingIssues`); hovering the disabled button shows a "Resolve issues
+    before deploying" tooltip. Resolving an issue clears the row.
+- **Soft issues** (non-blocking warnings) — `getDraftWarnings` /
+  `getCanvasWarnings` still exist but are **not surfaced in the modal for now**
+  (deferred); deploy is never blocked by them.
 
 ## 8. Capability predicates & tests
 

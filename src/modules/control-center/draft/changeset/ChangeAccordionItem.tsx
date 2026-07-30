@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from "react";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { AccordionContent, AccordionItem } from "@components/Accordion";
+import Button from "@components/Button";
 import { cn } from "@utils/helpers";
 import {
   CheckIcon,
   ChevronDownIcon,
   CopyIcon,
+  MonitorDownIcon,
   MoreVerticalIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -20,7 +22,9 @@ import { useDialog } from "@/contexts/DialogProvider";
 import {
   DraftChange,
   getChangeApiCall,
+  getChangeIssue,
   getChangeKind,
+  InstallPeerChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import { FieldLiveData } from "@/modules/control-center/utils/changeset-fields";
 import {
@@ -33,6 +37,7 @@ import {
   changeIcon,
   DiffStat,
   entityName,
+  IssueBadge,
   KindBadge,
 } from "@/modules/control-center/draft/changeset/change-presentation";
 import { ChangeCodeView } from "@/modules/control-center/draft/changeset/ChangeCodeView";
@@ -44,6 +49,9 @@ type Props = {
   // Global Visual/Code mode, owned by the modal.
   view: string;
   onDiscard: () => void;
+  // Resolve a blocking issue on this change (assign a network / install the
+  // peer). Undefined for changes with no issue.
+  onResolveIssue?: (change: DraftChange) => void;
   disabled: boolean;
 };
 
@@ -52,6 +60,7 @@ export const ChangeAccordionItem = ({
   live,
   view,
   onDiscard,
+  onResolveIssue,
   disabled,
 }: Props) => {
   const apiCall = getChangeApiCall(change);
@@ -88,6 +97,9 @@ export const ChangeAccordionItem = ({
     [view, change, live],
   );
   const showStat = view === "code" && stat.additions + stat.deletions > 0;
+  // A blocking issue (e.g. a resource with no network) replaces the
+  // diffstat/kind badge with an issue badge and rings the row.
+  const issue = getChangeIssue(change);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const { confirm } = useDialog();
@@ -198,8 +210,16 @@ export const ChangeAccordionItem = ({
 
           <span className={"flex-1"} />
 
-          {/* Right: diffstat (code mode) or kind badge */}
-          {showStat ? (
+          {/* Right: issue badge (blocking, click to fix) → diffstat (code
+              mode) → kind badge */}
+          {issue ? (
+            <IssueBadge
+              label={issue.label}
+              onClick={
+                onResolveIssue ? () => onResolveIssue(change) : undefined
+              }
+            />
+          ) : showStat ? (
             <DiffStat additions={stat.additions} deletions={stat.deletions} />
           ) : (
             <KindBadge kind={getChangeKind(change)} />
@@ -249,7 +269,16 @@ export const ChangeAccordionItem = ({
         {/* No outer padding — the content is flush; rows/code carry their own
             insets (peer-overview style rows, edge-to-edge code). */}
         <div className={"border-t border-nb-gray-910 min-w-0"}>
-          {view === "code" ? (
+          {change.type === "install-peer" ? (
+            <div className={"px-4 py-3.5"}>
+              <InstallPeerContent
+                change={change}
+                onInstall={
+                  onResolveIssue ? () => onResolveIssue(change) : undefined
+                }
+              />
+            </div>
+          ) : view === "code" ? (
             <ChangeCodeView change={change} live={live} hideHeader={true} />
           ) : (
             <ChangeVisualView change={change} live={live} />
@@ -257,5 +286,44 @@ export const ChangeAccordionItem = ({
         </div>
       </AccordionContent>
     </AccordionItem>
+  );
+};
+
+// Install-peer rows aren't API calls — instead of a JSON diff, the accordion
+// body explains the manual install and offers the full guide (the setup modal,
+// with OS-specific commands + key generation).
+const InstallPeerContent = ({
+  change,
+  onInstall,
+}: {
+  change: InstallPeerChange;
+  onInstall?: () => void;
+}) => {
+  const isUserDevice = change.kind === "user-device";
+  return (
+    <div className={"flex flex-col gap-3 text-xs text-nb-gray-300"}>
+      <p>
+        {isUserDevice
+          ? `Install NetBird on this device or assign an existing peer to complete “${change.name}”.`
+          : `Install NetBird on the machine that will run “${change.name}” to complete this change.`}
+      </p>
+      <ol
+        className={"flex flex-col gap-1.5 list-decimal pl-5 text-nb-gray-400"}
+      >
+        <li>Open the install guide and copy the setup key and command.</li>
+        <li>
+          Run it on the target machine (<code>netbird up</code>).
+        </li>
+        <li>The peer registers and this step resolves automatically.</li>
+      </ol>
+      {onInstall && (
+        <div>
+          <Button variant={"secondary"} size={"xs"} onClick={onInstall}>
+            <MonitorDownIcon size={14} />
+            {isUserDevice ? "Install or assign" : "Install NetBird"}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };

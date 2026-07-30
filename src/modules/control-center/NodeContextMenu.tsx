@@ -8,7 +8,7 @@ import React, {
 import {
   CircleMinusIcon,
   WaypointsIcon,
-  ListIcon,
+  EyeIcon,
   WorkflowIcon,
   PencilLineIcon,
   Share2Icon,
@@ -623,8 +623,8 @@ export const NodeContextMenu = ({
       if (!isPeer || !peerId) return [];
       const items: MenuItem[] = [
         {
-          label: "Details",
-          icon: <ListIcon size={14} />,
+          label: "View Details",
+          icon: <EyeIcon size={14} />,
           onClick: () => {
             setSelectedDestinationGroup("");
             setSelectedPeerPanel(peerId);
@@ -757,8 +757,8 @@ export const NodeContextMenu = ({
         const items: MenuItem[] = [
           ...focusItems(node),
           {
-            label: "Details",
-            icon: <ListIcon size={14} />,
+            label: "View Details",
+            icon: <EyeIcon size={14} />,
             onClick: () => setSelectedDestinationGroup(group?.id || node.id),
           },
         ];
@@ -812,8 +812,8 @@ export const NodeContextMenu = ({
       // Opens the group panel (name/metadata + assign peers) — the same thing
       // a left-click on the node does; surfaced here so it's discoverable.
       const edit: MenuItem = {
-        label: "Details",
-        icon: <ListIcon size={14} />,
+        label: "View Details",
+        icon: <EyeIcon size={14} />,
         onClick: () => setSelectedDestinationGroup(group?.id || node.id),
       };
       // "All" can neither be renamed nor deleted.
@@ -1079,26 +1079,31 @@ export const NodeContextMenu = ({
             left: (menuPosition ?? position).x,
           }}
         >
-          {items.map((item) => (
-            <button
-              key={item.label}
-              onClick={(e) => {
-                // Keep this click from reaching the document listener (which
-                // would dismiss the panel this item may have just opened).
-                e.stopPropagation();
-                item.onClick?.();
-                onClose();
-              }}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm transition-colors cursor-pointer",
-                item.danger
-                  ? "text-red-500 hover:bg-red-900/20 hover:text-red-500"
-                  : "text-nb-gray-300 hover:bg-nb-gray-900 hover:text-gray-50",
+          {items.map((item, i) => (
+            <React.Fragment key={item.label}>
+              {/* Separate the destructive Delete action from the rest. */}
+              {item.danger && i > 0 && !items[i - 1].danger && (
+                <div className={"-mx-1 my-1 h-px bg-nb-gray-910"} />
               )}
-            >
-              {item.icon}
-              {item.label}
-            </button>
+              <button
+                onClick={(e) => {
+                  // Keep this click from reaching the document listener (which
+                  // would dismiss the panel this item may have just opened).
+                  e.stopPropagation();
+                  item.onClick?.();
+                  onClose();
+                }}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm transition-colors cursor-pointer",
+                  item.danger
+                    ? "text-red-500 hover:bg-red-900/20 hover:text-red-500"
+                    : "text-nb-gray-300 hover:bg-nb-gray-900 hover:text-gray-50",
+                )}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            </React.Fragment>
           ))}
         </div>
       )}

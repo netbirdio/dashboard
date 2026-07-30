@@ -4,8 +4,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
 import {
+  DraftChange,
   DraftChangesetProvider,
   getCanvasWarnings,
+  getChangeIssue,
+  hasBlockingIssues,
   useDraftChangeset,
 } from "./DraftChangesetContext";
 
@@ -521,5 +524,68 @@ describe("canvas warnings", () => {
     const warnings = getCanvasWarnings(nodes, []);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("resource without a network");
+  });
+});
+
+describe("getChangeIssue / hasBlockingIssues", () => {
+  const resourceChange = (
+    net: Partial<Pick<DraftChange & { type: "create-resource" }, never>> & {
+      networkId?: string;
+      networkClientId?: string;
+      networkName?: string;
+    },
+  ): DraftChange =>
+    ({
+      id: "c1",
+      type: "create-resource",
+      clientId: "new-1",
+      name: "Internal API",
+      address: "10.0.0.1",
+      networkName: net.networkName ?? "",
+      networkId: net.networkId,
+      networkClientId: net.networkClientId,
+      groupIds: [],
+    }) as DraftChange;
+
+  it("flags a create-resource with no network as a 'No Network' issue", () => {
+    const issue = getChangeIssue(resourceChange({}));
+    expect(issue?.label).toBe("No Network");
+    expect(issue?.message).toContain("no network assigned");
+  });
+
+  it("has no issue once the resource has an API network id", () => {
+    expect(getChangeIssue(resourceChange({ networkId: "net-1" }))).toBeUndefined();
+  });
+
+  it("has no issue for a draft-network (client id) resource", () => {
+    expect(
+      getChangeIssue(resourceChange({ networkClientId: "new-net" })),
+    ).toBeUndefined();
+  });
+
+  it("flags an uninstalled placeholder peer as an 'Install' issue", () => {
+    const server = {
+      id: "i1",
+      type: "install-peer",
+      clientId: "draft-1",
+      name: "Server",
+      kind: "server",
+    } as DraftChange;
+    const issue = getChangeIssue(server);
+    expect(issue?.label).toBe("Install");
+    expect(issue?.message).toContain("must be installed");
+    expect(hasBlockingIssues([server])).toBe(true);
+  });
+
+  it("hasBlockingIssues is true when any change carries an issue", () => {
+    expect(hasBlockingIssues([resourceChange({ networkId: "net-1" })])).toBe(
+      false,
+    );
+    expect(
+      hasBlockingIssues([
+        resourceChange({ networkId: "net-1" }),
+        resourceChange({}),
+      ]),
+    ).toBe(true);
   });
 });

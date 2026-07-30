@@ -319,7 +319,10 @@ export const getChangeLabel = (
       };
     case "create-resource":
       return {
-        title: `Create resource “${change.name}” in “${change.networkName}”`,
+        // No network yet → drop the "in …" clause (it's flagged as an issue).
+        title: change.networkName
+          ? `Create resource “${change.name}” in “${change.networkName}”`
+          : `Create resource “${change.name}”`,
         detail: change.address,
       };
     case "create-router":
@@ -348,6 +351,41 @@ export const getChangeLabel = (
       };
   }
 };
+
+// A BLOCKING issue on a change: unlike a warning, an issue keeps the change in
+// the set but prevents deploying until it's resolved. Two today:
+// - a draft resource created without a network — it can't be POSTed until it's
+//   assigned to one.
+// - a placeholder peer (server/agent/user device) that hasn't been installed
+//   yet — the real peer must exist before the changes referencing it deploy.
+export type ChangeIssue = { label: string; message: string };
+
+export const getChangeIssue = (change: DraftChange): ChangeIssue | undefined => {
+  if (
+    change.type === "create-resource" &&
+    !change.networkId &&
+    !change.networkClientId
+  ) {
+    return {
+      label: "No Network",
+      message: `Resource “${change.name}” has no network assigned — assign it to a network before deploying.`,
+    };
+  }
+  if (change.type === "install-peer") {
+    return {
+      label: "Install",
+      message:
+        change.kind === "user-device"
+          ? `Peer “${change.name}” must be installed or selected before deploying.`
+          : `Peer “${change.name}” must be installed before deploying.`,
+    };
+  }
+  return undefined;
+};
+
+// True when any change has a blocking issue — Review & Deploy disables deploy.
+export const hasBlockingIssues = (changes: DraftChange[]): boolean =>
+  changes.some((c) => getChangeIssue(c) !== undefined);
 
 // Non-blocking Review & Deploy warnings (the draft equivalent of the live
 // "no access control policies" confirmations): unreachable resources and
@@ -409,8 +447,10 @@ export const getDraftWarnings = (changes: DraftChange[]): string[] => {
 // Canvas-only states that silently withhold changes from deploy — surfaced in
 // Review & Deploy so the user learns WHY something they built isn't listed:
 // policies referencing uninstalled placeholder peers (hard requirement — the
-// peer must exist before the policy can) and draft resources that never became
-// complete (no network assigned), which never reached the changeset.
+// peer must exist before the policy can). A draft resource with an address but
+// no network now enters the changeset as a blocking ISSUE (getChangeIssue), so
+// it's listed rather than silently withheld; only a resource still missing an
+// address never reaches the changeset and is warned about here.
 export const getCanvasWarnings = (
   nodes: {
     id: string;

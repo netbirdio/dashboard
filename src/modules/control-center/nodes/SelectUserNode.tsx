@@ -11,6 +11,7 @@ import * as React from "react";
 import { User } from "@/interfaces/User";
 import TruncatedText from "@components/ui/TruncatedText";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
 type UserNodeProps = Node<
@@ -74,6 +75,9 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
 
   const user = users?.find((u) => u.id === data.currentUser);
 
+  const [open, setOpen] = React.useState(false);
+  useCloseOnCanvasClick(open, () => setOpen(false));
+
   return (
     <div
       className={cn(
@@ -87,6 +91,8 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
         options={userSelectOptions}
         showSearch={true}
         searchPlaceholder={"Search user by name or email..."}
+        open={open}
+        onOpenChange={setOpen}
         popoverWidth={280}
         className={cn(
           "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300",

@@ -30,6 +30,7 @@ import { CanvasToolbar } from "@/modules/control-center/draft/CanvasToolbar";
 import { useCanvasState, useControlCenterUI } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
 
 // Width for the network selector: sized to its LONGEST option label
 // (~6.5px/char at the trigger's text-xs medium, plus icon/chevron/padding
@@ -184,6 +185,12 @@ function HeaderTopLeft() {
   const { networks } = useControlCenterData();
   const hasNetworks = (networks?.length ?? 0) > 0;
 
+  // Controlled so a click on the canvas closes it (the dropdown floats over
+  // the ReactFlow pane, whose stopPropagation hides the click from Radix's own
+  // outside-detection — see the hook).
+  const [networkSelectOpen, setNetworkSelectOpen] = React.useState(false);
+  useCloseOnCanvasClick(networkSelectOpen, () => setNetworkSelectOpen(false));
+
   return (
     <div className={"absolute left-0 top-0 z-10"}>
       <div
@@ -223,6 +230,7 @@ function HeaderTopLeft() {
           {!isDraft && currentView === "networks" && hasNetworks && (
             <div
               key={"network-select"}
+              className={"min-w-[200px]"}
               style={{
                 width: networkSelectorWidth(networkOptions.map((o) => o.label)),
               }}
@@ -233,6 +241,9 @@ function HeaderTopLeft() {
                 onChange={onNetworkSelect}
                 options={networkOptions}
                 showSearch={true}
+                open={networkSelectOpen}
+                onOpenChange={setNetworkSelectOpen}
+                popoverMinWidth={200}
                 className={
                   // Fixed height matching the RoutingPeersBar next to it.
                   "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0"

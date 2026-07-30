@@ -856,7 +856,9 @@ const PanelContent = React.memo(
                 <SmallBadge />
               </span>
               <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
-                {singularize("Resources", resourceCount, true)}
+                {resourceCount
+                  ? singularize("Resources", resourceCount)
+                  : "No Resources"}
               </span>
             </div>
           </div>
@@ -897,7 +899,9 @@ const PanelContent = React.memo(
                   />
                 </span>
                 <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
-                  {singularize("Resources", network.resources?.length ?? 0, true)}
+                  {network.resources?.length
+                    ? singularize("Resources", network.resources.length)
+                    : "No Resources"}
                 </span>
               </div>
             </div>

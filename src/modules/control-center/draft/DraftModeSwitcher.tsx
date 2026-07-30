@@ -119,7 +119,7 @@ export const DraftModeSwitcher = ({}: Props) => {
               <SegmentedTabs.Trigger
                 value={"draft"}
                 className={cn(
-                  "text-xs px-3 py-[0.45rem] whitespace-nowrap",
+                  "text-xs px-3 py-[0.45rem] whitespace-nowrap hover:text-nb-gray-200",
                   // Hold the hover state while the chooser popover is open.
                   startOpen && "bg-nb-gray-900/50 text-nb-gray-200",
                 )}

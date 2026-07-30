@@ -1,4 +1,5 @@
-import React, { useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
+import { useReactFlow } from "@xyflow/react";
 import Button from "@components/Button";
 import {
   Modal,
@@ -8,22 +9,23 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { Accordion } from "@components/Accordion";
+import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import {
   ExternalLinkIcon,
   GitPullRequestArrowIcon,
   ListTodoIcon,
-  TriangleAlertIcon,
 } from "lucide-react";
 import {
-  getCanvasWarnings,
-  getDraftWarnings,
+  DraftChange,
+  getChangeIssue,
+  hasBlockingIssues,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
 import { FieldLiveData } from "@/modules/control-center/utils/changeset-fields";
 
@@ -39,6 +41,9 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   const { deploy, isDeploying } = useDeployChangeset();
   const { policies, groups, networks, networkResources, peers } =
     useControlCenterData();
+  const { setResourceNetworkPicker, setInstallModal, setUserDeviceModal } =
+    useDraftMode();
+  const reactFlow = useReactFlow();
 
   const live: FieldLiveData = useMemo(
     () => ({ policies, groups, networks, networkResources, peers }),
@@ -61,10 +66,52 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   const deployableCount = changes.filter(
     (c) => c.type !== "install-peer",
   ).length;
-  const nodes = useStructuralNodes();
-  const warnings = useMemo(
-    () => [...getDraftWarnings(changes), ...getCanvasWarnings(nodes, changes)],
-    [changes, nodes],
+  // Hard issues BLOCK deploy (a change that can't be POSTed / completed
+  // as-is, e.g. a resource with no network or an uninstalled placeholder peer).
+  const hasIssues = hasBlockingIssues(changes);
+
+  // Sort priority: install steps first, then other blocking issues, then the
+  // rest — so the actions the user must take are up top (stable within a rank).
+  const sortedChanges = useMemo(() => {
+    const rank = (c: DraftChange) =>
+      c.type === "install-peer" ? 0 : getChangeIssue(c) ? 1 : 2;
+    return [...changes].sort((a, b) => rank(a) - rank(b));
+  }, [changes]);
+
+  // Resolve a change's blocking issue: open the same fix the canvas offers —
+  // the network picker for a no-network resource, the install/setup modal for
+  // a placeholder peer. Closes this modal so the fix isn't stacked on top.
+  const resolveIssue = useCallback(
+    (change: DraftChange) => {
+      if (change.type === "create-resource") {
+        onOpenChange(false);
+        setResourceNetworkPicker({ nodeId: `resource-${change.clientId}` });
+        return;
+      }
+      if (change.type === "install-peer") {
+        const nodeId = `peer-${change.clientId}`;
+        onOpenChange(false);
+        if (change.kind === "user-device") {
+          setUserDeviceModal({ nodeId, name: change.name });
+          return;
+        }
+        const node = reactFlow.getNodes().find((n) => n.id === nodeId);
+        const setupKey = (node?.data as { setupKey?: string })?.setupKey;
+        setInstallModal({
+          isUserDevice: false,
+          setupKey,
+          placeholderKind: change.kind,
+          nodeId,
+        });
+      }
+    },
+    [
+      onOpenChange,
+      setResourceNetworkPicker,
+      setInstallModal,
+      setUserDeviceModal,
+      reactFlow,
+    ],
   );
 
   const description = useMemo(
@@ -98,24 +145,6 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
         {/* min-w-0: this is a grid item of ModalContent; without it the item
             grows to the code's min-content width and overflows the modal. */}
         <div className={"px-8 pb-6 border-t border-nb-gray-910 pt-6 min-w-0"}>
-          {warnings.length > 0 && (
-            <div
-              className={
-                "rounded-md border border-amber-500/25 bg-amber-900/20 px-3.5 py-2.5 mb-3 flex flex-col gap-1.5"
-              }
-            >
-              {warnings.map((warning) => (
-                <div
-                  key={warning}
-                  className={"flex items-start gap-2 text-xs text-amber-300"}
-                >
-                  <TriangleAlertIcon size={13} className={"shrink-0 mt-[1px]"} />
-                  {warning}
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* No inner scroll box — the modal auto-sizes to its content and the
               overlay scrolls when it's taller than the viewport. */}
           {changes.length === 0 ? (
@@ -128,16 +157,19 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
               // expanded by default every time (but not on close — see above).
               key={openKeyRef.current}
               type={"multiple"}
-              defaultValue={changes[0] ? [changes[0].id] : []}
+              defaultValue={sortedChanges[0] ? [sortedChanges[0].id] : []}
               className={"flex flex-col gap-3"}
             >
-              {changes.map((change) => (
+              {sortedChanges.map((change) => (
                 <ChangeAccordionItem
                   key={change.id}
                   change={change}
                   live={live}
                   view={view}
                   onDiscard={() => removeChange(change.id)}
+                  onResolveIssue={
+                    getChangeIssue(change) ? resolveIssue : undefined
+                  }
                   disabled={isDeploying}
                 />
               ))}
@@ -166,15 +198,24 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                 Cancel
               </Button>
             </ModalClose>
-            <Button
-              variant={"primary"}
-              disabled={deployableCount === 0 || isDeploying}
-              onClick={handleDeploy}
-              data-testid={"cc-deploy"}
+            {/* Tooltip only while blocked by issues — explains the disabled
+                Deploy (a disabled button emits no hover, so the wrapper div
+                that FullTooltip adds carries it). */}
+            <FullTooltip
+              content={"Resolve issues before deploying"}
+              disabled={!hasIssues}
+              side={"top"}
             >
-              <ListTodoIcon size={16} />
-              {isDeploying ? "Deploying..." : "Approve & Deploy"}
-            </Button>
+              <Button
+                variant={"primary"}
+                disabled={deployableCount === 0 || isDeploying || hasIssues}
+                onClick={handleDeploy}
+                data-testid={"cc-deploy"}
+              >
+                <ListTodoIcon size={16} />
+                {isDeploying ? "Deploying..." : "Approve & Deploy"}
+              </Button>
+            </FullTooltip>
           </div>
         </ModalFooter>
       </ModalContent>

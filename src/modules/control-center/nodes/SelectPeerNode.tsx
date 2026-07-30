@@ -11,6 +11,7 @@ import * as React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
+import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
 import { OSLogo } from "@/modules/peers/PeerOSCell";
 
 type PeerNodeProps = Node<
@@ -60,6 +61,9 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
 
   const peer = peers?.find((p) => p.id === data.currentPeer);
 
+  const [open, setOpen] = React.useState(false);
+  useCloseOnCanvasClick(open, () => setOpen(false));
+
   return (
     <div
       className={
@@ -73,6 +77,8 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
         options={peerSelectOptions}
         showSearch={true}
         searchPlaceholder={data?.placeholder ?? "Search peers..."}
+        open={open}
+        onOpenChange={setOpen}
         popoverWidth={280}
         className={"!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300"}
         size={"xs"}

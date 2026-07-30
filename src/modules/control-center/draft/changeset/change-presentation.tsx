@@ -60,7 +60,9 @@ export const entityTitle = (change: DraftChange): string => {
     case "create-resource":
     case "update-resource":
     case "delete-resource":
-      return `Resource “${change.name}” in “${change.networkName}”`;
+      return change.networkName
+        ? `Resource “${change.name}” in “${change.networkName}”`
+        : `Resource “${change.name}”`;
     case "create-router":
       return change.peerId
         ? `Routing peer “${change.peerName ?? change.peerId}” for “${change.networkName}”`
@@ -165,6 +167,54 @@ export const KindIcon = ({
     )}
   </span>
 );
+
+// Blocking-issue badge (e.g. "No Network") — replaces the diffstat/kind badge
+// on a change that can't deploy until it's fixed. Amber "action required",
+// same palette as the "Install" action badge. When onClick is given the badge
+// is the fix affordance (rendered as a role=button span, since it lives inside
+// the accordion trigger button and can't nest a real <button>).
+export const IssueBadge = ({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick?: () => void;
+}) => {
+  const className = cn(
+    "inline-flex items-center justify-center gap-1.5 text-[0.65rem] font-medium px-2 py-1 rounded shrink-0 [&>svg]:shrink-0",
+    "bg-amber-900/30 text-amber-400 border border-amber-500/20",
+    onClick &&
+      "cursor-pointer hover:bg-amber-900/50 hover:text-amber-300 transition-colors",
+  );
+  if (!onClick) {
+    return (
+      <span className={className}>
+        <TriangleAlertIcon size={13} />
+        {label}
+      </span>
+    );
+  }
+  return (
+    <span
+      role={"button"}
+      tabIndex={0}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.stopPropagation();
+          onClick();
+        }
+      }}
+      className={className}
+    >
+      <TriangleAlertIcon size={13} />
+      {label}
+    </span>
+  );
+};
 
 export const KindBadge = ({ kind }: { kind: ChangeKind }) => {
   const badge = KIND_BADGES[kind];

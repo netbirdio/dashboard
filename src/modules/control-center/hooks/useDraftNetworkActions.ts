@@ -12,7 +12,6 @@ import {
   getDraftResource,
   getFrameChildPosition,
   getNetworkFrameHeight,
-  isCompleteDraftResource,
   isFrameNode,
   makeMembershipEdge,
   NETWORK_FRAME_CHILD_WIDTH,
@@ -126,7 +125,11 @@ export function useDraftNetworkActions() {
       const groupIds =
         (node.data as { resourceGroupIds?: string[] })?.resourceGroupIds ?? [];
 
-      if (!isCompleteDraftResource(node) || !network) {
+      // Track once it has an address. Without a network it still enters the
+      // changeset — but as a blocking ISSUE (getChangeIssue → "No Network")
+      // that the user resolves in Review & Deploy — instead of being silently
+      // withheld. Only an address-less resource stays off the changeset.
+      if (!resource.address) {
         untrackResource(resource.id);
         return;
       }
@@ -135,9 +138,9 @@ export function useDraftNetworkActions() {
         name: resource.name,
         description: resource.description || undefined,
         address: resource.address,
-        networkId: network.networkId,
-        networkClientId: network.networkClientId,
-        networkName: network.name,
+        networkId: network?.networkId,
+        networkClientId: network?.networkClientId,
+        networkName: network?.name ?? "",
         groupIds,
         enabled: (node.data as { enabled?: boolean }).enabled ?? true,
       });
@@ -433,9 +436,10 @@ export function useDraftNetworkActions() {
         return;
       }
 
-      // Standalone create with no network chosen yet — leave draftNetwork
-      // unset so the card reads "No Network"; syncDraftResource keeps it out
-      // of the changeset until a network is assigned.
+      // Standalone save with no network chosen yet — leave draftNetwork unset
+      // so the card reads "No Network". syncDraftResource still tracks it (a
+      // resource with an address), where it surfaces as a blocking "No
+      // Network" issue in Review & Deploy until a network is assigned.
       if (!network.networkClientId && !network.networkId) {
         setTimeout(() => syncDraftResource(nodeId), 0);
         return;

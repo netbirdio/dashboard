@@ -10,6 +10,7 @@ import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
 import { Group } from "@/interfaces/Group";
 import { getGroupCountLabel } from "@/modules/control-center/utils/helpers";
+import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
 
 type NodeProps = Node<
   {
@@ -41,6 +42,9 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
   const group = groups?.find((g) => g.id === data.currentGroup);
   const countLabel = getGroupCountLabel(group);
 
+  const [open, setOpen] = React.useState(false);
+  useCloseOnCanvasClick(open, () => setOpen(false));
+
   return (
     <div
       className={
@@ -54,6 +58,8 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
         options={groupOptions}
         showSearch={true}
         searchPlaceholder={"Search groups..."}
+        open={open}
+        onOpenChange={setOpen}
         popoverWidth={280}
         className={"!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300"}
         size={"xs"}

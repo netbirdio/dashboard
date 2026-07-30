@@ -59,6 +59,12 @@ interface SelectDropdownProps {
   // — always visible regardless of scroll or search. Receives a callback
   // that closes the popover.
   footer?: (close: () => void) => React.ReactNode;
+  // Optional controlled open state. When omitted the dropdown manages its own
+  // (existing behaviour); when provided, the caller drives open/close — e.g.
+  // to dismiss it on a click the Popover's own outside-detection can't see
+  // (a ReactFlow pane that stops pointer propagation).
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   "data-testid"?: string;
 }
 
@@ -84,6 +90,8 @@ export function SelectDropdown({
   truncate = false,
   compact = false,
   footer,
+  open: controlledOpen,
+  onOpenChange,
   "data-testid": dataTestId,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
@@ -100,7 +108,15 @@ export function SelectDropdown({
     }, 100);
   };
 
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = React.useCallback(
+    (next: boolean) => {
+      onOpenChange?.(next);
+      if (controlledOpen === undefined) setUncontrolledOpen(next);
+    },
+    [controlledOpen, onOpenChange],
+  );
 
   const selected = options.find((o) => o.value === value);
 

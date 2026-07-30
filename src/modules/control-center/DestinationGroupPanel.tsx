@@ -1025,7 +1025,7 @@ export const DestinationGroupPanel = ({
                         !(resource as { draftNetwork?: unknown })
                           .draftNetwork && (
                           <DraftStatusChip
-                            label={"No network"}
+                            label={"No Network"}
                             onClick={() =>
                               setResourceNetworkPicker({
                                 nodeId: `resource-${resource.id}`,
