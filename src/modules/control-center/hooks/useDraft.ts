@@ -691,6 +691,22 @@ export function useDraft() {
       const restored = liveStateRef.current;
       liveStateRef.current = null;
 
+      // A real live snapshot never holds draft-only ids ("-new-"/"-draft-").
+      // If it does, this hook was remounted mid-draft (dev hot-reload) and
+      // snapshotted the DRAFT canvas as "live" — restoring it would leave the
+      // draft nodes on screen after Cancel. Rebuild the live view from data
+      // instead (setLayoutInitialized(false) re-runs the view-init effect).
+      const snapshotPolluted = restored.nodes.some(
+        (n) => n.id.includes("-new-") || n.id.includes("-draft-"),
+      );
+      if (snapshotPolluted) {
+        setSelectedNetwork("");
+        setNodes([]);
+        setEdges([]);
+        setLayoutInitialized(false);
+        return;
+      }
+
       // Leaving draft while drilled into an EXISTING network → land in the
       // live single-network view of that network (not whatever live view the
       // draft was entered from). Draft-only networks have no live view.

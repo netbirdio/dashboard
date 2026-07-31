@@ -132,3 +132,16 @@ completed changes are already removed, so Deploy resumes.
     draft-group memberships can't ride on the key (no API id yet) — they deploy with the
     changeset after the upgrade sweep swaps in the real peer id, so ordering stays
     correct either way.
+12. **Install matching via a hidden bound group (2026-07).** Server/agent placeholders are
+    matched to their registering machine by GROUP membership, not hostname (hostname is a
+    fallback). The mechanism is invisible to the user — it is NOT a changeset entry, never
+    shown in Review & Deploy or the components panel, and never used in policies:
+    - When the user generates the setup key (`DraftInstallPeerModal.resolveAutoGroups`), a
+      throwaway group named "<placeholder name> (<suffix>)" is created directly via
+      `POST /groups` and its id rides on the key as an `auto_group`. Its id is stored on
+      the node (`boundGroupId`) so a reopened Install reuses it.
+    - The registering peer lands in that unique group, so `useDraftPeerUpgrade.findByGroup`
+      identifies it unambiguously and upgrades the placeholder in place. Once matched, the
+      group has served its purpose and is `DELETE`d from the API.
+    - Policies still reference the placeholder by its `draft-` peer ref and are re-recorded
+      with the real peer id on upgrade (design decision 8), unchanged by this.

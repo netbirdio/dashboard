@@ -1,11 +1,19 @@
 import * as React from "react";
 import { useOidcUser } from "@axa-fr/react-oidc";
 import { useReactFlow } from "@xyflow/react";
+import { useApiCall } from "@utils/api";
 import { Modal } from "@components/modal/Modal";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { getPlaceholderHostname } from "@/modules/control-center/utils/helpers";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import {
+  draftBoundGroupName,
+  getPlaceholderHostname,
+  kindHasBoundGroup,
+  PLACEHOLDER_BASE_NAMES,
+} from "@/modules/control-center/utils/helpers";
 import { Peer } from "@/interfaces/Peer";
+import { Group } from "@/interfaces/Group";
 
 // Renders the "Install NetBird" modal once for the whole canvas, driven by the
 // shared installModal state (opened from the components sidebar or a placeholder
@@ -16,6 +24,24 @@ export const DraftInstallPeerModal = () => {
   const { installModal, setInstallModal } = useDraftMode();
   const { oidcUser: user } = useOidcUser();
   const reactFlow = useReactFlow();
+  const groupRequest = useApiCall<Group>("/groups", true);
+  const { groups } = useControlCenterData();
+
+  // The placeholder's canvas name — drives the setup key name and its bound
+  // group name.
+  const placeholderName = React.useMemo(() => {
+    const nodeId = installModal?.nodeId;
+    if (!nodeId) return undefined;
+    const node = reactFlow.getNodes().find((n) => n.id === nodeId);
+    const data = node?.data as
+      | { placeholderName?: string; placeholderKind?: string }
+      | undefined;
+    return (
+      data?.placeholderName ??
+      PLACEHOLDER_BASE_NAMES[data?.placeholderKind ?? ""] ??
+      undefined
+    );
+  }, [installModal, reactFlow]);
 
   // Suggested hostname for the install commands: the placeholder's canvas
   // name, sanitized and unique across the draft peers (user devices — no
@@ -80,6 +106,56 @@ export const DraftInstallPeerModal = () => {
     return ids.size > 0 ? Array.from(ids) : undefined;
   }, [installModal, reactFlow]);
 
+  // Server/Agent placeholders get a hidden, throwaway BOUND identity group,
+  // created directly in the API the moment the user generates the setup key
+  // (never before — opening/closing the modal leaks nothing, and it's never a
+  // draft changeset entry). Its real id rides on the key as an auto-group so
+  // the registering peer lands in a unique group; that's how the upgrade
+  // watcher matches it back to this placeholder (useDraftPeerUpgrade), after
+  // which the group is deleted again. The group id is stored on the node so a
+  // reopened Install reuses it instead of creating another.
+  const resolveAutoGroups = React.useCallback(async (): Promise<string[]> => {
+    const nodeId = installModal?.nodeId;
+    const extra = autoGroups ?? [];
+    if (!nodeId) return extra;
+    const node = reactFlow.getNodes().find((n) => n.id === nodeId);
+    const data = node?.data as
+      | {
+          placeholderKind?: string;
+          placeholderName?: string;
+          boundGroupId?: string;
+        }
+      | undefined;
+    if (!kindHasBoundGroup(data?.placeholderKind)) return extra;
+
+    // Already created on a previous generate — reuse it.
+    let boundId = data?.boundGroupId;
+    if (!boundId) {
+      const label =
+        data?.placeholderName ??
+        PLACEHOLDER_BASE_NAMES[data?.placeholderKind ?? "agent"] ??
+        "Agent";
+      const taken = new Set((groups ?? []).map((g) => g.name));
+      const created = await groupRequest.post({
+        name: draftBoundGroupName(label, taken),
+        peers: [],
+        resources: [],
+      });
+      boundId = created?.id;
+      if (boundId) {
+        const id = boundId;
+        reactFlow.setNodes((prev) =>
+          prev.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...n.data, boundGroupId: id } }
+              : n,
+          ),
+        );
+      }
+    }
+    return boundId ? [boundId, ...extra.filter((g) => g !== boundId)] : extra;
+  }, [installModal, autoGroups, reactFlow, groupRequest, groups]);
+
   return (
     <Modal
       open={!!installModal}
@@ -93,13 +169,26 @@ export const DraftInstallPeerModal = () => {
           hostname={hostname}
           ephemeralKey={installModal.placeholderKind === "agent"}
           autoGroups={autoGroups}
+          resolveAutoGroups={resolveAutoGroups}
+          keyName={
+            placeholderName ? `Draft ${placeholderName}` : undefined
+          }
           onSetupKeyGenerated={(key) => {
             const nodeId = installModal.nodeId;
             if (!nodeId || !key?.key) return;
+            // Store the key string (for reuse) AND its id (so an abandoned
+            // draft can delete the key it created — see cleanup on removal).
             reactFlow.setNodes((prev) =>
               prev.map((n) =>
                 n.id === nodeId
-                  ? { ...n, data: { ...n.data, setupKey: key.key } }
+                  ? {
+                      ...n,
+                      data: {
+                        ...n.data,
+                        setupKey: key.key,
+                        setupKeyId: key.id,
+                      },
+                    }
                   : n,
               ),
             );

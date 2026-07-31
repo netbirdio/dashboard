@@ -11,6 +11,7 @@ import {
 } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import {
+  CHANGE_DEPLOY_ORDER,
   DraftChange,
   getChangeLabel,
   useDraftChangeset,
@@ -207,24 +208,15 @@ export function useDeployChangeset() {
       }
     };
 
-    const order: DraftChange["type"][] = [
-      "create-group",
-      "update-group",
-      "create-network",
-      "create-resource",
-      "update-resource",
-      "create-router",
-      "create-policy",
-      "update-policy",
-      "delete-policy",
-      "delete-resource",
-      "delete-group",
-    ];
     // install-peer entries aren't API calls — the user performs them by
     // installing/selecting the peer. They stay pending through a deploy.
     const ordered = changes
       .filter((c) => c.type !== "install-peer")
-      .sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+      .sort(
+        (a, b) =>
+          CHANGE_DEPLOY_ORDER.indexOf(a.type) -
+          CHANGE_DEPLOY_ORDER.indexOf(b.type),
+      );
 
     const run = async () => {
       for (const change of ordered) {

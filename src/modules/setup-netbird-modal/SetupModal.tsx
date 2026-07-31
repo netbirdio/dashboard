@@ -62,6 +62,12 @@ type Props = {
   // Group ids auto-assigned to peers registering with the generated key
   // (e.g. a draft placeholder's group memberships).
   autoGroups?: string[];
+  // Resolved lazily when the user generates the key — lets the caller create a
+  // group on demand (a draft placeholder's bound group) and return its real id
+  // as an auto-group. Takes precedence over `autoGroups` when provided.
+  resolveAutoGroups?: () => Promise<string[]>;
+  // Name for the in-modal generated key (defaults to a timestamped name).
+  keyName?: string;
   onSetupKeyGenerated?: (key: SetupKey) => void;
 };
 
@@ -76,6 +82,8 @@ export default function SetupModal({
   hostname,
   ephemeralKey,
   autoGroups,
+  resolveAutoGroups,
+  keyName,
   onSetupKeyGenerated,
 }: Readonly<Props>) {
   return (
@@ -96,6 +104,8 @@ export default function SetupModal({
         hostname={hostname}
         ephemeralKey={ephemeralKey}
         autoGroups={autoGroups}
+        resolveAutoGroups={resolveAutoGroups}
+        keyName={keyName}
         onSetupKeyGenerated={onSetupKeyGenerated}
       />
     </ModalContent>
@@ -114,6 +124,8 @@ type SetupModalContentProps = {
   isUserDevice?: boolean;
   ephemeralKey?: boolean;
   autoGroups?: string[];
+  resolveAutoGroups?: () => Promise<string[]>;
+  keyName?: string;
   onSetupKeyGenerated?: (key: SetupKey) => void;
 };
 
@@ -129,6 +141,8 @@ export function SetupModalContent({
   isUserDevice,
   ephemeralKey,
   autoGroups,
+  resolveAutoGroups,
+  keyName,
   onSetupKeyGenerated,
 }: Readonly<SetupModalContentProps>) {
   const os = useOperatingSystem();
@@ -187,6 +201,8 @@ export function SetupModalContent({
         generatedKey={generatedKey}
         ephemeral={ephemeralKey}
         autoGroups={autoGroups}
+        resolveAutoGroups={resolveAutoGroups}
+        keyName={keyName}
         onGenerated={(key) => {
           setGeneratedKey(key);
           onSetupKeyGenerated?.(key);
@@ -497,6 +513,10 @@ type SetupKeyGeneratorProps = {
   ephemeral?: boolean;
   // Group ids auto-assigned to peers registering with this key.
   autoGroups?: string[];
+  // Resolved when the user clicks Generate — takes precedence over autoGroups.
+  resolveAutoGroups?: () => Promise<string[]>;
+  // Custom key name (defaults to a timestamped one).
+  keyName?: string;
 };
 
 // SetupKeyGenerator renders the inline banner that lets the operator
@@ -508,6 +528,8 @@ function SetupKeyGenerator({
   onGenerated,
   ephemeral = false,
   autoGroups,
+  resolveAutoGroups,
+  keyName,
 }: SetupKeyGeneratorProps) {
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -516,18 +538,25 @@ function SetupKeyGenerator({
     setIsGenerating(true);
     // auto_groups only when the caller supplies them (a draft placeholder's
     // group memberships) — otherwise none: the "All" group can't be a
-    // setup-key auto-group, and we don't invent a default group here.
-    const request = setupKeyRequest
-      .post({
-        name: `Install setup key (${new Date().toLocaleString()})`,
-        type: "one-off",
-        expires_in: 24 * 60 * 60,
-        revoked: false,
-        auto_groups: autoGroups ?? [],
-        usage_limit: 1,
-        ephemeral,
-        allow_extra_dns_labels: false,
-      })
+    // setup-key auto-group, and we don't invent a default group here. A
+    // resolver (draft placeholder's bound group, created on demand) wins.
+    const request = (
+      resolveAutoGroups
+        ? resolveAutoGroups()
+        : Promise.resolve(autoGroups ?? [])
+    )
+      .then((groupIds) =>
+        setupKeyRequest.post({
+          name: keyName || `Install setup key (${new Date().toLocaleString()})`,
+          type: "one-off",
+          expires_in: 24 * 60 * 60,
+          revoked: false,
+          auto_groups: groupIds ?? [],
+          usage_limit: 1,
+          ephemeral,
+          allow_extra_dns_labels: false,
+        }),
+      )
       .then((created) => {
         onGenerated(created);
         return created;

@@ -12,6 +12,7 @@ import {
   CreateRouterChange,
   DraftChange,
   getChangeApiCall,
+  InstallPeerChange,
   UpdateGroupChange,
   UpdateResourceChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
@@ -201,6 +202,24 @@ export function routerCreateBody(
   };
 }
 
+// POST /setup-keys — the key generated when the user installs a server/agent
+// placeholder (Generate Key), NOT a deploy call. auto_groups shows the hidden
+// bound group that's created alongside it (by name here — its real id doesn't
+// exist until install). Mirrors DraftInstallPeerModal / SetupKeyGenerator.
+export function setupKeyCreateBody(change: InstallPeerChange) {
+  const isUserDevice = change.kind === "user-device";
+  return {
+    name: `Draft ${change.name}`,
+    type: "one-off",
+    expires_in: 24 * 60 * 60,
+    revoked: false,
+    auto_groups: isUserDevice ? [] : [`${change.name} (Draft)`],
+    usage_limit: 1,
+    ephemeral: change.kind === "agent",
+    allow_extra_dns_labels: false,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Preview: build the request(s) shown in the Review & Deploy code view.
 // ---------------------------------------------------------------------------
@@ -244,9 +263,12 @@ export function buildChangeRequest(
   change: DraftChange,
   live: LiveData = {},
 ): ChangeRequest | null {
-  if (change.type === "install-peer") return null;
   const r = previewResolvers(live);
   const { method, path } = methodPath(change);
+
+  if (change.type === "install-peer") {
+    return { method, path, body: setupKeyCreateBody(change) };
+  }
 
   switch (change.type) {
     case "create-policy":
@@ -306,7 +328,6 @@ export function changeDiffLines(
   change: DraftChange,
   live: LiveData = {},
 ): DiffLine[] {
-  if (change.type === "install-peer") return [];
   const after = buildChangeRequest(change, live);
   const before = buildBeforeRequest(change, live);
   return diffBodies(before?.body, after?.body);

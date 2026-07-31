@@ -47,8 +47,16 @@ export type PeerNodeType = Node<
     placeholderName?: string;
     setupKey?: string;
     // Hostname the install modal suggested — the upgrade watcher matches the
-    // registering peer against it (useDraftPeerUpgrade).
+    // registering peer against it (useDraftPeerUpgrade), as a fallback to the
+    // bound-group match below.
     installHostname?: string;
+    // Set for Server/Agent placeholders once the setup key is generated: the
+    // id of a hidden, throwaway group the key auto-assigns. The upgrade watcher
+    // matches the registering peer by membership in it, then deletes it.
+    boundGroupId?: string;
+    // Id of the setup key generated for this placeholder — deleted along with
+    // the bound group once the peer is matched or the draft is abandoned.
+    setupKeyId?: string;
   },
   "peerNode"
 >;

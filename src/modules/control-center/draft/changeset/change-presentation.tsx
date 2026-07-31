@@ -1,9 +1,12 @@
 import React from "react";
 import { cn } from "@utils/helpers";
 import {
+  BotIcon,
+  ChevronRightIcon,
   FolderGit2,
-  MonitorDownIcon,
+  MonitorSmartphoneIcon,
   NetworkIcon,
+  ServerIcon,
   ShieldIcon,
   SquareDotIcon,
   SquareMinusIcon,
@@ -40,7 +43,14 @@ export const changeIcon = (change: DraftChange, size = 14) => {
     case "create-router":
       return <WaypointsIcon size={size} />;
     case "install-peer":
-      return <MonitorDownIcon size={size} />;
+      // Match the placeholder's canvas icon by kind.
+      return change.kind === "agent" ? (
+        <BotIcon size={size} />
+      ) : change.kind === "user-device" ? (
+        <MonitorSmartphoneIcon size={size} />
+      ) : (
+        <ServerIcon size={size} />
+      );
   }
 };
 
@@ -189,7 +199,7 @@ export const IssueBadge = ({
   if (!onClick) {
     return (
       <span className={className}>
-        <TriangleAlertIcon size={13} />
+        <TriangleAlertIcon size={11} />
         {label}
       </span>
     );
@@ -210,8 +220,10 @@ export const IssueBadge = ({
       }}
       className={className}
     >
-      <TriangleAlertIcon size={13} />
+      <TriangleAlertIcon size={11} />
       {label}
+      {/* Chevron hints the badge is clickable (opens the fix). */}
+      <ChevronRightIcon size={12} className={"-mr-0.5 opacity-70"} />
     </span>
   );
 };

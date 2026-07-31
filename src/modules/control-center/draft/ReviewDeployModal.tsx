@@ -18,6 +18,7 @@ import {
   ListTodoIcon,
 } from "lucide-react";
 import {
+  CHANGE_DEPLOY_ORDER,
   DraftChange,
   getChangeIssue,
   hasBlockingIssues,
@@ -70,27 +71,28 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   // as-is, e.g. a resource with no network or an uninstalled placeholder peer).
   const hasIssues = hasBlockingIssues(changes);
 
-  // Sort priority: install steps first, then other blocking issues, then the
-  // rest — so the actions the user must take are up top (stable within a rank).
+  // Order mirrors the real deploy sequence (CHANGE_DEPLOY_ORDER) so the list
+  // always tells the truth — a network is listed before the resources that
+  // depend on it, deletes last, etc. install-peer is a manual prerequisite
+  // (not part of the deploy order), so those rows sort to the very top.
   const sortedChanges = useMemo(() => {
     const rank = (c: DraftChange) =>
-      c.type === "install-peer" ? 0 : getChangeIssue(c) ? 1 : 2;
+      c.type === "install-peer" ? -1 : CHANGE_DEPLOY_ORDER.indexOf(c.type);
     return [...changes].sort((a, b) => rank(a) - rank(b));
   }, [changes]);
 
   // Resolve a change's blocking issue: open the same fix the canvas offers —
   // the network picker for a no-network resource, the install/setup modal for
-  // a placeholder peer. Closes this modal so the fix isn't stacked on top.
+  // a placeholder peer. Review & Deploy stays OPEN behind the fix (it stacks
+  // on top) so the user returns to the changeset when it closes.
   const resolveIssue = useCallback(
     (change: DraftChange) => {
       if (change.type === "create-resource") {
-        onOpenChange(false);
         setResourceNetworkPicker({ nodeId: `resource-${change.clientId}` });
         return;
       }
       if (change.type === "install-peer") {
         const nodeId = `peer-${change.clientId}`;
-        onOpenChange(false);
         if (change.kind === "user-device") {
           setUserDeviceModal({ nodeId, name: change.name });
           return;
@@ -106,7 +108,6 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
       }
     },
     [
-      onOpenChange,
       setResourceNetworkPicker,
       setInstallModal,
       setUserDeviceModal,
@@ -114,12 +115,15 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
     ],
   );
 
+  // Count ALL pending rows (install steps included) so the header matches the
+  // "Review & Deploy" button badge and the number of rows shown below.
+  const totalCount = changes.length;
   const description = useMemo(
     () =>
-      `Review ${deployableCount} change${
-        deployableCount !== 1 ? "s" : ""
+      `Review ${totalCount} change${
+        totalCount !== 1 ? "s" : ""
       } before deploying to your network.`,
-    [deployableCount],
+    [totalCount],
   );
 
   const handleDeploy = async () => {
@@ -153,11 +157,17 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
             </div>
           ) : (
             <Accordion
-              // Remount when the modal (re)opens so the first change is
-              // expanded by default every time (but not on close — see above).
+              // Remount when the modal (re)opens so the first expandable change
+              // is open by default every time (but not on close — see above).
+              // install-peer rows aren't collapsible, so skip them here.
               key={openKeyRef.current}
               type={"multiple"}
-              defaultValue={sortedChanges[0] ? [sortedChanges[0].id] : []}
+              defaultValue={(() => {
+                const first = sortedChanges.find(
+                  (c) => c.type !== "install-peer",
+                );
+                return first ? [first.id] : [];
+              })()}
               className={"flex flex-col gap-3"}
             >
               {sortedChanges.map((change) => (

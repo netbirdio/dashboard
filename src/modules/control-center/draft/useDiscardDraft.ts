@@ -1,8 +1,10 @@
 import { useCallback } from "react";
+import { useReactFlow } from "@xyflow/react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { usePlaceholderArtifacts } from "@/modules/control-center/hooks/usePlaceholderArtifacts";
 
 // Leaving draft mode (Cancel, back arrow, Live tab) destroys the changeset —
 // guarded by a confirmation while changes are pending so nothing is discarded
@@ -13,11 +15,32 @@ export function useDiscardDraft() {
   const { changeCount, clearChanges } = useDraftChangeset();
   const { setLayoutInitialized } = useCanvasState();
   const { confirm } = useDialog();
+  const reactFlow = useReactFlow();
+  const deleteArtifacts = usePlaceholderArtifacts();
+
+  // Abandoning the draft deletes any real artifacts its uninstalled
+  // placeholders created (setup keys + hidden bound groups) so nothing is
+  // left orphaned in the account. Installed placeholders were upgraded and
+  // already cleaned up (useDraftPeerUpgrade), so only "peer-draft-" nodes
+  // still carry artifacts.
+  const sweepPlaceholderArtifacts = useCallback(() => {
+    reactFlow.getNodes().forEach((n) => {
+      if (!n.id.startsWith("peer-draft-")) return;
+      const d = n.data as { boundGroupId?: string; setupKeyId?: string };
+      if (d?.boundGroupId || d?.setupKeyId) {
+        deleteArtifacts({
+          boundGroupId: d.boundGroupId,
+          setupKeyId: d.setupKeyId,
+        });
+      }
+    });
+  }, [reactFlow, deleteArtifacts]);
 
   const exitDraft = useCallback(() => {
+    sweepPlaceholderArtifacts();
     clearChanges();
     setIsDraft(false);
-  }, [clearChanges, setIsDraft]);
+  }, [sweepPlaceholderArtifacts, clearChanges, setIsDraft]);
 
   // After a deploy the live data changed — force the live view to rebuild
   // instead of restoring the stale pre-draft canvas.
@@ -59,10 +82,17 @@ export function useDiscardDraft() {
       });
       if (!choice) return false;
     }
+    sweepPlaceholderArtifacts();
     clearChanges();
     newDraftSession();
     return true;
-  }, [changeCount, confirm, clearChanges, newDraftSession]);
+  }, [
+    changeCount,
+    confirm,
+    clearChanges,
+    newDraftSession,
+    sweepPlaceholderArtifacts,
+  ]);
 
   return { discardAndExit, exitAfterDeploy, startNewDraft };
 }

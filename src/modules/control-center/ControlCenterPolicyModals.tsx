@@ -556,12 +556,23 @@ export function ControlCenterPolicyProvider({
     // it was dropped and the missing pieces attach around it. Centering on
     // the matched nodes is only for flows without a drop point (connect-drag,
     // modal edits).
-    let centerX = base.x;
-    let centerY = base.y;
+    let policyPos = { x: base.x, y: base.y };
     if (!fallbackPosition && allExistingNodes.length > 0) {
       const bounds = reactFlow.getNodesBounds(allExistingNodes as any);
-      centerX = bounds.x + bounds.width / 2;
-      centerY = bounds.y + bounds.height / 2;
+      const centerX = bounds.x + bounds.width / 2;
+      const centerY = bounds.y + bounds.height / 2;
+      // A node's `position` is its TOP-LEFT, so drop it at the midpoint minus
+      // half its own size — otherwise it lands down-and-right of the true
+      // center (visibly off between two connected nodes). The pill has no
+      // fixed width; estimate from the name (status dot + paddings ≈ 64px,
+      // ~7px/char, capped at its max text width).
+      const POLICY_NODE_HEIGHT = 36;
+      const name = policy.rules?.[0]?.name ?? policy.name ?? "";
+      const policyNodeWidth = Math.min(248, 64 + Math.min(name.length, 26) * 7);
+      policyPos = {
+        x: centerX - policyNodeWidth / 2,
+        y: centerY - POLICY_NODE_HEIGHT / 2,
+      };
     }
 
     // Add policy node
@@ -570,7 +581,7 @@ export function ControlCenterPolicyProvider({
         id: policyNodeId,
         type: "policyNode",
         data: { policy },
-        position: { x: centerX, y: centerY },
+        position: policyPos,
       });
     }
 

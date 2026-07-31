@@ -7,6 +7,7 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { usePlaceholderArtifacts } from "@/modules/control-center/hooks/usePlaceholderArtifacts";
 import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import {
   patchGroupInPolicies,
@@ -63,6 +64,7 @@ export function useDraftGroupActions() {
   const { groups } = useControlCenterData();
   const { updateDraftPolicy } = useControlCenterPolicy();
   const { confirm } = useDialog();
+  const deleteArtifacts = usePlaceholderArtifacts();
   const {
     changes,
     trackCreateGroup,
@@ -231,6 +233,8 @@ export function useDraftGroupActions() {
             peer?: { id?: string };
             resource?: { id?: string };
             placeholderKind?: string;
+            boundGroupId?: string;
+            setupKeyId?: string;
           }
         | undefined;
       const entityId =
@@ -243,9 +247,15 @@ export function useDraftGroupActions() {
           : undefined);
 
       // An uninstalled placeholder leaving the canvas takes its pending
-      // install-peer entry with it (installed ones no longer have one).
+      // install-peer entry with it (installed ones no longer have one), and
+      // deletes any setup key / bound group it created on install (the peer
+      // never registered, so they'd otherwise be orphaned in the account).
       if (data?.placeholderKind && nodeId.startsWith("peer-draft-")) {
         untrackInstallPeer(nodeId.replace("peer-", ""));
+        deleteArtifacts({
+          boundGroupId: data.boundGroupId,
+          setupKeyId: data.setupKeyId,
+        });
       }
 
       // Router changes whose routing edge passes through this node go too.
@@ -436,6 +446,7 @@ export function useDraftGroupActions() {
       untrackResource,
       untrackRouter,
       untrackInstallPeer,
+      deleteArtifacts,
     ],
   );
 

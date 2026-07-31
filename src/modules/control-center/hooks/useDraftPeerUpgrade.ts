@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
+import { usePlaceholderArtifacts } from "@/modules/control-center/hooks/usePlaceholderArtifacts";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
@@ -190,23 +191,35 @@ export function usePlaceholderUpgrade() {
 }
 
 // Watches the peers list while a draft is open: when a placeholder's
-// installed machine registers (matched by the hostname the install modal
-// suggested and stamped onto the node), the placeholder upgrades in place
-// via usePlaceholderUpgrade.
+// installed machine registers, the placeholder upgrades in place via
+// usePlaceholderUpgrade. Server/Agent placeholders are matched by membership
+// in the hidden group their setup key auto-assigned (reliable); hostname is a
+// fallback. Once matched, that throwaway group has served its purpose and is
+// deleted from the API.
 export function useDraftPeerUpgrade() {
   const { isDraft } = useDraftMode();
   const { nodes } = useCanvasState();
   const { peers } = useControlCenterData();
   const upgrade = usePlaceholderUpgrade();
+  const deleteArtifacts = usePlaceholderArtifacts();
   // The effect re-runs on every nodes/peers change — never upgrade a node
   // twice (state updates land asynchronously).
   const upgraded = useRef(new Set<string>());
+  // Placeholders whose artifacts were already scheduled for deletion.
+  const cleaned = useRef(new Set<string>());
 
   useEffect(() => {
     if (!isDraft || !peers?.length) return;
 
     const onCanvas = new Set(nodes.map((n) => n.id));
     const upgrades: PlaceholderUpgrade[] = [];
+    // Hidden artifacts (bound group + setup key) to delete once their peer
+    // has been matched — they only existed to find it.
+    const artifactsToDelete: {
+      nodeId: string;
+      boundGroupId?: string;
+      setupKeyId?: string;
+    }[] = [];
 
     const findMatch = (installHostname: string) =>
       peers.find(
@@ -215,10 +228,22 @@ export function useDraftPeerUpgrade() {
           !onCanvas.has(`peer-${p.id}`),
       );
 
+    // The reliable match: the placeholder's setup key auto-assigns its unique
+    // BOUND identity group, so the registering peer is the (only) new peer
+    // that landed in that group.
+    const findByGroup = (groupId: string) =>
+      peers.find(
+        (p) =>
+          p.groups?.some((g) => g.id === groupId) &&
+          !onCanvas.has(`peer-${p.id}`),
+      );
+
     nodes.forEach((node) => {
       const data = node.data as {
         placeholderKind?: string;
         installHostname?: string;
+        boundGroupId?: string;
+        setupKeyId?: string;
         peer?: Peer;
         draftPeers?: (Peer & { installHostname?: string })[];
       };
@@ -235,14 +260,34 @@ export function useDraftPeerUpgrade() {
         upgrades.push({ nodeId: pseudoNodeId, peer: match });
       });
 
-      if (!data?.placeholderKind || !data.installHostname || data.peer) return;
+      if (!data?.placeholderKind || data.peer) return;
       if (upgraded.current.has(node.id)) return;
-      const match = findMatch(data.installHostname);
+      // Bound-group match first; hostname is the fallback (user devices, or a
+      // key generated without a bound group).
+      const match =
+        (data.boundGroupId ? findByGroup(data.boundGroupId) : undefined) ??
+        (data.installHostname ? findMatch(data.installHostname) : undefined);
       if (!match?.id) return;
       upgraded.current.add(node.id);
       upgrades.push({ nodeId: node.id, peer: match });
+      // The bound group + setup key only existed to find this peer — drop
+      // them now that it's matched.
+      if (
+        (data.boundGroupId || data.setupKeyId) &&
+        !cleaned.current.has(node.id)
+      ) {
+        cleaned.current.add(node.id);
+        artifactsToDelete.push({
+          nodeId: node.id,
+          boundGroupId: data.boundGroupId,
+          setupKeyId: data.setupKeyId,
+        });
+      }
     });
 
     upgrade(upgrades);
-  }, [isDraft, peers, nodes, upgrade]);
+    artifactsToDelete.forEach(({ boundGroupId, setupKeyId }) =>
+      deleteArtifacts({ boundGroupId, setupKeyId }),
+    );
+  }, [isDraft, peers, nodes, upgrade, deleteArtifacts]);
 }

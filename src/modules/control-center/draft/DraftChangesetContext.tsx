@@ -237,8 +237,10 @@ export const getChangeApiCall = (change: DraftChange): string => {
     case "delete-resource":
       return `DELETE /networks/${change.networkId}/resources/${change.resourceId}`;
     case "install-peer":
-      // Not an API call — the peer registers itself when installed.
-      return "peer install";
+      // Not a DEPLOY call — the setup key (and its bound group) are created
+      // when the user installs (Generate Key), not on deploy. Shown as the
+      // request that fires then.
+      return "POST /setup-keys";
   }
 };
 
@@ -386,6 +388,26 @@ export const getChangeIssue = (change: DraftChange): ChangeIssue | undefined => 
 // True when any change has a blocking issue — Review & Deploy disables deploy.
 export const hasBlockingIssues = (changes: DraftChange[]): boolean =>
   changes.some((c) => getChangeIssue(c) !== undefined);
+
+// Canonical CRUD dependency order the deploy runs in (a network before its
+// resources, resources before routers/policies, deletes last). Shared by
+// useDeployChangeset (execution) and Review & Deploy (display) so the list
+// always reads in the order things actually happen. install-peer is a manual
+// user step, not an API call — it isn't in here; Review & Deploy lists those
+// first as prerequisites.
+export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
+  "create-group",
+  "update-group",
+  "create-network",
+  "create-resource",
+  "update-resource",
+  "create-router",
+  "create-policy",
+  "update-policy",
+  "delete-policy",
+  "delete-resource",
+  "delete-group",
+];
 
 // Non-blocking Review & Deploy warnings (the draft equivalent of the live
 // "no access control policies" confirmations): unreachable resources and

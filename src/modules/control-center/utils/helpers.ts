@@ -305,6 +305,40 @@ export const PLACEHOLDER_BASE_NAMES: Record<string, string> = {
   "user-device": "User Device",
 };
 
+// A short random suffix that keeps a bound placeholder group's name unique
+// even when two placeholders share a base name ("Agent", "Agent").
+export const makeBoundGroupSuffix = () =>
+  (typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2)
+  )
+    .replace(/[^a-z0-9]/gi, "")
+    .slice(0, 5);
+
+// A bound group's display name: the placeholder's name tagged "(Draft)",
+// e.g. "Agent (Draft)". A random suffix is inserted only when that name is
+// already taken ("Agent (a3f9c) (Draft)"). The group is hidden and
+// short-lived (created at setup-key generation, deleted once the peer is
+// matched or the draft is abandoned), so the name is just a recognizable
+// label that reads as temporary.
+export const draftBoundGroupName = (
+  placeholderName: string,
+  taken: Set<string>,
+) => {
+  const base = `${placeholderName} (Draft)`;
+  if (!taken.has(base)) return base;
+  let candidate = base;
+  while (taken.has(candidate)) {
+    candidate = `${placeholderName} (${makeBoundGroupSuffix()}) (Draft)`;
+  }
+  return candidate;
+};
+
+// Only server/agent placeholders get a hidden bound group for install
+// matching (user devices don't).
+export const kindHasBoundGroup = (kind?: string) =>
+  kind === "server" || kind === "agent";
+
 // A placeholder peer node (Server / Agent / User Device, not installed yet)
 // as a pseudo-Peer: unique draft id ("draft-<uuid>", from node id
 // "peer-draft-<uuid>") plus its canvas name — lets placeholders participate
