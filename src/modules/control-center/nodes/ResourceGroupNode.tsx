@@ -1,13 +1,14 @@
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { cn, singularize } from "@utils/helpers";
-import { type Node, Position, useConnection } from "@xyflow/react";
+import { type Node, Position, useConnection, useStore } from "@xyflow/react";
 import * as React from "react";
 import { Group } from "@/interfaces/Group";
 import { useCanvasUI,
   useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { GroupNode } from "@/modules/control-center/nodes/GroupNode";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 
@@ -27,9 +28,16 @@ type ResourceGroupNode = Node<
 export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => {
   const { group, showHandles = true } = data;
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();
-  const { setSelectedDestinationGroup } = useDestinationGroup();
+  const { selectedDestinationGroup, setSelectedDestinationGroup } =
+    useDestinationGroup();
   const { contextMenuNodeId } = useCanvasUI();
-  const showHalo = contextMenuNodeId === id;
+  // Panel selection is keyed by group id, or by node id for draft groups —
+  // same rule as GroupNode. An open group panel rings this row's icon box
+  // sky (matching how a framed resource highlights when its editor is open).
+  const isPanelActive =
+    selectedDestinationGroup !== "" &&
+    (selectedDestinationGroup === group?.id || selectedDestinationGroup === id);
+  const showHalo = isPanelActive || contextMenuNodeId === id;
   // Framed rows accept connection DROPS in every view — the drop routes
   // into the destination picker preselected with this group. Only dragging
   // FROM the row stays drill-down-only (same rule as ResourceNode).
@@ -38,6 +46,31 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
   const isTarget = useConnection(
     (c) => c.inProgress && c.fromNode.id !== id,
   );
+
+  // Drilled into the single-network view the parent frame is HIDDEN — the same
+  // signal ResourceNode uses to swap its flat row for a card. A framed resource
+  // group promotes to a full GroupNode card there and reverts to the flat row
+  // back in the networks view. (Boolean store selector, not useInternalNode —
+  // see ResourceNode for why.)
+  const parentFrameHidden = useStore((st) =>
+    parentId ? !!st.nodeLookup.get(parentId)?.hidden : false,
+  );
+  const isDrilledChild = isFramed && parentFrameHidden;
+  if (isDraft && isDrilledChild) {
+    return (
+      <GroupNode
+        id={id}
+        type={"groupNode"}
+        position={{ x: 0, y: 0 }}
+        data={{
+          group,
+          enabled: data.enabled,
+          showHandles,
+          onClick: () => setSelectedDestinationGroup(group?.id || id),
+        }}
+      />
+    );
+  }
 
   return (
     <div
