@@ -28,7 +28,7 @@ import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChan
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
-import { FieldLiveData } from "@/modules/control-center/utils/changeset-fields";
+import { LiveData } from "@/modules/control-center/utils/changeset-request";
 
 type Props = {
   open: boolean;
@@ -40,19 +40,16 @@ type Props = {
 export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => {
   const { changes, removeChange } = useDraftChangeset();
   const { deploy, isDeploying } = useDeployChangeset();
-  const { policies, groups, networks, networkResources, peers } =
+  const { policies, groups, networks, networkResources } =
     useControlCenterData();
   const { setResourceNetworkPicker, setInstallModal, setUserDeviceModal } =
     useDraftMode();
   const reactFlow = useReactFlow();
 
-  const live: FieldLiveData = useMemo(
-    () => ({ policies, groups, networks, networkResources, peers }),
-    [policies, groups, networks, networkResources, peers],
+  const live: LiveData = useMemo(
+    () => ({ policies, groups, networks, networkResources }),
+    [policies, groups, networks, networkResources],
   );
-
-  // Visual view is hidden for now — every change shows its Diff.
-  const view = "code";
 
   // Remount the accordion (re-opening the first change) only when the modal
   // OPENS — never on close, which would otherwise flash the first accordion
@@ -175,7 +172,6 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                   key={change.id}
                   change={change}
                   live={live}
-                  view={view}
                   onDiscard={() => removeChange(change.id)}
                   onResolveIssue={
                     getChangeIssue(change) ? resolveIssue : undefined

@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { ScrollBar } from "@components/ScrollArea";
 import { cn } from "@utils/helpers";
-import { CheckIcon, CopyIcon, TerminalIcon } from "lucide-react";
+import { CheckIcon, CopyIcon } from "lucide-react";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import { DraftChange } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
@@ -40,7 +40,20 @@ type Props = {
 
 export const ChangeCodeView = ({ change, live, hideHeader = false }: Props) => {
   const after = useMemo(() => buildChangeRequest(change, live), [change, live]);
-  const lines = useMemo(() => changeDiffLines(change, live), [change, live]);
+  const lines = useMemo(() => {
+    const diff = changeDiffLines(change, live);
+    if (diff.length > 0) return diff;
+    // Never show an empty body. A create/update/install renders its request
+    // body as added lines; a bodiless DELETE with no reconstructable "before"
+    // falls back to its request line so there's always something to read.
+    const formatted = formatBody(after.body);
+    if (formatted !== null) {
+      return formatted
+        .split("\n")
+        .map((text) => ({ kind: "add" as const, text }));
+    }
+    return [{ kind: "context" as const, text: `${after.method} ${after.path}` }];
+  }, [change, live, after]);
 
   // Old/new line numbers, GitHub unified-diff style: removed lines number the
   // old side, added lines the new side, context both.
@@ -62,16 +75,6 @@ export const ChangeCodeView = ({ change, live, hideHeader = false }: Props) => {
     });
   }, [lines]);
 
-  // install-peer isn't an API call — buildChangeRequest returns null.
-  if (!after) {
-    return (
-      <div className={"flex items-start gap-2 text-xs text-nb-gray-400 py-1"}>
-        <TerminalIcon size={14} className={"shrink-0 mt-[1px]"} />
-        Not an API request — the peer registers itself when installed.
-      </div>
-    );
-  }
-
   const copyText = [
     `${after.method} ${after.path}`,
     after.body !== undefined ? `\n${formatBody(after.body)}` : "",
@@ -87,20 +90,14 @@ export const ChangeCodeView = ({ change, live, hideHeader = false }: Props) => {
         />
       )}
       {/* Bounded, scrollable code block (its own scroll area) so a long diff
-          doesn't grow the accordion — vertical + long lines both scroll. */}
-      {numbered.length === 0 ? (
-        <div className={"font-mono text-xs text-nb-gray-500 py-2 px-3"}>
-          {/* DELETE with no reconstructable before, or an empty body. */}
-          No request body.
-        </div>
-      ) : (
-        // Radix ScrollArea built from primitives so the VIEWPORT (not a
-        // fixed-height root) carries the max-height — it sizes to content up to
-        // 24rem, then scrolls, with the styled scrollbars.
-        <ScrollAreaPrimitive.Root className={"relative overflow-hidden w-full"}>
-          <ScrollAreaPrimitive.Viewport
-            className={"max-h-[24rem] w-full rounded-[inherit]"}
-          >
+          doesn't grow the accordion — vertical + long lines both scroll.
+          Radix ScrollArea built from primitives so the VIEWPORT (not a
+          fixed-height root) carries the max-height — it sizes to content up to
+          24rem, then scrolls, with the styled scrollbars. */}
+      <ScrollAreaPrimitive.Root className={"relative overflow-hidden w-full"}>
+        <ScrollAreaPrimitive.Viewport
+          className={"max-h-[24rem] w-full rounded-[inherit]"}
+        >
           <div
             className={"font-mono text-xs leading-relaxed w-max min-w-full"}
           >
@@ -132,12 +129,11 @@ export const ChangeCodeView = ({ change, live, hideHeader = false }: Props) => {
               </div>
             ))}
           </div>
-          </ScrollAreaPrimitive.Viewport>
-          <ScrollBar orientation={"vertical"} />
-          <ScrollBar orientation={"horizontal"} />
-          <ScrollAreaPrimitive.Corner />
-        </ScrollAreaPrimitive.Root>
-      )}
+        </ScrollAreaPrimitive.Viewport>
+        <ScrollBar orientation={"vertical"} />
+        <ScrollBar orientation={"horizontal"} />
+        <ScrollAreaPrimitive.Corner />
+      </ScrollAreaPrimitive.Root>
     </div>
   );
 };

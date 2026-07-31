@@ -23,10 +23,10 @@ import {
   getChangeIssue,
   getChangeKind,
 } from "@/modules/control-center/draft/DraftChangesetContext";
-import { FieldLiveData } from "@/modules/control-center/utils/changeset-fields";
 import {
   buildChangeRequest,
   changeDiffLines,
+  LiveData,
   toCurl,
 } from "@/modules/control-center/utils/changeset-request";
 import { diffStat } from "@/modules/control-center/utils/json-line-diff";
@@ -38,13 +38,10 @@ import {
   KindBadge,
 } from "@/modules/control-center/draft/changeset/change-presentation";
 import { ChangeCodeView } from "@/modules/control-center/draft/changeset/ChangeCodeView";
-import { ChangeVisualView } from "@/modules/control-center/draft/changeset/ChangeVisualView";
 
 type Props = {
   change: DraftChange;
-  live: FieldLiveData;
-  // Global Visual/Code mode, owned by the modal.
-  view: string;
+  live: LiveData;
   onDiscard: () => void;
   // Resolve a blocking issue on this change (assign a network / install the
   // peer). Undefined for changes with no issue.
@@ -55,7 +52,6 @@ type Props = {
 export const ChangeAccordionItem = ({
   change,
   live,
-  view,
   onDiscard,
   onResolveIssue,
   disabled,
@@ -84,16 +80,13 @@ export const ChangeAccordionItem = ({
     }
   };
 
-  // In Code mode the header shows a GitHub-style +/- diffstat instead of the
-  // kind badge (except install-peer, which has no diff).
+  // The header shows a GitHub-style +/- diffstat instead of the kind badge
+  // whenever the change produces a diff.
   const stat = useMemo(
-    () =>
-      view === "code"
-        ? diffStat(changeDiffLines(change, live))
-        : { additions: 0, deletions: 0 },
-    [view, change, live],
+    () => diffStat(changeDiffLines(change, live)),
+    [change, live],
   );
-  const showStat = view === "code" && stat.additions + stat.deletions > 0;
+  const showStat = stat.additions + stat.deletions > 0;
   // A blocking issue (e.g. a resource with no network) replaces the
   // diffstat/kind badge with an issue badge and rings the row.
   const issue = getChangeIssue(change);
@@ -162,48 +155,45 @@ export const ChangeAccordionItem = ({
               {entityName(change)}
             </span>
           </span>
-          {/* The request URL is only relevant in Code mode. The whole URL is
-              copyable — click anywhere on it (peer-page hostname pattern):
-              dashed underline on hover + copy/check icon. */}
-          {view === "code" && (
-            <span
-              role={"button"}
-              tabIndex={0}
-              onClick={(e) => {
+          {/* The whole URL is copyable — click anywhere on it (peer-page
+              hostname pattern): dashed underline on hover + copy/check icon. */}
+          <span
+            role={"button"}
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              doCopy(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
                 e.stopPropagation();
                 doCopy(true);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.stopPropagation();
-                  doCopy(true);
-                }
-              }}
-              aria-label={"Copy URL"}
-              className={
-                "group/copy relative top-[1px] flex items-center gap-1.5 font-mono text-[0.7rem] text-nb-gray-400 min-w-0 max-w-[18rem] cursor-pointer hover:text-nb-gray-200 transition-colors"
               }
-            >
-              <span className={"relative truncate min-w-0"}>
-                {apiCall}
-                <span
-                  className={
-                    "absolute bottom-0 left-0 right-0 border-b border-dashed border-transparent group-hover/copy:border-nb-gray-500 pointer-events-none"
-                  }
-                />
-              </span>
-              {copied ? (
-                <CheckIcon size={12} className={"shrink-0 text-nb-gray-100"} />
-              ) : (
-                <CopyIcon
-                  size={12}
-                  className={
-                    "shrink-0 opacity-0 group-hover/copy:opacity-100 transition-opacity"
-                  }
-                />
-              )}
+            }}
+            aria-label={"Copy URL"}
+            className={
+              "group/copy relative top-[1px] flex items-center gap-1.5 font-mono text-[0.7rem] text-nb-gray-400 min-w-0 max-w-[18rem] cursor-pointer hover:text-nb-gray-200 transition-colors"
+            }
+          >
+            <span className={"relative truncate min-w-0"}>
+              {apiCall}
+              <span
+                className={
+                  "absolute bottom-0 left-0 right-0 border-b border-dashed border-transparent group-hover/copy:border-nb-gray-500 pointer-events-none"
+                }
+              />
             </span>
-          )}
+            {copied ? (
+              <CheckIcon size={12} className={"shrink-0 text-nb-gray-100"} />
+            ) : (
+              <CopyIcon
+                size={12}
+                className={
+                  "shrink-0 opacity-0 group-hover/copy:opacity-100 transition-opacity"
+                }
+              />
+            )}
+          </span>
 
           <span className={"flex-1"} />
 
@@ -266,11 +256,7 @@ export const ChangeAccordionItem = ({
         {/* No outer padding — the content is flush; rows/code carry their own
             insets (peer-overview style rows, edge-to-edge code). */}
         <div className={"border-t border-nb-gray-910 min-w-0"}>
-          {view === "code" ? (
-            <ChangeCodeView change={change} live={live} hideHeader={true} />
-          ) : (
-            <ChangeVisualView change={change} live={live} />
-          )}
+          <ChangeCodeView change={change} live={live} hideHeader={true} />
         </div>
       </AccordionContent>
     </AccordionItem>

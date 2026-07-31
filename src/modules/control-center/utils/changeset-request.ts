@@ -255,14 +255,14 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
 const safePolicyBody = (policy: Policy, r: RequestResolvers) =>
   policy.rules?.[0] ? policyRequestBody(policy, r) : undefined;
 
-// The request a change WILL send once deployed (the diff's "after"). Returns
-// null for install-peer (not an API call). DELETE requests carry no body.
-// `live` supplies the group's current membership so an update-group shows the
-// FULL resulting member list (not just the draft additions).
+// The request a change WILL send once deployed (the diff's "after"). Every
+// change has one — install-peer sends its setup-key POST. DELETE requests
+// carry no body. `live` supplies the group's current membership so an
+// update-group shows the FULL resulting member list (not just the additions).
 export function buildChangeRequest(
   change: DraftChange,
   live: LiveData = {},
-): ChangeRequest | null {
+): ChangeRequest {
   const r = previewResolvers(live);
   const { method, path } = methodPath(change);
 
@@ -379,6 +379,29 @@ export function buildBeforeRequest(
           address: resource.address,
           enabled: resource.enabled,
           groups: toIds(resource.groups),
+        },
+      };
+    }
+    case "delete-network": {
+      const network = live.networks?.find((n) => n.id === change.networkId);
+      if (!network) return null;
+      // No real request body for DELETE — this reconstructs what's being
+      // removed (the network plus its resources/routers, cascaded
+      // server-side) so the code view shows it as an all-minus diff, like the
+      // other deletes.
+      return {
+        method: "DELETE",
+        path: `/networks/${change.networkId}`,
+        body: {
+          name: network.name,
+          description: network.description ?? "",
+          resources: (network.resources ?? []).map((rid) => {
+            const res = live.networkResources?.find((r) => r.id === rid);
+            return res
+              ? { name: res.name, address: res.address }
+              : { id: rid };
+          }),
+          ...(network.routers?.length ? { routers: network.routers } : {}),
         },
       };
     }
