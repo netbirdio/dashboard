@@ -173,6 +173,11 @@ export const useDragAndDrop = () => {
   // Whether the current drag can drop INTO a network frame (resources) — if
   // so, frames highlight as drop targets while the pointer is over them.
   const canDropIntoFrame = useRef(false);
+  // Skip the click-to-place "reveal" (fitBounds) — for templates that open a
+  // modal instead of placing a node (Resource): zooming the canvas while a
+  // modal takes focus is disorienting, and when drilled the frame fills the
+  // view so the free-spot search lands far outside and zooms into nothing.
+  const skipClickReveal = useRef(false);
 
   // Resolve the network frame under a screen point (walking a frame child up
   // to its parent), for the drop-target highlight.
@@ -211,12 +216,13 @@ export const useDragAndDrop = () => {
     (
       event: React.PointerEvent<HTMLDivElement>,
       onDrop: OnDropAction,
-      options?: { canDropIntoFrame?: boolean },
+      options?: { canDropIntoFrame?: boolean; skipClickReveal?: boolean },
     ) => {
       event.preventDefault();
       (event.target as HTMLElement).setPointerCapture(event.pointerId);
       dragStartPosition.current = { x: event.clientX, y: event.clientY };
       canDropIntoFrame.current = !!options?.canDropIntoFrame;
+      skipClickReveal.current = !!options?.skipClickReveal;
       setIsDragging(true);
       setDropAction(onDrop);
     },
@@ -275,7 +281,7 @@ export const useDragAndDrop = () => {
           view,
         );
         dropAction?.({ position });
-        if (outsideView) {
+        if (outsideView && !skipClickReveal.current) {
           const minX = Math.min(
             view.left,
             position.x - ESTIMATED_NODE_WIDTH / 2 - DROP_GAP,

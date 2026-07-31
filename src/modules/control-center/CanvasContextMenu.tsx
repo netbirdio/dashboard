@@ -8,6 +8,7 @@ import {
   OptionIcon,
   ServerIcon,
   ShieldIcon,
+  WaypointsIcon,
 } from "lucide-react";
 import { useReactFlow, XYPosition } from "@xyflow/react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -48,12 +49,23 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   // `position` stays the raw click point so actions create nodes there.
   const menuPosition = useEdgeAwareMenuPosition(position, menuRef);
   const reactFlow = useReactFlow();
-  const { isDraft, setComponentsPanelOpen, setResourceEditor } = useDraftMode();
+  const {
+    isDraft,
+    setComponentsPanelOpen,
+    setResourceEditor,
+    setRoutingPeerModal,
+    drillDownNetworkNodeId,
+  } = useDraftMode();
   const { addNewGroup } = useDraftGroupActions();
   const { addPeerPlaceholder, addBlankNode, addBlankPolicy } =
     useDraftNodeCreation();
 
   // ---- Draft mode actions ----
+
+  // Drilled into a single network, the peers/policy/group items stay, but the
+  // network/resource row swaps: no "New Network" (you're inside one), "New
+  // Resource" is assigned straight to it, and "Add Routing Peer" is added.
+  const drilled = !!drillDownNetworkNodeId;
 
   // Same "New …" set as the components picker, grouped with separators:
   // peers · group/policy · network/resource. Each action takes the flow
@@ -70,13 +82,13 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
           label: "New Server",
           icon: <ServerIcon size={14} />,
           shortcut: shortcutLabel(1),
-          action: (pos) => addPeerPlaceholder("server", pos),
+          action: (pos: XYPosition) => addPeerPlaceholder("server", pos),
         },
         {
           label: "New Agent",
           icon: <BotIcon size={14} />,
           shortcut: shortcutLabel(2),
-          action: (pos) => addPeerPlaceholder("agent", pos),
+          action: (pos: XYPosition) => addPeerPlaceholder("agent", pos),
         },
       ],
       [
@@ -84,38 +96,65 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
           label: "New Policy",
           icon: <ShieldIcon size={14} />,
           shortcut: shortcutLabel(3),
-          action: (pos) => addBlankPolicy(pos),
+          action: (pos: XYPosition) => addBlankPolicy(pos),
         },
         {
           label: "New Group",
           icon: <FolderGit2 size={14} />,
           shortcut: shortcutLabel(4),
-          action: (pos) => addNewGroup({ x: pos.x - 100, y: pos.y - 30 }),
+          action: (pos: XYPosition) =>
+            addNewGroup({ x: pos.x - 100, y: pos.y - 30 }),
         },
       ],
-      [
-        {
-          label: "New Network",
-          icon: <NetworkIcon size={14} />,
-          shortcut: shortcutLabel(5),
-          action: (pos) => addBlankNode("network", pos),
-        },
-        {
-          label: "New Resource",
-          icon: <WorkflowIcon size={14} />,
-          shortcut: shortcutLabel(6),
-          // Open the editor first — a resource must have an IP/CIDR/domain;
-          // the card is created at this spot only once the modal saves.
-          action: (pos) => setResourceEditor({ createStandaloneAt: pos }),
-        },
-      ],
+      drilled
+        ? [
+            {
+              label: "New Resource",
+              icon: <WorkflowIcon size={14} />,
+              shortcut: shortcutLabel(5),
+              // Created straight into the drilled network (not standalone).
+              action: () =>
+                setResourceEditor({
+                  createInNetworkNodeId: drillDownNetworkNodeId!,
+                }),
+            },
+            {
+              label: "Add Routing Peer",
+              icon: <WaypointsIcon size={14} />,
+              shortcut: shortcutLabel(6),
+              action: () =>
+                setRoutingPeerModal({
+                  networkNodeId: drillDownNetworkNodeId!,
+                }),
+            },
+          ]
+        : [
+            {
+              label: "New Network",
+              icon: <NetworkIcon size={14} />,
+              shortcut: shortcutLabel(5),
+              action: (pos: XYPosition) => addBlankNode("network", pos),
+            },
+            {
+              label: "New Resource",
+              icon: <WorkflowIcon size={14} />,
+              shortcut: shortcutLabel(6),
+              // Open the editor first — a resource must have an IP/CIDR/domain;
+              // the card is created at this spot only once the modal saves.
+              action: (pos: XYPosition) =>
+                setResourceEditor({ createStandaloneAt: pos }),
+            },
+          ],
     ],
     [
+      drilled,
+      drillDownNetworkNodeId,
       addNewGroup,
       addBlankPolicy,
       addPeerPlaceholder,
       addBlankNode,
       setResourceEditor,
+      setRoutingPeerModal,
     ],
   );
 
@@ -167,11 +206,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
         return;
       }
       const target = e.target as HTMLElement;
-      // The draft start screen overlays the pane while the canvas is empty —
-      // right-clicking it counts as right-clicking the canvas.
-      const isCanvas = target.closest(
-        ".react-flow__pane, .draft-empty-canvas",
-      );
+      const isCanvas = target.closest(".react-flow__pane");
       const isNode = target.closest(".react-flow__node");
       if (!isCanvas || isNode) {
         close();

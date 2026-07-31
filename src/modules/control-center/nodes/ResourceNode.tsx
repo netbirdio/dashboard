@@ -91,6 +91,14 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
     parentId ? !!st.nodeLookup.get(parentId)?.hidden : false,
   );
   const isDrilledChild = isFramed && parentFrameHidden;
+  // A draft drill-down reparents its resources OUT to free top-level cards
+  // (no longer framed), so isDrilledChild misses them — also hide the inline
+  // network when we're drilled INTO this resource's own network.
+  const drilledIntoOwnNetwork =
+    !!drillDownNetworkNodeId &&
+    `network-${
+      data.draftNetwork?.networkClientId ?? data.draftNetwork?.networkId ?? ""
+    }` === drillDownNetworkNodeId;
   const standaloneCard = isDraft
     ? !isFramed || isDrilledChild
     : !isFramed && (!!data.draftNetwork || !!data.standalone);
@@ -103,7 +111,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
         data={data}
         // Drilled views name the network in the header; everywhere else —
         // live destination cards included — it shows inline after the name.
-        hideNetwork={isDrilledChild}
+        hideNetwork={isDrilledChild || drilledIntoOwnNetwork}
       />
     );
   }

@@ -40,7 +40,6 @@ import { DraftResourceNetworkModal } from "@/modules/control-center/draft/DraftR
 import { DraftNetworkDestinationModal } from "@/modules/control-center/draft/DraftNetworkDestinationModal";
 import { DraftNetworkEditModal } from "@/modules/control-center/draft/DraftNetworkEditModal";
 import { DraftRoutingPeerModal } from "@/modules/control-center/draft/DraftRoutingPeerModal";
-import { DraftEmptyCanvas } from "@/modules/control-center/draft/DraftEmptyCanvas";
 import { DraftLeaveGuard } from "@/modules/control-center/draft/DraftLeaveGuard";
 import { useDraft } from "@/modules/control-center/hooks/useDraft";
 import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
@@ -241,7 +240,6 @@ function ControlCenterCanvas() {
   return (
     <>
       <ControlCenterEmptyStates />
-      <DraftEmptyCanvas />
       <ControlCenterHeader />
       <PeersToolbar />
       <DraftInstallPeerModal />

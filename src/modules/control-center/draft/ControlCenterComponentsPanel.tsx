@@ -159,6 +159,7 @@ export const ControlCenterComponentsPanel = () => {
     componentsPanelOpen,
     setComponentsPanelOpen,
     setResourceEditor,
+    drillDownNetworkNodeId,
   } = useDraftMode();
 
   // Stays mounted for the whole draft session — opening only toggles
@@ -170,6 +171,7 @@ export const ControlCenterComponentsPanel = () => {
       open={componentsPanelOpen}
       onClose={() => setComponentsPanelOpen(false)}
       setResourceEditor={setResourceEditor}
+      drillDownNetworkNodeId={drillDownNetworkNodeId}
     />
   );
 };
@@ -179,13 +181,18 @@ const PanelContent = React.memo(
     open,
     onClose,
     setResourceEditor,
+    drillDownNetworkNodeId,
   }: {
     open: boolean;
     onClose: () => void;
     // Passed down (not read via useDraftMode) so PanelContent — mounted for
     // the whole session — doesn't re-render on every draft-context change.
     setResourceEditor: ReturnType<typeof useDraftMode>["setResourceEditor"];
+    // When drilled into a single network, the panel is restricted to that
+    // network's resources + new ones (assigned straight to it).
+    drillDownNetworkNodeId: string | null;
   }) => {
+    const drilled = !!drillDownNetworkNodeId;
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState<PanelCategory>("peers");
     const isSearching = search.trim().length > 0;
@@ -350,8 +357,16 @@ const PanelContent = React.memo(
         // (targetNodeId is already resolved to the frame id by the drop
         // provider; every network- node on the draft canvas is a frame.)
         if (kind === "resource") {
-          if (targetNodeId?.startsWith("network-")) {
-            setResourceEditor({ createInNetworkNodeId: targetNodeId });
+          // Drilled into a network → the resource is created straight into it,
+          // wherever it's dropped. Otherwise a drop onto a frame assigns it
+          // there, and a drop on empty canvas creates it standalone.
+          const targetFrame = drilled
+            ? drillDownNetworkNodeId
+            : targetNodeId?.startsWith("network-")
+            ? targetNodeId
+            : undefined;
+          if (targetFrame) {
+            setResourceEditor({ createInNetworkNodeId: targetFrame });
           } else {
             setResourceEditor({ createStandaloneAt: position ?? null });
           }
@@ -359,7 +374,13 @@ const PanelContent = React.memo(
         }
         addBlankPlaceholderNode(kind, position);
       },
-      [addBlankPlaceholderNode, setResourceEditor, addNewGroup],
+      [
+        addBlankPlaceholderNode,
+        setResourceEditor,
+        addNewGroup,
+        drilled,
+        drillDownNetworkNodeId,
+      ],
     );
 
     const handleBlankDragStart = useCallback(
@@ -381,7 +402,12 @@ const PanelContent = React.memo(
             setGhostData(undefined);
             onClose();
           },
-          { canDropIntoFrame: kind === "resource" },
+          {
+            canDropIntoFrame: kind === "resource",
+            // Resource opens the editor modal — never zoom the canvas on a
+            // click-to-place (especially disorienting when drilled).
+            skipClickReveal: kind === "resource",
+          },
         );
       },
       [onDragStart, addBlankNode, onClose],
@@ -509,6 +535,7 @@ const PanelContent = React.memo(
       () => new Set(canvasNodes.map((n) => n.id)),
       [canvasNodes],
     );
+
 
     // Groups marked for deletion in the draft can't be re-added — they'd be
     // gone right after deploy.
@@ -700,10 +727,12 @@ const PanelContent = React.memo(
           (t) =>
             (t.kind === "resource" &&
               (resourcesCategory || matchesSearch(t.label))) ||
-            (t.kind === "network" &&
+            // Networks can't be created while drilled into one.
+            (!drilled &&
+              t.kind === "network" &&
               (networksCategory || matchesSearch(t.label))),
         ),
-      [matchesSearch, resourcesCategory, networksCategory],
+      [matchesSearch, resourcesCategory, networksCategory, drilled],
     );
     const showPolicyTemplate = policiesCategory || matchesSearch("Policy");
 

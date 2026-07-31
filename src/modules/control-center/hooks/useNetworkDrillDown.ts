@@ -6,7 +6,13 @@ import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-vi
 import {
   applyDrilledLayout,
   getDrilledFrameAnchor,
+  DRILLED_RESOURCE_SPACING,
 } from "@/modules/control-center/utils/drilled-layout";
+import {
+  NETWORK_FRAME_HEADER,
+  NETWORK_FRAME_PADDING_X,
+  NETWORK_FRAME_PADDING_Y,
+} from "@/modules/control-center/utils/helpers";
 import {
   drillInto,
   drillOutOf,
@@ -31,6 +37,16 @@ export function useNetworkDrillDown() {
   const viewportRef = useRef<Viewport | null>(null);
   // Parent-view positions of top-level nodes, restored on exit.
   const positionsRef = useRef<Map<string, XYPosition> | null>(null);
+  // Drill-down reparents the frame's resources to INDEPENDENT top-level nodes
+  // (so they drag individually and a resource-group becomes a real group
+  // node); this remembers each one's original parent/type/position to reparent
+  // it back into the frame on exit.
+  const reparentedRef = useRef<
+    Map<
+      string,
+      { parentId?: string; type?: string; position: XYPosition }
+    > | null
+  >(null);
   // True while the exit choreography plays — the reconciling repair must not
   // unhide nodes mid-fade (it would swap the worlds while still visible).
   const exitingRef = useRef(false);
@@ -48,7 +64,88 @@ export function useNetworkDrillDown() {
     prevRef.current = drillDownNetworkNodeId;
 
     if (drillDownNetworkNodeId) {
-      if (drillDownNetworkNodeId === prev) return;
+      if (drillDownNetworkNodeId === prev) {
+        // Already drilled. A resource added into this network is born as a free
+        // top-level column node by the drill-aware assign path
+        // (assignResourceToNetwork) — TRACK it here so exit reparents it back
+        // into the frame, and hide the frame if it was still showing the empty
+        // state. A resource reaching here as a frame CHILD (a non-drill-aware
+        // add path) is freed into the column defensively.
+        const rep = reparentedRef.current;
+        if (!rep) return;
+        const frameId = drillDownNetworkNodeId;
+        const belongs = (n: (typeof nodes)[number]) => {
+          if (!n.id.startsWith("resource-")) return false;
+          if (n.parentId === frameId) return true;
+          const dn = (
+            n.data as {
+              draftNetwork?: { networkId?: string; networkClientId?: string };
+            }
+          )?.draftNetwork;
+          return (
+            !n.parentId &&
+            `network-${dn?.networkClientId ?? dn?.networkId ?? ""}` === frameId
+          );
+        };
+        const untracked = nodes.filter((n) => belongs(n) && !rep.has(n.id));
+        const frameNode = nodes.find((n) => n.id === frameId);
+        const needFrameHide = !!frameNode && !frameNode.hidden;
+        if (untracked.length === 0 && !needFrameHide) return;
+        // Track every newcomer for exit (reparent into the frame; the frame
+        // layout re-grids the exact position on exit, so any is fine).
+        untracked.forEach((n) =>
+          rep.set(n.id, {
+            parentId: frameId,
+            type: n.type,
+            position: { ...n.position },
+          }),
+        );
+        // Only frame CHILDREN need freeing/positioning — top-level newcomers
+        // are already placed by the assign path.
+        const frameChildren = untracked.filter((n) => n.parentId === frameId);
+        const colX = frameNode
+          ? frameNode.position.x + NETWORK_FRAME_PADDING_X
+          : 0;
+        const placedTop = nodes.filter((n) => rep.has(n.id) && !n.parentId);
+        let nextY = placedTop.length
+          ? Math.max(...placedTop.map((n) => n.position.y)) +
+            DRILLED_RESOURCE_SPACING
+          : frameNode
+          ? frameNode.position.y +
+            NETWORK_FRAME_HEADER +
+            NETWORK_FRAME_PADDING_Y
+          : 0;
+        const placements = new Map<string, XYPosition>();
+        frameChildren.forEach((child) => {
+          placements.set(child.id, { x: colX, y: nextY });
+          nextY += DRILLED_RESOURCE_SPACING;
+        });
+        if (frameChildren.length === 0 && !needFrameHide) return;
+        setNodes((prevNodes) =>
+          prevNodes.map((n) => {
+            // First resource added into a previously-EMPTY drilled network:
+            // the frame was kept visible as the empty state — hide it now so
+            // the top-level resource replaces it (a no-op for the normal drill
+            // where the frame is already hidden).
+            if (n.id === frameId && !n.hidden) {
+              return { ...n, hidden: true };
+            }
+            const pos = placements.get(n.id);
+            if (!pos) return n;
+            return {
+              ...n,
+              hidden: false,
+              parentId: undefined,
+              extent: undefined,
+              selectable: undefined,
+              draggable: undefined,
+              type: n.type === "resourceGroupNode" ? "groupNode" : n.type,
+              position: pos,
+            };
+          }),
+        );
+        return;
+      }
       const frameId = drillDownNetworkNodeId;
       viewportRef.current = reactFlow.getViewport();
       // Committed state, NOT the reactFlow store — when the drill id is set
@@ -68,14 +165,51 @@ export function useNetworkDrillDown() {
       const keptEdges = edges.filter(
         (e) => keep.has(e.source) && keep.has(e.target),
       );
+      // An empty network (no resources, no policies) has nothing to reparent
+      // or lay out — drilling would dive into a blank canvas (empty bounds →
+      // NaN fit, camera stuck at the dive-in zoom). Keep the FRAME itself
+      // visible so the drill lands on the centered "No Resources / Add
+      // Resource" empty state; the first resource added hides it (below).
+      const emptyDrill = keep.size === 0;
+      if (emptyDrill) keep.add(frameId);
       const { updatedNodes } = applyDrilledLayout(keptTop, keptEdges);
       const drilledPos = new Map(updatedNodes.map((n) => [n.id, n.position]));
       // The hidden frame anchors the resource grid — placed manually so the
       // first child cell coincides with the layout's resource-column start
       // (including the frame in the layout itself skews the column math).
-      const childCount = nodes.filter((n) => n.parentId === frameId).length;
+      const drilledChildren = nodes
+        .filter((n) => n.parentId === frameId)
+        .sort(
+          (a, b) => a.position.y - b.position.y || a.position.x - b.position.x,
+        );
+      const childCount = drilledChildren.length;
       const frameAnchor = getDrilledFrameAnchor(childCount);
       drilledPos.set(frameId, frameAnchor);
+
+      // Reparent each resource to a free TOP-LEVEL node laid out in a single
+      // column (ABSOLUTE position = frame anchor + the column slot). A
+      // resource-GROUP row becomes a real group node. Originals are kept so
+      // exit puts them back into the frame.
+      const reparented = new Map<
+        string,
+        { parentId?: string; type?: string; position: XYPosition }
+      >();
+      drilledChildren.forEach((child, i) => {
+        reparented.set(child.id, {
+          parentId: child.parentId,
+          type: child.type,
+          position: { ...child.position },
+        });
+        drilledPos.set(child.id, {
+          x: frameAnchor.x + NETWORK_FRAME_PADDING_X,
+          y:
+            frameAnchor.y +
+            NETWORK_FRAME_HEADER +
+            NETWORK_FRAME_PADDING_Y +
+            i * DRILLED_RESOURCE_SPACING,
+        });
+      });
+      reparentedRef.current = reparented;
 
       const pane = document.querySelector<HTMLElement>(".react-flow");
 
@@ -137,6 +271,22 @@ export function useNetworkDrillDown() {
         setNodes((prevNodes) =>
           prevNodes.map((n) => {
             const hidden = !keep.has(n.id);
+            const rep = reparented.get(n.id);
+            if (rep) {
+              // Free the resource: top-level, absolute-positioned, draggable
+              // and selectable; a resource-group becomes a real group node.
+              return {
+                ...n,
+                hidden,
+                parentId: undefined,
+                extent: undefined,
+                selectable: undefined,
+                draggable: undefined,
+                type:
+                  rep.type === "resourceGroupNode" ? "groupNode" : n.type,
+                position: drilledPos.get(n.id) ?? n.position,
+              };
+            }
             const position = !n.parentId ? drilledPos.get(n.id) : undefined;
             if (n.hidden === hidden && !position) return n;
             return { ...n, hidden, ...(position ? { position } : {}) };
@@ -185,9 +335,23 @@ export function useNetworkDrillDown() {
     // Exit transition: restore the snapshotted parent positions along with
     // the hidden flags (the drill re-laid the kept world out).
     const savedPositions = prev ? positionsRef.current : null;
+    const reparented = prev ? reparentedRef.current : null;
     const restoreNodes = () => {
       setNodes((prevNodes) =>
         prevNodes.map((n) => {
+          // Put a freed resource back INTO its frame (parent/type/position),
+          // where the frame layout re-grids it.
+          const rep = reparented?.get(n.id);
+          if (rep) {
+            return {
+              ...n,
+              hidden: false,
+              parentId: rep.parentId,
+              type: rep.type,
+              position: rep.position,
+              selectable: false,
+            };
+          }
           if (n.parentId) return n;
           const position = savedPositions?.get(n.id);
           if (!n.hidden && !position) return n;
@@ -195,7 +359,10 @@ export function useNetworkDrillDown() {
         }),
       );
     };
-    if (prev) positionsRef.current = null;
+    if (prev) {
+      positionsRef.current = null;
+      reparentedRef.current = null;
+    }
 
     // Reverse drill illusion via the shared canvas transition: the drilled
     // world zooms OUT while fading, the parent canvas is restored invisibly
