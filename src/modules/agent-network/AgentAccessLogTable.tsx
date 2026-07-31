@@ -1046,9 +1046,13 @@ function TokenBreakdown({ entry }: { entry: AIAccessLogEntry }) {
 }
 
 function TokensCell({ entry }: { entry: AIAccessLogEntry }) {
+  // Cache-only requests carry no input/output but real cache read/write tokens,
+  // so weigh all four buckets — matching TokenBreakdown's total.
   if (
-    (entry.inputTokens === undefined || entry.inputTokens === 0) &&
-    (entry.outputTokens === undefined || entry.outputTokens === 0)
+    (entry.inputTokens ?? 0) === 0 &&
+    (entry.outputTokens ?? 0) === 0 &&
+    (entry.cachedInputTokens ?? 0) === 0 &&
+    (entry.cacheCreationTokens ?? 0) === 0
   ) {
     return <EmptyRow />;
   }
@@ -1060,12 +1064,12 @@ function TokensCell({ entry }: { entry: AIAccessLogEntry }) {
         <div className={"flex gap-2 items-center whitespace-nowrap"}>
           <ArrowUpIcon size={15} className={"text-sky-400"} />
           <span className={"sr-only"}>Input:</span>
-          {entry.inputTokens.toLocaleString()}
+          {(entry.inputTokens ?? 0).toLocaleString()}
         </div>
         <div className={"flex gap-2 items-center whitespace-nowrap"}>
           <ArrowDownIcon size={15} className={"text-netbird"} />
           <span className={"sr-only"}>Output:</span>
-          {entry.outputTokens.toLocaleString()}
+          {(entry.outputTokens ?? 0).toLocaleString()}
         </div>
       </div>
     </FullTooltip>
@@ -1351,7 +1355,13 @@ function SessionEntriesRow({ session }: { session: AIAccessLogSession }) {
       >
         {[...session.entries].reverse().map((entry) => {
           const isOpen = open.includes(entry.id);
-          const total = (entry.inputTokens ?? 0) + (entry.outputTokens ?? 0);
+          // Sum all four buckets so cache-only requests count and the figure
+          // matches TokenBreakdown's total.
+          const total =
+            (entry.inputTokens ?? 0) +
+            (entry.outputTokens ?? 0) +
+            (entry.cachedInputTokens ?? 0) +
+            (entry.cacheCreationTokens ?? 0);
           const isError = entry.decision === "deny" || entry.status >= 400;
           return (
             <div key={entry.id}>
