@@ -84,24 +84,22 @@ export function useNetworkFrameLayout() {
     });
 
     frames.forEach((frame) => {
-      // While ANY frame is drilled, the drill hook owns the canvas: the
-      // drilled frame's resources are reparented OUT to top-level nodes it
-      // manages (so they drag individually / a resource-group becomes a real
-      // group node), and every other frame is hidden and frozen. Laying out
-      // here would either fight those hidden flags or race the reparent
-      // (stale child updates clobbering the freed nodes) — so skip all frames.
-      if (drillDownNetworkNodeId) {
+      // While a frame is drilled, the others are hidden and frozen — writing
+      // to them would fight the drill-down's hidden flags.
+      if (drillDownNetworkNodeId && frame.id !== drillDownNetworkNodeId) {
         return;
       }
       // A hidden frame with no active drill is mid-exit-choreography (or
       // about to be healed by the drill hook's repair) — freeze it: laying
       // its children back into the parent grid now would visibly yank the
       // still-shown drilled cards.
-      if (frame.hidden) {
+      if (frame.hidden && frame.id !== drillDownNetworkNodeId) {
         return;
       }
-      // Parent view only — the drilled column is owned by the drill hook now.
-      const drilled = false;
+      // Drilled RENDERING only once the swap happened (frame hidden) — the
+      // drill id is set before the zoom-in choreography, and the frame must
+      // keep its parent look while still visible.
+      const drilled = frame.id === drillDownNetworkNodeId && !!frame.hidden;
       const resources = nodes
         .filter((n) => n.parentId === frame.id && !obsolete.has(n.id))
         .sort(

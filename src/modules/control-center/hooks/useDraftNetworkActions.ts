@@ -7,8 +7,6 @@ import { Policy } from "@/interfaces/Policy";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { DRILLED_RESOURCE_SPACING } from "@/modules/control-center/utils/drilled-layout";
 import {
   DraftNetworkRef,
   getDraftResource,
@@ -17,9 +15,6 @@ import {
   isFrameNode,
   makeMembershipEdge,
   NETWORK_FRAME_CHILD_WIDTH,
-  NETWORK_FRAME_HEADER,
-  NETWORK_FRAME_PADDING_X,
-  NETWORK_FRAME_PADDING_Y,
   NETWORK_FRAME_WIDTH,
 } from "@/modules/control-center/utils/helpers";
 
@@ -59,7 +54,6 @@ export function useDraftNetworkActions() {
     trackUpdateResource,
     updateDraftNetwork,
   } = useDraftChangeset();
-  const { drillDownNetworkNodeId } = useDraftMode();
 
   // Frames a network node and pulses its border for a couple of seconds so a
   // just-assigned resource is easy to spot landing in it. Runs after a short
@@ -67,10 +61,6 @@ export function useDraftNetworkActions() {
   // before we fit to it.
   const highlightNetworkNode = useCallback(
     (networkNodeId: string) => {
-      // While drilled INTO this network the frame is hidden and parked at its
-      // off-screen anchor — fitting to it would fling the camera away from the
-      // drilled column. The just-added resource is already in view, so skip.
-      if (drillDownNetworkNodeId) return;
       const PULSE_MS = 2200;
       window.setTimeout(() => {
         reactFlow.fitView({
@@ -102,7 +92,7 @@ export function useDraftNetworkActions() {
         }, PULSE_MS);
       }, 180);
     },
-    [reactFlow, drillDownNetworkNodeId],
+    [reactFlow],
   );
 
   // The id of the on-canvas frame for a network ref (real id or client id),
@@ -204,58 +194,13 @@ export function useDraftNetworkActions() {
       const networkRef = getNetworkRef(networkNode);
       if (!networkRef) return;
       const isFrame = isFrameNode(networkNode);
-      // Adding INTO the currently-drilled network: its frame is hidden and its
-      // resources render as free top-level column nodes (drag individually,
-      // resource-groups as real group nodes). Position the newcomer at the
-      // BOTTOM of that column rather than parenting it into the hidden frame
-      // (where it'd be invisible and stack on the anchor slot). The drill hook
-      // tracks it so exit reparents it back into the frame.
-      const drilledIntoThis =
-        isFrame && drillDownNetworkNodeId === networkNodeId;
-      const resolvesToFrame = (n: Node) => {
-        const dn = (n.data as { draftNetwork?: DraftNetworkRef })?.draftNetwork;
-        return (
-          `network-${dn?.networkClientId ?? dn?.networkId ?? ""}` ===
-          networkNodeId
-        );
-      };
 
       reactFlow.setNodes((prev) => {
         const childCount = prev.filter(
           (n) => n.parentId === networkNodeId && n.id !== resourceNodeId,
         ).length;
-        // Bottom of the drilled resource column (below every top-level resource
-        // already placed for this network).
-        const drilledPosition = (): { x: number; y: number } => {
-          const anchor = networkNode!.position;
-          const column = prev.filter(
-            (c) =>
-              c.id !== resourceNodeId &&
-              c.type === "resourceNode" &&
-              !c.parentId &&
-              resolvesToFrame(c),
-          );
-          return {
-            x: anchor.x + NETWORK_FRAME_PADDING_X,
-            y: column.length
-              ? Math.max(...column.map((c) => c.position.y)) +
-                DRILLED_RESOURCE_SPACING
-              : anchor.y + NETWORK_FRAME_HEADER + NETWORK_FRAME_PADDING_Y,
-          };
-        };
         let next = prev.map((n) => {
           if (n.id === resourceNodeId) {
-            if (drilledIntoThis) {
-              return {
-                ...n,
-                data: { ...n.data, draftNetwork: networkRef },
-                // Free-standing top-level card (the hidden frame no longer
-                // stamps its width) at the column's next slot.
-                parentId: undefined,
-                position: drilledPosition(),
-                style: { ...n.style, width: undefined },
-              };
-            }
             return {
               ...n,
               data: { ...n.data, draftNetwork: networkRef },
@@ -292,8 +237,7 @@ export function useDraftNetworkActions() {
           return n;
         });
         // ReactFlow requires parents before their children in the array.
-        // (Skipped when drilled — the resource is top-level, not a child.)
-        if (isFrame && !drilledIntoThis) {
+        if (isFrame) {
           const childIdx = next.findIndex((n) => n.id === resourceNodeId);
           const parentIdx = next.findIndex((n) => n.id === networkNodeId);
           if (childIdx < parentIdx) {
@@ -321,7 +265,7 @@ export function useDraftNetworkActions() {
       // The network is on the canvas by definition here — draw the eye to it.
       highlightNetworkNode(networkNodeId);
     },
-    [reactFlow, syncDraftResource, highlightNetworkNode, drillDownNetworkNodeId],
+    [reactFlow, syncDraftResource, highlightNetworkNode],
   );
 
   // Assigns a network to a draft resource held INSIDE a group (no canvas
