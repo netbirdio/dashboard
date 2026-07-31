@@ -61,6 +61,10 @@ import { useDrillDownBrowserHistory } from "@/modules/control-center/hooks/useDr
 import { useGroupFocusDim } from "@/modules/control-center/hooks/useGroupFocusDim";
 import { isFrameNode } from "@/modules/control-center/utils/helpers";
 import GroupsProvider from "@/contexts/GroupsProvider";
+import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
+import { NetworkProvider } from "@/modules/networks/NetworkProvider";
+import { Network } from "@/interfaces/Network";
+import { useSWRConfig } from "swr";
 
 export default function ControlCenter() {
   return (
@@ -113,6 +117,20 @@ function ControlCenterCanvas() {
   const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragToGroup();
   useDrillDownBrowserHistory();
   useGroupFocusDim();
+
+  // Live networks empty state → "Add Network" runs the networks-page create
+  // flow (network → resource → routing peer) in place; once the network
+  // exists we drill straight into it so the user lands on the canvas.
+  const { mutate } = useSWRConfig();
+  const onLiveNetworkCreated = React.useCallback(
+    async (network: Network) => {
+      // Wait for /networks to include the new network before drilling — the
+      // single-network view build reads the freshly revalidated list.
+      await mutate("/networks");
+      ui.onNetworkSelect(network.id);
+    },
+    [mutate, ui],
+  );
 
   // ReactFlow re-renders whenever the nodes prop changes (every drag tick);
   // its internal GraphView bails via memo ONLY when all other props keep
@@ -239,7 +257,15 @@ function ControlCenterCanvas() {
 
   return (
     <>
-      <ControlCenterEmptyStates />
+      {/* NetworkProvider (with its access-control context) stays mounted here
+          so the live "Add Network" flow — network → resource → routing peer,
+          the same modals as the networks page — survives the empty state
+          unmounting the moment the first network is created. */}
+      <NetworkAccessControlProvider>
+        <NetworkProvider onNetworkCreated={onLiveNetworkCreated}>
+          <ControlCenterEmptyStates />
+        </NetworkProvider>
+      </NetworkAccessControlProvider>
       <ControlCenterHeader />
       <PeersToolbar />
       <DraftInstallPeerModal />

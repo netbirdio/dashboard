@@ -1,5 +1,9 @@
+import { useSyncExternalStore } from "react";
 import type { Node, ReactFlowInstance, Rect, Viewport } from "@xyflow/react";
-import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
+import {
+  DEFAULT_MIN_ZOOM,
+  EMPTY_STATE_ZOOM,
+} from "@/modules/control-center/utils/layouts";
 
 // Reusable "dive / fly-out" scene transition for the control-center canvas.
 //
@@ -29,8 +33,13 @@ const FADE_OUT = 200;
 const PRE_SWAP_MOTION = 240;
 const SWAP_AT = 210;
 const FADE_IN_DELAY = 30;
-const FADE_IN = 220;
-const REVEAL = 450;
+// Exported so out-of-pane overlays (e.g. drill-down empty states) can grow
+// in with the exact same fade/zoom timing and curve as the canvas reveal.
+export const FADE_IN = 220;
+export const REVEAL = 450;
+// "in" direction grow-in start scale (mirrors runCanvasTransition's default
+// growFrom for direction "in").
+export const GROW_IN_FROM = 0.7;
 
 // Matches the app-wide fit parameters (live view init, drill fits).
 export const CANVAS_FIT = { padding: 0.1, maxZoom: 0.8 } as const;
@@ -48,9 +57,28 @@ export const getNodeRect = (node?: Node | null): Rect | null =>
     : null;
 
 let transitionActive = false;
+const transitionListeners = new Set<() => void>();
+const setTransitionActive = (value: boolean) => {
+  if (transitionActive === value) return;
+  transitionActive = value;
+  transitionListeners.forEach((l) => l());
+};
 // View-init effects call their own fitView after a rebuild — during a
 // transition the reveal owns the camera, so those fits must be skipped.
 export const isCanvasTransitionActive = () => transitionActive;
+
+// Reactive subscription for React components (overlays outside the canvas
+// pane, which the transition's opacity fade doesn't cover, use this to stay
+// hidden until the dive/fly-out has settled).
+export const useCanvasTransitionActive = () =>
+  useSyncExternalStore(
+    (cb) => {
+      transitionListeners.add(cb);
+      return () => transitionListeners.delete(cb);
+    },
+    isCanvasTransitionActive,
+    isCanvasTransitionActive,
+  );
 
 export type CanvasTransitionOptions = {
   // Pre-swap camera motion. "in" dives into `target` (an inner rect of it);
@@ -98,7 +126,7 @@ export function runCanvasTransition(
     return;
   }
 
-  transitionActive = true;
+  setTransitionActive(true);
 
   // 1. Fade out + accelerating camera motion.
   pane.style.transition = `opacity ${FADE_OUT}ms ease-in`;
@@ -191,16 +219,28 @@ export function runCanvasTransition(
 
     // 3. Fade in + decelerating reveal.
     setTimeout(() => {
+      const autoReveal = !finalVp && !reveal && !revealFrom;
       // Late scene viewport: for view rebuilds the new nodes only exist (and
       // are measured) after the swap committed — compute the grow-in
       // destination now so ALL callers share the same motion.
-      const lateVp =
-        !finalVp && !reveal && !revealFrom ? computeSceneViewport() : null;
-      if (lateVp) placeAtGrowStart(lateVp);
+      const lateVp = autoReveal ? computeSceneViewport() : null;
+      // No nodes to frame (e.g. an empty network's drilled view) — settle at
+      // the shared empty-state camera instead of leaving the camera at the
+      // zoomed-in dive position (which read as "too zoomed in").
+      const emptyVp =
+        autoReveal && !lateVp
+          ? {
+              zoom: EMPTY_STATE_ZOOM,
+              x: pane.clientWidth / 2,
+              y: pane.clientHeight / 2,
+            }
+          : null;
+      const growVp = lateVp ?? emptyVp;
+      if (growVp) placeAtGrowStart(growVp);
 
       pane.style.transition = `opacity ${FADE_IN}ms ease-out`;
       pane.style.opacity = "1";
-      const destination = finalVp ?? lateVp;
+      const destination = finalVp ?? growVp;
       if (destination) {
         void reactFlow.setViewport(destination, {
           duration: REVEAL,
@@ -215,8 +255,13 @@ export function runCanvasTransition(
           ease: easeOutHalf,
         });
       }
-      transitionActive = false;
       onDone?.();
+      // Ungate out-of-pane overlays (the empty states) once the canvas is
+      // fully opaque again — they're outside the pane, so appearing while it's
+      // still faint reads as a flash. They then ease in with a short fade
+      // (animate-in) over the solid canvas as the reveal zoom settles, so it's
+      // neither a flash nor a laggy late pop-in.
+      setTimeout(() => setTransitionActive(false), FADE_IN);
     }, FADE_IN_DELAY);
   }, SWAP_AT);
 }

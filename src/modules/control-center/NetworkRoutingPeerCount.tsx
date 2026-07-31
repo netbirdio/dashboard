@@ -1,5 +1,4 @@
 import useFetchApi from "@utils/api";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
 import { Network, NetworkRouter } from "@/interfaces/Network";
@@ -18,11 +17,10 @@ type Props = {
 };
 
 // Live single-network view's routing-peers control — the same button group +
-// dropdown as the draft frame's floating bar. Rows open the real
-// routing-peer modal (its save PUTs); Add navigates to the network page's
-// routing-peers tab.
+// dropdown as the draft frame's floating bar. Rows open the real routing-peer
+// modal (its save PUTs); Add (and the "No Routing Peer" status click) opens
+// the same modal to POST a new routing peer against this network.
 export const NetworkRoutingPeerCount = ({ network }: Props) => {
-  const router = useRouter();
   const { peers } = usePeers();
   const { groups } = useGroups();
   const { setRoutingPeerModal } = useDraftMode();
@@ -32,10 +30,6 @@ export const NetworkRoutingPeerCount = ({ network }: Props) => {
     false,
     !!network?.id,
   );
-
-  const openNetworkPage = () => {
-    router.push(`/network?id=${network.id}&tab=routing-peers`);
-  };
 
   const rows: RoutingPeerRow[] = useMemo(
     () =>
@@ -68,7 +62,7 @@ export const NetworkRoutingPeerCount = ({ network }: Props) => {
     <RoutingPeersBar
       rows={rows}
       count={getRoutingPeerCount(rows)}
-      onAdd={openNetworkPage}
+      onAdd={() => setRoutingPeerModal({ network })}
     />
   );
 };

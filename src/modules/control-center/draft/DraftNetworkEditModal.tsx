@@ -1,10 +1,12 @@
 import { Modal } from "@components/modal/Modal";
 import { useReactFlow } from "@xyflow/react";
 import * as React from "react";
+import { useSWRConfig } from "swr";
 import { Network } from "@/interfaces/Network";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { NetworkModalContent } from "@/modules/networks/NetworkModal";
 
 // Draft network editor — the networks page's network modal in pure-data mode
@@ -36,14 +38,20 @@ const EditorContent = ({
   onClose: () => void;
 }) => {
   const reactFlow = useReactFlow();
+  const { mutate } = useSWRConfig();
   const { changes } = useDraftChangeset();
   const { renameDraftNetwork } = useDraftNetworkActions();
+  const { networks } = useControlCenterData();
 
   const frame = reactFlow.getNodes().find((n) => n.id === networkNodeId);
-  const network = (frame?.data as { network?: Network })?.network;
-  const name = network?.name ?? "";
   // The description lives only in the create-network change.
   const clientId = networkNodeId.replace("network-", "");
+  // The live single-network view has no frame node (it lays resources out
+  // directly), so fall back to the real network from the API list by id.
+  const network =
+    (frame?.data as { network?: Network })?.network ??
+    networks?.find((n) => n.id === clientId);
+  const name = network?.name ?? "";
   const description = (
     changes.find(
       (c) => c.type === "create-network" && c.clientId === clientId,
@@ -53,7 +61,16 @@ const EditorContent = ({
   // EXISTING networks edit through the real modal — its save PUTs via the
   // API (same approach as API routers in the routing-peers dropdown).
   if (network?.id) {
-    return <NetworkModalContent network={network} onUpdated={onClose} />;
+    return (
+      <NetworkModalContent
+        network={network}
+        onUpdated={(n) => {
+          void mutate("/networks");
+          void mutate(`/networks/${n.id}`);
+          onClose();
+        }}
+      />
+    );
   }
 
   return (

@@ -1,6 +1,7 @@
 import { Modal } from "@components/modal/Modal";
 import { useReactFlow } from "@xyflow/react";
 import * as React from "react";
+import { useSWRConfig } from "swr";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
@@ -19,6 +20,7 @@ export const DraftRoutingPeerModal = () => {
   const { addRouterFromSelection } = useDraftNetworkActions();
   const { changes, removeChange } = useDraftChangeset();
   const reactFlow = useReactFlow();
+  const { mutate } = useSWRConfig();
 
   const networkNodeId = routingPeerModal?.networkNodeId;
   const network =
@@ -57,6 +59,21 @@ export const DraftRoutingPeerModal = () => {
   // An API router (picked from a routing-peers dropdown) edits the REAL
   // network via the modal's own save.
   const isApiRouter = !!routingPeerModal?.router && !editChange;
+  // Live "Add Routing Peer" (empty-state / header, no frame node): a real
+  // network with no preset router — the modal's own save POSTs a new router.
+  const isLiveCreate =
+    !isDraft &&
+    !!network?.id &&
+    !routingPeerModal?.router &&
+    !editChange &&
+    !networkNodeId;
+
+  const revalidateLiveRouters = () => {
+    if (!network?.id) return;
+    void mutate(`/networks/${network.id}/routers`);
+    void mutate("/networks");
+    void mutate("/groups");
+  };
 
   return (
     <Modal
@@ -68,7 +85,18 @@ export const DraftRoutingPeerModal = () => {
           <RoutingPeerModalContent
             network={network as Network}
             router={routingPeerModal.router}
-            onUpdated={() => setRoutingPeerModal(null)}
+            onUpdated={() => {
+              revalidateLiveRouters();
+              setRoutingPeerModal(null);
+            }}
+          />
+        ) : isLiveCreate ? (
+          <RoutingPeerModalContent
+            network={network as Network}
+            onCreated={() => {
+              revalidateLiveRouters();
+              setRoutingPeerModal(null);
+            }}
           />
         ) : (
           <RoutingPeerModalContent

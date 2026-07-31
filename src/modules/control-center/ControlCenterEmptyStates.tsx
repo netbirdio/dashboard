@@ -6,38 +6,127 @@ import GetStartedTest from "@components/ui/GetStartedTest";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { FlowView } from "@/modules/control-center/FlowSelector";
-import { ExternalLinkIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useNetworksContext } from "@/modules/networks/NetworkProvider";
+import { useCanvasTransitionActive } from "@/modules/control-center/utils/canvas-transition";
+
+// Grow-in classes matching the canvas reveal's own fade/zoom (grows from
+// 0.7 → 1 scale over 450ms while fading in — same GROW_IN_FROM/REVEAL values
+// as canvas-transition.ts; kept as literal numbers here, not imported,
+// because Tailwind's class scanner only generates utilities it can find as
+// static text in source — a template-literal-interpolated class name like
+// `zoom-in-[${GROW_IN_FROM}]` never gets generated and silently no-ops).
+// Same tailwindcss-animate mechanism used for menu/popover entrances
+// elsewhere (see CanvasContextMenu, NodeContextMenu), just tuned to the
+// canvas's own timing/scale instead of the small popover defaults.
+const CANVAS_REVEAL_IN =
+  "animate-in fade-in zoom-in-[.7] duration-[450ms] ease-out fill-mode-both";
 
 export function ControlCenterEmptyStates() {
-  const { currentView } = useCanvasState();
+  const { currentView, selectedNetwork, layoutInitialized } = useCanvasState();
   const { isDraft } = useDraftMode();
   const { isPeersLoading, isNetworksLoading, peers, networks } =
     useControlCenterData();
-  const router = useRouter();
+  const { openCreateNetworkModal, openResourceModal } = useNetworksContext();
   const { permission } = usePermissions();
+  const isTransitioning = useCanvasTransitionActive();
 
   if (isDraft) return null;
+
+  // Drilled into a single network that has no resources yet — offer the way to
+  // fill it (opens the real networks-page resource modal via NetworkProvider,
+  // which this overlay is mounted inside).
+  const drilledNetwork =
+    selectedNetwork !== ""
+      ? networks?.find((n) => n.id === selectedNetwork)
+      : undefined;
+  // Gate on layoutInitialized AND the drill transition being finished — the
+  // overlay lives outside the canvas pane, so the transition's opacity fade
+  // doesn't cover it; without these it flashes in mid-dive.
+  const drilledNetworkEmpty =
+    layoutInitialized &&
+    !isTransitioning &&
+    !!drilledNetwork &&
+    (drilledNetwork.resources?.length ?? 0) === 0;
 
   return (
     <>
       {currentView === FlowView.PEERS &&
         !isPeersLoading &&
         peers?.length === 0 && (
-          <div className={"absolute left-0 top-0 w-full mt-28"}>
+          <div className={"absolute left-0 top-0 z-10 w-full mt-28"}>
             <NoPeersGettingStarted showBackground={false} />
           </div>
         )}
 
       {currentView === FlowView.NETWORKS &&
         !isNetworksLoading &&
-        networks?.length === 0 && (
-          <div className={"absolute left-0 top-0 w-full mt-28"}>
+        drilledNetworkEmpty && (
+          <div
+            className={`absolute left-0 top-0 z-10 w-full mt-28 ${CANVAS_REVEAL_IN}`}
+          >
             <GetStartedTest
               showBackground={false}
+              cardClassName={"bg-transparent border-0"}
+              icon={
+                <SquareIcon
+                  icon={
+                    <NetworkRoutesIcon
+                      className={"fill-nb-gray-200"}
+                      size={20}
+                    />
+                  }
+                  color={"gray"}
+                  size={"large"}
+                />
+              }
+              title={"Create Resources"}
+              description={
+                "It looks like you don't have any resources. Add internal services like hosts, subnets or domains so your peers can reach them."
+              }
+              button={
+                <div
+                  className={"gap-x-4 flex items-center justify-center"}
+                >
+                  <Button
+                    variant={"primary"}
+                    onClick={() =>
+                      drilledNetwork && openResourceModal(drilledNetwork)
+                    }
+                    disabled={!permission.networks.update}
+                  >
+                    <PlusCircle size={16} />
+                    Add Resource
+                  </Button>
+                </div>
+              }
+              learnMore={
+                <>
+                  Learn more about
+                  <InlineLink
+                    href={"https://docs.netbird.io/how-to/networks#resources"}
+                    target={"_blank"}
+                  >
+                    Resources
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </>
+              }
+            />
+          </div>
+        )}
+
+      {currentView === FlowView.NETWORKS &&
+        !isNetworksLoading &&
+        selectedNetwork === "" &&
+        networks?.length === 0 && (
+          <div className={"absolute left-0 top-0 z-10 w-full mt-28"}>
+            <GetStartedTest
+              showBackground={false}
+              cardClassName={"bg-transparent border-0"}
               icon={
                 <SquareIcon
                   icon={
@@ -60,10 +149,11 @@ export function ControlCenterEmptyStates() {
                 >
                   <Button
                     variant={"primary"}
-                    onClick={() => router.push("/networks")}
+                    onClick={openCreateNetworkModal}
                     disabled={!permission.networks.create}
                   >
-                    Go to Networks
+                    <PlusCircle size={16} />
+                    Add Network
                   </Button>
                 </div>
               }
