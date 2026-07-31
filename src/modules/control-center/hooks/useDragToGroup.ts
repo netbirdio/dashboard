@@ -89,7 +89,7 @@ export function groupContainsItem(groupNode: Node, itemId: string): boolean {
 }
 
 export function useDragToGroup() {
-  const { isDraft } = useDraftMode();
+  const { isDraft, drillDownNetworkNodeId } = useDraftMode();
   const { setNodes, setEdges } = useCanvasState();
   const { trackAddGroupMembers, addGroupToDraftResource, trackCreateResource } =
     useDraftChangeset();
@@ -323,6 +323,11 @@ export function useDragToGroup() {
 
       const parentId = draggedNode.parentId;
       if (!parentId?.startsWith("network-")) return;
+      // Drilled-into network: its resources render as standalone cards, so a
+      // resource drag must move only that card — NOT the (hidden) frame and
+      // all its siblings. Skip the frame-drag setup and let ReactFlow move the
+      // child on its own.
+      if (parentId === drillDownNetworkNodeId) return;
       const frame = reactFlow.getNodes().find((n) => n.id === parentId);
       if (!frame) return;
       frameDrag.current = {
@@ -338,7 +343,7 @@ export function useDragToGroup() {
         prev.map((n) => (n.id === frame.id ? { ...n, zIndex: 1000 } : n)),
       );
     },
-    [isDraft, reactFlow, setNodes],
+    [isDraft, reactFlow, setNodes, drillDownNetworkNodeId],
   );
 
   const onNodeDrag = useCallback(

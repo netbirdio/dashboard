@@ -90,8 +90,10 @@ export const StandaloneResourceNode = ({
       }}
     >
       {/* Unassigned resources keep the floating "No Network" control top-left
-          (like the peer Install button) that opens the network picker. */}
-      {!hasNetwork && editable && (
+          (like the peer Install button) that opens the network picker. Hidden
+          for drilled children — they're shown inside their own network, so the
+          bar (and its "no network" claim) makes no sense there. */}
+      {!hasNetwork && editable && !hideNetwork && (
         <div className={"absolute bottom-full left-0 mb-3 nodrag"}>
           <Button
             variant={"secondary"}
