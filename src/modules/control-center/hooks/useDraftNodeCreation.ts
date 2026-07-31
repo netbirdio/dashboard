@@ -73,7 +73,8 @@ const getNextUniqueName = (base: string, taken: Set<string>) => {
 export function useDraftNodeCreation() {
   const reactFlow = useReactFlow();
   const { policies, networks, networkResources } = useControlCenterData();
-  const { trackCreateNetwork, trackInstallPeer } = useDraftChangeset();
+  const { trackCreateNetwork, trackInstallPeer, trackCreateGroup } =
+    useDraftChangeset();
 
   // Places a node roughly centered under the given flow position, on top of
   // everything already on the canvas (frames elevate their z — a peer dropped
@@ -311,9 +312,14 @@ export function useDraftNodeCreation() {
           },
         }),
       );
+      // Record the create so it lands in the changeset / Review & Deploy and a
+      // POST /groups runs on deploy — mirrors every other new-group path (e.g.
+      // addNewGroup). Members added later (drag / rename) coalesce onto this
+      // pending create by name.
+      trackCreateGroup({ clientId: nodeId, name });
       return nodeId;
     },
-    [reactFlow],
+    [reactFlow, trackCreateGroup],
   );
 
   // Drops an EXISTING network as a full frame (same chrome + behaviour as a
