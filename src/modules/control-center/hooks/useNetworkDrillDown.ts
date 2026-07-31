@@ -13,6 +13,10 @@ import {
   getNodeRect,
 } from "@/modules/control-center/utils/canvas-transition";
 import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
+import {
+  NETWORK_FRAME_WIDTH,
+  getNetworkFrameHeight,
+} from "@/modules/control-center/utils/helpers";
 
 // Drill-down (spec §10): clicking a network frame enters a single-network
 // draft view — only the frame (full resource grid via useNetworkFrameLayout's
@@ -117,6 +121,22 @@ export function useNetworkDrillDown() {
             n.measured?.height ?? 80,
           );
         });
+        // Empty network — nothing was kept and the frame has no children, so
+        // the loop above never extended the bounds. Left as-is they'd stay
+        // Infinity and the viewport math below resolves to ±Infinity: a blank
+        // canvas stranded at an invalid transform that can't be panned (pan
+        // deltas can't move ±Infinity). Frame the camera on the hidden frame's
+        // own rect instead, so drilling in lands ON the (empty) grid and a
+        // resource added there shows up centered rather than off to the side.
+        if (minX === Infinity) {
+          const frame = nodes.find((n) => n.id === frameId);
+          extend(
+            frameAnchor.x,
+            frameAnchor.y,
+            frame?.measured?.width ?? NETWORK_FRAME_WIDTH,
+            frame?.measured?.height ?? getNetworkFrameHeight(0),
+          );
+        }
         const W = pane?.clientWidth ?? window.innerWidth;
         const H = pane?.clientHeight ?? window.innerHeight;
         const bw = Math.max(maxX - minX, 1);

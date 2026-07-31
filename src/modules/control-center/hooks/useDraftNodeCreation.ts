@@ -8,6 +8,7 @@ import {
   getNetworkFrameHeight,
   getTopZIndex,
   NETWORK_FRAME_CHILD_WIDTH,
+  NETWORK_FRAME_FALLBACK_ROW,
   NETWORK_FRAME_WIDTH,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
@@ -264,6 +265,13 @@ export function useDraftNodeCreation() {
           // re-sorts by y/x and repositions everything).
           position: getFrameChildPosition(-1),
           style: { width: NETWORK_FRAME_CHILD_WIDTH },
+          // Seed dimensions so the node counts as "measured" the instant it
+          // mounts. When the frame is DRILLED it's hidden, and React Flow keeps
+          // an unmeasured child of a hidden parent at visibility:hidden — it
+          // renders but can't be selected/dragged ("fixed, not on canvas").
+          // The seed is replaced by the real measured size a frame later.
+          initialWidth: NETWORK_FRAME_CHILD_WIDTH,
+          initialHeight: NETWORK_FRAME_FALLBACK_ROW,
           data: {
             resource: { name },
             enabled: true,
@@ -305,6 +313,10 @@ export function useDraftNodeCreation() {
           // re-sorts by y/x and repositions everything).
           position: getFrameChildPosition(-1),
           style: { width: NETWORK_FRAME_CHILD_WIDTH },
+          // See addResourceToFrame: seed dimensions so a child added into a
+          // drilled (hidden) frame is measured on mount and stays interactive.
+          initialWidth: NETWORK_FRAME_CHILD_WIDTH,
+          initialHeight: NETWORK_FRAME_FALLBACK_ROW,
           data: {
             group: { name },
             enabled: true,
