@@ -133,12 +133,14 @@ export function useNetworkView() {
       addNode(allNodes, {
         id: `resource-${resource.id}`,
         type: "resourceNode",
-        // The draftNetwork ref routes the node to the standalone CARD look
-        // (name - network inline), same as the draft drill-down.
+        // The draftNetwork ref routes the node to the standalone CARD look,
+        // same as the draft drill-down. `drilled` suppresses the inline
+        // "- Network" suffix — the header already names the network here.
         data: {
           resource,
           enabled: true,
           draftNetwork: { networkId: network.id, name: network.name },
+          drilled: true,
         },
         position: { x: 0, y: 0 },
       });

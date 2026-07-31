@@ -499,6 +499,24 @@ export function useDragToGroup() {
         });
       }
 
+      // Drilled-into resource dropped: it renders as a standalone card (its
+      // frame is hidden) and drags freely like the live single-network view.
+      // Mark it so useNetworkFrameLayout stops snapping it back to its grid
+      // slot; the marker is cleared when the parent grid reconciles on exit.
+      if (
+        draggedNode.parentId &&
+        draggedNode.parentId === drillDownNetworkNodeId
+      ) {
+        setNodes((prev) =>
+          prev.map((n) =>
+            n.id === draggedNode.id
+              ? { ...n, data: { ...n.data, drilledFreePos: true } }
+              : n,
+          ),
+        );
+        return;
+      }
+
       // Contained resource → final snap; no group-drop for framed resources.
       const frame = frameDrag.current;
       if (frame && draggedNode.id === frame.childId) {
@@ -643,6 +661,7 @@ export function useDragToGroup() {
       networkResources,
       assignResourceToNetwork,
       addMemberToGroup,
+      drillDownNetworkNodeId,
     ],
   );
 

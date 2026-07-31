@@ -144,8 +144,15 @@ export function useNetworkFrameLayout() {
       const width = getNetworkFrameWidth(cols, childWidth);
 
       resources.slice(visibleResources.length).forEach((child) => {
-        if (!child.hidden || child.selectable !== false) {
-          updates.set(child.id, { hidden: true, selectable: false });
+        const clearFree = !!child.data?.drilledFreePos;
+        if (!child.hidden || child.selectable !== false || clearFree) {
+          updates.set(child.id, {
+            hidden: true,
+            selectable: false,
+            ...(clearFree
+              ? { data: { ...child.data, drilledFreePos: undefined } }
+              : {}),
+          });
         }
       });
 
@@ -186,8 +193,19 @@ export function useNetworkFrameLayout() {
         // selection (a row spans the full frame width, and Partial selection
         // would catch it on any graze — phantom members in Create Group).
         if (child.selectable !== false) childUpdate.selectable = false;
-        if (child.position.x !== desired.x || child.position.y !== desired.y) {
+        // A drilled resource the user dragged holds its own position (it
+        // renders standalone, like the live single-network view) — don't snap
+        // it back to the grid slot. In the parent view the row is grid-managed
+        // again, so the marker is dropped and the slot position restored.
+        const freePos = drilled && !!child.data?.drilledFreePos;
+        if (
+          !freePos &&
+          (child.position.x !== desired.x || child.position.y !== desired.y)
+        ) {
           childUpdate.position = desired;
+        }
+        if (!drilled && child.data?.drilledFreePos) {
+          childUpdate.data = { ...child.data, drilledFreePos: undefined };
         }
         // Sync the width/height and clear any stale fade mask left by the
         // old overflow treatment (rows are solid; overflow is a "+N more"

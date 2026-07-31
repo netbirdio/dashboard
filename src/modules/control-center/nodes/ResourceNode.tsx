@@ -34,6 +34,9 @@ type ResourceNode = Node<
     // Live views (peer/group/user destinations): force the standalone card
     // look without a network ref.
     standalone?: boolean;
+    // Live single-network (drilled) view: the network is named in the header,
+    // so suppress the inline "- Network" suffix on the card.
+    drilled?: boolean;
   },
   "resourceNode"
 >;
@@ -103,7 +106,10 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
         data={data}
         // Drilled views name the network in the header; everywhere else —
         // live destination cards included — it shows inline after the name.
-        hideNetwork={isDrilledChild}
+        // Draft drill-down signals via the hidden parent frame; the live
+        // single-network view carries an explicit `drilled` flag (its
+        // resources are top-level nodes, not frame children).
+        hideNetwork={isDrilledChild || !!data.drilled}
       />
     );
   }
