@@ -115,17 +115,20 @@ function DraftDrillDownHeader() {
     return options;
   }, [nodes]);
 
-  // The all-networks selector only belongs to draft sessions ENTERED from the
-  // networks view — the drill-down breadcrumb is a networks-view concept.
-  // Entering from peers/users/groups leaves currentView on that view (the live
-  // FlowSelector is hidden in draft, so it can't change), and it must stay
-  // hidden even after the user adds a network frame to the canvas.
-  if (currentView !== FlowView.NETWORKS) return null;
-
-  // No frames on the canvas → nothing to select.
-  if (frameOptions.length <= 1) return null;
-
   const drilled = !!drillDownNetworkNodeId;
+
+  // The all-networks OVERVIEW selector only belongs to draft sessions ENTERED
+  // from the networks view — picking a network from the top-left list is a
+  // networks-view concept. Entering from peers/users/groups leaves currentView
+  // on that view (the live FlowSelector is hidden in draft, so it can't
+  // change), so the standalone selector must stay hidden even after the user
+  // adds a network frame to the canvas. The DRILL-DOWN header (back button,
+  // network switcher, routing-peers bar) is view-agnostic, so it still renders
+  // once the user drills into a network from any entry view.
+  if (!drilled && currentView !== FlowView.NETWORKS) return null;
+
+  // Overview with no frames on the canvas → nothing to select.
+  if (!drilled && frameOptions.length <= 1) return null;
 
   return (
     <>
