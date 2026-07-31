@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import FullTooltip from "@components/FullTooltip";
+import { cn } from "@utils/helpers";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   SelectDropdown,
@@ -44,25 +45,50 @@ const networkSelectorWidth = (labels: unknown[]) => {
   return Math.min(256, Math.max(150, 86 + longest * 6.5));
 };
 
+// Edit-network button (✎) shown next to the network selector in BOTH modes.
+// setNetworkEditor routes by network: a draft network edits pure-data, an
+// existing one opens the real network modal (its save PUTs) — so it works in
+// live mode too (DraftNetworkEditModal is always mounted).
+// Right-hand segment attached to the network selector (the selector's right
+// corners are squared when this is present), so [ selector | ✎ ] reads as one
+// control — the border-l-0 lets the selector's right border be the divider.
+function NetworkEditButton({ networkNodeId }: { networkNodeId: string }) {
+  const { setNetworkEditor } = useDraftMode();
+  return (
+    <button
+      type={"button"}
+      aria-label={"Edit network"}
+      onClick={() => setNetworkEditor({ networkNodeId })}
+      className={
+        "flex items-center justify-center h-[40px] px-4 shrink-0 rounded-r-md border border-l-0 border-gray-700/40 bg-nb-gray-920 text-gray-400 hover:text-white hover:bg-nb-gray-910 transition-colors"
+      }
+    >
+      <PencilLineIcon size={14} />
+    </button>
+  );
+}
+
 // Shown while a network frame is drilled into (single-network draft view),
 // mirroring the live single-network header 1:1: back arrow, the network
 // SELECT (switches the drill-down between the frames on the canvas), the
 // shared RoutingPeersBar (rows from the draft state; Add opens the
 // routing-peer modal, the draft counterpart of the live navigation to the
-// routing-peers tab), plus a draft-only edit button (networks page's network
-// modal in pure-data mode — name + description land on the draft network).
+// routing-peers tab), plus an edit button (networks page's network modal;
+// draft networks pure-data, existing ones PUT).
 function DraftDrillDownHeader() {
-  const {
-    drillDownNetworkNodeId,
-    setDrillDownNetworkNodeId,
-    setRoutingPeerModal,
-    setNetworkEditor,
-  } = useDraftMode();
+  const { drillDownNetworkNodeId, setDrillDownNetworkNodeId, setRoutingPeerModal } =
+    useDraftMode();
   const { nodes } = useCanvasState();
   const { rows, count } = useFrameRouterRows(
     drillDownNetworkNodeId ?? undefined,
     !!drillDownNetworkNodeId,
   );
+
+  // Controlled so a canvas click closes it — the dropdown floats over the
+  // ReactFlow pane, whose stopPropagation hides the click from Radix's own
+  // outside-detection (same as the live selector).
+  const [selectOpen, setSelectOpen] = React.useState(false);
+  useCloseOnCanvasClick(selectOpen, () => setSelectOpen(false));
 
   // Overview (not drilled): a network selector stays top-left, like the live
   // networks view — it lists the frames on the canvas and picking one drills
@@ -89,86 +115,63 @@ function DraftDrillDownHeader() {
     return options;
   }, [nodes]);
 
-  if (!drillDownNetworkNodeId) {
-    if (frameOptions.length <= 1) return null;
-    return (
-      <div
-        key={"draft-network-select"}
-        style={{ width: networkSelectorWidth(frameOptions.map((o) => o.label)) }}
-      >
-        <SelectDropdown
-          variant={"secondary"}
-          value={""}
-          onChange={(nodeId) => nodeId && setDrillDownNetworkNodeId(nodeId)}
-          options={frameOptions}
-          showSearch={true}
-          className={
-            // Same treatment as the live network selector.
-            "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0"
-          }
-          size={"xs"}
-        />
-      </div>
-    );
-  }
-  const frame = nodes.find((n) => n.id === drillDownNetworkNodeId);
-  const name =
-    (frame?.data as { network?: { name?: string } })?.network?.name ?? "";
+  // No frames on the canvas → nothing to select.
+  if (frameOptions.length <= 1) return null;
+
+  const drilled = !!drillDownNetworkNodeId;
 
   return (
     <>
-      <Button
-        variant={"secondary"}
-        size={"xs"}
-        className={"!bg-nb-gray-930"}
-        onClick={() => setDrillDownNetworkNodeId(null)}
-      >
-        <ArrowLeftIcon size={14} />
-      </Button>
-      {/* Network name chip, same button-group treatment as RoutingPeersBar:
-          [icon name | ✎] — the pencil segment (draft networks only) opens
-          the network editor. Not a select: the drill-down targets one frame. */}
-      <div
-        className={
-          "flex items-stretch h-[40px] rounded-md overflow-hidden shrink-0 bg-nb-gray-920 border border-gray-700/40"
-        }
-      >
+      {/* Back to the all-networks overview (only while drilled in). */}
+      {drilled && (
+        <Button
+          variant={"secondary"}
+          size={"xs"}
+          className={"!bg-nb-gray-930"}
+          onClick={() => setDrillDownNetworkNodeId(null)}
+        >
+          <ArrowLeftIcon size={14} />
+        </Button>
+      )}
+      {/* Network SELECTOR (+ attached ✎ edit segment when drilled) — one
+          control. The selector switches the drill-down between the frames
+          ("All Networks" = overview). */}
+      <div className={"flex items-stretch"}>
         <div
-          className={
-            // Same left padding (px-4), icon-text gap (2.5) and label
-            // typography (xs medium, nb-gray-200) as the live network
-            // SelectDropdown trigger.
-            "flex items-center gap-2.5 pl-4 pr-4 text-xs font-medium text-nb-gray-200 whitespace-nowrap"
-          }
+          key={"draft-network-select"}
+          className={"min-w-[200px]"}
+          style={{ width: networkSelectorWidth(frameOptions.map((o) => o.label)) }}
         >
-          {/* Same icon size + color as the network SelectDropdown trigger
-              (its icon inherits the button's nb-gray-300). */}
-          <NetworkIcon size={14} className={"shrink-0 text-nb-gray-300"} />
-          {name}
+          <SelectDropdown
+            variant={"secondary"}
+            value={drillDownNetworkNodeId ?? ""}
+            onChange={(nodeId) => setDrillDownNetworkNodeId(nodeId || null)}
+            options={frameOptions}
+            showSearch={true}
+            open={selectOpen}
+            onOpenChange={setSelectOpen}
+            popoverMinWidth={200}
+            className={cn(
+              // Same treatment as the live network selector.
+              "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
+              // Square the right corners so the ✎ segment attaches flush.
+              drilled && "!rounded-r-none",
+            )}
+            size={"xs"}
+          />
         </div>
-        {/* Edit segment (like the routing bar's Add): draft networks edit
-            the draft (pure-data), existing ones open the REAL network modal
-            (its save PUTs). */}
-        <button
-          type={"button"}
-          aria-label={"Edit network"}
-          onClick={() =>
-            setNetworkEditor({ networkNodeId: drillDownNetworkNodeId })
-          }
-          className={
-            "flex items-center px-4 outline-none border-l border-gray-700/40 text-gray-400 hover:text-white hover:bg-nb-gray-910 transition-colors"
-          }
-        >
-          <PencilLineIcon size={12} />
-        </button>
+        {drilled && <NetworkEditButton networkNodeId={drillDownNetworkNodeId} />}
       </div>
-      <RoutingPeersBar
-        rows={rows}
-        count={count}
-        onAdd={() =>
-          setRoutingPeerModal({ networkNodeId: drillDownNetworkNodeId })
-        }
-      />
+      {/* Routing peers only make sense on a specific network. */}
+      {drilled && (
+        <RoutingPeersBar
+          rows={rows}
+          count={count}
+          onAdd={() =>
+            setRoutingPeerModal({ networkNodeId: drillDownNetworkNodeId })
+          }
+        />
+      )}
     </>
   );
 }
@@ -227,29 +230,38 @@ function HeaderTopLeft() {
           {/* Draft title (Untitled Draft dropdown + three-dots menu) hidden for now */}
           {/* {isDraft && <DraftModeTitle />} */}
 
+          {/* Network SELECTOR (+ attached ✎ edit segment once a network is
+              drilled into) — one control, mirroring the draft header. The edit
+              opens the real network modal (PUT) for the existing network. */}
           {!isDraft && currentView === "networks" && hasNetworks && (
-            <div
-              key={"network-select"}
-              className={"min-w-[200px]"}
-              style={{
-                width: networkSelectorWidth(networkOptions.map((o) => o.label)),
-              }}
-            >
-              <SelectDropdown
-                variant={"secondary"}
-                value={selectedNetwork}
-                onChange={onNetworkSelect}
-                options={networkOptions}
-                showSearch={true}
-                open={networkSelectOpen}
-                onOpenChange={setNetworkSelectOpen}
-                popoverMinWidth={200}
-                className={
-                  // Fixed height matching the RoutingPeersBar next to it.
-                  "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0"
-                }
-                size={"xs"}
-              />
+            <div key={"network-select"} className={"flex items-stretch"}>
+              <div
+                className={"min-w-[200px]"}
+                style={{
+                  width: networkSelectorWidth(networkOptions.map((o) => o.label)),
+                }}
+              >
+                <SelectDropdown
+                  variant={"secondary"}
+                  value={selectedNetwork}
+                  onChange={onNetworkSelect}
+                  options={networkOptions}
+                  showSearch={true}
+                  open={networkSelectOpen}
+                  onOpenChange={setNetworkSelectOpen}
+                  popoverMinWidth={200}
+                  className={cn(
+                    // Fixed height matching the RoutingPeersBar next to it.
+                    "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
+                    // Square the right corners so the ✎ segment attaches flush.
+                    selectedNetwork && "!rounded-r-none",
+                  )}
+                  size={"xs"}
+                />
+              </div>
+              {selectedNetwork && (
+                <NetworkEditButton networkNodeId={`network-${selectedNetwork}`} />
+              )}
             </div>
           )}
 

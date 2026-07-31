@@ -22,10 +22,6 @@ import { DraftStartPopover } from "@/modules/control-center/draft/DraftStartPopo
 // way back to live.
 const showDraftSwitcher = true;
 
-// Hidden for now — the Draft tab (and Cancel, while drafting) is the only
-// entry/exit. Flip to true to bring the Live tab back.
-const showLiveTab = false;
-
 type Props = {};
 export const DraftModeSwitcher = ({}: Props) => {
   const { isDraft, startBlankDraft, startCurrentDraft } = useDraftMode();
@@ -48,6 +44,57 @@ export const DraftModeSwitcher = ({}: Props) => {
     setStartOpen(false);
     void discardAndExit();
   };
+
+  // The Live | Draft segmented control. Shown in BOTH modes so the current
+  // mode is always obvious (the active segment). In live the Draft segment
+  // carries the chooser chevron (opens the blank/current popover); in draft
+  // the Live segment switches back (discardAndExit).
+  const modeTabs = (withChooserChevron: boolean) => (
+    <SegmentedTabs value={mode} onChange={handleSwitch} activationMode={"manual"}>
+      <SegmentedTabs.List
+        className={
+          "border-b rounded-b-lg text-sm font-medium bg-nb-gray-930 p-1"
+        }
+      >
+        <SegmentedTabs.Trigger
+          value={"live"}
+          className={"text-xs px-3 py-[0.45rem]"}
+          data-testid={"cc-mode-live"}
+        >
+          <CircleIcon active={true} size={8} className={"shrink-0"} />
+          Live
+        </SegmentedTabs.Trigger>
+        <SegmentedTabs.Trigger
+          value={"draft"}
+          className={cn(
+            "text-xs px-3 py-[0.45rem] whitespace-nowrap hover:text-nb-gray-200",
+            // Hold the hover state while the chooser popover is open.
+            startOpen && "bg-nb-gray-900/50 text-nb-gray-200",
+          )}
+          data-testid={"cc-mode-draft"}
+        >
+          <PencilLineIcon size={12} />
+          Draft
+          {/* Same Beta treatment as the sidebar's Reverse Proxy entry. */}
+          <SmallBadge
+            text={"Beta"}
+            variant={"sky"}
+            className={"text-[8px] leading-none py-[3px] px-[5px]"}
+            textClassName={"top-0"}
+          />
+          {withChooserChevron && (
+            <ChevronDownIcon
+              size={12}
+              className={cn(
+                "shrink-0 transition-transform",
+                startOpen && "rotate-180",
+              )}
+            />
+          )}
+        </SegmentedTabs.Trigger>
+      </SegmentedTabs.List>
+    </SegmentedTabs>
+  );
 
   return (
     // The id lets the group panel match its width to this action row
@@ -86,65 +133,21 @@ export const DraftModeSwitcher = ({}: Props) => {
               </span>
             )}
           </Button>
+          {/* Mode indicator while drafting — Draft is active, Live switches
+              back (destroys the draft, confirmed when there are changes). */}
+          {showDraftSwitcher && modeTabs(false)}
         </>
       )}
       {!isDraft &&
         (showDraftSwitcher ? (
-        <DraftStartPopover
-          open={startOpen}
-          onOpenChange={setStartOpen}
-          onStartBlank={startBlankDraft}
-          onUseCurrent={startCurrentDraft}
-        >
-          <SegmentedTabs
-            value={mode}
-            onChange={handleSwitch}
-            activationMode={"manual"}
+          <DraftStartPopover
+            open={startOpen}
+            onOpenChange={setStartOpen}
+            onStartBlank={startBlankDraft}
+            onUseCurrent={startCurrentDraft}
           >
-            <SegmentedTabs.List
-              className={
-                "border-b rounded-b-lg text-sm font-medium bg-nb-gray-930 p-1"
-              }
-            >
-              {showLiveTab && (
-                <SegmentedTabs.Trigger
-                  value={"live"}
-                  className={"text-xs px-3 py-[0.45rem]"}
-                  data-testid={"cc-mode-live"}
-                >
-                  <CircleIcon active={true} size={8} className={"shrink-0"} />
-                  Live
-                </SegmentedTabs.Trigger>
-              )}
-              <SegmentedTabs.Trigger
-                value={"draft"}
-                className={cn(
-                  "text-xs px-3 py-[0.45rem] whitespace-nowrap hover:text-nb-gray-200",
-                  // Hold the hover state while the chooser popover is open.
-                  startOpen && "bg-nb-gray-900/50 text-nb-gray-200",
-                )}
-                data-testid={"cc-mode-draft"}
-              >
-                <PencilLineIcon size={12} />
-                Draft
-                {/* Same Beta treatment as the sidebar's Reverse Proxy entry. */}
-                <SmallBadge
-                  text={"Beta"}
-                  variant={"sky"}
-                  className={"text-[8px] leading-none py-[3px] px-[5px]"}
-                  textClassName={"top-0"}
-                />
-                <ChevronDownIcon
-                  size={12}
-                  className={cn(
-                    "shrink-0 transition-transform",
-                    startOpen && "rotate-180",
-                  )}
-                />
-              </SegmentedTabs.Trigger>
-            </SegmentedTabs.List>
-          </SegmentedTabs>
-        </DraftStartPopover>
+            {modeTabs(true)}
+          </DraftStartPopover>
         ) : (
           <Button
             variant={"secondary"}
