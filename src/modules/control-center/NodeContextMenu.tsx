@@ -60,7 +60,7 @@ import {
   isFrameNode,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
-import { NetworkResource } from "@/interfaces/Network";
+import { Network, NetworkResource } from "@/interfaces/Network";
 import { canRenamePeerNode } from "@/modules/control-center/utils/node-capabilities";
 
 type MenuPosition = {
@@ -123,6 +123,7 @@ export const NodeContextMenu = ({
     trackDeletePolicy,
     trackUpdateResource,
     trackDeleteResource,
+    trackDeleteNetwork,
     trackInstallPeer,
   } = useDraftChangeset();
   const { confirm } = useDialog();
@@ -315,6 +316,30 @@ export const NodeContextMenu = ({
       removeNodeWithEdges(id);
     },
     [nodes, confirm, trackDeleteResource, removeNodeWithEdges],
+  );
+
+  // Delete a whole EXISTING network: confirm, record the delete-network
+  // change (its resources/routers cascade server-side), then take the frame
+  // off the canvas. Draft networks are never deleted this way — they Remove.
+  const deleteNetwork = useCallback(
+    async (id: string) => {
+      const target = nodes.find((n) => n.id === id);
+      const network = (target?.data as { network?: Network })?.network;
+      if (!network?.id) return;
+      const choice = await confirm({
+        title: `Delete network “${network.name}”?`,
+        description:
+          "Its resources and routing peers are removed too. It will be marked for deletion and deleted when you review and deploy.",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        type: "danger",
+        dismissOnOutsideClick: true,
+      });
+      if (!choice) return;
+      trackDeleteNetwork({ networkId: network.id, name: network.name });
+      removeNodeWithEdges(id);
+    },
+    [nodes, confirm, trackDeleteNetwork, removeNodeWithEdges],
   );
 
   const node = useMemo(
@@ -936,11 +961,20 @@ export const NodeContextMenu = ({
           icon: <Share2Icon size={14} />,
           onClick: () => setRoutingPeerModal({ networkNodeId: nodeId }),
         },
-        {
-          label: "Remove",
-          icon: <CircleMinusIcon size={14} />,
-          onClick: handleRemove,
-        },
+        // Draft networks Remove (cancels their pending create); existing ones
+        // Delete (marked for deletion, removed from the account on deploy).
+        draftNetwork
+          ? {
+              label: "Remove",
+              icon: <CircleMinusIcon size={14} />,
+              onClick: handleRemove,
+            }
+          : {
+              label: "Delete",
+              icon: <TrashIcon size={14} />,
+              danger: true,
+              onClick: () => deleteNetwork(nodeId),
+            },
       ];
     }
 

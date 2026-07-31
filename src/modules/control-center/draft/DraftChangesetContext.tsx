@@ -159,6 +159,17 @@ export interface DeleteResourceChange {
   networkName: string; // display-only (labels)
 }
 
+// Deleting a whole EXISTING network (real API id). Draft networks are never
+// deleted — they're removed from the canvas (untrackNetwork drops their
+// create). The API cascade removes the network's resources and routers
+// server-side, so we don't emit per-resource/router deletes for them.
+export interface DeleteNetworkChange {
+  id: string;
+  type: "delete-network";
+  networkId: string; // real API network id
+  name: string;
+}
+
 // A placeholder peer on the canvas (user device / server / agent). Not an
 // API call — the peer comes into existence by INSTALLING it (or, for a user
 // device, selecting an existing peer). Listed in Review & Deploy as a
@@ -185,6 +196,7 @@ export type DraftChange =
   | CreateRouterChange
   | UpdateResourceChange
   | DeleteResourceChange
+  | DeleteNetworkChange
   | InstallPeerChange;
 
 // Git-style classification for diff coloring (+ green, ~ orange, − red,
@@ -200,6 +212,7 @@ export const getChangeKind = (change: DraftChange): ChangeKind => {
     case "create-router":
       return "add";
     case "delete-resource":
+    case "delete-network":
     case "delete-group":
     case "delete-policy":
       return "remove";
@@ -236,6 +249,8 @@ export const getChangeApiCall = (change: DraftChange): string => {
       return `PUT /networks/${change.networkId}/resources/${change.resourceId}`;
     case "delete-resource":
       return `DELETE /networks/${change.networkId}/resources/${change.resourceId}`;
+    case "delete-network":
+      return `DELETE /networks/${change.networkId}`;
     case "install-peer":
       // Not a DEPLOY call — the setup key (and its bound group) are created
       // when the user installs (Generate Key), not on deploy. Shown as the
@@ -343,6 +358,11 @@ export const getChangeLabel = (
       return {
         title: `Delete resource “${change.name}” from “${change.networkName}”`,
       };
+    case "delete-network":
+      return {
+        title: `Delete network “${change.name}”`,
+        detail: "its resources and routing peers are removed too",
+      };
     case "install-peer":
       return {
         title: `Install peer “${change.name}”`,
@@ -406,6 +426,9 @@ export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "update-policy",
   "delete-policy",
   "delete-resource",
+  // A whole-network delete cascades its resources/routers server-side, so it
+  // runs last — after any explicit policy/resource/group deletes.
+  "delete-network",
   "delete-group",
 ];
 
@@ -598,6 +621,10 @@ interface DraftChangesetContextType {
   // Deletes an EXISTING resource (supersedes a pending update).
   trackDeleteResource: (
     params: Omit<DeleteResourceChange, "id" | "type">,
+  ) => void;
+  // Deletes a whole EXISTING network (cascades resources/routers server-side).
+  trackDeleteNetwork: (
+    params: Omit<DeleteNetworkChange, "id" | "type">,
   ) => void;
   // Adds a group ref (API id or draft-group name) to a draft resource's
   // create change — deploy applies groups via the resource's own `groups`
@@ -1094,6 +1121,30 @@ export function DraftChangesetProvider({
     [],
   );
 
+  // Deletes a whole EXISTING network. The API cascade removes its resources
+  // and routers, so any pending resource/router changes scoped to it are
+  // dropped (they'd be redundant or fail once the network is gone). Draft
+  // networks are never deleted this way — they use untrackNetwork.
+  const trackDeleteNetwork = useCallback(
+    (params: Omit<DeleteNetworkChange, "id" | "type">) => {
+      setChanges((prev) => [
+        ...prev.filter((c) => {
+          if (
+            (c.type === "create-resource" ||
+              c.type === "update-resource" ||
+              c.type === "delete-resource" ||
+              c.type === "create-router") &&
+            c.networkId === params.networkId
+          )
+            return false;
+          return true;
+        }),
+        { id: uid(), type: "delete-network", ...params },
+      ]);
+    },
+    [],
+  );
+
   const addGroupToDraftResource = useCallback(
     (clientId: string, groupRef: string) => {
       setChanges((prev) =>
@@ -1386,6 +1437,7 @@ export function DraftChangesetProvider({
       untrackResource,
       trackUpdateResource,
       trackDeleteResource,
+      trackDeleteNetwork,
       addGroupToDraftResource,
       removeGroupFromDraftResource,
       trackCreateRouter,
@@ -1416,6 +1468,7 @@ export function DraftChangesetProvider({
       untrackResource,
       trackUpdateResource,
       trackDeleteResource,
+      trackDeleteNetwork,
       addGroupToDraftResource,
       removeGroupFromDraftResource,
       trackCreateRouter,

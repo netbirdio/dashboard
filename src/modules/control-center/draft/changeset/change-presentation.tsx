@@ -35,6 +35,7 @@ export const changeIcon = (change: DraftChange, size = 14) => {
     case "delete-policy":
       return <ShieldIcon size={size} />;
     case "create-network":
+    case "delete-network":
       return <NetworkIcon size={size} />;
     case "create-resource":
     case "update-resource":
@@ -66,6 +67,7 @@ export const entityTitle = (change: DraftChange): string => {
     case "delete-policy":
       return `Policy “${change.name}”`;
     case "create-network":
+    case "delete-network":
       return `Network “${change.name}”`;
     case "create-resource":
     case "update-resource":
@@ -112,6 +114,7 @@ export const entityTypeLabel = (change: DraftChange): string => {
     case "delete-policy":
       return "Policy";
     case "create-network":
+    case "delete-network":
       return "Network";
     case "create-resource":
     case "update-resource":

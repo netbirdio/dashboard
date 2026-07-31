@@ -205,6 +205,10 @@ export function useDeployChangeset() {
           );
           return;
         }
+        case "delete-network": {
+          await networkRequest.del("", `/${change.networkId}`);
+          return;
+        }
       }
     };
 

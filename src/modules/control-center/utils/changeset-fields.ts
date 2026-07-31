@@ -124,6 +124,7 @@ const entityFor = (change: DraftChange): string => {
     case "delete-policy":
       return "Policy";
     case "create-network":
+    case "delete-network":
       return "Network";
     case "create-resource":
     case "update-resource":
@@ -197,6 +198,8 @@ export function getChangeVisual(
       if (change.description) rows.push({ label: "Description", after: change.description });
       return { ...base, rows };
     }
+    case "delete-network":
+      return { ...base, rows: [{ label: "Name", before: change.name }] };
 
     case "create-resource":
       return {

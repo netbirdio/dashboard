@@ -298,6 +298,7 @@ export function buildChangeRequest(
     case "delete-policy":
     case "delete-group":
     case "delete-resource":
+    case "delete-network":
       return { method, path };
   }
 }
