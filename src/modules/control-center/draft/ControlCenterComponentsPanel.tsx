@@ -584,14 +584,32 @@ const PanelContent = React.memo(
 
     const filteredResources = useMemo(() => {
       if (!resources) return [];
-      if (!search || resourcesCategory) return resources;
+      let list = resources;
+      // Drilled into a single network: only that network's OWN existing
+      // resources (a draft network has none yet — its resources are draft).
+      if (drilled) {
+        if (drillDownNetworkNodeId!.startsWith("network-new-")) return [];
+        const realId = drillDownNetworkNodeId!.replace("network-", "");
+        const ids = new Set(
+          networks?.find((n) => String(n.id) === realId)?.resources ?? [],
+        );
+        list = resources.filter((r) => r.id && ids.has(r.id));
+      }
+      if (!search || resourcesCategory) return list;
       const lower = search.toLowerCase();
-      return resources.filter(
+      return list.filter(
         (r) =>
           r.name?.toLowerCase().includes(lower) ||
           r.address?.toLowerCase().includes(lower),
       );
-    }, [resources, search, resourcesCategory]);
+    }, [
+      resources,
+      search,
+      resourcesCategory,
+      drilled,
+      drillDownNetworkNodeId,
+      networks,
+    ]);
 
     const filteredGroups = useMemo(() => {
       if (!groups) return [];
@@ -630,14 +648,34 @@ const PanelContent = React.memo(
       const result: { nodeId: string; resource: NetworkResource }[] = [];
       canvasNodes.forEach((n) => {
         const resource = getDraftResource(n);
-        if (resource) result.push({ nodeId: n.id, resource });
+        if (!resource) return;
+        // Drilled: only draft resources that belong to THIS network.
+        if (drilled) {
+          const dn = (
+            n.data as {
+              draftNetwork?: { networkId?: string; networkClientId?: string };
+            }
+          )?.draftNetwork;
+          if (
+            `network-${dn?.networkClientId ?? dn?.networkId ?? ""}` !==
+            drillDownNetworkNodeId
+          )
+            return;
+        }
+        result.push({ nodeId: n.id, resource });
       });
       if (!search || resourcesCategory) return result;
       const lower = search.toLowerCase();
       return result.filter((r) =>
         r.resource.name.toLowerCase().includes(lower),
       );
-    }, [canvasNodes, search, resourcesCategory]);
+    }, [
+      canvasNodes,
+      search,
+      resourcesCategory,
+      drilled,
+      drillDownNetworkNodeId,
+    ]);
 
     // Placeholder peers dropped in this draft (Server / Agent / User
     // Device) — NEW badge, disabled (already on canvas by construction).
@@ -672,14 +710,17 @@ const PanelContent = React.memo(
     }, [canvasNodes, search, policiesCategory]);
 
     const filteredNetworks = useMemo(() => {
-      if (!networks) return [];
+      // Drilled into a single network — no other networks are addable here.
+      if (!networks || drilled) return [];
       if (!search || resourcesCategory) return networks;
       const lower = search.toLowerCase();
       return networks.filter((n) => n.name.toLowerCase().includes(lower));
-    }, [networks, search, resourcesCategory]);
+    }, [networks, search, resourcesCategory, drilled]);
 
     // Networks created in this draft (frames) — NEW badge, disabled.
     const draftNetworks = useMemo(() => {
+      // Drilled into a single network — the networks list is hidden entirely.
+      if (drilled) return [];
       const result: {
         nodeId: string;
         name: string;
@@ -701,7 +742,7 @@ const PanelContent = React.memo(
       if (!search || resourcesCategory) return result;
       const lower = search.toLowerCase();
       return result.filter((r) => r.name.toLowerCase().includes(lower));
-    }, [canvasNodes, search, resourcesCategory]);
+    }, [canvasNodes, search, resourcesCategory, drilled]);
 
     const matchesSearch = useCallback(
       (label: string) =>
