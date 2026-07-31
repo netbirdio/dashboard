@@ -50,7 +50,8 @@ export const changeIcon = (change: DraftChange, size = 14) => {
       ) : change.kind === "user-device" ? (
         <MonitorSmartphoneIcon size={size} />
       ) : (
-        <ServerIcon size={size} />
+        // Server glyph reads visually heavier than the others — nudge it down.
+        <ServerIcon size={size - 2} />
       );
   }
 };
