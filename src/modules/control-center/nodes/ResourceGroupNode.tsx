@@ -5,6 +5,7 @@ import { type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
 import { Group } from "@/interfaces/Group";
 import { useCanvasUI,
+  useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
@@ -26,6 +27,7 @@ type ResourceGroupNode = Node<
 export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => {
   const { group, showHandles = true } = data;
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();
+  const { setSelectedDestinationGroup } = useDestinationGroup();
   const { contextMenuNodeId } = useCanvasUI();
   const showHalo = contextMenuNodeId === id;
   // Framed rows accept connection DROPS in every view — the drop routes
@@ -39,11 +41,16 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
 
   return (
     <div
-      className={
+      className={cn(
         // h-full + centering: the frame layout stamps a fixed slot height on
         // framed rows (deterministic grid — no measure-based re-layout).
-        "cc-frame-row relative rounded-lg transition-all group/node w-full h-full flex flex-col justify-center"
-      }
+        "cc-frame-row relative rounded-lg transition-all group/node w-full h-full flex flex-col justify-center",
+        // Draft: clicking the row opens the group panel for this group.
+        isDraft && "cursor-pointer",
+      )}
+      onClick={() => {
+        if (isDraft) setSelectedDestinationGroup(group?.id || id);
+      }}
     >
       <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
         <div

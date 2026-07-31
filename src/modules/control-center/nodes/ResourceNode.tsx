@@ -133,7 +133,10 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
           className,
         )}
         onClick={() => {
-          if (isDraftResource) setResourceEditor({ nodeId: id });
+          // Draft: clicking ANY framed resource — new or existing/dropped —
+          // opens the editor (the modal resolves + prefills from the node id).
+          // Live rows keep their drill-into-network click via onNodeClick.
+          if (isDraft) setResourceEditor({ nodeId: id });
         }}
       >
         <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
