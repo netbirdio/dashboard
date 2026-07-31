@@ -7,6 +7,7 @@ import { Policy } from "@/interfaces/Policy";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
   getDraftResource,
@@ -45,6 +46,7 @@ export function useDraftNetworkActions() {
   const reactFlow = useReactFlow();
   const { peers } = useControlCenterData();
   const { updateDraftPolicy } = useControlCenterPolicy();
+  const { drillDownNetworkNodeId } = useDraftMode();
   const {
     changes,
     trackCreateGroup,
@@ -61,6 +63,11 @@ export function useDraftNetworkActions() {
   // before we fit to it.
   const highlightNetworkNode = useCallback(
     (networkNodeId: string) => {
+      // While drilled into a network the frame itself is hidden and the drilled
+      // world already fills the view — fitting to (and pulsing) the frame would
+      // fling the camera to a strange spot. Adding a resource here should just
+      // drop it into the grid, exactly like normal draft mode outside a frame.
+      if (drillDownNetworkNodeId) return;
       const PULSE_MS = 2200;
       window.setTimeout(() => {
         reactFlow.fitView({
@@ -92,7 +99,7 @@ export function useDraftNetworkActions() {
         }, PULSE_MS);
       }, 180);
     },
-    [reactFlow],
+    [reactFlow, drillDownNetworkNodeId],
   );
 
   // The id of the on-canvas frame for a network ref (real id or client id),
