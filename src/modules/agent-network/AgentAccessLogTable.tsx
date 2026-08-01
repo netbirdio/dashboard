@@ -445,12 +445,13 @@ export default function AgentAccessLogTable({
           </DataTableHeader>
         ),
         // Same Reason cell as the flat view (deny reason, or the authorising
-        // policy link). A session is one policy decision in practice; surface a
-        // denied request when present, otherwise the first entry.
+        // policy link). Prefer an allowed request so a session that succeeded
+        // shows the authorising policy rather than an incidental deny reason;
+        // only surface a deny reason when every request was denied.
         cell: ({ row }) => {
           const entries = row.original.entries;
           const representative =
-            entries.find((e) => e.decision === "deny") ?? entries[0];
+            entries.find((e) => e.decision === "allow") ?? entries[0];
           return representative ? (
             <ReasonCell entry={representative} />
           ) : (
@@ -996,13 +997,10 @@ function ProviderCell({
   );
 }
 
-function TokensCell({ entry }: { entry: AIAccessLogEntry }) {
-  if (
-    (entry.inputTokens === undefined || entry.inputTokens === 0) &&
-    (entry.outputTokens === undefined || entry.outputTokens === 0)
-  ) {
-    return <EmptyRow />;
-  }
+// TokenBreakdown is the hover content shared by the flat Tokens column and the
+// session's per-request rows: one line per token bucket plus a total. Buckets
+// default to 0 so it renders for denied requests that carry partial counts.
+function TokenBreakdown({ entry }: { entry: AIAccessLogEntry }) {
   const cacheRead = entry.cachedInputTokens ?? 0;
   const cacheWrite = entry.cacheCreationTokens ?? 0;
   // Anthropic-shape cache buckets are additive to input tokens, so they count toward the total.
@@ -1012,54 +1010,66 @@ function TokensCell({ entry }: { entry: AIAccessLogEntry }) {
     cacheRead +
     cacheWrite;
   return (
-    <FullTooltip
-      content={
-        <div className={"text-xs flex flex-col gap-1"}>
-          <div className={"flex items-center gap-2 whitespace-nowrap"}>
-            <span className={"font-medium"}>
-              {entry.inputTokens.toLocaleString()}
-            </span>
-            <span className={"text-nb-gray-400"}>input</span>
-          </div>
-          <div className={"flex items-center gap-2 whitespace-nowrap"}>
-            <span className={"font-medium"}>
-              {entry.outputTokens.toLocaleString()}
-            </span>
-            <span className={"text-nb-gray-400"}>output</span>
-          </div>
-          <div className={"flex items-center gap-2 whitespace-nowrap"}>
-            <span className={"font-medium"}>{cacheRead.toLocaleString()}</span>
-            <span className={"text-nb-gray-400"}>cache read</span>
-          </div>
-          <div className={"flex items-center gap-2 whitespace-nowrap"}>
-            <span className={"font-medium"}>{cacheWrite.toLocaleString()}</span>
-            <span className={"text-nb-gray-400"}>cache write</span>
-          </div>
-          <div
-            className={
-              "border-t border-nb-gray-800 mt-0.5 pt-1 flex items-center gap-2 text-nb-gray-400 whitespace-nowrap"
-            }
-          >
-            <span className={"font-medium text-nb-gray-200"}>
-              {total.toLocaleString()}
-            </span>
-            <span>total</span>
-          </div>
-        </div>
-      }
-    >
+    <div className={"text-xs flex flex-col gap-1"}>
+      <div className={"flex items-center gap-2 whitespace-nowrap"}>
+        <span className={"font-medium"}>
+          {(entry.inputTokens ?? 0).toLocaleString()}
+        </span>
+        <span className={"text-nb-gray-400"}>input</span>
+      </div>
+      <div className={"flex items-center gap-2 whitespace-nowrap"}>
+        <span className={"font-medium"}>
+          {(entry.outputTokens ?? 0).toLocaleString()}
+        </span>
+        <span className={"text-nb-gray-400"}>output</span>
+      </div>
+      <div className={"flex items-center gap-2 whitespace-nowrap"}>
+        <span className={"font-medium"}>{cacheRead.toLocaleString()}</span>
+        <span className={"text-nb-gray-400"}>cache read</span>
+      </div>
+      <div className={"flex items-center gap-2 whitespace-nowrap"}>
+        <span className={"font-medium"}>{cacheWrite.toLocaleString()}</span>
+        <span className={"text-nb-gray-400"}>cache write</span>
+      </div>
+      <div
+        className={
+          "border-t border-nb-gray-800 mt-0.5 pt-1 flex items-center gap-2 text-nb-gray-400 whitespace-nowrap"
+        }
+      >
+        <span className={"font-medium text-nb-gray-200"}>
+          {total.toLocaleString()}
+        </span>
+        <span>total</span>
+      </div>
+    </div>
+  );
+}
+
+function TokensCell({ entry }: { entry: AIAccessLogEntry }) {
+  // Cache-only requests carry no input/output but real cache read/write tokens,
+  // so weigh all four buckets — matching TokenBreakdown's total.
+  if (
+    (entry.inputTokens ?? 0) === 0 &&
+    (entry.outputTokens ?? 0) === 0 &&
+    (entry.cachedInputTokens ?? 0) === 0 &&
+    (entry.cacheCreationTokens ?? 0) === 0
+  ) {
+    return <EmptyRow />;
+  }
+  return (
+    <FullTooltip content={<TokenBreakdown entry={entry} />}>
       <div
         className={"flex flex-col text-xs gap-1 text-nb-gray-300 font-medium"}
       >
         <div className={"flex gap-2 items-center whitespace-nowrap"}>
           <ArrowUpIcon size={15} className={"text-sky-400"} />
           <span className={"sr-only"}>Input:</span>
-          {entry.inputTokens.toLocaleString()}
+          {(entry.inputTokens ?? 0).toLocaleString()}
         </div>
         <div className={"flex gap-2 items-center whitespace-nowrap"}>
           <ArrowDownIcon size={15} className={"text-netbird"} />
           <span className={"sr-only"}>Output:</span>
-          {entry.outputTokens.toLocaleString()}
+          {(entry.outputTokens ?? 0).toLocaleString()}
         </div>
       </div>
     </FullTooltip>
@@ -1076,32 +1086,89 @@ function CostRow({ amount, label }: { amount: number; label: string }) {
   );
 }
 
-// CostCell renders the metered USD cost with a hover breakdown of the buckets
-// it was billed from.
-//
-// Servers that send the per-bucket breakdown get one line per bucket the
-// provider bills separately (input / output / cache read / cache write). Older
-// servers send only the two aggregates, so the hover falls back to the coarse
-// "input + output" vs "cache" split derivable from those — the two shapes are
-// distinguished by whether inputCostUsd is defined, not by whether it is zero.
-function CostCell({
-  costUsd,
-  cacheCostUsd,
-  inputCostUsd,
-  cachedInputCostUsd,
-  cacheCreationCostUsd,
-  outputCostUsd,
-}: {
+type CostFields = {
   costUsd: number;
   cacheCostUsd?: number;
   inputCostUsd?: number;
   cachedInputCostUsd?: number;
   cacheCreationCostUsd?: number;
   outputCostUsd?: number;
-}) {
+};
+
+// hasCostBreakdown reports whether a request carries enough cost detail to be
+// worth a hover: a cache split or a per-bucket breakdown. Shared so the flat
+// Cost cell and the session rows attach the tooltip on the same condition.
+function hasCostBreakdown(f: CostFields): boolean {
+  const cache = f.cacheCostUsd ?? 0;
+  const perBucket = f.inputCostUsd !== undefined || f.outputCostUsd !== undefined;
+  return cache > 0 || perBucket;
+}
+
+// CostBreakdown is the hover content shared by the flat Cost column and the
+// session's per-request rows.
+//
+// Servers that send the per-bucket breakdown get one line per bucket the
+// provider bills separately (input / output / cache read / cache write). Older
+// servers send only the two aggregates, so the hover falls back to the coarse
+// "input + output" vs "cache" split derivable from those — the two shapes are
+// distinguished by whether inputCostUsd is defined, not by whether it is zero.
+function CostBreakdown({
+  costUsd,
+  cacheCostUsd,
+  inputCostUsd,
+  cachedInputCostUsd,
+  cacheCreationCostUsd,
+  outputCostUsd,
+}: CostFields) {
   const cache = cacheCostUsd ?? 0;
   const hasBreakdown =
     inputCostUsd !== undefined || outputCostUsd !== undefined;
+  const cacheRead = cachedInputCostUsd ?? 0;
+  const cacheWrite = cacheCreationCostUsd ?? 0;
+  return (
+    <div className={"text-xs flex flex-col gap-1 font-mono"}>
+      {hasBreakdown ? (
+        <>
+          {/* All four buckets, including zeros: a zero cache-read line is
+              information (the request missed the cache), and a fixed set of
+              rows keeps the hover comparable between requests. */}
+          <CostRow amount={inputCostUsd ?? 0} label={"input"} />
+          <CostRow amount={outputCostUsd ?? 0} label={"output"} />
+          <CostRow amount={cacheRead} label={"cache read"} />
+          <CostRow amount={cacheWrite} label={"cache write"} />
+        </>
+      ) : (
+        <>
+          <CostRow amount={costUsd - cache} label={"input + output"} />
+          <CostRow amount={cache} label={"cache"} />
+        </>
+      )}
+      <div
+        className={
+          "border-t border-nb-gray-800 mt-0.5 pt-1 flex items-center gap-2 text-nb-gray-400 whitespace-nowrap"
+        }
+      >
+        <span className={"font-medium text-nb-gray-200"}>
+          ${costUsd.toFixed(4)}
+        </span>
+        <span className={"font-sans"}>total</span>
+      </div>
+    </div>
+  );
+}
+
+// CostCell renders the metered USD cost with a hover breakdown of the buckets
+// it was billed from (see CostBreakdown).
+function CostCell(fields: CostFields) {
+  const {
+    costUsd,
+    cacheCostUsd,
+    inputCostUsd,
+    cachedInputCostUsd,
+    cacheCreationCostUsd,
+    outputCostUsd,
+  } = fields;
+  const cache = cacheCostUsd ?? 0;
 
   // Nothing was metered: the request never reached a provider (denied before
   // routing), or ran on a model the proxy deliberately doesn't price. A dash
@@ -1127,45 +1194,10 @@ function CostCell({
     </span>
   );
   // Nothing to break out: no cache spend and no per-bucket split to show.
-  if (cache <= 0 && !hasBreakdown) return display;
+  if (!hasCostBreakdown(fields)) return display;
 
-  const cacheRead = cachedInputCostUsd ?? 0;
-  const cacheWrite = cacheCreationCostUsd ?? 0;
   return (
-    <FullTooltip
-      content={
-        <div className={"text-xs flex flex-col gap-1 font-mono"}>
-          {hasBreakdown ? (
-            <>
-              {/* All four buckets, including zeros: a zero cache-read line is
-                  information (the request missed the cache), and a fixed set of
-                  rows keeps the hover comparable between requests. */}
-              <CostRow amount={inputCostUsd ?? 0} label={"input"} />
-              <CostRow amount={outputCostUsd ?? 0} label={"output"} />
-              <CostRow amount={cacheRead} label={"cache read"} />
-              <CostRow amount={cacheWrite} label={"cache write"} />
-            </>
-          ) : (
-            <>
-              <CostRow amount={costUsd - cache} label={"input + output"} />
-              <CostRow amount={cache} label={"cache"} />
-            </>
-          )}
-          <div
-            className={
-              "border-t border-nb-gray-800 mt-0.5 pt-1 flex items-center gap-2 text-nb-gray-400 whitespace-nowrap"
-            }
-          >
-            <span className={"font-medium text-nb-gray-200"}>
-              ${costUsd.toFixed(4)}
-            </span>
-            <span className={"font-sans"}>total</span>
-          </div>
-        </div>
-      }
-    >
-      {display}
-    </FullTooltip>
+    <FullTooltip content={<CostBreakdown {...fields} />}>{display}</FullTooltip>
   );
 }
 
@@ -1323,7 +1355,13 @@ function SessionEntriesRow({ session }: { session: AIAccessLogSession }) {
       >
         {[...session.entries].reverse().map((entry) => {
           const isOpen = open.includes(entry.id);
-          const total = (entry.inputTokens ?? 0) + (entry.outputTokens ?? 0);
+          // Sum all four buckets so cache-only requests count and the figure
+          // matches TokenBreakdown's total.
+          const total =
+            (entry.inputTokens ?? 0) +
+            (entry.outputTokens ?? 0) +
+            (entry.cachedInputTokens ?? 0) +
+            (entry.cacheCreationTokens ?? 0);
           const isError = entry.decision === "deny" || entry.status >= 400;
           return (
             <div key={entry.id}>
@@ -1396,20 +1434,30 @@ function SessionEntriesRow({ session }: { session: AIAccessLogSession }) {
                 >
                   {entry.model || "—"}
                 </code>
-                <span
-                  className={
-                    "text-xs text-nb-gray-400 font-mono whitespace-nowrap tabular-nums w-[110px] text-right shrink-0"
-                  }
+                <FullTooltip
+                  disabled={total === 0}
+                  content={<TokenBreakdown entry={entry} />}
                 >
-                  {total.toLocaleString()} tokens
-                </span>
-                <span
-                  className={
-                    "text-xs text-nb-gray-400 font-mono whitespace-nowrap tabular-nums w-[64px] text-right shrink-0"
-                  }
+                  <span
+                    className={
+                      "text-xs text-nb-gray-400 font-mono whitespace-nowrap tabular-nums w-[110px] text-right shrink-0"
+                    }
+                  >
+                    {total.toLocaleString()} tokens
+                  </span>
+                </FullTooltip>
+                <FullTooltip
+                  disabled={!hasCostBreakdown(entry)}
+                  content={<CostBreakdown {...entry} />}
                 >
-                  ${entry.costUsd.toFixed(4)}
-                </span>
+                  <span
+                    className={
+                      "text-xs text-nb-gray-400 font-mono whitespace-nowrap tabular-nums w-[64px] text-right shrink-0"
+                    }
+                  >
+                    ${entry.costUsd.toFixed(4)}
+                  </span>
+                </FullTooltip>
               </button>
               {isOpen && (
                 <div className={"border-t border-nb-gray-800/70"}>

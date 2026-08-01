@@ -8,6 +8,12 @@ export type CatalogModel = {
   label: string;
   input_per_1k: number;
   output_per_1k: number;
+  // Default cache rates, present only when the model has one. Used to
+  // prefill the model row so the operator sees (and can override) the
+  // rate NetBird would bill with.
+  cached_input_per_1k?: number;
+  cache_read_per_1k?: number;
+  cache_creation_per_1k?: number;
   context_window: number;
 };
 
@@ -42,6 +48,13 @@ export type CatalogProvider = {
   // can choose between the always-on x-bf-lh- log family and the
   // declared x-bf-dim- telemetry family.
   identity_injection?: CatalogIdentityInjection;
+  // pricing_surfaces names the cost-meter surfaces this provider's
+  // traffic is metered under ("openai", "anthropic", "bedrock"). The
+  // modal uses it to decide which cache-rate fields apply: "openai" →
+  // cached input (subset discount); "anthropic"/"bedrock" → cache read
+  // + cache write (additive buckets). Absent for gateway/custom entries
+  // — show every cache field for those.
+  pricing_surfaces?: string[];
   models: CatalogModel[];
 };
 

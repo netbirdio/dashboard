@@ -128,6 +128,14 @@ async function openRowActions(
   name: string,
 ) {
   await clearScrollLock(page);
+  // A force-click can open a new action menu without the previous one having
+  // closed (scroll-lock artifacts suppress Radix's outside-click dismissal),
+  // leaving two menus open — the item lookup then hits a strict-mode violation.
+  // Dismiss any open menu and wait for it to be gone before opening the next.
+  if (await page.locator('[role="menu"]').count()) {
+    await page.keyboard.press("Escape");
+    await expect(page.locator('[role="menu"]')).toHaveCount(0);
+  }
   await page
     .locator("tr")
     .filter({ hasText: name })

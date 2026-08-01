@@ -72,13 +72,19 @@ function mockAccounts(page: Page, state: AccountState, delayMs: number) {
 
 async function openOnboarding(
   browser: Browser,
-  opts: { source?: boolean; account: AccountState; delayMs?: number },
+  opts: {
+    source?: boolean;
+    account: AccountState;
+    delayMs?: number;
+    edition?: string;
+    expectOnboarding?: boolean;
+  },
 ): Promise<{ page: Page; close: () => Promise<void> }> {
   const context = await browser.newContext({
     storageState: "e2e/fixtures/auth/owner.json",
   });
   await context.addInitScript(
-    ([sourceKey, sourceValue, withSource]) => {
+    ([sourceKey, sourceValue, withSource, edition]) => {
       try {
         window.localStorage.setItem("netbird-test-onboarding", "true");
         if (withSource) {
@@ -87,13 +93,32 @@ async function openOnboarding(
             sourceValue as string,
           );
         }
+        if (edition) {
+          window.localStorage.setItem("netbird-test-edition", edition as string);
+        }
       } catch (e) {}
     },
-    [SIGNUP_SOURCE_KEY, AGENT_NETWORK_SOURCE, !!opts.source] as const,
+    [
+      SIGNUP_SOURCE_KEY,
+      AGENT_NETWORK_SOURCE,
+      !!opts.source,
+      opts.edition ?? "",
+    ] as const,
   );
   const page = await context.newPage();
   mockAccounts(page, opts.account, opts.delayMs ?? 0);
-  await loginToApp(page, "owner", { expectOnboarding: true });
+  // The mocked GET /accounts is what drives the onboarding decision, and the
+  // dashboard can resolve before it lands — a "no form opened" assertion would
+  // then pass vacuously. Wait for the rewritten response before returning.
+  const accountsLoaded = page.waitForResponse(
+    (resp) =>
+      /\/api\/accounts(\?|$)/.test(resp.url()) &&
+      resp.request().method() === "GET",
+  );
+  await loginToApp(page, "owner", {
+    expectOnboarding: opts.expectOnboarding ?? true,
+  });
+  await accountsLoaded;
   return { page, close: () => context.close() };
 }
 
@@ -138,6 +163,50 @@ test.describe.serial("Onboarding form selection @onboarding", () => {
     try {
       await expect(page.getByTestId(AGENT_FORM)).toBeVisible();
       await expect(page.getByTestId(REGULAR_FORM)).toHaveCount(0);
+    } finally {
+      await close();
+    }
+  });
+
+  test("a self-hosted account with onboarding pending shows the regular flow at the intent step", async ({
+    browser,
+  }) => {
+    const { page, close } = await openOnboarding(browser, {
+      source: false,
+      edition: "oss",
+      account: { onboardingFlowPending: true },
+    });
+    try {
+      await expect(page.getByTestId(REGULAR_FORM)).toBeVisible();
+      await expect(page.getByTestId(AGENT_FORM)).toHaveCount(0);
+      // The signup survey relies on a JWT domain claim self-hosted IdPs don't
+      // emit, so the flow skips it and opens on the intent step. Scoped to the
+      // form: the dashboard behind the modal has its own "Get Started with
+      // NetBird" heading, and getByText matches case-insensitively.
+      await expect(
+        page
+          .getByTestId(REGULAR_FORM)
+          .getByRole("heading", { name: "Get started with NetBird" }),
+      ).toBeVisible();
+    } finally {
+      await close();
+    }
+  });
+
+  test("a self-hosted account with only the signup form pending shows no onboarding", async ({
+    browser,
+  }) => {
+    const { page, close } = await openOnboarding(browser, {
+      source: false,
+      edition: "oss",
+      account: { signupFormPending: true },
+      expectOnboarding: false,
+    });
+    try {
+      // loginToApp resolved the dashboard, so the account state has been
+      // applied — neither flow should have opened.
+      await expect(page.getByTestId(REGULAR_FORM)).toHaveCount(0);
+      await expect(page.getByTestId(AGENT_FORM)).toHaveCount(0);
     } finally {
       await close();
     }
