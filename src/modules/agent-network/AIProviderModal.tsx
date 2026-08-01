@@ -151,6 +151,20 @@ type Props = {
   provider?: AIProvider;
 };
 
+// ModelRowEditor owns row-local UI state (custom/catalog mode, expanded cache
+// disclosure, in-progress price text). Keying the row list by array index would
+// let that state stick to a position rather than a row, so removing or
+// reordering a row would leak the removed row's state into its neighbour. Each
+// row carries a stable client-only key instead. _key is never sent to the API —
+// toAPIModels whitelists the wire fields.
+type EditableModel = ProviderModel & { _key: string };
+
+let modelKeySeq = 0;
+const withModelKey = (m: ProviderModel): EditableModel => ({
+  ...m,
+  _key: `model-${modelKeySeq++}`,
+});
+
 export default function AIProviderModal({
   open,
   onOpenChange,
@@ -180,7 +194,9 @@ export default function AIProviderModal({
   );
   const [apiKey, setApiKey] = useState(isEdit ? "••••••••" : "");
   const [bootstrapCluster, setBootstrapCluster] = useState<string>("");
-  const [models, setModels] = useState<ProviderModel[]>(provider?.models ?? []);
+  const [models, setModels] = useState<EditableModel[]>(() =>
+    (provider?.models ?? []).map(withModelKey),
+  );
 
   // Vertex AI authenticates with a service-account JSON key, not an API key.
   // We upload the file and store it base64-encoded in apiKey (the server
@@ -343,7 +359,7 @@ export default function AIProviderModal({
       setUpstreamUrl(provider.upstreamUrl);
       setApiKey("••••••••");
       setBootstrapCluster("");
-      setModels(provider.models);
+      setModels(provider.models.map(withModelKey));
       setExtraValues(provider.extraValues ?? {});
       setIdentityHeaderUserId(provider.identityHeaderUserId ?? "");
       setIdentityHeaderGroups(provider.identityHeaderGroups ?? "");
@@ -506,19 +522,22 @@ export default function AIProviderModal({
     if (next) {
       setModels((prev) => [
         ...prev,
-        {
+        withModelKey({
           id: next.id,
           inputPer1k: next.input_per_1k,
           outputPer1k: next.output_per_1k,
           cachedInputPer1k: next.cached_input_per_1k,
           cacheReadPer1k: next.cache_read_per_1k,
           cacheCreationPer1k: next.cache_creation_per_1k,
-        },
+        }),
       ]);
       return;
     }
     // No catalog match left — append an empty row the operator can fill.
-    setModels((prev) => [...prev, { id: "", inputPer1k: 0, outputPer1k: 0 }]);
+    setModels((prev) => [
+      ...prev,
+      withModelKey({ id: "", inputPer1k: 0, outputPer1k: 0 }),
+    ]);
   };
 
   // Which cache-rate fields apply to this provider's models, derived
@@ -1254,7 +1273,7 @@ export default function AIProviderModal({
 
               {models.map((row, idx) => (
                 <ModelRowEditor
-                  key={idx}
+                  key={row._key}
                   row={row}
                   catalogModels={catalogModelOptions}
                   usedIds={usedModelIds}
