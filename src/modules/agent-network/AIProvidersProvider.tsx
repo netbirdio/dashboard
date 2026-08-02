@@ -125,8 +125,10 @@ export type APIAgentNetworkSettings = {
   enable_prompt_collection: boolean;
   redact_pii: boolean;
   access_log_retention_days?: number;
-  created_at: string;
-  updated_at: string;
+  // Absent until the account is bootstrapped — pre-bootstrap the backend
+  // returns the defaults without a persisted row to date.
+  created_at?: string;
+  updated_at?: string;
 };
 
 // APIAgentNetworkSettingsRequest matches the PUT /agent-network/settings
@@ -521,10 +523,12 @@ export function useAIProviders() {
 }
 
 // useAgentNetworkSettings fetches the account-level agent-network settings.
-// Returns null until the first provider is created — newer backends respond
-// 200 + JSON null while no settings row exists; older backends respond 404,
-// which we still tolerate via ignoreError so older deploys don't surface
-// a spurious error in the empty state.
+// Returns null until the account is bootstrapped (first provider create, or
+// a settings update carrying a cluster). Backends signal the unbootstrapped
+// state differently by age: current ones respond 200 with the defaults and
+// an empty cluster/subdomain/endpoint, older ones 200 + JSON null, and the
+// oldest 404 — tolerated via ignoreError so old deploys don't surface a
+// spurious error in the empty state. All three normalize to null here.
 export function useAgentNetworkSettings() {
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { data, error, isLoading, mutate } =
@@ -535,7 +539,7 @@ export function useAgentNetworkSettings() {
       agentNetworkEnabled,
     );
   const settings = useMemo<AgentNetworkSettings | null>(
-    () => (data ? settingsFromAPI(data) : null),
+    () => (data && data.endpoint ? settingsFromAPI(data) : null),
     [data],
   );
   const notFound = !!error && (error as { code?: number }).code === 404;
