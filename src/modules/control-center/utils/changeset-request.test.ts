@@ -190,7 +190,7 @@ describe("buildBeforeRequest", () => {
 });
 
 describe("id placeholders in preview", () => {
-  it("a draft group (no id) in a policy renders as a {group_..._id} token", () => {
+  it("a draft group (no id) in a policy renders as a {..._group_id} token", () => {
     const change: CreatePolicyChange = {
       id: "c1",
       type: "create-policy",
@@ -213,7 +213,7 @@ describe("id placeholders in preview", () => {
       }),
     };
     const body = buildChangeRequest(change)?.body as any;
-    expect(body.rules[0].sources).toEqual(["{group_sales_team_id}"]);
+    expect(body.rules[0].sources).toEqual(["{sales_team_group_id}"]);
     expect(body.rules[0].destinations).toEqual(["g2"]);
   });
 
@@ -230,10 +230,10 @@ describe("id placeholders in preview", () => {
     };
     const live: LiveData = { groups: [{ id: "grp-live", name: "Ops" }] };
     const body = buildChangeRequest(change, live)?.body as any;
-    expect(body.groups).toEqual(["{group_marketing_id}", "grp-live"]);
+    expect(body.groups).toEqual(["{marketing_group_id}", "grp-live"]);
   });
 
-  it("a policy referencing a not-yet-created resource shows {resource_..._id}", () => {
+  it("a policy referencing a not-yet-created resource shows {..._resource_id}", () => {
     const change: CreatePolicyChange = {
       id: "c2",
       type: "create-policy",
@@ -271,12 +271,12 @@ describe("id placeholders in preview", () => {
     };
     const body = buildChangeRequest(change, live)?.body as any;
     expect(body.rules[0].destinationResource).toEqual({
-      id: "{resource_database_id}",
+      id: "{database_resource_id}",
       type: "host",
     });
   });
 
-  it("a server install-peer's auto_group renders as a {group_..._id} placeholder", () => {
+  it("a server install-peer's auto_group renders as a {..._group_id} placeholder", () => {
     const change: InstallPeerChange = {
       id: "i1",
       type: "install-peer",
@@ -285,6 +285,6 @@ describe("id placeholders in preview", () => {
       kind: "server",
     };
     const body = buildChangeRequest(change)?.body as any;
-    expect(body.auto_groups).toEqual(["{group_server_id}"]);
+    expect(body.auto_groups).toEqual(["{server_group_id}"]);
   });
 });

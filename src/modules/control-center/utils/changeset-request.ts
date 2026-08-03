@@ -25,7 +25,7 @@ import {
 // can never drift. The difference between deploy and preview is only the
 // RESOLVERS: deploy resolves draft client-ids/names to the real API ids it has
 // created during the run; preview resolves what it can from live data and
-// renders the rest as {group_x_id}-style id placeholders (see idPlaceholder)
+// renders the rest as {x_group_id}-style id placeholders (see idPlaceholder)
 // so the reader sees exactly where deploy will fill in a not-yet-created id.
 
 export type HttpMethod = "POST" | "PUT" | "DELETE";
@@ -51,16 +51,16 @@ export interface LiveData {
 
 // A code-view placeholder for a real API id that doesn't exist yet because the
 // entity it belongs to is only in the draft (a group/network/resource that's
-// created on deploy). A single-brace, lower_snake token so it reads as "gets
-// replaced on deploy", e.g. {group_sales_id}. Falls back to {group_id} when
-// there's no name to embed.
+// created on deploy). A single-brace, lower_snake token — label before kind so
+// it reads naturally — that signals "gets replaced on deploy", e.g.
+// {sales_group_id}. Falls back to {group_id} when there's no name to embed.
 export function idPlaceholder(kind: string, label?: string): string {
   const slug = (label ?? "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
   const k = kind.toLowerCase();
-  return slug ? `{${k}_${slug}_id}` : `{${k}_id}`;
+  return slug ? `{${slug}_${k}_id}` : `{${k}_id}`;
 }
 
 // How draft references become wire values. Deploy and preview differ only here.
@@ -247,7 +247,7 @@ export function routerUpdateBody(
 // placeholder (Generate Key), NOT a deploy call. auto_groups binds the peer to
 // a hidden throwaway group created alongside the key; that group's real id
 // doesn't exist until generation, so the preview shows it as an id placeholder
-// ({group_<name>_id}) rather than a name. Mirrors DraftInstallPeerModal /
+// ({<name>_group_id}) rather than a name. Mirrors DraftInstallPeerModal /
 // SetupKeyGenerator.
 export function setupKeyCreateBody(change: InstallPeerChange) {
   const isUserDevice = change.kind === "user-device";
