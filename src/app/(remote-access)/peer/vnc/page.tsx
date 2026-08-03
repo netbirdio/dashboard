@@ -487,15 +487,10 @@ function VNCSession({
         tabIndex={-1}
         onKeyDownCapture={vnc.handlePasteShortcut}
         onContextMenu={(e) => e.preventDefault()}
-        onPaste={(e) => {
-          // Keep the browser from inserting anything into the page, but use the
-          // event's clipboard data: a paste gesture carries it without the
-          // read-permission prompt the toolbar button runs into.
-          e.preventDefault();
-          if (!vnc.viewOnly) {
-            vnc.pasteFromClipboardEvent(e.clipboardData);
-          }
-        }}
+        // The paste is handled from the keydown instead. Chromium delivers this
+        // event even when the keydown was preventDefault'd, so acting on both
+        // would type the clipboard twice.
+        onPaste={(e) => e.preventDefault()}
         className={
           vnc.status === VNCStatus.CONNECTED
             ? "w-full h-full bg-black vnc-cursor outline-none" +
