@@ -538,11 +538,14 @@ export function useAgentNetworkSettings() {
       true,
       agentNetworkEnabled,
     );
-  const settings = useMemo<AgentNetworkSettings | null>(
-    () => (data && data.endpoint ? settingsFromAPI(data) : null),
-    [data],
-  );
   const notFound = !!error && (error as { code?: number }).code === 404;
+  // SWR keeps the previous data alongside the error (keepPreviousData), so a
+  // later 404 must not expose the stale settings; other transient errors keep
+  // them, which is what keepPreviousData is for.
+  const settings = useMemo<AgentNetworkSettings | null>(
+    () => (data && data.endpoint && !notFound ? settingsFromAPI(data) : null),
+    [data, notFound],
+  );
   return {
     settings,
     isLoading: isLoading && !notFound,
@@ -680,7 +683,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           updates.metadataDisabled ?? existing.metadata_disabled,
         models: updates.models
           ? toAPIModels(updates.models)
-          : existing.models ?? [],
+          : (existing.models ?? []),
         enabled: updates.enabled ?? existing.enabled,
       };
       try {
@@ -765,7 +768,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         guardrail_ids: updates.guardrailIds ?? existing.guardrail_ids ?? [],
         limits: updates.limits
           ? policyLimitsToAPI(updates.limits)
-          : existing.limits ?? policyLimitsToAPI(EMPTY_POLICY_LIMITS),
+          : (existing.limits ?? policyLimitsToAPI(EMPTY_POLICY_LIMITS)),
       };
       try {
         await policiesApi.put(merged, `/${id}`);

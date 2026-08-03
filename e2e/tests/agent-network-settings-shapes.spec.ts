@@ -68,20 +68,27 @@ async function openProvidersPage(
   const context = await browser.newContext({
     storageState: "e2e/fixtures/auth/owner.json",
   });
-  await context.addInitScript(
-    ([key, value]) => {
-      try {
-        window.localStorage.setItem(key as string, value as string);
-      } catch (e) {}
-    },
-    [AGENT_NETWORK_CONFIG_KEY, "enabled"],
-  );
-  const page = await context.newPage();
-  await mockSettingsResponse(page, settingsResponse);
-  await loginToApp(page, "owner");
-  await page.goto("/agent-network/providers");
-  await page.keyboard.press("Escape");
-  return { page, close: () => context.close() };
+  // Close the context on any setup failure — the caller only receives the
+  // close callback once setup succeeds.
+  try {
+    await context.addInitScript(
+      ([key, value]) => {
+        try {
+          window.localStorage.setItem(key as string, value as string);
+        } catch (e) {}
+      },
+      [AGENT_NETWORK_CONFIG_KEY, "enabled"],
+    );
+    const page = await context.newPage();
+    await mockSettingsResponse(page, settingsResponse);
+    await loginToApp(page, "owner");
+    await page.goto("/agent-network/providers");
+    await page.keyboard.press("Escape");
+    return { page, close: () => context.close() };
+  } catch (e) {
+    await context.close();
+    throw e;
+  }
 }
 
 const UNBOOTSTRAPPED_SHAPES: {
