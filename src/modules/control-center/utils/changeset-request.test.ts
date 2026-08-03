@@ -3,11 +3,16 @@ import { Policy } from "@/interfaces/Policy";
 import {
   CreateGroupChange,
   CreatePolicyChange,
+  CreateResourceChange,
   DeletePolicyChange,
   UpdateGroupChange,
   UpdatePolicyChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
-import { buildBeforeRequest, buildChangeRequest } from "./changeset-request";
+import {
+  buildBeforeRequest,
+  buildChangeRequest,
+  LiveData,
+} from "./changeset-request";
 
 // The request the code view shows must match what deploy sends: group objects
 // become ids, draft-only members are filtered, deletes carry no body, and an
@@ -180,5 +185,93 @@ describe("buildBeforeRequest", () => {
       policy: policy(),
     };
     expect(buildBeforeRequest(change, {})).toBeNull();
+  });
+});
+
+describe("id placeholders in preview", () => {
+  it("a draft group (no id) in a policy renders as a {{GROUP_..._ID}} token", () => {
+    const change: CreatePolicyChange = {
+      id: "c1",
+      type: "create-policy",
+      clientId: "new-1",
+      name: "P",
+      policy: policy({
+        rules: [
+          {
+            name: "P",
+            description: "",
+            enabled: true,
+            sources: [{ name: "Sales Team" }], // draft group — no id yet
+            destinations: [{ id: "g2", name: "Admins" }],
+            bidirectional: true,
+            action: "accept",
+            protocol: "tcp",
+            ports: ["443"],
+          },
+        ],
+      }),
+    };
+    const body = buildChangeRequest(change)?.body as any;
+    expect(body.rules[0].sources).toEqual(["{{GROUP_SALES_TEAM_ID}}"]);
+    expect(body.rules[0].destinations).toEqual(["g2"]);
+  });
+
+  it("a draft resource's group refs: draft names → placeholder, live ids kept", () => {
+    const change: CreateResourceChange = {
+      id: "r1",
+      type: "create-resource",
+      clientId: "new-r1",
+      name: "db",
+      address: "10.0.0.1",
+      networkId: "n1",
+      networkName: "Office",
+      groupIds: ["Marketing", "grp-live"],
+    };
+    const live: LiveData = { groups: [{ id: "grp-live", name: "Ops" }] };
+    const body = buildChangeRequest(change, live)?.body as any;
+    expect(body.groups).toEqual(["{{GROUP_MARKETING_ID}}", "grp-live"]);
+  });
+
+  it("a policy referencing a not-yet-created resource shows {{RESOURCE_..._ID}}", () => {
+    const change: CreatePolicyChange = {
+      id: "c2",
+      type: "create-policy",
+      clientId: "new-2",
+      name: "P",
+      policy: policy({
+        rules: [
+          {
+            name: "P",
+            description: "",
+            enabled: true,
+            sources: [{ id: "g1", name: "Servers" }],
+            destinations: [],
+            destinationResource: { id: "new-res9", type: "host" },
+            bidirectional: true,
+            action: "accept",
+            protocol: "tcp",
+            ports: ["443"],
+          },
+        ],
+      }),
+    };
+    const live: LiveData = {
+      draftChanges: [
+        {
+          id: "x",
+          type: "create-resource",
+          clientId: "new-res9",
+          name: "Database",
+          address: "10.0.0.9",
+          networkName: "Office",
+          groupIds: [],
+        },
+      ],
+    };
+    const body = buildChangeRequest(change, live)?.body as any;
+    expect(body.rules[0].destinationResource).toEqual({
+      id: "{{RESOURCE_DATABASE_ID}}",
+      type: "host",
+    });
   });
 });

@@ -47,8 +47,8 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   const reactFlow = useReactFlow();
 
   const live: LiveData = useMemo(
-    () => ({ policies, groups, networks, networkResources }),
-    [policies, groups, networks, networkResources],
+    () => ({ policies, groups, networks, networkResources, draftChanges: changes }),
+    [policies, groups, networks, networkResources, changes],
   );
 
   // Remount the accordion (re-opening the first change) only when the modal

@@ -24,8 +24,9 @@ import {
 // "code" a user reviews is literally the request that will be sent — the two
 // can never drift. The difference between deploy and preview is only the
 // RESOLVERS: deploy resolves draft client-ids/names to the real API ids it has
-// created during the run; preview leaves draft references as display
-// placeholders (names, "{new}") because those ids don't exist yet.
+// created during the run; preview resolves what it can from live data and
+// renders the rest as {{GROUP_X_ID}}-style id placeholders (see idPlaceholder)
+// so the reader sees exactly where deploy will fill in a not-yet-created id.
 
 export type HttpMethod = "POST" | "PUT" | "DELETE";
 
@@ -43,6 +44,22 @@ export interface LiveData {
   groups?: Group[];
   networks?: Network[];
   networkResources?: NetworkResource[];
+  // The current changeset — lets the preview name draft entities (e.g. a
+  // draft resource's "new-…" id → its name) when building id placeholders.
+  draftChanges?: DraftChange[];
+}
+
+// A code-view placeholder for a real API id that doesn't exist yet because the
+// entity it belongs to is only in the draft (a group/network/resource that's
+// created on deploy). Curly braces + an UPPER_SNAKE label so it reads as
+// "gets replaced on deploy", e.g. {{GROUP_SALES_ID}}. Falls back to
+// {{GROUP_ID}} when there's no name to embed.
+export function idPlaceholder(kind: string, label?: string): string {
+  const slug = (label ?? "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return slug ? `{{${kind}_${slug}_ID}}` : `{{${kind}_ID}}`;
 }
 
 // How draft references become wire values. Deploy and preview differ only here.
@@ -261,12 +278,41 @@ const methodPath = (change: DraftChange): { method: HttpMethod; path: string } =
 export function previewResolvers(live: LiveData = {}): RequestResolvers {
   const nameToId = new Map<string, string>();
   live.groups?.forEach((g) => g.id && nameToId.set(g.name, g.id));
+  const liveGroupIds = new Set(
+    (live.groups ?? []).map((g) => g.id).filter(Boolean) as string[],
+  );
+  // Draft resource client id ("new-…") → its name, so a policy referencing a
+  // not-yet-created resource shows {{RESOURCE_<name>_ID}} rather than the id.
+  const draftResourceNames = new Map<string, string>();
+  live.draftChanges?.forEach((c) => {
+    if (c.type === "create-resource") draftResourceNames.set(c.clientId, c.name);
+  });
+
+  // A group reference (real id or draft-group name) → its wire value: a live
+  // id stays, a live name resolves to its id, and a group that only exists in
+  // the draft has no id yet → a placeholder the user must let deploy fill in.
+  const resolveGroupRef = (ref: string) => {
+    if (liveGroupIds.has(ref)) return ref;
+    return nameToId.get(ref) ?? idPlaceholder("GROUP", ref);
+  };
+
   return {
     resolveGroupIds: (list) =>
-      list?.map((g) => (typeof g === "string" ? g : g.id ?? g.name)),
-    resolveResource: (r) => r,
-    resolveNetworkId: (change) => change.networkId ?? "{new}",
-    groupIdForRef: (ref) => nameToId.get(ref) ?? ref,
+      list?.map((g) =>
+        typeof g === "string"
+          ? resolveGroupRef(g)
+          : g.id ?? nameToId.get(g.name) ?? idPlaceholder("GROUP", g.name),
+      ),
+    resolveResource: (r) => {
+      if (!r || !r.id.startsWith("new-")) return r;
+      return {
+        id: idPlaceholder("RESOURCE", draftResourceNames.get(r.id)),
+        type: r.type,
+      };
+    },
+    resolveNetworkId: (change) =>
+      change.networkId ?? idPlaceholder("NETWORK", change.networkName),
+    groupIdForRef: resolveGroupRef,
     normalizeAddress: (address) => normalizeHostCIDR(address),
   };
 }
