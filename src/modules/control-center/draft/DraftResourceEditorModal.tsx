@@ -59,7 +59,7 @@ const EditorContent = ({
 }) => {
   const reactFlow = useReactFlow();
   const { isDraft } = useDraftMode();
-  const { groups: apiGroups } = useControlCenterData();
+  const { groups: apiGroups, networks: apiNetworks } = useControlCenterData();
   const { changes, trackCreateGroup } = useDraftChangeset();
   const { saveDraftResource } = useDraftNetworkActions();
   const { addResourceToFrame, addDraftResource } = useDraftNodeCreation();
@@ -137,9 +137,15 @@ const EditorContent = ({
   };
 
   // LIVE mode: the frame's "Add Resource" creates against the REAL network
-  // (the modal's own save POSTs); mutate lands via SWR revalidation.
+  // (the modal's own save POSTs); mutate lands via SWR revalidation. The live
+  // single-network view has no frame node (it lays resources out directly), so
+  // fall back to the real network from the API list by id — same fallback the
+  // network edit modal uses.
   if (!isDraft && editor.createInNetworkNodeId) {
-    const liveNetwork = (frame?.data as { network?: Network })?.network;
+    const liveNetworkId = editor.createInNetworkNodeId.replace("network-", "");
+    const liveNetwork =
+      (frame?.data as { network?: Network })?.network ??
+      apiNetworks?.find((n) => n.id === liveNetworkId);
     if (!liveNetwork?.id) return null;
     return (
       <ResourceModalContent

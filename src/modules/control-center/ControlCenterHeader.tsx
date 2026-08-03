@@ -61,26 +61,26 @@ const networkSelectorWidth = (labels: unknown[]) => {
 };
 
 // Network actions (⋮) shown next to the network selector in BOTH modes — the
-// three-dots menu that replaced the standalone ✎ edit button.
-//   Edit   → setNetworkEditor, which routes by network: a draft network edits
-//            pure-data, an existing one opens the real network modal (its save
-//            PUTs), so it works in live mode too (DraftNetworkEditModal is
-//            always mounted).
-//   Delete → draft-only (deleting a network is a draft/deploy flow — live has
-//            no delete). Existing networks Delete (marked for deletion,
-//            removed on deploy); draft-created ones Remove (cancel the pending
-//            create). Both mirror the frame's right-click menu; when the
-//            deleted network is the one drilled into, we leave the drill-down.
+// three-dots menu that replaced the standalone ✎ edit button. Edit and Delete
+// are mode-aware under the hood: draft records to the changeset (deploys
+// later), live hits the API immediately (live changes never deploy).
+//   Edit   → setNetworkEditor (draft: pure-data change; live: immediate PUT).
+//   Delete → existing networks Delete (draft: marked for deletion; live:
+//            immediate DELETE), draft-created ones Remove (cancel the pending
+//            create) — mirroring the frame's right-click menu. onDeleted lets
+//            the caller leave the just-deleted network's view (drill-down in
+//            draft, selection in live).
 // Right-hand segment attached to the network selector (its right corners are
 // squared when this is present), so [ selector | ⋮ ] reads as one control —
 // the border-l-0 lets the selector's right border be the divider.
-function NetworkActionsMenu({ networkNodeId }: { networkNodeId: string }) {
-  const {
-    isDraft,
-    setNetworkEditor,
-    drillDownNetworkNodeId,
-    setDrillDownNetworkNodeId,
-  } = useDraftMode();
+function NetworkActionsMenu({
+  networkNodeId,
+  onDeleted,
+}: {
+  networkNodeId: string;
+  onDeleted?: () => void;
+}) {
+  const { setNetworkEditor } = useDraftMode();
   const reactFlow = useReactFlow();
   const { removeNodeWithEdges } = useDraftGroupActions();
   const deleteNetwork = useDeleteNetwork();
@@ -91,22 +91,13 @@ function NetworkActionsMenu({ networkNodeId }: { networkNodeId: string }) {
 
   const handleDelete = React.useCallback(async () => {
     // Draft-created network → Remove (canvas-only, never confirms); existing
-    // one → Delete (confirm + changeset delete). Only navigate out once it's
+    // one → Delete (confirm + changeset delete). Only leave the view once it's
     // actually gone (deleteNetwork resolves false on cancel).
     const removed = isDraftNew
       ? (removeNodeWithEdges(networkNodeId), true)
       : await deleteNetwork(networkNodeId);
-    if (removed && drillDownNetworkNodeId === networkNodeId) {
-      setDrillDownNetworkNodeId(null);
-    }
-  }, [
-    isDraftNew,
-    networkNodeId,
-    removeNodeWithEdges,
-    deleteNetwork,
-    drillDownNetworkNodeId,
-    setDrillDownNetworkNodeId,
-  ]);
+    if (removed) onDeleted?.();
+  }, [isDraftNew, networkNodeId, removeNodeWithEdges, deleteNetwork, onDeleted]);
 
   return (
     <DropdownMenu modal={false}>
@@ -128,21 +119,17 @@ function NetworkActionsMenu({ networkNodeId }: { networkNodeId: string }) {
             Edit
           </div>
         </DropdownMenuItem>
-        {isDraft && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleDelete} variant={"danger"}>
-              <div className={"flex gap-3 items-center"}>
-                {isDraftNew ? (
-                  <CircleMinusIcon size={14} className={"shrink-0"} />
-                ) : (
-                  <Trash2Icon size={14} className={"shrink-0"} />
-                )}
-                {isDraftNew ? "Remove" : "Delete"}
-              </div>
-            </DropdownMenuItem>
-          </>
-        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleDelete} variant={"danger"}>
+          <div className={"flex gap-3 items-center"}>
+            {isDraftNew ? (
+              <CircleMinusIcon size={14} className={"shrink-0"} />
+            ) : (
+              <Trash2Icon size={14} className={"shrink-0"} />
+            )}
+            {isDraftNew ? "Remove" : "Delete"}
+          </div>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -276,7 +263,10 @@ function DraftDrillDownHeader() {
           />
         </div>
         {drilled && (
-          <NetworkActionsMenu networkNodeId={drillDownNetworkNodeId} />
+          <NetworkActionsMenu
+            networkNodeId={drillDownNetworkNodeId}
+            onDeleted={() => setDrillDownNetworkNodeId(null)}
+          />
         )}
       </div>
       {/* Routing peers and resources only make sense on a specific network.
@@ -381,6 +371,7 @@ function HeaderTopLeft() {
               {selectedNetwork && (
                 <NetworkActionsMenu
                   networkNodeId={`network-${selectedNetwork}`}
+                  onDeleted={() => onNetworkSelect("")}
                 />
               )}
             </div>
@@ -390,6 +381,13 @@ function HeaderTopLeft() {
             <NetworkRoutingPeerCount
               key={"network-routing-peers"}
               network={currentNetwork}
+            />
+          )}
+
+          {!isDraft && selectedNetwork && currentNetwork && (
+            <AddResourceButton
+              key={"network-add-resource"}
+              networkNodeId={`network-${selectedNetwork}`}
             />
           )}
         </div>

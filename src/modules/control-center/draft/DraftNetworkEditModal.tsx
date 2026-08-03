@@ -1,6 +1,7 @@
 import { Modal } from "@components/modal/Modal";
 import { useReactFlow } from "@xyflow/react";
 import * as React from "react";
+import { useSWRConfig } from "swr";
 import { Network } from "@/interfaces/Network";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -37,6 +38,8 @@ const EditorContent = ({
   onClose: () => void;
 }) => {
   const reactFlow = useReactFlow();
+  const { isDraft } = useDraftMode();
+  const { mutate } = useSWRConfig();
   const { changes, trackUpdateNetwork } = useDraftChangeset();
   const { renameDraftNetwork } = useDraftNetworkActions();
   const { networks } = useControlCenterData();
@@ -56,35 +59,50 @@ const EditorContent = ({
     ) as { description?: string } | undefined
   )?.description;
 
-  // EXISTING networks are edited as a draft change (update-network) — no live
-  // PUT; it deploys with the rest of the changeset. The frame's label follows
-  // the pending rename immediately so the canvas reflects the edit.
   if (network?.id) {
     const existing = network;
+    // Patch the frame's label/description in place so the canvas reflects the
+    // edit immediately (shared by both modes).
+    const patchFrame = (name: string, description?: string) => {
+      if (!frame) return;
+      reactFlow.setNodes((prev) =>
+        prev.map((n) =>
+          n.id === networkNodeId
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  network: { ...existing, name, description },
+                },
+              }
+            : n,
+        ),
+      );
+    };
+
+    // LIVE: edit the account directly (PUT /networks/{id}) — live changes are
+    // never deployed via the changeset, so they must hit the API now.
+    if (!isDraft) {
+      return (
+        <NetworkModalContent
+          network={existing}
+          onUpdated={(updated) => {
+            patchFrame(updated.name, updated.description);
+            mutate("/networks");
+            onClose();
+          }}
+        />
+      );
+    }
+
+    // DRAFT: record an update-network change; it deploys with the rest of the
+    // changeset. The frame's label follows the pending rename immediately.
     return (
       <NetworkModalContent
         network={existing}
         useSave={false}
         onSaved={(values) => {
-          if (frame) {
-            reactFlow.setNodes((prev) =>
-              prev.map((n) =>
-                n.id === networkNodeId
-                  ? {
-                      ...n,
-                      data: {
-                        ...n.data,
-                        network: {
-                          ...existing,
-                          name: values.name,
-                          description: values.description,
-                        },
-                      },
-                    }
-                  : n,
-              ),
-            );
-          }
+          patchFrame(values.name, values.description);
           trackUpdateNetwork({
             networkId: existing.id,
             name: values.name,

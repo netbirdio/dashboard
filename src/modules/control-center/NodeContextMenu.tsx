@@ -20,11 +20,13 @@ import {
 import { Node } from "@xyflow/react";
 import { cn } from "@utils/helpers";
 import { mutate } from "swr";
+import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import { Group, GroupIssued } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import {
@@ -51,6 +53,7 @@ import { useDeleteNetwork } from "@/modules/control-center/hooks/useDeleteNetwor
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { Modal } from "@components/modal/Modal";
 import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
+import { CreateGroupNameModal } from "@/modules/control-center/draft/CreateGroupNameModal";
 import { EditPeerNameModal } from "@/modules/peers/EditPeerNameModal";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
 import {
@@ -61,7 +64,7 @@ import {
   isFrameNode,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
-import { NetworkResource } from "@/interfaces/Network";
+import { Network, NetworkResource } from "@/interfaces/Network";
 import { canRenamePeerNode } from "@/modules/control-center/utils/node-capabilities";
 
 type MenuPosition = {
@@ -105,7 +108,8 @@ export const NodeContextMenu = ({
   } = useCanvasState();
   const { focusedNodeId, setFocusedNodeId, setSelectedPeerPanel } =
     useDestinationGroup();
-  const { updatePolicy, serializeRules } = usePolicies();
+  const { updatePolicy, serializeRules, deletePolicy } = usePolicies();
+  const { createOrUpdate } = useGroups();
   const groupRequest = useApiCall<Group>("/groups", true);
   const peerRequest = useApiCall<Peer>("/peers", true);
   const resourceRequest = useApiCall<NetworkResource>("/networks", true);
@@ -609,6 +613,70 @@ export const NodeContextMenu = ({
   );
 
   const [peerRenameTarget, setPeerRenameTarget] = useState<Peer | null>(null);
+  // Live "Add Resource Group" opens a name dialog; on save it creates an empty
+  // group (POST /groups) immediately.
+  const [resourceGroupModalOpen, setResourceGroupModalOpen] = useState(false);
+
+  // Create an empty group with the given name against the account (live only).
+  // Resources get assigned to it afterwards — this just mints the group, the
+  // same as the canvas "Create Group" name flow.
+  const handleCreateLiveResourceGroup = useCallback(
+    (name: string) => {
+      setResourceGroupModalOpen(false);
+      notify({
+        title: name,
+        description: "Group created successfully.",
+        loadingMessage: "Creating group...",
+        promise: createOrUpdate({ name, peers: [], resources: [] }).then(() =>
+          mutate("/groups"),
+        ),
+      });
+    },
+    [createOrUpdate],
+  );
+
+  // Delete a policy against the account (live only): confirm, DELETE, then drop
+  // the node from the canvas.
+  const handleLiveDeletePolicy = useCallback(async () => {
+    if (!livePolicy?.id) return;
+    const choice = await confirm({
+      title: `Delete '${livePolicy.name ?? "Policy"}'?`,
+      description:
+        "Are you sure you want to delete this access control policy? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger",
+    });
+    if (!choice) return;
+    await deletePolicy(livePolicy, () => removeNodeWithEdges(nodeId));
+  }, [livePolicy, confirm, deletePolicy, removeNodeWithEdges, nodeId]);
+
+  // Delete a peer against the account (live only): confirm, DELETE /peers/{id},
+  // refresh, then drop the node from the canvas.
+  const handleLiveDeletePeer = useCallback(
+    async (peer: Peer) => {
+      const choice = await confirm({
+        title: `Delete '${peer.name}'?`,
+        description:
+          "Are you sure you want to delete this peer? This action cannot be undone.",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        type: "danger",
+      });
+      if (!choice) return;
+      notify({
+        title: peer.name,
+        description: "Peer was successfully deleted",
+        loadingMessage: "Deleting peer...",
+        promise: peerRequest.del({}, `/${peer.id}`).then(() => {
+          mutate("/peers");
+          mutate("/groups");
+          removeNodeWithEdges(nodeId);
+        }),
+      });
+    },
+    [confirm, peerRequest, removeNodeWithEdges, nodeId],
+  );
 
   // "Details" for peers (live AND draft): opens the peer's groups panel —
   // the same panel a left-click opens. Placeholders included: their group
@@ -644,9 +712,25 @@ export const NodeContextMenu = ({
           onClick: () => setPeerRenameTarget(realPeer),
         });
       }
+      // Live only: delete the peer from the account (DELETE /peers/{id}).
+      // Draft mode manages peers on the canvas (Remove), never a real delete.
+      if (!isDraft && realPeer?.id && permission.peers.delete) {
+        items.push({
+          label: "Delete",
+          icon: <TrashIcon size={14} />,
+          danger: true,
+          onClick: () => void handleLiveDeletePeer(realPeer),
+        });
+      }
       return items;
     },
-    [setSelectedDestinationGroup, setSelectedPeerPanel, permission],
+    [
+      setSelectedDestinationGroup,
+      setSelectedPeerPanel,
+      permission,
+      isDraft,
+      handleLiveDeletePeer,
+    ],
   );
 
   // Renames an existing peer (PUT, same payload shape as the peer page) and
@@ -731,26 +815,41 @@ export const NodeContextMenu = ({
   const items: MenuItem[] = useMemo(() => {
     if (!node) return [];
 
-    // Live mode: only policy nodes get a menu (see onNodeContextMenu) —
-    // Edit and Disable/Enable act on the real account behind confirmations.
-    // No Delete in live; deleting stays a draft/deploy flow.
+    // Live mode: policy, group, resource and network-frame nodes get a menu
+    // (see onNodeContextMenu). Actions act on the real account immediately
+    // (behind confirmations) — live changes never deploy via the changeset.
     if (!isDraft) {
       if (node.type === "policyNode") {
-        if (!nodePolicy?.id || !permission.policies.update) return [];
+        if (!nodePolicy?.id) return [];
         const enabled = livePolicy?.enabled ?? true;
-        return [
-          ...focusItems(node),
-          {
-            label: "Edit",
-            icon: <SquarePenIcon size={14} />,
-            onClick: () => void handleLiveEditPolicy(),
-          },
-          {
-            label: enabled ? "Disable" : "Enable",
-            icon: enabled ? <PowerOffIcon size={14} /> : <PowerIcon size={14} />,
-            onClick: () => void handleLiveTogglePolicy(),
-          },
-        ];
+        const items: MenuItem[] = [...focusItems(node)];
+        if (permission.policies.update) {
+          items.push(
+            {
+              label: "Edit",
+              icon: <SquarePenIcon size={14} />,
+              onClick: () => void handleLiveEditPolicy(),
+            },
+            {
+              label: enabled ? "Disable" : "Enable",
+              icon: enabled ? (
+                <PowerOffIcon size={14} />
+              ) : (
+                <PowerIcon size={14} />
+              ),
+              onClick: () => void handleLiveTogglePolicy(),
+            },
+          );
+        }
+        if (permission.policies.delete) {
+          items.push({
+            label: "Delete",
+            icon: <TrashIcon size={14} />,
+            danger: true,
+            onClick: () => void handleLiveDeletePolicy(),
+          });
+        }
+        return items;
       }
       // Groups: panel + rename/delete (both behind live-mode warnings, like
       // the policy actions). "All" is managed by the system.
@@ -799,6 +898,43 @@ export const NodeContextMenu = ({
             onClick: () => void handleLiveToggleResource(node),
           },
         ];
+      }
+      // Network frames: full live account actions — Add Resource / Resource
+      // Group / Routing Peer create immediately against the API, Delete removes
+      // the network now. (Passing the real `network` — not a networkNodeId —
+      // routes the routing-peer modal to its live POST path.)
+      if (node.type === "networkNode" && isFrameNode(node)) {
+        const liveNetwork = (node.data as { network?: Network })?.network;
+        if (!liveNetwork?.id) return [];
+        const items: MenuItem[] = [...focusItems(node)];
+        if (permission.networks.update) {
+          items.push(
+            {
+              label: "Add Resource",
+              icon: <WorkflowIcon size={14} />,
+              onClick: () => setResourceEditor({ createInNetworkNodeId: nodeId }),
+            },
+            {
+              label: "Add Resource Group",
+              icon: <GroupBadgeIcon size={14} />,
+              onClick: () => setResourceGroupModalOpen(true),
+            },
+            {
+              label: "Add Routing Peer",
+              icon: <Share2Icon size={14} />,
+              onClick: () => setRoutingPeerModal({ network: liveNetwork }),
+            },
+          );
+        }
+        if (permission.networks.delete) {
+          items.push({
+            label: "Delete",
+            icon: <TrashIcon size={14} />,
+            danger: true,
+            onClick: () => void deleteNetwork(nodeId),
+          });
+        }
+        return items;
       }
       return [...focusItems(node), ...peerDetailsItems(node)];
     }
@@ -1044,8 +1180,14 @@ export const NodeContextMenu = ({
     nodePolicy,
     livePolicy,
     permission.policies.update,
+    permission.policies.delete,
+    permission.networks.update,
+    permission.networks.delete,
     handleLiveEditPolicy,
     handleLiveTogglePolicy,
+    handleLiveDeletePolicy,
+    deleteNetwork,
+    setResourceGroupModalOpen,
     policyEnabled,
     handleRemove,
     removeGroup,
@@ -1193,6 +1335,15 @@ export const NodeContextMenu = ({
           />
         )}
       </Modal>
+
+      {/* Live "Add Resource Group": name a new (empty) group, created against
+          the account right away. */}
+      <CreateGroupNameModal
+        open={resourceGroupModalOpen}
+        onOpenChange={setResourceGroupModalOpen}
+        onSuccess={handleCreateLiveResourceGroup}
+        groups={groups}
+      />
     </>
   );
 };
