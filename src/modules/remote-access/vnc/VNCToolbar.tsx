@@ -82,7 +82,7 @@ export default function VNCToolbar({
         className="h-2 w-24 bg-nb-gray-500/60 group-hover:bg-nb-gray-400/80 rounded-b-lg mx-auto cursor-grab active:cursor-grabbing transition-colors touch-none"
         title="Drag to reposition"
       />
-      <div className="max-h-0 group-hover:max-h-20 overflow-hidden transition-all duration-200 ease-out">
+      <div className="max-h-0 group-hover:max-h-20 group-focus-within:max-h-20 overflow-hidden transition-all duration-200 ease-out">
         <div className="flex gap-1 bg-nb-gray-900/95 backdrop-blur border border-nb-gray-700 rounded-md px-2 py-1.5 shadow-lg mt-1">
           {viewOnly && (
             <span
@@ -95,7 +95,7 @@ export default function VNCToolbar({
           {onCtrlAltDel && !viewOnly && (
             <button
               onClick={onCtrlAltDel}
-              className="text-xs text-nb-gray-300 hover:text-white px-3 py-1 rounded hover:bg-nb-gray-700 transition-colors whitespace-nowrap"
+              className="text-xs text-nb-gray-300 hover:text-white px-3 py-1 rounded hover:bg-nb-gray-700 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-neutral-300"
               title="Send Ctrl+Alt+Del to remote machine"
             >
               Ctrl+Alt+Del
@@ -104,7 +104,7 @@ export default function VNCToolbar({
           {onPaste && (
             <button
               onClick={onPaste}
-              className="text-xs text-nb-gray-300 hover:text-white px-3 py-1 rounded hover:bg-nb-gray-700 transition-colors whitespace-nowrap"
+              className="text-xs text-nb-gray-300 hover:text-white px-3 py-1 rounded hover:bg-nb-gray-700 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-neutral-300"
               title="Paste host clipboard into remote machine by typing the text (works on login screens too)"
             >
               Paste
@@ -114,7 +114,7 @@ export default function VNCToolbar({
             <button
               onClick={() => onToggleRemoteCursor(!showRemoteCursor)}
               className={
-                "text-xs px-3 py-1 rounded transition-colors whitespace-nowrap " +
+                "text-xs px-3 py-1 rounded transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-neutral-300 " +
                 (showRemoteCursor
                   ? "text-white bg-nb-gray-700"
                   : "text-nb-gray-300 hover:text-white hover:bg-nb-gray-700")
@@ -132,7 +132,7 @@ export default function VNCToolbar({
               />
               <button
                 onClick={onDisconnect}
-                className="text-xs text-red-400 hover:text-red-300 px-3 py-1 rounded hover:bg-red-500/10 transition-colors whitespace-nowrap"
+                className="text-xs text-red-400 hover:text-red-300 px-3 py-1 rounded hover:bg-red-500/10 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-red-400"
                 title="End your session. The remote machine keeps running and you can reconnect afterwards."
               >
                 End session
