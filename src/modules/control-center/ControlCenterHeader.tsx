@@ -8,17 +8,30 @@ import {
 } from "@components/select/SelectDropdown";
 import {
   ArrowLeftIcon,
+  CircleMinusIcon,
+  CirclePlusIcon,
   LayoutGridIcon,
+  MoreVerticalIcon,
   NetworkIcon,
-  PencilLineIcon,
+  SquarePenIcon,
+  Trash2Icon,
   WaypointsIcon,
   XIcon,
 } from "lucide-react";
 import { sortBy } from "lodash";
 import React from "react";
+import { useReactFlow } from "@xyflow/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
 import { isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
 import {
+  isDraftNetworkNode,
   isFrameNode,
   useStructuralNodes,
 } from "@/modules/control-center/utils/helpers";
@@ -32,6 +45,8 @@ import { useCanvasState, useControlCenterUI } from "@/modules/control-center/Con
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
+import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
+import { useDeleteNetwork } from "@/modules/control-center/hooks/useDeleteNetwork";
 
 // Width for the network selector: sized to its LONGEST option label
 // (~6.5px/char at the trigger's text-xs medium, plus icon/chevron/padding
@@ -45,25 +60,115 @@ const networkSelectorWidth = (labels: unknown[]) => {
   return Math.min(256, Math.max(150, 86 + longest * 6.5));
 };
 
-// Edit-network button (✎) shown next to the network selector in BOTH modes.
-// setNetworkEditor routes by network: a draft network edits pure-data, an
-// existing one opens the real network modal (its save PUTs) — so it works in
-// live mode too (DraftNetworkEditModal is always mounted).
-// Right-hand segment attached to the network selector (the selector's right
-// corners are squared when this is present), so [ selector | ✎ ] reads as one
-// control — the border-l-0 lets the selector's right border be the divider.
-function NetworkEditButton({ networkNodeId }: { networkNodeId: string }) {
-  const { setNetworkEditor } = useDraftMode();
+// Network actions (⋮) shown next to the network selector in BOTH modes — the
+// three-dots menu that replaced the standalone ✎ edit button.
+//   Edit   → setNetworkEditor, which routes by network: a draft network edits
+//            pure-data, an existing one opens the real network modal (its save
+//            PUTs), so it works in live mode too (DraftNetworkEditModal is
+//            always mounted).
+//   Delete → draft-only (deleting a network is a draft/deploy flow — live has
+//            no delete). Existing networks Delete (marked for deletion,
+//            removed on deploy); draft-created ones Remove (cancel the pending
+//            create). Both mirror the frame's right-click menu; when the
+//            deleted network is the one drilled into, we leave the drill-down.
+// Right-hand segment attached to the network selector (its right corners are
+// squared when this is present), so [ selector | ⋮ ] reads as one control —
+// the border-l-0 lets the selector's right border be the divider.
+function NetworkActionsMenu({ networkNodeId }: { networkNodeId: string }) {
+  const {
+    isDraft,
+    setNetworkEditor,
+    drillDownNetworkNodeId,
+    setDrillDownNetworkNodeId,
+  } = useDraftMode();
+  const reactFlow = useReactFlow();
+  const { removeNodeWithEdges } = useDraftGroupActions();
+  const deleteNetwork = useDeleteNetwork();
+
+  const isDraftNew = isDraftNetworkNode(
+    reactFlow.getNodes().find((n) => n.id === networkNodeId),
+  );
+
+  const handleDelete = React.useCallback(async () => {
+    // Draft-created network → Remove (canvas-only, never confirms); existing
+    // one → Delete (confirm + changeset delete). Only navigate out once it's
+    // actually gone (deleteNetwork resolves false on cancel).
+    const removed = isDraftNew
+      ? (removeNodeWithEdges(networkNodeId), true)
+      : await deleteNetwork(networkNodeId);
+    if (removed && drillDownNetworkNodeId === networkNodeId) {
+      setDrillDownNetworkNodeId(null);
+    }
+  }, [
+    isDraftNew,
+    networkNodeId,
+    removeNodeWithEdges,
+    deleteNetwork,
+    drillDownNetworkNodeId,
+    setDrillDownNetworkNodeId,
+  ]);
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type={"button"}
+          aria-label={"Network actions"}
+          className={
+            "flex items-center justify-center h-[40px] px-4 shrink-0 rounded-r-md border border-l-0 border-gray-700/40 bg-nb-gray-920 text-gray-400 hover:text-white hover:bg-nb-gray-910 transition-colors"
+          }
+        >
+          <MoreVerticalIcon size={14} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={"start"} className={"w-[180px]"}>
+        <DropdownMenuItem onClick={() => setNetworkEditor({ networkNodeId })}>
+          <div className={"flex gap-3 items-center"}>
+            <SquarePenIcon size={14} className={"shrink-0"} />
+            Edit
+          </div>
+        </DropdownMenuItem>
+        {isDraft && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleDelete} variant={"danger"}>
+              <div className={"flex gap-3 items-center"}>
+                {isDraftNew ? (
+                  <CircleMinusIcon size={14} className={"shrink-0"} />
+                ) : (
+                  <Trash2Icon size={14} className={"shrink-0"} />
+                )}
+                {isDraftNew ? "Remove" : "Delete"}
+              </div>
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// "Add Resource" button for the drilled single-network top bar — sits after
+// the routing-peers bar. Opens the resource editor targeting this network
+// (draft: the row is created into the frame on save; live: a real POST). Styled
+// to match the RoutingPeersBar pill next to it so the bar reads as one control
+// language.
+function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
+  const { setResourceEditor } = useDraftMode();
   return (
     <button
       type={"button"}
-      aria-label={"Edit network"}
-      onClick={() => setNetworkEditor({ networkNodeId })}
-      className={
-        "flex items-center justify-center h-[40px] px-4 shrink-0 rounded-r-md border border-l-0 border-gray-700/40 bg-nb-gray-920 text-gray-400 hover:text-white hover:bg-nb-gray-910 transition-colors"
+      onClick={() =>
+        setResourceEditor({ createInNetworkNodeId: networkNodeId })
       }
+      className={cn(
+        "flex items-center gap-1.5 h-[40px] px-3.5 shrink-0 rounded-md text-xs whitespace-nowrap outline-none",
+        "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
+        "hover:text-white hover:bg-nb-gray-910 transition-colors",
+      )}
     >
-      <PencilLineIcon size={14} />
+      <CirclePlusIcon size={14} className={"shrink-0"} />
+      Add Resource
     </button>
   );
 }
@@ -170,9 +275,12 @@ function DraftDrillDownHeader() {
             size={"xs"}
           />
         </div>
-        {drilled && <NetworkEditButton networkNodeId={drillDownNetworkNodeId} />}
+        {drilled && (
+          <NetworkActionsMenu networkNodeId={drillDownNetworkNodeId} />
+        )}
       </div>
-      {/* Routing peers only make sense on a specific network. */}
+      {/* Routing peers and resources only make sense on a specific network.
+          Add Resource sits right after the routing-peers bar. */}
       {drilled && (
         <RoutingPeersBar
           rows={rows}
@@ -182,6 +290,7 @@ function DraftDrillDownHeader() {
           }
         />
       )}
+      {drilled && <AddResourceButton networkNodeId={drillDownNetworkNodeId} />}
     </>
   );
 }
@@ -270,7 +379,9 @@ function HeaderTopLeft() {
                 />
               </div>
               {selectedNetwork && (
-                <NetworkEditButton networkNodeId={`network-${selectedNetwork}`} />
+                <NetworkActionsMenu
+                  networkNodeId={`network-${selectedNetwork}`}
+                />
               )}
             </div>
           )}

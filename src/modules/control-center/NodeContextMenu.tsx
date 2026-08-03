@@ -47,6 +47,7 @@ import {
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
+import { useDeleteNetwork } from "@/modules/control-center/hooks/useDeleteNetwork";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { Modal } from "@components/modal/Modal";
 import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
@@ -60,7 +61,7 @@ import {
   isFrameNode,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
-import { Network, NetworkResource } from "@/interfaces/Network";
+import { NetworkResource } from "@/interfaces/Network";
 import { canRenamePeerNode } from "@/modules/control-center/utils/node-capabilities";
 
 type MenuPosition = {
@@ -123,7 +124,6 @@ export const NodeContextMenu = ({
     trackDeletePolicy,
     trackUpdateResource,
     trackDeleteResource,
-    trackDeleteNetwork,
     trackInstallPeer,
   } = useDraftChangeset();
   const { confirm } = useDialog();
@@ -135,6 +135,7 @@ export const NodeContextMenu = ({
   } = useDraftGroupActions();
   const { addResourceGroupToFrame } = useDraftNodeCreation();
   const { syncDraftResource } = useDraftNetworkActions();
+  const deleteNetwork = useDeleteNetwork();
 
   // The rename modal must survive the menu closing (position → null), so the
   // target node is snapshotted separately. It targets either a group node or
@@ -316,30 +317,6 @@ export const NodeContextMenu = ({
       removeNodeWithEdges(id);
     },
     [nodes, confirm, trackDeleteResource, removeNodeWithEdges],
-  );
-
-  // Delete a whole EXISTING network: confirm, record the delete-network
-  // change (its resources/routers cascade server-side), then take the frame
-  // off the canvas. Draft networks are never deleted this way — they Remove.
-  const deleteNetwork = useCallback(
-    async (id: string) => {
-      const target = nodes.find((n) => n.id === id);
-      const network = (target?.data as { network?: Network })?.network;
-      if (!network?.id) return;
-      const choice = await confirm({
-        title: `Delete network “${network.name}”?`,
-        description:
-          "Its resources and routing peers are removed too. It will be marked for deletion and deleted when you review and deploy.",
-        confirmText: "Delete",
-        cancelText: "Cancel",
-        type: "danger",
-        dismissOnOutsideClick: true,
-      });
-      if (!choice) return;
-      trackDeleteNetwork({ networkId: network.id, name: network.name });
-      removeNodeWithEdges(id);
-    },
-    [nodes, confirm, trackDeleteNetwork, removeNodeWithEdges],
   );
 
   const node = useMemo(
