@@ -237,9 +237,11 @@ export const RoutingPeersBar = ({
               autoSelectFirst={false}
               scrollAreaClassName={"!pt-2"}
               maxHeight={MAX_LIST_HEIGHT}
-              // Measured row: py-2 (16) + one text line (~17) ≈ 33px — 38
-              // left a visible dead strip below the last row.
-              estimatedItemHeight={34}
+              // Must equal the REAL row height (py-1 8 + p-1 8 + ~16 icon/text
+              // ≈ 32). The Virtuoso viewport is sized from this estimate, so
+              // overshooting leaves a dead strip below the last row that reads
+              // as extra bottom padding vs the top.
+              estimatedItemHeight={32}
               // Bottom padding is the last row's pb-2 (8) alone — match the
               // top pt-2 (8). No extra container fudge (it was adding ~4px more
               // below the last row than above the first).
