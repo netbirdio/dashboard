@@ -19,7 +19,10 @@ import {
   NetBirdStatus,
   useNetBirdClient,
 } from "@/modules/remote-access/useNetBirdClient";
-import { useVNCQueryParams, type VNCSettings } from "@/modules/remote-access/vnc/useVNCQueryParams";
+import {
+  useVNCQueryParams,
+  type VNCSettings,
+} from "@/modules/remote-access/vnc/useVNCQueryParams";
 import VNCToolbar from "@/modules/remote-access/vnc/VNCToolbar";
 
 // Network range exposed by the NetBird agent for the embedded VNC server.
@@ -27,12 +30,21 @@ import VNCToolbar from "@/modules/remote-access/vnc/VNCToolbar";
 const VNC_NETWORK_RANGE = "netbird-vnc/25900";
 
 export default function VNCPage() {
-  const { peerId, mode: initialMode, username: initialUser, ipVersion, settings, ready } = useVNCQueryParams();
-
   const {
-    data: peer,
-    isLoading: isPeerLoading,
-  } = useFetchApi<Peer>(`/peers/${peerId}`, true, false, !!peerId);
+    peerId,
+    mode: initialMode,
+    username: initialUser,
+    ipVersion,
+    settings,
+    ready,
+  } = useVNCQueryParams();
+
+  const { data: peer, isLoading: isPeerLoading } = useFetchApi<Peer>(
+    `/peers/${peerId}`,
+    true,
+    false,
+    !!peerId,
+  );
 
   return (
     <div className="w-screen h-screen overflow-hidden fixed inset-0">
@@ -98,8 +110,12 @@ function VNCSession({
   const [keySessionId, setKeySessionId] = useState<string>("");
 
   const peerOSType = getOperatingSystem(peer?.os);
-  const supportsSessionMode = peerOSType === OperatingSystem.LINUX || peerOSType === OperatingSystem.FREEBSD;
-  const [mode, setMode] = useState<VNCMode>(supportsSessionMode ? initialMode : "attach");
+  const supportsSessionMode =
+    peerOSType === OperatingSystem.LINUX ||
+    peerOSType === OperatingSystem.FREEBSD;
+  const [mode, setMode] = useState<VNCMode>(
+    supportsSessionMode ? initialMode : "attach",
+  );
   const [username, setUsername] = useState(initialUsername);
   // ipVer forces the address family for the dial: "4", "6", or "" for
   // automatic. Seeded from the ip_version query param, adjustable in the
@@ -115,15 +131,18 @@ function VNCSession({
     document.title = `${peer.name} - ${peer.ip} - VNC`;
   }, [peer.ip, peer.name]);
 
-  const sendErrorNotification = useCallback((title: string, message: string) => {
-    notify({
-      title,
-      description: message,
-      icon: <IconCircleX size={24} />,
-      backgroundColor: "bg-red-500",
-      duration: 10000,
-    });
-  }, []);
+  const sendErrorNotification = useCallback(
+    (title: string, message: string) => {
+      notify({
+        title,
+        description: message,
+        icon: <IconCircleX size={24} />,
+        backgroundColor: "bg-red-500",
+        duration: 10000,
+      });
+    },
+    [],
+  );
 
   const connectNetBird = useCallback(async () => {
     if (!peer?.id || client.status !== NetBirdStatus.DISCONNECTED) return;
@@ -281,7 +300,10 @@ function VNCSession({
         setKeySessionId(result.keySessionId);
       }
     } catch (error) {
-      sendErrorNotification("NetBird Connection Error", (error as Error).message);
+      sendErrorNotification(
+        "NetBird Connection Error",
+        (error as Error).message,
+      );
     } finally {
       setIsNetBirdConnecting(false);
     }
@@ -308,7 +330,8 @@ function VNCSession({
 
   const loadingLabel = (() => {
     if (isNetBirdConnecting) return "Requesting temporary peer access…";
-    if (client.status === NetBirdStatus.CONNECTING) return "Bringing up NetBird overlay…";
+    if (client.status === NetBirdStatus.CONNECTING)
+      return "Bringing up NetBird overlay…";
     if (vnc.status === VNCStatus.CONNECTING) {
       return vncWaitElapsed
         ? "Connecting to VNC server… the peer may be prompting its user for approval."
@@ -442,7 +465,11 @@ function VNCSession({
 
       {vnc.status === VNCStatus.CONNECTED && (
         <VNCToolbar
-          onCtrlAltDel={peerOSType === OperatingSystem.WINDOWS ? vnc.sendCtrlAltDel : undefined}
+          onCtrlAltDel={
+            peerOSType === OperatingSystem.WINDOWS
+              ? vnc.sendCtrlAltDel
+              : undefined
+          }
           onPaste={vnc.viewOnly ? undefined : vnc.pasteFromHostClipboard}
           showRemoteCursor={vnc.showRemoteCursor}
           onToggleRemoteCursor={
@@ -458,8 +485,17 @@ function VNCSession({
       <div
         ref={vnc.containerRef}
         tabIndex={-1}
+        onKeyDownCapture={vnc.handlePasteShortcut}
         onContextMenu={(e) => e.preventDefault()}
-        onPaste={(e) => e.preventDefault()}
+        onPaste={(e) => {
+          // Keep the browser from inserting anything into the page, but use the
+          // event's clipboard data: a paste gesture carries it without the
+          // read-permission prompt the toolbar button runs into.
+          e.preventDefault();
+          if (!vnc.viewOnly) {
+            vnc.pasteFromClipboardEvent(e.clipboardData);
+          }
+        }}
         className={
           vnc.status === VNCStatus.CONNECTED
             ? "w-full h-full bg-black vnc-cursor outline-none" +
@@ -468,7 +504,9 @@ function VNCSession({
               // pointer for orientation, so we keep the local cursor
               // visible. In control mode we hide it to avoid two cursors
               // tracking together.
-              (vnc.showRemoteCursor && !vnc.viewOnly ? " vnc-cursor-remote" : "")
+              (vnc.showRemoteCursor && !vnc.viewOnly
+                ? " vnc-cursor-remote"
+                : "")
             : "hidden"
         }
       />
