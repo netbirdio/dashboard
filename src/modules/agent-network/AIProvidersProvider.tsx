@@ -125,8 +125,10 @@ export type APIAgentNetworkSettings = {
   enable_prompt_collection: boolean;
   redact_pii: boolean;
   access_log_retention_days?: number;
-  created_at: string;
-  updated_at: string;
+  // Absent until the account is bootstrapped — pre-bootstrap the backend
+  // returns the defaults without a persisted row to date.
+  created_at?: string;
+  updated_at?: string;
 };
 
 // APIAgentNetworkSettingsRequest matches the PUT /agent-network/settings
@@ -521,10 +523,12 @@ export function useAIProviders() {
 }
 
 // useAgentNetworkSettings fetches the account-level agent-network settings.
-// Returns null until the first provider is created — newer backends respond
-// 200 + JSON null while no settings row exists; older backends respond 404,
-// which we still tolerate via ignoreError so older deploys don't surface
-// a spurious error in the empty state.
+// Returns null until the account is bootstrapped (first provider create, or
+// a settings update carrying a cluster). Backends signal the unbootstrapped
+// state differently by age: current ones respond 200 with the defaults and
+// an empty cluster/subdomain/endpoint, older ones 200 + JSON null, and the
+// oldest 404 — tolerated via ignoreError so old deploys don't surface a
+// spurious error in the empty state. All three normalize to null here.
 export function useAgentNetworkSettings() {
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { data, error, isLoading, mutate } =
@@ -534,11 +538,14 @@ export function useAgentNetworkSettings() {
       true,
       agentNetworkEnabled,
     );
-  const settings = useMemo<AgentNetworkSettings | null>(
-    () => (data ? settingsFromAPI(data) : null),
-    [data],
-  );
   const notFound = !!error && (error as { code?: number }).code === 404;
+  // SWR keeps the previous data alongside the error (keepPreviousData), so a
+  // later 404 must not expose the stale settings; other transient errors keep
+  // them, which is what keepPreviousData is for.
+  const settings = useMemo<AgentNetworkSettings | null>(
+    () => (data && data.endpoint && !notFound ? settingsFromAPI(data) : null),
+    [data, notFound],
+  );
   return {
     settings,
     isLoading: isLoading && !notFound,
@@ -676,7 +683,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           updates.metadataDisabled ?? existing.metadata_disabled,
         models: updates.models
           ? toAPIModels(updates.models)
-          : existing.models ?? [],
+          : (existing.models ?? []),
         enabled: updates.enabled ?? existing.enabled,
       };
       try {
@@ -761,7 +768,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         guardrail_ids: updates.guardrailIds ?? existing.guardrail_ids ?? [],
         limits: updates.limits
           ? policyLimitsToAPI(updates.limits)
-          : existing.limits ?? policyLimitsToAPI(EMPTY_POLICY_LIMITS),
+          : (existing.limits ?? policyLimitsToAPI(EMPTY_POLICY_LIMITS)),
       };
       try {
         await policiesApi.put(merged, `/${id}`);
