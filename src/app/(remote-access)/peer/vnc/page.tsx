@@ -1,9 +1,8 @@
 "use client";
 
 import Button from "@components/Button";
-import { notify } from "@components/Notification";
+import { sendErrorNotification } from "@/modules/remote-access/errorNotification";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
-import { IconCircleX } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import { MonitorIcon, UserIcon } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -130,19 +129,6 @@ function VNCSession({
   useEffect(() => {
     document.title = `${peer.name} - ${peer.ip} - VNC`;
   }, [peer.ip, peer.name]);
-
-  const sendErrorNotification = useCallback(
-    (title: string, message: string) => {
-      notify({
-        title,
-        description: message,
-        icon: <IconCircleX size={24} />,
-        backgroundColor: "bg-red-500",
-        duration: 10000,
-      });
-    },
-    [],
-  );
 
   const connectNetBird = useCallback(async () => {
     if (!peer?.id || client.status !== NetBirdStatus.DISCONNECTED) return;
