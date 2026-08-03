@@ -282,9 +282,9 @@ export const getChangeApiCall = (change: DraftChange): string => {
     case "update-network":
       return `PUT /networks/${change.networkId}`;
     case "create-resource":
-      return `POST /networks/${change.networkId ?? "{{NETWORK_ID}}"}/resources`;
+      return `POST /networks/${change.networkId ?? "{network_id}"}/resources`;
     case "create-router":
-      return `POST /networks/${change.networkId ?? "{{NETWORK_ID}}"}/routers`;
+      return `POST /networks/${change.networkId ?? "{network_id}"}/routers`;
     case "update-router":
       return `PUT /networks/${change.networkId}/routers/${change.routerId}`;
     case "update-resource":

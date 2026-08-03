@@ -25,7 +25,7 @@ import {
 // can never drift. The difference between deploy and preview is only the
 // RESOLVERS: deploy resolves draft client-ids/names to the real API ids it has
 // created during the run; preview resolves what it can from live data and
-// renders the rest as {{GROUP_X_ID}}-style id placeholders (see idPlaceholder)
+// renders the rest as {group_x_id}-style id placeholders (see idPlaceholder)
 // so the reader sees exactly where deploy will fill in a not-yet-created id.
 
 export type HttpMethod = "POST" | "PUT" | "DELETE";
@@ -51,15 +51,16 @@ export interface LiveData {
 
 // A code-view placeholder for a real API id that doesn't exist yet because the
 // entity it belongs to is only in the draft (a group/network/resource that's
-// created on deploy). Curly braces + an UPPER_SNAKE label so it reads as
-// "gets replaced on deploy", e.g. {{GROUP_SALES_ID}}. Falls back to
-// {{GROUP_ID}} when there's no name to embed.
+// created on deploy). A single-brace, lower_snake token so it reads as "gets
+// replaced on deploy", e.g. {group_sales_id}. Falls back to {group_id} when
+// there's no name to embed.
 export function idPlaceholder(kind: string, label?: string): string {
   const slug = (label ?? "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "_")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
-  return slug ? `{{${kind}_${slug}_ID}}` : `{{${kind}_ID}}`;
+  const k = kind.toLowerCase();
+  return slug ? `{${k}_${slug}_id}` : `{${k}_id}`;
 }
 
 // How draft references become wire values. Deploy and preview differ only here.

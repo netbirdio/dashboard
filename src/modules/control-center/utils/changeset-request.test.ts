@@ -189,7 +189,7 @@ describe("buildBeforeRequest", () => {
 });
 
 describe("id placeholders in preview", () => {
-  it("a draft group (no id) in a policy renders as a {{GROUP_..._ID}} token", () => {
+  it("a draft group (no id) in a policy renders as a {group_..._id} token", () => {
     const change: CreatePolicyChange = {
       id: "c1",
       type: "create-policy",
@@ -212,7 +212,7 @@ describe("id placeholders in preview", () => {
       }),
     };
     const body = buildChangeRequest(change)?.body as any;
-    expect(body.rules[0].sources).toEqual(["{{GROUP_SALES_TEAM_ID}}"]);
+    expect(body.rules[0].sources).toEqual(["{group_sales_team_id}"]);
     expect(body.rules[0].destinations).toEqual(["g2"]);
   });
 
@@ -229,10 +229,10 @@ describe("id placeholders in preview", () => {
     };
     const live: LiveData = { groups: [{ id: "grp-live", name: "Ops" }] };
     const body = buildChangeRequest(change, live)?.body as any;
-    expect(body.groups).toEqual(["{{GROUP_MARKETING_ID}}", "grp-live"]);
+    expect(body.groups).toEqual(["{group_marketing_id}", "grp-live"]);
   });
 
-  it("a policy referencing a not-yet-created resource shows {{RESOURCE_..._ID}}", () => {
+  it("a policy referencing a not-yet-created resource shows {resource_..._id}", () => {
     const change: CreatePolicyChange = {
       id: "c2",
       type: "create-policy",
@@ -270,7 +270,7 @@ describe("id placeholders in preview", () => {
     };
     const body = buildChangeRequest(change, live)?.body as any;
     expect(body.rules[0].destinationResource).toEqual({
-      id: "{{RESOURCE_DATABASE_ID}}",
+      id: "{resource_database_id}",
       type: "host",
     });
   });
