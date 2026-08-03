@@ -14,7 +14,9 @@ import {
   getChangeApiCall,
   InstallPeerChange,
   UpdateGroupChange,
+  UpdateNetworkChange,
   UpdateResourceChange,
+  UpdateRouterChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 
 // The request-body SHAPE is defined once here and used by BOTH the deploy
@@ -159,6 +161,11 @@ export function networkCreateBody(change: CreateNetworkChange) {
   return { name: change.name, description: change.description ?? "" };
 }
 
+// PUT /networks/{id} — same shape as create.
+export function networkUpdateBody(change: UpdateNetworkChange) {
+  return { name: change.name, description: change.description ?? "" };
+}
+
 export function resourceCreateBody(
   change: CreateResourceChange,
   r: RequestResolvers,
@@ -190,6 +197,22 @@ export function resourceUpdateBody(
 // unset.
 export function routerCreateBody(
   change: CreateRouterChange,
+  r: RequestResolvers,
+) {
+  return {
+    ...(change.peerId
+      ? { peer: change.peerId }
+      : { peer_groups: [r.groupIdForRef(change.groupId ?? "")] }),
+    metric: change.metric ?? 9999,
+    masquerade: change.masquerade ?? true,
+    enabled: change.enabled ?? true,
+  };
+}
+
+// PUT /networks/{netId}/routers/{routerId} — same body shape as create; the
+// groupId (a real id or a draft-group name) resolves the same way.
+export function routerUpdateBody(
+  change: UpdateRouterChange,
   r: RequestResolvers,
 ) {
   return {
@@ -289,12 +312,16 @@ export function buildChangeRequest(
     }
     case "create-network":
       return { method, path, body: networkCreateBody(change) };
+    case "update-network":
+      return { method, path, body: networkUpdateBody(change) };
     case "create-resource":
       return { method, path, body: resourceCreateBody(change, r) };
     case "update-resource":
       return { method, path, body: resourceUpdateBody(change, r) };
     case "create-router":
       return { method, path, body: routerCreateBody(change, r) };
+    case "update-router":
+      return { method, path, body: routerUpdateBody(change, r) };
     case "delete-policy":
     case "delete-group":
     case "delete-resource":
@@ -382,6 +409,18 @@ export function buildBeforeRequest(
         },
       };
     }
+    case "update-network": {
+      const network = live.networks?.find((n) => n.id === change.networkId);
+      if (!network) return null;
+      return {
+        method: "PUT",
+        path: `/networks/${change.networkId}`,
+        body: { name: network.name, description: network.description ?? "" },
+      };
+    }
+    // update-router has no "before": routers aren't in the global live data
+    // (they're fetched per-network, lazily) — it falls through to null and
+    // the code view renders the resulting PUT on its own.
     case "delete-network": {
       const network = live.networks?.find((n) => n.id === change.networkId);
       if (!network) return null;

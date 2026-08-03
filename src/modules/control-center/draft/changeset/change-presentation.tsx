@@ -35,6 +35,7 @@ export const changeIcon = (change: DraftChange, size = 14) => {
     case "delete-policy":
       return <ShieldIcon size={size} />;
     case "create-network":
+    case "update-network":
     case "delete-network":
       return <NetworkIcon size={size} />;
     case "create-resource":
@@ -42,6 +43,7 @@ export const changeIcon = (change: DraftChange, size = 14) => {
     case "delete-resource":
       return <WorkflowIcon size={size} />;
     case "create-router":
+    case "update-router":
       return <WaypointsIcon size={size} />;
     case "install-peer":
       // Match the placeholder's canvas icon by kind.
@@ -68,6 +70,7 @@ export const entityTitle = (change: DraftChange): string => {
     case "delete-policy":
       return `Policy “${change.name}”`;
     case "create-network":
+    case "update-network":
     case "delete-network":
       return `Network “${change.name}”`;
     case "create-resource":
@@ -77,6 +80,7 @@ export const entityTitle = (change: DraftChange): string => {
         ? `Resource “${change.name}” in “${change.networkName}”`
         : `Resource “${change.name}”`;
     case "create-router":
+    case "update-router":
       return change.peerId
         ? `Routing peer “${change.peerName ?? change.peerId}” for “${change.networkName}”`
         : `Routing peer group “${change.groupName ?? change.groupId}” for “${change.networkName}”`;
@@ -91,6 +95,7 @@ export const entityTitle = (change: DraftChange): string => {
 export const entityName = (change: DraftChange): string => {
   switch (change.type) {
     case "create-router":
+    case "update-router":
       return (
         change.peerName ??
         change.groupName ??
@@ -115,6 +120,7 @@ export const entityTypeLabel = (change: DraftChange): string => {
     case "delete-policy":
       return "Policy";
     case "create-network":
+    case "update-network":
     case "delete-network":
       return "Network";
     case "create-resource":
@@ -122,6 +128,7 @@ export const entityTypeLabel = (change: DraftChange): string => {
     case "delete-resource":
       return "Resource";
     case "create-router":
+    case "update-router":
       return "Routing peer";
     case "install-peer":
       return "Peer";

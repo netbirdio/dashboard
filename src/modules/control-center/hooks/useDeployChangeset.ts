@@ -22,11 +22,13 @@ import {
   groupUpdateBody,
   mergeGroupMembers,
   networkCreateBody,
+  networkUpdateBody,
   policyRequestBody,
   RequestResolvers,
   resourceCreateBody,
   resourceUpdateBody,
   routerCreateBody,
+  routerUpdateBody,
 } from "@/modules/control-center/utils/changeset-request";
 
 // Executes the draft changeset against the API in CRUD dependency order:
@@ -150,6 +152,13 @@ export function useDeployChangeset() {
           if (created?.id) networkClientToId.set(change.clientId, created.id);
           return;
         }
+        case "update-network": {
+          await networkRequest.put(
+            networkUpdateBody(change),
+            `/${change.networkId}`,
+          );
+          return;
+        }
         case "create-resource": {
           const networkId = resolveNetworkId(change);
           const created = await resourceRequest.post(
@@ -169,6 +178,13 @@ export function useDeployChangeset() {
           await routerRequest.post(
             routerCreateBody(change, resolvers),
             `/${networkId}/routers`,
+          );
+          return;
+        }
+        case "update-router": {
+          await routerRequest.put(
+            routerUpdateBody(change, resolvers),
+            `/${change.networkId}/routers/${change.routerId}`,
           );
           return;
         }

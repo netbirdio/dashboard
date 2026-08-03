@@ -449,6 +449,81 @@ describe("network / resource / router changes", () => {
       result.current.changes.find((c) => c.type === "create-router"),
     ).toMatchObject({ groupId: "G2", groupName: "G2" });
   });
+
+  it("update-network coalesces per network id", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateNetwork({
+        networkId: "n1",
+        name: "HQ",
+        originalName: "Office",
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateNetwork({
+        networkId: "n1",
+        name: "HQ2",
+        originalName: "Office",
+        description: "desc",
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    expect(result.current.changes[0]).toMatchObject({
+      type: "update-network",
+      networkId: "n1",
+      name: "HQ2",
+      description: "desc",
+    });
+  });
+
+  it("update-network reverting to the live name + description drops the change", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateNetwork({
+        networkId: "n1",
+        name: "HQ",
+        originalName: "Office",
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    act(() =>
+      result.current.trackUpdateNetwork({
+        networkId: "n1",
+        name: "Office",
+        originalName: "Office",
+      }),
+    );
+    expect(result.current.changes).toHaveLength(0);
+  });
+
+  it("update-router coalesces per router id (a later edit supersedes)", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateRouter({
+        routerId: "r1",
+        networkId: "n1",
+        networkName: "Office",
+        peerId: "p1",
+        metric: 100,
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateRouter({
+        routerId: "r1",
+        networkId: "n1",
+        networkName: "Office",
+        peerId: "p2",
+        metric: 200,
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    expect(result.current.changes[0]).toMatchObject({
+      type: "update-router",
+      routerId: "r1",
+      peerId: "p2",
+      metric: 200,
+    });
+  });
 });
 
 describe("canvas warnings", () => {

@@ -90,6 +90,20 @@ export interface CreateNetworkChange {
   description?: string;
 }
 
+// Edits to an EXISTING (API) network — name / description. Keyed by the real
+// network id; deploy PUTs the full network. Draft networks fold their edits
+// into the create change (updateDraftNetwork) instead. Reverting every field
+// back to the live values drops the change.
+export interface UpdateNetworkChange {
+  id: string;
+  type: "update-network";
+  networkId: string; // real API network id
+  name: string;
+  originalName: string;
+  description?: string;
+  originalDescription?: string;
+}
+
 // Draft resources are recorded only once complete (name + address + network)
 // — the editor saves all required fields, incomplete resources are
 // canvas-only.
@@ -129,6 +143,26 @@ export interface CreateRouterChange {
   groupName?: string;
   // Advanced settings from the routing-peer modal; deploy falls back to the
   // live-modal defaults (9999 / true / true) when absent.
+  metric?: number;
+  masquerade?: boolean;
+  enabled?: boolean;
+}
+
+// Edits to an EXISTING (API) router — its peer/group and advanced settings.
+// Keyed by the real router id (plus its network); deploy PUTs the full router.
+// Draft-created routers fold their edits by dropping+re-adding the create
+// change instead. Same peer/group model as create-router (exactly one of
+// peerId/groupId; groupId may be a draft-group name resolved on deploy).
+export interface UpdateRouterChange {
+  id: string;
+  type: "update-router";
+  routerId: string; // real API router id
+  networkId: string; // real API network id
+  networkName: string; // display-only (labels)
+  peerId?: string;
+  groupId?: string;
+  peerName?: string;
+  groupName?: string;
   metric?: number;
   masquerade?: boolean;
   enabled?: boolean;
@@ -192,8 +226,10 @@ export type DraftChange =
   | UpdatePolicyChange
   | DeletePolicyChange
   | CreateNetworkChange
+  | UpdateNetworkChange
   | CreateResourceChange
   | CreateRouterChange
+  | UpdateRouterChange
   | UpdateResourceChange
   | DeleteResourceChange
   | DeleteNetworkChange
@@ -218,6 +254,8 @@ export const getChangeKind = (change: DraftChange): ChangeKind => {
       return "remove";
     case "update-group":
     case "update-policy":
+    case "update-network":
+    case "update-router":
     case "update-resource":
       return "update";
     case "install-peer":
@@ -241,10 +279,14 @@ export const getChangeApiCall = (change: DraftChange): string => {
       return `DELETE /policies/${change.policyId}`;
     case "create-network":
       return "POST /networks";
+    case "update-network":
+      return `PUT /networks/${change.networkId}`;
     case "create-resource":
       return `POST /networks/${change.networkId ?? "{new}"}/resources`;
     case "create-router":
       return `POST /networks/${change.networkId ?? "{new}"}/routers`;
+    case "update-router":
+      return `PUT /networks/${change.networkId}/routers/${change.routerId}`;
     case "update-resource":
       return `PUT /networks/${change.networkId}/resources/${change.resourceId}`;
     case "delete-resource":
@@ -334,6 +376,17 @@ export const getChangeLabel = (
         title: `Create network “${change.name}”`,
         detail: change.description || undefined,
       };
+    case "update-network": {
+      const parts = [];
+      if (change.name !== change.originalName)
+        parts.push(`renamed from “${change.originalName}”`);
+      if ((change.description ?? "") !== (change.originalDescription ?? ""))
+        parts.push("description changed");
+      return {
+        title: `Update network “${change.name}”`,
+        detail: parts.length > 0 ? parts.join(", ") : undefined,
+      };
+    }
     case "create-resource":
       return {
         // No network yet → drop the "in …" clause (it's flagged as an issue).
@@ -347,6 +400,12 @@ export const getChangeLabel = (
         title: change.peerId
           ? `Add routing peer “${change.peerName ?? change.peerId}” to “${change.networkName}”`
           : `Add routing peer group “${change.groupName ?? change.groupId}” to “${change.networkName}”`,
+      };
+    case "update-router":
+      return {
+        title: change.peerId
+          ? `Update routing peer “${change.peerName ?? change.peerId}” in “${change.networkName}”`
+          : `Update routing peer group “${change.groupName ?? change.groupId}” in “${change.networkName}”`,
       };
     case "update-resource":
       return {
@@ -419,9 +478,11 @@ export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "create-group",
   "update-group",
   "create-network",
+  "update-network",
   "create-resource",
   "update-resource",
   "create-router",
+  "update-router",
   "create-policy",
   "update-policy",
   "delete-policy",
@@ -609,6 +670,11 @@ interface DraftChangesetContextType {
   // Drops the network and cascades: dependent resources lose their network
   // (change dropped — they're incomplete now), dependent routers dropped.
   untrackNetwork: (clientId: string) => void;
+  // Edits to an EXISTING (API) network (name/description) — one change per
+  // network id. Reverting to the live name+description drops the change.
+  trackUpdateNetwork: (
+    params: Omit<UpdateNetworkChange, "id" | "type">,
+  ) => void;
   // Upserts by clientId — the editor always saves the full resource.
   trackCreateResource: (params: Omit<CreateResourceChange, "id" | "type">) => void;
   // Drops the resource change and removes its id from group memberships.
@@ -639,6 +705,11 @@ interface DraftChangesetContextType {
     peerId?: string;
     groupId?: string;
   }) => void;
+  // Edits to an EXISTING (API) router — one change per router id (supersedes
+  // an earlier edit of the same router).
+  trackUpdateRouter: (
+    params: Omit<UpdateRouterChange, "id" | "type">,
+  ) => void;
   trackCreatePolicy: (params: { clientId: string; policy: Policy }) => void;
   // Edits from the policy modal — updates the pending create change for draft
   // policies ("new-…" ids), records/replaces an update-policy change otherwise.
@@ -1045,6 +1116,33 @@ export function DraftChangesetProvider({
     );
   }, []);
 
+  // Edits to an existing network (name/description) — one update-network per
+  // network id. Reverting name AND description back to the live values makes
+  // the change a no-op and it disappears.
+  const trackUpdateNetwork = useCallback(
+    (params: Omit<UpdateNetworkChange, "id" | "type">) => {
+      setChanges((prev) => {
+        const revert =
+          params.name === params.originalName &&
+          (params.description ?? "") === (params.originalDescription ?? "");
+        const existing = prev.find(
+          (c): c is UpdateNetworkChange =>
+            c.type === "update-network" && c.networkId === params.networkId,
+        );
+        if (revert) {
+          return existing ? prev.filter((c) => c.id !== existing.id) : prev;
+        }
+        if (existing) {
+          return prev.map((c) =>
+            c.id === existing.id ? { ...existing, ...params } : c,
+          );
+        }
+        return [...prev, { id: uid(), type: "update-network", ...params }];
+      });
+    },
+    [],
+  );
+
   const trackCreateResource = useCallback(
     (params: Omit<CreateResourceChange, "id" | "type">) => {
       setChanges((prev) => {
@@ -1214,6 +1312,26 @@ export function DraftChangesetProvider({
             ),
         ),
       );
+    },
+    [],
+  );
+
+  // Edits to an existing router — one update-router per router id; a later
+  // edit of the same router supersedes the earlier one.
+  const trackUpdateRouter = useCallback(
+    (params: Omit<UpdateRouterChange, "id" | "type">) => {
+      setChanges((prev) => {
+        const existing = prev.find(
+          (c): c is UpdateRouterChange =>
+            c.type === "update-router" && c.routerId === params.routerId,
+        );
+        if (existing) {
+          return prev.map((c) =>
+            c.id === existing.id ? { ...existing, ...params } : c,
+          );
+        }
+        return [...prev, { id: uid(), type: "update-router", ...params }];
+      });
     },
     [],
   );
@@ -1433,6 +1551,7 @@ export function DraftChangesetProvider({
       trackCreateNetwork,
       updateDraftNetwork,
       untrackNetwork,
+      trackUpdateNetwork,
       trackCreateResource,
       untrackResource,
       trackUpdateResource,
@@ -1442,6 +1561,7 @@ export function DraftChangesetProvider({
       removeGroupFromDraftResource,
       trackCreateRouter,
       untrackRouter,
+      trackUpdateRouter,
       trackCreatePolicy,
       trackUpdatePolicy,
       trackSetPolicyEnabled,
@@ -1464,6 +1584,7 @@ export function DraftChangesetProvider({
       trackCreateNetwork,
       updateDraftNetwork,
       untrackNetwork,
+      trackUpdateNetwork,
       trackCreateResource,
       untrackResource,
       trackUpdateResource,
@@ -1473,6 +1594,7 @@ export function DraftChangesetProvider({
       removeGroupFromDraftResource,
       trackCreateRouter,
       untrackRouter,
+      trackUpdateRouter,
       trackCreatePolicy,
       trackUpdatePolicy,
       trackSetPolicyEnabled,

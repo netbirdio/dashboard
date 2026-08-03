@@ -13,11 +13,13 @@ import { RoutingPeerModalContent } from "@/modules/networks/routing-peers/Networ
 // addRouterFromSelection; with editChangeId set (frame's routing-peers
 // dropdown) the modal opens prefilled from that create-router change and the
 // save replaces it. With `router` set (an API router picked from a
-// routing-peers dropdown) the REAL modal opens against the real network —
-// its save PUTs via the API.
+// routing-peers dropdown) the modal opens prefilled from the real router and
+// the save records an update-router change (updateRouterFromSelection) — no
+// live PUT; it deploys with the rest of the changeset.
 export const DraftRoutingPeerModal = () => {
   const { isDraft, routingPeerModal, setRoutingPeerModal } = useDraftMode();
-  const { addRouterFromSelection } = useDraftNetworkActions();
+  const { addRouterFromSelection, updateRouterFromSelection } =
+    useDraftNetworkActions();
   const { changes, removeChange } = useDraftChangeset();
   const reactFlow = useReactFlow();
   const { mutate } = useSWRConfig();
@@ -85,8 +87,16 @@ export const DraftRoutingPeerModal = () => {
           <RoutingPeerModalContent
             network={network as Network}
             router={routingPeerModal.router}
-            onUpdated={() => {
-              revalidateLiveRouters();
+            useSave={false}
+            onSaved={(result) => {
+              if (network?.id && routingPeerModal.router) {
+                updateRouterFromSelection({
+                  networkId: network.id,
+                  networkName: network.name,
+                  routerId: routingPeerModal.router.id,
+                  ...result,
+                });
+              }
               setRoutingPeerModal(null);
             }}
           />

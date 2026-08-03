@@ -4,7 +4,10 @@ import useFetchApi from "@utils/api";
 import { NetworkRouter } from "@/interfaces/Network";
 import { usePeers } from "@/contexts/PeersProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import {
+  UpdateRouterChange,
+  useDraftChangeset,
+} from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   getRoutingPeerCount,
@@ -62,19 +65,29 @@ export function useFrameRouterRows(
     if (!networkNodeId) return [];
     const list: RoutingPeerRow[] = [];
     (apiRouters ?? []).forEach((r) => {
-      const peer = r.peer ? peers?.find((p) => p.id === r.peer) : undefined;
-      const groupId = r.peer_groups?.[0];
-      const group = groupId
-        ? groups?.find((g) => g.id === groupId)
+      // A pending update-router edit for this API router overlays the live
+      // values so the frame reflects the draft change before deploy.
+      const pending = changes.find(
+        (c): c is UpdateRouterChange =>
+          c.type === "update-router" && c.routerId === r.id,
+      );
+      const peerId = pending ? pending.peerId : r.peer;
+      const groupRef = pending ? pending.groupId : r.peer_groups?.[0];
+      const enabled = pending ? pending.enabled ?? r.enabled : r.enabled;
+      const peer = peerId ? peers?.find((p) => p.id === peerId) : undefined;
+      const group = groupRef
+        ? groups?.find((g) => g.id === groupRef || g.name === groupRef)
         : undefined;
       list.push({
         key: `api-${r.id}`,
         peerOs: peer?.os,
         name: peer?.name ?? group?.name ?? "Routing Peer",
-        isGroup: !r.peer,
-        peersCount: !r.peer ? group?.peers_count ?? 0 : undefined,
-        enabled: r.enabled,
-        // API routers open the real routing-peer modal (its save PUTs).
+        isGroup: !peerId,
+        peersCount: !peerId ? group?.peers_count ?? 0 : undefined,
+        enabled,
+        // API routers open the real routing-peer modal; in draft its save
+        // records an update-router change (a re-edit supersedes the pending
+        // one, keyed by router id).
         onEdit: () => setRoutingPeerModal({ networkNodeId, router: r }),
       });
     });
@@ -101,6 +114,7 @@ export function useFrameRouterRows(
   }, [
     apiRouters,
     draftRouters,
+    changes,
     peers,
     groups,
     networkNodeId,

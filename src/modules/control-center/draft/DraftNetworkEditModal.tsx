@@ -1,7 +1,6 @@
 import { Modal } from "@components/modal/Modal";
 import { useReactFlow } from "@xyflow/react";
 import * as React from "react";
-import { useSWRConfig } from "swr";
 import { Network } from "@/interfaces/Network";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -38,8 +37,7 @@ const EditorContent = ({
   onClose: () => void;
 }) => {
   const reactFlow = useReactFlow();
-  const { mutate } = useSWRConfig();
-  const { changes } = useDraftChangeset();
+  const { changes, trackUpdateNetwork } = useDraftChangeset();
   const { renameDraftNetwork } = useDraftNetworkActions();
   const { networks } = useControlCenterData();
 
@@ -58,15 +56,42 @@ const EditorContent = ({
     ) as { description?: string } | undefined
   )?.description;
 
-  // EXISTING networks edit through the real modal — its save PUTs via the
-  // API (same approach as API routers in the routing-peers dropdown).
+  // EXISTING networks are edited as a draft change (update-network) — no live
+  // PUT; it deploys with the rest of the changeset. The frame's label follows
+  // the pending rename immediately so the canvas reflects the edit.
   if (network?.id) {
+    const existing = network;
     return (
       <NetworkModalContent
-        network={network}
-        onUpdated={(n) => {
-          void mutate("/networks");
-          void mutate(`/networks/${n.id}`);
+        network={existing}
+        useSave={false}
+        onSaved={(values) => {
+          if (frame) {
+            reactFlow.setNodes((prev) =>
+              prev.map((n) =>
+                n.id === networkNodeId
+                  ? {
+                      ...n,
+                      data: {
+                        ...n.data,
+                        network: {
+                          ...existing,
+                          name: values.name,
+                          description: values.description,
+                        },
+                      },
+                    }
+                  : n,
+              ),
+            );
+          }
+          trackUpdateNetwork({
+            networkId: existing.id,
+            name: values.name,
+            originalName: existing.name,
+            description: values.description,
+            originalDescription: existing.description,
+          });
           onClose();
         }}
       />

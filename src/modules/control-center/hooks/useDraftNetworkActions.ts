@@ -51,6 +51,7 @@ export function useDraftNetworkActions() {
     changes,
     trackCreateGroup,
     trackCreateRouter,
+    trackUpdateRouter,
     trackCreateResource,
     untrackResource,
     trackUpdateResource,
@@ -569,8 +570,65 @@ export function useDraftNetworkActions() {
     [reactFlow, changes, trackCreateGroup, trackCreateRouter],
   );
 
+  // Applies the routing-peer modal's pick to an EXISTING (API) router as a
+  // draft update-router change. Mirrors addRouterFromSelection (id-less groups
+  // get their create-group change) but keys on the real router + network id.
+  const updateRouterFromSelection = useCallback(
+    (params: {
+      networkId: string;
+      networkName: string;
+      routerId: string;
+      peer?: Peer;
+      peerGroups: Group[];
+      metric: number;
+      masquerade: boolean;
+      enabled: boolean;
+    }) => {
+      const {
+        networkId,
+        networkName,
+        routerId,
+        peer,
+        peerGroups,
+        metric,
+        masquerade,
+        enabled,
+      } = params;
+      const group = peerGroups[0];
+      if (peer ? !peer.id : !group?.name) return;
+
+      // Groups typed straight into the modal's selector are draft groups.
+      if (group && !group.id) {
+        const exists = changes.some(
+          (c) => c.type === "create-group" && c.name === group.name,
+        );
+        if (!exists) {
+          trackCreateGroup({
+            clientId: `group-new-${group.name}`,
+            name: group.name,
+          });
+        }
+      }
+
+      trackUpdateRouter({
+        routerId,
+        networkId,
+        networkName,
+        peerId: peer?.id,
+        peerName: peer?.name,
+        groupId: group ? group.id ?? group.name : undefined,
+        groupName: group?.name,
+        metric,
+        masquerade,
+        enabled,
+      });
+    },
+    [changes, trackCreateGroup, trackUpdateRouter],
+  );
+
   return {
     addRouterFromSelection,
+    updateRouterFromSelection,
     assignResourceToNetwork,
     assignResourceToExistingNetwork,
     assignHeldResourceToNetwork,
