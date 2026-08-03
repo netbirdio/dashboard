@@ -26,7 +26,6 @@ import { Group, GroupIssued } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { useDialog } from "@/contexts/DialogProvider";
-import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import {
@@ -53,7 +52,6 @@ import { useDeleteNetwork } from "@/modules/control-center/hooks/useDeleteNetwor
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { Modal } from "@components/modal/Modal";
 import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
-import { CreateGroupNameModal } from "@/modules/control-center/draft/CreateGroupNameModal";
 import { EditPeerNameModal } from "@/modules/peers/EditPeerNameModal";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
 import {
@@ -109,7 +107,6 @@ export const NodeContextMenu = ({
   const { focusedNodeId, setFocusedNodeId, setSelectedPeerPanel } =
     useDestinationGroup();
   const { updatePolicy, serializeRules, deletePolicy } = usePolicies();
-  const { createOrUpdate } = useGroups();
   const groupRequest = useApiCall<Group>("/groups", true);
   const peerRequest = useApiCall<Peer>("/peers", true);
   const resourceRequest = useApiCall<NetworkResource>("/networks", true);
@@ -613,27 +610,6 @@ export const NodeContextMenu = ({
   );
 
   const [peerRenameTarget, setPeerRenameTarget] = useState<Peer | null>(null);
-  // Live "Add Resource Group" opens a name dialog; on save it creates an empty
-  // group (POST /groups) immediately.
-  const [resourceGroupModalOpen, setResourceGroupModalOpen] = useState(false);
-
-  // Create an empty group with the given name against the account (live only).
-  // Resources get assigned to it afterwards — this just mints the group, the
-  // same as the canvas "Create Group" name flow.
-  const handleCreateLiveResourceGroup = useCallback(
-    (name: string) => {
-      setResourceGroupModalOpen(false);
-      notify({
-        title: name,
-        description: "Group created successfully.",
-        loadingMessage: "Creating group...",
-        promise: createOrUpdate({ name, peers: [], resources: [] }).then(() =>
-          mutate("/groups"),
-        ),
-      });
-    },
-    [createOrUpdate],
-  );
 
   // Delete a policy against the account (live only): confirm, DELETE, then drop
   // the node from the canvas.
@@ -899,10 +875,10 @@ export const NodeContextMenu = ({
           },
         ];
       }
-      // Network frames: full live account actions — Add Resource / Resource
-      // Group / Routing Peer create immediately against the API, Delete removes
-      // the network now. (Passing the real `network` — not a networkNodeId —
-      // routes the routing-peer modal to its live POST path.)
+      // Network frames: live account actions — Add Resource / Routing Peer
+      // create immediately against the API, Delete removes the network now.
+      // (Passing the real `network` — not a networkNodeId — routes the
+      // routing-peer modal to its live POST path.)
       if (node.type === "networkNode" && isFrameNode(node)) {
         const liveNetwork = (node.data as { network?: Network })?.network;
         if (!liveNetwork?.id) return [];
@@ -913,11 +889,6 @@ export const NodeContextMenu = ({
               label: "Add Resource",
               icon: <WorkflowIcon size={14} />,
               onClick: () => setResourceEditor({ createInNetworkNodeId: nodeId }),
-            },
-            {
-              label: "Add Resource Group",
-              icon: <GroupBadgeIcon size={14} />,
-              onClick: () => setResourceGroupModalOpen(true),
             },
             {
               label: "Add Routing Peer",
@@ -1187,7 +1158,6 @@ export const NodeContextMenu = ({
     handleLiveTogglePolicy,
     handleLiveDeletePolicy,
     deleteNetwork,
-    setResourceGroupModalOpen,
     policyEnabled,
     handleRemove,
     removeGroup,
@@ -1335,15 +1305,6 @@ export const NodeContextMenu = ({
           />
         )}
       </Modal>
-
-      {/* Live "Add Resource Group": name a new (empty) group, created against
-          the account right away. */}
-      <CreateGroupNameModal
-        open={resourceGroupModalOpen}
-        onOpenChange={setResourceGroupModalOpen}
-        onSuccess={handleCreateLiveResourceGroup}
-        groups={groups}
-      />
     </>
   );
 };
