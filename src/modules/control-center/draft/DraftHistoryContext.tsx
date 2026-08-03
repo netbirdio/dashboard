@@ -107,6 +107,34 @@ export function DraftHistoryProvider({
   // Bumped whenever the stacks change so canUndo/canRedo re-render.
   const [, setVersion] = useState(0);
 
+  // Latest committed React state, mirrored each render so undo/redo can flush a
+  // still-pending (debounced) capture synchronously — see captureNow.
+  const latest = useRef<Snapshot>({ nodes, edges, changes });
+  latest.current = { nodes, edges, changes };
+
+  // Force the pending debounced capture to happen NOW. Undo/redo call this
+  // first: without it, undoing within the 300ms capture window popped the
+  // wrong (older) snapshot — overshooting the intermediate state — and the
+  // effect-cleanup clearTimeout then discarded the in-flight edit so redo
+  // could never restore it.
+  const captureNow = useRef(() => {});
+  captureNow.current = () => {
+    const snap = latest.current;
+    if (!committed.current) {
+      committed.current = snap;
+      committedSig.current = signature(snap);
+      return;
+    }
+    const snapSig = signature(snap);
+    if (snapSig === (committedSig.current ?? signature(committed.current)))
+      return;
+    committedSig.current = snapSig;
+    undoStack.current.push(committed.current);
+    if (undoStack.current.length > HISTORY_LIMIT) undoStack.current.shift();
+    redoStack.current = [];
+    committed.current = snap;
+  };
+
   const applyRef = useRef((snap: Snapshot) => {
     setNodes(snap.nodes);
     setEdges(snap.edges);
@@ -182,6 +210,8 @@ export function DraftHistoryProvider({
   }, [isDraft, nodes, edges, changes]);
 
   const undo = useCallback(() => {
+    // Flush any pending edit so we step back exactly one state.
+    captureNow.current();
     const prev = undoStack.current.pop();
     if (!prev || !committed.current) return;
     redoStack.current.push(committed.current);
@@ -192,6 +222,8 @@ export function DraftHistoryProvider({
   }, []);
 
   const redo = useCallback(() => {
+    // A pending edit invalidates redo — capture it first (clears the stack).
+    captureNow.current();
     const next = redoStack.current.pop();
     if (!next || !committed.current) return;
     undoStack.current.push(committed.current);

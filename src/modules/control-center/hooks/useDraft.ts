@@ -164,13 +164,12 @@ export function useDraft() {
         );
       });
 
-      // Same order as the live views' build (sortBy(policies, "enabled",
-      // "desc")) — the policy column and, through per-policy node creation,
-      // the destination column then keep the live vertical order.
+      // Same order as the live views' build (sortBy by `enabled`, ascending —
+      // disabled policies first) so the policy column and, through per-policy
+      // node creation, the destination column keep the live vertical order.
       const visiblePolicies = sortBy(
         policies?.filter((p) => p.id && livePolicyIds.has(p.id)) ?? [],
         "enabled",
-        "desc",
       );
 
       visiblePolicies?.forEach((policy) => {

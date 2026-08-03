@@ -106,6 +106,80 @@ export const DraftInstallPeerModal = () => {
     return ids.size > 0 ? Array.from(ids) : undefined;
   }, [installModal, reactFlow]);
 
+  // Write fields onto the placeholder's own node, or — if it was absorbed into
+  // a group (no own node) — onto its entry in that group's draftPeers. Mirrors
+  // the installHostname effect so the setup-key artifacts (key id, bound group)
+  // are stored for grouped placeholders too, and therefore get cleaned up.
+  const writeToPlaceholder = React.useCallback(
+    (draftId: string, patch: Record<string, unknown>) => {
+      const nodeId = `peer-${draftId}`;
+      reactFlow.setNodes((prev) => {
+        if (prev.some((n) => n.id === nodeId)) {
+          return prev.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, ...patch } } : n,
+          );
+        }
+        return prev.map((n) => {
+          const held = n.data?.draftPeers as
+            | (Peer & Record<string, unknown>)[]
+            | undefined;
+          if (!held?.some((p) => p.id === draftId)) return n;
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              draftPeers: held.map((p) =>
+                p.id === draftId ? { ...p, ...patch } : p,
+              ),
+            },
+          };
+        });
+      });
+    },
+    [reactFlow],
+  );
+
+  // Read a placeholder's kind/name/boundGroupId from its own node, or from its
+  // draftPeers entry when absorbed (kind rides on the pseudo-peer's os).
+  const readPlaceholder = React.useCallback(
+    (draftId: string) => {
+      const nodeId = `peer-${draftId}`;
+      const all = reactFlow.getNodes();
+      const own = all.find((n) => n.id === nodeId);
+      if (own) {
+        const d = own.data as {
+          placeholderKind?: string;
+          placeholderName?: string;
+          boundGroupId?: string;
+        };
+        return {
+          placeholderKind: d?.placeholderKind,
+          placeholderName: d?.placeholderName,
+          boundGroupId: d?.boundGroupId,
+        };
+      }
+      for (const n of all) {
+        const held = n.data?.draftPeers as
+          | (Peer & { boundGroupId?: string })[]
+          | undefined;
+        const entry = held?.find((p) => p.id === draftId);
+        if (entry) {
+          return {
+            placeholderKind: (entry.os ?? "").replace("draft-", "") || undefined,
+            placeholderName: entry.name,
+            boundGroupId: entry.boundGroupId,
+          };
+        }
+      }
+      return {} as {
+        placeholderKind?: string;
+        placeholderName?: string;
+        boundGroupId?: string;
+      };
+    },
+    [reactFlow],
+  );
+
   // Server/Agent placeholders get a hidden, throwaway BOUND identity group,
   // created directly in the API the moment the user generates the setup key
   // (never before — opening/closing the modal leaks nothing, and it's never a
@@ -118,22 +192,16 @@ export const DraftInstallPeerModal = () => {
     const nodeId = installModal?.nodeId;
     const extra = autoGroups ?? [];
     if (!nodeId) return extra;
-    const node = reactFlow.getNodes().find((n) => n.id === nodeId);
-    const data = node?.data as
-      | {
-          placeholderKind?: string;
-          placeholderName?: string;
-          boundGroupId?: string;
-        }
-      | undefined;
-    if (!kindHasBoundGroup(data?.placeholderKind)) return extra;
+    const draftId = nodeId.replace("peer-", "");
+    const data = readPlaceholder(draftId);
+    if (!kindHasBoundGroup(data.placeholderKind)) return extra;
 
     // Already created on a previous generate — reuse it.
-    let boundId = data?.boundGroupId;
+    let boundId = data.boundGroupId;
     if (!boundId) {
       const label =
-        data?.placeholderName ??
-        PLACEHOLDER_BASE_NAMES[data?.placeholderKind ?? "agent"] ??
+        data.placeholderName ??
+        PLACEHOLDER_BASE_NAMES[data.placeholderKind ?? "agent"] ??
         "Agent";
       const taken = new Set((groups ?? []).map((g) => g.name));
       const created = await groupRequest.post({
@@ -142,19 +210,19 @@ export const DraftInstallPeerModal = () => {
         resources: [],
       });
       boundId = created?.id;
-      if (boundId) {
-        const id = boundId;
-        reactFlow.setNodes((prev) =>
-          prev.map((n) =>
-            n.id === nodeId
-              ? { ...n, data: { ...n.data, boundGroupId: id } }
-              : n,
-          ),
-        );
-      }
+      // Store onto the node OR its group's draftPeers entry (absorbed) so a
+      // reopened Install reuses it and cleanup can later delete it.
+      if (boundId) writeToPlaceholder(draftId, { boundGroupId: boundId });
     }
     return boundId ? [boundId, ...extra.filter((g) => g !== boundId)] : extra;
-  }, [installModal, autoGroups, reactFlow, groupRequest, groups]);
+  }, [
+    installModal,
+    autoGroups,
+    readPlaceholder,
+    writeToPlaceholder,
+    groupRequest,
+    groups,
+  ]);
 
   return (
     <Modal
@@ -177,21 +245,13 @@ export const DraftInstallPeerModal = () => {
             const nodeId = installModal.nodeId;
             if (!nodeId || !key?.key) return;
             // Store the key string (for reuse) AND its id (so an abandoned
-            // draft can delete the key it created — see cleanup on removal).
-            reactFlow.setNodes((prev) =>
-              prev.map((n) =>
-                n.id === nodeId
-                  ? {
-                      ...n,
-                      data: {
-                        ...n.data,
-                        setupKey: key.key,
-                        setupKeyId: key.id,
-                      },
-                    }
-                  : n,
-              ),
-            );
+            // draft can delete the key it created — see cleanup on removal) —
+            // onto the node OR, for an absorbed placeholder, its draftPeers
+            // entry.
+            writeToPlaceholder(nodeId.replace("peer-", ""), {
+              setupKey: key.key,
+              setupKeyId: key.id,
+            });
           }}
         />
       )}

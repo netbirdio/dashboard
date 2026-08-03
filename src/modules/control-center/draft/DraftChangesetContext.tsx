@@ -684,7 +684,16 @@ interface DraftChangesetContextType {
   // Edits to an EXISTING resource (enable/disable, field edits) — one change
   // per resource id.
   trackUpdateResource: (
-    params: Omit<UpdateResourceChange, "id" | "type">,
+    params: Omit<UpdateResourceChange, "id" | "type"> & {
+      // Live (pre-edit) state — a field-for-field revert drops the change.
+      original?: {
+        enabled: boolean;
+        name: string;
+        address: string;
+        description?: string;
+        groupIds: string[];
+      };
+    },
   ) => void;
   // Deletes an EXISTING resource (supersedes a pending update).
   trackDeleteResource: (
@@ -764,13 +773,19 @@ const renameGroupInPolicies = (
   to: string,
 ): DraftChange[] =>
   changes.map((c) => {
-    if (c.type === "create-resource" && c.groupIds.includes(from)) {
+    if (
+      (c.type === "create-resource" || c.type === "update-resource") &&
+      c.groupIds.includes(from)
+    ) {
       return {
         ...c,
         groupIds: c.groupIds.map((id) => (id === from ? to : id)),
       };
     }
-    if (c.type === "create-router" && c.groupId === from) {
+    if (
+      (c.type === "create-router" || c.type === "update-router") &&
+      c.groupId === from
+    ) {
       return { ...c, groupId: to, groupName: to };
     }
     if (c.type !== "create-policy" && c.type !== "update-policy") return c;
@@ -1035,8 +1050,8 @@ export function DraftChangesetProvider({
 
   const replacePeerIdInGroups = useCallback(
     (oldId: string, newId: string, newName?: string) => {
-      setChanges((prev) =>
-        prev.map((c) => {
+      setChanges((prev) => {
+        const mapped = prev.map((c) => {
           if (c.type === "create-router" && c.peerId === oldId) {
             return { ...c, peerId: newId, peerName: newName ?? c.peerName };
           }
@@ -1048,8 +1063,21 @@ export function DraftChangesetProvider({
               ...new Set(c.peerIds.map((id) => (id === oldId ? newId : id))),
             ],
           };
-        }),
-      );
+        });
+        // Renaming a router's peer to the real id can collide with a router the
+        // upgrade already recorded for the same (network, peer) — drop the dup
+        // so deploy doesn't POST the router twice.
+        const seen = new Set<string>();
+        return mapped.filter((c) => {
+          if (c.type !== "create-router") return true;
+          const key = `${c.networkId ?? c.networkClientId}|${
+            c.peerId ?? ""
+          }|${c.groupId ?? ""}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      });
     },
     [],
   );
@@ -1186,19 +1214,46 @@ export function DraftChangesetProvider({
   // update-resource per resource id. Reverting `enabled` back to its original
   // with nothing else changed drops the change.
   const trackUpdateResource = useCallback(
-    (params: Omit<UpdateResourceChange, "id" | "type">) => {
+    (
+      params: Omit<UpdateResourceChange, "id" | "type"> & {
+        // The resource's live (pre-edit) state — lets a field-for-field revert
+        // drop the change instead of shipping an empty PUT.
+        original?: {
+          enabled: boolean;
+          name: string;
+          address: string;
+          description?: string;
+          groupIds: string[];
+        };
+      },
+    ) => {
+      const { original, ...change } = params;
       setChanges((prev) => {
         const existing = prev.find(
           (c): c is UpdateResourceChange =>
             c.type === "update-resource" &&
-            c.resourceId === params.resourceId,
+            c.resourceId === change.resourceId,
         );
+        const sameIds = (a: string[], b: string[]) =>
+          a.length === b.length && [...a].sort().join() === [...b].sort().join();
+        const isRevert =
+          original &&
+          change.enabled === original.enabled &&
+          change.name === original.name &&
+          change.address === original.address &&
+          (change.description ?? "") === (original.description ?? "") &&
+          sameIds(change.groupIds, original.groupIds);
+        if (isRevert) {
+          // Reverted to the live state — nothing to deploy. Drop any pending
+          // change for this resource rather than leaving a no-op PUT.
+          return existing ? prev.filter((c) => c.id !== existing.id) : prev;
+        }
         if (existing) {
           return prev.map((c) =>
-            c.id === existing.id ? { ...existing, ...params } : c,
+            c.id === existing.id ? { ...existing, ...change } : c,
           );
         }
-        return [...prev, { id: uid(), type: "update-resource", ...params }];
+        return [...prev, { id: uid(), type: "update-resource", ...change }];
       });
     },
     [],
@@ -1233,7 +1288,11 @@ export function DraftChangesetProvider({
             (c.type === "create-resource" ||
               c.type === "update-resource" ||
               c.type === "delete-resource" ||
-              c.type === "create-router") &&
+              c.type === "create-router" ||
+              // update-router / update-network for this network would PUT a
+              // router/network the cascade deletes server-side — drop them too.
+              c.type === "update-router" ||
+              c.type === "update-network") &&
             c.networkId === params.networkId
           )
             return false;

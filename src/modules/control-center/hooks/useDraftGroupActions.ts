@@ -235,6 +235,11 @@ export function useDraftGroupActions() {
             placeholderKind?: string;
             boundGroupId?: string;
             setupKeyId?: string;
+            draftPeers?: {
+              id?: string;
+              boundGroupId?: string;
+              setupKeyId?: string;
+            }[];
           }
         | undefined;
       const entityId =
@@ -257,6 +262,20 @@ export function useDraftGroupActions() {
           setupKeyId: data.setupKeyId,
         });
       }
+
+      // Removing a group node takes any absorbed (uninstalled) placeholders
+      // riding in its draftPeers with it — untrack their install steps and
+      // delete the setup key / bound group each created.
+      data?.draftPeers?.forEach((p) => {
+        if (!p?.id?.startsWith("draft-")) return;
+        untrackInstallPeer(p.id);
+        if (p.boundGroupId || p.setupKeyId) {
+          deleteArtifacts({
+            boundGroupId: p.boundGroupId,
+            setupKeyId: p.setupKeyId,
+          });
+        }
+      });
 
       // Router changes whose routing edge passes through this node go too.
       reactFlow

@@ -268,6 +268,10 @@ export const NodeContextMenu = ({
       const net = (target?.data as { draftNetwork?: DraftNetworkRef })
         ?.draftNetwork;
       if (resource?.id && net?.networkId) {
+        const groupIds = ((resource.groups as (string | { id?: string })[]) ??
+          [])
+          .map((g) => (typeof g === "string" ? g : g.id ?? ""))
+          .filter(Boolean);
         trackUpdateResource({
           resourceId: resource.id,
           networkId: net.networkId,
@@ -276,9 +280,16 @@ export const NodeContextMenu = ({
           address: resource.address,
           description: resource.description,
           enabled,
-          groupIds: ((resource.groups as (string | { id?: string })[]) ?? [])
-            .map((g) => (typeof g === "string" ? g : g.id ?? ""))
-            .filter(Boolean),
+          groupIds,
+          // Only `enabled` changes here — the rest mirror the live resource, so
+          // toggling back to the original drops the change.
+          original: {
+            enabled: resource.enabled ?? true,
+            name: resource.name,
+            address: resource.address,
+            description: resource.description,
+            groupIds,
+          },
         });
       }
     },

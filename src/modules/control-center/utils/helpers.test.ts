@@ -344,6 +344,21 @@ describe("draft resources", () => {
     expect(isCompleteDraftResource(complete)).toBe(true);
   });
 
+  it("isCompleteDraftResource fails when the name is missing (not just empty)", () => {
+    // getDraftResource defaults name to "Resource"; the gate must check the raw
+    // name so an address+network resource with no user-set name isn't complete.
+    const noName = node("resource-new-r1", {
+      resource: { address: "10.0.0.5" },
+      draftNetwork: { networkClientId: "new-n1", name: "Office" },
+    });
+    const blankName = node("resource-new-r1", {
+      resource: { name: "", address: "10.0.0.5" },
+      draftNetwork: { networkClientId: "new-n1", name: "Office" },
+    });
+    expect(isCompleteDraftResource(noName)).toBe(false);
+    expect(isCompleteDraftResource(blankName)).toBe(false);
+  });
+
   it("policies referencing draft resources deploy only when the resource is tracked", () => {
     const policy = makePolicy("p", {
       sources: [{ name: "G" } as Group],

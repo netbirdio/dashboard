@@ -178,33 +178,50 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   const handleEntityChange = (id: string, config: EntityChangeConfig) => {
     const { selectNodeId, dataKey, selectedValue, setSelected, applyView } =
       config;
+    const shouldRecalculate = selectedValue !== id;
 
-    setNodes((prev) => {
-      const shouldRecalculate = selectedValue !== id;
-      shouldRecalculate && setSelected(id);
+    // Compute the view layout ONCE, before touching state — it's a synchronous
+    // d3 simulation and must not run inside the setNodes updater (React
+    // double-invokes updaters under StrictMode/concurrent rendering, which ran
+    // the layout twice). applyView is a pure function of the SWR data + id; it
+    // does not read the canvas store, so hoisting it out is safe.
+    const result = applyView(id);
 
-      let selectNode: Node | undefined;
-      const previousNodes = prev.map((node) => {
-        if (node.id === selectNodeId) {
-          selectNode = shouldRecalculate
-            ? { ...node, data: { ...node.data, [dataKey]: id } }
-            : node;
-          return selectNode;
-        }
-        return node;
+    if (shouldRecalculate) setSelected(id);
+
+    if (result) {
+      // The select node may have just been set by the caller (the view-init
+      // effect does setNodes([selectNode]) immediately before this) and not
+      // yet be committed — so read/patch it from the updater's `prev`, NOT
+      // reactFlow.getNodes(), which wouldn't see it yet. The updater stays
+      // pure (no side effects): it only derives the next nodes from prev.
+      setNodes((prev) => {
+        const source = prev.find((n) => n.id === selectNodeId);
+        if (!source) return prev;
+        const selectNode = shouldRecalculate
+          ? { ...source, data: { ...source.data, [dataKey]: id } }
+          : source;
+        return [...result.updatedNodes, selectNode];
       });
+      setEdges(result.updatedEdges);
+      setLayoutInitialized(true);
+      // fitView only needs the node ids to fit — it reads their geometry from
+      // the store at rAF time — so a stub id for the select node is enough.
+      if (shouldRecalculate)
+        fitView([...result.updatedNodes, { id: selectNodeId } as Node]);
+      return;
+    }
 
-      const result = applyView(id);
-      if (result && selectNode) {
-        const updatedNodes = result.updatedNodes;
-        updatedNodes.push(selectNode);
-        setEdges(result.updatedEdges);
-        setLayoutInitialized(true);
-        shouldRecalculate && fitView(updatedNodes);
-        return updatedNodes;
-      }
-      return previousNodes;
-    });
+    // No view result — just stamp the select node's data key.
+    if (shouldRecalculate) {
+      setNodes((prev) =>
+        prev.map((n) =>
+          n.id === selectNodeId
+            ? { ...n, data: { ...n.data, [dataKey]: id } }
+            : n,
+        ),
+      );
+    }
   };
 
   const handleGroupChange = (id: string) =>

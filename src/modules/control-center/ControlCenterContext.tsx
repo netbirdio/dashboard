@@ -37,7 +37,11 @@ import { PeerGroupsPanel } from "@/modules/control-center/PeerGroupsPanel";
 import NetworkResourceModal from "@/modules/networks/resources/NetworkResourceModal";
 import { mutate } from "swr";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { ensureParentsBeforeChildren } from "@/modules/control-center/utils/helpers";
+import {
+  ensureParentsBeforeChildren,
+  getIpPlaceholderFromRange,
+} from "@/modules/control-center/utils/helpers";
+import { useAccount } from "@/modules/account/useAccount";
 
 // ---- Canvas State Context ----
 
@@ -88,6 +92,10 @@ const CanvasStateContext = createContext<CanvasState | null>(null);
 interface CanvasUIState {
   contextMenuNodeId: string;
   setContextMenuNodeId: (v: string) => void;
+  // The account network-range IP shown on placeholder peer cards. Sourced here
+  // (once) so PeerNode doesn't call the account fetch hook per node; it's a
+  // stable string that only changes when the account's range does.
+  placeholderIp: string;
 }
 
 const CanvasUIContext = createContext<CanvasUIState | null>(null);
@@ -199,6 +207,14 @@ export function CanvasStateProvider({
   const forceSingleGroupViewRef = useRef<(id: string) => void>(() => {});
   const refreshLiveViewRef = useRef<(policy: Policy) => void>(() => {});
 
+  // Placeholder peer cards show an IP derived from the account's network range.
+  // Read it once here (a stable string) instead of in every PeerNode.
+  const account = useAccount();
+  const placeholderIp = useMemo(
+    () => getIpPlaceholderFromRange(account?.settings?.network_range),
+    [account?.settings?.network_range],
+  );
+
   const value = useMemo(
     () => ({
       nodes,
@@ -253,8 +269,9 @@ export function CanvasStateProvider({
     () => ({
       contextMenuNodeId,
       setContextMenuNodeId,
+      placeholderIp,
     }),
-    [contextMenuNodeId],
+    [contextMenuNodeId, placeholderIp],
   );
 
   const destinationGroupValue = useMemo(

@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import { useSWRConfig } from "swr";
 import { useReactFlow } from "@xyflow/react";
 import { useApiCall } from "@utils/api";
+import { notify } from "@components/Notification";
 import { useDialog } from "@/contexts/DialogProvider";
 import Button from "@components/Button";
 import {
@@ -571,6 +572,14 @@ export const DestinationGroupPanel = ({
       // Membership lives on /groups and /peers (peer.groups) — refresh both
       // so the panel and the rebuilt view pick the change up.
       await Promise.all([mutate("/groups"), mutate("/peers")]);
+    } catch {
+      // useApiCall runs with ignoreError=true, so it won't toast — surface the
+      // failure here and re-sync so the optimistic canvas counts revert.
+      notify({
+        title: group.name,
+        description: "Failed to save the group. Your changes were not applied.",
+      });
+      await Promise.all([mutate("/groups"), mutate("/peers")]).catch(() => {});
     } finally {
       setSaving(false);
     }

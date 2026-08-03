@@ -245,19 +245,38 @@ export function useDraftPeerUpgrade() {
         boundGroupId?: string;
         setupKeyId?: string;
         peer?: Peer;
-        draftPeers?: (Peer & { installHostname?: string })[];
+        draftPeers?: (Peer & {
+          installHostname?: string;
+          boundGroupId?: string;
+          setupKeyId?: string;
+        })[];
       };
 
       // Placeholders absorbed into a group (no own node anymore) install
       // from the group panel — their pending entries ride on the group node.
       data?.draftPeers?.forEach((p) => {
-        if (!p.id || !p.installHostname) return;
+        if (!p.id) return;
         const pseudoNodeId = `peer-${p.id}`;
         if (upgraded.current.has(pseudoNodeId)) return;
-        const match = findMatch(p.installHostname);
+        // Bound-group match first (reliable); hostname is the fallback.
+        const match =
+          (p.boundGroupId ? findByGroup(p.boundGroupId) : undefined) ??
+          (p.installHostname ? findMatch(p.installHostname) : undefined);
         if (!match?.id) return;
         upgraded.current.add(pseudoNodeId);
         upgrades.push({ nodeId: pseudoNodeId, peer: match });
+        // Drop the setup key + bound group the placeholder created once matched.
+        if (
+          (p.boundGroupId || p.setupKeyId) &&
+          !cleaned.current.has(pseudoNodeId)
+        ) {
+          cleaned.current.add(pseudoNodeId);
+          artifactsToDelete.push({
+            nodeId: pseudoNodeId,
+            boundGroupId: p.boundGroupId,
+            setupKeyId: p.setupKeyId,
+          });
+        }
       });
 
       if (!data?.placeholderKind || data.peer) return;

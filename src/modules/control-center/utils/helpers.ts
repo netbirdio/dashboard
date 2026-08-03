@@ -603,9 +603,13 @@ export const getDraftResource = (
 // name, a valid-enough address, and a parent network.
 export const isCompleteDraftResource = (node?: CanvasNode): boolean => {
   const resource = getDraftResource(node);
+  // Check the RAW name — getDraftResource defaults it to "Resource", which
+  // would make the name requirement always pass.
+  const rawName = (node?.data as { resource?: { name?: string } })?.resource
+    ?.name;
   const network = (node?.data as { draftNetwork?: DraftNetworkRef })
     ?.draftNetwork;
-  return !!resource?.name && !!resource?.address && !!network?.name;
+  return !!rawName && !!resource?.address && !!network?.name;
 };
 
 // Routing edge (peer/group → network): gray dashed "routes" line, visually

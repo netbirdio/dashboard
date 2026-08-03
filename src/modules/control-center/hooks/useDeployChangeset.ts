@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { mutate } from "swr";
 import { useApiCall } from "@utils/api";
 import { normalizeHostCIDR } from "@utils/ip";
@@ -43,7 +43,16 @@ import {
 // turn draft client-ids/names into the real API ids it creates as it runs.
 export function useDeployChangeset() {
   const { changes, removeChange } = useDraftChangeset();
-  const { groups } = useControlCenterData();
+  const { groups, networks } = useControlCenterData();
+  // Draft client ids → real API ids, PERSISTED across deploy() calls: a
+  // partial deploy removes each completed create from the changeset, so on a
+  // retry the create is gone and can no longer seed these maps. Persisting
+  // them (client ids are stable, unique per draft session) lets a retried
+  // dependent still resolve a network/resource created in the earlier run.
+  const networkClientToId = useRef(new Map<string, string>());
+  const resourceClientToId = useRef(
+    new Map<string, { id: string; type?: NetworkResource["type"] }>(),
+  );
   const groupRequest = useApiCall<Group>("/groups", true);
   const policyRequest = useApiCall<Policy>("/policies", true);
   const networkRequest = useApiCall<Network>("/networks", true);
@@ -58,13 +67,11 @@ export function useDeployChangeset() {
     const nameToId = new Map<string, string>();
     groups?.forEach((g) => g.id && nameToId.set(g.name, g.id));
 
-    // Draft network / resource client ids → API ids, filled as the creates
-    // respond; consumed by dependent resources/routers/policies.
-    const networkClientToId = new Map<string, string>();
-    const resourceClientToId = new Map<
-      string,
-      { id: string; type?: NetworkResource["type"] }
-    >();
+    // Draft network / resource client ids → API ids (persisted refs, see
+    // above), filled as the creates respond; consumed by dependent
+    // resources/routers/policies.
+    const networkClientMap = networkClientToId.current;
+    const resourceClientMap = resourceClientToId.current;
     const resolveNetworkId = (change: {
       networkId?: string;
       networkClientId?: string;
@@ -73,8 +80,12 @@ export function useDeployChangeset() {
       const id =
         change.networkId ??
         (change.networkClientId
-          ? networkClientToId.get(change.networkClientId)
-          : undefined);
+          ? networkClientMap.get(change.networkClientId)
+          : undefined) ??
+        // Retry fallback: a network created in an earlier (partial) run is no
+        // longer in the map after a reload, but it now exists live — match it
+        // by name so its dependents can still deploy.
+        networks?.find((n) => n.name === change.networkName)?.id;
       if (!id) {
         throw new Error(
           `Network "${change.networkName}" is missing — it may have been removed from the draft.`,
@@ -104,7 +115,7 @@ export function useDeployChangeset() {
     ): PolicyRuleResource | undefined => {
       if (!r) return undefined;
       if (!r.id.startsWith("new-")) return r;
-      const created = resourceClientToId.get(r.id);
+      const created = resourceClientMap.get(r.id);
       if (!created) {
         throw new Error(
           "A referenced resource is missing — it may have been removed from the draft.",
@@ -149,7 +160,7 @@ export function useDeployChangeset() {
         }
         case "create-network": {
           const created = await networkRequest.post(networkCreateBody(change));
-          if (created?.id) networkClientToId.set(change.clientId, created.id);
+          if (created?.id) networkClientMap.set(change.clientId, created.id);
           return;
         }
         case "update-network": {
@@ -166,7 +177,7 @@ export function useDeployChangeset() {
             `/${networkId}/resources`,
           );
           if (created?.id) {
-            resourceClientToId.set(change.clientId, {
+            resourceClientMap.set(change.clientId, {
               id: created.id,
               type: created.type,
             });
@@ -281,6 +292,7 @@ export function useDeployChangeset() {
   }, [
     changes,
     groups,
+    networks,
     groupRequest,
     policyRequest,
     networkRequest,

@@ -38,7 +38,7 @@ type Props = {
 };
 
 export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => {
-  const { changes, removeChange } = useDraftChangeset();
+  const { changes, removeChange, untrackNetwork } = useDraftChangeset();
   const { deploy, isDeploying } = useDeployChangeset();
   const { policies, groups, networks, networkResources } =
     useControlCenterData();
@@ -172,7 +172,14 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                   key={change.id}
                   change={change}
                   live={live}
-                  onDiscard={() => removeChange(change.id)}
+                  onDiscard={() =>
+                    // A draft network cascades: discarding it also drops the
+                    // resources/routers that live in it (they'd otherwise
+                    // strand the deploy with no network to resolve).
+                    change.type === "create-network"
+                      ? untrackNetwork(change.clientId)
+                      : removeChange(change.id)
+                  }
                   onResolveIssue={
                     getChangeIssue(change) ? resolveIssue : undefined
                   }

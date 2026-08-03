@@ -37,8 +37,9 @@ export function useGroupView() {
           destinations?.some((d) => d.id === groupId)
         );
       }),
+      // sortBy sorts ascending and ignores a direction arg — disabled first
+      // (kept for live/draft parity; see usePeerView).
       "enabled",
-      "asc",
     );
 
     groupPolicies.forEach((policy) => {

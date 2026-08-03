@@ -430,6 +430,11 @@ export function useDraftNetworkActions() {
           resource?.enabled ??
           true;
         if (resource?.id && network.networkId) {
+          const originalGroupIds = (
+            (resource.groups as (string | { id?: string })[]) ?? []
+          )
+            .map((g) => (typeof g === "string" ? g : g.id ?? ""))
+            .filter(Boolean);
           trackUpdateResource({
             resourceId: resource.id,
             networkId: network.networkId,
@@ -439,6 +444,14 @@ export function useDraftNetworkActions() {
             description,
             enabled,
             groupIds,
+            // Live state — an edit reverted field-for-field drops the change.
+            original: {
+              enabled: resource.enabled ?? true,
+              name: resource.name,
+              address: resource.address,
+              description: resource.description,
+              groupIds: originalGroupIds,
+            },
           });
         }
         return;

@@ -58,9 +58,13 @@ export const DraftRoutingPeerModal = () => {
         }
       : routingPeerModal?.router;
 
-  // An API router (picked from a routing-peers dropdown) edits the REAL
-  // network via the modal's own save.
-  const isApiRouter = !!routingPeerModal?.router && !editChange;
+  // An existing API router picked from a routing-peers dropdown, with no draft
+  // create-router behind it. In LIVE mode the edit hits the real network via
+  // the modal's own save (PUT); in DRAFT mode (a carried-over frame's dropdown)
+  // it records an update-router change that deploys with the rest.
+  const isApiRouterEdit = !!routingPeerModal?.router && !editChange;
+  const isLiveApiEdit = !isDraft && isApiRouterEdit;
+  const isDraftApiEdit = isDraft && isApiRouterEdit;
   // Live "Add Routing Peer" (empty-state / header, no frame node): a real
   // network with no preset router — the modal's own save POSTs a new router.
   const isLiveCreate =
@@ -83,7 +87,16 @@ export const DraftRoutingPeerModal = () => {
       onOpenChange={(open) => !open && setRoutingPeerModal(null)}
     >
       {routingPeerModal &&
-        (isApiRouter ? (
+        (isLiveApiEdit ? (
+          <RoutingPeerModalContent
+            network={network as Network}
+            router={routingPeerModal.router}
+            onUpdated={() => {
+              revalidateLiveRouters();
+              setRoutingPeerModal(null);
+            }}
+          />
+        ) : isDraftApiEdit ? (
           <RoutingPeerModalContent
             network={network as Network}
             router={routingPeerModal.router}

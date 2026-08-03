@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useSWRConfig } from "swr";
 import { useApiCall } from "@utils/api";
+import { notify } from "@components/Notification";
 import { useDialog } from "@/contexts/DialogProvider";
 import Button from "@components/Button";
 import { cn } from "@utils/helpers";
@@ -197,6 +198,16 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
         );
       }
       await Promise.all([mutate("/groups"), mutate("/peers")]);
+    } catch {
+      // useApiCall runs with ignoreError=true (no toast). A PUT in the loop
+      // may have partially applied — surface it and re-sync so the panel and
+      // canvas reflect the server truth rather than the optimistic selection.
+      notify({
+        title: peer.name ?? "Peer",
+        description:
+          "Failed to update group membership. Some changes may not have been applied.",
+      });
+      await Promise.all([mutate("/groups"), mutate("/peers")]).catch(() => {});
     } finally {
       setSaving(false);
     }

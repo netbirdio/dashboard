@@ -524,6 +524,97 @@ describe("network / resource / router changes", () => {
       metric: 200,
     });
   });
+
+  const updateResourceParams = {
+    resourceId: "r1",
+    networkId: "n1",
+    name: "DB",
+    networkName: "Office",
+    address: "10.0.0.5",
+    enabled: true,
+    groupIds: ["g1"],
+  };
+
+  it("update-resource reverting to the live state drops the change", () => {
+    const { result } = setup();
+    const original = {
+      enabled: true,
+      name: "DB",
+      address: "10.0.0.5",
+      groupIds: ["g1"],
+    };
+    // Disable → records an update.
+    act(() =>
+      result.current.trackUpdateResource({
+        ...updateResourceParams,
+        enabled: false,
+        original,
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    // Re-enable (back to live) → the no-op change disappears.
+    act(() =>
+      result.current.trackUpdateResource({
+        ...updateResourceParams,
+        enabled: true,
+        original,
+      }),
+    );
+    expect(result.current.changes).toHaveLength(0);
+  });
+
+  it("deleting a network drops its pending update-router / update-network", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateNetwork({
+        networkId: "n1",
+        name: "HQ",
+        originalName: "Office",
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateRouter({
+        routerId: "rt1",
+        networkId: "n1",
+        networkName: "Office",
+        peerId: "p1",
+      }),
+    );
+    expect(result.current.changes).toHaveLength(2);
+    act(() =>
+      result.current.trackDeleteNetwork({ networkId: "n1", name: "Office" }),
+    );
+    // Only the delete-network survives — the redundant PUTs are dropped.
+    expect(result.current.changes).toEqual([
+      expect.objectContaining({ type: "delete-network", networkId: "n1" }),
+    ]);
+  });
+
+  it("group renames also follow into update-resource / update-router", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateResource({
+        ...updateResourceParams,
+        groupIds: ["G"],
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateRouter({
+        routerId: "rt1",
+        networkId: "n1",
+        networkName: "Office",
+        groupId: "G",
+        groupName: "G",
+      }),
+    );
+    act(() => result.current.trackRenameGroup({ from: "G", to: "G2" }));
+    expect(
+      result.current.changes.find((c) => c.type === "update-resource"),
+    ).toMatchObject({ groupIds: ["G2"] });
+    expect(
+      result.current.changes.find((c) => c.type === "update-router"),
+    ).toMatchObject({ groupId: "G2", groupName: "G2" });
+  });
 });
 
 describe("canvas warnings", () => {

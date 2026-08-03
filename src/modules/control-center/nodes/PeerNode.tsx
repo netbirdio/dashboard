@@ -11,14 +11,12 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import type { Peer } from "@/interfaces/Peer";
-import { useAccount } from "@/modules/account/useAccount";
 import {
   useCanvasUI,
   useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import {
-  getIpPlaceholderFromRange,
   PLACEHOLDER_BASE_NAMES,
   useAnySourceGroupEnabled,
 } from "@/modules/control-center/utils/helpers";
@@ -80,10 +78,9 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
   const isTarget = useConnection(
     (c) => c.inProgress && c.fromNode.id !== id,
   );
-  const { contextMenuNodeId } = useCanvasUI();
+  const { contextMenuNodeId, placeholderIp } = useCanvasUI();
   const { selectedPeerPanel } = useDestinationGroup();
   const { setInstallModal, setUserDeviceModal } = useDraftMode();
-  const account = useAccount();
   // Ring while the context menu targets this peer or while its groups panel
   // is open — same halo the group panel puts on its group node. Placeholder
   // peers have no data.peer.id: they're keyed on the node id (matching how
@@ -175,7 +172,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
                 "font-normal text-sm text-nb-gray-500 relative -top-[0.1rem]"
               }
             >
-              {getIpPlaceholderFromRange(account?.settings?.network_range)}
+              {placeholderIp}
             </span>
           </div>
         </div>

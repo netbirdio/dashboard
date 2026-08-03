@@ -62,8 +62,11 @@ export function useDeleteNetwork() {
         type: "danger",
       });
       if (!choice) return false;
-      removeNodeWithEdges(nodeId);
+      // Remove the frame only AFTER the DELETE succeeds — an optimistic remove
+      // left the canvas out of sync (frame gone, network still on the account)
+      // whenever the request failed, with no rollback.
       const promise = deleteCall({}, `/${network.id}`).then(() => {
+        removeNodeWithEdges(nodeId);
         mutate("/networks");
         mutate("/groups");
       });
@@ -73,8 +76,13 @@ export function useDeleteNetwork() {
         loadingMessage: "Deleting network...",
         promise,
       });
-      await promise;
-      return true;
+      try {
+        await promise;
+        return true;
+      } catch {
+        // The frame stays on the canvas; notify() surfaced the error.
+        return false;
+      }
     },
     [
       reactFlow,
