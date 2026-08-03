@@ -50,6 +50,13 @@ export function useCreateGroupOnCanvas() {
           peers_count: peerIds.length,
           resources_count: resourceIds.length,
         };
+        // Placeholder members (server/agent/never-assigned user device) are
+        // pseudo-peers with "draft-" ids that don't exist in the API peer
+        // list. Their canvas nodes leave with the grouping, so — like
+        // draftResources — their full objects must ride on the group node,
+        // else the panels can't resolve them and the group reads "No Peers".
+        const draftPeers =
+          peers?.filter((p) => p.id?.startsWith("draft-")) ?? [];
         reactFlow.addNodes({
           id: nodeId,
           type: "groupNode",
@@ -61,6 +68,7 @@ export function useCreateGroupOnCanvas() {
             ...(unassignedDraftResources?.length
               ? { draftResources: unassignedDraftResources }
               : {}),
+            ...(draftPeers.length ? { draftPeers } : {}),
           },
           position,
         });

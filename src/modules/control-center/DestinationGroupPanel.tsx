@@ -41,7 +41,10 @@ import {
 import { useAccount } from "@/modules/account/useAccount";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import {
+  InstallPeerChange,
+  useDraftChangeset,
+} from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import {
   getNodeGroup,
@@ -280,8 +283,32 @@ export const DestinationGroupPanel = ({
         if (p.id && addedMembers.has(p.id)) byId.set(p.id, p);
       });
     });
+    // A placeholder can lose its group node's transient `draftPeers` — the
+    // node carrying it leaves the canvas on multi-select grouping, and a
+    // later group-view rebuild reconstructs the group node from data without
+    // it. The install-peer changeset entry persists regardless (it's the
+    // pending install), so reconstruct the pseudo-peer from it — the same
+    // changeset-sourced way the member COUNT survives. Mirrors
+    // getPlaceholderPeer's shape (kind rides in `os`).
+    if (isDraft) {
+      addedMembers.forEach((id) => {
+        if (!id.startsWith("draft-") || byId.has(id)) return;
+        const install = changes.find(
+          (c): c is InstallPeerChange =>
+            c.type === "install-peer" && c.clientId === id,
+        );
+        if (install) {
+          byId.set(id, {
+            id,
+            name: install.name,
+            ip: "",
+            os: `draft-${install.kind}`,
+          } as Peer);
+        }
+      });
+    }
     return [...byId.values()];
-  }, [groupNodes, addedMembers]);
+  }, [groupNodes, addedMembers, isDraft, changes]);
   const draftMemberResources = useMemo(() => {
     const byId = new Map<string, NetworkResource>();
     groupNodes.forEach((n) => {
