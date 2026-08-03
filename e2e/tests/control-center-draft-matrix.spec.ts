@@ -18,8 +18,7 @@ import {
 } from "../helpers/control-center";
 
 /**
- * Matrix-driven tests generated from
- * src/modules/control-center/specs/interaction-matrix.md.
+ * Matrix-driven tests for the control-center node-interaction matrix.
  * Every node-pair connect, drop, menu, and negative case gets an explicit
  * expectation — positives assert the modal/edge/changeset, negatives assert
  * a strict no-op.

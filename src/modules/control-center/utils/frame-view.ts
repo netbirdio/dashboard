@@ -65,7 +65,7 @@ export function computeFrameEdgeTargets(
 // (post re-attachment flip) — plus those policies' source nodes. The frame
 // itself and its routing peers are hidden (routing state lives in the
 // header count, exactly like live mode); policies reaching the network only
-// via a resource-GROUP stay hidden (accepted gap, see specs/limitations.md).
+// via a resource-GROUP stay hidden (accepted gap).
 export function computeDrillDownKeepSet(
   nodes: Node[],
   edges: Edge[],
