@@ -5,6 +5,7 @@ import {
   CreatePolicyChange,
   CreateResourceChange,
   DeletePolicyChange,
+  InstallPeerChange,
   UpdateGroupChange,
   UpdatePolicyChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
@@ -273,5 +274,17 @@ describe("id placeholders in preview", () => {
       id: "{resource_database_id}",
       type: "host",
     });
+  });
+
+  it("a server install-peer's auto_group renders as a {group_..._id} placeholder", () => {
+    const change: InstallPeerChange = {
+      id: "i1",
+      type: "install-peer",
+      clientId: "draft-abc",
+      name: "Server",
+      kind: "server",
+    };
+    const body = buildChangeRequest(change)?.body as any;
+    expect(body.auto_groups).toEqual(["{group_server_id}"]);
   });
 });

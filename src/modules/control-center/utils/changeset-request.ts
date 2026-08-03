@@ -244,9 +244,11 @@ export function routerUpdateBody(
 }
 
 // POST /setup-keys — the key generated when the user installs a server/agent
-// placeholder (Generate Key), NOT a deploy call. auto_groups shows the hidden
-// bound group that's created alongside it (by name here — its real id doesn't
-// exist until install). Mirrors DraftInstallPeerModal / SetupKeyGenerator.
+// placeholder (Generate Key), NOT a deploy call. auto_groups binds the peer to
+// a hidden throwaway group created alongside the key; that group's real id
+// doesn't exist until generation, so the preview shows it as an id placeholder
+// ({group_<name>_id}) rather than a name. Mirrors DraftInstallPeerModal /
+// SetupKeyGenerator.
 export function setupKeyCreateBody(change: InstallPeerChange) {
   const isUserDevice = change.kind === "user-device";
   return {
@@ -254,7 +256,7 @@ export function setupKeyCreateBody(change: InstallPeerChange) {
     type: "one-off",
     expires_in: 24 * 60 * 60,
     revoked: false,
-    auto_groups: isUserDevice ? [] : [`${change.name} (Draft)`],
+    auto_groups: isUserDevice ? [] : [idPlaceholder("GROUP", change.name)],
     usage_limit: 1,
     ephemeral: change.kind === "agent",
     allow_extra_dns_labels: false,
