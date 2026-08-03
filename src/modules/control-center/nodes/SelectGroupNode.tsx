@@ -53,6 +53,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
     >
       <SelectDropdown
         variant={"secondary"}
+        deferChange
         value={data.currentGroup}
         onChange={data.onChange}
         options={groupOptions}

@@ -86,6 +86,7 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
     >
       <SelectDropdown
         variant={"secondary"}
+        deferChange
         value={data.currentUser}
         onChange={data.onUserChange}
         options={userSelectOptions}

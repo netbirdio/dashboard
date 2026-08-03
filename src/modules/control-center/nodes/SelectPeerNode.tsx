@@ -72,6 +72,7 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
     >
       <SelectDropdown
         variant={"secondary"}
+        deferChange
         value={data.currentPeer}
         onChange={data.onPeerChange}
         options={peerSelectOptions}

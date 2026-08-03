@@ -69,7 +69,7 @@ const OPTIONS: SelectOption[] = [
   { value: "b", label: "Beta" },
 ];
 
-const setup = (value = "a") => {
+const setup = (value = "a", extra: Record<string, unknown> = {}) => {
   const onChange = vi.fn();
   render(
     <SelectDropdown
@@ -77,6 +77,7 @@ const setup = (value = "a") => {
       onChange={onChange}
       options={OPTIONS}
       data-testid={"dd"}
+      {...extra}
     />,
   );
   return onChange;
@@ -88,15 +89,26 @@ describe("SelectDropdown", () => {
     expect(screen.getByTestId("dd").textContent).toContain("Alpha");
   });
 
-  it("reports the picked option's value via onChange", async () => {
+  it("reports the picked option's value via onChange synchronously by default", async () => {
     const onChange = setup("a");
     fireEvent.click(screen.getByTestId("dd"));
     // Target the option row (role=option) — the selected label also appears on
     // the trigger, so a plain text query would be ambiguous.
     const beta = await screen.findByRole("option", { name: "Beta" });
     fireEvent.click(beta);
-    // Contract holds whether onChange is synchronous (main) or deferred
-    // (branch) — waitFor tolerates both.
+    // Default (non-control-center) dropdowns report the change immediately —
+    // no waitFor. This pins the app-wide behavior after gating the defer.
+    expect(onChange).toHaveBeenCalledWith("b");
+  });
+
+  it("defers onChange until after the close animation when deferChange is set", async () => {
+    const onChange = setup("a", { deferChange: true });
+    fireEvent.click(screen.getByTestId("dd"));
+    const beta = await screen.findByRole("option", { name: "Beta" });
+    fireEvent.click(beta);
+    // Not fired synchronously — the control center opts into this so a heavy
+    // canvas-rebuilding onChange doesn't jank mid close-animation.
+    expect(onChange).not.toHaveBeenCalled();
     await waitFor(() => expect(onChange).toHaveBeenCalledWith("b"));
   });
 

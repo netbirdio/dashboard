@@ -65,6 +65,11 @@ interface SelectDropdownProps {
   // (a ReactFlow pane that stops pointer propagation).
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  // Defer onChange until after the popover's close animation (~180ms). OFF by
+  // default so ordinary dropdowns report synchronously (pre-existing behaviour);
+  // the control center opts in because its onChange rebuilds the whole canvas
+  // and janks if it fires mid-animation.
+  deferChange?: boolean;
   "data-testid"?: string;
 }
 
@@ -92,6 +97,7 @@ export function SelectDropdown({
   footer,
   open: controlledOpen,
   onOpenChange,
+  deferChange = false,
   "data-testid": dataTestId,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
@@ -99,10 +105,14 @@ export function SelectDropdown({
   const toggle = (selectedValue: string) => {
     const isSelected = value == selectedValue;
     setOpen(false);
-    // Fire the change only after the popover's close animation has played
-    // out — a heavy onChange (e.g. the control center rebuilding its canvas)
-    // otherwise janks mid-animation and the dropdown lingers, then blinks.
-    if (!isSelected) setTimeout(() => onChange?.(selectedValue), 180);
+    if (!isSelected) {
+      // deferChange: fire after the popover's close animation so a heavy
+      // onChange (e.g. the control center rebuilding its canvas) doesn't jank
+      // mid-animation. Default is synchronous — ordinary dropdowns expect the
+      // change to land immediately.
+      if (deferChange) setTimeout(() => onChange?.(selectedValue), 180);
+      else onChange?.(selectedValue);
+    }
     setTimeout(() => {
       setSearch("");
     }, 100);

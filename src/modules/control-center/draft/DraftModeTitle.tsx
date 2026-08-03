@@ -66,6 +66,7 @@ export const DraftModeTitle = () => {
   return (
     <div className={"flex items-center gap-2"}>
       <SelectDropdown
+        deferChange
         value={selectedDraft}
         onChange={handleChange}
         options={options}

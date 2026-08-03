@@ -246,6 +246,7 @@ function DraftDrillDownHeader() {
         >
           <SelectDropdown
             variant={"secondary"}
+            deferChange
             value={drillDownNetworkNodeId ?? ""}
             onChange={(nodeId) => setDrillDownNetworkNodeId(nodeId || null)}
             options={frameOptions}
@@ -352,6 +353,7 @@ function HeaderTopLeft() {
               >
                 <SelectDropdown
                   variant={"secondary"}
+                  deferChange
                   value={selectedNetwork}
                   onChange={onNetworkSelect}
                   options={networkOptions}
