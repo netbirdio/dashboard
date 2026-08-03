@@ -1,8 +1,7 @@
 "use client";
 
-import { notify } from "@components/Notification";
+import { sendErrorNotification } from "@/modules/remote-access/errorNotification";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
-import { IconCircleX } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import { Loader2Icon } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -61,16 +60,6 @@ function RDPSession({ peer, ipVersion }: Props) {
   useEffect(() => {
     document.title = `${peer.name} - ${peer.ip} - RDP`;
   }, [peer.ip, peer.name, connected, rdp]);
-
-  const sendErrorNotification = (title: string, message: string) => {
-    notify({
-      title: title,
-      description: message,
-      icon: <IconCircleX size={24} />,
-      backgroundColor: "bg-red-500",
-      duration: 10000,
-    });
-  };
 
   /**
    * Reset the RDP session state but keep the NetBird client connected,
