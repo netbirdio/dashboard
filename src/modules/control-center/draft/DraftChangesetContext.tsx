@@ -439,6 +439,8 @@ export const getChangeLabel = (
 //   assigned to one.
 // - a placeholder peer (server/agent/user device) that hasn't been installed
 //   yet — the real peer must exist before the changes referencing it deploy.
+//   (A policy referencing such a peer is listed as an ordinary change; that
+//   peer's own install-peer issue is what blocks the deploy.)
 export type ChangeIssue = { label: string; message: string };
 
 export const getChangeIssue = (change: DraftChange): ChangeIssue | undefined => {

@@ -366,7 +366,10 @@ revalidation set).
 - **Hard issues** (blocking) — `getChangeIssue(change)`. A change that can't
   be POSTed / completed as-is. Two today: a `create-resource` with no network
   ("No Network"), and an uninstalled placeholder peer / `install-peer`
-  ("Install"). Presentation (no summary callout — the row itself is the fix):
+  ("Install"). A policy that references an uninstalled placeholder peer is
+  *listed* (it's trackable — both sides are set) but carries no issue of its
+  own: that peer's `install-peer` row is what blocks the deploy. Presentation
+  (no summary callout — the row itself is the fix):
   - Its row shows an amber **issue badge** ("No Network" / "Install") in place
     of the diffstat/kind badge. **Clicking the badge opens the fix**: the
     network picker (`setResourceNetworkPicker`, same as the resource node) for

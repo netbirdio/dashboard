@@ -448,26 +448,27 @@ export const getPolicyRegroupUpdates = (
   return updates;
 };
 
-// Only a policy with both a source and a destination is deployable — and
-// neither side may reference a placeholder peer ("draft-…" id): the peer
-// doesn't exist in the API until it's installed. Policies failing this stay
-// out of the changeset (canvas-only) until the draft completes them.
-export const isDeployablePolicy = (
+// Shared core of the two policy gates below. A policy needs both a source and
+// a destination, and neither side may reference a draft resource ("new-…" id)
+// that isn't tracked (it wouldn't be created on deploy). The one difference is
+// placeholder peers ("draft-…" id): they don't exist in the API until
+// installed, so a DEPLOYABLE policy can't reference one — but a TRACKABLE one
+// can (it enters the changeset and surfaces the missing peer as a blocking
+// issue rather than vanishing from Review & Deploy).
+const policyComplete = (
   policy: Policy,
-  // Client ids of draft resources that ARE tracked (complete) — a policy
-  // referencing a "new-…" resource is deployable only when the resource
-  // itself will be created on deploy.
-  trackedResourceClientIds?: Set<string>,
+  trackedResourceClientIds: Set<string> | undefined,
+  peerMustBeInstalled: boolean,
 ) => {
   const rule = policy.rules?.[0];
   if (!rule) return false;
   const hasSource = (rule.sources?.length ?? 0) > 0 || !!rule.sourceResource;
   const hasDestination =
     (rule.destinations?.length ?? 0) > 0 || !!rule.destinationResource;
-  const isDeployableResource = (r?: { id: string }) => {
+  const isOkResource = (r?: { id: string }) => {
     if (!r?.id) return true;
     // Placeholder peers don't exist in the API until installed.
-    if (r.id.startsWith("draft-")) return false;
+    if (r.id.startsWith("draft-")) return !peerMustBeInstalled;
     // Draft resources deploy first and resolve — but only tracked ones.
     if (r.id.startsWith("new-")) {
       return trackedResourceClientIds?.has(r.id) ?? false;
@@ -477,10 +478,31 @@ export const isDeployablePolicy = (
   return (
     hasSource &&
     hasDestination &&
-    isDeployableResource(rule.sourceResource) &&
-    isDeployableResource(rule.destinationResource)
+    isOkResource(rule.sourceResource) &&
+    isOkResource(rule.destinationResource)
   );
 };
+
+// A policy that can actually be POSTed on deploy: both sides set, no
+// uninstalled placeholder peer, referenced draft resources tracked.
+export const isDeployablePolicy = (
+  policy: Policy,
+  // Client ids of draft resources that ARE tracked (complete) — a policy
+  // referencing a "new-…" resource is deployable only when the resource
+  // itself will be created on deploy.
+  trackedResourceClientIds?: Set<string>,
+) => policyComplete(policy, trackedResourceClientIds, true);
+
+// A policy complete enough to enter the changeset: both sides set and any
+// referenced draft resource tracked. It MAY still reference an uninstalled
+// placeholder peer — the policy is listed as an ordinary change; that peer's
+// own install-peer issue is what blocks the deploy, so the policy isn't hidden
+// for it. A policy still missing a side stays canvas-only (visibly unfinished,
+// not listed).
+export const isTrackablePolicy = (
+  policy: Policy,
+  trackedResourceClientIds?: Set<string>,
+) => policyComplete(policy, trackedResourceClientIds, false);
 
 // Derived resource type for canvas display; the API derives the
 // authoritative type on create. Mirrors ResourceSingleAddressInput: letters

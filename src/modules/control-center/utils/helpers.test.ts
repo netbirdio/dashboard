@@ -15,6 +15,7 @@ import {
   getPolicyRegroupUpdates,
   isCompleteDraftResource,
   isDeployablePolicy,
+  isTrackablePolicy,
   PLACEHOLDER_BASE_NAMES,
 } from "./helpers";
 
@@ -259,6 +260,34 @@ describe("isDeployablePolicy — only real policies enter the changeset", () => 
     expect(
       isDeployablePolicy({ ...makePolicy("p", {}), rules: [] }),
     ).toBe(false);
+  });
+});
+
+describe("isTrackablePolicy — both-sides policies enter the changeset even with an uninstalled peer", () => {
+  it("a one-sided policy is not trackable (visibly unfinished)", () => {
+    expect(
+      isTrackablePolicy(makePolicy("p", { sources: [{ name: "G" } as Group] })),
+    ).toBe(false);
+  });
+
+  it("a policy referencing an uninstalled placeholder peer IS trackable", () => {
+    // The difference from isDeployablePolicy: trackable, so it shows in Review
+    // & Deploy (as a blocking issue), rather than vanishing.
+    const policy = makePolicy("p", {
+      sourceResource: { id: "draft-x", type: "peer" },
+      destinations: [{ name: "G" } as Group],
+    });
+    expect(isTrackablePolicy(policy)).toBe(true);
+    expect(isDeployablePolicy(policy)).toBe(false);
+  });
+
+  it("still requires referenced draft resources to be tracked", () => {
+    const policy = makePolicy("p", {
+      sources: [{ name: "G" } as Group],
+      destinationResource: { id: "new-r1", type: "host" },
+    });
+    expect(isTrackablePolicy(policy, new Set())).toBe(false);
+    expect(isTrackablePolicy(policy, new Set(["new-r1"]))).toBe(true);
   });
 });
 

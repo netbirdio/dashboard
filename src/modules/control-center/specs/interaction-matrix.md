@@ -105,8 +105,10 @@ completed changes are already removed, so Deploy resumes.
 1. Self-connection (same entity on both policy sides) is intentionally allowed.
 2. Group names: "All" is reserved; duplicates (API + canvas draft groups) rejected in the
    create/rename modals.
-3. Policies referencing uninstalled placeholder peers surface a Review & Deploy warning
-   (`getCanvasWarnings`) — the peer is a hard requirement before deploy.
+3. Policies referencing uninstalled placeholder peers are listed in Review & Deploy as an
+   ordinary change (`isTrackablePolicy`) — the deploy is blocked by that peer's own
+   `install-peer` issue, not a policy-level one; installing the peer re-records the policy
+   with the real id.
 4. Standalone no-network resources also surface a Review & Deploy warning.
 5. Delete/Backspace maps to Remove semantics via `useNodeRemoval` (nodes without a Remove
    menu item are exempt).

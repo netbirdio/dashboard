@@ -25,7 +25,7 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import {
   getDraftResource,
   getPlaceholderPeer,
-  isDeployablePolicy,
+  isTrackablePolicy,
 } from "@/modules/control-center/utils/helpers";
 
 interface PolicyContextType {
@@ -629,8 +629,9 @@ export function ControlCenterPolicyProvider({
       }`;
       policy = { ...policy, id: clientId };
       ensureDraftGroupChanges(policy);
-      // Policies referencing uninstalled placeholder peers aren't deployable
-      // — they stay out of the changeset (like blank policies) until real.
+      // Track once both sides are set (blank/one-sided policies stay
+      // canvas-only). A reference to an uninstalled placeholder peer no longer
+      // withholds the policy — it enters the changeset with a blocking issue.
       if (isCompletePolicy(policy)) {
         trackCreatePolicy({ clientId, policy });
       }
@@ -640,8 +641,8 @@ export function ControlCenterPolicyProvider({
     policyDropPositionRef.current = undefined;
   };
 
-  // Shared with the unit tests — see isDeployablePolicy in utils/helpers.
-  // Policies referencing draft resources are deployable only while the
+  // Shared with the unit tests — see isTrackablePolicy in utils/helpers.
+  // Policies referencing draft resources are trackable only while the
   // resource is tracked (complete).
   const trackedResourceClientIds = useMemo(
     () =>
@@ -652,8 +653,13 @@ export function ControlCenterPolicyProvider({
       ),
     [changes],
   );
+  // A policy enters the changeset once it's trackable (both sides set, draft
+  // resources tracked). It may still reference an uninstalled placeholder peer
+  // — it's listed as an ordinary change (not hidden); that peer's own
+  // install-peer issue blocks the deploy until it's installed, at which point
+  // usePlaceholderUpgrade re-records this change with the real id.
   const isCompletePolicy = (policy: Policy) =>
-    isDeployablePolicy(policy, trackedResourceClientIds);
+    isTrackablePolicy(policy, trackedResourceClientIds);
 
   // Applies an edited policy to the draft: record an update change and redraw
   // — draft-created policies just update their create change. Used by the
@@ -675,8 +681,10 @@ export function ControlCenterPolicyProvider({
         drawPolicyOnCanvas(policy);
         return;
       }
-      // Tracked but no longer deployable (e.g. a placeholder peer replaced a
-      // group) — drop the pending create until it's real again.
+      // Tracked but no longer trackable (a side was emptied, or a draft
+      // resource lost its network) — drop the pending create until it's
+      // complete again. An uninstalled placeholder peer does NOT drop it: the
+      // policy stays listed (that peer's install-peer issue blocks deploy).
       if (!isCompletePolicy(policy)) {
         trackDeletePolicy({ policyId: policy.id, name: policy.name ?? "Policy" });
         drawPolicyOnCanvas(policy);
@@ -684,9 +692,10 @@ export function ControlCenterPolicyProvider({
       }
     }
     // Existing policies: an incomplete state (e.g. its single-peer source
-    // was removed from the canvas) isn't deployable — a pending edit would
+    // was removed from the canvas) isn't trackable — a pending edit would
     // ship that broken state, so it's dropped; the API policy stays as-is
-    // until the draft completes it again.
+    // until the draft completes it again. (A referenced uninstalled peer keeps
+    // the update tracked and listed; its install-peer issue blocks deploy.)
     if (!isCompletePolicy(policy)) {
       const pending = changes.find(
         (c) => c.type === "update-policy" && c.policyId === policy.id,
