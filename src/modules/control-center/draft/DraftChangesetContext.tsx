@@ -216,6 +216,9 @@ export interface InstallPeerChange {
   clientId: string;
   name: string;
   kind: "user-device" | "server" | "agent";
+  // Set once a setup key is generated for it: the peer is now "waiting" to
+  // register (the canvas polls /peers). Flips the issue badge to "Waiting".
+  setupKeyId?: string;
 }
 
 export type DraftChange =
@@ -441,7 +444,13 @@ export const getChangeLabel = (
 //   yet — the real peer must exist before the changes referencing it deploy.
 //   (A policy referencing such a peer is listed as an ordinary change; that
 //   peer's own install-peer issue is what blocks the deploy.)
-export type ChangeIssue = { label: string; message: string };
+export type ChangeIssue = {
+  label: string;
+  message: string;
+  // A non-blocking "in progress" issue (peer waiting to register): the badge
+  // shows a spinner instead of the alert triangle.
+  waiting?: boolean;
+};
 
 export const getChangeIssue = (change: DraftChange): ChangeIssue | undefined => {
   if (
@@ -455,6 +464,15 @@ export const getChangeIssue = (change: DraftChange): ChangeIssue | undefined => 
     };
   }
   if (change.type === "install-peer") {
+    // Once a setup key exists the peer is waiting to register — show a spinner
+    // instead of the alert, but it still blocks deploy until it upgrades.
+    if (change.setupKeyId) {
+      return {
+        label: "Waiting",
+        waiting: true,
+        message: `Waiting for “${change.name}” to register after install.`,
+      };
+    }
     return {
       label: "Install",
       message:
@@ -743,6 +761,8 @@ interface DraftChangesetContextType {
     name: string;
     kind: InstallPeerChange["kind"];
   }) => void;
+  // Mark a tracked install-peer as waiting (its setup key was generated).
+  markInstallPeerWaiting: (clientId: string, setupKeyId: string) => void;
   untrackInstallPeer: (clientId: string) => void;
   removeChange: (id: string) => void;
   clearChanges: () => void;
@@ -1557,6 +1577,21 @@ export function DraftChangesetProvider({
     [],
   );
 
+  const markInstallPeerWaiting = useCallback(
+    (clientId: string, setupKeyId: string) => {
+      setChanges((prev) =>
+        prev.map((c) =>
+          c.type === "install-peer" &&
+          c.clientId === clientId &&
+          c.setupKeyId !== setupKeyId
+            ? { ...c, setupKeyId }
+            : c,
+        ),
+      );
+    },
+    [],
+  );
+
   const untrackInstallPeer = useCallback((clientId: string) => {
     setChanges((prev) =>
       prev.filter(
@@ -1628,6 +1663,7 @@ export function DraftChangesetProvider({
       trackSetPolicyEnabled,
       trackDeletePolicy,
       trackInstallPeer,
+      markInstallPeerWaiting,
       untrackInstallPeer,
       removeChange,
       clearChanges,
@@ -1661,6 +1697,7 @@ export function DraftChangesetProvider({
       trackSetPolicyEnabled,
       trackDeletePolicy,
       trackInstallPeer,
+      markInstallPeerWaiting,
       untrackInstallPeer,
       removeChange,
       clearChanges,

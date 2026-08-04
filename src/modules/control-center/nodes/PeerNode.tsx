@@ -6,6 +6,7 @@ import {
   AlertTriangleIcon,
   BotIcon,
   DownloadIcon,
+  Loader2,
   MonitorSmartphoneIcon,
   ServerIcon,
 } from "lucide-react";
@@ -140,10 +141,18 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
           >
             {placeholderKind === "user-device" ? (
               <AlertTriangleIcon size={12} className={"text-yellow-400"} />
+            ) : setupKey ? (
+              // Setup key generated — waiting for the machine to register (the
+              // canvas polls /peers and swaps this for the real peer).
+              <Loader2 size={12} className={"animate-spin text-nb-gray-300"} />
             ) : (
               <DownloadIcon size={12} className={"text-yellow-400"} />
             )}
-            {placeholderKind === "user-device" ? "Install or assign" : "Install"}
+            {placeholderKind === "user-device"
+              ? "Install or assign"
+              : setupKey
+              ? "Waiting"
+              : "Install"}
           </Button>
         </div>
         <div className={"flex items-center gap-2.5 text-nb-gray-300"}>

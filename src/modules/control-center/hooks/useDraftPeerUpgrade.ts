@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useReactFlow } from "@xyflow/react";
+import { mutate } from "swr";
 import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { usePlaceholderArtifacts } from "@/modules/control-center/hooks/usePlaceholderArtifacts";
@@ -8,6 +9,7 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
 
 export type PlaceholderUpgrade = {
   // Canvas node id being replaced (peer-draft-… or, on re-selection of a
@@ -309,4 +311,36 @@ export function useDraftPeerUpgrade() {
       deleteArtifacts({ boundGroupId, setupKeyId }),
     );
   }, [isDraft, peers, nodes, upgrade, deleteArtifacts]);
+
+  // A placeholder is "waiting" once its setup key is generated (setupKeyId /
+  // boundGroupId written to the node or its group-panel entry) and it hasn't
+  // upgraded yet. getPlaceholderPeer returns undefined after upgrade (the node
+  // becomes a real peer), and absorbed entries are dropped, so this clears
+  // itself.
+  const hasWaitingInstall = useMemo(
+    () =>
+      nodes.some((n) => {
+        const d = n.data as {
+          boundGroupId?: string;
+          setupKeyId?: string;
+          draftPeers?: { boundGroupId?: string; setupKeyId?: string }[];
+        };
+        if (getPlaceholderPeer(n) && (d?.boundGroupId || d?.setupKeyId)) {
+          return true;
+        }
+        return (d?.draftPeers ?? []).some(
+          (p) => p?.boundGroupId || p?.setupKeyId,
+        );
+      }),
+    [nodes],
+  );
+
+  // While a placeholder waits for its machine to register, /peers won't change
+  // on its own (SWR only revalidates on focus/reconnect). Poll it so the
+  // watcher above picks up the new peer and upgrades the placeholder in place.
+  useEffect(() => {
+    if (!isDraft || !hasWaitingInstall) return;
+    const id = window.setInterval(() => void mutate("/peers"), 5000);
+    return () => window.clearInterval(id);
+  }, [isDraft, hasWaitingInstall]);
 }

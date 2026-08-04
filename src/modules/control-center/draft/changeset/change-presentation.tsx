@@ -4,6 +4,7 @@ import {
   BotIcon,
   ChevronRightIcon,
   FolderGit2,
+  Loader2,
   MonitorSmartphoneIcon,
   NetworkIcon,
   ServerIcon,
@@ -196,9 +197,12 @@ export const KindIcon = ({
 export const IssueBadge = ({
   label,
   onClick,
+  waiting,
 }: {
   label: string;
   onClick?: () => void;
+  // "In progress" (peer waiting to register): spinner instead of the alert.
+  waiting?: boolean;
 }) => {
   const className = cn(
     "inline-flex items-center justify-center gap-1.5 text-[0.65rem] font-medium px-2 py-1 rounded shrink-0 [&>svg]:shrink-0",
@@ -206,10 +210,15 @@ export const IssueBadge = ({
     onClick &&
       "cursor-pointer hover:bg-amber-900/50 hover:text-amber-300 transition-colors",
   );
+  const Leading = waiting ? (
+    <Loader2 size={11} className={"animate-spin"} />
+  ) : (
+    <TriangleAlertIcon size={11} />
+  );
   if (!onClick) {
     return (
       <span className={className}>
-        <TriangleAlertIcon size={11} />
+        {Leading}
         {label}
       </span>
     );
@@ -230,7 +239,7 @@ export const IssueBadge = ({
       }}
       className={className}
     >
-      <TriangleAlertIcon size={11} />
+      {Leading}
       {label}
       {/* Chevron hints the badge is clickable (opens the fix). */}
       <ChevronRightIcon size={12} className={"-mr-0.5 opacity-70"} />

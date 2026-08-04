@@ -6,6 +6,7 @@ import { Modal } from "@components/modal/Modal";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   draftBoundGroupName,
   getPlaceholderHostname,
@@ -26,6 +27,7 @@ export const DraftInstallPeerModal = () => {
   const reactFlow = useReactFlow();
   const groupRequest = useApiCall<Group>("/groups", true);
   const { groups } = useControlCenterData();
+  const { markInstallPeerWaiting } = useDraftChangeset();
 
   // The placeholder's canvas name — drives the setup key name and its bound
   // group name.
@@ -252,10 +254,14 @@ export const DraftInstallPeerModal = () => {
             // draft can delete the key it created — see cleanup on removal) —
             // onto the node OR, for an absorbed placeholder, its draftPeers
             // entry.
-            writeToPlaceholder(nodeId.replace("peer-", ""), {
+            const draftId = nodeId.replace("peer-", "");
+            writeToPlaceholder(draftId, {
               setupKey: key.key,
               setupKeyId: key.id,
             });
+            // Flip its changeset issue badge to "Waiting" (the canvas now polls
+            // /peers for the machine to register).
+            if (key.id) markInstallPeerWaiting(draftId, key.id);
           }}
         />
       )}

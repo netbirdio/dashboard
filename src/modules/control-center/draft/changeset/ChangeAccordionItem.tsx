@@ -221,6 +221,7 @@ export const ChangeAccordionItem = ({
           {issue ? (
             <IssueBadge
               label={issue.label}
+              waiting={issue.waiting}
               onClick={
                 onResolveIssue && !disabled
                   ? () => onResolveIssue(change)
