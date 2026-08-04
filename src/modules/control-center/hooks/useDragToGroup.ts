@@ -293,29 +293,9 @@ export function useDragToGroup() {
       lastHighlightCheck.current = null;
       if (!isDraft) return;
 
-      // While a peer/resource drags, every group it could drop into gets a
-      // white border (dropEligible → GroupNode); the one under the pointer
-      // upgrades to the stronger dropTarget ring via the drag-tick highlight.
-      if (
-        DROPPABLE_NODE_TYPES.has(draggedNode.type ?? "") &&
-        !draggedNode.parentId
-      ) {
-        const itemId = getDraggedItemId(draggedNode);
-        if (itemId) {
-          setNodes((prev) => {
-            let changed = false;
-            const next = prev.map((n) => {
-              if (n.id === draggedNode.id) return n;
-              if (!GROUP_NODE_TYPES.has(n.type ?? "")) return n;
-              if ((n.data?.group as Group)?.name === "All") return n;
-              if (groupContainsItem(n, itemId)) return n;
-              changed = true;
-              return { ...n, data: { ...n.data, dropEligible: true } };
-            });
-            return changed ? next : prev;
-          });
-        }
-      }
+      // While a peer/resource drags, the group directly under the pointer
+      // gets the dropTarget ring via the drag-tick highlight. (No border on
+      // the other eligible groups — it read as noise on drag start.)
 
       const parentId = draggedNode.parentId;
       if (!parentId?.startsWith("network-")) return;
@@ -466,19 +446,14 @@ export function useDragToGroup() {
     (_event: React.MouseEvent, draggedNode: Node) => {
       if (!isDraft) return;
 
-      // Always clear frame drop-target highlights and the drop-eligible
-      // borders first, regardless of where the drag ends (the branches
-      // below return early).
+      // Always clear any drop-target highlight (frame or group) first,
+      // regardless of where the drag ends (the branches below return early).
       setNodes((prev) => {
         let changed = false;
         const next = prev.map((n) => {
-          const clearFrame = isFrameNode(n) && n.data.dropTarget;
-          if (!clearFrame && !n.data.dropEligible) return n;
+          if (!n.data.dropTarget) return n;
           changed = true;
-          return {
-            ...n,
-            data: { ...n.data, dropTarget: false, dropEligible: false },
-          };
+          return { ...n, data: { ...n.data, dropTarget: false } };
         });
         return changed ? next : prev;
       });
