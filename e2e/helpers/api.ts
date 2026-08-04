@@ -42,7 +42,13 @@ async function getApiContext(
       (resp) => {
         const req = resp.request();
         if (!resp.url().includes("/api/")) return false;
-        const isMatch = req.method() === "GET" && resp.status() === 200;
+        // Require the Bearer header: right after a (re)start the OIDC service
+        // worker may not have injected the token into the first /api calls yet,
+        // so an early tokenless 200 would be captured with an empty token.
+        const isMatch =
+          req.method() === "GET" &&
+          resp.status() === 200 &&
+          !!req.headers()["authorization"];
         if (debugApi) {
           // eslint-disable-next-line no-console
           console.log(
@@ -53,9 +59,12 @@ async function getApiContext(
         }
         return isMatch;
       },
-      { timeout: 10_000 },
+      // Generous: in `next dev` the FIRST navigation to /team/users triggers
+      // on-demand route compilation (seconds under emulation / after a restart)
+      // before any /api response comes back.
+      { timeout: 30_000 },
     ),
-    page.goto("/team/users"),
+    page.goto("/team/users", { timeout: 30_000 }),
   ]);
 
   const request = response.request();

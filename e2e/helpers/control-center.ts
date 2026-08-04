@@ -2,10 +2,29 @@ import { Page, Locator, expect } from "@playwright/test";
 import { navigateTo } from "./auth";
 import { clearScrollLock } from "./utils";
 
+// The test build treats the account as cloud (isNetBirdCloud → true when
+// APP_ENV=test), which mounts BillingProvider and its trial/limits modals — a
+// full-screen backdrop that intercepts canvas clicks. Control-center isn't
+// billing-gated, so force a non-cloud edition via the app's own e2e override
+// (netbird-test-edition localStorage) to suppress billing entirely. Registered
+// once per page, before the first navigation.
+const billingDisabled = new WeakSet<Page>();
+async function disableCloudBilling(page: Page) {
+  if (billingDisabled.has(page)) return;
+  billingDisabled.add(page);
+  await page.addInitScript(() => {
+    try {
+      window.localStorage.setItem("netbird-test-edition", "licensed");
+    } catch {
+      /* storage unavailable — fall back to the overlay dismissal below */
+    }
+  });
+}
+
 /**
- * The account can auto-open a billing modal (trial/limits) whose full-screen
- * backdrop intercepts canvas clicks. It appears async, so tests must be able to
- * shrug it off at any point.
+ * Belt-and-suspenders for any residual full-screen backdrop (e.g. an overlay
+ * that mounted before the edition override took effect): strip it + the body
+ * scroll-lock so a canvas click isn't swallowed.
  */
 export async function dismissBlockingOverlays(page: Page) {
   await clearScrollLock(page);
@@ -17,6 +36,8 @@ export const CANVAS_KEY = "netbird-control-center-draft-canvas";
 export type FlowView = "peers" | "users" | "groups" | "networks";
 
 export async function openControlCenter(page: Page, tab?: FlowView) {
+  // Suppress the cloud billing modal before the page loads (see above).
+  await disableCloudBilling(page);
   // The live view honours a ?tab= query param for its initial FlowView, so we
   // can deep-link straight to networks/groups/etc. instead of clicking a tab.
   await navigateTo(page, tab ? `/control-center?tab=${tab}` : "/control-center");
@@ -41,10 +62,13 @@ export async function switchFlowView(page: Page, view: FlowView) {
 }
 
 export async function enterDraft(page: Page) {
-  await page.getByTestId("cc-mode-draft").click();
+  // A billing/trial modal backdrop can sit over the switcher — clear it and
+  // force the clicks so it can't swallow them.
+  await dismissBlockingOverlays(page);
+  await page.getByTestId("cc-mode-draft").click({ force: true });
   // The start dialog asks blank vs. current view — keep the current view so
   // the draft mirrors live (what the control-center suites assert against).
-  await page.getByTestId("cc-draft-use-current-option").click();
+  await page.getByTestId("cc-draft-use-current-option").click({ force: true });
   // The toolbar slides in with a spring animation — waiting for the Add
   // button also guarantees draft mode is fully active.
   await expect(page.getByTestId("cc-toolbar-add")).toBeVisible();

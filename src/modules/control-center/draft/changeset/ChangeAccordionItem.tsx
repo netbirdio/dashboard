@@ -29,6 +29,7 @@ import {
   LiveData,
   toCurl,
 } from "@/modules/control-center/utils/changeset-request";
+import { CascadePreview } from "@/modules/control-center/utils/change-cascade";
 import { diffStat } from "@/modules/control-center/utils/json-line-diff";
 import {
   changeIcon,
@@ -43,6 +44,9 @@ type Props = {
   change: DraftChange;
   live: LiveData;
   onDiscard: () => void;
+  // Side-effect preview for the remove confirmation (what else the removal
+  // touches on the canvas / in other changes).
+  previewRemove: (change: DraftChange) => CascadePreview;
   // Resolve a blocking issue on this change (assign a network / install the
   // peer). Undefined for changes with no issue.
   onResolveIssue?: (change: DraftChange) => void;
@@ -53,6 +57,7 @@ export const ChangeAccordionItem = ({
   change,
   live,
   onDiscard,
+  previewRemove,
   onResolveIssue,
   disabled,
 }: Props) => {
@@ -95,10 +100,18 @@ export const ChangeAccordionItem = ({
   const { confirm } = useDialog();
   const handleRemove = async () => {
     setMenuOpen(false);
+    const preview = previewRemove(change);
     const ok = await confirm({
-      title: "Remove this change?",
+      title: preview.summary,
       description:
-        "This removes it from the changeset — the change won't be deployed. This cannot be undone.",
+        "This reverts it on the canvas and drops it from the changeset — it won't be deployed.",
+      children: preview.effects.length ? (
+        <ul className={"list-disc pl-5 text-sm text-nb-gray-300 space-y-1"}>
+          {preview.effects.map((e) => (
+            <li key={e}>{e}</li>
+          ))}
+        </ul>
+      ) : undefined,
       confirmText: "Remove",
       cancelText: "Cancel",
       type: "danger",
@@ -110,6 +123,7 @@ export const ChangeAccordionItem = ({
   return (
     <AccordionItem
       value={change.id}
+      data-testid={`cc-change-${change.type}`}
       className={
         "border border-nb-gray-910 rounded-lg bg-nb-gray-930/40 overflow-hidden min-w-0"
       }
@@ -213,6 +227,7 @@ export const ChangeAccordionItem = ({
             <button
               disabled={disabled}
               onClick={(e) => e.stopPropagation()}
+              data-testid={"cc-change-menu"}
               className={
                 "self-center shrink-0 p-1.5 rounded text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 data-[state=open]:bg-nb-gray-800 data-[state=open]:text-nb-gray-100 transition-colors disabled:opacity-50 outline-none"
               }
@@ -237,6 +252,7 @@ export const ChangeAccordionItem = ({
             <DropdownMenuItem
               variant={"danger"}
               className={"gap-2"}
+              data-testid={"cc-change-remove"}
               onClick={handleRemove}
             >
               <Trash2Icon size={14} />

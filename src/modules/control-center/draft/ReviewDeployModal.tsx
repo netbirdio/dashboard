@@ -25,6 +25,7 @@ import {
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
+import { useRemoveChange } from "@/modules/control-center/hooks/useRemoveChange";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
@@ -38,7 +39,8 @@ type Props = {
 };
 
 export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => {
-  const { changes, removeChange, untrackNetwork } = useDraftChangeset();
+  const { changes } = useDraftChangeset();
+  const { removeWithCascade, previewRemove } = useRemoveChange();
   const { deploy, isDeploying } = useDeployChangeset();
   const { policies, groups, networks, networkResources } =
     useControlCenterData();
@@ -171,14 +173,8 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                   key={change.id}
                   change={change}
                   live={live}
-                  onDiscard={() =>
-                    // A draft network cascades: discarding it also drops the
-                    // resources/routers that live in it (they'd otherwise
-                    // strand the deploy with no network to resolve).
-                    change.type === "create-network"
-                      ? untrackNetwork(change.clientId)
-                      : removeChange(change.id)
-                  }
+                  onDiscard={() => removeWithCascade(change)}
+                  previewRemove={previewRemove}
                   onResolveIssue={
                     getChangeIssue(change) ? resolveIssue : undefined
                   }
