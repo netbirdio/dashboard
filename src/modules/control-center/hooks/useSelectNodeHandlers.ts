@@ -535,7 +535,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
             const choice = await confirm({
               title: `Edit resource “${resource.name ?? "Resource"}”?`,
               description:
-                "You are in live mode — saving your changes will apply them to your account immediately.",
+                "You are in live mode. Saving your changes will apply them to your account immediately.",
               confirmText: "Edit",
               cancelText: "Cancel",
               type: "warning",

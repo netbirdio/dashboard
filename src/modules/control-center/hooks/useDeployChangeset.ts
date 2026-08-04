@@ -88,7 +88,7 @@ export function useDeployChangeset() {
         networks?.find((n) => n.name === change.networkName)?.id;
       if (!id) {
         throw new Error(
-          `Network "${change.networkName}" is missing — it may have been removed from the draft.`,
+          `Network "${change.networkName}" is missing. It may have been removed from the draft.`,
         );
       }
       return id;
@@ -101,7 +101,7 @@ export function useDeployChangeset() {
         const id = g.id ?? nameToId.get(g.name);
         if (!id) {
           throw new Error(
-            `Group "${g.name}" is missing — it may have been removed from the draft.`,
+            `Group "${g.name}" is missing. It may have been removed from the draft.`,
           );
         }
         return id;
@@ -118,7 +118,7 @@ export function useDeployChangeset() {
       const created = resourceClientMap.get(r.id);
       if (!created) {
         throw new Error(
-          "A referenced resource is missing — it may have been removed from the draft.",
+          "A referenced resource is missing. It may have been removed from the draft.",
         );
       }
       return { id: created.id, type: created.type ?? r.type };
@@ -258,7 +258,7 @@ export function useDeployChangeset() {
           const message =
             (err as { message?: string })?.message ?? "The API request failed.";
           // Failed + remaining changes stay in the draft for a retry.
-          throw { message: `${label} — ${message}`, code: 0 };
+          throw { message: `${label}: ${message}`, code: 0 };
         }
         removeChange(change.id);
       }

@@ -451,7 +451,7 @@ export const getChangeIssue = (change: DraftChange): ChangeIssue | undefined => 
   ) {
     return {
       label: "No Network",
-      message: `Resource “${change.name}” has no network assigned — assign it to a network before deploying.`,
+      message: `Resource “${change.name}” has no network assigned. Assign it to a network before deploying.`,
     };
   }
   if (change.type === "install-peer") {

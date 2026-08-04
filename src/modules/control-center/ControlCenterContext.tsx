@@ -114,9 +114,9 @@ interface DestinationGroupState {
   // on either.
   focusedNodeId: string;
   setFocusedNodeId: (v: string) => void;
-  // Highlight-Connections tool: armed via the header button (or "H") — the
-  // next node click sets focusedNodeId; stays armed so further clicks
-  // re-target until the pill's X (or a pane click) exits.
+  // Focus tool: armed via the "F" key; the next node click sets focusedNodeId.
+  // Stays armed so further clicks re-target until the pill's X (or a pane
+  // click) exits.
   highlightArmed: boolean;
   setHighlightArmed: (v: boolean) => void;
   // Peer whose groups panel is open (real peer id) — the peer-side twin of

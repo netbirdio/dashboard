@@ -174,7 +174,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     const choice = await confirm({
       title: `Save groups of “${peer.name}”?`,
       description:
-        "You are in live mode — saving your changes will apply them to your account immediately.",
+        "You are in live mode. Saving your changes will apply them to your account immediately.",
       confirmText: "Save",
       cancelText: "Cancel",
       type: "warning",

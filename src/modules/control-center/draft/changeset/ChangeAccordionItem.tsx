@@ -104,7 +104,7 @@ export const ChangeAccordionItem = ({
     const ok = await confirm({
       title: preview.summary,
       description:
-        "This reverts it on the canvas and drops it from the changeset — it won't be deployed.",
+        "This reverts it on the canvas and drops it from the changeset. It won't be deployed.",
       children: preview.effects.length ? (
         <ul className={"list-disc pl-5 text-sm text-nb-gray-300 space-y-1"}>
           {preview.effects.map((e) => (

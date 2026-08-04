@@ -491,10 +491,10 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     dashboardAsOwner: page,
   }) => {
     await openControlCenter(page);
-    const pill = page.getByText("Select a node to highlight its connections");
+    const pill = page.getByText("Select a node to focus");
     await expect(pill).not.toBeVisible();
 
-    // "F" arms highlight mode (input-aware, no modifiers).
+    // "F" arms focus mode (input-aware, no modifiers).
     await page.locator("body").press("f");
     await expect(pill).toBeVisible();
 
@@ -674,19 +674,17 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
       2,
     );
 
-    // "Highlight Connections" enters focus mode.
+    // "Focus" enters focus mode.
     const menu = await openNodeMenu(page, policyNode);
-    await menu
-      .getByRole("button", { name: "Highlight Connections", exact: true })
-      .click();
+    await menu.getByRole("button", { name: "Focus", exact: true }).click();
 
     // The focus pill names the active mode; off-path nodes dim (cc-dimmed).
-    await expect(page.getByText(/Highlighting connections/i)).toBeVisible();
+    await expect(page.getByText(/Focusing on/i)).toBeVisible();
     await expect(page.locator(".cc-dimmed").first()).toBeVisible();
 
     // Exit via the pill's close button; the dim clears.
-    await page.getByRole("button", { name: "Exit Highlight Mode" }).click();
-    await expect(page.getByText(/Highlighting connections/i)).not.toBeVisible();
+    await page.getByRole("button", { name: "Exit Focus" }).click();
+    await expect(page.getByText(/Focusing on/i)).not.toBeVisible();
     await expect(page.locator(".cc-dimmed")).toHaveCount(0);
   });
 });

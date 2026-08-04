@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import {
   CircleMinusIcon,
-  WaypointsIcon,
+  FocusIcon,
   EyeIcon,
   WorkflowIcon,
   PencilLineIcon,
@@ -474,7 +474,7 @@ export const NodeContextMenu = ({
     const choice = await confirm({
       title: `Edit policy “${livePolicy.name ?? "Policy"}”?`,
       description:
-        "You are in live mode — saving your changes will apply them to your account immediately.",
+        "You are in live mode. Saving your changes will apply them to your account immediately.",
       confirmText: "Edit",
       cancelText: "Cancel",
       type: "warning",
@@ -492,7 +492,7 @@ export const NodeContextMenu = ({
       title: `${enabled ? "Enable" : "Disable"} policy “${
         livePolicy.name ?? "Policy"
       }”?`,
-      description: `You are in live mode — the policy will be ${
+      description: `You are in live mode. The policy will be ${
         enabled ? "enabled" : "disabled"
       } on your account immediately.`,
       confirmText: enabled ? "Enable" : "Disable",
@@ -537,7 +537,7 @@ export const NodeContextMenu = ({
       const choice = await confirm({
         title: `Edit resource “${ref.resource.name ?? "Resource"}”?`,
         description:
-          "You are in live mode — saving your changes will apply them to your account immediately.",
+          "You are in live mode. Saving your changes will apply them to your account immediately.",
         confirmText: "Edit",
         cancelText: "Cancel",
         type: "warning",
@@ -561,7 +561,7 @@ export const NodeContextMenu = ({
         title: `${enabled ? "Enable" : "Disable"} resource “${
           ref.resource.name ?? "Resource"
         }”?`,
-        description: `You are in live mode — the resource will be ${
+        description: `You are in live mode. The resource will be ${
           enabled ? "enabled" : "disabled"
         } immediately.`,
         confirmText: enabled ? "Enable" : "Disable",
@@ -611,8 +611,8 @@ export const NodeContextMenu = ({
       if (!isFocusWorthy(n.id, nodes, edges)) return [];
       return [
         {
-          label: "Highlight Connections",
-          icon: <WaypointsIcon size={14} />,
+          label: "Focus",
+          icon: <FocusIcon size={14} />,
           onClick: () => setFocusedNodeId(n.id),
         },
       ];
@@ -755,7 +755,7 @@ export const NodeContextMenu = ({
       const choice = await confirm({
         title: `Rename group “${group.name}”?`,
         description:
-          "You are in live mode — saving your changes will apply them to your account immediately.",
+          "You are in live mode. Saving your changes will apply them to your account immediately.",
         confirmText: "Rename",
         cancelText: "Cancel",
         type: "warning",

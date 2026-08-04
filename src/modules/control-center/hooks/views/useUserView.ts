@@ -44,7 +44,7 @@ export function useUserView() {
           variant: "card",
           showHandles: false,
           // No click action — highlighting goes through the header's
-          // Highlight Connections tool (armed clicks land in onNodeClick).
+          // Focus tool (armed clicks land in onNodeClick).
         },
         position: { x: 0, y: 0 },
       });
