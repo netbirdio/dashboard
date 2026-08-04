@@ -156,16 +156,11 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
             </div>
           ) : (
             <Accordion
-              // Remount so the first expandable change opens by default on each
-              // (re)open — install-peer rows aren't collapsible, so skip them.
+              // Remount so the FIRST change (as sorted — install-peer / server
+              // / agent rows lead the list) opens by default on each (re)open.
               key={openKeyRef.current}
               type={"multiple"}
-              defaultValue={(() => {
-                const first = sortedChanges.find(
-                  (c) => c.type !== "install-peer",
-                );
-                return first ? [first.id] : [];
-              })()}
+              defaultValue={sortedChanges[0] ? [sortedChanges[0].id] : []}
               className={"flex flex-col gap-3"}
             >
               {sortedChanges.map((change) => (

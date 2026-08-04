@@ -16,6 +16,7 @@ import {
   isCompleteDraftResource,
   isDeployablePolicy,
   isTrackablePolicy,
+  pinByOrder,
   PLACEHOLDER_BASE_NAMES,
 } from "./helpers";
 
@@ -505,5 +506,49 @@ describe("getFirstGroup", () => {
 
   it("returns All when it is the only group", () => {
     expect(getFirstGroup([group("all", "All", 9)], [])?.id).toBe("all");
+  });
+});
+
+describe("pinByOrder", () => {
+  const idOf = (x: { id: string }) => x.id;
+
+  it("orders items by their position in the frozen order", () => {
+    const items = [{ id: "c" }, { id: "a" }, { id: "b" }];
+    expect(pinByOrder(items, ["a", "b", "c"], idOf).map(idOf)).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+  });
+
+  it("keeps rows put when the input array is reordered (post-save mutate)", () => {
+    // The panel captured this order when it opened...
+    const order = ["p1", "p2", "p3"];
+    // ...then a save + SWR mutate returned the list in a different order.
+    const afterMutate = [{ id: "p3" }, { id: "p1" }, { id: "p2" }];
+    expect(pinByOrder(afterMutate, order, idOf).map(idOf)).toEqual([
+      "p1",
+      "p2",
+      "p3",
+    ]);
+  });
+
+  it("appends ids missing from the order, preserving their relative order", () => {
+    const items = [{ id: "new2" }, { id: "a" }, { id: "new1" }, { id: "b" }];
+    // Only a, b were known at open; new1/new2 registered afterwards and sort
+    // to the end in the order they appear in the input (stable sort).
+    expect(pinByOrder(items, ["a", "b"], idOf).map(idOf)).toEqual([
+      "a",
+      "b",
+      "new2",
+      "new1",
+    ]);
+  });
+
+  it("does not mutate the input array", () => {
+    const items = [{ id: "b" }, { id: "a" }];
+    const copy = [...items];
+    pinByOrder(items, ["a", "b"], idOf);
+    expect(items).toEqual(copy);
   });
 });

@@ -488,12 +488,33 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         // side panel — the focus-dim effect highlights its path.
         onDestinationGroupSelect(groupId);
       }
-      // Clicking a policy opens it in the editor (live and draft alike; the
-      // modal saves via PUT in live, into the changeset in draft). The
-      // right-click context menu keeps Edit/Disable too.
+      // Clicking a policy opens it in the editor. Draft opens directly (edits
+      // land in the changeset); live confirms first — same "you are in live
+      // mode" dialog as the context-menu Edit — since the modal saves via PUT
+      // to the account immediately. The right-click menu keeps Edit/Disable too.
       if (policyId) {
-        setSelectedPolicy(policyId);
-        setPolicyModalOpen(true);
+        if (isDraft) {
+          setSelectedPolicy(policyId);
+          setPolicyModalOpen(true);
+        } else {
+          const policyName =
+            (_node.data as { policy?: { name?: string } })?.policy?.name ??
+            "Policy";
+          void (async () => {
+            const choice = await confirm({
+              title: `Edit policy “${policyName}”?`,
+              description:
+                "You are in live mode — saving your changes will apply them to your account immediately.",
+              confirmText: "Edit",
+              cancelText: "Cancel",
+              type: "warning",
+              dismissOnOutsideClick: true,
+            });
+            if (!choice) return;
+            setSelectedPolicy(policyId);
+            setPolicyModalOpen(true);
+          })();
+        }
       }
       // Live resources open the real editor (networks page modal) — its
       // save PUTs, so confirm first, like the live policy actions. Framed

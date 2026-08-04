@@ -1,7 +1,9 @@
 import { Modal } from "@components/modal/Modal";
 import { useReactFlow } from "@xyflow/react";
 import * as React from "react";
+import { mutate } from "swr";
 import { Network, NetworkResource } from "@/interfaces/Network";
+import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   ResourceEditorState,
@@ -58,6 +60,7 @@ const EditorContent = ({
 }) => {
   const reactFlow = useReactFlow();
   const { isDraft } = useDraftMode();
+  const { setLayoutInitialized } = useCanvasState();
   const { groups: apiGroups, networks: apiNetworks } = useControlCenterData();
   const { changes, trackCreateGroup } = useDraftChangeset();
   const { saveDraftResource } = useDraftNetworkActions();
@@ -149,7 +152,22 @@ const EditorContent = ({
     return (
       <ResourceModalContent
         network={liveNetwork}
-        onCreated={() => onClose()}
+        onCreated={async () => {
+          // The modal POSTed the resource against the real network. Nothing
+          // has told the canvas yet: revalidate the network + resource lists,
+          // then force the live view to rebuild (the init effect is gated on
+          // layoutInitialized) so the new resource appears — same rebuild
+          // drilling in/out triggers, which is why it only showed after
+          // navigating. Await the mutations first so the rebuild reads the
+          // fresh data.
+          await Promise.all([
+            mutate("/networks"),
+            mutate("/networks/resources"),
+            mutate("/groups"),
+          ]);
+          setLayoutInitialized(false);
+          onClose();
+        }}
       />
     );
   }

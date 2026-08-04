@@ -248,6 +248,50 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     ).toHaveCount(0);
   });
 
+  test("Should show a live-added resource on the canvas without navigating", async ({
+    dashboardAsOwner: page,
+  }) => {
+    const base = generateRandomName(PREFIX);
+    const network = await createNetwork(page, base + "-n");
+
+    await openControlCenter(page, "networks");
+    const frame = canvasNode(page, `network-${network.id}`);
+    await expect(frame).toBeVisible();
+
+    // Add a resource straight from the frame's right-click menu — a live POST
+    // against the real network (draft mode would only touch the changeset).
+    await clickContextMenuItem(page, frame, "Add Resource");
+    await page.getByTestId("resource-name-input").fill(base + "-r");
+    await page.getByTestId("resource-address-input").fill("10.0.0.9/32");
+    await page.getByTestId("resource-continue").click();
+
+    const postResponse = page.waitForResponse(
+      (resp) =>
+        /\/api\/networks\/[^/]+\/resources$/.test(resp.url()) &&
+        resp.request().method() === "POST",
+      { timeout: 30_000 },
+    );
+    await page.getByTestId("submit-resource").click();
+    // No groups picked → a "No Access Control Policies" confirmation always
+    // gates the POST here. Scope to THAT dialog (a stale confirm dialog from a
+    // prior step can otherwise shadow the testid).
+    const noPolicyDialog = page
+      .getByRole("dialog")
+      .filter({ hasText: "No Access Control Policies" });
+    await expect(noPolicyDialog).toBeVisible();
+    await noPolicyDialog.getByTestId("confirmation.confirm").click();
+    const response = await postResponse;
+    expect([200, 201]).toContain(response.status());
+    const created = (await response.json()) as { id: string };
+
+    // The regression: the new resource must appear on the canvas immediately —
+    // as the frame's child row — WITHOUT drilling in and back out to force a
+    // rebuild (the live view init is gated on layoutInitialized).
+    await expect(canvasNode(page, `resource-${created.id}`)).toBeVisible({
+      timeout: 15_000,
+    });
+  });
+
   test("Should show live policy actions and warn before editing", async ({
     dashboardAsOwner: page,
   }) => {
@@ -271,6 +315,31 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     await expect(page.getByText("You are in live mode")).toBeVisible();
     await page.getByTestId("confirmation.cancel").click();
     await expect(page.getByTestId("policy-name")).not.toBeVisible();
+  });
+
+  test("Should warn before opening a policy on left-click in live mode", async ({
+    dashboardAsOwner: page,
+  }) => {
+    const { policyNode } = await seedPolicyAndOpenGroupView(page);
+
+    // Left-clicking a policy in LIVE mode must NOT open the editor directly —
+    // it warns first, exactly like the context menu's Edit, because the modal
+    // saves via PUT to the account immediately. (Draft opens it directly.)
+    await dismissBlockingOverlays(page);
+    await policyNode.click();
+    await expect(page.getByText("You are in live mode")).toBeVisible();
+
+    // Cancelling leaves the editor closed.
+    await page.getByTestId("confirmation.cancel").click();
+    await expect(
+      page.getByText("Update Access Control Policy"),
+    ).not.toBeVisible();
+
+    // Confirming opens the policy editor.
+    await policyNode.click();
+    await expect(page.getByText("You are in live mode")).toBeVisible();
+    await page.getByTestId("confirmation.confirm").click();
+    await expect(page.getByText("Update Access Control Policy")).toBeVisible();
   });
 
   test("Should disable a policy from the live menu (immediate PUT)", async ({
@@ -432,6 +501,98 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
         return groups.find((g) => g.id === dst.id)?.name;
       })
       .toBe(newName);
+  });
+
+  test("Should save group resource membership in live mode (correct payload)", async ({
+    dashboardAsOwner: page,
+  }) => {
+    // Clean slate so the group view deterministically lands on our group (it
+    // auto-selects a group that HAS a policy — see seedPolicyAndOpenGroupView).
+    await deletePoliciesBySubstring(page, PREFIX);
+    await deleteGroupsByPrefix(page, PREFIX);
+
+    // A group shown in the group view + an (unassigned) resource to add to it.
+    const base = generateRandomName(PREFIX);
+    const src = await createGroup(page, base + "-src");
+    const dst = await createGroup(page, base + "-dst");
+    await createPolicy(page, base + "-p", src.id, dst.id, true);
+    const network = await createNetwork(page, base + "-n");
+    const resource = await createResource(
+      page,
+      network.id,
+      base + "-r",
+      "10.0.0.7/32",
+      [],
+    );
+
+    await openControlCenter(page, "groups");
+    const groupNode = canvasNode(page, `group-${dst.id}`);
+    await expect(groupNode).toBeVisible({ timeout: 15_000 });
+
+    // Open the group's side panel and switch to its Resources tab.
+    await dismissBlockingOverlays(page);
+    await groupNode.click();
+    const panel = page.locator("#cc-group-panel");
+    await expect(panel).toBeVisible();
+    await panel.getByRole("tab", { name: "Resources" }).click();
+
+    // Toggle the resource on (clicking the row flips its checkbox).
+    await panel.getByText(base + "-r").click();
+
+    // Save → the PUT must SUCCEED. The regression sent resources as bare id
+    // strings, which the API rejected with 400 "could not parse json"; the fix
+    // sends them as {id, type} objects like the networks/groups pages.
+    const putResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/groups/${dst.id}`) &&
+        resp.request().method() === "PUT",
+      { timeout: 30_000 },
+    );
+    await panel.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("You are in live mode")).toBeVisible();
+    await page.getByTestId("confirmation.confirm").click();
+    const response = await putResponse;
+    expect([200, 201]).toContain(response.status());
+
+    // The resource really landed in the group on the account.
+    await expect
+      .poll(async () => {
+        const groups = await listGroups(page);
+        const g = groups.find((x) => x.id === dst.id);
+        return (g?.resources ?? []).some((r: any) =>
+          (typeof r === "string" ? r : r?.id) === resource.id,
+        );
+      })
+      .toBe(true);
+  });
+
+  test("Should keep the group panel fitted after a viewport resize", async ({
+    dashboardAsOwner: page,
+  }) => {
+    const { dst } = await seedPolicyAndOpenGroupView(page);
+    const groupNode = canvasNode(page, `group-${dst.id}`);
+    await expect(groupNode).toBeVisible();
+
+    await dismissBlockingOverlays(page);
+    await groupNode.click();
+    const panel = page.locator("#cc-group-panel");
+    await expect(panel).toBeVisible();
+
+    // Shrink the window — the panel must re-fit against the new canvas size
+    // (the open-time placement effect only runs on open, so without the resize
+    // listener the box would stay sized for the old, wider viewport).
+    await page.setViewportSize({ width: 1200, height: 800 });
+    await expect
+      .poll(async () => {
+        const box = await panel.boundingBox();
+        return box ? Math.round(box.x + box.width) : Number.MAX_SAFE_INTEGER;
+      })
+      .toBeLessThanOrEqual(1200);
+    const after = await panel.boundingBox();
+    expect(after!.x).toBeGreaterThan(0);
+
+    // Restore the viewport for the tests that follow.
+    await page.setViewportSize({ width: 1920, height: 1080 });
   });
 
   test("Should highlight a node's connections (focus mode) and exit", async ({

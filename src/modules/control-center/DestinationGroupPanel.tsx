@@ -37,6 +37,7 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import {
   getIpPlaceholderFromRange,
   getPlaceholderPeer,
+  pinByOrder,
   useStructuralNodes,
 } from "@/modules/control-center/utils/helpers";
 import { useAccount } from "@/modules/account/useAccount";
@@ -560,25 +561,39 @@ export const DestinationGroupPanel = ({
     });
     if (!choice) return;
     setSaving(true);
-    try {
-      await groupRequest.put(
+    // The group PUT wants peers as id strings but resources as {id, type}
+    // objects — sending resource id strings makes the API reject the body
+    // ("could not parse json"). Mirror the networks/groups pages.
+    const request = groupRequest
+      .put(
         {
           name: group.name,
           peers: [...selectedPeerIds],
-          resources: [...selectedResourceIds],
+          resources: [...selectedResourceIds].map((id) => ({
+            id,
+            type: networkResources?.find((r) => r.id === id)?.type,
+          })),
         },
         `/${group.id}`,
-      );
-      // Membership lives on /groups and /peers (peer.groups) — refresh both
-      // so the panel and the rebuilt view pick the change up.
-      await Promise.all([mutate("/groups"), mutate("/peers")]);
-    } catch {
-      // useApiCall runs with ignoreError=true, so it won't toast — surface the
-      // failure here and re-sync so the optimistic canvas counts revert.
-      notify({
-        title: group.name,
-        description: "Failed to save the group. Your changes were not applied.",
+      )
+      .then(async (g) => {
+        // Membership lives on /groups and /peers (peer.groups) — refresh both
+        // so the panel and the rebuilt view pick the change up.
+        await Promise.all([mutate("/groups"), mutate("/peers")]);
+        return g;
       });
+    // The promise drives the toast: green on success, red with the API error
+    // on failure (useApiCall runs with ignoreError=true and rejects, so a
+    // plain notify would have shown a green "success" for a failed save).
+    notify({
+      title: group.name,
+      description: `${group.name} was successfully saved.`,
+      promise: request,
+    });
+    try {
+      await request;
+    } catch {
+      // Re-sync so the optimistic canvas counts revert to the server truth.
       await Promise.all([mutate("/groups"), mutate("/peers")]).catch(() => {});
     } finally {
       setSaving(false);
@@ -600,75 +615,93 @@ export const DestinationGroupPanel = ({
 
   const query = search.trim().toLowerCase();
 
-  // Members-first ORDER is frozen per open: it partitions by the membership
-  // AT OPEN TIME, not the live one — toggling would otherwise reshuffle the
-  // list under the pointer. Null until the data is loaded.
-  const [orderSnapshot, setOrderSnapshot] = useState<{
-    peers: Set<string>;
-    resources: Set<string>;
-  } | null>(null);
-  useEffect(() => {
-    setOrderSnapshot(null);
-  }, [groupId]);
-  useEffect(() => {
-    if (orderSnapshot || !groupId || !peers || !networkResources) return;
-    setOrderSnapshot({
-      peers: new Set(memberPeerIds),
-      resources: new Set(memberResourceIds),
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderSnapshot, groupId, peers, networkResources]);
-  const peerOrder = orderSnapshot?.peers ?? memberPeerIds;
-  const resourceOrder = orderSnapshot?.resources ?? memberResourceIds;
-
   // Draft: EVERY peer/resource is listed (members first, checked) so the
   // checkbox doubles as assign/unassign — same pattern as PeerGroupSelector.
-  // Live: members only.
+  // Live: members only. The members-first order here is only a SEED — it's
+  // pinned below to the sequence captured when the panel opened.
+  const peerCandidates = useMemo(() => {
+    if (!canEditMembers) return groupPeers;
+    return [
+      // Draft members (placeholder peers) aren't in the API list — they lead
+      // the member section so the row count matches the group's counter.
+      ...draftMemberPeers,
+      ...(peers ?? []).filter((p) => p.id && memberPeerIds.has(p.id)),
+      // Canvas placeholders not yet in the group are assignable.
+      ...[...canvasPlaceholderPeers.values()]
+        .map(({ peer }) => peer)
+        .filter((p) => p.id && !addedMembers.has(p.id)),
+      ...(peers ?? []).filter((p) => p.id && !memberPeerIds.has(p.id)),
+    ];
+  }, [
+    canEditMembers,
+    groupPeers,
+    peers,
+    memberPeerIds,
+    draftMemberPeers,
+    canvasPlaceholderPeers,
+    addedMembers,
+  ]);
+
+  const resourceCandidates = useMemo(() => {
+    if (!canEditMembers) return resources;
+    return [
+      ...draftMemberResources,
+      ...(networkResources ?? []).filter((r) => memberResourceIds.has(r.id)),
+      ...(networkResources ?? []).filter((r) => !memberResourceIds.has(r.id)),
+    ];
+  }, [
+    canEditMembers,
+    resources,
+    networkResources,
+    memberResourceIds,
+    draftMemberResources,
+  ]);
+
+  // Row order FROZEN per open: the full ordered id sequence, captured once the
+  // data is ready. Toggling, saving, and the post-save SWR mutate (which can
+  // return the peers/resources arrays in a different order) all leave the rows
+  // where they were; ids that appear after open sort to the end. Null until
+  // the data is loaded.
+  const [rowOrder, setRowOrder] = useState<{
+    peers: string[];
+    resources: string[];
+  } | null>(null);
+  useEffect(() => {
+    setRowOrder(null);
+  }, [groupId]);
+  useEffect(() => {
+    if (rowOrder || !groupId || !peers || !networkResources) return;
+    setRowOrder({
+      peers: peerCandidates.map((p) => p.id ?? "").filter(Boolean),
+      resources: resourceCandidates.map((r) => r.id),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowOrder, groupId, peers, networkResources]);
+
   const peerRows = useMemo(() => {
-    // Draft members (placeholder peers) aren't in the API list — they lead
-    // the member section so the row count matches the group's counter.
-    const all = canEditMembers
-      ? [
-          ...draftMemberPeers,
-          ...(peers ?? []).filter((p) => p.id && peerOrder.has(p.id)),
-          // Canvas placeholders not yet in the group are assignable.
-          ...[...canvasPlaceholderPeers.values()]
-            .map(({ peer }) => peer)
-            .filter((p) => p.id && !addedMembers.has(p.id)),
-          ...(peers ?? []).filter((p) => p.id && !peerOrder.has(p.id)),
-        ]
-      : groupPeers;
-    if (!query) return all;
-    return all.filter(
+    const pinned = rowOrder
+      ? pinByOrder(peerCandidates, rowOrder.peers, (p) => p.id ?? "")
+      : peerCandidates;
+    if (!query) return pinned;
+    return pinned.filter(
       (p) =>
         p.name?.toLowerCase().includes(query) ||
         p.ip?.toLowerCase().includes(query) ||
         p.dns_label?.toLowerCase().includes(query),
     );
-  }, [canEditMembers, groupPeers, peers, peerOrder, draftMemberPeers, query]);
+  }, [peerCandidates, rowOrder, query]);
 
   const resourceRows = useMemo(() => {
-    const all = canEditMembers
-      ? [
-          ...draftMemberResources,
-          ...(networkResources ?? []).filter((r) => resourceOrder.has(r.id)),
-          ...(networkResources ?? []).filter((r) => !resourceOrder.has(r.id)),
-        ]
-      : resources;
-    if (!query) return all;
-    return all.filter(
+    const pinned = rowOrder
+      ? pinByOrder(resourceCandidates, rowOrder.resources, (r) => r.id)
+      : resourceCandidates;
+    if (!query) return pinned;
+    return pinned.filter(
       (r) =>
         r.name?.toLowerCase().includes(query) ||
         r.address?.toLowerCase().includes(query),
     );
-  }, [
-    canEditMembers,
-    resources,
-    networkResources,
-    resourceOrder,
-    draftMemberResources,
-    query,
-  ]);
+  }, [resourceCandidates, rowOrder, query]);
 
   // Footer count — total assignable entities per tab.
   const totalPeers =
@@ -720,6 +753,30 @@ export const DestinationGroupPanel = ({
   // whole open sequence (placement reset + pan) when the width shifts.
   const panelWidthRef = useRef(panelWidth);
   panelWidthRef.current = panelWidth;
+
+  // Keep the panel fitted when the window/canvas is resized — the open effect
+  // below only runs on open, so a resize would otherwise leave the box sized
+  // for the old container (clipped or floating off the edge). Recompute
+  // left/top/height against the new container size.
+  useEffect(() => {
+    const onResize = () => {
+      setPlacement((p) => {
+        if (!p) return p;
+        const container = document
+          .querySelector(".react-flow")
+          ?.getBoundingClientRect();
+        if (!container) return p;
+        return {
+          ...p,
+          left: container.width - panelWidthRef.current - MARGIN,
+          top: TOP,
+          height: container.height - TOP - BOTTOM,
+        };
+      });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     if (!groupId) {

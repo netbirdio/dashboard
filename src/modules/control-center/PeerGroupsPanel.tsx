@@ -19,6 +19,7 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import {
   getGroupCountLabel,
   getPlaceholderPeer,
+  pinByOrder,
   useStructuralNodes,
 } from "@/modules/control-center/utils/helpers";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -134,6 +135,8 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
 
   const saveAssignments = async () => {
     if (!peer?.id) return;
+    // Narrowed once here — the async IIFE below re-widens peer.id otherwise.
+    const peerId = peer.id;
     const added = allGroups.filter(
       (g) => selectedRefs.has(groupRef(g)) && !assignedRefs.has(groupRef(g)),
     );
@@ -179,34 +182,42 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     });
     if (!choice) return;
     setSaving(true);
-    try {
-      const toIds = (list?: (string | { id?: string })[]) =>
-        (list ?? []).map((x) => (typeof x === "string" ? x : x.id ?? ""));
+    const toIds = (list?: (string | { id?: string })[]) =>
+      (list ?? []).map((x) => (typeof x === "string" ? x : x.id ?? ""));
+    const request = (async () => {
       for (const g of [...added, ...removed]) {
         const full = groups?.find((x) => x.id === g.id);
         if (!full?.id) continue;
         const peerIds = new Set(toIds(full.peers));
-        if (selectedRefs.has(full.id)) peerIds.add(peer.id);
-        else peerIds.delete(peer.id);
+        if (selectedRefs.has(full.id)) peerIds.add(peerId);
+        else peerIds.delete(peerId);
         await groupRequest.put(
           {
             name: full.name,
             peers: [...peerIds],
-            resources: toIds(full.resources as (string | { id?: string })[]),
+            // Resources pass through untouched, as {id, type} objects — the
+            // API rejects a body that sends them as id strings.
+            resources: full.resources,
           },
           `/${full.id}`,
         );
       }
       await Promise.all([mutate("/groups"), mutate("/peers")]);
+    })();
+    // The promise drives the toast styling: green on success, red with the
+    // API error on failure (useApiCall rejects but never toasts itself, so a
+    // plain notify would have shown a green "success" for a failed save).
+    notify({
+      title: peer.name ?? "Peer",
+      description: `Groups of ${peer.name ?? "the peer"} were successfully saved.`,
+      promise: request,
+    });
+    try {
+      await request;
     } catch {
-      // useApiCall runs with ignoreError=true (no toast). A PUT in the loop
-      // may have partially applied — surface it and re-sync so the panel and
-      // canvas reflect the server truth rather than the optimistic selection.
-      notify({
-        title: peer.name ?? "Peer",
-        description:
-          "Failed to update group membership. Some changes may not have been applied.",
-      });
+      // A PUT in the loop may have partially applied — re-sync so the panel
+      // and canvas reflect the server truth rather than the optimistic
+      // selection.
       await Promise.all([mutate("/groups"), mutate("/peers")]).catch(() => {});
     } finally {
       setSaving(false);
@@ -223,26 +234,35 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   }, [peerId]);
   const query = search.trim().toLowerCase();
 
-  // Assigned-first order, FROZEN per open so toggling never reshuffles rows.
-  const [orderSnapshot, setOrderSnapshot] = useState<Set<string> | null>(null);
+  // Assigned-first candidate list (seed order — pinned below).
+  const groupCandidates = useMemo(
+    () => [
+      ...allGroups.filter((g) => assignedRefs.has(groupRef(g))),
+      ...allGroups.filter((g) => !assignedRefs.has(groupRef(g))),
+    ],
+    [allGroups, assignedRefs],
+  );
+
+  // Row order FROZEN per open (the full id sequence): toggling, saving, and
+  // the post-save SWR mutate (which can return the groups array reordered) all
+  // leave rows in place. New groups sort to the end. Null until data is ready.
+  const [rowOrder, setRowOrder] = useState<string[] | null>(null);
   useEffect(() => {
-    setOrderSnapshot(null);
+    setRowOrder(null);
   }, [peerId]);
   useEffect(() => {
-    if (orderSnapshot || !peerId || !groups) return;
-    setOrderSnapshot(new Set(assignedRefs));
+    if (rowOrder || !peerId || !groups) return;
+    setRowOrder(groupCandidates.map((g) => groupRef(g)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderSnapshot, peerId, groups]);
-  const order = orderSnapshot ?? assignedRefs;
+  }, [rowOrder, peerId, groups]);
 
   const groupRows = useMemo(() => {
-    const all = [
-      ...allGroups.filter((g) => order.has(groupRef(g))),
-      ...allGroups.filter((g) => !order.has(groupRef(g))),
-    ];
-    if (!query) return all;
-    return all.filter((g) => g.name?.toLowerCase().includes(query));
-  }, [allGroups, order, query]);
+    const pinned = rowOrder
+      ? pinByOrder(groupCandidates, rowOrder, (g) => groupRef(g))
+      : groupCandidates;
+    if (!query) return pinned;
+    return pinned.filter((g) => g.name?.toLowerCase().includes(query));
+  }, [groupCandidates, rowOrder, query]);
 
   // ---- Placement (same as the group panel: right side, full height) ----
 
@@ -270,6 +290,28 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
 
   const panelWidthRef = useRef(panelWidth);
   panelWidthRef.current = panelWidth;
+
+  // Keep the panel fitted when the window/canvas is resized — the open effect
+  // below only runs on open, so a resize would otherwise leave the box sized
+  // for the old container.
+  useEffect(() => {
+    const onResize = () => {
+      setPlacement((p) => {
+        if (!p) return p;
+        const container = document
+          .querySelector(".react-flow")
+          ?.getBoundingClientRect();
+        if (!container) return p;
+        return {
+          left: container.width - panelWidthRef.current - MARGIN,
+          top: TOP,
+          height: container.height - TOP - BOTTOM,
+        };
+      });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   useEffect(() => {
     if (!peerId) {

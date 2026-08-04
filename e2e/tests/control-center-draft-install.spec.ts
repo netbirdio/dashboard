@@ -13,6 +13,7 @@ import {
   enterDraft,
   openControlCenter,
   resetDraftState,
+  reviewButton,
 } from "../helpers/control-center";
 import {
   removeDockerContainer,
@@ -49,6 +50,45 @@ test.describe.serial("Control Center Draft Install @control-center", () => {
     await expect(page.getByTestId("setup-netbird-modal")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("setup-netbird-modal")).not.toBeVisible();
+  });
+
+  test("A Server install command omits --hostname (matched by its bound group)", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await enterDraft(page);
+    await createViaCanvasMenu(page, "New Server");
+    const placeholder = canvasNode(page, "peer-");
+    await expect(placeholder).toHaveCount(1);
+
+    await placeholder.hover();
+    await page.getByTestId("cc-peer-install").click({ force: true });
+
+    const modal = page.getByTestId("setup-netbird-modal");
+    await expect(modal).toBeVisible();
+    // Server/Agent placeholders match their installed machine by the hidden
+    // bound group now, so the install command no longer pins a --hostname
+    // (which used to read `--hostname 'server'`).
+    await expect(modal).not.toContainText("--hostname");
+
+    await page.keyboard.press("Escape");
+    await expect(modal).not.toBeVisible();
+  });
+
+  test("Review & Deploy opens the first change even when it's a Server install step", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await enterDraft(page);
+    // A lone Server placeholder is an install-peer change — it sorts to the
+    // very top of the list, so it IS the first accordion.
+    await createViaCanvasMenu(page, "New Server");
+    await expect(canvasNode(page, "peer-")).toHaveCount(1);
+
+    await reviewButton(page).click();
+    const item = page.getByTestId("cc-change-install-peer");
+    await expect(item).toBeVisible();
+    // The regression: the first accordion must open by default, even though
+    // it's an install-peer row (it used to be skipped, leaving nothing open).
+    await expect(item).toHaveAttribute("data-state", "open");
   });
 
   test("Full flow: a docker peer installs (upgrades) a Server placeholder", async ({

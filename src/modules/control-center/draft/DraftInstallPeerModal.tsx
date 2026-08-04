@@ -43,11 +43,14 @@ export const DraftInstallPeerModal = () => {
     );
   }, [installModal, reactFlow]);
 
-  // Suggested hostname for the install commands: the placeholder's canvas
-  // name, sanitized and unique across the draft peers (user devices — no
-  // nodeId — keep their machine hostname).
+  // Suggested hostname for the install commands, used only as a matching
+  // fallback. Server/Agent placeholders now match by their hidden bound group
+  // (reliable — see resolveAutoGroups / useDraftPeerUpgrade), so they don't
+  // need a hostname suggestion at all; only bound-group-less placeholders
+  // (user devices) still get one so the upgrade watcher can find them.
   const hostname = React.useMemo(() => {
     if (!installModal?.nodeId) return undefined;
+    if (kindHasBoundGroup(installModal.placeholderKind)) return undefined;
     return getPlaceholderHostname(reactFlow.getNodes(), installModal.nodeId);
   }, [installModal, reactFlow]);
 
@@ -55,7 +58,8 @@ export const DraftInstallPeerModal = () => {
   // upgrade watcher can match the registering peer even if placeholders are
   // added/removed later (which would shift the computed suffixes). A
   // placeholder absorbed into a group has no node — the hostname lands on
-  // its entry in the group node's draftPeers instead.
+  // its entry in the group node's draftPeers instead. (Server/Agent get no
+  // hostname — the bound group is their match key.)
   React.useEffect(() => {
     const nodeId = installModal?.nodeId;
     if (!nodeId || !hostname) return;
