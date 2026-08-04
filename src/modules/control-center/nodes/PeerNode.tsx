@@ -127,6 +127,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
           <Button
             variant={"secondary"}
             size={"xs"}
+            data-testid={"cc-peer-install"}
             onClick={() =>
               placeholderKind === "user-device"
                 ? setUserDeviceModal({ nodeId: id, name: label })

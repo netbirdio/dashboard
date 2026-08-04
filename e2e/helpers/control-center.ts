@@ -1,14 +1,44 @@
 import { Page, Locator, expect } from "@playwright/test";
 import { navigateTo } from "./auth";
+import { clearScrollLock } from "./utils";
+
+/**
+ * The account can auto-open a billing modal (trial/limits) with a full-screen
+ * backdrop once billing data loads, which intercepts canvas clicks. It appears
+ * async, so tests must be able to shrug it off. clearScrollLock removes the
+ * backdrop overlay + body scroll-lock the modal leaves behind.
+ */
+export async function dismissBlockingOverlays(page: Page) {
+  await clearScrollLock(page);
+}
 
 export const CHANGES_KEY = "netbird-control-center-draft-changes";
 export const CANVAS_KEY = "netbird-control-center-draft-canvas";
 
-export async function openControlCenter(page: Page) {
-  await navigateTo(page, "/control-center");
+export type FlowView = "peers" | "users" | "groups" | "networks";
+
+export async function openControlCenter(page: Page, tab?: FlowView) {
+  // The live view honours a ?tab= query param for its initial FlowView, so we
+  // can deep-link straight to networks/groups/etc. instead of clicking a tab.
+  await navigateTo(page, tab ? `/control-center?tab=${tab}` : "/control-center");
   // The canvas hides behind cc-prefit until the first fitView; wait for the
   // pane itself so later mouse coordinates are meaningful.
   await expect(page.locator(".react-flow__pane")).toBeVisible();
+  // A billing modal may already be sitting over the canvas — clear it so the
+  // first interaction isn't blocked.
+  await dismissBlockingOverlays(page);
+}
+
+/** Clicks a FlowSelector tab (live-mode view switcher). */
+export async function switchFlowView(page: Page, view: FlowView) {
+  // Clear any billing/trial modal backdrop first; force the click so a modal
+  // that pops between clearing and clicking can't intercept it either.
+  await dismissBlockingOverlays(page);
+  await page.getByTestId(`cc-flow-${view}`).click({ force: true });
+  await expect(page.getByTestId(`cc-flow-${view}`)).toHaveAttribute(
+    "data-state",
+    "active",
+  );
 }
 
 export async function enterDraft(page: Page) {
@@ -171,6 +201,7 @@ export async function clickContextMenuItem(
   node: Locator,
   itemText: string,
 ) {
+  await dismissBlockingOverlays(page);
   await node.click({ button: "right" });
   const menu = page.getByTestId("cc-node-context-menu");
   await expect(menu).toBeVisible();

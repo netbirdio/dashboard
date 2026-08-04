@@ -276,6 +276,7 @@ export const CanvasToolbar = () => {
         </ToolbarButton>
         <ToolbarButton
           tooltip="Auto Arrange"
+          data-testid="cc-toolbar-arrange"
           shortcut="A"
           onClick={handleArrange}
           className="w-8"

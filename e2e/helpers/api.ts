@@ -103,6 +103,28 @@ export async function listGroups(page: Page): Promise<Group[]> {
   return apiGet<Group[]>(page, "/groups");
 }
 
+type Peer = { id: string; name: string; hostname: string; connected: boolean };
+
+/** List all peers. */
+export async function listPeers(page: Page): Promise<Peer[]> {
+  return apiGet<Peer[]>(page, "/peers");
+}
+
+/** Delete a peer by ID. */
+export async function deletePeerById(page: Page, peerId: string) {
+  await apiDelete(page, `/peers/${peerId}`);
+}
+
+/** Delete all peers whose name or hostname starts with a prefix. */
+export async function deletePeersByPrefix(page: Page, prefix: string) {
+  const peers = await listPeers(page);
+  for (const p of peers) {
+    if (p.name?.startsWith(prefix) || p.hostname?.startsWith(prefix)) {
+      await deletePeerById(page, p.id);
+    }
+  }
+}
+
 /** Create a group directly via the API (test setup). */
 export async function createGroup(page: Page, name: string): Promise<Group> {
   return apiPost<Group>(page, "/groups", { name, peers: [] });
@@ -134,9 +156,37 @@ export async function listNetworks(page: Page): Promise<Network[]> {
   return apiGet<Network[]>(page, "/networks");
 }
 
+/** Create a network directly via the API (test setup). */
+export async function createNetwork(
+  page: Page,
+  name: string,
+  description = "",
+): Promise<Network> {
+  return apiPost<Network>(page, "/networks", { name, description });
+}
+
 /** Delete a network by ID. */
 export async function deleteNetworkById(page: Page, networkId: string) {
   await apiDelete(page, `/networks/${networkId}`);
+}
+
+type NetworkResource = { id: string; name: string; address: string };
+
+/** Create a network resource directly via the API (test setup). */
+export async function createResource(
+  page: Page,
+  networkId: string,
+  name: string,
+  address: string,
+  groupIds: string[],
+): Promise<NetworkResource> {
+  return apiPost<NetworkResource>(page, `/networks/${networkId}/resources`, {
+    name,
+    description: name,
+    address,
+    groups: groupIds,
+    enabled: true,
+  });
 }
 
 /** Delete all networks matching a prefix. */
@@ -160,6 +210,37 @@ type Policy = {
 /** List all policies. */
 export async function listPolicies(page: Page): Promise<Policy[]> {
   return apiGet<Policy[]>(page, "/policies");
+}
+
+/**
+ * Create a bidirectional "all traffic" policy between a source and destination
+ * group directly via the API (test setup). Groups can exist without peers, so
+ * this is the peer-free way to make policy/group nodes render on the live
+ * canvas.
+ */
+export async function createPolicy(
+  page: Page,
+  name: string,
+  sourceGroupId: string,
+  destinationGroupId: string,
+  enabled = true,
+): Promise<Policy> {
+  return apiPost<Policy>(page, "/policies", {
+    name,
+    description: name,
+    enabled,
+    rules: [
+      {
+        name,
+        enabled,
+        bidirectional: true,
+        protocol: "all",
+        action: "accept",
+        sources: [sourceGroupId],
+        destinations: [destinationGroupId],
+      },
+    ],
+  });
 }
 
 /** Delete a policy by ID. */
@@ -233,6 +314,24 @@ type SetupKey = {
 /** List all setup keys. */
 export async function listSetupKeys(page: Page): Promise<SetupKey[]> {
   return apiGet<SetupKey[]>(page, "/setup-keys");
+}
+
+/** Create a reusable setup key directly via the API (test setup). Returns the
+ * created key including its plaintext `key` (only present on creation). */
+export async function createSetupKey(
+  page: Page,
+  name: string,
+  autoGroupIds: string[] = [],
+): Promise<SetupKey & { key: string }> {
+  return apiPost<SetupKey & { key: string }>(page, "/setup-keys", {
+    name,
+    type: "reusable",
+    expires_in: 86400,
+    revoked: false,
+    auto_groups: autoGroupIds,
+    usage_limit: 0,
+    ephemeral: false,
+  });
 }
 
 /** Delete a setup key by ID. */

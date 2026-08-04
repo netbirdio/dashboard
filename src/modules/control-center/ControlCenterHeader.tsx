@@ -145,6 +145,7 @@ function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
   return (
     <button
       type={"button"}
+      data-testid={"cc-add-resource"}
       onClick={() =>
         setResourceEditor({ createInNetworkNodeId: networkNodeId })
       }
@@ -230,6 +231,7 @@ function DraftDrillDownHeader() {
           variant={"secondary"}
           size={"xs"}
           className={"!bg-nb-gray-930"}
+          data-testid={"cc-drill-back"}
           onClick={() => setDrillDownNetworkNodeId(null)}
         >
           <ArrowLeftIcon size={14} />
@@ -322,6 +324,7 @@ function HeaderTopLeft() {
               variant={"secondary"}
               size={"xs"}
               className={"!bg-nb-gray-930"}
+              data-testid={"cc-network-back"}
               onClick={() => onNetworkSelect("")}
             >
               <ArrowLeftIcon size={14} />

@@ -589,6 +589,7 @@ function SetupKeyGenerator({
           variant={"primary"}
           onClick={generate}
           disabled={isGenerating}
+          data-testid={"setup-generate-key"}
         >
           {isGenerating ? (
             <Loader2 size={14} className={"animate-spin"} />
