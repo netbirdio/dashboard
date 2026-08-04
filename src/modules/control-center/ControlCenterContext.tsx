@@ -8,6 +8,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import {
   applyNodeChanges,
@@ -86,14 +87,40 @@ interface CanvasState {
 
 const CanvasStateContext = createContext<CanvasState | null>(null);
 
-// Lightweight UI state the NODE COMPONENTS need (context-menu halo, group
-// details panel target). Split from CanvasState so nodes don't subscribe to
-// the nodes/edges arrays — the full context changes identity on every canvas
-// update (drag ticks, layout reconciles) and re-rendered every node on the
-// canvas (visible lag with many networks).
+// The right-clicked node (context-menu halo) lives in a tiny external store,
+// NOT in a context. A context value changes identity when the id changes, so
+// EVERY node reading it re-rendered on each right-click (visibly laggy on big
+// canvases). With useSyncExternalStore each node subscribes to a BOOLEAN (am I
+// the target?), so only the node whose halo actually toggles re-renders.
+let haloNodeId = "";
+const haloListeners = new Set<() => void>();
+const haloStore = {
+  set(id: string) {
+    if (id === haloNodeId) return;
+    haloNodeId = id;
+    haloListeners.forEach((l) => l());
+  },
+  subscribe(l: () => void) {
+    haloListeners.add(l);
+    return () => haloListeners.delete(l);
+  },
+};
+
+// True while this node is the one whose context menu is open. Used for the
+// halo ring; re-renders only this node when its own state flips.
+export function useIsContextMenuTarget(nodeId: string): boolean {
+  return useSyncExternalStore(
+    haloStore.subscribe,
+    () => haloNodeId === nodeId,
+    () => false,
+  );
+}
+
+// Lightweight UI state the NODE COMPONENTS need. Split from CanvasState so
+// nodes don't subscribe to the nodes/edges arrays — the full context changes
+// identity on every canvas update (drag ticks, layout reconciles) and
+// re-rendered every node on the canvas (visible lag with many networks).
 interface CanvasUIState {
-  contextMenuNodeId: string;
-  setContextMenuNodeId: (v: string) => void;
   // The account network-range IP shown on placeholder peer cards. Sourced here
   // (once) so PeerNode doesn't call the account fetch hook per node; it's a
   // stable string that only changes when the account's range does.
@@ -204,7 +231,13 @@ export function CanvasStateProvider({
   } | null>(null);
   const [focusedNodeId, setFocusedNodeId] = useState("");
   const [highlightArmed, setHighlightArmed] = useState(false);
-  const [contextMenuNodeId, setContextMenuNodeId] = useState("");
+  const [contextMenuNodeId, setContextMenuNodeIdState] = useState("");
+  // Keep the halo store in sync with the menu-target state. The store drives
+  // the per-node halo (useIsContextMenuTarget) without re-rendering every node.
+  const setContextMenuNodeId = useCallback((v: string) => {
+    haloStore.set(v);
+    setContextMenuNodeIdState(v);
+  }, []);
 
   const forceSingleGroupViewRef = useRef<(id: string) => void>(() => {});
   const refreshLiveViewRef = useRef<(policy: Policy) => void>(() => {});
@@ -269,11 +302,9 @@ export function CanvasStateProvider({
 
   const uiValue = useMemo(
     () => ({
-      contextMenuNodeId,
-      setContextMenuNodeId,
       placeholderIp,
     }),
-    [contextMenuNodeId, placeholderIp],
+    [placeholderIp],
   );
 
   const destinationGroupValue = useMemo(

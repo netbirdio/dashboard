@@ -8,9 +8,7 @@ import {
   useNodeId,
 } from "@xyflow/react";
 import * as React from "react";
-import {
-  useCanvasUI,
-} from "@/modules/control-center/ControlCenterContext";
+import { useIsContextMenuTarget } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
@@ -28,7 +26,6 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
   const rule = data.policy.rules?.[0];
   const label = getPolicyProtocolAndPortText(data.policy);
   const isActive = rule?.enabled;
-  const { contextMenuNodeId } = useCanvasUI();
   const { isDraft } = useDraftMode();
   const nodeId = useNodeId();
   // A drag from another node may be dropped here (add group to this policy).
@@ -38,7 +35,7 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
 
   // Halo while the context menu targets this policy — same ring the other
   // nodes show.
-  const showHalo = contextMenuNodeId === id;
+  const showHalo = useIsContextMenuTarget(id);
 
   return (
     <div

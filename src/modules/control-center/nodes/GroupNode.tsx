@@ -6,8 +6,8 @@ import * as React from "react";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
 import {
-  useCanvasUI,
   useDestinationGroup,
+  useIsContextMenuTarget,
 } from "@/modules/control-center/ControlCenterContext";
 import {
   getGroupCountLabel,
@@ -50,13 +50,12 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
     (c) => c.inProgress && c.fromNode.id !== id,
   );
   const isNew = !group?.id;
-  const { contextMenuNodeId } = useCanvasUI();
+  const isContextMenuActive = useIsContextMenuTarget(id);
   const { selectedDestinationGroup } = useDestinationGroup();
   // Panel selection is keyed by group id, or by node id for draft groups.
   const isPanelActive =
     selectedDestinationGroup !== "" &&
     (selectedDestinationGroup === group?.id || selectedDestinationGroup === id);
-  const isContextMenuActive = contextMenuNodeId === id;
   const showHalo = isPanelActive || isContextMenuActive;
 
   const countLabel = useMemo(() => getGroupCountLabel(group), [group]);

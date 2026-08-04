@@ -4,8 +4,9 @@ import { cn, singularize } from "@utils/helpers";
 import { type Node, Position, useConnection, useStore } from "@xyflow/react";
 import * as React from "react";
 import { Group } from "@/interfaces/Group";
-import { useCanvasUI,
+import {
   useDestinationGroup,
+  useIsContextMenuTarget,
 } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { GroupNode } from "@/modules/control-center/nodes/GroupNode";
@@ -30,14 +31,14 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();
   const { selectedDestinationGroup, setSelectedDestinationGroup } =
     useDestinationGroup();
-  const { contextMenuNodeId } = useCanvasUI();
+  const isContextTarget = useIsContextMenuTarget(id);
   // Panel selection is keyed by group id, or by node id for draft groups —
   // same rule as GroupNode. An open group panel rings this row's icon box
   // sky (matching how a framed resource highlights when its editor is open).
   const isPanelActive =
     selectedDestinationGroup !== "" &&
     (selectedDestinationGroup === group?.id || selectedDestinationGroup === id);
-  const showHalo = isPanelActive || contextMenuNodeId === id;
+  const showHalo = isPanelActive || isContextTarget;
   // Framed rows accept connection DROPS in every view — the drop routes
   // into the destination picker preselected with this group. Only dragging
   // FROM the row stays drill-down-only (same rule as ResourceNode).

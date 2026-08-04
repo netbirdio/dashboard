@@ -1030,6 +1030,7 @@ export const NodeContextMenu = ({
     if (node.type === "networkNode" && isFrameNode(node)) {
       const draftNetwork = isDraftNetworkNode(node);
       return [
+        ...focusItems(node),
         ...(draftNetwork
           ? [
               {

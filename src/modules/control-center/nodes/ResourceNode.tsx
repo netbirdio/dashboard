@@ -12,8 +12,7 @@ import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import { StandaloneResourceNode } from "@/modules/control-center/nodes/StandaloneResourceNode";
-import { useCanvasUI,
-} from "@/modules/control-center/ControlCenterContext";
+import { useIsContextMenuTarget } from "@/modules/control-center/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
@@ -63,8 +62,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   const isTarget = useConnection(
     (c) => c.inProgress && c.fromNode.id !== id,
   );
-  const { contextMenuNodeId } = useCanvasUI();
-  const showHalo = contextMenuNodeId === id;
+  const showHalo = useIsContextMenuTarget(id);
 
   // Draft resources (resource-new-…) are edited on the canvas via click /
   // context-menu Edit; incomplete ones (no address yet) show the dimmed

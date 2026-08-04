@@ -304,9 +304,14 @@ function ControlCenterCanvas() {
         zoomOnScroll={canInteract}
         zoomOnPinch={canInteract}
         zoomOnDoubleClick={canInteract}
-        nodesDraggable={!anyMenuOpen && !emptyState && !focusMode}
-        nodesConnectable={!anyMenuOpen && !emptyState}
-        elementsSelectable={!anyMenuOpen && !emptyState}
+        // NOT gated on anyMenuOpen: flipping these re-renders every node
+        // wrapper (RF passes isConnectable/selectable down to each node), which
+        // lagged a right-click. The menu already dismisses on any click/scroll,
+        // so nodes staying interactive behind it is harmless; pan/zoom stay
+        // locked via canInteract so the canvas doesn't move under the menu.
+        nodesDraggable={!emptyState && !focusMode}
+        nodesConnectable={!emptyState}
+        elementsSelectable={!emptyState}
         selectionOnDrag={draft.isSelectMode && !emptyState}
         selectionMode={SelectionMode.Partial}
       >

@@ -14,6 +14,7 @@ import type { Peer } from "@/interfaces/Peer";
 import {
   useCanvasUI,
   useDestinationGroup,
+  useIsContextMenuTarget,
 } from "@/modules/control-center/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import {
@@ -76,7 +77,8 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
   const isTarget = useConnection(
     (c) => c.inProgress && c.fromNode.id !== id,
   );
-  const { contextMenuNodeId, placeholderIp } = useCanvasUI();
+  const { placeholderIp } = useCanvasUI();
+  const isContextTarget = useIsContextMenuTarget(id);
   const { selectedPeerPanel } = useDestinationGroup();
   const { setInstallModal, setUserDeviceModal } = useDraftMode();
   // Ring while the context menu targets this peer or while its groups panel
@@ -85,7 +87,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
   // onNodeClick/getPlaceholderPeer derive the panel id), so fall back to that
   // or the ring never shows when a placeholder's panel is selected.
   const showHalo =
-    contextMenuNodeId === id ||
+    isContextTarget ||
     (!!selectedPeerPanel &&
       selectedPeerPanel === (data.peer?.id ?? id.replace("peer-", "")));
 
