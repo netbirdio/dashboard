@@ -1,13 +1,11 @@
 /**
  * Spin up a REAL NetBird peer as a docker container that registers with the
  * test management via a setup key. The test env has no signal/TURN, so the
- * peer registers but stays offline (connected:false) — which is enough for the
- * dashboard's Peer/User views, which just need a peer to exist and be
- * selectable.
+ * peer registers but stays offline (connected:false) — enough for the Peer/User
+ * views, which just need a selectable peer.
  *
- * Verified working recipe (see e2e-test-summary-claude.md §5): the client MUST
- * talk to management directly (http://management:80), NOT through caddy — the
- * gRPC/h2c handshake breaks through caddy in this env.
+ * The client MUST talk to management directly (http://management:80), NOT
+ * through caddy — the gRPC/h2c handshake breaks through caddy in this env.
  */
 import { execSync } from "child_process";
 import { expect, type Page } from "@playwright/test";

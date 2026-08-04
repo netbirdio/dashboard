@@ -285,7 +285,7 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
     (live.groups ?? []).map((g) => g.id).filter(Boolean) as string[],
   );
   // Draft resource client id ("new-…") → its name, so a policy referencing a
-  // not-yet-created resource shows {{RESOURCE_<name>_ID}} rather than the id.
+  // not-yet-created resource shows a name placeholder rather than the id.
   const draftResourceNames = new Map<string, string>();
   live.draftChanges?.forEach((c) => {
     if (c.type === "create-resource") draftResourceNames.set(c.clientId, c.name);
@@ -379,8 +379,6 @@ export function buildChangeRequest(
   }
 }
 
-// The request that reflects the entity's CURRENT live state (the diff's
-// "before"). Null for creates (nothing exists yet) and install-peer.
 // Render a request as a curl command matching the API docs — auth is a
 // `<TOKEN>` placeholder the user swaps for a personal access token. The base is
 // the account's configured management origin (api.netbird.io on cloud, the

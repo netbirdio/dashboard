@@ -13,15 +13,10 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { useCanvasTransitionActive } from "@/modules/control-center/utils/canvas-transition";
 
-// Grow-in classes matching the canvas reveal's own fade/zoom (grows from
-// 0.7 → 1 scale over 450ms while fading in — same GROW_IN_FROM/REVEAL values
-// as canvas-transition.ts; kept as literal numbers here, not imported,
-// because Tailwind's class scanner only generates utilities it can find as
-// static text in source — a template-literal-interpolated class name like
-// `zoom-in-[${GROW_IN_FROM}]` never gets generated and silently no-ops).
-// Same tailwindcss-animate mechanism used for menu/popover entrances
-// elsewhere (see CanvasContextMenu, NodeContextMenu), just tuned to the
-// canvas's own timing/scale instead of the small popover defaults.
+// Matches the canvas reveal's fade/zoom (same values as canvas-transition.ts).
+// Numbers are literal, not imported: Tailwind's scanner only generates classes
+// it finds as static text, so an interpolated `zoom-in-[${GROW_IN_FROM}]`
+// silently no-ops.
 const CANVAS_REVEAL_IN =
   "animate-in fade-in zoom-in-[.7] duration-[450ms] ease-out fill-mode-both";
 

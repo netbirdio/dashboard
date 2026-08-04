@@ -902,7 +902,6 @@ export const DestinationGroupPanel = ({
           </button>
         </div>
 
-        {/* Tabs below the search. */}
         <div className={"shrink-0 flex items-center"}>
           <TabsList justify={"start"} className={"px-4 flex-1"}>
             <TabsTrigger value={"peers"} className={"text-[.8rem] font-normal"}>

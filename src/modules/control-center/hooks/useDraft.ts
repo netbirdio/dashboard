@@ -113,7 +113,6 @@ export function useDraft() {
       // from the saved live canvas, not the current draft nodes.
       const liveNodes = liveStateRef.current?.nodes ?? nodes;
 
-      // Build a lookup of group members from API data
       const groupMembers = new Map<string, Set<string>>();
       peers?.forEach((p) => {
         p.groups?.forEach((g) => {
@@ -132,7 +131,6 @@ export function useDraft() {
         });
       });
 
-      // Build the draft canvas from policies visible in the live view
       const allNodes: Node[] = [];
       const allEdges: Edge[] = [];
 
@@ -179,7 +177,6 @@ export function useDraft() {
         const enabled = policy.enabled;
         const policyNodeId = `policy-${policy.id}`;
 
-        // Add policy node
         addNode(allNodes, {
           id: policyNodeId,
           type: "policyNode",
@@ -204,7 +201,6 @@ export function useDraft() {
           [...sourceGroupIds].filter((id) => destGroupIds.has(id)),
         );
 
-        // Source groups
         sources.forEach((source) => {
           const groupId = typeof source === "string" ? source : source.id;
           if (!groupId) return;
@@ -237,7 +233,6 @@ export function useDraft() {
           });
         });
 
-        // Source resource (peer)
         const sourceResource = rule.sourceResource;
         if (sourceResource?.id && sourceResource.type === "peer") {
           const peer = peers?.find((p) => p.id === sourceResource.id);
@@ -327,7 +322,6 @@ export function useDraft() {
           });
         });
 
-        // Destination resource (peer or network resource)
         const destResource = rule.destinationResource;
         if (destResource?.id) {
           if (destResource.type === "peer") {
@@ -731,7 +725,6 @@ export function useDraft() {
 
       setNodes(restored.nodes);
       setEdges(restored.edges);
-      // Fit view after restoring live state
       setTimeout(() => {
         reactFlow.fitView({
           nodes: restored.nodes,

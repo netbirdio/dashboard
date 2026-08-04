@@ -124,11 +124,10 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       : null;
     flowEl?.classList.add("cc-prefit");
     const reveal = () => flowEl?.classList.remove("cc-prefit");
-    // Returning to the page via client-side nav remounts everything with a
-    // warm SWR cache: the view initializes on the very first commit, before
-    // ReactFlow has rendered/measured the new nodes — fitView would compute
-    // bounds from unmeasured nodes and misalign the camera. Wait (bounded)
-    // until every target node is in the store with a measured size.
+    // The view can initialize before ReactFlow has rendered/measured the new
+    // nodes (warm-cache remount) — fitView would then compute bounds from
+    // unmeasured nodes and misalign the camera. Wait (bounded) until every
+    // target node is in the store with a measured size.
     const attempt = (triesLeft: number) => {
       if (target.length === 0) {
         // Center the flow origin mid-screen (a raw {0,0} viewport anchors it

@@ -36,8 +36,8 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
     (c) => c.inProgress && c.fromNode?.id !== nodeId,
   );
 
-  // Halo while the context menu targets this policy, and while it's the
-  // focused node (left-click focus mode) — same ring the other nodes show.
+  // Halo while the context menu targets this policy — same ring the other
+  // nodes show.
   const showHalo = contextMenuNodeId === id;
 
   return (

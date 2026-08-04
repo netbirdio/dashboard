@@ -22,11 +22,9 @@ import { usePlaceholderUpgrade } from "@/modules/control-center/hooks/useDraftPe
 import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
-// Setup stepper for a user-device placeholder (the canvas node and the group
-// panel both open it — the node itself has no inline select): step 1
-// installs NetBird on the device (opens the install modal), step 2 selects
-// the registered peer. Selecting upgrades the placeholder in place, so group
-// memberships and policies referencing it follow.
+// Setup stepper for a user-device placeholder: step 1 installs NetBird, step
+// 2 selects the registered peer. Selecting upgrades the placeholder in place,
+// so group memberships and policies referencing it follow.
 export const DraftUserDeviceModal = () => {
   const { userDeviceModal, setUserDeviceModal } = useDraftMode();
   return (

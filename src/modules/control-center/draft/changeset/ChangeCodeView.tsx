@@ -89,11 +89,10 @@ export const ChangeCodeView = ({ change, live, hideHeader = false }: Props) => {
           copyText={copyText}
         />
       )}
-      {/* Bounded, scrollable code block (its own scroll area) so a long diff
-          doesn't grow the accordion — vertical + long lines both scroll.
-          Radix ScrollArea built from primitives so the VIEWPORT (not a
-          fixed-height root) carries the max-height — it sizes to content up to
-          24rem, then scrolls, with the styled scrollbars. */}
+      {/* Bounded, scrollable code block so a long diff doesn't grow the
+          accordion. Built from Radix primitives so the VIEWPORT (not a
+          fixed-height root) carries the max-height — sizes to content up to
+          24rem, then scrolls. */}
       <ScrollAreaPrimitive.Root className={"relative overflow-hidden w-full"}>
         <ScrollAreaPrimitive.Viewport
           className={"max-h-[24rem] w-full rounded-[inherit]"}

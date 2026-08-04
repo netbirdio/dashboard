@@ -9,8 +9,7 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
 
-// Delete a whole EXISTING network by its canvas node id. Mode-aware, since a
-// draft change and a live change persist completely differently:
+// Delete a whole EXISTING network by its canvas node id. Mode-aware:
 //   • Draft — record a delete-network change (its resources/routers cascade)
 //     and drop the frame; it applies when the user reviews & deploys.
 //   • Live — delete immediately against the account (DELETE /networks/{id},

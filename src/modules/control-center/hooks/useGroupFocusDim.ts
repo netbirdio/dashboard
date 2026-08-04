@@ -5,13 +5,11 @@ import {
 } from "@/modules/control-center/ControlCenterContext";
 import { isFocusWorthy } from "@/modules/control-center/utils/helpers";
 
-// Focus highlight (live AND draft): while a node is explicitly focused (via
-// its context menu's Focus item or the header's armed Focus tool), everything
-// that is NOT on the node's path dims to grayscale — the node, the policies
-// it feeds, and the networks/destinations those reach stay lit, so "group X →
-// policy → network Y" reads at a glance. Applied via node/edge `className`
-// (`cc-dimmed`, globals.css); cleared when the focus ends. Merely opening a
-// group's side panel (left click) does NOT focus — focus is an explicit tool.
+// Focus highlight (live AND draft): while a node is explicitly focused (its
+// context-menu Focus item or the header's armed Focus tool), everything NOT
+// on the node's path dims to grayscale (via `cc-dimmed`, globals.css); the
+// node, the policies it feeds, and the networks/destinations those reach stay
+// lit. Merely opening a group's side panel (left click) does NOT focus.
 // Selector nodes (pick a peer/group/user) aren't real entities and can never
 // be focused.
 const SELECTOR_NODE_TYPES = new Set([

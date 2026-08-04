@@ -5,9 +5,9 @@ import {
   computeFrameEdgeTargets,
 } from "@/modules/control-center/utils/frame-view";
 
-// Spec §10 parent view / drill-down: policy edges to framed resources attach
-// to the FRAME in the parent view and to the actual resource inside the
-// drill-down; the drill-down shows only the network's own world.
+// Parent view / drill-down: policy edges to framed resources attach to the
+// FRAME in the parent view and to the actual resource inside the drill-down;
+// the drill-down shows only the network's own world.
 
 const node = (id: string, extra: Partial<Node> = {}): Node => ({
   id,

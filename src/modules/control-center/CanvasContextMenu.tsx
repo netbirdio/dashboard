@@ -23,8 +23,8 @@ type MenuPosition = {
   y: number;
 };
 
-// Shortcut badges: ⌥ icon on macOS, "Alt" text elsewhere (Ctrl+digit is
-// reserved for tab switching on Windows/Linux browsers).
+// Alt/⌥+digit, not Ctrl+digit — Ctrl+digit switches browser tabs on
+// Windows/Linux.
 const shortcutLabel = (n: number): React.ReactNode =>
   isMac ? (
     <span className={"flex items-center gap-0.5"}>
@@ -62,14 +62,12 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
 
   // ---- Draft mode actions ----
 
-  // Drilled into a single network, the peers/policy/group items stay, but the
-  // network/resource row swaps: no "New Network" (you're inside one), "New
-  // Resource" is assigned straight to it, and "Add Routing Peer" is added.
+  // When drilled into a network the network/resource row swaps: no "New
+  // Network", "New Resource" assigns into it, and "Add Routing Peer" appears.
   const drilled = !!drillDownNetworkNodeId;
 
-  // Same "New …" set as the components picker, grouped with separators:
-  // peers · group/policy · network/resource. Each action takes the flow
-  // position it should create at (right-click point or viewport center).
+  // Same "New …" set as the components picker. Each action takes the flow
+  // position to create at (right-click point or viewport center).
   const draftItemGroups: {
     label: string;
     icon: React.ReactNode;

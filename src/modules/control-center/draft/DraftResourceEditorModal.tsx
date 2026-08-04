@@ -22,11 +22,10 @@ import {
 } from "@/modules/networks/resources/NetworkResourceModal";
 
 // Draft resource editor — the networks page's resource modal in pure-data
-// mode (useSave={false}): no API calls, the data lands on the canvas node
-// and in the create-resource change. Two modes: edit an existing resource
-// node (click / context-menu Edit), or CREATE one into a frame (the frame's
-// "Add Resource" row) — the node is only created on save. The parent
-// network is the resource's frame, so no network selector.
+// mode (useSave={false}): no API call; data lands on the canvas node and a
+// create-resource change. Two modes: edit an existing resource node, or
+// CREATE into a frame — the node is only born on save. Parent network is the
+// frame, so no network selector.
 export const DraftResourceEditorModal = () => {
   const { resourceEditor, setResourceEditor } = useDraftMode();
   return (

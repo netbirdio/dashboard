@@ -62,9 +62,8 @@ type Props = {
   // Group ids auto-assigned to peers registering with the generated key
   // (e.g. a draft placeholder's group memberships).
   autoGroups?: string[];
-  // Resolved lazily when the user generates the key — lets the caller create a
-  // group on demand (a draft placeholder's bound group) and return its real id
-  // as an auto-group. Takes precedence over `autoGroups` when provided.
+  // Resolved when the key is generated, so the caller can create a group on
+  // demand and return its id. Takes precedence over `autoGroups`.
   resolveAutoGroups?: () => Promise<string[]>;
   // Name for the in-modal generated key (defaults to a timestamped name).
   keyName?: string;

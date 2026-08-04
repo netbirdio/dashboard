@@ -28,9 +28,7 @@ import Button from "@components/Button";
 // A not-yet-installed peer dropped from the components sidebar. Server/Agent
 // carry no setup key until the user installs: the Install button opens the
 // setup modal, where the key is generated on demand and then held here
-// (`setupKey`) so a later reopen reuses it. "user-device" renders as a
-// select node — pick an existing peer from the dropdown or install a new one
-// via the floating Install button.
+// (`setupKey`) so a later reopen reuses it.
 export type PeerPlaceholderKind = "server" | "agent" | "user-device";
 
 export type PeerNodeType = Node<
@@ -92,9 +90,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
       selectedPeerPanel === (data.peer?.id ?? id.replace("peer-", "")));
 
   // A user-device placeholder that picked its peer IS that peer (plain card
-  // below); un-picked placeholders of every kind render the placeholder card
-  // — user devices get "Set up" (the install+select stepper modal) instead
-  // of the inline select they used to carry.
+  // below); un-picked placeholders of every kind render the placeholder card.
   if (placeholderKind && !peer) {
     const Icon =
       placeholderKind === "agent"

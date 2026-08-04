@@ -106,10 +106,8 @@ export function SelectDropdown({
     const isSelected = value == selectedValue;
     setOpen(false);
     if (!isSelected) {
-      // deferChange: fire after the popover's close animation so a heavy
-      // onChange (e.g. the control center rebuilding its canvas) doesn't jank
-      // mid-animation. Default is synchronous — ordinary dropdowns expect the
-      // change to land immediately.
+      // Fire after the close animation (see deferChange prop) so a heavy
+      // onChange doesn't jank mid-animation; otherwise report synchronously.
       if (deferChange) setTimeout(() => onChange?.(selectedValue), 180);
       else onChange?.(selectedValue);
     }

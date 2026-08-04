@@ -91,7 +91,7 @@ export const entityTitle = (change: DraftChange): string => {
   }
 };
 
-// The entity's display name only (no verb, no type) — e.g. "asd".
+// The entity's display name only (no verb, no type).
 export const entityName = (change: DraftChange): string => {
   switch (change.type) {
     case "create-router":
@@ -172,8 +172,7 @@ const KIND_ICON_COLOR: Record<ChangeKind, string> = {
   install: "text-amber-400",
 };
 
-// The kind's file icon (plus / diff / minus) in its color — no label or
-// background. The single icon used in the compact nav rows.
+// The kind's file icon in its color — plus / diff / minus, no label.
 export const KindIcon = ({
   kind,
   size = 15,

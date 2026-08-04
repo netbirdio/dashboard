@@ -27,8 +27,7 @@ import {
  *
  * NOTE: the FULL upgrade flow (generate key → register a docker peer in the
  * auto-group → placeholder swaps to the real peer) is a much larger, fragile
- * orchestration — see §5/§8 of e2e-test-summary-claude.md. This covers the
- * entry point deterministically.
+ * orchestration; the entry-point test below is the deterministic core.
  */
 test.describe.serial("Control Center Draft Install @control-center", () => {
   test.beforeEach(async ({ dashboardAsOwner: page }) => {

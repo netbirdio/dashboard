@@ -20,9 +20,8 @@ export function isInputFocused(): boolean {
 }
 
 /**
- * Registers keyboard shortcuts that are only active in draft mode.
- * Automatically ignores keypresses when an input is focused.
- * Uses a ref internally so the shortcuts map doesn't need to be memoized by the caller.
+ * Draft-only keyboard shortcuts; ignored while an input is focused. Reads the
+ * map through a ref so callers needn't memoize it.
  */
 export function useControlCenterShortcuts(
   shortcuts: ShortcutMap,

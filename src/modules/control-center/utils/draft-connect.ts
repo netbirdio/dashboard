@@ -67,7 +67,6 @@ export const parseNodeId = (id: string): NodeInfo | undefined => {
   if (id.startsWith("network-new-")) return { kind: "network", id };
   if (id.startsWith("network-")) return { kind: "network", id: id.replace("network-", "") };
   if (id.startsWith("policy-")) return { kind: "policy", id: id.replace("policy-", "") };
-  // Handle expanded/destination variants
   if (id.startsWith("expanded-peer-")) return { kind: "peer", id: id.replace("expanded-peer-", "") };
   if (id.startsWith("source-peer-")) return { kind: "peer", id: id.replace("source-peer-", "") };
   if (id.startsWith("destination-resource-")) return { kind: "resource", id: id.replace("destination-resource-", "") };
@@ -407,7 +406,6 @@ export function handleDraftConnect(
       : undefined,
   );
 
-  // Set source resource or group
   let sourceName: string | undefined;
   let destName: string | undefined;
   const sourceGroups: Group[] = [];
@@ -425,7 +423,6 @@ export function handleDraftConnect(
     }
   }
 
-  // Set destination resource or group
   const destGroups: Group[] = [];
   if (targetInfo.kind === "peer") {
     const peer = findPeer(targetInfo.id);

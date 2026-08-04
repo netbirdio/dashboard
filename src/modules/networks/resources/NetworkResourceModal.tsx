@@ -264,8 +264,7 @@ export function ResourceModalContent({
             ? `${resource.name}`
             : network?.name
             ? `Add new resource to "${network.name}"`
-            : // No network yet (draft canvas standalone resource) — it's
-              // assigned to a network later, so don't render an empty "".
+            : // No network yet (draft canvas) — assigned later, so avoid an empty "".
               "Add a new resource"
         }
         color={"yellow"}

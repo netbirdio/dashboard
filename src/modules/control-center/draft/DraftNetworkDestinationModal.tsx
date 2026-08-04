@@ -22,7 +22,7 @@ import {
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { getDraftResource } from "@/modules/control-center/utils/helpers";
 
-// Minimal destination picker (spec §10): a POLICY connected with a network
+// Minimal destination picker: a POLICY connected with a network
 // frame (either drag direction) — the policy modal's destination selector,
 // limited to the network's own resources and the resource-groups represented
 // in it (groups XOR one resource). The pick lands on that policy's

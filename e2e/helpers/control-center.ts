@@ -3,10 +3,9 @@ import { navigateTo } from "./auth";
 import { clearScrollLock } from "./utils";
 
 /**
- * The account can auto-open a billing modal (trial/limits) with a full-screen
- * backdrop once billing data loads, which intercepts canvas clicks. It appears
- * async, so tests must be able to shrug it off. clearScrollLock removes the
- * backdrop overlay + body scroll-lock the modal leaves behind.
+ * The account can auto-open a billing modal (trial/limits) whose full-screen
+ * backdrop intercepts canvas clicks. It appears async, so tests must be able to
+ * shrug it off at any point.
  */
 export async function dismissBlockingOverlays(page: Page) {
   await clearScrollLock(page);

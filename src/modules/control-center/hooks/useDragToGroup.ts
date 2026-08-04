@@ -69,21 +69,18 @@ export function groupContainsItem(groupNode: Node, itemId: string): boolean {
     | undefined;
   if (removedMembers?.has(itemId)) return false;
 
-  // Check existing peers
   const peers = group.peers ?? [];
   const hasPeer = peers.some((p) =>
     typeof p === "string" ? p === itemId : p.id === itemId,
   );
   if (hasPeer) return true;
 
-  // Check existing resources
   const resources = group.resources ?? [];
   const hasResource = resources.some((r) =>
     typeof r === "string" ? r === itemId : r.id === itemId,
   );
   if (hasResource) return true;
 
-  // Check draft-added members
   const addedMembers = (groupNode.data?.addedMembers as Set<string>) ?? new Set();
   return addedMembers.has(itemId);
 }
@@ -129,7 +126,6 @@ export function useDragToGroup() {
       // membership makes no sense.
       if (groupData.name === "All") return;
 
-      // Remove the dragged node and its edges
       if (draggedNodeId) {
         setNodes((prev) => prev.filter((n) => n.id !== draggedNodeId));
         setEdges((prev) =>
@@ -622,7 +618,6 @@ export function useDragToGroup() {
 
       if (!DROPPABLE_NODE_TYPES.has(draggedNode.type ?? "")) return;
 
-      // Clear all dropTarget highlights
       setNodes((prev) =>
         prev.map((n) => {
           if (!GROUP_NODE_TYPES.has(n.type ?? "")) return n;

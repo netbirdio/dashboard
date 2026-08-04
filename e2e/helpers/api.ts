@@ -213,10 +213,9 @@ export async function listPolicies(page: Page): Promise<Policy[]> {
 }
 
 /**
- * Create a bidirectional "all traffic" policy between a source and destination
- * group directly via the API (test setup). Groups can exist without peers, so
- * this is the peer-free way to make policy/group nodes render on the live
- * canvas.
+ * Create a bidirectional "all traffic" policy via the API (test setup). Groups
+ * can exist without peers, so this is the peer-free way to make policy/group
+ * nodes render on the live canvas.
  */
 export async function createPolicy(
   page: Page,

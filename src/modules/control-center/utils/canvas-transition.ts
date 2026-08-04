@@ -7,21 +7,16 @@ import {
 
 // Reusable "dive / fly-out" scene transition for the control-center canvas.
 //
-// Anatomy (single canvas — a true crossfade isn't possible, so the swap
-// happens in a ~2-frame invisible window):
-//   1. camera moves while the canvas fades out — the motion ACCELERATES
-//      (easeInHalf) and ends at max speed exactly when opacity hits 0
-//   2. the scene is swapped while invisible (nodes hidden/shown/replaced)
-//      and the camera is teleported to the start of the reveal motion
-//   3. the canvas fades back in while the camera DECELERATES (easeOutHalf)
-//      into its final viewport
+// A single canvas can't crossfade, so the swap happens in a ~2-frame
+// invisible window:
+//   1. camera ACCELERATES (easeInHalf) while the canvas fades out — at max
+//      speed exactly when opacity hits 0
+//   2. scene swapped while invisible; camera teleported to the reveal start
+//   3. canvas fades in while the camera DECELERATES (easeOutHalf) into its
+//      final viewport
 // The two half-eases stitch into one continuous ease-in-out zoom across the
-// swap — it reads as a single motion, not two.
-//
-// Callers describe the pre-swap motion (dive into a rect / zoom out), the
-// swap, and the final viewport (or a custom reveal); everything else —
-// fades, timing, velocity profile — is owned here so every drill-down and
-// back transition across the app feels identical.
+// swap. Callers describe the pre-swap motion, swap, and final viewport;
+// fades/timing/velocity are owned here so all transitions feel identical.
 
 // Two halves of ONE zoom (see above).
 export const easeInHalf = (t: number) => t * t;

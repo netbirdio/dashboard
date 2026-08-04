@@ -120,10 +120,8 @@ const findFreeDropPosition = (
 };
 
 interface DragAndDropContextType {
-  // If a node is being dragged.
   isDragging: boolean;
   setIsDragging: Dispatch<SetStateAction<boolean>>;
-  // The action to be performed when something is dropped on the flow.
   dropAction: OnDropAction | null;
   setDropAction: Dispatch<SetStateAction<OnDropAction | null>>;
 }
@@ -307,14 +305,12 @@ export const useDragAndDrop = () => {
         return;
       }
 
-      // Use elementFromPoint to get the actual element under the pointer
       const elementUnderPointer = document.elementFromPoint(
         event.clientX,
         event.clientY,
       );
       const isDroppingOnFlow = elementUnderPointer?.closest(".react-flow");
 
-      // Only allow dropping on the flow area
       if (isDroppingOnFlow) {
         const flowPosition = screenToFlowPosition({
           x: event.clientX,
@@ -349,7 +345,6 @@ export const useDragAndDrop = () => {
     ],
   );
 
-  // Add global touch event listeners
   useEffect(() => {
     if (!isDragging) return;
 
@@ -393,8 +388,7 @@ export const useDragAndDrop = () => {
 export const useDragAndDropPosition = () => {
   const [position, setPosition] = useState<XYPosition | undefined>(undefined);
 
-  // By default, the pointer move event sets the position of the dragged element in the context.
-  // This will be used to display the `DragGhost` component.
+  // Tracks the pointer position for the `DragGhost` component.
   const onDrag = useCallback((event: PointerEvent) => {
     event.preventDefault();
     setPosition({ x: event.clientX, y: event.clientY });

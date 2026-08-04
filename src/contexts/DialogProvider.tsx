@@ -29,8 +29,7 @@ type DialogOptions = {
   maxWidthClass?: string;
   hideIcon?: boolean;
   center?: boolean;
-  // Clicking the overlay dismisses the dialog (resolves false) — opt-in,
-  // used by the control-center's live-mode warning confirms.
+  // Opt-in: clicking the overlay dismisses the dialog (resolves false).
   dismissOnOutsideClick?: boolean;
 };
 

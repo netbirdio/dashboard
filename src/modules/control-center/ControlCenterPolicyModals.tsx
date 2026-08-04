@@ -260,7 +260,6 @@ export function ControlCenterPolicyProvider({
     let newSourceCount = 0;
     let newDestCount = 0;
 
-    // Helper: ensure a node exists on canvas, create if missing.
     // Returns true when a new node was added.
     const ensureNode = (
       id: string,
@@ -306,12 +305,10 @@ export function ControlCenterPolicyProvider({
       ((rule.destinations as Group[]) ?? []).map(groupKey).filter(Boolean),
     );
 
-    // Helper: find an existing group node by ID or by group name
     const findGroupNode = (gid: string, groupName?: string) => {
-      // Try exact ID match first
       const byId = findNode(`group-${gid}`);
       if (byId) return `group-${gid}`;
-      // Try matching by group name in node data (for draft groups with different IDs)
+      // Fall back to matching by group name (draft groups have different ids)
       if (groupName) {
         const byName = currentNodes.find(
           (n) =>
@@ -441,7 +438,6 @@ export function ControlCenterPolicyProvider({
             return (n?.data as any)?.group?.name === group.name;
           }));
 
-      // Find existing destination node by ID or name
       const existingDestNode = findGroupNode(gid, group?.name);
 
       let nodeId: string;
@@ -575,7 +571,6 @@ export function ControlCenterPolicyProvider({
       };
     }
 
-    // Add policy node
     if (!findNode(policyNodeId)) {
       newNodes.push({
         id: policyNodeId,

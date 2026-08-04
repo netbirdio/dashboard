@@ -154,9 +154,8 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
             </div>
           ) : (
             <Accordion
-              // Remount when the modal (re)opens so the first expandable change
-              // is open by default every time (but not on close — see above).
-              // install-peer rows aren't collapsible, so skip them here.
+              // Remount so the first expandable change opens by default on each
+              // (re)open — install-peer rows aren't collapsible, so skip them.
               key={openKeyRef.current}
               type={"multiple"}
               defaultValue={(() => {

@@ -47,22 +47,18 @@ export function SmartEdge({ id, source, target, data }: Props) {
   let sourcePosition: Position, targetPosition: Position;
 
   if (sourceIsPolicy) {
-    // Source is policy → always exits from right
     sx = sPos.x + sW;
     sourcePosition = Position.Right;
   } else {
-    // Non-policy source → pick side based on relative position
     sx = sourceIsLeft ? sPos.x + sW : sPos.x;
     sourcePosition = sourceIsLeft ? Position.Right : Position.Left;
   }
   sy = sPos.y + sH / 2;
 
   if (targetIsPolicy) {
-    // Target is policy → always enters from left
     tx = tPos.x;
     targetPosition = Position.Left;
   } else {
-    // Non-policy target → pick side based on relative position
     tx = sourceIsLeft ? tPos.x : tPos.x + tW;
     targetPosition = sourceIsLeft ? Position.Left : Position.Right;
   }

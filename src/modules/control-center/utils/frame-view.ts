@@ -1,8 +1,8 @@
 import { Edge, Node } from "@xyflow/react";
 
-// Pure logic behind the parent-view / drill-down frame rules (spec §10),
-// consumed by useFrameEdgeAttachment and useNetworkDrillDown and unit-tested
-// in frame-view.test.ts.
+// Pure logic behind the parent-view / drill-down frame rules, consumed by
+// useFrameEdgeAttachment and useNetworkDrillDown and unit-tested in
+// frame-view.test.ts.
 
 // Edge-target resolution: a policy edge whose destination is a framed
 // resource targets the FRAME in the parent view and the actual resource

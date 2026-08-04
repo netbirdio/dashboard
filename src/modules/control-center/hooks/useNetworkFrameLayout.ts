@@ -46,16 +46,13 @@ const sameMoreCell = (a?: FrameMoreCell, b?: FrameMoreCell) => {
   );
 };
 
-// Lays out network frames from MEASURED child heights: resources fill a
-// row-major grid under the header (column count targets a viewport-shaped
-// frame, see getFrameGridColumns) with a uniform 16px inset on the
-// left/right/bottom; the frame grows/shrinks to fit exactly. Runs as a
-// reconciling effect — it only writes when a position/size actually
-// drifted, so it settles immediately after ReactFlow reports dimensions.
-// Adding resources happens from the frame's bottom "Add Resource" button, and
-// overflow past the visible cap collapses into a "+N more" cell that
-// NetworkNode overlays on the last grid slot (rect computed here) — so the
-// frame's only children are resource nodes.
+// Reconciling layout for network frames: resources fill a row-major grid
+// under the header (column count targets a viewport-shaped frame, see
+// getFrameGridColumns), 16px inset, the frame grows/shrinks to fit. Only
+// writes when a position/size actually drifted, so it settles once ReactFlow
+// reports measured dimensions. Overflow past the visible cap collapses into a
+// "+N more" cell NetworkNode overlays on the last grid slot (rect computed
+// here) — so the frame's only children are resource nodes.
 export function useNetworkFrameLayout() {
   const { nodes, setNodes } = useCanvasState();
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();

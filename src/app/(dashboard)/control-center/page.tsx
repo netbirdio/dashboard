@@ -106,10 +106,8 @@ function ControlCenterCanvas() {
   const ui = useControlCenterUI();
   const draft = useDraft();
   const { componentsPanelOpen, setComponentsPanelOpen } = useDraftMode();
-  // Focus mode (explicit, via a node's context-menu Focus item or the header
-  // tool — NOT a mere left-click panel open): node dragging is disabled so
-  // dragging anywhere pans the canvas instead of accidentally moving dimmed
-  // nodes. Applies in live and draft alike.
+  // In focus mode dragging is disabled, so a drag pans the canvas rather than
+  // nudging a dimmed node.
   const { focusedNodeId, highlightArmed, setSelectedPeerPanel } =
     useDestinationGroup();
   const focusMode = focusedNodeId !== "";
@@ -118,26 +116,21 @@ function ControlCenterCanvas() {
   useDrillDownBrowserHistory();
   useGroupFocusDim();
 
-  // Live networks empty state → "Add Network" runs the networks-page create
-  // flow (network → resource → routing peer) in place; once the network
-  // exists we drill straight into it so the user lands on the canvas.
   const { mutate } = useSWRConfig();
   const onLiveNetworkCreated = React.useCallback(
     async (network: Network) => {
-      // Wait for /networks to include the new network before drilling — the
-      // single-network view build reads the freshly revalidated list.
+      // Drill only after /networks includes the new one — the single-network
+      // view builds from the revalidated list.
       await mutate("/networks");
       ui.onNetworkSelect(network.id);
     },
     [mutate, ui],
   );
 
-  // ReactFlow re-renders whenever the nodes prop changes (every drag tick);
-  // its internal GraphView bails via memo ONLY when all other props keep
-  // their identity. Inline/per-render callbacks defeated that memo and made
-  // every tick re-render the WHOLE canvas subtree (~2700 fibers, 120ms+ —
-  // measured with the React profiler). Every handler below goes through a
-  // stable wrapper.
+  // ReactFlow re-renders on every nodes change (each drag tick); its GraphView
+  // memo bails only when all OTHER props keep identity. Per-render callbacks
+  // defeated it and re-rendered the whole canvas (~2700 fibers), so every
+  // handler goes through a stable wrapper.
   const useStableHandler = <A extends unknown[], R>(
     fn: (...args: A) => R,
   ): ((...args: A) => R) => {
@@ -153,27 +146,25 @@ function ControlCenterCanvas() {
   } | null>(null);
   const nodeContextMenuOpen = nodeContextMenuPos !== null;
   const anyMenuOpen = contextMenuOpen || nodeContextMenuOpen;
-  // An empty state overlay is up (live peers/networks empty, or the draft start
-  // screen) — lock canvas interactions. Once the user starts (opens the
-  // components panel) the empty canvas becomes interactive again. A blank draft
-  // shows no overlay, so its empty canvas stays interactive (pannable).
+  // While an empty-state overlay is up (live empty views or the draft start
+  // screen), lock canvas interactions. A blank draft has no overlay, so it
+  // stays interactive.
   const emptyState =
     canvas.nodes.length === 0 &&
     !componentsPanelOpen &&
     !(draft.isDraft && draft.startedBlank);
   const canInteract = !anyMenuOpen && !draft.isSelectMode && !emptyState;
 
-  // Closes just the context menu — used after picking a menu item (so an
-  // action like "Details", which opens the group panel, isn't undone).
+  // Close only the menu (not panels), so picking e.g. "Details" keeps the
+  // panel it just opened.
   const closeNodeContextMenu = React.useCallback(() => {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
   }, [canvas, setSelectedPeerPanel]);
 
-  // A click OUTSIDE dismisses everything at once — the context menu AND any
-  // open panel/components picker — so the user never has to click twice.
-  // The group panel registers a discard-confirm guard while it has
-  // unassigned toggles; closing it waits for that dialog.
+  // Outside click dismisses everything at once (menu + panels + components
+  // picker). The group panel may register a discard-confirm guard, so wait on
+  // it before closing.
   const dismissCanvasOverlays = React.useCallback(() => {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
@@ -196,11 +187,8 @@ function ControlCenterCanvas() {
   const stableOnNodeClick = useStableHandler(ui.onNodeClick);
   const stableOnNodeContextMenu = useStableHandler(
     (event: React.MouseEvent, node: FlowNode) => {
-      // Live mode context menus: policies (Edit / Disable / Delete), groups
-      // (Details / Rename), peers (Details / Rename / Delete), resources
-      // (Edit / Disable), and network frames (Add Resource / Add Routing Peer /
-      // Delete) — all behind confirmations, acting on the account immediately.
-      // Everything else keeps the browser menu.
+      // Live mode shows our menu only for these node types; every other node
+      // keeps the browser's default menu.
       const LIVE_MENU_TYPES = new Set([
         "policyNode",
         "groupNode",
@@ -222,9 +210,8 @@ function ControlCenterCanvas() {
   const stableOnPaneClick = useStableHandler(() => dismissCanvasOverlays());
   const stableOnNodeMouseEnter = useStableHandler(
     (_: React.MouseEvent, node: FlowNode) => {
-      // Hovering a frame OR anything inside it (resource rows are separate
-      // ReactFlow nodes, not DOM children) highlights the frame — draft and
-      // live network frames alike.
+      // Resource rows are separate nodes, not DOM children, so map a hover on
+      // any child back to its frame.
       const frameId = isFrameNode(node)
         ? node.id
         : node.parentId?.startsWith("network-")
@@ -239,12 +226,9 @@ function ControlCenterCanvas() {
   const stableOnNodeDragStart = useStableHandler(onNodeDragStart);
   const stableOnNodeDrag = useStableHandler(onNodeDrag);
   const stableOnNodeDragStop = useStableHandler(onNodeDragStop);
-  // Backspace/Delete gate: live mode deletes NOTHING (the canvas mirrors the
-  // account). In draft the keys act exactly like the context menu's Remove —
-  // routed through useNodeRemoval so the changeset bookkeeping (cancelled
-  // creates, policy disconnects, group refs) happens; React Flow's raw
-  // deletion is always blocked. Nodes without a Remove action (existing
-  // framed resources) are skipped, and standalone edges never delete.
+  // Live mode never deletes (the canvas mirrors the account). In draft the keys
+  // act like the menu's Remove, routed through useNodeRemoval for the changeset
+  // bookkeeping; React Flow's raw deletion is always blocked.
   const { removeNode } = useNodeRemoval();
   const stableOnBeforeDelete = useStableHandler(
     async ({ nodes }: { nodes: FlowNode[]; edges: FlowEdge[] }) => {
@@ -259,10 +243,8 @@ function ControlCenterCanvas() {
 
   return (
     <>
-      {/* NetworkProvider (with its access-control context) stays mounted here
-          so the live "Add Network" flow — network → resource → routing peer,
-          the same modals as the networks page — survives the empty state
-          unmounting the moment the first network is created. */}
+      {/* Kept mounted here so the live "Add Network" flow survives the empty
+          state unmounting once the first network is created. */}
       <NetworkAccessControlProvider>
         <NetworkProvider onNetworkCreated={onLiveNetworkCreated}>
           <ControlCenterEmptyStates />
@@ -282,7 +264,6 @@ function ControlCenterCanvas() {
         className={
           [
             draft.isSelectMode && "select-mode",
-            // Armed Focus Mode: nodes get the dashed sky hover halo.
             highlightArmed && "cc-focus-armed",
           ]
             .filter(Boolean)

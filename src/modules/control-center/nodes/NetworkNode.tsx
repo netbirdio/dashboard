@@ -161,7 +161,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
 
   return (
     <div
-      // Clicking the frame drills into the single-network view (§10).
+      // Clicking the frame drills into the single-network view.
       onClick={
         isDraft && isFrame && !isDrilled
           ? () => setDrillDownNetworkNodeId(id)
@@ -248,13 +248,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         </div>
       )}
 
-      {/* "Add Resource" button — always present in a draft frame so resources
-          can be added at any count. Empty frames center it in the body (auto
-          width); once there are resources it's a full-width row pinned to the
-          bottom band the layout reserves, and the "+N More" overflow footer
-          (when resources overflow the visible cap) stacks just above it.
-          Hovering it must not highlight the frame / reveal the ConnectHandle,
-          same as the floating controls. */}
+      {/* "Add Resource" — always present in a draft frame. Empty frames center
+          it; with resources it's a full-width row pinned to the bottom band
+          the layout reserves (the "+N More" overflow footer stacks above it). */}
       {isFrame && (
         <FrameAddResourceButton
           id={id}
@@ -351,9 +347,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
 // Draft-only "Add Resource" button, split into its own component so LIVE
 // frames never mount useDraftNodeCreation (it pulls useControlCenterData —
 // six SWR subscriptions per frame, a real mount cost on the networks
-// overview). Empty frames center it in the body (auto width); with content
-// it's a full-width row pinned to the bottom band the layout reserves.
-// Hovering it must not highlight the frame / reveal the ConnectHandle.
+// overview).
 const FrameAddResourceButton = ({
   id,
   frameCellCount,

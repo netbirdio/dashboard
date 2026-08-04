@@ -452,7 +452,6 @@ export function ControlCenterUIProvider({
                   network={network}
                   resource={resource}
                   onUpdated={(r) => {
-                    // Patch every canvas node carrying this resource.
                     canvas.setNodes((prev) =>
                       prev.map((n) => {
                         const res = n.data?.resource as

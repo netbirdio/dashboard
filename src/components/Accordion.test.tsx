@@ -7,13 +7,10 @@ import {
   AccordionTrigger,
 } from "./Accordion";
 
-// Regression net for the app-wide Accordion. The PR reworked AccordionContent's
-// open/close sync (useEffect → useLayoutEffect + a MutationObserver on
-// data-state, first-mount-without-animation) and added an optional `animated`
-// prop (default true = pre-PR). Animation itself isn't observable in jsdom, so
-// these pin the functional contract that must survive: children render, and the
-// trigger toggles the item's open state. Pre-PR API only → runs on both
-// branches.
+// Regression net for the app-wide Accordion, which the PR reworked (animation
+// sync + optional `animated` prop). Animation isn't observable in jsdom, so
+// these pin the functional contract: children render and the trigger toggles
+// the item's open state. Pre-PR API only, so it runs on both branches.
 afterEach(cleanup);
 
 const renderAccordion = () =>

@@ -8,14 +8,11 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { RoutingPeerModalContent } from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
 
-// The networks page's routing-peer modal. Draft targets run in pure-data
-// mode (useSave={false}) — the pick lands in the changeset via
-// addRouterFromSelection; with editChangeId set (frame's routing-peers
-// dropdown) the modal opens prefilled from that create-router change and the
-// save replaces it. With `router` set (an API router picked from a
-// routing-peers dropdown) the modal opens prefilled from the real router and
-// the save records an update-router change (updateRouterFromSelection) — no
-// live PUT; it deploys with the rest of the changeset.
+// The networks page's routing-peer modal, run in pure-data mode
+// (useSave={false}) for draft targets — the result lands in the changeset,
+// never a live PUT. editChangeId prefills from an existing create-router
+// change (and the save replaces it); `router` prefills from a real API router
+// (and the save records an update-router change). Both deploy with the rest.
 export const DraftRoutingPeerModal = () => {
   const { isDraft, routingPeerModal, setRoutingPeerModal } = useDraftMode();
   const { addRouterFromSelection, updateRouterFromSelection } =

@@ -114,9 +114,7 @@ export const ChangeAccordionItem = ({
         "border border-nb-gray-910 rounded-lg bg-nb-gray-930/40 overflow-hidden min-w-0"
       }
     >
-      {/* Header has a fixed height (stays constant); the trigger holds
-          everything up to the diffstat/badge, the discard ✕ sits outside it
-          (buttons can't nest). */}
+      {/* Fixed-height header; the trigger holds everything up to the badge. */}
       <AccordionPrimitive.Header
         className={
           "group/row flex items-stretch gap-3 pr-3 h-11 hover:bg-nb-gray-930/40 transition-colors"
@@ -127,8 +125,6 @@ export const ChangeAccordionItem = ({
             "group flex flex-1 items-center gap-3 pl-3 pr-1 text-left min-w-0"
           }
         >
-          {/* Chevron on the left — styled like a button (hover bg), bigger
-              hit area */}
           <span
             className={
               "shrink-0 -ml-1 p-1.5 rounded text-nb-gray-400 hover:text-nb-gray-200 hover:bg-nb-gray-800 transition-colors"
@@ -142,7 +138,6 @@ export const ChangeAccordionItem = ({
               )}
             />
           </span>
-          {/* Entity icon + name, kept tight together */}
           <span className={"flex items-center gap-2 min-w-0"}>
             <span className={"text-nb-gray-300 shrink-0 relative -top-px"}>
               {changeIcon(change)}
@@ -155,8 +150,7 @@ export const ChangeAccordionItem = ({
               {entityName(change)}
             </span>
           </span>
-          {/* The whole URL is copyable — click anywhere on it (peer-page
-              hostname pattern): dashed underline on hover + copy/check icon. */}
+          {/* The whole URL is a copy affordance (peer-page hostname pattern). */}
           <span
             role={"button"}
             tabIndex={0}

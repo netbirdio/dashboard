@@ -1,10 +1,9 @@
 import { Handle, Position } from "@xyflow/react";
 import * as React from "react";
 
-// Invisible target handle spanning the whole node — a connection dragged
-// from another node can be dropped anywhere on it. Connectable only while a
-// drag is in progress (pass the node's isTarget), so it never swallows
-// regular pointer interactions.
+// Invisible target handle spanning the whole node so a dragged connection can
+// drop anywhere on it. Connectable only mid-drag (pass isTarget) so it never
+// swallows regular pointer interactions.
 export const FullAreaTargetHandle = ({
   isConnectable,
   id = "ta",

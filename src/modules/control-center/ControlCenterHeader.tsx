@@ -60,19 +60,13 @@ const networkSelectorWidth = (labels: unknown[]) => {
   return Math.min(256, Math.max(150, 86 + longest * 6.5));
 };
 
-// Network actions (⋮) shown next to the network selector in BOTH modes — the
-// three-dots menu that replaced the standalone ✎ edit button. Edit and Delete
-// are mode-aware under the hood: draft records to the changeset (deploys
-// later), live hits the API immediately (live changes never deploy).
-//   Edit   → setNetworkEditor (draft: pure-data change; live: immediate PUT).
-//   Delete → existing networks Delete (draft: marked for deletion; live:
-//            immediate DELETE), draft-created ones Remove (cancel the pending
-//            create) — mirroring the frame's right-click menu. onDeleted lets
-//            the caller leave the just-deleted network's view (drill-down in
-//            draft, selection in live).
-// Right-hand segment attached to the network selector (its right corners are
-// squared when this is present), so [ selector | ⋮ ] reads as one control —
-// the border-l-0 lets the selector's right border be the divider.
+// Network actions (⋮) next to the network selector, in BOTH modes. Edit and
+// Delete are mode-aware: draft records to the changeset (deploys later), live
+// hits the API immediately. Delete on an existing network confirms + deletes;
+// on a draft-created one it's Remove (cancels the pending create). onDeleted
+// lets the caller leave the just-deleted network's view (drill-down or
+// selection). Rendered as a right-hand segment on the selector so
+// [ selector | ⋮ ] reads as one control.
 function NetworkActionsMenu({
   networkNodeId,
   onDeleted,
@@ -161,13 +155,9 @@ function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
   );
 }
 
-// Shown while a network frame is drilled into (single-network draft view),
-// mirroring the live single-network header 1:1: back arrow, the network
-// SELECT (switches the drill-down between the frames on the canvas), the
-// shared RoutingPeersBar (rows from the draft state; Add opens the
-// routing-peer modal, the draft counterpart of the live navigation to the
-// routing-peers tab), plus an edit button (networks page's network modal;
-// draft networks pure-data, existing ones PUT).
+// The drilled single-network header (draft), mirroring the live one: back
+// arrow, network selector (switches which frame is drilled), the shared
+// RoutingPeersBar, and Add Resource.
 function DraftDrillDownHeader() {
   const { drillDownNetworkNodeId, setDrillDownNetworkNodeId, setRoutingPeerModal } =
     useDraftMode();

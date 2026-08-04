@@ -3,11 +3,8 @@ import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
 
-/**
- * Push a node into the array only if no node with that id exists.
- * If a node with the same id already exists, merge `node.data` into
- * the existing node's data instead of adding a duplicate.
- */
+// Add a node; if one with the same id already exists, merge `node.data` into
+// it rather than duplicating.
 export function addNode(nodes: Node[], node: Node): void {
   const existing = nodes.find((n) => n.id === node.id);
   if (!existing) {
@@ -17,11 +14,8 @@ export function addNode(nodes: Node[], node: Node): void {
   }
 }
 
-/**
- * Push an edge into the array only if no edge with that id exists.
- * If an edge with the same id already exists, merge `edge.data` into
- * the existing edge's data instead of adding a duplicate.
- */
+// Add an edge; if one with the same id already exists, merge `edge.data` into
+// it rather than duplicating.
 export function addEdge(edges: Edge[], edge: Edge): void {
   const existing = edges.find((e) => e.id === edge.id);
   if (!existing) {
@@ -31,19 +25,13 @@ export function addEdge(edges: Edge[], edge: Edge): void {
   }
 }
 
-/**
- * Default layout configuration used across all hierarchical views
- * (peer, group, user, network).
- */
+// Default layout config shared by all hierarchical views (peer, group, user, network).
 export const DEFAULT_LAYOUT_CONFIG = {
   policy: { width: 500, spacing: 60 },
   destinationGroup: { width: 1000, spacing: 100 },
   peersAndResources: { width: 1400, spacing: 80 },
 };
 
-/**
- * Filter peers that belong to a given group.
- */
 export function getGroupPeers(peers: Peer[], groupId: string): Peer[] {
   return peers.filter((p) => {
     const peerGroupIds = p.groups?.map((g) => g.id) || [];
@@ -51,9 +39,6 @@ export function getGroupPeers(peers: Peer[], groupId: string): Peer[] {
   });
 }
 
-/**
- * Filter network resources that belong to a given group.
- */
 export function getGroupResources(
   resources: NetworkResource[],
   groupId: string,
@@ -66,11 +51,11 @@ export function getGroupResources(
 }
 
 /**
- * Add expanded group content (peers + resources) for a destination group.
- * Used when a destination group is selected/expanded in the graph.
+ * Add a destination group's expanded content (its peers + resources) when it
+ * is selected/expanded in the graph.
  *
- * @param peerNodeType - The node type for peer nodes (e.g. "peerNode", "expandedGroupPeer")
- * @param peerIdPrefix - The prefix for peer node ids (e.g. "peer-")
+ * @param peerNodeType - e.g. "peerNode", "expandedGroupPeer"
+ * @param peerIdPrefix - e.g. "peer-"
  */
 export function addExpandedGroupContent(
   allNodes: Node[],

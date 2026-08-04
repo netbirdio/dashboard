@@ -18,7 +18,7 @@ import {
   getNetworkFrameHeight,
 } from "@/modules/control-center/utils/helpers";
 
-// Drill-down (spec §10): clicking a network frame enters a single-network
+// Drill-down: clicking a network frame enters a single-network
 // draft view — only the frame (full resource grid via useNetworkFrameLayout's
 // drilled branch), its routing peers, and the policies targeting its
 // resources (plus their sources) stay visible; everything else is hidden.

@@ -20,7 +20,7 @@ import { cleanupDockerPeer, registerDockerPeer } from "../helpers/docker-peer";
  * Live PEER view, exercised with a REAL docker peer registered via a setup key
  * (the test env has no peers otherwise). Registration is confirmed working
  * against management directly; the peer stays offline (no signal/TURN) but is
- * selectable, which is all the Peer view needs. See §5 of the summary.
+ * selectable, which is all the Peer view needs.
  *
  * These are @slow: registering a peer takes ~10–20s.
  */

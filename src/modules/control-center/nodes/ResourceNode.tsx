@@ -98,8 +98,6 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
     ? !isFramed || isDrilledChild
     : !isFramed && (!!data.draftNetwork || !!data.standalone);
   if (cardResource && standaloneCard) {
-    // Drilled views (draft drill-down, live single-network) already show the
-    // network in the header — no inline "- Network" suffix on the card.
     return (
       <StandaloneResourceNode
         id={id}

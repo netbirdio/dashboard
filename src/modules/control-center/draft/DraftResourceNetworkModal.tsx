@@ -143,8 +143,6 @@ const PickerContent = ({
     onClose();
   };
 
-  // Create a new draft network (frame) with the entered name/description and
-  // drop the resource into it.
   const createAndAssign = (values: { name: string; description: string }) => {
     const networkNodeId = addDraftNetwork(undefined, {
       name: values.name,
