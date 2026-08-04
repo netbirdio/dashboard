@@ -35,6 +35,8 @@ import { useSelectNodeHandlers } from "@/modules/control-center/hooks/useSelectN
 import { DestinationGroupPanel } from "@/modules/control-center/DestinationGroupPanel";
 import { PeerGroupsPanel } from "@/modules/control-center/PeerGroupsPanel";
 import NetworkResourceModal from "@/modules/networks/resources/NetworkResourceModal";
+import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
+import { NetworkProvider } from "@/modules/networks/NetworkProvider";
 import { mutate } from "swr";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
@@ -444,14 +446,19 @@ export function ControlCenterUIProvider({
               );
               if (!network || !resource) return null;
               return (
-                <NetworkResourceModal
-                  open={true}
-                  setOpen={(open) =>
-                    !open && canvas.setLiveResourceEditor(null)
-                  }
-                  network={network}
-                  resource={resource}
-                  onUpdated={(r) => {
+                // The modal reads assignedPolicies from useNetworksContext, so
+                // wrap it in the same providers the networks page (and the
+                // draft resource modal) mount above it, or it crashes.
+                <NetworkAccessControlProvider>
+                  <NetworkProvider network={network}>
+                    <NetworkResourceModal
+                      open={true}
+                      setOpen={(open) =>
+                        !open && canvas.setLiveResourceEditor(null)
+                      }
+                      network={network}
+                      resource={resource}
+                      onUpdated={(r) => {
                     canvas.setNodes((prev) =>
                       prev.map((n) => {
                         const res = n.data?.resource as
@@ -468,11 +475,13 @@ export function ControlCenterUIProvider({
                         };
                       }),
                     );
-                    void mutate("/networks/resources");
-                    void mutate("/groups");
-                    canvas.setLiveResourceEditor(null);
-                  }}
-                />
+                        void mutate("/networks/resources");
+                        void mutate("/groups");
+                        canvas.setLiveResourceEditor(null);
+                      }}
+                    />
+                  </NetworkProvider>
+                </NetworkAccessControlProvider>
               );
             })()}
         </div>

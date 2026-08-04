@@ -156,7 +156,7 @@ const EditorContent = ({
           // The modal POSTed the resource against the real network. Nothing
           // has told the canvas yet: revalidate the network + resource lists,
           // then force the live view to rebuild (the init effect is gated on
-          // layoutInitialized) so the new resource appears — same rebuild
+          // layoutInitialized) so the new resource appears. Same rebuild
           // drilling in/out triggers, which is why it only showed after
           // navigating. Await the mutations first so the rebuild reads the
           // fresh data.

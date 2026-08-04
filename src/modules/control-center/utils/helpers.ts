@@ -912,11 +912,11 @@ export function packFrameGrid(
   });
 }
 
-// Stable-orders `items` by each item's id position in `order`; ids absent from
+// Stable-orders `items` by each item's id position in `order`. Ids absent from
 // `order` keep their relative order at the end (Array.prototype.sort is
-// stable). The side panels freeze `order` per open so a save — and the SWR
-// mutate that follows it, which can return the peers/resources/groups arrays
-// in a different order — never reshuffles the rows the user is looking at.
+// stable). The side panels freeze `order` per open. That way a save, and the
+// SWR mutate after it (which can return the peers/resources/groups arrays in a
+// different order), never reshuffles the rows the user is looking at.
 export function pinByOrder<T>(
   items: T[],
   order: string[],

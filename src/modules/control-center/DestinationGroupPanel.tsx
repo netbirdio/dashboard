@@ -562,7 +562,7 @@ export const DestinationGroupPanel = ({
     if (!choice) return;
     setSaving(true);
     // The group PUT wants peers as id strings but resources as {id, type}
-    // objects — sending resource id strings makes the API reject the body
+    // objects. Sending resource id strings makes the API reject the body
     // ("could not parse json"). Mirror the networks/groups pages.
     const request = groupRequest
       .put(
@@ -577,8 +577,8 @@ export const DestinationGroupPanel = ({
         `/${group.id}`,
       )
       .then(async (g) => {
-        // Membership lives on /groups and /peers (peer.groups) — refresh both
-        // so the panel and the rebuilt view pick the change up.
+        // Membership lives on /groups and /peers (peer.groups), so refresh
+        // both so the panel and the rebuilt view pick the change up.
         await Promise.all([mutate("/groups"), mutate("/peers")]);
         return g;
       });
@@ -616,13 +616,13 @@ export const DestinationGroupPanel = ({
   const query = search.trim().toLowerCase();
 
   // Draft: EVERY peer/resource is listed (members first, checked) so the
-  // checkbox doubles as assign/unassign — same pattern as PeerGroupSelector.
-  // Live: members only. The members-first order here is only a SEED — it's
+  // checkbox doubles as assign/unassign, the same pattern as PeerGroupSelector.
+  // Live: members only. The members-first order here is only a SEED. It's
   // pinned below to the sequence captured when the panel opened.
   const peerCandidates = useMemo(() => {
     if (!canEditMembers) return groupPeers;
     return [
-      // Draft members (placeholder peers) aren't in the API list — they lead
+      // Draft members (placeholder peers) aren't in the API list, so they lead
       // the member section so the row count matches the group's counter.
       ...draftMemberPeers,
       ...(peers ?? []).filter((p) => p.id && memberPeerIds.has(p.id)),
@@ -754,7 +754,7 @@ export const DestinationGroupPanel = ({
   const panelWidthRef = useRef(panelWidth);
   panelWidthRef.current = panelWidth;
 
-  // Keep the panel fitted when the window/canvas is resized — the open effect
+  // Keep the panel fitted when the window/canvas is resized. The open effect
   // below only runs on open, so a resize would otherwise leave the box sized
   // for the old container (clipped or floating off the edge). Recompute
   // left/top/height against the new container size.

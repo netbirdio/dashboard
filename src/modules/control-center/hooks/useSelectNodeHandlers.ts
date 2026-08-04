@@ -489,9 +489,10 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         onDestinationGroupSelect(groupId);
       }
       // Clicking a policy opens it in the editor. Draft opens directly (edits
-      // land in the changeset); live confirms first — same "you are in live
-      // mode" dialog as the context-menu Edit — since the modal saves via PUT
-      // to the account immediately. The right-click menu keeps Edit/Disable too.
+      // land in the changeset). Live confirms first, with the same "you are in
+      // live mode" dialog as the context-menu Edit, since the modal saves via
+      // PUT to the account immediately. The right-click menu keeps Edit/Disable
+      // too.
       if (policyId) {
         if (isDraft) {
           setSelectedPolicy(policyId);
@@ -504,7 +505,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
             const choice = await confirm({
               title: `Edit policy “${policyName}”?`,
               description:
-                "You are in live mode — saving your changes will apply them to your account immediately.",
+                "You are in live mode. Saving your changes will apply them to your account immediately.",
               confirmText: "Edit",
               cancelText: "Cancel",
               type: "warning",

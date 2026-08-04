@@ -135,7 +135,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
 
   const saveAssignments = async () => {
     if (!peer?.id) return;
-    // Narrowed once here — the async IIFE below re-widens peer.id otherwise.
+    // Narrowed once here; the async IIFE below re-widens peer.id otherwise.
     const peerId = peer.id;
     const added = allGroups.filter(
       (g) => selectedRefs.has(groupRef(g)) && !assignedRefs.has(groupRef(g)),
@@ -195,7 +195,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
           {
             name: full.name,
             peers: [...peerIds],
-            // Resources pass through untouched, as {id, type} objects — the
+            // Resources pass through untouched, as {id, type} objects. The
             // API rejects a body that sends them as id strings.
             resources: full.resources,
           },
@@ -215,7 +215,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     try {
       await request;
     } catch {
-      // A PUT in the loop may have partially applied — re-sync so the panel
+      // A PUT in the loop may have partially applied, so re-sync so the panel
       // and canvas reflect the server truth rather than the optimistic
       // selection.
       await Promise.all([mutate("/groups"), mutate("/peers")]).catch(() => {});
@@ -234,7 +234,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   }, [peerId]);
   const query = search.trim().toLowerCase();
 
-  // Assigned-first candidate list (seed order — pinned below).
+  // Assigned-first candidate list (seed order, pinned below).
   const groupCandidates = useMemo(
     () => [
       ...allGroups.filter((g) => assignedRefs.has(groupRef(g))),
@@ -291,7 +291,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   const panelWidthRef = useRef(panelWidth);
   panelWidthRef.current = panelWidth;
 
-  // Keep the panel fitted when the window/canvas is resized — the open effect
+  // Keep the panel fitted when the window/canvas is resized. The open effect
   // below only runs on open, so a resize would otherwise leave the box sized
   // for the old container.
   useEffect(() => {

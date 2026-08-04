@@ -78,7 +78,7 @@ test.describe.serial("Control Center Draft Install @control-center", () => {
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
-    // A lone Server placeholder is an install-peer change — it sorts to the
+    // A lone Server placeholder is an install-peer change. It sorts to the
     // very top of the list, so it IS the first accordion.
     await createViaCanvasMenu(page, "New Server");
     await expect(canvasNode(page, "peer-")).toHaveCount(1);

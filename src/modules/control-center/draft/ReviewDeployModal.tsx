@@ -156,7 +156,7 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
             </div>
           ) : (
             <Accordion
-              // Remount so the FIRST change (as sorted — install-peer / server
+              // Remount so the FIRST change (as sorted: install-peer / server
               // / agent rows lead the list) opens by default on each (re)open.
               key={openKeyRef.current}
               type={"multiple"}

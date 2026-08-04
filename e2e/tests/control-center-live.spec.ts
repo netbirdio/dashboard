@@ -248,6 +248,62 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     ).toHaveCount(0);
   });
 
+  test("Should edit a live resource inside a drilled network (modal opens, PUT)", async ({
+    dashboardAsOwner: page,
+  }) => {
+    const base = generateRandomName(PREFIX);
+    const group = await createGroup(page, base + "-g");
+    const network = await createNetwork(page, base + "-n");
+    const resource = await createResource(
+      page,
+      network.id,
+      base + "-r",
+      "10.0.0.5/32",
+      [group.id],
+    );
+
+    await openControlCenter(page, "networks");
+    const frame = canvasNode(page, `network-${network.id}`);
+    await expect(frame).toBeVisible();
+
+    // Drill into the network so the resource renders as its own node.
+    await dismissBlockingOverlays(page);
+    await frame.click({ force: true });
+    const resNode = canvasNode(page, `resource-${resource.id}`);
+    await expect(resNode).toBeVisible({ timeout: 15_000 });
+
+    // Edit via the resource menu, behind the live-mode confirmation.
+    const menu = await openNodeMenu(page, resNode);
+    await menu.getByRole("button", { name: "Edit", exact: true }).click();
+    await expect(page.getByText("You are in live mode")).toBeVisible();
+    await page.getByTestId("confirmation.confirm").click();
+
+    // The modal must OPEN. It used to crash on render ("assignedPolicies is
+    // not a function") because it wasn't wrapped in the NetworkProvider that
+    // supplies it.
+    await expect(page.getByTestId("resource-name-input")).toBeVisible();
+
+    // Change the address and save → immediate PUT.
+    await page.getByTestId("resource-address-input").fill("10.0.0.9/32");
+    const putResponse = page.waitForResponse(
+      (resp) =>
+        new RegExp(
+          `/api/networks/${network.id}/resources/${resource.id}$`,
+        ).test(resp.url()) && resp.request().method() === "PUT",
+      { timeout: 30_000 },
+    );
+    await page.getByTestId("submit-route").click();
+    // The group has no policy → the "No Access Control Policies" confirm gates
+    // the PUT (scope to that dialog so a stale confirm can't shadow it).
+    const noPolicyDialog = page
+      .getByRole("dialog")
+      .filter({ hasText: "No Access Control Policies" });
+    await expect(noPolicyDialog).toBeVisible();
+    await noPolicyDialog.getByTestId("confirmation.confirm").click();
+    const response = await putResponse;
+    expect([200, 201]).toContain(response.status());
+  });
+
   test("Should show a live-added resource on the canvas without navigating", async ({
     dashboardAsOwner: page,
   }) => {
@@ -258,8 +314,8 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const frame = canvasNode(page, `network-${network.id}`);
     await expect(frame).toBeVisible();
 
-    // Add a resource straight from the frame's right-click menu — a live POST
-    // against the real network (draft mode would only touch the changeset).
+    // Add a resource straight from the frame's right-click menu. This is a live
+    // POST against the real network (draft mode would only touch the changeset).
     await clickContextMenuItem(page, frame, "Add Resource");
     await page.getByTestId("resource-name-input").fill(base + "-r");
     await page.getByTestId("resource-address-input").fill("10.0.0.9/32");
@@ -284,8 +340,8 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     expect([200, 201]).toContain(response.status());
     const created = (await response.json()) as { id: string };
 
-    // The regression: the new resource must appear on the canvas immediately —
-    // as the frame's child row — WITHOUT drilling in and back out to force a
+    // The regression: the new resource must appear on the canvas immediately,
+    // as the frame's child row, WITHOUT drilling in and back out to force a
     // rebuild (the live view init is gated on layoutInitialized).
     await expect(canvasNode(page, `resource-${created.id}`)).toBeVisible({
       timeout: 15_000,
@@ -322,8 +378,8 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
   }) => {
     const { policyNode } = await seedPolicyAndOpenGroupView(page);
 
-    // Left-clicking a policy in LIVE mode must NOT open the editor directly —
-    // it warns first, exactly like the context menu's Edit, because the modal
+    // Left-clicking a policy in LIVE mode must NOT open the editor directly.
+    // It warns first, exactly like the context menu's Edit, because the modal
     // saves via PUT to the account immediately. (Draft opens it directly.)
     await dismissBlockingOverlays(page);
     await policyNode.click();
@@ -507,7 +563,7 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     dashboardAsOwner: page,
   }) => {
     // Clean slate so the group view deterministically lands on our group (it
-    // auto-selects a group that HAS a policy — see seedPolicyAndOpenGroupView).
+    // auto-selects a group that HAS a policy; see seedPolicyAndOpenGroupView).
     await deletePoliciesBySubstring(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
 
@@ -578,7 +634,7 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const panel = page.locator("#cc-group-panel");
     await expect(panel).toBeVisible();
 
-    // Shrink the window — the panel must re-fit against the new canvas size
+    // Shrink the window. The panel must re-fit against the new canvas size
     // (the open-time placement effect only runs on open, so without the resize
     // listener the box would stay sized for the old, wider viewport).
     await page.setViewportSize({ width: 1200, height: 800 });
