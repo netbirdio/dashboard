@@ -40,15 +40,16 @@ export const getNetworksFromPolicy = (networks: Network[], policy: Policy) => {
 export const getGroupCountLabel = (group?: Group) => {
   const peerCount = group?.peers_count || 0;
   const resourceCount = group?.resources_count || 0;
-  if (resourceCount === 0)
-    return peerCount === 0 ? "No Peers" : singularize("Peers", peerCount, true);
-  // Resources lead once the group holds any; a zero side is omitted.
-  if (peerCount === 0) return singularize("Resources", resourceCount, true);
-  return `${singularize("Resources", resourceCount, true)}, ${singularize(
-    "Peers",
-    peerCount,
-    true,
-  )}`;
+  if (peerCount === 0 && resourceCount === 0) return "No Peers";
+  const peers = singularize("Peers", peerCount, true);
+  const resources = singularize("Resources", resourceCount, true);
+  // A zero side is omitted.
+  if (resourceCount === 0) return peers;
+  if (peerCount === 0) return resources;
+  // Lead with the bigger side (ties keep resources first).
+  return peerCount > resourceCount
+    ? `${peers}, ${resources}`
+    : `${resources}, ${peers}`;
 };
 
 export const getPeersFromGroup = (group: Group, peers: Peer[]) => {

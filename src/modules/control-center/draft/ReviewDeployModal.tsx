@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useReactFlow } from "@xyflow/react";
 import Button from "@components/Button";
 import {
@@ -12,11 +12,14 @@ import { Accordion } from "@components/Accordion";
 import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
+import { notify } from "@components/Notification";
 import {
   ExternalLinkIcon,
   GitPullRequestArrowIcon,
   ListTodoIcon,
+  Loader2,
 } from "lucide-react";
+import { cn } from "@utils/helpers";
 import {
   CHANGE_DEPLOY_ORDER,
   DraftChange,
@@ -39,9 +42,9 @@ type Props = {
 };
 
 export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => {
-  const { changes } = useDraftChangeset();
+  const { changes, clearChanges } = useDraftChangeset();
   const { removeWithCascade, previewRemove } = useRemoveChange();
-  const { deploy, isDeploying } = useDeployChangeset();
+  const { deploy, isDeploying, deployStatus } = useDeployChangeset();
   const { policies, groups, networks, networkResources } =
     useControlCenterData();
   const { setResourceNetworkPicker, setInstallModal, setUserDeviceModal } =
@@ -52,6 +55,19 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
     () => ({ policies, groups, networks, networkResources, draftChanges: changes }),
     [policies, groups, networks, networkResources, changes],
   );
+
+  // Freeze the live snapshot the rows render against from the moment a deploy
+  // starts until the changeset is reset. Without this, the SWR mutate that runs
+  // as changes land recomputes each row's diff mid-deploy — a deployed row's
+  // diff collapses to empty and briefly flips to the "Modify" kind badge, which
+  // reads as the changeset changing under the user. Cleared once the changeset
+  // empties (after a successful deploy's modal closes).
+  const frozenLive = useRef<LiveData | null>(null);
+  if (isDeploying && !frozenLive.current) frozenLive.current = live;
+  useEffect(() => {
+    if (changes.length === 0) frozenLive.current = null;
+  }, [changes.length]);
+  const renderLive = frozenLive.current ?? live;
 
   // Remount the accordion (re-opening the first change) only when the modal
   // OPENS — never on close, which would otherwise flash the first accordion
@@ -127,16 +143,34 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
 
   const handleDeploy = async () => {
     const ok = await deploy();
-    // A partial failure keeps the modal open: applied changes were already
-    // removed from the list, so what remains is exactly what still needs to
-    // deploy — the user can fix the cause and hit Deploy again to resume.
+    // A partial failure keeps the modal open: the deployed items keep their
+    // green check and are skipped on retry, so the user can fix the cause and
+    // hit Deploy again to finish.
     if (!ok) return;
-    onOpenChange(false);
+    notify({
+      title: "Deploy complete",
+      description: `Your ${deployableCount} change${
+        deployableCount !== 1 ? "s were" : " was"
+      } applied to your network.`,
+    });
+    // Everything deployed. Switch to live first (the canvas rebuilds behind
+    // the modal), then close. Reset the changeset only AFTER the modal has
+    // closed, so the deployed items stay visible (green checks) and the modal
+    // never flashes an empty "no changes" state on the way out.
     onDeployed();
+    onOpenChange(false);
+    window.setTimeout(() => clearChanges(), 400);
   };
 
   return (
-    <Modal open={open} onOpenChange={onOpenChange}>
+    <Modal
+      open={open}
+      // Can't dismiss (outside click / Esc) mid-deploy — the run must finish.
+      onOpenChange={(o) => {
+        if (isDeploying && !o) return;
+        onOpenChange(o);
+      }}
+    >
       <ModalContent maxWidthClass={"max-w-[45rem]"}>
         <ModalHeader
           icon={<GitPullRequestArrowIcon size={18} className={"text-netbird"} />}
@@ -167,13 +201,14 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                 <ChangeAccordionItem
                   key={change.id}
                   change={change}
-                  live={live}
+                  live={renderLive}
                   onDiscard={() => removeWithCascade(change)}
                   previewRemove={previewRemove}
                   onResolveIssue={
                     getChangeIssue(change) ? resolveIssue : undefined
                   }
                   disabled={isDeploying}
+                  status={deployStatus[change.id]}
                 />
               ))}
             </Accordion>
@@ -214,9 +249,27 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                 disabled={deployableCount === 0 || isDeploying || hasIssues}
                 onClick={handleDeploy}
                 data-testid={"cc-deploy"}
+                className={"relative"}
               >
-                <ListTodoIcon size={16} />
-                {isDeploying ? "Deploying..." : "Approve & Deploy"}
+                {/* While deploying, show only a centered spinner but keep the
+                    button's width: the label stays in place, just invisible. */}
+                <span
+                  className={cn(
+                    "flex items-center gap-2",
+                    isDeploying && "invisible",
+                  )}
+                >
+                  <ListTodoIcon size={16} />
+                  Approve & Deploy
+                </span>
+                {isDeploying && (
+                  <Loader2
+                    size={16}
+                    className={
+                      "animate-spin absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                    }
+                  />
+                )}
               </Button>
             </FullTooltip>
           </div>

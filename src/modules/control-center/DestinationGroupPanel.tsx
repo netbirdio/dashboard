@@ -2,6 +2,7 @@ import { cn } from "@utils/helpers";
 import {
   DownloadIcon,
   Layers3Icon,
+  Loader2,
   MonitorSmartphoneIcon,
   SearchIcon,
   TriangleAlertIcon,
@@ -577,9 +578,17 @@ export const DestinationGroupPanel = ({
         `/${group.id}`,
       )
       .then(async (g) => {
-        // Membership lives on /groups and /peers (peer.groups), so refresh
-        // both so the panel and the rebuilt view pick the change up.
-        await Promise.all([mutate("/groups"), mutate("/peers")]);
+        // Membership shows on /groups, /peers (peer.groups) and
+        // /networks/resources (resource.groups). /policies embeds group member
+        // counts too, and the views rebuild their group nodes from it — refresh
+        // all four so the panel un-dirties AND other views/draft don't show
+        // stale counts.
+        await Promise.all([
+          mutate("/groups"),
+          mutate("/peers"),
+          mutate("/networks/resources"),
+          mutate("/policies"),
+        ]);
         return g;
       });
     // The promise drives the toast: green on success, red with the API error
@@ -592,9 +601,16 @@ export const DestinationGroupPanel = ({
     });
     try {
       await request;
+      // Saved — close the panel (draft's Assign path closes too).
+      onClose();
     } catch {
       // Re-sync so the optimistic canvas counts revert to the server truth.
-      await Promise.all([mutate("/groups"), mutate("/peers")]).catch(() => {});
+      await Promise.all([
+        mutate("/groups"),
+        mutate("/peers"),
+        mutate("/networks/resources"),
+        mutate("/policies"),
+      ]).catch(() => {});
     } finally {
       setSaving(false);
     }
@@ -1143,11 +1159,22 @@ export const DestinationGroupPanel = ({
             <Button
               variant={"primary"}
               size={"xs"}
-              className={"py-2.5"}
+              className={"relative py-2.5"}
               disabled={!dirty || saving}
               onClick={() => void saveMembership()}
             >
-              {saving ? "Saving..." : isDraft ? "Assign" : "Save"}
+              {/* Spinner while saving, but keep the label's width (no jump). */}
+              <span className={cn(saving && "invisible")}>
+                {isDraft ? "Assign" : "Save"}
+              </span>
+              {saving && (
+                <Loader2
+                  size={14}
+                  className={
+                    "animate-spin absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                  }
+                />
+              )}
             </Button>
           </div>
         </div>

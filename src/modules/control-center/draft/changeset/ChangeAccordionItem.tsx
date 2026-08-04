@@ -6,6 +6,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   CopyIcon,
+  Loader2,
   MoreVerticalIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -39,6 +40,7 @@ import {
   KindBadge,
 } from "@/modules/control-center/draft/changeset/change-presentation";
 import { ChangeCodeView } from "@/modules/control-center/draft/changeset/ChangeCodeView";
+import { DeployStatus } from "@/modules/control-center/hooks/useDeployChangeset";
 
 type Props = {
   change: DraftChange;
@@ -51,6 +53,9 @@ type Props = {
   // peer). Undefined for changes with no issue.
   onResolveIssue?: (change: DraftChange) => void;
   disabled: boolean;
+  // Deploy progress: undefined = not started; "deploying" spins + pulses;
+  // "done" shows a green check; "error" reverts to the actions menu.
+  status?: DeployStatus;
 };
 
 export const ChangeAccordionItem = ({
@@ -60,6 +65,7 @@ export const ChangeAccordionItem = ({
   previewRemove,
   onResolveIssue,
   disabled,
+  status,
 }: Props) => {
   const apiCall = getChangeApiCall(change);
   // Clicking the URL copies the full request as a curl command (API-docs
@@ -124,9 +130,12 @@ export const ChangeAccordionItem = ({
     <AccordionItem
       value={change.id}
       data-testid={`cc-change-${change.type}`}
-      className={
-        "border border-nb-gray-910 rounded-lg bg-nb-gray-930/40 overflow-hidden min-w-0"
-      }
+      className={cn(
+        "border border-nb-gray-910 rounded-lg bg-nb-gray-930/40 overflow-hidden min-w-0",
+        // The row being deployed pulses (no border color); state is conveyed by
+        // the spinner / green check in the header.
+        status === "deploying" && "animate-pulse",
+      )}
     >
       {/* Fixed-height header; the trigger holds everything up to the badge. */}
       <AccordionPrimitive.Header
@@ -135,9 +144,11 @@ export const ChangeAccordionItem = ({
         }
       >
         <AccordionPrimitive.Trigger
-          className={
-            "group flex flex-1 items-center gap-3 pl-3 pr-1 text-left min-w-0"
-          }
+          disabled={disabled}
+          className={cn(
+            "group flex flex-1 items-center gap-3 pl-3 pr-1 text-left min-w-0",
+            disabled && "cursor-default",
+          )}
         >
           <span
             className={
@@ -211,7 +222,9 @@ export const ChangeAccordionItem = ({
             <IssueBadge
               label={issue.label}
               onClick={
-                onResolveIssue ? () => onResolveIssue(change) : undefined
+                onResolveIssue && !disabled
+                  ? () => onResolveIssue(change)
+                  : undefined
               }
             />
           ) : showStat ? (
@@ -221,45 +234,63 @@ export const ChangeAccordionItem = ({
           )}
         </AccordionPrimitive.Trigger>
 
-        {/* More actions — outside the trigger (buttons can't nest). */}
-        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-          <DropdownMenuTrigger asChild={true}>
-            <button
-              disabled={disabled}
-              onClick={(e) => e.stopPropagation()}
-              data-testid={"cc-change-menu"}
-              className={
-                "self-center shrink-0 p-1.5 rounded text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 data-[state=open]:bg-nb-gray-800 data-[state=open]:text-nb-gray-100 transition-colors disabled:opacity-50 outline-none"
-              }
-              aria-label={"More actions"}
-            >
-              <MoreVerticalIcon size={16} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align={"end"}>
-            {request && (
-              <DropdownMenuItem
-                className={"gap-2"}
-                onClick={() => {
-                  doCopy(false);
-                  setMenuOpen(false);
-                }}
+        {/* While this change deploys the ⋮ becomes a spinner, then a green
+            check when it lands; other rows keep their menu (disabled). */}
+        {status === "deploying" ? (
+          <div
+            className={"self-center shrink-0 p-1.5 text-white"}
+            aria-label={"Deploying"}
+          >
+            <Loader2 size={16} className={"animate-spin"} />
+          </div>
+        ) : status === "done" ? (
+          <div
+            className={"self-center shrink-0 p-1.5 text-green-500"}
+            aria-label={"Deployed"}
+          >
+            <CheckIcon size={16} />
+          </div>
+        ) : (
+          // More actions — outside the trigger (buttons can't nest).
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+            <DropdownMenuTrigger asChild={true}>
+              <button
+                disabled={disabled}
+                onClick={(e) => e.stopPropagation()}
+                data-testid={"cc-change-menu"}
+                className={
+                  "self-center shrink-0 p-1.5 rounded text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 data-[state=open]:bg-nb-gray-800 data-[state=open]:text-nb-gray-100 transition-colors disabled:opacity-50 outline-none"
+                }
+                aria-label={"More actions"}
               >
-                <CopyIcon size={14} />
-                Copy cURL
+                <MoreVerticalIcon size={16} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align={"end"}>
+              {request && (
+                <DropdownMenuItem
+                  className={"gap-2"}
+                  onClick={() => {
+                    doCopy(false);
+                    setMenuOpen(false);
+                  }}
+                >
+                  <CopyIcon size={14} />
+                  Copy cURL
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                variant={"danger"}
+                className={"gap-2"}
+                data-testid={"cc-change-remove"}
+                onClick={handleRemove}
+              >
+                <Trash2Icon size={14} />
+                Remove
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              variant={"danger"}
-              className={"gap-2"}
-              data-testid={"cc-change-remove"}
-              onClick={handleRemove}
-            >
-              <Trash2Icon size={14} />
-              Remove
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </AccordionPrimitive.Header>
 
       <AccordionContent animated={false}>

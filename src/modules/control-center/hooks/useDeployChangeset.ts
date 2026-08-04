@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { mutate } from "swr";
 import { useApiCall } from "@utils/api";
 import { normalizeHostCIDR } from "@utils/ip";
@@ -41,9 +41,12 @@ import {
 // the SAME functions the Review & Deploy code view renders — so what a user
 // reviews is exactly what gets sent. Deploy only supplies the resolvers that
 // turn draft client-ids/names into the real API ids it creates as it runs.
+// Per-change progress shown in the Review & Deploy modal while a deploy runs.
+export type DeployStatus = "deploying" | "done" | "error";
+
 export function useDeployChangeset() {
-  const { changes, removeChange } = useDraftChangeset();
-  const { groups, networks } = useControlCenterData();
+  const { changes } = useDraftChangeset();
+  const { groups, networks, networkResources } = useControlCenterData();
   // Draft client ids → real API ids, PERSISTED across deploy() calls: a
   // partial deploy removes each completed create from the changeset, so on a
   // retry the create is gone and can no longer seed these maps. Persisting
@@ -59,6 +62,20 @@ export function useDeployChangeset() {
   const resourceRequest = useApiCall<NetworkResource>("/networks", true);
   const routerRequest = useApiCall<NetworkRouter>("/networks", true);
   const [isDeploying, setIsDeploying] = useState(false);
+  // Per-change status drives the in-modal spinner / green check. Changes are
+  // NOT removed as they succeed (they stay visible with a check); doneIds
+  // skips them on a retry after a partial failure. Both reset once the
+  // changeset empties (the modal clears it after a successful deploy closes).
+  const [deployStatus, setDeployStatus] = useState<
+    Record<string, DeployStatus>
+  >({});
+  const doneIds = useRef(new Set<string>());
+  useEffect(() => {
+    if (changes.length === 0 && doneIds.current.size > 0) {
+      doneIds.current.clear();
+      setDeployStatus({});
+    }
+  }, [changes.length]);
 
   const deploy = useCallback(async (): Promise<boolean> => {
     setIsDeploying(true);
@@ -132,12 +149,19 @@ export function useDeployChangeset() {
       resolveNetworkId,
       groupIdForRef: (ref) => nameToId.get(ref) ?? ref,
       normalizeAddress: normalizeHostCIDR,
+      // The group POST/PUT sends resources as {id, type} objects; look the type
+      // up from the just-created draft resources first, then the live list.
+      resourceType: (id) =>
+        resourceClientMap.get(id)?.type ??
+        networkResources?.find((res) => res.id === id)?.type,
     };
 
     const executeChange = async (change: DraftChange) => {
       switch (change.type) {
         case "create-group": {
-          const created = await groupRequest.post(groupCreateBody(change));
+          const created = await groupRequest.post(
+            groupCreateBody(change, resolvers),
+          );
           if (created?.id) nameToId.set(created.name, created.id);
           return;
         }
@@ -152,7 +176,10 @@ export function useDeployChangeset() {
             groups?.find((g) => g.id === change.groupId);
           if (!base) throw new Error("Group no longer exists.");
           const updated = await groupRequest.put(
-            groupUpdateBody(change.name, mergeGroupMembers(base, change)),
+            groupUpdateBody(
+              change.name,
+              mergeGroupMembers(base, change, resolvers),
+            ),
             `/${change.groupId}`,
           );
           if (updated?.id) nameToId.set(updated.name, updated.id);
@@ -251,33 +278,44 @@ export function useDeployChangeset() {
 
     const run = async () => {
       for (const change of ordered) {
+        // Skip changes a previous (partial) run already deployed — re-running
+        // a create would duplicate it. Their green check stays.
+        if (doneIds.current.has(change.id)) continue;
+        setDeployStatus((p) => ({ ...p, [change.id]: "deploying" }));
         try {
           await executeChange(change);
         } catch (err) {
+          setDeployStatus((p) => ({ ...p, [change.id]: "error" }));
           const label = getChangeLabel(change).title;
-          const message =
-            (err as { message?: string })?.message ?? "The API request failed.";
+          const e = err as { message?: string; code?: number };
           // Failed + remaining changes stay in the draft for a retry.
-          throw { message: `${label}: ${message}`, code: 0 };
+          throw {
+            message: `${label}: ${e?.message ?? "The API request failed."}`,
+            code: e?.code ?? 0,
+          };
         }
-        removeChange(change.id);
+        doneIds.current.add(change.id);
+        setDeployStatus((p) => ({ ...p, [change.id]: "done" }));
       }
     };
 
-    const promise = run();
-    notify({
-      title: "Deploy",
-      description: `${ordered.length} change${
-        ordered.length !== 1 ? "s" : ""
-      } deployed successfully.`,
-      loadingMessage: "Deploying changes...",
-      promise,
-    });
-
+    // Progress is shown per-change IN the modal (spinner → green check), so
+    // there's no aggregate loading toast; only a failure raises a toast, the
+    // same red "Code N: …" notification the rest of the app uses.
     try {
-      await promise;
+      await run();
       return true;
-    } catch {
+    } catch (err) {
+      // notify() renders the red "Code N: …" toast from a rejected promise.
+      // Give it a no-op catch first so the brief window before notify attaches
+      // its own handler doesn't log an unhandled rejection.
+      const rejected = Promise.reject(err);
+      void rejected.catch(() => {});
+      notify({
+        title: "Deploy",
+        description: "Changes deployed successfully.",
+        promise: rejected,
+      });
       return false;
     } finally {
       // Await revalidation so the live view rebuilds from fresh data on exit.
@@ -293,13 +331,13 @@ export function useDeployChangeset() {
     changes,
     groups,
     networks,
+    networkResources,
     groupRequest,
     policyRequest,
     networkRequest,
     resourceRequest,
     routerRequest,
-    removeChange,
   ]);
 
-  return { deploy, isDeploying };
+  return { deploy, isDeploying, deployStatus };
 }

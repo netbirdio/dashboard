@@ -70,7 +70,9 @@ describe("buildChangeRequest", () => {
     };
     const body = buildChangeRequest(change)?.body as any;
     expect(body.peers).toEqual(["p1"]);
-    expect(body.resources).toEqual(["r1"]);
+    // Resources go as {id, type} objects (bare id strings are rejected by the
+    // API); no live data here so the type is unresolved.
+    expect(body.resources).toEqual([{ id: "r1", type: undefined }]);
   });
 
   it("SSH authorized_groups keys resolve to ids deploy sends, not names", () => {

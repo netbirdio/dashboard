@@ -1,4 +1,4 @@
-import { FolderGit2, SearchIcon } from "lucide-react";
+import { FolderGit2, Loader2, SearchIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -202,7 +202,13 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
           `/${full.id}`,
         );
       }
-      await Promise.all([mutate("/groups"), mutate("/peers")]);
+      // /policies embeds group member counts the views rebuild from — refresh
+      // it too so other views / the draft don't show stale counts.
+      await Promise.all([
+        mutate("/groups"),
+        mutate("/peers"),
+        mutate("/policies"),
+      ]);
     })();
     // The promise drives the toast styling: green on success, red with the
     // API error on failure (useApiCall rejects but never toasts itself, so a
@@ -214,11 +220,17 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     });
     try {
       await request;
+      // Saved — close the panel (draft's Assign path closes too).
+      onClose();
     } catch {
       // A PUT in the loop may have partially applied, so re-sync so the panel
       // and canvas reflect the server truth rather than the optimistic
       // selection.
-      await Promise.all([mutate("/groups"), mutate("/peers")]).catch(() => {});
+      await Promise.all([
+        mutate("/groups"),
+        mutate("/peers"),
+        mutate("/policies"),
+      ]).catch(() => {});
     } finally {
       setSaving(false);
     }
@@ -536,11 +548,22 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
           <Button
             variant={"primary"}
             size={"xs"}
-            className={"py-2.5"}
+            className={"relative py-2.5"}
             disabled={!dirty || saving}
             onClick={() => void saveAssignments()}
           >
-            {saving ? "Saving..." : isDraft ? "Assign" : "Save"}
+            {/* Spinner while saving, but keep the label's width (no jump). */}
+            <span className={cn(saving && "invisible")}>
+              {isDraft ? "Assign" : "Save"}
+            </span>
+            {saving && (
+              <Loader2
+                size={14}
+                className={
+                  "animate-spin absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                }
+              />
+            )}
           </Button>
         </div>
       </div>

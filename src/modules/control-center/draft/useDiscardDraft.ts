@@ -58,11 +58,15 @@ export function useDiscardDraft() {
   }, [sweepPlaceholderArtifacts, clearChanges, setIsDraft]);
 
   // After a deploy the live data changed — force the live view to rebuild
-  // instead of restoring the stale pre-draft canvas.
+  // instead of restoring the stale pre-draft canvas. The changeset is NOT
+  // cleared here: the Review & Deploy modal keeps the deployed items visible
+  // (green checks) and clears them once it has closed, so it never flashes an
+  // empty "no changes" state on the way out.
   const exitAfterDeploy = useCallback(() => {
-    exitDraft();
+    sweepPlaceholderArtifacts();
+    setIsDraft(false);
     setLayoutInitialized(false);
-  }, [exitDraft, setLayoutInitialized]);
+  }, [sweepPlaceholderArtifacts, setIsDraft, setLayoutInitialized]);
 
   // Returns true when the draft was actually exited.
   const discardAndExit = useCallback(async () => {

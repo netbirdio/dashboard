@@ -80,7 +80,13 @@ export interface RequestResolvers {
   groupIdForRef: (ref: string) => string;
   // Address normalizer (deploy and preview both apply normalizeHostCIDR).
   normalizeAddress: (address: string) => string;
+  // Resource id → its type. The group POST/PUT wants resources as {id, type}
+  // objects; bare id strings are rejected ("could not parse json").
+  resourceType: (id: string) => NetworkResource["type"] | undefined;
 }
+
+// A group's resources on the wire: {id, type} objects (never bare id strings).
+type WireResource = { id: string; type?: NetworkResource["type"] };
 
 export const toIds = (
   items?: ({ id?: string } | string)[] | null,
@@ -144,11 +150,13 @@ export function policyRequestBody(policy: Policy, r: RequestResolvers) {
 // POST /groups. Placeholder members that never installed keep their "draft-"
 // ids (not in the API); draft resources ("new-…") apply membership through the
 // resource's own `groups` field, so both are filtered here.
-export function groupCreateBody(change: CreateGroupChange) {
+export function groupCreateBody(change: CreateGroupChange, r?: RequestResolvers) {
   return {
     name: change.name,
     peers: change.peerIds.filter((id) => !id.startsWith("draft-")),
-    resources: change.resourceIds.filter((id) => !id.startsWith("new-")),
+    resources: change.resourceIds
+      .filter((id) => !id.startsWith("new-"))
+      .map((id) => ({ id, type: r?.resourceType(id) }) as WireResource),
   };
 }
 
@@ -158,6 +166,7 @@ export function groupCreateBody(change: CreateGroupChange) {
 export function mergeGroupMembers(
   base: { peers?: (GroupPeer | string)[]; resources?: (GroupResource | string)[] },
   change: UpdateGroupChange,
+  r?: RequestResolvers,
 ) {
   const peers = new Set(toIds(base.peers));
   const resources = new Set(toIds(base.resources));
@@ -165,12 +174,24 @@ export function mergeGroupMembers(
   change.resourceIds.forEach((id) => !id.startsWith("new-") && resources.add(id));
   change.removedPeerIds?.forEach((id) => peers.delete(id));
   change.removedResourceIds?.forEach((id) => resources.delete(id));
-  return { peers: Array.from(peers), resources: Array.from(resources) };
+  // Keep the base group's known resource types; resolve any newly-added ones.
+  const typeById = new Map<string, NetworkResource["type"] | undefined>();
+  (base.resources ?? []).forEach((res) => {
+    if (typeof res !== "string" && res?.id) {
+      typeById.set(res.id, res.type as NetworkResource["type"]);
+    }
+  });
+  return {
+    peers: Array.from(peers),
+    resources: Array.from(resources).map(
+      (id) => ({ id, type: typeById.get(id) ?? r?.resourceType(id) }) as WireResource,
+    ),
+  };
 }
 
 export function groupUpdateBody(
   name: string,
-  members: { peers: string[]; resources: string[] },
+  members: { peers: string[]; resources: WireResource[] },
 ) {
   return { name, peers: members.peers, resources: members.resources };
 }
@@ -317,6 +338,8 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
       change.networkId ?? idPlaceholder("NETWORK", change.networkName),
     groupIdForRef: resolveGroupRef,
     normalizeAddress: (address) => normalizeHostCIDR(address),
+    resourceType: (id) =>
+      live.networkResources?.find((res) => res.id === id)?.type,
   };
 }
 
@@ -347,7 +370,7 @@ export function buildChangeRequest(
     case "update-policy":
       return { method, path, body: safePolicyBody(change.policy, r) };
     case "create-group":
-      return { method, path, body: groupCreateBody(change) };
+      return { method, path, body: groupCreateBody(change, r) };
     case "update-group": {
       const group = live.groups?.find((g) => g.id === change.groupId);
       return {
@@ -355,7 +378,7 @@ export function buildChangeRequest(
         path,
         body: groupUpdateBody(
           change.name,
-          mergeGroupMembers(group ?? { peers: [], resources: [] }, change),
+          mergeGroupMembers(group ?? { peers: [], resources: [] }, change, r),
         ),
       };
     }

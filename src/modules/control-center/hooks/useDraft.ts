@@ -204,10 +204,11 @@ export function useDraft() {
         sources.forEach((source) => {
           const groupId = typeof source === "string" ? source : source.id;
           if (!groupId) return;
+          // Prefer the fresh SWR group (its counts) over the policy-embedded
+          // snapshot, which goes stale after a live membership change.
           const group =
-            typeof source === "string"
-              ? groups?.find((g) => g.id === source)
-              : source;
+            groups?.find((g) => g.id === groupId) ??
+            (typeof source === "string" ? undefined : source);
           if (!group) return;
 
           const nodeId = `group-${groupId}`;
@@ -271,10 +272,11 @@ export function useDraft() {
         orderedDestinations.forEach((dest) => {
           const groupId = typeof dest === "string" ? dest : dest.id;
           if (!groupId) return;
+          // Prefer the fresh SWR group over the policy-embedded snapshot (see
+          // the source-group note above).
           const group =
-            typeof dest === "string"
-              ? groups?.find((g) => g.id === dest)
-              : dest;
+            groups?.find((g) => g.id === groupId) ??
+            (typeof dest === "string" ? undefined : dest);
           if (!group) return;
 
           const isSelfRef = selfRefGroupIds.has(groupId);
@@ -418,7 +420,9 @@ export function useDraft() {
           liveNode.type === "selectGroupNode"
             ? groups?.find((g) => g.id === data?.currentGroup)
             : data?.group?.id
-            ? (data.group as Group)
+            ? // Prefer fresh SWR group counts over the live node's snapshot.
+              (groups?.find((g) => g.id === data.group.id) ??
+              (data.group as Group))
             : undefined;
         if (group?.id && !hasGroup(group.id)) {
           const members = groupMembers.get(group.id);
