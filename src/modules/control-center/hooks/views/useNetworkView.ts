@@ -23,8 +23,7 @@ import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
 export function useNetworkView() {
-  const { selectedNetwork, layoutInitialized, forceSingleGroupViewRef } =
-    useCanvasState();
+  const { selectedNetwork, layoutInitialized } = useCanvasState();
   const {
     policies,
     networks,
@@ -76,11 +75,11 @@ export function useNetworkView() {
           addNode(allNodes, {
             id: `group-${group.id}`,
             type: "groupNode",
-            data: {
-              group,
-              enabled,
-              onClick: () => forceSingleGroupViewRef.current(group.id || ""),
-            },
+            // No onClick → the click falls through to onNodeClick, which opens
+            // the group's side panel (same as every other view). It used to
+            // navigate to the whole group view, which was jarring from a
+            // drilled network.
+            data: { group, enabled },
             position: { x: 0, y: 0 },
           });
 
