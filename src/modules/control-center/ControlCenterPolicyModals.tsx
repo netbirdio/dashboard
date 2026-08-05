@@ -17,6 +17,7 @@ import { Modal } from "@components/modal/Modal";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { Group } from "@/interfaces/Group";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useDialog } from "@/contexts/DialogProvider";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
 import { useReactFlow, XYPosition } from "@xyflow/react";
@@ -100,6 +101,20 @@ export function ControlCenterPolicyProvider({
   } = useDraftChangeset();
   const { setDropdownOptions } = useGroups();
   const reactFlow = useReactFlow();
+  const { confirm } = useDialog();
+
+  // Live edits hit the account on save — confirm first (the modal calls this
+  // before its PUT via onBeforeSave; draft skips it).
+  const confirmLivePolicySave = () =>
+    confirm({
+      title: "Save policy changes?",
+      description:
+        "You are in live mode. Saving your changes will apply them to your account immediately.",
+      confirmText: "Save",
+      cancelText: "Cancel",
+      type: "warning",
+      dismissOnOutsideClick: true,
+    });
 
   const [selectedPolicy, setSelectedPolicy] = useState("");
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
@@ -769,6 +784,9 @@ export function ControlCenterPolicyProvider({
           // In draft the modal must not call the API — edits are recorded as
           // update-policy changes and applied on deploy.
           useSave={!isDraft}
+          // Live: the modal opens directly; the "you are in live mode"
+          // confirmation is deferred to when the user clicks Save Changes.
+          onBeforeSave={isDraft ? undefined : confirmLivePolicySave}
           additionalPeers={isDraft ? placeholderPeers : undefined}
           additionalResources={isDraft ? draftResources : undefined}
           onSuccess={(p) =>

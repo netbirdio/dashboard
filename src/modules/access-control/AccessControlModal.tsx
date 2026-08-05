@@ -70,6 +70,7 @@ type UpdateModalProps = {
   postureCheckTemplates?: PostureCheck[];
   onSuccess?: (policy: Policy) => void;
   useSave?: boolean;
+  onBeforeSave?: () => Promise<boolean> | boolean;
   allowEditPeers?: boolean;
   additionalPeers?: Peer[];
   additionalResources?: NetworkResource[];
@@ -94,6 +95,7 @@ export function AccessControlUpdateModal({
   postureCheckTemplates,
   onSuccess,
   useSave = true,
+  onBeforeSave,
   allowEditPeers,
   additionalPeers,
   additionalResources,
@@ -110,6 +112,7 @@ export function AccessControlUpdateModal({
           cell={cell}
           postureCheckTemplates={postureCheckTemplates}
           useSave={useSave}
+          onBeforeSave={onBeforeSave}
           allowEditPeers={allowEditPeers}
           additionalPeers={additionalPeers}
           additionalResources={additionalResources}
@@ -129,6 +132,10 @@ type ModalProps = {
   cell?: string;
   postureCheckTemplates?: PostureCheck[];
   useSave?: boolean;
+  // Runs right before the modal saves (useSave mode). Return false to abort —
+  // e.g. a "you are in live mode" confirmation. Save proceeds when it resolves
+  // truthy (or when not provided).
+  onBeforeSave?: () => Promise<boolean> | boolean;
   allowEditPeers?: boolean;
   initialProtocol?: Protocol;
   initialPorts?: number[];
@@ -158,6 +165,7 @@ export function AccessControlModalContent({
   cell,
   postureCheckTemplates,
   useSave = true,
+  onBeforeSave,
   allowEditPeers = false,
   initialSourceGroups,
   initialDestinationGroups,
@@ -256,6 +264,14 @@ export function AccessControlModalContent({
   const close = () => {
     const data = getPolicyData();
     onSuccess && onSuccess(data);
+  };
+
+  // Save button behaviour: in useSave mode run the optional confirm, then the
+  // real save; otherwise just hand the data back to the caller (draft mode).
+  const saveOrClose = async () => {
+    if (!useSave) return close();
+    if (onBeforeSave && !(await onBeforeSave())) return;
+    submit();
   };
 
   // Network-scoped destinations are resource access — one-way by nature.
@@ -660,13 +676,7 @@ export function AccessControlModalContent({
                   <Button
                     variant={"primary"}
                     disabled={submitDisabled || !permission.policies.create}
-                    onClick={() => {
-                      if (useSave) {
-                        submit();
-                      } else {
-                        close();
-                      }
-                    }}
+                    onClick={() => void saveOrClose()}
                     data-testid={"submit-policy"}
                   >
                     <PlusCircle size={16} />
@@ -683,13 +693,7 @@ export function AccessControlModalContent({
               <Button
                 variant={"primary"}
                 disabled={submitDisabled || !permission.policies.update}
-                onClick={() => {
-                  if (useSave) {
-                    submit();
-                  } else {
-                    close();
-                  }
-                }}
+                onClick={() => void saveOrClose()}
               >
                 Save Changes
               </Button>
