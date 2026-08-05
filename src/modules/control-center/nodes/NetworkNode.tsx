@@ -286,6 +286,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
             rows={routerRows}
             count={routingPeersCount}
             loading={routerRowsLoading}
+            compact
             onOpenChange={(open) => open && setRoutersRequested(true)}
             onPrefetch={() => setRoutersRequested(true)}
             // Adds work in BOTH modes — live opens the real routing-peer
