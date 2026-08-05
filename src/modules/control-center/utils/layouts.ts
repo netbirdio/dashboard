@@ -172,7 +172,7 @@ export const applyD3HierarchicalLayout = (
     startX,
     view === "network"
       ? nodeSpacing
-      : (options?.destinationGroup?.spacing ?? nodeSpacing),
+      : options?.destinationGroup?.spacing ?? nodeSpacing,
     centerY,
   );
   if (view === "group") {
@@ -223,20 +223,15 @@ export const applyD3HierarchicalLayout = (
     centerY + 5,
   );
 
-  // The column placement above (centerNodesVertically) is already final —
-  // node.x/node.y hold the target positions. The d3 simulation that used to run
-  // here was a NO-OP: zero-strength charge + zero-radius collision, and a
-  // "position" force whose target was each node's OWN coordinate (dx = dy = 0),
-  // so 100 ticks integrated zero velocity and moved nothing. It only burned CPU
-  // synchronously on every view build — most visibly the live↔draft switch,
-  // where it froze the canvas for a beat. Read the placed positions straight
-  // out instead.
+  // centerNodesVertically already set node.x/node.y. A d3 simulation used to run
+  // here but was a no-op (zero charge/collision, a position force targeting each
+  // node's own coordinate) — 100 ticks that moved nothing and only burned CPU on
+  // every view build. Read the placed positions straight out.
   const updatedNodes: Node[] = simulationNodes.map((node) => ({
     ...node,
     position: { x: node.x, y: node.y },
   }));
 
-  // Endpoint lookup via a Map — was an O(edges × nodes) find per endpoint.
   const nodeById = new Map(simulationNodes.map((n) => [n.id, n]));
   const updatedEdges: Edge[] = edges.map((edge) => {
     const sourceNode = nodeById.get(edge.source);

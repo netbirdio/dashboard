@@ -413,11 +413,10 @@ export const DestinationGroupPanel = ({
     return next;
   };
   // Toggles only edit the LOCAL selection — Save applies everything at once
-  // (draft: ONE coalesced changeset entry; live: one PUT). The canvas preview
-  // (group subtitle count + drilled group↔resource edges) is driven imperatively
-  // from HERE, not a selection effect: an effect can't tell a real toggle from
-  // the transient where the selection is still populating on open, and previewing
-  // that transient flashed a stale "No Peers"/count onto the node.
+  // (draft: one coalesced changeset entry; live: one PUT). The canvas preview is
+  // driven imperatively from HERE, not a selection effect: an effect can't tell a
+  // real toggle from the still-populating-on-open transient, which flashed a
+  // stale count onto the node.
   const togglePeer = (peer: Peer) => {
     if (!peer.id) return;
     const next = toggleId(selectedPeerIds, peer.id);
@@ -471,11 +470,9 @@ export const DestinationGroupPanel = ({
     [group, setNodes],
   );
 
-  // Live preview of the group↔resource CONNECTIONS while toggling — only in the
-  // drilled network view, where resources are their OWN standalone nodes (a
-  // framed row attaches differently and isn't previewed here). Draw an edge to
-  // each selected resource, drop it when unselected. Reverted on close unless
-  // saved (see restore below); Save rebuilds the view from persisted data.
+  // Live preview of the group↔resource connections while toggling — only in the
+  // drilled view, where resources are standalone nodes (`!parentId`); a framed
+  // row attaches differently. Reverted on close unless saved.
   const syncGroupEdges = useCallback(
     (resourceIds: Set<string>) => {
       const gid = group?.id;
@@ -541,12 +538,10 @@ export const DestinationGroupPanel = ({
     };
   }, [groupId]);
 
-  // Revert the previewed connections on close UNLESS the panel was saved (Save
-  // persists + rebuilds the view, so leave the edges to that). The refs are
-  // updated in an effect (NOT inline during render) so that on the closing
-  // render — where `group` has already gone undefined and memberResourceIds
-  // emptied — they still hold the leaving group's syncer + membership when the
-  // [groupId] cleanup below runs (the ref-update effect runs AFTER cleanups).
+  // Revert the previewed connections on close unless saved. The refs are updated
+  // in an effect, NOT inline during render, so that on the closing render (where
+  // `group` is already undefined) the [groupId] cleanup below still sees the
+  // leaving group's syncer + membership — effect updates run after cleanups.
   const savedRef = useRef(false);
   const syncGroupEdgesRef = useRef(syncGroupEdges);
   const memberResourceIdsRef = useRef(memberResourceIds);
@@ -677,12 +672,10 @@ export const DestinationGroupPanel = ({
     });
     try {
       await request;
-      // The canvas already reflects the new membership — the toggles previewed
-      // the counts and the drilled group↔resource edges live. So DON'T rebuild
-      // the view (that refit + auto-arranged the canvas on every save); just
-      // keep the preview: mark saved so the close cleanup doesn't revert the
-      // edges, and point the count-restore snapshot at the applied selection
-      // (mirrors the draft path) so it doesn't revert the counts either.
+      // The toggles already previewed the new membership onto the canvas, so
+      // DON'T rebuild the view (that refit + auto-arranged it on every save) —
+      // just keep the preview: mark saved so close doesn't revert the edges, and
+      // point the count-restore snapshot at the applied selection.
       savedRef.current = true;
       restoreCountsRef.current = {
         sync: syncNodeCounts,

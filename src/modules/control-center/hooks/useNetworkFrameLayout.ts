@@ -193,11 +193,9 @@ export function useNetworkFrameLayout() {
         );
         const childUpdate: Partial<Node> = {};
         if (child.hidden) childUpdate.hidden = false;
-        // Parent-view rows are frame-managed: keep them out of rubber-band
-        // selection (a full-width row is caught by any graze — phantom members
-        // in Create Group). Drilled cards are individual, auto-width nodes, so
-        // they ARE selectable — that powers "select resources → Create Group"
-        // in the single-network view.
+        // Parent-view rows are non-selectable (a full-width row gets caught by
+        // any rubber-band graze → phantom Create-Group members). Drilled cards
+        // are individual, so they're selectable for "select → Create Group".
         if (child.selectable !== drilled) childUpdate.selectable = drilled;
         // A drilled resource the user dragged holds its own position (it
         // renders standalone, like the live single-network view) — don't snap

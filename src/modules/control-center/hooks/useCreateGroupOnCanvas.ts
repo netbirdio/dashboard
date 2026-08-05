@@ -21,9 +21,8 @@ type CreateGroupOptions = {
   // their data rides on the group node (dropping the group into a network
   // frame assigns them to that network).
   unassignedDraftResources?: NetworkResource[];
-  // Set when grouping resources INSIDE a drilled network: the group is created
-  // as a resourceGroupNode child of this frame (folds into the network) instead
-  // of a standalone group node. Draft only.
+  // Grouping resources inside a drilled network: create the group as a
+  // resourceGroupNode child of this frame instead of a standalone node. Draft.
   frameId?: string;
 };
 
@@ -59,25 +58,20 @@ export function useCreateGroupOnCanvas() {
           peers_count: peerIds.length,
           resources_count: resourceIds.length,
         };
-        // Grouping resources inside a drilled network: the group belongs to
-        // that network, so create it as a resourceGroupNode child of the frame
-        // (folds into it, exactly like a dragged-in / dropped resource group).
-        // The resourcegroup-new- id keeps Rename working and matches the frame
-        // resource-group menu.
+        // The resourcegroup-new- id keeps Rename working (matches the frame
+        // resource-group menu's prefix check).
         if (frameId) {
           const nodeId = `resourcegroup-new-${uid()}`;
           reactFlow.addNodes({
             id: nodeId,
             type: NodeType.ResourceGroupNode,
             parentId: frameId,
-            // `position` is the frame-relative center of the selection the
-            // group replaces; drilledFreePos tells the frame layout to keep it
-            // there instead of snapping the freshly added node to the bottom
-            // grid slot (the drilled view places children by index).
+            // drilledFreePos keeps the frame layout from snapping this new node
+            // to the bottom grid slot (drilled places children by index).
             position,
             style: { width: NETWORK_FRAME_CHILD_WIDTH },
-            // Seed dims so a child added into a drilled (hidden) frame is
-            // measured on mount and paints in its slot immediately.
+            // Seed dims so a child added into a hidden (drilled) frame measures
+            // on mount instead of flashing unmeasured.
             initialWidth: NETWORK_FRAME_CHILD_WIDTH,
             initialHeight: NETWORK_FRAME_FALLBACK_ROW,
             data: {

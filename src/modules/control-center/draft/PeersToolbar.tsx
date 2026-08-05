@@ -125,8 +125,8 @@ export const PeersToolbar = () => {
 
   const toolbarPosition = useMemo(() => {
     if (selectionNodes.length === 0) return null;
-    // ABSOLUTE bounds (not getNodesBounds, which reads relative positions for
-    // frame children) so the toolbar sits over drilled resource cards too.
+    // Absolute bounds — getNodesBounds reads relative positions for frame
+    // children, which would misplace the toolbar over drilled resource cards.
     let minX = Infinity,
       minY = Infinity,
       maxX = -Infinity,
@@ -200,9 +200,8 @@ export const PeersToolbar = () => {
       const centerX = bounds.x + bounds.width / 2;
       const centerY = bounds.y + bounds.height / 2;
 
-      // Grouping resource cards inside a drilled network → the group belongs to
-      // that network, so create it as a resource-group row folded into the
-      // frame (all selected nodes must be resources of the drilled frame).
+      // Grouping resource cards inside a drilled network folds the group into
+      // that frame (only when every selected node is a resource of that frame).
       const drilledFrameId =
         drillDownNetworkNodeId &&
         selectedGroupableNodes.every(
@@ -213,10 +212,9 @@ export const PeersToolbar = () => {
           ? drillDownNetworkNodeId
           : undefined;
 
-      // Position the new node. Top-level (peers/standalone): the selection's
-      // absolute center. Drilled frame child: FRAME-RELATIVE center of the
-      // selected cards (their n.position is relative to the frame), so the group
-      // lands in the middle of the selection it replaces, not at the bottom.
+      // A frame child's position is relative to the frame, so a drilled group
+      // uses the selection's frame-relative center (lands where the selection
+      // was); a top-level group uses the absolute center.
       let position = { x: centerX - 75, y: centerY - 20 };
       if (drilledFrameId) {
         let minX = Infinity,

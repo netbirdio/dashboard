@@ -536,11 +536,9 @@ const PanelContent = React.memo(
       [canvasNodes],
     );
 
-    // A grouped resource is FOLDED into its group's row inside a network frame,
-    // so it has no `resource-<id>` node of its own on the canvas — but it IS
-    // represented. Treat it as on-canvas (like a plain child), so the panel
-    // greys it out and re-dropping it can't spawn a duplicate standalone node
-    // (which would also draw a stray group→resource line to the folded row).
+    // A resource folded into a group's frame row has no `resource-<id>` node of
+    // its own, but IS represented — treat it as on-canvas so the panel greys it
+    // out and re-dropping can't spawn a duplicate (with a stray edge to the row).
     const foldedResourceIds = useMemo(() => {
       const groupIds = new Set<string>();
       canvasNodes.forEach((n) => {

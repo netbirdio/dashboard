@@ -1102,11 +1102,9 @@ export const NodeContextMenu = ({
       ];
     }
 
-    // Draft resource groups (inside a frame): Rename / Remove. Covers a freshly
-    // added group (resourcegroup-new-…) AND an EXISTING group folded into the
-    // frame (keeps its own id, but type resourceGroupNode) — the fold otherwise
-    // dropped Rename because resourceGroupNode isn't in GROUP_NODE_TYPES, so it
-    // fell through to the remove-only default. New groups are always renameable;
+    // Draft resource groups inside a frame: Rename / Remove. resourceGroupNode
+    // isn't in GROUP_NODE_TYPES, so a folded existing group would otherwise fall
+    // through to the remove-only default. New groups are always renameable;
     // folded existing ones follow canRenameGroup (IdP-issued groups can't).
     if (
       nodeId.startsWith("resourcegroup-new-") ||
