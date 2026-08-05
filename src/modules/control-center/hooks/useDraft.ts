@@ -37,6 +37,43 @@ import {
   addEdge,
 } from "@/modules/control-center/utils/graph-builder";
 
+// Reorder draft nodes to match the LIVE array order (by id). ReactFlow
+// positions by node.position, not array order, so this is visually invisible —
+// but matching the order stops React from MOVING keyed DOM subtrees on the
+// switch, which profiling showed was the biggest cost. New draft-only nodes
+// keep their build order at the end.
+const orderNodesToMatchLive = (
+  draftNodes: Node[],
+  liveNodes: Node[],
+): Node[] => {
+  if (liveNodes.length === 0) return draftNodes;
+  const liveIndex = new Map<string, number>();
+  liveNodes.forEach((n, i) => liveIndex.set(n.id, i));
+  const END = Number.MAX_SAFE_INTEGER;
+  const sorted = draftNodes
+    .map((n, i) => ({ n, i }))
+    .sort((a, b) => {
+      const ai = liveIndex.get(a.n.id) ?? END;
+      const bi = liveIndex.get(b.n.id) ?? END;
+      return ai - bi || a.i - b.i;
+    })
+    .map((x) => x.n);
+  // ReactFlow requires parents before children — new frame-child nodes sorted
+  // to the end must be pulled back after their frame.
+  const byId = new Map(sorted.map((n) => [n.id, n]));
+  const emitted = new Set<string>();
+  const result: Node[] = [];
+  const emit = (n: Node) => {
+    if (emitted.has(n.id)) return;
+    const parent = n.parentId ? byId.get(n.parentId) : undefined;
+    if (parent && !emitted.has(parent.id)) emit(parent);
+    emitted.add(n.id);
+    result.push(n);
+  };
+  sorted.forEach(emit);
+  return result;
+};
+
 export function useDraft() {
   // Upgrades installed placeholders to real peers as they register.
   useDraftPeerUpgrade();
@@ -134,13 +171,28 @@ export function useDraft() {
       const allNodes: Node[] = [];
       const allEdges: Edge[] = [];
 
+      // Id indexes — the build resolves twins/members by id in tight loops;
+      // linear .find per lookup made it O(nodes²).
+      const liveById = new Map(liveNodes.map((n) => [n.id, n]));
+      const resourceById = new Map(
+        (networkResources ?? []).map((r) => [r.id, r]),
+      );
+      const groupById = new Map((groups ?? []).map((g) => [g.id, g]));
+      const peerById = new Map((peers ?? []).map((p) => [p.id, p]));
+      const networkByResourceId = new Map<string, Network>();
+      networks?.forEach((n) =>
+        (n.resources ?? []).forEach((rid) => {
+          if (!networkByResourceId.has(rid)) networkByResourceId.set(rid, n);
+        }),
+      );
+
       // Draft nodes whose id differs from their live counterpart (self-ref
       // destination clones, destination resources/peers) REMOUNT on the mode
       // switch, and React Flow hides unmeasured new nodes for one frame — a
       // visible blink in the destination column. Adopting the live node's
       // measured size lets them paint immediately in the same slot.
       const liveDims = (liveId: string) => {
-        const m = liveNodes.find((n) => n.id === liveId)?.measured;
+        const m = liveById.get(liveId)?.measured;
         return m?.width && m?.height
           ? { initialWidth: m.width, initialHeight: m.height }
           : {};
@@ -169,6 +221,10 @@ export function useDraft() {
         policies?.filter((p) => p.id && livePolicyIds.has(p.id)) ?? [],
         "enabled",
       );
+
+      // A self-referencing group reuses ONE destination node across policies —
+      // groupId → that node's id.
+      const destNodeByGroupId = new Map<string, string>();
 
       visiblePolicies?.forEach((policy) => {
         const rule = policy.rules?.[0];
@@ -207,7 +263,7 @@ export function useDraft() {
           // Prefer the fresh SWR group (its counts) over the policy-embedded
           // snapshot, which goes stale after a live membership change.
           const group =
-            groups?.find((g) => g.id === groupId) ??
+            groupById.get(groupId) ??
             (typeof source === "string" ? undefined : source);
           if (!group) return;
 
@@ -236,7 +292,7 @@ export function useDraft() {
 
         const sourceResource = rule.sourceResource;
         if (sourceResource?.id && sourceResource.type === "peer") {
-          const peer = peers?.find((p) => p.id === sourceResource.id);
+          const peer = peerById.get(sourceResource.id);
           if (peer) {
             const nodeId = `peer-${peer.id}`;
             addNode(allNodes, {
@@ -275,7 +331,7 @@ export function useDraft() {
           // Prefer the fresh SWR group over the policy-embedded snapshot (see
           // the source-group note above).
           const group =
-            groups?.find((g) => g.id === groupId) ??
+            groupById.get(groupId) ??
             (typeof dest === "string" ? undefined : dest);
           if (!group) return;
 
@@ -283,17 +339,11 @@ export function useDraft() {
           const members = groupMembers.get(groupId);
 
           // For self-referencing groups, reuse any existing destination node,
-          // otherwise create a separate destination copy
+          // otherwise create a separate destination copy.
           let nodeId = `group-${groupId}`;
-          const existingDest = allNodes.find(
-            (n) =>
-              n.type === "destinationGroupNode" &&
-              (n.id === `group-${groupId}` ||
-                n.id.startsWith(`dest-group-${groupId}-`)),
-          );
-
-          if (existingDest) {
-            nodeId = existingDest.id;
+          const existingDestId = destNodeByGroupId.get(groupId);
+          if (existingDestId) {
+            nodeId = existingDestId;
           } else if (isSelfRef) {
             nodeId = `dest-group-${groupId}-${policy.id}`;
           }
@@ -314,6 +364,9 @@ export function useDraft() {
             },
             position: { x: 0, y: 0 },
           });
+          if (!destNodeByGroupId.has(groupId)) {
+            destNodeByGroupId.set(groupId, nodeId);
+          }
 
           addEdge(allEdges, {
             id: `${policyNodeId}-${nodeId}`,
@@ -327,7 +380,7 @@ export function useDraft() {
         const destResource = rule.destinationResource;
         if (destResource?.id) {
           if (destResource.type === "peer") {
-            const peer = peers?.find((p) => p.id === destResource.id);
+            const peer = peerById.get(destResource.id);
             if (peer) {
               const nodeId = `peer-${peer.id}`;
               addNode(allNodes, {
@@ -354,18 +407,14 @@ export function useDraft() {
               });
             }
           } else {
-            const resource = networkResources?.find(
-              (r) => r.id === destResource.id,
-            );
+            const resource = resourceById.get(destResource.id);
             if (resource) {
               const nodeId = `resource-${resource.id}`;
               // Stamp the resource's real network (StandaloneResourceNode
               // shows a "No Network" control without it — wrong for an
               // existing resource, which always belongs to one). Frame
               // carry-over below overwrites this with the frame's ref.
-              const net = networks?.find((n) =>
-                n.resources?.includes(resource.id ?? ""),
-              );
+              const net = networkByResourceId.get(resource.id ?? "");
               addNode(allNodes, {
                 id: nodeId,
                 type: "resourceNode",
@@ -396,35 +445,35 @@ export function useDraft() {
       });
 
       // Carry over the entities shown in the live view even when they have no
-      // policies (e.g. group view of a policy-less group) so the draft
-      // doesn't start empty. Covers group nodes drawn on the live canvas and
-      // the group/peer picked in the live select node.
-      const hasGroup = (id?: string) =>
-        !!id && allNodes.some((n) => (n.data as any)?.group?.id === id);
-      const hasPeer = (id?: string) =>
-        !!id && allNodes.some((n) => (n.data as any)?.peer?.id === id);
-      // A peer already represented through one of its groups on the canvas
-      // (e.g. peer view: the picked peer is a member of a visible policy's
-      // source group) must not get its own node — it lives inside the group,
-      // and a standalone copy would overlap it with no connections.
-      const isPeerInCanvasGroup = (peerId: string) =>
-        allNodes.some((n) => {
-          const gid = (n.data as any)?.group?.id;
-          return !!gid && !!groupMembers.get(gid)?.has(peerId);
-        });
+      // policies (e.g. group view of a policy-less group) so the draft doesn't
+      // start empty. `peersInCanvasGroups` (union of all on-canvas groups'
+      // members) suppresses a standalone node for a peer already represented
+      // through one of its groups. Sets kept current as the loop adds nodes.
+      const groupIdsOnCanvas = new Set<string>();
+      const peerIdsOnCanvas = new Set<string>();
+      const peersInCanvasGroups = new Set<string>();
+      const noteGroupOnCanvas = (gid?: string) => {
+        if (!gid || groupIdsOnCanvas.has(gid)) return;
+        groupIdsOnCanvas.add(gid);
+        groupMembers.get(gid)?.forEach((mid) => peersInCanvasGroups.add(mid));
+      };
+      allNodes.forEach((n) => {
+        noteGroupOnCanvas((n.data as { group?: { id?: string } })?.group?.id);
+        const pid = (n.data as { peer?: { id?: string } })?.peer?.id;
+        if (pid) peerIdsOnCanvas.add(pid);
+      });
 
       liveNodes.forEach((liveNode) => {
         const data = liveNode.data as any;
 
         const group: Group | undefined =
           liveNode.type === "selectGroupNode"
-            ? groups?.find((g) => g.id === data?.currentGroup)
+            ? groupById.get(data?.currentGroup)
             : data?.group?.id
             ? // Prefer fresh SWR group counts over the live node's snapshot.
-              (groups?.find((g) => g.id === data.group.id) ??
-              (data.group as Group))
+              (groupById.get(data.group.id) ?? (data.group as Group))
             : undefined;
-        if (group?.id && !hasGroup(group.id)) {
+        if (group?.id && !groupIdsOnCanvas.has(group.id)) {
           const members = groupMembers.get(group.id);
           addNode(allNodes, {
             id: `group-${group.id}`,
@@ -437,14 +486,20 @@ export function useDraft() {
             },
             position: { x: 0, y: 0 },
           });
+          noteGroupOnCanvas(group.id);
           return;
         }
 
         const peer =
           liveNode.type === "selectPeerNode"
-            ? peers?.find((p) => p.id === data?.currentPeer)
+            ? peerById.get(data?.currentPeer)
             : undefined;
-        if (peer?.id && !hasPeer(peer.id) && !isPeerInCanvasGroup(peer.id)) {
+        if (
+          peer?.id &&
+          !peerIdsOnCanvas.has(peer.id) &&
+          !peersInCanvasGroups.has(peer.id)
+        ) {
+          peerIdsOnCanvas.add(peer.id);
           addNode(allNodes, {
             id: `peer-${peer.id}`,
             type: "peerNode",
@@ -461,7 +516,9 @@ export function useDraft() {
       const carryNetworkFrame = (network: Network) => {
         if (!network.id) return;
         const frameId = `network-${network.id}`;
-        if (allNodes.some((n) => n.id === frameId)) return;
+        // Snapshot ids before the mutations below so membership checks are O(1).
+        const nodeIds = new Set(allNodes.map((n) => n.id));
+        if (nodeIds.has(frameId)) return;
 
         // Resources already represented by a group on the canvas (a
         // destination / resource group node). If such a resource has NO direct
@@ -482,14 +539,13 @@ export function useDraft() {
         // partition, so a different input order reshuffles the untargeted rows.
         const childResources = orderFrameResources(
           (network.resources ?? [])
-            .map((rid) => networkResources?.find((r) => r.id === rid))
+            .map((rid) => resourceById.get(rid))
             .filter(Boolean) as NonNullable<typeof networkResources>,
           network.policies,
           policies,
         ).filter(
           (r) =>
-            allNodes.some((n) => n.id === `resource-${r.id}`) ||
-            !groupedResourceIds.has(r.id),
+            nodeIds.has(`resource-${r.id}`) || !groupedResourceIds.has(r.id),
         );
         // Seed with the CAPPED parent-view grid (same as the live overview):
         // an uncapped height (all resources) made big frames seed thousands
@@ -508,7 +564,10 @@ export function useDraft() {
         childResources.forEach((r, i) => {
           // Reparent an already-drawn resource node (splice + re-push so the
           // child follows its parent in the array), or create a fresh child.
-          const idx = allNodes.findIndex((n) => n.id === `resource-${r.id}`);
+          // The set check skips the findIndex scan for the common fresh case.
+          const idx = nodeIds.has(`resource-${r.id}`)
+            ? allNodes.findIndex((n) => n.id === `resource-${r.id}`)
+            : -1;
           const existing = idx >= 0 ? allNodes.splice(idx, 1)[0] : undefined;
           allNodes.push({
             ...(existing ?? {
@@ -583,12 +642,10 @@ export function useDraft() {
         const netId = [...memberNetworks][0];
         const frameId = frameByNetworkId.get(netId);
         if (!frameId) return;
-        // Convert in place (id kept — the smart edges follow to the frame);
-        // ordering is safe: frame children are re-appended after the layout.
-        // The draft keeps the group's own id, but the live overview drew this
-        // same row under a different id (`resource-group-<netId>-<gid>`); adopt
-        // THAT twin's measured size so the row paints immediately instead of
-        // being hidden a frame as unmeasured (a visible flash on the switch).
+        // Convert in place (id kept so its edges follow to the frame). The live
+        // overview drew this row under a different id
+        // (`resource-group-<netId>-<gid>`); adopt that twin's measured size so it
+        // paints immediately instead of flashing unmeasured on the switch.
         allNodes[idx] = {
           ...node,
           type: NodeType.ResourceGroupNode,
@@ -599,16 +656,19 @@ export function useDraft() {
         };
       });
 
-      // Re-seed the frame sizes with their FOLDED group rows included —
-      // the grid packing below must use final heights (live packs with the
-      // group rows too; packing on pre-fold heights gave draft a tighter
-      // vertical rhythm than live).
+      // Re-seed the frame sizes now the folded group rows are counted too, so
+      // the grid packing below uses final heights (matching live's rhythm).
+      const childCountByParent = new Map<string, number>();
+      allNodes.forEach((c) => {
+        if (!c.parentId) return;
+        childCountByParent.set(
+          c.parentId,
+          (childCountByParent.get(c.parentId) ?? 0) + 1,
+        );
+      });
       allNodes.forEach((n) => {
         if (!isFrameNode(n)) return;
-        const childCount = allNodes.filter(
-          (c) => c.parentId === n.id,
-        ).length;
-        const g = getLiveFrameGrid(childCount);
+        const g = getLiveFrameGrid(childCountByParent.get(n.id) ?? 0);
         n.style = { ...n.style, width: g.width, height: g.height };
       });
 
@@ -651,7 +711,7 @@ export function useDraft() {
       // nodes).
       allNodes.forEach((n) => {
         if (n.initialWidth) return;
-        const m = liveNodes.find((l) => l.id === n.id)?.measured;
+        const m = liveById.get(n.id)?.measured;
         if (m?.width && m?.height) {
           n.initialWidth = m.width;
           n.initialHeight = m.height;
@@ -662,11 +722,9 @@ export function useDraft() {
       // toolbar's Auto Arrange, so arranging an untouched draft reproduces
       // this exact layout): sources → policies → destinations, mirroring
       // whatever LIVE view the draft was entered from.
-      const { updatedNodes, updatedEdges } = applyDraftBuildLayout(
-        allNodes,
-        allEdges,
-        liveNodes,
-      );
+      const built = applyDraftBuildLayout(allNodes, allEdges, liveNodes);
+      const updatedEdges = built.updatedEdges;
+      const updatedNodes = orderNodesToMatchLive(built.updatedNodes, liveNodes);
 
       // From the live drilled view, enter the draft drill-down of the same
       // network in the SAME commit: the hidden flags are pre-applied so the

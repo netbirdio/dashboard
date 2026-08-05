@@ -37,7 +37,9 @@ export const DraftStartPopover = ({
 }: Props) => {
   const choose = (fn: () => void) => {
     onOpenChange(false);
-    fn();
+    // Defer past the close: this modal popover's scroll-lock teardown forces a
+    // reflow that thrashed against the canvas rebuild when run in the same tick.
+    requestAnimationFrame(() => fn());
   };
 
   return (
