@@ -284,11 +284,39 @@ export function useNetworkView() {
         });
       });
 
+      // Fold grouped resources into their group row (like the draft build):
+      // a resource that belongs to one of the frame's group rows is already
+      // represented by that row, so don't ALSO list it as its own row — unless
+      // a policy targets it directly (then it needs its own node). This makes
+      // the live frame read "groups contain their resources" instead of showing
+      // both, matching draft.
+      const groupRowMemberIds = new Set<string>();
+      groupRows.forEach((g) => {
+        (networkResources ?? []).forEach((r) => {
+          if (!resourceIdSet.has(r.id ?? "")) return;
+          const inGroup = ((r.groups ?? []) as (Group | string)[]).some(
+            (gg) => (typeof gg === "string" ? gg : gg?.id) === g.id,
+          );
+          if (inGroup && r.id) groupRowMemberIds.add(r.id);
+        });
+      });
+      const directTargetIds = new Set<string>();
+      networkPolicyObjs.forEach((po) => {
+        const dr = po.rules?.[0]?.destinationResource as
+          | { id?: string }
+          | undefined;
+        if (dr?.id) directTargetIds.add(dr.id);
+      });
+      const foldedResources = childResources.filter(
+        (r) =>
+          !groupRowMemberIds.has(r.id ?? "") || directTargetIds.has(r.id ?? ""),
+      );
+
       // Policy-reached resources sort to the top of the frame — shared rule
       // with the draft build (orderFrameResources) so live and draft frames
       // agree on the order.
       const orderedResources = orderFrameResources(
-        childResources,
+        foldedResources,
         network.policies,
         policiesOverride ?? policies,
       );
@@ -296,7 +324,7 @@ export function useNetworkView() {
       // Seed the frame with the SAME grid the reconciling layout produces
       // (2 cols, visible cap, fallback rows) — a mismatched seed made every
       // frame resize and its "+N more" cell shift right after mount.
-      const grid = getLiveFrameGrid(childResources.length + groupRows.length);
+      const grid = getLiveFrameGrid(foldedResources.length + groupRows.length);
       const networkEnabled =
         networkPolicyObjs.length === 0 ||
         networkPolicyObjs.some((po) => po.rules?.[0]?.enabled);

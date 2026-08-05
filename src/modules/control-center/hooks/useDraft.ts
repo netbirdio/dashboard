@@ -477,10 +477,13 @@ export function useDraft() {
         });
         // Same policy-targeted-first order as the live overview
         // (orderFrameResources) — entering draft must not reshuffle rows.
+        // Map network.resources (NOT the global networkResources list) so the
+        // input order matches the live build: orderFrameResources is a stable
+        // partition, so a different input order reshuffles the untargeted rows.
         const childResources = orderFrameResources(
-          (networkResources ?? []).filter((r) =>
-            network.resources?.includes(r.id ?? ""),
-          ),
+          (network.resources ?? [])
+            .map((rid) => networkResources?.find((r) => r.id === rid))
+            .filter(Boolean) as NonNullable<typeof networkResources>,
           network.policies,
           policies,
         ).filter(
@@ -577,16 +580,22 @@ export function useDraft() {
             .filter(Boolean) as string[],
         );
         if (memberNetworks.size !== 1) return;
-        const frameId = frameByNetworkId.get([...memberNetworks][0]);
+        const netId = [...memberNetworks][0];
+        const frameId = frameByNetworkId.get(netId);
         if (!frameId) return;
         // Convert in place (id kept — the smart edges follow to the frame);
         // ordering is safe: frame children are re-appended after the layout.
+        // The draft keeps the group's own id, but the live overview drew this
+        // same row under a different id (`resource-group-<netId>-<gid>`); adopt
+        // THAT twin's measured size so the row paints immediately instead of
+        // being hidden a frame as unmeasured (a visible flash on the switch).
         allNodes[idx] = {
           ...node,
           type: NodeType.ResourceGroupNode,
           parentId: frameId,
           position: getFrameChildPosition(-1),
           style: { ...node.style, width: NETWORK_FRAME_CHILD_WIDTH },
+          ...liveDims(`resource-group-${netId}-${gid}`),
         };
       });
 
