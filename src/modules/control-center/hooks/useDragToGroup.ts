@@ -36,6 +36,9 @@ const GROUP_NODE_TYPES = new Set([
   "groupNode",
   "sourceGroupNode",
   "destinationGroupNode",
+  // A framed resource group is a valid drop target too (drop a resource onto
+  // it in the drilled network view to add it).
+  "resourceGroupNode",
 ]);
 
 function getIntersectingGroup(
@@ -478,14 +481,19 @@ export function useDragToGroup() {
         draggedNode.parentId &&
         draggedNode.parentId === drillDownNetworkNodeId
       ) {
-        setNodes((prev) =>
-          prev.map((n) =>
-            n.id === draggedNode.id
-              ? { ...n, data: { ...n.data, drilledFreePos: true } }
-              : n,
-          ),
-        );
-        return;
+        // Dropped onto a group in the drilled view → fall through to the
+        // group-drop handling below (add it as a member). Otherwise it just
+        // repositions freely.
+        if (!getIntersectingGroup(draggedNode, reactFlow)) {
+          setNodes((prev) =>
+            prev.map((n) =>
+              n.id === draggedNode.id
+                ? { ...n, data: { ...n.data, drilledFreePos: true } }
+                : n,
+            ),
+          );
+          return;
+        }
       }
 
       // Contained resource → final snap; no group-drop for framed resources.
@@ -620,6 +628,8 @@ export function useDragToGroup() {
         peer,
         resource,
         itemId,
+        // Dropping a resource into a group absorbs it — the card leaves the
+        // canvas (same as peers).
         draggedNodeId: draggedNode.id,
       });
     },

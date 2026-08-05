@@ -18,6 +18,8 @@ type ResourceGroupNode = Node<
     group: Group;
     enabled?: boolean;
     showHandles?: boolean;
+    // Set by the drag-to-group tick while a droppable node hovers this group.
+    dropTarget?: boolean;
   },
   "resourceGroupNode"
 >;
@@ -67,6 +69,8 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
           group,
           enabled: data.enabled,
           showHandles,
+          // Carry the drop-target highlight so it rings while a resource hovers.
+          dropTarget: data.dropTarget,
           onClick: () => setSelectedDestinationGroup(group?.id || id),
         }}
       />
@@ -79,8 +83,9 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
         // h-full + centering: the frame layout stamps a fixed slot height on
         // framed rows (deterministic grid — no measure-based re-layout).
         "cc-frame-row relative rounded-lg transition-all group/node w-full h-full flex flex-col justify-center",
-        // Draft: clicking the row opens the group panel for this group.
-        isDraft && "cursor-pointer",
+        // Interactive like the resource rows next to it (pointer + hover): draft
+        // opens the group panel, live drills into the network (via onNodeClick).
+        "cursor-pointer",
       )}
       onClick={() => {
         if (isDraft) setSelectedDestinationGroup(group?.id || id);

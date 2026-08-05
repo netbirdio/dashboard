@@ -211,13 +211,19 @@ export const DestinationGroupPanel = ({
   // In draft the canvas node is the source of truth (it carries renames and
   // drag-added members); the API group is the live-mode fallback. A group can
   // exist on the canvas more than once (source node + destination copy).
+  // A framed "resource group" (resourceGroupNode) is a group too — include it
+  // so its panel resolves members, even though it's kept out of the shared
+  // isGroupNode set (which routes menus/removal for the plain group nodes).
+  const isPanelGroupNode = (n: (typeof nodes)[number]) =>
+    isGroupNode(n) || n.type === "resourceGroupNode";
   const groupNodes = useMemo(
     () =>
       nodes.filter(
         (n) =>
-          isGroupNode(n) &&
+          isPanelGroupNode(n) &&
           (n.id === groupId || getNodeGroup(n)?.id === groupId),
       ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [nodes, groupId],
   );
   const groupNode = groupNodes[0];
@@ -226,6 +232,13 @@ export const DestinationGroupPanel = ({
     if (isDraft && groupNode) return getNodeGroup(groupNode);
     return groups?.find((g) => g.id === groupId) ?? getNodeGroup(groupNode);
   }, [isDraft, groupNode, groups, groupId]);
+
+  // Open on the Resources tab when the group leans towards resources: a framed
+  // resource group, or any group that holds more resources than peers.
+  const preferResourcesTab =
+    groupNode?.type === "resourceGroupNode" ||
+    !!groupNode?.parentId?.startsWith("network-") ||
+    (group?.resources_count ?? 0) > (group?.peers_count ?? 0);
 
   const realGroupId = group?.id ?? "";
 
@@ -624,9 +637,11 @@ export const DestinationGroupPanel = ({
 
   useEffect(() => {
     setSearch("");
-    setTab("peers");
+    // Resource-leaning groups open on the Resources tab; everything else Peers.
+    setTab(preferResourcesTab ? "resources" : "peers");
     // autoFocus only fires on mount — refocus when switching groups too.
     searchInputRef.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
 
   const query = search.trim().toLowerCase();
@@ -823,7 +838,7 @@ export const DestinationGroupPanel = ({
         .getNodes()
         .find(
           (n) =>
-            isGroupNode(n) &&
+            isPanelGroupNode(n) &&
             (n.id === groupId || getNodeGroup(n)?.id === groupId),
         );
       const internal = node && reactFlow.getInternalNode(node.id);

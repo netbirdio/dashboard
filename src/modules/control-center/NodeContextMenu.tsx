@@ -30,8 +30,10 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import {
   useCanvasState,
+  useControlCenterUI,
   useDestinationGroup,
 } from "@/modules/control-center/ControlCenterContext";
+import { getNodeRect } from "@/modules/control-center/utils/canvas-transition";
 import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import useGroupsUsage from "@/modules/groups/useGroupsUsage";
@@ -111,8 +113,14 @@ export const NodeContextMenu = ({
   const peerRequest = useApiCall<Peer>("/peers", true);
   const resourceRequest = useApiCall<NetworkResource>("/networks", true);
   const { permission } = usePermissions();
-  const { isDraft, setResourceEditor, setRoutingPeerModal, setNetworkEditor } =
-    useDraftMode();
+  const {
+    isDraft,
+    setResourceEditor,
+    setRoutingPeerModal,
+    setNetworkEditor,
+    setDrillDownNetworkNodeId,
+  } = useDraftMode();
+  const { onNetworkSelect } = useControlCenterUI();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const { groups, policies } = useControlCenterData();
   // Group deletability mirrors the Groups page: an IdP-issued group can't be
@@ -468,22 +476,30 @@ export const NodeContextMenu = ({
     [policies, nodePolicy],
   );
 
-  // Live actions hit the real account — every one confirms first.
-  const handleLiveEditPolicy = useCallback(async () => {
+  // Opens the editor directly; the "you are in live mode" confirmation is
+  // deferred to when the user clicks Save Changes (onBeforeSave in the modal).
+  const handleLiveEditPolicy = useCallback(() => {
     if (!livePolicy?.id) return;
-    const choice = await confirm({
-      title: `Edit policy “${livePolicy.name ?? "Policy"}”?`,
-      description:
-        "You are in live mode. Saving your changes will apply them to your account immediately.",
-      confirmText: "Edit",
-      cancelText: "Cancel",
-      type: "warning",
-      dismissOnOutsideClick: true,
-    });
-    if (!choice) return;
     setSelectedPolicy(livePolicy.id);
     setPolicyModalOpen(true);
-  }, [livePolicy, confirm, setSelectedPolicy, setPolicyModalOpen]);
+  }, [livePolicy, setSelectedPolicy, setPolicyModalOpen]);
+
+  // "View Details" on a network frame drills into its single-network view —
+  // the draft drill in draft, the live drill (with the frame rect for the
+  // dive animation) in live. Same as clicking the frame.
+  const handleViewNetworkDetails = useCallback(
+    (frameNode: Node) => {
+      if (isDraft) {
+        setDrillDownNetworkNodeId(frameNode.id);
+      } else {
+        onNetworkSelect(
+          frameNode.id.replace("network-", ""),
+          getNodeRect(frameNode),
+        );
+      }
+    },
+    [isDraft, setDrillDownNetworkNodeId, onNetworkSelect],
+  );
 
   const handleLiveTogglePolicy = useCallback(async () => {
     if (!livePolicy?.id) return;
@@ -893,7 +909,14 @@ export const NodeContextMenu = ({
       if (node.type === "networkNode" && isFrameNode(node)) {
         const liveNetwork = (node.data as { network?: Network })?.network;
         if (!liveNetwork?.id) return [];
-        const items: MenuItem[] = [...focusItems(node)];
+        const items: MenuItem[] = [
+          {
+            label: "View Details",
+            icon: <EyeIcon size={14} />,
+            onClick: () => handleViewNetworkDetails(node),
+          },
+          ...focusItems(node),
+        ];
         if (permission.networks.update) {
           items.push(
             {
@@ -1030,6 +1053,11 @@ export const NodeContextMenu = ({
     if (node.type === "networkNode" && isFrameNode(node)) {
       const draftNetwork = isDraftNetworkNode(node);
       return [
+        {
+          label: "View Details",
+          icon: <EyeIcon size={14} />,
+          onClick: () => handleViewNetworkDetails(node),
+        },
         ...focusItems(node),
         ...(draftNetwork
           ? [
@@ -1167,6 +1195,7 @@ export const NodeContextMenu = ({
     permission.networks.update,
     permission.networks.delete,
     handleLiveEditPolicy,
+    handleViewNetworkDetails,
     handleLiveTogglePolicy,
     handleLiveDeletePolicy,
     deleteNetwork,

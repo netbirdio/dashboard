@@ -73,8 +73,9 @@ const getNextUniqueName = (base: string, taken: Set<string>) => {
 // context menu (click/shortcut).
 export function useDraftNodeCreation() {
   const reactFlow = useReactFlow();
-  const { policies, networks, networkResources } = useControlCenterData();
-  const { trackCreateNetwork, trackInstallPeer, trackCreateGroup } =
+  const { policies, networks, networkResources, groups } =
+    useControlCenterData();
+  const { changes, trackCreateNetwork, trackInstallPeer, trackCreateGroup } =
     useDraftChangeset();
 
   // Places a node roughly centered under the given flow position, on top of
@@ -294,12 +295,17 @@ export function useDraftNodeCreation() {
       const frame = nodes.find((n) => n.id === networkNodeId);
       if (!frame) return;
 
+      // Unique across API groups, canvas group names AND pending create-group
+      // changes — otherwise a name that only collides with a LIVE group slips
+      // through and deploy fails with "group already exists".
       const taken = new Set<string>();
+      groups?.forEach((g) => taken.add(g.name));
       nodes.forEach((n) => {
         const groupName = (n.data as { group?: { name?: string } })?.group
           ?.name;
         if (groupName) taken.add(groupName);
       });
+      changes.forEach((c) => c.type === "create-group" && taken.add(c.name));
       const name = getNextNewGroupName(taken);
 
       const nodeId = `resourcegroup-new-${uid()}`;
@@ -331,7 +337,7 @@ export function useDraftNodeCreation() {
       trackCreateGroup({ clientId: nodeId, name });
       return nodeId;
     },
-    [reactFlow, trackCreateGroup],
+    [reactFlow, groups, changes, trackCreateGroup],
   );
 
   // Drops an EXISTING network as a full frame (same chrome + behaviour as a
