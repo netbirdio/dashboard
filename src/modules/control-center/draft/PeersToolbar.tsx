@@ -24,6 +24,8 @@ import {
   getDraftResource,
   getPlaceholderPeer,
   getPolicyRegroupUpdates,
+  NETWORK_FRAME_CHILD_WIDTH,
+  NETWORK_FRAME_FALLBACK_ROW,
 } from "@/modules/control-center/utils/helpers";
 
 const GROUPABLE_NODE_TYPES = new Set([
@@ -46,7 +48,7 @@ const RESOURCE_NODE_TYPES = new Set([
 ]);
 
 export const PeersToolbar = () => {
-  const { isDraft } = useDraftMode();
+  const { isDraft, drillDownNetworkNodeId } = useDraftMode();
   const { setNodes, setEdges } = useCanvasState();
   // Structural subscription incl. selection — positions don't matter here,
   // and the context re-rendered the toolbar on every drag tick.
@@ -123,12 +125,26 @@ export const PeersToolbar = () => {
 
   const toolbarPosition = useMemo(() => {
     if (selectionNodes.length === 0) return null;
-    const bounds = reactFlow.getNodesBounds(selectionNodes);
+    // ABSOLUTE bounds (not getNodesBounds, which reads relative positions for
+    // frame children) so the toolbar sits over drilled resource cards too.
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
+    selectionNodes.forEach((n) => {
+      const internal = reactFlow.getInternalNode(n.id);
+      const pos = internal?.internals.positionAbsolute ?? n.position;
+      const w = internal?.measured?.width ?? n.measured?.width ?? 0;
+      const h = internal?.measured?.height ?? n.measured?.height ?? 0;
+      minX = Math.min(minX, pos.x);
+      minY = Math.min(minY, pos.y);
+      maxX = Math.max(maxX, pos.x + w);
+      maxY = Math.max(maxY, pos.y + h);
+    });
+    if (minX === Infinity) return null;
     const screenX =
-      bounds.x * viewport.zoom +
-      viewport.x +
-      (bounds.width * viewport.zoom) / 2;
-    const screenY = bounds.y * viewport.zoom + viewport.y - 12;
+      minX * viewport.zoom + viewport.x + ((maxX - minX) * viewport.zoom) / 2;
+    const screenY = minY * viewport.zoom + viewport.y - 12;
     return { x: screenX, y: screenY };
   }, [selectionNodes, reactFlow, viewport]);
 
@@ -184,13 +200,51 @@ export const PeersToolbar = () => {
       const centerX = bounds.x + bounds.width / 2;
       const centerY = bounds.y + bounds.height / 2;
 
+      // Grouping resource cards inside a drilled network → the group belongs to
+      // that network, so create it as a resource-group row folded into the
+      // frame (all selected nodes must be resources of the drilled frame).
+      const drilledFrameId =
+        drillDownNetworkNodeId &&
+        selectedGroupableNodes.every(
+          (n) =>
+            RESOURCE_NODE_TYPES.has(n.type ?? "") &&
+            n.parentId === drillDownNetworkNodeId,
+        )
+          ? drillDownNetworkNodeId
+          : undefined;
+
+      // Position the new node. Top-level (peers/standalone): the selection's
+      // absolute center. Drilled frame child: FRAME-RELATIVE center of the
+      // selected cards (their n.position is relative to the frame), so the group
+      // lands in the middle of the selection it replaces, not at the bottom.
+      let position = { x: centerX - 75, y: centerY - 20 };
+      if (drilledFrameId) {
+        let minX = Infinity,
+          minY = Infinity,
+          maxX = -Infinity,
+          maxY = -Infinity;
+        selectedGroupableNodes.forEach((n) => {
+          const w = n.measured?.width ?? 0;
+          const h = n.measured?.height ?? 0;
+          minX = Math.min(minX, n.position.x);
+          minY = Math.min(minY, n.position.y);
+          maxX = Math.max(maxX, n.position.x + w);
+          maxY = Math.max(maxY, n.position.y + h);
+        });
+        position = {
+          x: (minX + maxX) / 2 - NETWORK_FRAME_CHILD_WIDTH / 2,
+          y: (minY + maxY) / 2 - NETWORK_FRAME_FALLBACK_ROW / 2,
+        };
+      }
+
       // createGroup records the draft change itself (no API call in draft).
       const createdGroup = await createGroup({
         name: groupName,
-        position: { x: centerX - 75, y: centerY - 20 },
+        position,
         peers: selectedPeers,
         resources: selectedResources,
         unassignedDraftResources,
+        frameId: drilledFrameId,
       });
 
       if (!createdGroup) return;
@@ -236,6 +290,7 @@ export const PeersToolbar = () => {
       updateDraftPolicy,
       setModalOpen,
       clearSelection,
+      drillDownNetworkNodeId,
     ],
   );
 
