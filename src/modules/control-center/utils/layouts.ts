@@ -223,41 +223,24 @@ export const applyD3HierarchicalLayout = (
     centerY + 5,
   );
 
-  const simulation = d3
-    .forceSimulation(simulationNodes)
-    .force("charge", d3.forceManyBody().strength(0))
-    .force("collision", d3.forceCollide().radius(0))
-    .alphaDecay(0.05)
-    .velocityDecay(0.7);
-
-  simulation.force("position", (alpha) => {
-    simulationNodes.forEach((node) => {
-      let targetX = node.x;
-      let targetY = node.y;
-
-      const dx = targetX - node.x;
-      const dy = targetY - node.y;
-
-      node.vx = (node.vx || 0) + dx * alpha * 0.1;
-      node.vy = (node.vy || 0) + dy * alpha * 0.1;
-    });
-  });
-
-  for (let i = 0; i < 100; i++) {
-    simulation.tick();
-  }
-
+  // The column placement above (centerNodesVertically) is already final —
+  // node.x/node.y hold the target positions. The d3 simulation that used to run
+  // here was a NO-OP: zero-strength charge + zero-radius collision, and a
+  // "position" force whose target was each node's OWN coordinate (dx = dy = 0),
+  // so 100 ticks integrated zero velocity and moved nothing. It only burned CPU
+  // synchronously on every view build — most visibly the live↔draft switch,
+  // where it froze the canvas for a beat. Read the placed positions straight
+  // out instead.
   const updatedNodes: Node[] = simulationNodes.map((node) => ({
     ...node,
-    position: {
-      x: node.x,
-      y: node.y,
-    },
+    position: { x: node.x, y: node.y },
   }));
 
+  // Endpoint lookup via a Map — was an O(edges × nodes) find per endpoint.
+  const nodeById = new Map(simulationNodes.map((n) => [n.id, n]));
   const updatedEdges: Edge[] = edges.map((edge) => {
-    const sourceNode = simulationNodes.find((n) => n.id === edge.source);
-    const targetNode = simulationNodes.find((n) => n.id === edge.target);
+    const sourceNode = nodeById.get(edge.source);
+    const targetNode = nodeById.get(edge.target);
 
     return {
       ...edge,
@@ -273,8 +256,6 @@ export const applyD3HierarchicalLayout = (
       },
     };
   });
-
-  simulation.stop();
 
   return { updatedNodes, updatedEdges };
 };
