@@ -211,6 +211,14 @@ export function useDraftNetworkActions() {
           if (n.id === resourceNodeId) {
             return {
               ...n,
+              // Drop the transient drag flag. When this reparent comes from a
+              // drag (useDragToGroup), `reactFlow.setNodes` reads the xyflow
+              // STORE, which at drag-stop can still hold `dragging: true`
+              // (the drag-stop clear hasn't round-tripped back yet) — spreading
+              // `...n` would bake it in. useNetworkFrameLayout bails while any
+              // node is dragging, so a stuck flag freezes the child at its
+              // temporary slot until the frame is moved (which clears it).
+              dragging: false,
               data: { ...n.data, draftNetwork: networkRef },
               ...(isFrame
                 ? {
