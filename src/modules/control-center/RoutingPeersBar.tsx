@@ -104,6 +104,7 @@ export const RoutingPeersBar = ({
   onPrefetch,
   onOpenChange,
   loading = false,
+  compact = false,
 }: {
   rows: RoutingPeerRow[];
   count: number;
@@ -118,6 +119,10 @@ export const RoutingPeersBar = ({
   // Rows still loading (lazy live fetch) — the popover opens immediately
   // with skeleton rows instead of waiting.
   loading?: boolean;
+  // Frame variant: shrink to the height of the node's floating "Install"
+  // button (Button size="xs" ≈ 34px) instead of the header's 40px, so the
+  // pill sits above the frame at the same scale as the other node overlays.
+  compact?: boolean;
 }) => {
   const [open, setOpen] = React.useState(false);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
@@ -155,8 +160,10 @@ export const RoutingPeersBar = ({
   return (
     <div
       className={cn(
-        // Fixed height matching the header's network SelectDropdown.
-        "flex items-stretch h-[40px] rounded-md overflow-hidden shrink-0",
+        // Fixed height matching the header's network SelectDropdown; the
+        // compact frame variant matches the node's floating "Install" button.
+        "flex items-stretch rounded-md overflow-hidden shrink-0",
+        compact ? "h-[34px]" : "h-[40px]",
         "bg-nb-gray-920 border border-gray-700/40",
       )}
     >
