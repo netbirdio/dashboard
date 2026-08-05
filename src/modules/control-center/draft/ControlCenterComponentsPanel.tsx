@@ -536,6 +536,29 @@ const PanelContent = React.memo(
       [canvasNodes],
     );
 
+    // A grouped resource is FOLDED into its group's row inside a network frame,
+    // so it has no `resource-<id>` node of its own on the canvas — but it IS
+    // represented. Treat it as on-canvas (like a plain child), so the panel
+    // greys it out and re-dropping it can't spawn a duplicate standalone node
+    // (which would also draw a stray group→resource line to the folded row).
+    const foldedResourceIds = useMemo(() => {
+      const groupIds = new Set<string>();
+      canvasNodes.forEach((n) => {
+        if (n.type !== "resourceGroupNode") return;
+        const gid = (n.data as { group?: { id?: string } })?.group?.id;
+        if (gid) groupIds.add(gid);
+      });
+      const ids = new Set<string>();
+      if (groupIds.size === 0) return ids;
+      (resources ?? []).forEach((r) => {
+        const inFolded = ((r.groups ?? []) as (Group | string)[]).some((g) =>
+          groupIds.has(typeof g === "string" ? g : g?.id ?? ""),
+        );
+        if (inFolded && r.id) ids.add(r.id);
+      });
+      return ids;
+    }, [canvasNodes, resources]);
+
 
     // Groups marked for deletion in the draft can't be re-added — they'd be
     // gone right after deploy.
@@ -981,7 +1004,9 @@ const PanelContent = React.memo(
 
     const buildResourceRows = () =>
       filteredResources.map((resource) => {
-        const onCanvas = canvasNodeIds.has(`resource-${resource.id}`);
+        const onCanvas =
+          canvasNodeIds.has(`resource-${resource.id}`) ||
+          foldedResourceIds.has(resource.id ?? "");
         // Existing resources already live in a network — show "name - network"
         // (like the global search) and, since v1 doesn't reassign existing
         // resources, they must NOT drop into another network frame.
