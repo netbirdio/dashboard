@@ -208,7 +208,16 @@ export function useNetworkFrameLayout() {
         ) {
           childUpdate.position = desired;
         }
-        if (!drilled && child.data?.drilledFreePos) {
+        // Drilled: pin each child after its FIRST placement (drilled slots are
+        // a fixed pitch, so the initial position is final) — later reconciles
+        // then leave it alone, so moving or absorbing a sibling never re-grids
+        // the rest. The parent view drops the marker and re-grids.
+        if (drilled && !freePos) {
+          childUpdate.data = {
+            ...(childUpdate.data ?? child.data),
+            drilledFreePos: true,
+          };
+        } else if (!drilled && child.data?.drilledFreePos) {
           childUpdate.data = { ...child.data, drilledFreePos: undefined };
         }
         // Sync the width/height and clear any stale fade mask left by the

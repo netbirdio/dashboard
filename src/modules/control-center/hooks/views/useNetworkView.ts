@@ -200,6 +200,9 @@ export function useNetworkView() {
             addEdge(allEdges, {
               id: `group-${group.id}-resource-${resource.id}`,
               source: `group-${group.id}`,
+              // Leave from the group's RIGHT handle (toward the resource) —
+              // without it RF defaults to the first source handle ("sl", left).
+              sourceHandle: "sr",
               target: `resource-${resource.id}`,
               type: "simple",
             });

@@ -463,6 +463,18 @@ export function useDraft() {
         const frameId = `network-${network.id}`;
         if (allNodes.some((n) => n.id === frameId)) return;
 
+        // Resources already represented by a group on the canvas (a
+        // destination / resource group node). If such a resource has NO direct
+        // policy connection — no node of its own drawn by the policy pass — a
+        // standalone child would just be a disconnected duplicate; the group
+        // already covers it. Skip those (a directly-connected resource stays).
+        const groupedResourceIds = new Set<string>();
+        allNodes.forEach((n) => {
+          const gid = (n.data as { group?: { id?: string } })?.group?.id;
+          if (gid) {
+            groupMembers.get(gid)?.forEach((mid) => groupedResourceIds.add(mid));
+          }
+        });
         // Same policy-targeted-first order as the live overview
         // (orderFrameResources) — entering draft must not reshuffle rows.
         const childResources = orderFrameResources(
@@ -471,6 +483,10 @@ export function useDraft() {
           ),
           network.policies,
           policies,
+        ).filter(
+          (r) =>
+            allNodes.some((n) => n.id === `resource-${r.id}`) ||
+            !groupedResourceIds.has(r.id),
         );
         // Seed with the CAPPED parent-view grid (same as the live overview):
         // an uncapped height (all resources) made big frames seed thousands
