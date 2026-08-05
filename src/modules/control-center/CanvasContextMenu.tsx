@@ -111,9 +111,13 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
               icon: <WorkflowIcon size={14} />,
               shortcut: shortcutLabel(5),
               // Created straight into the drilled network (not standalone).
-              action: () =>
+              // Pass the right-click point so the card lands under the cursor
+              // instead of at the frame's next grid slot (parity with the
+              // non-drilled "New Resource" createStandaloneAt).
+              action: (pos: XYPosition) =>
                 setResourceEditor({
                   createInNetworkNodeId: drillDownNetworkNodeId!,
+                  createAt: pos,
                 }),
             },
             {

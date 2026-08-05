@@ -127,7 +127,10 @@ const EditorContent = ({
       // The node is only born now, on save — into its frame, or standalone at
       // the drop/click position (a plain "No Network" card until assigned).
       const nodeId = editor.createInNetworkNodeId
-        ? addResourceToFrame(editor.createInNetworkNodeId)
+        ? addResourceToFrame(
+            editor.createInNetworkNodeId,
+            editor.createAt ?? undefined,
+          )
         : addDraftResource(editor.createStandaloneAt ?? undefined);
       // Next tick — the freshly created node must be committed to the
       // canvas before saveDraftResource stamps its data.

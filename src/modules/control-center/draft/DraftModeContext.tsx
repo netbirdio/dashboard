@@ -41,9 +41,17 @@ export type NetworkDestinationPickerState = {
 // frame (createInNetworkNodeId), or CREATE a standalone "No Network" resource
 // at a canvas position (createStandaloneAt). Both create shapes defer the
 // node's creation until the modal saves — cancelling leaves nothing behind.
+// createAt (frame create only) carries the drilled-view flow position the
+// right-click happened at, so the new resource lands under the cursor rather
+// than at a grid slot — mirrors createStandaloneAt in the non-drilled view.
 export type ResourceEditorState =
   | { nodeId: string; createInNetworkNodeId?: never; createStandaloneAt?: never }
-  | { nodeId?: never; createInNetworkNodeId: string; createStandaloneAt?: never }
+  | {
+      nodeId?: never;
+      createInNetworkNodeId: string;
+      createAt?: XYPosition | null;
+      createStandaloneAt?: never;
+    }
   | {
       nodeId?: never;
       createInNetworkNodeId?: never;

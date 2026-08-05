@@ -237,8 +237,11 @@ export function useDraftNodeCreation() {
 
   // Adds a draft resource INTO an existing network frame (context menu's
   // "Add Resource") — child of the frame, laid out by useNetworkFrameLayout.
+  // When `position` is given (right-click in the DRILLED view) the card lands
+  // under the cursor instead of at the next grid slot — the drilled equivalent
+  // of the standalone createStandaloneAt placement.
   const addResourceToFrame = useCallback(
-    (networkNodeId: string) => {
+    (networkNodeId: string, position?: XYPosition) => {
       const nodes = reactFlow.getNodes();
       const frame = nodes.find((n) => n.id === networkNodeId);
       // Resolve the frame's network ref (real id for existing-network frames,
@@ -255,6 +258,19 @@ export function useDraftNodeCreation() {
       });
       const name = getNextUniqueName("Resource", takenResources);
 
+      // Cursor placement: the flow position is absolute, child positions are
+      // frame-relative — subtract the frame's origin and roughly center the
+      // card on the pointer (same offset placeNode uses for standalone cards).
+      // `drilledFreePos` tells useNetworkFrameLayout to leave the card where it
+      // dropped rather than snapping it into the grid — exactly how a card the
+      // user drags in the drilled view is treated.
+      const dropPos = position
+        ? {
+            x: position.x - frame.position.x - 100,
+            y: position.y - frame.position.y - 30,
+          }
+        : getFrameChildPosition(-1);
+
       const nodeId = `resource-new-${uid()}`;
       reactFlow.setNodes((prev) =>
         prev.concat({
@@ -263,8 +279,9 @@ export function useDraftNodeCreation() {
           parentId: networkNodeId,
           // Index -1 sorts above every existing child, so the newly added
           // node lands FIRST in the frame's grid (the reconciling layout
-          // re-sorts by y/x and repositions everything).
-          position: getFrameChildPosition(-1),
+          // re-sorts by y/x and repositions everything). A cursor drop instead
+          // pins its own free position (see dropPos above).
+          position: dropPos,
           style: { width: NETWORK_FRAME_CHILD_WIDTH },
           // Seed dimensions so the node counts as "measured" the instant it
           // mounts. When the frame is DRILLED it's hidden, and React Flow keeps
@@ -278,6 +295,7 @@ export function useDraftNodeCreation() {
             enabled: true,
             showHandles: true,
             draftNetwork: networkRef,
+            ...(position ? { drilledFreePos: true } : {}),
           },
         }),
       );
