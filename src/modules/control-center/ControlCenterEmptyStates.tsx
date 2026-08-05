@@ -13,12 +13,11 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { useCanvasTransitionActive } from "@/modules/control-center/utils/canvas-transition";
 
-// Matches the canvas reveal's fade/zoom (same values as canvas-transition.ts).
-// Numbers are literal, not imported: Tailwind's scanner only generates classes
-// it finds as static text, so an interpolated `zoom-in-[${GROW_IN_FROM}]`
-// silently no-ops.
+// Gentle entrance for the drilled empty-network card — a slow fade with a
+// barely-there zoom so it settles in rather than popping. Values are literal:
+// Tailwind's scanner only emits classes it finds as static text.
 const EMPTY_STATE_REVEAL_IN =
-  "animate-in fade-in zoom-in-[.7] duration-[450ms] ease-out fill-mode-both";
+  "animate-in fade-in zoom-in-[.97] duration-[700ms] ease-out fill-mode-both";
 
 export function ControlCenterEmptyStates() {
   const { currentView, selectedNetwork, layoutInitialized } = useCanvasState();
