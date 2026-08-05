@@ -280,25 +280,24 @@ export function useNetworkView() {
                 (gg) => (typeof gg === "string" ? gg : gg?.id) === g.id,
               ),
           );
-          if (hasNetworkResource) groupRows.push(g);
+          if (hasNetworkResource) {
+            // The policy-embedded group carries no counts (folded row showed
+            // "No Resources"); use the fresh SWR group instead.
+            groupRows.push(groups?.find((x) => x.id === g.id) ?? g);
+          }
         });
       });
 
-      // Fold grouped resources into their group row (like the draft build):
-      // a resource that belongs to one of the frame's group rows is already
-      // represented by that row, so don't ALSO list it as its own row — unless
-      // a policy targets it directly (then it needs its own node). This makes
-      // the live frame read "groups contain their resources" instead of showing
-      // both, matching draft.
+      // Fold grouped resources into their group row (matching draft): a resource
+      // already represented by a frame group row isn't ALSO listed on its own,
+      // unless a policy targets it directly (then it needs its own node).
+      const groupRowIds = new Set(groupRows.map((g) => g.id));
       const groupRowMemberIds = new Set<string>();
-      groupRows.forEach((g) => {
-        (networkResources ?? []).forEach((r) => {
-          if (!resourceIdSet.has(r.id ?? "")) return;
-          const inGroup = ((r.groups ?? []) as (Group | string)[]).some(
-            (gg) => (typeof gg === "string" ? gg : gg?.id) === g.id,
-          );
-          if (inGroup && r.id) groupRowMemberIds.add(r.id);
-        });
+      childResources.forEach((r) => {
+        const inGroup = ((r.groups ?? []) as (Group | string)[]).some((gg) =>
+          groupRowIds.has(typeof gg === "string" ? gg : gg?.id ?? ""),
+        );
+        if (inGroup && r.id) groupRowMemberIds.add(r.id);
       });
       const directTargetIds = new Set<string>();
       networkPolicyObjs.forEach((po) => {
