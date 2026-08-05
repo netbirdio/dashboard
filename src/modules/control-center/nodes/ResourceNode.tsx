@@ -140,8 +140,9 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
             className={cn(
               "cc-frame-row-icon h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 transition-all",
               "border border-nb-gray-850",
-              isDraft &&
-                "group-hover/node:text-nb-gray-200 group-hover/node:bg-nb-gray-700 group-hover/node:border-nb-gray-700",
+              // Both modes: the row is clickable (draft opens the editor, live
+              // drills), so its icon box lights up on hover.
+              "group-hover/node:text-nb-gray-200 group-hover/node:bg-nb-gray-700 group-hover/node:border-nb-gray-700",
               // Rings live on the icon box for framed rows: white while a
               // connection drag hovers, sky halo for the context menu.
               isTarget && "group-hover/node:ring-2 group-hover/node:ring-white",

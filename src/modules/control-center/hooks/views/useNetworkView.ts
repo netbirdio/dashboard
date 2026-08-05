@@ -185,7 +185,7 @@ export function useNetworkView() {
             addNode(allNodes, {
               id: `group-${group.id}`,
               type: "destinationGroupNode",
-              data: { group, enabled, hoverable: false },
+              data: { group, enabled },
               position: { x: 0, y: 0 },
             });
 

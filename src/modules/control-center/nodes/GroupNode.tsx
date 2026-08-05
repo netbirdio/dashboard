@@ -81,9 +81,11 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
       >
         <div className={"flex items-center gap-3 font-normal text-sm"}>
           <div
-            className={
-              "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0"
-            }
+            className={cn(
+              "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 transition-all",
+              // Icon box lights up on hover, matching the resource rows.
+              hoverable && "group-hover/node:bg-nb-gray-700",
+            )}
           >
             <GroupBadgeIcon id={group?.id} issued={group?.issued} size={14} />
           </div>

@@ -199,8 +199,9 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
     <div
       className={cn(
         // Fixed height matching GroupNode (h-9 icon + py-3.5 = 64px inner)
-        // so peers, selects, and groups all line up.
-        "relative rounded-lg transition-all group/node pr-5 pl-3 h-[64px] flex items-center border",
+        // so peers, selects, and groups all line up. The unnamed `group` lets
+        // DeviceCard's icon box light up on hover (its group-hover: is unnamed).
+        "relative rounded-lg transition-all group group/node pr-5 pl-3 h-[64px] flex items-center border",
         variant === "card" &&
           "bg-nb-gray-940 border-nb-gray-850 hover:bg-nb-gray-930 hover:border-nb-gray-800",
         variant === "default" && "border-transparent",

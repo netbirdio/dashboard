@@ -425,9 +425,13 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       // A live frame's resource row drills into its network, same as the
       // frame itself (rows are separate nodes, so the frame click never
       // fires for them).
+      // A live frame's resource / resource-group row drills into its network,
+      // same as the frame. Only in the overview (!selectedNetwork) — inside the
+      // drilled view these rows are already there, so a click is a no-op.
       const frameChildNetworkId =
         !isDraft &&
-        _node.type === "resourceNode" &&
+        !selectedNetwork &&
+        (_node.type === "resourceNode" || _node.type === "resourceGroupNode") &&
         _node.parentId?.startsWith("network-")
           ? _node.parentId.replace("network-", "")
           : "";
@@ -488,34 +492,12 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         // side panel — the focus-dim effect highlights its path.
         onDestinationGroupSelect(groupId);
       }
-      // Clicking a policy opens it in the editor. Draft opens directly (edits
-      // land in the changeset). Live confirms first, with the same "you are in
-      // live mode" dialog as the context-menu Edit, since the modal saves via
-      // PUT to the account immediately. The right-click menu keeps Edit/Disable
-      // too.
+      // Clicking a policy opens the editor directly (live and draft alike). In
+      // live the "you are in live mode" confirmation is deferred to when the
+      // user clicks Save Changes (onBeforeSave in ControlCenterPolicyModals).
       if (policyId) {
-        if (isDraft) {
-          setSelectedPolicy(policyId);
-          setPolicyModalOpen(true);
-        } else {
-          const policyName =
-            (_node.data as { policy?: { name?: string } })?.policy?.name ??
-            "Policy";
-          void (async () => {
-            const choice = await confirm({
-              title: `Edit policy “${policyName}”?`,
-              description:
-                "You are in live mode. Saving your changes will apply them to your account immediately.",
-              confirmText: "Edit",
-              cancelText: "Cancel",
-              type: "warning",
-              dismissOnOutsideClick: true,
-            });
-            if (!choice) return;
-            setSelectedPolicy(policyId);
-            setPolicyModalOpen(true);
-          })();
-        }
+        setSelectedPolicy(policyId);
+        setPolicyModalOpen(true);
       }
       // Live resources open the real editor (networks page modal) — its
       // save PUTs, so confirm first, like the live policy actions. Framed
@@ -568,6 +550,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       onNetworkSelect,
       onDestinationGroupSelect,
       currentView,
+      selectedNetwork,
       isDraft,
       setFocusedNodeId,
       highlightArmed,

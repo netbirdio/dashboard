@@ -97,11 +97,18 @@ export function useNetworkFrameLayout() {
       // drill id is set before the zoom-in choreography, and the frame must
       // keep its parent look while still visible.
       const drilled = frame.id === drillDownNetworkNodeId && !!frame.hidden;
-      const resources = nodes
-        .filter((n) => n.parentId === frame.id && !obsolete.has(n.id))
-        .sort(
+      const resources = nodes.filter(
+        (n) => n.parentId === frame.id && !obsolete.has(n.id),
+      );
+      // Parent grid: order by visual position so the cells read top-to-bottom.
+      // Drilled: keep a STABLE order (insertion order) instead — re-sorting by
+      // position every reconcile meant moving one drilled card reshuffled the
+      // grid indices of all the others (a visible "auto-arrange" on every drag).
+      if (!drilled) {
+        resources.sort(
           (a, b) => a.position.y - b.position.y || a.position.x - b.position.x,
         );
+      }
 
       // Parent view caps visible cells at NETWORK_FRAME_MAX_VISIBLE. Past the
       // cap the LAST cell becomes a "+N more" cell (NetworkNode renders it from
