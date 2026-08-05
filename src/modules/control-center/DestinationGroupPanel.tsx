@@ -12,7 +12,7 @@ import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useSWRConfig } from "swr";
-import { useReactFlow } from "@xyflow/react";
+import { type Edge, useReactFlow } from "@xyflow/react";
 import { useApiCall } from "@utils/api";
 import { notify } from "@components/Notification";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -196,7 +196,7 @@ export const DestinationGroupPanel = ({
   // context nodes subscription re-rendered it (and its member lists) on
   // every canvas update while open.
   const nodes = useStructuralNodes();
-  const { setNodes } = useCanvasState();
+  const { setNodes, setEdges } = useCanvasState();
   const { isDraft, setResourceNetworkPicker } = useDraftMode();
   const { changes } = useDraftChangeset();
   const { removeGroupMember } = useDraftGroupActions();
@@ -413,11 +413,23 @@ export const DestinationGroupPanel = ({
     return next;
   };
   // Toggles only edit the LOCAL selection — Save applies everything at once
-  // (draft: ONE coalesced changeset entry; live: one PUT).
-  const togglePeer = (peer: Peer) =>
-    peer.id && setSelectedPeerIds((prev) => toggleId(prev, peer.id!));
-  const toggleResource = (resource: NetworkResource) =>
-    setSelectedResourceIds((prev) => toggleId(prev, resource.id));
+  // (draft: ONE coalesced changeset entry; live: one PUT). The canvas preview
+  // (group subtitle count + drilled group↔resource edges) is driven imperatively
+  // from HERE, not a selection effect: an effect can't tell a real toggle from
+  // the transient where the selection is still populating on open, and previewing
+  // that transient flashed a stale "No Peers"/count onto the node.
+  const togglePeer = (peer: Peer) => {
+    if (!peer.id) return;
+    const next = toggleId(selectedPeerIds, peer.id);
+    setSelectedPeerIds(next);
+    syncNodeCounts(next.size, selectedResourceIds.size);
+  };
+  const toggleResource = (resource: NetworkResource) => {
+    const next = toggleId(selectedResourceIds, resource.id);
+    setSelectedResourceIds(next);
+    syncNodeCounts(selectedPeerIds.size, next.size);
+    syncGroupEdges(next);
+  };
 
   // Live count preview while toggling (debounced below) writes the pending
   // selection sizes into every canvas instance of the group so its subtitle
@@ -459,25 +471,52 @@ export const DestinationGroupPanel = ({
     [group, setNodes],
   );
 
-  // Count preview follows every toggle — nothing hits the API until Save, so
-  // no debounce. The one-tick deferral (with cleanup) is NOT a debounce: on
-  // open the selection is momentarily stale (empty) until the sync effect
-  // above lands, and writing that stale 0 to the node flipped its label to
-  // "No Peers" — the resync re-render cancels the pending stale write.
-  useEffect(() => {
-    if (!canEditMembers || !dirty) return;
-    const timer = window.setTimeout(
-      () => syncNodeCounts(selectedPeerIds.size, selectedResourceIds.size),
-      0,
-    );
-    return () => window.clearTimeout(timer);
-  }, [
-    canEditMembers,
-    dirty,
-    selectedPeerIds,
-    selectedResourceIds,
-    syncNodeCounts,
-  ]);
+  // Live preview of the group↔resource CONNECTIONS while toggling — only in the
+  // drilled network view, where resources are their OWN standalone nodes (a
+  // framed row attaches differently and isn't previewed here). Draw an edge to
+  // each selected resource, drop it when unselected. Reverted on close unless
+  // saved (see restore below); Save rebuilds the view from persisted data.
+  const syncGroupEdges = useCallback(
+    (resourceIds: Set<string>) => {
+      const gid = group?.id;
+      if (!gid) return;
+      const groupNodeId = `group-${gid}`;
+      setEdges((prev) => {
+        const nodeById = new Map(reactFlow.getNodes().map((n) => [n.id, n]));
+        const wanted = new Set<string>();
+        resourceIds.forEach((rid) => {
+          const n = nodeById.get(`resource-${rid}`);
+          if (n && !n.parentId) wanted.add(`${groupNodeId}-resource-${rid}`);
+        });
+        const isGroupResEdge = (e: Edge) =>
+          e.source === groupNodeId && (e.target ?? "").startsWith("resource-");
+        let changed = false;
+        const kept = prev.filter((e) => {
+          if (!isGroupResEdge(e)) return true;
+          const keep = wanted.has(e.id);
+          if (!keep) changed = true;
+          return keep;
+        });
+        const have = new Set(kept.map((e) => e.id));
+        const added: Edge[] = [];
+        wanted.forEach((id) => {
+          if (have.has(id)) return;
+          const rid = id.slice(`${groupNodeId}-resource-`.length);
+          added.push({
+            id,
+            source: groupNodeId,
+            sourceHandle: "sr",
+            target: `resource-${rid}`,
+            type: "simple",
+            data: {},
+          });
+          changed = true;
+        });
+        return changed ? [...kept, ...added] : prev;
+      });
+    },
+    [group, setEdges, reactFlow],
+  );
 
   // Closing / switching groups with unsaved toggles reverts the previewed
   // counts to the actual membership. The ref updates AFTER effects run, so
@@ -499,6 +538,29 @@ export const DestinationGroupPanel = ({
     return () => {
       const r = restoreCountsRef.current;
       r?.sync(r.peers, r.resources);
+    };
+  }, [groupId]);
+
+  // Revert the previewed connections on close UNLESS the panel was saved (Save
+  // persists + rebuilds the view, so leave the edges to that). The refs are
+  // updated in an effect (NOT inline during render) so that on the closing
+  // render — where `group` has already gone undefined and memberResourceIds
+  // emptied — they still hold the leaving group's syncer + membership when the
+  // [groupId] cleanup below runs (the ref-update effect runs AFTER cleanups).
+  const savedRef = useRef(false);
+  const syncGroupEdgesRef = useRef(syncGroupEdges);
+  const memberResourceIdsRef = useRef(memberResourceIds);
+  useEffect(() => {
+    syncGroupEdgesRef.current = syncGroupEdges;
+    memberResourceIdsRef.current = memberResourceIds;
+  }, [syncGroupEdges, memberResourceIds]);
+  useEffect(() => {
+    if (!groupId) return;
+    savedRef.current = false;
+    return () => {
+      if (!savedRef.current) {
+        syncGroupEdgesRef.current(memberResourceIdsRef.current);
+      }
     };
   }, [groupId]);
 
@@ -558,6 +620,7 @@ export const DestinationGroupPanel = ({
         peers: selectedPeerIds.size,
         resources: selectedResourceIds.size,
       };
+      savedRef.current = true;
       onClose();
       return;
     }
@@ -614,7 +677,19 @@ export const DestinationGroupPanel = ({
     });
     try {
       await request;
-      // Saved — close the panel (draft's Assign path closes too).
+      // The canvas already reflects the new membership — the toggles previewed
+      // the counts and the drilled group↔resource edges live. So DON'T rebuild
+      // the view (that refit + auto-arranged the canvas on every save); just
+      // keep the preview: mark saved so the close cleanup doesn't revert the
+      // edges, and point the count-restore snapshot at the applied selection
+      // (mirrors the draft path) so it doesn't revert the counts either.
+      savedRef.current = true;
+      restoreCountsRef.current = {
+        sync: syncNodeCounts,
+        peers: selectedPeerIds.size,
+        resources: selectedResourceIds.size,
+      };
+      // Close the panel (draft's Assign path closes too).
       onClose();
     } catch {
       // Re-sync so the optimistic canvas counts revert to the server truth.
