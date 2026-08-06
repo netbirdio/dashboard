@@ -67,6 +67,9 @@ async function edgeCount(page: Page) {
 
 test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
+    // Prime the API-token cache (its first read navigates to /team/users) up
+    // front, so a mid-test listGroups() call doesn't navigate off the canvas.
+    await listGroups(page);
     await resetDraftState(page);
     await enterDraft(page);
   });
