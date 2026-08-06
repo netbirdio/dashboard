@@ -22,12 +22,40 @@ import {
 export const easeInHalf = (t: number) => t * t;
 export const easeOutHalf = (t: number) => 1 - (1 - t) * (1 - t);
 
+// Run `cb` after the just-committed (invisible) swap has had a couple of real
+// frames to render, so a heavy swap drains while masked instead of stealing
+// the reveal tween's opening frames. Backstopped for backgrounded tabs.
+const afterSwapSettled = (cb: () => void) => {
+  if (typeof requestAnimationFrame !== "function") {
+    setTimeout(cb, FADE_IN_DELAY);
+    return;
+  }
+  let fired = false;
+  const run = () => {
+    if (fired) return;
+    fired = true;
+    cb();
+  };
+  let frames = 0;
+  const tick = () => {
+    if (fired) return;
+    if (frames++ >= REVEAL_WAIT_FRAMES) run();
+    else requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  setTimeout(run, REVEAL_WAIT_MAX_MS);
+};
+
 // Timing (ms). FADE_OUT and the pre-swap motion share a duration so the
 // motion is still at full speed when the canvas turns invisible.
 const FADE_OUT = 200;
 const PRE_SWAP_MOTION = 240;
 const SWAP_AT = 210;
+// Fallback settle delay only when rAF is unavailable (SSR safety).
 const FADE_IN_DELAY = 30;
+// Frames to let the swap commit before revealing (see afterSwapSettled).
+const REVEAL_WAIT_FRAMES = 2;
+const REVEAL_WAIT_MAX_MS = 200;
 // Exported so out-of-pane overlays (e.g. drill-down empty states) can grow
 // in with the exact same fade/zoom timing and curve as the canvas reveal.
 export const FADE_IN = 220;
@@ -213,7 +241,7 @@ export function runCanvasTransition(
     }
 
     // 3. Fade in + decelerating reveal.
-    setTimeout(() => {
+    afterSwapSettled(() => {
       const autoReveal = !finalVp && !reveal && !revealFrom;
       // Late scene viewport: for view rebuilds the new nodes only exist (and
       // are measured) after the swap committed — compute the grow-in
@@ -257,7 +285,7 @@ export function runCanvasTransition(
       // (animate-in) over the solid canvas as the reveal zoom settles, so it's
       // neither a flash nor a laggy late pop-in.
       setTimeout(() => setTransitionActive(false), FADE_IN);
-    }, FADE_IN_DELAY);
+    });
   }, SWAP_AT);
 }
 

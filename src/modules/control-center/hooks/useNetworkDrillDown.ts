@@ -38,6 +38,7 @@ export function useNetworkDrillDown() {
   // True while the exit choreography plays — the reconciling repair must not
   // unhide nodes mid-fade (it would swap the worlds while still visible).
   const exitingRef = useRef(false);
+  const startRafRef = useRef<number | null>(null);
 
   // Leaving draft or removing the drilled frame always exits the drill-down.
   useEffect(() => {
@@ -54,18 +55,23 @@ export function useNetworkDrillDown() {
     if (drillDownNetworkNodeId) {
       if (drillDownNetworkNodeId === prev) return;
       const frameId = drillDownNetworkNodeId;
-      viewportRef.current = reactFlow.getViewport();
+      // Snapshot only when entering from the overview — recapturing on a
+      // network switch (still drilled) would save the DRILLED positions as the
+      // overview and collapse the frames onto each other on exit.
+      const enteringFromOverview = prev == null;
+      if (enteringFromOverview) viewportRef.current = reactFlow.getViewport();
       // Committed state, NOT the reactFlow store — when the drill id is set
       // in the same commit as a fresh canvas (entering draft from the live
       // drilled view), the store may still hold the previous nodes.
       const keep = computeDrillDownKeepSet(nodes, edges, frameId);
 
-      // Snapshot the parent positions, then lay the kept world out like the
-      // LIVE single-network view (same algorithm + spacing) — drilling in
-      // draft and entering draft from the live drilled view look identical.
-      positionsRef.current = new Map(
-        nodes.filter((n) => !n.parentId).map((n) => [n.id, { ...n.position }]),
-      );
+      if (enteringFromOverview || !positionsRef.current) {
+        positionsRef.current = new Map(
+          nodes
+            .filter((n) => !n.parentId)
+            .map((n) => [n.id, { ...n.position }]),
+        );
+      }
       const keptTop = nodes
         .filter((n) => keep.has(n.id) && !n.parentId)
         .map((n) => ({ ...n }));
@@ -77,7 +83,12 @@ export function useNetworkDrillDown() {
       // The hidden frame anchors the resource grid — placed manually so the
       // first child cell coincides with the layout's resource-column start
       // (including the frame in the layout itself skews the column math).
-      const childCount = nodes.filter((n) => n.parentId === frameId).length;
+      // Indexed once — the slot lookup below was an O(nodes) filter per child.
+      const frameChildren = nodes.filter((n) => n.parentId === frameId);
+      const frameChildIndexById = new Map(
+        frameChildren.map((n, i) => [n.id, i] as [string, number]),
+      );
+      const childCount = frameChildren.length;
       const frameAnchor = getDrilledFrameAnchor(childCount);
       drilledPos.set(frameId, frameAnchor);
 
@@ -101,9 +112,7 @@ export function useNetworkDrillDown() {
         nodes.forEach((n) => {
           if (n.parentId === frameId) {
             // Drilled grid slot (single column, fixed pitch).
-            const i = nodes
-              .filter((c) => c.parentId === frameId)
-              .indexOf(n);
+            const i = frameChildIndexById.get(n.id) ?? 0;
             extend(
               frameAnchor.x + 20,
               frameAnchor.y + 86 + i * 95,
@@ -185,13 +194,26 @@ export function useNetworkDrillDown() {
       // drilled view builds pre-drilled).
       const frameNode = nodes.find((n) => n.id === frameId);
       if (frameNode && !frameNode.hidden) {
-        drillInto(reactFlow, frameNode, () => applyDrill(null), {
-          finalViewport: computeFinalViewport,
+        // Start the dive next frame so the drilled view (header switch) paints
+        // first — a same-frame kickoff made them compete and dropped frames.
+        if (startRafRef.current != null)
+          cancelAnimationFrame(startRafRef.current);
+        startRafRef.current = requestAnimationFrame(() => {
+          startRafRef.current = null;
+          drillInto(reactFlow, frameNode, () => applyDrill(null), {
+            finalViewport: computeFinalViewport,
+          });
         });
       } else {
         applyDrill(500);
       }
       return;
+    }
+
+    // A dive queued for next frame but the drill was already left — drop it.
+    if (startRafRef.current != null) {
+      cancelAnimationFrame(startRafRef.current);
+      startRafRef.current = null;
     }
 
     // Not drilled: reconciling repair — top-level nodes must not be hidden.

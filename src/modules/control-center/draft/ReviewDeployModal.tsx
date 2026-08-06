@@ -263,12 +263,13 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                   Approve & Deploy
                 </span>
                 {isDeploying && (
-                  <Loader2
-                    size={16}
+                  <span
                     className={
-                      "animate-spin absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                      "absolute inset-0 flex items-center justify-center"
                     }
-                  />
+                  >
+                    <Loader2 size={16} className={"animate-spin"} />
+                  </span>
                 )}
               </Button>
             </FullTooltip>

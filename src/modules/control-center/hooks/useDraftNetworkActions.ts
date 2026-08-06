@@ -479,10 +479,16 @@ export function useDraftNetworkActions() {
       const networkNodeId = network.networkClientId
         ? `network-${network.networkClientId}`
         : `network-${network.networkId}`;
-      const networkOnCanvas = reactFlow
-        .getNodes()
-        .some((n) => n.id === networkNodeId);
-      if (networkOnCanvas) {
+      const nodesNow = reactFlow.getNodes();
+      const networkOnCanvas = nodesNow.some((n) => n.id === networkNodeId);
+      // Already a child (created straight into this drilled network) — re-
+      // assigning would re-grid it, snapping a cursor drop to center; just sync.
+      const alreadyChild = nodesNow.some(
+        (n) => n.id === nodeId && n.parentId === networkNodeId,
+      );
+      if (networkOnCanvas && alreadyChild) {
+        setTimeout(() => syncDraftResource(nodeId), 0);
+      } else if (networkOnCanvas) {
         assignResourceToNetwork({ resourceNodeId: nodeId, networkNodeId });
       } else {
         reactFlow.setNodes((prev) =>
