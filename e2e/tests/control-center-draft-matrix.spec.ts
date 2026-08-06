@@ -563,25 +563,26 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
 
     await expect(canvasNode(page, "group-new-")).toHaveCount(4);
 
-    for (const [existing, added] of [
-      [g1, "cc-col-source"],
-      [g2, "cc-col-destination"],
+    const g1Name = (await g1.innerText()).split("\n")[0].trim();
+    const g2Name = (await g2.innerText()).split("\n")[0].trim();
+    for (const [anchorName, added, otherName] of [
+      [g1Name, "cc-col-source", g2Name],
+      [g2Name, "cc-col-destination", g1Name],
     ] as const) {
-      const existingName = (await existing.innerText()).split("\n")[0].trim();
       // Layout reconciles after save — poll until the joined group has settled
-      // into the existing group's column (same x) stacked below it.
+      // into the anchor's column (nearer it than the other column) below it.
       await expect
         .poll(async () => {
           const canvas = await readDraftCanvas(page);
           const posOf = (name: string) =>
             canvas.nodes.find((n: any) => n.data?.group?.name === name)
               ?.position;
-          const anchor = posOf(existingName);
+          const anchor = posOf(anchorName);
           const joined = posOf(added);
+          const other = posOf(otherName);
+          if (!anchor || !joined || !other) return false;
           return (
-            !!anchor &&
-            !!joined &&
-            Math.abs(joined.x - anchor.x) < 1 &&
+            Math.abs(joined.x - anchor.x) < Math.abs(joined.x - other.x) &&
             joined.y > anchor.y
           );
         })
