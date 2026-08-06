@@ -609,12 +609,12 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     // amber "Install" step row.
     await page.getByTestId("cc-draft-review").click();
     await expect(
-      page.getByText(/references a peer that isn't installed yet/),
+      page.getByRole("heading", { name: "Review & Deploy" }),
     ).toBeVisible();
-    await expect(
-      page.getByText(/has no network assigned and won't deploy/),
-    ).toBeVisible();
+    // Review surfaces the blockers as badges: the peer's Install step and the
+    // unassigned resource's No Network warning.
     await expect(page.getByText("Install", { exact: true })).toBeVisible();
+    await expect(page.getByText("No Network", { exact: true })).toBeVisible();
     await page.keyboard.press("Escape");
   });
 
