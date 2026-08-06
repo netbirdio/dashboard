@@ -42,8 +42,8 @@ export const OnboardingTestP2P = ({
         <Steps.Step step={1}>
           <p className={"!text-nb-gray-300"}>
             Run this command from{" "}
-            <span className={"text-white"}>{firstDevice?.name}</span> to ping{" "}
-            <span className={"text-white"}>{secondDevice?.name}</span>.
+            <span className={"text-nb-gray-100"}>{firstDevice?.name}</span> to ping{" "}
+            <span className={"text-nb-gray-100"}>{secondDevice?.name}</span>.
             You should receive a response if the connection is working.
           </p>
           <Code message={"Command has been copied successfully"}>

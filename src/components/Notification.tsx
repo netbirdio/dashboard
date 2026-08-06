@@ -181,12 +181,14 @@ export default function Notification<T>({
         <div className={"flex items-center gap-4"}>
           <div
             className={classNames(
-              "h-8 w-8  shadow-sm text-white flex items-center justify-center rounded-md shrink-0",
+              "h-8 w-8  shadow-sm flex items-center justify-center rounded-md shrink-0",
               loading
-                ? "bg-nb-gray-900"
+                ? "bg-nb-gray-900 text-nb-gray-100"
                 : error
-                ? "bg-red-500"
-                : backgroundColor || "bg-green-500",
+                ? "bg-red-500 text-white"
+                : backgroundColor
+                ? `${backgroundColor} text-white`
+                : "bg-green-500 text-white",
             )}
           >
             {loading ? (

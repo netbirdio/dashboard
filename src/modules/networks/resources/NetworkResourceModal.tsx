@@ -348,7 +348,7 @@ export function ResourceModalContent({
                       {groupPolicyCount > 0 && (
                         <Callout variant={"info"} className={"mt-3"}>
                           Your selected resource groups are used in{" "}
-                          <span className="text-white font-medium">
+                          <span className="text-sky-900 dark:text-white font-medium">
                             {groupPolicyCount} Access Control{" "}
                             {groupPolicyCount === 1 ? "Policy" : "Policies"}
                           </span>

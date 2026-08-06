@@ -27,7 +27,7 @@ export default function ActiveInactiveRow({
   return (
     <div
       className={cn(
-        "gap-3 dark:text-neutral-300 text-neutral-500 min-w-0",
+        "gap-3 text-nb-gray-300 min-w-0",
         className,
       )}
       data-testid={dataTestId}

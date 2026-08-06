@@ -210,7 +210,7 @@ export function SelectDropdown({
       </PopoverTrigger>
       <PopoverContent
         className={cn(
-          "p-0 shadow-sm shadow-nb-gray-950 focus:outline-none",
+          "p-0 shadow-sm dark:shadow-nb-gray-950 focus:outline-none",
           popoverWidth !== "content" && "w-full",
         )}
         style={{

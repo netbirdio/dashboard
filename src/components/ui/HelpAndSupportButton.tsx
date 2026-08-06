@@ -39,7 +39,7 @@ export default function HelpAndSupportButton() {
           variant={"default-outline"}
           className={cn(
             "!rounded-full h-[38px] w-[38px] !p-0",
-            dropdownOpen && "text-white",
+            dropdownOpen && "text-nb-gray-100",
           )}
         >
           <CircleQuestionMark size={18} />

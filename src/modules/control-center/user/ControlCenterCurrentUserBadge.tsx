@@ -32,7 +32,7 @@ export const ControlCenterCurrentUserBadge = ({ userId }: Props) => {
         <div className={cn("flex items-center justify-center gap-2.5")}>
           <div
             className={
-              "w-6 h-6 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"
+              "w-6 h-6 rounded-full relative flex items-center justify-center text-neutral-700 dark:text-white uppercase text-md font-medium bg-nb-gray-900"
             }
             style={{
               color: generateColorFromUser(user),

@@ -60,17 +60,21 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
 
       <div
         className={cn(
-          "w-10 h-10 shrink-0 relative rounded-full border-0 bg-nb-gray-900 border-nb-gray-800 flex items-center justify-center uppercase text-sm font-medium text-nb-gray-300",
+          "w-10 h-10 shrink-0 relative rounded-full border-0 bg-nb-gray-800 dark:bg-nb-gray-900 border-nb-gray-800 flex items-center justify-center uppercase text-sm font-medium text-nb-gray-300",
         )}
       >
         <ActivityTypeIcon code={event.activity_code} />
         <div
           className={cn(
             "w-6 h-6 absolute -right-1 -bottom-1 bg-nb-gray-930 rounded-full flex items-center justify-center border-4 border-nb-gray-950",
-            color == "red" && "bg-red-950 text-red-500 ",
-            color == "green" && "bg-green-950 text-green-400 ",
-            color == "blue-darker" && "bg-sky-950 text-sky-500 ",
-            color == "netbird" && "bg-netbird-950 text-netbird-500",
+            color == "red" &&
+              "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-500 ",
+            color == "green" &&
+              "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400 ",
+            color == "blue-darker" &&
+              "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-500 ",
+            color == "netbird" &&
+              "bg-netbird-100 text-netbird-700 dark:bg-netbird-950 dark:text-netbird-500",
           )}
         >
           {color && ActionIcons[color as ActionColor]}
@@ -83,7 +87,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
             <div className={"flex items-center gap-2"}>
               <div
                 className={
-                  "w-4 h-4 rounded-full flex items-center justify-center text-white uppercase text-[9px] font-medium bg-nb-gray-900"
+                  "w-4 h-4 rounded-full flex items-center justify-center text-neutral-700 dark:text-white uppercase text-[9px] font-medium bg-nb-gray-900"
                 }
                 style={{
                   color: generateColorFromUser(user),
@@ -126,7 +130,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
 
         <Card
           className={
-            "w-full relative bg-nb-gray-925 text-sm text-nb-gray-300 flex flex-col px-4 pt-3 pb-3"
+            "w-full relative bg-white dark:bg-nb-gray-925 border-nb-gray-800 dark:border-nb-gray-900 text-sm text-nb-gray-300 flex flex-col px-4 pt-3 pb-3"
           }
         >
           <div className={"flex gap-4"}>
@@ -148,7 +152,7 @@ function VerticalLine() {
   return (
     <div
       className={
-        "absolute left-0 top-0 translate-y-12 h-[56%] bg-nb-gray-900/50 w-[2px] ml-[20px] z-0"
+        "absolute left-0 top-0 translate-y-12 h-[56%] bg-nb-gray-700 dark:bg-nb-gray-900/50 w-[2px] ml-[20px] z-0"
       }
     ></div>
   );
