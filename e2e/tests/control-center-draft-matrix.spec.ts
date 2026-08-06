@@ -614,7 +614,9 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     // Review surfaces the blockers: the peer's Install step and the unassigned
     // resource's No Network warning.
     await expect(page.getByTestId("cc-peer-install")).toBeVisible();
-    await expect(page.getByText("No Network", { exact: true })).toBeVisible();
+    await expect(
+      page.getByTestId("cc-change-create-resource").getByText("No Network"),
+    ).toBeVisible();
     await page.keyboard.press("Escape");
   });
 
