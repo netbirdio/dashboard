@@ -1,8 +1,11 @@
 import { useMemo, useState } from "react";
 import {
+  isL4Mode,
   ReverseProxy,
   ReverseProxyDomain,
   ReverseProxyDomainType,
+  ReverseProxyPortMapping,
+  ServiceMode,
 } from "@/interfaces/ReverseProxy";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 
@@ -74,12 +77,19 @@ type UseReverseProxyDomainOptions = {
   reverseProxy?: ReverseProxy;
   domains?: ReverseProxyDomain[];
   initialSubdomain?: string;
+  serviceMode: ServiceMode;
+  portMappings: ReverseProxyPortMapping[];
 };
+
+const canonicalDomain = (domain: string) =>
+  domain.trim().toLowerCase().replace(/\.+$/, "");
 
 export function useReverseProxyDomain({
   reverseProxy,
   domains,
   initialSubdomain,
+  serviceMode,
+  portMappings,
 }: UseReverseProxyDomainOptions) {
   const { reverseProxies } = useReverseProxies();
 
@@ -118,10 +128,39 @@ export function useReverseProxyDomain({
 
   const domainAlreadyExists = useMemo(() => {
     if (!reverseProxies || !fullDomain) return false;
-    return reverseProxies.some(
-      (p) => p.domain === fullDomain && p.id !== reverseProxy?.id,
-    );
-  }, [reverseProxies, fullDomain, reverseProxy?.id]);
+    const candidateDomain = canonicalDomain(fullDomain);
+
+    const candidateIsL4 = isL4Mode(serviceMode);
+    const candidateHasTLS =
+      serviceMode === ServiceMode.TLS ||
+      portMappings.some((mapping) => mapping.protocol === ServiceMode.TLS);
+
+    // HTTP may share a hostname with raw TCP/UDP services. It retains one HTTP
+    // owner, while TLS passthrough remains exclusive because it also routes by
+    // hostname. Listener-range conflicts between L4 services are validated by
+    // management.
+    return reverseProxies.some((proxy) => {
+      if (
+        canonicalDomain(proxy.domain) !== candidateDomain ||
+        proxy.id === reverseProxy?.id
+      ) {
+        return false;
+      }
+
+      const existingIsL4 = isL4Mode(proxy.mode);
+      const existingHasTLS =
+        proxy.mode === ServiceMode.TLS ||
+        proxy.port_mappings?.some(
+          (mapping) => mapping.protocol === ServiceMode.TLS,
+        ) === true;
+
+      return (
+        (!candidateIsL4 && !existingIsL4) ||
+        (!candidateIsL4 && existingHasTLS) ||
+        (candidateHasTLS && !existingIsL4)
+      );
+    });
+  }, [reverseProxies, fullDomain, reverseProxy?.id, serviceMode, portMappings]);
 
   const isClusterConnected = useMemo(() => {
     if (!reverseProxy?.proxy_cluster) return false;
