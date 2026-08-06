@@ -558,23 +558,34 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       await modalTitle.click();
       await expect(search).toBeHidden();
     }
-    await page.getByTestId("submit-policy").click();
+    // The draft-policy edit modal saves via "Save Changes" (update flow).
+    await page.getByRole("button", { name: "Save Changes" }).click();
 
     await expect(canvasNode(page, "group-new-")).toHaveCount(4);
-    const canvas = await readDraftCanvas(page);
-    const groupsByName = (name: string) =>
-      canvas.nodes.find((n: any) => n.data?.group?.name === name);
-    const pos = (node: any) => node.position;
 
     for (const [existing, added] of [
       [g1, "cc-col-source"],
       [g2, "cc-col-destination"],
     ] as const) {
       const existingName = (await existing.innerText()).split("\n")[0].trim();
-      const anchor = pos(groupsByName(existingName));
-      const joined = pos(groupsByName(added));
-      expect(joined.x).toBeCloseTo(anchor.x, 0); // same column
-      expect(joined.y).toBeGreaterThan(anchor.y); // stacked below
+      // Layout reconciles after save — poll until the joined group has settled
+      // into the existing group's column (same x) stacked below it.
+      await expect
+        .poll(async () => {
+          const canvas = await readDraftCanvas(page);
+          const posOf = (name: string) =>
+            canvas.nodes.find((n: any) => n.data?.group?.name === name)
+              ?.position;
+          const anchor = posOf(existingName);
+          const joined = posOf(added);
+          return (
+            !!anchor &&
+            !!joined &&
+            Math.abs(joined.x - anchor.x) < 1 &&
+            joined.y > anchor.y
+          );
+        })
+        .toBe(true);
     }
   });
 
