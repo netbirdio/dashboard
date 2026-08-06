@@ -39,6 +39,14 @@ async function place(page: Page, kind: Kind, fx: number, fy: number) {
   await dragTemplateToCanvas(page, KIND[kind].template, {
     ...(await panePoint(page, fx, fy)),
   });
+  // A resource drop opens the editor first; the node is created on save.
+  if (kind === "resource") {
+    await page.getByTestId("resource-name-input").fill(`cc-res-${before}`);
+    await page
+      .getByTestId("resource-address-input")
+      .fill(`10.99.${before}.1/32`);
+    await page.getByTestId("submit-resource").click({ force: true });
+  }
   const nodes = canvasNode(page, KIND[kind].prefix);
   await expect(nodes).toHaveCount(before + 1);
   return nodes.nth(before);
@@ -86,7 +94,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       const a = await place(page, source, 0.45, 0.35);
       const b = await place(page, target, 0.75, 0.65);
       // Resources only expose a left (destination) handle.
-      await connectNodes(page, a, b, source === "resource" ? "sl" : "sr");
+      await connectNodes(page, a, b, source === "resource" || source === "network" ? "sl" : "sr");
       await expectPolicyModalThenDismiss(page);
       // Dismissing the modal must not leave a policy or edge behind.
       await expect(canvasNode(page, "policy-new-")).toHaveCount(0);
@@ -110,7 +118,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       const a = await place(page, source, 0.45, 0.35);
       const b = await place(page, target, 0.75, 0.65);
       const edgesBefore = await edgeCount(page);
-      await connectNodes(page, a, b, source === "resource" ? "sl" : "sr");
+      await connectNodes(page, a, b, source === "resource" || source === "network" ? "sl" : "sr");
       await expect(createPolicyHeading(page)).not.toBeVisible();
       expect(await edgeCount(page)).toBe(edgesBefore);
     });
@@ -168,7 +176,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     expect(await edgeCount(page)).toBe(1);
   });
 
-  test("A policy referencing an untracked draft resource stays out of the changeset", async ({
+  test("A policy referencing a no-network resource is tracked but blocked by the resource", async ({
     dashboardAsOwner: page,
   }) => {
     await createViaCanvasMenu(page, "New Policy", { fx: 0.6, fy: 0.35 });
@@ -177,13 +185,19 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const resource = await place(page, "resource", 0.85, 0.65);
 
     await connectNodes(page, group, policy, "sr");
-    // A blank resource (no address, no network) connects as destination…
     await connectNodes(page, resource, policy, "sl");
-    // …but the resource is untracked, so the policy must not deploy: only
-    // the group create is pending.
-    await expectChangeCount(page, 1);
+
+    // The policy is a complete change (both sides set, the resource tracked).
+    // What blocks the deploy is the resource itself: it has an address but no
+    // network, so its create-resource change carries the "No Network" issue.
+    await expectChangeCount(page, 3);
     const changes = await readDraftChanges(page);
-    expect(changes.filter((c) => c.type === "create-policy")).toHaveLength(0);
+    expect(changes.filter((c) => c.type === "create-policy")).toHaveLength(1);
+    const resourceChanges = changes.filter((c) => c.type === "create-resource");
+    expect(resourceChanges).toHaveLength(1);
+    expect(
+      resourceChanges[0].networkId ?? resourceChanges[0].networkClientId,
+    ).toBeFalsy();
   });
 
   // ── Network flows ─────────────────────────────────────────────────────────
@@ -194,8 +208,10 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await createViaCanvasMenu(page, "New Policy", { fx: 0.35, fy: 0.5 });
     const network = await place(page, "network", 0.75, 0.5);
     await connectNodes(page, network, canvasNode(page, "policy-new-"), "sl");
+    // The empty network opens the picker in its no-resources state, so assert
+    // the "Select Destination" modal rather than the resource selector.
     await expect(
-      page.getByTestId("network-destination-selector"),
+      page.getByRole("heading", { name: "Select Destination" }),
     ).toBeVisible();
     await page.keyboard.press("Escape");
   });
@@ -267,7 +283,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await expect(group).toContainText(/1\s*resource/i);
 
     // Its Details row carries the "No Network" alert.
-    await clickContextMenuItem(page, group, "Details");
+    await clickContextMenuItem(page, group, "View Details");
     await page.getByRole("tab", { name: /Resources/ }).click();
     await expect(page.getByText("No network")).toBeVisible();
     await page.keyboard.press("Escape");

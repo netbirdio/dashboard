@@ -189,6 +189,22 @@ export function CanvasStateProvider({
   children: React.ReactNode;
 }) {
   const [nodes, setNodes] = useNodesState<Node>([]);
+
+  // Test-only observability: the canvas lives only in React (not persisted),
+  // so mirror a lightweight projection onto window for e2e assertions.
+  useEffect(() => {
+    if (process.env.APP_ENV !== "test") return;
+    (window as unknown as { __ccDraftCanvas?: unknown }).__ccDraftCanvas = {
+      nodes: nodes.map((n) => ({
+        id: n.id,
+        type: n.type,
+        parentId: n.parentId,
+        position: n.position,
+        data: n.data,
+      })),
+    };
+  }, [nodes]);
+
   // applyNodeChanges keeps replaced nodes at their original index, so a
   // reparent issued through `instance.setNodes` (frame drop adoption,
   // assign-to-network) can leave a child in front of its frame — ReactFlow

@@ -180,8 +180,12 @@ export async function dragTemplateToCanvas(
     y: paneBox.y + paneBox.height * 0.5,
   };
   await mouseDrag(page, await centerOf(item), to);
-  // Close the panel so it doesn't cover nodes for the next interaction.
-  await page.keyboard.press("Escape");
+  // A resource drop opens the editor modal (the caller fills + submits it) and
+  // closes the panel itself — pressing Escape here would dismiss that editor.
+  // Every other template places its node directly, so dismiss the panel.
+  if (!templateTestId.includes("resource")) {
+    await page.keyboard.press("Escape");
+  }
 }
 
 export function canvasNode(page: Page, dataIdPrefix: string) {
@@ -253,11 +257,13 @@ export async function createViaCanvasMenu(
 }
 
 export async function readDraftCanvas(page: Page): Promise<any | null> {
-  const raw = await page.evaluate(
-    (key) => localStorage.getItem(key),
-    CANVAS_KEY,
+  // Draft state is React-only (not persisted); the app mirrors the canvas onto
+  // window.__ccDraftCanvas in the test build.
+  return await page.evaluate(
+    () =>
+      (window as unknown as { __ccDraftCanvas?: unknown }).__ccDraftCanvas ??
+      null,
   );
-  return raw ? JSON.parse(raw) : null;
 }
 
 /** Drags one canvas node onto another (e.g. a peer into a group). */
