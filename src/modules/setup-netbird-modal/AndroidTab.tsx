@@ -26,6 +26,7 @@ export default function AndroidTab() {
                   "https://play.google.com/store/apps/details?id=io.netbird.client"
                 }
                 target={"_blank"}
+                rel="noopener noreferrer"
               >
                 <Image
                   src={GooglePlayButton}
