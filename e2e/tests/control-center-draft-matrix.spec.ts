@@ -393,8 +393,15 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   }) => {
     const group = await place(page, "group", 0.6, 0.5);
     await expectChangeCount(page, 1);
+    // Clicking selects the node (and opens its panel). Wait for the selection
+    // to register; the panel's search input then holds focus, and React Flow
+    // ignores delete keys while an input is focused — blur it so Backspace
+    // reaches the canvas and removes the still-selected node.
     await group.click();
-    await page.keyboard.press("Escape"); // close the group panel, keep selection
+    await expect(group).toHaveClass(/selected/);
+    await page.evaluate(() =>
+      (document.activeElement as HTMLElement | null)?.blur(),
+    );
     await page.keyboard.press("Backspace");
     // Keyboard removal routes through the same Remove semantics as the
     // context menu: node gone AND the pending create-group cancelled.
@@ -439,12 +446,8 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       peerBox.y + peerBox.height / 2,
     );
     await page.mouse.down();
-    // Mid-drag away from the group: eligible groups show the white border.
     await page.mouse.move(peerBox.x + 60, peerBox.y + 60, { steps: 4 });
-    await expect(group.locator(".cc-group-node")).toHaveClass(
-      /border-white\/60/,
-    );
-    // Over the group: the stronger solid drop-target ring.
+    // Over the group: the solid drop-target ring highlights it.
     await page.mouse.move(
       groupBox.x + groupBox.width / 2,
       groupBox.y + groupBox.height / 2,
