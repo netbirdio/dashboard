@@ -45,7 +45,9 @@ test.describe.serial(
       // Drag from the first group's right handle onto the second group —
       // the create-policy modal opens prefilled with both sides.
       await connectNodes(page, groups.nth(0), groups.nth(1));
-      await expect(page.getByTestId("policy-name")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Create New Access Control Policy" }),
+      ).toBeVisible();
       await submitCreatePolicyModal(page);
 
       // A complete policy lands on canvas with two edges and a tracked
@@ -76,7 +78,9 @@ test.describe.serial(
       await expect(peer).toHaveCount(1);
 
       await connectNodes(page, peer, group);
-      await expect(page.getByTestId("policy-name")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Create New Access Control Policy" }),
+      ).toBeVisible();
       await submitCreatePolicyModal(page);
 
       // The policy node and edges exist on canvas…
@@ -157,7 +161,9 @@ test.describe.serial(
       });
       const groups = canvasNode(page, "group-new-");
       await connectNodes(page, groups.nth(0), groups.nth(1));
-      await expect(page.getByTestId("policy-name")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Create New Access Control Policy" }),
+      ).toBeVisible();
 
       // Type a brand-new group name into the destination selector and add it.
       const inlineName = generateRandomName("cc-inline-");
@@ -205,7 +211,11 @@ test.describe.serial(
       // Edit via context menu, rename the policy on the General tab.
       const newName = generateRandomName("cc-policy-");
       await clickContextMenuItem(page, policyNode, "Edit");
-      await expect(page.getByTestId("policy-name")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Update Access Control Policy" }),
+      ).toBeVisible();
+      // The name field lives on the Name & Description tab.
+      await page.getByRole("tab", { name: "Name & Description" }).click();
       await page.getByTestId("policy-name").fill(newName);
       await page.getByTestId("submit-policy").click();
 

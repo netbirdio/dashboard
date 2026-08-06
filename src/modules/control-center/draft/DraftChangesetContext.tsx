@@ -4,6 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -838,6 +839,16 @@ export function DraftChangesetProvider({
   // Draft changes live only in React state — they exist for the lifetime of
   // the draft session and are gone on reload (no persistence).
   const [changes, setChanges] = useState<DraftChange[]>([]);
+
+  // Test-only observability: the changeset lives only in React (not persisted),
+  // so expose it on window for e2e assertions in the test build.
+  useEffect(() => {
+    if (process.env.APP_ENV === "test") {
+      (
+        window as unknown as { __ccDraftChanges?: DraftChange[] }
+      ).__ccDraftChanges = changes;
+    }
+  }, [changes]);
 
   const trackCreateGroup = useCallback(
     ({

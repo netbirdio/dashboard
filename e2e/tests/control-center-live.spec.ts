@@ -365,45 +365,49 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
       menu.getByRole("button", { name: "Delete", exact: true }),
     ).toBeVisible();
 
-    // Edit opens the policy modal directly; the "you are in live mode"
-    // confirmation is deferred to Save (a live edit hits the account at once).
+    // Edit opens the policy modal directly (on the Policy tab); the "you are in
+    // live mode" confirmation is deferred to Save (a live edit hits the account
+    // at once).
+    const modalTitle = page.getByRole("heading", {
+      name: "Update Access Control Policy",
+    });
     await menu.getByRole("button", { name: "Edit", exact: true }).click();
-    await expect(page.getByTestId("policy-name")).toBeVisible();
+    await expect(modalTitle).toBeVisible();
 
     // Saving warns first; cancelling the warning aborts the save (no PUT) and
     // leaves the modal open.
     await page.getByRole("button", { name: "Save Changes" }).click();
     await expect(page.getByText("You are in live mode")).toBeVisible();
     await page.getByTestId("confirmation.cancel").click();
-    await expect(page.getByTestId("policy-name")).toBeVisible();
+    await expect(modalTitle).toBeVisible();
 
     await page.getByRole("button", { name: "Cancel", exact: true }).click();
-    await expect(page.getByTestId("policy-name")).not.toBeVisible();
+    await expect(modalTitle).not.toBeVisible();
   });
 
-  test("Should warn before opening a policy on left-click in live mode", async ({
+  test("Should warn before saving a policy opened on left-click in live mode", async ({
     dashboardAsOwner: page,
   }) => {
     const { policyNode } = await seedPolicyAndOpenGroupView(page);
 
-    // Left-clicking a policy in LIVE mode must NOT open the editor directly.
-    // It warns first, exactly like the context menu's Edit, because the modal
-    // saves via PUT to the account immediately. (Draft opens it directly.)
+    // Left-clicking a policy opens the editor directly (live and draft alike);
+    // the live-mode warning is deferred to Save, since the save PUTs to the
+    // account immediately.
+    const modalTitle = page.getByRole("heading", {
+      name: "Update Access Control Policy",
+    });
     await dismissBlockingOverlays(page);
     await policyNode.click();
-    await expect(page.getByText("You are in live mode")).toBeVisible();
+    await expect(modalTitle).toBeVisible();
 
-    // Cancelling leaves the editor closed.
+    // Saving warns first; cancelling the warning aborts the save (no PUT).
+    await page.getByRole("button", { name: "Save Changes" }).click();
+    await expect(page.getByText("You are in live mode")).toBeVisible();
     await page.getByTestId("confirmation.cancel").click();
-    await expect(
-      page.getByText("Update Access Control Policy"),
-    ).not.toBeVisible();
+    await expect(modalTitle).toBeVisible();
 
-    // Confirming opens the policy editor.
-    await policyNode.click();
-    await expect(page.getByText("You are in live mode")).toBeVisible();
-    await page.getByTestId("confirmation.confirm").click();
-    await expect(page.getByText("Update Access Control Policy")).toBeVisible();
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(modalTitle).not.toBeVisible();
   });
 
   test("Should disable a policy from the live menu (immediate PUT)", async ({

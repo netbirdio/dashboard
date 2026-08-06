@@ -44,10 +44,13 @@ async function place(page: Page, kind: Kind, fx: number, fy: number) {
   return nodes.nth(before);
 }
 
+const createPolicyHeading = (page: Page) =>
+  page.getByRole("heading", { name: "Create New Access Control Policy" });
+
 async function expectPolicyModalThenDismiss(page: Page) {
-  await expect(page.getByTestId("policy-name")).toBeVisible();
+  await expect(createPolicyHeading(page)).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByTestId("policy-name")).not.toBeVisible();
+  await expect(createPolicyHeading(page)).not.toBeVisible();
 }
 
 async function edgeCount(page: Page) {
@@ -108,7 +111,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       const b = await place(page, target, 0.75, 0.65);
       const edgesBefore = await edgeCount(page);
       await connectNodes(page, a, b, source === "resource" ? "sl" : "sr");
-      await expect(page.getByTestId("policy-name")).not.toBeVisible();
+      await expect(createPolicyHeading(page)).not.toBeVisible();
       expect(await edgeCount(page)).toBe(edgesBefore);
     });
   }
@@ -121,7 +124,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const policies = canvasNode(page, "policy-new-");
     await expect(policies).toHaveCount(2);
     await connectNodes(page, policies.nth(0), policies.nth(1));
-    await expect(page.getByTestId("policy-name")).not.toBeVisible();
+    await expect(createPolicyHeading(page)).not.toBeVisible();
     expect(await edgeCount(page)).toBe(0);
   });
 
@@ -140,7 +143,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
 
     // Right handle → source side; left handle → destination side.
     await connectNodes(page, g1, policy, "sr");
-    await expect(page.getByTestId("policy-name")).not.toBeVisible();
+    await expect(createPolicyHeading(page)).not.toBeVisible();
     expect(await edgeCount(page)).toBe(1);
     await expectChangeCount(page, 2); // still incomplete: one side only
 
@@ -204,7 +207,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const network = await place(page, "network", 0.75, 0.5);
     await connectNodes(page, resource, network, "sl");
     // No policy modal — the resource joins the frame.
-    await expect(page.getByTestId("policy-name")).not.toBeVisible();
+    await expect(createPolicyHeading(page)).not.toBeVisible();
     await expect
       .poll(async () => {
         const canvas = await readDraftCanvas(page);
@@ -547,7 +550,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const peer = await place(page, "peer", 0.75, 0.35);
     await place(page, "resource", 0.55, 0.7);
     await connectNodes(page, group, peer);
-    await expect(page.getByTestId("policy-name")).toBeVisible();
+    await expect(createPolicyHeading(page)).toBeVisible();
     await page.getByTestId("policy-continue").click();
     await page.getByTestId("policy-continue").click();
     await page.getByTestId("submit-policy").click();

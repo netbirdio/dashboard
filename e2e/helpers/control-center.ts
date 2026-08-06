@@ -100,11 +100,12 @@ export async function resetDraftState(page: Page) {
 }
 
 export async function readDraftChanges(page: Page): Promise<any[]> {
-  const raw = await page.evaluate(
-    (key) => localStorage.getItem(key),
-    CHANGES_KEY,
+  // Draft state is React-only (not persisted); the app mirrors the live
+  // changeset onto window.__ccDraftChanges in the test build.
+  return await page.evaluate(
+    () =>
+      (window as unknown as { __ccDraftChanges?: any[] }).__ccDraftChanges ?? [],
   );
-  return raw ? JSON.parse(raw) : [];
 }
 
 async function centerOf(locator: Locator) {
@@ -207,7 +208,27 @@ export async function connectNodes(
   );
   await expect(handle).toBeVisible();
   await page.waitForTimeout(100);
-  await mouseDrag(page, await centerOf(handle), await centerOf(target));
+  // React Flow's connection is a pointer drag distinct from the panel's custom
+  // drag: it tracks the connection line across pointermoves and the target's
+  // full-area handle only becomes connectable mid-drag, so pace the path and
+  // dwell on the target before releasing.
+  const from = await centerOf(handle);
+  const to = await centerOf(target);
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.waitForTimeout(50);
+  const steps = 20;
+  for (let i = 1; i <= steps; i++) {
+    await page.mouse.move(
+      from.x + ((to.x - from.x) * i) / steps,
+      from.y + ((to.y - from.y) * i) / steps,
+    );
+    await page.waitForTimeout(12);
+  }
+  await page.mouse.move(to.x, to.y);
+  await page.waitForTimeout(80);
+  await page.mouse.up();
+  await page.waitForTimeout(120);
 }
 
 /** Positions relative to the canvas pane (fractions of width/height). */
