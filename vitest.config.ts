@@ -9,8 +9,5 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],
-    // Legacy standalone test scripts (hand-rolled, call process.exit) — run
-    // them directly with node/tsx instead.
-    exclude: ["src/utils/ip.test.ts", "src/utils/version.test.ts"],
   },
 });
