@@ -540,12 +540,15 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
 
     await clickContextMenuItem(page, policy, "Edit");
     for (const side of ["source", "destination"] as const) {
+      const search = page.getByTestId(`${side}-group-selector-search`);
       await page.getByTestId(`${side}-group-selector`).click();
-      await page
-        .getByTestId(`${side}-group-selector-search`)
-        .fill(`cc-col-${side}`);
+      await expect(search).toBeVisible();
+      await search.fill(`cc-col-${side}`);
       await page.keyboard.press("Enter");
       await page.keyboard.press("Escape");
+      // Wait for the popover to fully close before opening the next side — a
+      // still-closing Radix popover swallows the next trigger click.
+      await expect(search).toBeHidden();
     }
     await page.getByTestId("submit-policy").click();
 
