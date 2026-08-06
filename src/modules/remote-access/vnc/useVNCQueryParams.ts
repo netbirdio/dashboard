@@ -25,7 +25,10 @@ const defaultSettings: VNCSettings = {
   scale: true,
   resize: false,
   quality: 6,
-  dotCursor: true,
+  // Off, matching noVNC's own default. The dot replaces the viewer's local
+  // pointer, and a peer that sends no cursor of its own (macOS does not) would
+  // leave the dot as the only thing on screen.
+  dotCursor: false,
 };
 
 const allowedModes = ["attach", "session"] as const;
@@ -46,7 +49,7 @@ function parseSettings(p: URLSearchParams): VNCSettings {
     scale: p.get("scale") !== "false",
     resize: p.get("resize") === "true",
     quality,
-    dotCursor: p.get("cursor") !== "false",
+    dotCursor: p.get("cursor") === "true",
   };
 }
 
@@ -68,7 +71,9 @@ export function useVNCQueryParams() {
     const mode = parseMode(searchParams.get("mode"));
     const username = searchParams.get("user") || "";
     const ipVersion = searchParams.get("ip_version");
-    const settings = parseSettings(new URLSearchParams(searchParams.toString()));
+    const settings = parseSettings(
+      new URLSearchParams(searchParams.toString()),
+    );
 
     if (peerId) {
       setParams({ peerId, mode, username, ipVersion, settings, ready: true });
