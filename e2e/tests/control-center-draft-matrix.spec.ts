@@ -539,15 +539,23 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await expect(policy).toHaveCount(1);
 
     await clickContextMenuItem(page, policy, "Edit");
+    const modalTitle = page.getByRole("heading", {
+      name: "Update Access Control Policy",
+    });
     for (const side of ["source", "destination"] as const) {
+      const selector = page.getByTestId(`${side}-group-selector`);
       const search = page.getByTestId(`${side}-group-selector-search`);
-      await page.getByTestId(`${side}-group-selector`).click();
-      await expect(search).toBeVisible();
+      // A still-closing Radix popover (from the previous side) can swallow the
+      // trigger click, so retry opening until the search is on screen.
+      await expect(async () => {
+        await selector.click();
+        await expect(search).toBeVisible({ timeout: 1000 });
+      }).toPass();
       await search.fill(`cc-col-${side}`);
       await page.keyboard.press("Enter");
-      await page.keyboard.press("Escape");
-      // Wait for the popover to fully close before opening the next side — a
-      // still-closing Radix popover swallows the next trigger click.
+      // Close the popover with an in-modal click, not Escape — Escape can close
+      // the whole modal once the popover is already gone.
+      await modalTitle.click();
       await expect(search).toBeHidden();
     }
     await page.getByTestId("submit-policy").click();

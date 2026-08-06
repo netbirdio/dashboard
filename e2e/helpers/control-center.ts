@@ -278,10 +278,16 @@ export async function clickContextMenuItem(
   itemText: string,
 ) {
   await dismissBlockingOverlays(page);
-  await node.click({ button: "right" });
-  const menu = page.getByTestId("cc-node-context-menu");
-  await expect(menu).toBeVisible();
-  await menu.getByRole("button", { name: itemText, exact: true }).click();
+  // The menu can re-render (and its items detach) when the node underneath it
+  // updates, so retry the whole open + click until it lands.
+  await expect(async () => {
+    await node.click({ button: "right" });
+    const menu = page.getByTestId("cc-node-context-menu");
+    await expect(menu).toBeVisible({ timeout: 2000 });
+    await menu
+      .getByRole("button", { name: itemText, exact: true })
+      .click({ timeout: 2000 });
+  }).toPass();
 }
 
 export function reviewButton(page: Page) {
