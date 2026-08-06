@@ -19,6 +19,7 @@ import Button from "@components/Button";
 import { Label } from "@components/Label";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
+import { IPVersionSelect } from "@/modules/remote-access/IPVersionSelect";
 import {
   RDP_DOCS_LINK,
   RDPCredentials,
@@ -31,6 +32,7 @@ type Props = {
   onConnect?: (credentials: RDPCredentials) => void;
   error?: string;
   loading?: boolean;
+  initialIpVersion?: string | null;
 };
 
 export const RDPCredentialsModal = ({
@@ -39,6 +41,7 @@ export const RDPCredentialsModal = ({
   onConnect,
   error,
   loading,
+  initialIpVersion,
 }: Props) => {
   const defaultUsername =
     getOperatingSystem(peer?.os) === OperatingSystem.WINDOWS
@@ -48,6 +51,9 @@ export const RDPCredentialsModal = ({
   const [password, setPassword] = useState("");
 
   const [port, setPort] = useState("3389");
+  const [ipVersion, setIpVersion] = useState(
+    initialIpVersion === "6" && peer.ipv6 ? "6" : "4",
+  );
 
   const userNameError = useMemo(() => {
     if (username?.length === 0) return "Username cannot be empty";
@@ -93,8 +99,9 @@ export const RDPCredentialsModal = ({
       password,
       domain: parsedDomain,
       port: Number(port),
+      ipVersion,
     });
-  }, [hasAnyError, onConnect, username, password, port]);
+  }, [hasAnyError, onConnect, username, password, port, ipVersion]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -196,6 +203,17 @@ export const RDPCredentialsModal = ({
                   className={"text-nb-gray-300"}
                 />
               }
+            />
+          </div>
+          <div>
+            <Label>IP Version</Label>
+            <HelpText>
+              The IP version used to connect to the remote host.
+            </HelpText>
+            <IPVersionSelect
+              value={ipVersion}
+              onChange={setIpVersion}
+              hasIPv6={!!peer.ipv6}
             />
           </div>
         </form>
