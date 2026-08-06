@@ -130,22 +130,46 @@ async function mouseDrag(
     );
   }
   await page.mouse.up();
+  // Let the drop handler commit the new node before callers assert on it.
+  await page.waitForTimeout(120);
 }
 
 /**
  * Drags a components-panel template onto the canvas. The panel uses a custom
  * pointer-based drag (not HTML5 DnD), so raw mouse events are required.
  */
+// The components panel groups its create-templates under category tabs and
+// opens on "peers", so a group/resource/network template isn't on screen until
+// its tab is selected. Networks share the Resources tab.
+function categoryForTemplate(templateTestId: string): string {
+  if (templateTestId.includes("peer")) return "peers";
+  if (templateTestId.includes("policy")) return "policies";
+  if (templateTestId.includes("group")) return "groups";
+  return "resources";
+}
+
 export async function dragTemplateToCanvas(
   page: Page,
   templateTestId: string,
   target?: { x: number; y: number },
 ) {
   const item = page.getByTestId(templateTestId);
-  if (!(await item.isVisible().catch(() => false))) {
-    await page.getByTestId("cc-toolbar-add").click();
-    await expect(item).toBeVisible();
+  // Open the panel if it's closed. The panel only fades out (staying in the
+  // DOM), so element visibility is unreliable — read the toggle's real state
+  // from aria-pressed instead.
+  const addButton = page.getByTestId("cc-toolbar-add");
+  if ((await addButton.getAttribute("aria-pressed")) !== "true") {
+    await addButton.click();
+    await expect(addButton).toHaveAttribute("aria-pressed", "true");
   }
+  // Templates are grouped under category tabs and the panel opens on "peers";
+  // switch to the tab holding this template. Dispatch the click directly — the
+  // tab's hover tooltip intercepts a real pointer click and the category never
+  // changes.
+  await page
+    .getByTestId(`cc-category-${categoryForTemplate(templateTestId)}`)
+    .dispatchEvent("click");
+  await expect(item).toBeVisible();
   const pane = page.locator(".react-flow__pane");
   const paneBox = await pane.boundingBox();
   if (!paneBox) throw new Error("canvas pane not laid out");
@@ -175,12 +199,14 @@ export async function connectNodes(
   target: Locator,
   handleSide: "sr" | "sl" = "sr",
 ) {
-  // Connect handles fade in on node hover.
+  // Connect handles fade in on node hover — wait for it to be on screen (not
+  // just attached) so the drag starts from a stable position.
   await source.hover();
   const handle = source.locator(
     `.react-flow__handle[data-handleid="${handleSide}-connect"]`,
   );
-  await expect(handle).toBeAttached();
+  await expect(handle).toBeVisible();
+  await page.waitForTimeout(100);
   await mouseDrag(page, await centerOf(handle), await centerOf(target));
 }
 

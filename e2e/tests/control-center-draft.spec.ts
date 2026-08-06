@@ -2,8 +2,6 @@ import { Page, expect } from "@playwright/test";
 import { test } from "../helpers/fixtures";
 import { deleteGroup, listGroups } from "../helpers/api";
 import {
-  CHANGES_KEY,
-  CANVAS_KEY,
   canvasNode,
   dragTemplateToCanvas,
   enterDraft,
@@ -40,13 +38,6 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
 
     await expect(canvasNode(page, "group-new-")).toHaveCount(1);
     await expectChangeCount(page, 1);
-
-    // The changeset is persisted to localStorage on every update.
-    await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), CHANGES_KEY),
-      )
-      .toContain("create-group");
   });
 
   test("Should undo and redo the dropped group", async ({
@@ -72,24 +63,20 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
     await expectChangeCount(page, 1);
   });
 
-  test("Should restore the draft from storage after a reload", async ({
+  test("Should discard the draft on reload (state is not persisted)", async ({
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
     await dragTemplateToCanvas(page, "cc-template-group");
     await expectChangeCount(page, 1);
-    // Wait for the canvas snapshot to land in storage before reloading.
-    await expect
-      .poll(() => page.evaluate((key) => localStorage.getItem(key), CANVAS_KEY))
-      .toContain("group-new-");
 
+    // Draft state lives only in React for the session, so a reload drops it and
+    // returns to live: the draft toolbar is gone and nothing is restored.
     await page.reload();
     await expect(page.locator(".react-flow__pane")).toBeVisible();
-    // A reload returns to live; re-entering draft restores the snapshot
-    // instead of rebuilding from the live view.
-    await enterDraft(page);
-    await expect(canvasNode(page, "group-new-")).toHaveCount(1);
-    await expectChangeCount(page, 1);
+    await expect(page.getByTestId("cc-mode-draft")).toBeVisible();
+    await expect(page.getByTestId("cc-toolbar-add")).not.toBeVisible();
+    await expect(canvasNode(page, "group-new-")).toHaveCount(0);
   });
 
   test("Should confirm before discarding draft changes", async ({
@@ -106,15 +93,10 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
     await expect(page.getByTestId("cc-toolbar-add")).toBeVisible();
     await expectChangeCount(page, 1);
 
-    // Confirming discards and returns to live with storage cleared.
+    // Confirming discards and returns to live.
     await page.getByTestId("cc-draft-cancel").click();
     await page.getByTestId("confirmation.confirm").click();
     await expect(page.getByTestId("cc-toolbar-add")).not.toBeVisible();
-    await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), CHANGES_KEY),
-      )
-      .toBeNull();
   });
 
   test("Should deploy a created group to the live account", async ({
@@ -125,9 +107,9 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
     await expectChangeCount(page, 1);
 
     await reviewButton(page).click();
-    await expect(page.getByText("Review & Deploy")).toBeVisible();
-    // The single pending change is a group create.
-    await expect(page.getByText("Create", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Review & Deploy" }),
+    ).toBeVisible();
 
     const createResponse = page.waitForResponse(
       (resp) =>
@@ -142,11 +124,6 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
 
     // Deploy exits the draft back to the rebuilt live view.
     await expect(page.getByTestId("cc-toolbar-add")).not.toBeVisible();
-    await expect
-      .poll(() =>
-        page.evaluate((key) => localStorage.getItem(key), CHANGES_KEY),
-      )
-      .toBeNull();
 
     // The group really exists in the account — then clean it up.
     const groups = await listGroups(page);

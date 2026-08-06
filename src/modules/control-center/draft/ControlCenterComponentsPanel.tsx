@@ -1323,6 +1323,7 @@ const PanelContent = React.memo(
                   variant={"lighter"}
                 >
                   <button
+                    data-testid={`cc-category-${cat.id}`}
                     onClick={() => {
                       setCategory(cat.id);
                       setSearch("");

@@ -348,7 +348,7 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     });
   });
 
-  test("Should show live policy actions and warn before editing", async ({
+  test("Should show live policy actions and warn before saving an edit", async ({
     dashboardAsOwner: page,
   }) => {
     const { policyNode } = await seedPolicyAndOpenGroupView(page);
@@ -365,11 +365,19 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
       menu.getByRole("button", { name: "Delete", exact: true }),
     ).toBeVisible();
 
-    // Edit is gated by a "you are in live mode" confirmation; cancelling it
-    // must NOT open the policy modal (no accidental live change).
+    // Edit opens the policy modal directly; the "you are in live mode"
+    // confirmation is deferred to Save (a live edit hits the account at once).
     await menu.getByRole("button", { name: "Edit", exact: true }).click();
+    await expect(page.getByTestId("policy-name")).toBeVisible();
+
+    // Saving warns first; cancelling the warning aborts the save (no PUT) and
+    // leaves the modal open.
+    await page.getByRole("button", { name: "Save Changes" }).click();
     await expect(page.getByText("You are in live mode")).toBeVisible();
     await page.getByTestId("confirmation.cancel").click();
+    await expect(page.getByTestId("policy-name")).toBeVisible();
+
+    await page.getByRole("button", { name: "Cancel", exact: true }).click();
     await expect(page.getByTestId("policy-name")).not.toBeVisible();
   });
 

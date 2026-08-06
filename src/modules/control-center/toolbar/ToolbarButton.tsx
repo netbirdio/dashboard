@@ -30,6 +30,7 @@ export const ToolbarButton = ({
       onClick={onClick}
       disabled={disabled}
       data-testid={dataTestId}
+      aria-pressed={active}
       className={cn(
         "h-8 flex items-center justify-center rounded-md transition-colors",
         variant === "default" &&
