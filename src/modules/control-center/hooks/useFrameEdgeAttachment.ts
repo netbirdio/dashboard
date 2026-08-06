@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { computeFrameEdgeTargets } from "@/modules/control-center/utils/frame-view";
 import { isFrameNode } from "@/modules/control-center/utils/helpers";

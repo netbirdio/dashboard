@@ -5,7 +5,7 @@ import { type Node, Position, useConnection } from "@xyflow/react";
 import { AlertTriangleIcon, GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
 import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
-import { useIsContextMenuTarget } from "@/modules/control-center/ControlCenterContext";
+import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,

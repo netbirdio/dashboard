@@ -19,7 +19,7 @@ import {
   orderFrameResources,
 } from "@/modules/control-center/utils/helpers";
 import { ViewResult } from "./types";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
 export function useNetworkView() {

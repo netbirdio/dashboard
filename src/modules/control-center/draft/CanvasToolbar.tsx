@@ -19,7 +19,7 @@ import {
   useDraftMode,
 } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftHistory } from "@/modules/control-center/draft/DraftHistoryContext";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
 import {

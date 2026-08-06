@@ -8,7 +8,7 @@ import {
   useNodeId,
 } from "@xyflow/react";
 import * as React from "react";
-import { useIsContextMenuTarget } from "@/modules/control-center/ControlCenterContext";
+import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";

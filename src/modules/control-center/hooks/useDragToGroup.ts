@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import { Node, useReactFlow, XYPosition } from "@xyflow/react";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {

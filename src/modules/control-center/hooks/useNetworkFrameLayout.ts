@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Node } from "@xyflow/react";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   NETWORK_FRAME_CHILD_WIDTH,

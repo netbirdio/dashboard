@@ -13,8 +13,8 @@ import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import {
   NetworkDestinationPickerState,
   useDraftMode,

@@ -32,9 +32,9 @@ import {
   useCanvasState,
   useControlCenterUI,
   useDestinationGroup,
-} from "@/modules/control-center/ControlCenterContext";
+} from "@/modules/control-center/contexts/ControlCenterContext";
 import { getNodeRect } from "@/modules/control-center/utils/canvas-transition";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import useGroupsUsage from "@/modules/groups/useGroupsUsage";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -53,7 +53,7 @@ import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftN
 import { useDeleteNetwork } from "@/modules/control-center/hooks/useDeleteNetwork";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { Modal } from "@components/modal/Modal";
-import { GroupRenameModal } from "@/modules/control-center/draft/GroupRenameModal";
+import { GroupRenameModal } from "@/modules/control-center/draft/modals/GroupRenameModal";
 import { EditPeerNameModal } from "@/modules/peers/EditPeerNameModal";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
 import {

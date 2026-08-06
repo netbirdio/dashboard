@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import {
   useCanvasState,
   useControlCenterUI,
-} from "@/modules/control-center/ControlCenterContext";
+} from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 // Wires the canvas drill-downs into the browser history: entering a level

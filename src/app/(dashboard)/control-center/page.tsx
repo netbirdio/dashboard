@@ -22,38 +22,38 @@ import {
   EMPTY_STATE_ZOOM,
 } from "@/modules/control-center/utils/layouts";
 import { NODE_TYPES } from "@/modules/control-center/utils/nodes";
-import { DragAndDropProvider } from "@/modules/control-center/DragAndDropProvider";
-import { ConnectionLine } from "@/modules/control-center/ConnectionLine";
+import { DragAndDropProvider } from "@/modules/control-center/contexts/DragAndDropProvider";
+import { ConnectionLine } from "@/modules/control-center/edges/ConnectionLine";
 import { ControlCenterComponentsPanel } from "@/modules/control-center/draft/ControlCenterComponentsPanel";
 import {
   DraftModeProvider,
   useDraftMode,
   useNetworkHover,
 } from "@/modules/control-center/draft/DraftModeContext";
-import { CanvasContextMenu } from "@/modules/control-center/CanvasContextMenu";
-import { NodeContextMenu } from "@/modules/control-center/NodeContextMenu";
+import { CanvasContextMenu } from "@/modules/control-center/menus/CanvasContextMenu";
+import { NodeContextMenu } from "@/modules/control-center/menus/NodeContextMenu";
 import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
-import { DraftInstallPeerModal } from "@/modules/control-center/draft/DraftInstallPeerModal";
-import { DraftUserDeviceModal } from "@/modules/control-center/draft/DraftUserDeviceModal";
-import { DraftResourceEditorModal } from "@/modules/control-center/draft/DraftResourceEditorModal";
-import { DraftResourceNetworkModal } from "@/modules/control-center/draft/DraftResourceNetworkModal";
-import { DraftNetworkDestinationModal } from "@/modules/control-center/draft/DraftNetworkDestinationModal";
-import { DraftNetworkEditModal } from "@/modules/control-center/draft/DraftNetworkEditModal";
-import { DraftRoutingPeerModal } from "@/modules/control-center/draft/DraftRoutingPeerModal";
+import { DraftInstallPeerModal } from "@/modules/control-center/draft/modals/DraftInstallPeerModal";
+import { DraftUserDeviceModal } from "@/modules/control-center/draft/modals/DraftUserDeviceModal";
+import { DraftResourceEditorModal } from "@/modules/control-center/draft/modals/DraftResourceEditorModal";
+import { DraftResourceNetworkModal } from "@/modules/control-center/draft/modals/DraftResourceNetworkModal";
+import { DraftNetworkDestinationModal } from "@/modules/control-center/draft/modals/DraftNetworkDestinationModal";
+import { DraftNetworkEditModal } from "@/modules/control-center/draft/modals/DraftNetworkEditModal";
+import { DraftRoutingPeerModal } from "@/modules/control-center/draft/modals/DraftRoutingPeerModal";
 import { DraftLeaveGuard } from "@/modules/control-center/draft/DraftLeaveGuard";
 import { useDraft } from "@/modules/control-center/hooks/useDraft";
 import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
-import { ControlCenterHeader } from "@/modules/control-center/ControlCenterHeader";
-import { ControlCenterEmptyStates } from "@/modules/control-center/ControlCenterEmptyStates";
+import { ControlCenterHeader } from "@/modules/control-center/header/ControlCenterHeader";
+import { ControlCenterEmptyStates } from "@/modules/control-center/header/ControlCenterEmptyStates";
 import {
   CanvasStateProvider,
   ControlCenterUIProvider,
   useCanvasState,
   useControlCenterUI,
   useDestinationGroup,
-} from "@/modules/control-center/ControlCenterContext";
-import { groupPanelCloseGuard } from "@/modules/control-center/DestinationGroupPanel";
-import { ControlCenterPolicyProvider } from "@/modules/control-center/ControlCenterPolicyModals";
+} from "@/modules/control-center/contexts/ControlCenterContext";
+import { groupPanelCloseGuard } from "@/modules/control-center/panels/DestinationGroupPanel";
+import { ControlCenterPolicyProvider } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
 import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";

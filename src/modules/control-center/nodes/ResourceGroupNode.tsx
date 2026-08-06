@@ -7,7 +7,7 @@ import { Group } from "@/interfaces/Group";
 import {
   useDestinationGroup,
   useIsContextMenuTarget,
-} from "@/modules/control-center/ControlCenterContext";
+} from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { GroupNode } from "@/modules/control-center/nodes/GroupNode";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";

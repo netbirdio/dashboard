@@ -3,7 +3,7 @@ import { useEffect, useMemo } from "react";
 import { CircleXIcon, FolderPlusIcon, TrashIcon } from "lucide-react";
 import { useReactFlow, useStoreApi, useViewport } from "@xyflow/react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
 import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
@@ -12,14 +12,14 @@ import {
   GROUP_NODE_TYPES,
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
-import { CreateGroupNameModal } from "@/modules/control-center/draft/CreateGroupNameModal";
+import { CreateGroupNameModal } from "@/modules/control-center/draft/modals/CreateGroupNameModal";
 import { ToolbarButton } from "@/modules/control-center/toolbar/ToolbarButton";
 import { ToolbarContainer } from "@/modules/control-center/toolbar/ToolbarContainer";
 import { ToolbarGroup } from "@/modules/control-center/toolbar/ToolbarGroup";
 import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import {
   getDraftResource,
   getPlaceholderPeer,

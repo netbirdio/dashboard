@@ -3,7 +3,7 @@ import { useReactFlow } from "@xyflow/react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { usePlaceholderArtifacts } from "@/modules/control-center/hooks/usePlaceholderArtifacts";
 
 // Leaving draft mode (Cancel, back arrow, Live tab) destroys the changeset —

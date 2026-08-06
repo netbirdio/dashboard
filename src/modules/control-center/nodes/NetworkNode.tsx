@@ -12,13 +12,13 @@ import {
   getRoutingPeerCount,
   RoutingPeersBar,
   RoutingPeersIndicator,
-} from "@/modules/control-center/RoutingPeersBar";
+} from "@/modules/control-center/panels/RoutingPeersBar";
 import { useFrameRouterRows } from "@/modules/control-center/hooks/useFrameRouterRows";
 import Button from "@components/Button";
 import * as React from "react";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { Network, NetworkResource } from "@/interfaces/Network";
-import { useIsContextMenuTarget } from "@/modules/control-center/ControlCenterContext";
+import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import {
   useDraftMode,

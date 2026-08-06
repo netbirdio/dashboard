@@ -14,7 +14,7 @@ import { SmallBadge } from "@components/ui/SmallBadge";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDiscardDraft } from "@/modules/control-center/draft/useDiscardDraft";
-import { ReviewDeployModal } from "@/modules/control-center/draft/ReviewDeployModal";
+import { ReviewDeployModal } from "@/modules/control-center/draft/modals/ReviewDeployModal";
 import { DraftStartPopover } from "@/modules/control-center/draft/DraftStartPopover";
 
 // Toggle the Live/Draft segmented control. While off, draft is entered via a

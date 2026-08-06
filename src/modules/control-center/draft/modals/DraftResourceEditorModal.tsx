@@ -3,7 +3,7 @@ import { useReactFlow } from "@xyflow/react";
 import * as React from "react";
 import { mutate } from "swr";
 import { Network, NetworkResource } from "@/interfaces/Network";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   ResourceEditorState,

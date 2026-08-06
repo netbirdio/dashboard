@@ -12,7 +12,7 @@ import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import { StandaloneResourceNode } from "@/modules/control-center/nodes/StandaloneResourceNode";
-import { useIsContextMenuTarget } from "@/modules/control-center/ControlCenterContext";
+import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,

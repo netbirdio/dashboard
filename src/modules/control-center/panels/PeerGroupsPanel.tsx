@@ -36,7 +36,7 @@ import {
   MemberRow,
   PanelVirtuosoScroller,
   usePanelWidth,
-} from "@/modules/control-center/DestinationGroupPanel";
+} from "@/modules/control-center/panels/DestinationGroupPanel";
 
 interface PeerGroupsPanelProps {
   // Real peer id (empty = closed). The peer-side twin of the group panel:

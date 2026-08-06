@@ -8,7 +8,7 @@ import { Group } from "@/interfaces/Group";
 import {
   useDestinationGroup,
   useIsContextMenuTarget,
-} from "@/modules/control-center/ControlCenterContext";
+} from "@/modules/control-center/contexts/ControlCenterContext";
 import {
   getGroupCountLabel,
   useAnySourceGroupEnabled,

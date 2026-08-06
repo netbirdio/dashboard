@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Edge, Node } from "@xyflow/react";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
 import {

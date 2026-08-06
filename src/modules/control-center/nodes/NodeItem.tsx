@@ -5,7 +5,7 @@ import { ResourceNode } from "@/modules/control-center/nodes/ResourceNode";
 import { Peer } from "@/interfaces/Peer";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
-import { useDragAndDropPosition } from "@/modules/control-center/DragAndDropProvider";
+import { useDragAndDropPosition } from "@/modules/control-center/contexts/DragAndDropProvider";
 import { cn } from "@utils/helpers";
 import * as React from "react";
 

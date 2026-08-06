@@ -9,7 +9,7 @@ import {
   RoutingPeerRow,
   RoutingPeersBar,
   sortRoutingPeerRows,
-} from "@/modules/control-center/RoutingPeersBar";
+} from "@/modules/control-center/panels/RoutingPeersBar";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type Props = {

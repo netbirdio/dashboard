@@ -16,7 +16,7 @@ import {
   useCanvasUI,
   useDestinationGroup,
   useIsContextMenuTarget,
-} from "@/modules/control-center/ControlCenterContext";
+} from "@/modules/control-center/contexts/ControlCenterContext";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import {
   PLACEHOLDER_BASE_NAMES,

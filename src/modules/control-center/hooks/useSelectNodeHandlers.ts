@@ -6,18 +6,18 @@ import {
   isCanvasTransitionActive,
 } from "@/modules/control-center/utils/canvas-transition";
 import React, { useCallback, useEffect } from "react";
-import { FlowView } from "@/modules/control-center/FlowSelector";
+import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { DEFAULT_MIN_ZOOM, EMPTY_STATE_ZOOM } from "@/modules/control-center/utils/layouts";
 import {
   getFirstGroup,
   getPlaceholderPeer,
   isFocusWorthy,
 } from "@/modules/control-center/utils/helpers";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useDestinationGroup } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { Policy } from "@/interfaces/Policy";
 import { useDialog } from "@/contexts/DialogProvider";
 

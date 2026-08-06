@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { orderBy, sortBy } from "lodash";
-import { FlowView } from "@/modules/control-center/FlowSelector";
+import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { Connection, Edge, Node, useReactFlow } from "@xyflow/react";
 import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
@@ -9,9 +9,9 @@ import {
   CanvasTool,
   useDraftMode,
 } from "@/modules/control-center/draft/DraftModeContext";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import {

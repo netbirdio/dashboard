@@ -13,7 +13,7 @@ import {
   getRoutingPeerCount,
   RoutingPeerRow,
   sortRoutingPeerRows,
-} from "@/modules/control-center/RoutingPeersBar";
+} from "@/modules/control-center/panels/RoutingPeersBar";
 
 // RoutingPeersBar rows for a draft network frame: the frame's create-router
 // changes plus, for existing networks, the API routers. Draft rows carry an

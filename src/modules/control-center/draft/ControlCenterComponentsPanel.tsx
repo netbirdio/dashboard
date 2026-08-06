@@ -42,7 +42,7 @@ import {
   OnDropAction,
   useDragAndDrop,
   useDragAndDropPosition,
-} from "@/modules/control-center/DragAndDropProvider";
+} from "@/modules/control-center/contexts/DragAndDropProvider";
 import { XYPosition } from "@xyflow/react";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 import {
@@ -54,7 +54,7 @@ import {
   getGroupCountLabel,
   getPolicyProtocolAndPortText,
 } from "@/modules/control-center/utils/helpers";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useAccount } from "@/modules/account/useAccount";
 import {

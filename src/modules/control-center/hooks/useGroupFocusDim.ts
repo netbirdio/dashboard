@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import {
   useCanvasState,
   useDestinationGroup,
-} from "@/modules/control-center/ControlCenterContext";
+} from "@/modules/control-center/contexts/ControlCenterContext";
 import { isFocusWorthy } from "@/modules/control-center/utils/helpers";
 
 // Focus highlight (live AND draft): while a node is explicitly focused (its

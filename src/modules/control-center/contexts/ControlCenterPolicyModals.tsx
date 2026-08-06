@@ -19,7 +19,7 @@ import { Group } from "@/interfaces/Group";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useReactFlow, XYPosition } from "@xyflow/react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";

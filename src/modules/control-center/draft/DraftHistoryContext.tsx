@@ -15,7 +15,7 @@ import {
   DraftChange,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 
 // Snapshot-based undo/redo for draft mode. Canvas (nodes/edges) and the

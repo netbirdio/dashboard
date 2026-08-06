@@ -25,7 +25,7 @@ DraftModeProvider → DragAndDropProvider → ReactFlowProvider → PoliciesProv
 
 Data flow: `useControlCenterData()` fetches everything (SWR) → view hooks (`usePeerView`, `useGroupView`, `useUserView`, `useNetworkView`) build node/edge graphs → `useSelectNodeHandlers({ views })` owns navigation, the view-init effect, and the shared `fitView` → `ControlCenterUIProvider` wires it together. Circular deps (node onClick → handlers → view builders) resolve via refs on CanvasStateProvider (`forceSingleGroupViewRef`, `refreshLiveViewRef`).
 
-Key directories under `control-center/`: `hooks/` (data, views, draft logic, layout reconcilers), `draft/` (draft-mode UI + changeset/history contexts), `nodes/`, `edges/`, `handles/`, `utils/` (graph-builder, layouts, canvas-transition, pure testable logic).
+Key directories under `control-center/`: `contexts/` (ControlCenterContext, DragAndDropProvider, policy modals), `header/` (top chrome + FlowSelector), `menus/` (canvas/node context menus), `panels/` (destination-group, peer-groups, routing-peers), `nodes/`, `edges/` (+ ConnectionLine), `handles/`, `toolbar/`, `hooks/` (data, `views/`, draft logic, layout reconcilers), `utils/` (graph-builder, layouts, canvas-transition, pure testable logic), `draft/` (draft-mode UI + changeset/history contexts; `modals/` holds the Draft\* modals, `changeset/` the review views).
 
 ## Views (live)
 

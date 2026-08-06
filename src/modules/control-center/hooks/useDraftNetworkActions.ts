@@ -5,7 +5,7 @@ import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useControlCenterPolicy } from "@/modules/control-center/ControlCenterPolicyModals";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {

@@ -33,7 +33,7 @@ import {
   getGroupPeers,
   getGroupResources,
 } from "@/modules/control-center/utils/graph-builder";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   getIpPlaceholderFromRange,

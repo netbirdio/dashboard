@@ -29,19 +29,19 @@ import {
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import { isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
-import { useDestinationGroup } from "@/modules/control-center/ControlCenterContext";
+import { useDestinationGroup } from "@/modules/control-center/contexts/ControlCenterContext";
 import {
   isDraftNetworkNode,
   isFrameNode,
   useStructuralNodes,
 } from "@/modules/control-center/utils/helpers";
-import { FlowSelector, FlowView } from "@/modules/control-center/FlowSelector";
-import { NetworkRoutingPeerCount } from "@/modules/control-center/NetworkRoutingPeerCount";
-import { RoutingPeersBar } from "@/modules/control-center/RoutingPeersBar";
+import { FlowSelector, FlowView } from "@/modules/control-center/header/FlowSelector";
+import { NetworkRoutingPeerCount } from "@/modules/control-center/header/NetworkRoutingPeerCount";
+import { RoutingPeersBar } from "@/modules/control-center/panels/RoutingPeersBar";
 import { useFrameRouterRows } from "@/modules/control-center/hooks/useFrameRouterRows";
 import { DraftModeSwitcher } from "@/modules/control-center/draft/DraftModeSwitcher";
 import { CanvasToolbar } from "@/modules/control-center/draft/CanvasToolbar";
-import { useCanvasState, useControlCenterUI } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState, useControlCenterUI } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";

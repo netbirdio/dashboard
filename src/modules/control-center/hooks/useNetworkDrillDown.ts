@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useReactFlow, Viewport, XYPosition } from "@xyflow/react";
-import { useCanvasState } from "@/modules/control-center/ControlCenterContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
 import {
