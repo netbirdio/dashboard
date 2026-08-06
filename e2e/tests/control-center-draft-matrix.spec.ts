@@ -506,7 +506,11 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const g2 = await place(page, "group", 0.8, 0.4);
     await connectNodes(page, g1, g2);
     await submitCreatePolicyModal(page);
-    await place(page, "peer", 0.6, 0.8); // an off-path node that would dim
+    // A second, off-path policy: Focus is only offered when it declutters
+    // (isFocusWorthy needs 2+ policies), and this peer + its policy are what dim.
+    const peer = await place(page, "peer", 0.6, 0.8);
+    await connectNodes(page, peer, g2);
+    await submitCreatePolicyModal(page);
 
     await g1.click();
     // The group panel opens, but nothing dims — focus is context-menu only.
