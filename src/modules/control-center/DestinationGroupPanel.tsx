@@ -245,9 +245,9 @@ export const DestinationGroupPanel = ({
   // Draft membership edits live on the canvas nodes AND in the changeset. The
   // changeset is authoritative: node data (addedMembers/removedMembers Sets) is
   // transient — a canvas rebuild or an SWR mutate of /peers|/networks/resources
-  // drops it, which used to resurrect a removed member here even though the
-  // changeset still recorded the removal. Folding the changeset in makes the
-  // displayed membership survive both. Matches PeerGroupsPanel's derivation.
+  // drops it, which would resurrect a removed member even though the changeset
+  // still records the removal. Folding the changeset in makes the displayed
+  // membership survive both. Matches PeerGroupsPanel's derivation.
   const addedMembers = useMemo(() => {
     const added = new Set<string>();
     groupNodes.forEach((n) => {
@@ -697,8 +697,6 @@ export const DestinationGroupPanel = ({
     }
   };
 
-  // ---- Search + tabs ----
-
   const [tab, setTab] = useState("peers");
   const [search, setSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -826,10 +824,12 @@ export const DestinationGroupPanel = ({
     dy: number;
   } | null>(null);
 
-  const MARGIN = 24; // canvas edge margin
+  // canvas edge margin
+  const MARGIN = 24;
   // On the right side nothing sits below the header actions row, and the
   // bottom toolbar is centered — the panel can run nearly edge to edge.
-  const TOP = 75; // header actions row
+  // TOP clears the header actions row.
+  const TOP = 75;
   const BOTTOM = 19;
 
   // Width changes while OPEN (the header action row grows with the

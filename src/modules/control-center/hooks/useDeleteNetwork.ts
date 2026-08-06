@@ -9,17 +9,12 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
 
-// Delete a whole EXISTING network by its canvas node id. Mode-aware:
-//   • Draft — record a delete-network change (its resources/routers cascade)
-//     and drop the frame; it applies when the user reviews & deploys.
-//   • Live — delete immediately against the account (DELETE /networks/{id},
-//     mirroring the networks page). Live changes are NEVER deployed via the
-//     changeset, so they must hit the API now.
-// Draft (not-yet-created) networks are never deleted this way — they Remove.
-// Shared by the node context menu and the top-bar ⋮ menu so both confirm and
-// behave identically. Resolves true only when the network was actually deleted
-// (false on cancel or a draft/id-less network), so callers can navigate out of
-// the just-deleted network's view.
+// Deletes an EXISTING network by its canvas node id. Draft records a
+// delete-network change (resources/routers cascade) applied on review & deploy;
+// live deletes immediately (DELETE /networks/{id}) — live changes never go
+// through the changeset. Draft not-yet-created networks Remove instead, never
+// delete here. Resolves true only when the network was actually deleted, so
+// callers can navigate out of its view.
 export function useDeleteNetwork() {
   const reactFlow = useReactFlow();
   const { isDraft } = useDraftMode();
@@ -62,8 +57,8 @@ export function useDeleteNetwork() {
       });
       if (!choice) return false;
       // Remove the frame only AFTER the DELETE succeeds — an optimistic remove
-      // left the canvas out of sync (frame gone, network still on the account)
-      // whenever the request failed, with no rollback.
+      // would desync the canvas (frame gone, network still live) on failure,
+      // with no rollback.
       const promise = deleteCall({}, `/${network.id}`).then(() => {
         removeNodeWithEdges(nodeId);
         mutate("/networks");

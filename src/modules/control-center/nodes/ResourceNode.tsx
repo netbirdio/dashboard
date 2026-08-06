@@ -30,11 +30,11 @@ type ResourceNode = Node<
     showHandles?: boolean;
     className?: string;
     draftNetwork?: DraftNetworkRef;
-    // Live views (peer/group/user destinations): force the standalone card
-    // look without a network ref.
+    // Force the standalone card look without a network ref (live
+    // peer/group/user destinations).
     standalone?: boolean;
-    // Live single-network (drilled) view: the network is named in the header,
-    // so suppress the inline "- Network" suffix on the card.
+    // Live single-network view: network is named in the header, so suppress
+    // the inline "- Network" suffix on the card.
     drilled?: boolean;
   },
   "resourceNode"
@@ -54,9 +54,8 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   );
   const isEnabled = enabled ?? sourceGroupEnabled;
   const { isDraft, setResourceEditor, drillDownNetworkNodeId } = useDraftMode();
-  // Framed resources accept connection DROPS in every view — the drop
-  // routes into the destination picker preselected with this resource. Only
-  // dragging FROM the resource stays drill-down-only in the parent view.
+  // Framed resources accept connection DROPS in every view; only dragging FROM
+  // the resource stays drill-down-only in the parent view.
   const isFramed = !!parentId?.startsWith("network-");
   const handlesActive = !isFramed || drillDownNetworkNodeId === parentId;
   const isTarget = useConnection(
@@ -64,27 +63,21 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   );
   const showHalo = useIsContextMenuTarget(id);
 
-  // Draft resources (resource-new-…) are edited on the canvas via click /
-  // context-menu Edit; incomplete ones (no address yet) show the dimmed
-  // x.x.x.x placeholder and have no changeset entry.
+  // Draft resources (resource-new-…) are edited on the canvas; incomplete ones
+  // (no address yet) have no changeset entry.
   const isDraftResource = id.startsWith("resource-new-");
   const node = { id, data, position: { x: 0, y: 0 } } as Node;
   const draftResource = isDraftResource ? getDraftResource(node) : undefined;
-  // The resource to render in the card — draft ones use their live-edited
-  // draft data, existing (dropped) ones use their API resource.
+  // Draft resources render their live-edited draft data, existing (dropped)
+  // ones their API resource.
   const cardResource = draftResource ?? resource;
 
-  // Standalone draft/existing resource → its own card component (network shown
-  // inline after the name; context-menu halo on the whole card). Drilled
-  // frame children render as the same card — the drill-down mirrors the
-  // standalone look, only the parent view keeps the flat rows. The LIVE
-  // single-network view uses the card too (its resources carry a
-  // draftNetwork ref so the network shows inline).
-  // Drilled rendering keys off the parent frame being HIDDEN, not the drill
-  // id: the id is set before the dive-in (frame still visible → keep rows)
-  // and cleared before the exit fade finishes (frame still hidden → keep
-  // cards). The swap between row and card thus always happens while the
-  // canvas is invisible.
+  // Standalone resources render as their own card; drilled frame children and
+  // the live single-network view use the same card.
+  // Drilled rendering keys off the parent frame being HIDDEN, not the drill id:
+  // the id is set before the dive-in (frame still visible → keep rows) and
+  // cleared before the exit fade finishes (frame still hidden → keep cards), so
+  // the row↔card swap always happens while the canvas is invisible.
   // Boolean store selector, NOT useInternalNode — the internal lookup is
   // rebuilt every drag tick, and useInternalNode re-rendered EVERY framed
   // resource row per tick (the main drag lag with many network frames).
@@ -100,38 +93,36 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
       <StandaloneResourceNode
         id={id}
         data={data}
-        // Drilled views name the network in the header; everywhere else —
-        // live destination cards included — it shows inline after the name.
-        // Draft drill-down signals via the hidden parent frame; the live
-        // single-network view carries an explicit `drilled` flag (its
-        // resources are top-level nodes, not frame children).
+        // Drilled views name the network in the header; everywhere else it
+        // shows inline after the name. Draft drill-down signals via the hidden
+        // parent frame; the live single-network view carries an explicit
+        // `drilled` flag (its resources are top-level nodes, not frame children).
         hideNetwork={isDrilledChild || !!data.drilled}
       />
     );
   }
 
   // A resource INSIDE a network frame: a flat row managed by the frame (no
-  // card border/bg) — draft frames and live network frames alike. The
-  // context-menu halo lives on the icon box here.
+  // card border/bg). The context-menu halo lives on the icon box here.
   if (cardResource && isFramed) {
     const Icon = TYPE_ICONS[cardResource.type ?? "host"] ?? GlobeIcon;
     return (
       <div
         className={cn(
           "cc-frame-row relative rounded-lg transition-colors group/node w-full min-w-[185px]",
-          // h-full + centering: the frame layout stamps a fixed slot height
-          // on framed rows (deterministic grid — no measure-based re-layout).
+          // The frame layout stamps a fixed slot height on framed rows
+          // (deterministic grid — no measure-based re-layout).
           "h-full flex flex-col justify-center",
-          // Live rows keep the pointer (clicking drills into the network like
-          // the frame does) but no row hover styling — the frame highlights.
+          // Live rows keep the pointer (click drills into the network) but no
+          // row hover styling — the frame highlights.
           "cursor-pointer",
           data.enabled === false && "opacity-60",
           className,
         )}
         onClick={() => {
-          // Draft: clicking ANY framed resource — new or existing/dropped —
-          // opens the editor (the modal resolves + prefills from the node id).
-          // Live rows keep their drill-into-network click via onNodeClick.
+          // Draft: clicking any framed resource opens the editor (the modal
+          // resolves + prefills from the node id). Live rows drill into the
+          // network via onNodeClick.
           if (isDraft) setResourceEditor({ nodeId: id });
         }}
       >
@@ -140,8 +131,6 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
             className={cn(
               "cc-frame-row-icon h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 transition-all",
               "border border-nb-gray-850",
-              // Both modes: the row is clickable (draft opens the editor, live
-              // drills), so its icon box lights up on hover.
               "group-hover/node:text-nb-gray-200 group-hover/node:bg-nb-gray-700 group-hover/node:border-nb-gray-700",
               // Rings live on the icon box for framed rows: white while a
               // connection drag hovers, sky halo for the context menu.
@@ -162,7 +151,6 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
               </span>
               {isDraftResource && <SmallBadge />}
             </span>
-            {/* Address slot — dimmed placeholder until it's set. */}
             <span
               className={
                 "font-normal text-sm text-nb-gray-500 relative -top-[0.1rem]"
@@ -184,8 +172,8 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
     <div
       className={cn(
         "cursor-pointer border rounded-lg overflow-hidden transition-all group/node",
-        // standalone (live peer/group/user destinations): the same card
-        // surface as PeerNode's card variant instead of a transparent row.
+        // standalone: the same card surface as PeerNode's card variant instead
+        // of a transparent row.
         data.standalone
           ? "bg-nb-gray-940 border-nb-gray-850 pr-5 pl-3 h-[64px] flex items-center"
           : "border-transparent",
@@ -197,8 +185,8 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
       <DeviceCard
         resource={resource}
         device={peer}
-        // w-auto for peers: PeerNode's card variant sizes to content — the
-        // fixed w-[200px] made the same peer wider here than in draft.
+        // w-auto for peers: match PeerNode's card variant, which sizes to
+        // content rather than the fixed w-[200px].
         className={cn("p-0", !isEnabled && "opacity-60", peer && "w-auto")}
       />
       <AllHandles />

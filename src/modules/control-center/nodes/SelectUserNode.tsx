@@ -102,7 +102,7 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
         size={"xs"}
         maxHeight={300}
       >
-        {/* Same height as GroupNode (h-9 icon box + py-3.5 = 64px inner). */}
+        {/* Same 64px inner height as GroupNode so nodes line up. */}
         <div
           className={"flex items-center justify-between gap-8 pr-3 pl-3 h-[64px]"}
         >

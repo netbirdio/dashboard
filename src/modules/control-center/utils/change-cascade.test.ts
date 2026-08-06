@@ -77,7 +77,8 @@ describe("reduceRemoveChange", () => {
     expect(keptRes).toBeDefined();
     expect(keptRes.networkClientId).toBeUndefined();
     expect(keptRes.networkId).toBeUndefined();
-    expect(keptRes.networkName).toBe(""); // → flagged "No Network"
+    // Empty network name is what flags the resource as "No Network".
+    expect(keptRes.networkName).toBe("");
     expect(out.find((c) => c.id === router.id)).toBeUndefined();
   });
 

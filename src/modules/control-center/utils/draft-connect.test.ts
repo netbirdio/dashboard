@@ -83,8 +83,6 @@ const placeholderAgent = node("peer-draft-x", "peerNode", {
   placeholderName: "Agent",
 });
 
-// ---- node ↔ node: opens the create-policy modal prefilled ------------------
-
 describe("connect node ↔ node (create-policy modal)", () => {
   let deps: ReturnType<typeof makeDeps>;
   beforeEach(() => {
@@ -211,8 +209,6 @@ describe("connect node ↔ node (create-policy modal)", () => {
   });
 });
 
-// ---- node ↔ policy: edits the policy directly (no modal) -------------------
-
 describe("connect node ↔ policy (direct side edit)", () => {
   const blankPolicy = makePolicy("new-1");
   const blankPolicyNode = node("policy-new-1", "policyNode", {
@@ -318,8 +314,6 @@ describe("connect node ↔ policy (direct side edit)", () => {
     expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
   });
 });
-
-// ---- node ↔ network: routers and membership (no policy modal) --------------
 
 describe("connect node ↔ network (destination picker & membership)", () => {
   const draftNetworkNode = node("network-new-1", "networkNode", {
@@ -474,8 +468,6 @@ describe("connect node ↔ network (destination picker & membership)", () => {
     expect(deps.setCreatePolicyModal).not.toHaveBeenCalled();
   });
 });
-
-// ---- resources in policies (destinations only) -----------------------------
 
 describe("resources in policies (one-way)", () => {
   const draftResourceNode = node("resource-new-r1", "resourceNode", {

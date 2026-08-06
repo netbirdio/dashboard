@@ -13,8 +13,7 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { useCanvasTransitionActive } from "@/modules/control-center/utils/canvas-transition";
 
-// Gentle entrance for the drilled empty-network card — a slow fade with a
-// barely-there zoom so it settles in rather than popping. Values are literal:
+// Entrance for the drilled empty-network card. Class names must be literal:
 // Tailwind's scanner only emits classes it finds as static text.
 const EMPTY_STATE_REVEAL_IN =
   "animate-in fade-in zoom-in-[.97] duration-[700ms] ease-out fill-mode-both";

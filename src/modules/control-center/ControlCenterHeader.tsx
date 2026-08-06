@@ -50,8 +50,7 @@ import { useDeleteNetwork } from "@/modules/control-center/hooks/useDeleteNetwor
 
 // Width for the network selector: sized to its LONGEST option label
 // (~6.5px/char at the trigger's text-xs medium, plus icon/chevron/padding
-// chrome), clamped to the old fixed width (256px) as the max — short network
-// names don't need the full column.
+// chrome), clamped to 256px max so short names don't need the full column.
 const networkSelectorWidth = (labels: unknown[]) => {
   const longest = labels.reduce<number>(
     (m, l) => Math.max(m, typeof l === "string" ? l.length : 0),
@@ -64,9 +63,7 @@ const networkSelectorWidth = (labels: unknown[]) => {
 // Delete are mode-aware: draft records to the changeset (deploys later), live
 // hits the API immediately. Delete on an existing network confirms + deletes;
 // on a draft-created one it's Remove (cancels the pending create). onDeleted
-// lets the caller leave the just-deleted network's view (drill-down or
-// selection). Rendered as a right-hand segment on the selector so
-// [ selector | ⋮ ] reads as one control.
+// lets the caller leave the just-deleted network's view.
 function NetworkActionsMenu({
   networkNodeId,
   onDeleted,
@@ -129,11 +126,9 @@ function NetworkActionsMenu({
   );
 }
 
-// "Add Resource" button for the drilled single-network top bar — sits after
-// the routing-peers bar. Opens the resource editor targeting this network
-// (draft: the row is created into the frame on save; live: a real POST). Styled
-// to match the RoutingPeersBar pill next to it so the bar reads as one control
-// language.
+// "Add Resource" button for the drilled single-network top bar. Opens the
+// resource editor targeting this network (draft: the row is created into the
+// frame on save; live: a real POST).
 function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
   const { setResourceEditor } = useDraftMode();
   return (
@@ -156,8 +151,7 @@ function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
 }
 
 // The drilled single-network header (draft), mirroring the live one: back
-// arrow, network selector (switches which frame is drilled), the shared
-// RoutingPeersBar, and Add Resource.
+// arrow, network selector, the shared RoutingPeersBar, and Add Resource.
 function DraftDrillDownHeader() {
   const { drillDownNetworkNodeId, setDrillDownNetworkNodeId, setRoutingPeerModal } =
     useDraftMode();
@@ -173,8 +167,7 @@ function DraftDrillDownHeader() {
   const [selectOpen, setSelectOpen] = React.useState(false);
   useCloseOnCanvasClick(selectOpen, () => setSelectOpen(false));
 
-  // Overview (not drilled): a network selector stays top-left, like the live
-  // networks view — it lists the frames on the canvas and picking one drills
+  // Overview (not drilled): lists the frames on the canvas; picking one drills
   // into it (the drill effect plays the dive transition itself).
   const frameOptions = React.useMemo(() => {
     const options: SelectOption[] = sortBy(
@@ -200,14 +193,9 @@ function DraftDrillDownHeader() {
 
   const drilled = !!drillDownNetworkNodeId;
 
-  // The all-networks OVERVIEW selector only belongs to draft sessions ENTERED
-  // from the networks view — picking a network from the top-left list is a
-  // networks-view concept. Entering from peers/users/groups leaves currentView
-  // on that view (the live FlowSelector is hidden in draft, so it can't
-  // change), so the standalone selector must stay hidden even after the user
-  // adds a network frame to the canvas. The DRILL-DOWN header (back button,
-  // network switcher, routing-peers bar) is view-agnostic, so it still renders
-  // once the user drills into a network from any entry view.
+  // The all-networks OVERVIEW selector only belongs to draft sessions entered
+  // from the networks view. The DRILL-DOWN header is view-agnostic, so it
+  // still renders once the user drills into a network from any entry view.
   if (!drilled && currentView !== FlowView.NETWORKS) return null;
 
   // Overview with no frames on the canvas → nothing to select.
@@ -215,7 +203,6 @@ function DraftDrillDownHeader() {
 
   return (
     <>
-      {/* Back to the all-networks overview (only while drilled in). */}
       {drilled && (
         <Button
           variant={"secondary"}
@@ -227,9 +214,8 @@ function DraftDrillDownHeader() {
           <ArrowLeftIcon size={14} />
         </Button>
       )}
-      {/* Network SELECTOR (+ attached ✎ edit segment when drilled) — one
-          control. The selector switches the drill-down between the frames
-          ("All Networks" = overview). */}
+      {/* Network selector + attached ✎ edit segment (when drilled) as one
+          control; "All Networks" selects the overview. */}
       <div className={"flex items-stretch"}>
         <div
           key={"draft-network-select"}
@@ -330,12 +316,9 @@ function HeaderTopLeft() {
               in the DraftModeSwitcher. */}
           {isDraft && <DraftDrillDownHeader />}
 
-          {/* Draft title (Untitled Draft dropdown + three-dots menu) hidden for now */}
-          {/* {isDraft && <DraftModeTitle />} */}
-
-          {/* Network SELECTOR (+ attached ✎ edit segment once a network is
-              drilled into) — one control, mirroring the draft header. The edit
-              opens the real network modal (PUT) for the existing network. */}
+          {/* Network selector + attached ✎ edit segment (once drilled), one
+              control mirroring the draft header. Edit opens the real network
+              modal (PUT) for the existing network. */}
           {!isDraft && currentView === "networks" && hasNetworks && (
             <div key={"network-select"} className={"flex items-stretch"}>
               <div
@@ -498,7 +481,6 @@ function HeaderTopRight() {
 function HeaderBottom() {
   const { isDraft } = useDraftMode();
 
-  // Always visible in draft (slides in/out with draft via framer-motion).
   const showToolbar = isDraft;
 
   return (

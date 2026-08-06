@@ -109,7 +109,6 @@ export const entityName = (change: DraftChange): string => {
   }
 };
 
-// The entity type label — e.g. "Group", "Policy".
 export const entityTypeLabel = (change: DraftChange): string => {
   switch (change.type) {
     case "create-group":

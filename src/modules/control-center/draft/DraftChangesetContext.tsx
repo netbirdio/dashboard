@@ -97,7 +97,7 @@ export interface CreateNetworkChange {
 export interface UpdateNetworkChange {
   id: string;
   type: "update-network";
-  networkId: string; // real API network id
+  networkId: string;
   name: string;
   originalName: string;
   description?: string;
@@ -110,7 +110,7 @@ export interface UpdateNetworkChange {
 export interface CreateResourceChange {
   id: string;
   type: "create-resource";
-  clientId: string; // "new-<uuid>"
+  clientId: string;
   name: string;
   description?: string;
   address: string;
@@ -156,9 +156,9 @@ export interface CreateRouterChange {
 export interface UpdateRouterChange {
   id: string;
   type: "update-router";
-  routerId: string; // real API router id
-  networkId: string; // real API network id
-  networkName: string; // display-only (labels)
+  routerId: string;
+  networkId: string;
+  networkName: string;
   peerId?: string;
   groupId?: string;
   peerName?: string;
@@ -176,7 +176,7 @@ export interface UpdateResourceChange {
   resourceId: string;
   networkId: string;
   name: string;
-  networkName: string; // display-only (labels)
+  networkName: string;
   address: string;
   description?: string;
   enabled: boolean;
@@ -190,7 +190,7 @@ export interface DeleteResourceChange {
   resourceId: string;
   networkId: string;
   name: string;
-  networkName: string; // display-only (labels)
+  networkName: string;
 }
 
 // Deleting a whole EXISTING network (real API id). Draft networks are never
@@ -200,7 +200,7 @@ export interface DeleteResourceChange {
 export interface DeleteNetworkChange {
   id: string;
   type: "delete-network";
-  networkId: string; // real API network id
+  networkId: string;
   name: string;
 }
 
@@ -600,7 +600,8 @@ export const getCanvasWarnings = (
       const hasBothSides =
         ((rule.sources?.length ?? 0) > 0 || !!rule.sourceResource) &&
         ((rule.destinations?.length ?? 0) > 0 || !!rule.destinationResource);
-      if (!hasBothSides) return; // incomplete policies are visibly unfinished
+      // Incomplete policies are visibly unfinished — no warning needed.
+      if (!hasBothSides) return;
       const refs = [rule.sourceResource, rule.destinationResource];
       if (refs.some((r) => r?.id?.startsWith("draft-"))) {
         warnings.push(
@@ -730,7 +731,8 @@ interface DraftChangesetContextType {
   trackCreateRouter: (params: Omit<CreateRouterChange, "id" | "type">) => void;
   // Drops a router change by its network + peer/group reference.
   untrackRouter: (params: {
-    networkRef: string; // networkId or networkClientId
+    // networkId or networkClientId
+    networkRef: string;
     peerId?: string;
     groupId?: string;
   }) => void;

@@ -38,7 +38,7 @@ export function changeNodeId(change: DraftChange): string | undefined {
     case "install-peer":
       return `peer-${change.clientId}`;
     default:
-      return undefined; // create-router / update-router have no node
+      return undefined;
   }
 }
 

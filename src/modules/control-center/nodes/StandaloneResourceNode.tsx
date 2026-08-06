@@ -27,14 +27,11 @@ type StandaloneResourceNodeData = {
   draftNetwork?: DraftNetworkRef;
 };
 
-// A STANDALONE draft resource (not inside a network frame): a card like the
-// peer/group nodes. While unassigned it keeps a floating "No Network" control
-// (top-left, alert) that opens the network picker; once assigned, the network
-// shows inline after the name ("Name - Network", same color as the name, like
-// the components panel). Dragging the card into a frame also assigns. New
-// draft resources are editable and carry a NEW badge; existing dropped
-// resources are read-only (v1). Unlike framed resource rows, the context-menu
-// halo sits on the whole card, not the icon box.
+// A STANDALONE resource (not inside a network frame): a card like the
+// peer/group nodes. While unassigned it shows a floating "No Network" control;
+// once assigned, the network shows inline after the name. Existing dropped
+// resources are read-only (v1). The context-menu halo sits on the whole card,
+// not the icon box.
 export const StandaloneResourceNode = ({
   id,
   data,
@@ -42,7 +39,7 @@ export const StandaloneResourceNode = ({
 }: {
   id: string;
   data: StandaloneResourceNodeData;
-  // Drilled views already show the network in the header — the inline
+  // Drilled views already show the network in the header, so the inline
   // "- Network" suffix is redundant there.
   hideNetwork?: boolean;
 }) => {
@@ -60,13 +57,11 @@ export const StandaloneResourceNode = ({
   if (!resource) return null;
 
   const Icon = TYPE_ICONS[resource.type ?? "host"] ?? GlobeIcon;
-  // In draft, both draft and existing standalone resources open the editor /
-  // network picker on click (existing ones edit the canvas node only — v1
-  // doesn't push updates to the API). The LIVE single-network view renders
+  // Draft resources are editable on click; the LIVE single-network view renders
   // the same card read-only.
   const editable = isDraft;
-  // "Assigned" only once the ref points at a real network (id) or a draft
-  // frame (clientId) — an empty ref still reads as "No Network".
+  // "Assigned" only once the ref points at a real network (id) or a draft frame
+  // (clientId) — an empty ref still reads as "No Network".
   const network = data.draftNetwork;
   const hasNetwork = !!(network?.networkId || network?.networkClientId);
 
@@ -76,9 +71,7 @@ export const StandaloneResourceNode = ({
         // min width matches NETWORK_FRAME_CHILD_WIDTH_MULTI so it doesn't
         // collapse below framed rows.
         "relative rounded-lg transition-colors group/node w-full min-w-[185px]",
-        // Same card surface as the group node.
         "cursor-pointer border bg-nb-gray-940 border-nb-gray-850 hover:bg-nb-gray-930 hover:border-nb-gray-800 px-3 py-2.5",
-        // Context-menu halo + connection-drop ring on the whole card.
         isTarget && "hover:ring-2 hover:ring-white",
         showHalo && "ring-2 ring-sky-500",
         data.enabled === false && "opacity-60",
@@ -87,10 +80,8 @@ export const StandaloneResourceNode = ({
         if (editable) setResourceEditor({ nodeId: id });
       }}
     >
-      {/* Unassigned resources keep the floating "No Network" control top-left
-          (like the peer Install button) that opens the network picker. Hidden
-          for drilled children — they're shown inside their own network, so the
-          bar (and its "no network" claim) makes no sense there. */}
+      {/* Floating "No Network" control that opens the network picker. Hidden
+          for drilled children — they're already shown inside their network. */}
       {!hasNetwork && editable && !hideNetwork && (
         <div className={"absolute bottom-full left-0 mb-3 nodrag"}>
           <Button
@@ -123,9 +114,9 @@ export const StandaloneResourceNode = ({
             }
           >
             <span className={"truncate max-w-[120px]"}>{resource.name}</span>
-            {/* Once assigned, the network shows inline after the name in the
-                same color; clickable to reopen the picker for draft resources
-                (existing resources can't be reassigned in v1). */}
+            {/* Network shown inline after the name; clickable to reopen the
+                picker for draft resources (existing ones can't be reassigned
+                in v1). */}
             {hasNetwork && !hideNetwork && (
               <span
                 className={cn(

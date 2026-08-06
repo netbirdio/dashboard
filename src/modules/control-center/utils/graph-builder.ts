@@ -53,9 +53,6 @@ export function getGroupResources(
 /**
  * Add a destination group's expanded content (its peers + resources) when it
  * is selected/expanded in the graph.
- *
- * @param peerNodeType - e.g. "peerNode", "expandedGroupPeer"
- * @param peerIdPrefix - e.g. "peer-"
  */
 export function addExpandedGroupContent(
   allNodes: Node[],

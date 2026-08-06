@@ -127,10 +127,9 @@ function ControlCenterCanvas() {
     [mutate, ui],
   );
 
-  // ReactFlow re-renders on every nodes change (each drag tick); its GraphView
-  // memo bails only when all OTHER props keep identity. Per-render callbacks
-  // defeated it and re-rendered the whole canvas (~2700 fibers), so every
-  // handler goes through a stable wrapper.
+  // GraphView's memo only bails when every other prop keeps identity; per-render
+  // callbacks would re-render the whole canvas each drag tick, so route handlers
+  // through a stable wrapper.
   const useStableHandler = <A extends unknown[], R>(
     fn: (...args: A) => R,
   ): ((...args: A) => R) => {
@@ -304,11 +303,9 @@ function ControlCenterCanvas() {
         zoomOnScroll={canInteract}
         zoomOnPinch={canInteract}
         zoomOnDoubleClick={canInteract}
-        // NOT gated on anyMenuOpen: flipping these re-renders every node
-        // wrapper (RF passes isConnectable/selectable down to each node), which
-        // lagged a right-click. The menu already dismisses on any click/scroll,
-        // so nodes staying interactive behind it is harmless; pan/zoom stay
-        // locked via canInteract so the canvas doesn't move under the menu.
+        // Not gated on anyMenuOpen: flipping these re-renders every node wrapper
+        // and lagged right-click. Nodes staying interactive behind the menu is
+        // harmless; pan/zoom stay locked via canInteract.
         nodesDraggable={!emptyState && !focusMode}
         nodesConnectable={!emptyState}
         elementsSelectable={!emptyState}

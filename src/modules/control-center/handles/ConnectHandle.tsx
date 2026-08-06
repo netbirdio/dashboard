@@ -19,11 +19,9 @@ type Props = {
   position?: Position;
   type?: "source" | "target";
   style?: React.CSSProperties;
-  // Horizontal shift in px (positive → right), applied to both hit area and
-  // bubble on top of ReactFlow's handle placement.
+  // Horizontal shift in px (positive → right).
   offsetX?: number;
-  // Force the bubble hidden even while the node is hovered (e.g. pointer over a
-  // floating control that shouldn't reveal the handle).
+  // Force the bubble hidden even while the node is hovered.
   hidden?: boolean;
 };
 

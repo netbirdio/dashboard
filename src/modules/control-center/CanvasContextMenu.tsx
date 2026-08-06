@@ -60,13 +60,11 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   const { addPeerPlaceholder, addBlankNode, addBlankPolicy } =
     useDraftNodeCreation();
 
-  // ---- Draft mode actions ----
-
   // When drilled into a network the network/resource row swaps: no "New
   // Network", "New Resource" assigns into it, and "Add Routing Peer" appears.
   const drilled = !!drillDownNetworkNodeId;
 
-  // Same "New …" set as the components picker. Each action takes the flow
+  // Same "New …" set as the components picker; each action takes the flow
   // position to create at (right-click point or viewport center).
   const draftItemGroups: {
     label: string;
@@ -110,10 +108,9 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
               label: "New Resource",
               icon: <WorkflowIcon size={14} />,
               shortcut: shortcutLabel(5),
-              // Created straight into the drilled network (not standalone).
-              // Pass the right-click point so the card lands under the cursor
-              // instead of at the frame's next grid slot (parity with the
-              // non-drilled "New Resource" createStandaloneAt).
+              // Created into the drilled network. Pass the right-click point so
+              // the card lands under the cursor instead of the frame's next
+              // grid slot (parity with the non-drilled createStandaloneAt).
               action: (pos: XYPosition) =>
                 setResourceEditor({
                   createInNetworkNodeId: drillDownNetworkNodeId!,
@@ -181,8 +178,6 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   }, [draftItemGroups, viewportCenter]);
 
   useControlCenterShortcuts(shortcutMap);
-
-  // ---- Menu open/close ----
 
   const open = useCallback(
     (pos: MenuPosition) => {

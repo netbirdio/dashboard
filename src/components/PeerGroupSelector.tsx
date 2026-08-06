@@ -211,7 +211,6 @@ export function PeerGroupSelector({
     { filter: true, debounce: 150 },
   );
 
-  // Update dropdown options when groups change
   useEffect(() => {
     if (!groups) return;
     const sortedGroups = sortBy([...groups], "name");
@@ -235,7 +234,6 @@ export function PeerGroupSelector({
     }
   };
 
-  // Add group to the groupOptions if it does not exist
   const selectGroup = (name: string) => {
     onResourceChange?.(undefined);
     const group = groups?.find((group) => group.name == name);
@@ -285,14 +283,12 @@ export function PeerGroupSelector({
     if (max == 1) setOpen(false);
   };
 
-  // Remove group from the groupOptions if it does not have an id
   const deselectGroup = (name: string) => {
     onChange((previous) => {
       return previous.filter((group) => group.name != name);
     });
   };
 
-  // Check if the searched group does not exist
   const searchedGroupNotFound = useMemo(() => {
     const isSearching = search.length > 0;
     const groupDoesNotExist =
@@ -342,7 +338,6 @@ export function PeerGroupSelector({
     onChange(union);
   };
 
-  // Reset the search input when switching tabs
   useEffect(() => {
     setSearch("");
     setTimeout(() => {
@@ -518,7 +513,8 @@ export function PeerGroupSelector({
                           e.preventDefault();
                           e.stopPropagation();
                           if (disableInlineRemoveGroup) return;
-                          if (peer != undefined && group.name == "All") return; // Prevent removing the "All" group
+                          // Prevent removing the "All" group
+                          if (peer != undefined && group.name == "All") return;
                           toggleGroupByName(group.name);
                         }}
                         showX={
@@ -689,8 +685,9 @@ export function PeerGroupSelector({
                             value={option.name + option.id}
                             disabled={isDisabled}
                             onSelect={() => {
+                              // Prevent removing the "All" group
                               if (peer != undefined && option.name == "All")
-                                return; // Prevent removing the "All" group
+                                return;
                               if (isDisabled) return;
                               toggleGroupByName(option.name);
                               searchRef.current?.focus();

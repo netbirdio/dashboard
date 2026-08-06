@@ -383,7 +383,6 @@ export function ControlCenterPolicyProvider({
     const fallbackGroupNodeId = (g: Group | string | undefined, gid: string) =>
       typeof g === "object" && !g.id ? `group-new-${gid}` : `group-${gid}`;
 
-    // Source groups
     for (const source of (rule.sources as Group[]) ?? []) {
       const gid = groupKey(source);
       if (!gid) continue;
@@ -438,7 +437,6 @@ export function ControlCenterPolicyProvider({
     // --- Destination nodes ---
     const destNodeIds: string[] = [];
 
-    // Destination groups
     for (const dest of (rule.destinations as Group[]) ?? []) {
       const gid = groupKey(dest);
       if (!gid) continue;
@@ -640,8 +638,8 @@ export function ControlCenterPolicyProvider({
       policy = { ...policy, id: clientId };
       ensureDraftGroupChanges(policy);
       // Track once both sides are set (blank/one-sided policies stay
-      // canvas-only). A reference to an uninstalled placeholder peer no longer
-      // withholds the policy — it enters the changeset with a blocking issue.
+      // canvas-only). A reference to an uninstalled placeholder peer doesn't
+      // withhold the policy — it enters the changeset with a blocking issue.
       if (isCompletePolicy(policy)) {
         trackCreatePolicy({ clientId, policy });
       }

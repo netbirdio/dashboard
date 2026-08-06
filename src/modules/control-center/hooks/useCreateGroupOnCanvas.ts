@@ -17,9 +17,8 @@ type CreateGroupOptions = {
   position: XYPosition;
   peers?: Peer[];
   resources?: NetworkResource[];
-  // Grouped UNASSIGNED draft resources — their nodes leave the canvas, so
-  // their data rides on the group node (dropping the group into a network
-  // frame assigns them to that network).
+  // Grouped UNASSIGNED draft resources — their nodes leave the canvas, so their
+  // data rides on the group node (dropping the group into a frame assigns them).
   unassignedDraftResources?: NetworkResource[];
   // Grouping resources inside a drilled network: create the group as a
   // resourceGroupNode child of this frame instead of a standalone node. Draft.

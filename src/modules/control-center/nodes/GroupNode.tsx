@@ -62,7 +62,6 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
     <div
       className={cn(
         "relative cc-group-node bg-nb-gray-940 border rounded-lg transition-all group/node",
-        // The group directly under the pointer during a drop-drag gets the ring.
         dropTarget
           ? "border-white ring-2 ring-white/20 bg-nb-gray-930"
           : "border-nb-gray-850",
@@ -83,7 +82,6 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
           <div
             className={cn(
               "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 transition-all",
-              // Icon box lights up on hover, matching the resource rows.
               hoverable && "group-hover/node:bg-nb-gray-700",
             )}
           >

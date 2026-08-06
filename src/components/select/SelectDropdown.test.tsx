@@ -8,14 +8,9 @@ import {
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { SelectDropdown, SelectOption } from "./SelectDropdown";
 
-// Regression net for the app-wide SelectDropdown — the shared component the PR
-// changed most invasively (onChange now fires after the popover's close
-// animation). These pin the consumer contract every dropdown depends on:
-//   • selecting an option eventually reports its value via onChange
-//   • re-selecting the already-selected value does NOT fire onChange
-//   • the trigger shows the selected option's label
-// waitFor keeps the contract true whether onChange is synchronous (main) or
-// deferred (branch).
+// Consumer contract every dropdown depends on: selecting an option reports its
+// value via onChange, re-selecting the current value does NOT fire onChange,
+// and the trigger shows the selected label.
 
 // jsdom lacks the observers / layout APIs Radix Popover + cmdk + the option
 // rows (useIsVisible → IntersectionObserver) rely on. Report intersection
@@ -94,7 +89,6 @@ describe("SelectDropdown", () => {
     // the trigger, so a plain text query would be ambiguous.
     const beta = await screen.findByRole("option", { name: "Beta" });
     fireEvent.click(beta);
-    // Default dropdowns report immediately — no waitFor.
     expect(onChange).toHaveBeenCalledWith("b");
   });
 

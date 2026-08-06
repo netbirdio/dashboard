@@ -68,8 +68,7 @@ export function useUserView() {
         const sources = rule.sources as Group[];
         return sources?.some((d) => allUserGroups.includes(d.id));
       }),
-      // sortBy sorts ascending and ignores a direction arg — disabled first
-      // (kept for live/draft parity; see usePeerView).
+      // Ascending — disabled first (live/draft parity; see usePeerView).
       "enabled",
     );
 

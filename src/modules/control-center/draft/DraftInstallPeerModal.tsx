@@ -46,10 +46,10 @@ export const DraftInstallPeerModal = () => {
   }, [installModal, reactFlow]);
 
   // Suggested hostname for the install commands, used only as a matching
-  // fallback. Server/Agent placeholders now match by their hidden bound group
+  // fallback. Server/Agent placeholders match by their hidden bound group
   // (reliable; see resolveAutoGroups / useDraftPeerUpgrade), so they don't
   // need a hostname suggestion at all. Only bound-group-less placeholders
-  // (user devices) still get one so the upgrade watcher can find them.
+  // (user devices) get one so the upgrade watcher can find them.
   const hostname = React.useMemo(() => {
     if (!installModal?.nodeId) return undefined;
     if (kindHasBoundGroup(installModal.placeholderKind)) return undefined;

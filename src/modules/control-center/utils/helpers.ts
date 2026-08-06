@@ -736,9 +736,7 @@ export const getFrameChildPosition = (index: number) => ({
 
 // Seed grid for a LIVE overview frame — the same grid useNetworkFrameLayout
 // reconciles to (2 columns, NETWORK_FRAME_MAX_VISIBLE cap with a "+N more"
-// cell taking the last slot, fallback row heights). Seeding with the old
-// single-column math made every frame resize and its "+N more" cell shift
-// one beat after mount.
+// cell taking the last slot, fallback row heights).
 export const getLiveFrameGrid = (resourceCount: number) => {
   const hasMore = resourceCount > NETWORK_FRAME_MAX_VISIBLE;
   const visibleCount = hasMore
@@ -780,15 +778,6 @@ export const getLiveFrameGrid = (resourceCount: number) => {
   };
 };
 
-// Canvas nodes subscribed STRUCTURALLY (ids, data refs, parentId and —
-// optionally — selection), ignoring positions/measure/drag state: for
-// always-mounted consumers (components panel, toolbars) that only derive
-// from node data, so node drags don't re-render them every tick. Positions
-// must be read imperatively (reactFlow.getNodes()) when needed.
-// Focus Mode is only offered where it actually declutters: the node needs a
-// BUSY neighborhood — at least 4 incident edges and at least 2 policies
-// involved (the node itself counts when it IS a policy). Below that the
-// path is readable without dimming anything.
 export function isFocusWorthy(
   nodeId: string,
   nodes: { id: string; type?: string }[],
@@ -837,6 +826,11 @@ export function orderFrameResources(
   return [...resources.filter(isTargeted), ...resources.filter((r) => !isTargeted(r))];
 }
 
+// Canvas nodes subscribed STRUCTURALLY (ids, data refs, parentId and —
+// optionally — selection), ignoring positions/measure/drag state: for
+// always-mounted consumers (components panel, toolbars) that only derive
+// from node data, so node drags don't re-render them every tick. Positions
+// must be read imperatively (reactFlow.getNodes()) when needed.
 export function useStructuralNodes(options?: { selection?: boolean }) {
   const withSelection = options?.selection ?? false;
   return useStore(
@@ -856,11 +850,6 @@ export function useStructuralNodes(options?: { selection?: boolean }) {
   );
 }
 
-// Staggered grid for network frames (draft build + live networks overview):
-// cols ≈ √(n·avgCellH/cellW) for a ~1:1 block; each column packs frames by
-// their own heights; odd columns start half a typical cell lower so edges
-// flow between frames. Mutates the frames' positions in place and centers
-// the block vertically on `centerMidY`.
 // Grid x-origin right of the policies column — SHARED by the live overview
 // and the draft build so the policy → network gap reads identical.
 export const FRAME_GRID_BASE_X = 1050;
@@ -875,6 +864,11 @@ export const FRAME_GRID_GAP_Y = 200;
 export const SOURCE_NODE_HALF_HEIGHT = 30;
 export const POLICY_NODE_HALF_HEIGHT = 17;
 
+// Staggered grid for network frames (draft build + live networks overview):
+// cols ≈ √(n·avgCellH/cellW) for a ~1:1 block; each column packs frames by
+// their own heights; odd columns start half a typical cell lower so edges
+// flow between frames. Mutates the frames' positions in place and centers
+// the block vertically on `centerMidY`.
 export function packFrameGrid(
   frames: CanvasNode[],
   baseX: number,

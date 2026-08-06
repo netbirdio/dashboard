@@ -230,7 +230,6 @@ export const useAccessControl = ({
       return groups;
     });
 
-    // Create posture checks if they don't have an ID
     let hasError = false;
     let allChecks = postureChecks;
     await createPostureChecksWithoutID()

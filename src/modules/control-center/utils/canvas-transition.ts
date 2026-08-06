@@ -18,7 +18,6 @@ import {
 // swap. Callers describe the pre-swap motion, swap, and final viewport;
 // fades/timing/velocity are owned here so all transitions feel identical.
 
-// Two halves of ONE zoom (see above).
 export const easeInHalf = (t: number) => t * t;
 export const easeOutHalf = (t: number) => 1 - (1 - t) * (1 - t);
 
@@ -289,14 +288,9 @@ export function runCanvasTransition(
   }, SWAP_AT);
 }
 
-// ---------------------------------------------------------------------------
-// One-liner facades — THE drill-down behavior, ready for any view.
-// ---------------------------------------------------------------------------
-
 // Drill INTO something: dives toward the clicked node (or zooms from the
 // center when there's none — dropdown picks), swaps the scene invisibly and
 // grows the new scene in.
-//   drillInto(reactFlow, clickedNode, () => switchToDetailView());
 export const drillInto = (
   reactFlow: ReactFlowInstance,
   target: Node | Rect | null | undefined,
@@ -314,7 +308,6 @@ export const drillInto = (
 // Drill back OUT: zooms outward while fading, swaps invisibly, then grows
 // the parent scene in (or flies out of `from`, e.g. the frame the drill
 // came from, when given).
-//   drillOutOf(reactFlow, () => switchToOverview());
 export const drillOutOf = (
   reactFlow: ReactFlowInstance,
   swap: () => void,

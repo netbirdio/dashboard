@@ -28,13 +28,10 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
   const isActive = rule?.enabled;
   const { isDraft } = useDraftMode();
   const nodeId = useNodeId();
-  // A drag from another node may be dropped here (add group to this policy).
   const isDropTarget = useConnection(
     (c) => c.inProgress && c.fromNode?.id !== nodeId,
   );
 
-  // Halo while the context menu targets this policy — same ring the other
-  // nodes show.
   const showHalo = useIsContextMenuTarget(id);
 
   return (
@@ -133,10 +130,8 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
         isConnectable={false}
       />
 
-      {/* Draft: hover connect handles — dragging from the right adds the
-          target group as a destination, from the left as a source. The
-          full-area target handle accepts drags from group handles (left group
-          handle → destination, right → source). */}
+      {/* Draft connect handles: dragging from the right adds the target group
+          as a destination, from the left as a source. */}
       {isDraft && (
         <>
           <ConnectHandle type={"source"} position={Position.Left} />

@@ -24,10 +24,7 @@ type DeviceCardProps = {
   resource?: NetworkResource;
   className?: string;
   size?: DeviceCardSize;
-  // Rendered inline after the name (e.g. the NEW badge for draft entities).
   badge?: React.ReactNode;
-  // Truncation width for the name — wider containers (e.g. the group panel
-  // lists) pass more room than the canvas-card default.
   nameMaxWidth?: string;
 };
 
@@ -90,17 +87,16 @@ export const DeviceCard = ({
       <div
         className={cn(
           "flex flex-col justify-center leading-tight",
-          // Peer subtitles sit tighter than resource ones — a hair less gap
-          // keeps resources from looking spaced out. Default-size peers use
-          // no gap at all (the placeholder card's metrics).
+          // Peers sit a hair tighter than resources; default-size peers use no
+          // gap to match the placeholder card.
           device ? (isSmall ? "gap-0.5" : "gap-0") : "gap-px",
         )}
       >
         <span
           className={cn(
             "font-normal text-nb-gray-100 flex items-center gap-2",
-            // Default metrics match the placeholder peer card so installed
-            // and not-yet-installed peers share the title/subtitle gap.
+            // Metrics match the placeholder peer card so installed and
+            // not-yet-installed peers share the title/subtitle gap.
             isSmall
               ? "text-[0.72rem]"
               : "mb-1 mt-1 text-[0.85rem] relative top-[0.05rem]",

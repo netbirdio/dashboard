@@ -136,10 +136,11 @@ export function useRemoveChange() {
         case "create-router": {
           const netId = change.networkId ?? change.networkClientId;
           const frameId = `network-${netId}`;
+          // A draft group's router edge id isn't peer-scoped — match by target.
           const src = change.peerId
             ? `peer-${change.peerId}`
             : change.groupId
-            ? undefined // draft group edge id is not peer-scoped; match by target
+            ? undefined
             : undefined;
           setEdges((prev) =>
             prev.filter(

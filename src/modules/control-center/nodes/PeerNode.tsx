@@ -28,9 +28,8 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import Button from "@components/Button";
 
 // A not-yet-installed peer dropped from the components sidebar. Server/Agent
-// carry no setup key until the user installs: the Install button opens the
-// setup modal, where the key is generated on demand and then held here
-// (`setupKey`) so a later reopen reuses it.
+// carry no setup key until installed: the key is generated on demand and held
+// on the node (`setupKey`) so a later reopen reuses it.
 export type PeerPlaceholderKind = "server" | "agent" | "user-device";
 
 export type PeerNodeType = Node<
@@ -41,19 +40,18 @@ export type PeerNodeType = Node<
     showHandles?: boolean;
     variant?: "default" | "card";
     placeholderKind?: PeerPlaceholderKind;
-    // Canvas-only custom name set via the node context menu's Rename.
+    // Canvas-only custom name set via the context menu's Rename.
     placeholderName?: string;
     setupKey?: string;
-    // Hostname the install modal suggested — the upgrade watcher matches the
-    // registering peer against it (useDraftPeerUpgrade), as a fallback to the
-    // bound-group match below.
+    // Hostname the install modal suggested — a fallback the upgrade watcher
+    // (useDraftPeerUpgrade) matches the registering peer against.
     installHostname?: string;
-    // Set for Server/Agent placeholders once the setup key is generated: the
-    // id of a hidden, throwaway group the key auto-assigns. The upgrade watcher
+    // Set for Server/Agent placeholders once the setup key is generated: id of
+    // a hidden throwaway group the key auto-assigns. The upgrade watcher
     // matches the registering peer by membership in it, then deletes it.
     boundGroupId?: string;
-    // Id of the setup key generated for this placeholder — deleted along with
-    // the bound group once the peer is matched or the draft is abandoned.
+    // Deleted along with the bound group once the peer is matched or the draft
+    // is abandoned.
     setupKeyId?: string;
   },
   "peerNode"
@@ -82,18 +80,16 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
   const isContextTarget = useIsContextMenuTarget(id);
   const { selectedPeerPanel } = useDestinationGroup();
   const { setInstallModal, setUserDeviceModal } = useDraftMode();
-  // Ring while the context menu targets this peer or while its groups panel
-  // is open — same halo the group panel puts on its group node. Placeholder
-  // peers have no data.peer.id: they're keyed on the node id (matching how
-  // onNodeClick/getPlaceholderPeer derive the panel id), so fall back to that
-  // or the ring never shows when a placeholder's panel is selected.
+  // Placeholder peers have no data.peer.id: they're keyed on the node id
+  // (matching how onNodeClick/getPlaceholderPeer derive the panel id), so fall
+  // back to that or the ring never shows for a placeholder's panel.
   const showHalo =
     isContextTarget ||
     (!!selectedPeerPanel &&
       selectedPeerPanel === (data.peer?.id ?? id.replace("peer-", "")));
 
   // A user-device placeholder that picked its peer IS that peer (plain card
-  // below); un-picked placeholders of every kind render the placeholder card.
+  // below); un-picked placeholders render the placeholder card.
   if (placeholderKind && !peer) {
     const Icon =
       placeholderKind === "agent"
@@ -102,11 +98,10 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
         ? MonitorSmartphoneIcon
         : ServerIcon;
     // Drops always assign a unique placeholderName ("Agent", "Agent (1)", …);
-    // the fallback only covers drafts persisted before names existed.
+    // the base name is just a fallback.
     const label = placeholderName || PLACEHOLDER_BASE_NAMES[placeholderKind];
-    // Mirrors the real peer node (card variant + default-size DeviceCard):
-    // same wrapper padding, icon box, gaps and text sizes — only the Install
-    // button is extra.
+    // Mirrors the real peer node (card variant + default-size DeviceCard) —
+    // only the Install button is extra.
     return (
       <div
         className={cn(
@@ -117,11 +112,9 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
           showHalo && "ring-2 ring-sky-500",
         )}
       >
-        {/* Floating Install — top-left above the node, zooms with the
-            canvas (positioned inside the node, not a NodeToolbar portal). */}
-        {/* Same alert treatment as a standalone resource's "No Network"
-            control — a CTA, not a plain label: user devices open the setup
-            stepper, servers/agents the install modal. */}
+        {/* Floating Install CTA above the node (positioned inside the node,
+            not a NodeToolbar portal, so it zooms with the canvas): user
+            devices open the setup stepper, servers/agents the install modal. */}
         <div className={"absolute bottom-full left-0 mb-3 nodrag"}>
           <Button
             variant={"secondary"}
@@ -142,8 +135,8 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
             {placeholderKind === "user-device" ? (
               <AlertTriangleIcon size={12} className={"text-yellow-400"} />
             ) : setupKey ? (
-              // Setup key generated — waiting for the machine to register (the
-              // canvas polls /peers and swaps this for the real peer).
+              // Waiting for the machine to register (the canvas polls /peers
+              // and swaps this for the real peer).
               <Loader2 size={12} className={"animate-spin text-nb-gray-300"} />
             ) : (
               <DownloadIcon size={12} className={"text-yellow-400"} />
@@ -172,9 +165,8 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
               <TruncatedText text={label} maxWidth={"150px"} hideTooltip />
               <SmallBadge />
             </span>
-            {/* Sits in the slot where real peers show their NetBird IP —
-                x placeholders read as "assigned on install", derived from
-                the account's peer network range. */}
+            {/* Slot where real peers show their NetBird IP; the placeholder IP
+                is derived from the account's peer network range. */}
             <span
               className={
                 "font-normal text-sm text-nb-gray-500 relative -top-[0.1rem]"
@@ -198,9 +190,9 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
   return (
     <div
       className={cn(
-        // Fixed height matching GroupNode (h-9 icon + py-3.5 = 64px inner)
-        // so peers, selects, and groups all line up. The unnamed `group` lets
-        // DeviceCard's icon box light up on hover (its group-hover: is unnamed).
+        // Fixed height matching GroupNode (64px inner) so peers, selects, and
+        // groups line up. The unnamed `group` lets DeviceCard's icon box light
+        // up on hover (its group-hover: is unnamed).
         "relative rounded-lg transition-all group group/node pr-5 pl-3 h-[64px] flex items-center border",
         variant === "card" &&
           "bg-nb-gray-940 border-nb-gray-850 hover:bg-nb-gray-930 hover:border-nb-gray-800",
@@ -216,9 +208,8 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
         device={peer}
         className={cn("p-0", !isEnabled && "opacity-60", "w-auto")}
       />
-      {/* Like GroupNode: AllHandles always render (invisible edge anchors —
-          edges need them to attach); showHandles only gates the visible
-          connect bubbles. */}
+      {/* AllHandles always render (invisible edge anchors); showHandles only
+          gates the visible connect bubbles. */}
       <AllHandles />
       {showHandles && (
         <>

@@ -3,10 +3,9 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type ShortcutMap = Record<string, () => void>;
 
-// Only genuine text-entry contexts block shortcuts. Focused buttons (a click
-// leaves the button focused) must NOT block them — otherwise hotkeys go dead
-// after any toolbar/canvas button press. Enter still activates a focused
-// button; plain-key shortcuts don't overlap button interaction.
+// Only genuine text-entry contexts block shortcuts. Focused buttons must NOT
+// (a click leaves the button focused) — else hotkeys go dead after any button
+// press.
 const TEXT_ENTRY_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
 export function isInputFocused(): boolean {
@@ -37,12 +36,10 @@ export function useControlCenterShortcuts(
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isInputFocused()) return;
 
-      // Modifier combos are registered as "ctrl+<key>" / "alt+<key>" /
-      // "shift+<key>" and take priority. Plain-key shortcuts never fire while
-      // Ctrl/Cmd/Alt is held (so e.g. Ctrl+C copy doesn't toggle the
-      // components panel). Alt combos match on e.code (Option+digit types
-      // special characters on macOS). Exact key is checked first (Delete,
-      // Escape, +, -) then lowercase letters.
+      // Modifier combos ("ctrl+<key>" / "alt+<key>" / "shift+<key>") take
+      // priority; plain-key shortcuts never fire while Ctrl/Cmd/Alt is held (so
+      // e.g. Ctrl+C doesn't toggle the components panel). Alt combos match on
+      // e.code (Option+digit types special characters on macOS).
       const lower = e.key.toLowerCase();
       const codeKey = e.code?.startsWith("Digit")
         ? e.code.slice(5)

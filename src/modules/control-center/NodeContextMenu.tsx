@@ -372,8 +372,6 @@ export const NodeContextMenu = ({
     removeNodeWithEdges(nodeId);
   }, [nodeId, removeNodeWithEdges]);
 
-  // ---- Policy actions (draft) ----
-
   const nodePolicy = node?.data?.policy as Policy | undefined;
   const policyClientId = nodeId.startsWith("policy-")
     ? nodeId.replace("policy-", "")
@@ -463,8 +461,6 @@ export const NodeContextMenu = ({
     trackDeletePolicy,
     removeNodeWithEdges,
   ]);
-
-  // ---- Policy actions (live) ----
 
   // The canvas node's policy may predate the last save — the SWR list is the
   // freshest copy of a live policy.
@@ -812,8 +808,6 @@ export const NodeContextMenu = ({
     },
     [groups, groupRequest, setNodes],
   );
-
-  // ---- Menu items ----
 
   const items: MenuItem[] = useMemo(() => {
     if (!node) return [];

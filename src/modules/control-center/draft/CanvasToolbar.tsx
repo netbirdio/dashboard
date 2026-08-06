@@ -81,10 +81,8 @@ export const CanvasToolbar = () => {
   const handleFitView = () =>
     reactFlow.fitView({ padding: 0.1, duration: 500, maxZoom: 0.8 });
 
-  // Re-arranges the current graph with THE same layout the canvas got when
-  // the draft was entered (applyDraftBuildLayout / applyDrilledLayout) —
-  // arranging an untouched canvas reproduces the initial positions exactly
-  // instead of drifting to a slightly different rhythm.
+  // Re-arranges with the layout the draft was entered with — arranging an
+  // untouched canvas reproduces the initial positions instead of drifting.
   const handleArrange = () => {
     const nodes = reactFlow.getNodes();
     const edges = reactFlow.getEdges();
@@ -182,8 +180,6 @@ export const CanvasToolbar = () => {
           shortcut="C"
           variant="primary"
           active={componentsPanelOpen}
-          // Toggle, matching the C shortcut — panel buttons close on re-click
-          // rather than being disabled while open.
           onClick={() => setComponentsPanelOpen(!componentsPanelOpen)}
           className="pl-2 pr-2.5 gap-1 text-sm group/add"
         >

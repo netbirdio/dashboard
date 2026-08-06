@@ -65,12 +65,8 @@ import {
 } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { SmallBadge } from "@components/ui/SmallBadge";
 
-// Draggable "create new" templates that drop a blank node onto the canvas.
 type BlankKind = "group" | "network" | "resource";
 
-// Draggable "create new" peer templates — all drop a placeholder node onto
-// the canvas. Server/Agent placeholders carry an Install button; the User
-// Device placeholder is a select node (pick an existing peer or install).
 type PeerTemplate = {
   key: PeerPlaceholderKind;
   label: string;
@@ -162,8 +158,6 @@ export const ControlCenterComponentsPanel = () => {
     drillDownNetworkNodeId,
   } = useDraftMode();
 
-  // Stays mounted for the whole draft session — opening only toggles
-  // visibility, so there is no mount cost while the animation runs.
   if (!isDraft) return null;
 
   return (
@@ -188,8 +182,6 @@ const PanelContent = React.memo(
     // Passed down (not read via useDraftMode) so PanelContent — mounted for
     // the whole session — doesn't re-render on every draft-context change.
     setResourceEditor: ReturnType<typeof useDraftMode>["setResourceEditor"];
-    // When drilled into a single network, the panel is restricted to that
-    // network's resources + new ones (assigned straight to it).
     drillDownNetworkNodeId: string | null;
   }) => {
     const drilled = !!drillDownNetworkNodeId;
@@ -281,9 +273,8 @@ const PanelContent = React.memo(
       [drawPolicyOnCanvas, changes],
     );
 
-    // Mirror of the existing-policy drop for existing networks/resources:
-    // the policies granting access to the dropped resources are drawn too
-    // (sources created/connected around an anchor left of the drop point).
+    // Like handleExistingPolicyDrop, but for existing networks/resources: also
+    // draws the policies granting access to the dropped resources.
     const drawResourcePolicies = useCallback(
       (droppedResources: NetworkResource[], position?: XYPosition) => {
         // Pending update-policy changes win over API data (see
@@ -327,8 +318,6 @@ const PanelContent = React.memo(
           initialY: event.clientY,
         });
         onDragStart(event, ({ position }) => {
-          // New-policy template drops a blank policy node — no modal; it
-          // becomes a changeset entry once connects give it both sides.
           if (policy) handleExistingPolicyDrop(policy, position);
           else addBlankPolicy(position);
           setGhostData(undefined);
@@ -338,10 +327,6 @@ const PanelContent = React.memo(
       [onDragStart, handleExistingPolicyDrop, addBlankPolicy, onClose],
     );
 
-    // Drops a fresh, id-less "new" node so the node components render their
-    // NEW badge. Each drop gets a unique canvas id so multiple blanks coexist.
-    // Groups go through addNewGroup: unique "New Group (n)" name, tracked in
-    // the draft changeset, group panel opened for immediate renaming.
     const addBlankNode = useCallback(
       (kind: BlankKind, position?: XYPosition, targetNodeId?: string) => {
         if (kind === "group") {
@@ -351,15 +336,11 @@ const PanelContent = React.memo(
           addNewGroup(pos);
           return;
         }
-        // A resource always opens the editor first so an IP/CIDR/domain is
-        // entered; the card is created only on save. Dropped onto a network
-        // frame it's created INTO it, otherwise standalone at the drop point.
-        // (targetNodeId is already resolved to the frame id by the drop
-        // provider; every network- node on the draft canvas is a frame.)
+        // A resource opens the editor first so an IP/CIDR/domain is entered;
+        // the card is created only on save. When drilled, it's created into the
+        // drilled network; otherwise a drop onto a frame (targetNodeId, already
+        // resolved to the frame id) assigns it there, else it's standalone.
         if (kind === "resource") {
-          // Drilled into a network → the resource is created straight into it,
-          // wherever it's dropped. Otherwise a drop onto a frame assigns it
-          // there, and a drop on empty canvas creates it standalone.
           const targetFrame = drilled
             ? drillDownNetworkNodeId
             : targetNodeId?.startsWith("network-")
@@ -420,8 +401,7 @@ const PanelContent = React.memo(
         position?: XYPosition,
       ) => {
         // Existing networks drop as a full frame (chrome + existing resources
-        // as children), reusing the draft-frame machinery — plus the policies
-        // that grant access to its resources.
+        // as children), plus the policies that grant access to its resources.
         if (type === NodeType.NetworkNode) {
           const network = data as Network;
           dropExistingNetworkFrame(network, position);
@@ -474,8 +454,6 @@ const PanelContent = React.memo(
           position,
         );
 
-        // Existing resources also pull in the policies granting access to
-        // them (directly or via their groups).
         if (type === NodeType.ResourceNode) {
           drawResourcePolicies([data as NetworkResource], position);
         }
@@ -798,8 +776,7 @@ const PanelContent = React.memo(
     );
     const showPolicyTemplate = policiesCategory || matchesSearch("Policy");
 
-    // ---- Row builders (shared between category pages and search results) ----
-
+    // Row builders — shared between category pages and search results.
     const buildPeerTemplateRows = () =>
       filteredPeerTemplates.map((tpl) => (
         <TemplateItem
@@ -1296,7 +1273,6 @@ const PanelContent = React.memo(
             "bg-nb-gray-935 shadow-xl",
           )}
         >
-          {/* Search — transparent, like the global search */}
           <div
             className={
               "flex items-center gap-2 pr-3 border-b border-nb-gray-910"
@@ -1331,7 +1307,6 @@ const PanelContent = React.memo(
           </div>
 
           <div className={"flex flex-1 min-h-0"}>
-            {/* Category rail — icon only, tooltip on hover */}
             <div
               className={
                 "w-[52px] shrink-0 border-r border-nb-gray-910 py-2 flex flex-col items-center gap-1"
@@ -1365,7 +1340,6 @@ const PanelContent = React.memo(
               ))}
             </div>
 
-            {/* Items — virtualized (react-virtuoso), like PeerSelector */}
             {flatRows.length > 0 ? (
               <MemoizedScrollArea
                 withoutViewport={true}
@@ -1373,21 +1347,17 @@ const PanelContent = React.memo(
               >
                 <Virtuoso
                   ref={listRef}
-                  // The panel stays mounted while closed (it only fades) —
-                  // Virtuoso and the scroll area would keep their first,
-                  // invisible-mount measurements (wrong scrollbar size, or
-                  // none at all). Remount the list on every open for a
-                  // fresh measure of the now-visible container. Tab/search
-                  // switches only scroll back to the top (see the effect
-                  // above) — remounting per tab blinked the list.
+                  // The panel stays mounted while closed (it only fades), so
+                  // Virtuoso keeps its invisible-mount measurements (wrong/no
+                  // scrollbar). Remount on every open for a fresh measure;
+                  // per-tab remounts blinked the list, so those only scroll to
+                  // top (see the effect above).
                   key={open ? "open" : "closed"}
                   data={flatRows}
                   overscan={300}
-                  // Exact row height (h-[52px]) — headings are shorter and
-                  // measured as soon as they render; an overestimate here
-                  // inflates the scrollbar until every item was measured
-                  // (visibly off on heading-heavy tabs like Networks &
-                  // Resources).
+                  // Exact row height (h-[52px]) — an overestimate inflates the
+                  // scrollbar until every item is measured (visibly off on
+                  // heading-heavy tabs like Networks & Resources).
                   defaultItemHeight={52}
                   computeItemKey={(index) => flatRows[index].key}
                   itemContent={(index, row) => (
@@ -1410,7 +1380,6 @@ const PanelContent = React.memo(
                 />
               </MemoizedScrollArea>
             ) : (
-              // Same not-found state as the global search modal.
               <div className={"flex-1 flex justify-center pt-8"}>
                 <div className={"text-center"}>
                   <div

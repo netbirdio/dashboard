@@ -24,10 +24,9 @@ type ResourceGroupNode = Node<
   "resourceGroupNode"
 >;
 
-// A resource group shown INSIDE a network frame: same row anatomy as the
-// draft resource node (icon box + name + count) but flat — no card
-// background, border, or padding. Laid out by the frame like resources
-// (fixed in place; dragging it moves the whole frame).
+// A resource group shown INSIDE a network frame: same row anatomy as the draft
+// resource node but flat (no card background/border/padding). Laid out by the
+// frame like resources; dragging it moves the whole frame.
 export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => {
   const { group, showHandles = true } = data;
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();
@@ -35,26 +34,23 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
     useDestinationGroup();
   const isContextTarget = useIsContextMenuTarget(id);
   // Panel selection is keyed by group id, or by node id for draft groups —
-  // same rule as GroupNode. An open group panel rings this row's icon box
-  // sky (matching how a framed resource highlights when its editor is open).
+  // same rule as GroupNode.
   const isPanelActive =
     selectedDestinationGroup !== "" &&
     (selectedDestinationGroup === group?.id || selectedDestinationGroup === id);
   const showHalo = isPanelActive || isContextTarget;
-  // Framed rows accept connection DROPS in every view — the drop routes
-  // into the destination picker preselected with this group. Only dragging
-  // FROM the row stays drill-down-only (same rule as ResourceNode).
+  // Framed rows accept connection DROPS in every view; only dragging FROM the
+  // row stays drill-down-only (same rule as ResourceNode).
   const isFramed = !!parentId?.startsWith("network-");
   const handlesActive = !isFramed || drillDownNetworkNodeId === parentId;
   const isTarget = useConnection(
     (c) => c.inProgress && c.fromNode.id !== id,
   );
 
-  // Drilled into the single-network view the parent frame is HIDDEN — the same
-  // signal ResourceNode uses to swap its flat row for a card. A framed resource
-  // group promotes to a full GroupNode card there and reverts to the flat row
-  // back in the networks view. (Boolean store selector, not useInternalNode —
-  // see ResourceNode for why.)
+  // While drilled, the parent frame is HIDDEN — the same signal ResourceNode
+  // uses to swap its flat row for a card; here the row promotes to a full
+  // GroupNode card. (Boolean store selector, not useInternalNode — see
+  // ResourceNode for why.)
   const parentFrameHidden = useStore((st) =>
     parentId ? !!st.nodeLookup.get(parentId)?.hidden : false,
   );
@@ -69,7 +65,6 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
           group,
           enabled: data.enabled,
           showHandles,
-          // Carry the drop-target highlight so it rings while a resource hovers.
           dropTarget: data.dropTarget,
           onClick: () => setSelectedDestinationGroup(group?.id || id),
         }}
@@ -83,8 +78,8 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
         // h-full + centering: the frame layout stamps a fixed slot height on
         // framed rows (deterministic grid — no measure-based re-layout).
         "cc-frame-row relative rounded-lg transition-all group/node w-full h-full flex flex-col justify-center",
-        // Interactive like the resource rows next to it (pointer + hover): draft
-        // opens the group panel, live drills into the network (via onNodeClick).
+        // Draft opens the group panel; live drills into the network (via
+        // onNodeClick).
         "cursor-pointer",
       )}
       onClick={() => {
@@ -95,9 +90,8 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
         <div
           className={cn(
             "cc-frame-row-icon h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 group-hover/node:bg-nb-gray-800 transition-all",
-            // Rings live on the icon box, not the whole row: white only while a
-            // connection drag actually hovers this node, sky halo for the
-            // context menu (same as resource nodes).
+            // Rings live on the icon box, not the whole row: white while a
+            // connection drag hovers, sky halo for the context menu.
             isTarget && "group-hover/node:ring-2 group-hover/node:ring-white",
             showHalo && "ring-2 ring-sky-500",
           )}

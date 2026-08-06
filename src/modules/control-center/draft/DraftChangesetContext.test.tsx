@@ -543,7 +543,6 @@ describe("network / resource / router changes", () => {
       address: "10.0.0.5",
       groupIds: ["g1"],
     };
-    // Disable → records an update.
     act(() =>
       result.current.trackUpdateResource({
         ...updateResourceParams,
@@ -552,7 +551,6 @@ describe("network / resource / router changes", () => {
       }),
     );
     expect(result.current.changes).toHaveLength(1);
-    // Re-enable (back to live) → the no-op change disappears.
     act(() =>
       result.current.trackUpdateResource({
         ...updateResourceParams,
@@ -584,7 +582,6 @@ describe("network / resource / router changes", () => {
     act(() =>
       result.current.trackDeleteNetwork({ networkId: "n1", name: "Office" }),
     );
-    // Only the delete-network survives — the redundant PUTs are dropped.
     expect(result.current.changes).toEqual([
       expect.objectContaining({ type: "delete-network", networkId: "n1" }),
     ]);

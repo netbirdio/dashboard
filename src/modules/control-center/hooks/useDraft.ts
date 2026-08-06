@@ -240,7 +240,6 @@ export function useDraft() {
           position: { x: 0, y: 0 },
         });
 
-        // Detect self-referencing groups (same group in both sources and destinations)
         const sources = (rule.sources as Group[]) ?? [];
         const destinations = (rule.destinations as Group[]) ?? [];
         const sourceGroupIds = new Set(

@@ -133,7 +133,6 @@ export function ResourceModalContent({
 
   const { confirm } = useDialog();
 
-  // Access control policies
   const [policies, setPolicies] = useState<Policy[]>([]);
   const { createPoliciesForResource } = usePolicies();
   const {

@@ -101,10 +101,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     },
   } = params;
 
-  // ---------------------------------------------------------------------------
-  // fitView
-  // ---------------------------------------------------------------------------
-
   // First fit after a mount: returning to the page via client-side nav
   // remounts with a warm SWR cache, so nodes commit (and paint at the
   // default viewport — a top-left flash) before the camera is fitted. Hide
@@ -169,10 +165,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     };
     window.requestAnimationFrame(() => attempt(30));
   };
-
-  // ---------------------------------------------------------------------------
-  // Generic handleEntityChange
-  // ---------------------------------------------------------------------------
 
   const handleEntityChange = (id: string, config: EntityChangeConfig) => {
     const { selectNodeId, dataKey, selectedValue, setSelected, applyView } =
@@ -250,10 +242,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       applyView: applyUserView,
     });
 
-  // ---------------------------------------------------------------------------
-  // refreshLiveView — in-place canvas update after a live policy save
-  // ---------------------------------------------------------------------------
-
   // Rebuilds the CURRENT live view from the API response of a policy update
   // (the SWR cache still holds the pre-save list until its background
   // revalidation lands). Surviving nodes keep their positions and the camera
@@ -302,10 +290,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setEdges(result.updatedEdges);
   };
 
-  // ---------------------------------------------------------------------------
-  // Generic forceEntityView
-  // ---------------------------------------------------------------------------
-
   const forceEntityView = (entityId: string, config: ForceEntityViewConfig) => {
     const { flowView, resetState, selectNode, applyView } = config;
 
@@ -342,10 +326,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       },
       applyView: applySingleGroupView,
     });
-
-  // ---------------------------------------------------------------------------
-  // Navigation
-  // ---------------------------------------------------------------------------
 
   const resetView = () => {
     setLayoutInitialized(false);
@@ -392,10 +372,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     } catch (e) {}
   };
 
-  // ---------------------------------------------------------------------------
-  // onDestinationGroupSelect
-  // ---------------------------------------------------------------------------
-
   // Clicking a group opens its panel; clicking it again keeps it open (no
   // toggle) — the panel only closes on a click outside (pane click / Esc).
   const onDestinationGroupSelect = useCallback(
@@ -408,10 +384,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     },
     [setSelectedDestinationGroup, setSelectedPeerPanel],
   );
-
-  // ---------------------------------------------------------------------------
-  // onNodeClick
-  // ---------------------------------------------------------------------------
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, _node: Node) => {
@@ -562,10 +534,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       confirm,
     ],
   );
-
-  // ---------------------------------------------------------------------------
-  // View initialization effect
-  // ---------------------------------------------------------------------------
 
   useEffect(() => {
     if (isLoading) return;

@@ -17,9 +17,6 @@ export type OnDropAction = ({
   targetNodeId,
 }: {
   position: XYPosition;
-  // Id of the ReactFlow node the pointer was released over (if any) — lets a
-  // drop handler assign into that node (e.g. a resource into a network frame)
-  // instead of dropping standalone.
   targetNodeId?: string;
 }) => void;
 
@@ -142,7 +139,7 @@ export function DragAndDropProvider({
         isDragging,
         setIsDragging,
         dropAction,
-        // This is a workaround to ensure that the drop action is not treated as a lazy function.
+        // Wrap so React doesn't treat the drop action as a lazy state updater.
         setDropAction: (action) => setDropAction(() => action),
       }}
     >
@@ -168,13 +165,11 @@ export const useDragAndDrop = () => {
   // Where the pointer went down — releasing within CLICK_MOVE_THRESHOLD px is
   // a click, not a drag.
   const dragStartPosition = useRef<XYPosition | undefined>(undefined);
-  // Whether the current drag can drop INTO a network frame (resources) — if
-  // so, frames highlight as drop targets while the pointer is over them.
   const canDropIntoFrame = useRef(false);
-  // Skip the click-to-place "reveal" (fitBounds) — for templates that open a
-  // modal instead of placing a node (Resource): zooming the canvas while a
-  // modal takes focus is disorienting, and when drilled the frame fills the
-  // view so the free-spot search lands far outside and zooms into nothing.
+  // Skip the click-to-place "reveal" (fitBounds) for templates that open a
+  // modal instead of placing a node: zooming while a modal takes focus is
+  // disorienting, and when drilled the frame fills the view so the free-spot
+  // search lands far outside and zooms into nothing.
   const skipClickReveal = useRef(false);
 
   // Resolve the network frame under a screen point (walking a frame child up
@@ -229,9 +224,7 @@ export const useDragAndDrop = () => {
 
   const onDragEnd = useCallback(
     (event: PointerEvent) => {
-      // Clear any frame drop-target highlight raised during the drag. The
-      // reparent (addResourceToFrame) itself keeps no highlight, so this is
-      // the only thing that needs to tidy up.
+      // Clear any frame drop-target highlight raised during the drag.
       if (canDropIntoFrame.current) setFrameDropTarget(undefined);
       if (!isDragging) {
         setIsDragging(false);
@@ -316,10 +309,8 @@ export const useDragAndDrop = () => {
           x: event.clientX,
           y: event.clientY,
         });
-        // The ReactFlow node released over (if any) — lets a resource drop
-        // assign into a network frame instead of landing standalone. If the
-        // pointer is over a frame's child (a resource row), resolve to the
-        // frame itself.
+        // When the pointer is over a frame's child (a resource row), resolve
+        // to the frame itself.
         const overId =
           elementUnderPointer
             ?.closest(".react-flow__node")
@@ -355,9 +346,8 @@ export const useDragAndDrop = () => {
     };
   }, [onDragEnd, isDragging]);
 
-  // A REAL drag (pointer traveled past the click threshold) hides the
-  // components panel right away so the canvas is visible while dragging —
-  // plain clicks (click-to-place) keep it open.
+  // A real drag (past the click threshold) hides the components panel so the
+  // canvas is visible; plain clicks (click-to-place) keep it open.
   const { setComponentsPanelOpen } = useDraftMode();
   useEffect(() => {
     if (!isDragging) return;

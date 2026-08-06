@@ -161,7 +161,8 @@ describe("buildBeforeRequest", () => {
     const before = buildBeforeRequest(change, live);
     expect(before?.method).toBe("PUT");
     expect(before?.path).toBe("/policies/pol1");
-    expect((before?.body as any).enabled).toBe(true); // live value, not the draft's false
+    // Live value, not the draft's false.
+    expect((before?.body as any).enabled).toBe(true);
   });
 
   it("degrades to no body (never throws) for a rule-less live policy", () => {
@@ -204,7 +205,8 @@ describe("id placeholders in preview", () => {
             name: "P",
             description: "",
             enabled: true,
-            sources: [{ name: "Sales Team" }], // draft group — no id yet
+            // Draft group — no id yet.
+            sources: [{ name: "Sales Team" }],
             destinations: [{ id: "g2", name: "Admins" }],
             bidirectional: true,
             action: "accept",

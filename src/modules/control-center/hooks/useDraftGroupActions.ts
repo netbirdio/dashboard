@@ -378,7 +378,8 @@ export function useDraftGroupActions() {
         const updatesById = new Map<string, Policy>();
         reactFlow.getEdges().forEach((e) => {
           if (e.source !== nodeId && e.target !== nodeId) return;
-          const isSourceSide = e.source === nodeId; // group → policy
+          // group → policy
+          const isSourceSide = e.source === nodeId;
           const policyNodeId = isSourceSide ? e.target : e.source;
           const policyNode = allNodes.find((n) => n.id === policyNodeId);
           if (policyNode?.type !== NodeType.PolicyNode) return;

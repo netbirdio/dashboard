@@ -10,8 +10,6 @@ type AnimatedLineProps = Edge<
   "animated-line"
 >;
 
-// Live-overview source → network line: same side-anchored dashed bezier as
-// the draft SmartEdge, with the policy's protocol/port label on the midpoint.
 function AnimatedLine({ source, target, data }: AnimatedLineProps) {
   const sourceRect = useEdgeNodeRect(source);
   const targetRect = useEdgeNodeRect(target);
@@ -24,8 +22,7 @@ function AnimatedLine({ source, target, data }: AnimatedLineProps) {
   const labelWidth = label.length * 7 + 12;
   const labelHeight = fontSize + 6;
 
-  // Side-anchored like SmartEdge: anchor each end to the side facing the other
-  // (frames sit right of the sources).
+  // Anchor each end to the side facing the other.
   const sourceIsLeft =
     sourceRect.x + sourceRect.width / 2 < targetRect.x + targetRect.width / 2;
   const sx = sourceIsLeft ? sourceRect.x + sourceRect.width : sourceRect.x;

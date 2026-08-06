@@ -26,7 +26,6 @@ export default function DataTableGlobalSearch({
   const [inputValue, setInputValue] = useState(globalSearch || "");
   const debouncedValue = useDebounce(inputValue, 800);
 
-  // Call setGlobalSearch when debounced value changes
   useEffect(() => {
     setGlobalSearch(debouncedValue);
   }, [debouncedValue]);
@@ -70,7 +69,7 @@ export default function DataTableGlobalSearch({
         }
       }}
       icon={<Search size={15} />}
-      value={inputValue} // Shows immediate updates
+      value={inputValue}
       onChange={handleChange}
       maxWidthClass={className}
       customSuffix={

@@ -155,14 +155,12 @@ export function RoutingPeerModalContent({
   }, [isNonLinuxRoutingPeer]);
 
   const addRouter = async () => {
-    // Create groups that do not exist
     const g1 = getAllRoutingGroupsToUpdate();
     const createOrUpdateGroups = uniqBy([...g1], "name").map((g) => g.promise);
     const createdGroups = await Promise.all(
       createOrUpdateGroups.map((call) => call()),
     );
 
-    // Check if routing peer is selected
     const isRoutingPeer = type === "peer";
 
     notify({
@@ -184,14 +182,12 @@ export function RoutingPeerModalContent({
   };
 
   const updateRouter = async () => {
-    // Create groups that do not exist
     const g1 = getAllRoutingGroupsToUpdate();
     const createOrUpdateGroups = uniqBy([...g1], "name").map((g) => g.promise);
     const createdGroups = await Promise.all(
       createOrUpdateGroups.map((call) => call()),
     );
 
-    // Check if routing peer is selected
     const isRoutingPeer = type === "peer";
 
     notify({
@@ -476,7 +472,8 @@ const InstallNetBirdWithSetupKeyButton = ({
       .post({
         name,
         type: "one-off",
-        expires_in: 24 * 60 * 60, // 1 day expiration
+        // 1 day expiration (seconds)
+        expires_in: 24 * 60 * 60,
         revoked: false,
         auto_groups: [],
         usage_limit: 1,

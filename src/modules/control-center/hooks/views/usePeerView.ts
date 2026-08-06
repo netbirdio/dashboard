@@ -36,9 +36,7 @@ export function usePeerView() {
         const sources = rule.sources as Group[];
         return sources?.some((d) => peerGroups?.some((pg) => pg.id === d.id));
       }),
-      // sortBy sorts ascending and ignores a direction arg — disabled policies
-      // first. Kept as-is so live/draft layout parity holds across all views;
-      // enabled-first would need a deliberate change everywhere at once.
+      // Ascending — disabled policies first (live/draft layout parity).
       "enabled",
     );
 

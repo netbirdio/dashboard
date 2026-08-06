@@ -472,7 +472,6 @@ const PeerOverviewTabContent = () => {
 
           <PeerSSHToggle />
 
-          {/* Remote Access Buttons */}
           <div>
             <Label>Remote Access</Label>
             <HelpText>Connect directly to this peer via SSH or RDP.</HelpText>

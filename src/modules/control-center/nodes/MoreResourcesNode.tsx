@@ -2,10 +2,8 @@ import { cn } from "@utils/helpers";
 import { MoreHorizontal } from "lucide-react";
 import * as React from "react";
 
-// The "+N more" cell for a network frame whose resources overflow the visible
-// cap. NOT a ReactFlow node: NetworkNode overlays it at the rect
-// useNetworkFrameLayout computed so it lines up with the resource child nodes.
-// Clicking bubbles to the frame → drills into the single-network view.
+// NOT a ReactFlow node: NetworkNode overlays it at the rect
+// useNetworkFrameLayout computed. Clicking bubbles to the frame → drills in.
 export const MoreResourcesNode = ({
   count,
   style,
@@ -15,10 +13,8 @@ export const MoreResourcesNode = ({
 }) => {
   return (
     <div
-      // Center vertically so the icon box lines up with the resource rows'
-      // icon boxes (centered in a taller two-line row). Its own group name
-      // ("more", not "node") so hovering the parent FRAME doesn't light this
-      // cell up — only hovering the cell itself does.
+      // Own hover group (`group/more`, not the frame's `group/node`) so
+      // hovering the parent frame doesn't light this cell up.
       className={
         "absolute flex items-center rounded-lg transition-all group/more cursor-pointer"
       }

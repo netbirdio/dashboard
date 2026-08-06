@@ -46,8 +46,6 @@ import {
 } from "@/modules/control-center/utils/helpers";
 import { useAccount } from "@/modules/account/useAccount";
 
-// ---- Canvas State Context ----
-
 interface CanvasState {
   nodes: Node[];
   edges: Edge[];
@@ -88,8 +86,8 @@ interface CanvasState {
 const CanvasStateContext = createContext<CanvasState | null>(null);
 
 // The right-clicked node (context-menu halo) lives in a tiny external store,
-// NOT in a context. A context value changes identity when the id changes, so
-// EVERY node reading it re-rendered on each right-click (visibly laggy on big
+// NOT a context: a context value changes identity when the id changes, so
+// every node reading it re-renders on each right-click (laggy on big
 // canvases). With useSyncExternalStore each node subscribes to a BOOLEAN (am I
 // the target?), so only the node whose halo actually toggles re-renders.
 let haloNodeId = "";
@@ -106,8 +104,8 @@ const haloStore = {
   },
 };
 
-// True while this node is the one whose context menu is open. Used for the
-// halo ring; re-renders only this node when its own state flips.
+// True while this node's context menu is open. Re-renders only this node when
+// its own state flips (see haloStore).
 export function useIsContextMenuTarget(nodeId: string): boolean {
   return useSyncExternalStore(
     haloStore.subscribe,
@@ -129,10 +127,9 @@ interface CanvasUIState {
 
 const CanvasUIContext = createContext<CanvasUIState | null>(null);
 
-// Group-details selection in its OWN context: it lived in CanvasUIState,
-// so clicking a group (opening the panel) re-rendered EVERY node component
-// on the canvas — a visible freeze on big canvases. Only GroupNode (its
-// highlight) subscribes here.
+// Group-details selection in its OWN context so clicking a group (opening
+// the panel) doesn't re-render EVERY node component — a visible freeze on big
+// canvases. Only GroupNode (its highlight) subscribes here.
 interface DestinationGroupState {
   selectedDestinationGroup: string;
   setSelectedDestinationGroup: (v: string) => void;
@@ -192,11 +189,10 @@ export function CanvasStateProvider({
   children: React.ReactNode;
 }) {
   const [nodes, setNodes] = useNodesState<Node>([]);
-  // Controlled-flow change application (what useNodesState's onNodesChange
-  // does) PLUS the parents-before-children reconcile: applyNodeChanges keeps
-  // replaced nodes at their original index, so a reparent issued through
-  // `instance.setNodes` (frame drop adoption, assign-to-network) can leave a
-  // child in front of its frame — ReactFlow then drops the containment.
+  // applyNodeChanges keeps replaced nodes at their original index, so a
+  // reparent issued through `instance.setNodes` (frame drop adoption,
+  // assign-to-network) can leave a child in front of its frame — ReactFlow
+  // then drops the containment. Reconcile parents-before-children to fix that.
   const onNodesChange: OnNodesChange<Node> = useCallback(
     (changes) =>
       setNodes((prev) =>
@@ -455,8 +451,8 @@ export function ControlCenterUIProvider({
         {sidebar}
         <div className={"w-full h-full relative overflow-hidden"}>
           {children}
-          {/* Always mounted (renders null while closed) — remounting per
-              open rebuilt the full peer/resource lists every time. */}
+          {/* Always mounted (renders null while closed) — remounting per open
+              would rebuild the full peer/resource lists every time. */}
           <DestinationGroupPanel
             groupId={canvas.selectedDestinationGroup}
             onClose={() => canvas.setSelectedDestinationGroup("")}

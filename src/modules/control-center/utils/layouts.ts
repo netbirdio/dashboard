@@ -25,7 +25,6 @@ export const applyD3ForceLayout = (nodes: Node[], edges: Edge[]) => {
     target: edge.target,
   }));
 
-  // Apply minimal D3 simulation for final positioning with reduced link distance
   const simulation = d3
     .forceSimulation(simulationNodes)
     .force(
@@ -33,8 +32,10 @@ export const applyD3ForceLayout = (nodes: Node[], edges: Edge[]) => {
       d3
         .forceLink(simulationLinks)
         .id((d: any) => d.id)
-        .distance(60) // Reduced distance to minimize crossings
-        .strength(0.05), // Reduced strength to maintain radial structure
+        // Reduced distance to minimize crossings
+        .distance(60)
+        // Reduced strength to maintain radial structure
+        .strength(0.05),
     )
     .force("collision", d3.forceCollide().radius(300));
 
@@ -154,7 +155,6 @@ export const applyD3HierarchicalLayout = (
     centerY,
   );
 
-  // Peers
   if (peerNodes.length > 0 && view !== "group") {
     centerNodesVertically(
       peerNodes,
@@ -193,7 +193,6 @@ export const applyD3HierarchicalLayout = (
     );
   }
 
-  // Policies
   centerNodesVertically(
     policyNodes,
     startX + (options?.policy?.width ?? columnWidth),
@@ -207,7 +206,6 @@ export const applyD3HierarchicalLayout = (
     centerY + 14,
   );
 
-  // Destination Groups
   centerNodesVertically(
     [...destinationGroupNodes, ...destinationResourceNodes],
     startX + (options?.destinationGroup?.width ?? columnWidth),
@@ -215,7 +213,6 @@ export const applyD3HierarchicalLayout = (
     centerY,
   );
 
-  // Networks
   centerNodesVertically(
     networkAndResourceNodes,
     startX + (options?.peersAndResources?.width ?? columnWidth),
@@ -223,10 +220,8 @@ export const applyD3HierarchicalLayout = (
     centerY + 5,
   );
 
-  // centerNodesVertically already set node.x/node.y. A d3 simulation used to run
-  // here but was a no-op (zero charge/collision, a position force targeting each
-  // node's own coordinate) — 100 ticks that moved nothing and only burned CPU on
-  // every view build. Read the placed positions straight out.
+  // centerNodesVertically already set node.x/node.y — read the placed
+  // positions straight out (no simulation needed).
   const updatedNodes: Node[] = simulationNodes.map((node) => ({
     ...node,
     position: { x: node.x, y: node.y },

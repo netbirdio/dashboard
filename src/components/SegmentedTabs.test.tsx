@@ -2,10 +2,8 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SegmentedTabs } from "./SegmentedTabs";
 
-// Regression net for the app-wide SegmentedTabs, which the PR extended
-// (optional `activationMode`, disabled styling). These pin the consumer
-// contract: clicking a tab reports its value, the active tab's content shows,
-// disabled tabs don't fire. Pre-PR API only, so it runs on both branches.
+// Consumer contract for SegmentedTabs: clicking a tab reports its value, only
+// the active tab's content shows, disabled tabs don't fire.
 afterEach(cleanup);
 
 const renderTabs = (value: string) => {

@@ -7,10 +7,8 @@ import {
   AccordionTrigger,
 } from "./Accordion";
 
-// Regression net for the app-wide Accordion, which the PR reworked (animation
-// sync + optional `animated` prop). Animation isn't observable in jsdom, so
-// these pin the functional contract: children render and the trigger toggles
-// the item's open state. Pre-PR API only, so it runs on both branches.
+// Animation isn't observable in jsdom, so these pin the functional contract:
+// children render and the trigger toggles the item's open state.
 afterEach(cleanup);
 
 const renderAccordion = () =>
@@ -28,7 +26,6 @@ describe("Accordion", () => {
     renderAccordion();
     expect(screen.getByText("Header One")).toBeTruthy();
     expect(screen.getByText("Body One")).toBeTruthy();
-    // defaultValue opens item-1.
     expect(screen.getByText("Header One").getAttribute("aria-expanded")).toBe(
       "true",
     );
