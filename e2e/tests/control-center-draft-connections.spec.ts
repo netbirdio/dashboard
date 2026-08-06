@@ -59,7 +59,7 @@ test.describe.serial(
       expect(changes.filter((c) => c.type === "create-policy")).toHaveLength(1);
     });
 
-    test("Should keep a placeholder-peer policy out of the changeset until the peer installs", async ({
+    test("Should track a placeholder-peer policy but block its deploy on the peer install", async ({
       dashboardAsOwner: page,
     }) => {
       await enterDraft(page);
@@ -85,13 +85,15 @@ test.describe.serial(
 
       // The policy node and edges exist on canvas…
       await expect(canvasNode(page, "policy-new-")).toHaveCount(1);
-      // …but a policy referencing an uninstalled placeholder peer is
-      // incomplete: only the group create and the pending peer install are
-      // tracked.
+      // …and the policy is tracked as an ordinary create-policy change. The
+      // reference to an uninstalled placeholder peer does NOT withhold it —
+      // instead the peer's own install-peer change carries the blocking issue
+      // that gates the deploy until the peer installs.
       const changes = await readDraftChanges(page);
-      expect(changes.filter((c) => c.type === "create-policy")).toHaveLength(0);
+      expect(changes.filter((c) => c.type === "create-policy")).toHaveLength(1);
       expect(changes.filter((c) => c.type === "install-peer")).toHaveLength(1);
-      await expectChangeCount(page, 2);
+      // group create + placeholder install + policy create.
+      await expectChangeCount(page, 3);
     });
 
     test("Should rename a group and propagate the name into the policy changeset", async ({
