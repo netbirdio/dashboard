@@ -19,8 +19,13 @@ import {
   SelectOption,
 } from "@components/select/SelectDropdown";
 import { CountrySelector } from "@/components/ui/CountrySelector";
-import { AccessRestrictions, CrowdSecMode } from "@/interfaces/ReverseProxy";
+import {
+  AccessRestrictions,
+  AppSecMode,
+  CrowdSecMode,
+} from "@/interfaces/ReverseProxy";
 import { ReverseProxyCrowdSecIPReputation } from "@/modules/reverse-proxy/ReverseProxyCrowdSecIPReputation";
+import { ReverseProxyAppSecInspection } from "@/modules/reverse-proxy/ReverseProxyAppSecInspection";
 
 type AccessAction = "allow" | "block";
 type AccessRuleType = "country" | "ip" | "cidr";
@@ -121,6 +126,7 @@ function restrictionsToRules(
 function rulesToRestrictions(
   rules: AccessRule[],
   crowdsecMode?: CrowdSecMode,
+  appsecMode?: AppSecMode,
 ): AccessRestrictions | undefined {
   const allowed_countries: string[] = [];
   const blocked_countries: string[] = [];
@@ -144,12 +150,14 @@ function rulesToRestrictions(
   }
 
   const hasCrowdSec = crowdsecMode != null && crowdsecMode !== CrowdSecMode.OFF;
+  const hasAppSec = appsecMode != null && appsecMode !== AppSecMode.OFF;
   const hasAny =
     allowed_countries.length > 0 ||
     blocked_countries.length > 0 ||
     allowed_cidrs.length > 0 ||
     blocked_cidrs.length > 0 ||
-    hasCrowdSec;
+    hasCrowdSec ||
+    hasAppSec;
 
   if (!hasAny) return undefined;
 
@@ -159,6 +167,7 @@ function rulesToRestrictions(
     ...(allowed_cidrs.length > 0 && { allowed_cidrs }),
     ...(blocked_cidrs.length > 0 && { blocked_cidrs }),
     ...(hasCrowdSec && { crowdsec_mode: crowdsecMode }),
+    ...(hasAppSec && { appsec_mode: appsecMode }),
   };
 }
 
@@ -167,6 +176,7 @@ type Props = {
   onChange: (value: AccessRestrictions | undefined) => void;
   onValidationChange?: (hasErrors: boolean) => void;
   supportsCrowdSec?: boolean;
+  supportsAppSec?: boolean;
 };
 
 function validateRule(rule: AccessRule): string {
@@ -193,11 +203,16 @@ export const ReverseProxyAccessControlRules = ({
   onChange,
   onValidationChange,
   supportsCrowdSec,
+  supportsAppSec,
 }: Props) => {
   const [rules, dispatch] = useReducer(
     rulesReducer,
     value,
     restrictionsToRules,
+  );
+
+  const [appsecMode, setAppsecMode] = useState<AppSecMode>(
+    value?.appsec_mode ?? AppSecMode.OFF,
   );
 
   const [crowdsecMode, setCrowdsecMode] = useState<CrowdSecMode>(
@@ -227,8 +242,14 @@ export const ReverseProxyAccessControlRules = ({
   }, [supportsCrowdSec]);
 
   useEffect(() => {
-    onChangeRef.current(rulesToRestrictions(rules, crowdsecMode));
-  }, [rules, crowdsecMode]);
+    if (!supportsAppSec) {
+      setAppsecMode(AppSecMode.OFF);
+    }
+  }, [supportsAppSec]);
+
+  useEffect(() => {
+    onChangeRef.current(rulesToRestrictions(rules, crowdsecMode, appsecMode));
+  }, [rules, crowdsecMode, appsecMode]);
 
   useEffect(() => {
     onValidationChangeRef.current?.(hasErrors);
@@ -240,6 +261,12 @@ export const ReverseProxyAccessControlRules = ({
         <ReverseProxyCrowdSecIPReputation
           value={crowdsecMode}
           onChange={setCrowdsecMode}
+        />
+      )}
+      {supportsAppSec && (
+        <ReverseProxyAppSecInspection
+          value={appsecMode}
+          onChange={setAppsecMode}
         />
       )}
       <div>
