@@ -15,7 +15,9 @@ type Props = {
 
 export const TrafficEventsDetailRow = ({ event, className }: Props) => {
   const otherEvents = event.events.filter(
-    (e) => e.type !== TrafficEventType.CONNECTED,
+    (e) =>
+      e.type !== TrafficEventType.CONNECTED &&
+      e.type !== TrafficEventType.UNKNOWN,
   );
   const { policy } = event;
   const hasPolicy = !!policy?.id;

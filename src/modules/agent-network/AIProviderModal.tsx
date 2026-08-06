@@ -23,8 +23,10 @@ import {
   AlertCircleIcon,
   ArrowRightLeft,
   Boxes,
+  ChevronRightIcon,
   ExternalLinkIcon,
   KeyRound,
+  ListIcon,
   MinusCircleIcon,
   PlusCircle,
   PlusIcon,
@@ -113,6 +115,8 @@ function upstreamUrlPlaceholder(providerId: AIProviderId): string {
       return "https://api.portkey.ai";
     case "vllm":
       return "https://your-vllm-host:8000";
+    case "kimi_api":
+      return "https://api.moonshot.ai";
     case "custom":
       return "https://your-llm-host";
     default:
@@ -147,6 +151,20 @@ type Props = {
   provider?: AIProvider;
 };
 
+// ModelRowEditor owns row-local UI state (custom/catalog mode, expanded cache
+// disclosure, in-progress price text). Keying the row list by array index would
+// let that state stick to a position rather than a row, so removing or
+// reordering a row would leak the removed row's state into its neighbour. Each
+// row carries a stable client-only key instead. _key is never sent to the API —
+// toAPIModels whitelists the wire fields.
+type EditableModel = ProviderModel & { _key: string };
+
+let modelKeySeq = 0;
+const withModelKey = (m: ProviderModel): EditableModel => ({
+  ...m,
+  _key: `model-${modelKeySeq++}`,
+});
+
 export default function AIProviderModal({
   open,
   onOpenChange,
@@ -176,7 +194,9 @@ export default function AIProviderModal({
   );
   const [apiKey, setApiKey] = useState(isEdit ? "••••••••" : "");
   const [bootstrapCluster, setBootstrapCluster] = useState<string>("");
-  const [models, setModels] = useState<ProviderModel[]>(provider?.models ?? []);
+  const [models, setModels] = useState<EditableModel[]>(() =>
+    (provider?.models ?? []).map(withModelKey),
+  );
 
   // Vertex AI authenticates with a service-account JSON key, not an API key.
   // We upload the file and store it base64-encoded in apiKey (the server
@@ -216,6 +236,9 @@ export default function AIProviderModal({
   );
   const [skipTlsVerification, setSkipTlsVerification] = useState<boolean>(
     provider?.skipTlsVerification ?? false,
+  );
+  const [metadataDisabled, setMetadataDisabled] = useState<boolean>(
+    provider?.metadataDisabled ?? false,
   );
 
   const catalog = getById(providerId);
@@ -262,7 +285,8 @@ export default function AIProviderModal({
     providerId === "bifrost" ||
     providerId === "cloudflare_ai_gateway" ||
     providerId === "vercel_ai_gateway" ||
-    providerId === "openrouter";
+    providerId === "openrouter" ||
+    providerId === "bedrock_api";
 
   // If the user flips provider type while viewing the Mappings tab and
   // the new type doesn't show mappings, snap back to the Provider tab
@@ -335,11 +359,12 @@ export default function AIProviderModal({
       setUpstreamUrl(provider.upstreamUrl);
       setApiKey("••••••••");
       setBootstrapCluster("");
-      setModels(provider.models);
+      setModels(provider.models.map(withModelKey));
       setExtraValues(provider.extraValues ?? {});
       setIdentityHeaderUserId(provider.identityHeaderUserId ?? "");
       setIdentityHeaderGroups(provider.identityHeaderGroups ?? "");
       setSkipTlsVerification(provider.skipTlsVerification ?? false);
+      setMetadataDisabled(provider.metadataDisabled ?? false);
     } else {
       const fallback = getById("openai_api");
       setProviderId("openai_api");
@@ -354,6 +379,7 @@ export default function AIProviderModal({
       setIdentityHeaderUserId("");
       setIdentityHeaderGroups("");
       setSkipTlsVerification(false);
+      setMetadataDisabled(false);
     }
   };
 
@@ -385,6 +411,21 @@ export default function AIProviderModal({
 
   const handleSubmit = async () => {
     if (!catalog) return;
+    // Drop rows the operator never filled in (an added-but-empty custom
+    // row, or the empty fallback row when the catalog is exhausted) —
+    // the API rejects models without an id, which would fail the whole
+    // save over a leftover blank line. Duplicate ids are collapsed to the
+    // first row too: the catalog dropdown can't offer an id twice, but two
+    // custom rows can be typed with the same id, and shipping both would
+    // send an ambiguous price for the model.
+    const seenModelIds = new Set<string>();
+    const submittedModels = models
+      .map((m) => ({ ...m, id: m.id.trim() }))
+      .filter((m) => {
+        if (m.id === "" || seenModelIds.has(m.id)) return false;
+        seenModelIds.add(m.id);
+        return true;
+      });
     // Identity overrides are only forwarded when the catalog entry
     // flags either shape (HeaderPair or JSONMetadata) as customizable.
     // Sending them on a non-customizable provider would be a no-op
@@ -401,10 +442,11 @@ export default function AIProviderModal({
         providerId,
         name,
         upstreamUrl,
-        models,
+        models: submittedModels,
         extraValues: sanitizedExtraValues,
         ...identityOverrides,
         skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+        metadataDisabled,
         // Only forward the API key when the user actually rotated it
         ...(apiKey && apiKey !== "••••••••" ? { apiKey } : {}),
       });
@@ -420,7 +462,8 @@ export default function AIProviderModal({
       extraValues: sanitizedExtraValues,
       ...identityOverrides,
       skipTlsVerification: isCustomKind ? skipTlsVerification : false,
-      models,
+      metadataDisabled,
+      models: submittedModels,
       enabled: true,
     });
     handleClose();
@@ -479,17 +522,37 @@ export default function AIProviderModal({
     if (next) {
       setModels((prev) => [
         ...prev,
-        {
+        withModelKey({
           id: next.id,
           inputPer1k: next.input_per_1k,
           outputPer1k: next.output_per_1k,
-        },
+          cachedInputPer1k: next.cached_input_per_1k,
+          cacheReadPer1k: next.cache_read_per_1k,
+          cacheCreationPer1k: next.cache_creation_per_1k,
+        }),
       ]);
       return;
     }
     // No catalog match left — append an empty row the operator can fill.
-    setModels((prev) => [...prev, { id: "", inputPer1k: 0, outputPer1k: 0 }]);
+    setModels((prev) => [
+      ...prev,
+      withModelKey({ id: "", inputPer1k: 0, outputPer1k: 0 }),
+    ]);
   };
+
+  // Which cache-rate fields apply to this provider's models, derived
+  // from the catalog's pricing surfaces: "openai" bills cached prompt
+  // tokens as a discounted SUBSET of input (one rate), "anthropic" /
+  // "bedrock" bill two ADDITIVE buckets (cache read + cache write).
+  // Gateways/custom entries (and older backends) declare no surfaces —
+  // NetBird can't know the upstream shape, so every field is offered.
+  const pricingSurfaces = catalog?.pricing_surfaces ?? [];
+  const showCachedInputRate =
+    pricingSurfaces.length === 0 || pricingSurfaces.includes("openai");
+  const showCacheBucketRates =
+    pricingSurfaces.length === 0 ||
+    pricingSurfaces.includes("anthropic") ||
+    pricingSurfaces.includes("bedrock");
 
   return (
     <Modal open={open} onOpenChange={(o) => (o ? null : handleClose())}>
@@ -609,7 +672,20 @@ export default function AIProviderModal({
               </FormRow>
 
               <FormRow
-                label={"Upstream URL"}
+                label={
+                  providerId === "kimi_api" ? (
+                    <>
+                      Upstream URL
+                      <HelpTooltip
+                        content={
+                          "Moonshot AI's international platform endpoint. Keep the bare host. Moonshot serves both API shapes with the same key: the path an agent calls rides through to Moonshot, so its base URL picks the shape (Claude Code appends /anthropic; Kimi CLI and OpenAI shaped callers use the bare endpoint). Mainland China accounts use api.moonshot.cn instead."
+                        }
+                      />
+                    </>
+                  ) : (
+                    "Upstream URL"
+                  )
+                }
                 helpText={upstreamUrlHelpText(providerId)}
               >
                 <Input
@@ -730,7 +806,7 @@ export default function AIProviderModal({
                     onChange={(e) => setApiKey(e.target.value)}
                     customPrefix={<KeyRound size={14} />}
                     placeholder={
-                      providerId === "openai_api"
+                      providerId === "openai_api" || providerId === "kimi_api"
                         ? "sk-..."
                         : providerId === "anthropic_api"
                         ? "sk-ant-..."
@@ -785,6 +861,23 @@ export default function AIProviderModal({
           {showMappings && providerId === "litellm_proxy" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
               <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                {/* The forwarding toggle sits first: it gates the identity
+                    mappings described below, so turning it off makes the fixed
+                    mapping that follows moot. */}
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the identity mappings below onto LiteLLM requests."
+                  }
+                />
+
                 <div>
                   <Label>Identity Mappings</Label>
                   <HelpText className={"mb-0"}>
@@ -987,6 +1080,61 @@ export default function AIProviderModal({
             </TabsContent>
           )}
 
+          {showMappings && providerId === "bedrock_api" && (
+            <TabsContent value={"mappings"} className={"pb-8"}>
+              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                {/* The forwarding toggle sits first: it gates the identity
+                    metadata described below, so turning it off makes the fixed
+                    mapping that follows moot. */}
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the identity metadata below onto Bedrock requests."
+                  }
+                />
+
+                <div>
+                  <Label>Identity Metadata</Label>
+                  <HelpText className={"mb-0"}>
+                    NetBird stamps the caller&apos;s identity into the{" "}
+                    <InlineLink
+                      href={
+                        "https://docs.aws.amazon.com/bedrock/latest/userguide/cost-mgmt-request-metadata.html"
+                      }
+                      target={"_blank"}
+                    >
+                      <code
+                        className={
+                          "text-xs font-mono bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        }
+                      >
+                        X-Amzn-Bedrock-Request-Metadata
+                      </code>
+                    </InlineLink>{" "}
+                    header, so you can break Bedrock spend down by user and
+                    group. Client-supplied values are stripped and sanitized.
+                  </HelpText>
+                </div>
+
+                <div
+                  className={
+                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
+                  }
+                >
+                  <MappingRow header={"user"} sourceLabel={"User Email"} />
+                  <MappingRow header={"group"} sourceLabel={"Groups"} />
+                </div>
+              </div>
+            </TabsContent>
+          )}
+
           {showMappings && providerId === "vercel_ai_gateway" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
               <div className={"px-8 pt-3 flex-col flex gap-4"}>
@@ -1117,13 +1265,15 @@ export default function AIProviderModal({
                 <HelpText>
                   Models exposed through this endpoint, with the per-1k
                   input/output prices used for cost tracking. Empty = all
-                  catalog models allowed at catalog prices.
+                  catalog models allowed at catalog prices. Cache rates
+                  left empty fall back to NetBird&apos;s defaults for the
+                  model; 0 bills cached tokens at the input rate.
                 </HelpText>
               </div>
 
               {models.map((row, idx) => (
                 <ModelRowEditor
-                  key={idx}
+                  key={row._key}
                   row={row}
                   catalogModels={catalogModelOptions}
                   usedIds={usedModelIds}
@@ -1136,6 +1286,9 @@ export default function AIProviderModal({
                         id,
                         inputPer1k: fromCatalog.input_per_1k,
                         outputPer1k: fromCatalog.output_per_1k,
+                        cachedInputPer1k: fromCatalog.cached_input_per_1k,
+                        cacheReadPer1k: fromCatalog.cache_read_per_1k,
+                        cacheCreationPer1k: fromCatalog.cache_creation_per_1k,
                       });
                     } else {
                       updateModel(idx, { id });
@@ -1143,6 +1296,17 @@ export default function AIProviderModal({
                   }}
                   onChangeInput={(n) => updateModel(idx, { inputPer1k: n })}
                   onChangeOutput={(n) => updateModel(idx, { outputPer1k: n })}
+                  showCachedInputRate={showCachedInputRate}
+                  showCacheBucketRates={showCacheBucketRates}
+                  onChangeCachedInput={(n) =>
+                    updateModel(idx, { cachedInputPer1k: n })
+                  }
+                  onChangeCacheRead={(n) =>
+                    updateModel(idx, { cacheReadPer1k: n })
+                  }
+                  onChangeCacheCreation={(n) =>
+                    updateModel(idx, { cacheCreationPer1k: n })
+                  }
                   onRemove={() => removeModel(idx)}
                 />
               ))}
@@ -1164,8 +1328,11 @@ export default function AIProviderModal({
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
               Learn more about
-              <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
-                Agent Network
+              <InlineLink
+                href={"https://docs.netbird.io/agent-network/providers"}
+                target={"_blank"}
+              >
+                Agent Network Providers
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
@@ -1272,11 +1439,20 @@ function FormRow({
   );
 }
 
+// CUSTOM_MODEL_OPTION is the sentinel value of the "Custom model…"
+// dropdown entry. Never a real model id (vendors don't use NUL-ish
+// double-underscore namespacing), never sent to the API — selecting it
+// only flips the row into free-text mode.
+const CUSTOM_MODEL_OPTION = "__netbird_custom_model__";
+
 type CatalogModelOption = {
   id: string;
   label: string;
   input_per_1k: number;
   output_per_1k: number;
+  cached_input_per_1k?: number;
+  cache_read_per_1k?: number;
+  cache_creation_per_1k?: number;
 };
 
 // priceToInput renders a stored price as an editable string, always using "."
@@ -1291,6 +1467,61 @@ function priceFromInput(s: string): number {
   return parseFloat(s.replace(/,/g, ".")) || 0;
 }
 
+// optionalPriceFromInput parses a price whose empty state is meaningful. It
+// reports undefined for anything that isn't a number ("", "abc") instead of
+// falling back to 0 — for cache rates an explicit 0 is a real setting ("bill
+// cached tokens at the input rate"), so a typo must not silently become one.
+function optionalPriceFromInput(s: string): number | undefined {
+  const t = s.trim();
+  if (t === "") return undefined;
+  const n = parseFloat(t.replace(/,/g, "."));
+  return Number.isFinite(n) ? n : undefined;
+}
+
+// OptionalPriceField is a price input whose EMPTY state is meaningful:
+// empty = undefined = "inherit NetBird's default rate for this model",
+// while an explicit 0 disables the cache discount. It must never coerce
+// one into the other, so it keeps its own string state and only reports
+// undefined for a blank box.
+function OptionalPriceField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | undefined;
+  onChange: (n: number | undefined) => void;
+}) {
+  const [str, setStr] = useState(() =>
+    value === undefined ? "" : priceToInput(value),
+  );
+  // Re-sync when the value is set from outside (catalog model pick),
+  // but not while the operator is mid-typing the same value.
+  useEffect(() => {
+    const parsed = optionalPriceFromInput(str);
+    if (parsed !== value) {
+      setStr(value === undefined ? "" : priceToInput(value));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <div className={"flex-1 min-w-0"}>
+      <Label>{label}</Label>
+      <Input
+        type={"text"}
+        inputMode={"decimal"}
+        value={str}
+        placeholder={"default"}
+        onChange={(e) => {
+          setStr(e.target.value);
+          onChange(optionalPriceFromInput(e.target.value));
+        }}
+      />
+    </div>
+  );
+}
+
 function ModelRowEditor({
   row,
   catalogModels,
@@ -1298,6 +1529,11 @@ function ModelRowEditor({
   onChangeId,
   onChangeInput,
   onChangeOutput,
+  showCachedInputRate,
+  showCacheBucketRates,
+  onChangeCachedInput,
+  onChangeCacheRead,
+  onChangeCacheCreation,
   onRemove,
 }: {
   row: ProviderModel;
@@ -1306,6 +1542,13 @@ function ModelRowEditor({
   onChangeId: (id: string) => void;
   onChangeInput: (n: number) => void;
   onChangeOutput: (n: number) => void;
+  // Which cache-rate fields apply to this provider's billing shape;
+  // see the pricing_surfaces derivation in the modal body.
+  showCachedInputRate: boolean;
+  showCacheBucketRates: boolean;
+  onChangeCachedInput: (n: number | undefined) => void;
+  onChangeCacheRead: (n: number | undefined) => void;
+  onChangeCacheCreation: (n: number | undefined) => void;
   onRemove: () => void;
 }) {
   // Editable text for the price fields. We keep the raw string locally so the
@@ -1336,75 +1579,185 @@ function ModelRowEditor({
   // React will unmount the input and steal focus.
   const hasCatalog = catalogModels.length > 0;
 
-  // Catalog options excluding the ones already on other rows. The
-  // current row's own id stays in the list so the dropdown can render
-  // its label.
+  // Custom-model entry: catalog providers get a "Custom model…" option
+  // that swaps the dropdown for a free-text input, so operators can add
+  // models NetBird doesn't list yet (e.g. a model released after this
+  // build). Rows loaded with an id the catalog doesn't know start in
+  // custom mode so their id is editable rather than trapped in a
+  // single-option dropdown.
+  const [customMode, setCustomMode] = useState(
+    () =>
+      hasCatalog && row.id !== "" && !catalogModels.some((m) => m.id === row.id),
+  );
+  // The catalog is fetched async, so an edit-modal row can mount before it
+  // arrives — the initializer then sees no catalog and leaves customMode off,
+  // trapping an unknown id in a dropdown that can't represent it. Re-evaluate
+  // once the catalog lands. Keyed on hasCatalog only: later catalog/row churn
+  // must not undo the operator's own custom-mode choice.
+  useEffect(() => {
+    if (!hasCatalog || row.id === "") return;
+    if (!catalogModels.some((m) => m.id === row.id)) setCustomMode(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasCatalog]);
+
+  // Catalog options excluding the ones already on other rows, plus the
+  // custom-model escape hatch.
   const dropdownOptions = useMemo(() => {
     const visible = catalogModels.filter(
       (m) => m.id === row.id || !usedIds.has(m.id),
     );
-    const seen = new Set(visible.map((m) => m.id));
     const opts = visible.map((m) => ({ value: m.id, label: m.label }));
-    if (row.id && !seen.has(row.id)) {
-      opts.unshift({ value: row.id, label: row.id });
-    }
+    opts.push({ value: CUSTOM_MODEL_OPTION, label: "Custom model…" });
     return opts;
   }, [catalogModels, usedIds, row.id]);
+
+  const showCacheLine = showCachedInputRate || showCacheBucketRates;
+  const hasCacheValues =
+    row.cachedInputPer1k !== undefined ||
+    row.cacheReadPer1k !== undefined ||
+    row.cacheCreationPer1k !== undefined;
+  // Cache rates live behind a per-row disclosure, collapsed by default:
+  // most operators keep NetBird's defaults, so the row stays compact.
+  // The collapsed summary ("· custom" vs "· default") signals when a
+  // row carries stored rates worth expanding.
+  const [cacheOpen, setCacheOpen] = useState(false);
 
   return (
     <div
       className={
-        "flex items-end gap-2 p-3 rounded border border-nb-gray-800 bg-nb-gray-900/20"
+        "flex flex-col gap-2 p-3 rounded border border-nb-gray-800 bg-nb-gray-900/20"
       }
     >
-      <div className={"flex-1 min-w-0"}>
-        <Label>Model</Label>
-        {hasCatalog ? (
-          <SelectDropdown
-            value={row.id}
-            onChange={onChangeId}
-            options={dropdownOptions}
-            placeholder={"Select a model..."}
-          />
-        ) : (
+      <div className={"flex items-end gap-2"}>
+        <div className={"flex-1 min-w-0"}>
+          <Label>Model</Label>
+          {hasCatalog && !customMode ? (
+            <SelectDropdown
+              value={row.id}
+              onChange={(v) => {
+                if (v === CUSTOM_MODEL_OPTION) {
+                  setCustomMode(true);
+                  onChangeId("");
+                  return;
+                }
+                onChangeId(v);
+              }}
+              options={dropdownOptions}
+              placeholder={"Select a model..."}
+            />
+          ) : hasCatalog ? (
+            <div className={"flex gap-2"}>
+              <Input
+                value={row.id}
+                onChange={(e) => onChangeId(e.target.value)}
+                placeholder={"e.g. claude-fable-6"}
+                autoFocus={row.id === ""}
+              />
+              <Button
+                variant={"default-outline"}
+                className={"h-[42px] !px-3 shrink-0"}
+                title={"Pick from catalog instead"}
+                onClick={() => {
+                  setCustomMode(false);
+                  onChangeId("");
+                }}
+              >
+                <ListIcon size={15} />
+              </Button>
+            </div>
+          ) : (
+            <Input
+              value={row.id}
+              onChange={(e) => onChangeId(e.target.value)}
+              placeholder={"e.g. gpt-4o-mini"}
+            />
+          )}
+        </div>
+        <div className={"w-[120px] shrink-0"}>
+          <Label>Input $/1k</Label>
           <Input
-            value={row.id}
-            onChange={(e) => onChangeId(e.target.value)}
-            placeholder={"e.g. gpt-4o-mini"}
+            type={"text"}
+            inputMode={"decimal"}
+            value={inputStr}
+            onChange={(e) => {
+              setInputStr(e.target.value);
+              onChangeInput(priceFromInput(e.target.value));
+            }}
           />
-        )}
+        </div>
+        <div className={"w-[120px] shrink-0"}>
+          <Label>Output $/1k</Label>
+          <Input
+            type={"text"}
+            inputMode={"decimal"}
+            value={outputStr}
+            onChange={(e) => {
+              setOutputStr(e.target.value);
+              onChangeOutput(priceFromInput(e.target.value));
+            }}
+          />
+        </div>
+        <Button
+          variant={"default-outline"}
+          className={"h-[42px] !px-3"}
+          onClick={onRemove}
+        >
+          <MinusCircleIcon size={15} />
+        </Button>
       </div>
-      <div className={"w-[120px] shrink-0"}>
-        <Label>Input $/1k</Label>
-        <Input
-          type={"text"}
-          inputMode={"decimal"}
-          value={inputStr}
-          onChange={(e) => {
-            setInputStr(e.target.value);
-            onChangeInput(priceFromInput(e.target.value));
-          }}
-        />
-      </div>
-      <div className={"w-[120px] shrink-0"}>
-        <Label>Output $/1k</Label>
-        <Input
-          type={"text"}
-          inputMode={"decimal"}
-          value={outputStr}
-          onChange={(e) => {
-            setOutputStr(e.target.value);
-            onChangeOutput(priceFromInput(e.target.value));
-          }}
-        />
-      </div>
-      <Button
-        variant={"default-outline"}
-        className={"h-[42px] !px-3"}
-        onClick={onRemove}
-      >
-        <MinusCircleIcon size={15} />
-      </Button>
+      {showCacheLine && (
+        <>
+          <button
+            type={"button"}
+            onClick={() => setCacheOpen((v) => !v)}
+            className={
+              "flex items-center gap-1 text-xs text-nb-gray-400 hover:text-nb-gray-200 transition-colors w-fit"
+            }
+          >
+            <ChevronRightIcon
+              size={13}
+              className={
+                "transition-transform " + (cacheOpen ? "rotate-90" : "")
+              }
+            />
+            Cache pricing
+            {!cacheOpen && (
+              <span className={"text-nb-gray-500"}>
+                {hasCacheValues ? "· custom" : "· default"}
+              </span>
+            )}
+          </button>
+          {cacheOpen && (
+            <div
+              className={
+                "flex items-end gap-2 pt-2 border-t border-nb-gray-900"
+              }
+            >
+              {showCachedInputRate && (
+                <OptionalPriceField
+                  label={"Cached input $/1k"}
+                  value={row.cachedInputPer1k}
+                  onChange={onChangeCachedInput}
+                />
+              )}
+              {showCacheBucketRates && (
+                <>
+                  <OptionalPriceField
+                    label={"Cache read $/1k"}
+                    value={row.cacheReadPer1k}
+                    onChange={onChangeCacheRead}
+                  />
+                  <OptionalPriceField
+                    label={"Cache write $/1k"}
+                    value={row.cacheCreationPer1k}
+                    onChange={onChangeCacheCreation}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

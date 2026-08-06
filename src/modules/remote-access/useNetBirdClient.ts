@@ -176,7 +176,7 @@ export const useNetBirdClient = () => {
       try {
         netBirdClient.current = await (window as any).NetBirdClient({
           privateKey,
-          logLevel: "warn",
+          logLevel: "info",
           managementURL: config.apiOrigin,
         });
 

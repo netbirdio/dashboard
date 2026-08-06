@@ -2,11 +2,7 @@
 
 import { ScrollArea } from "@components/ScrollArea";
 import { cn } from "@utils/helpers";
-import {
-  isAgentNetworkEnabled,
-  isAgentNetworkOnly,
-  isNetBirdCloud,
-} from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
@@ -24,6 +20,7 @@ import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { headerHeight } from "@/layouts/Header";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
 import { SmallBadge } from "@components/ui/SmallBadge";
@@ -43,6 +40,8 @@ export default function Navigation({
   const { bannerHeight } = useAnnouncement();
   const { isNavigationCollapsed } = useApplicationContext();
   const { permission, isRestricted } = usePermissions();
+  const { only: agentNetworkOnly, enabled: agentNetworkEnabled } =
+    useAgentNetworkMode();
 
   return (
     <div
@@ -126,7 +125,7 @@ export default function Navigation({
                   />
                 </SidebarItem>
 
-                {!isAgentNetworkOnly() && <NetworkNavigation />}
+                {!agentNetworkOnly && <NetworkNavigation />}
 
                 <SidebarItem
                   icon={<ReverseProxyIcon size={16} />}
@@ -145,7 +144,7 @@ export default function Navigation({
                   href={"/reverse-proxy"}
                   collapsible
                   exactPathMatch={false}
-                  visible={permission?.services?.read && !isAgentNetworkOnly()}
+                  visible={permission?.services?.read && !agentNetworkOnly}
                 >
                   <SidebarItem
                     label="Services"
@@ -183,7 +182,7 @@ export default function Navigation({
                   label={
                     <div className={"flex items-center gap-2"}>
                       Agent Network
-                      {!isAgentNetworkOnly() && (
+                      {!agentNetworkOnly && (
                         <SmallBadge
                           text={"Beta"}
                           variant={"sky"}
@@ -200,44 +199,36 @@ export default function Navigation({
                   exactPathMatch={false}
                   // Parent is visible when at least one child is permitted. All
                   // Agent Network pages guard on services.read, so the section
-                  // tracks that (plus the feature flag).
-                  visible={isAgentNetworkEnabled() && permission?.services?.read}
+                  // tracks that (plus the feature gating).
+                  visible={agentNetworkEnabled && permission?.services?.read}
                 >
                   <SidebarItem
                     label="Providers"
                     isChild
                     href={"/agent-network/providers"}
                     exactPathMatch={true}
-                    visible={
-                      isAgentNetworkEnabled() && permission?.services?.read
-                    }
+                    visible={agentNetworkEnabled && permission?.services?.read}
                   />
                   <SidebarItem
                     label="Policies"
                     isChild
                     href={"/agent-network/policies"}
                     exactPathMatch={true}
-                    visible={
-                      isAgentNetworkEnabled() && permission?.services?.read
-                    }
+                    visible={agentNetworkEnabled && permission?.services?.read}
                   />
                   <SidebarItem
                     label="Usage & Logs"
                     isChild
                     href={"/agent-network/usage"}
                     exactPathMatch={true}
-                    visible={
-                      isAgentNetworkEnabled() && permission?.services?.read
-                    }
+                    visible={agentNetworkEnabled && permission?.services?.read}
                   />
                   <SidebarItem
                     label="Configuration"
                     isChild
                     href={"/agent-network/configuration"}
                     exactPathMatch={true}
-                    visible={
-                      isAgentNetworkEnabled() && permission?.services?.read
-                    }
+                    visible={agentNetworkEnabled && permission?.services?.read}
                   />
                 </SidebarItem>
 
@@ -249,7 +240,7 @@ export default function Navigation({
                   exactPathMatch={true}
                   visible={
                     (permission.dns.read || permission.nameservers.read) &&
-                    !isAgentNetworkOnly()
+                    !agentNetworkOnly
                   }
                 >
                   <SidebarItem
@@ -351,6 +342,7 @@ export function SidebarItemGroup({ children }: SidebarItemGroupProps) {
 
 const ActivityNavigationItem = () => {
   const { permission } = usePermissions();
+  const { only: agentNetworkOnly } = useAgentNetworkMode();
 
   return (
     <SidebarItem
@@ -358,7 +350,7 @@ const ActivityNavigationItem = () => {
       label="Activity"
       href={"/events"}
       collapsible
-      visible={permission.events.read && !isAgentNetworkOnly()}
+      visible={permission.events.read && !agentNetworkOnly}
     >
       <SidebarItem
         label="Audit Events"

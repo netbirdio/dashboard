@@ -2,7 +2,6 @@
 
 import { notify } from "@components/Notification";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { isAgentNetworkEnabled } from "@utils/netbird";
 import React, {
   createContext,
   useCallback,
@@ -22,11 +21,19 @@ import {
   PolicyLimits,
   ProviderModel,
 } from "@/modules/agent-network/data/mockData";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 
 export type APIProviderModel = {
   id: string;
   input_per_1k: number;
   output_per_1k: number;
+  // Optional cache rates. Omitted on the wire = inherit NetBird's
+  // default rate for this model (the backend folds it in at synthesis
+  // time); explicit 0 = no discount (bucket bills at the input rate).
+  // Never coerce undefined to 0 — the two mean different things.
+  cached_input_per_1k?: number;
+  cache_read_per_1k?: number;
+  cache_creation_per_1k?: number;
 };
 
 export type APIProvider = {
@@ -50,6 +57,9 @@ export type APIProvider = {
   // Skip TLS certificate verification on upstream requests (custom providers
   // with self-signed certs). Off by default.
   skip_tls_verification?: boolean;
+  // Disable identity metadata injection (caller user + authorizing group) on
+  // upstream requests. Off by default (metadata is sent).
+  metadata_disabled?: boolean;
   enabled: boolean;
   created_at: string;
   updated_at: string;
@@ -67,6 +77,7 @@ export type APIProviderRequest = {
   identity_header_user_id?: string;
   identity_header_groups?: string;
   skip_tls_verification?: boolean;
+  metadata_disabled?: boolean;
   models: APIProviderModel[];
   enabled?: boolean;
 };
@@ -84,6 +95,8 @@ export type ProviderConnectInput = {
   identityHeaderGroups?: string;
   // Skip upstream TLS verification (custom providers with self-signed certs).
   skipTlsVerification?: boolean;
+  // Disable identity metadata injection (user + authorizing group). Off by default.
+  metadataDisabled?: boolean;
   models: ProviderModel[];
   enabled?: boolean;
 };
@@ -97,6 +110,7 @@ export type ProviderUpdateInput = {
   identityHeaderUserId?: string;
   identityHeaderGroups?: string;
   skipTlsVerification?: boolean;
+  metadataDisabled?: boolean;
   models?: ProviderModel[];
   enabled?: boolean;
 };
@@ -111,8 +125,10 @@ export type APIAgentNetworkSettings = {
   enable_prompt_collection: boolean;
   redact_pii: boolean;
   access_log_retention_days?: number;
-  created_at: string;
-  updated_at: string;
+  // Absent until the account is bootstrapped — pre-bootstrap the backend
+  // returns the defaults without a persisted row to date.
+  created_at?: string;
+  updated_at?: string;
 };
 
 // APIAgentNetworkSettingsRequest matches the PUT /agent-network/settings
@@ -149,6 +165,9 @@ function fromAPI(p: APIProvider): AIProvider {
     id: m.id,
     inputPer1k: m.input_per_1k,
     outputPer1k: m.output_per_1k,
+    cachedInputPer1k: m.cached_input_per_1k,
+    cacheReadPer1k: m.cache_read_per_1k,
+    cacheCreationPer1k: m.cache_creation_per_1k,
   }));
   return {
     id: p.id,
@@ -159,6 +178,7 @@ function fromAPI(p: APIProvider): AIProvider {
     identityHeaderUserId: p.identity_header_user_id,
     identityHeaderGroups: p.identity_header_groups,
     skipTlsVerification: p.skip_tls_verification ?? false,
+    metadataDisabled: p.metadata_disabled ?? false,
     status: p.enabled ? "active" : "disabled",
     models,
     allowedGroups: [],
@@ -183,10 +203,16 @@ function fromAPI(p: APIProvider): AIProvider {
 }
 
 function toAPIModels(models: ProviderModel[]): APIProviderModel[] {
+  // undefined cache rates stay undefined so JSON.stringify omits the
+  // key: an omitted rate inherits NetBird's default, an explicit 0
+  // disables the discount. Coercing here would change billing.
   return models.map((m) => ({
     id: m.id,
     input_per_1k: m.inputPer1k,
     output_per_1k: m.outputPer1k,
+    cached_input_per_1k: m.cachedInputPer1k,
+    cache_read_per_1k: m.cacheReadPer1k,
+    cache_creation_per_1k: m.cacheCreationPer1k,
   }));
 }
 
@@ -201,6 +227,7 @@ function toCreateRequest(input: ProviderConnectInput): APIProviderRequest {
     identity_header_user_id: input.identityHeaderUserId,
     identity_header_groups: input.identityHeaderGroups,
     skip_tls_verification: input.skipTlsVerification,
+    metadata_disabled: input.metadataDisabled,
     models: toAPIModels(input.models),
     enabled: input.enabled,
   };
@@ -496,23 +523,29 @@ export function useAIProviders() {
 }
 
 // useAgentNetworkSettings fetches the account-level agent-network settings.
-// Returns null until the first provider is created — newer backends respond
-// 200 + JSON null while no settings row exists; older backends respond 404,
-// which we still tolerate via ignoreError so older deploys don't surface
-// a spurious error in the empty state.
+// Returns null until the account is bootstrapped (first provider create, or
+// a settings update carrying a cluster). Backends signal the unbootstrapped
+// state differently by age: current ones respond 200 with the defaults and
+// an empty cluster/subdomain/endpoint, older ones 200 + JSON null, and the
+// oldest 404 — tolerated via ignoreError so old deploys don't surface a
+// spurious error in the empty state. All three normalize to null here.
 export function useAgentNetworkSettings() {
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { data, error, isLoading, mutate } =
     useFetchApi<APIAgentNetworkSettings>(
       "/agent-network/settings",
       true,
       true,
-      isAgentNetworkEnabled(),
+      agentNetworkEnabled,
     );
-  const settings = useMemo<AgentNetworkSettings | null>(
-    () => (data ? settingsFromAPI(data) : null),
-    [data],
-  );
   const notFound = !!error && (error as { code?: number }).code === 404;
+  // SWR keeps the previous data alongside the error (keepPreviousData), so a
+  // later 404 must not expose the stale settings; other transient errors keep
+  // them, which is what keepPreviousData is for.
+  const settings = useMemo<AgentNetworkSettings | null>(
+    () => (data && data.endpoint && !notFound ? settingsFromAPI(data) : null),
+    [data, notFound],
+  );
   return {
     settings,
     isLoading: isLoading && !notFound,
@@ -528,7 +561,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   // disabled — it can safely wrap surfaces like the Control Center
   // without hitting agent-network endpoints in deployments that don't
   // have the feature.
-  const agentNetworkEnabled = isAgentNetworkEnabled();
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
   const {
     data: apiProviders,
@@ -646,9 +679,11 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           updates.identityHeaderGroups ?? existing.identity_header_groups,
         skip_tls_verification:
           updates.skipTlsVerification ?? existing.skip_tls_verification,
+        metadata_disabled:
+          updates.metadataDisabled ?? existing.metadata_disabled,
         models: updates.models
           ? toAPIModels(updates.models)
-          : existing.models ?? [],
+          : (existing.models ?? []),
         enabled: updates.enabled ?? existing.enabled,
       };
       try {
@@ -733,7 +768,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         guardrail_ids: updates.guardrailIds ?? existing.guardrail_ids ?? [],
         limits: updates.limits
           ? policyLimitsToAPI(updates.limits)
-          : existing.limits ?? policyLimitsToAPI(EMPTY_POLICY_LIMITS),
+          : (existing.limits ?? policyLimitsToAPI(EMPTY_POLICY_LIMITS)),
       };
       try {
         await policiesApi.put(merged, `/${id}`);

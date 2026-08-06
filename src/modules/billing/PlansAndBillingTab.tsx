@@ -1,23 +1,11 @@
 import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@components/Select";
 import Separator from "@components/Separator";
 import { VerticalTabs } from "@components/VerticalTabs";
 import * as Tabs from "@radix-ui/react-tabs";
 import { isNetBirdCloud } from "@utils/netbird";
-import {
-  CreditCardIcon,
-  DollarSignIcon,
-  EuroIcon,
-  ExternalLinkIcon,
-} from "lucide-react";
+import { CreditCardIcon, ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -25,7 +13,7 @@ import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useBilling } from "@/contexts/BillingProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { Currency, Plan } from "@/interfaces/Plan";
+import { Plan } from "@/interfaces/Plan";
 import { PlanTier } from "@/interfaces/Subscription";
 import { PlanCard, PlanLoadingSkeleton } from "@/modules/billing/PlanCard";
 import { PlanCurrentPlan } from "@/modules/billing/PlanCurrentPlan";
@@ -75,7 +63,6 @@ const PlansAndBillingTabContent = () => {
     isTrialAvailable,
     isTrial,
     currency,
-    setCurrency,
     currentPlanPrice,
     trialDaysRemaining,
     estimatedPrice,
@@ -216,34 +203,11 @@ const PlansAndBillingTabContent = () => {
       <Separator />
       <div className={"px-8 py-6"}>
         <div className={"max-w-3xl"}>
-          <div className={"flex justify-between"}>
-            <h2>
-              {subscription?.active
-                ? "Update your NetBird Plan"
-                : "Upgrade your NetBird Plan"}
-            </h2>
-            <Select
-              value={currency}
-              onValueChange={setCurrency}
-              disabled={subscription?.active}
-            >
-              <SelectTrigger className="w-[140px]">
-                <div className={"flex items-center gap-3"}>
-                  {currency == Currency.EUR ? (
-                    <EuroIcon size={15} className={"text-nb-gray-300"} />
-                  ) : (
-                    <DollarSignIcon size={15} className={"text-nb-gray-300"} />
-                  )}
-
-                  <SelectValue placeholder="Select currency..." />
-                </div>
-              </SelectTrigger>
-              <SelectContent data-testid={"protocol-selection"}>
-                <SelectItem value="usd">USD</SelectItem>
-                <SelectItem value="eur">EUR</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <h2>
+            {subscription?.active
+              ? "Update your NetBird Plan"
+              : "Upgrade your NetBird Plan"}
+          </h2>
 
           <Paragraph>
             Increase your user and peer limit by upgrading your plan.

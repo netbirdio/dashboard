@@ -68,10 +68,12 @@ const getCombinedFilterId = (
   return `${type || ""}|${direction || ""}|${protocol || ""}`;
 };
 
+const EMPTY_FILTERS: NonNullable<Props["filters"]> = {};
+
 export function TrafficEventsFilter({
   table,
   disabled = false,
-  filters = {},
+  filters = EMPTY_FILTERS,
   onFilterChange,
   closeOnSelect = false,
 }: Readonly<Props>) {
@@ -123,7 +125,7 @@ export function TrafficEventsFilter({
       !filters.direction?.length &&
       !filters.protocol?.length
     ) {
-      setActiveFilterIds([]);
+      setActiveFilterIds((prev) => (prev.length === 0 ? prev : []));
       updateTableFilters([]);
       return;
     }

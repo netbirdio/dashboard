@@ -22,7 +22,15 @@ test.describe.serial("Team - Service Users @team", () => {
   test("Should update role and manage access tokens", async ({ dashboardAsOwner: page }) => {
     await page.locator("tr").getByText(regularUser).click();
     await changeRoleTo(page, "Admin");
+    // Await the PUT so the role change is persisted before the next serial
+    // test asserts it — clicking save alone returns before the request lands.
+    const saveResponse = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/users/") && resp.request().method() === "PUT",
+      { timeout: 30_000 },
+    );
     await page.getByTestId("save-changes").click();
+    await saveResponse;
 
     // Create and delete access token
     const tokenName = generateRandomName("tkn_");

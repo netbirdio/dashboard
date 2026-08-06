@@ -70,8 +70,8 @@ export function IntegrationCard<T>({
       )}
     >
       <div className={"flex flex-col gap-4"}>
-        <div className={"flex justify-between"}>
-          <div className={"flex gap-4"}>
+        <div className={"flex justify-between gap-3"}>
+          <div className={"flex gap-4 min-w-0"}>
             <div
               className={
                 "h-12 w-12 flex items-center justify-center rounded-md bg-nb-gray-900/70 p-2 border border-nb-gray-900/70"
@@ -84,25 +84,24 @@ export function IntegrationCard<T>({
                 priority={true}
               />
             </div>
-            <div>
-              <h3 className={""}>{name}</h3>
+            <div className={"min-w-0"}>
+              <h3 className={"truncate"}>{name}</h3>
               <InlineLink
                 href={url.href}
                 target={"_blank"}
-                className={"text-sm font-light"}
+                className={"text-sm font-light min-w-0 max-w-full"}
                 variant={"faded"}
               >
-                {url.title}
-                <ExternalLinkIcon size={12} />
+                <span className={"truncate"}>{url.title}</span>
+                <ExternalLinkIcon size={12} className={"shrink-0"} />
               </InlineLink>
             </div>
           </div>
           {!hideSwitch && (
-            <div className={"flex items-center"}>
+            <div className={"flex items-center shrink-0"}>
               <ToggleSwitch
                 checked={switchState}
                 onCheckedChange={onEnabledChange}
-                className={"grow"}
               />
             </div>
           )}

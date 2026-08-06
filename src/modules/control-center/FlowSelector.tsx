@@ -6,6 +6,7 @@ import {
   UsersIcon,
 } from "lucide-react";
 import * as React from "react";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 
 export enum FlowView {
   NETWORKS = "networks",
@@ -20,6 +21,8 @@ type Props = {
 };
 
 export const FlowSelector = ({ value, onChange }: Props) => {
+  const { only: agentNetworkOnly } = useAgentNetworkMode();
+
   return (
     <SegmentedTabs value={value} onChange={(v) => onChange?.(v as FlowView)}>
       <SegmentedTabs.List
@@ -51,14 +54,19 @@ export const FlowSelector = ({ value, onChange }: Props) => {
           <FolderGit2 size={12} />
           Group
         </SegmentedTabs.Trigger>
-        <SegmentedTabs.Trigger
-          value={FlowView.NETWORKS}
-          className={"text-xs px-3 py-[0.45rem]"}
-          data-testid={"cc-flow-networks"}
-        >
-          <NetworkIcon size={12} />
-          Networks
-        </SegmentedTabs.Trigger>
+        {/* The agent-network repackaging drops Networks as a top-level
+            pivot. Keep it for everyone else so flag-off behaviour is
+            unchanged. */}
+        {!agentNetworkOnly && (
+          <SegmentedTabs.Trigger
+            value={FlowView.NETWORKS}
+            className={"text-xs px-3 py-[0.45rem]"}
+            data-testid={"cc-flow-networks"}
+          >
+            <NetworkIcon size={12} />
+            Networks
+          </SegmentedTabs.Trigger>
+        )}
       </SegmentedTabs.List>
     </SegmentedTabs>
   );

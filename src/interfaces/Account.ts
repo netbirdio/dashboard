@@ -35,8 +35,16 @@ export interface Account {
     local_mfa_enabled?: boolean;
     ipv6_enabled_groups?: string[];
     network_range_v6?: string;
+    agent_network_only?: boolean;
+    dashboard_features?: AccountDashboardFeatures;
   };
   onboarding?: AccountOnboarding;
+}
+
+// AccountDashboardFeatures holds per-account dashboard section visibility
+// overrides. Omitted keys follow the default dashboard behavior.
+export interface AccountDashboardFeatures {
+  agent_network?: boolean;
 }
 
 export interface AccountOnboarding {

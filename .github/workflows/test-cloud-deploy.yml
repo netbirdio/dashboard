@@ -1,0 +1,78 @@
+name: Test cloud deploy config
+
+on:
+  pull_request:
+    paths:
+      - "docker/init_react_envs.sh"
+      - "templates/reverse-proxy/**"
+      - "src/modules/reverse-proxy/clusters/ClusterCloudDeploy.tsx"
+      - ".github/workflows/test-cloud-deploy.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  csp-connect-src:
+    name: CSP allows cloud provider APIs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install nginx
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nginx gettext-base
+
+      - name: Prepare nginx layout expected by the init script
+        run: |
+          sudo mkdir -p /etc/nginx/http.d /usr/share/nginx/html
+          echo 'add_header Content-Security-Policy "placeholder" always;' | sudo tee /etc/nginx/http.d/default.conf
+          sudo touch /usr/share/nginx/html/OidcTrustedDomains.js.tmpl
+          sudo systemctl start nginx
+
+      - name: Run init script with production-like env
+        env:
+          AUTH_AUTHORITY: https://auth.example.com
+          AUTH_CLIENT_ID: test-client
+          AUTH_AUDIENCE: test-audience
+          AUTH_SUPPORTED_SCOPES: openid profile email
+          USE_AUTH0: "false"
+          NETBIRD_MGMT_API_ENDPOINT: https://api.example.com
+        run: sudo -E bash docker/init_react_envs.sh
+
+      - name: Assert provider APIs are in connect-src
+        run: |
+          CSP=$(grep -o 'Content-Security-Policy "[^"]*"' /etc/nginx/http.d/default.conf)
+          echo "Generated CSP: $CSP"
+          CONNECT_SRC=$(echo "$CSP" | sed 's/.*connect-src \([^;]*\);.*/\1/')
+          echo "connect-src: $CONNECT_SRC"
+          status=0
+          for origin in https://api.hetzner.cloud https://api.digitalocean.com; do
+            if echo "$CONNECT_SRC" | grep -qF "$origin"; then
+              echo "OK: $origin"
+            else
+              echo "MISSING in connect-src: $origin"
+              status=1
+            fi
+          done
+          exit $status
+
+  cfn-template-url:
+    name: CloudFormation template URL is live
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract template URL from component and check it
+        run: |
+          URL=$(grep -o 'https://[^"]*netbird-proxy-cfn\.yaml' src/modules/reverse-proxy/clusters/ClusterCloudDeploy.tsx)
+          echo "CFN_TEMPLATE_URL: $URL"
+          test -n "$URL"
+          # Non-blocking: the template is published by sync-deploy-templates on
+          # the default branch, so it may not exist yet for a PR that only edits
+          # the URL. Warn instead of failing the check.
+          if curl -sfI "$URL" >/dev/null; then
+            echo "OK: template URL is live"
+          else
+            echo "::warning::CloudFormation template URL is not reachable yet: $URL"
+          fi

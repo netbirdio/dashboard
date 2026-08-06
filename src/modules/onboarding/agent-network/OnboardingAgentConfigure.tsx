@@ -15,9 +15,12 @@ type Props = {
 export const OnboardingAgentConfigure = ({ onBack, onNext }: Props) => {
   const { settings, providers } = useAIProviders();
 
-  // Open the tab that matches the connected provider: Anthropic speaks the
-  // Claude Code config, everything else is OpenAI-shaped so default to cURL.
-  const defaultTab = providers.some((p) => p.providerId === "anthropic_api")
+  // Open the tab that matches the connected provider: Anthropic and Kimi
+  // (whose upstream also speaks the Anthropic Messages API) get the Claude
+  // Code config, everything else is OpenAI-shaped so default to cURL.
+  const defaultTab = providers.some(
+    (p) => p.providerId === "anthropic_api" || p.providerId === "kimi_api",
+  )
     ? "claude-code"
     : "curl";
 
@@ -42,6 +45,7 @@ export const OnboardingAgentConfigure = ({ onBack, onNext }: Props) => {
           listClassName={"px-0"}
           contentClassName={"px-0 py-2"}
           defaultTab={defaultTab}
+          providerIds={providers.map((p) => p.providerId)}
         />
       ) : (
         <div
