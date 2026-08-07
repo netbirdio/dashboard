@@ -3,6 +3,7 @@ import { BidirectionalEdges } from "@/modules/control-center/edges/Bidirectional
 import { DirectionIn } from "@/modules/control-center/edges/DirectionIn";
 import FloatingEdge from "@/modules/control-center/edges/FloatingEdge";
 import { SimpleConnection } from "@/modules/control-center/edges/SimpleConnection";
+import { SmartEdge } from "@/modules/control-center/edges/SmartEdge";
 
 export const EDGE_TYPES = {
   in: DirectionIn,
@@ -10,4 +11,5 @@ export const EDGE_TYPES = {
   floating: FloatingEdge,
   "floating-straight": AnimatedLine,
   simple: SimpleConnection,
+  smart: SmartEdge,
 };

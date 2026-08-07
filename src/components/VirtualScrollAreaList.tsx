@@ -33,6 +33,10 @@ type Props<T extends { id?: string }> = {
   heightAdjustment?: number;
   groupKey?: (item: T) => string | undefined;
   itemKey?: (item: T) => string;
+  // Combobox lists highlight the first row on open so keyboard nav has a
+  // starting point. Read-only lists (view/hover-edit, no select) pass false so
+  // nothing looks pre-hovered — only a real mouse hover highlights a row.
+  autoSelectFirst?: boolean;
 };
 
 export function VirtualScrollAreaList<T extends { id?: string }>({
@@ -51,16 +55,19 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
   heightAdjustment = 8,
   groupKey,
   itemKey,
+  autoSelectFirst = true,
 }: Readonly<Props<T>>) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [lastInputMethod, setLastInputMethod] = useState<"mouse" | "keyboard">(
     "mouse",
   );
-  const [selected, setSelected] = useState(0);
+  // -1 = nothing highlighted (read-only lists); 0 = first row (combobox nav).
+  const initialSelected = autoSelectFirst ? 0 : -1;
+  const [selected, setSelected] = useState(initialSelected);
 
   useEffect(() => {
-    setSelected(0);
-  }, [items]);
+    setSelected(initialSelected);
+  }, [items, initialSelected]);
 
   const scrollToItem = useCallback((index: number) => {
     virtuosoRef.current?.scrollIntoView({

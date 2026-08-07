@@ -18,6 +18,8 @@
     "test:clean": "cd ./e2e/environment && sh clean-test-env.sh",
     "test:dev": "cross-env APP_ENV=test next dev -p 1337",
     "test": "npx playwright test --config=e2e/playwright.config.ts",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
     "test:ui": "npx playwright test --config=e2e/playwright.config.ts --ui",
     "test:ci": "cross-env APP_ENV=test next build && npx playwright test --config=e2e/playwright.config.ts"
   },
@@ -103,13 +105,17 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^9.5.1",
+    "@playwright/test": "^1.52.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
     "@types/chroma-js": "^3.1.1",
     "@types/js-cookie": "^3.0.6",
-    "@playwright/test": "^1.52.0",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.1.6",
+    "jsdom": "^29.1.1",
     "postcss": "^8",
     "prettier": "3.0.3",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "vitest": "^4.1.10"
   }
 }

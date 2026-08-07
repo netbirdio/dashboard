@@ -55,6 +55,21 @@ interface SelectDropdownProps {
   iconSize?: number;
   truncate?: boolean;
   compact?: boolean;
+  // Pinned content below the scrollable options (e.g. a "create new" action)
+  // — always visible regardless of scroll or search. Receives a callback
+  // that closes the popover.
+  footer?: (close: () => void) => React.ReactNode;
+  // Optional controlled open state. When omitted the dropdown manages its own
+  // (existing behaviour); when provided, the caller drives open/close — e.g.
+  // to dismiss it on a click the Popover's own outside-detection can't see
+  // (a ReactFlow pane that stops pointer propagation).
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  // Defer onChange until after the popover's close animation (~180ms). OFF by
+  // default so ordinary dropdowns report synchronously (pre-existing behaviour);
+  // the control center opts in because its onChange rebuilds the whole canvas
+  // and janks if it fires mid-animation.
+  deferChange?: boolean;
   "data-testid"?: string;
 }
 
@@ -79,20 +94,37 @@ export function SelectDropdown({
   iconSize = 14,
   truncate = false,
   compact = false,
+  footer,
+  open: controlledOpen,
+  onOpenChange,
+  deferChange = false,
   "data-testid": dataTestId,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const toggle = (selectedValue: string) => {
     const isSelected = value == selectedValue;
-    if (!isSelected) onChange?.(selectedValue);
+    setOpen(false);
+    if (!isSelected) {
+      // Fire after the close animation (see deferChange prop) so a heavy
+      // onChange doesn't jank mid-animation; otherwise report synchronously.
+      if (deferChange) setTimeout(() => onChange?.(selectedValue), 180);
+      else onChange?.(selectedValue);
+    }
     setTimeout(() => {
       setSearch("");
     }, 100);
-    setOpen(false);
   };
 
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = React.useCallback(
+    (next: boolean) => {
+      onOpenChange?.(next);
+      if (controlledOpen === undefined) setUncontrolledOpen(next);
+    },
+    [controlledOpen, onOpenChange],
+  );
 
   const selected = options.find((o) => o.value === value);
 
@@ -202,7 +234,7 @@ export function SelectDropdown({
               {!isLoading && selected && <SelectedItem />}
               {!isLoading && !selected && <PlaceholderItem />}
               <div className={"pl-2"}>
-                <ChevronsUpDown size={18} className={"shrink-0"} />
+                <ChevronsUpDown size={16} className={"shrink-0"} />
               </div>
             </div>
           </Button>
@@ -308,6 +340,11 @@ export function SelectDropdown({
                 )}
               </CommandGroup>
             </ScrollArea>
+            {footer && (
+              <div className={"border-t dark:border-nb-gray-800/70"}>
+                {footer(() => setOpen(false))}
+              </div>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>
