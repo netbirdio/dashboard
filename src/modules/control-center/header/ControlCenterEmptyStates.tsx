@@ -19,7 +19,8 @@ const EMPTY_STATE_REVEAL_IN =
   "animate-in fade-in zoom-in-[.97] duration-[700ms] ease-out fill-mode-both";
 
 export function ControlCenterEmptyStates() {
-  const { currentView, selectedNetwork, layoutInitialized } = useCanvasState();
+  const { currentView, selectedNetwork, layoutInitialized, instantDrill } =
+    useCanvasState();
   const { isDraft } = useDraftMode();
   const { isPeersLoading, isNetworksLoading, peers, networks } =
     useControlCenterData();
@@ -59,7 +60,9 @@ export function ControlCenterEmptyStates() {
         !isNetworksLoading &&
         drilledNetworkEmpty && (
           <div
-            className={`absolute left-0 top-0 z-10 w-full mt-28 ${EMPTY_STATE_REVEAL_IN}`}
+            className={`absolute left-0 top-0 z-10 w-full mt-28 ${
+              instantDrill ? "" : EMPTY_STATE_REVEAL_IN
+            }`}
           >
             <GetStartedTest
               showBackground={false}

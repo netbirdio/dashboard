@@ -120,12 +120,17 @@ function ControlCenterCanvas() {
   const onLiveNetworkCreated = React.useCallback(
     async (network: Network) => {
       // Drill only after /networks includes the new one — the single-network
-      // view builds from the revalidated list.
+      // view builds from the revalidated list. Instant: the add-resource prompt
+      // opens right after, so an animation would play behind the dialog.
       await mutate("/networks");
-      ui.onNetworkSelect(network.id);
+      ui.onNetworkSelect(network.id, null, true);
     },
     [mutate, ui],
   );
+
+  const onLiveResourceCreated = React.useCallback(() => {
+    canvas.setLayoutInitialized(false);
+  }, [canvas]);
 
   // GraphView's memo only bails when every other prop keeps identity; per-render
   // callbacks would re-render the whole canvas each drag tick, so route handlers
@@ -245,7 +250,10 @@ function ControlCenterCanvas() {
       {/* Kept mounted here so the live "Add Network" flow survives the empty
           state unmounting once the first network is created. */}
       <NetworkAccessControlProvider>
-        <NetworkProvider onNetworkCreated={onLiveNetworkCreated}>
+        <NetworkProvider
+          onNetworkCreated={onLiveNetworkCreated}
+          onResourceCreated={onLiveResourceCreated}
+        >
           <ControlCenterEmptyStates />
         </NetworkProvider>
       </NetworkAccessControlProvider>

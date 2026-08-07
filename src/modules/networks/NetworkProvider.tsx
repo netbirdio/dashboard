@@ -27,6 +27,7 @@ type Props = {
   // Fired right after a network is created (before the add-resource prompt).
   // The control-center canvas uses this to drill into the fresh network.
   onNetworkCreated?: (network: Network) => void;
+  onResourceCreated?: (network?: Network) => void;
 };
 
 const NetworksContext = React.createContext(
@@ -76,6 +77,7 @@ export const NetworkProvider = ({
   onResourceDelete,
   onResourceUpdate,
   onNetworkCreated,
+  onResourceCreated,
 }: Props) => {
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
@@ -461,13 +463,15 @@ export const NetworkProvider = ({
               onCreated={async (r) => {
                 setResourceModal(false);
                 setCurrentResource(undefined);
-                mutate("/networks");
+                await mutate("/networks");
                 mutate("/groups");
-                mutate("/networks/resources");
+                await mutate("/networks/resources");
                 if (network) {
                   mutate(`/networks/${network.id}/resources`);
                   mutate(`/networks/${network.id}`);
-                } else {
+                }
+                onResourceCreated?.(currentNetwork);
+                if (!network) {
                   currentNetwork?.routing_peers_count === 0 &&
                     (await askForRoutingPeer(currentNetwork));
                 }

@@ -63,6 +63,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setEdges,
     layoutInitialized,
     setLayoutInitialized,
+    setInstantDrill,
     currentView,
     setCurrentView,
     selectedNetwork,
@@ -113,11 +114,14 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   // the camera fits, so the first fit hides the viewport (cc-prefit), fits
   // while hidden, then reveals — animating in from a zoomed-out start.
   const firstFitRef = React.useRef(true);
+  const instantFitRef = React.useRef(false);
 
   const fitView = (newNodes?: Node[]) => {
     // A running canvas transition owns the camera — its reveal does the fit.
     if (isCanvasTransitionActive()) return;
     const target = newNodes ?? nodes;
+    const instant = instantFitRef.current;
+    instantFitRef.current = false;
     const isFirstFit = firstFitRef.current;
     firstFitRef.current = false;
     const flowEl = isFirstFit
@@ -160,6 +164,11 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         maxZoom: 0.8,
         minZoom: DEFAULT_MIN_ZOOM,
       };
+      if (instant) {
+        void reactFlow.fitView({ ...fitOptions, duration: 0 });
+        reveal();
+        return;
+      }
       if (!isFirstFit) {
         void reactFlow.fitView({ ...fitOptions, duration: FIT_ANIMATION_MS });
         return;
@@ -367,12 +376,18 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   // happens in the invisible swap window; the transition's reveal owns the
   // camera (the init effect's fitView is suppressed meanwhile).
   const onNetworkSelect = useCallback(
-    (networkId: string, targetRect?: Rect | null) => {
+    (networkId: string, targetRect?: Rect | null, instant?: boolean) => {
+      setInstantDrill(!!instant);
       const swap = () => {
         resetView();
         setCurrentView(FlowView.NETWORKS);
         setSelectedNetwork(networkId);
       };
+      if (instant) {
+        instantFitRef.current = true;
+        swap();
+        return;
+      }
       if (networkId) drillInto(reactFlow, targetRect, swap);
       else drillOutOf(reactFlow, swap);
     },

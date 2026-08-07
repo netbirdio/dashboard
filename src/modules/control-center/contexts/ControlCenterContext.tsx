@@ -55,6 +55,8 @@ interface CanvasState {
   onEdgesChange: OnEdgesChange<Edge>;
   layoutInitialized: boolean;
   setLayoutInitialized: (v: boolean) => void;
+  instantDrill: boolean;
+  setInstantDrill: (v: boolean) => void;
   currentView: FlowView;
   setCurrentView: (v: FlowView) => void;
   selectedNetwork: string;
@@ -218,6 +220,7 @@ export function CanvasStateProvider({
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [layoutInitialized, setLayoutInitialized] = useState(false);
+  const [instantDrill, setInstantDrill] = useState(false);
   const { loggedInUser } = useLoggedInUser();
 
   const queryParams = useSearchParams();
@@ -272,6 +275,8 @@ export function CanvasStateProvider({
       onEdgesChange,
       layoutInitialized,
       setLayoutInitialized,
+      instantDrill,
+      setInstantDrill,
       currentView,
       setCurrentView,
       selectedNetwork,
@@ -300,6 +305,7 @@ export function CanvasStateProvider({
       onNodesChange,
       onEdgesChange,
       layoutInitialized,
+      instantDrill,
       currentView,
       selectedNetwork,
       selectedGroup,
@@ -352,7 +358,11 @@ interface ControlCenterUIContextType {
   onViewChange: (view: FlowView) => void;
   // targetRect: the clicked frame's rect — the canvas transition dives into
   // it; without one (dropdown/back picks) it zooms from the viewport center.
-  onNetworkSelect: (id: string, targetRect?: Rect | null) => void;
+  onNetworkSelect: (
+    id: string,
+    targetRect?: Rect | null,
+    instant?: boolean,
+  ) => void;
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
 }
 
