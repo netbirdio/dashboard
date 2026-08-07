@@ -284,9 +284,13 @@ export function AccessControlModalContent({
       <ModalHeader
         icon={<AccessControlIcon className={"fill-netbird"} />}
         title={
-          policy
-            ? "Update Access Control Policy"
-            : "Create New Access Control Policy"
+          <span
+            data-testid={policy ? "update-policy-title" : "create-policy-title"}
+          >
+            {policy
+              ? "Update Access Control Policy"
+              : "Create New Access Control Policy"}
+          </span>
         }
         description={
           "Use this policy to restrict access to groups of resources."
@@ -694,6 +698,7 @@ export function AccessControlModalContent({
                 variant={"primary"}
                 disabled={submitDisabled || !permission.policies.update}
                 onClick={() => void saveOrClose()}
+                data-testid={"submit-policy"}
               >
                 Save Changes
               </Button>

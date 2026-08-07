@@ -39,7 +39,7 @@ test.describe.serial("Control Center Draft Install @control-center", () => {
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
-    await createViaCanvasMenu(page, "New Server");
+    await createViaCanvasMenu(page, "new-server");
 
     const placeholder = canvasNode(page, "peer-");
     await expect(placeholder).toHaveCount(1);
@@ -56,7 +56,7 @@ test.describe.serial("Control Center Draft Install @control-center", () => {
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
-    await createViaCanvasMenu(page, "New Server");
+    await createViaCanvasMenu(page, "new-server");
     const placeholder = canvasNode(page, "peer-");
     await expect(placeholder).toHaveCount(1);
 
@@ -80,7 +80,7 @@ test.describe.serial("Control Center Draft Install @control-center", () => {
     await enterDraft(page);
     // A lone Server placeholder is an install-peer change. It sorts to the
     // very top of the list, so it IS the first accordion.
-    await createViaCanvasMenu(page, "New Server");
+    await createViaCanvasMenu(page, "new-server");
     await expect(canvasNode(page, "peer-")).toHaveCount(1);
 
     await reviewButton(page).click();
@@ -106,7 +106,7 @@ test.describe.serial("Control Center Draft Install @control-center", () => {
       await openControlCenter(page);
 
       await enterDraft(page);
-      await createViaCanvasMenu(page, "New Server");
+      await createViaCanvasMenu(page, "new-server");
       const placeholder = canvasNode(page, "peer-");
       await expect(placeholder).toHaveCount(1);
 

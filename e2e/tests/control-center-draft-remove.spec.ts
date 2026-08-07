@@ -25,7 +25,8 @@ import {
 
 // Removing a change from Review & Deploy cascades to the canvas AND to
 // dependent changes (useRemoveChange + reduceRemoveChange).
-test.describe.serial("Control Center Draft — remove change cascade @control-center", () => {
+test.describe
+  .serial("Control Center Draft — remove change cascade @control-center", () => {
   const PREFIX = "cc-rm-";
 
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
@@ -79,7 +80,7 @@ test.describe.serial("Control Center Draft — remove change cascade @control-ce
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
-    await createViaCanvasMenu(page, "New Network");
+    await createViaCanvasMenu(page, "new-network");
     const frame = canvasNode(page, "network-new-");
     await expect(frame).toHaveCount(1);
 
@@ -102,7 +103,9 @@ test.describe.serial("Control Center Draft — remove change cascade @control-ce
     await page.getByTestId("confirmation.confirm").click();
 
     // The network change is gone; the resource survives, now flagged No Network.
-    await expect(page.getByTestId("cc-change-create-network")).not.toBeVisible();
+    await expect(
+      page.getByTestId("cc-change-create-network"),
+    ).not.toBeVisible();
     await expect(page.getByTestId("cc-change-create-resource")).toBeVisible();
     await expect(page.getByText("No Network").first()).toBeVisible();
   });
@@ -111,11 +114,11 @@ test.describe.serial("Control Center Draft — remove change cascade @control-ce
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
-    await createViaCanvasMenu(page, "New Group", { fx: 0.3, fy: 0.4 });
-    await createViaCanvasMenu(page, "New Group", { fx: 0.3, fy: 0.7 });
+    await createViaCanvasMenu(page, "new-group", { fx: 0.3, fy: 0.4 });
+    await createViaCanvasMenu(page, "new-group", { fx: 0.3, fy: 0.7 });
     const groups = canvasNode(page, "group-new-");
     await expect(groups).toHaveCount(2);
-    await createViaCanvasMenu(page, "New Policy", { fx: 0.65, fy: 0.5 });
+    await createViaCanvasMenu(page, "new-policy", { fx: 0.65, fy: 0.5 });
     const policy = canvasNode(page, "policy-new-");
     await connectNodes(page, groups.nth(0), policy, "sr");
     await connectNodes(page, groups.nth(1), policy, "sl");
@@ -145,7 +148,7 @@ test.describe.serial("Control Center Draft — remove change cascade @control-ce
     await expect(frame).toBeVisible();
 
     // Delete the existing network in draft → delete-network change; frame goes.
-    await clickContextMenuItem(page, frame, "Delete");
+    await clickContextMenuItem(page, frame, "delete");
     await page.getByTestId("confirmation.confirm").click();
     await expect(frame).not.toBeVisible();
 
@@ -159,7 +162,9 @@ test.describe.serial("Control Center Draft — remove change cascade @control-ce
     await expect(canvasNode(page, `network-${network.id}`)).toBeVisible();
     // The network was never actually deleted on the account.
     await expect
-      .poll(async () => (await listNetworks(page)).some((n) => n.id === network.id))
+      .poll(async () =>
+        (await listNetworks(page)).some((n) => n.id === network.id),
+      )
       .toBe(true);
   });
 
@@ -169,7 +174,7 @@ test.describe.serial("Control Center Draft — remove change cascade @control-ce
     const { policy, policyNode } = await seedPolicyGroupView(page);
 
     // Disable the (enabled) existing policy in draft → an update-policy change.
-    await clickContextMenuItem(page, policyNode, "Disable");
+    await clickContextMenuItem(page, policyNode, "disable");
 
     await openReview(page);
     await expect(page.getByTestId("cc-change-update-policy")).toBeVisible();
@@ -182,7 +187,9 @@ test.describe.serial("Control Center Draft — remove change cascade @control-ce
     // The live policy was never changed.
     await expect
       .poll(async () => {
-        const p = (await listPolicies(page)).find((x) => x.id === policy.id) as {
+        const p = (await listPolicies(page)).find(
+          (x) => x.id === policy.id,
+        ) as {
           enabled?: boolean;
         };
         return p?.enabled;
@@ -196,7 +203,7 @@ test.describe.serial("Control Center Draft — remove change cascade @control-ce
     const { policy, policyNode } = await seedPolicyGroupView(page);
 
     // Delete the existing policy in draft → delete-policy; node goes.
-    await clickContextMenuItem(page, policyNode, "Delete");
+    await clickContextMenuItem(page, policyNode, "delete");
     await page.getByTestId("confirmation.confirm").click();
     await expect(policyNode).not.toBeVisible();
 
@@ -209,7 +216,9 @@ test.describe.serial("Control Center Draft — remove change cascade @control-ce
     await expect(canvasNode(page, `policy-${policy.id}`)).toBeVisible();
     // Never actually deleted on the account.
     await expect
-      .poll(async () => (await listPolicies(page)).some((p) => p.id === policy.id))
+      .poll(async () =>
+        (await listPolicies(page)).some((p) => p.id === policy.id),
+      )
       .toBe(true);
   });
 });

@@ -53,7 +53,7 @@ async function place(page: Page, kind: Kind, fx: number, fy: number) {
 }
 
 const createPolicyHeading = (page: Page) =>
-  page.getByRole("heading", { name: "Create New Access Control Policy" });
+  page.getByTestId("create-policy-title");
 
 async function expectPolicyModalThenDismiss(page: Page) {
   await expect(createPolicyHeading(page)).toBeVisible();
@@ -97,7 +97,12 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       const a = await place(page, source, 0.45, 0.35);
       const b = await place(page, target, 0.75, 0.65);
       // Resources only expose a left (destination) handle.
-      await connectNodes(page, a, b, source === "resource" || source === "network" ? "sl" : "sr");
+      await connectNodes(
+        page,
+        a,
+        b,
+        source === "resource" || source === "network" ? "sl" : "sr",
+      );
       await expectPolicyModalThenDismiss(page);
       // Dismissing the modal must not leave a policy or edge behind.
       await expect(canvasNode(page, "policy-new-")).toHaveCount(0);
@@ -121,7 +126,12 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       const a = await place(page, source, 0.45, 0.35);
       const b = await place(page, target, 0.75, 0.65);
       const edgesBefore = await edgeCount(page);
-      await connectNodes(page, a, b, source === "resource" || source === "network" ? "sl" : "sr");
+      await connectNodes(
+        page,
+        a,
+        b,
+        source === "resource" || source === "network" ? "sl" : "sr",
+      );
       await expect(createPolicyHeading(page)).not.toBeVisible();
       expect(await edgeCount(page)).toBe(edgesBefore);
     });
@@ -130,8 +140,8 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test("Connect policy → policy is a no-op", async ({
     dashboardAsOwner: page,
   }) => {
-    await createViaCanvasMenu(page, "New Policy", { fx: 0.45, fy: 0.35 });
-    await createViaCanvasMenu(page, "New Policy", { fx: 0.75, fy: 0.65 });
+    await createViaCanvasMenu(page, "new-policy", { fx: 0.45, fy: 0.35 });
+    await createViaCanvasMenu(page, "new-policy", { fx: 0.75, fy: 0.65 });
     const policies = canvasNode(page, "policy-new-");
     await expect(policies).toHaveCount(2);
     await connectNodes(page, policies.nth(0), policies.nth(1));
@@ -144,7 +154,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test("Blank policy completes via direct connects and enters the changeset", async ({
     dashboardAsOwner: page,
   }) => {
-    await createViaCanvasMenu(page, "New Policy", { fx: 0.6, fy: 0.5 });
+    await createViaCanvasMenu(page, "new-policy", { fx: 0.6, fy: 0.5 });
     const policy = canvasNode(page, "policy-new-");
     await expect(policy).toHaveCount(1);
     // A blank (incomplete) policy is canvas-only.
@@ -169,7 +179,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test("Connecting the same group to the same policy side twice is a no-op", async ({
     dashboardAsOwner: page,
   }) => {
-    await createViaCanvasMenu(page, "New Policy", { fx: 0.6, fy: 0.5 });
+    await createViaCanvasMenu(page, "new-policy", { fx: 0.6, fy: 0.5 });
     const policy = canvasNode(page, "policy-new-");
     const g1 = await place(page, "group", 0.35, 0.5);
     await connectNodes(page, g1, policy, "sr");
@@ -182,7 +192,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test("A policy referencing a no-network resource is tracked but blocked by the resource", async ({
     dashboardAsOwner: page,
   }) => {
-    await createViaCanvasMenu(page, "New Policy", { fx: 0.6, fy: 0.35 });
+    await createViaCanvasMenu(page, "new-policy", { fx: 0.6, fy: 0.35 });
     const policy = canvasNode(page, "policy-new-");
     const group = await place(page, "group", 0.35, 0.5);
     const resource = await place(page, "resource", 0.85, 0.65);
@@ -208,7 +218,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test("Connect network → policy opens the destination picker", async ({
     dashboardAsOwner: page,
   }) => {
-    await createViaCanvasMenu(page, "New Policy", { fx: 0.35, fy: 0.5 });
+    await createViaCanvasMenu(page, "new-policy", { fx: 0.35, fy: 0.5 });
     const network = await place(page, "network", 0.75, 0.5);
     await connectNodes(page, network, canvasNode(page, "policy-new-"), "sl");
     // The empty network opens the picker in its no-resources state, so assert
@@ -247,15 +257,15 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await page.mouse.click(point.x, point.y, { button: "right" });
     const menu = page.getByTestId("cc-canvas-context-menu");
     await expect(menu).toBeVisible();
-    for (const label of [
-      "New Server",
-      "New Agent",
-      "New Policy",
-      "New Group",
-      "New Network",
-      "New Resource",
+    for (const action of [
+      "new-server",
+      "new-agent",
+      "new-policy",
+      "new-group",
+      "new-network",
+      "new-resource",
     ]) {
-      await expect(menu.getByRole("button", { name: label })).toBeVisible();
+      await expect(menu.getByTestId(`cc-canvas-menu-${action}`)).toBeVisible();
     }
     await page.keyboard.press("Escape");
   });
@@ -263,11 +273,11 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test("New Group via canvas menu tracks immediately; New Policy does not", async ({
     dashboardAsOwner: page,
   }) => {
-    await createViaCanvasMenu(page, "New Group", { fx: 0.4, fy: 0.4 });
+    await createViaCanvasMenu(page, "new-group", { fx: 0.4, fy: 0.4 });
     await expect(canvasNode(page, "group-new-")).toHaveCount(1);
     await expectChangeCount(page, 1);
 
-    await createViaCanvasMenu(page, "New Policy", { fx: 0.7, fy: 0.6 });
+    await createViaCanvasMenu(page, "new-policy", { fx: 0.7, fy: 0.6 });
     await expect(canvasNode(page, "policy-new-")).toHaveCount(1);
     // Incomplete policies never enter the changeset.
     await expectChangeCount(page, 1);
@@ -286,7 +296,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await expect(group).toContainText(/1\s*resource/i);
 
     // Its Details row carries the "No Network" alert.
-    await clickContextMenuItem(page, group, "View Details");
+    await clickContextMenuItem(page, group, "view-details");
     await page.getByRole("tab", { name: /Resources/ }).click();
     await expect(page.getByText("No network")).toBeVisible();
     await page.keyboard.press("Escape");
@@ -311,7 +321,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const peer = await place(page, "peer", 0.6, 0.5);
     // Placing a placeholder tracks exactly one pending install step.
     await expectChangeCount(page, 1);
-    await clickContextMenuItem(page, peer, "Rename");
+    await clickContextMenuItem(page, peer, "rename");
     await page.getByTestId("cc-rename-input").fill("build-server-1");
     await page.getByTestId("cc-rename-submit").click();
     await expect(peer).toContainText("build-server-1");
@@ -322,7 +332,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     expect(install.name).toBe("build-server-1");
 
     // Removing the placeholder resolves the pending step.
-    await clickContextMenuItem(page, peer, "Remove");
+    await clickContextMenuItem(page, peer, "remove");
     await expectChangeCount(page, 0);
   });
 
@@ -333,20 +343,18 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const all = groups.find((g) => g.name === "All");
     expect(all).toBeTruthy();
 
-    await page.getByTestId("cc-toolbar-add").click();
-    await page.getByPlaceholder(/Search components/).fill("All");
-    await dragTemplateToCanvas(page, `cc-panel-group-${all!.id}`);
-    const node = page.locator(
-      `.react-flow__node[data-id="group-${all!.id}"]`,
-    );
+    await dragTemplateToCanvas(page, `cc-panel-group-${all!.id}`, undefined, {
+      search: "All",
+    });
+    const node = page.locator(`.react-flow__node[data-id="group-${all!.id}"]`);
     await expect(node).toHaveCount(1);
 
     await node.click({ button: "right" });
     const menu = page.getByTestId("cc-node-context-menu");
     await expect(menu).toBeVisible();
-    await expect(menu.getByRole("button", { name: "Remove" })).toBeVisible();
-    await expect(menu.getByRole("button", { name: "Rename" })).toHaveCount(0);
-    await expect(menu.getByRole("button", { name: "Delete" })).toHaveCount(0);
+    await expect(menu.getByTestId("cc-menu-remove")).toBeVisible();
+    await expect(menu.getByTestId("cc-menu-rename")).toHaveCount(0);
+    await expect(menu.getByTestId("cc-menu-delete")).toHaveCount(0);
     await page.keyboard.press("Escape");
   });
 
@@ -357,10 +365,10 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await group.click({ button: "right" });
     const menu = page.getByTestId("cc-node-context-menu");
     await expect(menu).toBeVisible();
-    await expect(menu.getByRole("button", { name: "Remove" })).toBeVisible();
-    await expect(menu.getByRole("button", { name: "Rename" })).toBeVisible();
+    await expect(menu.getByTestId("cc-menu-remove")).toBeVisible();
+    await expect(menu.getByTestId("cc-menu-rename")).toBeVisible();
     // Delete is reserved for entities that exist in the API.
-    await expect(menu.getByRole("button", { name: "Delete" })).toHaveCount(0);
+    await expect(menu.getByTestId("cc-menu-delete")).toHaveCount(0);
     await page.keyboard.press("Escape");
   });
 
@@ -370,15 +378,13 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const groups = await listGroups(page);
     const all = groups.find((g) => g.name === "All");
     expect(all).toBeTruthy();
-    await page.getByTestId("cc-toolbar-add").click();
-    await page.getByPlaceholder(/Search components/).fill("All");
-    await dragTemplateToCanvas(page, `cc-panel-group-${all!.id}`);
-    const node = page.locator(
-      `.react-flow__node[data-id="group-${all!.id}"]`,
-    );
+    await dragTemplateToCanvas(page, `cc-panel-group-${all!.id}`, undefined, {
+      search: "All",
+    });
+    const node = page.locator(`.react-flow__node[data-id="group-${all!.id}"]`);
     await expect(node).toHaveCount(1);
 
-    await clickContextMenuItem(page, node, "Remove");
+    await clickContextMenuItem(page, node, "remove");
     await expect(page.getByTestId("confirmation.confirm")).not.toBeVisible();
     await expect(node).toHaveCount(0);
     // No connected policies were touched → nothing to deploy.
@@ -399,8 +405,8 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     // reaches the canvas and removes the still-selected node.
     await group.click();
     await expect(group).toHaveClass(/selected/);
-    await page.evaluate(() =>
-      (document.activeElement as HTMLElement | null)?.blur(),
+    await page.evaluate(
+      () => (document.activeElement as HTMLElement | null)?.blur(),
     );
     await page.keyboard.press("Backspace");
     // Keyboard removal routes through the same Remove semantics as the
@@ -414,11 +420,9 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   }) => {
     const g1 = await place(page, "group", 0.45, 0.35);
     await place(page, "group", 0.75, 0.65);
-    const secondName = await canvasNode(page, "group-new-")
-      .nth(1)
-      .innerText();
+    const secondName = await canvasNode(page, "group-new-").nth(1).innerText();
 
-    await clickContextMenuItem(page, g1, "Rename");
+    await clickContextMenuItem(page, g1, "rename");
     const input = page.getByTestId("cc-rename-input");
     // Reserved system name.
     await input.fill("All");
@@ -471,9 +475,9 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     expect(all).toBeTruthy();
     const allPeerCount = all!.peers_count ?? 0;
 
-    await page.getByTestId("cc-toolbar-add").click();
-    await page.getByPlaceholder(/Search components/).fill("All");
-    await dragTemplateToCanvas(page, `cc-panel-group-${all!.id}`);
+    await dragTemplateToCanvas(page, `cc-panel-group-${all!.id}`, undefined, {
+      search: "All",
+    });
     const allNode = page.locator(
       `.react-flow__node[data-id="group-${all!.id}"]`,
     );
@@ -518,7 +522,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await page.keyboard.press("Escape");
 
     // Focus via context menu DOES dim off-path nodes.
-    await clickContextMenuItem(page, g1, "Focus");
+    await clickContextMenuItem(page, g1, "focus");
     await expect(page.locator(".react-flow__node.cc-dimmed")).not.toHaveCount(
       0,
     );
@@ -538,10 +542,8 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const policy = canvasNode(page, "policy-new-");
     await expect(policy).toHaveCount(1);
 
-    await clickContextMenuItem(page, policy, "Edit");
-    const modalTitle = page.getByRole("heading", {
-      name: "Update Access Control Policy",
-    });
+    await clickContextMenuItem(page, policy, "edit");
+    const modalTitle = page.getByTestId("update-policy-title");
     for (const side of ["source", "destination"] as const) {
       const selector = page.getByTestId(`${side}-group-selector`);
       const search = page.getByTestId(`${side}-group-selector-search`);
@@ -558,8 +560,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       await modalTitle.click();
       await expect(search).toBeHidden();
     }
-    // The draft-policy edit modal saves via "Save Changes" (update flow).
-    await page.getByRole("button", { name: "Save Changes" }).click();
+    await page.getByTestId("submit-policy").click();
 
     await expect(canvasNode(page, "group-new-")).toHaveCount(4);
 
@@ -623,7 +624,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test("Removing a tracked policy's only source drops its pending change", async ({
     dashboardAsOwner: page,
   }) => {
-    await createViaCanvasMenu(page, "New Policy", { fx: 0.6, fy: 0.5 });
+    await createViaCanvasMenu(page, "new-policy", { fx: 0.6, fy: 0.5 });
     const policy = canvasNode(page, "policy-new-");
     const g1 = await place(page, "group", 0.35, 0.5);
     const g2 = await place(page, "group", 0.85, 0.5);
@@ -633,7 +634,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
 
     // Removing the source group strips it from the policy → the policy is
     // incomplete again and its pending create disappears.
-    await clickContextMenuItem(page, g1, "Remove");
+    await clickContextMenuItem(page, g1, "remove");
     await expect(canvasNode(page, "group-new-")).toHaveCount(1);
     const changes = await readDraftChanges(page);
     expect(changes.filter((c) => c.type === "create-policy")).toHaveLength(0);

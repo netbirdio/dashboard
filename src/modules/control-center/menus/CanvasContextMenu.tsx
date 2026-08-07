@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import {
   BotIcon,
@@ -16,6 +22,7 @@ import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGro
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
+import { menuItemSlug } from "@/modules/control-center/menus/menuItemTestId";
 import { isMac } from "@hooks/useOperatingSystem";
 
 type MenuPosition = {
@@ -262,6 +269,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
           {group.map((item) => (
             <button
               key={item.label}
+              data-testid={`cc-canvas-menu-${menuItemSlug(item.label)}`}
               onClick={() => {
                 item.action(
                   reactFlow.screenToFlowPosition({

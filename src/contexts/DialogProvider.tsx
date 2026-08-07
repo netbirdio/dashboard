@@ -79,7 +79,11 @@ export default function DialogProvider({ children }: Props) {
           >
             <ModalHeader
               center={dialogOptions.center ?? dialogOptions.type == "center"}
-              title={dialogOptions.title || "Confirmation"}
+              title={
+                <span data-testid={"confirmation.title"}>
+                  {dialogOptions.title || "Confirmation"}
+                </span>
+              }
               margin={"mt-1"}
               description={
                 dialogOptions.description ||

@@ -21,7 +21,7 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
-    await createViaCanvasMenu(page, "New Network");
+    await createViaCanvasMenu(page, "new-network");
 
     const frame = canvasNode(page, "network-new-");
     await expect(frame).toHaveCount(1);
@@ -31,16 +31,14 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     await frame.click({ button: "right" });
     const menu = page.getByTestId("cc-node-context-menu");
     await expect(menu).toBeVisible();
-    for (const label of [
-      "Edit",
-      "Add Resource",
-      "Add Resource Group",
-      "Add Routing Peer",
-      "Remove",
+    for (const action of [
+      "edit",
+      "add-resource",
+      "add-resource-group",
+      "add-routing-peer",
+      "remove",
     ]) {
-      await expect(
-        menu.getByRole("button", { name: label, exact: true }),
-      ).toBeVisible();
+      await expect(menu.getByTestId(`cc-menu-${action}`)).toBeVisible();
     }
   });
 
@@ -74,7 +72,7 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
-    await createViaCanvasMenu(page, "New Network");
+    await createViaCanvasMenu(page, "new-network");
     const frame = canvasNode(page, "network-new-");
     await expect(frame).toHaveCount(1);
 
@@ -82,7 +80,7 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     await frame.click({ button: "right" });
     const menu = page.getByTestId("cc-node-context-menu");
     await expect(menu).toBeVisible();
-    await menu.getByRole("button", { name: "Edit", exact: true }).click();
+    await menu.getByTestId("cc-menu-edit").click();
 
     const newName = "Renamed Draft Net";
     await page.getByTestId("network-name-input").fill(newName);
@@ -99,7 +97,7 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
 
     // Create a standalone draft resource (opens the editor; the node is added
     // on save).
-    await createViaCanvasMenu(page, "New Resource");
+    await createViaCanvasMenu(page, "new-resource");
     await page.getByTestId("resource-name-input").fill("toggle-res");
     await page.getByTestId("resource-address-input").fill("10.5.6.7/32");
     await page.getByTestId("submit-resource").click({ force: true });
@@ -116,19 +114,15 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
 
     // Enabled resource offers "Disable"; toggling flips the menu to "Enable".
     let menu = await openMenu();
-    await menu.getByRole("button", { name: "Disable", exact: true }).click();
+    await menu.getByTestId("cc-menu-disable").click();
 
     menu = await openMenu();
-    await expect(
-      menu.getByRole("button", { name: "Enable", exact: true }),
-    ).toBeVisible();
-    await menu.getByRole("button", { name: "Enable", exact: true }).click();
+    await expect(menu.getByTestId("cc-menu-enable")).toBeVisible();
+    await menu.getByTestId("cc-menu-enable").click();
 
     // Back to enabled → "Disable" again.
     menu = await openMenu();
-    await expect(
-      menu.getByRole("button", { name: "Disable", exact: true }),
-    ).toBeVisible();
+    await expect(menu.getByTestId("cc-menu-disable")).toBeVisible();
     await page.keyboard.press("Escape");
   });
 
@@ -136,7 +130,7 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
-    await createViaCanvasMenu(page, "New Network");
+    await createViaCanvasMenu(page, "new-network");
     const frame = canvasNode(page, "network-new-");
     await expect(frame).toHaveCount(1);
 
@@ -157,7 +151,7 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
-    await createViaCanvasMenu(page, "New Resource");
+    await createViaCanvasMenu(page, "new-resource");
     await page.getByTestId("resource-name-input").fill("orig-res");
     await page.getByTestId("resource-address-input").fill("10.9.9.9/32");
     await page.getByTestId("submit-resource").click({ force: true });
@@ -168,7 +162,7 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     await resource.click({ button: "right" });
     const menu = page.getByTestId("cc-node-context-menu");
     await expect(menu).toBeVisible();
-    await menu.getByRole("button", { name: "Rename", exact: true }).click();
+    await menu.getByTestId("cc-menu-rename").click();
 
     await page.getByTestId("cc-rename-input").fill("renamed-res");
     await page.getByTestId("cc-rename-submit").click({ force: true });

@@ -1,6 +1,7 @@
 import { expect, test } from "../helpers/fixtures";
 import { loginToApp, navigateTo } from "../helpers/auth";
 import { deleteUserByEmail } from "../helpers/api";
+import { setTestEdition } from "../helpers/utils";
 
 test.setTimeout(60_000);
 
@@ -64,6 +65,9 @@ test.describe.serial("User Approval & Billing Admin @team", () => {
   test("Should approve user and assign Billing Admin role", async ({
     dashboardAsOwner: page,
   }) => {
+    // Billing Admin is cloud-only, and the shared owner page may still carry a
+    // non-cloud edition override from a control-center spec in this worker.
+    await setTestEdition(page, "cloud");
     await navigateTo(page, "/team/users");
 
     const pendingRow = page.locator("tr").filter({ hasText: "Pending" });

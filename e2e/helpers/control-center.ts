@@ -1,24 +1,16 @@
 import { Page, Locator, expect } from "@playwright/test";
 import { navigateTo } from "./auth";
-import { clearScrollLock } from "./utils";
+import { clearScrollLock, setTestEdition } from "./utils";
 
 // The test build treats the account as cloud (isNetBirdCloud → true when
 // APP_ENV=test), which mounts BillingProvider and its trial/limits modals — a
 // full-screen backdrop that intercepts canvas clicks. Control-center isn't
 // billing-gated, so force a non-cloud edition via the app's own e2e override
-// (netbird-test-edition localStorage) to suppress billing entirely. Registered
-// once per page, before the first navigation.
-const billingDisabled = new WeakSet<Page>();
+// (netbird-test-edition localStorage) to suppress billing entirely. Set on
+// every open, not once per page: the owner page is shared across specs, so
+// another spec may have switched the edition in between.
 async function disableCloudBilling(page: Page) {
-  if (billingDisabled.has(page)) return;
-  billingDisabled.add(page);
-  await page.addInitScript(() => {
-    try {
-      window.localStorage.setItem("netbird-test-edition", "licensed");
-    } catch {
-      /* storage unavailable — fall back to the overlay dismissal below */
-    }
-  });
+  await setTestEdition(page, "licensed");
 }
 
 /**
@@ -40,7 +32,10 @@ export async function openControlCenter(page: Page, tab?: FlowView) {
   await disableCloudBilling(page);
   // The live view honours a ?tab= query param for its initial FlowView, so we
   // can deep-link straight to networks/groups/etc. instead of clicking a tab.
-  await navigateTo(page, tab ? `/control-center?tab=${tab}` : "/control-center");
+  await navigateTo(
+    page,
+    tab ? `/control-center?tab=${tab}` : "/control-center",
+  );
   // The canvas hides behind cc-prefit until the first fitView; wait for the
   // pane itself so later mouse coordinates are meaningful.
   await expect(page.locator(".react-flow__pane")).toBeVisible();
@@ -104,7 +99,8 @@ export async function readDraftChanges(page: Page): Promise<any[]> {
   // changeset onto window.__ccDraftChanges in the test build.
   return await page.evaluate(
     () =>
-      (window as unknown as { __ccDraftChanges?: any[] }).__ccDraftChanges ?? [],
+      (window as unknown as { __ccDraftChanges?: any[] }).__ccDraftChanges ??
+      [],
   );
 }
 
@@ -153,6 +149,7 @@ export async function dragTemplateToCanvas(
   page: Page,
   templateTestId: string,
   target?: { x: number; y: number },
+  opts: { search?: string } = {},
 ) {
   const item = page.getByTestId(templateTestId);
   // Open the panel if it's closed. The panel only fades out (staying in the
@@ -170,7 +167,14 @@ export async function dragTemplateToCanvas(
   await page
     .getByTestId(`cc-category-${categoryForTemplate(templateTestId)}`)
     .dispatchEvent("click");
+  // Picking a category clears the search box, so narrowing the (virtualized)
+  // list to an existing entity has to happen after the switch — otherwise its
+  // row may never be mounted, or sit below the fold where a drag can't start.
+  if (opts.search) {
+    await page.getByPlaceholder(/Search components/).fill(opts.search);
+  }
   await expect(item).toBeVisible();
+  await item.scrollIntoViewIfNeeded();
   const pane = page.locator(".react-flow__pane");
   const paneBox = await pane.boundingBox();
   if (!paneBox) throw new Error("canvas pane not laid out");
@@ -245,7 +249,7 @@ export async function panePoint(page: Page, fx: number, fy: number) {
 /** Right-clicks empty canvas and clicks a creation item ("New Group", …). */
 export async function createViaCanvasMenu(
   page: Page,
-  itemText: string,
+  action: string,
   at?: { fx: number; fy: number },
 ) {
   const point = await panePoint(page, at?.fx ?? 0.6, at?.fy ?? 0.5);
@@ -253,7 +257,7 @@ export async function createViaCanvasMenu(
   await page.mouse.click(point.x, point.y, { button: "right" });
   const menu = page.getByTestId("cc-canvas-context-menu");
   await expect(menu).toBeVisible();
-  await menu.getByRole("button", { name: itemText }).click();
+  await menu.getByTestId(`cc-canvas-menu-${action}`).click();
 }
 
 export async function readDraftCanvas(page: Page): Promise<any | null> {
@@ -271,11 +275,14 @@ export async function dragNodeOnto(page: Page, node: Locator, target: Locator) {
   await mouseDrag(page, await centerOf(node), await centerOf(target));
 }
 
-/** Right-clicks a node and clicks the given context-menu item. */
+/**
+ * Right-clicks a node and clicks the given context-menu action, identified by
+ * its `cc-menu-<action>` test id (e.g. "view-details", "remove", "delete").
+ */
 export async function clickContextMenuItem(
   page: Page,
   node: Locator,
-  itemText: string,
+  action: string,
 ) {
   await dismissBlockingOverlays(page);
   // The menu can re-render (and its items detach) when the node underneath it
@@ -284,9 +291,7 @@ export async function clickContextMenuItem(
     await node.click({ button: "right" });
     const menu = page.getByTestId("cc-node-context-menu");
     await expect(menu).toBeVisible({ timeout: 2000 });
-    await menu
-      .getByRole("button", { name: itemText, exact: true })
-      .click({ timeout: 2000 });
+    await menu.getByTestId(`cc-menu-${action}`).click({ timeout: 2000 });
   }).toPass();
 }
 

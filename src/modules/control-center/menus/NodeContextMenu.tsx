@@ -56,6 +56,7 @@ import { Modal } from "@components/modal/Modal";
 import { GroupRenameModal } from "@/modules/control-center/draft/modals/GroupRenameModal";
 import { EditPeerNameModal } from "@/modules/peers/EditPeerNameModal";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
+import { menuItemSlug } from "@/modules/control-center/menus/menuItemTestId";
 import {
   DraftNetworkRef,
   getPlaceholderPeer,
@@ -276,8 +277,9 @@ export const NodeContextMenu = ({
       const net = (target?.data as { draftNetwork?: DraftNetworkRef })
         ?.draftNetwork;
       if (resource?.id && net?.networkId) {
-        const groupIds = ((resource.groups as (string | { id?: string })[]) ??
-          [])
+        const groupIds = (
+          (resource.groups as (string | { id?: string })[]) ?? []
+        )
           .map((g) => (typeof g === "string" ? g : g.id ?? ""))
           .filter(Boolean);
         trackUpdateResource({
@@ -466,8 +468,7 @@ export const NodeContextMenu = ({
   // freshest copy of a live policy.
   const livePolicy = useMemo(
     () =>
-      (nodePolicy?.id &&
-        policies?.find((p) => p.id === nodePolicy.id)) ||
+      (nodePolicy?.id && policies?.find((p) => p.id === nodePolicy.id)) ||
       nodePolicy,
     [policies, nodePolicy],
   );
@@ -531,16 +532,13 @@ export const NodeContextMenu = ({
   // ---- Live resource actions (edit / disable) — confirmed like every
   // live action. The node carries the resource + its network ref. ----
 
-  const liveResourceOf = useCallback(
-    (n: Node) => {
-      const resource = (n.data as { resource?: NetworkResource })?.resource;
-      const networkId =
-        (n.data as { draftNetwork?: { networkId?: string } })?.draftNetwork
-          ?.networkId ?? n.parentId?.replace("network-", "");
-      return resource?.id && networkId ? { resource, networkId } : null;
-    },
-    [],
-  );
+  const liveResourceOf = useCallback((n: Node) => {
+    const resource = (n.data as { resource?: NetworkResource })?.resource;
+    const networkId =
+      (n.data as { draftNetwork?: { networkId?: string } })?.draftNetwork
+        ?.networkId ?? n.parentId?.replace("network-", "");
+    return resource?.id && networkId ? { resource, networkId } : null;
+  }, []);
 
   const handleLiveEditResource = useCallback(
     async (n: Node) => {
@@ -872,8 +870,7 @@ export const NodeContextMenu = ({
       // Resources: Edit + Disable/Enable (no Delete in live) — the same
       // confirmations as the other live actions.
       const isResourceNode =
-        node.type === "resourceNode" ||
-        node.type === "destinationResourceNode";
+        node.type === "resourceNode" || node.type === "destinationResourceNode";
       if (isResourceNode && liveResourceOf(node)) {
         const resEnabled =
           ((node.data as { resource?: { enabled?: boolean } })?.resource
@@ -916,7 +913,8 @@ export const NodeContextMenu = ({
             {
               label: "Add Resource",
               icon: <WorkflowIcon size={14} />,
-              onClick: () => setResourceEditor({ createInNetworkNodeId: nodeId }),
+              onClick: () =>
+                setResourceEditor({ createInNetworkNodeId: nodeId }),
             },
             {
               label: "Add Routing Peer",
@@ -1128,8 +1126,7 @@ export const NodeContextMenu = ({
     if (node.type === "resourceNode") {
       const isDraftRes = nodeId.startsWith("resource-new-");
       const isFramed = !!node.parentId?.startsWith("network-");
-      const resEnabled =
-        (node.data as { enabled?: boolean }).enabled ?? true;
+      const resEnabled = (node.data as { enabled?: boolean }).enabled ?? true;
       const items: MenuItem[] = [
         ...focusItems(node),
         {
@@ -1147,11 +1144,7 @@ export const NodeContextMenu = ({
       }
       items.push({
         label: resEnabled ? "Disable" : "Enable",
-        icon: resEnabled ? (
-          <PowerOffIcon size={14} />
-        ) : (
-          <PowerIcon size={14} />
-        ),
+        icon: resEnabled ? <PowerOffIcon size={14} /> : <PowerIcon size={14} />,
         onClick: () => toggleResourceEnabled(nodeId),
       });
       // Existing resource inside a network → Delete only; otherwise Remove.
@@ -1253,6 +1246,7 @@ export const NodeContextMenu = ({
                 <div className={"-mx-1 my-1 h-px bg-nb-gray-910"} />
               )}
               <button
+                data-testid={`cc-menu-${menuItemSlug(item.label)}`}
                 onClick={(e) => {
                   // Keep this click from reaching the document listener (which
                   // would dismiss the panel this item may have just opened).
@@ -1306,9 +1300,7 @@ export const NodeContextMenu = ({
             ? resourceCurrentName
             : getNodeGroup(renameTarget ?? undefined)?.name ?? ""
         }
-        groups={
-          isPlaceholderRename || isResourceRename ? undefined : groups
-        }
+        groups={isPlaceholderRename || isResourceRename ? undefined : groups}
         takenNames={
           isPlaceholderRename
             ? placeholderTakenNames

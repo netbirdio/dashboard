@@ -75,7 +75,7 @@ test.describe.serial("Control Center Drill-down @control-center", () => {
     dashboardAsOwner: page,
   }) => {
     await enterDraft(page);
-    await createViaCanvasMenu(page, "New Network");
+    await createViaCanvasMenu(page, "new-network");
     const frame = canvasNode(page, "network-new-");
     await expect(frame).toHaveCount(1);
 
