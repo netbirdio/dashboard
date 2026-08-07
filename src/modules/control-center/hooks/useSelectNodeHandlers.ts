@@ -46,6 +46,14 @@ interface ForceEntityViewConfig {
   applyView: (id: string) => any;
 }
 
+// First-open fly-in starts this fraction zoomed out from the fitted view;
+// small values read as no motion, large ones overshoot.
+const FIRST_FIT_START_ZOOM_FACTOR = 0.55;
+const FIT_ANIMATION_MS = 800;
+// Ease-out: default ease-in-out barely moves for the first ~150ms (reads as a
+// stall) before catching up.
+const fitEase = (t: number) => t * (2 - t);
+
 export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   const reactFlow = useReactFlow();
 
@@ -101,12 +109,9 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     },
   } = params;
 
-  // First fit after a mount: returning to the page via client-side nav
-  // remounts with a warm SWR cache, so nodes commit (and paint at the
-  // default viewport — a top-left flash) before the camera is fitted. Hide
-  // the viewport (cc-prefit, applied synchronously so it lands in the same
-  // paint as the nodes) and fit WITHOUT animation, revealing the scene
-  // already framed.
+  // A warm-cache remount paints nodes at the origin (top-left flash) before
+  // the camera fits, so the first fit hides the viewport (cc-prefit), fits
+  // while hidden, then reveals — animating in from a zoomed-out start.
   const firstFitRef = React.useRef(true);
 
   const fitView = (newNodes?: Node[]) => {
@@ -148,20 +153,45 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         window.requestAnimationFrame(() => attempt(triesLeft - 1));
         return;
       }
-      void reactFlow
-        .fitView({
-          nodes: target,
-          padding: 0.1,
-          // The first fit reveals a hidden scene — snap, don't animate.
-          duration: isFirstFit ? 0 : 800,
-          // Gentle ease-OUT (quad): starts moving on the first frame — the
-          // default ease-in-out barely moves for the first ~150ms, which reads
-          // as a stall — but decelerates softly instead of snapping.
-          ease: (t: number) => t * (2 - t),
-          maxZoom: 0.8,
-          minZoom: DEFAULT_MIN_ZOOM,
-        })
-        .then(reveal, reveal);
+      const fitOptions = {
+        nodes: target,
+        padding: 0.1,
+        ease: fitEase,
+        maxZoom: 0.8,
+        minZoom: DEFAULT_MIN_ZOOM,
+      };
+      if (!isFirstFit) {
+        void reactFlow.fitView({ ...fitOptions, duration: FIT_ANIMATION_MS });
+        return;
+      }
+      // Fit while hidden to learn the target camera, snap to a zoomed-out
+      // start, reveal, then animate in.
+      void reactFlow.fitView({ ...fitOptions, duration: 0 }).then(() => {
+        const end = reactFlow.getViewport();
+        const rect = flowEl?.getBoundingClientRect();
+        if (!rect || rect.width === 0 || rect.height === 0) {
+          reveal();
+          return;
+        }
+        // Zoom out around the container center so the fly-in doesn't drift.
+        const worldCx = (rect.width / 2 - end.x) / end.zoom;
+        const worldCy = (rect.height / 2 - end.y) / end.zoom;
+        const startZoom = end.zoom * FIRST_FIT_START_ZOOM_FACTOR;
+        reactFlow.setViewport({
+          x: rect.width / 2 - worldCx * startZoom,
+          y: rect.height / 2 - worldCy * startZoom,
+          zoom: startZoom,
+        });
+        reveal();
+        // Next frame, not this tick: the snap must paint first, or d3 reads the
+        // current transform (still `end`) and tweens end→end — no fly-in.
+        window.requestAnimationFrame(() => {
+          void reactFlow.setViewport(end, {
+            duration: FIT_ANIMATION_MS,
+            ease: fitEase,
+          });
+        });
+      });
     };
     window.requestAnimationFrame(() => attempt(30));
   };
