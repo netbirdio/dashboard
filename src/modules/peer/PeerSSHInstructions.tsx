@@ -22,6 +22,8 @@ import { SegmentedTabs } from "@components/SegmentedTabs";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { Peer } from "@/interfaces/Peer";
 import { PeerSSHPolicyModal } from "@/modules/peer/PeerSSHPolicyModal";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
 type Props = {
   open?: boolean;
@@ -38,6 +40,12 @@ export const PeerSSHInstructions = ({
 }: Props) => {
   const [client, setClient] = useState("cli");
   const [policyModal, setPolicyModal] = useState(false);
+
+  // Enabling the SSH server and root login require root, or an administrator on
+  // Windows, since they decide who may obtain a shell on that machine.
+  const isWindows =
+    !!peer?.os && getOperatingSystem(peer.os) === OperatingSystem.WINDOWS;
+  const prefix = isWindows ? "" : "sudo ";
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
@@ -75,13 +83,19 @@ export const PeerSSHInstructions = ({
               <Steps.Step step={1}>
                 <p className={"font-normal"}>
                   If you are using NetBird via CLI, you can enable SSH by
-                  running
+                  running{" "}
+                  {isWindows
+                    ? "these commands in an elevated prompt"
+                    : "these commands as root"}
+                  . Run the first one only if NetBird is already running. On a
+                  machine where you do not have those rights, an administrator
+                  has to run them.
                 </p>
-                <Code codeToCopy={"netbird down"}>
-                  <Code.Line>{`netbird down # if NetBird is already running`}</Code.Line>
+                <Code codeToCopy={`${prefix}netbird down`}>
+                  <Code.Line>{`${prefix}netbird down`}</Code.Line>
                 </Code>
                 <Code>
-                  <Code.Line>{`netbird up --allow-server-ssh --enable-ssh-root`}</Code.Line>
+                  <Code.Line>{`${prefix}netbird up --allow-server-ssh --enable-ssh-root`}</Code.Line>
                 </Code>
               </Steps.Step>
             ) : (
@@ -92,6 +106,14 @@ export const PeerSSHInstructions = ({
                   <Mark>Allow SSH</Mark>. If you want to enable Root Login go to{" "}
                   <Mark>Settings &gt; Advanced Settings</Mark> and enable SSH
                   Root Login under the SSH tab.
+                </p>
+                <p className={"font-normal mt-2"}>
+                  These switches need a privileged client, which the app is not
+                  while it runs as your own user. It then shows them as
+                  unavailable with the equivalent command next to them, so use
+                  the CLI commands above{" "}
+                  {isWindows ? "in an elevated prompt" : "with sudo"}, or ask an
+                  administrator if you do not have those rights.
                 </p>
                 <Lightbox image={sshImage} />
               </Steps.Step>
