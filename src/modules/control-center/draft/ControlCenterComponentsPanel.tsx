@@ -84,7 +84,7 @@ const PEER_TEMPLATES: PeerTemplate[] = [
   {
     key: "agent",
     label: "Agent",
-    description: "Add an automated or ephemeral peer",
+    description: "Add an automated or headless peer",
     icon: BotIcon,
   },
 ];

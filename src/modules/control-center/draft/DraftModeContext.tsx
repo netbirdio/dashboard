@@ -19,8 +19,8 @@ export enum CanvasTool {
 
 // Drives the shared "Install NetBird" modal. Opened by dragging a User Device
 // template onto the canvas, or by clicking Install on a placeholder peer node.
-// Placeholder installs carry their kind (agent keys are ephemeral) and node id
-// so a key generated inside the modal can be held on the node for reuse.
+// Placeholder installs carry their kind and node id so a key generated inside
+// the modal can be held on the node for reuse.
 export type InstallModalState = {
   isUserDevice: boolean;
   setupKey?: string;

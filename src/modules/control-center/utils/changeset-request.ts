@@ -279,7 +279,7 @@ export function setupKeyCreateBody(change: InstallPeerChange) {
     revoked: false,
     auto_groups: isUserDevice ? [] : [idPlaceholder("GROUP", change.name)],
     usage_limit: 1,
-    ephemeral: change.kind === "agent",
+    ephemeral: false,
     allow_extra_dns_labels: false,
   };
 }

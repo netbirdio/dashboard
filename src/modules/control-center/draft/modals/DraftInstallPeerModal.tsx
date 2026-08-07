@@ -241,7 +241,6 @@ export const DraftInstallPeerModal = () => {
           isUserDevice={installModal.isUserDevice}
           setupKey={installModal.setupKey}
           hostname={hostname}
-          ephemeralKey={installModal.placeholderKind === "agent"}
           autoGroups={autoGroups}
           resolveAutoGroups={resolveAutoGroups}
           keyName={
