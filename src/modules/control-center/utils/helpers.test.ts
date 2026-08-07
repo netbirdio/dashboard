@@ -18,6 +18,7 @@ import {
   isTrackablePolicy,
   pinByOrder,
   PLACEHOLDER_BASE_NAMES,
+  withFreshGroupCounts,
 } from "./helpers";
 
 const node = (id: string, data: Record<string, unknown>): Node => ({
@@ -550,5 +551,45 @@ describe("pinByOrder", () => {
     const copy = [...items];
     pinByOrder(items, ["a", "b"], idOf);
     expect(items).toEqual(copy);
+  });
+});
+
+describe("withFreshGroupCounts", () => {
+  it("overrides stale counts with the fresh /groups values", () => {
+    const stale: Group = {
+      id: "g1",
+      name: "Ops",
+      peers_count: 1,
+      resources_count: 0,
+    };
+    const groups: Group[] = [
+      { id: "g1", name: "Ops", peers_count: 4, resources_count: 2 },
+    ];
+    const result = withFreshGroupCounts(stale, groups);
+    expect(result.peers_count).toBe(4);
+    expect(result.resources_count).toBe(2);
+    // Non-count fields are preserved from the embedded group.
+    expect(result.name).toBe("Ops");
+  });
+
+  it("falls back to the embedded snapshot when the group is not in /groups", () => {
+    const stale: Group = { id: "draft-1", name: "New", peers_count: 3 };
+    const result = withFreshGroupCounts(stale, [
+      { id: "other", name: "Other", peers_count: 9 },
+    ]);
+    expect(result).toBe(stale);
+  });
+
+  it("falls back when the groups list is undefined", () => {
+    const stale: Group = { id: "g1", name: "Ops", peers_count: 1 };
+    expect(withFreshGroupCounts(stale, undefined)).toBe(stale);
+  });
+
+  it("does not mutate the input group", () => {
+    const stale: Group = { id: "g1", name: "Ops", peers_count: 1 };
+    withFreshGroupCounts(stale, [
+      { id: "g1", name: "Ops", peers_count: 5 },
+    ]);
+    expect(stale.peers_count).toBe(1);
   });
 });

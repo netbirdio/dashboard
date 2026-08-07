@@ -10,9 +10,10 @@ import {
 import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
 import { addDestinationResourceNodes, ViewResult } from "./types";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
 
 export function usePeerView() {
-  const { policies, peers, networks, networkResources, isDataReady } =
+  const { policies, peers, networks, networkResources, groups, isDataReady } =
     useControlCenterData();
 
   const applyPeerView = (
@@ -63,7 +64,7 @@ export function usePeerView() {
         addNode(allNodes, {
           id: destinationNodeId,
           type: "destinationGroupNode",
-          data: { group: destination, enabled },
+          data: { group: withFreshGroupCounts(destination, groups), enabled },
           position: { x: 0, y: 0 },
         });
 

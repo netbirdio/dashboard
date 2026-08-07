@@ -52,6 +52,25 @@ export const getGroupCountLabel = (group?: Group) => {
     : `${resources}, ${peers}`;
 };
 
+// Policy-embedded groups (rule.sources / rule.destinations) carry a peers_count
+// snapshot from when the policy was fetched, which goes stale as peers join or
+// leave the group. /groups is authoritative — override the counts from it so a
+// group reads the same on the canvas as it does in the group list. Falls back
+// to the embedded snapshot when the group isn't in the list (e.g. draft-only
+// groups that don't exist server-side yet).
+export const withFreshGroupCounts = (
+  group: Group,
+  groups?: Group[],
+): Group => {
+  const fresh = groups?.find((g) => g.id === group.id);
+  if (!fresh) return group;
+  return {
+    ...group,
+    peers_count: fresh.peers_count,
+    resources_count: fresh.resources_count,
+  };
+};
+
 export const getPeersFromGroup = (group: Group, peers: Peer[]) => {
   return peers.filter((peer) => {
     const groupIds = peer.groups?.map((g) => g.id) || [];

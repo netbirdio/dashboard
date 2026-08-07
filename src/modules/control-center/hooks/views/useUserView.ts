@@ -6,9 +6,10 @@ import { DEFAULT_LAYOUT_CONFIG } from "@/modules/control-center/utils/graph-buil
 import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
 import { addDestinationResourceNodes, ViewResult } from "./types";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
 
 export function useUserView() {
-  const { policies, peers, networks, networkResources, isDataReady } =
+  const { policies, peers, networks, networkResources, groups, isDataReady } =
     useControlCenterData();
 
   const applyUserView = (
@@ -115,7 +116,7 @@ export function useUserView() {
           allNodes.push({
             id: destinationNodeId,
             type: "destinationGroupNode",
-            data: { group: destination },
+            data: { group: withFreshGroupCounts(destination, groups) },
             position: { x: 900, y: policyIndex * 120 + destIndex * 60 },
           });
         }

@@ -10,9 +10,10 @@ import {
 import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
 import { addDestinationResourceNodes, ViewResult } from "./types";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
 
 export function useGroupView() {
-  const { policies, peers, networks, networkResources, isDataReady } =
+  const { policies, peers, networks, networkResources, groups, isDataReady } =
     useControlCenterData();
 
   // policiesOverride: rebuild from fresher data than the SWR cache (e.g. the
@@ -73,7 +74,7 @@ export function useGroupView() {
             type: "sourceGroupNode",
             // Explicit enabled — GroupNode's fallback checks INCOMING edges,
             // and source groups only have outgoing ones (they'd render dimmed).
-            data: { group: source, enabled },
+            data: { group: withFreshGroupCounts(source, groups), enabled },
             position: { x: 0, y: 0 },
           });
 
@@ -110,7 +111,7 @@ export function useGroupView() {
           allNodes.push({
             id: destinationNodeId,
             type: "destinationGroupNode",
-            data: { group: destination },
+            data: { group: withFreshGroupCounts(destination, groups) },
             position: { x: 0, y: 0 },
           });
 
