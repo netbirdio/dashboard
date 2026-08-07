@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { Node } from "@xyflow/react";
-import { resolveNodeOverlaps } from "./draft-build-layout";
+import { Edge, Node } from "@xyflow/react";
+import {
+  applyDraftBuildLayout,
+  resolveNodeOverlaps,
+} from "./draft-build-layout";
+import { FRAME_GRID_BASE_X } from "./helpers";
 
 const makeNode = (
   id: string,
@@ -69,5 +73,117 @@ describe("resolveNodeOverlaps", () => {
 
     expect(child.position).toEqual({ x: 20, y: 20 });
     expect(hidden.position).toEqual({ x: 10, y: 10 });
+  });
+});
+
+const node = (
+  id: string,
+  type: string,
+  data: Record<string, unknown> = {},
+): Node => ({
+  id,
+  type,
+  position: { x: 0, y: 0 },
+  measured: { width: 250, height: 80 },
+  data,
+});
+const policyNode = (id: string, name: string): Node => ({
+  ...node(id, "policyNode", { policy: { name } }),
+  measured: { width: 160, height: 36 },
+});
+const frameNode = (id: string, name: string): Node => ({
+  ...node(id, "networkNode", { frame: true, network: { id, name } }),
+  measured: { width: 400, height: 300 },
+  style: { width: 400, height: 300 },
+});
+const edge = (source: string, target: string): Edge => ({
+  id: `${source}-${target}`,
+  source,
+  target,
+});
+const at = (nodes: Node[], id: string) =>
+  nodes.find((n) => n.id === id)!.position;
+
+describe("applyDraftBuildLayout", () => {
+  // Source → policy → destination must read left-to-right for EVERY
+  // destination type. The hierarchical layout buckets by node type, so a
+  // destination peer starts life stacked on the sources at x 0 and a
+  // standalone resource inside the frame grid's territory.
+  const cases: Array<[string, string]> = [
+    ["peer", "peerNode"],
+    ["group", "destinationGroupNode"],
+    ["resource", "resourceNode"],
+  ];
+
+  cases.forEach(([label, type]) => {
+    it(`puts a destination ${label} right of the policy`, () => {
+      const nodes = [
+        node("src", "peerNode", { placeholderName: "Server" }),
+        node("dst", type, { placeholderName: "Agent" }),
+        policyNode("pol", "P"),
+      ];
+      const { updatedNodes } = applyDraftBuildLayout(nodes, [
+        edge("src", "pol"),
+        edge("pol", "dst"),
+      ]);
+
+      expect(at(updatedNodes, "src").x).toBe(0);
+      expect(at(updatedNodes, "pol").x).toBe(500);
+      expect(at(updatedNodes, "dst").x).toBe(1000);
+    });
+
+    it(`puts a destination ${label} right of the policy with frames on the canvas`, () => {
+      const nodes = [
+        node("src", "peerNode", { placeholderName: "Server" }),
+        node("dst", type, { placeholderName: "Agent" }),
+        policyNode("pol", "P"),
+        frameNode("net", "Net"),
+      ];
+      const { updatedNodes } = applyDraftBuildLayout(nodes, [
+        edge("src", "pol"),
+        edge("pol", "dst"),
+      ]);
+
+      expect(at(updatedNodes, "src").x).toBe(0);
+      expect(at(updatedNodes, "pol").x).toBe(500);
+      expect(at(updatedNodes, "dst").x).toBe(1000);
+      // The frame grid clears the destination column instead of sharing
+      // its band (and being nudged apart by the overlap pass).
+      expect(at(updatedNodes, "net").x).toBeGreaterThan(1250);
+    });
+  });
+
+  it("keeps the live frame-grid origin when frames are the only destinations", () => {
+    // Live-parity: the networks overview has nothing but frames on the
+    // destination side, so entering draft must not shift the grid.
+    const nodes = [
+      node("src", "groupNode", { group: { id: "g", name: "Src" } }),
+      policyNode("pol", "P"),
+      frameNode("net", "Net"),
+    ];
+    const { updatedNodes } = applyDraftBuildLayout(nodes, [
+      edge("src", "pol"),
+      edge("pol", "net"),
+    ]);
+
+    expect(at(updatedNodes, "net").x).toBe(FRAME_GRID_BASE_X);
+  });
+
+  it("re-centers a lone source left behind by the destination restack", () => {
+    // Both peers start in the same layout bucket, centered as a pair; once
+    // the destination moves to its own column the source must not stay at
+    // the pair's top offset.
+    const nodes = [
+      node("src", "peerNode", { placeholderName: "Server" }),
+      node("dst", "peerNode", { placeholderName: "Agent" }),
+      policyNode("pol", "P"),
+    ];
+    const { updatedNodes } = applyDraftBuildLayout(nodes, [
+      edge("src", "pol"),
+      edge("pol", "dst"),
+    ]);
+
+    expect(at(updatedNodes, "src").y).toBe(0);
+    expect(at(updatedNodes, "dst").y).toBe(0);
   });
 });
