@@ -37,6 +37,13 @@ const rectsIntersect = (
 // so the tight column rhythms (e.g. 100 pitch vs ~80 tall nodes) are never
 // "resolved" apart and an untouched canvas keeps its entry layout verbatim.
 const OVERLAP_MARGIN = 40;
+
+// The destination column's x — the same one every live view uses, so a draft
+// entered from a peer/group/user view reproduces it exactly.
+const DEST_COLUMN_X = 1000;
+// Breathing room between that column and the network frame grid behind it.
+const DEST_COLUMN_FRAME_GAP = 200;
+
 export const resolveNodeOverlaps = (nodes: Node[]) => {
   const movable = nodes.filter((n) => !n.parentId && !n.hidden);
   const area = (n: Node) => {
@@ -134,7 +141,7 @@ export const applyDraftBuildLayout = (
       (n.data as { peer?: { name?: string } })?.peer?.name ??
       ""
     ).toLowerCase();
-  if (sourceColumn.length > 1 || (carriesFrames && sourceColumn.length > 0)) {
+  if (sourceColumn.length > 0) {
     // Name-sorted like the live overview.
     sourceColumn.sort((a, b) =>
       draftDisplayName(a).localeCompare(draftDisplayName(b)),
@@ -169,52 +176,57 @@ export const applyDraftBuildLayout = (
         };
       });
     }
-  } else {
-    // Destination column: live views center destination groups AND
-    // destination resources as ONE column (x 1000, pitch 100) — the
-    // draft build's resources are `resourceNode`s (a separate layout
-    // bucket at 1400/80) and destination peers are `peerNode`s (stacked
-    // at x=0 with the sources), so restack them together at the live
-    // rhythm, keeping the layout's top-to-bottom order.
-    // groupNode included: a group that is BOTH a source and a destination
-    // dedups into one groupNode — the source restack skips destinations,
-    // so without this it would strand at x=0 while the live view shows it
-    // in the destination column (visible jump on mode switch).
-    const destColumn = updatedNodes.filter(
-      (n) =>
-        !n.parentId &&
-        destinationIds.has(n.id) &&
-        (n.type === "destinationGroupNode" ||
-          n.type === "groupNode" ||
-          n.type === "resourceNode" ||
-          n.type === "peerNode"),
+  }
+
+  // Destination column: live views center destination groups AND
+  // destination resources as ONE column (x 1000, pitch 100) — the
+  // draft build's resources are `resourceNode`s (a separate layout
+  // bucket at 1400/80) and destination peers are `peerNode`s (stacked
+  // at x=0 with the sources), so restack them together at the live
+  // rhythm, keeping the layout's top-to-bottom order.
+  // groupNode included: a group that is BOTH a source and a destination
+  // dedups into one groupNode — the source restack skips destinations,
+  // so without this it would strand at x=0 while the live view shows it
+  // in the destination column (visible jump on mode switch).
+  // Frame drafts need this just as much: a policy can target a peer, a
+  // standalone resource or an unfolded group there too, and those types
+  // bucket at x 0 / x 1400 — i.e. on top of the sources or inside the
+  // frame grid — until they're restacked here.
+  const destColumn = updatedNodes.filter(
+    (n) =>
+      !n.parentId &&
+      !isFrameNode(n) &&
+      destinationIds.has(n.id) &&
+      (n.type === "destinationGroupNode" ||
+        n.type === "groupNode" ||
+        n.type === "resourceNode" ||
+        n.type === "peerNode"),
+  );
+  if (destColumn.length > 0) {
+    // Live concatenates [destination groups, destination resources] —
+    // groups on top, resources/peers below; within each block, ordered
+    // by the first policy that targets the node (live creates its
+    // destination nodes per-policy in that order). NOT node creation
+    // order — the draft dedups by entity id, so a node also used as a
+    // source elsewhere was created earlier than its live counterpart —
+    // and NOT layout y, which is meaningless across layout buckets.
+    const rank = (n: Node) =>
+      n.type === "destinationGroupNode" || n.type === "groupNode" ? 0 : 1;
+    const firstDestEdgeIndex = new Map<string, number>();
+    updatedEdges.forEach((e, i) => {
+      if (policyNodeIds.has(e.source) && !firstDestEdgeIndex.has(e.target))
+        firstDestEdgeIndex.set(e.target, i);
+    });
+    destColumn.sort(
+      (a, b) =>
+        rank(a) - rank(b) ||
+        (firstDestEdgeIndex.get(a.id) ?? 0) -
+          (firstDestEdgeIndex.get(b.id) ?? 0),
     );
-    if (destColumn.length > 0) {
-      // Live concatenates [destination groups, destination resources] —
-      // groups on top, resources/peers below; within each block, ordered
-      // by the first policy that targets the node (live creates its
-      // destination nodes per-policy in that order). NOT node creation
-      // order — the draft dedups by entity id, so a node also used as a
-      // source elsewhere was created earlier than its live counterpart —
-      // and NOT layout y, which is meaningless across layout buckets.
-      const rank = (n: Node) =>
-        n.type === "destinationGroupNode" || n.type === "groupNode" ? 0 : 1;
-      const firstDestEdgeIndex = new Map<string, number>();
-      updatedEdges.forEach((e, i) => {
-        if (policyNodeIds.has(e.source) && !firstDestEdgeIndex.has(e.target))
-          firstDestEdgeIndex.set(e.target, i);
-      });
-      destColumn.sort(
-        (a, b) =>
-          rank(a) - rank(b) ||
-          (firstDestEdgeIndex.get(a.id) ?? 0) -
-            (firstDestEdgeIndex.get(b.id) ?? 0),
-      );
-      const colHeight = (destColumn.length - 1) * 100;
-      destColumn.forEach((n, i) => {
-        n.position = { x: 1000, y: -colHeight / 2 + i * 100 };
-      });
-    }
+    const colHeight = (destColumn.length - 1) * 100;
+    destColumn.forEach((n, i) => {
+      n.position = { x: DEST_COLUMN_X, y: -colHeight / 2 + i * 100 };
+    });
   }
 
   // Arrange the network frames in a STAGGERED GRID on the right instead
@@ -232,7 +244,22 @@ export const applyDraftBuildLayout = (
     // px off the live value — and since the scene is then anchored to the
     // live frame position (below), that delta shifted the source/policy
     // columns on every live↔draft switch.
-    packFrameGrid(frames, FRAME_GRID_BASE_X, SOURCE_NODE_HALF_HEIGHT);
+    // The live overview has nothing but frames on the destination side, so
+    // it always uses the bare base x; a draft that ALSO has a destination
+    // column (frames sit at 1050, the column at 1000) pushes the grid past
+    // it so the two don't share the same band.
+    packFrameGrid(
+      frames,
+      destColumn.length > 0
+        ? Math.max(
+            FRAME_GRID_BASE_X,
+            DEST_COLUMN_X +
+              Math.max(...destColumn.map((n) => nodeRect(n).width)) +
+              DEST_COLUMN_FRAME_GAP,
+          )
+        : FRAME_GRID_BASE_X,
+      SOURCE_NODE_HALF_HEIGHT,
+    );
   }
 
   // Nodes the columns above don't claim (e.g. a standalone resource in a
