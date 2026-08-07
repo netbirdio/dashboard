@@ -22,10 +22,54 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  # Number of parallel test shards. Keep this in sync with the matrix list in
+  # the `playwright` job below AND the `/N` denominator on the test command.
+  SHARD_TOTAL: 4
 
 jobs:
-  playwright-run:
+  # ── Build the static app once, then hand it to every shard as an artifact so
+  # `next build` isn't repeated N times. ────────────────────────────────────
+  build:
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          fetch-depth: 0
+
+      - name: setup-node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - run: echo '{}' > .local-config.json
+
+      - name: Build test app
+        run: npx cross-env APP_ENV=test next build
+
+      - name: Upload built app
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-out
+          path: out/
+          retention-days: 1
+
+  # ── Fan out: each shard spins up its OWN docker env (isolated account) and
+  # runs its slice of the suite. Serial specs stay whole (fullyParallel:false
+  # shards by file), and per-shard backends mean cross-file state can't
+  # collide. ─────────────────────────────────────────────────────────────────
+  playwright:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -44,6 +88,12 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
+
+      - name: Download built app
+        uses: actions/download-artifact@v7
+        with:
+          name: app-out
+          path: out/
 
       - name: Log in to the Container registry
         uses: docker/login-action@v4
@@ -107,28 +157,13 @@ jobs:
           REVERSE_PROXY_IMAGE_TAG: ${{ steps.reverse_proxy_tag.outputs.tag }}
         run: cd ./e2e/environment && bash create-test-env.sh
 
-      - name: Run Playwright tests
+      - name: Run Playwright tests (shard ${{ matrix.shard }}/${{ env.SHARD_TOTAL }})
         id: playwright
         run: |
           set -o pipefail
-          npm run test:ci 2>&1 | tee playwright-output.log
-
-      - name: Append Playwright summary to job summary
-        if: always() && hashFiles('e2e/test-results/results.json') != ''
-        run: |
-          if [ -f e2e/test-results/results.json ]; then
-            passed=$(jq '.stats.expected // 0' e2e/test-results/results.json)
-            failed=$(jq '.stats.unexpected // 0' e2e/test-results/results.json)
-            skipped=$(jq '.stats.skipped // 0' e2e/test-results/results.json)
-            duration=$(jq '.stats.duration // 0' e2e/test-results/results.json)
-            {
-              echo '### Playwright results'
-              echo ''
-              echo "| Passed | Failed | Skipped | Duration |"
-              echo "|--------|--------|---------|----------|"
-              echo "| $passed | $failed | $skipped | ${duration}ms |"
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
+          npx playwright test --config=e2e/playwright.config.ts \
+            --shard=${{ matrix.shard }}/${{ env.SHARD_TOTAL }} \
+            2>&1 | tee playwright-output.log
 
       - name: Collect container logs
         if: failure()
@@ -137,26 +172,106 @@ jobs:
           docker compose logs management --tail=500 --no-color > management.log 2>&1 || true
           docker compose logs reverse-proxy --tail=500 --no-color > reverse-proxy.log 2>&1 || true
 
-      - uses: actions/upload-artifact@v7
+      - name: Upload blob report
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
-          path: e2e/playwright-report/
+          name: blob-report-${{ matrix.shard }}
+          path: e2e/blob-report/
+          retention-days: 1
 
       - uses: actions/upload-artifact@v7
         if: ${{ failure() }}
         with:
-          name: playwright-traces
+          name: playwright-traces-${{ matrix.shard }}
           path: e2e/test-results/
 
       - uses: actions/upload-artifact@v7
         if: ${{ failure() }}
         with:
-          name: management-logs
+          name: management-logs-${{ matrix.shard }}
           path: e2e/environment/management.log
 
       - uses: actions/upload-artifact@v7
         if: ${{ failure() }}
         with:
-          name: reverse-proxy-logs
+          name: reverse-proxy-logs-${{ matrix.shard }}
           path: e2e/environment/reverse-proxy.log
+
+  # ── Stitch every shard's blob into one HTML report + a summary table. ──────
+  merge-report:
+    if: ${{ !cancelled() }}
+    needs: playwright
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          fetch-depth: 0
+
+      - name: setup-node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Download shard blobs
+        uses: actions/download-artifact@v7
+        with:
+          pattern: blob-report-*
+          path: all-blobs
+          merge-multiple: true
+
+      - name: Merge into HTML report
+        env:
+          PLAYWRIGHT_HTML_REPORT: playwright-report
+        run: npx playwright merge-reports --reporter html ./all-blobs
+
+      - name: Merge into JSON for the summary
+        if: always()
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: merged-results.json
+        run: npx playwright merge-reports --reporter json ./all-blobs || true
+
+      - name: Append Playwright summary to job summary
+        if: always() && hashFiles('merged-results.json') != ''
+        run: |
+          passed=$(jq '.stats.expected // 0' merged-results.json)
+          failed=$(jq '.stats.unexpected // 0' merged-results.json)
+          flaky=$(jq '.stats.flaky // 0' merged-results.json)
+          skipped=$(jq '.stats.skipped // 0' merged-results.json)
+          duration=$(jq '.stats.duration // 0' merged-results.json)
+          {
+            echo '### Playwright results (merged across shards)'
+            echo ''
+            echo "| Passed | Failed | Flaky | Skipped | Duration |"
+            echo "|--------|--------|-------|---------|----------|"
+            echo "| $passed | $failed | $flaky | $skipped | ${duration}ms |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload merged HTML report
+        uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+
+      - name: Fail if any shard failed or any test failed
+        if: always()
+        run: |
+          # A shard that died during env setup produces no blob, so its tests
+          # would be silently absent from merged-results.json. Gate on the
+          # matrix job result too, not just the merged failure count.
+          if [ "${{ needs.playwright.result }}" != "success" ]; then
+            echo "::error::playwright matrix did not succeed (result=${{ needs.playwright.result }})"
+            exit 1
+          fi
+          failed=$(jq '.stats.unexpected // 0' merged-results.json 2>/dev/null || echo 1)
+          if [ "$failed" != "0" ]; then
+            echo "::error::$failed test(s) failed across shards"
+            exit 1
+          fi

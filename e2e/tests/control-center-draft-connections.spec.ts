@@ -169,12 +169,23 @@ test.describe.serial(
 
       // Type a brand-new group name into the destination selector and add it.
       const inlineName = generateRandomName("cc-inline-");
-      await page.getByTestId("destination-group-selector").click();
-      await page
-        .getByTestId("destination-group-selector-search")
-        .fill(inlineName);
+      const selector = page.getByTestId("destination-group-selector");
+      const search = page.getByTestId("destination-group-selector-search");
+      // The Radix popover open can be swallowed while the create-policy modal
+      // is still animating in, so retry the trigger click until the search is
+      // on screen (same hardening as the matrix "edit policy" test).
+      await expect(async () => {
+        await selector.click();
+        await expect(search).toBeVisible({ timeout: 1000 });
+      }).toPass();
+      await search.fill(inlineName);
       await page.keyboard.press("Enter");
-      await page.keyboard.press("Escape"); // close the selector dropdown
+      // Close the popover with an in-modal click, not Escape — Escape can close
+      // the whole create-policy modal once the popover is already gone.
+      await page
+        .getByRole("heading", { name: "Create New Access Control Policy" })
+        .click();
+      await expect(search).toBeHidden();
       await submitCreatePolicyModal(page);
 
       // The inline group exists on canvas as its own draft node and as a

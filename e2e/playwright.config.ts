@@ -16,8 +16,10 @@ export default defineConfig({
   reporter: process.env.CI
     ? [
         ["github"],
-        ["html", { outputFolder: "./playwright-report", open: "never" }],
-        ["json", { outputFile: "test-results/results.json" }],
+        // Each shard emits a machine-readable blob under e2e/blob-report; the
+        // workflow's merge-report job stitches every shard's blob into one
+        // HTML report (and a merged results.json for the summary).
+        ["blob"],
       ]
     : [
         ["list"],
