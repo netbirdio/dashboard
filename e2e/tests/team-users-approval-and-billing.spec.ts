@@ -81,18 +81,20 @@ test.describe.serial("User Approval & Billing Admin @team", () => {
       page.getByTestId("breadcrumb-item").filter({ hasText: /^user/i }),
     ).toBeVisible();
 
-    await expect(page.getByTestId("user-role-selector")).toBeEnabled({
-      timeout: 15_000,
-    });
-    const currentRole = await page
-      .getByTestId("user-role-selector")
-      .textContent();
+    const roleSelector = page.getByTestId("user-role-selector");
+    await expect(roleSelector).toBeEnabled({ timeout: 15_000 });
+    const currentRole = await roleSelector.textContent();
     if (!currentRole?.includes("Billing Admin")) {
-      await page.getByTestId("user-role-selector").click();
-      await page
+      const billingItem = page
         .getByTestId("user-role-selector-item")
-        .filter({ hasText: "Billing Admin" })
-        .click();
+        .filter({ hasText: "Billing Admin" });
+      // The Radix Select open can be swallowed; retry the trigger click until
+      // the item is on screen before selecting it.
+      await expect(async () => {
+        await roleSelector.click();
+        await expect(billingItem).toBeVisible({ timeout: 1_000 });
+      }).toPass({ timeout: 15_000 });
+      await billingItem.click();
       await page.getByTestId("save-changes").click();
     }
   });

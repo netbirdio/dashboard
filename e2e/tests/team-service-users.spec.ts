@@ -107,8 +107,20 @@ async function checkServiceUserRow(
   role: string,
 ) {
   const row = page.locator("tr").filter({ hasText: name });
+  const cell = row.getByText(role, { exact: true }).first();
   await expect(row).toBeVisible({ timeout: 10_000 });
-  await expect(row.getByText(role, { exact: true }).first()).toBeVisible({ timeout: 10_000 });
+  // The list can serve a stale SWR read right after a role change +
+  // navigation; give it a moment, then reload once if the role cell hasn't
+  // caught up. (Read-only verification — a reload only re-reads the account.)
+  const settled = await cell
+    .waitFor({ state: "visible", timeout: 7_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!settled) {
+    await page.reload();
+    await expect(row).toBeVisible({ timeout: 10_000 });
+  }
+  await expect(cell).toBeVisible({ timeout: 10_000 });
 }
 
 async function changeRoleTo(

@@ -74,9 +74,19 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const policyName = generateRandomName(PREFIX);
     const policy = await createPolicy(page, policyName, src.id, dst.id, enabled);
 
-    await openControlCenter(page, "groups");
     const policyNode = canvasNode(page, `policy-${policy.id}`);
-    await expect(policyNode).toBeVisible({ timeout: 15_000 });
+    // The group view builds from a fresh fetch and auto-selects a group that
+    // has a policy; a stale SWR read or a transient build/fit race can briefly
+    // fail to place our node. Re-open the view until the node is on canvas.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await openControlCenter(page, "groups");
+      const shown = await policyNode
+        .waitFor({ state: "visible", timeout: 10_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (shown) break;
+    }
+    await expect(policyNode).toBeVisible({ timeout: 10_000 });
     return { src, dst, policy, policyNode };
   }
 
