@@ -3,8 +3,8 @@
  *
  * The management API signals "account not bootstrapped" differently by
  * generation: current servers answer GET /agent-network/settings with the
- * defaults object carrying an empty cluster/subdomain/endpoint, older ones
- * with 200 + a JSON null body, and the oldest with a 404.
+ * defaults object carrying an empty endpoint/proxy_address, older ones with
+ * 200 + a JSON null body, and the oldest with a 404.
  * useAgentNetworkSettings normalizes all three to the same null-settings
  * signal, and this spec pins that: the providers page must render the
  * connect-first endpoint placeholder for every unbootstrapped shape, and the
@@ -23,12 +23,12 @@ const EMPTY_STATE_TEXT =
 const BOOTSTRAPPED_ENDPOINT = "violet.eu.proxy.netbird.io";
 
 // The defaults object current servers return before the account is
-// bootstrapped: values present, cluster/subdomain/endpoint empty, no
-// timestamps (no row has been persisted yet).
+// bootstrapped: values present, endpoint/proxy_address empty, no timestamps
+// (no row has been persisted yet).
 const UNBOOTSTRAPPED_DEFAULTS = {
-  cluster: "",
-  subdomain: "",
   endpoint: "",
+  proxy_address: "",
+  dedicated: false,
   enable_log_collection: true,
   enable_prompt_collection: false,
   redact_pii: false,
@@ -36,9 +36,9 @@ const UNBOOTSTRAPPED_DEFAULTS = {
 };
 
 const BOOTSTRAPPED_SETTINGS = {
-  cluster: "eu.proxy.netbird.io",
-  subdomain: "violet",
   endpoint: BOOTSTRAPPED_ENDPOINT,
+  proxy_address: "eu.proxy.netbird.io",
+  dedicated: false,
   enable_log_collection: true,
   enable_prompt_collection: false,
   redact_pii: false,

@@ -10,7 +10,10 @@
  * The kimi_api catalog entry ships with newer management builds. When the
  * backend under test predates it, the whole suite skips instead of failing —
  * same trade-off as the provider matrix in netbird's agent-network e2e
- * harness, which skips per-provider on missing credentials.
+ * harness, which skips per-provider on missing credentials. The same applies
+ * to the explicit settings bootstrap: connecting the first provider of an
+ * account POSTs /agent-network/settings first, so on a build without that
+ * endpoint the wizard cannot get as far as creating a provider.
  *
  * The Agent Network menu is deployment-gated; the test build honors the
  * localStorage override (see testAgentNetworkOverride in utils/netbird.ts),
@@ -22,6 +25,7 @@ import { generateRandomName } from "../helpers/utils";
 import {
   deleteAgentNetworkProvidersByPrefix,
   listAgentNetworkCatalog,
+  supportsAgentNetworkSettingsBootstrap,
 } from "../helpers/api";
 
 const AGENT_NETWORK_CONFIG_KEY = "netbird-test-agent-network";
@@ -61,6 +65,11 @@ test.describe.serial("Agent Network Kimi provider @agent-network", () => {
       test.skip(
         !catalog.some((c) => c.id === KIMI_CATALOG_ID),
         `management catalog has no ${KIMI_CATALOG_ID} entry`,
+      );
+      test.skip(
+        !(await supportsAgentNetworkSettingsBootstrap(page)),
+        "management build has no POST /agent-network/settings, so the " +
+          "wizard cannot bootstrap the account before the first create",
       );
 
       await deleteAgentNetworkProvidersByPrefix(page, PROVIDER_PREFIX);
@@ -110,11 +119,36 @@ test.describe.serial("Agent Network Kimi provider @agent-network", () => {
           resp.request().method() === "POST",
         { timeout: 30_000 },
       );
+      // On the account's first provider the wizard bootstraps the settings row
+      // first and only creates the provider once that succeeds. A rejected
+      // bootstrap therefore means no provider POST ever happens, which on its
+      // own surfaces only as the whole test timing out — race it so the real
+      // status is reported instead.
+      const bootstrapRejected: Promise<never> = page
+        .waitForResponse(
+          (resp) =>
+            resp.url().includes("/agent-network/settings") &&
+            resp.request().method() === "POST" &&
+            !resp.ok(),
+          { timeout: 30_000 },
+        )
+        .then(
+          (resp) => {
+            throw new Error(
+              `Agent Network settings bootstrap POST returned ${resp.status()}; ` +
+                "the provider was never created",
+            );
+          },
+          // Nothing matched: the bootstrap succeeded or wasn't needed. Never
+          // settle, leaving the race to the provider create.
+          () => new Promise<never>(() => {}),
+        );
       await page
         .getByRole("button", { name: "Connect Provider" })
         .last()
         .click({ force: true });
-      expect([200, 201]).toContain((await createResponse).status());
+      const created = await Promise.race([createResponse, bootstrapRejected]);
+      expect([200, 201]).toContain(created.status());
 
       // Row lands in the providers table.
       await expect(page.getByText(providerName).first()).toBeVisible();
