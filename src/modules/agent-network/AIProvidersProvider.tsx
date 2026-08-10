@@ -140,10 +140,14 @@ export type APIAgentNetworkSettingsCreateRequest = {
 };
 
 // APIAgentNetworkSettingsRequest matches the PUT /agent-network/settings
-// body. The identity fields (endpoint, proxy_address) are assigned at
-// bootstrap (POST) and are not part of the update schema; timestamps are
-// stamped by the backend.
+// body. Every field is required — the PUT is a full replace, like the rest of
+// the REST API. The identity fields (endpoint, proxy_address) are assigned at
+// bootstrap (POST) and immutable: the request must echo the stored values
+// unchanged, and the backend rejects a mismatch (422) without applying
+// anything. Timestamps are stamped by the backend.
 export type APIAgentNetworkSettingsRequest = {
+  endpoint: string;
+  proxy_address: string;
   enable_log_collection: boolean;
   enable_prompt_collection: boolean;
   redact_pii: boolean;
@@ -257,8 +261,13 @@ function settingsFromAPI(s: APIAgentNetworkSettings): AgentNetworkSettings {
 
 function settingsToRequest(
   s: AgentNetworkSettingsUpdate,
+  identity: Pick<AgentNetworkSettings, "endpoint" | "proxyAddress">,
 ): APIAgentNetworkSettingsRequest {
   return {
+    // Required echo of the immutable identity — always the stored values,
+    // never user input, so the backend's mismatch rejection can't trigger.
+    endpoint: identity.endpoint,
+    proxy_address: identity.proxyAddress,
     enable_log_collection: s.enableLogCollection,
     enable_prompt_collection: s.enablePromptCollection,
     redact_pii: s.redactPii,
@@ -1010,8 +1019,19 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
 
   const updateAgentNetworkSettings = useCallback(
     async (updates: AgentNetworkSettingsUpdate) => {
+      // The PUT must echo the immutable identity fields (endpoint,
+      // proxy_address) alongside the mutable ones. Without a loaded settings
+      // row there is nothing to echo — and no row to update; the backend
+      // would 404 the PUT anyway.
+      if (!settings) {
+        notify({
+          title: "Failed to update account controls",
+          description: "Agent Network has not been set up yet.",
+        });
+        return false;
+      }
       try {
-        await settingsApi.put(settingsToRequest(updates));
+        await settingsApi.put(settingsToRequest(updates, settings));
         await mutateSettings();
         notify({
           title: "Account controls updated",
@@ -1026,7 +1046,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         return false;
       }
     },
-    [settingsApi, mutateSettings],
+    [settings, settingsApi, mutateSettings],
   );
 
   const value = useMemo<AIProvidersContextValue>(
