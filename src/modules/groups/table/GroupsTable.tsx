@@ -50,7 +50,13 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
     header: ({ table }) => (
       <div className={"min-w-[20px] max-w-[20px]"}>
         <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+              ? "indeterminate"
+              : false
+          }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           disabled={!table.getRowModel().rows.some((row) => row.getCanSelect())}
           aria-label="Select all groups on this page"
@@ -415,7 +421,7 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
           <TableFilterChips table={table} filters={filterDefs} />
         )}
         columnVisibility={{
-          select: permission.groups.delete,
+          select: !!permission.groups.delete,
           in_use: false,
           search: false,
         }}

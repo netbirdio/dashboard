@@ -3,7 +3,7 @@
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { cn } from "@utils/helpers";
 import { cva, VariantProps } from "class-variance-authority";
-import { Check } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import * as React from "react";
 
 type CheckboxVariants = VariantProps<typeof variants>;
@@ -42,9 +42,16 @@ const Checkbox = React.forwardRef<
       {...props}
     >
       <CheckboxPrimitive.Indicator
-        className={"flex items-center justify-center"}
+        className={"group flex items-center justify-center"}
       >
-        <Check size={14} />
+        <Check
+          size={14}
+          className={"group-data-[state=indeterminate]:hidden"}
+        />
+        <Minus
+          size={14}
+          className={"hidden group-data-[state=indeterminate]:block"}
+        />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   </div>
