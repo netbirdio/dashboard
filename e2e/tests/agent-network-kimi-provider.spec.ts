@@ -123,12 +123,16 @@ test.describe.serial("Agent Network Kimi provider @agent-network", () => {
       // first and only creates the provider once that succeeds. A rejected
       // bootstrap therefore means no provider POST ever happens, which on its
       // own surfaces only as the whole test timing out — race it so the real
-      // status is reported instead.
+      // status is reported instead. 409 is not a rejection: it means a
+      // concurrent bootstrap won and the row exists, which the wizard treats as
+      // success and follows with the provider create, so matching it here would
+      // fail a run that is about to succeed.
       const bootstrapRejected: Promise<never> = page
         .waitForResponse(
           (resp) =>
             resp.url().includes("/agent-network/settings") &&
             resp.request().method() === "POST" &&
+            resp.status() !== 409 &&
             !resp.ok(),
           { timeout: 30_000 },
         )

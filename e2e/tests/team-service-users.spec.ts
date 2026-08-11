@@ -99,7 +99,10 @@ async function openServiceUserList(page: Page) {
 // the client-side navigation is still in flight, so anything that follows can
 // otherwise be computed against the page being left behind.
 async function returnToServiceUserList(page: Page) {
-  await page.getByRole("link", { name: "Service Users" }).click();
+  await page
+    .getByTestId("breadcrumb-item")
+    .filter({ hasText: "Service Users" })
+    .click();
   await page.waitForURL(/\/team\/service-users/, { timeout: 15_000 });
   await expectServiceUserList(page);
 }

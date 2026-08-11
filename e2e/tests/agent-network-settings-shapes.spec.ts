@@ -22,9 +22,10 @@ const EMPTY_STATE_TEXT =
 
 const BOOTSTRAPPED_ENDPOINT = "violet.eu.proxy.netbird.io";
 
-// The defaults object current servers return before the account is
-// bootstrapped: values present, endpoint/proxy_address empty, no timestamps
-// (no row has been persisted yet).
+// The defaults object current servers return for an account that has not been
+// bootstrapped yet: the mutable settings carry their default values, the
+// endpoint/proxy_address identity is empty, and there are no timestamps because
+// no row has been persisted.
 const UNBOOTSTRAPPED_DEFAULTS = {
   endpoint: "",
   proxy_address: "",
