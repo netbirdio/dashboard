@@ -36,6 +36,37 @@ p {
     scrollbar-width: none;  /* Firefox */
 }
 
+/*
+ * Slim scrollbar for panes that scroll their own content, matching the Radix
+ * `ScrollBar` thumb. Used where a native scroll container is required and the
+ * Radix component can't wrap it — see the assistant thread's viewport.
+ */
+.nb-scrollbar {
+    scrollbar-width: thin;  /* Firefox */
+    scrollbar-color: theme("colors.nb-gray.800") transparent;
+}
+
+.nb-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.nb-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.nb-scrollbar::-webkit-scrollbar-thumb {
+    /* Inset via a transparent border so the thumb reads as 8px inside a 10px gutter. */
+    background-color: theme("colors.nb-gray.800");
+    border: 1px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+}
+
+.nb-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: theme("colors.nb-gray.700");
+}
+
 [placeholder]{
     text-overflow:ellipsis;
 }
@@ -199,4 +230,80 @@ p {
 /* Control Center */
 .react-flow__node-groupNode .selected{
     @apply border-netbird;
+}
+
+/*
+ * A fenced block with a header is one box, not a bar on top of a box: the
+ * `pre` drops its top edge and the gap between them. Done here rather than in
+ * the `pre` renderer because that component can't see whether a header was
+ * rendered — `CodeHeader` skips one-liners.
+ */
+.assistant-markdown .assistant-code-header + pre {
+    @apply mt-0 rounded-t-none border-t-0 pt-1;
+}
+
+/**
+ * Assistant code block tokens (lowlight → hljs classes).
+ *
+ * A hand-written palette rather than one of highlight.js's stylesheets: those
+ * set their own background and a foreground that fights the panel's. Scoped to
+ * `.assistant-markdown` so it can't reach the dashboard's other code surfaces,
+ * and limited to the token classes the registered grammars actually emit.
+ *
+ * Two hues and the greys, deliberately: a full editor palette turns a
+ * three-line install command into the loudest thing in the conversation.
+ */
+.assistant-markdown .hljs-comment,
+.assistant-markdown .hljs-quote {
+    @apply text-nb-gray-500 italic;
+}
+
+.assistant-markdown .hljs-keyword,
+.assistant-markdown .hljs-selector-tag,
+.assistant-markdown .hljs-literal,
+.assistant-markdown .hljs-section,
+.assistant-markdown .hljs-doctag,
+.assistant-markdown .hljs-type {
+    @apply text-netbird-300;
+}
+
+.assistant-markdown .hljs-string,
+.assistant-markdown .hljs-regexp,
+.assistant-markdown .hljs-addition {
+    @apply text-green-400;
+}
+
+.assistant-markdown .hljs-number,
+.assistant-markdown .hljs-symbol,
+.assistant-markdown .hljs-bullet,
+.assistant-markdown .hljs-meta {
+    @apply text-nb-gray-300;
+}
+
+.assistant-markdown .hljs-attr,
+.assistant-markdown .hljs-attribute,
+.assistant-markdown .hljs-variable,
+.assistant-markdown .hljs-template-variable,
+.assistant-markdown .hljs-selector-attr {
+    @apply text-nb-gray-200;
+}
+
+.assistant-markdown .hljs-title,
+.assistant-markdown .hljs-name,
+.assistant-markdown .hljs-built_in,
+.assistant-markdown .hljs-selector-id,
+.assistant-markdown .hljs-selector-class {
+    @apply text-nb-gray-100 font-medium;
+}
+
+.assistant-markdown .hljs-deletion {
+    @apply text-red-400;
+}
+
+.assistant-markdown .hljs-emphasis {
+    @apply italic;
+}
+
+.assistant-markdown .hljs-strong {
+    @apply font-semibold;
 }

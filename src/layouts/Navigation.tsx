@@ -20,6 +20,7 @@ import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { headerHeight } from "@/layouts/Header";
+import { useAssistantPanel } from "@/modules/assistant/AssistantPanelContext";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
@@ -39,6 +40,9 @@ export default function Navigation({
 }: Readonly<Props>) {
   const { bannerHeight } = useAnnouncement();
   const { isNavigationCollapsed } = useApplicationContext();
+  // Heights here derive from 100vh, so they must account for the dashboard being
+  // inset by the assistant panel or the nav overflows the card and is clipped.
+  const { inset } = useAssistantPanel();
   const { permission, isRestricted } = usePermissions();
   const { only: agentNetworkOnly, enabled: agentNetworkEnabled } =
     useAgentNetworkMode();
@@ -51,19 +55,35 @@ export default function Navigation({
         hideOnMobile ? "hidden md:block" : "",
         fullWidth
           ? "w-auto max-w-[22rem]"
-          : "w-[15rem] max-w-[15rem] min-w-[15rem] overflow-y-auto",
+          : // Not a scroll container: the `ScrollArea` inside owns scrolling. Left
+            // scrollable it would trip over its own child — a y-scrollbar narrows
+            // the content box, which makes the 15rem child overflow sideways.
+            "w-[15rem] max-w-[15rem] min-w-[15rem] overflow-hidden",
+        // Taken out of flow so hover-expanding the rail overlays the page
+        // instead of pushing it (`PageContainer` reserves the 64px). Absolute
+        // rather than fixed: a fixed rail escapes the dashboard card's
+        // `overflow-hidden`, so it painted over the card's rounded edge once the
+        // assistant panel inset it. The row it sits in is `relative`, and its
+        // static position is that row's top-left, so this is the same geometry.
         isNavigationCollapsed &&
-          "md:w-[64px] md:min-w-[64px] md:fixed md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
+          "md:w-[64px] md:min-w-[64px] md:absolute md:left-0 md:top-0 md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
       )}
       style={{
-        height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
+        height: `calc(100vh - ${headerHeight + bannerHeight + inset * 2}px)`,
       }}
     >
-      <div className={cn(fullWidth ? "w-10/12" : "fixed z-0")}>
+      {/*
+        In flow, not positioned out of it: the `ScrollArea` below is already
+        sized to the viewport, so taking this out of flow only made the rail
+        escape the card's clipping (when fixed) or add scrollable overflow to
+        the rail itself (when absolute). `relative` keeps it the containing
+        block for the submenu popovers.
+      */}
+      <div className={cn(fullWidth ? "w-10/12" : "relative z-0")}>
         <ScrollArea
           style={{
             height: !fullWidth
-              ? `calc(100vh - ${headerHeight + bannerHeight}px)`
+              ? `calc(100vh - ${headerHeight + bannerHeight + inset * 2}px)`
               : "100%",
           }}
         >
@@ -75,7 +95,7 @@ export default function Navigation({
             )}
             style={{
               height: !fullWidth
-                ? `calc(100vh - ${headerHeight + bannerHeight}px)`
+                ? `calc(100vh - ${headerHeight + bannerHeight + inset * 2}px)`
                 : "100%",
             }}
           >

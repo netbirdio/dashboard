@@ -157,6 +157,11 @@ const config: Config = {
           "950": "#063746",
         },
       },
+      fontSize: {
+        // The assistant panel's body size — between Tailwind's xs and sm, which
+        // are both slightly wrong for a chat column this narrow.
+        chat: ["0.8125rem", "1.25rem"],
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -166,10 +171,16 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        // Assistant "thinking" text: a highlight sweeping across the label.
+        shimmer: {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        shimmer: "shimmer 2s linear infinite",
       },
       transitionDuration: {
         "3000": "3000ms",
