@@ -56,7 +56,9 @@ export function parseCIDR(value: string): Address4 | Address6 | null {
 }
 
 // isHostInCIDR reports whether host falls within network. A host from a
-// different address family is never considered inside the network.
+// different address family is never considered inside the network, except that
+// an IPv4-mapped IPv6 host (::ffff:10.0.0.5) is matched by its embedded IPv4
+// address against an IPv4 network.
 export function isHostInCIDR(
   host: string,
   network: Address4 | Address6,
@@ -65,7 +67,12 @@ export function isHostInCIDR(
     if (network instanceof Address6) {
       return isIPv6(host) && new Address6(host).isInSubnet(network);
     }
-    return isIPv4(host) && new Address4(host).isInSubnet(network);
+    if (isIPv4(host)) return new Address4(host).isInSubnet(network);
+    if (isIPv6(host)) {
+      const mapped = new Address6(host).address4;
+      return !!mapped && mapped.isInSubnet(network);
+    }
+    return false;
   } catch {
     return false;
   }
