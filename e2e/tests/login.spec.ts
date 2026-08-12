@@ -81,7 +81,11 @@ test.describe("Global Setup", () => {
   // gate would skip the entire suite on any cluster hiccup, which is worse
   // than letting the individual reverse-proxy specs report the problem.
   test("wait for reverse-proxy clusters to be online", async ({ browser }) => {
-    test.setTimeout(15_000);
+    // Must cover a full loginToApp (OIDC redirect) plus the bounded cluster
+    // wait. 15s was too tight on emulated arm64 (amd64 mgmt image): the hard
+    // test timeout would abort before the in-body try/catch could soft-warn a
+    // slow/absent cluster, failing the login project and every dependent spec.
+    test.setTimeout(45_000);
     const context = await browser.newContext({
       storageState: path.join(AUTH_DIR, "owner.json"),
     });
@@ -91,10 +95,15 @@ test.describe("Global Setup", () => {
       // still needs the OIDC redirect flow to get an access token before
       // it makes any API call, so log in like every other consumer does.
       await loginToApp(page, "owner");
-      await waitForProxyClustersOnline(page, [
-        "example.com",
-        "noports.example.com",
-      ]);
+      // Bound the poll below the test timeout. The default (120s) exceeds the
+      // budget, so a slow/absent cluster would trip the uncatchable hard
+      // timeout instead of the try/catch below — defeating the soft-fail. ~25s
+      // leaves room for loginToApp above.
+      await waitForProxyClustersOnline(
+        page,
+        ["example.com", "noports.example.com"],
+        25_000,
+      );
     } catch (err) {
       // eslint-disable-next-line no-console
       console.warn(

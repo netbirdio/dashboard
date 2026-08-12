@@ -38,15 +38,8 @@ export function BidirectionalEdges({
           stroke: "#0e9f6e",
           strokeDasharray: "5, 5",
         }}
-      >
-        <animate
-          attributeName="stroke-dashoffset"
-          from="20"
-          to="0"
-          dur="0.5s"
-          repeatCount="indefinite"
-        />
-      </BaseEdge>
+        className={"cc-animated-edge"}
+      />
 
       <BaseEdge
         id={`${id}-backward`}
@@ -56,15 +49,8 @@ export function BidirectionalEdges({
           stroke: "#0e9f6e",
           strokeDasharray: "5, 5",
         }}
-      >
-        <animate
-          attributeName="stroke-dashoffset"
-          from="20"
-          to="0"
-          dur="0.5s"
-          repeatCount="indefinite"
-        />
-      </BaseEdge>
+        className={"cc-animated-edge"}
+      />
     </>
   );
 }

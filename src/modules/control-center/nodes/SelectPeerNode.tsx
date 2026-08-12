@@ -10,7 +10,8 @@ import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
-import { DeviceCard } from "@components/DeviceCard";
+import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
+import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
 import { OSLogo } from "@/modules/peers/PeerOSCell";
 
 type PeerNodeProps = Node<
@@ -60,6 +61,9 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
 
   const peer = peers?.find((p) => p.id === data.currentPeer);
 
+  const [open, setOpen] = React.useState(false);
+  useCloseOnCanvasClick(open, () => setOpen(false));
+
   return (
     <div
       className={
@@ -68,17 +72,20 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
     >
       <SelectDropdown
         variant={"secondary"}
+        deferChange
         value={data.currentPeer}
         onChange={data.onPeerChange}
         options={peerSelectOptions}
         showSearch={true}
         searchPlaceholder={data?.placeholder ?? "Search peers..."}
+        open={open}
+        onOpenChange={setOpen}
         popoverWidth={280}
         className={"!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300"}
         size={"xs"}
         maxHeight={300}
       >
-        <div className={"flex items-center justify-between gap-8 pr-3"}>
+        <div className={"flex items-center justify-between gap-8 pr-3 h-[64px]"}>
           {peer && <DeviceCard device={peer} />}
           <ChevronsUpDown size={18} className={"shrink-0"} />
         </div>

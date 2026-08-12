@@ -38,12 +38,18 @@ AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
 
 const AccordionContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
->(({ className, children }, ref) => {
+  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content> & {
+    // animated={false} toggles instantly (no height/opacity animation).
+    animated?: boolean;
+  }
+>(({ className, children, animated = true }, ref) => {
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
+  // The first data-state sync must not animate — otherwise every mount of an
+  // initially-open section visibly replays the expand animation.
+  const mounted = React.useRef(false);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const el = wrapperRef.current?.closest("[data-state]");
     if (!el) return;
 
@@ -56,6 +62,23 @@ const AccordionContent = React.forwardRef<
     return () => observer.disconnect();
   }, []);
 
+  React.useEffect(() => {
+    mounted.current = true;
+  }, []);
+
+  if (!animated) {
+    return (
+      <div ref={wrapperRef}>
+        <div
+          ref={ref}
+          className={cn("text-sm", !isOpen && "hidden", className)}
+        >
+          <div className="pt-0">{children}</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div ref={wrapperRef}>
       <motion.div
@@ -65,7 +88,10 @@ const AccordionContent = React.forwardRef<
           height: isOpen ? "auto" : 0,
           opacity: isOpen ? 1 : 0,
         }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
+        transition={{
+          duration: mounted.current ? 0.15 : 0,
+          ease: "easeOut",
+        }}
         className={cn("overflow-hidden text-sm", className)}
       >
         <div className="pt-0">{children}</div>

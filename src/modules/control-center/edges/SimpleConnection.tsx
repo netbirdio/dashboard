@@ -36,7 +36,7 @@ export function SimpleConnection({
       path={edgePath}
       style={{
         strokeWidth: 1.5,
-        stroke: "#595959",
+        stroke: "#7d7d7d",
         strokeDasharray: "0, 0",
         opacity: enabled ? 1 : 0.6,
       }}

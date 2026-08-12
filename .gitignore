@@ -44,6 +44,7 @@ e2e/test-results/
 e2e/playwright-report/
 /test-results/
 /playwright-report/
+playwright-report*.zip
 .configs/.local-config.zitadel.json
 .configs/.staging-config.json
 .configs/.temp-config.json

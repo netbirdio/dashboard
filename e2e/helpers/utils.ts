@@ -85,6 +85,28 @@ export async function applyRadioTableFilter(
 }
 
 /**
+ * Drive the app's edition (cloud/licensed/oss) through its test-only
+ * `netbird-test-edition` localStorage override. Call this before navigating.
+ *
+ * The value persists for the whole browser context, and the owner page is
+ * shared across every spec in a worker — so any spec that depends on the
+ * edition (cloud-only UI such as the Billing Admin role, billing modals, ...)
+ * must set the one it needs instead of relying on the default.
+ */
+export async function setTestEdition(
+  page: Page,
+  edition: "cloud" | "licensed" | "oss",
+) {
+  await page.evaluate((ed) => {
+    try {
+      window.localStorage.setItem("netbird-test-edition", ed);
+    } catch (e) {
+      /* storage unavailable */
+    }
+  }, edition);
+}
+
+/**
  * Clear stale Radix scroll-lock and overlay from body.
  * Some Radix modals leave `data-scroll-locked`, `pointer-events: none`,
  * or a stale overlay div blocking the entire page.
@@ -95,9 +117,7 @@ export async function clearScrollLock(page: Page) {
     document.body.style.removeProperty("pointer-events");
     // Remove stale Radix dialog overlays that block pointer events
     document
-      .querySelectorAll(
-        'div[data-state="open"].fixed[class*="backdrop-blur"]',
-      )
+      .querySelectorAll('div[data-state="open"].fixed[class*="backdrop-blur"]')
       .forEach((el) => el.remove());
   });
 }

@@ -1,23 +1,22 @@
-import {
-  BaseEdge,
-  EdgeProps,
-  getBezierPath,
-  useInternalNode,
-} from "@xyflow/react";
+import { BaseEdge, EdgeProps, getBezierPath } from "@xyflow/react";
 import React from "react";
-import { getEdgeParams } from "@/modules/control-center/utils/edge-helper";
+import {
+  getEdgeParams,
+  rectAsInternalNode,
+  useEdgeNodeRect,
+} from "@/modules/control-center/utils/edge-helper";
 
 function FloatingEdge({ id, source, target, markerEnd, style }: EdgeProps) {
-  const sourceNode = useInternalNode(source);
-  const targetNode = useInternalNode(target);
+  const sourceRect = useEdgeNodeRect(source);
+  const targetRect = useEdgeNodeRect(target);
 
-  if (!sourceNode || !targetNode) {
+  if (!sourceRect || !targetRect) {
     return null;
   }
 
   const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(
-    sourceNode,
-    targetNode,
+    rectAsInternalNode(sourceRect),
+    rectAsInternalNode(targetRect),
   );
 
   const [edgePath] = getBezierPath({
@@ -38,15 +37,8 @@ function FloatingEdge({ id, source, target, markerEnd, style }: EdgeProps) {
         stroke: "#0e9f6e",
         strokeDasharray: "5, 5",
       }}
-    >
-      <animate
-        attributeName="stroke-dashoffset"
-        from="20"
-        to="0"
-        dur="0.5s"
-        repeatCount="indefinite"
-      />
-    </BaseEdge>
+      className={"cc-animated-edge"}
+    />
   );
 }
 

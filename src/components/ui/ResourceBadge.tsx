@@ -79,6 +79,7 @@ const ResourceIcon = ({ type }: { type: string }) => {
     case "subnet":
       return <NetworkIcon size={12} className={"shrink-0"} />;
     default:
-      return null;
+      // Draft resources without an address have no type yet — default icon.
+      return <WorkflowIcon size={12} className={"shrink-0"} />;
   }
 };

@@ -117,7 +117,15 @@ export async function loginToApp(
  * Use this instead of page.goto() for in-app navigation after loginToApp().
  */
 export async function navigateTo(page: Page, path: string) {
-  await page.goto(path, { waitUntil: "domcontentloaded" });
+  // A client-side route update still in flight from the previous test (the
+  // dashboard page is shared per worker) aborts the navigation. Retry once —
+  // by then the app-driven navigation has landed.
+  try {
+    await page.goto(path, { waitUntil: "domcontentloaded" });
+  } catch (e) {
+    if (!String(e).includes("ERR_ABORTED")) throw e;
+    await page.goto(path, { waitUntil: "domcontentloaded" });
+  }
   const modal = page.getByTestId("setup-netbird-modal");
   try {
     await modal.waitFor({ state: "visible", timeout: 3_000 });

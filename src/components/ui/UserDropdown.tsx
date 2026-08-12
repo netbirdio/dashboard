@@ -19,9 +19,9 @@ import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
-import useOSDetection from "@/hooks/useOperatingSystem";
 import { ChangePasswordModalContent } from "@/modules/users/ChangePasswordModal";
 import { isNetBirdCloud } from "@utils/netbird";
+import { isMac } from "@hooks/useOperatingSystem";
 import { Modal } from "@components/modal/Modal";
 
 export default function UserDropdown() {
@@ -30,7 +30,6 @@ export default function UserDropdown() {
   const { user } = useApplicationContext();
   const { loggedInUser, logout } = useLoggedInUser();
   const { isRestricted, permission } = usePermissions();
-  const isMac = useOSDetection();
   const router = useRouter();
 
   useHotkeys("shift+mod+l", () => logout(), []);
@@ -116,8 +115,14 @@ export default function UserDropdown() {
               <LogOutIcon size={14} />
               Log out
             </div>
-            <DropdownMenuShortcut>
-              {isMac ? "⇧⌘L" : "⇧ ⊞ L"}
+            <DropdownMenuShortcut className={"opacity-75"}>
+              {isMac ? (
+                "⇧⌘L"
+              ) : (
+                <span className="flex items-center gap-0.5">
+                  Ctrl<span>+</span>⇧<span>+</span>L
+                </span>
+              )}
             </DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -55,6 +55,19 @@ type Props = {
   //   undefined – legacy: keep historical heuristic (mobile shown unless
   //               a setupKey is already provided; Docker shown).
   isUserDevice?: boolean;
+  // Preset hostname woven into the install commands (netbird up --hostname).
+  hostname?: string;
+  // Options for the in-modal key generator (server flow without a key).
+  ephemeralKey?: boolean;
+  // Group ids auto-assigned to peers registering with the generated key
+  // (e.g. a draft placeholder's group memberships).
+  autoGroups?: string[];
+  // Resolved when the key is generated, so the caller can create a group on
+  // demand and return its id. Takes precedence over `autoGroups`.
+  resolveAutoGroups?: () => Promise<string[]>;
+  // Name for the in-modal generated key (defaults to a timestamped name).
+  keyName?: string;
+  onSetupKeyGenerated?: (key: SetupKey) => void;
 };
 
 export default function SetupModal({
@@ -65,6 +78,12 @@ export default function SetupModal({
   className,
   style,
   isUserDevice,
+  hostname,
+  ephemeralKey,
+  autoGroups,
+  resolveAutoGroups,
+  keyName,
+  onSetupKeyGenerated,
 }: Readonly<Props>) {
   return (
     <ModalContent
@@ -81,6 +100,12 @@ export default function SetupModal({
         setupKey={setupKey}
         showOnlyRoutingPeerOS={showOnlyRoutingPeerOS}
         isUserDevice={isUserDevice}
+        hostname={hostname}
+        ephemeralKey={ephemeralKey}
+        autoGroups={autoGroups}
+        resolveAutoGroups={resolveAutoGroups}
+        keyName={keyName}
+        onSetupKeyGenerated={onSetupKeyGenerated}
       />
     </ModalContent>
   );
@@ -96,6 +121,11 @@ type SetupModalContentProps = {
   title?: string;
   hostname?: string;
   isUserDevice?: boolean;
+  ephemeralKey?: boolean;
+  autoGroups?: string[];
+  resolveAutoGroups?: () => Promise<string[]>;
+  keyName?: string;
+  onSetupKeyGenerated?: (key: SetupKey) => void;
 };
 
 export function SetupModalContent({
@@ -108,6 +138,11 @@ export function SetupModalContent({
   title,
   hostname,
   isUserDevice,
+  ephemeralKey,
+  autoGroups,
+  resolveAutoGroups,
+  keyName,
+  onSetupKeyGenerated,
 }: Readonly<SetupModalContentProps>) {
   const os = useOperatingSystem();
   const [isFirstRun] = useLocalStorage<boolean>("netbird-first-run", true);
@@ -163,7 +198,14 @@ export function SetupModalContent({
       </div>
       <SetupKeyGenerator
         generatedKey={generatedKey}
-        onGenerated={setGeneratedKey}
+        ephemeral={ephemeralKey}
+        autoGroups={autoGroups}
+        resolveAutoGroups={resolveAutoGroups}
+        keyName={keyName}
+        onGenerated={(key) => {
+          setGeneratedKey(key);
+          onSetupKeyGenerated?.(key);
+        }}
       />
     </>
   ) : undefined;
@@ -370,17 +412,13 @@ type NetBirdUpCommandProps = {
   setupKey?: string;
   setupKeyPlaceholder?: string;
   hostname?: string;
-  // Shell line-continuation character used for the *visual* multi-line
-  // display. Unix shells use "\"; Windows Command Prompt uses "^". The
-  // copied command (codeToCopy) is always a clean single line regardless,
-  // so it runs on any shell.
+  // Shell line-continuation char for the *visual* multi-line display (Unix "\",
+  // Windows cmd "^"). The copied command is always a clean single line.
   continuation?: string;
 };
 
-// NetBirdUpCommand renders `netbird up` inside a <Code> block. When
-// extra flags are present it splits across multiple lines with the
-// shell's line-continuation character (purely visual) so long commands
-// stay readable; the clipboard always gets the single-line form.
+// Renders `netbird up` in a <Code> block; long commands split across visual
+// lines while the clipboard always gets the single-line form.
 export const NetBirdUpCommand = ({
   setupKey,
   setupKeyPlaceholder,
@@ -391,10 +429,8 @@ export const NetBirdUpCommand = ({
   const hasKey = !!keyValue;
   const hasHostname = !!hostname;
 
-  // Canonical, OS-agnostic single-line command for the clipboard. The
-  // copy button always yields this, so the pasted command runs on every
-  // shell (bash, zsh, cmd, PowerShell) regardless of how it's displayed
-  // — the line continuations below are purely a visual aid.
+  // Canonical single-line command for the clipboard — runs on every shell
+  // regardless of the visual line-continuations rendered below.
   const copyCommand = [
     getNetBirdUpCommand(),
     hasKey && `--setup-key ${keyValue}`,
@@ -466,6 +502,14 @@ export const RoutingPeerSetupKeyInfo = () => {
 type SetupKeyGeneratorProps = {
   generatedKey?: SetupKey;
   onGenerated: (key: SetupKey) => void;
+  // Ephemeral peers (agents) disappear when offline for a while.
+  ephemeral?: boolean;
+  // Group ids auto-assigned to peers registering with this key.
+  autoGroups?: string[];
+  // Resolved when the user clicks Generate — takes precedence over autoGroups.
+  resolveAutoGroups?: () => Promise<string[]>;
+  // Custom key name (defaults to a timestamped one).
+  keyName?: string;
 };
 
 // SetupKeyGenerator renders the inline banner that lets the operator
@@ -475,26 +519,37 @@ type SetupKeyGeneratorProps = {
 function SetupKeyGenerator({
   generatedKey,
   onGenerated,
+  ephemeral = false,
+  autoGroups,
+  resolveAutoGroups,
+  keyName,
 }: SetupKeyGeneratorProps) {
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const generate = () => {
     setIsGenerating(true);
-    // No auto_groups: the "All" group can't be a setup-key auto-group,
-    // and we don't want to invent a default group on the operator's
-    // behalf here. They can edit the key afterwards if they want.
-    const request = setupKeyRequest
-      .post({
-        name: `Install setup key (${new Date().toLocaleString()})`,
-        type: "one-off",
-        expires_in: 24 * 60 * 60,
-        revoked: false,
-        auto_groups: [],
-        usage_limit: 1,
-        ephemeral: false,
-        allow_extra_dns_labels: false,
-      })
+    // auto_groups only when the caller supplies them (a draft placeholder's
+    // group memberships) — otherwise none: the "All" group can't be a
+    // setup-key auto-group, and we don't invent a default group here. A
+    // resolver (draft placeholder's bound group, created on demand) wins.
+    const request = (
+      resolveAutoGroups
+        ? resolveAutoGroups()
+        : Promise.resolve(autoGroups ?? [])
+    )
+      .then((groupIds) =>
+        setupKeyRequest.post({
+          name: keyName || `Install setup key (${new Date().toLocaleString()})`,
+          type: "one-off",
+          expires_in: 24 * 60 * 60,
+          revoked: false,
+          auto_groups: groupIds ?? [],
+          usage_limit: 1,
+          ephemeral,
+          allow_extra_dns_labels: false,
+        }),
+      )
       .then((created) => {
         onGenerated(created);
         return created;
@@ -527,6 +582,7 @@ function SetupKeyGenerator({
           variant={"primary"}
           onClick={generate}
           disabled={isGenerating}
+          data-testid={"setup-generate-key"}
         >
           {isGenerating ? (
             <Loader2 size={14} className={"animate-spin"} />
