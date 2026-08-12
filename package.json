@@ -12,7 +12,7 @@
     "build": "next build",
     "postbuild": "node postbuild.js",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test:setup": "cd ./e2e/environment && sh create-test-env.sh",
     "test:clean": "cd ./e2e/environment && sh clean-test-env.sh",
     "test:dev": "cross-env APP_ENV=test next dev -p 1337",
