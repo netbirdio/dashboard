@@ -55,6 +55,10 @@ export const isNetBirdCloud = () => {
   if (override) return override === "cloud";
   if (process.env.APP_ENV === "test") return true;
   if (config.cloud) return true;
+  // `next build` renders the tree in Node to emit the static export, where the
+  // hostname is unknowable. The prerendered output is discarded on the client,
+  // so this only has to avoid throwing.
+  if (typeof window === "undefined") return false;
   const hostname = window.location.hostname;
   if (hostname.includes("selfhosted")) return false;
   return (
