@@ -17,6 +17,10 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { PeerSelector } from "@components/PeerSelector";
+import {
+  isDraftPeerId,
+  isPlaceholderPeer,
+} from "@/modules/control-center/utils/helpers";
 import { SegmentedTabs } from "@components/SegmentedTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
@@ -95,6 +99,12 @@ type ContentProps = {
   // (draft mode).
   useSave?: boolean;
   onSaved?: (r: RoutingPeerModalResult) => void;
+  /**
+   * Peers to offer besides the account's own — the control center's draft
+   * placeholders, which have no API row yet. Draft mode only: a placeholder
+   * router is recorded in the changeset and deploys once the peer is installed.
+   */
+  extraPeers?: Peer[];
 };
 
 export function RoutingPeerModalContent({
@@ -104,6 +114,7 @@ export function RoutingPeerModalContent({
   onUpdated,
   useSave = true,
   onSaved,
+  extraPeers,
 }: ContentProps) {
   const isRoutingPeer = router ? router.peer != "" : true;
 
@@ -117,14 +128,21 @@ export function RoutingPeerModalContent({
     `/networks/${network.id}/routers/${router?.id}`,
   ).put;
 
+  // A placeholder's id has no API row — resolve the prefill from `extraPeers`
+  // instead of fetching a 404.
+  const presetIsDraft = isDraftPeerId(router?.peer);
   const { data: peer } = useFetchApi<Peer>(
     "/peers/" + router?.peer,
     true,
     false,
-    router ? router.peer != "" : false,
+    router ? router.peer != "" && !presetIsDraft : false,
   );
 
-  const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(peer);
+  const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(
+    presetIsDraft
+      ? extraPeers?.find((p) => p.id === router?.peer)
+      : peer,
+  );
 
   const [
     routingPeerGroups,
@@ -147,6 +165,9 @@ export function RoutingPeerModalContent({
 
   const isNonLinuxRoutingPeer = useMemo(() => {
     if (!routingPeer) return false;
+    // A placeholder's OS is unknown until it's installed — assuming non-Linux
+    // would lock masquerade on for a router the user hasn't set up yet.
+    if (isPlaceholderPeer(routingPeer)) return false;
     return getOperatingSystem(routingPeer.os) != OperatingSystem.LINUX;
   }, [routingPeer]);
 
@@ -291,6 +312,7 @@ export function RoutingPeerModalContent({
                     <PeerSelector
                       onChange={setRoutingPeer}
                       value={routingPeer}
+                      extraPeers={extraPeers}
                     />
                   </div>
                 </SegmentedTabs.Content>

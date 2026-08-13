@@ -48,6 +48,10 @@ export type PlaceholderType =
   | "event"
   | "resource"
   | "posture_check"
+  // A control-center canvas node. Not an account resource — a handle for
+  // something on screen, so the assistant can act on it without being told
+  // whose device it is.
+  | "node"
   | "ip"
   | "cidr"
   | "domain"
@@ -344,7 +348,20 @@ export class Redactor {
   private mint(type: PlaceholderType, real: string, display: string): string {
     const key = `${type} ${real}`;
     const existing = this.forward.get(key);
-    if (existing) return existing;
+    if (existing) {
+      /*
+        Upgrade a display that is still just the id. The first mint for a
+        resource can happen where no name is in reach — a bare id in a nested
+        field, a canvas node whose entity was named elsewhere — and a token that
+        restores to `69b666c4321c` tells the user nothing. A real name replaces
+        it as soon as one shows up; the token itself never changes.
+      */
+      const current = this.reverse.get(existing);
+      if (current && current.display === current.real && display !== real) {
+        this.reverse.set(existing, { real, display });
+      }
+      return existing;
+    }
     const n = (this.counters.get(type) ?? 0) + 1;
     this.counters.set(type, n);
     const token = formatToken(type, n);

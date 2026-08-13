@@ -50,11 +50,10 @@ import {
   useStructuralNodes,
   getIpPlaceholderFromRange,
   getPlaceholderPeer,
-  getPoliciesTargetingResources,
   getGroupCountLabel,
   getPolicyProtocolAndPortText,
 } from "@/modules/control-center/utils/helpers";
-import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { useDraftEntityDrop } from "@/modules/control-center/hooks/useDraftEntityDrop";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useAccount } from "@/modules/account/useAccount";
 import {
@@ -218,13 +217,10 @@ const PanelContent = React.memo(
     const { onDragStart, isDragging } = useDragAndDrop();
     const [ghostData, setGhostData] = useState<GhostData>();
     const {
-      placeNode: placeDroppedNode,
       addPeerPlaceholder,
       addBlankNode: addBlankPlaceholderNode,
       addBlankPolicy,
-      dropExistingNetworkFrame,
     } = useDraftNodeCreation();
-    // Declared before addNode (which references them) to avoid a TDZ in its deps.
     const { data: networks } = useFetchApi<Network[]>("/networks");
     const { data: resources } = useFetchApi<NetworkResource[]>(
       "/networks/resources",
@@ -254,56 +250,15 @@ const PanelContent = React.memo(
     );
 
     const { addNewGroup } = useDraftGroupActions();
-    const { drawPolicyOnCanvas } = useControlCenterPolicy();
-
-    // Existing policy: draw it with its sources/destinations — nodes already on
-    // the canvas are connected, missing ones are created around the drop point.
-    // A pending update-policy change wins over the API data, so a policy edited
-    // or disconnected in this draft (e.g. Remove emptied its sides) comes back
-    // in its draft state, not its deployed one.
-    const handleExistingPolicyDrop = useCallback(
-      (policy: Policy, position?: XYPosition) => {
-        const pending = changes.find(
-          (c) => c.type === "update-policy" && c.policyId === policy.id,
-        );
-        const draftPolicy =
-          pending?.type === "update-policy" ? pending.policy : policy;
-        drawPolicyOnCanvas(draftPolicy, position);
-      },
-      [drawPolicyOnCanvas, changes],
-    );
-
-    // Like handleExistingPolicyDrop, but for existing networks/resources: also
-    // draws the policies granting access to the dropped resources.
-    const drawResourcePolicies = useCallback(
-      (droppedResources: NetworkResource[], position?: XYPosition) => {
-        // Pending update-policy changes win over API data (see
-        // handleExistingPolicyDrop) — a policy disconnected in this draft
-        // doesn't get re-drawn with its deployed sides.
-        const draftPolicies = (policies ?? []).map((p) => {
-          const pending = changes.find(
-            (c) => c.type === "update-policy" && c.policyId === p.id,
-          );
-          return pending?.type === "update-policy" ? pending.policy : p;
-        });
-        const related = getPoliciesTargetingResources(
-          droppedResources,
-          draftPolicies,
-        );
-        if (related.length === 0) return;
-        // Next tick — the dropped nodes must be committed to the canvas
-        // before drawPolicyOnCanvas connects the policies' edges to them.
-        setTimeout(() => {
-          related.forEach((policy, i) => {
-            const anchor = position
-              ? { x: position.x - 500, y: position.y + i * 140 }
-              : undefined;
-            drawPolicyOnCanvas(policy, anchor);
-          });
-        }, 0);
-      },
-      [policies, changes, drawPolicyOnCanvas],
-    );
+    // Placing an existing entity is shared with the assistant's cc_add — see
+    // useDraftEntityDrop.
+    const {
+      dropExistingPeer,
+      dropExistingGroup,
+      dropExistingResource,
+      dropExistingNetwork,
+      dropExistingPolicy: handleExistingPolicyDrop,
+    } = useDraftEntityDrop();
 
     const handlePolicyDragStart = useCallback(
       (event: React.PointerEvent<HTMLDivElement>, policy?: Policy) => {
@@ -400,70 +355,21 @@ const PanelContent = React.memo(
         data: Peer | Group | NetworkResource | Network,
         position?: XYPosition,
       ) => {
-        // Existing networks drop as a full frame (chrome + existing resources
-        // as children), plus the policies that grant access to its resources.
         if (type === NodeType.NetworkNode) {
-          const network = data as Network;
-          dropExistingNetworkFrame(network, position);
-          const childResources = (resources ?? []).filter((r) =>
-            network.resources?.includes(r.id ?? ""),
-          );
-          drawResourcePolicies(childResources, position);
-          return;
-        }
-
-        let nodeData: any;
-        let nodeId: string;
-
-        if (type === NodeType.PeerNode) {
-          nodeData = {
-            peer: data as Peer,
-            enabled: true,
-            showHandles: true,
-            variant: "card",
-          };
-          nodeId = `peer-${data.id}`;
+          dropExistingNetwork(data as Network, position);
+        } else if (type === NodeType.PeerNode) {
+          dropExistingPeer(data as Peer, position);
         } else if (type === NodeType.GroupNode) {
-          nodeData = { group: data as Group, enabled: true, showHandles: true };
-          nodeId = `group-${data.id}`;
+          dropExistingGroup(data as Group, position);
         } else if (type === NodeType.ResourceNode) {
-          // Existing resources already live in a network — stamp its ref so
-          // the standalone card shows the network name (read-only in v1).
-          const resourceData = data as NetworkResource;
-          const network = networks?.find((n) =>
-            n.resources?.some((r) => r === resourceData.id),
-          );
-          nodeData = {
-            resource: resourceData,
-            enabled: true,
-            showHandles: true,
-            draftNetwork: network
-              ? { networkId: network.id, name: network.name }
-              : undefined,
-          };
-          nodeId = `resource-${data.id}`;
-        }
-
-        placeDroppedNode(
-          {
-            id: nodeId!,
-            type: type,
-            data: nodeData,
-            position: { x: 0, y: 0 },
-          },
-          position,
-        );
-
-        if (type === NodeType.ResourceNode) {
-          drawResourcePolicies([data as NetworkResource], position);
+          dropExistingResource(data as NetworkResource, position);
         }
       },
       [
-        placeDroppedNode,
-        networks,
-        resources,
-        dropExistingNetworkFrame,
-        drawResourcePolicies,
+        dropExistingNetwork,
+        dropExistingPeer,
+        dropExistingGroup,
+        dropExistingResource,
       ],
     );
 

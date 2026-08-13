@@ -36,6 +36,7 @@ import {
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
+  getDraftResource,
   getIpPlaceholderFromRange,
   getPlaceholderPeer,
   pinByOrder,
@@ -317,6 +318,22 @@ export const DestinationGroupPanel = ({
     nodes.forEach((n) => {
       const p = getPlaceholderPeer(n);
       if (p?.id) byId.set(p.id, { peer: p, nodeId: n.id });
+    });
+    return byId;
+  }, [nodes]);
+
+  /*
+    Draft resources still ON the canvas, the resource twin of
+    canvasPlaceholderPeers: a resource the user (or the assistant) just drew has
+    no API row, so without this the panel offered no way to put "Postgres DB" in
+    "Databases" — the group could only be filled by dragging its card onto it.
+  */
+  const canvasDraftResources = useMemo(() => {
+    const byId = new Map<string, { resource: NetworkResource; nodeId: string }>();
+    nodes.forEach((n) => {
+      if (!n.id.startsWith("resource-new-")) return;
+      const resource = getDraftResource(n);
+      if (resource?.id) byId.set(resource.id, { resource, nodeId: n.id });
     });
     return byId;
   }, [nodes]);
@@ -607,6 +624,15 @@ export const DestinationGroupPanel = ({
           addMemberToGroup(groupNode, { peer, draggedNodeId: nodeId });
         }
       });
+      canvasDraftResources.forEach(({ resource, nodeId }, id) => {
+        if (selectedResourceIds.has(id) && !memberResourceIds.has(id)) {
+          addMemberToGroup(groupNode, {
+            resource,
+            itemId: id,
+            draggedNodeId: nodeId,
+          });
+        }
+      });
       // Applying closes the panel. The unmount cleanup restores the counts
       // snapshot — point it at the just-applied selection so it doesn't
       // revert the apply.
@@ -744,6 +770,10 @@ export const DestinationGroupPanel = ({
     return [
       ...draftMemberResources,
       ...(networkResources ?? []).filter((r) => memberResourceIds.has(r.id)),
+      // Draft resources on the canvas that aren't in the group yet.
+      ...[...canvasDraftResources.values()]
+        .map(({ resource }) => resource)
+        .filter((r) => !addedMembers.has(r.id)),
       ...(networkResources ?? []).filter((r) => !memberResourceIds.has(r.id)),
     ];
   }, [
@@ -752,6 +782,8 @@ export const DestinationGroupPanel = ({
     networkResources,
     memberResourceIds,
     draftMemberResources,
+    canvasDraftResources,
+    addedMembers,
   ]);
 
   // Row order FROZEN per open: the full ordered id sequence, captured once the

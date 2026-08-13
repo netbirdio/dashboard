@@ -45,6 +45,7 @@ import {
   getIpPlaceholderFromRange,
 } from "@/modules/control-center/utils/helpers";
 import { useAccount } from "@/modules/account/useAccount";
+import { AgentBusyOverlay } from "@/modules/control-center/agent/AgentBusyOverlay";
 
 interface CanvasState {
   nodes: Node[];
@@ -474,6 +475,9 @@ export function ControlCenterUIProvider({
   return (
     <ControlCenterUIContext.Provider value={value}>
       <div className={"relative h-full w-full flex overflow-hidden"}>
+        {/* Spans the module, so a step locks the header and panels too — not
+            just the canvas. */}
+        <AgentBusyOverlay />
         {sidebar}
         <div className={"w-full h-full relative overflow-hidden"}>
           {children}

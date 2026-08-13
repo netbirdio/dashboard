@@ -56,6 +56,7 @@ import { groupPanelCloseGuard } from "@/modules/control-center/panels/Destinatio
 import { ControlCenterPolicyProvider } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
 import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
+import { useAssistantPanelPan } from "@/modules/control-center/hooks/useAssistantPanelPan";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import { useDrillDownBrowserHistory } from "@/modules/control-center/hooks/useDrillDownBrowserHistory";
 import { useGroupFocusDim } from "@/modules/control-center/hooks/useGroupFocusDim";
@@ -65,6 +66,7 @@ import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessCo
 import { NetworkProvider } from "@/modules/networks/NetworkProvider";
 import { Network } from "@/interfaces/Network";
 import { useSWRConfig } from "swr";
+import { CanvasAgentBridge } from "@/modules/control-center/agent/CanvasAgentBridge";
 
 export default function ControlCenter() {
   return (
@@ -115,6 +117,7 @@ function ControlCenterCanvas() {
   const { onNodeDragStart, onNodeDrag, onNodeDragStop } = useDragToGroup();
   useDrillDownBrowserHistory();
   useGroupFocusDim();
+  useAssistantPanelPan();
 
   const { mutate } = useSWRConfig();
   const onLiveNetworkCreated = React.useCallback(
@@ -267,6 +270,8 @@ function ControlCenterCanvas() {
       <DraftNetworkDestinationModal />
       <DraftNetworkEditModal />
       <DraftLeaveGuard />
+      {/* Publishes the canvas to the assistant for as long as this page is up. */}
+      <CanvasAgentBridge onConnect={draft.onNodeConnect} />
       <ReactFlow
         className={
           [

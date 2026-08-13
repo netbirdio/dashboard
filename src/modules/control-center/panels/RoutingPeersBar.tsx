@@ -1,4 +1,5 @@
 import { cn, singularize } from "@utils/helpers";
+import { getIpPlaceholderFromRange } from "@/modules/control-center/utils/helpers";
 import {
   AlertTriangleIcon,
   ChevronDown,
@@ -66,6 +67,9 @@ export type RoutingPeerRow = {
   isGroup: boolean;
   peersCount?: number;
   enabled: boolean;
+  // A draft placeholder peer routes this network: it can't route anything until
+  // it's installed, and the row would otherwise read like a working router.
+  pendingInstall?: boolean;
   // Hover-reveal edit action (pencil); rows without one are read-only.
   onEdit?: () => void;
 };
@@ -287,6 +291,18 @@ export const RoutingPeersBar = ({
                     {row.peersCount !== undefined &&
                       ` (${singularize("Peers", row.peersCount, true)})`}
                   </span>
+                  {row.pendingInstall && (
+                    // The masked range its address will come from, like the
+                    // placeholder's own card — "waiting for an address", not an
+                    // error. The Install step is listed in Review & Deploy.
+                    <span
+                      className={
+                        "shrink-0 font-mono text-[10px] font-normal text-nb-gray-400"
+                      }
+                    >
+                      {getIpPlaceholderFromRange()}
+                    </span>
+                  )}
                   {row.onEdit && (
                     <SquarePenIcon
                       size={13}

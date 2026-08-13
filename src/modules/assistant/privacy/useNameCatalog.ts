@@ -29,6 +29,31 @@ const SOURCES: { key: string; type: PlaceholderType }[] = [
   { key: "/users?service_user=true", type: "user" },
 ];
 
+/**
+ * Identifying fields that are values in their own right rather than resources.
+ *
+ * Two jobs. Hostnames and DNS labels have no structure a pattern could catch, so
+ * this is the only way they get tokenised at all. Addresses and emails DO get
+ * matched structurally by `rewriteNames` (so they work even when the dashboard
+ * has nothing loaded) — listing them here adds the thing a pattern can't know:
+ * which resource the value belongs to, which becomes the model's attribution
+ * note. Same token either way, so the two passes can't disagree.
+ */
+const SCALAR_FIELDS: Record<
+  string,
+  { field: string; type: PlaceholderType; label?: string }[]
+> = {
+  "/peers": [
+    { field: "dns_label", type: "dns", label: "DNS label" },
+    { field: "hostname", type: "dns" },
+    { field: "ip", type: "ip" },
+    { field: "ipv6", type: "ip" },
+    { field: "connection_ip", type: "ip" },
+  ],
+  "/users?service_user=false": [{ field: "email", type: "email" }],
+  "/users?service_user=true": [{ field: "email", type: "email" }],
+};
+
 interface CachedRow {
   id?: unknown;
   name?: unknown;
@@ -45,8 +70,20 @@ export function useNameCatalog(): () => CatalogEntry[] {
       if (!Array.isArray(rows)) continue;
 
       for (const row of rows) {
-        if (typeof row?.id === "string" && typeof row?.name === "string") {
-          entries.push({ name: row.name, type, id: row.id });
+        const id = typeof row?.id === "string" ? row.id : undefined;
+        const name = typeof row?.name === "string" ? row.name : undefined;
+        if (id && name) entries.push({ name, type, id });
+
+        for (const scalar of SCALAR_FIELDS[key] ?? []) {
+          const value = (row as Record<string, unknown>)[scalar.field];
+          if (typeof value !== "string" || !value.length || !id) continue;
+          entries.push({
+            name: value,
+            type: scalar.type,
+            id: value,
+            scalar: true,
+            owner: { type, id, name, field: scalar.label ?? scalar.field },
+          });
         }
       }
     }

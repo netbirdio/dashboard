@@ -8,15 +8,29 @@
  *     management's RBAC bounds the blast radius exactly as it would in the UI.
  *  3. **Redact** — the response goes through the shared allowlist before it can
  *     leave the browser. Default-deny: unlisted fields are dropped.
+ *
+ * Two tool families aren't fetches and branch out before any of that:
+ * `open_page` (a route push) and the `cc_*` control-center tools (they drive the
+ * canvas — see controlCenterTools.ts).
  */
 import { useNetBirdFetch } from "@utils/api";
 import loadNetBirdConfig from "@utils/config";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import type { ResourceStore } from "../data/resourceStore";
 import type { Redactor } from "../privacy/redaction";
-import { CLIENT_TOOLS, OPEN_PAGE_TOOL, pageHref } from "./clientTools";
+import {
+  CLIENT_TOOLS,
+  OPEN_PAGE_TOOL,
+  pageHref,
+  pageIdMismatch,
+} from "./clientTools";
+import {
+  CONTROL_CENTER_HREF,
+  executeControlCenterTool,
+  isControlCenterTool,
+} from "./controlCenterTools";
 
 export interface ToolOutcome {
   /** JSON string handed back to the model — always post-redaction. */
@@ -81,6 +95,7 @@ export function useToolExecutor() {
   const { fetch: netbirdFetch } = useNetBirdFetch(true);
   const { loggedInUser } = useLoggedInUser();
   const router = useRouter();
+  const pathname = usePathname();
   const currentUserId = loggedInUser?.id;
 
   return useCallback(
@@ -91,14 +106,31 @@ export function useToolExecutor() {
       signal?: AbortSignal,
     ): Promise<ToolOutcome> => {
       /*
+        The control-center tools drive the canvas instead of the API: no fetch,
+        and a redaction contract of their own (canvas nodes as tokens). They also
+        need the page open, which they handle themselves.
+      */
+      if (isControlCenterTool(name)) {
+        return executeControlCenterTool(name, rawInput, {
+          redactor,
+          navigate: (href) => router.push(href),
+          onControlCenterPage: pathname === CONTROL_CENTER_HREF,
+        });
+      }
+
+      /*
         Navigation, not a fetch: resolve the page and push it. `resolveInput`
         below turns the model's `{PEER_1}` back into the real id, which is
         exactly what the route needs — so this runs after it.
       */
       if (name === OPEN_PAGE_TOOL) {
-        const target = pageHref(
-          resolveInput((rawInput ?? {}) as Record<string, unknown>, redactor),
-        );
+        const raw = (rawInput ?? {}) as Record<string, unknown>;
+        // Checked on the tokens, before they're resolved away: a scalar token
+        // resolves to a perfectly good string that simply isn't an id.
+        const mismatch = pageIdMismatch(raw);
+        if (mismatch) return { content: mismatch, isError: true };
+
+        const target = pageHref(resolveInput(raw, redactor));
         if (!target) {
           return {
             content:
@@ -167,6 +199,6 @@ export function useToolExecutor() {
         };
       }
     },
-    [netbirdFetch, currentUserId, router],
+    [netbirdFetch, currentUserId, router, pathname],
   );
 }

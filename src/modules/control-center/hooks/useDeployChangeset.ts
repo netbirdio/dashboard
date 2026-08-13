@@ -148,6 +148,9 @@ export function useDeployChangeset() {
       resolveResource,
       resolveNetworkId,
       groupIdForRef: (ref) => nameToId.get(ref) ?? ref,
+      // Deploy never sees a draft peer id: install-peer blocks the deploy until
+      // the peer exists, and installing rewrites the router with the real id.
+      peerIdForRef: (ref) => ref,
       normalizeAddress: normalizeHostCIDR,
       // The group POST/PUT sends resources as {id, type} objects; look the type
       // up from the just-created draft resources first, then the live list.

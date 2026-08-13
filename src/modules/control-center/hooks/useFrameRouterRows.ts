@@ -8,6 +8,7 @@ import {
   UpdateRouterChange,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
+import { isDraftPeerId } from "@/modules/control-center/utils/helpers";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   getRoutingPeerCount,
@@ -72,6 +73,7 @@ export function useFrameRouterRows(
           c.type === "update-router" && c.routerId === r.id,
       );
       const peerId = pending ? pending.peerId : r.peer;
+      const draftPeer = isDraftPeerId(peerId);
       const groupRef = pending ? pending.groupId : r.peer_groups?.[0];
       const enabled = pending ? pending.enabled ?? r.enabled : r.enabled;
       const peer = peerId ? peers?.find((p) => p.id === peerId) : undefined;
@@ -81,10 +83,15 @@ export function useFrameRouterRows(
       list.push({
         key: `api-${r.id}`,
         peerOs: peer?.os,
-        name: peer?.name ?? group?.name ?? "Routing Peer",
+        name:
+          peer?.name ??
+          (draftPeer ? pending?.peerName : undefined) ??
+          group?.name ??
+          "Routing Peer",
         isGroup: !peerId,
         peersCount: !peerId ? group?.peers_count ?? 0 : undefined,
         enabled,
+        pendingInstall: draftPeer,
         // API routers open the real routing-peer modal; in draft its save
         // records an update-router change (a re-edit supersedes the pending
         // one, keyed by router id).
@@ -106,6 +113,9 @@ export function useFrameRouterRows(
         isGroup: !c.peerId,
         peersCount: !c.peerId ? group?.peers_count ?? 0 : undefined,
         enabled: c.enabled ?? true,
+        // The peer is a draft placeholder — the row says so, and the change
+        // carries the blocking issue (getChangeIssue).
+        pendingInstall: isDraftPeerId(c.peerId),
         onEdit: () =>
           setRoutingPeerModal({ networkNodeId, editChangeId: c.id }),
       });

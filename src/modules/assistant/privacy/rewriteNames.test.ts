@@ -1,14 +1,15 @@
 /**
- * Run with: npx tsx src/modules/assistant/privacy/rewriteNames.test.ts
- *
- * Follows the plain-script style of the other unit tests in this repo (see
- * `src/utils/ip.test.ts`) — no runner to configure, exits non-zero on failure.
- *
  * The rewriter edits what the user typed, so the cases that matter most are the
- * ones where it must NOT fire.
+ * ones where it must NOT fire — and the ones where a typed value has to come out
+ * as the *same* token the redacted data carries.
  */
+import { describe, expect, it } from "vitest";
 import type { Redactor } from "./redaction";
-import { type CatalogEntry, rewriteNames } from "./rewriteNames";
+import {
+  attributeIdentifiers,
+  type CatalogEntry,
+  rewriteNames,
+} from "./rewriteNames";
 
 const CATALOG: CatalogEntry[] = [
   { name: "eduards-macbook", type: "peer", id: "p1" },
@@ -17,91 +18,168 @@ const CATALOG: CatalogEntry[] = [
   { name: "Contractors", type: "group", id: "g2" },
   { name: "All", type: "group", id: "g3" },
   { name: "db", type: "peer", id: "p3" },
+  {
+    name: "macbook.netbird.cloud",
+    type: "dns",
+    id: "macbook.netbird.cloud",
+    scalar: true,
+    owner: { type: "peer", id: "p1", name: "eduards-macbook", field: "hostname" },
+  },
+  {
+    name: "100.84.175.167",
+    type: "ip",
+    id: "100.84.175.167",
+    scalar: true,
+    owner: { type: "peer", id: "p2", name: "build-runner-01", field: "ip" },
+  },
 ];
 
-/** Enough of a `Redactor` for the rewriter: stable token per (type, id). */
+/**
+ * Enough of a `Redactor` for the rewriter: stable token per (type, real value).
+ * `placeholder` and `handle` share the map on purpose — that's what makes a typed
+ * value and a redacted field come out as the same token.
+ */
 function fakeRedactor(): Redactor {
   const seen = new Map<string, string>();
   const counts = new Map<string, number>();
 
+  const mint = (type: string, real: string) => {
+    const key = `${type} ${real}`;
+    const existing = seen.get(key);
+    if (existing) return existing;
+    const n = (counts.get(type) ?? 0) + 1;
+    counts.set(type, n);
+    const token = `{${type.toUpperCase()}_${n}}`;
+    seen.set(key, token);
+    return token;
+  };
+
   return {
-    handle(type: string, id: string) {
-      const key = `${type} ${id}`;
-      const existing = seen.get(key);
-      if (existing) return existing;
-      const n = (counts.get(type) ?? 0) + 1;
-      counts.set(type, n);
-      const token = `{${type.toUpperCase()}_${n}}`;
-      seen.set(key, token);
-      return token;
-    },
+    handle: (type: string, id: string) => mint(type, id),
+    placeholder: (type: string, value: string) => mint(type, value),
   } as unknown as Redactor;
 }
 
-let failures = 0;
+const rewrite = (text: string) => rewriteNames(text, CATALOG, fakeRedactor());
 
-function check(desc: string, input: string, expected: string) {
-  const actual = rewriteNames(input, CATALOG, fakeRedactor());
-  const ok = actual === expected;
-  if (!ok) failures++;
-  console.log(
-    `${ok ? "ok  " : "FAIL"} ${desc}\n     ${JSON.stringify(
-      input,
-    )}\n  -> ${JSON.stringify(actual)}${
-      ok ? "" : `\n  want ${JSON.stringify(expected)}`
-    }`,
-  );
-}
+describe("rewriteNames: names", () => {
+  it("swaps a peer name", () => {
+    expect(rewrite("is eduards-macbook online?")).toBe("is {PEER_1} online?");
+  });
 
-console.log("=== rewriteNames ===");
+  it("prefers the longest name over a shorter one it contains", () => {
+    expect(rewrite("check build-runner-01")).toBe("check {PEER_1}");
+  });
 
-check("swaps a peer name", "is eduards-macbook online?", "is {PEER_1} online?");
+  it("leaves a longer hostname alone", () => {
+    expect(rewrite("check build-runner-011")).toBe("check build-runner-011");
+  });
 
-check(
-  "longest name wins over a shorter one it contains",
-  "check build-runner-01",
-  "check {PEER_1}",
-);
+  it("matches case-insensitively and keeps the rest of the sentence", () => {
+    expect(rewrite("can CONTRACTORS reach it?")).toBe("can {GROUP_1} reach it?");
+  });
 
-check(
-  "leaves a longer hostname alone",
-  "check build-runner-011",
-  "check build-runner-011",
-);
+  it("skips names too generic to be meant as names", () => {
+    expect(rewrite("list all peers and all groups")).toBe(
+      "list all peers and all groups",
+    );
+  });
 
-check(
-  "case-insensitive, keeps the rest of the sentence",
-  "can CONTRACTORS reach it?",
-  "can {GROUP_1} reach it?",
-);
+  it("skips names under three characters", () => {
+    expect(rewrite("is db up?")).toBe("is db up?");
+  });
 
-check(
-  "skips names too generic to be meant as names",
-  "list all peers and all groups",
-  "list all peers and all groups",
-);
+  it("does not match inside another word", () => {
+    expect(rewrite("rebuild the buildkite runner")).toBe(
+      "rebuild the buildkite runner",
+    );
+  });
 
-check("skips names under three characters", "is db up?", "is db up?");
+  it("leaves already-tokenised text untouched", () => {
+    expect(rewrite("is {PEER_1} online?")).toBe("is {PEER_1} online?");
+  });
 
-check(
-  "does not match inside another word",
-  "rebuild the buildkite runner",
-  "rebuild the buildkite runner",
-);
+  it("handles two different resources in one sentence", () => {
+    expect(rewrite("can Contractors reach eduards-macbook?")).toBe(
+      "can {GROUP_1} reach {PEER_1}?",
+    );
+  });
 
-check(
-  "already-tokenised text is untouched",
-  "is {PEER_1} online?",
-  "is {PEER_1} online?",
-);
+  it("swaps a DNS label from the catalog", () => {
+    expect(rewrite("open macbook.netbird.cloud")).toBe("open {DNS_1}");
+  });
 
-check(
-  "two different resources in one sentence",
-  "can Contractors reach eduards-macbook?",
-  "can {GROUP_1} reach {PEER_1}?",
-);
+  it("passes empty input through", () => {
+    expect(rewrite("")).toBe("");
+  });
+});
 
-check("empty input", "", "");
+describe("rewriteNames: addresses and emails", () => {
+  it("tokenises an IP the user typed", () => {
+    expect(rewrite("where is 100.84.175.167?")).toBe("where is {IP_1}?");
+  });
 
-console.log(`\n${failures} test(s) failed`);
-process.exit(failures > 0 ? 1 : 0);
+  it("gives the same IP one token", () => {
+    expect(rewrite("is 100.84.175.167 the same as 100.84.175.167?")).toBe(
+      "is {IP_1} the same as {IP_1}?",
+    );
+  });
+
+  it("matches a CIDR before the address inside it", () => {
+    expect(rewrite("route 10.0.0.0/24 please")).toBe("route {CIDR_1} please");
+  });
+
+  it("tokenises uncompressed IPv6", () => {
+    expect(rewrite("ping fd00:1234:5678:9abc")).toBe("ping {IP_1}");
+  });
+
+  it("tokenises an email", () => {
+    expect(rewrite("who is eduard@netbird.io?")).toBe("who is {EMAIL_1}?");
+  });
+
+  it("does not read a version number as an address", () => {
+    expect(rewrite("peers on 0.28.9 need an update")).toBe(
+      "peers on 0.28.9 need an update",
+    );
+  });
+
+  it("works with no catalog at all", () => {
+    expect(rewriteNames("where is 100.84.175.167?", [], fakeRedactor())).toBe(
+      "where is {IP_1}?",
+    );
+  });
+});
+
+describe("attributeIdentifiers", () => {
+  it("names the peer a typed hostname belongs to", () => {
+    const redactor = fakeRedactor();
+    const notes = attributeIdentifiers(
+      "bring me to macbook.netbird.cloud",
+      CATALOG,
+      redactor,
+    );
+    expect(notes).toEqual(["{DNS_1} is the hostname of peer {PEER_1}"]);
+    // The tokens in the note are the tokens in the rewritten message.
+    expect(
+      rewriteNames("bring me to macbook.netbird.cloud", CATALOG, redactor),
+    ).toBe("bring me to {DNS_1}");
+  });
+
+  it("names the peer a typed address belongs to", () => {
+    expect(
+      attributeIdentifiers("where is 100.84.175.167?", CATALOG, fakeRedactor()),
+    ).toEqual(["{IP_1} is the ip of peer {PEER_1}"]);
+  });
+
+  it("says nothing about values the message doesn't mention", () => {
+    expect(
+      attributeIdentifiers("list my peers", CATALOG, fakeRedactor()),
+    ).toEqual([]);
+  });
+
+  it("says nothing for a resource name (the token already is the resource)", () => {
+    expect(
+      attributeIdentifiers("open eduards-macbook", CATALOG, fakeRedactor()),
+    ).toEqual([]);
+  });
+});

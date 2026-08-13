@@ -55,17 +55,47 @@ export type ChatEvent =
     }
   | { type: "final"; content: LlmContentBlock[]; stopReason: string | null }
   | { type: "done"; stopReason: string | null }
-  | { type: "error"; message: string };
+  | {
+      type: "error";
+      /** Already written for the user (netbird-assistant `src/llm/errors.ts`). */
+      message: string;
+      /** Why it failed, for logs — not for display. */
+      code?: string;
+      /** Whether the same request is worth sending again. */
+      retryable?: boolean;
+    };
+
+/**
+ * The server's rejection when a request names a model that is no longer in the
+ * allowlist — usually a panel that resolved the model list before the deployment
+ * changed models. Recoverable: retry without the id and the server picks its own.
+ */
+export const UNKNOWN_MODEL = "unknown model";
 
 export class AssistantHttpError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /**
+     * The server's own `error` string, kept alongside the user-facing message so
+     * callers can recognise a specific, recoverable rejection (see UNKNOWN_MODEL)
+     * without matching on prose.
+     */
+    readonly detail?: string,
   ) {
     super(message);
     this.name = "AssistantHttpError";
   }
 }
+
+/** The server's `error` field, if the body is the shape we expect. */
+const serverDetail = (body: string): string | undefined => {
+  try {
+    return JSON.parse(body)?.error as string | undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 /**
  * An `error` event the server sent mid-stream. Its message is already written
@@ -78,17 +108,31 @@ export class AssistantStreamError extends Error {
   }
 }
 
-/** Map a non-2xx from the assistant server onto a message worth showing. */
-const describeFailure = (status: number, body: string): string => {
-  const detail = (() => {
-    try {
-      return JSON.parse(body)?.error as string | undefined;
-    } catch {
-      return undefined;
-    }
-  })();
+/**
+ * Map a non-2xx from the assistant server onto a message worth showing.
+ * Exported for its own tests — it's the whole of what the user reads on a failure.
+ */
+export const describeFailure = (status: number, body: string): string => {
+  const detail = serverDetail(body);
 
   switch (status) {
+    case 400:
+      /*
+        The server's 400 bodies are terse machine strings ("unknown model",
+        "invalid request body"). Each gets a sentence written for the user —
+        pasting the raw string in front of a generic "try again" produced
+        ungrammatical advice that was also wrong: retrying changes nothing here.
+      */
+      if (detail === UNKNOWN_MODEL) {
+        return "The model this chat was set to isn't available any more. Reopen the assistant to pick up the current one.";
+      }
+      if (detail === "request blocked by guardrails") {
+        return "That request was blocked before it reached the assistant. Try rewording it.";
+      }
+      if (detail === "too many messages") {
+        return "This conversation has too many messages. Start a new chat to continue.";
+      }
+      return "The assistant couldn't read that request. Starting a new chat usually clears it.";
     case 401:
       return "Your session expired. Reload the page and sign in again.";
     case 402:
@@ -105,9 +149,9 @@ const describeFailure = (status: number, body: string): string => {
     case 504:
       return "The assistant service is temporarily unavailable. It may be restarting — try again in a minute.";
     default:
-      return detail
-        ? `${detail} Try again in a moment.`
-        : `The assistant couldn't complete that request (error ${status}). Try again in a moment.`;
+      // No raw server detail here either — an unmapped status is a bug on our
+      // side, and the status code is the part worth reporting.
+      return `The assistant couldn't complete that request (error ${status}). Try again in a moment.`;
   }
 };
 
@@ -148,6 +192,40 @@ export interface ChatRequestBody {
 }
 
 /**
+ * One turn's stream, with the one HTTP failure that's worth recovering from
+ * handled here: a model id the server no longer allows.
+ *
+ * That happens on any deployment that changes models — the panel resolves the
+ * model list once, so an open tab keeps naming the old one and every send fails.
+ * Dropping the id and retrying lets the server pick its own current default, so
+ * the user's turn goes through instead of erroring; `onModelDropped` lets the
+ * caller stop sending the dead id on later turns.
+ */
+export async function* streamTurn(
+  fetchFn: AuthedFetch,
+  origin: string,
+  body: ChatRequestBody,
+  signal: AbortSignal | undefined,
+  onModelDropped: (rejected: string) => void,
+): AsyncGenerator<ChatEvent> {
+  try {
+    yield* streamChat(fetchFn, origin, body, signal);
+    return;
+  } catch (err) {
+    const stale =
+      err instanceof AssistantHttpError &&
+      err.status === 400 &&
+      err.detail === UNKNOWN_MODEL &&
+      body.model !== undefined;
+    if (!stale) throw err;
+    onModelDropped(body.model!);
+  }
+  // Outside the catch: a failure in the retry is the caller's to describe, and
+  // nesting it here would report the first error instead of the real one.
+  yield* streamChat(fetchFn, origin, { ...body, model: undefined }, signal);
+}
+
+/**
  * Stream one chat turn. Yields each parsed SSE event in order; returns when the
  * server closes the stream.
  */
@@ -164,9 +242,11 @@ export async function* streamChat(
   });
 
   if (!res.ok) {
+    const raw = await res.text().catch(() => "");
     throw new AssistantHttpError(
       res.status,
-      describeFailure(res.status, await res.text().catch(() => "")),
+      describeFailure(res.status, raw),
+      serverDetail(raw),
     );
   }
   if (!res.body) throw new Error("Assistant returned an empty stream.");

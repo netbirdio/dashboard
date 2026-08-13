@@ -421,6 +421,27 @@ describe("network / resource / router changes", () => {
     });
   });
 
+  it("an update-router's placeholder peer is replaced on install too", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateRouter({
+        routerId: "router-1",
+        networkId: "net-1",
+        networkName: "Office",
+        peerId: "draft-a",
+        peerName: "Office Gateway",
+      }),
+    );
+    act(() =>
+      result.current.replacePeerIdInGroups("draft-a", "real-1", "office-gw"),
+    );
+    expect(result.current.changes[0]).toMatchObject({
+      type: "update-router",
+      peerId: "real-1",
+      peerName: "office-gw",
+    });
+  });
+
   it("group renames follow into resource groupIds and router group refs", () => {
     const { result } = setup();
     act(() =>
@@ -738,6 +759,54 @@ describe("getChangeIssue / hasBlockingIssues", () => {
     expect(issue?.label).toBe("Install");
     expect(issue?.message).toContain("must be installed");
     expect(hasBlockingIssues([server])).toBe(true);
+  });
+
+  const placeholderRouter = {
+    id: "r1",
+    type: "create-router",
+    clientId: "new-r1",
+    networkClientId: "new-net",
+    networkName: "Office Network",
+    peerId: "draft-9",
+    peerName: "Office Gateway",
+  } as DraftChange;
+  const installStep = {
+    id: "i9",
+    type: "install-peer",
+    clientId: "draft-9",
+    name: "Office Gateway",
+    kind: "server",
+  } as DraftChange;
+
+  it("says nothing on a router whose peer already has an install step", () => {
+    // Review & Deploy lists that step first as a prerequisite; repeating it on the
+    // router hides the request the row exists to show.
+    expect(
+      getChangeIssue(placeholderRouter, [installStep, placeholderRouter]),
+    ).toBeUndefined();
+    // Still blocked — by the install step itself.
+    expect(hasBlockingIssues([installStep, placeholderRouter])).toBe(true);
+  });
+
+  it("flags an ORPHANED placeholder router (its peer left the canvas)", () => {
+    const issue = getChangeIssue(placeholderRouter, [placeholderRouter]);
+    expect(issue?.label).toBe("Install");
+    expect(issue?.message).toContain("Office Gateway");
+    expect(hasBlockingIssues([placeholderRouter])).toBe(true);
+  });
+
+  it("has no issue once the router points at a real peer", () => {
+    expect(
+      getChangeIssue({
+        id: "r1",
+        type: "create-router",
+        clientId: "new-r1",
+        networkId: "net-1",
+        networkName: "Office Network",
+        peerId: "real-peer-1",
+        peerName: "office-gw",
+      } as DraftChange),
+    ).toBeUndefined();
   });
 
   it("hasBlockingIssues is true when any change carries an issue", () => {

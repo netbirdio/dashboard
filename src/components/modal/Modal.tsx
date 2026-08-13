@@ -33,7 +33,10 @@ const ModalOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed top-0 left-0 bottom-0 right-0 grid z-50  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ",
+      // nb-overlay-inset, not `fixed inset-0`: the assistant panel takes a strip
+      // of the viewport that the dashboard card (and so its modals) must stay out
+      // of. It is the whole viewport when no panel is open.
+      "nb-overlay-inset grid z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ",
       "mx-auto place-items-start overflow-y-auto md:py-16",
       "bg-black/30 dark:bg-black/40 backdrop-blur-sm",
       className,
@@ -129,7 +132,7 @@ const SidebarModalContent = React.forwardRef<
       <ModalPortal>
         <div
           className={cn(
-            "fixed top-0 left-0 bottom-0 right-0 grid z-50  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+            "nb-overlay-inset grid z-50 overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           )}
         >
           <DialogPrimitive.Content
@@ -142,7 +145,11 @@ const SidebarModalContent = React.forwardRef<
             )}
             {...props}
             style={{
-              height: `calc(100vh - ${headerHeight + 100 - 2}px)`,
+              // The overlay inset comes out of the viewport too, or the sidebar
+              // overflows its (now clipped) container while the panel is open.
+              height: `calc(100vh - ${
+                headerHeight + 100 - 2
+              }px - var(--nb-overlay-top) - var(--nb-overlay-bottom))`,
             }}
             onClick={(e) => e.stopPropagation()}
           >

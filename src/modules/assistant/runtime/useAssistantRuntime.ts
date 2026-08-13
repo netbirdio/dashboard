@@ -32,32 +32,43 @@ import type { ChatEvent } from "../assistantApi";
 import {
   AssistantStreamError,
   describeAssistantError,
-  streamChat,
+  streamTurn,
 } from "../assistantApi";
 import loadAssistantConfig from "../assistantConfig";
 import type { AssistantQuestion } from "../components/QuestionCard";
 import type { Redactor } from "../privacy/redaction";
-import { type CatalogEntry, rewriteNames } from "../privacy/rewriteNames";
-import { isClientTool } from "../tools/clientTools";
+import {
+  attributeIdentifiers,
+  type CatalogEntry,
+  rewriteNames,
+} from "../privacy/rewriteNames";
+import { isClientTool, toolLabel } from "../tools/clientTools";
+import {
+  controlCenterActivity,
+  isControlCenterTool,
+} from "../tools/controlCenterTools";
+import { thinkingStatus } from "./thinkingStatus";
+import { beginCanvasTurn } from "../tools/controlCenterTools";
 import { type ToolSession, useToolExecutor } from "../tools/useToolExecutor";
 import type { ChatMessage, LlmContentBlock } from "../types";
 
 /**
- * Swap resource names the user typed for their tokens, everywhere in the
+ * Swap identifiers the user typed for their tokens, everywhere in the
  * transcript. Applied to the wire copy only — the thread keeps what they
  * actually wrote, so the bubble still says "eduards-macbook".
  *
  * Every user turn, not just the newest: the transcript is rebuilt from the
  * thread on each run, so an earlier message would otherwise go back out with
  * its names intact.
+ *
+ * Runs even with an empty catalog: addresses and emails are matched structurally,
+ * so they don't depend on the dashboard having loaded anything.
  */
 function withResolvedNames(
   wire: ChatMessage[],
   catalog: CatalogEntry[],
   redactor: Redactor,
 ): ChatMessage[] {
-  if (catalog.length === 0) return wire;
-
   return wire.map((message) =>
     message.role === "user" && typeof message.content === "string"
       ? {
@@ -66,6 +77,28 @@ function withResolvedNames(
         }
       : message,
   );
+}
+
+/**
+ * The attribution notes for the turn the user just sent, as one line for the
+ * context block — "`{IP_7}` is the ip of peer `{PEER_3}`".
+ *
+ * Read from the message BEFORE the rewrite (that's where the real values still
+ * are), and only the newest one: an old turn's notes are already in the
+ * transcript, and the model has since read the rows anyway.
+ */
+function identifierNotes(
+  wire: ChatMessage[],
+  catalog: CatalogEntry[],
+  redactor: Redactor,
+): string | null {
+  const message = wire[wire.map((m) => m.role).lastIndexOf("user")];
+  if (!message || typeof message.content !== "string") return null;
+
+  const notes = attributeIdentifiers(message.content, catalog, redactor);
+  return notes.length
+    ? `Identifiers in this message: ${notes.join("; ")}.`
+    : null;
 }
 
 /**
@@ -95,8 +128,40 @@ function withPageContext(
  * Safety net on the caller side of the loop. The server caps its own internal
  * doc iterations; this bounds how many times *we* will round-trip on management
  * tools before giving up, so a model that keeps asking can't spin forever.
+ *
+ * High enough for a control-center build: the canvas tools take one action per
+ * call (so each step is its own row the user can watch), and several of those
+ * can share a turn — but a build still spans a handful of turns on top of any
+ * account data the model reads first.
  */
-const MAX_TOOL_TURNS = 8;
+const MAX_TOOL_TURNS = 24;
+
+/**
+ * How often the reasoning status line may change. Slow enough to read a phrase,
+ * fast enough that it tracks what's happening.
+ */
+const REASONING_STATUS_MS = 900;
+
+/**
+ * What the status line says while one tool runs: the same words its activity row
+ * shows. The canvas tools describe their subject, which is far more useful than
+ * the tool's name — and it means the line and the row can't disagree.
+ */
+function stepLabel(
+  name: string,
+  input: unknown,
+  redactor: Redactor,
+): string {
+  if (isControlCenterTool(name)) {
+    const activity = controlCenterActivity(
+      name,
+      input,
+      redactor.restore.bind(redactor),
+    );
+    return [activity.label, activity.detail].filter(Boolean).join(" ");
+  }
+  return toolLabel(name, true);
+}
 
 /** Synthetic tool name used to carry an inline `component` event as a part. */
 export const COMPONENT_PART = "netbird_component";
@@ -190,6 +255,13 @@ class PartBuilder {
     } else {
       this.parts.push({ type: "text", text: delta });
     }
+  }
+
+  /** Whether anything has been written to the thread yet. */
+  hasText(): boolean {
+    return this.parts.some(
+      (part) => part.type === "text" && part.text.trim().length > 0,
+    );
   }
 
   /**
@@ -349,26 +421,56 @@ export function useAssistantRuntime({
   const conversationIdRef = useRef<string>(crypto.randomUUID());
   const componentCountRef = useRef(0);
   const questionCountRef = useRef(0);
+  /*
+    A model id the server rejected as unknown. Remembered rather than simply
+    clearing the selection, so it only suppresses THAT id: re-sending it on every
+    later turn would fail identically, while a model the user picks afterwards
+    must still be honoured.
+  */
+  const rejectedModelRef = useRef<string | null>(null);
 
   const run = useCallback(
     async function* ({
       messages,
       abortSignal,
     }: ChatModelRunOptions): AsyncGenerator<ChatModelRunResult, void> {
+      const raw = toWireMessages(messages);
+      const catalog = nameCatalog?.() ?? [];
       const base = withPageContext(
-        withResolvedNames(
-          toWireMessages(messages),
-          nameCatalog?.() ?? [],
-          session.redactor,
-        ),
-        pageContext?.() ?? null,
+        withResolvedNames(raw, catalog, session.redactor),
+        [
+          identifierNotes(raw, catalog, session.redactor),
+          pageContext?.() ?? null,
+        ]
+          .filter(Boolean)
+          .join("\n\n") || null,
       );
       // Turns generated inside this single run (doc turns + tool round-trips).
       const generated: ChatMessage[] = [];
       const builder = new PartBuilder();
 
+      const status = (next: string | null) => onStatus?.(next);
+
+      /*
+        The status line tracks the reasoning as it streams, so the user reads what
+        the assistant is working on instead of the word "Thinking" for ten
+        seconds. Recomputed at most every REASONING_STATUS_MS — the deltas are
+        token-sized, and a line that changes on every one of them is unreadable.
+      */
+      let reasoning = "";
+      let reasonedAt = 0;
+      const reasoningStatus = (delta: string) => {
+        reasoning += delta;
+        const now = performance.now();
+        if (now - reasonedAt < REASONING_STATUS_MS) return;
+        reasonedAt = now;
+        const line = thinkingStatus(reasoning, session.redactor.restore.bind(session.redactor));
+        status(line ?? "Thinking");
+      };
+      const endCanvasTurn = beginCanvasTurn();
+
       try {
-        onStatus?.("Thinking");
+        status("Thinking");
         // Whatever was on offer belonged to the previous answer — the user has
         // moved on, whether by picking an option, typing, or skipping.
         onQuestion?.(null);
@@ -377,36 +479,48 @@ export function useAssistantRuntime({
           let pendingToolUse: Extract<ChatEvent, { type: "tool_use" }> | null =
             null;
 
-          const stream = streamChat(
+          const stream = streamTurn(
             authedFetch,
             origin,
             {
               messages: [...base, ...generated],
               conversationId: conversationIdRef.current,
-              model,
+              // Suppressed only if the server has already refused this exact id.
+              model: model === rejectedModelRef.current ? undefined : model,
             },
             abortSignal,
+            (dropped) => {
+              rejectedModelRef.current = dropped;
+            },
           );
 
           for await (const event of stream) {
             switch (event.type) {
               case "text":
-                onStatus?.(null);
+                status(null);
                 builder.appendText(event.delta);
                 yield builder.snapshot();
                 break;
 
+              /*
+                Reasoning drives the status line and nothing else. It is the
+                model talking to itself ("I should ask the user to clarify…"),
+                which belongs in a debugging view, not in a chat panel — the one
+                short sentence above the steps is the whole of what the user sees
+                of it. Nothing is appended to the thread, so there is no
+                transcript of it to expand, either.
+              */
               case "reasoning":
-                onStatus?.("Thinking");
-                builder.appendReasoning(event.delta);
-                yield builder.snapshot();
+                reasoningStatus(event.delta);
                 break;
 
               case "tool_activity":
                 if (event.phase === "start") {
+                  status(toolLabel(event.name, true));
                   builder.startTool(event.id, event.name, event.input);
                 } else {
-                  onStatus?.("Thinking");
+                  reasoning = "";
+                  status("Working");
                   builder.finishTool(
                     event.id,
                     event.summary ?? "",
@@ -437,6 +551,19 @@ export function useAssistantRuntime({
               }
 
               case "question":
+                /*
+                  The card is dismissible and holds the only copy of the
+                  question, so a turn that shows one without saying anything
+                  leaves the user with an empty composer and no way back to it.
+                  The server refuses that (see askGate); this is the net under
+                  it — write the question into the thread so it survives being
+                  dismissed. Skipped when the model already said something, to
+                  avoid printing the same question twice.
+                */
+                if (!builder.hasText()) {
+                  builder.appendText(event.question);
+                  yield builder.snapshot();
+                }
                 onQuestion?.({
                   id: `q${questionCountRef.current++}`,
                   title: event.question,
@@ -541,6 +668,10 @@ export function useAssistantRuntime({
             }
 
             builder.startTool(block.id, block.name, block.input);
+            // The words the step's own row shows — canvas steps name their
+            // subject ("Connect 'Devs' to 'Dev Database Access'"), so the line
+            // above them says the same thing rather than "Thinking".
+            status(stepLabel(block.name, block.input, session.redactor));
             yield builder.snapshot();
 
             const outcome = await executeTool(
@@ -551,7 +682,8 @@ export function useAssistantRuntime({
             );
 
             builder.finishTool(block.id, outcome.content, outcome.isError);
-            onStatus?.("Thinking");
+            reasoning = "";
+            status("Working");
             yield builder.snapshot();
 
             toolResults.push({
@@ -589,7 +721,10 @@ export function useAssistantRuntime({
         };
       } finally {
         // Covers every exit: answered, errored, aborted or out of turns.
-        onStatus?.(null);
+        status(null);
+        // Releases the canvas overlay — including on the user's Cancel, which
+        // aborts the generator and lands here.
+        endCanvasTurn();
       }
     },
     [

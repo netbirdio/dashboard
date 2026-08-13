@@ -205,7 +205,7 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                   onDiscard={() => removeWithCascade(change)}
                   previewRemove={previewRemove}
                   onResolveIssue={
-                    getChangeIssue(change) ? resolveIssue : undefined
+                    getChangeIssue(change, changes) ? resolveIssue : undefined
                   }
                   disabled={isDeploying}
                   status={deployStatus[change.id]}

@@ -23,6 +23,7 @@ import {
   getChangeApiCall,
   getChangeIssue,
   getChangeKind,
+  useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   buildChangeRequest,
@@ -67,6 +68,7 @@ export const ChangeAccordionItem = ({
   disabled,
   status,
 }: Props) => {
+  const { changes } = useDraftChangeset();
   const apiCall = getChangeApiCall(change);
   // Clicking the URL copies the full request as a curl command (API-docs
   // format) with a <TOKEN> placeholder.
@@ -100,7 +102,9 @@ export const ChangeAccordionItem = ({
   const showStat = stat.additions + stat.deletions > 0;
   // A blocking issue (e.g. a resource with no network) replaces the
   // diffstat/kind badge with an issue badge and rings the row.
-  const issue = getChangeIssue(change);
+  // Passed the whole set: an issue that another change already explains (a router
+  // waiting on a placeholder peer's install step) isn't repeated here.
+  const issue = getChangeIssue(change, changes);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const { confirm } = useDialog();

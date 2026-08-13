@@ -97,9 +97,27 @@ export function useDraftNodeCreation() {
   // modal, only when the user actually installs. The pending install itself
   // IS tracked so Review & Deploy tells the user this step is on them.
   const addPeerPlaceholder = useCallback(
-    (kind: PeerPlaceholderKind, position?: XYPosition) => {
+    (
+      kind: PeerPlaceholderKind,
+      position?: XYPosition,
+      // Names it at birth. Renaming right after creating goes through a
+      // different setter than the create (React state vs the flow store), so the
+      // patch could land before the node did and be silently dropped — leaving
+      // the card reading "Server" while the changeset said "Minecraft Server".
+      preferredName?: string,
+    ) => {
       const nodeId = `peer-draft-${uid()}`;
-      const name = getNextPlaceholderName(kind, reactFlow.getNodes());
+      const nodes = reactFlow.getNodes();
+      const wanted = preferredName?.trim();
+      const taken = new Set(
+        nodes
+          .map((n) => (n.data as { placeholderName?: string })?.placeholderName)
+          .filter(Boolean),
+      );
+      const name =
+        wanted && !taken.has(wanted)
+          ? wanted
+          : getNextPlaceholderName(kind, nodes);
       placeNode(
         {
           id: nodeId,
@@ -124,22 +142,33 @@ export function useDraftNodeCreation() {
   // without a source and a destination isn't deployable; it only enters the
   // changeset once connects give it both sides (see updateDraftPolicy).
   const addBlankPolicy = useCallback(
-    (position?: XYPosition) => {
-      const name = getNextPolicyName(policies, reactFlow.getNodes());
+    (
+      position?: XYPosition,
+      // Names it at birth (the assistant always does). Naming a policy after
+      // creating it means a second write against state the first hasn't
+      // committed — and a node still showing "Policy (1)" if that races.
+      preset?: { name?: string; description?: string; bidirectional?: boolean },
+    ) => {
+      const name =
+        preset?.name?.trim() || getNextPolicyName(policies, reactFlow.getNodes());
+      const description = preset?.description ?? "";
       const clientId = `new-${uid()}`;
       const policy: Policy = {
         id: clientId,
         name,
-        description: "",
+        description,
         enabled: true,
         rules: [
           {
             name,
-            description: "",
+            description,
             enabled: true,
             sources: [],
             destinations: [],
-            bidirectional: true,
+            // Bidirectional is the UI's default; a caller that knows the
+            // direction says so here rather than editing it a step later, where
+            // the canvas would show two lines it then has to take back.
+            bidirectional: preset?.bidirectional ?? true,
             action: "accept",
             protocol: "all",
             ports: [],
@@ -206,7 +235,12 @@ export function useDraftNodeCreation() {
   // editor opens on node click; the address stays a dimmed placeholder until
   // set.
   const addDraftResource = useCallback(
-    (position?: XYPosition) => {
+    (
+      position?: XYPosition,
+      // Same reason as addPeerPlaceholder: born with its details rather than
+      // stamped with them a tick later.
+      preset?: { name?: string; address?: string; description?: string },
+    ) => {
       const takenResources = new Set<string>();
       networkResources?.forEach((r) => r.name && takenResources.add(r.name));
       reactFlow.getNodes().forEach((n) => {
@@ -214,7 +248,11 @@ export function useDraftNodeCreation() {
           ?.resource?.name;
         if (resourceName) takenResources.add(resourceName);
       });
-      const name = getNextUniqueName("Resource", takenResources);
+      const wanted = preset?.name?.trim();
+      const name =
+        wanted && !takenResources.has(wanted)
+          ? wanted
+          : getNextUniqueName("Resource", takenResources);
 
       const nodeId = `resource-new-${uid()}`;
       placeNode(
@@ -223,7 +261,11 @@ export function useDraftNodeCreation() {
           type: NodeType.ResourceNode,
           position: { x: 0, y: 0 },
           data: {
-            resource: { name },
+            resource: {
+              name,
+              ...(preset?.address ? { address: preset.address } : {}),
+              ...(preset?.description ? { description: preset.description } : {}),
+            },
             enabled: true,
             showHandles: true,
           },

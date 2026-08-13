@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useAgentBusy } from "@/modules/control-center/agent/canvasAgentStore";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type ShortcutMap = Record<string, () => void>;
@@ -19,19 +20,22 @@ export function isInputFocused(): boolean {
 }
 
 /**
- * Draft-only keyboard shortcuts; ignored while an input is focused. Reads the
- * map through a ref so callers needn't memoize it.
+ * Draft-only keyboard shortcuts; ignored while an input is focused, and while the
+ * assistant is acting on the canvas — the blocking overlay stops the pointer, but
+ * a keydown listener lives on `window` and would happily undo or re-arrange
+ * underneath it.
  */
 export function useControlCenterShortcuts(
   shortcuts: ShortcutMap,
   enabled: boolean = true,
 ) {
   const { isDraft } = useDraftMode();
+  const agentBusy = useAgentBusy();
   const shortcutsRef = useRef(shortcuts);
   shortcutsRef.current = shortcuts;
 
   useEffect(() => {
-    if (!isDraft || !enabled) return;
+    if (!isDraft || !enabled || agentBusy) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isInputFocused()) return;
@@ -67,5 +71,5 @@ export function useControlCenterShortcuts(
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isDraft, enabled]);
+  }, [isDraft, enabled, agentBusy]);
 }

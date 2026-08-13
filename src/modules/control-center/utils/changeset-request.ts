@@ -78,6 +78,13 @@ export interface RequestResolvers {
   // A single group ref (id or draft-group name) → id for resource/router groups
   // and SSH authorized_groups keys.
   groupIdForRef: (ref: string) => string;
+  /**
+   * A router's peer ref → its wire value. A real id passes through; a draft
+   * placeholder's id ("draft-…") has no wire value yet, so the PREVIEW renders a
+   * `{office_router_peer_id}` token — a curl carrying a draft id can't be run,
+   * and printing one invites the reader to try.
+   */
+  peerIdForRef: (ref: string, label?: string) => string;
   // Address normalizer (deploy and preview both apply normalizeHostCIDR).
   normalizeAddress: (address: string) => string;
   // Resource id → its type. The group POST/PUT wants resources as {id, type}
@@ -240,7 +247,7 @@ export function routerCreateBody(
 ) {
   return {
     ...(change.peerId
-      ? { peer: change.peerId }
+      ? { peer: r.peerIdForRef(change.peerId, change.peerName) }
       : { peer_groups: [r.groupIdForRef(change.groupId ?? "")] }),
     metric: change.metric ?? 9999,
     masquerade: change.masquerade ?? true,
@@ -256,7 +263,7 @@ export function routerUpdateBody(
 ) {
   return {
     ...(change.peerId
-      ? { peer: change.peerId }
+      ? { peer: r.peerIdForRef(change.peerId, change.peerName) }
       : { peer_groups: [r.groupIdForRef(change.groupId ?? "")] }),
     metric: change.metric ?? 9999,
     masquerade: change.masquerade ?? true,
@@ -337,6 +344,8 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
     resolveNetworkId: (change) =>
       change.networkId ?? idPlaceholder("NETWORK", change.networkName),
     groupIdForRef: resolveGroupRef,
+    peerIdForRef: (ref, label) =>
+      ref.startsWith("draft-") ? idPlaceholder("PEER", label) : ref,
     normalizeAddress: (address) => normalizeHostCIDR(address),
     resourceType: (id) =>
       live.networkResources?.find((res) => res.id === id)?.type,

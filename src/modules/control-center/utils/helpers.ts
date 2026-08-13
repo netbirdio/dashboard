@@ -365,6 +365,22 @@ export const kindHasBoundGroup = (kind?: string) =>
 // in policies and the policy modal's peer selector before they exist in the
 // API. A user-device select node with a peer chosen is that real peer, not
 // a placeholder anymore.
+// A pseudo-peer minted by getPlaceholderPeer: its id is a draft id and its `os`
+// carries the placeholder kind. Selectors and the changeset both need to tell
+// one from a real peer — a draft id must never reach the API.
+export const isPlaceholderPeer = (peer?: {
+  id?: string;
+  os?: string;
+}): boolean =>
+  !!peer &&
+  (isDraftPeerId(peer.id) || !!peer.os?.startsWith(PLACEHOLDER_OS_PREFIX));
+
+export const PLACEHOLDER_OS_PREFIX = "draft-";
+
+/** True for a placeholder peer's canvas-side id ("draft-<uuid>"). */
+export const isDraftPeerId = (id?: string): boolean =>
+  !!id && id.startsWith("draft-");
+
 export const getPlaceholderPeer = (node?: CanvasNode): Peer | undefined => {
   const data = node?.data as
     | { placeholderKind?: string; placeholderName?: string; peer?: Peer }

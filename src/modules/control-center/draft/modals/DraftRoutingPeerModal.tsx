@@ -3,6 +3,8 @@ import { useReactFlow } from "@xyflow/react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { Network, NetworkRouter } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
+import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
@@ -36,24 +38,42 @@ export const DraftRoutingPeerModal = () => {
           c.id === routingPeerModal.editChangeId && c.type === "create-router",
       )
     : undefined;
-  // Prefill for edit mode — a NetworkRouter shaped from the draft change.
-  // Placeholder-peer routers ("draft-…" ids) skip the peer prefill: the
-  // modal would try to fetch them from the API. An API router preset
-  // (read-only view) is passed through as-is.
+  // Prefill for edit mode — a NetworkRouter shaped from the draft change. An API
+  // router preset (read-only view) is passed through as-is.
   const routerPreset: NetworkRouter | undefined =
     editChange?.type === "create-router"
       ? {
           id: editChange.clientId,
-          peer:
-            editChange.peerId && !editChange.peerId.startsWith("draft-")
-              ? editChange.peerId
-              : "",
+          peer: editChange.peerId ?? "",
           peer_groups: editChange.groupId ? [editChange.groupId] : [],
           metric: editChange.metric ?? 9999,
           masquerade: editChange.masquerade ?? true,
           enabled: editChange.enabled ?? true,
         }
       : routingPeerModal?.router;
+
+  /**
+   * The draft's placeholder peers, offered alongside the account's own.
+   *
+   * An office router the user is about to install is the most natural routing
+   * peer there is, and before this they had to install it first, then come back
+   * — so a draft that described the whole network couldn't express the one thing
+   * that makes it work. The router is recorded against the placeholder's draft
+   * id; its own install-peer step blocks the deploy until the peer exists, and
+   * installing it rewrites the router with the real id (useDraftPeerUpgrade).
+   */
+  const placeholderPeers = React.useMemo(
+    () =>
+      isDraft
+        ? reactFlow
+            .getNodes()
+            .map((n) => getPlaceholderPeer(n))
+            .filter((p): p is Peer => !!p)
+        : [],
+    // Read once per modal open: the canvas can't change while it's up.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isDraft, !!routingPeerModal],
+  );
 
   // An existing API router picked from a routing-peers dropdown, with no draft
   // create-router behind it. In LIVE mode the edit hits the real network via
@@ -98,6 +118,7 @@ export const DraftRoutingPeerModal = () => {
             network={network as Network}
             router={routingPeerModal.router}
             useSave={false}
+            extraPeers={placeholderPeers}
             onSaved={(result) => {
               if (network?.id && routingPeerModal.router) {
                 updateRouterFromSelection({
@@ -123,6 +144,7 @@ export const DraftRoutingPeerModal = () => {
             network={{ id: "", name: network?.name ?? "" } as Network}
             router={routerPreset}
             useSave={false}
+            extraPeers={placeholderPeers}
             onSaved={(result) => {
               if (networkNodeId) {
                 // Editing replaces the change (same dedup rules re-apply).

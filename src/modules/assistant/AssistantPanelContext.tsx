@@ -16,6 +16,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -44,6 +45,14 @@ export const PANEL_WIDTH = 520;
 
 /** Gap around the dashboard card when the panel is open, px. */
 export const CARD_INSET = 18;
+
+/**
+ * The revealed card's own outline (`border` + `rounded-2xl` in DashboardLayout).
+ * Overlays inset themselves by this so they stop at the card's inner edge and
+ * leave its border visible.
+ */
+export const CARD_BORDER = 1;
+export const CARD_RADIUS = "1rem";
 
 /**
  * Padding the chat's own rows carry, px — the header, the message viewport and
@@ -142,6 +151,37 @@ export function AssistantPanelProvider({
       inset: reveal ? CARD_INSET : 0,
     };
   }, [open, setOpen, toggle, overlay, reachable]);
+
+  /**
+   * Publishes the card's box as the `--nb-overlay-*` inset (see globals.css).
+   * Full-screen overlays are portaled to `body`, so they can't inherit the card's
+   * margins — without this a modal would cover the panel it was opened next to.
+   *
+   * Insets land on the card's INNER edge (`CARD_BORDER` past its margin, with the
+   * radius shrunk to match), so the card keeps drawing its own outline around the
+   * overlay instead of the overlay painting over it.
+   */
+  useEffect(() => {
+    const root = document.documentElement;
+    const edge = CARD_INSET + CARD_BORDER;
+    const box = value.reveal
+      ? {
+          top: `${edge}px`,
+          bottom: `${edge}px`,
+          left: PANEL_ON_LEFT ? `${PANEL_WIDTH + CARD_BORDER}px` : `${edge}px`,
+          right: PANEL_ON_LEFT ? `${edge}px` : `${PANEL_WIDTH + CARD_BORDER}px`,
+          radius: `calc(${CARD_RADIUS} - ${CARD_BORDER}px)`,
+        }
+      : {
+          top: "0px",
+          bottom: "0px",
+          left: "0px",
+          right: "0px",
+          radius: "0px",
+        };
+    for (const [edge, px] of Object.entries(box))
+      root.style.setProperty(`--nb-overlay-${edge}`, px);
+  }, [value.reveal]);
 
   return (
     <AssistantPanelContext.Provider value={value}>

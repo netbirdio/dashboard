@@ -307,13 +307,17 @@ export function AssistantPanel() {
     setChats((prev) => prev.filter((chat) => chat.id !== id));
   }, []);
 
-  // Resolved the first time the panel is actually shown — it's always mounted,
-  // so doing this eagerly would cost every page load. Failure is survivable:
-  // with no id the server picks the model itself.
-  const loadedRef = useRef(false);
+  /*
+    Resolved when the panel is shown — it's always mounted, so doing this eagerly
+    would cost every page load. Failure is survivable: with no id the server picks
+    the model itself.
+
+    On every open, not just the first: the panel outlives deployments, and a
+    once-only fetch left it naming a model the server had since dropped — every
+    send then failed with "unknown model" until the page was reloaded.
+  */
   useEffect(() => {
-    if (!open || loadedRef.current) return;
-    loadedRef.current = true;
+    if (!open) return;
     let cancelled = false;
 
     (async () => {

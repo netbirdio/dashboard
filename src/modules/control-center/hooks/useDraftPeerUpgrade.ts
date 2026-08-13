@@ -134,8 +134,11 @@ export function usePlaceholderUpgrade() {
 
       // Group changes (create/update) carrying the placeholder's draft id as
       // a member get the real peer id, so deploy adds the installed peer.
+      // ...and so do routers routing THROUGH it (the routing-peer modal accepts a
+      // placeholder): the name comes along so the frame's row stops reading as
+      // the placeholder it no longer is.
       withOldIds.forEach((u) =>
-        replacePeerIdInGroups(u.oldId, u.peer.id as string),
+        replacePeerIdInGroups(u.oldId, u.peer.id as string, u.peer.name),
       );
       reactFlow.setEdges((prev) =>
         prev.map((e) => {

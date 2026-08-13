@@ -13,6 +13,10 @@
  * progress events.
  */
 import type { ResourceType } from "../privacy/redaction";
+import {
+  CC_TOOL_LABELS,
+  isControlCenterTool,
+} from "./controlCenterTools";
 
 export interface ClientTool {
   /** Management API path, relative to `<apiOrigin>/api`. */
@@ -106,8 +110,45 @@ export function pageHref(input: Record<string, unknown>): string | null {
   return PAGES[page]?.(input) ?? null;
 }
 
+/** The token kind each detail page's `id` must be. */
+const DETAIL_ID_TYPE: Record<string, string> = {
+  peer: "peer",
+  group: "group",
+  network: "network",
+  user: "user",
+};
+
+/** `{PEER_3}` / `PEER_3` → "peer". Real ids carry no `_<n>` suffix, so they don't match. */
+const TOKEN_TYPE = /^\{?([a-z_]+)_\d+\}?$/i;
+
+/**
+ * Why a navigation would be wrong before it moves the user's screen.
+ *
+ * The case this exists for: a hostname or address the user typed is a token of
+ * its own kind (`{DNS_1}`, `{IP_7}`), and passing one as a peer id resolves to a
+ * hostname, which is not an id — the peer page then says "peer not found" and the
+ * model has to work out why from a dead end. Naming the mistake turns two wasted
+ * turns into one, and the model's next move is the right one.
+ */
+export function pageIdMismatch(input: Record<string, unknown>): string | null {
+  const page = typeof input.page === "string" ? input.page : "";
+  const expected = DETAIL_ID_TYPE[page];
+  const id = typeof input.id === "string" ? input.id.trim() : "";
+  if (!expected || !id) return null;
+
+  const type = TOKEN_TYPE.exec(id)?.[1]?.toLowerCase();
+  if (!type || type === expected) return null;
+
+  return (
+    `${id} is a ${type} value, not a ${expected} id — didn't navigate. ` +
+    `List the ${expected}s, find the one carrying ${id}, and open that ${expected}'s own token.`
+  );
+}
+
 export const isClientTool = (name: string): boolean =>
-  name in CLIENT_TOOLS || name === OPEN_PAGE_TOOL;
+  name in CLIENT_TOOLS ||
+  name === OPEN_PAGE_TOOL ||
+  isControlCenterTool(name);
 
 /**
  * Server-run tool that asks the user a question. Its outcome is the card above
@@ -155,6 +196,8 @@ export const TOOL_LABELS: Record<string, { running: string; done: string }> = {
   },
   render_component: { running: "Preparing a view", done: "Prepared a view" },
   [OPEN_PAGE_TOOL]: { running: "Navigating to", done: "Navigated to" },
+  // The control-center canvas tools — they draw rather than read.
+  ...CC_TOOL_LABELS,
   [ASK_USER_TOOL]: { running: "Asking a question", done: "Asked a question" },
 };
 

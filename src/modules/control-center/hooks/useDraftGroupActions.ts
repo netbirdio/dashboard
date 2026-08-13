@@ -81,8 +81,13 @@ export function useDraftGroupActions() {
 
   // Drops a fresh draft group ("Group", "Group (1)", …) and records
   // the create change. The group panel opens on click, not on drop.
+  //
+  // `preferredName` names the group AT BIRTH. Creating it and renaming it after
+  // the fact is a different thing entirely: two changeset writes, the second one
+  // reading state the first hasn't committed yet — which is how a group ended up
+  // deploying as one name while the canvas still showed the generated one.
   const addNewGroup = useCallback(
-    (position: XYPosition) => {
+    (position: XYPosition, preferredName?: string) => {
       const taken = new Set<string>();
       groups?.forEach((g) => taken.add(g.name));
       reactFlow
@@ -90,7 +95,9 @@ export function useDraftGroupActions() {
         .forEach((n) => getNodeGroup(n)?.name && taken.add(getNodeGroup(n)!.name));
       changes.forEach((c) => c.type === "create-group" && taken.add(c.name));
 
-      const name = getNextNewGroupName(taken);
+      const wanted = preferredName?.trim();
+      const name =
+        wanted && !taken.has(wanted) ? wanted : getNextNewGroupName(taken);
       const nodeId = `group-new-${uid()}`;
       setNodes((prev) =>
         prev.concat({

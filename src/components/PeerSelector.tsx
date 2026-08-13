@@ -14,6 +14,10 @@ import * as React from "react";
 import { memo, useEffect, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
 import { Peer } from "@/interfaces/Peer";
+import {
+  getIpPlaceholderFromRange,
+  isPlaceholderPeer,
+} from "@/modules/control-center/utils/helpers";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
 const MapPinIcon = memo(() => <MapPin size={12} />);
@@ -24,21 +28,46 @@ interface MultiSelectProps {
   onChange: React.Dispatch<React.SetStateAction<Peer | undefined>>;
   excludedPeers?: string[];
   disabled?: boolean;
+  /**
+   * Peers that don't exist in the API yet — the control center's draft
+   * placeholders. Listed above the real ones and exempt from the version gate:
+   * their version is unknown until they're installed, so gating on it would make
+   * every placeholder unselectable.
+   */
+  extraPeers?: Peer[];
 }
 
 const searchPredicate = (item: Peer, query: string) => {
   const lowerCaseQuery = query.toLowerCase();
   if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
-  if (item.hostname.toLowerCase().includes(lowerCaseQuery)) return true;
+  if (item.hostname?.toLowerCase().includes(lowerCaseQuery)) return true;
   if (item.ip.toLowerCase().startsWith(lowerCaseQuery)) return true;
   return !!item.ipv6?.toLowerCase().startsWith(lowerCaseQuery);
 };
+
+/**
+ * What a peer shows in the IP column. A placeholder has no address until it
+ * registers, so it shows the masked range its address will come from — the same
+ * `100.x.x.x` its canvas card shows (see placeholderIp in ControlCenterContext),
+ * which reads as "an address is coming" rather than as an error.
+ */
+const addressOf = (peer: Peer) =>
+  isPlaceholderPeer(peer) ? getIpPlaceholderFromRange() : peer.ip;
+
+/**
+ * A placeholder has no version to compare — it isn't installed yet, which is the
+ * whole point of picking one here. The install flow is where a too-old agent
+ * shows up, not this list.
+ */
+const supportsRouting = (peer: Peer) =>
+  isPlaceholderPeer(peer) || isRoutingPeerSupported(peer.version, peer.os);
 
 export function PeerSelector({
   onChange,
   value,
   excludedPeers,
   disabled = false,
+  extraPeers,
 }: MultiSelectProps) {
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
@@ -50,12 +79,16 @@ export function PeerSelector({
     { filter: true, debounce: 150 },
   );
 
+  // Serialised so the effect below reacts to a placeholder being renamed or
+  // added, without depending on a fresh array identity each render.
+  const extraKey = (extraPeers ?? []).map((p) => `${p.id}:${p.name}`).join("|");
+
   // Update unfiltered items when peers change
   useEffect(() => {
-    if (!peers) return;
+    if (!peers && !extraPeers?.length) return;
 
     // Sort
-    let options = sortBy([...peers], "name") as Peer[];
+    let options = sortBy([...(peers ?? [])], "name") as Peer[];
 
     // Filter out excluded peers
     if (excludedPeers) {
@@ -65,9 +98,13 @@ export function PeerSelector({
       });
     }
 
-    setUnfilteredItems(unionBy(options, unfilteredItems, "id"));
+    // Draft placeholders first: they're what the user just drew, and the API
+    // list can be long.
+    setUnfilteredItems(
+      unionBy([...(extraPeers ?? []), ...options], unfilteredItems, "id"),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [peers]);
+  }, [peers, extraKey]);
 
   const togglePeer = (peer: Peer) => {
     const isSelected = value && value.id == peer.id;
@@ -125,7 +162,7 @@ export function PeerSelector({
                     "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-1 font-mono text-[10px]"
                   }
                 >
-                  {value.ip}
+                  {addressOf(value)}
                 </div>
               </div>
             ) : (
@@ -172,18 +209,11 @@ export function PeerSelector({
               items={filteredItems}
               estimatedItemHeight={37}
               onSelect={(item) => {
-                const isSupported = isRoutingPeerSupported(
-                  item.version,
-                  item.os,
-                );
-                if (!isSupported) return;
+                if (!supportsRouting(item)) return;
                 togglePeer(item);
               }}
               renderItem={(option) => {
-                const isSupported = isRoutingPeerSupported(
-                  option.version,
-                  option.os,
-                );
+                const isSupported = supportsRouting(option);
                 return (
                   <FullTooltip
                     disabled={isSupported}
@@ -238,7 +268,7 @@ export function PeerSelector({
                         !isSupported && "opacity-50",
                       )}
                     >
-                      {option.ip}
+                      {addressOf(option)}
                     </div>
                   </FullTooltip>
                 );

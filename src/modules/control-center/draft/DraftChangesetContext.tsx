@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
+import { isDraftPeerId } from "@/modules/control-center/utils/helpers";
 
 // Every draft action is recorded as a change describing the API call needed on
 // deploy. Nothing hits the API until the changeset is deployed. Changes are
@@ -126,9 +127,10 @@ export interface CreateResourceChange {
   enabled?: boolean;
 }
 
-// Routers referencing a placeholder peer stay OUT of the changeset (the
-// routing edge carries the intent) until the peer installs — the upgrade
-// sweep records them with the real id.
+// A router may reference a placeholder peer (picked in the routing-peer modal):
+// the change is recorded against the draft id and carries a blocking "Install"
+// issue until the peer exists, at which point the upgrade sweep rewrites it with
+// the real id (replacePeerIdInGroups).
 export interface CreateRouterChange {
   id: string;
   type: "create-router";
@@ -453,7 +455,15 @@ export type ChangeIssue = {
   waiting?: boolean;
 };
 
-export const getChangeIssue = (change: DraftChange): ChangeIssue | undefined => {
+export const getChangeIssue = (
+  change: DraftChange,
+  /**
+   * The rest of the changeset, when the caller has it. Only used to avoid saying
+   * the same thing twice: a router waiting on a placeholder is explained by that
+   * peer's own install-peer step, which Review & Deploy already lists first.
+   */
+  changes?: DraftChange[],
+): ChangeIssue | undefined => {
   if (
     change.type === "create-resource" &&
     !change.networkId &&
@@ -462,6 +472,29 @@ export const getChangeIssue = (change: DraftChange): ChangeIssue | undefined => 
     return {
       label: "No Network",
       message: `Resource “${change.name}” has no network assigned. Assign it to a network before deploying.`,
+    };
+  }
+  /*
+    A router pointing at a placeholder peer.
+
+    Normally the peer's own install-peer change is what blocks the deploy, and it
+    is listed FIRST as a prerequisite — so the router row says nothing and shows
+    its request like any other change. This is only the orphan guard: the
+    placeholder can be removed from the canvas, which drops that install step
+    while the router it routes for stays, and a "draft-…" id must never be POSTed.
+  */
+  if (
+    (change.type === "create-router" || change.type === "update-router") &&
+    isDraftPeerId(change.peerId) &&
+    !changes?.some(
+      (c) => c.type === "install-peer" && c.clientId === change.peerId,
+    )
+  ) {
+    return {
+      label: "Install",
+      message: `Routing peer “${
+        change.peerName ?? "peer"
+      }” must be installed before ${change.networkName} can be deployed, and it is no longer on the canvas — re-add it, or remove this routing peer.`,
     };
   }
   if (change.type === "install-peer") {
@@ -487,7 +520,7 @@ export const getChangeIssue = (change: DraftChange): ChangeIssue | undefined => 
 
 // True when any change has a blocking issue — Review & Deploy disables deploy.
 export const hasBlockingIssues = (changes: DraftChange[]): boolean =>
-  changes.some((c) => getChangeIssue(c) !== undefined);
+  changes.some((c) => getChangeIssue(c, changes) !== undefined);
 
 // Canonical CRUD dependency order the deploy runs in (a network before its
 // resources, resources before routers/policies, deletes last). Shared by
@@ -1085,7 +1118,12 @@ export function DraftChangesetProvider({
     (oldId: string, newId: string, newName?: string) => {
       setChanges((prev) => {
         const mapped = prev.map((c) => {
-          if (c.type === "create-router" && c.peerId === oldId) {
+          // Routers too: a placeholder can BE the routing peer (picked in the
+          // routing-peer modal), on a draft network or an existing one.
+          if (
+            (c.type === "create-router" || c.type === "update-router") &&
+            c.peerId === oldId
+          ) {
             return { ...c, peerId: newId, peerName: newName ?? c.peerName };
           }
           if (c.type !== "create-group" && c.type !== "update-group") return c;

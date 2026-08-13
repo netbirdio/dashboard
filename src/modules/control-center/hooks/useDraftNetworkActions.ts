@@ -6,6 +6,7 @@ import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { pulseNodes } from "@/modules/control-center/utils/node-pulse";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
@@ -69,7 +70,6 @@ export function useDraftNetworkActions() {
       // fling the camera to a strange spot. Adding a resource here should just
       // drop it into the grid, exactly like normal draft mode outside a frame.
       if (drillDownNetworkNodeId) return;
-      const PULSE_MS = 2200;
       window.setTimeout(() => {
         reactFlow.fitView({
           nodes: [{ id: networkNodeId }],
@@ -77,27 +77,7 @@ export function useDraftNetworkActions() {
           padding: 0.35,
           maxZoom: 1,
         });
-        reactFlow.setNodes((prev) =>
-          prev.map((n) =>
-            n.id === networkNodeId
-              ? { ...n, className: `${n.className ?? ""} cc-node-pulse`.trim() }
-              : n,
-          ),
-        );
-        window.setTimeout(() => {
-          reactFlow.setNodes((prev) =>
-            prev.map((n) =>
-              n.id === networkNodeId && n.className?.includes("cc-node-pulse")
-                ? {
-                    ...n,
-                    className:
-                      n.className.replace(/\s*cc-node-pulse/g, "").trim() ||
-                      undefined,
-                  }
-                : n,
-            ),
-          );
-        }, PULSE_MS);
+        pulseNodes(reactFlow, [networkNodeId]);
       }, 180);
     },
     [reactFlow, drillDownNetworkNodeId],
@@ -136,7 +116,8 @@ export function useDraftNetworkActions() {
       // Track once it has an address. Without a network it still enters the
       // changeset — but as a blocking ISSUE (getChangeIssue → "No Network")
       // that the user resolves in Review & Deploy — instead of being silently
-      // withheld. Only an address-less resource stays off the changeset.
+      // withheld. Only an address-less resource stays off the changeset: a
+      // resource IS its address, so there is nothing to deploy without one.
       if (!resource.address) {
         untrackResource(resource.id);
         return;

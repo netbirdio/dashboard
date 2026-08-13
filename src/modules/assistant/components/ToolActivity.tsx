@@ -18,6 +18,10 @@ import { AlertCircle, Check, ChevronRight, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useRestorePlaceholders } from "../privacy/RedactorContext";
 import { OPEN_PAGE_TOOL, pageHref, toolLabel } from "../tools/clientTools";
+import {
+  controlCenterActivity,
+  isControlCenterTool,
+} from "../tools/controlCenterTools";
 
 /**
  * The fields a row needs. Narrower than `ToolCallMessagePartProps` on purpose:
@@ -39,13 +43,24 @@ export interface ToolActivityProps {
  *
  * `open_page` is the exception: its input names a page in the model's
  * vocabulary ("users"), and the useful thing to show is where that actually
- * went — the route the dashboard pushed.
+ * went — the route the dashboard pushed. Its id is restored BEFORE the href is
+ * built: `pageHref` percent-encodes it, and `%7BPEER_3%7D` is past restoring.
  */
-function subjectOf(toolName: string, args: unknown): string | null {
+function subjectOf(
+  toolName: string,
+  args: unknown,
+  restore: (text: string) => string,
+): string | null {
   if (!args || typeof args !== "object") return null;
 
   if (toolName === OPEN_PAGE_TOOL) {
-    return pageHref(args as Record<string, unknown>);
+    const input = Object.fromEntries(
+      Object.entries(args as Record<string, unknown>).map(([key, value]) => [
+        key,
+        typeof value === "string" ? restore(value) : value,
+      ]),
+    );
+    return pageHref(input);
   }
 
   for (const value of Object.values(args as Record<string, unknown>)) {
@@ -94,7 +109,15 @@ export function ToolActivity({
   const outcome = formatResult(result);
   // Nothing to reveal on a no-argument call that hasn't returned yet.
   const expandable = Boolean(request || outcome);
-  const subject = subjectOf(toolName, args);
+  /*
+    The canvas tools name their own move and their own subject — the generic
+    first-string rule surfaced raw enums ('new_empty') and half a connection.
+    Everything else keeps that rule, quoted here.
+  */
+  const activity = isControlCenterTool(toolName)
+    ? controlCenterActivity(toolName, args, restore)
+    : null;
+  const subject = activity ? null : subjectOf(toolName, args, restore);
 
   return (
     <div className="text-chat">
@@ -131,13 +154,17 @@ export function ToolActivity({
               "animate-shimmer bg-gradient-to-r from-nb-gray-500 via-nb-gray-100 to-nb-gray-500 bg-[length:200%_100%] bg-clip-text text-transparent",
           )}
         >
-          {toolLabel(toolName, running)}
+          {activity ? activity.label : toolLabel(toolName, running)}
           {running ? "…" : ""}
         </span>
 
         {/* Ticked rather than chipped, and in the row's own colour and size:
             it's part of the same sentence as the label, not an annotation on
             it. A filled badge gave the argument more weight than the step. */}
+        {activity?.detail && (
+          <span className="min-w-0 truncate">{activity.detail}</span>
+        )}
+
         {subject && (
           <span className="min-w-0 truncate">{`'${restore(subject)}'`}</span>
         )}
