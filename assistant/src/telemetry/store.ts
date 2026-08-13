@@ -295,14 +295,34 @@ export async function getSessionStats(): Promise<SessionStats> {
   };
 }
 
-/** Readiness probe helper — cheap connectivity check. */
+// `/readyz` is unauthenticated and un-rate-limited, so an uncached check would
+// let anyone turn one HTTP request into one DB round trip and starve the pool
+// the chat path needs. Probes run every few seconds; a result this stale reads
+// identically to them. Concurrent callers share the in-flight check so a flood
+// can't stampede past the cache either.
+const DB_READY_TTL_MS = 2000;
+let dbReadyAt = 0;
+let dbReadyOk = false;
+let dbReadyCheck: Promise<boolean> | null = null;
+
+/** Readiness probe helper — cheap connectivity check, cached for a beat. */
 export async function dbReady(): Promise<boolean> {
-  try {
-    await db()`SELECT 1`;
-    return true;
-  } catch {
-    return false;
-  }
+  if (Date.now() - dbReadyAt < DB_READY_TTL_MS) return dbReadyOk;
+  if (dbReadyCheck) return dbReadyCheck;
+
+  dbReadyCheck = (async () => {
+    try {
+      await db()`SELECT 1`;
+      dbReadyOk = true;
+    } catch {
+      dbReadyOk = false;
+    }
+    dbReadyAt = Date.now();
+    dbReadyCheck = null;
+    return dbReadyOk;
+  })();
+
+  return dbReadyCheck;
 }
 
 /** Test-only: point the pool at a fresh DATABASE_URL and clear the queue. */
@@ -310,4 +330,7 @@ export function resetDbForTests(): void {
   sql = null;
   queue.length = 0;
   inFlight = null;
+  dbReadyAt = 0;
+  dbReadyOk = false;
+  dbReadyCheck = null;
 }
