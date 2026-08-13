@@ -604,3 +604,28 @@ export async function deleteAgentNetworkProvidersByPrefix(
     }
   }
 }
+
+/**
+ * Whether the management build under test bootstraps the Agent Network
+ * settings row through the explicit POST /agent-network/settings.
+ *
+ * Builds that predate it seed the row as a side effect of the first provider
+ * create and describe the endpoint identity as cluster + subdomain; builds
+ * that have it expose proxy_address instead. The settings GET carries the
+ * field either way — including before the account is bootstrapped, where it
+ * answers with the defaults and an empty proxy_address — so the shape of that
+ * response is a side-effect-free probe for the endpoint's existence.
+ */
+export async function supportsAgentNetworkSettingsBootstrap(
+  page: Page,
+): Promise<boolean> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.get(`${origin}/api/agent-network/settings`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!resp.ok()) return false;
+  const settings = await resp.json().catch(() => null);
+  return (
+    !!settings && typeof settings === "object" && "proxy_address" in settings
+  );
+}

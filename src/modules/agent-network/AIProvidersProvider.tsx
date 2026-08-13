@@ -69,9 +69,6 @@ export type APIProviderRequest = {
   provider_id: string;
   name: string;
   upstream_url: string;
-  // bootstrap_cluster is only honoured on the first provider create
-  // for the account; subsequent creates and all updates ignore it.
-  bootstrap_cluster?: string;
   api_key?: string;
   extra_values?: Record<string, string>;
   identity_header_user_id?: string;
@@ -86,9 +83,6 @@ export type ProviderConnectInput = {
   providerId: AIProviderId;
   name: string;
   upstreamUrl: string;
-  // bootstrapCluster is only used on first-create to seed the
-  // account-level Settings row; ignored after that.
-  bootstrapCluster?: string;
   apiKey: string;
   extraValues?: Record<string, string>;
   identityHeaderUserId?: string;
@@ -116,9 +110,13 @@ export type ProviderUpdateInput = {
 };
 
 export type APIAgentNetworkSettings = {
-  cluster: string;
-  subdomain: string;
+  // Bare hostname agents call for this account. Empty until bootstrapped.
   endpoint: string;
+  // Declared cluster address of the proxy serving the endpoint: equal to
+  // endpoint when a dedicated proxy serves the account, otherwise the shared
+  // cluster the endpoint hangs one label beneath.
+  proxy_address: string;
+  dedicated: boolean;
   attribution_mode?: AttributionMode;
   default_user_monthly_budget?: number;
   enable_log_collection: boolean;
@@ -131,10 +129,25 @@ export type APIAgentNetworkSettings = {
   updated_at?: string;
 };
 
+// APIAgentNetworkSettingsCreateRequest matches the POST /agent-network/settings
+// bootstrap body. Exactly one of proxy_address (labeled endpoint — the server
+// allocates the label beneath it) and endpoint (self-addressed dedicated
+// endpoint, claimed verbatim) must be set. The dashboard only uses the
+// labeled shape; the dedicated shape is API/BYOP-facing.
+export type APIAgentNetworkSettingsCreateRequest = {
+  proxy_address?: string;
+  endpoint?: string;
+};
+
 // APIAgentNetworkSettingsRequest matches the PUT /agent-network/settings
-// body. Read-only fields (cluster, subdomain, endpoint, timestamps) are
-// stamped by the backend and never sent from the dashboard.
+// body. Every field is required — the PUT is a full replace, like the rest of
+// the REST API. The identity fields (endpoint, proxy_address) are assigned at
+// bootstrap (POST) and immutable: the request must echo the stored values
+// unchanged, and the backend rejects a mismatch (422) without applying
+// anything. Timestamps are stamped by the backend.
 export type APIAgentNetworkSettingsRequest = {
+  endpoint: string;
+  proxy_address: string;
   enable_log_collection: boolean;
   enable_prompt_collection: boolean;
   redact_pii: boolean;
@@ -142,9 +155,9 @@ export type APIAgentNetworkSettingsRequest = {
 };
 
 export type AgentNetworkSettings = {
-  cluster: string;
-  subdomain: string;
   endpoint: string;
+  proxyAddress: string;
+  dedicated: boolean;
   attributionMode: AttributionMode;
   defaultUserMonthlyBudget: number;
   enableLogCollection: boolean;
@@ -221,7 +234,6 @@ function toCreateRequest(input: ProviderConnectInput): APIProviderRequest {
     provider_id: input.providerId,
     name: input.name,
     upstream_url: input.upstreamUrl,
-    bootstrap_cluster: input.bootstrapCluster,
     api_key: input.apiKey,
     extra_values: input.extraValues,
     identity_header_user_id: input.identityHeaderUserId,
@@ -235,9 +247,9 @@ function toCreateRequest(input: ProviderConnectInput): APIProviderRequest {
 
 function settingsFromAPI(s: APIAgentNetworkSettings): AgentNetworkSettings {
   return {
-    cluster: s.cluster,
-    subdomain: s.subdomain,
     endpoint: s.endpoint,
+    proxyAddress: s.proxy_address,
+    dedicated: s.dedicated ?? false,
     attributionMode: s.attribution_mode ?? "priority",
     defaultUserMonthlyBudget: s.default_user_monthly_budget ?? 0,
     enableLogCollection: s.enable_log_collection ?? false,
@@ -249,8 +261,13 @@ function settingsFromAPI(s: APIAgentNetworkSettings): AgentNetworkSettings {
 
 function settingsToRequest(
   s: AgentNetworkSettingsUpdate,
+  identity: Pick<AgentNetworkSettings, "endpoint" | "proxyAddress">,
 ): APIAgentNetworkSettingsRequest {
   return {
+    // Required echo of the immutable identity — always the stored values,
+    // never user input, so the backend's mismatch rejection can't trigger.
+    endpoint: identity.endpoint,
+    proxy_address: identity.proxyAddress,
     enable_log_collection: s.enableLogCollection,
     enable_prompt_collection: s.enablePromptCollection,
     redact_pii: s.redactPii,
@@ -510,6 +527,12 @@ type AIProvidersContextValue = {
   updateAgentNetworkSettings: (
     updates: AgentNetworkSettingsUpdate,
   ) => Promise<boolean>;
+  // Bootstraps the account's settings row, assigning the endpoint as a
+  // server-allocated label beneath the given proxy cluster address. One-time
+  // per account; resolves to true once the row exists (a lost race against a
+  // concurrent bootstrap counts — the row is there), false on failure (errors
+  // are notified internally).
+  bootstrapAgentNetworkSettings: (proxyAddress: string) => Promise<boolean>;
 };
 
 const AIProvidersContext = createContext<AIProvidersContextValue | null>(null);
@@ -523,12 +546,12 @@ export function useAIProviders() {
 }
 
 // useAgentNetworkSettings fetches the account-level agent-network settings.
-// Returns null until the account is bootstrapped (first provider create, or
-// a settings update carrying a cluster). Backends signal the unbootstrapped
-// state differently by age: current ones respond 200 with the defaults and
-// an empty cluster/subdomain/endpoint, older ones 200 + JSON null, and the
-// oldest 404 — tolerated via ignoreError so old deploys don't surface a
-// spurious error in the empty state. All three normalize to null here.
+// Returns null until the account is bootstrapped via the explicit settings
+// POST. Backends signal the unbootstrapped state differently by age: current
+// ones respond 200 with the defaults and an empty endpoint/proxy_address,
+// older ones 200 + JSON null, and the oldest 404 — tolerated via ignoreError
+// so old deploys don't surface a spurious error in the empty state. All
+// three normalize to null here.
 export function useAgentNetworkSettings() {
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { data, error, isLoading, mutate } =
@@ -607,6 +630,13 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const settingsApi = useApiCall<APIAgentNetworkSettings>(
     "/agent-network/settings",
   );
+  // Separate call with ignoreError: the bootstrap treats a 409 (a concurrent
+  // bootstrap won) as success, so the global error surface must not fire
+  // before we get to classify the failure.
+  const settingsBootstrapApi = useApiCall<APIAgentNetworkSettings>(
+    "/agent-network/settings",
+    true,
+  );
 
   const providers = useMemo<AIProvider[]>(
     () => (apiProviders ?? []).map(fromAPI),
@@ -638,10 +668,6 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       try {
         const created = await providersApi.post(toCreateRequest(input));
         await mutate();
-        // First-create bootstraps account-level settings on the
-        // backend; refresh so the page header flips out of the empty
-        // state without a manual reload.
-        await mutateSettings();
         notify({
           title: "AI provider connected",
           description: `${created.name} is now available on your agent network endpoint.`,
@@ -655,7 +681,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         return undefined;
       }
     },
-    [providersApi, mutate, mutateSettings],
+    [providersApi, mutate],
   );
 
   const updateProvider = useCallback(
@@ -966,10 +992,46 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     [budgetRulesApi, mutateBudgetRules],
   );
 
+  const bootstrapAgentNetworkSettings = useCallback(
+    async (proxyAddress: string) => {
+      const body: APIAgentNetworkSettingsCreateRequest = {
+        proxy_address: proxyAddress,
+      };
+      try {
+        await settingsBootstrapApi.post(body);
+      } catch (err) {
+        const code = (err as { code?: number })?.code;
+        if (code !== 409) {
+          notify({
+            title: "Failed to set up the agent network endpoint",
+            description: err instanceof Error ? err.message : String(err),
+          });
+          return false;
+        }
+        // 409: a concurrent bootstrap won. The row exists, which is what
+        // the caller wanted — fall through to the refresh.
+      }
+      await mutateSettings();
+      return true;
+    },
+    [settingsBootstrapApi, mutateSettings],
+  );
+
   const updateAgentNetworkSettings = useCallback(
     async (updates: AgentNetworkSettingsUpdate) => {
+      // The PUT must echo the immutable identity fields (endpoint,
+      // proxy_address) alongside the mutable ones. Without a loaded settings
+      // row there is nothing to echo — and no row to update; the backend
+      // would 404 the PUT anyway.
+      if (!settings) {
+        notify({
+          title: "Failed to update account controls",
+          description: "Agent Network has not been set up yet.",
+        });
+        return false;
+      }
       try {
-        await settingsApi.put(settingsToRequest(updates));
+        await settingsApi.put(settingsToRequest(updates, settings));
         await mutateSettings();
         notify({
           title: "Account controls updated",
@@ -984,7 +1046,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         return false;
       }
     },
-    [settingsApi, mutateSettings],
+    [settings, settingsApi, mutateSettings],
   );
 
   const value = useMemo<AIProvidersContextValue>(
@@ -1016,6 +1078,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       toggleBudgetRule,
       deleteBudgetRule,
       updateAgentNetworkSettings,
+      bootstrapAgentNetworkSettings,
     }),
     [
       providers,
@@ -1045,6 +1108,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       toggleBudgetRule,
       deleteBudgetRule,
       updateAgentNetworkSettings,
+      bootstrapAgentNetworkSettings,
     ],
   );
 

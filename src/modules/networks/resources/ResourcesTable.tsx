@@ -18,10 +18,9 @@ import {
   TableFiltersButton,
 } from "@components/table/TableFilters";
 import NoResults from "@components/ui/NoResults";
-import { IconCirclePlus } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
-import { ArrowUpRightIcon, Layers3Icon } from "lucide-react";
+import { ArrowUpRightIcon, Layers3Icon, PlusCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useMemo, useState } from "react";
@@ -338,7 +337,7 @@ export default function ResourcesTable({
                 disabled={!permission.networks.update}
                 data-testid={"add-resource"}
               >
-                <IconCirclePlus size={16} />
+                <PlusCircle size={16} />
                 Add
               </Button>
             )
