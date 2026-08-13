@@ -10,11 +10,12 @@ import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 import prettier from "eslint-config-prettier";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 
-export default [
+const config = [
   {
     ignores: [
       "node_modules/**",
       ".next/**",
+      ".claude/**",
       "out/**",
       "build/**",
       "public/**",
@@ -31,6 +32,7 @@ export default [
   prettier,
 
   {
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     plugins: { "simple-import-sort": simpleImportSort },
     rules: {
       "simple-import-sort/imports": [
@@ -41,3 +43,5 @@ export default [
     },
   },
 ];
+
+export default config;

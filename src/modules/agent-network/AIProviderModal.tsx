@@ -170,18 +170,22 @@ export default function AIProviderModal({
   onOpenChange,
   provider,
 }: Readonly<Props>) {
-  const { addProvider, updateProvider, settings } = useAIProviders();
+  const {
+    addProvider,
+    updateProvider,
+    settings,
+    bootstrapAgentNetworkSettings,
+  } = useAIProviders();
   const { data: domains, isLoading: domainsLoading } = useFetchApi<
     ReverseProxyDomain[]
   >("/reverse-proxies/domains");
   const { catalog: catalogList, getById } = useProviderCatalog();
 
   const isEdit = !!provider;
-  // Cluster is no longer a per-provider concern: the backend pins it on
-  // the account-level Settings row, seeded by the first provider create.
-  // We auto-pick from the live /domains response and ship it as
-  // bootstrap_cluster on the create payload — the backend ignores it on
-  // subsequent creates and updates.
+  // The endpoint lives on the account-level Settings row, bootstrapped once
+  // via an explicit POST. We auto-pick a proxy cluster from the live /domains
+  // response and, when the account isn't bootstrapped yet, POST it as the
+  // settings proxy_address right before the first provider create.
   const settingsBootstrapped = !!settings;
 
   const [tab, setTab] = useState<string>("provider");
@@ -309,7 +313,7 @@ export default function AIProviderModal({
 
   // Auto-pick the first validated cluster on first render once the
   // /domains response lands. Only matters for the first-create flow —
-  // once settings is bootstrapped the bootstrap hint is ignored.
+  // once settings is bootstrapped no further bootstrap happens.
   React.useEffect(() => {
     if (settingsBootstrapped) return;
     if (bootstrapCluster) return;
@@ -393,8 +397,8 @@ export default function AIProviderModal({
     name.trim().length > 0 &&
     /^https?:\/\/[^\s]+$/i.test(upstreamUrl.trim()) &&
     apiKey.trim().length >= 4 &&
-    // First-create requires a cluster pick; once settings is bootstrapped
-    // the bootstrap hint is ignored so we don't need to gate on it.
+    // First-create bootstraps the settings row and needs a cluster pick;
+    // once settings is bootstrapped no cluster is involved.
     (settingsBootstrapped || bootstrapCluster.trim().length > 0);
 
   // Restrict extraValues to keys the current catalog entry declares.
@@ -453,11 +457,20 @@ export default function AIProviderModal({
       handleClose();
       return;
     }
+    // First create: bootstrap the account's endpoint before the provider
+    // exists, as an explicit settings POST. A failure keeps the wizard open
+    // (the provider isn't created either) so the operator sees the error and
+    // can retry — this used to be a silent backend side effect.
+    if (!settingsBootstrapped) {
+      const bootstrapped = await bootstrapAgentNetworkSettings(
+        bootstrapCluster.trim(),
+      );
+      if (!bootstrapped) return;
+    }
     await addProvider({
       providerId,
       name,
       upstreamUrl,
-      bootstrapCluster: settingsBootstrapped ? undefined : bootstrapCluster,
       apiKey,
       extraValues: sanitizedExtraValues,
       ...identityOverrides,

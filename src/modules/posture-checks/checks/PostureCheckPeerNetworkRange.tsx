@@ -6,7 +6,7 @@ import { Label } from "@components/Label";
 import { ModalClose, ModalFooter } from "@components/modal/Modal";
 import Paragraph from "@components/Paragraph";
 import { RadioGroup, RadioGroupItem } from "@components/RadioGroup";
-import cidr from "ip-cidr";
+import { isValidIP } from "@utils/ip";
 import { isEmpty, uniqueId } from "lodash";
 import {
   ExternalLinkIcon,
@@ -100,7 +100,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
 
   const validateNetworkRange = (networkRange: string) => {
     if (networkRange == "") return "";
-    const validCIDR = cidr.isValidAddress(networkRange);
+    const validCIDR = isValidIP(networkRange);
     if (!validCIDR) return "Please enter a valid CIDR, e.g., 192.168.1.0/24";
     return "";
   };

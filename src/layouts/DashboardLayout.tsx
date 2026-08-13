@@ -271,7 +271,7 @@ function DashboardPageContent({
                   }}
                 >
                   {!isRestricted && <Navigation hideOnMobile />}
-                  {children}
+                  <React.Fragment key={"page"}>{children}</React.Fragment>
                 </div>
               </motion.div>
             </motion.div>

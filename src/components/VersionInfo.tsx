@@ -17,6 +17,13 @@ function formatVersion(version: string): string {
   return version;
 }
 
+// Self-hosted builds can carry a numeric build suffix (e.g. "0.76.3-31256681241")
+// that overflows the sidebar. Show the semver only and keep the rest for the
+// tooltip. Pre-release labels like "-rc.1" are left intact so they stay visible.
+function formatShortVersion(version: string): string {
+  return formatVersion(version).replace(/^(v?\d+(?:\.\d+)*)-\d+$/, "$1");
+}
+
 function compareVersions(current: string, latest: string): boolean {
   // Returns true if latest is newer than current
   if (!current || !latest) return false;
@@ -98,9 +105,15 @@ const NavigationVersionInfoContent = () => {
       <div className="flex flex-col gap-1 text-nb-gray-400">
         <FullTooltip
           content={
-            <span className="text-xs">
-              Latest: {formatVersion(versionInfo.management_available_version)}
-            </span>
+            <div className="text-xs flex flex-col gap-1">
+              <span>
+                Installed:{" "}
+                {formatVersion(versionInfo.management_current_version)}
+              </span>
+              <span>
+                Latest: {formatVersion(versionInfo.management_available_version)}
+              </span>
+            </div>
           }
           side="top"
           className="w-full"
@@ -108,15 +121,18 @@ const NavigationVersionInfoContent = () => {
           <div className="flex items-center justify-between w-full cursor-default">
             <span>Management</span>
             <span className="text-nb-gray-300 font-medium">
-              {formatVersion(versionInfo.management_current_version)}
+              {formatShortVersion(versionInfo.management_current_version)}
             </span>
           </div>
         </FullTooltip>
         <FullTooltip
           content={
-            <span className="text-xs">
-              Latest: {formatVersion(versionInfo.dashboard_available_version)}
-            </span>
+            <div className="text-xs flex flex-col gap-1">
+              <span>Installed: {formatVersion(dashboardVersion)}</span>
+              <span>
+                Latest: {formatVersion(versionInfo.dashboard_available_version)}
+              </span>
+            </div>
           }
           side="top"
           className="w-full"
@@ -124,7 +140,7 @@ const NavigationVersionInfoContent = () => {
           <div className="flex items-center justify-between w-full cursor-default">
             <span>Dashboard</span>
             <span className="text-nb-gray-300 font-medium">
-              {formatVersion(dashboardVersion)}
+              {formatShortVersion(dashboardVersion)}
             </span>
           </div>
         </FullTooltip>

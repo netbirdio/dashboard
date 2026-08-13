@@ -360,11 +360,9 @@ export function SetupContent({
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Once the application is created, you&apos;ll be redirected to a
-                getting started page. Click <Mark>Get started</Mark> in the{" "}
-                <Mark>Provision User Accounts</Mark> section. Under the Create
-                configuration section, click{" "}
-                <Mark>Connect your application</Mark>
+                Once the application is created, click <Mark>Manage</Mark>, then
+                click <Mark>Provisioning</Mark>. Under the Create configuration
+                section, click <Mark>Connect your application</Mark>
               </p>
               <Lightbox image={entraGetStarted} />
             </Steps.Step>
@@ -431,8 +429,8 @@ export function SetupContent({
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to the <Mark>Attribute mapping</Mark> section and click{" "}
-                <Mark>Provision Microsoft Entra ID Groups</Mark>
+                Navigate to the <Mark>Attribute mapping</Mark> section and
+                select the <Mark>Groups</Mark> tab
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
@@ -462,8 +460,8 @@ export function SetupContent({
           <Steps>
             <Steps.Step step={1}>
               <p>
-                Navigate to the <Mark>Attribute mapping</Mark> section and click{" "}
-                <Mark>Provision Microsoft Entra ID Users</Mark>
+                Navigate to the <Mark>Attribute mapping</Mark> section and
+                select the <Mark>Users</Mark> tab
               </p>
             </Steps.Step>
             <Steps.Step step={2}>
@@ -541,9 +539,9 @@ export function SetupContent({
             <Steps.Step step={1}>
               <p>
                 After assigning users and groups, navigate back to the
-                provisioning configuration and click the{" "}
-                <Mark>Start provisioning</Mark> button to enable automatic
-                synchronization
+                provisioning configuration, click <Mark>Overview</Mark>, then
+                click the <Mark>Start provisioning</Mark> button to enable
+                automatic synchronization
               </p>
               <Lightbox image={entraStartProvisioning} />
             </Steps.Step>
