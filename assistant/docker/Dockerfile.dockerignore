@@ -1,0 +1,18 @@
+# Keep secrets and build cruft out of the image (Dockerfile does `COPY . .`).
+.env
+.env.*
+!.env.example
+
+node_modules
+.git
+.gitignore
+
+# Not needed at runtime.
+test
+grafana
+*.md
+.idea
+.vscode
+.DS_Store
+dist
+out-tsc

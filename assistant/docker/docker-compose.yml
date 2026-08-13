@@ -1,0 +1,149 @@
+# Local dev stack: Postgres + Prometheus + Grafana. Run the app on the host
+# (`bun run dev`); the containers reach it via host.docker.internal.
+#
+#   docker compose -f docker/docker-compose.yml up -d
+#   export DATABASE_URL=postgres://netbird:netbird@localhost:55432/netbird_assistant
+#   bun run migrate && bun run dev
+#
+#   Grafana    http://localhost:3001  (anonymous admin, dashboard pre-loaded)
+#   Prometheus http://localhost:59090
+#
+# The dedicated project name + shifted host ports keep this from clashing with any
+# other Postgres/Grafana (local install or another compose project) on the defaults.
+name: netbird-assistant-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: netbird-assistant-dev-db
+    environment:
+      POSTGRES_USER: netbird
+      POSTGRES_PASSWORD: netbird
+      POSTGRES_DB: netbird_assistant
+    ports:
+      - "55432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    configs:
+      # Creates the throwaway DB the integration tests TRUNCATE. Only runs on a
+      # fresh volume; see AGENTS.md for the one-liner on an existing one.
+      - source: postgres_init
+        target: /docker-entrypoint-initdb.d/10-test-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U netbird -d netbird_assistant"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Scrapes the app running on the host. Unlike prod this is a full Prometheus
+  # (not --agent) so it stores locally and Grafana can query it — no Grafana Cloud.
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: netbird-assistant-dev-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-lifecycle
+    ports:
+      - "59090:9090"
+    extra_hosts:
+      # Linux: Docker Desktop resolves host.docker.internal already, plain Docker doesn't.
+      - "host.docker.internal:host-gateway"
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
+    volumes:
+      - promdata:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: netbird-assistant-dev-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      # Dev only: no login, straight into the dashboard.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_BASIC_ENABLED: "false"
+      GF_USERS_DEFAULT_THEME: dark
+      GF_LOG_LEVEL: warn
+    configs:
+      - source: grafana_datasource
+        target: /etc/grafana/provisioning/datasources/prometheus.yml
+      - source: grafana_dashboards
+        target: /etc/grafana/provisioning/dashboards/netbird.yml
+    volumes:
+      # The dashboard JSON is provisioned straight from the repo — edits made in
+      # Grafana's UI are transient; re-export over this file to keep them.
+      - ../grafana:/etc/grafana/dashboards:ro
+      - grafanadata:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  # Host CPU/memory/disk, so the dashboard's host panels have data too. Inside a
+  # Linux VM (Docker Desktop on macOS) these are the VM's numbers, not the Mac's.
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: netbird-assistant-dev-node-exporter
+    command:
+      - --path.rootfs=/host
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /:/host:ro
+
+configs:
+  postgres_init:
+    content: |
+      CREATE DATABASE netbird_assistant_test OWNER netbird;
+
+  prometheus_config:
+    content: |
+      global:
+        scrape_interval: 15s
+      # env/host are stamped at scrape time, not via external_labels: the latter are
+      # only applied on remote_write (prod's path), so locally they would be missing
+      # and the dashboard's env/host selectors would come up empty.
+      scrape_configs:
+        - job_name: netbird-assistant
+          metrics_path: /metrics
+          static_configs:
+            # The app's metrics listener (METRICS_PORT), not its API port.
+            - targets: ["host.docker.internal:9464"]
+          relabel_configs: &dev_labels
+            - target_label: env
+              replacement: dev
+            - target_label: host
+              replacement: local
+        - job_name: node
+          static_configs:
+            - targets: ["node-exporter:9100"]
+          relabel_configs: *dev_labels
+
+  grafana_datasource:
+    content: |
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          uid: netbird-assistant-prom
+          type: prometheus
+          access: proxy
+          url: http://prometheus:9090
+          isDefault: true
+          jsonData:
+            timeInterval: 15s
+
+  grafana_dashboards:
+    content: |
+      apiVersion: 1
+      providers:
+        - name: netbird-assistant
+          type: file
+          allowUiUpdates: true
+          options:
+            path: /etc/grafana/dashboards
+            foldersFromFilesStructure: false
+
+volumes:
+  pgdata:
+  promdata:
+  grafanadata:
