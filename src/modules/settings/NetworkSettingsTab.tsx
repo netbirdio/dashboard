@@ -12,7 +12,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { validator } from "@utils/helpers";
 import { isNetBirdCloud } from "@utils/netbird";
-import cidr from "ip-cidr";
+import { isValidCIDR } from "@utils/ip";
 import { ExternalLinkIcon, GlobeIcon, NetworkIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -164,7 +164,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
     }
 
     try {
-      const validCIDR = cidr.isValidCIDR(networkRange);
+      const validCIDR = isValidCIDR(networkRange);
       if (!validCIDR) {
         return "Please enter a valid IPv4 CIDR range, e.g. 100.64.0.0/16 or 192.168.1.0/24";
       }
@@ -175,7 +175,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 
   const networkRangeV6Error = useMemo(() => {
     if (networkRangeV6 == "") return "";
-    if (!networkRangeV6.includes(":") || !cidr.isValidCIDR(networkRangeV6)) {
+    if (!networkRangeV6.includes(":") || !isValidCIDR(networkRangeV6)) {
       return "Please enter a valid IPv6 CIDR range, e.g. fd00:1234::/64";
     }
     const prefixLen = parseInt(networkRangeV6.split("/")[1], 10);
