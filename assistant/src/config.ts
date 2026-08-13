@@ -121,6 +121,17 @@ const Schema = z
     RATE_LIMIT_WINDOW_SEC: z.coerce.number().int().positive().default(60),
     RATE_LIMIT_MAX: z.coerce.number().int().positive().default(30),
 
+    // Probe rate limit (/readyz), keyed per client IP rather than per principal —
+    // the probes are unauthenticated. Deliberately far looser than the chat limit:
+    // a load balancer polls every few seconds, and answering it matters more than
+    // shedding load, so the ceiling only has to stop a flood.
+    PROBE_RATE_LIMIT_WINDOW_SEC: z.coerce.number().int().positive().default(10),
+    PROBE_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
+    // Off by default: X-Forwarded-For is caller-supplied, so trusting it without a
+    // proxy in front lets anyone rotate the header to dodge the limit — or forge a
+    // peer's address and get them limited. Turn on only when a proxy rewrites it.
+    TRUST_PROXY_HEADER: bool("false"),
+
     // Usage limits (tokens/day, tokens/month) — a ceiling on tokens processed on
     // whichever API key backs the provider. Works self-hosted (BYO-key) or hosted.
     LIMIT_USER_DAILY_TOKENS: z.coerce.number().int().positive().default(1_000_000),

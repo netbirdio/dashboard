@@ -4,10 +4,15 @@
  * (unbounded). Per-account/user cost lives in Postgres (model_calls); Prometheus
  * tracks operational rates/latency and aggregate cost throughput.
  */
+import type { Server } from "bun";
 import client from "prom-client";
 import { timingSafeEqual } from "node:crypto";
 import { loadConfig } from "@/config.ts";
 import type { ProviderName, ModelTier, Task, Usage } from "@/types.ts";
+
+/** Bun's route-handler second argument. Optional so tests can call a wrapped
+ *  handler with just a Request, as the real server always supplies it. */
+export type RouteServer = Server<unknown>;
 
 export const registry = new client.Registry();
 
@@ -266,16 +271,20 @@ export function observeHttp(route: string, method: string, status: number, durat
 
 export const streamsInFlightGauge = llmStreamsInFlight;
 
-/** Wrap a route handler to record count, status, latency, and in-flight count. */
+/**
+ * Wrap a route handler to record count, status, latency, and in-flight count.
+ * Bun's second route argument is passed through so a handler can reach
+ * `server.requestIP()`; handlers that don't need it just declare one parameter.
+ */
 export function withMetrics(
   route: string,
-  handler: (req: Request) => Response | Promise<Response>,
-): (req: Request) => Promise<Response> {
-  return async (req: Request): Promise<Response> => {
+  handler: (req: Request, server?: RouteServer) => Response | Promise<Response>,
+): (req: Request, server?: RouteServer) => Promise<Response> {
+  return async (req: Request, server?: RouteServer): Promise<Response> => {
     const start = performance.now();
     httpInFlight.inc({ route });
     try {
-      const res = await handler(req);
+      const res = await handler(req, server);
       observeHttp(route, req.method, res.status, (performance.now() - start) / 1000);
       return res;
     } catch (err) {

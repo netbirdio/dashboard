@@ -19,6 +19,12 @@ caller, not here.
   (`guardrails/pii.ts`) is the one in-memory mapping, and it lives for a single REQUEST: tokens go to
   the model, real values are restored on everything streamed back, and a later turn re-scrubs the
   transcript the caller resends. Never persist or log it, and never let it grow a conversation key.
+- **The probes stay cheap and answerable.** `/healthz` and `/readyz` are unauthenticated, and
+  `/readyz` is CORS-enabled because the dashboard probes it from the browser. Its DB check is cached
+  (2s) and it is rate-limited per client IP, so a flood can neither reach Postgres per-request nor
+  exhaust the pool the chat path needs. Keep the probe ceiling far above any load balancer's cadence:
+  refusing a real probe marks a healthy instance down, which is worse than the flood. Client IP comes
+  from the socket — only read `X-Forwarded-For` under `TRUST_PROXY_HEADER`, or callers forge it.
 - **Trust `accountId` only from the validated JWT** — never from a query param, header, or body
   (CWE-639; management enforces the same).
 - **Secrets never leave the server and never hit logs.** `ANTHROPIC_API_KEY`, `DATABASE_URL`, and
@@ -85,7 +91,7 @@ src/config.ts           env schema (zod)
 src/types.ts            provider-neutral domain types
 src/jwks.ts             JWKS verify + claim extraction (auth domain logic)
 src/http/               compose (middleware chain), cors, sse
-src/middleware/         auth (Bearer→verify), rateLimit, usageLimit
+src/middleware/         auth (Bearer→verify), rateLimit, probeRateLimit (per-IP, /readyz), usageLimit
 src/routes/             chat (SSE turn), health (/healthz, /readyz)
 src/guardrails/         input (validation/pre-screen), output (tool allowlist)
 src/llm/                provider interface, registry (tiers), tools, anthropic (SDK-isolated), system.md

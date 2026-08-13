@@ -9,12 +9,13 @@ import { auth } from "@/middleware/auth.ts";
 import { compose } from "@/http/compose.ts";
 import { cors, preflight, applyCors } from "@/http/cors.ts";
 import { rateLimit } from "@/middleware/rateLimit.ts";
+import { checkProbeLimit, clientAddress } from "@/middleware/probeRateLimit.ts";
 import { usageLimit } from "@/middleware/usageLimit.ts";
 import { chat } from "@/routes/chat.ts";
 import { models } from "@/routes/models.ts";
 import { suggestions } from "@/routes/suggestions.ts";
 import { healthz, readyz } from "@/routes/health.ts";
-import { setBuildInfo, withMetrics, metricsHandler } from "@/telemetry/metrics.ts";
+import { setBuildInfo, withMetrics, metricsHandler, countRejection } from "@/telemetry/metrics.ts";
 import { installRollupGauges } from "@/telemetry/dbGauges.ts";
 import { drainTelemetry } from "@/telemetry/store.ts";
 import { migrate } from "@/db/migrate.ts";
@@ -62,11 +63,18 @@ const server = Bun.serve({
     // CORS-enabled (unauthenticated) because the dashboard probes it before
     // rendering the assistant launcher — without the headers the browser
     // refuses to read the response and a healthy server looks down.
+    // Rate-limited per client address: unlike /v1/*, there is no principal to key
+    // on, and the check runs before readyz() so a flood can't reach the DB probe.
     "/readyz": {
       OPTIONS: preflight,
-      GET: withMetrics("/readyz", async (req: Request) =>
-        applyCors(req, await readyz()),
-      ),
+      GET: withMetrics("/readyz", async (req: Request, server) => {
+        const limited = checkProbeLimit(clientAddress(req, server));
+        if (limited) {
+          countRejection("/readyz", "rate_limited");
+          return applyCors(req, limited);
+        }
+        return applyCors(req, await readyz());
+      }),
     },
     "/v1/chat": {
       OPTIONS: preflight,
