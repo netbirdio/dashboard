@@ -54,22 +54,6 @@ const YUM_REPOSITORY = [
   "EOF",
 ];
 
-// The legacy GTK3 netbird-ui build keeps the current package name, so it is
-// served from its own repository path. Registered alongside YUM_REPOSITORY,
-// which still provides the CLI.
-const YUM_GTK3_REPOSITORY = [
-  ...YUM_REPOSITORY,
-  "sudo tee /etc/yum.repos.d/netbird-gtk3.repo <<EOF",
-  "[netbird-gtk3]",
-  "name=netbird-gtk3",
-  "baseurl=https://pkgs.netbird.io/yum-gtk3/\\$basearch",
-  "enabled=1",
-  "gpgcheck=1",
-  "gpgkey=https://pkgs.netbird.io/yum/repodata/repomd.xml.key",
-  "repo_gpgcheck=0",
-  "EOF",
-];
-
 // The desktop app links GTK 4.10+ and WebKitGTK 6.0, and the released
 // packages do not declare those as dependencies, so each install line names
 // them explicitly. Distributions below that floor get the CLI only.
@@ -92,9 +76,8 @@ const DISTROS: Distro[] = [
   },
   {
     // Legacy GTK3 / WebKit2GTK 4.1 build of the desktop app, for releases
-    // without WebKitGTK 6.0. It keeps the netbird-ui package name, so it is
-    // served from the `gtk3` distribution instead of `stable`; the CLI still
-    // comes from `stable`, hence both lists are registered.
+    // without WebKitGTK 6.0. It ships under its own netbird-ui-gtk3 name and
+    // conflicts with netbird-ui, so it lives in the regular repository.
     label: "Ubuntu 22.04 / Debian 12 (APT)",
     value: "apt-gtk3",
     repository: [
@@ -102,7 +85,6 @@ const DISTROS: Distro[] = [
       "sudo apt-get install ca-certificates curl gnupg -y",
       "curl -sSL https://pkgs.netbird.io/debian/public.key | sudo gpg --dearmor --output /usr/share/keyrings/netbird-archive-keyring.gpg",
       `echo 'deb [signed-by=/usr/share/keyrings/netbird-archive-keyring.gpg] https://pkgs.netbird.io/debian stable main' | sudo tee /etc/apt/sources.list.d/netbird.list`,
-      `echo 'deb [signed-by=/usr/share/keyrings/netbird-archive-keyring.gpg] https://pkgs.netbird.io/debian gtk3 main' | sudo tee /etc/apt/sources.list.d/netbird-gtk3.list`,
       // On Ubuntu, libwebkit2gtk-4.1-0 comes from the universe component. It is
       // enabled on stock images but can be switched off. Guarded by the ID
       // check: `universe` is an Ubuntu-only shortcut that Debian rejects.
@@ -112,7 +94,7 @@ const DISTROS: Distro[] = [
     cli: "sudo apt-get install netbird",
     // The package declares its libgtk-3-0, libwebkit2gtk-4.1-0 and xdg-utils
     // dependencies, so apt pulls those in on its own.
-    desktopApp: ["sudo apt-get install netbird-ui"],
+    desktopApp: ["sudo apt-get install netbird-ui-gtk3"],
     note: "For releases without WebKitGTK 6.0, which get a GTK3 build of the desktop app. On Ubuntu it needs the universe component, which the repository step enables. On Ubuntu 24.04 or Debian 13 and newer use the Debian / Ubuntu (APT) option instead.",
   },
   {
@@ -135,20 +117,6 @@ const DISTROS: Distro[] = [
       "sudo dnf install netbird-ui gtk4 webkitgtk6.0 xdg-utils",
     ],
     note: "The desktop app needs version 10 or newer with EPEL enabled, which provides WebKitGTK 6.0. On version 9 install the CLI only.",
-  },
-  {
-    // Legacy GTK3 / WebKit2GTK 4.1 build, served from the yum-gtk3 path.
-    label: "RHEL 9 / AlmaLinux 9 / Rocky 9 (DNF)",
-    value: "rhel-gtk3",
-    repository: YUM_GTK3_REPOSITORY,
-    cli: "sudo dnf install netbird",
-    // The package declares its gtk3, webkit2gtk4.1 and xdg-utils dependencies,
-    // but WebKit2GTK 4.1 lives in EPEL rather than the base repositories.
-    desktopApp: [
-      "sudo dnf install epel-release -y",
-      "sudo dnf install netbird-ui",
-    ],
-    note: "For version 9, which does not ship WebKitGTK 6.0 and gets a GTK3 build of the desktop app. EPEL provides WebKit2GTK 4.1. On version 10 and newer use the RHEL / AlmaLinux / Rocky (DNF) option instead.",
   },
   {
     label: "openSUSE (Zypper)",
