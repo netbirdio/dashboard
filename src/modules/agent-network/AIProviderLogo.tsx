@@ -6,7 +6,10 @@ import { AIProviderId } from "@/modules/agent-network/data/mockData";
 import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
 
 type Props = {
-  providerId: AIProviderId;
+  // Catalog provider id to badge. Undefined renders the neutral "?" badge —
+  // for requests NetBird can't attribute to any provider (e.g. rejected
+  // before the router picked one).
+  providerId?: AIProviderId;
   size?: number;
   className?: string;
 };
@@ -17,7 +20,7 @@ export default function AIProviderLogo({
   className,
 }: Readonly<Props>) {
   const { getById } = useProviderCatalog();
-  const entry = getById(providerId);
+  const entry = providerId ? getById(providerId) : undefined;
   const initial = entry ? entry.name.charAt(0) : "?";
   const bg = entry?.brand_color ?? "#6B7280";
 
