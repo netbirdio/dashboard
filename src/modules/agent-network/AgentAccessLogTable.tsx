@@ -1036,10 +1036,20 @@ function resolveProviderDisplay(
     };
   }
 
+  // A vendor the dashboard has no catalog id for normalises to "custom" — itself
+  // a real catalog entry (the OpenAI-compatible catch-all). Resolving its name
+  // would label every unrecognised vendor with that one generic name, and keying
+  // on the id would collapse distinct vendors into a single item in the session
+  // column. Key and label those by the raw vendor label instead.
+  const unmappedVendor = entry.providerId === "custom";
   return {
-    key: `vendor:${entry.providerId}`,
+    key: unmappedVendor
+      ? `vendor:${entry.providerVendor}`
+      : `vendor:${entry.providerId}`,
     logoId: entry.providerId,
-    name: catalogNameById.get(entry.providerId) ?? entry.providerVendor,
+    name: unmappedVendor
+      ? entry.providerVendor
+      : (catalogNameById.get(entry.providerId) ?? entry.providerVendor),
     resolved: false,
     hint: "Not attributed to a configured provider. This is the API shape the client called. Requests denied before routing never reach a provider.",
   };
