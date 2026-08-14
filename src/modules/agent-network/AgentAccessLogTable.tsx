@@ -1032,7 +1032,7 @@ function resolveProviderDisplay(
       key: "unknown",
       name: "Unknown",
       resolved: false,
-      hint: "Not attributed to a provider — the request was rejected before NetBird recognised it as an LLM call.",
+      hint: "Not attributed to a provider. The request was rejected before NetBird recognised it as an LLM call.",
     };
   }
 
@@ -1041,7 +1041,7 @@ function resolveProviderDisplay(
     logoId: entry.providerId,
     name: catalogNameById.get(entry.providerId) ?? entry.providerVendor,
     resolved: false,
-    hint: "Not attributed to a configured provider — this is the API shape the client called. Requests denied before routing never reach a provider.",
+    hint: "Not attributed to a configured provider. This is the API shape the client called. Requests denied before routing never reach a provider.",
   };
 }
 
