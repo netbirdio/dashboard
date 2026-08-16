@@ -38,11 +38,22 @@ export default function AgentNetworkConfigurationPage() {
   const { only: agentNetworkOnly } = useAgentNetworkMode();
   const queryParams = useSearchParams();
   const queryTab = queryParams.get("tab");
-  const [tab, setTab] = useState(queryTab ?? TAB_BUDGET_SETTINGS);
+
+  // Clusters is a reverse-proxy surface (its table and controls run on the
+  // services permission), so it stays hidden from roles that only hold
+  // agent_network.settings, e.g. agent_network_admin.
+  const canReadClusters = !!permission?.services?.read;
+  const requestedTab =
+    queryTab && (queryTab !== TAB_CLUSTERS || canReadClusters)
+      ? queryTab
+      : TAB_BUDGET_SETTINGS;
+  const [tab, setTab] = useState(requestedTab);
 
   useEffect(() => {
-    if (queryTab) setTab(queryTab);
-  }, [queryTab]);
+    if (queryTab && (queryTab !== TAB_CLUSTERS || canReadClusters)) {
+      setTab(queryTab);
+    }
+  }, [queryTab, canReadClusters]);
 
   return (
     <PageContainer>
@@ -56,10 +67,12 @@ export default function AgentNetworkConfigurationPage() {
             <ScrollText size={14} />
             Log Collection
           </VerticalTabs.Trigger>
-          <VerticalTabs.Trigger value={TAB_CLUSTERS}>
-            <ServerIcon size={14} />
-            Clusters
-          </VerticalTabs.Trigger>
+          {canReadClusters && (
+            <VerticalTabs.Trigger value={TAB_CLUSTERS}>
+              <ServerIcon size={14} />
+              Clusters
+            </VerticalTabs.Trigger>
+          )}
         </VerticalTabs.List>
         <RestrictedAccess
           page={"Configuration"}
@@ -96,26 +109,28 @@ export default function AgentNetworkConfigurationPage() {
                     </Suspense>
                   </Tabs.Content>
 
-                  <Tabs.Content value={TAB_CLUSTERS} className={"w-full"}>
-                    <ConfigTabHeader
-                      label={"Clusters"}
-                      href={"/agent-network/configuration?tab=clusters"}
-                    >
-                      {agentNetworkOnly
-                        ? "Proxy clusters route your agents' traffic to AI providers and run on your own infrastructure. Add multiple clusters to scale your environment."
-                        : "Proxy clusters route inbound traffic to your services. Shared clusters are run by the platform; account clusters (self-hosted) run on your own infrastructure."}{" "}
-                      <InlineLink
-                        href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
-                        target={"_blank"}
+                  {canReadClusters && (
+                    <Tabs.Content value={TAB_CLUSTERS} className={"w-full"}>
+                      <ConfigTabHeader
+                        label={"Clusters"}
+                        href={"/agent-network/configuration?tab=clusters"}
                       >
-                        Learn more
-                        <ExternalLinkIcon size={12} />
-                      </InlineLink>
-                    </ConfigTabHeader>
-                    <Suspense fallback={<SkeletonTable />}>
-                      <ClustersTable />
-                    </Suspense>
-                  </Tabs.Content>
+                        {agentNetworkOnly
+                          ? "Proxy clusters route your agents' traffic to AI providers and run on your own infrastructure. Add multiple clusters to scale your environment."
+                          : "Proxy clusters route inbound traffic to your services. Shared clusters are run by the platform; account clusters (self-hosted) run on your own infrastructure."}{" "}
+                        <InlineLink
+                          href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
+                          target={"_blank"}
+                        >
+                          Learn more
+                          <ExternalLinkIcon size={12} />
+                        </InlineLink>
+                      </ConfigTabHeader>
+                      <Suspense fallback={<SkeletonTable />}>
+                        <ClustersTable />
+                      </Suspense>
+                    </Tabs.Content>
+                  )}
                 </div>
               </AIProvidersProvider>
             </PeersProvider>

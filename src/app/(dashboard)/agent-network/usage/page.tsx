@@ -24,8 +24,6 @@ import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
 const TAB_USAGE = "usage";
 const TAB_ACCESS_LOGS = "access-logs";
 
-const VALID_TABS = new Set([TAB_USAGE, TAB_ACCESS_LOGS]);
-
 // UsageAndLogsPage surfaces the live access log and the spend dashboard.
 // Budget rules and log-collection controls live under the separate
 // Configuration entry. Providers are mounted once at the top so switching
@@ -36,8 +34,23 @@ export default function UsageAndLogsPage() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const canReadUsage = !!permission?.["agent_network.usage"]?.read;
+  const canReadLogs = !!permission?.["agent_network.logs"]?.read;
+
+  // Each tab maps to its own permission submodule (usage_viewer, for one,
+  // reads usage but not the request-level log). Only permitted tabs are
+  // selectable; a deep link to a forbidden or unknown tab falls back to the
+  // first permitted one.
+  const allowedTabs = useMemo(() => {
+    const tabs = new Set<string>();
+    if (canReadUsage) tabs.add(TAB_USAGE);
+    if (canReadLogs) tabs.add(TAB_ACCESS_LOGS);
+    return tabs;
+  }, [canReadUsage, canReadLogs]);
+  const defaultTab = canReadUsage ? TAB_USAGE : TAB_ACCESS_LOGS;
+
   const queryTab = searchParams.get("tab") ?? "";
-  const initialTab = VALID_TABS.has(queryTab) ? queryTab : TAB_USAGE;
+  const initialTab = allowedTabs.has(queryTab) ? queryTab : defaultTab;
   const [tab, setTab] = useState(initialTab);
 
   // Access-log view mode: flat per-request rows, or grouped by provider session.
@@ -59,8 +72,8 @@ export default function UsageAndLogsPage() {
   // Also reset to the default when ?tab= is removed or invalid, so navigating
   // back to the bare URL doesn't leave the previous tab selected.
   useEffect(() => {
-    setTab(VALID_TABS.has(queryTab) ? queryTab : TAB_USAGE);
-  }, [queryTab]);
+    setTab(allowedTabs.has(queryTab) ? queryTab : defaultTab);
+  }, [queryTab, allowedTabs, defaultTab]);
 
   // Reflect the active tab in the URL so it's shareable, like Settings.
   const onTabChange = (value: string) => {
@@ -109,41 +122,49 @@ export default function UsageAndLogsPage() {
                 className={"pt-4 pb-0 mb-0"}
               >
                 <TabsList justify={"start"} className={"px-8"}>
-                  <TabsTrigger value={TAB_USAGE}>
-                    <LayoutDashboard size={16} />
-                    Usage
-                  </TabsTrigger>
-                  <TabsTrigger value={TAB_ACCESS_LOGS}>
-                    <ScrollText size={16} />
-                    Access Logs
-                  </TabsTrigger>
+                  {canReadUsage && (
+                    <TabsTrigger value={TAB_USAGE}>
+                      <LayoutDashboard size={16} />
+                      Usage
+                    </TabsTrigger>
+                  )}
+                  {canReadLogs && (
+                    <TabsTrigger value={TAB_ACCESS_LOGS}>
+                      <ScrollText size={16} />
+                      Access Logs
+                    </TabsTrigger>
+                  )}
                 </TabsList>
 
-                <TabsContent value={TAB_USAGE} className={"pb-8"}>
-                  <Suspense fallback={<SkeletonTable />}>
-                    <AgentOverviewPanel />
-                  </Suspense>
-                </TabsContent>
+                {canReadUsage && (
+                  <TabsContent value={TAB_USAGE} className={"pb-8"}>
+                    <Suspense fallback={<SkeletonTable />}>
+                      <AgentOverviewPanel />
+                    </Suspense>
+                  </TabsContent>
+                )}
 
-                <TabsContent value={TAB_ACCESS_LOGS} className={"pb-8"}>
-                  <Suspense fallback={<SkeletonTable />}>
-                    <ServerPaginationProvider
-                      key={groupBySession ? "sessions" : "flat"}
-                      url={
-                        groupBySession
-                          ? "/agent-network/access-log-sessions"
-                          : "/agent-network/access-logs"
-                      }
-                      defaultPageSize={25}
-                      defaultFilters={defaultAccessLogFilters}
-                    >
-                      <AgentAccessLogTable
-                        grouped={groupBySession}
-                        onGroupedChange={setGroupBySession}
-                      />
-                    </ServerPaginationProvider>
-                  </Suspense>
-                </TabsContent>
+                {canReadLogs && (
+                  <TabsContent value={TAB_ACCESS_LOGS} className={"pb-8"}>
+                    <Suspense fallback={<SkeletonTable />}>
+                      <ServerPaginationProvider
+                        key={groupBySession ? "sessions" : "flat"}
+                        url={
+                          groupBySession
+                            ? "/agent-network/access-log-sessions"
+                            : "/agent-network/access-logs"
+                        }
+                        defaultPageSize={25}
+                        defaultFilters={defaultAccessLogFilters}
+                      >
+                        <AgentAccessLogTable
+                          grouped={groupBySession}
+                          onGroupedChange={setGroupBySession}
+                        />
+                      </ServerPaginationProvider>
+                    </Suspense>
+                  </TabsContent>
+                )}
               </Tabs>
             </AIProvidersProvider>
           </PeersProvider>
