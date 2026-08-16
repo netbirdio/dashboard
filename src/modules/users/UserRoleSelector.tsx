@@ -10,11 +10,13 @@ import {
   Cog,
   CreditCard,
   EyeIcon,
+  GaugeIcon,
   NetworkIcon,
   User2,
 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -50,6 +52,16 @@ export const UserRoles = [
     name: "Network Admin",
     value: Role.NetworkAdmin,
     icon: NetworkIcon,
+  },
+  {
+    name: "Agent Network Admin",
+    value: Role.AgentNetworkAdmin,
+    icon: AgentNetworkIcon,
+  },
+  {
+    name: "Usage Viewer",
+    value: Role.UsageViewer,
+    icon: GaugeIcon,
   },
   {
     name: "Billing Admin",

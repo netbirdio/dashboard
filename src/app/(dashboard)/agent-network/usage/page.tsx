@@ -94,7 +94,10 @@ export default function UsageAndLogsPage() {
 
       <RestrictedAccess
         page={"Usage & Logs"}
-        hasAccess={permission?.services?.read}
+        hasAccess={
+          permission?.["agent_network.usage"]?.read ||
+          permission?.["agent_network.logs"]?.read
+        }
       >
         <GroupsProvider>
           <PeersProvider>

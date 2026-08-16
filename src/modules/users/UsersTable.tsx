@@ -249,6 +249,8 @@ export default function UsersTable({
       { value: "admin", label: "Admin" },
       { value: "user", label: "User" },
       { value: "network_admin", label: "Network Admin" },
+      { value: "agent_network_admin", label: "Agent Network Admin" },
+      { value: "usage_viewer", label: "Usage Viewer" },
       { value: "billing_admin", label: "Billing Admin" },
       { value: "auditor", label: "Auditor" },
     ],

@@ -197,38 +197,59 @@ export default function Navigation({
                   href={"/agent-network/providers"}
                   collapsible
                   exactPathMatch={false}
-                  // Parent is visible when at least one child is permitted. All
-                  // Agent Network pages guard on services.read, so the section
-                  // tracks that (plus the feature gating).
-                  visible={agentNetworkEnabled && permission?.services?.read}
+                  // Parent is visible when at least one child is permitted.
+                  // Each page tracks its agent_network submodule, so delegated
+                  // roles (agent_network_admin, usage_viewer) see exactly the
+                  // pages their grants cover.
+                  visible={
+                    agentNetworkEnabled &&
+                    (permission?.["agent_network.providers"]?.read ||
+                      permission?.["agent_network.policies"]?.read ||
+                      permission?.["agent_network.usage"]?.read ||
+                      permission?.["agent_network.logs"]?.read ||
+                      permission?.["agent_network.settings"]?.read)
+                  }
                 >
                   <SidebarItem
                     label="Providers"
                     isChild
                     href={"/agent-network/providers"}
                     exactPathMatch={true}
-                    visible={agentNetworkEnabled && permission?.services?.read}
+                    visible={
+                      agentNetworkEnabled &&
+                      permission?.["agent_network.providers"]?.read
+                    }
                   />
                   <SidebarItem
                     label="Policies"
                     isChild
                     href={"/agent-network/policies"}
                     exactPathMatch={true}
-                    visible={agentNetworkEnabled && permission?.services?.read}
+                    visible={
+                      agentNetworkEnabled &&
+                      permission?.["agent_network.policies"]?.read
+                    }
                   />
                   <SidebarItem
                     label="Usage & Logs"
                     isChild
                     href={"/agent-network/usage"}
                     exactPathMatch={true}
-                    visible={agentNetworkEnabled && permission?.services?.read}
+                    visible={
+                      agentNetworkEnabled &&
+                      (permission?.["agent_network.usage"]?.read ||
+                        permission?.["agent_network.logs"]?.read)
+                    }
                   />
                   <SidebarItem
                     label="Configuration"
                     isChild
                     href={"/agent-network/configuration"}
                     exactPathMatch={true}
-                    visible={agentNetworkEnabled && permission?.services?.read}
+                    visible={
+                      agentNetworkEnabled &&
+                      permission?.["agent_network.settings"]?.read
+                    }
                   />
                 </SidebarItem>
 

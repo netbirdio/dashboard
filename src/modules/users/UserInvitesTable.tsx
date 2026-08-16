@@ -49,12 +49,14 @@ import {
   CreditCardIcon,
   ExternalLinkIcon,
   EyeIcon,
+  GaugeIcon,
   Link2,
   MailPlus,
   NetworkIcon,
   Trash2,
   User2,
 } from "lucide-react";
+import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import Badge from "@components/Badge";
 import { usePathname } from "next/navigation";
@@ -143,6 +145,18 @@ function InviteRoleCell({ invite }: { invite: UserInvite }) {
           <>
             <NetworkIcon size={14} />
             Network Admin
+          </>
+        )}
+        {role === Role.AgentNetworkAdmin && (
+          <>
+            <AgentNetworkIcon size={14} />
+            Agent Network Admin
+          </>
+        )}
+        {role === Role.UsageViewer && (
+          <>
+            <GaugeIcon size={14} />
+            Usage Viewer
           </>
         )}
       </Badge>
@@ -500,6 +514,8 @@ export default function UserInvitesTable({
       { value: "admin", label: "Admin" },
       { value: "user", label: "User" },
       { value: "network_admin", label: "Network Admin" },
+      { value: "agent_network_admin", label: "Agent Network Admin" },
+      { value: "usage_viewer", label: "Usage Viewer" },
       { value: "billing_admin", label: "Billing Admin" },
       { value: "auditor", label: "Auditor" },
     ],

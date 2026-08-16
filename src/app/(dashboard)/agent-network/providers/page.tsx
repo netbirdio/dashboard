@@ -168,10 +168,10 @@ export default function AgentNetworkProvidersPage() {
     <PageContainer>
       {/* Gate the whole surface: AIProvidersProvider and EndpointHeader fetch
           agent-network state, so they must not mount for users without
-          services.read. */}
+          read on the providers submodule. */}
       <RestrictedAccess
         page={"Providers"}
-        hasAccess={permission?.services?.read}
+        hasAccess={permission?.["agent_network.providers"]?.read}
       >
         <AIProvidersProvider>
           <div className={"p-default py-6"}>

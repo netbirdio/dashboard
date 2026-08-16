@@ -63,7 +63,7 @@ export default function AgentNetworkConfigurationPage() {
         </VerticalTabs.List>
         <RestrictedAccess
           page={"Configuration"}
-          hasAccess={permission?.services?.read}
+          hasAccess={permission?.["agent_network.settings"]?.read}
         >
           <GroupsProvider>
             <PeersProvider>
