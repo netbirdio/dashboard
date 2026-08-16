@@ -9,7 +9,7 @@ import { VerticalTabs } from "@components/VerticalTabs";
 import * as Tabs from "@radix-ui/react-tabs";
 import { ExternalLinkIcon, Gauge, ScrollText, ServerIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
@@ -41,19 +41,22 @@ export default function AgentNetworkConfigurationPage() {
 
   // Clusters is a reverse-proxy surface (its table and controls run on the
   // services permission), so it stays hidden from roles that only hold
-  // agent_network.settings, e.g. agent_network_admin.
+  // agent_network.settings, e.g. agent_network_admin. Unknown ?tab= values
+  // fall back to the first tab so a matching content pane always renders.
   const canReadClusters = !!permission?.services?.read;
-  const requestedTab =
-    queryTab && (queryTab !== TAB_CLUSTERS || canReadClusters)
-      ? queryTab
-      : TAB_BUDGET_SETTINGS;
-  const [tab, setTab] = useState(requestedTab);
+  const selectableTabs = useMemo(() => {
+    const tabs = new Set([TAB_BUDGET_SETTINGS, TAB_LOG_SETTINGS]);
+    if (canReadClusters) tabs.add(TAB_CLUSTERS);
+    return tabs;
+  }, [canReadClusters]);
+
+  const [tab, setTab] = useState(
+    queryTab && selectableTabs.has(queryTab) ? queryTab : TAB_BUDGET_SETTINGS,
+  );
 
   useEffect(() => {
-    if (queryTab && (queryTab !== TAB_CLUSTERS || canReadClusters)) {
-      setTab(queryTab);
-    }
-  }, [queryTab, canReadClusters]);
+    if (queryTab && selectableTabs.has(queryTab)) setTab(queryTab);
+  }, [queryTab, selectableTabs]);
 
   return (
     <PageContainer>
