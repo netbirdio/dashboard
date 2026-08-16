@@ -460,7 +460,10 @@ export default function AgentBudgetRulesTable() {
             learnMore={
               <>
                 Learn more about
-                <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
+                <InlineLink
+                  href={"https://docs.netbird.io/agent-network"}
+                  target={"_blank"}
+                >
                   Agent Network
                   <ExternalLinkIcon size={12} />
                 </InlineLink>

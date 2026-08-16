@@ -735,12 +735,15 @@ export default function AgentAccessLogTable({
           }
           title={"No Access Log Entries Yet"}
           description={
-            "No agent-network requests detected yet. This may be because no AI providers are connected, policies don’t allow traffic to them, log collection is disabled, or no traffic has occurred."
+            "No agent network requests yet. Check that providers are connected, policies allow traffic, and log collection is on."
           }
           learnMore={
             <>
               Learn more about
-              <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
+              <InlineLink
+                href={"https://docs.netbird.io/agent-network"}
+                target={"_blank"}
+              >
                 Agent Network
                 <ExternalLinkIcon size={12} />
               </InlineLink>
