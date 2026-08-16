@@ -8,8 +8,8 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { VerticalTabs } from "@components/VerticalTabs";
 import * as Tabs from "@radix-ui/react-tabs";
 import { ExternalLinkIcon, Gauge, ScrollText, ServerIcon } from "lucide-react";
-import { useSearchParams } from "next/navigation";
-import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import React, { lazy, Suspense, useMemo } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
@@ -38,6 +38,8 @@ export default function AgentNetworkConfigurationPage() {
   const { only: agentNetworkOnly } = useAgentNetworkMode();
   const queryParams = useSearchParams();
   const queryTab = queryParams.get("tab");
+  const router = useRouter();
+  const pathname = usePathname();
 
   // Clusters is a reverse-proxy surface (its table and controls run on the
   // services permission), so it stays hidden from roles that only hold
@@ -50,17 +52,18 @@ export default function AgentNetworkConfigurationPage() {
     return tabs;
   }, [canReadClusters]);
 
-  const [tab, setTab] = useState(
-    queryTab && selectableTabs.has(queryTab) ? queryTab : TAB_BUDGET_SETTINGS,
-  );
-
-  useEffect(() => {
-    if (queryTab && selectableTabs.has(queryTab)) setTab(queryTab);
-  }, [queryTab, selectableTabs]);
+  // The ?tab= query is the single source of truth. Trigger clicks push it
+  // themselves; onChange covers Radix's keyboard navigation, which fires
+  // onValueChange without a click.
+  const tab =
+    queryTab && selectableTabs.has(queryTab) ? queryTab : TAB_BUDGET_SETTINGS;
+  const onTabChange = (value: string) => {
+    router.push(`${pathname}?tab=${value}`, { scroll: false });
+  };
 
   return (
     <PageContainer>
-      <VerticalTabs value={tab} onChange={setTab}>
+      <VerticalTabs value={tab} onChange={onTabChange}>
         <VerticalTabs.List>
           <VerticalTabs.Trigger value={TAB_BUDGET_SETTINGS}>
             <Gauge size={14} />
