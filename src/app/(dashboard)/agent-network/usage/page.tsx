@@ -8,7 +8,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { LayoutDashboard, ScrollText } from "lucide-react";
 import dayjs from "dayjs";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { Suspense, useEffect, useMemo, useState } from "react";
+import React, { Suspense, useMemo, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
@@ -49,9 +49,10 @@ export default function UsageAndLogsPage() {
   }, [canReadUsage, canReadLogs]);
   const defaultTab = canReadUsage ? TAB_USAGE : TAB_ACCESS_LOGS;
 
+  // The ?tab= query is the single source of truth; onTabChange below pushes
+  // it, so deep links, back/forward and clicks all resolve the same way.
   const queryTab = searchParams.get("tab") ?? "";
-  const initialTab = allowedTabs.has(queryTab) ? queryTab : defaultTab;
-  const [tab, setTab] = useState(initialTab);
+  const tab = allowedTabs.has(queryTab) ? queryTab : defaultTab;
 
   // Access-log view mode: flat per-request rows, or grouped by provider session.
   // Each mode hits its own endpoint and the provider is remounted on toggle
@@ -68,16 +69,8 @@ export default function UsageAndLogsPage() {
     [],
   );
 
-  // Keep the tab in sync when the ?tab= query changes (deep links / back-forward).
-  // Also reset to the default when ?tab= is removed or invalid, so navigating
-  // back to the bare URL doesn't leave the previous tab selected.
-  useEffect(() => {
-    setTab(allowedTabs.has(queryTab) ? queryTab : defaultTab);
-  }, [queryTab, allowedTabs, defaultTab]);
-
   // Reflect the active tab in the URL so it's shareable, like Settings.
   const onTabChange = (value: string) => {
-    setTab(value);
     const params = new URLSearchParams(searchParams.toString());
     params.set("tab", value);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -118,7 +111,6 @@ export default function UsageAndLogsPage() {
               <Tabs
                 value={tab}
                 onValueChange={onTabChange}
-                defaultValue={initialTab}
                 className={"pt-4 pb-0 mb-0"}
               >
                 <TabsList justify={"start"} className={"px-8"}>
