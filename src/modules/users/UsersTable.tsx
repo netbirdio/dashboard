@@ -43,12 +43,14 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
 import { User, UserInvite } from "@/interfaces/User";
+import { useAccount } from "@/modules/account/useAccount";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
-import { useGroups } from "@/contexts/GroupsProvider";
 import { PendingApprovalFilter } from "@/modules/users/PendingApprovalFilter";
 import UserActionCell from "@/modules/users/table-cells/UserActionCell";
 import UserGroupCell from "@/modules/users/table-cells/UserGroupCell";
@@ -57,7 +59,6 @@ import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 import UserInviteModal from "@/modules/users/UserInviteModal";
 import UserInvitesTable from "@/modules/users/UserInvitesTable";
-import { useAccount } from "@/modules/account/useAccount";
 
 export const UsersTableColumns: ColumnDef<User>[] = [
   {
@@ -211,6 +212,7 @@ export default function UsersTable({
 
   const router = useRouter();
   const { permission } = usePermissions();
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
   const usersWithGroupNames = useMemo(() => {
     if (!users) return undefined;
@@ -249,12 +251,21 @@ export default function UsersTable({
       { value: "admin", label: "Admin" },
       { value: "user", label: "User" },
       { value: "network_admin", label: "Network Admin" },
-      { value: "agent_network_admin", label: "Agent Network Admin" },
-      { value: "usage_viewer", label: "Usage Viewer" },
+      // Agent Network roles can only be assigned where the surface exists, so
+      // don't offer them as filters elsewhere.
+      ...(agentNetworkEnabled
+        ? [
+            {
+              value: "agent_network_admin",
+              label: "Agent Network Admin",
+            },
+            { value: "usage_viewer", label: "Usage Viewer" },
+          ]
+        : []),
       { value: "billing_admin", label: "Billing Admin" },
       { value: "auditor", label: "Auditor" },
     ],
-    [],
+    [agentNetworkEnabled],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
