@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import {
   ReverseProxyDomain,
   ReverseProxyDomainType,
@@ -174,12 +175,10 @@ export default function AIProviderModal({
     addProvider,
     updateProvider,
     settings,
+    settingsLoading,
     bootstrapAgentNetworkSettings,
   } = useAIProviders();
-  const { data: domains, isLoading: domainsLoading } = useFetchApi<
-    ReverseProxyDomain[]
-  >("/reverse-proxies/domains");
-  const { catalog: catalogList, getById } = useProviderCatalog();
+  const { permission } = usePermissions();
 
   const isEdit = !!provider;
   // The endpoint lives on the account-level Settings row, bootstrapped once
@@ -187,6 +186,21 @@ export default function AIProviderModal({
   // response and, when the account isn't bootstrapped yet, POST it as the
   // settings proxy_address right before the first provider create.
   const settingsBootstrapped = !!settings;
+
+  // /reverse-proxies/domains is guarded by the Services module, which the
+  // delegated Agent Network roles don't hold — calling it for them only yields
+  // a 403. The list is needed for the one-time bootstrap cluster pick, so skip
+  // the request once the account is bootstrapped or the role can't read it.
+  const canReadDomains = !!permission.services?.read;
+  const { data: domains, isLoading: domainsLoading } = useFetchApi<
+    ReverseProxyDomain[]
+  >(
+    "/reverse-proxies/domains",
+    true,
+    true,
+    canReadDomains && !settingsBootstrapped && !settingsLoading,
+  );
+  const { catalog: catalogList, getById } = useProviderCatalog();
 
   const [tab, setTab] = useState<string>("provider");
   const [providerId, setProviderId] = useState<AIProviderId>(
@@ -308,8 +322,13 @@ export default function AIProviderModal({
       ),
     [domains],
   );
+  // Wait for both requests before claiming there is nothing to pick, otherwise
+  // the warning flashes while the settings row is still loading.
   const noClustersAvailable =
-    !settingsBootstrapped && !domainsLoading && validatedClusters.length === 0;
+    !settingsBootstrapped &&
+    !settingsLoading &&
+    !domainsLoading &&
+    validatedClusters.length === 0;
 
   // Auto-pick the first validated cluster on first render once the
   // /domains response lands. Only matters for the first-create flow —
@@ -617,12 +636,25 @@ export default function AIProviderModal({
                     />
                   }
                 >
-                  No active proxy clusters are available. Connect at least one
-                  proxy under
-                  <InlineLink href={"/reverse-proxy/services"}>
-                    {" "}Reverse Proxy
-                  </InlineLink>
-                  {" "}before adding a provider.
+                  {canReadDomains ? (
+                    <>
+                      No active proxy clusters are available. Connect at least
+                      one proxy under
+                      <InlineLink href={"/reverse-proxy/services"}>
+                        {" "}Reverse Proxy
+                      </InlineLink>
+                      {" "}before adding a provider.
+                    </>
+                  ) : (
+                    // Roles scoped to Agent Network can't read or connect
+                    // proxies, so point at who can instead of at a page they
+                    // have no access to.
+                    <>
+                      Agent Network isn&apos;t set up for this account yet. Ask
+                      an account admin to connect a proxy before adding a
+                      provider.
+                    </>
+                  )}
                 </Callout>
               )}
 
