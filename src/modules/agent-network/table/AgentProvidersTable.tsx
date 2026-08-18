@@ -13,6 +13,7 @@ import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import AIAccessIcon from "@/assets/icons/AgentNetworkIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { AIProvider } from "@/modules/agent-network/data/mockData";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
@@ -57,7 +58,9 @@ function NameCell({ provider }: { provider: AIProvider }) {
         </p>
         <DescriptionWithTooltip
           className={"text-left mt-0.5"}
-          text={`${catalog?.name ?? provider.providerId} · ${provider.upstreamUrl}`}
+          text={`${catalog?.name ?? provider.providerId} · ${
+            provider.upstreamUrl
+          }`}
           maxChars={40}
         />
       </div>
@@ -112,6 +115,11 @@ export default function AgentProvidersTable({
 }: Readonly<Props>) {
   const path = usePathname();
   const { providers, isLoading } = useAIProviders();
+  // Read-only viewers (usage_viewer) see the list but no write flows: the
+  // edit modal needs update, and opening it would also mislead them with
+  // the bootstrap warning since they can't read the settings row.
+  const { permission } = usePermissions();
+  const canUpdate = !!permission?.["agent_network.providers"]?.update;
 
   const [sorting, setSorting] = useLocalStorage<SortingState>(
     "netbird-table-sort" + path,
@@ -136,65 +144,73 @@ export default function AgentProvidersTable({
         />
       )}
       <DataTable
-      headingTarget={headingTarget}
-      isLoading={isLoading}
-      text={"Providers"}
-      sorting={sorting}
-      setSorting={setSorting}
-      columns={columns}
-      data={providers}
-      searchPlaceholder={"Search by name..."}
-      onRowClick={(row) => {
-        setEditingProvider(row.original);
-        setEditOpen(true);
-      }}
-      getStartedCard={
-        <GetStartedTest
-          icon={
-            <SquareIcon
-              icon={<AIAccessIcon className={"fill-nb-gray-200"} size={20} />}
-              color={"gray"}
-              size={"large"}
-            />
-          }
-          title={"Connect a provider"}
-          description={
-            "Route OpenAI, Anthropic, and other LLM APIs through NetBird to enforce access control, track token spend, and capture prompts."
-          }
-          button={
-            <div className={"gap-x-4 flex items-center justify-center"}>
+        headingTarget={headingTarget}
+        isLoading={isLoading}
+        text={"Providers"}
+        sorting={sorting}
+        setSorting={setSorting}
+        columns={columns}
+        data={providers}
+        searchPlaceholder={"Search by name..."}
+        onRowClick={
+          canUpdate
+            ? (row) => {
+                setEditingProvider(row.original);
+                setEditOpen(true);
+              }
+            : undefined
+        }
+        getStartedCard={
+          <GetStartedTest
+            icon={
+              <SquareIcon
+                icon={<AIAccessIcon className={"fill-nb-gray-200"} size={20} />}
+                color={"gray"}
+                size={"large"}
+              />
+            }
+            title={"Connect a provider"}
+            description={
+              "Route OpenAI, Anthropic, and other LLM APIs through NetBird to enforce access control, track token spend, and capture prompts."
+            }
+            button={
+              <div className={"gap-x-4 flex items-center justify-center"}>
+                <AddProviderButton />
+              </div>
+            }
+            learnMore={
+              <>
+                Learn more about
+                <InlineLink
+                  href={"https://docs.netbird.io/agent-network/providers"}
+                  target={"_blank"}
+                >
+                  Agent Network Providers
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </>
+            }
+          />
+        }
+        rightSide={() =>
+          providers.length > 0 && (
+            <div className={cn("gap-x-4 ml-auto flex")}>
               <AddProviderButton />
             </div>
-          }
-          learnMore={
-            <>
-              Learn more about
-              <InlineLink
-                href={"https://docs.netbird.io/agent-network/providers"}
-                target={"_blank"}
-              >
-                Agent Network Providers
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </>
-          }
-        />
-      }
-      rightSide={() =>
-        providers.length > 0 && (
-          <div className={cn("gap-x-4 ml-auto flex")}>
-            <AddProviderButton />
-          </div>
-        )
-      }
-      initialPageSize={25}
-    />
+          )
+        }
+        initialPageSize={25}
+      />
     </>
   );
 }
 
 const AddProviderButton = () => {
   const { openWizard } = useAIProviders();
+  const { permission } = usePermissions();
+  // Connecting a provider needs the create grant; read-only viewers get no
+  // button instead of a wizard that can only fail.
+  if (!permission?.["agent_network.providers"]?.create) return null;
   return (
     <Button variant={"primary"} onClick={openWizard}>
       <PlusCircle size={16} />
