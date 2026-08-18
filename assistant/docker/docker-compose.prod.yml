@@ -1,18 +1,5 @@
-# `docker compose -f docker/docker-compose.prod.yml up -d` brings up everything:
-# the app (which runs pending migrations on boot) and Prometheus, which scrapes
-# app + host metrics and remote_writes them to Grafana Cloud. The host needs only
-# this file + `.env` next to it (the app runs from a prebuilt image).
-#
-#   cp .env.example docker/.env    # fill AUTH_*, ANTHROPIC_API_KEY, POSTGRES_PASSWORD,
-#                                  #   ASSISTANT_IMAGE, GRAFANA_CLOUD_*
-#   docker compose -f docker/docker-compose.prod.yml up -d
-#
-# Build/push the image (context is the repo root):
-#   docker build -f docker/Dockerfile -t <registry>/netbird-assistant:<tag> . && docker push ...
-# For a managed DB (RDS), drop the `postgres` service and point DATABASE_URL at it.
 name: netbird-assistant
 
-# Cap container logs so the box never fills with them (3 × 10 MB per container).
 x-logging: &logging
   driver: json-file
   options:
@@ -27,13 +14,20 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://netbird:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/netbird_assistant
+      PRESIDIO_URL: http://presidio:3000
     ports:
-      # API only. METRICS_PORT (9464) is intentionally absent — Prometheus reaches
-      # it over the compose network, so /metrics is never on the public surface.
       - "8787:8787"
     depends_on:
       postgres:
         condition: service_healthy
+      presidio:
+        condition: service_started
+    logging: *logging
+
+  # The PII backstop's analyzer. Internal only — never published.
+  presidio:
+    image: ${PRESIDIO_IMAGE:-ghcr.io/data-privacy-stack/presidio-analyzer:2.2.364}
+    restart: unless-stopped
     logging: *logging
 
   postgres:
@@ -51,60 +45,6 @@ services:
       timeout: 3s
       retries: 5
     logging: *logging
-
-  # Host metrics (CPU, memory, disk). CPU/memory come from the container's /proc
-  # (host values); the root bind gives the filesystem collector. If you'd rather
-  # install node_exporter on the host (apt/systemd), drop this service and change
-  # the `node` target below to the host address.
-  node-exporter:
-    image: quay.io/prometheus/node-exporter:latest
-    restart: unless-stopped
-    command:
-      - --path.rootfs=/host
-      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)
-    volumes:
-      - /:/host:ro
-    logging: *logging
-
-  # Prometheus: scrape app + host metrics, remote_write to Grafana Cloud.
-  prometheus:
-    image: prom/prometheus:latest
-    restart: unless-stopped
-    command:
-      - --agent
-      - --config.file=/etc/prometheus/prometheus.yml
-    configs:
-      - source: prometheus_config
-        target: /etc/prometheus/prometheus.yml
-    depends_on:
-      - app
-      - node-exporter
-    logging: *logging
-
-# Inlined so the prod host needs no extra files — values interpolated from .env.
-configs:
-  prometheus_config:
-    content: |
-      global:
-        scrape_interval: 30s
-        external_labels:
-          env: ${DEPLOY_ENV:-prod}
-          host: ${DEPLOY_HOST:-unknown}
-      scrape_configs:
-        - job_name: netbird-assistant
-          metrics_path: /metrics
-          static_configs:
-            # METRICS_PORT on the app container. Deliberately not published to the
-            # host: reachable on this compose network, from nowhere else.
-            - targets: ["app:9464"]
-        - job_name: node
-          static_configs:
-            - targets: ["node-exporter:9100"]
-      remote_write:
-        - url: ${GRAFANA_CLOUD_PROM_URL:?set GRAFANA_CLOUD_PROM_URL in .env}
-          basic_auth:
-            username: ${GRAFANA_CLOUD_USER:?set GRAFANA_CLOUD_USER in .env}
-            password: ${GRAFANA_CLOUD_API_KEY:?set GRAFANA_CLOUD_API_KEY in .env}
 
 volumes:
   pgdata:

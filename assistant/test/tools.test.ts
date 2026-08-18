@@ -1,35 +1,25 @@
-import { test, expect } from "bun:test";
-import { TOOLS, toolSpecs, isKnownTool, isMutating } from "@/llm/tools.ts";
-import { vetToolUses } from "@/guardrails/output.ts";
-import type { LlmContentBlock } from "@/types.ts";
+import { test, expect, beforeAll } from "bun:test";
+import { setEnv } from "./env.ts";
+import { buildToolSet, TOOLS } from "@/tools/index.ts";
 
-test("every v1 tool is read-only and has a complete spec", () => {
-  const specs = toolSpecs();
-  expect(specs.length).toBe(Object.keys(TOOLS).length);
-  for (const s of specs) {
-    expect(s.name).toBeTruthy();
-    expect(s.description.length).toBeGreaterThan(10);
-    expect(s.inputSchema).toHaveProperty("type", "object");
+beforeAll(() => setEnv());
+
+test("every v1 tool has a complete spec", () => {
+  for (const { spec } of Object.values(TOOLS)) {
+    expect(spec.name).toBeTruthy();
+    expect(spec.description.length).toBeGreaterThan(10);
+    expect(spec.inputSchema).toHaveProperty("type", "object");
   }
-  expect(Object.values(TOOLS).every((t) => t.mutating === false)).toBe(true);
+  expect("list_peers" in TOOLS).toBe(true);
+  expect("delete_everything" in TOOLS).toBe(false);
 });
 
-test("isKnownTool / isMutating reflect the registry", () => {
-  expect(isKnownTool("list_peers")).toBe(true);
-  expect(isKnownTool("delete_everything")).toBe(false);
-  expect(isMutating("list_peers")).toBe(false);
-  expect(isMutating("unknown")).toBe(false);
-});
-
-test("vetToolUses allows known tools, denies unknown, and ignores text", () => {
-  const content: LlmContentBlock[] = [
-    { type: "text", text: "sure" },
-    { type: "tool_use", id: "t1", name: "list_peers", input: {} },
-    { type: "tool_use", id: "t2", name: "rm_rf", input: {} },
-  ];
-  const decisions = vetToolUses(content);
-  expect(decisions).toEqual([
-    { toolUseId: "t1", name: "list_peers", allowed: true, mutating: false },
-    { toolUseId: "t2", name: "rm_rf", allowed: false, mutating: false },
-  ]);
+test("buildToolSet gives server tools an execute and leaves client tools to the dashboard", () => {
+  const set = buildToolSet();
+  expect(Object.keys(set).length).toBe(Object.keys(TOOLS).length);
+  expect(set.search_docs?.execute).toBeDefined();
+  expect(set.ask_user?.execute).toBeDefined();
+  expect(set.render_component?.execute).toBeDefined();
+  expect(set.list_peers?.execute).toBeUndefined();
+  expect(set.cc_add?.execute).toBeUndefined();
 });

@@ -10,16 +10,14 @@ yarn-error.log*
 
 .vscode/*
 
-# Env & secrets
 .env
 .env.*
 !.env.example
 
-# Bun
 bun.lockb
 
-# Build output
 /dist
 
-# macOS
 .DS_Store
+
+/coverage

@@ -1,8 +1,7 @@
 import { test, expect } from "bun:test";
-import { indexOpenApi, queryOpenApi } from "@/docs/api.ts";
-import { isServerTool, isKnownTool } from "@/llm/tools.ts";
+import { indexOpenApi, queryOpenApi } from "@/tools/docs.ts";
+import { isServerTool, TOOLS } from "@/tools/index.ts";
 
-// Minimal OpenAPI fixture mirroring the real spec's shape (paths + components/schemas).
 const SPEC = `openapi: 3.0.0
 paths:
   /api/peers:
@@ -52,9 +51,9 @@ test("queryOpenApi returns matching endpoints + schema (with one-level $ref expa
   const idx = indexOpenApi(SPEC);
   const out = queryOpenApi(idx, "peers", 10_000);
   expect(out).toContain("GET /api/peers");
-  expect(out).toContain("Peer:"); // primary schema
-  expect(out).toContain("PeerMinimum:"); // expanded from $ref
-  expect(out).not.toContain("Group:"); // unrelated schema excluded
+  expect(out).toContain("Peer:");
+  expect(out).toContain("PeerMinimum:");
+  expect(out).not.toContain("Group:");
 });
 
 test("queryOpenApi returns empty string when nothing matches", () => {
@@ -62,6 +61,6 @@ test("queryOpenApi returns empty string when nothing matches", () => {
 });
 
 test("get_api_reference is a known, server-executed tool", () => {
-  expect(isKnownTool("get_api_reference")).toBe(true);
+  expect("get_api_reference" in TOOLS).toBe(true);
   expect(isServerTool("get_api_reference")).toBe(true);
 });

@@ -18,8 +18,8 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["agent/*"]
     }
   },
-  "include": ["src", "test"]
+  "include": ["agent", "test"]
 }

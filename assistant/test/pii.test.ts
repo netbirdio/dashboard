@@ -1,125 +1,196 @@
-import { test, expect } from "bun:test";
+import { test, expect, beforeEach, afterEach } from "bun:test";
+import { setEnv } from "./env.ts";
+import type { UIMessage, UIMessageChunk } from "ai";
 import {
-  createPiiVault,
-  createRestoreStream,
-  scrubTranscript,
-} from "@/guardrails/pii.ts";
-import type { LlmMessage } from "@/types.ts";
+  analyzeText,
+  PiiVault,
+  type PresidioFinding,
+  resetPiiCacheForTests,
+  restoreChunkStream,
+  scrubMessages,
+} from "@/pii.ts";
 
-test("scrub replaces emails, IPv4, IPv6 and CIDR with reversible tokens", () => {
-  const v = createPiiVault();
-  expect(v.scrub("mail me at ann@acme.io")).toBe("mail me at {REDACTED_EMAIL_1}");
-  expect(v.scrub("peer at 100.64.0.7 is down")).toBe("peer at {REDACTED_IP_1} is down");
-  expect(v.scrub("route 10.0.0.0/24 via gw")).toBe("route {REDACTED_CIDR_1} via gw");
-  expect(v.scrub("v6 2001:db8:85a3:0:0:8a2e:370:7334 here")).toBe("v6 {REDACTED_IP_2} here");
+const realFetch = globalThis.fetch;
+
+function mockAnalyzer(handler: (text: string) => PresidioFinding[] | Response): void {
+  globalThis.fetch = (async (_url: unknown, init?: RequestInit) => {
+    const { text } = JSON.parse(String(init?.body)) as { text: string };
+    const result = handler(text);
+    if (result instanceof Response) return result;
+    return new Response(JSON.stringify(result), { status: 200 });
+  }) as typeof fetch;
+}
+
+const find = (text: string, needle: string, entity_type: string): PresidioFinding => {
+  const start = text.indexOf(needle);
+  return { entity_type, start, end: start + needle.length, score: 0.9 };
+};
+
+async function pump(vault: PiiVault, chunks: UIMessageChunk[]): Promise<UIMessageChunk[]> {
+  const ts = restoreChunkStream(vault);
+  const out: UIMessageChunk[] = [];
+  const reading = (async () => {
+    const reader = ts.readable.getReader();
+    for (;;) {
+      const r = await reader.read();
+      if (r.done) break;
+      out.push(r.value);
+    }
+  })();
+  const writer = ts.writable.getWriter();
+  for (const c of chunks) await writer.write(c);
+  await writer.close();
+  await reading;
+  return out;
+}
+
+const textOf = (chunks: UIMessageChunk[]): string =>
+  chunks.map((c) => (c.type === "text-delta" ? c.delta : "")).join("");
+
+beforeEach(() => {
+  setEnv();
+  resetPiiCacheForTests();
 });
 
-test("the same value always gets the same token", () => {
-  const v = createPiiVault();
-  const first = v.scrub("from 10.0.0.5 to 10.0.0.9");
-  expect(first).toBe("from {REDACTED_IP_1} to {REDACTED_IP_2}");
-  expect(v.scrub("10.0.0.5 again")).toBe("{REDACTED_IP_1} again");
-  expect(v.size).toBe(2);
+afterEach(() => {
+  globalThis.fetch = realFetch;
 });
 
-test("restore puts the real values back, and leaves foreign tokens alone", () => {
-  const v = createPiiVault();
-  v.scrub("check 192.168.1.5 and ann@acme.io");
-  expect(v.restore("{REDACTED_IP_1} is up; mailed {REDACTED_EMAIL_1}")).toBe(
-    "192.168.1.5 is up; mailed ann@acme.io",
-  );
-  // The frontend's own placeholders, and anything the model invented, survive.
-  expect(v.restore("{PEER_1} at {IP_1} — {REDACTED_IP_9}")).toBe(
-    "{PEER_1} at {IP_1} — {REDACTED_IP_9}",
-  );
+test("scrubText mints tokens and restore brings the value back", async () => {
+  mockAnalyzer((text) => (text.includes("Milo Kern") ? [find(text, "Milo Kern", "PERSON")] : []));
+  const vault = new PiiVault();
+
+  const scrubbed = await vault.scrubText("add Milo Kern's laptop to Build Servers");
+  expect(scrubbed).toBe("add [REDACTED_PERSON_1]'s laptop to Build Servers");
+  expect(vault.restoreText(scrubbed)).toBe("add Milo Kern's laptop to Build Servers");
+  // Tolerates the mangled forms models write.
+  expect(vault.restoreText("ok, REDACTED PERSON 1 it is")).toBe("ok, Milo Kern it is");
+  expect(vault.restoreDeep({ a: ["[REDACTED_PERSON_1]"], n: 1 })).toEqual({
+    a: ["Milo Kern"],
+    n: 1,
+  });
 });
 
-test("restore is a no-op for a vault that scrubbed nothing", () => {
-  const v = createPiiVault();
-  expect(v.restore("{REDACTED_IP_1}")).toBe("{REDACTED_IP_1}");
+test("same value keeps one token; overlapping findings keep the first", () => {
+  const vault = new PiiVault();
+  const text = "Milo Kern and Milo Kern";
+  const out = vault.applyFindings(text, [
+    find(text, "Milo Kern", "PERSON"),
+    { entity_type: "PERSON", start: 14, end: 23, score: 0.9 },
+    // Overlaps the first finding — dropped.
+    { entity_type: "LOCATION", start: 5, end: 12, score: 0.9 },
+  ]);
+  expect(out).toBe("[REDACTED_PERSON_1] and [REDACTED_PERSON_1]");
 });
 
-test("scrub is conservative: normal text and doc URLs survive", () => {
-  const v = createPiiVault();
-  const url = "See https://docs.netbird.io/manage/dns/nameserver-groups for setup.";
-  expect(v.scrub(url)).toBe(url);
-  expect(v.scrub("version 0.28.1 on peer_3")).toBe("version 0.28.1 on peer_3");
-  expect(v.scrub("run step a:b:c then done")).toBe("run step a:b:c then done");
-  expect(v.size).toBe(0);
+test("fails open when the analyzer is unreachable, then trips the breaker", async () => {
+  let attempts = 0;
+  globalThis.fetch = (async () => {
+    attempts++;
+    throw new Error("connection refused");
+  }) as unknown as typeof fetch;
+  const vault = new PiiVault();
+  expect(await vault.scrubText("call Milo Kern")).toBe("call Milo Kern");
+  expect(vault.size).toBe(0);
+  // The breaker is open now: further scrubs skip the network entirely.
+  expect(await vault.scrubText("mail Milo Kern")).toBe("mail Milo Kern");
+  expect(attempts).toBe(1);
 });
 
-test("scrub cannot catch resource names (documents the limitation)", () => {
-  const v = createPiiVault();
-  // A peer named 'prod-db-1' has nothing structural to match — frontend's job.
-  expect(v.scrub("why can't prod-db-1 reach the office?")).toBe(
-    "why can't prod-db-1 reach the office?",
-  );
+test("analyzeText caches by text", async () => {
+  let calls = 0;
+  mockAnalyzer(() => {
+    calls++;
+    return [];
+  });
+  await analyzeText("same text");
+  await analyzeText("same text");
+  expect(calls).toBe(1);
 });
 
-test("scrubTranscript covers user text, tool results, assistant text and tool inputs", () => {
-  const v = createPiiVault();
-  const messages: LlmMessage[] = [
-    { role: "user", content: "check 192.168.1.5" },
+test("scrubMessages touches only user and assistant text parts", async () => {
+  mockAnalyzer((text) => (text.includes("Milo Kern") ? [find(text, "Milo Kern", "PERSON")] : []));
+  const vault = new PiiVault();
+  const messages = [
     {
+      id: "m1",
+      role: "user",
+      parts: [{ type: "text", text: "who is Milo Kern?" }],
+    },
+    {
+      id: "m2",
       role: "assistant",
-      content: [
-        { type: "text", text: "the admin is admin@x.io" },
-        { type: "tool_use", id: "t1", name: "cc_add", input: { items: [{ address: "10.1.1.0/24" }] } },
+      parts: [
+        { type: "reasoning", text: "Milo Kern must be an owner" },
+        { type: "text", text: "Milo Kern owns [PEER_1]" },
       ],
     },
-    { role: "user", content: [{ type: "tool_result", toolUseId: "t1", content: "peer ip 10.1.1.1" }] },
+  ] as unknown as UIMessage[];
+
+  await scrubMessages(messages, vault);
+
+  expect(messages[0]!.parts[0]).toMatchObject({ text: "who is [REDACTED_PERSON_1]?" });
+  // Reasoning is signature-protected — byte-identical or the provider rejects it.
+  expect(messages[1]!.parts[0]).toMatchObject({ text: "Milo Kern must be an owner" });
+  // The dashboard's own tokens pass through untouched.
+  expect(messages[1]!.parts[1]).toMatchObject({ text: "[REDACTED_PERSON_1] owns [PEER_1]" });
+});
+
+test("restores tokens split across stream chunks", async () => {
+  const vault = new PiiVault();
+  vault.applyFindings("Milo Kern", [find("Milo Kern", "Milo Kern", "PERSON")]);
+
+  const out = await pump(vault, [
+    { type: "text-start", id: "t1" },
+    { type: "text-delta", id: "t1", delta: "ask [REDACTED_PER" },
+    { type: "text-delta", id: "t1", delta: "SON_1] about it" },
+    { type: "text-end", id: "t1" },
+  ]);
+
+  expect(textOf(out)).toBe("ask Milo Kern about it");
+});
+
+test("flushes a held partial before the part ends", async () => {
+  const vault = new PiiVault();
+  vault.applyFindings("Milo Kern", [find("Milo Kern", "Milo Kern", "PERSON")]);
+
+  const out = await pump(vault, [
+    { type: "text-start", id: "t1" },
+    { type: "text-delta", id: "t1", delta: "x [RED" },
+    { type: "text-end", id: "t1" },
+  ]);
+
+  expect(textOf(out)).toBe("x [RED");
+  expect(out.at(-1)).toMatchObject({ type: "text-end" });
+});
+
+test("restores tool inputs and data parts deeply", async () => {
+  const vault = new PiiVault();
+  vault.applyFindings("Milo Kern", [find("Milo Kern", "Milo Kern", "PERSON")]);
+
+  const out = await pump(vault, [
+    {
+      type: "tool-input-available",
+      toolCallId: "c1",
+      toolName: "cc_add",
+      input: { name: "Machine of [REDACTED_PERSON_1]" },
+    },
+    {
+      type: "data-suggestions",
+      data: { question: "Add [REDACTED_PERSON_1]?", quick_replies: ["yes"] },
+    } as UIMessageChunk,
+  ]);
+
+  expect(out[0]).toMatchObject({ input: { name: "Machine of Milo Kern" } });
+  expect(out[1]).toMatchObject({ data: { question: "Add Milo Kern?" } });
+});
+
+test("passes everything through untouched when nothing was scrubbed", async () => {
+  const vault = new PiiVault();
+  const chunks: UIMessageChunk[] = [
+    { type: "text-start", id: "t1" },
+    { type: "text-delta", id: "t1", delta: "plain [PEER_1] answer" },
+    { type: "text-end", id: "t1" },
   ];
-
-  const out = scrubTranscript(messages, v);
-
-  expect(out[0]!.content).toBe("check {REDACTED_IP_1}");
-  // Assistant turns are scrubbed too: real values were restored on the way out
-  // last turn, so they come back in the transcript.
-  const assistant = out[1]!.content as any[];
-  expect(assistant[0].text).toBe("the admin is {REDACTED_EMAIL_1}");
-  expect(assistant[1].input.items[0].address).toBe("{REDACTED_CIDR_1}");
-  expect((out[2]!.content as any[])[0].content).toBe("peer ip {REDACTED_IP_2}");
-});
-
-test("restoreDeep walks a payload but never rewrites a thinking block", () => {
-  const v = createPiiVault();
-  v.scrub("192.168.1.5");
-  const thinking = { type: "thinking", thinking: "about {REDACTED_IP_1}", signature: "sig" };
-
-  const restored = v.restoreDeep({
-    content: [{ type: "text", text: "it is {REDACTED_IP_1}" }, thinking],
-  }) as any;
-
-  expect(restored.content[0].text).toBe("it is 192.168.1.5");
-  // Altering thinking text would invalidate its signature for the next turn.
-  expect(restored.content[1].thinking).toBe("about {REDACTED_IP_1}");
-});
-
-test("a token split across two deltas is held back, not half-emitted", () => {
-  const v = createPiiVault();
-  v.scrub("100.64.0.7");
-  const stream = createRestoreStream(v);
-
-  expect(stream.push("the ip is {REDAC")).toBe("the ip is ");
-  expect(stream.push("TED_IP_1} now")).toBe("100.64.0.7 now");
-  expect(stream.flush()).toBe("");
-});
-
-test("an unclosed brace is released on flush rather than swallowed", () => {
-  const v = createPiiVault();
-  v.scrub("100.64.0.7");
-  const stream = createRestoreStream(v);
-
-  expect(stream.push("a json object {")).toBe("a json object ");
-  expect(stream.flush()).toBe("{");
-});
-
-test("a long brace run is not held forever", () => {
-  const v = createPiiVault();
-  v.scrub("100.64.0.7");
-  const stream = createRestoreStream(v);
-
-  // Longer than any token this module mints — emitted instead of buffered.
-  const long = "{" + "A".repeat(40);
-  expect(stream.push(long)).toBe(long);
+  expect(await pump(vault, chunks)).toEqual(chunks);
 });

@@ -1,7 +1,3 @@
-/**
- * JWT validation — the security-critical path. Uses a locally-generated JWKS
- * (RSA + EC) and an injected key set, so it runs fully offline.
- */
 import { test, expect, beforeAll } from "bun:test";
 import {
   generateKeyPair,
@@ -12,7 +8,7 @@ import {
   type CryptoKey,
 } from "jose";
 import { setEnv, ISSUER, AUDIENCE, JWKS_URI, ACCOUNT_CLAIM } from "./env.ts";
-import { verifyToken, setAuthForTests } from "@/jwks.ts";
+import { discoveryUrl, verifyToken, setAuthForTests } from "@/http/auth.ts";
 
 let rsaKey: CryptoKey;
 let ecKey: CryptoKey;
@@ -56,6 +52,18 @@ beforeAll(async () => {
   const rsaJwk: JWK = { ...(await exportJWK(rsa.publicKey)), kid: "rsa1", alg: "RS256", use: "sig" };
   const ecJwk: JWK = { ...(await exportJWK(ec.publicKey)), kid: "ec1", alg: "ES256", use: "sig" };
   setAuthForTests(createLocalJWKSet({ keys: [rsaJwk, ecJwk] }), { issuer: ISSUER, jwksUri: JWKS_URI });
+});
+
+test("discoveryUrl derives the well-known endpoint from any authority shape", () => {
+  expect(discoveryUrl("https://netbird-localdev.eu.auth0.com")).toBe(
+    "https://netbird-localdev.eu.auth0.com/.well-known/openid-configuration",
+  );
+  expect(discoveryUrl("https://idp.test/")).toBe(
+    "https://idp.test/.well-known/openid-configuration",
+  );
+  expect(discoveryUrl("https://sso.test/realms/netbird")).toBe(
+    "https://sso.test/realms/netbird/.well-known/openid-configuration",
+  );
 });
 
 test("accepts a valid RS256 token and extracts userId from `sub`", async () => {

@@ -1,16 +1,15 @@
 import { describe, expect, it } from "bun:test";
-import { classifyToolFailure, detectSentiment } from "@/telemetry/signals.ts";
-import { collectTurnSignals } from "@/telemetry/turnSignals.ts";
-import { registry, resetMetricsForTests } from "@/telemetry/metrics.ts";
-import type { ChatMessage } from "@/types.ts";
+import { classifyToolFailure, detectSentiment } from "@/instrumentation/signals.ts";
+import { collectTurnSignals } from "@/instrumentation/signals.ts";
+import { registry, resetMetricsForTests } from "@/instrumentation/metrics.ts";
+import type { UIMessage } from "ai";
 
-/** The real messages the dashboard's tools produce, as seen in the wild. */
 describe("classifyToolFailure", () => {
   it("buckets a handle that doesn't resolve", () => {
     expect(classifyToolFailure("(no network) isn't a network frame.")).toBe(
       "bad_reference",
     );
-    expect(classifyToolFailure("No network frame matches {NODE_4}.")).toBe(
+    expect(classifyToolFailure("No network frame matches node-4.")).toBe(
       "bad_reference",
     );
   });
@@ -72,41 +71,39 @@ describe("collectTurnSignals", () => {
     requestId: "11111111-1111-1111-1111-111111111111",
     accountId: "acc-1",
     userId: "user-1",
-    now: new Date("2026-01-01T00:00:00Z"),
   };
 
   const metric = async (name: string) =>
     (await registry.getSingleMetricAsString(name)) ?? "";
 
+  const say = (text: string): UIMessage => ({
+    id: "m-user",
+    role: "user",
+    parts: [{ type: "text", text }],
+  });
+
+  const toolTurn = (state: "output-available" | "output-error", errorText?: string): UIMessage => ({
+    id: "m-assistant",
+    role: "assistant",
+    parts: [
+      {
+        type: "tool-cc_node",
+        toolCallId: "t1",
+        state,
+        input: { action: "route_network" },
+        ...(state === "output-error"
+          ? { errorText }
+          : { output: { ok: true, content: "done", summary: "done" } }),
+      } as UIMessage["parts"][number],
+    ],
+  });
+
   it("counts a failed step against the tool that failed", async () => {
     resetMetricsForTests();
-    const messages: ChatMessage[] = [
-      { role: "user", content: "route the office network" },
-      {
-        role: "assistant",
-        content: [
-          {
-            type: "tool_use",
-            id: "t1",
-            name: "cc_node",
-            input: { action: "route_network" },
-          },
-        ],
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "tool_result",
-            toolUseId: "t1",
-            content: "(no network) isn't a network frame.",
-            isError: true,
-          },
-        ],
-      },
-    ];
-
-    collectTurnSignals(messages, ctx);
+    collectTurnSignals(
+      [say("route the office network"), toolTurn("output-error", "(no network) isn't a network frame.")],
+      ctx,
+    );
 
     const text = await metric("netbird_assistant_tool_failures_total");
     expect(text).toContain('tool="cc_node"');
@@ -115,47 +112,14 @@ describe("collectTurnSignals", () => {
 
   it("ignores a step that succeeded", async () => {
     resetMetricsForTests();
-    collectTurnSignals(
-      [
-        {
-          role: "assistant",
-          content: [{ type: "tool_use", id: "t1", name: "cc_add", input: {} }],
-        },
-        {
-          role: "user",
-          content: [
-            { type: "tool_result", toolUseId: "t1", content: "Added it." },
-          ],
-        },
-      ],
-      ctx,
-    );
-    expect(await metric("netbird_assistant_tool_failures_total")).not.toContain('tool="cc_add"');
+    collectTurnSignals([say("add a node"), toolTurn("output-available")], ctx);
+    expect(await metric("netbird_assistant_tool_failures_total")).not.toContain('tool="cc_node"');
   });
 
-  it("counts only the newest turn, so a replayed transcript can't double-count", async () => {
+  it("counts only the newest message, so a replayed transcript can't double-count", async () => {
     resetMetricsForTests();
-    const failed: ChatMessage[] = [
-      {
-        role: "assistant",
-        content: [{ type: "tool_use", id: "t1", name: "cc_node", input: {} }],
-      },
-      {
-        role: "user",
-        content: [
-          {
-            type: "tool_result",
-            toolUseId: "t1",
-            content: "(no network) isn't a network frame.",
-            isError: true,
-          },
-        ],
-      },
-    ];
-    // The same failure, now followed by later turns — the shape every request
-    // after it has.
     collectTurnSignals(
-      [...failed, { role: "assistant", content: [{ type: "text", text: "ok" }] }, { role: "user", content: "thanks" }],
+      [toolTurn("output-error", "(no network) isn't a network frame."), say("thanks")],
       ctx,
     );
     expect(await metric("netbird_assistant_tool_failures_total")).not.toContain('tool="cc_node"');
@@ -163,10 +127,7 @@ describe("collectTurnSignals", () => {
 
   it("counts the user's tone from their own message", async () => {
     resetMetricsForTests();
-    collectTurnSignals(
-      [{ role: "user", content: "this still doesn't work, seriously?" }],
-      ctx,
-    );
+    collectTurnSignals([say("this still doesn't work, seriously?")], ctx);
     expect(await metric("netbird_assistant_user_sentiment_total")).toContain(
       'kind="frustration"',
     );

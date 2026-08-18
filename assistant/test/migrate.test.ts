@@ -1,10 +1,6 @@
-/**
- * Migration runner integration tests (gated on TEST_DATABASE_URL). Cover fresh
- * apply, idempotency, and concurrency (the advisory lock).
- */
 import { describe, test, expect, beforeEach } from "bun:test";
 import { setEnv } from "./env.ts";
-import { db, resetDbForTests } from "@/telemetry/store.ts";
+import { db, resetDbForTests } from "@/db/index.ts";
 import { migrate } from "@/db/migrate.ts";
 
 const TEST_DB = process.env.TEST_DATABASE_URL;

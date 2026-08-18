@@ -5,7 +5,7 @@ import {
   mean,
   percentile,
   priceFor,
-} from "@/telemetry/pricing.ts";
+} from "@/db/index.ts";
 import type { Usage } from "@/types.ts";
 
 const usage = (o: Partial<Usage> = {}): Usage => ({
@@ -24,7 +24,6 @@ describe("priceFor", () => {
   });
 
   it("prefers the longest matching prefix", () => {
-    // haiku-4 has its own rate; it must not fall back to the older haiku one.
     expect(priceFor("claude-haiku-4-5-20251001")!.input).toBe(1);
   });
 
@@ -78,7 +77,6 @@ describe("percentile / mean", () => {
   });
 
   it("mean and median disagree on a skewed day, which is the point", () => {
-    // Ninety cheap questions and one big canvas build.
     const sessions = [...Array(90).fill(0.01), 5];
     expect(mean(sessions)).toBeGreaterThan(percentile(sessions, 0.5));
     expect(percentile(sessions, 0.5)).toBeCloseTo(0.01, 6);

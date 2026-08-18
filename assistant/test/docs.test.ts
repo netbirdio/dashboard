@@ -1,13 +1,11 @@
 import { test, expect, beforeAll } from "bun:test";
 import { setEnv } from "./env.ts";
-import { tokenize, deriveEntry, rankEntries, type DocEntry } from "@/docs/catalog.ts";
-import { rawCandidates, cleanMdx, htmlToText, fetchDoc, DocFetchError } from "@/docs/fetch.ts";
-import { runDocTool, isDocTool } from "@/docs/execute.ts";
-import { toolSpecs, isServerTool, isKnownTool } from "@/llm/tools.ts";
+import { deriveEntry, rankEntries, type DocEntry } from "@/tools/docs.ts";
+import { rawCandidates, cleanMdx, htmlToText, fetchDoc, DocFetchError } from "@/tools/docs.ts";
+import { runDocTool, isDocTool } from "@/tools/docs.ts";
+import { isServerTool, TOOLS } from "@/tools/index.ts";
 
-beforeAll(() => setEnv()); // fetch guards call loadConfig()
-
-// ── catalog: derivation + ranking (pure) ─────────────────────────────────────
+beforeAll(() => setEnv());
 
 test("deriveEntry pulls title + section from a docs URL", () => {
   expect(deriveEntry("https://docs.netbird.io/manage/dns/dns-settings")).toEqual({
@@ -18,10 +16,6 @@ test("deriveEntry pulls title + section from a docs URL", () => {
   expect(deriveEntry("https://docs.netbird.io/").title).toBe("Introduction");
 });
 
-test("tokenize drops stopwords and short/noise tokens", () => {
-  expect(tokenize("How do I set up split DNS in NetBird?")).toEqual(["set", "up", "split", "dns"]);
-});
-
 test("rankEntries ranks title/slug/section matches, ignores misses", () => {
   const entries: DocEntry[] = [
     { url: "https://docs.netbird.io/manage/dns/dns-settings", title: "Dns Settings", section: "manage" },
@@ -29,17 +23,15 @@ test("rankEntries ranks title/slug/section matches, ignores misses", () => {
     { url: "https://docs.netbird.io/manage/dns/nameserver-groups", title: "Nameserver Groups", section: "manage" },
   ];
   const hits = rankEntries(entries, "dns settings", 5);
-  expect(hits[0]!.url).toContain("dns-settings"); // title match wins
+  expect(hits[0]!.url).toContain("dns-settings");
   expect(hits.every((h) => h.score > 0)).toBe(true);
-  expect(hits.find((h) => h.url.endsWith("/peers"))).toBeUndefined(); // no overlap → excluded
+  expect(hits.find((h) => h.url.endsWith("/peers"))).toBeUndefined();
 });
 
 test("rankEntries returns nothing for an all-stopword query", () => {
   const entries: DocEntry[] = [{ url: "https://docs.netbird.io/x", title: "X", section: "x" }];
   expect(rankEntries(entries, "how do i", 5)).toEqual([]);
 });
-
-// ── fetch helpers (pure) ─────────────────────────────────────────────────────
 
 test("rawCandidates maps a doc URL to leaf then index MDX", () => {
   expect(rawCandidates("https://docs.netbird.io/manage/dns/dns-settings")).toEqual([
@@ -72,13 +64,11 @@ test("htmlToText drops script/style and decodes entities", async () => {
   expect(text).not.toContain("menu");
 });
 
-// ── execute: guards that do not touch the network ────────────────────────────
-
 test("isDocTool / isServerTool agree that docs tools run server-side", () => {
   for (const name of ["search_docs", "fetch_doc"]) {
     expect(isDocTool(name)).toBe(true);
     expect(isServerTool(name)).toBe(true);
-    expect(isKnownTool(name)).toBe(true);
+    expect(name in TOOLS).toBe(true);
   }
   expect(isServerTool("list_peers")).toBe(false);
 });
@@ -94,17 +84,6 @@ test("fetch_doc refuses a disallowed host (SSRF guard) with no network call", as
   const res = await runDocTool("fetch_doc", { url: "https://evil.example.com/x" });
   expect(res.ok).toBe(false);
   expect(res.content).toContain("Could not fetch");
-  await expect(fetchDoc("http://docs.netbird.io/x")).rejects.toBeInstanceOf(DocFetchError); // http, not https
+  await expect(fetchDoc("http://docs.netbird.io/x")).rejects.toBeInstanceOf(DocFetchError);
 });
 
-// ── tool advertisement respects DOCS_ENABLED ─────────────────────────────────
-
-test("toolSpecs includes doc tools only when server tools are enabled", () => {
-  const withDocs = toolSpecs(true).map((t) => t.name);
-  const withoutDocs = toolSpecs(false).map((t) => t.name);
-  expect(withDocs).toContain("search_docs");
-  expect(withDocs).toContain("fetch_doc");
-  expect(withoutDocs).not.toContain("search_docs");
-  expect(withoutDocs).not.toContain("fetch_doc");
-  expect(withoutDocs).toContain("list_peers"); // client tools unaffected
-});
