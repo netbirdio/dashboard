@@ -442,10 +442,8 @@ type ManagementUrlStepProps = {
 };
 
 // ManagementUrlStep tells a desktop-client user where to point the client at
-// this self-hosted management server. The client reworked its UI in v0.75: it
-// now asks for the management server in the first-run "Set up NetBird" screen
-// and keeps the field in Settings > General, so the old
-// "Settings > Advanced Settings" path no longer exists.
+// this self-hosted management server: the first-run "Set up NetBird" screen,
+// or Settings > General once the client is past it.
 export const ManagementUrlStep = ({ trayName }: ManagementUrlStepProps) => {
   return (
     <>
