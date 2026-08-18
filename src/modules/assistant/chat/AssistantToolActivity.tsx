@@ -6,6 +6,7 @@ import { AlertCircle, Check, ChevronRight, Loader2 } from "lucide-react";
 import { useState } from "react";
 import type { TrailDescription } from "@/modules/assistant/tools/control-center-call-tool";
 import { navigateToPage } from "@/modules/assistant/tools/navigate-to-page";
+import { useRedactor } from "@/modules/assistant/utils/redaction";
 import { ASSISTANT_TOOLS } from "@/modules/assistant/utils/tools";
 
 // Falls back to the raw name so a tool the dashboard doesn't know yet still renders.
@@ -64,6 +65,11 @@ const asJson = (value: unknown): string | null => {
 
 // A server tool's result is `{ ok, content, summary, … }` — the content is the
 // readable part. A management call's result is the JSON payload as a string.
+const restoreOr = (
+  text: string | null,
+  restore: (text: string) => string,
+): string | null => (text === null ? null : restore(text));
+
 function formatResult(result: unknown): string | null {
   if (result === undefined || result === null) return null;
   const content = (result as { content?: unknown })?.content;
@@ -87,12 +93,15 @@ export function AssistantToolActivity({
   result,
 }: Readonly<ToolActivityProps>) {
   const [open, setOpen] = useState(false);
+  const { restore } = useRedactor();
 
   const running = status?.type === "running";
   const failed = isError === true || status?.type === "incomplete";
 
-  const request = asJson(args);
-  const outcome = formatResult(result);
+  // Args and results are the wire copy — tokens in, real names for the user.
+  // Restore is plain text substitution, so it works on the JSON strings too.
+  const request = restoreOr(asJson(args), restore);
+  const outcome = restoreOr(formatResult(result), restore);
   const expandable = Boolean(request || outcome);
   // The canvas tools name their own move and subject — the generic first-string
   // rule surfaced raw enums ('new_empty') and half a connection.
@@ -100,7 +109,9 @@ export function AssistantToolActivity({
     ASSISTANT_TOOLS[toolName]?.kind === "control-center"
       ? describeControlCenterTool(toolName, args)
       : null;
-  const subject = activity ? null : subjectOf(toolName, args);
+  const subject = activity
+    ? null
+    : restoreOr(subjectOf(toolName, args), restore);
 
   return (
     <div className="text-chat">
@@ -139,17 +150,17 @@ export function AssistantToolActivity({
         </span>
 
         {activity?.detail && (
-          <span className="min-w-0 truncate">{activity.detail}</span>
+          <span className="min-w-0 truncate">{restore(activity.detail)}</span>
         )}
 
-        {subject && (
-          <span className="min-w-0 truncate">{`'${subject}'`}</span>
-        )}
+        {subject && <span className="min-w-0 truncate">{`'${subject}'`}</span>}
 
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           {running && <Loader2 size={14} className="animate-spin" />}
           {!running && failed && <AlertCircle size={13} />}
-          {!running && !failed && <Check size={13} className="text-green-500" />}
+          {!running && !failed && (
+            <Check size={13} className="text-green-500" />
+          )}
         </span>
       </button>
 

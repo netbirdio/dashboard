@@ -7,7 +7,8 @@ import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import PermissionsProvider from "@/contexts/PermissionsProvider";
 import { Role, User } from "@/interfaces/User";
 
-const config = loadConfig();
+let cachedConfig: ReturnType<typeof loadConfig> | null = null;
+const config = () => (cachedConfig ??= loadConfig());
 
 type Props = {
   children: React.ReactNode;
@@ -115,7 +116,7 @@ export const useLoggedInUser = () => {
   const isOwnerOrAdmin = isOwner || isAdmin;
 
   const logout = async () => {
-    return oidcLogout("/", { client_id: config.clientId }).then(() => {
+    return oidcLogout("/", { client_id: config().clientId }).then(() => {
       setGlobalApiParams?.({});
     });
   };

@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import {
   Modal,
   ModalClose,
@@ -155,9 +156,11 @@ const PickerContent = ({
       />
       <div className={"p-default flex flex-col"}>
         {resources.length === 0 && groupIds.length === 0 ? (
-          <div className={"text-sm text-nb-gray-400 text-center py-4"}>
-            This network has no resources yet.
-          </div>
+          <Callout variant={"info"}>
+            Connecting to a network needs something inside it to connect to.
+            Add a resource to {network?.name ?? "this network"} first, then
+            pick it here as the destination.
+          </Callout>
         ) : (
           <div className={"w-full"}>
             <PeerGroupSelector

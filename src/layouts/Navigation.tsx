@@ -1,15 +1,19 @@
 "use client";
 
 import { ScrollArea } from "@components/ScrollArea";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { isNetBirdCloud } from "@utils/netbird";
+import * as React from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import ActivityIcon from "@/assets/icons/ActivityIcon";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { DistributorNavigation } from "@/cloud/distributor/DistributorNavigation";
@@ -20,14 +24,10 @@ import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { headerHeight } from "@/layouts/Header";
-import { useAssistantPanel } from "@/modules/assistant/AssistantPanelContext";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvider";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import * as React from "react";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 
 type Props = {
   fullWidth?: boolean;
@@ -42,7 +42,7 @@ export default function Navigation({
   const { isNavigationCollapsed } = useApplicationContext();
   // Heights here derive from 100vh, so they must account for the dashboard being
   // inset by the assistant panel or the nav overflows the card and is clipped.
-  const { inset } = useAssistantPanel();
+  const { inset } = useAssistantSidebar();
   const { permission, isRestricted } = usePermissions();
   const { only: agentNetworkOnly, enabled: agentNetworkEnabled } =
     useAgentNetworkMode();

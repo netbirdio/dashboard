@@ -1,16 +1,12 @@
-/**
- * The header's "Agent" toggle. Reveals the assistant panel by shrinking the
- * dashboard card — see `AssistantPanelContext`.
- */
 "use client";
 
 import Button from "@components/Button";
 import { cn } from "@utils/helpers";
-import { AssistantIcon } from "./AssistantIcon";
-import { useAssistantPanel } from "./AssistantPanelContext";
+import { AssistantIcon } from "@/assets/icons/AssistantIcon";
+import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvider";
 
 export function AssistantButton() {
-  const { available, open, toggle } = useAssistantPanel();
+  const { available, open, toggle } = useAssistantSidebar();
 
   if (!available) return null;
 
@@ -20,17 +16,15 @@ export function AssistantButton() {
       variant={"default-outline"}
       onClick={toggle}
       aria-expanded={open}
-      aria-label={open ? "Close the agent" : "Open the NetBird agent"}
+      aria-label={open ? "Close the assistant" : "Open the NetBird assistant"}
       className={cn(
-        "h-[38px] px-3 text-[0.88rem]",
-        // Held state while the panel is open — the button is a toggle, and
-        // `default-outline`'s hover styling alone doesn't show that.
+        "h-[38px] px-3 text-[0.95rem]",
         open &&
           "!border-white !bg-white !text-nb-gray-950 hover:!bg-nb-gray-100",
       )}
     >
       <AssistantIcon size={16} />
-      <span className="hidden sm:inline">Agent</span>
+      <span className="hidden sm:inline">Ask</span>
     </Button>
   );
 }

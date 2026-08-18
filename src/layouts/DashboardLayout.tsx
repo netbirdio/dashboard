@@ -9,7 +9,7 @@ import { isNetBirdCloud } from "@utils/netbird";
 import { useIsSm, useIsXs } from "@utils/responsive";
 import { AnimatePresence, motion } from "framer-motion";
 import { XIcon } from "lucide-react";
-import React, { Suspense } from "react";
+import React from "react";
 import { NetBirdCloudProvider } from "@/cloud/contexts/NetBirdCloudProvider";
 import DistributorProvider from "@/cloud/distributor/contexts/DistributorProvider";
 import MSPProvider from "@/cloud/msp/contexts/MSPProvider";
@@ -24,16 +24,12 @@ import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import UsersProvider from "@/contexts/UsersProvider";
+import { PANEL_ON_LEFT, PANEL_WIDTH } from "@/interfaces/Assistant";
 import Navigation from "@/layouts/Navigation";
-import AssistantPanel from "@/modules/assistant/AssistantPanel";
-import {
-  AssistantPanelProvider,
-  PANEL_ON_LEFT,
-  PANEL_WIDTH,
-  useAssistantPanel,
-} from "@/modules/assistant/AssistantPanelContext";
-import { AssistantContextProvider } from "@/modules/assistant/context/AssistantContextProvider";
-import RouteAssistantContext from "@/modules/assistant/context/routeContext";
+import { AssistantChatContextProvider } from "@/modules/assistant/AssistantChatContextProvider";
+import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvider";
+import { AssistantSidebarProvider } from "@/modules/assistant/AssistantSidebarProvider";
+import AssistantChatPanel from "@/modules/assistant/chat/AssistantChatPanel";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
 import Header, { headerHeight } from "./Header";
 
@@ -51,19 +47,13 @@ export default function DashboardLayout({
               <BillingProvider>
                 <GroupsProvider>
                   <CountryProvider>
-                    <AssistantPanelProvider>
-                      <AssistantContextProvider>
-                        <NetBirdCloudProvider />
-                        {!isNetBirdCloud() && <OnboardingProvider />}
-                        {/* Reads the URL and publishes what the user is looking
-                          at. Inside Suspense because `useSearchParams` opts the
-                          tree out of static rendering otherwise. */}
-                        <Suspense fallback={null}>
-                          <RouteAssistantContext />
-                        </Suspense>
-                        <DashboardPageContent>{children}</DashboardPageContent>
-                      </AssistantContextProvider>
-                    </AssistantPanelProvider>
+                    <AssistantSidebarProvider>
+                      <AssistantChatContextProvider>
+                      <NetBirdCloudProvider />
+                      {!isNetBirdCloud() && <OnboardingProvider />}
+                      <DashboardPageContent>{children}</DashboardPageContent>
+                    </AssistantChatContextProvider>
+                    </AssistantSidebarProvider>
                   </CountryProvider>
                 </GroupsProvider>
               </BillingProvider>
@@ -115,12 +105,12 @@ function DashboardPageContent({
 
   const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
   const { bannerHeight } = useAnnouncement();
-  const { reveal, inset } = useAssistantPanel();
+  const { reveal, inset } = useAssistantSidebar();
   const resizing = useIsResizing();
 
   return (
     <>
-      {!isRestricted && <AssistantPanel />}
+      {!isRestricted && <AssistantChatPanel />}
 
       {/*
         The dashboard card. Sits above the panel and shrinks to reveal it —

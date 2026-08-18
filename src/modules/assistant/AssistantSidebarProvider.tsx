@@ -24,10 +24,16 @@ import {
 // A configured origin isn't enough — `/readyz` also covers the assistant's
 // Postgres and JWKS. Focus/reconnect revalidation keeps a long-lived tab honest.
 function useReachable(origin: string): boolean {
-  const { data, error } = useFetchApi<unknown>("/readyz", true, true, !!origin, {
-    origin,
-    shouldRetryOnError: false,
-  });
+  const { data, error } = useFetchApi<unknown>(
+    "/readyz",
+    true,
+    true,
+    !!origin,
+    {
+      origin,
+      shouldRetryOnError: false,
+    },
+  );
   // SWR keeps the last good payload when a revalidation fails, so `data` alone
   // would stay truthy after the server goes down; `error` reflects the latest probe.
   return !error && !!data;

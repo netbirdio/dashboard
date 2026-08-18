@@ -14,12 +14,20 @@ const CANVAS_ACTION_LABELS: Record<string, string> = {
 };
 
 // `cc_canvas`: camera and layout — arrange, fit, zoom.
-export const arrangeCanvas: ControlCenterToolAction = async (input, api, redactor) => {
-  const step = await api.canvas(String(input.action ?? "") as AgentCanvasAction);
+export const arrangeCanvas: ControlCenterToolAction = async (
+  input,
+  api,
+  redactor,
+) => {
+  const step = await api.canvas(
+    String(input.action ?? "") as AgentCanvasAction,
+  );
   return reportSteps([step], api, redactor);
 };
 
 export const describeArrangeCanvas: ControlCenterDescribeTrail = (input) => {
   const action = nonEmptyString(input.action);
-  return action && CANVAS_ACTION_LABELS[action] ? { label: CANVAS_ACTION_LABELS[action] } : {};
+  return action && CANVAS_ACTION_LABELS[action]
+    ? { label: CANVAS_ACTION_LABELS[action] }
+    : {};
 };

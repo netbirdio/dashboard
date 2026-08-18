@@ -30,6 +30,11 @@ import {
   describeAssistantError,
   serverFailure,
 } from "@/modules/assistant/utils/errors";
+import {
+  identifierNotes,
+  pseudonymizeMessages,
+  type Redactor,
+} from "@/modules/assistant/utils/redaction";
 import { ASSISTANT_TOOLS } from "@/modules/assistant/utils/tools";
 
 const TEXT = {
@@ -89,7 +94,10 @@ type AuthedFetch = (
 // can surface the raw body as the error message.
 export function friendlyFetch(authedFetch: AuthedFetch): typeof fetch {
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const res = await authedFetch(input instanceof URL ? input.toString() : input, init);
+    const res = await authedFetch(
+      input instanceof URL ? input.toString() : input,
+      init,
+    );
     if (!res.ok) {
       const raw = await res.text().catch(() => "");
       const { code, message } = serverFailure(res.status, raw);
@@ -132,57 +140,58 @@ interface AskInput {
 
 export interface AssistantRuntimeOptions {
   toolResults: ToolResultStore;
-  // Omitted means the server default.
-  model?: string;
+  redactor: Redactor;
   onQuestion?: (question: AssistantQuestion | null) => void;
   onStatus?: (status: string | null) => void;
   // True from send until the turn is really over, spanning the round gaps
   // where the chat is briefly "ready" while client tools execute.
   onTurnActive?: (active: boolean) => void;
   pageContext?: () => string | null;
-  onFeedback?: (feedback: { type: "positive" | "negative" }) => void;
 }
 
 export function useAssistantRuntime({
   toolResults,
-  model,
+  redactor,
   onQuestion,
   onStatus,
   onTurnActive,
-  onFeedback,
   pageContext,
 }: AssistantRuntimeOptions) {
   const { fetch: authedFetch } = useNetBirdFetch(true);
   const executeTool = useAssistantTools();
   const { origin } = useAssistantSidebar();
 
-  // Read at send time through refs: the transport is built once per
-  // conversation, and both can change between two messages.
-  const modelRef = useRef(model);
-  modelRef.current = model;
+  // Read at send time through a ref: the transport is built once per
+  // conversation, and the page can change between two messages.
   const contextRef = useRef(pageContext);
   contextRef.current = pageContext;
-  // Only the rejected id is suppressed; a model picked later is honoured.
-  const rejectedModelRef = useRef<string | null>(null);
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport<UIMessage>({
         api: `${origin}/v1/chat`,
         fetch: friendlyFetch(authedFetch),
-        prepareSendMessagesRequest: ({ id, messages }) => ({
-          body: {
-            id,
-            messages,
-            model:
-              modelRef.current === rejectedModelRef.current
-                ? undefined
-                : modelRef.current,
-            pageContext: contextRef.current?.() ?? undefined,
-          },
-        }),
+        /*
+          The privacy boundary. The wire copy is pseudonymized here, on every
+          send — chat state keeps what the user typed, and the monotonic token
+          map makes each resend come out identical. Tool outputs need nothing:
+          they were redacted when they were recorded. The identifier notes ride
+          in pageContext, which the server prepends to the newest user message.
+        */
+        prepareSendMessagesRequest: ({ id, messages }) => {
+          const notes = identifierNotes(messages, redactor);
+          const context = contextRef.current?.() ?? null;
+          return {
+            body: {
+              id,
+              messages: pseudonymizeMessages(messages, redactor),
+              pageContext:
+                [notes, context].filter(Boolean).join("\n\n") || undefined,
+            },
+          };
+        },
       }),
-    [origin, authedFetch],
+    [origin, authedFetch, redactor],
   );
 
   // Holds the canvas lock and batches its re-layout from the first canvas
@@ -226,7 +235,11 @@ export function useAssistantRuntime({
   const chatRef = useRef<Chat | null>(null);
 
   const runClientTool = useCallback(
-    async (toolCall: { toolCallId: string; toolName: string; input: unknown }) => {
+    async (toolCall: {
+      toolCallId: string;
+      toolName: string;
+      input: unknown;
+    }) => {
       const current = chatRef.current;
       if (!current) return;
       const { toolCallId, toolName, input } = toolCall;
@@ -240,7 +253,12 @@ export function useAssistantRuntime({
       try {
         // executeTool also words the failure for a tool this dashboard
         // version doesn't know.
-        const outcome = await executeTool(toolName, input, toolResults);
+        const outcome = await executeTool(
+          toolName,
+          input,
+          toolResults,
+          redactor,
+        );
         if (outcome.isError) {
           current.addToolResult({
             tool: toolName,
@@ -249,18 +267,13 @@ export function useAssistantRuntime({
             errorText: outcome.content,
           });
         } else {
-          current.addToolResult({ tool: toolName, toolCallId, output: outcome.content });
+          current.addToolResult({
+            tool: toolName,
+            toolCallId,
+            output: outcome.content,
+          });
         }
       } catch (err) {
-        if ((err as Error)?.name === "AbortError") {
-          // A stopped turn leaves the tool part without an output, so nothing
-          // re-runs the status effect — settle the turn from here instead.
-          publishTurnActive(false);
-          onStatus?.(null);
-          endCanvasTurnRef.current?.();
-          endCanvasTurnRef.current = null;
-          return;
-        }
         current.addToolResult({
           tool: toolName,
           toolCallId,
@@ -269,7 +282,7 @@ export function useAssistantRuntime({
         });
       }
     },
-    [executeTool, toolResults, publishTurnActive, onStatus],
+    [executeTool, toolResults, redactor],
   );
 
   // Tool calls of one message run strictly in the order the model made them:
@@ -297,11 +310,6 @@ export function useAssistantRuntime({
         options: s.quick_replies.map((label) => ({ label })),
         multi: false,
       });
-    },
-    onError: (error) => {
-      if (error instanceof AssistantHttpError && error.code === "unknown_model") {
-        rejectedModelRef.current = modelRef.current ?? null;
-      }
     },
   });
   chatRef.current = chat;
@@ -332,7 +340,8 @@ export function useAssistantRuntime({
         for (const part of last.parts) {
           if (!isToolUIPart(part) || getToolName(part) !== "ask_user") continue;
           if (part.state !== "output-available") continue;
-          if ((part.output as { ok?: boolean } | undefined)?.ok !== true) continue;
+          if ((part.output as { ok?: boolean } | undefined)?.ok !== true)
+            continue;
           if (shownQuestionRef.current === part.toolCallId) return;
           shownQuestionRef.current = part.toolCallId;
           const input = part.input as AskInput;
@@ -362,15 +371,23 @@ export function useAssistantRuntime({
       }
       if (isToolUIPart(part)) {
         const name = getToolName(part);
-        if (part.state === "input-streaming" || part.state === "input-available") {
+        if (
+          part.state === "input-streaming" ||
+          part.state === "input-available"
+        ) {
           const trail =
             ASSISTANT_TOOLS[name]?.kind === "control-center"
               ? describeControlCenterTool(name, part.input)
               : null;
+          // Restored here because the status line bypasses the components
+          // that restore everywhere else: tool args and reasoning are the
+          // model's words, so they carry tokens.
           onStatus?.(
-            trail
-              ? [trail.label, trail.detail].filter(Boolean).join(" ")
-              : toolLabel(name, true),
+            redactor.restore(
+              trail
+                ? [trail.label, trail.detail].filter(Boolean).join(" ")
+                : toolLabel(name, true),
+            ),
           );
         } else {
           onStatus?.(TEXT.working);
@@ -378,17 +395,20 @@ export function useAssistantRuntime({
         return;
       }
       if (part.type === "reasoning" && part.text) {
-        onStatus?.(thinkingStatus(part.text) ?? TEXT.thinking);
+        const status = thinkingStatus(part.text);
+        onStatus?.(status ? redactor.restore(status) : TEXT.thinking);
         return;
       }
     }
     onStatus?.(TEXT.thinking);
-  }, [chat.messages, chat.status, onStatus, onQuestion, publishTurnActive]);
+  }, [
+    chat.messages,
+    chat.status,
+    onStatus,
+    onQuestion,
+    publishTurnActive,
+    redactor,
+  ]);
 
-  const feedback = useMemo(
-    () => ({ submit: ({ type }: { type: "positive" | "negative" }) => onFeedback?.({ type }) }),
-    [onFeedback],
-  );
-
-  return useAISDKRuntime(chat, { adapters: { feedback } });
+  return useAISDKRuntime(chat);
 }

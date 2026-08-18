@@ -8,8 +8,6 @@ const ERROR_MESSAGES = {
     "The assistant service is temporarily unavailable. It may be restarting — try again in a minute.",
   requestFailed:
     "The assistant couldn't complete that request. Try again in a moment.",
-  staleModel:
-    "The model this chat was set to isn't available any more. Reopen the assistant to pick up the current one.",
   timeout: "The assistant took too long to respond. Try again in a moment.",
   unreachable:
     "Can't reach the assistant service — it looks offline or is restarting. Try again in a minute, or contact your administrator if it keeps happening.",
@@ -46,7 +44,7 @@ export const serverFailure = (
   status: number,
   body: string,
 ): { code?: string; message: string } => {
-  let parsed: { code?: string; message?: string; error?: string } | null = null;
+  let parsed: { code?: string; message?: string } | null = null;
   try {
     parsed = JSON.parse(body);
   } catch {
@@ -54,10 +52,6 @@ export const serverFailure = (
   }
   if (parsed?.code && parsed?.message) {
     return { code: parsed.code, message: parsed.message };
-  }
-  // Pre-`{code, message}` servers signal a stale model id this way.
-  if (status === 400 && parsed?.error === "unknown model") {
-    return { code: "unknown_model", message: ERROR_MESSAGES.staleModel };
   }
   return { message: fallbackFailure(status) };
 };

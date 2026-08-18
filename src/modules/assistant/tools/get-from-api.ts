@@ -255,6 +255,11 @@ export const getUsers: ManagementApiCall = {
   redact: USER,
 };
 
+export const getCurrentUser: ManagementApiCall = {
+  path: () => "/users/current",
+  redact: USER,
+};
+
 export const getAccountSettings: ManagementApiCall = {
   path: () => "/accounts",
   redact: ACCOUNT_SETTINGS,

@@ -24,8 +24,6 @@ import {
   RotateCw,
   ShieldCheck,
   Square,
-  ThumbsDown,
-  ThumbsUp,
 } from "lucide-react";
 import Image from "next/image";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
@@ -43,6 +41,7 @@ import {
   parseOptionNumbers,
 } from "@/modules/assistant/chat/AssistantQuestionCard";
 import { AssistantToolActivity } from "@/modules/assistant/chat/AssistantToolActivity";
+import { useRedactor } from "@/modules/assistant/utils/redaction";
 
 // Width of the `.nb-scrollbar` track, so overlays can stop short of it.
 const SCROLLBAR_WIDTH = 10;
@@ -78,15 +77,18 @@ const groupSteps = (part: { type: string; toolName?: string }) => {
 // Below this a summary hides more than it saves.
 const SUMMARIZE_FROM = 3;
 
-function PlainText({ text }: Readonly<{ text: string }>) {
-  return <span className="whitespace-pre-wrap">{text}</span>;
+// Typed text passes through unchanged; a quick-reply pick appends the option's
+// label, which can carry tokens, so user bubbles restore too.
+function RestoredText({ text }: Readonly<{ text: string }>) {
+  const { restore } = useRedactor();
+  return <span className="whitespace-pre-wrap">{restore(text)}</span>;
 }
 
 function UserMessage() {
   return (
     <MessagePrimitive.Root className="mb-5 flex justify-end">
       <div className="max-w-[85%] rounded-lg rounded-br-sm bg-nb-gray-900 px-3 py-2 text-sm text-nb-gray-100">
-        <MessagePrimitive.Parts components={{ Text: PlainText }} />
+        <MessagePrimitive.Parts components={{ Text: RestoredText }} />
       </div>
     </MessagePrimitive.Root>
   );
@@ -98,20 +100,26 @@ const actionClass =
 // Not `ActionBarPrimitive.Copy`: `useCopyToClipboard` fires the dashboard's
 // standard notification.
 function CopyAction() {
+  const { restore } = useRedactor();
   const text = useAuiState((s) =>
     s.message.parts
       .map((part) => (part.type === "text" ? part.text : ""))
       .join("")
       .trim(),
   );
-  const [, copyToClipboard, copied] = useCopyToClipboard(text);
+  // Disabled only while THIS message still streams — copying then would grab
+  // a fragment. Finished messages stay copyable through later turns.
+  const running = useAuiState(
+    (s) => s.message.role === "assistant" && s.message.status.type === "running",
+  );
+  const [, copyToClipboard, copied] = useCopyToClipboard(restore(text));
 
   return (
     <button
       type="button"
       aria-label="Copy answer"
       title="Copy"
-      disabled={!text}
+      disabled={!text || running}
       onClick={() => copyToClipboard("The answer has been copied.")}
       className={actionClass}
     >
@@ -124,34 +132,17 @@ function CopyAction() {
   );
 }
 
-// Hidden while running: acting on a half-written answer copies and rates a fragment.
+// Always mounted: the bar's height is part of the message's layout, and
+// mounting it late (the old `hideWhenRunning`) shifted the thread at every
+// turn boundary and made finished messages uncopyable mid-turn. It stays
+// invisible until hover; only its buttons know about running state.
 function MessageActions() {
   return (
-    <ActionBarPrimitive.Root
-      hideWhenRunning
-      className="mt-1 flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/message:opacity-100"
-    >
+    <ActionBarPrimitive.Root className="mt-1 flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/message:opacity-100">
       <CopyAction />
-
-      <ActionBarPrimitive.FeedbackPositive
-        aria-label="Good answer"
-        title="Good answer"
-        className={cn(actionClass, "data-[submitted]:text-green-500")}
-      >
-        <ThumbsUp size={14} />
-      </ActionBarPrimitive.FeedbackPositive>
-
-      <ActionBarPrimitive.FeedbackNegative
-        aria-label="Bad answer"
-        title="Bad answer"
-        className={cn(actionClass, "data-[submitted]:text-red-400")}
-      >
-        <ThumbsDown size={14} />
-      </ActionBarPrimitive.FeedbackNegative>
     </ActionBarPrimitive.Root>
   );
 }
-
 
 // Steps show live while the turn runs — they're the only progress there is —
 // then collapse to a single line. Reasoning parts sit in the group unrendered
@@ -172,11 +163,11 @@ function StepsPanel({
   // over: its own `running` ends at every round boundary, and collapsing
   // there just to open the next round's panel reads as flicker. Panels of
   // finished turns never see `running`, so a new turn leaves them collapsed.
+  // Adjusted during render (with guards) rather than in an effect, per
+  // https://react.dev/learn/you-might-not-need-an-effect.
   const [live, setLive] = useState(running);
-  useEffect(() => {
-    if (running) setLive(true);
-    else if (!turnActive) setLive(false);
-  }, [running, turnActive]);
+  if (running && !live) setLive(true);
+  if (!running && !turnActive && live) setLive(false);
 
   const count = useAuiState(
     (s) =>
@@ -494,7 +485,9 @@ function Composer({
             aria-label="Stop"
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-nb-gray-700 text-nb-gray-300 hover:text-nb-gray-100"
           >
-            <Square size={11} />
+            {/* Even size: the bordered 8x8 box has a 30px content area, and an
+                odd-sized icon centers on a half pixel — visibly off-middle. */}
+            <Square size={12} className="fill-current" />
           </ComposerPrimitive.Cancel>
         </ThreadPrimitive.If>
       </div>
@@ -619,7 +612,10 @@ export function AssistantThread({
           {/* The chip is absolute against this box, so it slides out from
               behind the composer's rounded body. */}
           <div className="relative">
-            <AssistantContextChip entry={context} onDismiss={onDismissContext} />
+            <AssistantContextChip
+              entry={context}
+              onDismiss={onDismissContext}
+            />
             <Composer question={question} onAnswer={answer} />
           </div>
         </div>

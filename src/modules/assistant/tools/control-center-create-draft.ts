@@ -15,7 +15,11 @@ const DRAFT_ACTION_LABELS: Record<string, string> = {
 };
 
 // `cc_draft`: enter or leave the local draft the other tools edit.
-export const createDraft: ControlCenterToolAction = async (input, api, redactor) => {
+export const createDraft: ControlCenterToolAction = async (
+  input,
+  api,
+  redactor,
+) => {
   const step = await api.draft(String(input.action ?? "") as AgentDraftAction);
   return reportSteps([step], api, redactor);
 };
@@ -23,6 +27,7 @@ export const createDraft: ControlCenterToolAction = async (input, api, redactor)
 export const describeCreateDraft: ControlCenterDescribeTrail = (input) => {
   const action = nonEmptyString(input.action);
   // The verb says all of it; a subject would only repeat the verb.
-  if (action && DRAFT_ACTION_LABELS[action]) return { label: DRAFT_ACTION_LABELS[action] };
+  if (action && DRAFT_ACTION_LABELS[action])
+    return { label: DRAFT_ACTION_LABELS[action] };
   return { detail: quoted(action ? humanize(action) : undefined) };
 };

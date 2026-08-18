@@ -15,8 +15,8 @@ import { MSPTransferAccountModal } from "@/cloud/msp/MSPTransferAccountModal";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { PANEL_ON_LEFT } from "@/interfaces/Assistant";
 import AssistantButton from "@/modules/assistant/AssistantButton";
-import { PANEL_ON_LEFT } from "@/modules/assistant/AssistantPanelContext";
 
 export const headerHeight = 65;
 

@@ -2,12 +2,8 @@
 
 import { useReactFlow } from "@xyflow/react";
 import { useEffect, useRef } from "react";
-import {
-  CARD_INSET,
-  PANEL_ON_LEFT,
-  PANEL_WIDTH,
-  useAssistantPanel,
-} from "@/modules/assistant/AssistantPanelContext";
+import { CARD_INSET, PANEL_ON_LEFT, PANEL_WIDTH } from "@/interfaces/Assistant";
+import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvider";
 
 /**
  * The dashboard card shrinks by this much when the assistant panel is revealed
@@ -31,7 +27,7 @@ const MARGIN = 64;
  */
 export function useAssistantPanelPan() {
   const reactFlow = useReactFlow();
-  const { reveal } = useAssistantPanel();
+  const { reveal } = useAssistantSidebar();
   const wasRevealed = useRef(reveal);
   const pannedBy = useRef(0);
 

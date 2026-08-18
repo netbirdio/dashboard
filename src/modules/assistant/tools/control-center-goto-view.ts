@@ -7,7 +7,11 @@ import {
 import type { AgentNavigateInput } from "@/modules/control-center/agent/canvasAgentStore";
 
 // `cc_navigate`: point the canvas at a view or a specific entity.
-export const gotoView: ControlCenterToolAction = async (input, api, redactor) => {
+export const gotoView: ControlCenterToolAction = async (
+  input,
+  api,
+  redactor,
+) => {
   const step = await api.navigate({
     view: String(input.view ?? "") as AgentNavigateInput["view"],
     target: typeof input.target === "string" ? input.target : undefined,

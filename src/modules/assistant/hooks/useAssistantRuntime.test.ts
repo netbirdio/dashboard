@@ -69,27 +69,39 @@ const jsonError = (code: string, message: string) =>
 
 describe("friendlyFetch", () => {
   it("carries the server's own message and code, unmapped", async () => {
-    const fetchFn = vi.fn(async () =>
-      new Response(
-        jsonError("unknown_model", "Reopen the assistant to pick up the current one."),
-        { status: 400 },
-      ),
+    const fetchFn = vi.fn(
+      async () =>
+        new Response(
+          jsonError(
+            "usage_limit",
+            "The AI assistant has reached its usage limit for this account.",
+          ),
+          { status: 402 },
+        ),
     );
 
-    const err = await friendlyFetch(fetchFn as never)("https://assistant.test/v1/chat").then(
+    const err = await friendlyFetch(fetchFn as never)(
+      "https://assistant.test/v1/chat",
+    ).then(
       () => null,
       (e) => e as AssistantHttpError,
     );
     expect(err).toBeInstanceOf(AssistantHttpError);
-    expect(err!.status).toBe(400);
-    expect(err!.code).toBe("unknown_model");
-    expect(err!.message).toBe("Reopen the assistant to pick up the current one.");
+    expect(err!.status).toBe(402);
+    expect(err!.code).toBe("usage_limit");
+    expect(err!.message).toBe(
+      "The AI assistant has reached its usage limit for this account.",
+    );
   });
 
   it("falls back to a status-based sentence when the reply carried no message", async () => {
-    const fetchFn = vi.fn(async () => new Response("<html>502</html>", { status: 502 }));
+    const fetchFn = vi.fn(
+      async () => new Response("<html>502</html>", { status: 502 }),
+    );
 
-    const err = await friendlyFetch(fetchFn as never)("https://assistant.test/v1/chat").then(
+    const err = await friendlyFetch(fetchFn as never)(
+      "https://assistant.test/v1/chat",
+    ).then(
       () => null,
       (e) => e as AssistantHttpError,
     );
@@ -101,7 +113,9 @@ describe("friendlyFetch", () => {
 
   it("passes a successful response through untouched", async () => {
     const fetchFn = vi.fn(async () => new Response("ok", { status: 200 }));
-    const res = await friendlyFetch(fetchFn as never)("https://assistant.test/v1/chat");
+    const res = await friendlyFetch(fetchFn as never)(
+      "https://assistant.test/v1/chat",
+    );
     expect(await res.text()).toBe("ok");
   });
 });

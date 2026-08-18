@@ -882,11 +882,12 @@ async function addOne(
     }
 
     case "new_resource": {
-      // A resource IS its address — a network resource with nothing to route to
-      // is not a thing that exists. Ask for it rather than drawing a shell.
+      // A resource IS its address — the canvas cannot draw one without it. The
+      // reply steers the model toward assuming one over asking: the user can
+      // edit the address on the node, and nothing deploys without their click.
       if (!item.address) {
         return fail(
-          "A resource needs an address (IP, CIDR or domain) — nothing was added. Ask the user for it, or add the rest of the draft first.",
+          "A resource needs an address (IP, CIDR or domain) — nothing was added. Add it again with a plausible address (inside the network's range if known) and tell the user what you assumed; they can correct it on the node.",
         );
       }
       const frame = item.network

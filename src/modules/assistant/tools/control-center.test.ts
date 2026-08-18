@@ -65,8 +65,14 @@ function fakeApi(overrides: Partial<CanvasAgentApi> = {}): CanvasAgentApi {
   return {
     snapshot: () => SNAPSHOT,
     drainNotices: vi.fn(() => []),
-    navigate: vi.fn(async () => ({ ok: true, detail: "Opened the peers view." })),
-    draft: vi.fn(async () => ({ ok: true, detail: "Started a new empty draft." })),
+    navigate: vi.fn(async () => ({
+      ok: true,
+      detail: "Opened the peers view.",
+    })),
+    draft: vi.fn(async () => ({
+      ok: true,
+      detail: "Started a new empty draft.",
+    })),
     add: vi.fn(async () => [
       { ok: true, detail: "Added a server placeholder.", nodeId: "peer-new-2" },
     ]),
@@ -74,7 +80,10 @@ function fakeApi(overrides: Partial<CanvasAgentApi> = {}): CanvasAgentApi {
       { ok: true, detail: "Connected peer-real-1 → “Build Servers”." },
     ]),
     node: vi.fn(async () => [{ ok: true, detail: "Renamed the placeholder." }]),
-    policy: vi.fn(async () => ({ ok: true, detail: "Updated policy “Build access”." })),
+    policy: vi.fn(async () => ({
+      ok: true,
+      detail: "Updated policy “Build access”.",
+    })),
     canvas: vi.fn(async () => ({ ok: true, detail: "Zoomed in." })),
     ...overrides,
   };
@@ -111,17 +120,17 @@ describe("control-center tools", () => {
     const parsed = JSON.parse(content);
     // A peer's name is personal: no `name`, and its entity rides as a token.
     expect(parsed.nodes[0]).toMatchObject({
-      id: "{NODE_1}",
+      id: "[NODE_1]",
       kind: "peer",
-      entity: "{PEER_1}",
+      entity: "[PEER_1]",
     });
     expect(parsed.nodes[0].name).toBeUndefined();
     // An admin-chosen label passes through as written.
     expect(parsed.nodes[1]).toMatchObject({
-      id: "{NODE_2}",
+      id: "[NODE_2]",
       name: "Build Servers",
     });
-    expect(parsed.edges).toEqual([{ from: "{NODE_1}", to: "{NODE_2}" }]);
+    expect(parsed.edges).toEqual([{ from: "[NODE_1]", to: "[NODE_2]" }]);
     for (const real of ["peer-real-1", "eduards-macbook", "peer-id-1"]) {
       expect(content).not.toContain(real);
     }
@@ -137,7 +146,7 @@ describe("control-center tools", () => {
 
     await executeControlCenterTool(
       "cc_node",
-      { node: "{NODE_1}", action: "rename", name: "Machine of {PEER_1}" },
+      { node: "[NODE_1]", action: "rename", name: "Machine of [PEER_1]" },
       context(vi.fn(), redactor),
     );
 
@@ -234,8 +243,8 @@ describe("control-center tools", () => {
       context(),
     );
 
-    // The snapshot's third node is the created one → {NODE_3}, never the raw id.
-    expect(JSON.parse(content).steps[0]).toContain("({NODE_3})");
+    // The snapshot's third node is the created one → [NODE_3], never the raw id.
+    expect(JSON.parse(content).steps[0]).toContain("([NODE_3])");
     expect(content).not.toContain("peer-new-2");
   });
 
@@ -329,7 +338,9 @@ describe("control-center tools", () => {
         // already reported, so it rides along with the next one.
         drainNotices: vi
           .fn()
-          .mockReturnValueOnce(["Auto-arranged the canvas and fitted the view."])
+          .mockReturnValueOnce([
+            "Auto-arranged the canvas and fitted the view.",
+          ])
           .mockReturnValue([]),
       }),
     );
@@ -348,20 +359,28 @@ describe("control-center tools", () => {
   });
 
   // Longer than the bridge's own registration wait, which this test rides out.
-  it("navigates to the control center when it isn't mounted", { timeout: 15_000 }, async () => {
-    registerCanvasAgent(fakeApi())();
-    const navigate = vi.fn();
+  it(
+    "navigates to the control center when it isn't mounted",
+    { timeout: 15_000 },
+    async () => {
+      registerCanvasAgent(fakeApi())();
+      const navigate = vi.fn();
 
-    const outcome = await executeControlCenterTool("cc_state", {}, {
-      redactor: new Redactor(),
-      navigate,
-      onControlCenterPage: false,
-    });
+      const outcome = await executeControlCenterTool(
+        "cc_state",
+        {},
+        {
+          redactor: new Redactor(),
+          navigate,
+          onControlCenterPage: false,
+        },
+      );
 
-    expect(navigate).toHaveBeenCalledWith(CONTROL_CENTER_HREF);
-    // Nothing registered within the wait, so the model is told rather than hung.
-    expect(outcome.isError).toBe(true);
-  });
+      expect(navigate).toHaveBeenCalledWith(CONTROL_CENTER_HREF);
+      // Nothing registered within the wait, so the model is told rather than hung.
+      expect(outcome.isError).toBe(true);
+    },
+  );
 
   it("marks a batch that failed outright as an error", async () => {
     registerCanvasAgent(
@@ -387,7 +406,9 @@ describe("describeControlCenterTool", () => {
   it("lets the draft action own the whole phrase", () => {
     // It used to read "Set up a draft 'new_empty'" — and, worse, "Set up a
     // draft 'Leave Draft'", which says the opposite of what happened.
-    expect(describeControlCenterTool("cc_draft", { action: "new_empty" })).toEqual({
+    expect(
+      describeControlCenterTool("cc_draft", { action: "new_empty" }),
+    ).toEqual({
       label: "Start an empty draft",
     });
     expect(describeControlCenterTool("cc_draft", { action: "exit" })).toEqual({
@@ -398,7 +419,9 @@ describe("describeControlCenterTool", () => {
     ).toEqual({ label: "Start a draft from this view" });
 
     // An action we don't have a phrase for still reads as words, not an enum.
-    expect(describeControlCenterTool("cc_draft", { action: "some_future_mode" })).toEqual({
+    expect(
+      describeControlCenterTool("cc_draft", { action: "some_future_mode" }),
+    ).toEqual({
       label: "Set up a draft",
       detail: "'Some Future Mode'",
     });
@@ -406,11 +429,16 @@ describe("describeControlCenterTool", () => {
 
   it("names what was added, preferring the name over the kind", () => {
     expect(
-      describeControlCenterTool("cc_add", { kind: "server", name: "Minecraft Server" }),
+      describeControlCenterTool("cc_add", {
+        kind: "server",
+        name: "Minecraft Server",
+      }),
     ).toEqual({ label: "Add to draft", detail: "'Minecraft Server'" });
 
     // Unnamed placeholder — the kind, humanised.
-    expect(describeControlCenterTool("cc_add", { kind: "user_device" })).toEqual({
+    expect(
+      describeControlCenterTool("cc_add", { kind: "user_device" }),
+    ).toEqual({
       label: "Add to draft",
       detail: "'User Device'",
     });
@@ -418,7 +446,10 @@ describe("describeControlCenterTool", () => {
 
   it("shows both ends of a connection", () => {
     expect(
-      describeControlCenterTool("cc_connect", { from: "Players", to: "Access" }),
+      describeControlCenterTool("cc_connect", {
+        from: "Players",
+        to: "Access",
+      }),
     ).toEqual({ label: "Connect", detail: "'Players' to 'Access'" });
   });
 
@@ -432,7 +463,10 @@ describe("describeControlCenterTool", () => {
     ).toEqual({ label: "Rename", detail: "'Group (2)' to 'Players'" });
 
     expect(
-      describeControlCenterTool("cc_node", { node: "Group (2)", action: "remove" }),
+      describeControlCenterTool("cc_node", {
+        node: "Group (2)",
+        action: "remove",
+      }),
     ).toEqual({ label: "Remove", detail: "'Group (2)'" });
 
     // A move's coordinates aren't a "to" worth printing.
@@ -450,14 +484,18 @@ describe("describeControlCenterTool", () => {
       label: "Edit policy",
       detail: "'Access'",
     });
-    expect(describeControlCenterTool("cc_canvas", { action: "fit_view" })).toEqual({
+    expect(
+      describeControlCenterTool("cc_canvas", { action: "fit_view" }),
+    ).toEqual({
       label: "Fit the view",
     });
   });
 
   it("reads the first entry of a batched list", () => {
     expect(
-      describeControlCenterTool("cc_add", { items: [{ kind: "agent", name: "Runner" }] }),
+      describeControlCenterTool("cc_add", {
+        items: [{ kind: "agent", name: "Runner" }],
+      }),
     ).toEqual({ label: "Add to draft", detail: "'Runner'" });
   });
 });

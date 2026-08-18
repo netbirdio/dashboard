@@ -23,7 +23,13 @@ export type ErrorResponse = {
 // server-side request. Absent on older servers.
 const REQUEST_ID_HEADER = "X-Request-Id";
 
-const config = loadConfig();
+/**
+ * Lazy: loading it at module scope means importing anything that reaches this
+ * file executes the config read, which throws wherever no config.json is
+ * resolvable (unit tests) and does work no caller has asked for yet.
+ */
+let cachedConfig: ReturnType<typeof loadConfig> | null = null;
+const config = () => (cachedConfig ??= loadConfig());
 
 type RequestOptions = {
   key?: string;
@@ -45,7 +51,7 @@ async function apiRequest<T>(
   data?: any,
   options?: RequestOptions,
 ) {
-  const origin = options?.origin ? options?.origin : config.apiOrigin + "/api";
+  const origin = options?.origin ? options?.origin : config().apiOrigin + "/api";
   let newUrl = mergeUrlParams(
     url,
     options?.ignoreGlobalParams ? undefined : options?.globalParams,
@@ -82,7 +88,7 @@ async function apiRequest<T>(
 export function useNetBirdFetch(ignoreError: boolean = false): {
   fetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
 } {
-  const tokenSource = config.tokenSource || "accessToken";
+  const tokenSource = config().tokenSource || "accessToken";
   const { idToken } = useOidcIdToken();
   const { accessToken } = useOidcAccessToken();
   const token = tokenSource.toLowerCase() == "idtoken" ? idToken : accessToken;

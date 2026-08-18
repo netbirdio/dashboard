@@ -34,6 +34,7 @@ import {
 } from "@/modules/assistant/tools/control-center-goto-view";
 import {
   getAccountSettings,
+  getCurrentUser,
   getEvents,
   getGroups,
   getNameserverGroups,
@@ -130,6 +131,11 @@ export const ASSISTANT_TOOLS: Record<string, AssistantTool> = {
     labels: ["Reading users", "Read users"],
     action: getUsers,
   },
+  get_current_user: {
+    kind: "management",
+    labels: ["Reading your profile", "Read your profile"],
+    action: getCurrentUser,
+  },
   get_account_settings: {
     kind: "management",
     labels: ["Reading account settings", "Read account settings"],
@@ -195,12 +201,24 @@ export const ASSISTANT_TOOLS: Record<string, AssistantTool> = {
     describe: describeArrangeCanvas,
   },
 
-  search_docs: { kind: "server", labels: ["Searching the docs", "Searched the docs"] },
-  fetch_doc: { kind: "server", labels: ["Reading documentation", "Read documentation"] },
+  search_docs: {
+    kind: "server",
+    labels: ["Searching the docs", "Searched the docs"],
+  },
+  fetch_doc: {
+    kind: "server",
+    labels: ["Reading documentation", "Read documentation"],
+  },
   get_api_reference: {
     kind: "server",
     labels: ["Looking up the API reference", "Looked up the API reference"],
   },
-  render_component: { kind: "server", labels: ["Preparing a view", "Prepared a view"] },
-  ask_user: { kind: "server", labels: ["Asking a question", "Asked a question"] },
+  render_component: {
+    kind: "server",
+    labels: ["Preparing a view", "Prepared a view"],
+  },
+  ask_user: {
+    kind: "server",
+    labels: ["Asking a question", "Asked a question"],
+  },
 };
