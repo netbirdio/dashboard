@@ -21,6 +21,7 @@ import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { headerHeight } from "@/layouts/Header";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
 import { SmallBadge } from "@components/ui/SmallBadge";
@@ -42,6 +43,10 @@ export default function Navigation({
   const { permission, isRestricted } = usePermissions();
   const { only: agentNetworkOnly, enabled: agentNetworkEnabled } =
     useAgentNetworkMode();
+  // Caller-scoped: true whenever the caller's own policies grant access to
+  // at least one provider, independent of any agent_network permission —
+  // this is what lets plain users (limited view included) reach My Setup.
+  const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
 
   return (
     <div
@@ -194,22 +199,36 @@ export default function Navigation({
                       )}
                     </div>
                   }
-                  href={"/agent-network/providers"}
+                  href={
+                    permission?.["agent_network.providers"]?.read
+                      ? "/agent-network/providers"
+                      : "/agent-network/my-setup"
+                  }
                   collapsible
                   exactPathMatch={false}
                   // Parent is visible when at least one child is permitted.
                   // Each page tracks its agent_network submodule, so delegated
                   // roles (agent_network_admin, usage_viewer) see exactly the
-                  // pages their grants cover.
+                  // pages their grants cover. My Setup is caller-scoped and
+                  // needs no permission, so a configured setup alone also
+                  // surfaces the section — that is how plain users reach it.
                   visible={
-                    agentNetworkEnabled &&
-                    (permission?.["agent_network.providers"]?.read ||
-                      permission?.["agent_network.policies"]?.read ||
-                      permission?.["agent_network.usage"]?.read ||
-                      permission?.["agent_network.logs"]?.read ||
-                      permission?.["agent_network.settings"]?.read)
+                    (agentNetworkEnabled &&
+                      (permission?.["agent_network.providers"]?.read ||
+                        permission?.["agent_network.policies"]?.read ||
+                        permission?.["agent_network.usage"]?.read ||
+                        permission?.["agent_network.logs"]?.read ||
+                        permission?.["agent_network.settings"]?.read)) ||
+                    mySetupConfigured
                   }
                 >
+                  <SidebarItem
+                    label="My Setup"
+                    isChild
+                    href={"/agent-network/my-setup"}
+                    exactPathMatch={true}
+                    visible={mySetupConfigured}
+                  />
                   <SidebarItem
                     label="Providers"
                     isChild
