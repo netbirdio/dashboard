@@ -9,10 +9,11 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import SmallParagraph from "@components/SmallParagraph";
 import { Tabs, TabsList, TabsTrigger } from "@components/Tabs";
+import { Mark } from "@components/ui/Mark";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
-import { getNetBirdUpCommand } from "@utils/netbird";
+import { getNetBirdUpCommand, GRPC_API_ORIGIN } from "@utils/netbird";
 import {
   CopyIcon,
   ExternalLinkIcon,
@@ -430,6 +431,38 @@ export const NetBirdUpCommand = ({
         </Code.Line>
       )}
     </Code>
+  );
+};
+
+type ManagementUrlStepProps = {
+  // The desktop client calls it the system tray on Windows and the menu bar
+  // on macOS; use the platform's own term so the step matches what the user
+  // is looking at.
+  trayName: string;
+};
+
+// ManagementUrlStep tells a desktop-client user where to point the client at
+// this self-hosted management server. The client reworked its UI in v0.75: it
+// now asks for the management server in the first-run "Set up NetBird" screen
+// and keeps the field in Settings > General, so the old
+// "Settings > Advanced Settings" path no longer exists.
+export const ManagementUrlStep = ({ trayName }: ManagementUrlStepProps) => {
+  return (
+    <>
+      <p>
+        On first launch, NetBird asks where to connect. Select{" "}
+        <Mark>Self-hosted</Mark> and enter the following{" "}
+        <Mark>Management server URL</Mark>
+      </p>
+      <Code>
+        <Code.Line>{GRPC_API_ORIGIN}</Code.Line>
+      </Code>
+      <p className={"mt-2 text-xs text-nb-gray-300 font-normal"}>
+        Already past that screen? Click the NetBird icon in your {trayName},
+        open <Mark>Settings</Mark> and set <Mark>Management Server</Mark> to{" "}
+        <Mark>Self-hosted</Mark> under <Mark>General</Mark>.
+      </p>
+    </>
   );
 };
 
