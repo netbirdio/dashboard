@@ -46,6 +46,23 @@ export const useAgentNetworkMode = () => {
     permission.accounts.read,
   );
 
+  // Resolving the flag needs accounts read, which the delegated roles below
+  // account admin (usage_viewer, and agent_network scopes granted to custom
+  // roles) may not hold. For them, holding an explicit agent_network grant
+  // is proof enough the surface exists — the grants only exist on
+  // deployments that have it. Callers WITH accounts read keep the flag as
+  // the source of truth, so admins on deployments without the surface
+  // don't get the menu from their blanket grants.
+  const hasAgentNetworkGrant =
+    !permission?.accounts?.read &&
+    !!(
+      permission?.["agent_network.providers"]?.read ||
+      permission?.["agent_network.policies"]?.read ||
+      permission?.["agent_network.usage"]?.read ||
+      permission?.["agent_network.logs"]?.read ||
+      permission?.["agent_network.settings"]?.read
+    );
+
   return useMemo(() => {
     const account = accounts?.[0];
     // Deployment config is a floor: NETBIRD_AGENT_NETWORK_ONLY focuses the
@@ -61,8 +78,9 @@ export const useAgentNetworkMode = () => {
     // alongside the full dashboard (unlike "only", which hides everything else).
     const featureEnabled =
       account?.settings?.dashboard_features?.agent_network === true;
-    const enabled = only || featureEnabled || isAgentNetworkEnabled();
+    const enabled =
+      only || featureEnabled || isAgentNetworkEnabled() || hasAgentNetworkGrant;
     const loading = permission.accounts.read ? isLoading : false;
     return { only, enabled, loading } as const;
-  }, [accounts, isLoading, permission.accounts.read]);
+  }, [accounts, isLoading, permission.accounts.read, hasAgentNetworkGrant]);
 };

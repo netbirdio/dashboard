@@ -26,7 +26,10 @@ import { Bar } from "react-chartjs-2";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
-import { useAccessLogFilters } from "@/modules/agent-network/AccessLogFilters";
+import {
+  AccessLogFilterId,
+  useAccessLogFilters,
+} from "@/modules/agent-network/AccessLogFilters";
 import {
   APIAgentNetworkUsageBucket,
   buildUsageOverviewQuery,
@@ -62,11 +65,20 @@ type DayBucket = {
 // chart with a Tokens / Cost switch, and a standard data table of the same
 // per-day buckets underneath. Data comes pre-aggregated from the server's
 // /agent-network/usage/overview endpoint (day granularity); the shared filter
-// bar (Date / User / Group / Provider / Model) drives the query.
-export default function AgentOverviewPanel() {
+// bar (Date / User / Group / Provider / Model) drives the query. With
+// selfScoped the server answers with the caller's own rows only, so the
+// identity and provider filters (which need permissions a plain user
+// doesn't hold, and would be overridden anyway) are dropped — Date stays.
+const SELF_SCOPED_FILTERS = { include: ["date"] as AccessLogFilterId[] };
+
+export default function AgentOverviewPanel({
+  selfScoped = false,
+}: {
+  selfScoped?: boolean;
+} = {}) {
   const [metric, setMetric] = useState<Metric>("tokens");
   const { columnFilters, filtersButton, filterChips, resetButton } =
-    useAccessLogFilters();
+    useAccessLogFilters(selfScoped ? SELF_SCOPED_FILTERS : undefined);
   const { groups } = useGroups();
   const { users } = useUsers();
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
@@ -93,11 +105,13 @@ export default function AgentOverviewPanel() {
     [columnFilters, groupIdByName, userIdByEmail],
   );
 
+  // Self-scoped callers can't always resolve the feature flag (it needs
+  // accounts read); reaching this panel configured is proof enough.
   const { data: buckets } = useFetchApi<APIAgentNetworkUsageBucket[]>(
     `/agent-network/usage/overview?${query}`,
     false,
     true,
-    agentNetworkEnabled,
+    agentNetworkEnabled || selfScoped,
   );
 
   const daily = useMemo(() => toDailyBuckets(buckets ?? []), [buckets]);
@@ -111,24 +125,6 @@ export default function AgentOverviewPanel() {
       {filterChips}
       <OverviewContent daily={daily} metric={metric} setMetric={setMetric} />
     </div>
-  );
-}
-
-// MyUsageOverview is the caller-scoped twin of AgentOverviewPanel: the
-// same chart and per-day table, fed from the me/usage/overview endpoint,
-// which pins the data to the calling user server-side. No filter bar and
-// no users/groups lookups — those need permissions a plain user doesn't
-// have, and the identity filters would be overridden anyway.
-export function MyUsageOverview() {
-  const [metric, setMetric] = useState<Metric>("tokens");
-  const { data: buckets } = useFetchApi<APIAgentNetworkUsageBucket[]>(
-    "/agent-network/me/usage/overview",
-    true,
-  );
-  const daily = useMemo(() => toDailyBuckets(buckets ?? []), [buckets]);
-
-  return (
-    <OverviewContent daily={daily} metric={metric} setMetric={setMetric} />
   );
 }
 

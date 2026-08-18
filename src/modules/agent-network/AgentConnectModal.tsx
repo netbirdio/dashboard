@@ -18,6 +18,11 @@ type Props = {
   endpoint: string;
 };
 
+type ViewProps = Props & {
+  // Catalog ids of the providers reachable through the endpoint.
+  providerIds: string[];
+};
+
 // Snippet renders a copyable Code block from a list of lines, with an optional
 // caption above it. Wrapped in min-w-0 so its scroll area handles long lines
 // instead of widening the modal. By default the displayed lines are what gets
@@ -314,8 +319,14 @@ export function AgentConnectTabs({
             Pairs with a Kimi provider keeping the default upstream URL{" "}
             <code className={"font-mono"}>https://api.moonshot.ai</code>. For
             the OpenAI shape instead, use{" "}
-            <code className={"font-mono"}>type = &quot;openai_legacy&quot;</code>{" "}
-            with <code className={"font-mono"}>base_url = &quot;{openaiBase}&quot;</code>.
+            <code className={"font-mono"}>
+              type = &quot;openai_legacy&quot;
+            </code>{" "}
+            with{" "}
+            <code className={"font-mono"}>
+              base_url = &quot;{openaiBase}&quot;
+            </code>
+            .
           </SmallParagraph>
         </div>
       </TabsContent>
@@ -363,34 +374,51 @@ export function AgentConnectTabs({
   );
 }
 
-export default function AgentConnectModal({
+// AgentConnectModalView is the modal itself with the provider ids passed
+// explicitly. Used directly by caller-scoped surfaces (My Setup) that know
+// their providers from the me/setup answer and must not mount the
+// admin-permissioned AIProvidersProvider.
+export function AgentConnectModalView({
   open,
   onOpenChange,
   endpoint,
-}: Readonly<Props>) {
-  // Rendered inside <AIProvidersProvider> (providers page); the connected
-  // provider ids gate which per-tool config variants the tabs offer.
-  const { providers } = useAIProviders();
+  providerIds,
+}: Readonly<ViewProps>) {
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-2xl"}>
         <div className={"px-8 pt-5"}>
           <div className={"flex items-center gap-3"}>
-            <SquareIcon color={"netbird"} margin={""} icon={<Plug size={16} />} />
-            <h2 className={"text-lg my-0 leading-[1.5]"}>Configure Your Agent</h2>
+            <SquareIcon
+              color={"netbird"}
+              margin={""}
+              icon={<Plug size={16} />}
+            />
+            <h2 className={"text-lg my-0 leading-[1.5]"}>
+              Configure Your Agent
+            </h2>
           </div>
           <Paragraph className={"text-sm mt-3"}>
-            Point your agent at the NetBird endpoint as its base URL. No provider
-            API key is needed on the client. NetBird authorizes the request
-            against your policies and injects the upstream key.
+            Point your agent at the NetBird endpoint as its base URL. No
+            provider API key is needed on the client. NetBird authorizes the
+            request against your policies and injects the upstream key.
           </Paragraph>
         </div>
 
-        <AgentConnectTabs
-          endpoint={endpoint}
-          providerIds={providers.map((p) => p.providerId)}
-        />
+        <AgentConnectTabs endpoint={endpoint} providerIds={providerIds} />
       </ModalContent>
     </Modal>
+  );
+}
+
+export default function AgentConnectModal(props: Readonly<Props>) {
+  // Rendered inside <AIProvidersProvider> (providers page); the connected
+  // provider ids gate which per-tool config variants the tabs offer.
+  const { providers } = useAIProviders();
+  return (
+    <AgentConnectModalView
+      {...props}
+      providerIds={providers.map((p) => p.providerId)}
+    />
   );
 }

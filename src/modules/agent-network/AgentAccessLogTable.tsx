@@ -80,6 +80,11 @@ type Props = {
   // per-request rows. The owning page swaps the data endpoint to match.
   grouped?: boolean;
   onGroupedChange?: (value: boolean) => void;
+  // The server answers with the caller's own requests only (no
+  // agent_network.logs grant), so the identity and provider filters —
+  // which need permissions the caller doesn't hold and would be
+  // overridden anyway — are dropped; Date and Path stay.
+  selfScoped?: boolean;
 };
 
 // csvToArray splits a comma-separated filter value (the form the
@@ -92,6 +97,7 @@ export default function AgentAccessLogTable({
   headingTarget,
   grouped = false,
   onGroupedChange,
+  selfScoped = false,
 }: Readonly<Props>) {
   const { providers } = useAIProviders();
   const { users } = useUsers();
@@ -283,9 +289,7 @@ export default function AgentAccessLogTable({
           <div className={"flex items-center gap-3"}>
             <StatusCell entry={row.original} />
             <span
-              className={
-                "text-nb-gray-300 text-[0.82rem] px-3 py-2 font-mono"
-              }
+              className={"text-nb-gray-300 text-[0.82rem] px-3 py-2 font-mono"}
             >
               {formatDuration(row.original.durationMs)}
             </span>
@@ -509,7 +513,7 @@ export default function AgentAccessLogTable({
       .map((m) => ({ value: m, label: m }));
   }, [providers]);
 
-  const filterDefs = useMemo<TableFilterDef[]>(
+  const allFilterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         // Backed by the real "timestamp" column so the shared filter adapter can
@@ -645,6 +649,14 @@ export default function AgentAccessLogTable({
       groupIdByName,
       setFilter,
     ],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () =>
+      selfScoped
+        ? allFilterDefs.filter((d) => d.id === "timestamp" || d.id === "path")
+        : allFilterDefs,
+    [allFilterDefs, selfScoped],
   );
 
   // Seed the DataTable's column-filter chips from the active server query so a
@@ -1103,7 +1115,8 @@ type CostFields = {
 // Cost cell and the session rows attach the tooltip on the same condition.
 function hasCostBreakdown(f: CostFields): boolean {
   const cache = f.cacheCostUsd ?? 0;
-  const perBucket = f.inputCostUsd !== undefined || f.outputCostUsd !== undefined;
+  const perBucket =
+    f.inputCostUsd !== undefined || f.outputCostUsd !== undefined;
   return cache > 0 || perBucket;
 }
 

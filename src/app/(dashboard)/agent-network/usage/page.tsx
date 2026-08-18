@@ -18,6 +18,7 @@ import PageContainer from "@/layouts/PageContainer";
 import AgentAccessLogTable from "@/modules/agent-network/AgentAccessLogTable";
 import AgentOverviewPanel from "@/modules/agent-network/AgentOverviewPanel";
 import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
+import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 
 // Tab ids — kept stable so ?tab=<id> URL hand-off works (e.g.
 // /agent-network/usage?tab=access-logs), the same way Settings deep-links tabs.
@@ -36,6 +37,12 @@ export default function UsageAndLogsPage() {
 
   const canReadUsage = !!permission?.["agent_network.usage"]?.read;
   const canReadLogs = !!permission?.["agent_network.logs"]?.read;
+  // Callers without the account-wide grants still get this page once their
+  // own Agent Network setup is configured: the server self-scopes the usage
+  // and log endpoints to them, so the same tabs render their own data.
+  const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
+  const canUseUsage = canReadUsage || mySetupConfigured;
+  const canUseLogs = canReadLogs || mySetupConfigured;
 
   // Each tab maps to its own permission submodule (usage_viewer, for one,
   // reads usage but not the request-level log). Only permitted tabs are
@@ -43,11 +50,11 @@ export default function UsageAndLogsPage() {
   // first permitted one.
   const allowedTabs = useMemo(() => {
     const tabs = new Set<string>();
-    if (canReadUsage) tabs.add(TAB_USAGE);
-    if (canReadLogs) tabs.add(TAB_ACCESS_LOGS);
+    if (canUseUsage) tabs.add(TAB_USAGE);
+    if (canUseLogs) tabs.add(TAB_ACCESS_LOGS);
     return tabs;
-  }, [canReadUsage, canReadLogs]);
-  const defaultTab = canReadUsage ? TAB_USAGE : TAB_ACCESS_LOGS;
+  }, [canUseUsage, canUseLogs]);
+  const defaultTab = canUseUsage ? TAB_USAGE : TAB_ACCESS_LOGS;
 
   // The ?tab= query is the single source of truth; onTabChange below pushes
   // it, so deep links, back/forward and clicks all resolve the same way.
@@ -100,10 +107,7 @@ export default function UsageAndLogsPage() {
 
       <RestrictedAccess
         page={"Usage & Logs"}
-        hasAccess={
-          permission?.["agent_network.usage"]?.read ||
-          permission?.["agent_network.logs"]?.read
-        }
+        hasAccess={canUseUsage || canUseLogs}
       >
         <GroupsProvider>
           <PeersProvider>
@@ -114,13 +118,13 @@ export default function UsageAndLogsPage() {
                 className={"pt-4 pb-0 mb-0"}
               >
                 <TabsList justify={"start"} className={"px-8"}>
-                  {canReadUsage && (
+                  {canUseUsage && (
                     <TabsTrigger value={TAB_USAGE}>
                       <LayoutDashboard size={16} />
                       Usage
                     </TabsTrigger>
                   )}
-                  {canReadLogs && (
+                  {canUseLogs && (
                     <TabsTrigger value={TAB_ACCESS_LOGS}>
                       <ScrollText size={16} />
                       Access Logs
@@ -128,15 +132,15 @@ export default function UsageAndLogsPage() {
                   )}
                 </TabsList>
 
-                {canReadUsage && (
+                {canUseUsage && (
                   <TabsContent value={TAB_USAGE} className={"pb-8"}>
                     <Suspense fallback={<SkeletonTable />}>
-                      <AgentOverviewPanel />
+                      <AgentOverviewPanel selfScoped={!canReadUsage} />
                     </Suspense>
                   </TabsContent>
                 )}
 
-                {canReadLogs && (
+                {canUseLogs && (
                   <TabsContent value={TAB_ACCESS_LOGS} className={"pb-8"}>
                     <Suspense fallback={<SkeletonTable />}>
                       <ServerPaginationProvider
@@ -152,6 +156,7 @@ export default function UsageAndLogsPage() {
                         <AgentAccessLogTable
                           grouped={groupBySession}
                           onGroupedChange={setGroupBySession}
+                          selfScoped={!canReadLogs}
                         />
                       </ServerPaginationProvider>
                     </Suspense>

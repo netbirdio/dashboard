@@ -40,28 +40,17 @@ export default function Navigation({
 }: Readonly<Props>) {
   const { bannerHeight } = useAnnouncement();
   const { isNavigationCollapsed } = useApplicationContext();
-  const { permission, isRestricted } = usePermissions();
-  const { only: agentNetworkOnly, enabled: agentNetworkEnabled } =
+  const { permission } = usePermissions();
+  // "enabled" already falls back to the caller's agent_network grants when
+  // the feature flag can't be resolved (no accounts read — usage_viewer and
+  // custom delegated roles), so it is the one surface switch here.
+  const { only: agentNetworkOnly, enabled: agentNetworkSurface } =
     useAgentNetworkMode();
   // Caller-scoped: true whenever the caller's own policies grant access to
   // at least one provider, independent of any agent_network permission —
-  // this is what lets plain users (limited view included) reach My Setup.
+  // this is what lets plain users (limited view included) reach My Setup
+  // and the self-scoped Usage & Logs view.
   const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
-  // Resolving the Agent Network feature flag needs accounts read, which the
-  // delegated roles below account admin (usage_viewer, and agent_network
-  // scopes granted to custom roles) may not hold. For them, holding an
-  // explicit agent_network grant is proof enough the surface exists — the
-  // roles only exist on deployments that have it. Callers WITH accounts
-  // read keep the flag as the source of truth, so admins on deployments
-  // without the surface don't get the menu from their blanket grants.
-  const agentNetworkSurface =
-    agentNetworkEnabled ||
-    (!permission?.accounts?.read &&
-      (permission?.["agent_network.providers"]?.read ||
-        permission?.["agent_network.policies"]?.read ||
-        permission?.["agent_network.usage"]?.read ||
-        permission?.["agent_network.logs"]?.read ||
-        permission?.["agent_network.settings"]?.read));
 
   return (
     <div
@@ -112,7 +101,9 @@ export default function Navigation({
                   icon={<PeerIcon />}
                   label="Peers"
                   href={"/peers"}
-                  visible={!isRestricted}
+                  // Restricted users get the add-your-device view there, so
+                  // the link stays even in the limited (user role) sidebar.
+                  visible={true}
                 />
 
                 <DistributorNavigation />
@@ -269,10 +260,13 @@ export default function Navigation({
                     isChild
                     href={"/agent-network/usage"}
                     exactPathMatch={true}
+                    // A configured self-service caller gets the page too:
+                    // the server scopes usage and logs to them.
                     visible={
-                      agentNetworkSurface &&
-                      (permission?.["agent_network.usage"]?.read ||
-                        permission?.["agent_network.logs"]?.read)
+                      (agentNetworkSurface &&
+                        (permission?.["agent_network.usage"]?.read ||
+                          permission?.["agent_network.logs"]?.read)) ||
+                      mySetupConfigured
                     }
                   />
                   <SidebarItem
