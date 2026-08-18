@@ -2,7 +2,6 @@
 "use client";
 
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
 import { PanelLeft, PanelRight, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -11,12 +10,8 @@ import {
   type PageContextEntry,
   PANEL_ON_LEFT,
   PANEL_WIDTH,
-  type SelectableModel,
 } from "@/interfaces/Assistant";
-import {
-  describePageContext,
-  useActivePageContext,
-} from "@/modules/assistant/AssistantChatContextProvider";
+import { useActivePageContext } from "@/modules/assistant/AssistantChatContextProvider";
 import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvider";
 import { useContextChip } from "@/modules/assistant/chat/AssistantContextChip";
 import type { AssistantQuestion } from "@/modules/assistant/chat/AssistantQuestionCard";
@@ -26,14 +21,53 @@ import {
   ToolResultsProvider,
   ToolResultStore,
 } from "@/modules/assistant/hooks/useAssistantTools";
+import { PII_PATTERNS } from "@/modules/assistant/utils/pii";
+import {
+  type CatalogScalarField,
+  type CatalogSource,
+  describePageContext,
+  Redactor,
+  RedactorProvider,
+  useNameCatalog,
+} from "@/modules/assistant/utils/redaction";
+
+// What feeds typed-text redaction: the SWR keys whose rows carry known names,
+// and the identifying scalar fields on them. A typed name only tokenises if it
+// matches something listed here — the rest goes out as written.
+const CATALOG_SOURCES: readonly CatalogSource[] = [
+  { key: "/peers", type: "peer" },
+  { key: "/groups", type: "group" },
+  { key: "/policies", type: "policy" },
+  { key: "/networks", type: "network" },
+  { key: "/routes", type: "route" },
+  { key: "/dns/nameservers", type: "nsgroup" },
+  { key: "/setup-keys", type: "setup_key" },
+  { key: "/users?service_user=false", type: "user" },
+  { key: "/users?service_user=true", type: "user" },
+];
+
+const SCALAR_FIELDS: Record<string, readonly CatalogScalarField[]> = {
+  "/peers": [
+    { field: "dns_label", type: "dns", label: "DNS label" },
+    { field: "hostname", type: "dns" },
+    { field: "ip", type: "ip" },
+    { field: "ipv6", type: "ip" },
+    { field: "connection_ip", type: "ip" },
+  ],
+  "/users?service_user=false": [{ field: "email", type: "email" }],
+  "/users?service_user=true": [{ field: "email", type: "email" }],
+};
 
 interface ConversationProps {
   toolResults: ToolResultStore;
-  model?: string;
+  redactor: Redactor;
 }
 
 // One conversation. Remounted via `key` to start a new one.
-function AssistantConversation({ toolResults, model }: Readonly<ConversationProps>) {
+function AssistantConversation({
+  toolResults,
+  redactor,
+}: Readonly<ConversationProps>) {
   const [question, setQuestion] = useState<AssistantQuestion | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [turnActive, setTurnActive] = useState(false);
@@ -51,13 +85,17 @@ function AssistantConversation({ toolResults, model }: Readonly<ConversationProp
 
   const pageContext = useCallback(
     () =>
-      describePageContext(contextRef.current.entry, contextRef.current.name),
-    [],
+      describePageContext(
+        contextRef.current.entry,
+        redactor,
+        contextRef.current.name,
+      ),
+    [redactor],
   );
 
   const runtime = useAssistantRuntime({
     toolResults,
-    model,
+    redactor,
     onQuestion: setQuestion,
     onStatus: setStatus,
     onTurnActive: setTurnActive,
@@ -67,15 +105,17 @@ function AssistantConversation({ toolResults, model }: Readonly<ConversationProp
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <ToolResultsProvider value={toolResults}>
-        {entry && <ContextName entry={entry} contextRef={contextRef} />}
-        <AssistantThread
-          question={question}
-          onDismissQuestion={dismissQuestion}
-          status={status}
-          turnActive={turnActive}
-          context={entry}
-          onDismissContext={dismiss}
-        />
+        <RedactorProvider value={redactor}>
+          {entry && <ContextName entry={entry} contextRef={contextRef} />}
+          <AssistantThread
+            question={question}
+            onDismissQuestion={dismissQuestion}
+            status={status}
+            turnActive={turnActive}
+            context={entry}
+            onDismissContext={dismiss}
+          />
+        </RedactorProvider>
       </ToolResultsProvider>
     </AssistantRuntimeProvider>
   );
@@ -134,26 +174,24 @@ function PanelButton({
 export function AssistantChatPanel() {
   const { available, open, setOpen, overlay, origin } = useAssistantSidebar();
 
-  // Per-conversation fetched rows. A new store is a new conversation.
+  const catalog = useNameCatalog(CATALOG_SOURCES, SCALAR_FIELDS);
+
+  // Per-conversation fetched rows and token dictionary. New instances are a
+  // new conversation.
   const [chat, setChat] = useState(() => ({
     id: crypto.randomUUID(),
     toolResults: new ToolResultStore(),
+    redactor: new Redactor({ catalog, patterns: PII_PATTERNS }),
   }));
 
-  // Fetched on every open, not once: the panel outlives deployments and a stale
-  // model id makes every send fail. With no id the server picks the model itself.
-  const { data: modelList } = useFetchApi<{ models: SelectableModel[] }>(
-    "/v1/models",
-    true,
-    true,
-    available && open,
-    { origin },
-  );
-  const model = modelList?.models?.find((m) => m.default)?.id;
-
   const startNewChat = useCallback(
-    () => setChat({ id: crypto.randomUUID(), toolResults: new ToolResultStore() }),
-    [],
+    () =>
+      setChat({
+        id: crypto.randomUUID(),
+        toolResults: new ToolResultStore(),
+        redactor: new Redactor({ catalog, patterns: PII_PATTERNS }),
+      }),
+    [catalog],
   );
 
   // autoFocus only fires on mount and the panel is always mounted, so opening
@@ -216,7 +254,7 @@ export function AssistantChatPanel() {
         <AssistantConversation
           key={chat.id}
           toolResults={chat.toolResults}
-          model={model}
+          redactor={chat.redactor}
         />
       </div>
     </aside>

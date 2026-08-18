@@ -1,8 +1,3 @@
-export interface SelectableModel {
-  id: string;
-  default: boolean;
-}
-
 // What a client-run tool hands back to the model.
 export interface ToolOutcome {
   content: string;
@@ -29,7 +24,7 @@ export interface PageContextEntry {
 // drift apart — DashboardLayout and Navigation size themselves from these.
 type PanelSide = "left" | "right";
 
-export const PANEL_SIDE: PanelSide = "right";
+const PANEL_SIDE: PanelSide = "right";
 
 // Re-asserted rather than compared directly: TypeScript narrows the const to its
 // initialiser, so a plain comparison errors as one that can never hold.

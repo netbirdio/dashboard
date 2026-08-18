@@ -8,7 +8,11 @@ import {
 import type { AgentAddItem } from "@/modules/control-center/agent/canvasAgentStore";
 
 // `cc_add`: put a peer, group, resource or policy node on the draft.
-export const addNode: ControlCenterToolAction = async (input, api, redactor) => {
+export const addNode: ControlCenterToolAction = async (
+  input,
+  api,
+  redactor,
+) => {
   const items = actions<Record<string, unknown>>(input, "items");
   if (!items.some((i) => i.kind))
     return { content: "cc_add needs a `kind`.", isError: true };

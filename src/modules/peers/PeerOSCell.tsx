@@ -79,21 +79,38 @@ const ListItem = ({
   );
 };
 
-export function OSLogo({ os }: { os: string }) {
+// `size` is the base measure (defaults keep the historical look); each logo
+// scales from it with its own factor because the marks aren't optically equal
+// at the same pixel size.
+export function OSLogo({ os, size = 18 }: { os: string; size?: number }) {
   const icon = useMemo(() => {
     return getOperatingSystem(os);
   }, [os]);
 
   if (icon === OperatingSystem.WINDOWS)
-    return <FaWindows className={"text-white text-lg"} />;
+    return <FaWindows className={"text-white"} size={size} />;
   if (icon === OperatingSystem.APPLE)
-    return <Image src={AppleLogo} alt={""} width={14} />;
+    return (
+      <Image src={AppleLogo} alt={""} width={Math.round(size * (14 / 18))} />
+    );
   if (icon === OperatingSystem.FREEBSD)
-    return <Image src={FreeBSDLogo} alt={""} width={18} />;
+    return <Image src={FreeBSDLogo} alt={""} width={size} />;
   if (icon === OperatingSystem.IOS)
-    return <IOSIcon className={"fill-white"} size={20} />;
+    return (
+      <IOSIcon className={"fill-white"} size={Math.round(size * (20 / 18))} />
+    );
   if (icon === OperatingSystem.ANDROID)
-    return <FcAndroidOs className={"text-white text-2xl brightness-200"} />;
+    return (
+      <FcAndroidOs
+        className={"text-white brightness-200"}
+        size={Math.round(size * (24 / 18))}
+      />
+    );
 
-  return <FcLinux className={"text-white text-2xl brightness-150"} />;
+  return (
+    <FcLinux
+      className={"text-white brightness-150"}
+      size={Math.round(size * (24 / 18))}
+    />
+  );
 }

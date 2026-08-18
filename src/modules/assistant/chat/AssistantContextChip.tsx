@@ -13,10 +13,7 @@ import {
 import { useSWRConfig } from "swr";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
-import type {
-  PageContextEntry,
-  PageContextType,
-} from "@/interfaces/Assistant";
+import type { PageContextEntry, PageContextType } from "@/interfaces/Assistant";
 import { OSLogo } from "@/modules/peers/PeerOSCell";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
@@ -38,8 +35,8 @@ function ChipIcon({
 }>) {
   if (os) {
     return (
-      <span className="flex h-4 w-4 items-center justify-center grayscale [&_*]:!text-[13px]">
-        <OSLogo os={os} />
+      <span className="flex h-4 w-4 items-center justify-center grayscale">
+        <OSLogo os={os} size={14} />
       </span>
     );
   }

@@ -23,7 +23,11 @@ const NODE_ACTION_LABELS: Record<string, string> = {
 };
 
 // `cc_node`: act on one node of the draft (rename, move, group, …).
-export const editNode: ControlCenterToolAction = async (input, api, redactor) => {
+export const editNode: ControlCenterToolAction = async (
+  input,
+  api,
+  redactor,
+) => {
   const list = actions<Record<string, unknown>>(input, "actions");
   if (!list.some((a) => a.node && a.action))
     return { content: "cc_node needs `node` and `action`.", isError: true };
@@ -56,13 +60,15 @@ export const describeEditNode: ControlCenterDescribeTrail = (input) => {
   // Rename, add_to_group and route_network have a second half worth showing
   // ("Set routing peer 'Office Router' to 'Office'").
   const target = quoted(
-    textOf(action.name) ??
-      textOf(action.group) ??
-      textOf(action.network),
+    textOf(action.name) ?? textOf(action.group) ?? textOf(action.network),
   );
   return {
-    ...(verb && NODE_ACTION_LABELS[verb] ? { label: NODE_ACTION_LABELS[verb] } : {}),
+    ...(verb && NODE_ACTION_LABELS[verb]
+      ? { label: NODE_ACTION_LABELS[verb] }
+      : {}),
     detail:
-      subject && target && verb !== "move" ? `${subject} to ${target}` : subject,
+      subject && target && verb !== "move"
+        ? `${subject} to ${target}`
+        : subject,
   };
 };

@@ -280,3 +280,20 @@ export const formatDuration = (ms: number): string => {
   if (ms < 3600000) return `${(ms / 60000).toFixed(1)}m`;
   return `${(ms / 3600000).toFixed(1)}h`;
 };
+
+export const textOf = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim() ? value.trim() : undefined;
+
+export const nonEmptyString = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim() ? value : undefined;
+
+/** `new_empty` → `New Empty`: enum values are for the wire, not for reading. */
+export const humanize = (value: string): string =>
+  value
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((word) => word[0]!.toUpperCase() + word.slice(1))
+    .join(" ");
+
+export const quoted = (value?: string): string | undefined =>
+  value ? `'${value}'` : undefined;

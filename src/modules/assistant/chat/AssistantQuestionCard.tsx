@@ -5,6 +5,7 @@
 import { cn } from "@utils/helpers";
 import { ArrowUp, Check, X } from "lucide-react";
 import { useState } from "react";
+import { useRedactor } from "@/modules/assistant/utils/redaction";
 
 export interface QuestionOption {
   label: string;
@@ -47,6 +48,9 @@ export function AssistantQuestionCard({
   onDismiss,
 }: Readonly<QuestionCardProps>) {
   const [picked, setPicked] = useState<number[]>([]);
+  // Restored at render only: the answer sends the option's label as written,
+  // tokens included, so the model gets its own vocabulary back.
+  const { restore } = useRedactor();
 
   const { multi, options } = question;
 
@@ -66,7 +70,7 @@ export function AssistantQuestionCard({
     <div className="mb-3 rounded-2xl border border-nb-gray-700 bg-nb-gray-900 px-4 pb-2.5 pt-3.5">
       <div className="flex items-start gap-2">
         <p className="min-w-0 flex-1 text-chat font-normal text-nb-gray-100">
-          {question.title}
+          {restore(question.title)}
         </p>
         <button
           type="button"
@@ -118,11 +122,11 @@ export function AssistantQuestionCard({
 
                 <span className="min-w-0 flex-1">
                   <span className="block text-chat font-normal text-nb-gray-300 group-hover:text-nb-gray-100">
-                    {option.label}
+                    {restore(option.label)}
                   </span>
                   {option.description && (
                     <span className="block text-xs text-nb-gray-400">
-                      {option.description}
+                      {restore(option.description)}
                     </span>
                   )}
                 </span>

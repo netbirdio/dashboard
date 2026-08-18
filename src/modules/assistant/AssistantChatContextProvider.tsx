@@ -1,5 +1,5 @@
 // What the user is looking at, made available to the assistant. Detail pages
-// register via the URL; modals held in local state call `useRegisterPageContext`.
+// register via the URL (the route watcher below).
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
@@ -12,10 +12,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import type {
-  PageContextEntry,
-  PageContextType,
-} from "@/interfaces/Assistant";
+import type { PageContextEntry, PageContextType } from "@/interfaces/Assistant";
 
 interface AssistantChatContextState {
   entry: PageContextEntry | null;
@@ -76,7 +73,7 @@ export function AssistantChatContextProvider({
 }
 
 // No-op outside the provider, so a page rendered in isolation doesn't need it.
-export function useRegisterPageContext(entry: PageContextEntry | null): void {
+function useRegisterPageContext(entry: PageContextEntry | null): void {
   const state = useContext(ChatContext);
   const register = state?.register;
 

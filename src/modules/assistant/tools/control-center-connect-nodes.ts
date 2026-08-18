@@ -7,7 +7,11 @@ import {
 } from "@/modules/assistant/tools/control-center-call-tool";
 
 // `cc_connect`: draw an access edge between two nodes on the draft.
-export const connectNodes: ControlCenterToolAction = async (input, api, redactor) => {
+export const connectNodes: ControlCenterToolAction = async (
+  input,
+  api,
+  redactor,
+) => {
   const links = actions<Record<string, unknown>>(input, "links");
   if (!links.some((l) => l.from && l.to))
     return { content: "cc_connect needs `from` and `to`.", isError: true };

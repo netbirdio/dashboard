@@ -7,7 +7,11 @@ import {
 import type { AgentPolicyEdit } from "@/modules/control-center/agent/canvasAgentStore";
 
 // `cc_policy`: edit a policy node's rule (protocol, ports, direction).
-export const editPolicy: ControlCenterToolAction = async (input, api, redactor) => {
+export const editPolicy: ControlCenterToolAction = async (
+  input,
+  api,
+  redactor,
+) => {
   if (typeof input.node !== "string")
     return { content: "cc_policy needs the policy's `node`.", isError: true };
   const step = await api.policy(
@@ -17,9 +21,7 @@ export const editPolicy: ControlCenterToolAction = async (input, api, redactor) 
       description: nonEmptyString(input.description),
       enabled: typeof input.enabled === "boolean" ? input.enabled : undefined,
       protocol: nonEmptyString(input.protocol) as AgentPolicyEdit["protocol"],
-      ports: Array.isArray(input.ports)
-        ? input.ports.map(String)
-        : undefined,
+      ports: Array.isArray(input.ports) ? input.ports.map(String) : undefined,
       bidirectional:
         typeof input.bidirectional === "boolean"
           ? input.bidirectional

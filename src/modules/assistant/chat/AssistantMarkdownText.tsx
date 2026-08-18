@@ -23,6 +23,7 @@ import { Check, Copy, ExternalLink } from "lucide-react";
 import type { ReactNode } from "react";
 import remarkGfm from "remark-gfm";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
+import { useRedactor } from "@/modules/assistant/utils/redaction";
 
 // Registered by hand rather than lowlight's `common` bundle, so only the
 // grammars a NetBird answer contains get bundled; anything else stays plain.
@@ -287,11 +288,15 @@ const components = {
 };
 
 export function AssistantMarkdownText() {
+  const { restore } = useRedactor();
 
   return (
     <div className="assistant-markdown text-sm leading-relaxed text-nb-gray-100">
       <MarkdownTextPrimitive
         remarkPlugins={[remarkGfm]}
+        // Placeholders become real names before the parser sees the text, so a
+        // token can't be split across markdown elements.
+        preprocess={restore}
         // The server already streams tokens; the primitive's reveal animation
         // on top reads as the text hesitating in bursts.
         smooth={false}
