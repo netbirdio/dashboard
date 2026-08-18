@@ -23,6 +23,7 @@ import BillingProvider from "@/contexts/BillingProvider";
 import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
@@ -63,7 +64,18 @@ function DashboardPageContent({
   const { mobileNavOpen, toggleMobileNav } = useApplicationContext();
   const isSm = useIsSm();
   const isXs = useIsXs();
-  const { isRestricted } = usePermissions();
+  const { isRestricted, permission } = usePermissions();
+  // Restricted users normally get no navigation at all, but the Agent
+  // Network self-service pages are theirs by design: show the sidebar when
+  // the caller's own setup is configured or their role reads an
+  // agent_network surface (e.g. usage_viewer), so the limited view can
+  // still reach My Setup and Usage & Logs.
+  const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
+  const showNavigation =
+    !isRestricted ||
+    mySetupConfigured ||
+    !!permission?.["agent_network.usage"]?.read ||
+    !!permission?.["agent_network.logs"]?.read;
 
   const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
   const { bannerHeight } = useAnnouncement();
@@ -174,7 +186,7 @@ function DashboardPageContent({
                 height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}
             >
-              {!isRestricted && <Navigation hideOnMobile />}
+              {showNavigation && <Navigation hideOnMobile />}
               <React.Fragment key={"page"}>{children}</React.Fragment>
             </div>
           </motion.div>

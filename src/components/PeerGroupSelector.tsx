@@ -18,6 +18,7 @@ import { useSearch } from "@hooks/useSearch";
 import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
 import { IconArrowBack } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
 import { sortBy, trim, unionBy } from "lodash";
@@ -143,9 +144,13 @@ export function PeerGroupSelector({
   selectedCluster,
   onClusterChange,
 }: Readonly<MultiSelectProps>) {
+  // Network resources sit behind the networks permission; callers without
+  // it (e.g. agent_network_admin opening the policy modal) get a plain
+  // group selector instead of a 403.
+  const { permission } = usePermissions();
   const { data: fetchedResources, isLoading: isResourcesLoading } = useFetchApi<
     NetworkResource[]
-  >("/networks/resources");
+  >("/networks/resources", false, true, !!permission?.networks?.read);
 
   const resources = useMemo(() => {
     if (!additionalResources?.length) return fetchedResources;
@@ -426,9 +431,7 @@ export function PeerGroupSelector({
                   useHover={true}
                   data-cy={"cluster-badge"}
                   variant={"gray-ghost"}
-                  className={
-                    "py-[3px] transition-all group whitespace-nowrap"
-                  }
+                  className={"py-[3px] transition-all group whitespace-nowrap"}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1095,9 +1098,7 @@ const ClustersList = ({
 
   return (
     <Radio defaultValue={value} name={"cluster"} value={value}>
-      <ScrollArea
-        className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}
-      >
+      <ScrollArea className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}>
         {clusters.map((c) => (
           <CommandItem
             key={c.domain}

@@ -47,6 +47,21 @@ export default function Navigation({
   // at least one provider, independent of any agent_network permission —
   // this is what lets plain users (limited view included) reach My Setup.
   const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
+  // Resolving the Agent Network feature flag needs accounts read, which the
+  // delegated roles below account admin (usage_viewer, and agent_network
+  // scopes granted to custom roles) may not hold. For them, holding an
+  // explicit agent_network grant is proof enough the surface exists — the
+  // roles only exist on deployments that have it. Callers WITH accounts
+  // read keep the flag as the source of truth, so admins on deployments
+  // without the surface don't get the menu from their blanket grants.
+  const agentNetworkSurface =
+    agentNetworkEnabled ||
+    (!permission?.accounts?.read &&
+      (permission?.["agent_network.providers"]?.read ||
+        permission?.["agent_network.policies"]?.read ||
+        permission?.["agent_network.usage"]?.read ||
+        permission?.["agent_network.logs"]?.read ||
+        permission?.["agent_network.settings"]?.read));
 
   return (
     <div
@@ -213,7 +228,7 @@ export default function Navigation({
                   // needs no permission, so a configured setup alone also
                   // surfaces the section — that is how plain users reach it.
                   visible={
-                    (agentNetworkEnabled &&
+                    (agentNetworkSurface &&
                       (permission?.["agent_network.providers"]?.read ||
                         permission?.["agent_network.policies"]?.read ||
                         permission?.["agent_network.usage"]?.read ||
@@ -235,7 +250,7 @@ export default function Navigation({
                     href={"/agent-network/providers"}
                     exactPathMatch={true}
                     visible={
-                      agentNetworkEnabled &&
+                      agentNetworkSurface &&
                       permission?.["agent_network.providers"]?.read
                     }
                   />
@@ -245,7 +260,7 @@ export default function Navigation({
                     href={"/agent-network/policies"}
                     exactPathMatch={true}
                     visible={
-                      agentNetworkEnabled &&
+                      agentNetworkSurface &&
                       permission?.["agent_network.policies"]?.read
                     }
                   />
@@ -255,7 +270,7 @@ export default function Navigation({
                     href={"/agent-network/usage"}
                     exactPathMatch={true}
                     visible={
-                      agentNetworkEnabled &&
+                      agentNetworkSurface &&
                       (permission?.["agent_network.usage"]?.read ||
                         permission?.["agent_network.logs"]?.read)
                     }
@@ -266,7 +281,7 @@ export default function Navigation({
                     href={"/agent-network/configuration"}
                     exactPathMatch={true}
                     visible={
-                      agentNetworkEnabled &&
+                      agentNetworkSurface &&
                       permission?.["agent_network.settings"]?.read
                     }
                   />

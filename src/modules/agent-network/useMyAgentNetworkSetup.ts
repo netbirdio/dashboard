@@ -18,17 +18,6 @@ export type APIMeSetup = {
   providers: APIMeProvider[];
 };
 
-export type APIMeConsumption = {
-  dimension_kind: string;
-  dimension_id: string;
-  window_seconds: number;
-  window_start_utc: string;
-  tokens_input: number;
-  tokens_output: number;
-  cost_usd: number;
-  updated_at: string;
-};
-
 /**
  * Fetch the caller's effective Agent Network setup. `configured` doubles as
  * the visibility switch for the self-service pages: the server deliberately
@@ -47,14 +36,4 @@ export const useMyAgentNetworkSetup = () => {
     configured: setup?.configured === true,
     isLoading,
   } as const;
-};
-
-export const useMyAgentNetworkConsumption = (enabled: boolean) => {
-  const { data: rows, isLoading } = useFetchApi<APIMeConsumption[]>(
-    "/agent-network/me/consumption",
-    true,
-    true,
-    enabled,
-  );
-  return { rows, isLoading } as const;
 };

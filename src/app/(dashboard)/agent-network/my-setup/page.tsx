@@ -8,14 +8,13 @@ import { VerticalTabs } from "@components/VerticalTabs";
 import * as Tabs from "@radix-ui/react-tabs";
 import { CheckCircle2, Gauge, Plug } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useMemo } from "react";
+import React from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import PageContainer from "@/layouts/PageContainer";
 import { AgentConnectTabs } from "@/modules/agent-network/AgentConnectModal";
+import { MyUsageOverview } from "@/modules/agent-network/AgentOverviewPanel";
 import {
-  APIMeConsumption,
   APIMeSetup,
-  useMyAgentNetworkConsumption,
   useMyAgentNetworkSetup,
 } from "@/modules/agent-network/useMyAgentNetworkSetup";
 
@@ -91,7 +90,15 @@ export default function MyAgentNetworkPage() {
               window across every request you made through the Agent Network
               endpoint.
             </TabHeader>
-            <MyUsageContent enabled={configured} />
+            {configured ? (
+              <MyUsageOverview />
+            ) : (
+              <EmptyState
+                text={
+                  "Agent Network is not set up for your user yet, so there is no usage to show."
+                }
+              />
+            )}
           </Tabs.Content>
         </div>
       </VerticalTabs>
@@ -218,112 +225,6 @@ function MySetupContent({ setup }: { setup: APIMeSetup }) {
         listClassName={"px-0"}
         contentClassName={"py-2 px-0"}
       />
-    </div>
-  );
-}
-
-// formatWindow renders an aligned counter window as "<length> · <start>",
-// naming the two lengths the proxy actually ticks.
-const formatWindow = (row: APIMeConsumption) => {
-  const length =
-    row.window_seconds === 86400
-      ? "Daily"
-      : row.window_seconds === 3600
-      ? "Hourly"
-      : `${row.window_seconds}s`;
-  const start = new Date(row.window_start_utc).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: row.window_seconds < 86400 ? "short" : undefined,
-  });
-  return `${length} · ${start}`;
-};
-
-const numberFormat = new Intl.NumberFormat();
-
-function MyUsageContent({ enabled }: { enabled: boolean }) {
-  const { rows, isLoading } = useMyAgentNetworkConsumption(enabled);
-
-  const sorted = useMemo(
-    () =>
-      [...(rows ?? [])].sort(
-        (a, b) =>
-          new Date(b.window_start_utc).getTime() -
-          new Date(a.window_start_utc).getTime(),
-      ),
-    [rows],
-  );
-
-  if (!enabled) {
-    return (
-      <EmptyState
-        text={
-          "Agent Network is not set up for your user yet, so there is no usage to show."
-        }
-      />
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className={"px-8"}>
-        <SkeletonTable />
-      </div>
-    );
-  }
-
-  if (sorted.length === 0) {
-    return (
-      <EmptyState
-        text={
-          "No usage recorded yet. Counters appear here after your first request through the Agent Network endpoint."
-        }
-      />
-    );
-  }
-
-  return (
-    <div className={"p-default pt-2 pb-8 max-w-3xl"}>
-      <table className={"w-full text-sm"}>
-        <thead>
-          <tr
-            className={
-              "text-left text-xs uppercase tracking-wide text-nb-gray-500 border-b border-nb-gray-920"
-            }
-          >
-            <th className={"py-2 pr-4 font-medium"}>Window</th>
-            <th className={"py-2 pr-4 font-medium text-right"}>Input tokens</th>
-            <th className={"py-2 pr-4 font-medium text-right"}>
-              Output tokens
-            </th>
-            <th className={"py-2 font-medium text-right"}>Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((row) => (
-            <tr
-              key={`${row.window_seconds}-${row.window_start_utc}`}
-              className={"border-b border-nb-gray-930 last:border-b-0"}
-            >
-              <td className={"py-3 pr-4 text-nb-gray-200 whitespace-nowrap"}>
-                {formatWindow(row)}
-              </td>
-              <td className={"py-3 pr-4 text-right text-nb-gray-200"}>
-                {numberFormat.format(row.tokens_input)}
-              </td>
-              <td className={"py-3 pr-4 text-right text-nb-gray-200"}>
-                {numberFormat.format(row.tokens_output)}
-              </td>
-              <td className={"py-3 text-right text-nb-gray-100"}>
-                {row.cost_usd.toLocaleString(undefined, {
-                  style: "currency",
-                  currency: "USD",
-                  maximumFractionDigits: 4,
-                })}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

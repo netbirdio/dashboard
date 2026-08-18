@@ -114,6 +114,24 @@ export default function AgentOverviewPanel() {
   );
 }
 
+// MyUsageOverview is the caller-scoped twin of AgentOverviewPanel: the
+// same chart and per-day table, fed from the me/usage/overview endpoint,
+// which pins the data to the calling user server-side. No filter bar and
+// no users/groups lookups — those need permissions a plain user doesn't
+// have, and the identity filters would be overridden anyway.
+export function MyUsageOverview() {
+  const [metric, setMetric] = useState<Metric>("tokens");
+  const { data: buckets } = useFetchApi<APIAgentNetworkUsageBucket[]>(
+    "/agent-network/me/usage/overview",
+    true,
+  );
+  const daily = useMemo(() => toDailyBuckets(buckets ?? []), [buckets]);
+
+  return (
+    <OverviewContent daily={daily} metric={metric} setMetric={setMetric} />
+  );
+}
+
 function OverviewContent({
   daily,
   metric,
