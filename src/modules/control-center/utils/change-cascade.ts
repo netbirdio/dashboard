@@ -364,6 +364,12 @@ export function previewRemoveChange(
     }
 
     case "install-peer": {
+      if (change.installedPeerId) {
+        return {
+          summary: `Remove the installed peer “${change.name}” from this list?`,
+          effects: ["The peer itself stays on the canvas and in your network"],
+        };
+      }
       const nodeId = `peer-${change.clientId}`;
       const policyCount = policiesTouchingNode(nodeId);
       const routerCount = changes.filter(

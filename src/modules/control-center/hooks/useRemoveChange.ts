@@ -71,6 +71,10 @@ export function useRemoveChange() {
       // install-peer: the canvas hook also deletes the generated setup key and
       // bound group, so use it wholesale (it updates the changeset too).
       if (change.type === "install-peer") {
+        if (change.installedPeerId) {
+          replaceChanges(changes.filter((c) => c.id !== change.id));
+          return;
+        }
         removeNodeWithEdges(`peer-${change.clientId}`);
         return;
       }

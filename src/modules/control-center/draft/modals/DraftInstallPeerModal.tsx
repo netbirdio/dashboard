@@ -1,12 +1,23 @@
 import * as React from "react";
 import { useOidcUser } from "@axa-fr/react-oidc";
 import { useReactFlow } from "@xyflow/react";
+import { CheckCircle2Icon } from "lucide-react";
 import { useApiCall } from "@utils/api";
-import { Modal } from "@components/modal/Modal";
+import Button from "@components/Button";
+import {
+  Modal,
+  ModalClose,
+  ModalContent,
+  ModalFooter,
+} from "@components/modal/Modal";
+import ModalHeader from "@components/modal/ModalHeader";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import {
+  InstallPeerChange,
+  useDraftChangeset,
+} from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   draftBoundGroupName,
   getPlaceholderHostname,
@@ -27,7 +38,19 @@ export const DraftInstallPeerModal = () => {
   const reactFlow = useReactFlow();
   const groupRequest = useApiCall<Group>("/groups", true);
   const { groups } = useControlCenterData();
-  const { markInstallPeerWaiting } = useDraftChangeset();
+  const { changes, markInstallPeerWaiting } = useDraftChangeset();
+
+  const installedChange = React.useMemo(() => {
+    const nodeId = installModal?.nodeId;
+    if (!nodeId) return undefined;
+    const draftId = nodeId.replace("peer-", "");
+    return changes.find(
+      (c): c is InstallPeerChange =>
+        c.type === "install-peer" &&
+        c.clientId === draftId &&
+        !!c.installedPeerId,
+    );
+  }, [installModal, changes]);
 
   // The placeholder's canvas name — drives the setup key name and its bound
   // group name.
@@ -235,7 +258,24 @@ export const DraftInstallPeerModal = () => {
       open={!!installModal}
       onOpenChange={(open) => !open && setInstallModal(null)}
     >
-      {installModal && (
+      {installModal && installedChange && (
+        <ModalContent maxWidthClass={"max-w-md"}>
+          <ModalHeader
+            icon={<CheckCircle2Icon size={20} />}
+            color={"green"}
+            title={"Peer installed"}
+            description={`“${installedChange.name}” registered and took the placeholder's place in your draft.`}
+          />
+          <ModalFooter>
+            <ModalClose asChild={true}>
+              <Button variant={"primary"} className={"w-full"}>
+                Continue
+              </Button>
+            </ModalClose>
+          </ModalFooter>
+        </ModalContent>
+      )}
+      {installModal && !installedChange && (
         <SetupModal
           user={user}
           isUserDevice={installModal.isUserDevice}

@@ -740,6 +740,46 @@ describe("getChangeIssue / hasBlockingIssues", () => {
     expect(hasBlockingIssues([server])).toBe(true);
   });
 
+  it("an installed placeholder peer carries no issue and doesn't block", () => {
+    const installed = {
+      id: "i1",
+      type: "install-peer",
+      clientId: "draft-1",
+      name: "Server",
+      kind: "server",
+      setupKeyId: "sk-1",
+      installedPeerId: "peer-1",
+    } as DraftChange;
+    expect(getChangeIssue(installed)).toBeUndefined();
+    expect(hasBlockingIssues([installed])).toBe(false);
+  });
+
+  it("markInstallPeerInstalled keeps the entry and adopts the real peer", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackInstallPeer({
+        clientId: "draft-1",
+        name: "Server",
+        kind: "server",
+      }),
+    );
+    act(() =>
+      result.current.markInstallPeerInstalled("draft-1", {
+        id: "peer-1",
+        name: "server-01",
+      }),
+    );
+
+    expect(result.current.changes).toHaveLength(1);
+    expect(result.current.changes[0]).toMatchObject({
+      type: "install-peer",
+      clientId: "draft-1",
+      installedPeerId: "peer-1",
+      name: "server-01",
+    });
+    expect(hasBlockingIssues(result.current.changes)).toBe(false);
+  });
+
   it("hasBlockingIssues is true when any change carries an issue", () => {
     expect(hasBlockingIssues([resourceChange({ networkId: "net-1" })])).toBe(
       false,

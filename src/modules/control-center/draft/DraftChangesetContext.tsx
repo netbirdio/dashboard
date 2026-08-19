@@ -209,7 +209,7 @@ export interface DeleteNetworkChange {
 // API call — the peer comes into existence by INSTALLING it (or, for a user
 // device, selecting an existing peer). Listed in Review & Deploy as a
 // pending action so drafts that depend on it aren't silently incomplete;
-// resolved (removed) by the placeholder upgrade once the real peer exists.
+// marked installed by the placeholder upgrade once the real peer exists.
 export interface InstallPeerChange {
   id: string;
   type: "install-peer";
@@ -220,6 +220,7 @@ export interface InstallPeerChange {
   // Set once a setup key is generated for it: the peer is now "waiting" to
   // register (the canvas polls /peers). Flips the issue badge to "Waiting".
   setupKeyId?: string;
+  installedPeerId?: string;
 }
 
 export type DraftChange =
@@ -427,6 +428,12 @@ export const getChangeLabel = (
         detail: "its resources and routing peers are removed too",
       };
     case "install-peer":
+      if (change.installedPeerId) {
+        return {
+          title: `Peer “${change.name}” installed`,
+          detail: "it joined your network — nothing left to deploy for it",
+        };
+      }
       return {
         title: `Install peer “${change.name}”`,
         detail:
@@ -465,6 +472,7 @@ export const getChangeIssue = (change: DraftChange): ChangeIssue | undefined => 
     };
   }
   if (change.type === "install-peer") {
+    if (change.installedPeerId) return undefined;
     // Once a setup key exists the peer is waiting to register — show a spinner
     // instead of the alert, but it still blocks deploy until it upgrades.
     if (change.setupKeyId) {
@@ -766,6 +774,10 @@ interface DraftChangesetContextType {
   }) => void;
   // Mark a tracked install-peer as waiting (its setup key was generated).
   markInstallPeerWaiting: (clientId: string, setupKeyId: string) => void;
+  markInstallPeerInstalled: (
+    clientId: string,
+    peer: { id: string; name?: string },
+  ) => void;
   untrackInstallPeer: (clientId: string) => void;
   removeChange: (id: string) => void;
   clearChanges: () => void;
@@ -1605,6 +1617,19 @@ export function DraftChangesetProvider({
     [],
   );
 
+  const markInstallPeerInstalled = useCallback(
+    (clientId: string, peer: { id: string; name?: string }) => {
+      setChanges((prev) =>
+        prev.map((c) =>
+          c.type === "install-peer" && c.clientId === clientId
+            ? { ...c, installedPeerId: peer.id, name: peer.name ?? c.name }
+            : c,
+        ),
+      );
+    },
+    [],
+  );
+
   const untrackInstallPeer = useCallback((clientId: string) => {
     setChanges((prev) =>
       prev.filter(
@@ -1677,6 +1702,7 @@ export function DraftChangesetProvider({
       trackDeletePolicy,
       trackInstallPeer,
       markInstallPeerWaiting,
+      markInstallPeerInstalled,
       untrackInstallPeer,
       removeChange,
       clearChanges,
@@ -1711,6 +1737,7 @@ export function DraftChangesetProvider({
       trackDeletePolicy,
       trackInstallPeer,
       markInstallPeerWaiting,
+      markInstallPeerInstalled,
       untrackInstallPeer,
       removeChange,
       clearChanges,

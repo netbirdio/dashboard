@@ -86,6 +86,9 @@ export const entityTitle = (change: DraftChange): string => {
         ? `Routing peer “${change.peerName ?? change.peerId}” for “${change.networkName}”`
         : `Routing peer group “${change.groupName ?? change.groupId}” for “${change.networkName}”`;
     case "install-peer":
+      if (change.installedPeerId) {
+        return `Peer “${change.name}” is installed and joined your network`;
+      }
       return change.kind === "user-device"
         ? `Peer “${change.name}”: select an existing peer or install a new one`
         : `Peer “${change.name}”: install it with a setup key to complete this draft`;

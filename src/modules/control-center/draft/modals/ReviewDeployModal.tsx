@@ -83,6 +83,9 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   const deployableCount = changes.filter(
     (c) => c.type !== "install-peer",
   ).length;
+  const installedCount = changes.filter(
+    (c) => c.type === "install-peer" && !!c.installedPeerId,
+  ).length;
   // Hard issues BLOCK deploy (a change that can't be POSTed / completed
   // as-is, e.g. a resource with no network or an uninstalled placeholder peer).
   const hasIssues = hasBlockingIssues(changes);
@@ -152,9 +155,12 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
     if (!ok) return;
     notify({
       title: "Deploy complete",
-      description: `Your ${deployableCount} change${
-        deployableCount !== 1 ? "s were" : " was"
-      } applied to your network.`,
+      description:
+        deployableCount > 0
+          ? `Your ${deployableCount} change${
+              deployableCount !== 1 ? "s were" : " was"
+            } applied to your network.`
+          : "Your installed peers are already live — no API changes were needed.",
     });
     // Everything deployed. Switch to live first (the canvas rebuilds behind
     // the modal), then close. Reset the changeset only AFTER the modal has
@@ -249,7 +255,11 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
             >
               <Button
                 variant={"primary"}
-                disabled={deployableCount === 0 || isDeploying || hasIssues}
+                disabled={
+                  (deployableCount === 0 && installedCount === 0) ||
+                  isDeploying ||
+                  hasIssues
+                }
                 onClick={handleDeploy}
                 data-testid={"cc-deploy"}
                 className={"relative"}

@@ -32,7 +32,7 @@ const uid = () =>
 export function usePlaceholderUpgrade() {
   const reactFlow = useReactFlow();
   const { updateDraftPolicy } = useControlCenterPolicy();
-  const { replacePeerIdInGroups, trackCreateRouter, untrackInstallPeer } =
+  const { replacePeerIdInGroups, trackCreateRouter, markInstallPeerInstalled } =
     useDraftChangeset();
 
   return useCallback(
@@ -44,8 +44,13 @@ export function usePlaceholderUpgrade() {
       }));
 
       // The peer now exists (installed / selected) — its pending
-      // install-peer step is resolved.
-      withOldIds.forEach((u) => untrackInstallPeer(u.oldId));
+      // install-peer step is done.
+      withOldIds.forEach((u) =>
+        markInstallPeerInstalled(u.oldId, {
+          id: u.peer.id as string,
+          name: u.peer.name,
+        }),
+      );
 
       // Routing edges from upgraded placeholders become deployable — record
       // their create-router changes with the real peer id. (Read pre-swap:
@@ -187,7 +192,7 @@ export function usePlaceholderUpgrade() {
       updateDraftPolicy,
       replacePeerIdInGroups,
       trackCreateRouter,
-      untrackInstallPeer,
+      markInstallPeerInstalled,
     ],
   );
 }
