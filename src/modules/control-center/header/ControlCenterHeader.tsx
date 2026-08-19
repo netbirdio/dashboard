@@ -1,26 +1,4 @@
 import Button from "@components/Button";
-import FullTooltip from "@components/FullTooltip";
-import { cn } from "@utils/helpers";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  SelectDropdown,
-  SelectOption,
-} from "@components/select/SelectDropdown";
-import {
-  ArrowLeftIcon,
-  CircleMinusIcon,
-  CirclePlusIcon,
-  LayoutGridIcon,
-  MoreVerticalIcon,
-  NetworkIcon,
-  SquarePenIcon,
-  Trash2Icon,
-  FocusIcon,
-  XIcon,
-} from "lucide-react";
-import { sortBy } from "lodash";
-import React from "react";
-import { useReactFlow } from "@xyflow/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,25 +6,53 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import { isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
+import FullTooltip from "@components/FullTooltip";
+import {
+  SelectDropdown,
+  SelectOption,
+} from "@components/select/SelectDropdown";
+import { cn } from "@utils/helpers";
+import { useReactFlow } from "@xyflow/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { sortBy } from "lodash";
+import {
+  ArrowLeftIcon,
+  CircleMinusIcon,
+  CirclePlusIcon,
+  FocusIcon,
+  LayoutGridIcon,
+  MoreVerticalIcon,
+  NetworkIcon,
+  SquarePenIcon,
+  Trash2Icon,
+  XIcon,
+} from "lucide-react";
+import React from "react";
 import { useDestinationGroup } from "@/modules/control-center/contexts/ControlCenterContext";
+import {
+  useCanvasState,
+  useControlCenterUI,
+} from "@/modules/control-center/contexts/ControlCenterContext";
+import { CanvasToolbar } from "@/modules/control-center/draft/CanvasToolbar";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { DraftModeSwitcher } from "@/modules/control-center/draft/DraftModeSwitcher";
+import {
+  FlowSelector,
+  FlowView,
+} from "@/modules/control-center/header/FlowSelector";
+import { NetworkRoutingPeerCount } from "@/modules/control-center/header/NetworkRoutingPeerCount";
+import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
+import { useDeleteNetwork } from "@/modules/control-center/hooks/useDeleteNetwork";
+import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
+import { useFrameRouterRows } from "@/modules/control-center/hooks/useFrameRouterRows";
+import { RoutingPeersBar } from "@/modules/control-center/panels/RoutingPeersBar";
 import {
   isDraftNetworkNode,
   isFrameNode,
   useStructuralNodes,
 } from "@/modules/control-center/utils/helpers";
-import { FlowSelector, FlowView } from "@/modules/control-center/header/FlowSelector";
-import { NetworkRoutingPeerCount } from "@/modules/control-center/header/NetworkRoutingPeerCount";
-import { RoutingPeersBar } from "@/modules/control-center/panels/RoutingPeersBar";
-import { useFrameRouterRows } from "@/modules/control-center/hooks/useFrameRouterRows";
-import { DraftModeSwitcher } from "@/modules/control-center/draft/DraftModeSwitcher";
-import { CanvasToolbar } from "@/modules/control-center/draft/CanvasToolbar";
-import { useCanvasState, useControlCenterUI } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
-import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
-import { useDeleteNetwork } from "@/modules/control-center/hooks/useDeleteNetwork";
 
 // Width for the network selector: sized to its LONGEST option label
 // (~6.5px/char at the trigger's text-xs medium, plus icon/chevron/padding
@@ -88,7 +94,13 @@ function NetworkActionsMenu({
       ? (removeNodeWithEdges(networkNodeId), true)
       : await deleteNetwork(networkNodeId);
     if (removed) onDeleted?.();
-  }, [isDraftNew, networkNodeId, removeNodeWithEdges, deleteNetwork, onDeleted]);
+  }, [
+    isDraftNew,
+    networkNodeId,
+    removeNodeWithEdges,
+    deleteNetwork,
+    onDeleted,
+  ]);
 
   return (
     <DropdownMenu modal={false}>
@@ -153,8 +165,11 @@ function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
 // The drilled single-network header (draft), mirroring the live one: back
 // arrow, network selector, the shared RoutingPeersBar, and Add Resource.
 function DraftDrillDownHeader() {
-  const { drillDownNetworkNodeId, setDrillDownNetworkNodeId, setRoutingPeerModal } =
-    useDraftMode();
+  const {
+    drillDownNetworkNodeId,
+    setDrillDownNetworkNodeId,
+    setRoutingPeerModal,
+  } = useDraftMode();
   const { nodes, currentView } = useCanvasState();
   const { rows, count } = useFrameRouterRows(
     drillDownNetworkNodeId ?? undefined,
@@ -203,63 +218,69 @@ function DraftDrillDownHeader() {
 
   return (
     <>
-      {drilled && (
-        <Button
-          variant={"secondary"}
-          size={"xs"}
-          className={"!bg-nb-gray-930"}
-          data-testid={"cc-drill-back"}
-          onClick={() => setDrillDownNetworkNodeId(null)}
-        >
-          <ArrowLeftIcon size={14} />
-        </Button>
-      )}
-      {/* Network selector + attached ✎ edit segment (when drilled) as one
-          control; "All Networks" selects the overview. */}
-      <div className={"flex items-stretch"}>
-        <div
-          key={"draft-network-select"}
-          className={"min-w-[200px]"}
-          style={{ width: networkSelectorWidth(frameOptions.map((o) => o.label)) }}
-        >
-          <SelectDropdown
-            variant={"secondary"}
-            deferChange
-            value={drillDownNetworkNodeId ?? ""}
-            onChange={(nodeId) => setDrillDownNetworkNodeId(nodeId || null)}
-            options={frameOptions}
-            showSearch={true}
-            open={selectOpen}
-            onOpenChange={setSelectOpen}
-            popoverMinWidth={200}
-            className={cn(
-              // Same treatment as the live network selector.
-              "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
-              // Square the right corners so the ✎ segment attaches flush.
-              drilled && "!rounded-r-none",
-            )}
-            size={"xs"}
-          />
-        </div>
+      <div className={"flex min-w-0 max-w-full gap-3 md:gap-4"}>
         {drilled && (
-          <NetworkActionsMenu
-            networkNodeId={drillDownNetworkNodeId}
-            onDeleted={() => setDrillDownNetworkNodeId(null)}
-          />
+          <Button
+            variant={"secondary"}
+            size={"xs"}
+            className={"!bg-nb-gray-930"}
+            data-testid={"cc-drill-back"}
+            onClick={() => setDrillDownNetworkNodeId(null)}
+          >
+            <ArrowLeftIcon size={14} />
+          </Button>
         )}
+        {/* Network selector + attached ✎ edit segment (when drilled) as one
+          control; "All Networks" selects the overview. */}
+        <div className={"flex min-w-0 items-stretch"}>
+          <div
+            key={"draft-network-select"}
+            className={"min-w-[120px] md:min-w-[200px]"}
+            style={{
+              width: networkSelectorWidth(frameOptions.map((o) => o.label)),
+            }}
+          >
+            <SelectDropdown
+              variant={"secondary"}
+              deferChange
+              value={drillDownNetworkNodeId ?? ""}
+              onChange={(nodeId) => setDrillDownNetworkNodeId(nodeId || null)}
+              options={frameOptions}
+              showSearch={true}
+              open={selectOpen}
+              onOpenChange={setSelectOpen}
+              popoverMinWidth={200}
+              className={cn(
+                // Same treatment as the live network selector.
+                "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
+                // Square the right corners so the ✎ segment attaches flush.
+                drilled && "!rounded-r-none",
+              )}
+              size={"xs"}
+            />
+          </div>
+          {drilled && (
+            <NetworkActionsMenu
+              networkNodeId={drillDownNetworkNodeId}
+              onDeleted={() => setDrillDownNetworkNodeId(null)}
+            />
+          )}
+        </div>
       </div>
       {/* Routing peers and resources only make sense on a specific network.
           Add Resource sits right after the routing-peers bar. */}
       {drilled && (
-        <RoutingPeersBar
-          rows={rows}
-          count={count}
-          onAdd={() =>
-            setRoutingPeerModal({ networkNodeId: drillDownNetworkNodeId })
-          }
-        />
+        <div className={"flex flex-wrap gap-3 md:gap-4"}>
+          <RoutingPeersBar
+            rows={rows}
+            count={count}
+            onAdd={() =>
+              setRoutingPeerModal({ networkNodeId: drillDownNetworkNodeId })
+            }
+          />
+          <AddResourceButton networkNodeId={drillDownNetworkNodeId} />
+        </div>
       )}
-      {drilled && <AddResourceButton networkNodeId={drillDownNetworkNodeId} />}
     </>
   );
 }
@@ -267,12 +288,8 @@ function DraftDrillDownHeader() {
 function HeaderTopLeft() {
   const { currentView, selectedNetwork } = useCanvasState();
   const { isDraft } = useDraftMode();
-  const {
-    networkOptions,
-    currentNetwork,
-    onViewChange,
-    onNetworkSelect,
-  } = useControlCenterUI();
+  const { networkOptions, currentNetwork, onViewChange, onNetworkSelect } =
+    useControlCenterUI();
   const { networks } = useControlCenterData();
   const hasNetworks = (networks?.length ?? 0) > 0;
 
@@ -283,92 +300,94 @@ function HeaderTopLeft() {
   useCloseOnCanvasClick(networkSelectOpen, () => setNetworkSelectOpen(false));
 
   return (
-    <div className={"absolute left-0 top-0 z-10"}>
-      <div
-        className={
-          "flex justify-between px-6 py-4 text-sm w-full"
-        }
-      >
-        {/* Keys keep each control's identity stable while its conditional
-            siblings mount/unmount — without them, picking a network inserts
-            the back button and React REMOUNTS the network SelectDropdown
-            (its just-closing popover flashes). */}
-        <div className={"flex gap-4"}>
-          {!isDraft && selectedNetwork !== "" && (
-            <Button
-              key={"network-back"}
-              variant={"secondary"}
-              size={"xs"}
-              className={"!bg-nb-gray-930"}
-              data-testid={"cc-network-back"}
-              onClick={() => onNetworkSelect("")}
-            >
-              <ArrowLeftIcon size={14} />
-            </Button>
-          )}
+    <div className={"pointer-events-auto min-w-0 text-sm"}>
+      {/* Keys keep each control's identity stable while its conditional
+          siblings mount/unmount — without them, picking a network inserts
+          the back button and React REMOUNTS the network SelectDropdown
+          (its just-closing popover flashes). */}
+      <div className={"flex flex-wrap gap-3 md:gap-4"}>
+        {!isDraft && (
+          <div className={"flex flex-wrap min-w-0 max-w-full gap-3 md:gap-4"}>
+            {selectedNetwork !== "" && (
+              <Button
+                key={"network-back"}
+                variant={"secondary"}
+                size={"xs"}
+                className={"!bg-nb-gray-930"}
+                data-testid={"cc-network-back"}
+                onClick={() => onNetworkSelect("")}
+              >
+                <ArrowLeftIcon size={14} />
+              </Button>
+            )}
 
-          {selectedNetwork === "" && !isDraft && (
-            <FlowSelector value={currentView} onChange={onViewChange} />
-          )}
+            {selectedNetwork === "" && (
+              <FlowSelector value={currentView} onChange={onViewChange} />
+            )}
 
-          {/* Draft: the drill-down breadcrumb is the only top-left
-              control — exiting draft happens via Cancel / Review & Deploy
-              in the DraftModeSwitcher. */}
-          {isDraft && <DraftDrillDownHeader />}
-
-          {/* Network selector + attached ✎ edit segment (once drilled), one
+            {/* Network selector + attached ✎ edit segment (once drilled), one
               control mirroring the draft header. Edit opens the real network
               modal (PUT) for the existing network. */}
-          {!isDraft && currentView === "networks" && hasNetworks && (
-            <div key={"network-select"} className={"flex items-stretch"}>
+            {currentView === "networks" && hasNetworks && (
               <div
-                className={"min-w-[200px]"}
-                style={{
-                  width: networkSelectorWidth(networkOptions.map((o) => o.label)),
-                }}
+                key={"network-select"}
+                className={"flex min-w-0 items-stretch"}
               >
-                <SelectDropdown
-                  variant={"secondary"}
-                  deferChange
-                  value={selectedNetwork}
-                  onChange={onNetworkSelect}
-                  options={networkOptions}
-                  showSearch={true}
-                  open={networkSelectOpen}
-                  onOpenChange={setNetworkSelectOpen}
-                  popoverMinWidth={200}
-                  className={cn(
-                    // Fixed height matching the RoutingPeersBar next to it.
-                    "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
-                    // Square the right corners so the ✎ segment attaches flush.
-                    selectedNetwork && "!rounded-r-none",
-                  )}
-                  size={"xs"}
-                />
+                <div
+                  className={"min-w-[120px] md:min-w-[200px]"}
+                  style={{
+                    width: networkSelectorWidth(
+                      networkOptions.map((o) => o.label),
+                    ),
+                  }}
+                >
+                  <SelectDropdown
+                    variant={"secondary"}
+                    deferChange
+                    value={selectedNetwork}
+                    onChange={onNetworkSelect}
+                    options={networkOptions}
+                    showSearch={true}
+                    open={networkSelectOpen}
+                    onOpenChange={setNetworkSelectOpen}
+                    popoverMinWidth={200}
+                    className={cn(
+                      // Fixed height matching the RoutingPeersBar next to it.
+                      "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
+                      // Square the right corners so the ✎ segment attaches flush.
+                      selectedNetwork && "!rounded-r-none",
+                    )}
+                    size={"xs"}
+                  />
+                </div>
+                {selectedNetwork && (
+                  <NetworkActionsMenu
+                    networkNodeId={`network-${selectedNetwork}`}
+                    onDeleted={() => onNetworkSelect("")}
+                  />
+                )}
               </div>
-              {selectedNetwork && (
-                <NetworkActionsMenu
-                  networkNodeId={`network-${selectedNetwork}`}
-                  onDeleted={() => onNetworkSelect("")}
-                />
-              )}
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {!isDraft && selectedNetwork && currentNetwork && (
+        {/* Draft: the drill-down breadcrumb is the only top-left
+              control — exiting draft happens via Cancel / Review & Deploy
+              in the DraftModeSwitcher. */}
+        {isDraft && <DraftDrillDownHeader />}
+
+        {!isDraft && selectedNetwork && currentNetwork && (
+          <div className={"flex flex-wrap gap-3 md:gap-4"}>
             <NetworkRoutingPeerCount
               key={"network-routing-peers"}
               network={currentNetwork}
             />
-          )}
-
-          {!isDraft && selectedNetwork && currentNetwork && (
             <AddResourceButton
               key={"network-add-resource"}
               networkNodeId={`network-${selectedNetwork}`}
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -470,8 +489,8 @@ function FocusModePill() {
 
 function HeaderTopRight() {
   return (
-    <div className={"absolute right-0 top-0 z-10"}>
-      <div className={"px-6 py-4 flex items-center gap-3"}>
+    <div className={"ml-auto shrink-0 pointer-events-auto"}>
+      <div className={"flex items-center gap-3"}>
         <DraftModeSwitcher />
       </div>
     </div>
@@ -505,8 +524,14 @@ function HeaderBottom() {
 export function ControlCenterHeader() {
   return (
     <>
-      <HeaderTopLeft />
-      <HeaderTopRight />
+      <div
+        className={
+          "absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 md:gap-4 p-3 md:px-6 md:py-4 pointer-events-none"
+        }
+      >
+        <HeaderTopLeft />
+        <HeaderTopRight />
+      </div>
       <FocusModePill />
       <HeaderBottom />
     </>
