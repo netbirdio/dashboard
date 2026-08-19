@@ -165,12 +165,15 @@ const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
   const kind = (draftPeer.os?.replace("draft-", "") ??
     "server") as PeerPlaceholderKind;
   const nodeId = `peer-${draftPeer.id}`;
+  const setupKey = (draftPeer as Peer & { setupKey?: string }).setupKey;
 
   return (
     <DraftStatusChip
-      label={isUserDevice ? "Install or assign" : "Install"}
+      label={isUserDevice ? "Install or assign" : setupKey ? "Waiting" : "Install"}
       icon={
-        isUserDevice ? undefined : (
+        isUserDevice ? undefined : setupKey ? (
+          <Loader2 size={12} className={"animate-spin text-nb-gray-300"} />
+        ) : (
           <DownloadIcon size={12} className={"text-yellow-400"} />
         )
       }
@@ -179,6 +182,7 @@ const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
           ? setUserDeviceModal({ nodeId, name: draftPeer.name ?? "Device" })
           : setInstallModal({
               isUserDevice: false,
+              setupKey,
               placeholderKind: kind,
               nodeId,
             })

@@ -367,10 +367,23 @@ export const kindHasBoundGroup = (kind?: string) =>
 // a placeholder anymore.
 export const getPlaceholderPeer = (node?: CanvasNode): Peer | undefined => {
   const data = node?.data as
-    | { placeholderKind?: string; placeholderName?: string; peer?: Peer }
+    | {
+        placeholderKind?: string;
+        placeholderName?: string;
+        peer?: Peer;
+        setupKey?: string;
+        setupKeyId?: string;
+        boundGroupId?: string;
+        installHostname?: string;
+      }
     | undefined;
   if (!node || !data?.placeholderKind || data.peer) return undefined;
-  return {
+  const pseudo: Partial<Peer> & {
+    setupKey?: string;
+    setupKeyId?: string;
+    boundGroupId?: string;
+    installHostname?: string;
+  } = {
     id: node.id.replace("peer-", ""),
     name:
       data.placeholderName ??
@@ -381,7 +394,28 @@ export const getPlaceholderPeer = (node?: CanvasNode): Peer | undefined => {
     // Server/Agent/User-Device icon instead of a (wrong) OS logo — see
     // PeerOperatingSystemIcon; getOperatingSystem treats it as unknown.
     os: `draft-${data.placeholderKind}`,
-  } as Peer;
+    setupKey: data.setupKey,
+    setupKeyId: data.setupKeyId,
+    boundGroupId: data.boundGroupId,
+    installHostname: data.installHostname,
+  };
+  return pseudo as Peer;
+};
+
+export const getPlaceholderSetupKey = (
+  nodes: CanvasNode[],
+  draftId: string,
+): string | undefined => {
+  const own = nodes.find((n) => n.id === `peer-${draftId}`);
+  if (own) return (own.data as { setupKey?: string })?.setupKey;
+  for (const n of nodes) {
+    const held = n.data?.draftPeers as
+      | (Peer & { setupKey?: string })[]
+      | undefined;
+    const entry = held?.find((p) => p.id === draftId);
+    if (entry) return entry.setupKey;
+  }
+  return undefined;
 };
 
 // Suggested install hostname for a placeholder peer: its canvas name,

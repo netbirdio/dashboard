@@ -32,6 +32,7 @@ import { useRemoveChange } from "@/modules/control-center/hooks/useRemoveChange"
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
+import { getPlaceholderSetupKey } from "@/modules/control-center/utils/helpers";
 import { LiveData } from "@/modules/control-center/utils/changeset-request";
 
 type Props = {
@@ -112,8 +113,10 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
           setUserDeviceModal({ nodeId, name: change.name });
           return;
         }
-        const node = reactFlow.getNodes().find((n) => n.id === nodeId);
-        const setupKey = (node?.data as { setupKey?: string })?.setupKey;
+        const setupKey = getPlaceholderSetupKey(
+          reactFlow.getNodes(),
+          change.clientId,
+        );
         setInstallModal({
           isUserDevice: false,
           setupKey,

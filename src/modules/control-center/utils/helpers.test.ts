@@ -11,6 +11,7 @@ import {
   canDropGroupIntoNetwork,
   getFirstGroup,
   getPlaceholderPeer,
+  getPlaceholderSetupKey,
   getPoliciesTargetingResources,
   getPolicyRegroupUpdates,
   isCompleteDraftResource,
@@ -116,6 +117,54 @@ describe("getPlaceholderPeer", () => {
       ),
     ).toBe(undefined);
     expect(getPlaceholderPeer(undefined)).toBe(undefined);
+  });
+
+  it("carries the node's install artifacts (survive absorption into a group)", () => {
+    const peer = getPlaceholderPeer(
+      node("peer-draft-abc", {
+        placeholderKind: "agent",
+        setupKey: "KEY-1",
+        setupKeyId: "sk-1",
+        boundGroupId: "bg-1",
+        installHostname: "agent-1",
+      }),
+    );
+    expect(peer).toMatchObject({
+      id: "draft-abc",
+      setupKey: "KEY-1",
+      setupKeyId: "sk-1",
+      boundGroupId: "bg-1",
+      installHostname: "agent-1",
+    });
+  });
+});
+
+describe("getPlaceholderSetupKey", () => {
+  it("reads the key from the placeholder's own node", () => {
+    const canvas = [
+      node("peer-draft-a", { placeholderKind: "agent", setupKey: "KEY-A" }),
+    ];
+    expect(getPlaceholderSetupKey(canvas, "draft-a")).toBe("KEY-A");
+  });
+
+  it("reads the key from a group's draftPeers entry when absorbed", () => {
+    const canvas = [
+      node("group-1", {
+        group: { id: "1", name: "Servers" },
+        draftPeers: [{ id: "draft-b", name: "Server", setupKey: "KEY-B" }],
+      }),
+    ];
+    expect(getPlaceholderSetupKey(canvas, "draft-b")).toBe("KEY-B");
+  });
+
+  it("returns undefined before a key was generated", () => {
+    const canvas = [
+      node("peer-draft-a", { placeholderKind: "agent" }),
+      node("group-1", { draftPeers: [{ id: "draft-b", name: "Server" }] }),
+    ];
+    expect(getPlaceholderSetupKey(canvas, "draft-a")).toBe(undefined);
+    expect(getPlaceholderSetupKey(canvas, "draft-b")).toBe(undefined);
+    expect(getPlaceholderSetupKey(canvas, "draft-missing")).toBe(undefined);
   });
 });
 
