@@ -3,8 +3,8 @@
 import "@xyflow/react/dist/style.css";
 import {
   Background,
-  EdgeTypes,
   type Edge as FlowEdge,
+  EdgeTypes,
   type Node as FlowNode,
   NodeTypes,
   ReactFlow,
@@ -12,39 +12,12 @@ import {
   SelectionMode,
 } from "@xyflow/react";
 import React, { useState } from "react";
+import { useSWRConfig } from "swr";
+import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
+import { Network } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
-import { EDGE_TYPES } from "@/modules/control-center/utils/edges";
-import {
-  DEFAULT_MAX_ZOOM,
-  DEFAULT_MIN_ZOOM,
-  EMPTY_STATE_ZOOM,
-} from "@/modules/control-center/utils/layouts";
-import { NODE_TYPES } from "@/modules/control-center/utils/nodes";
-import { DragAndDropProvider } from "@/modules/control-center/contexts/DragAndDropProvider";
-import { ConnectionLine } from "@/modules/control-center/edges/ConnectionLine";
-import { ControlCenterComponentsPanel } from "@/modules/control-center/draft/ControlCenterComponentsPanel";
-import {
-  DraftModeProvider,
-  useDraftMode,
-  useNetworkHover,
-} from "@/modules/control-center/draft/DraftModeContext";
-import { CanvasContextMenu } from "@/modules/control-center/menus/CanvasContextMenu";
-import { NodeContextMenu } from "@/modules/control-center/menus/NodeContextMenu";
-import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
-import { DraftInstallPeerModal } from "@/modules/control-center/draft/modals/DraftInstallPeerModal";
-import { DraftUserDeviceModal } from "@/modules/control-center/draft/modals/DraftUserDeviceModal";
-import { DraftResourceEditorModal } from "@/modules/control-center/draft/modals/DraftResourceEditorModal";
-import { DraftResourceNetworkModal } from "@/modules/control-center/draft/modals/DraftResourceNetworkModal";
-import { DraftNetworkDestinationModal } from "@/modules/control-center/draft/modals/DraftNetworkDestinationModal";
-import { DraftNetworkEditModal } from "@/modules/control-center/draft/modals/DraftNetworkEditModal";
-import { DraftRoutingPeerModal } from "@/modules/control-center/draft/modals/DraftRoutingPeerModal";
-import { DraftLeaveGuard } from "@/modules/control-center/draft/DraftLeaveGuard";
-import { useDraft } from "@/modules/control-center/hooks/useDraft";
-import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
-import { ControlCenterHeader } from "@/modules/control-center/header/ControlCenterHeader";
-import { ControlCenterEmptyStates } from "@/modules/control-center/header/ControlCenterEmptyStates";
 import {
   CanvasStateProvider,
   ControlCenterUIProvider,
@@ -52,19 +25,46 @@ import {
   useControlCenterUI,
   useDestinationGroup,
 } from "@/modules/control-center/contexts/ControlCenterContext";
-import { groupPanelCloseGuard } from "@/modules/control-center/panels/DestinationGroupPanel";
 import { ControlCenterPolicyProvider } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { DragAndDropProvider } from "@/modules/control-center/contexts/DragAndDropProvider";
+import { ControlCenterComponentsPanel } from "@/modules/control-center/draft/ControlCenterComponentsPanel";
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
 import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
+import { DraftLeaveGuard } from "@/modules/control-center/draft/DraftLeaveGuard";
+import {
+  DraftModeProvider,
+  useDraftMode,
+  useNetworkHover,
+} from "@/modules/control-center/draft/DraftModeContext";
+import { DraftInstallPeerModal } from "@/modules/control-center/draft/modals/DraftInstallPeerModal";
+import { DraftNetworkDestinationModal } from "@/modules/control-center/draft/modals/DraftNetworkDestinationModal";
+import { DraftNetworkEditModal } from "@/modules/control-center/draft/modals/DraftNetworkEditModal";
+import { DraftResourceEditorModal } from "@/modules/control-center/draft/modals/DraftResourceEditorModal";
+import { DraftResourceNetworkModal } from "@/modules/control-center/draft/modals/DraftResourceNetworkModal";
+import { DraftRoutingPeerModal } from "@/modules/control-center/draft/modals/DraftRoutingPeerModal";
+import { DraftUserDeviceModal } from "@/modules/control-center/draft/modals/DraftUserDeviceModal";
+import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
+import { ConnectionLine } from "@/modules/control-center/edges/ConnectionLine";
+import { ControlCenterEmptyStates } from "@/modules/control-center/header/ControlCenterEmptyStates";
+import { ControlCenterHeader } from "@/modules/control-center/header/ControlCenterHeader";
+import { useDraft } from "@/modules/control-center/hooks/useDraft";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import { useDrillDownBrowserHistory } from "@/modules/control-center/hooks/useDrillDownBrowserHistory";
 import { useGroupFocusDim } from "@/modules/control-center/hooks/useGroupFocusDim";
+import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
+import { CanvasContextMenu } from "@/modules/control-center/menus/CanvasContextMenu";
+import { NodeContextMenu } from "@/modules/control-center/menus/NodeContextMenu";
+import { groupPanelCloseGuard } from "@/modules/control-center/panels/DestinationGroupPanel";
+import { EDGE_TYPES } from "@/modules/control-center/utils/edges";
 import { isFrameNode } from "@/modules/control-center/utils/helpers";
-import GroupsProvider from "@/contexts/GroupsProvider";
+import {
+  DEFAULT_MAX_ZOOM,
+  DEFAULT_MIN_ZOOM,
+  EMPTY_STATE_ZOOM,
+} from "@/modules/control-center/utils/layouts";
+import { NODE_TYPES } from "@/modules/control-center/utils/nodes";
 import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
 import { NetworkProvider } from "@/modules/networks/NetworkProvider";
-import { Network } from "@/interfaces/Network";
-import { useSWRConfig } from "swr";
 
 export default function ControlCenter() {
   return (
@@ -75,19 +75,19 @@ export default function ControlCenter() {
             <PeersProvider>
               <CanvasStateProvider>
                 <GroupsProvider>
-                <DraftChangesetProvider>
-                  <DraftHistoryProvider>
-                  <ControlCenterPolicyProvider>
-                  <PageContainer>
-                    <ControlCenterUIProvider
-                      sidebar={<ControlCenterComponentsPanel />}
-                    >
-                      <ControlCenterCanvas />
-                    </ControlCenterUIProvider>
-                  </PageContainer>
-                  </ControlCenterPolicyProvider>
-                  </DraftHistoryProvider>
-                </DraftChangesetProvider>
+                  <DraftChangesetProvider>
+                    <DraftHistoryProvider>
+                      <ControlCenterPolicyProvider>
+                        <PageContainer>
+                          <ControlCenterUIProvider
+                            sidebar={<ControlCenterComponentsPanel />}
+                          >
+                            <ControlCenterCanvas />
+                          </ControlCenterUIProvider>
+                        </PageContainer>
+                      </ControlCenterPolicyProvider>
+                    </DraftHistoryProvider>
+                  </DraftChangesetProvider>
                 </GroupsProvider>
               </CanvasStateProvider>
             </PeersProvider>
@@ -309,7 +309,7 @@ function ControlCenterCanvas() {
         panOnDrag={canInteract}
         panOnScroll={draft.isSelectMode && !emptyState}
         zoomOnScroll={canInteract}
-        zoomOnPinch={canInteract}
+        zoomOnPinch={!anyMenuOpen && !emptyState}
         zoomOnDoubleClick={canInteract}
         // Not gated on anyMenuOpen: flipping these re-renders every node wrapper
         // and lagged right-click. Nodes staying interactive behind the menu is
