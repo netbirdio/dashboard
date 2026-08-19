@@ -1,14 +1,14 @@
-import { useEffect } from "react";
+import {
+  clearNavigationGuard,
+  type NavigationGuard,
+  setNavigationGuard,
+} from "@utils/navigation-guard";
 import { useRouter } from "next/navigation";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useEffect } from "react";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDiscardDraft } from "@/modules/control-center/draft/useDiscardDraft";
 
-// Leaving the page while draft changes are pending must not silently discard
-// them: closing/reloading the tab triggers the browser's native prompt, and
-// in-app navigation — links AND programmatic router.push (the sidebar
-// navigates via router.push, not anchors) — is intercepted to show the same
-// "Discard draft changes?" dialog as Cancel / switching to Live.
 export const DraftLeaveGuard = () => {
   const { isDraft } = useDraftMode();
   const { changeCount } = useDraftChangeset();
@@ -27,27 +27,16 @@ export const DraftLeaveGuard = () => {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [hasChanges]);
 
-  // useRouter() returns the app-wide router instance, so wrapping push/replace
-  // here guards every programmatic navigation (e.g. SidebarItem) while
-  // pending changes exist. Restored on cleanup.
   useEffect(() => {
     if (!hasChanges) return;
-    const originalPush = router.push.bind(router);
-    const originalReplace = router.replace.bind(router);
-    const guarded =
-      (navigate: typeof originalPush): typeof originalPush =>
-      (href, options) => {
-        void discardAndExit().then((left) => {
-          if (left) navigate(href, options);
-        });
-      };
-    router.push = guarded(originalPush);
-    router.replace = guarded(originalReplace);
-    return () => {
-      router.push = originalPush;
-      router.replace = originalReplace;
+    const guard: NavigationGuard = (proceed) => {
+      void discardAndExit().then((left) => {
+        if (left) proceed();
+      });
     };
-  }, [hasChanges, router, discardAndExit]);
+    setNavigationGuard(guard);
+    return () => clearNavigationGuard(guard);
+  }, [hasChanges, discardAndExit]);
 
   useEffect(() => {
     if (!hasChanges) return;
@@ -69,14 +58,11 @@ export const DraftLeaveGuard = () => {
 
       e.preventDefault();
       e.stopPropagation();
-      void (async () => {
-        const left = await discardAndExit();
-        if (left) router.push(url.pathname + url.search);
-      })();
+      router.push(url.pathname + url.search);
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
-  }, [hasChanges, discardAndExit, router]);
+  }, [hasChanges, router]);
 
   return null;
 };

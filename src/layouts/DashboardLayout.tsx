@@ -5,11 +5,13 @@ import { useOidcUser } from "@axa-fr/react-oidc";
 import Button from "@components/Button";
 import { UserAvatar } from "@components/ui/UserAvatar";
 import { cn } from "@utils/helpers";
+import { installNavigationGuard } from "@utils/navigation-guard";
 import { isNetBirdCloud } from "@utils/netbird";
 import { useIsSm, useIsXs } from "@utils/responsive";
 import { AnimatePresence, motion } from "framer-motion";
 import { XIcon } from "lucide-react";
-import React from "react";
+import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import React, { useContext } from "react";
 import { NetBirdCloudProvider } from "@/cloud/contexts/NetBirdCloudProvider";
 import DistributorProvider from "@/cloud/distributor/contexts/DistributorProvider";
 import MSPProvider from "@/cloud/msp/contexts/MSPProvider";
@@ -33,6 +35,11 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const appRouter = useContext(AppRouterContext);
+  if (typeof window !== "undefined" && appRouter) {
+    installNavigationGuard(appRouter);
+  }
+
   return (
     <ApplicationProvider>
       <DistributorProvider>

@@ -1,5 +1,4 @@
-import { Page, expect } from "@playwright/test";
-import { test } from "../helpers/fixtures";
+import { expect,Page } from "@playwright/test";
 import { deleteGroup, listGroups } from "../helpers/api";
 import {
   canvasNode,
@@ -9,6 +8,8 @@ import {
   resetDraftState,
   reviewButton,
 } from "../helpers/control-center";
+import { test } from "../helpers/fixtures";
+import { visitByNavigation } from "../helpers/navigation";
 
 test.describe.serial("Control Center Draft Mode @control-center", () => {
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
@@ -97,6 +98,24 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
     await page.getByTestId("cc-draft-cancel").click();
     await page.getByTestId("confirmation.confirm").click();
     await expect(page.getByTestId("cc-toolbar-add")).not.toBeVisible();
+  });
+
+  test("Should confirm before leaving draft via sidebar navigation", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await enterDraft(page);
+    await dragTemplateToCanvas(page, "cc-template-group");
+    await expectChangeCount(page, 1);
+
+    await visitByNavigation(page, "Peers");
+    await expect(page.getByText("Discard draft changes?")).toBeVisible();
+    await page.getByTestId("confirmation.cancel").click();
+    await expect(page).toHaveURL(/control-center/);
+    await expectChangeCount(page, 1);
+
+    await visitByNavigation(page, "Peers");
+    await page.getByTestId("confirmation.confirm").click();
+    await expect(page).toHaveURL(/peers/);
   });
 
   test("Should deploy a created group to the live account", async ({
