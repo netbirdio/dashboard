@@ -1,10 +1,10 @@
-import { useCallback } from "react";
-import { useReactFlow } from "@xyflow/react";
-import { useSWRConfig } from "swr";
 import { notify } from "@components/Notification";
-import { useApiCall } from "@utils/api";
-import { Network } from "@/interfaces/Network";
+import useFetchApi, { useApiCall } from "@utils/api";
+import { useReactFlow } from "@xyflow/react";
+import { useCallback } from "react";
+import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { Network } from "@/interfaces/Network";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
@@ -23,11 +23,14 @@ export function useDeleteNetwork() {
   const { trackDeleteNetwork } = useDraftChangeset();
   const { removeNodeWithEdges } = useDraftGroupActions();
   const deleteCall = useApiCall("/networks").del;
+  const { data: networks } = useFetchApi<Network[]>("/networks");
 
   return useCallback(
     async (nodeId: string): Promise<boolean> => {
       const target = reactFlow.getNodes().find((n) => n.id === nodeId);
-      const network = (target?.data as { network?: Network })?.network;
+      const network =
+        (target?.data as { network?: Network })?.network ??
+        networks?.find((n) => `network-${n.id}` === nodeId);
       if (!network?.id) return false;
 
       if (isDraft) {
@@ -80,6 +83,7 @@ export function useDeleteNetwork() {
     },
     [
       reactFlow,
+      networks,
       isDraft,
       confirm,
       mutate,
