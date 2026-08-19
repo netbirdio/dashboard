@@ -1,16 +1,16 @@
-import { useCallback, useState } from "react";
 import { useReactFlow, XYPosition } from "@xyflow/react";
+import { useCallback, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { Group } from "@/interfaces/Group";
+import { NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { NodeType } from "@/modules/control-center/utils/nodes";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_FALLBACK_ROW,
 } from "@/modules/control-center/utils/helpers";
-import { Group } from "@/interfaces/Group";
-import { Peer } from "@/interfaces/Peer";
-import { NetworkResource } from "@/interfaces/Network";
+import { NodeType } from "@/modules/control-center/utils/nodes";
 
 type CreateGroupOptions = {
   name: string;
@@ -46,9 +46,11 @@ export function useCreateGroupOnCanvas() {
       unassignedDraftResources,
       frameId,
     }: CreateGroupOptions) => {
-      const peerIds = (peers?.map((p) => p.id).filter(Boolean) as string[]) ?? [];
+      const peerIds =
+        (peers?.map((p) => p.id).filter(Boolean) as string[]) ?? [];
       const resourceIds =
         (resources?.map((r) => r.id).filter(Boolean) as string[]) ?? [];
+      const draftPeers = peers?.filter((p) => p.id?.startsWith("draft-")) ?? [];
 
       // Draft: no API call — put the group on the canvas and record the change.
       if (isDraft) {
@@ -79,6 +81,7 @@ export function useCreateGroupOnCanvas() {
               showHandles: false,
               drilledFreePos: true,
               addedMembers: new Set([...peerIds, ...resourceIds]),
+              ...(draftPeers.length ? { draftPeers } : {}),
               ...(unassignedDraftResources?.length
                 ? { draftResources: unassignedDraftResources }
                 : {}),
@@ -97,6 +100,7 @@ export function useCreateGroupOnCanvas() {
             enabled: true,
             showHandles: true,
             addedMembers: new Set([...peerIds, ...resourceIds]),
+            ...(draftPeers.length ? { draftPeers } : {}),
             ...(unassignedDraftResources?.length
               ? { draftResources: unassignedDraftResources }
               : {}),
