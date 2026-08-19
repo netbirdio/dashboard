@@ -1,8 +1,4 @@
-import {
-  clearNavigationGuard,
-  type NavigationGuard,
-  setNavigationGuard,
-} from "@utils/navigation-guard";
+import { useSetNavigationGuard } from "@utils/navigation-guard";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
@@ -27,16 +23,14 @@ export const DraftLeaveGuard = () => {
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [hasChanges]);
 
-  useEffect(() => {
-    if (!hasChanges) return;
-    const guard: NavigationGuard = (proceed) => {
-      void discardAndExit().then((left) => {
-        if (left) proceed();
-      });
-    };
-    setNavigationGuard(guard);
-    return () => clearNavigationGuard(guard);
-  }, [hasChanges, discardAndExit]);
+  useSetNavigationGuard(
+    hasChanges
+      ? (proceed) =>
+          void discardAndExit().then((left) => {
+            if (left) proceed();
+          })
+      : null,
+  );
 
   useEffect(() => {
     if (!hasChanges) return;

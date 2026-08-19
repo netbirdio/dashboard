@@ -1,4 +1,7 @@
-import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import type { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
+
+type AppRouterInstance = ReturnType<typeof useRouter>;
 
 export type NavigationGuard = (proceed: () => void) => void;
 
@@ -12,9 +15,40 @@ export function clearNavigationGuard(guard: NavigationGuard) {
   if (activeGuard === guard) activeGuard = null;
 }
 
+export function useSetNavigationGuard(guard: NavigationGuard | null) {
+  const guardRef = useRef(guard);
+  useEffect(() => {
+    guardRef.current = guard;
+  });
+  const enabled = guard !== null;
+  useEffect(() => {
+    if (!enabled) return;
+    const stable: NavigationGuard = (proceed) => guardRef.current?.(proceed);
+    setNavigationGuard(stable);
+    return () => clearNavigationGuard(stable);
+  }, [enabled]);
+}
+
 const INSTALLED = Symbol.for("netbird.navigation-guard-installed");
 
-export function installNavigationGuard(router: AppRouterInstance) {
+function getSharedAppRouter(): AppRouterInstance | undefined {
+  return (window as { next?: { router?: AppRouterInstance } }).next?.router;
+}
+
+export function useNavigationGuard() {
+  if (typeof window === "undefined") return;
+  installNavigationGuard();
+}
+
+function installNavigationGuard() {
+  const router = getSharedAppRouter();
+  if (!router?.push || !router.replace) {
+    console.error(
+      "navigation-guard: window.next.router is unavailable; " +
+        "programmatic navigation will not be guarded.",
+    );
+    return;
+  }
   const target = router as AppRouterInstance &
     Record<symbol, boolean | undefined>;
   if (target[INSTALLED]) return;
