@@ -117,14 +117,17 @@ export function RoutingPeerModalContent({
     `/networks/${network.id}/routers/${router?.id}`,
   ).put;
 
-  const { data: peer } = useFetchApi<Peer>(
+  const { data: peer, isLoading: peerLoading } = useFetchApi<Peer>(
     "/peers/" + router?.peer,
     true,
     false,
     router ? router.peer != "" : false,
   );
 
-  const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(peer);
+  const [selectedPeer, setSelectedPeer] = useState<Peer | undefined | null>(
+    null,
+  );
+  const routingPeer = selectedPeer === null ? peer : selectedPeer;
 
   const [
     routingPeerGroups,
@@ -217,8 +220,7 @@ export function RoutingPeerModalContent({
       peer: type === "peer" ? routingPeer : undefined,
       peerGroups: type === "peer" ? [] : routingPeerGroups,
       metric: parseInt(metric),
-      masquerade:
-        type === "peer" && isNonLinuxRoutingPeer ? true : masquerade,
+      masquerade: type === "peer" && isNonLinuxRoutingPeer ? true : masquerade,
       enabled,
     });
   };
@@ -261,7 +263,7 @@ export function RoutingPeerModalContent({
                 value={type}
                 onChange={(state) => {
                   setType(state);
-                  setRoutingPeer(undefined);
+                  setSelectedPeer(undefined);
                   setRoutingPeerGroups([]);
                 }}
               >
@@ -289,8 +291,9 @@ export function RoutingPeerModalContent({
                       network.
                     </HelpText>
                     <PeerSelector
-                      onChange={setRoutingPeer}
+                      onChange={setSelectedPeer}
                       value={routingPeer}
+                      disabled={peerLoading}
                     />
                   </div>
                 </SegmentedTabs.Content>

@@ -21,7 +21,7 @@ MapPinIcon.displayName = "MapPinIcon";
 
 interface MultiSelectProps {
   value?: Peer;
-  onChange: React.Dispatch<React.SetStateAction<Peer | undefined>>;
+  onChange: (peer: Peer | undefined) => void;
   excludedPeers?: string[];
   disabled?: boolean;
 }
