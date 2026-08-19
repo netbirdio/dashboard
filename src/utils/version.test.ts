@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isNativeSSHSupported } from "./version";
+import { compareVersions, isNativeSSHSupported, isNewerVersion } from "./version";
 
 describe("isNativeSSHSupported", () => {
   it.each([
@@ -22,7 +22,98 @@ describe("isNativeSSHSupported", () => {
       shouldSupport: false,
       desc: "old version with suffix",
     },
+    {
+      version: "0.60.0+enterprise.1",
+      shouldSupport: true,
+      desc: "enterprise build",
+    },
+    {
+      version: "0.59.9+enterprise.1",
+      shouldSupport: false,
+      desc: "old enterprise build",
+    },
+    {
+      version: "0.76.3-31256681241",
+      shouldSupport: true,
+      desc: "CI build suffix",
+    },
   ])("$version → $shouldSupport ($desc)", ({ version, shouldSupport }) => {
     expect(isNativeSSHSupported(version)).toBe(shouldSupport);
+  });
+});
+
+describe("compareVersions (version >= minVersion)", () => {
+  it.each([
+    { version: "0.60.0", min: "0.60.0", expected: true },
+    { version: "0.60.1", min: "0.60.0", expected: true },
+    { version: "0.59.9", min: "0.60.0", expected: false },
+    // Suffixed builds must compare on the release only — the trailing build
+    // number is not a fourth release component.
+    {
+      version: "0.60.0-beta.1",
+      min: "0.60.1",
+      expected: false,
+      desc: "pre-release vs newer patch",
+    },
+    {
+      version: "0.60.0+enterprise.1",
+      min: "0.60.1",
+      expected: false,
+      desc: "enterprise vs newer patch",
+    },
+    {
+      version: "0.77.0+enterprise.1",
+      min: "0.77.0",
+      expected: true,
+      desc: "enterprise build metadata ignored",
+    },
+  ])("$version >= $min → $expected ($desc)", ({ version, min, expected }) => {
+    expect(compareVersions(version, min)).toBe(expected);
+  });
+});
+
+describe("isNewerVersion (update available)", () => {
+  it.each([
+    // The shape enterprise/cloud installations report: same release, plus a
+    // build tag. Not an update.
+    {
+      current: "0.77.0+enterprise.1",
+      latest: "0.77.0",
+      expected: false,
+      desc: "enterprise build, same release",
+    },
+    {
+      current: "0.77.0+enterprise.1",
+      latest: "0.77.1",
+      expected: true,
+      desc: "enterprise build, newer patch",
+    },
+    {
+      current: "0.77.0+enterprise.2",
+      latest: "0.76.9",
+      expected: false,
+      desc: "enterprise build, older latest",
+    },
+    {
+      current: "0.76.3-31256681241",
+      latest: "0.76.3",
+      expected: false,
+      desc: "CI build suffix",
+    },
+    {
+      current: "v2.91.0",
+      latest: "2.91.0",
+      expected: false,
+      desc: "v prefix on one side",
+    },
+    {
+      current: "development",
+      latest: "0.77.0",
+      expected: false,
+      desc: "development build",
+    },
+    { current: "0.77.0", latest: "", expected: false, desc: "unknown latest" },
+  ])("$current → $latest → $expected ($desc)", ({ current, latest, expected }) => {
+    expect(isNewerVersion(current, latest)).toBe(expected);
   });
 });
