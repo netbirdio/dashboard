@@ -21,6 +21,7 @@ import {
   CirclePlusIcon,
   FocusIcon,
   LayoutGridIcon,
+  MessageSquareShare,
   MoreVerticalIcon,
   NetworkIcon,
   SquarePenIcon,
@@ -521,6 +522,24 @@ function HeaderBottom() {
   );
 }
 
+function FeedbackButton() {
+  return (
+    <div className={"absolute bottom-0 right-0 z-10 p-3 md:px-6 md:py-4"}>
+      <a
+        href={"https://forms.gle/WURodsLqdsoRrgKHA"}
+        target={"_blank"}
+        rel={"noopener noreferrer"}
+      >
+        {/* Same button style as the draft-mode Cancel button. */}
+        <Button variant={"secondary"} size={"xs"} className={"h-[39px] px-4.5"}>
+          <MessageSquareShare size={14} />
+          Feedback
+        </Button>
+      </a>
+    </div>
+  );
+}
+
 export function ControlCenterHeader() {
   return (
     <>
@@ -534,6 +553,7 @@ export function ControlCenterHeader() {
       </div>
       <FocusModePill />
       <HeaderBottom />
+      <FeedbackButton />
     </>
   );
 }
