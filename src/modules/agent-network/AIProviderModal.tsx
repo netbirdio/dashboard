@@ -30,6 +30,7 @@ import {
   MinusCircleIcon,
   PlusCircle,
   PlusIcon,
+  RefreshCwIcon,
   ShieldOffIcon,
   Sparkles,
   UploadIcon,
@@ -40,15 +41,14 @@ import {
   ReverseProxyDomain,
   ReverseProxyDomainType,
 } from "@/interfaces/ReverseProxy";
+import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   AIProvider,
   AIProviderId,
   ProviderModel,
 } from "@/modules/agent-network/data/mockData";
-import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
-import {
-  useAIProviders,
-} from "@/modules/agent-network/AIProvidersProvider";
+import { useDiscoveredModels } from "@/modules/agent-network/useDiscoveredModels";
 import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
 
 // EXTRA_HEADER_UI owns the dashboard copy for catalog-declared extra
@@ -160,6 +160,11 @@ type Props = {
 type EditableModel = ProviderModel & { _key: string };
 
 let modelKeySeq = 0;
+// MASKED_API_KEY is what the edit form shows in place of a stored credential.
+// The real key never reaches the browser, so anything equal to this is a
+// placeholder rather than something that can be sent to a vendor.
+const MASKED_API_KEY = "••••••••";
+
 const withModelKey = (m: ProviderModel): EditableModel => ({
   ...m,
   _key: `model-${modelKeySeq++}`,
@@ -201,6 +206,7 @@ export default function AIProviderModal({
   const [models, setModels] = useState<EditableModel[]>(() =>
     (provider?.models ?? []).map(withModelKey),
   );
+  const discovered = useDiscoveredModels();
 
   // Vertex AI authenticates with a service-account JSON key, not an API key.
   // We upload the file and store it base64-encoded in apiKey (the server
@@ -373,7 +379,9 @@ export default function AIProviderModal({
       const fallback = getById("openai_api");
       setProviderId("openai_api");
       setName(fallback ? fallback.name : "OpenAI API");
-      setUpstreamUrl(fallback?.default_host ? `https://${fallback.default_host}` : "");
+      setUpstreamUrl(
+        fallback?.default_host ? `https://${fallback.default_host}` : "",
+      );
       setApiKey("");
       setBootstrapCluster(
         settingsBootstrapped ? "" : validatedClusters[0]?.domain ?? "",
@@ -525,11 +533,67 @@ export default function AIProviderModal({
   // Catalog options the user hasn't already added; falls back to a
   // generic empty row when the catalog is exhausted or there is no
   // catalog (custom providers).
-  const catalogModelOptions = useMemo(
-    () => catalog?.models ?? [],
-    [catalog],
+  // Merged: the catalog first, then anything the vendor reported that the
+  // catalog does not already carry. Both the per-row picker and "Add More"
+  // read this one list, so merging here is all the wiring either needs.
+  //
+  // A catalog entry wins on collision — it carries prices, and the discovery
+  // response deliberately carries none.
+  const catalogModelOptions = useMemo<CatalogModelOption[]>(() => {
+    const base = catalog?.models ?? [];
+    if (discovered.models.length === 0) return base;
+
+    const known = new Set(base.map((m) => m.id));
+    const extra = discovered.models
+      .filter((m) => !known.has(m.id))
+      .map<CatalogModelOption>((m) => ({
+        id: m.id,
+        label: m.label || m.id,
+        input_per_1k: 0,
+        output_per_1k: 0,
+        pricing_known: m.pricing_known,
+      }));
+    return [...base, ...extra];
+  }, [catalog, discovered.models]);
+
+  // Editing a saved provider shows a masked api key, never the real one, so
+  // discovery reuses the stored credential by record id instead. A new
+  // provider has to supply the key the operator is typing.
+  const canDiscoverModels = useMemo(() => {
+    if (isEdit && provider?.id) return true;
+    return (
+      upstreamUrl.trim() !== "" &&
+      apiKey.trim() !== "" &&
+      apiKey !== MASKED_API_KEY
+    );
+  }, [isEdit, provider?.id, upstreamUrl, apiKey]);
+
+  const loadModelsFromProvider = () => {
+    if (isEdit && provider?.id) {
+      void discovered.discover({
+        catalog_provider_id: providerId,
+        provider_id: provider.id,
+      });
+      return;
+    }
+    void discovered.discover({
+      catalog_provider_id: providerId,
+      upstream_url: upstreamUrl.trim(),
+      api_key: apiKey.trim(),
+    });
+  };
+
+  // Discovered models NetBird cannot price. Registering one at the 0 it
+  // arrives with would record every request against it as free, so the
+  // operator is told which rows need a rate before saving.
+  const unpricedDiscovered = useMemo(
+    () => discovered.models.filter((m) => !m.pricing_known).map((m) => m.id),
+    [discovered.models],
   );
-  const usedModelIds = useMemo(() => new Set(models.map((m) => m.id)), [models]);
+  const usedModelIds = useMemo(
+    () => new Set(models.map((m) => m.id)),
+    [models],
+  );
   const addModel = () => {
     const next = catalogModelOptions.find((m) => !usedModelIds.has(m.id));
     if (next) {
@@ -587,10 +651,7 @@ export default function AIProviderModal({
               <Sparkles size={14} />
               Provider
             </TabsTrigger>
-            <TabsTrigger
-              value={"models"}
-              disabled={!canContinueFromProvider}
-            >
+            <TabsTrigger value={"models"} disabled={!canContinueFromProvider}>
               <Boxes size={14} />
               Models
             </TabsTrigger>
@@ -620,9 +681,10 @@ export default function AIProviderModal({
                   No active proxy clusters are available. Connect at least one
                   proxy under
                   <InlineLink href={"/reverse-proxy/services"}>
-                    {" "}Reverse Proxy
-                  </InlineLink>
-                  {" "}before adding a provider.
+                    {" "}
+                    Reverse Proxy
+                  </InlineLink>{" "}
+                  before adding a provider.
                 </Callout>
               )}
 
@@ -755,7 +817,9 @@ export default function AIProviderModal({
                           <>
                             Upload the Vertex AI service account JSON key.
                             NetBird base64-encodes it and prefixes it with{" "}
-                            <code className={"text-nb-gray-200"}>keyfile::</code>{" "}
+                            <code className={"text-nb-gray-200"}>
+                              keyfile::
+                            </code>{" "}
                             before injecting it on every upstream request, so
                             agents never see the key.
                           </>
@@ -829,7 +893,8 @@ export default function AIProviderModal({
                 </FormRow>
               )}
               {(catalog?.extra_headers ?? []).map((h) => {
-                const ui = EXTRA_HEADER_UI[h.name] ?? fallbackExtraHeaderUI(h.name);
+                const ui =
+                  EXTRA_HEADER_UI[h.name] ?? fallbackExtraHeaderUI(h.name);
                 return (
                   <FormRow
                     key={h.name}
@@ -858,16 +923,16 @@ export default function AIProviderModal({
                   </FormRow>
                 );
               })}
-                <FormRow
-                    label={"Display name"}
-                    helpText={"Shown in the Agent Network table."}
-                >
-                    <Input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder={"e.g. OpenAI"}
-                    />
-                </FormRow>
+              <FormRow
+                label={"Display name"}
+                helpText={"Shown in the Agent Network table."}
+              >
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={"e.g. OpenAI"}
+                />
+              </FormRow>
             </div>
           </TabsContent>
 
@@ -902,8 +967,8 @@ export default function AIProviderModal({
                     >
                       metadata.tags
                     </code>{" "}
-                    in the JSON body so LiteLLM can enforce tag budgets and rate limits.
-                    The user identity is sent in the{" "}
+                    in the JSON body so LiteLLM can enforce tag budgets and rate
+                    limits. The user identity is sent in the{" "}
                     <code
                       className={
                         "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
@@ -911,10 +976,9 @@ export default function AIProviderModal({
                     >
                       x-litellm-end-user-id
                     </code>{" "}
-                    header. The proxy strips any client-supplied value
-                    first, so an app can&apos;t spoof identity. The
-                    configured API key must be a LiteLLM virtual key
-                    with{" "}
+                    header. The proxy strips any client-supplied value first, so
+                    an app can&apos;t spoof identity. The configured API key
+                    must be a LiteLLM virtual key with{" "}
                     <code
                       className={
                         "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
@@ -950,11 +1014,11 @@ export default function AIProviderModal({
                 <div>
                   <Label>Identity Headers</Label>
                   <HelpText className={"mb-0"}>
-                    Pick which wire headers carry the caller&apos;s identity
-                    on every upstream request. The proxy strips any
-                    client-supplied value first, so an app can&apos;t spoof
-                    identity. Leave a field empty to disable stamping for that
-                    dimension. The defaults shown as placeholders use the{" "}
+                    Pick which wire headers carry the caller&apos;s identity on
+                    every upstream request. The proxy strips any client-supplied
+                    value first, so an app can&apos;t spoof identity. Leave a
+                    field empty to disable stamping for that dimension. The
+                    defaults shown as placeholders use the{" "}
                     <code
                       className={
                         "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
@@ -962,8 +1026,8 @@ export default function AIProviderModal({
                     >
                       x-bf-dim-*
                     </code>{" "}
-                    family (Prometheus / OTEL — requires a matching
-                    declaration in your gateway&apos;s{" "}
+                    family (Prometheus / OTEL — requires a matching declaration
+                    in your gateway&apos;s{" "}
                     <code
                       className={
                         "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
@@ -979,30 +1043,38 @@ export default function AIProviderModal({
                     >
                       x-bf-lh-*
                     </code>{" "}
-                    to use Bifrost&apos;s always-on log-metadata path
-                    instead — no gateway-side config needed there.
+                    to use Bifrost&apos;s always-on log-metadata path instead —
+                    no gateway-side config needed there.
                   </HelpText>
                 </div>
 
                 <FormRow
                   label={"User identity header"}
-                  helpText={"Wire header name receiving the caller's user email (or peer name when unlinked). Leave empty to skip."}
+                  helpText={
+                    "Wire header name receiving the caller's user email (or peer name when unlinked). Leave empty to skip."
+                  }
                 >
                   <Input
                     value={identityHeaderUserId}
                     onChange={(e) => setIdentityHeaderUserId(e.target.value)}
-                    placeholder={identityDefaultUser || "x-bf-dim-netbird_user_id"}
+                    placeholder={
+                      identityDefaultUser || "x-bf-dim-netbird_user_id"
+                    }
                   />
                 </FormRow>
 
                 <FormRow
                   label={"Groups header"}
-                  helpText={"Wire header name receiving the caller's NetBird groups as a comma-separated list. Leave empty to skip."}
+                  helpText={
+                    "Wire header name receiving the caller's NetBird groups as a comma-separated list. Leave empty to skip."
+                  }
                 >
                   <Input
                     value={identityHeaderGroups}
                     onChange={(e) => setIdentityHeaderGroups(e.target.value)}
-                    placeholder={identityDefaultGroups || "x-bf-dim-netbird_groups"}
+                    placeholder={
+                      identityDefaultGroups || "x-bf-dim-netbird_groups"
+                    }
                   />
                 </FormRow>
               </div>
@@ -1024,18 +1096,20 @@ export default function AIProviderModal({
                       {jsonMetadataHeader || "metadata"}
                     </code>{" "}
                     header with the caller&apos;s identity so the gateway&apos;s
-                    logs and analytics key off the real user, not whichever
-                    app process happens to hold the API token. Pick the JSON
-                    key names that match your existing log filters; leave a
-                    field empty to omit that key from the JSON. The proxy
-                    strips any client-supplied value first, so an app
-                    can&apos;t spoof identity.
+                    logs and analytics key off the real user, not whichever app
+                    process happens to hold the API token. Pick the JSON key
+                    names that match your existing log filters; leave a field
+                    empty to omit that key from the JSON. The proxy strips any
+                    client-supplied value first, so an app can&apos;t spoof
+                    identity.
                   </HelpText>
                 </div>
 
                 <FormRow
                   label={"User identity key"}
-                  helpText={"JSON key receiving the caller's user email (or peer name when unlinked). Leave empty to skip."}
+                  helpText={
+                    "JSON key receiving the caller's user email (or peer name when unlinked). Leave empty to skip."
+                  }
                 >
                   <Input
                     value={identityHeaderUserId}
@@ -1046,7 +1120,9 @@ export default function AIProviderModal({
 
                 <FormRow
                   label={"Groups key"}
-                  helpText={"JSON key receiving the caller's NetBird groups as a comma-separated string. Leave empty to skip."}
+                  helpText={
+                    "JSON key receiving the caller's NetBird groups as a comma-separated string. Leave empty to skip."
+                  }
                 >
                   <Input
                     value={identityHeaderGroups}
@@ -1072,12 +1148,11 @@ export default function AIProviderModal({
                     >
                       x-portkey-metadata
                     </code>{" "}
-                    header with a JSON object so Portkey&apos;s analytics
-                    and budgets key off the real caller. The proxy strips
-                    any client-supplied value first, so an app can&apos;t
-                    spoof identity. Per Portkey&apos;s 128-character cap
-                    each value is truncated when needed. The mapping is
-                    fixed in this release.
+                    header with a JSON object so Portkey&apos;s analytics and
+                    budgets key off the real caller. The proxy strips any
+                    client-supplied value first, so an app can&apos;t spoof
+                    identity. Per Portkey&apos;s 128-character cap each value is
+                    truncated when needed. The mapping is fixed in this release.
                   </HelpText>
                 </div>
 
@@ -1187,9 +1262,9 @@ export default function AIProviderModal({
                     >
                       group_by=tag
                     </code>
-                    ). Header names are fixed by Vercel&apos;s API contract
-                    — renaming would silently disable attribution. The
-                    proxy strips any client-supplied value first.
+                    ). Header names are fixed by Vercel&apos;s API contract —
+                    renaming would silently disable attribution. The proxy
+                    strips any client-supplied value first.
                   </HelpText>
                 </div>
 
@@ -1210,11 +1285,11 @@ export default function AIProviderModal({
 
                 <HelpText className={"mb-0"}>
                   <strong>Caveats:</strong> Vercel caps tags at 10 per request
-                  (each 1–64 chars) and the user value at 256 chars. Members
-                  of more than 10 groups will see Vercel reject the request
-                  with HTTP 400 — re-scope group memberships if you hit it.
-                  Vercel charges $0.075 per 1,000 unique user/tag values
-                  written; budget accordingly for high-cardinality use cases.
+                  (each 1–64 chars) and the user value at 256 chars. Members of
+                  more than 10 groups will see Vercel reject the request with
+                  HTTP 400 — re-scope group memberships if you hit it. Vercel
+                  charges $0.075 per 1,000 unique user/tag values written;
+                  budget accordingly for high-cardinality use cases.
                 </HelpText>
               </div>
             </TabsContent>
@@ -1235,10 +1310,10 @@ export default function AIProviderModal({
                     >
                       user
                     </code>{" "}
-                    field — that&apos;s the OpenAI-standard field
-                    OpenRouter consults for per-user analytics. The proxy
-                    overwrites any client-supplied value first, so an app
-                    can&apos;t spoof identity.
+                    field — that&apos;s the OpenAI-standard field OpenRouter
+                    consults for per-user analytics. The proxy overwrites any
+                    client-supplied value first, so an app can&apos;t spoof
+                    identity.
                   </HelpText>
                 </div>
 
@@ -1256,16 +1331,17 @@ export default function AIProviderModal({
                 <HelpText className={"mb-0"}>
                   <strong>No groups dimension.</strong> OpenRouter does not
                   document a per-request tag, label, or team field — only
-                  per-user identity. NetBird&apos;s group memberships are
-                  not propagated to OpenRouter; if you need per-group
-                  attribution, query NetBird&apos;s own access log instead
-                  of OpenRouter&apos;s analytics.
+                  per-user identity. NetBird&apos;s group memberships are not
+                  propagated to OpenRouter; if you need per-group attribution,
+                  query NetBird&apos;s own access log instead of
+                  OpenRouter&apos;s analytics.
                 </HelpText>
                 <HelpText className={"mb-0"}>
-                  <strong>App branding</strong> (HTTP-Referer + X-OpenRouter-Title)
-                  is set per-provider on the Provider tab, not per-request.
-                  Operators who fill those in get their app surfaced on
-                  OpenRouter&apos;s public rankings and per-app analytics.
+                  <strong>App branding</strong> (HTTP-Referer +
+                  X-OpenRouter-Title) is set per-provider on the Provider tab,
+                  not per-request. Operators who fill those in get their app
+                  surfaced on OpenRouter&apos;s public rankings and per-app
+                  analytics.
                 </HelpText>
               </div>
             </TabsContent>
@@ -1278,11 +1354,50 @@ export default function AIProviderModal({
                 <HelpText>
                   Models exposed through this endpoint, with the per-1k
                   input/output prices used for cost tracking. Empty = all
-                  catalog models allowed at catalog prices. Cache rates
-                  left empty fall back to NetBird&apos;s defaults for the
-                  model; 0 bills cached tokens at the input rate.
+                  catalog models allowed at catalog prices. Cache rates left
+                  empty fall back to NetBird&apos;s defaults for the model; 0
+                  bills cached tokens at the input rate.
                 </HelpText>
               </div>
+
+              <div className={"flex items-center gap-3"}>
+                <Button
+                  variant={"secondary"}
+                  size={"xs"}
+                  disabled={discovered.isLoading || !canDiscoverModels}
+                  onClick={loadModelsFromProvider}
+                >
+                  <RefreshCwIcon size={13} />
+                  {discovered.isLoading
+                    ? "Loading models…"
+                    : "Load models from provider"}
+                </Button>
+                {!canDiscoverModels && (
+                  <HelpText className={"!mb-0"}>
+                    Enter the endpoint URL and API key first.
+                  </HelpText>
+                )}
+                {discovered.notSupported && (
+                  <HelpText className={"!mb-0"}>
+                    This provider has no model listing endpoint — the catalog
+                    list is used instead.
+                  </HelpText>
+                )}
+                {discovered.error && (
+                  <HelpText className={"!mb-0 text-orange-400"}>
+                    {discovered.error}
+                  </HelpText>
+                )}
+              </div>
+
+              {unpricedDiscovered.length > 0 && (
+                <HelpText className={"!mb-0 text-orange-400"}>
+                  NetBird has no default price for{" "}
+                  {unpricedDiscovered.join(", ")}. Set input and output rates
+                  before saving, or requests to those models record a cost of
+                  zero.
+                </HelpText>
+              )}
 
               {models.map((row, idx) => (
                 <ModelRowEditor
@@ -1403,10 +1518,7 @@ export default function AIProviderModal({
             )}
             {tab === "mappings" && (
               <>
-                <Button
-                  variant={"secondary"}
-                  onClick={() => setTab("models")}
-                >
+                <Button variant={"secondary"} onClick={() => setTab("models")}>
                   Back
                 </Button>
                 <Button
@@ -1466,6 +1578,11 @@ type CatalogModelOption = {
   cached_input_per_1k?: number;
   cache_read_per_1k?: number;
   cache_creation_per_1k?: number;
+  // false for a model the vendor reported but NetBird's pricing table does
+  // not know. It still lands with 0 rates, which is indistinguishable from a
+  // genuinely free model — so the Models tab names these explicitly rather
+  // than letting the operator register one that meters at zero.
+  pricing_known?: boolean;
 };
 
 // priceToInput renders a stored price as an editable string, always using "."
@@ -1600,7 +1717,9 @@ function ModelRowEditor({
   // single-option dropdown.
   const [customMode, setCustomMode] = useState(
     () =>
-      hasCatalog && row.id !== "" && !catalogModels.some((m) => m.id === row.id),
+      hasCatalog &&
+      row.id !== "" &&
+      !catalogModels.some((m) => m.id === row.id),
   );
   // The catalog is fetched async, so an edit-modal row can mount before it
   // arrives — the initializer then sees no catalog and leaves customMode off,
