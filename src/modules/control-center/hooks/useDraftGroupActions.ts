@@ -11,6 +11,7 @@ import { usePlaceholderArtifacts } from "@/modules/control-center/hooks/usePlace
 import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import {
   patchGroupInPolicies,
+  removeGroupFromPolicy,
   sameGroupMatcher,
 } from "@/modules/control-center/utils/policy-group-sync";
 import {
@@ -70,6 +71,7 @@ export function useDraftGroupActions() {
     trackCreateGroup,
     trackRenameGroup,
     trackDeleteGroup,
+    trackUpdatePolicy,
     trackRemoveGroupMembers,
     removeGroupFromDraftResource,
     untrackNewGroup,
@@ -509,6 +511,21 @@ export function useDraftGroupActions() {
         return;
       }
 
+      // A group DELETE is rejected while a policy still references it. Remove
+      // this group from each policy's tracked payload before scheduling the
+      // delete; use the direct tracker because a now-empty policy side still
+      // has to be sent to release the group reference.
+      const policyUpdates = new Map<string, Policy>();
+      reactFlow.getNodes().forEach((candidate) => {
+        const policy = candidate.data?.policy as Policy | undefined;
+        if (!policy?.id) return;
+        const updated = removeGroupFromPolicy(policy, group);
+        if (updated !== policy) policyUpdates.set(policy.id, updated);
+      });
+      policyUpdates.forEach((policy) =>
+        trackUpdatePolicy({ policyId: policy.id!, policy }),
+      );
+
       trackDeleteGroup({ groupId: group.id, name: group.name });
       const instanceIds = new Set(
         reactFlow
@@ -516,7 +533,17 @@ export function useDraftGroupActions() {
           .filter((n) => isGroupNode(n) && getNodeGroup(n)?.id === group.id)
           .map((n) => n.id),
       );
-      setNodes((prev) => prev.filter((n) => !instanceIds.has(n.id)));
+      setNodes((prev) =>
+        prev
+          .filter((n) => !instanceIds.has(n.id))
+          .map((n) => {
+            const policy = n.data?.policy as Policy | undefined;
+            const updated = policy?.id
+              ? policyUpdates.get(policy.id)
+              : undefined;
+            return updated ? { ...n, data: { ...n.data, policy: updated } } : n;
+          }),
+      );
       setEdges((prev) =>
         prev.filter(
           (e) => !instanceIds.has(e.source) && !instanceIds.has(e.target),
@@ -527,6 +554,7 @@ export function useDraftGroupActions() {
     [
       reactFlow,
       trackDeleteGroup,
+      trackUpdatePolicy,
       removeGroup,
       setNodes,
       setEdges,

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
 import {
   patchGroupInPolicies,
+  removeGroupFromPolicy,
   sameGroupMatcher,
 } from "./policy-group-sync";
 
@@ -100,5 +101,20 @@ describe("patchGroupInPolicies", () => {
     const rule = (next[0].data.policy as any).rules[0];
     expect(rule.sources[0]).toBe("g1");
     expect(rule.destinations[0].name).toBe("New");
+  });
+
+  it("removes a deleted group from every policy side before deployment", () => {
+    const policy = policyItem(
+      [{ id: "g1", name: "Ops" } as Group, { id: "g2", name: "Dev" } as Group],
+      ["g1", { id: "g3", name: "QA" } as Group],
+    ).data.policy as any;
+
+    const next = removeGroupFromPolicy(policy, {
+      id: "g1",
+      name: "Ops",
+    } as Group);
+
+    expect(next.rules[0].sources).toEqual([{ id: "g2", name: "Dev" }]);
+    expect(next.rules[0].destinations).toEqual([{ id: "g3", name: "QA" }]);
   });
 });
