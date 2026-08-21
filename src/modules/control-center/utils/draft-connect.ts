@@ -129,10 +129,12 @@ export function handleDraftConnect(
   // Everything a network frame contains — the create-policy modal restricts
   // its destination side to this when the connect targets the network world.
   const scopeForFrame = (frameId: string) => {
-    const resourceIds: string[] = [];
+    const resourceIdSet = new Set<string>();
     const groupIds = new Set<string>();
-    // Existing-network cards (dropped from the panel) have no draft
-    // children — their contents come from the API data instead.
+    // An existing-network card contributes its API contents AND any draft
+    // children added to it on the canvas, so both sets are unioned:
+    // getDraftResource only ever resolves "resource-new-" nodes, which the
+    // API list can't cover.
     const apiNetwork = (
       currentNodes.find((n) => n.id === frameId)?.data as {
         network?: { id?: string; resources?: string[] };
@@ -140,19 +142,18 @@ export function handleDraftConnect(
     )?.network;
     if (apiNetwork?.id) {
       (apiNetwork.resources ?? []).forEach((rid) => {
-        resourceIds.push(rid);
+        resourceIdSet.add(rid);
         const resource = networkResources?.find((r) => r.id === rid);
         (resource?.groups as (Group | string)[] | undefined)?.forEach((g) =>
           groupIds.add(typeof g === "string" ? g : g.id ?? g.name),
         );
       });
-      return { resourceIds, groupIds: Array.from(groupIds) };
     }
     currentNodes
       .filter((n) => n.parentId === frameId)
       .forEach((n) => {
         const resource = getDraftResource(n);
-        if (resource?.id) resourceIds.push(resource.id);
+        if (resource?.id) resourceIdSet.add(resource.id);
         (
           n.data as { resourceGroupIds?: string[] }
         )?.resourceGroupIds?.forEach((idOrName) => groupIds.add(idOrName));
@@ -161,7 +162,10 @@ export function handleDraftConnect(
           if (group) groupIds.add(group.id ?? group.name);
         }
       });
-    return { resourceIds, groupIds: Array.from(groupIds) };
+    return {
+      resourceIds: Array.from(resourceIdSet),
+      groupIds: Array.from(groupIds),
+    };
   };
 
   // Networks are never policy actors. The frame's left connector can drag

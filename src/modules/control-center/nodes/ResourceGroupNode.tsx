@@ -118,13 +118,13 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
           </span>
         </div>
       </div>
-      {showHandles && (
-        <>
-          <AllHandles />
-          {isDraft && handlesActive && (
-            <ConnectHandle type={"source"} position={Position.Left} />
-          )}
-        </>
+      {/* AllHandles always render (invisible edge anchors) — a row created with
+          showHandles false (grouping resources inside a drilled frame) still
+          has to resolve a policy drop and anchor its edges; showHandles only
+          gates the visible connect bubble. */}
+      <AllHandles />
+      {showHandles && isDraft && handlesActive && (
+        <ConnectHandle type={"source"} position={Position.Left} />
       )}
     </div>
   );

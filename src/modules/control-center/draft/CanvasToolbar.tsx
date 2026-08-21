@@ -19,7 +19,6 @@ import {
   useDraftMode,
 } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftHistory } from "@/modules/control-center/draft/DraftHistoryContext";
-import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
 import {
@@ -72,9 +71,6 @@ export const CanvasToolbar = () => {
   } = useDraftMode();
   const reactFlow = useReactFlow();
   const { undo, redo, canUndo, canRedo } = useDraftHistory();
-  // Setters only — subscribing to nodes/edges re-rendered the toolbar on
-  // every drag tick; arrange reads them at click time via the store.
-  const { setNodes, setEdges } = useCanvasState();
 
   const handleZoomIn = () => reactFlow.zoomIn({ duration: 200 });
   const handleZoomOut = () => reactFlow.zoomOut({ duration: 200 });
@@ -83,6 +79,11 @@ export const CanvasToolbar = () => {
 
   // Re-arranges with the layout the draft was entered with — arranging an
   // untouched canvas reproduces the initial positions instead of drifting.
+  // Reads and writes the canvas through the ReactFlow instance, never
+  // useCanvasState: that context changes identity on every nodes update, so
+  // even destructuring its setters re-rendered the toolbar on every drag tick.
+  // Arrange only repositions existing nodes, so the replace-style changes
+  // `instance.setNodes/setEdges` round-trip through onNodesChange are enough.
   const handleArrange = () => {
     const nodes = reactFlow.getNodes();
     const edges = reactFlow.getEdges();
@@ -120,14 +121,14 @@ export const CanvasToolbar = () => {
         const position = drilledPos.get(n.id);
         return position ? { ...n, position } : n;
       });
-      setNodes(arranged);
+      reactFlow.setNodes(arranged);
       refit(arranged);
       return;
     }
 
     const { updatedNodes, updatedEdges } = applyDraftBuildLayout(nodes, edges);
-    setNodes(updatedNodes);
-    setEdges(updatedEdges);
+    reactFlow.setNodes(updatedNodes);
+    reactFlow.setEdges(updatedEdges);
     refit(updatedNodes);
   };
 

@@ -157,12 +157,20 @@ export const ControlCenterComponentsPanel = () => {
     drillDownNetworkNodeId,
   } = useDraftMode();
 
+  // Stable identity: this wrapper re-renders on every draft-context change, and
+  // a fresh closure here would defeat PanelContent's memo and rebuild every
+  // entity row — even while the panel is closed.
+  const onClose = useCallback(
+    () => setComponentsPanelOpen(false),
+    [setComponentsPanelOpen],
+  );
+
   if (!isDraft) return null;
 
   return (
     <PanelContent
       open={componentsPanelOpen}
-      onClose={() => setComponentsPanelOpen(false)}
+      onClose={onClose}
       setResourceEditor={setResourceEditor}
       drillDownNetworkNodeId={drillDownNetworkNodeId}
     />
@@ -186,7 +194,11 @@ const PanelContent = React.memo(
     const drilled = !!drillDownNetworkNodeId;
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState<PanelCategory>("peers");
-    const isSearching = search.trim().length > 0;
+    // Every filter compares against the TRIMMED term: a whitespace-only search
+    // must stay a no-op, otherwise it silently empties the category page (no
+    // name contains a literal space) with no search affordance to explain it.
+    const query = search.trim();
+    const isSearching = query.length > 0;
     const searchRef = useRef<HTMLInputElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<VirtuosoHandle>(null);
@@ -535,27 +547,43 @@ const PanelContent = React.memo(
     }, [canvasNodes, resources]);
 
 
-    // Groups marked for deletion in the draft can't be re-added — they'd be
-    // gone right after deploy.
-    const pendingDeleteGroupIds = useMemo(
-      () =>
-        new Set(
-          changes
-            .filter((c) => c.type === "delete-group")
-            .map((c) => (c.type === "delete-group" ? c.groupId : "")),
-        ),
-      [changes],
-    );
+    // Entities marked for deletion in the draft can't be re-added — they'd be
+    // gone right after deploy, and re-dropping one would draw it back fully
+    // connected without touching the changeset.
+    const pendingDeleteIds = useMemo(() => {
+      const ids = {
+        group: new Set<string>(),
+        policy: new Set<string>(),
+        network: new Set<string>(),
+        resource: new Set<string>(),
+      };
+      changes.forEach((c) => {
+        if (c.type === "delete-group") ids.group.add(c.groupId);
+        else if (c.type === "delete-policy") ids.policy.add(c.policyId);
+        else if (c.type === "delete-resource") ids.resource.add(c.resourceId);
+        else if (c.type === "delete-network") {
+          ids.network.add(c.networkId);
+          // Deleting a network takes its resources with it (one DELETE
+          // /networks/{id}, cascaded server-side), so they must be blocked
+          // too — otherwise a resource could be dragged back and would
+          // vanish again on deploy with no delete change of its own.
+          networks
+            ?.find((n) => n.id === c.networkId)
+            ?.resources?.forEach((rid) => ids.resource.add(rid));
+        }
+      });
+      return ids;
+    }, [changes, networks]);
 
     // A category word ("peer"/"peers", "group"/"groups", …) reveals the whole
     // matching section (all items + create templates), not just name matches.
     const categoryMatch = useCallback(
       (keywords: string[]) => {
-        const s = search.trim().toLowerCase();
+        const s = query.toLowerCase();
         if (!s) return false;
         return keywords.some((k) => k.includes(s) || s.includes(k));
       },
-      [search],
+      [query],
     );
     const peersCategory = categoryMatch(["peer", "peers", "device", "devices"]);
     const resourcesCategory = categoryMatch([
@@ -570,15 +598,15 @@ const PanelContent = React.memo(
 
     const filteredPeers = useMemo(() => {
       if (!peers) return [];
-      if (!search || peersCategory) return peers;
-      const lower = search.toLowerCase();
+      if (!query || peersCategory) return peers;
+      const lower = query.toLowerCase();
       return peers.filter(
         (p) =>
           p.name?.toLowerCase().includes(lower) ||
           p.ip?.toLowerCase().includes(lower) ||
           p.hostname?.toLowerCase().includes(lower),
       );
-    }, [peers, search, peersCategory]);
+    }, [peers, query, peersCategory]);
 
     const filteredResources = useMemo(() => {
       if (!resources) return [];
@@ -593,8 +621,8 @@ const PanelContent = React.memo(
         );
         list = resources.filter((r) => r.id && ids.has(r.id));
       }
-      if (!search || resourcesCategory) return list;
-      const lower = search.toLowerCase();
+      if (!query || resourcesCategory) return list;
+      const lower = query.toLowerCase();
       return list.filter(
         (r) =>
           r.name?.toLowerCase().includes(lower) ||
@@ -602,7 +630,7 @@ const PanelContent = React.memo(
       );
     }, [
       resources,
-      search,
+      query,
       resourcesCategory,
       drilled,
       drillDownNetworkNodeId,
@@ -611,17 +639,17 @@ const PanelContent = React.memo(
 
     const filteredGroups = useMemo(() => {
       if (!groups) return [];
-      if (!search || groupsCategory) return groups;
-      const lower = search.toLowerCase();
+      if (!query || groupsCategory) return groups;
+      const lower = query.toLowerCase();
       return groups.filter((g) => g.name?.toLowerCase().includes(lower));
-    }, [groups, search, groupsCategory]);
+    }, [groups, query, groupsCategory]);
 
     const filteredPolicies = useMemo(() => {
       if (!policies) return [];
-      if (!search || policiesCategory) return policies;
-      const lower = search.toLowerCase();
+      if (!query || policiesCategory) return policies;
+      const lower = query.toLowerCase();
       return policies.filter((p) => p.name?.toLowerCase().includes(lower));
-    }, [policies, search, policiesCategory]);
+    }, [policies, query, policiesCategory]);
 
     // Groups that only exist in the draft (dropped onto the canvas, not created
     // yet) — listed with a NEW badge so the panel reflects them immediately.
@@ -635,10 +663,10 @@ const PanelContent = React.memo(
         seen.add(group.name);
         result.push({ nodeId: n.id, group });
       });
-      if (!search || groupsCategory) return result;
-      const lower = search.toLowerCase();
+      if (!query || groupsCategory) return result;
+      const lower = query.toLowerCase();
       return result.filter((r) => r.group.name.toLowerCase().includes(lower));
-    }, [canvasNodes, search, groupsCategory]);
+    }, [canvasNodes, query, groupsCategory]);
 
     // Resources created in this draft — listed with a NEW badge, disabled
     // (they're already on the canvas by construction).
@@ -662,14 +690,14 @@ const PanelContent = React.memo(
         }
         result.push({ nodeId: n.id, resource });
       });
-      if (!search || resourcesCategory) return result;
-      const lower = search.toLowerCase();
+      if (!query || resourcesCategory) return result;
+      const lower = query.toLowerCase();
       return result.filter((r) =>
         r.resource.name.toLowerCase().includes(lower),
       );
     }, [
       canvasNodes,
-      search,
+      query,
       resourcesCategory,
       drilled,
       drillDownNetworkNodeId,
@@ -683,10 +711,10 @@ const PanelContent = React.memo(
         const peer = getPlaceholderPeer(n);
         if (peer) result.push({ nodeId: n.id, peer });
       });
-      if (!search || peersCategory) return result;
-      const lower = search.toLowerCase();
+      if (!query || peersCategory) return result;
+      const lower = query.toLowerCase();
       return result.filter((r) => r.peer.name.toLowerCase().includes(lower));
-    }, [canvasNodes, search, peersCategory]);
+    }, [canvasNodes, query, peersCategory]);
 
     // Draft-created policies — NEW badge, disabled.
     const draftPolicies = useMemo(() => {
@@ -700,20 +728,20 @@ const PanelContent = React.memo(
         seen.add(policy.id);
         result.push({ nodeId: n.id, policy });
       });
-      if (!search || policiesCategory) return result;
-      const lower = search.toLowerCase();
+      if (!query || policiesCategory) return result;
+      const lower = query.toLowerCase();
       return result.filter((r) =>
         (r.policy.name ?? "").toLowerCase().includes(lower),
       );
-    }, [canvasNodes, search, policiesCategory]);
+    }, [canvasNodes, query, policiesCategory]);
 
     const filteredNetworks = useMemo(() => {
       // Drilled into a single network — no other networks are addable here.
       if (!networks || drilled) return [];
-      if (!search || resourcesCategory) return networks;
-      const lower = search.toLowerCase();
+      if (!query || resourcesCategory) return networks;
+      const lower = query.toLowerCase();
       return networks.filter((n) => n.name.toLowerCase().includes(lower));
-    }, [networks, search, resourcesCategory, drilled]);
+    }, [networks, query, resourcesCategory, drilled]);
 
     // Networks created in this draft (frames) — NEW badge, disabled.
     const draftNetworks = useMemo(() => {
@@ -737,15 +765,15 @@ const PanelContent = React.memo(
           ).length,
         });
       });
-      if (!search || resourcesCategory) return result;
-      const lower = search.toLowerCase();
+      if (!query || resourcesCategory) return result;
+      const lower = query.toLowerCase();
       return result.filter((r) => r.name.toLowerCase().includes(lower));
-    }, [canvasNodes, search, resourcesCategory, drilled]);
+    }, [canvasNodes, query, resourcesCategory, drilled]);
 
     const matchesSearch = useCallback(
       (label: string) =>
-        !search || label.toLowerCase().includes(search.toLowerCase()),
-      [search],
+        !query || label.toLowerCase().includes(query.toLowerCase()),
+      [query],
     );
     const filteredPeerTemplates = useMemo(
       () =>
@@ -931,10 +959,11 @@ const PanelContent = React.memo(
     const buildNetworkRows = () =>
       filteredNetworks.map((network) => {
         const onCanvas = canvasNodeIds.has(`network-${network.id}`);
+        const pendingDelete = pendingDeleteIds.network.has(network.id ?? "");
         return (
           <PanelListItem
             key={network.id}
-            disabled={onCanvas}
+            disabled={onCanvas || pendingDelete}
             onCanvas={onCanvas}
             onPointerDown={(e) =>
               handleDragStart(e, NodeType.NetworkNode, network)
@@ -952,7 +981,7 @@ const PanelContent = React.memo(
               <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
                 <span
                   className={
-                    "text-xs text-nb-gray-100 flex items-center min-w-0"
+                    "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
                   }
                 >
                   <TruncatedText
@@ -960,6 +989,7 @@ const PanelContent = React.memo(
                     maxWidth={"150px"}
                     hideTooltip={true}
                   />
+                  {pendingDelete && <DeletedBadge />}
                 </span>
                 <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
                   {network.resources?.length
@@ -986,10 +1016,11 @@ const PanelContent = React.memo(
         const displayResource = network
           ? { ...resource, name: `${resource.name} - ${network.name}` }
           : resource;
+        const pendingDelete = pendingDeleteIds.resource.has(resource.id ?? "");
         return (
           <PanelListItem
             key={resource.id}
-            disabled={onCanvas}
+            disabled={onCanvas || pendingDelete}
             onCanvas={onCanvas}
             onPointerDown={(e) =>
               handleDragStart(e, NodeType.ResourceNode, resource)
@@ -1000,6 +1031,7 @@ const PanelContent = React.memo(
               resource={displayResource}
               size="small"
               className="flex-1"
+              badge={pendingDelete ? <DeletedBadge /> : undefined}
             />
           </PanelListItem>
         );
@@ -1051,7 +1083,7 @@ const PanelContent = React.memo(
 
     const buildGroupRows = () =>
       filteredGroups.map((group) => {
-        const pendingDelete = pendingDeleteGroupIds.has(group.id ?? "");
+        const pendingDelete = pendingDeleteIds.group.has(group.id ?? "");
         const onCanvas = canvasNodeIds.has(`group-${group.id}`);
         return (
           <PanelListItem
@@ -1080,15 +1112,7 @@ const PanelContent = React.memo(
                     maxWidth={"150px"}
                     hideTooltip={true}
                   />
-                  {pendingDelete && (
-                    <span
-                      className={
-                        "text-[0.55rem] leading-none px-1 py-[0.3rem] rounded-[3px] bg-red-900/40 border border-red-500/20 text-red-400"
-                      }
-                    >
-                      DELETED
-                    </span>
-                  )}
+                  {pendingDelete && <DeletedBadge />}
                 </span>
                 <span className={"text-[0.72rem] text-nb-gray-400"}>
                   {getGroupCountLabel(group)}
@@ -1103,10 +1127,11 @@ const PanelContent = React.memo(
       filteredPolicies.map((policy) => {
         const protocolLabel = getPolicyProtocolAndPortText(policy);
         const onCanvas = canvasNodeIds.has(`policy-${policy.id}`);
+        const pendingDelete = pendingDeleteIds.policy.has(policy.id ?? "");
         return (
           <PanelListItem
             key={policy.id}
-            disabled={onCanvas}
+            disabled={onCanvas || pendingDelete}
             onCanvas={onCanvas}
             onPointerDown={(e) => handlePolicyDragStart(e, policy)}
             data-testid={`cc-panel-policy-${policy.id}`}
@@ -1122,7 +1147,7 @@ const PanelContent = React.memo(
               <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
                 <span
                   className={
-                    "text-xs text-nb-gray-100 flex items-center min-w-0"
+                    "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
                   }
                 >
                   <TruncatedText
@@ -1130,6 +1155,7 @@ const PanelContent = React.memo(
                     maxWidth={"150px"}
                     hideTooltip={true}
                   />
+                  {pendingDelete && <DeletedBadge />}
                 </span>
                 <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
                   {/* Same fallback as PolicyNode: empty label = all protocols */}
@@ -1410,6 +1436,17 @@ const PanelContent = React.memo(
 );
 
 PanelContent.displayName = "PanelContent";
+
+// Marks an existing entity that a pending delete change will remove on deploy.
+const DeletedBadge = () => (
+  <span
+    className={
+      "text-[0.55rem] leading-none px-1 py-[0.3rem] rounded-[3px] bg-red-900/40 border border-red-500/20 text-red-400"
+    }
+  >
+    DELETED
+  </span>
+);
 
 const TemplateItem = React.memo(
   ({

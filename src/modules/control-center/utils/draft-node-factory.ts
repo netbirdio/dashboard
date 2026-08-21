@@ -54,10 +54,14 @@ export function buildNetworkFrame(
   policies: Policy[] | undefined,
 ): { frame: Node; children: Node[] } {
   const frameId = `network-${network.id}`;
+  // Map network.resources (NOT the global networkResources list) so the input
+  // order matches the live build and useDraft's carryNetworkFrame:
+  // orderFrameResources is a stable partition, so a different input order
+  // reshuffles the untargeted rows of a restored frame.
   const childResources = orderFrameResources(
-    (networkResources ?? []).filter((r) =>
-      network.resources?.includes(r.id ?? ""),
-    ),
+    (network.resources ?? [])
+      .map((rid) => (networkResources ?? []).find((r) => r.id === rid))
+      .filter(Boolean) as NetworkResource[],
     network.policies,
     policies,
   );

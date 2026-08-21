@@ -411,6 +411,36 @@ describe("connect node ↔ network (destination picker & membership)", () => {
     expect(deps.onNetworkConnect).not.toHaveBeenCalled();
   });
 
+  it("peer → existing-network frame scopes to its API resources AND draft children", () => {
+    const existingFrame = node("network-real-1", "networkNode", {
+      network: { id: "real-1", name: "Office", resources: ["res-1"] },
+      frame: true,
+    });
+    const draftChild = {
+      ...node("resource-new-r1", "resourceNode", {
+        resource: { name: "DB", address: "10.0.0.5" },
+      }),
+      parentId: "network-real-1",
+    };
+    const groupRow = {
+      ...node("resourcegroup-g1", "resourceGroupNode", {
+        group: { id: "g1", name: "Databases" },
+      }),
+      parentId: "network-real-1",
+    };
+    const deps = {
+      ...makeDeps([existingFrame, draftChild, groupRow]),
+      networkResources: [{ ...resourceDb, groups: ["g-db"] } as NetworkResource],
+      onNetworkConnect: vi.fn(),
+    };
+    handleDraftConnect(connect("peer-a", "network-real-1"), deps);
+    expect(deps.setPolicyDestinationScope).toHaveBeenCalledWith({
+      resourceIds: ["res-1", "new-r1"],
+      groupIds: ["g-db", "g1"],
+    });
+    expect(deps.setCreatePolicyModal).toHaveBeenCalledWith(true);
+  });
+
   it("peer → resource-group row opens the policy modal with the group as destination", () => {
     const groupRow = {
       ...node("resourcegroup-g1", "resourceGroupNode", {

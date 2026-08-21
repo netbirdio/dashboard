@@ -118,6 +118,12 @@ export const PeersToolbar = () => {
 
   const toolbarPosition = useMemo(() => {
     if (selectionNodes.length === 0) return null;
+    // The toolbar is hidden while the pointer is down (see showToolbar), so
+    // skip the bounds until it is released — and because node positions are
+    // read imperatively below, that release is the ONLY signal that the
+    // selection has settled somewhere new. Without it the toolbar reappeared
+    // over the selection's old spot after a drag.
+    if (mouseDown) return null;
     // Absolute bounds — getNodesBounds reads relative positions for frame
     // children, which would misplace the toolbar over drilled resource cards.
     let minX = Infinity,
@@ -139,7 +145,7 @@ export const PeersToolbar = () => {
       minX * viewport.zoom + viewport.x + ((maxX - minX) * viewport.zoom) / 2;
     const screenY = minY * viewport.zoom + viewport.y - 12;
     return { x: screenX, y: screenY };
-  }, [selectionNodes, reactFlow, viewport]);
+  }, [selectionNodes, reactFlow, viewport, mouseDown]);
 
   const handleOpenModal = React.useCallback(() => {
     if (selectedGroupableNodes.length < 2) return;
