@@ -30,6 +30,10 @@ test.describe("WASM client @wasm", () => {
   test("the pinned WASM client instantiates", async ({
     dashboardAsOwner: page,
   }) => {
+    // The client is a ~60MB module fetched from the package host, so downloading
+    // and compiling it does not fit the default per-test budget.
+    test.setTimeout(180_000);
+
     const result = await page.evaluate(async (url) => {
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement("script");
@@ -48,8 +52,9 @@ test.describe("WASM client @wasm", () => {
       void go.run(wasmModule.instance);
 
       // The Go runtime publishes its exports partway through startup, so the
-      // constructor appears some time after go.run() returns.
-      const deadline = Date.now() + 30_000;
+      // constructor appears some time after go.run() returns. The dashboard
+      // gives it 10s before reporting a load failure.
+      const deadline = Date.now() + 15_000;
       while (Date.now() < deadline) {
         if (typeof (window as any).NetBirdClient === "function") {
           return "ok";
