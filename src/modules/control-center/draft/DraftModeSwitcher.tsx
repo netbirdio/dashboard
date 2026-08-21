@@ -27,22 +27,17 @@ export const DraftModeSwitcher = ({}: Props) => {
 
   const handleSwitch = (v: string) => {
     if (v === "draft") {
-      // Open the start chooser (blank vs. current view). The tab stays on Live
-      // until a choice is made. Closing is handled by the popover itself
-      // (modal outside-click / Escape); while open the tab can't be re-clicked
-      // to reopen, so this only ever fires from the closed state.
+      // The tab stays on Live until the chooser gets a choice; the popover
+      // owns its own closing.
       setStartOpen(true);
       return;
     }
-    // Switching to live destroys the draft — confirmed while changes exist.
+    // Switching to live destroys the draft, so it confirms while changes exist.
     setStartOpen(false);
     void discardAndExit();
   };
 
-  // The Live | Draft segmented control. Shown in BOTH modes so the current
-  // mode is always obvious (the active segment). In live the Draft segment
-  // carries the chooser chevron (opens the blank/current popover); in draft
-  // the Live segment switches back (discardAndExit).
+  // Shown in BOTH modes so the active segment always reveals the current mode.
   const modeTabs = (withChooserChevron: boolean) => (
     <SegmentedTabs value={mode} onChange={handleSwitch} activationMode={"manual"}>
       <SegmentedTabs.List
@@ -69,7 +64,6 @@ export const DraftModeSwitcher = ({}: Props) => {
         >
           <PencilLineIcon size={12} />
           Draft
-          {/* Same Beta treatment as the sidebar's Reverse Proxy entry. */}
           <SmallBadge
             text={"Beta"}
             variant={"sky"}
@@ -91,8 +85,7 @@ export const DraftModeSwitcher = ({}: Props) => {
   );
 
   return (
-    // The id lets the group panel match its width to this action row
-    // (Cancel · Review & Deploy · Live/Draft) via ResizeObserver.
+    // The id lets the group panel match its width to this row via ResizeObserver.
     <div
       id={"cc-header-actions"}
       className={
@@ -134,8 +127,6 @@ export const DraftModeSwitcher = ({}: Props) => {
               )}
             </Button>
           </div>
-          {/* Mode indicator while drafting — Draft is active, Live switches
-              back (destroys the draft, confirmed when there are changes). */}
           {modeTabs(false)}
         </>
       )}

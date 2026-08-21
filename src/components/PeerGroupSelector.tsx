@@ -52,8 +52,7 @@ import TruncatedText from "@components/ui/TruncatedText";
 type PeerGroupSelectorTab = "peers" | "groups" | "resources" | "clusters";
 
 export type ClusterOption = {
-  /** Cluster apex domain (e.g. "eu.proxy.netbird.io"); also the value
-   *  that downstream code stores in target_id / proxy_cluster. */
+  /** Apex domain; also what downstream stores in target_id / proxy_cluster. */
   domain: string;
   /** Human-friendly label; falls back to domain. */
   label?: string;
@@ -85,17 +84,13 @@ interface MultiSelectProps {
   showPeerCounter?: boolean;
   hideGroupsTab?: boolean;
   tabOrder?: PeerGroupSelectorTab[];
-  // Tab the dropdown opens on (when nothing is selected yet) — unlike
-  // tabOrder it does NOT reorder the tab triggers.
+  // Tab the dropdown opens on; unlike tabOrder it doesn't reorder triggers.
   initialTab?: PeerGroupSelectorTab;
   closeOnSelect?: boolean;
-  /** Show a Clusters tab. Off by default; flip on with clusters list. */
   showClusters?: boolean;
   /** Clusters offered in the Clusters tab. When empty the tab is hidden. */
   clusters?: ClusterOption[];
-  /** Currently-selected cluster (domain string), if any. */
   selectedCluster?: string;
-  /** Called when the user picks (or clears) a cluster. */
   onClusterChange?: (cluster?: string) => void;
   resource?: PolicyRuleResource;
   onResourceChange?: (resource?: PolicyRuleResource) => void;
@@ -106,12 +101,11 @@ interface MultiSelectProps {
   users?: User[];
   placeholderForSearch?: string;
   resourceIds?: string[];
-  // Limit the Groups tab to these ids (or names for draft groups) — e.g. the
-  // network destination picker. Also disables inline group creation.
+  // Limit the Groups tab to these ids (names for draft groups). Also
+  // disables inline group creation.
   groupIds?: string[];
   additionalResources?: NetworkResource[];
-  // Extra peers offered alongside the fetched ones (e.g. draft placeholder
-  // peers that don't exist in the API yet).
+  // Extra peers alongside the fetched ones (e.g. draft placeholder peers).
   additionalPeers?: Peer[];
   policies?: Policy[];
 }
@@ -308,8 +302,6 @@ export function PeerGroupSelector({
 
   const [tab, setTab] = useState<PeerGroupSelectorTab>(getDefaultTab);
 
-  // Opening the dropdown lands on the tab of the current selection: a chosen
-  // peer opens Peers, a resource opens Resources, groups open Groups.
   const getOpeningTab = (): PeerGroupSelectorTab => {
     if (resource) {
       if (resource.type === "peer") {
@@ -513,7 +505,6 @@ export function PeerGroupSelector({
                           e.preventDefault();
                           e.stopPropagation();
                           if (disableInlineRemoveGroup) return;
-                          // Prevent removing the "All" group
                           if (peer != undefined && group.name == "All") return;
                           toggleGroupByName(group.name);
                         }}
@@ -683,7 +674,6 @@ export function PeerGroupSelector({
                             value={option.name + option.id}
                             disabled={isDisabled}
                             onSelect={() => {
-                              // Prevent removing the "All" group
                               if (peer != undefined && option.name == "All")
                                 return;
                               if (isDisabled) return;
@@ -1085,8 +1075,7 @@ const ResourcesList = ({
                     e.preventDefault();
                   }}
                 >
-                  {/* Draft resources without an address have no type yet —
-                      show the default (host) icon instead of none. */}
+                  {/* Draft resources without an address have no type yet. */}
                   {(res.type === "host" || !res.type) && (
                     <WorkflowIcon size={12} className={"shrink-0"} />
                   )}

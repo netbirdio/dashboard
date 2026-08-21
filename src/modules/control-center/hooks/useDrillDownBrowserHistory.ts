@@ -5,18 +5,9 @@ import {
 } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
-// Wires the canvas drill-downs into the browser history: entering a level
-// that shows a back arrow pushes one history entry (same URL, marker state),
-// so the browser's Back button exits that level — through the SAME path the
-// UI back arrow uses, so the usual transition plays. Exiting via the UI
-// consumes the pushed entry silently (history.back with a suppressed
-// popstate), keeping the history stack balanced.
-//
-// Levels (each owns at most one entry; they're mutually exclusive today but
-// tracked as a stack so nesting keeps working):
-// - network: live single-network view / draft drill-down — one combined
-//   level, they mirror each other across mode switches. Switching networks
-//   while drilled reuses the entry.
+// Each drill-down level pushes one history entry (same URL, marker state) so
+// browser Back exits it through the same path as the UI back arrow. A UI exit
+// consumes that entry with a suppressed history.back to keep the stack balanced.
 type DrillLevel = {
   key: string;
   active: boolean;
@@ -45,15 +36,11 @@ export function useDrillDownBrowserHistory() {
   levelsRef.current = levels;
 
   const prevActiveRef = useRef<Record<string, boolean>>({});
-  // Keys of the levels whose history entries WE pushed, in push order.
   const ownedStackRef = useRef<string[]>([]);
   // Counts popstates caused by our own history.back() calls.
   const suppressPopRef = useRef(0);
-  // Deferred entry consumption per level. Mode switches (draft ↔ live while
-  // drilled) briefly deactivate the level across commits (drill id cleared
-  // before selectedNetwork is set) — consuming the entry immediately and
-  // re-pushing races the async history.back() and scrambles the stack. A
-  // reactivation within the window cancels the consume and REUSES the entry.
+  // Mode switches briefly deactivate the level across commits, and consuming
+  // the entry then races the async history.back(). A reactivation reuses it.
   const pendingConsumeRef = useRef<
     Record<string, ReturnType<typeof setTimeout>>
   >({});
@@ -67,7 +54,7 @@ export function useDrillDownBrowserHistory() {
       if (level.active && !prev) {
         const pending = pendingConsumeRef.current[level.key];
         if (pending) {
-          // Transient deactivation (mode switch) — keep the existing entry.
+          // Transient deactivation from a mode switch: keep the entry.
           clearTimeout(pending);
           delete pendingConsumeRef.current[level.key];
           return;
@@ -79,8 +66,7 @@ export function useDrillDownBrowserHistory() {
         return;
       }
       if (!level.active && prev && owned && !pendingConsumeRef.current[level.key]) {
-        // Exited through the UI — take our entry back off the stack, unless
-        // the level reactivates within the window (see pendingConsumeRef).
+        // Exited through the UI: take our entry back off the stack.
         pendingConsumeRef.current[level.key] = setTimeout(() => {
           delete pendingConsumeRef.current[level.key];
           ownedStackRef.current = ownedStackRef.current.filter(
@@ -102,14 +88,13 @@ export function useDrillDownBrowserHistory() {
       }
       const key = ownedStackRef.current.pop();
       if (!key) return;
-      // Mark inactive BEFORE exiting — the state change must not re-consume
+      // Mark inactive BEFORE exiting so the state change doesn't re-consume
       // the entry the browser just popped.
       prevActiveRef.current[key] = false;
       levelsRef.current.find((l) => l.key === key)?.exit();
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-    // Unmounting (page navigation) while drilled leaves the pushed entry in
-    // the stack, but it points at the same URL — harmless.
+    // Unmounting while drilled leaves the entry, but it points at the same URL.
   }, []);
 }

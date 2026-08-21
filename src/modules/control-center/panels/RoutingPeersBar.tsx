@@ -13,7 +13,6 @@ import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
-// Traffic light: gray = 0, yellow = 1, green ≥ 2 (HA).
 export const RoutingPeersIndicator = ({
   count,
   dotSize = 8,
@@ -25,9 +24,8 @@ export const RoutingPeersIndicator = ({
   className?: string;
   zeroLabel?: string;
 }) => {
-  // The status bar (has a zeroLabel) flags "no routing peers" with a yellow
-  // AlertTriangle, same as a resource's "No Network" — a missing router means
-  // the network can't route. Elsewhere the traffic-light dot is kept.
+  // A missing router means the network can't route, so the status bar warns
+  // instead of showing the traffic-light dot.
   const showAlert = count === 0 && !!zeroLabel;
   return (
     <div className={cn("flex items-center", className)}>
@@ -54,8 +52,6 @@ export const RoutingPeersIndicator = ({
   );
 };
 
-// One row of the routing-peers dropdown: a peer router (OS icon + name) or a
-// group router (group badge + "Name (x Peers)").
 export type RoutingPeerRow = {
   key: string;
   peerOs?: string;
@@ -63,20 +59,17 @@ export type RoutingPeerRow = {
   isGroup: boolean;
   peersCount?: number;
   enabled: boolean;
-  // Hover-reveal edit action (pencil); rows without one are read-only.
+  // Rows without one are read-only.
   onEdit?: () => void;
 };
 
-// Counts PEERS, not routers: a group router contributes its peers, a peer
-// router one — disabled routers contribute nothing.
+// Counts PEERS, not routers: a group router contributes all of its peers.
 export const getRoutingPeerCount = (rows: RoutingPeerRow[]) =>
   rows.reduce(
     (sum, r) => (r.enabled ? sum + (r.isGroup ? r.peersCount ?? 0 : 1) : sum),
     0,
   );
 
-// Disabled routers last; within each half groups first (most peers on top),
-// then peer routers by name.
 export const sortRoutingPeerRows = (rows: RoutingPeerRow[]) =>
   rows.sort((a, b) => {
     if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
@@ -86,13 +79,8 @@ export const sortRoutingPeerRows = (rows: RoutingPeerRow[]) =>
     return a.name.localeCompare(b.name);
   });
 
-// Max height of the popover's row list (scrolls beyond it).
 const MAX_LIST_HEIGHT = 195;
 
-// Routing-peers button group `[● status ⌄ | ⊕ Add]`: the status button opens
-// a PeerSelector-style popover (search + one row per router); with no routers
-// it triggers onAdd directly. Shared by the draft network frame's floating
-// bar, the live network frames, and the live single-network header.
 export const RoutingPeersBar = ({
   rows,
   count,
@@ -105,31 +93,20 @@ export const RoutingPeersBar = ({
   rows: RoutingPeerRow[];
   count: number;
   onAdd: () => void;
-  // Fired on trigger hover — frames prefetch their rows so the popover
-  // usually opens with data already there (no skeleton flash).
   onPrefetch?: () => void;
-  // Fired when the popover toggles — live frames use it to lazily fetch
-  // their router rows on first open (mounting a fetch per frame lagged the
-  // networks overview).
+  // Live frames fetch their rows on first open; a fetch per mounted frame
+  // lagged the networks overview.
   onOpenChange?: (open: boolean) => void;
-  // Rows still loading (lazy live fetch) — the popover opens immediately
-  // with skeleton rows instead of waiting.
   loading?: boolean;
-  // Frame variant: shrink to the height of the node's floating "Install"
-  // button (Button size="xs" ≈ 34px) instead of the header's 40px, so the
-  // pill sits above the frame at the same scale as the other node overlays.
+  // Frame variant: matches the height of the node's floating "Install" button.
   compact?: boolean;
 }) => {
   const [open, setOpen] = React.useState(false);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
-  // Dismiss on any outside pointerdown — including clicks on the ReactFlow
-  // canvas. Radix's built-in outside-dismiss listens on the bubbling phase,
-  // but the canvas pane stops pointerdown propagation before it reaches the
-  // document, so canvas clicks never dismiss it. A capture-phase listener runs
-  // top-down before the pane handler, so it always fires — matching how the
-  // other canvas dropdowns close on a pane click.
+  // The ReactFlow pane stops pointerdown before it bubbles to Radix's
+  // outside-dismiss, so canvas clicks only reach a capture-phase listener.
   React.useEffect(() => {
     if (!open) return;
     const onPointerDown = (e: PointerEvent) => {
@@ -144,8 +121,7 @@ export const RoutingPeersBar = ({
       document.removeEventListener("pointerdown", onPointerDown, true);
   }, [open]);
 
-  // count covers rows that haven't loaded yet (lazy live frames) — the
-  // popover simply appears once they land.
+  // The count covers rows that haven't loaded yet (lazy live frames).
   const hasRouters = rows.length > 0 || count > 0;
   // VirtualScrollAreaList keys items by `id`.
   const virtualRows = React.useMemo(
@@ -156,8 +132,6 @@ export const RoutingPeersBar = ({
   return (
     <div
       className={cn(
-        // Fixed height matching the header's network SelectDropdown; the
-        // compact frame variant matches the node's floating "Install" button.
         "flex items-stretch rounded-md overflow-hidden shrink-0",
         compact ? "h-[34px]" : "h-[40px]",
         "bg-nb-gray-920 border border-gray-700/40",
@@ -177,11 +151,8 @@ export const RoutingPeersBar = ({
             onMouseEnter={onPrefetch}
             onClick={(e) => {
               e.stopPropagation();
-              // Empty state: this button IS the Add action, not a popover
-              // toggle. preventDefault stops Radix's composed trigger handler
-              // from flipping `open` to true — otherwise it latches open behind
-              // the suppressed (rows === 0) popover and springs open the moment
-              // the just-added routing peer becomes a row.
+              // With no routers this button IS the Add action; without
+              // preventDefault Radix latches `open` and the popover springs out.
               if (!hasRouters) {
                 e.preventDefault();
                 onAdd();
@@ -213,10 +184,7 @@ export const RoutingPeersBar = ({
           onClick={(e) => e.stopPropagation()}
         >
           {loading ? (
-            // While the API rows load: any already-known rows (draft
-            // changeset) render as skeleton placeholders too — one per known
-            // routing peer (count from the /networks payload), capped to
-            // what the max height fits.
+            // One skeleton per known routing peer, capped to what fits.
             <div
               className={"flex flex-col px-2 pb-2 pt-2 overflow-hidden"}
               style={{ maxHeight: MAX_LIST_HEIGHT }}
@@ -235,27 +203,20 @@ export const RoutingPeersBar = ({
             <VirtualScrollAreaList
               items={virtualRows}
               itemKey={(row) => row.key}
-              // Read-only list, not a keyboard-select combobox — don't
-              // pre-highlight the first row on open (only real hover should).
+              // Read-only list: nothing should look pre-hovered.
               autoSelectFirst={false}
               scrollAreaClassName={"!pt-2"}
               maxHeight={MAX_LIST_HEIGHT}
-              // Must equal the REAL row height (py-1 8 + p-1 8 + ~16 icon/text
-              // ≈ 32). The Virtuoso viewport is sized from this estimate, so
-              // overshooting leaves a dead strip below the last row that reads
-              // as extra bottom padding vs the top.
+              // Must equal the real row height: the Virtuoso viewport is sized
+              // from this estimate and overshooting leaves a dead strip.
               estimatedItemHeight={32}
-              // Bottom padding is the last row's pb-2 (8) alone — match the
-              // top pt-2 (8). No extra container fudge (it was adding ~4px more
-              // below the last row than above the first).
+              // The last row's own pb-2 already matches the top pt-2.
               heightAdjustment={0}
               onSelect={(row) => {
                 if (!row.onEdit) return;
                 setOpen(false);
                 row.onEdit();
               }}
-              // Match the header's network SelectDropdown option rows: text-xs
-              // font-medium, py-1 px-2, and the same nb-gray-910 hover.
               itemClassNameWithItem={(row) =>
                 cn(
                   "text-xs font-medium text-nb-gray-200 py-1 px-2 dark:aria-selected:bg-nb-gray-910",
@@ -298,8 +259,7 @@ export const RoutingPeersBar = ({
           )}
         </PopoverContent>
       </Popover>
-      {/* Trailing "Add" only once there's a routing peer — with none, the
-          status button itself ("No Routing Peer") adds the first. */}
+      {/* With no routers the status button itself adds the first. */}
       {hasRouters && (
         <button
           type={"button"}

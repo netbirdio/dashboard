@@ -36,8 +36,7 @@ const GROUP_NODE_TYPES = new Set([
   "groupNode",
   "sourceGroupNode",
   "destinationGroupNode",
-  // A framed resource group is a valid drop target too (drop a resource onto
-  // it in the drilled network view to add it).
+  // A framed resource group accepts resource drops in the drilled network view.
   "resourceGroupNode",
 ]);
 
@@ -57,16 +56,13 @@ function getIntersectingFrame(
   return intersecting.find(isFrameNode);
 }
 
-// Placeholders (Server / Agent / unselected User Device) join with their
-// draft ids — the upgrade flow swaps them for the real id on install.
 const getDraggedItemId = getGroupableEntityId;
 
 function groupContainsItem(groupNode: Node, itemId: string): boolean {
   const group = groupNode.data?.group as Group | undefined;
   if (!group) return false;
 
-  // A member removed in the draft no longer counts as contained — re-adding
-  // it reverts the removal.
+  // A member removed in the draft isn't contained; re-adding reverts it.
   const removedMembers = groupNode.data?.removedMembers as
     | Set<string>
     | undefined;
@@ -98,12 +94,6 @@ export function useDragToGroup() {
   const { networkResources } = useControlCenterData();
   const reactFlow = useReactFlow();
 
-  // Adds a peer/resource to a group: updates every canvas instance of the
-  // group (counts + addedMembers, reverting a draft removal if present) and
-  // records the changeset entry. When the member arrives as a canvas node
-  // (draggedNodeId), the node and its edges leave the canvas and policies
-  // that referenced it follow it into the group. Also used by the group
-  // panel's drop zone (components-panel drags).
   const addMemberToGroup = useCallback(
     (
       targetGroup: Node,
@@ -125,8 +115,7 @@ export function useDragToGroup() {
       if (groupContainsItem(targetGroup, itemId)) return;
 
       const groupData = targetGroup.data.group as Group;
-      // "All" is system-managed (every peer is in it implicitly) — manual
-      // membership makes no sense.
+      // "All" is system-managed: every peer is in it implicitly.
       if (groupData.name === "All") return;
 
       if (draggedNodeId) {
@@ -146,16 +135,11 @@ export function useDragToGroup() {
           : g.resources_count,
       });
 
-      // A draft peer joining any group will also be in the system "All"
-      // group once installed — the canvas's All node mirrors that (count +
-      // Details list). Real peers are already in All's API counts, and All
-      // membership is implicit, so no changeset entry is ever recorded.
+      // A draft peer joins "All" on install; real peers are already counted there.
       const bumpsAll = !!peer && itemId.startsWith("draft-");
       const isAllMatcher = (g: Group) => g.name === "All";
 
-      // Draft members aren't in the API lists the group Details panel reads
-      // — keep their full objects on the group node so the panel can list
-      // them after the dropped node leaves the canvas.
+      // Draft members aren't in the API lists, so their full objects ride the node.
       const draftPeerMember =
         peer && itemId.startsWith("draft-") ? peer : undefined;
       const draftResourceMember =
@@ -176,10 +160,7 @@ export function useDragToGroup() {
         return data;
       };
 
-      // Update counts and added members on EVERY canvas instance of the
-      // group — a group can appear twice (source node + destination copy),
-      // and both must reflect the new member. Policy nodes/edges hold their
-      // own group copies (they seed the edit modal), so those follow too.
+      // A group can appear twice, and policy nodes/edges hold their own copies.
       setNodes((prev) => {
         let next = prev.map((n) => {
           const g = n.data?.group as Group | undefined;
@@ -199,8 +180,6 @@ export function useDragToGroup() {
           const addedMembers = new Set(
             (n.data.addedMembers as Set<string>) ?? [],
           );
-          // An existing member removed in the draft just comes back;
-          // anything else is a draft addition.
           if (removedMembers.has(itemId)) removedMembers.delete(itemId);
           else addedMembers.add(itemId);
 
@@ -243,15 +222,11 @@ export function useDragToGroup() {
         resourceIds: resource ? [resource.id] : [],
       });
 
-      // Draft resources also carry the group on their own create change —
-      // deploy applies groups via the resource's `groups` field, since group
-      // changes run before the resource exists.
+      // A draft resource doesn't exist yet, so its groups ride its own field.
       if (itemId.startsWith("new-") && resource) {
         addGroupToDraftResource(itemId, groupData.id ?? groupData.name);
       }
 
-      // Policies that referenced the dragged entity as their single
-      // source/destination follow it into the group.
       if (draggedNodeId) {
         const policyUpdates = getPolicyRegroupUpdates(
           reactFlow.getNodes(),
@@ -259,8 +234,7 @@ export function useDragToGroup() {
           groupData,
         );
         if (policyUpdates.length > 0) {
-          // Next tick — the node removal must be committed to the canvas
-          // before drawPolicyOnCanvas rebuilds the policies' edges.
+          // The node removal must hit the canvas before the edges rebuild.
           setTimeout(
             () => policyUpdates.forEach((p) => updateDraftPolicy(p)),
             0,
@@ -278,16 +252,13 @@ export function useDragToGroup() {
     ],
   );
 
-  // Dragging a resource contained in a network frame moves the WHOLE frame
-  // (and everything in it): the child's displacement is transferred to the
-  // frame each drag tick while the child snaps back to its slot.
+  // Dragging a framed resource moves the whole frame, not the child.
   const frameDrag = useRef<{
     childId: string;
     childStart: { x: number; y: number };
     frameId: string;
     frameStart: { x: number; y: number };
   } | null>(null);
-  // Last dragged position at which the drop-target highlight ran.
   const lastHighlightCheck = useRef<XYPosition | null>(null);
 
   const onNodeDragStart = useCallback(
@@ -296,16 +267,9 @@ export function useDragToGroup() {
       lastHighlightCheck.current = null;
       if (!isDraft) return;
 
-      // While a peer/resource drags, the group directly under the pointer
-      // gets the dropTarget ring via the drag-tick highlight. (No border on
-      // the other eligible groups — it read as noise on drag start.)
-
       const parentId = draggedNode.parentId;
       if (!parentId?.startsWith("network-")) return;
-      // Drilled-into network: its resources render as standalone cards, so a
-      // resource drag must move only that card — NOT the (hidden) frame and
-      // all its siblings. Skip the frame-drag setup and let ReactFlow move the
-      // child on its own.
+      // Drilled resources render as standalone cards, so only that card moves.
       if (parentId === drillDownNetworkNodeId) return;
       const frame = reactFlow.getNodes().find((n) => n.id === parentId);
       if (!frame) return;
@@ -315,9 +279,7 @@ export function useDragToGroup() {
         frameId: frame.id,
         frameStart: { ...frame.position },
       };
-      // ReactFlow only elevates the DRAGGED node (the child) — raise the
-      // frame too so frame + children ride above other nodes while moving
-      // (children inherit the parent's elevation).
+      // ReactFlow only elevates the dragged child, never its frame.
       setNodes((prev) =>
         prev.map((n) => (n.id === frame.id ? { ...n, zIndex: 1000 } : n)),
       );
@@ -329,7 +291,6 @@ export function useDragToGroup() {
     (_event: React.MouseEvent, draggedNode: Node) => {
       if (!isDraft) return;
 
-      // Contained resource → transfer the movement to its frame.
       const frame = frameDrag.current;
       if (frame && draggedNode.id === frame.childId) {
         const delta = {
@@ -355,9 +316,7 @@ export function useDragToGroup() {
         return;
       }
 
-      // The drop-target highlight branches below run intersection tests over
-      // the whole canvas — throttle them to ~every 8px of movement instead
-      // of every pointer-move tick (a real cost with many network frames).
+      // The highlight branches below intersection-test the whole canvas.
       const last = lastHighlightCheck.current;
       if (
         last &&
@@ -368,8 +327,6 @@ export function useDragToGroup() {
       }
       lastHighlightCheck.current = { ...draggedNode.position };
 
-      // Standalone draft resource → highlight the network frame it's over as
-      // a drop target (mirrors the group-drop highlight below).
       if (
         draggedNode.id.startsWith("resource-new-") &&
         !draggedNode.parentId
@@ -384,15 +341,12 @@ export function useDragToGroup() {
             changed = true;
             return { ...n, data: { ...n.data, dropTarget: isTarget } };
           });
-          // Same array when nothing flipped — a new identity per drag tick
-          // re-rendered the whole canvas.
+          // A new array identity per drag tick re-renders the whole canvas.
           return changed ? next : prev;
         });
         return;
       }
 
-      // Group → highlight the frame it's over when it may drop in (empty
-      // group, or one of the network's resources belongs to it).
       if (GROUP_NODE_TYPES.has(draggedNode.type ?? "") && !draggedNode.parentId) {
         const targetFrame = getIntersectingFrame(draggedNode, reactFlow);
         const eligible =
@@ -422,8 +376,6 @@ export function useDragToGroup() {
       const targetGroup = getIntersectingGroup(draggedNode, reactFlow);
       const itemId = getDraggedItemId(draggedNode);
 
-      // Don't highlight if the item already belongs to this group, or for
-      // the system-managed "All" group (manual membership makes no sense).
       const canDrop =
         targetGroup &&
         itemId &&
@@ -449,8 +401,7 @@ export function useDragToGroup() {
     (_event: React.MouseEvent, draggedNode: Node) => {
       if (!isDraft) return;
 
-      // Always clear any drop-target highlight (frame or group) first,
-      // regardless of where the drag ends (the branches below return early).
+      // Clear the highlight first: the branches below return early.
       setNodes((prev) => {
         let changed = false;
         const next = prev.map((n) => {
@@ -461,9 +412,7 @@ export function useDragToGroup() {
         return changed ? next : prev;
       });
 
-      // Whatever was dragged settles on top — e.g. a peer dropped over a
-      // network frame must paint above it, not behind. Frame children are
-      // handled by the frame branch below (they ride their parent's z).
+      // The dropped node settles on top so a peer over a frame paints above it.
       if (!draggedNode.parentId) {
         setNodes((prev) => {
           const z = getTopZIndex(prev);
@@ -473,17 +422,11 @@ export function useDragToGroup() {
         });
       }
 
-      // Drilled-into resource dropped: it renders as a standalone card (its
-      // frame is hidden) and drags freely like the live single-network view.
-      // Mark it so useNetworkFrameLayout stops snapping it back to its grid
-      // slot; the marker is cleared when the parent grid reconciles on exit.
+      // The marker stops useNetworkFrameLayout snapping the card back to its slot.
       if (
         draggedNode.parentId &&
         draggedNode.parentId === drillDownNetworkNodeId
       ) {
-        // Dropped onto a group in the drilled view → fall through to the
-        // group-drop handling below (add it as a member). Otherwise it just
-        // repositions freely.
         if (!getIntersectingGroup(draggedNode, reactFlow)) {
           setNodes((prev) =>
             prev.map((n) =>
@@ -496,12 +439,11 @@ export function useDragToGroup() {
         }
       }
 
-      // Contained resource → final snap; no group-drop for framed resources.
+      // Framed resources snap back to their slot and never group-drop.
       const frame = frameDrag.current;
       if (frame && draggedNode.id === frame.childId) {
         frameDrag.current = null;
         setNodes((prev) => {
-          // The dropped frame stays on top (see getTopZIndex for why +2).
           const z = getTopZIndex(prev);
           return prev.map((n) => {
             if (n.id === frame.childId) {
@@ -516,9 +458,6 @@ export function useDragToGroup() {
         return;
       }
 
-      // Standalone draft resource dropped onto a network frame → assign it to
-      // that network (reparents into the frame). The other way to assign is
-      // the "No Network" picker.
       if (
         draggedNode.id.startsWith("resource-new-") &&
         !draggedNode.parentId
@@ -533,11 +472,7 @@ export function useDragToGroup() {
         }
       }
 
-      // Group dropped onto a network frame → the node becomes a resource-
-      // group row INSIDE the frame (frame-managed flat row, same id so its
-      // policy edges follow — they re-attach to the frame like a framed
-      // resource's). Only eligible groups drop in: empty, or with at least
-      // one resource that's part of that network. Canvas-only in v1.
+      // A group dropped on a frame keeps its id so policy edges re-attach.
       if (GROUP_NODE_TYPES.has(draggedNode.type ?? "") && !draggedNode.parentId) {
         const targetFrame = getIntersectingFrame(draggedNode, reactFlow);
         if (
@@ -557,23 +492,19 @@ export function useDragToGroup() {
               ...dragged,
               type: NodeType.ResourceGroupNode,
               parentId: targetFrame.id,
-              // Index -1 sorts above every existing child — the reconciling
-              // frame layout re-sorts and repositions everything.
+              // -1 sorts above every existing child; the frame layout re-sorts.
               position: getFrameChildPosition(-1),
               style: { ...dragged.style, width: NETWORK_FRAME_CHILD_WIDTH },
               // Children inherit the frame's elevation.
               zIndex: undefined,
             };
             const others = prev.filter((n) => n.id !== draggedNode.id);
-            // Parents must precede children — insert right after the frame.
+            // Parents must precede children in the node array.
             const at = others.findIndex((n) => n.id === targetFrame.id) + 1;
             return [...others.slice(0, at), converted, ...others.slice(at)];
           });
 
-          // Unassigned draft resources carried by the group (their standalone
-          // cards left the canvas when grouped) get assigned to this network:
-          // a create-resource change per resource, group membership included.
-          // Incomplete ones (no address yet) stay untracked, like standalone.
+          // Carried draft resources join this network; addressless ones stay untracked.
           const carried = (
             draggedNode.data as { draftResources?: NetworkResource[] }
           )?.draftResources;
@@ -610,8 +541,7 @@ export function useDragToGroup() {
       const peer =
         (draggedNode.data?.peer as Peer | undefined) ??
         getPlaceholderPeer(draggedNode);
-      // Draft resources go through getDraftResource so the stored object
-      // always has its "new-…" id and name — the raw node data may be blank.
+      // getDraftResource guarantees the id and name; raw node data may be blank.
       const resource = draggedNode.id.startsWith("resource-new-")
         ? getDraftResource(draggedNode)
         : (draggedNode.data?.resource as NetworkResource | undefined);
@@ -620,8 +550,6 @@ export function useDragToGroup() {
         peer,
         resource,
         itemId,
-        // Dropping a resource into a group absorbs it — the card leaves the
-        // canvas (same as peers).
         draggedNodeId: draggedNode.id,
       });
     },

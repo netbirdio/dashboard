@@ -13,8 +13,7 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { useCanvasTransitionActive } from "@/modules/control-center/utils/canvas-transition";
 
-// Entrance for the drilled empty-network card. Class names must be literal:
-// Tailwind's scanner only emits classes it finds as static text.
+// Must stay a literal: Tailwind only emits classes it finds as static text.
 const EMPTY_STATE_REVEAL_IN =
   "animate-in fade-in zoom-in-[.97] duration-[700ms] ease-out fill-mode-both";
 
@@ -30,16 +29,12 @@ export function ControlCenterEmptyStates() {
 
   if (isDraft) return null;
 
-  // Drilled into a single network that has no resources yet — offer the way to
-  // fill it (opens the real networks-page resource modal via NetworkProvider,
-  // which this overlay is mounted inside).
   const drilledNetwork =
     selectedNetwork !== ""
       ? networks?.find((n) => n.id === selectedNetwork)
       : undefined;
-  // Gate on layoutInitialized AND the drill transition being finished — the
-  // overlay lives outside the canvas pane, so the transition's opacity fade
-  // doesn't cover it; without these it flashes in mid-dive.
+  // The overlay lives outside the canvas pane, so the drill transition's fade
+  // doesn't cover it and it would otherwise flash in mid-dive.
   const drilledNetworkEmpty =
     layoutInitialized &&
     !isTransitioning &&

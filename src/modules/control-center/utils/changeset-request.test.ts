@@ -17,15 +17,10 @@ import {
   toCurl,
 } from "./changeset-request";
 
-// toCurl reads the account's management origin; the real loader needs Next's
-// build-time config files, which the unit env doesn't have.
+// The real config loader needs Next build-time files the unit env lacks.
 vi.mock("@utils/config", () => ({
   default: () => ({ apiOrigin: "https://api.netbird.io" }),
 }));
-
-// The request the code view shows must match what deploy sends: group objects
-// become ids, draft-only members are filtered, deletes carry no body, and an
-// update's "before" is reconstructed from the live account.
 
 const policy = (over: Partial<Policy> = {}): Policy => ({
   name: "P",
@@ -78,8 +73,7 @@ describe("buildChangeRequest", () => {
     };
     const body = buildChangeRequest(change)?.body as any;
     expect(body.peers).toEqual(["p1"]);
-    // Resources go as {id, type} objects (bare id strings are rejected by the
-    // API); no live data here so the type is unresolved.
+    // Bare id strings are rejected by the API.
     expect(body.resources).toEqual([{ id: "r1", type: undefined }]);
   });
 
@@ -108,8 +102,7 @@ describe("buildChangeRequest", () => {
     };
     const live = { groups: [{ id: "grp-123", name: "Admins" }] };
     const body = buildChangeRequest(change, live)?.body as any;
-    // Draft stores authorized_groups keyed by NAME; deploy sends the id, so the
-    // preview must too.
+    // Draft keys authorized_groups by NAME; deploy sends the id.
     expect(body.rules[0].authorized_groups).toEqual({ "grp-123": ["root"] });
     expect(body.rules[0].ports).toEqual(["22"]);
   });
@@ -203,7 +196,7 @@ describe("buildBeforeRequest", () => {
         {
           id: "g1",
           name: "Servers",
-          // Live groups carry object members; a bare id string is tolerated too.
+          // A bare id string is tolerated alongside object members.
           resources: [{ id: "res1", type: "host" }, "res2" as any],
         },
       ],
@@ -254,8 +247,7 @@ describe("changeDiffLines", () => {
       .filter((l) => l.kind !== "context")
       .map((l) => l.text)
       .join("\n");
-    // Only the added peer moves; membership the draft never touched must not
-    // show up as a removal plus an addition.
+    // Membership the draft never touched must not show as a remove plus add.
     expect(changed).toContain("p2");
     expect(changed).not.toContain("res1");
     expect(changed).not.toContain("host");
@@ -274,7 +266,7 @@ describe("toCurl", () => {
     };
     const curl = toCurl(buildChangeRequest(change));
     expect(curl).toContain(`Eduard'\\''s Devices`);
-    // A bare apostrophe would close the -d payload early and break the command.
+    // A bare apostrophe would close the -d payload early.
     expect(curl).not.toContain(`Eduard's`);
   });
 });
@@ -292,7 +284,7 @@ describe("id placeholders in preview", () => {
             name: "P",
             description: "",
             enabled: true,
-            // Draft group — no id yet.
+            // Draft group: no id yet.
             sources: [{ name: "Sales Team" }],
             destinations: [{ id: "g2", name: "Admins" }],
             bidirectional: true,

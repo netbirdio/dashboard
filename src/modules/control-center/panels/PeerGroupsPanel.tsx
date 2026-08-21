@@ -41,13 +41,12 @@ import {
 } from "@/modules/control-center/panels/DestinationGroupPanel";
 
 interface PeerGroupsPanelProps {
-  // Real peer id (empty = closed). The peer-side twin of the group panel:
-  // one Groups tab where the peer's group assignments are toggled.
+  // Real peer id; empty means closed.
   peerId: string;
   onClose: () => void;
 }
 
-// A group's stable reference — API id, or the name for draft-created groups.
+// Draft-created groups have no API id, so they key by name.
 const groupRef = (g: Group) => g.id ?? g.name;
 
 export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
@@ -65,16 +64,11 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   const peer = useMemo(
     () =>
       peers?.find((p) => p.id === peerId) ??
-      // Placeholder peers (draft-…) aren't in the API list — resolve them
-      // from their canvas node so groups can be assigned pre-install
-      // (assignments become the setup key's auto-groups / deploy after the
-      // peer registers).
+      // Placeholder peers aren't in the API list; resolve them from their canvas node.
       getPlaceholderPeer(nodes.find((n) => n.id === `peer-${peerId}`)),
     [peers, peerId, nodes],
   );
 
-  // Assignable groups: API groups plus draft-created ones (create-group
-  // changes) — "All" is automatic and excluded.
   const allGroups = useMemo(() => {
     const draftGroups: Group[] = isDraft
       ? changes
@@ -84,12 +78,9 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     return [...(groups ?? []), ...draftGroups].filter((g) => !isAllGroup(g));
   }, [groups, changes, isDraft]);
 
-  // Membership: the peer's API groups, adjusted by the draft changeset
-  // (update-group add/remove lists + create-group member lists).
   const assignedRefs = useMemo(() => {
     const assigned = new Set<string>();
-    // "All" is excluded from the list, so it must not count as assigned
-    // either — otherwise the footer counts an invisible membership.
+    // "All" is excluded from the list, so it must not count as assigned either.
     (peer?.groups ?? []).forEach(
       (g) => g.id && !isAllGroup(g) && assigned.add(g.id),
     );
@@ -110,12 +101,9 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     [assignedRefs],
   );
 
-  // ---- Local selection, applied in one go via Assign/Save ----
-
   const [selectedRefs, setSelectedRefs] = useState<Set<string>>(new Set());
   useEffect(() => {
     setSelectedRefs(new Set(assignedKey ? assignedKey.split(",") : []));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [peerId, assignedKey]);
 
   const dirty = !setEquals(selectedRefs, assignedRefs);
@@ -146,8 +134,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
 
     if (isDraft) {
       added.forEach((g) => {
-        // Groups ON the canvas get the full treatment (counts + member
-        // sets); off-canvas ones land straight in the changeset.
+        // Groups on the canvas get counts and member sets; off-canvas ones only changeset.
         const node = nodes.find(
           (n) =>
             isGroupNode(n) &&
@@ -170,7 +157,6 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
       return;
     }
 
-    // Live — one PUT per changed group, behind a single confirmation.
     const choice = await confirm({
       title: `Save groups of “${peer.name}”?`,
       description:
@@ -195,24 +181,20 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
           {
             name: full.name,
             peers: [...peerIds],
-            // Resources pass through untouched, as {id, type} objects. The
-            // API rejects a body that sends them as id strings.
+            // The API rejects resources sent as id strings.
             resources: full.resources,
           },
           `/${full.id}`,
         );
       }
-      // /policies embeds group member counts the views rebuild from — refresh
-      // it too so other views / the draft don't show stale counts.
+      // /policies embeds the group member counts the views rebuild from.
       await Promise.all([
         mutate("/groups"),
         mutate("/peers"),
         mutate("/policies"),
       ]);
     })();
-    // The promise drives the toast styling: green on success, red with the
-    // API error on failure (useApiCall rejects but never toasts itself, so a
-    // plain notify would have shown a green "success" for a failed save).
+    // useApiCall rejects but never toasts, so the promise drives the toast.
     notify({
       title: peer.name ?? "Peer",
       description: `Groups of ${peer.name ?? "the peer"} were successfully saved.`,
@@ -220,12 +202,9 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     });
     try {
       await request;
-      // Saved — close the panel (draft's Assign path closes too).
       onClose();
     } catch {
-      // A PUT in the loop may have partially applied, so re-sync so the panel
-      // and canvas reflect the server truth rather than the optimistic
-      // selection.
+      // A PUT in the loop may have partially applied, so re-sync to the server truth.
       await Promise.all([
         mutate("/groups"),
         mutate("/peers"),
@@ -236,8 +215,6 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     }
   };
 
-  // ---- Search ----
-
   const [search, setSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -246,7 +223,6 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   }, [peerId]);
   const query = search.trim().toLowerCase();
 
-  // Assigned-first candidate list (seed order, pinned below).
   const groupCandidates = useMemo(
     () => [
       ...allGroups.filter((g) => assignedRefs.has(groupRef(g))),
@@ -255,9 +231,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     [allGroups, assignedRefs],
   );
 
-  // Row order FROZEN per open (the full id sequence): toggling, saving, and
-  // the post-save SWR mutate (which can return the groups array reordered) all
-  // leave rows in place. New groups sort to the end. Null until data is ready.
+  // Row order frozen per open: the post-save mutate can return the groups reordered.
   const [rowOrder, setRowOrder] = useState<string[] | null>(null);
   useEffect(() => {
     setRowOrder(null);
@@ -265,7 +239,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   useEffect(() => {
     if (rowOrder || !peerId || !groups) return;
     setRowOrder(groupCandidates.map((g) => groupRef(g)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- groupCandidates is snapshotted once, not tracked
   }, [rowOrder, peerId, groups]);
 
   const groupRows = useMemo(() => {
@@ -276,16 +250,12 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     return pinned.filter((g) => g.name?.toLowerCase().includes(query));
   }, [groupCandidates, rowOrder, query]);
 
-  // ---- Placement (same as the group panel: right side, full height) ----
-
   const placement = usePanelPlacement({
     openKey: peerId,
     panelWidth,
     top: 80,
     bottom: 24,
   });
-
-  // ---- Close handling (same discard guard as the group panel) ----
 
   const confirmDiscard = async () => {
     if (!dirty) return true;
@@ -307,8 +277,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   if (!peerId || !placement) return null;
 
   return (
-    // NO key: switching peers swaps the data in the same mounted panel —
-    // the entry animation only plays when opening from closed.
+    // No key: switching peers must not replay the entry animation.
     <motion.div
       id={"cc-group-panel"}
       initial={{ opacity: 0, x: 48, y: 0 }}
@@ -325,7 +294,6 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
       }}
     >
       <Tabs value={"groups"} className={"flex-1 min-h-0 flex flex-col"}>
-        {/* Search on top — same chrome as the group panel. */}
         <div className={"relative shrink-0 flex items-center pr-4 pt-1"}>
           <input
             className={
@@ -342,7 +310,6 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
           >
             <SearchIcon size={14} />
           </div>
-          {/* ESC badge instead of an X — closes the whole panel. */}
           <button
             onClick={() => void requestClose()}
             className={
@@ -371,13 +338,10 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
         </div>
 
         <TabsContent value={"groups"} className={"flex-1 min-h-0 m-0 p-0"}>
-          {/* Virtualized (react-virtuoso) — accounts with many groups render
-              only the visible slice. */}
           {groupRows.length > 0 ? (
             <MemoizedScrollArea withoutViewport={true} className={"h-full"}>
               <Virtuoso
-                // Remount per peer: Virtuoso keeps its scroll offset across
-                // data swaps — switching peers would land mid-list.
+                // Virtuoso keeps its scroll offset across data swaps.
                 key={`${peerId}-groups`}
                 data={groupRows}
                 overscan={300}
@@ -440,7 +404,6 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
         </TabsContent>
       </Tabs>
 
-      {/* Fixed footer — same as the group panel. */}
       <div
         className={
           "shrink-0 border-t border-nb-gray-910 px-5 py-4 flex items-center justify-between"
@@ -465,7 +428,6 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
             disabled={!dirty || saving}
             onClick={() => void saveAssignments()}
           >
-            {/* Spinner while saving, but keep the label's width (no jump). */}
             <span className={cn(saving && "invisible")}>
               {isDraft ? "Assign" : "Save"}
             </span>

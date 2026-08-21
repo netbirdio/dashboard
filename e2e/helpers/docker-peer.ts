@@ -1,12 +1,6 @@
-/**
- * Spin up a REAL NetBird peer as a docker container that registers with the
- * test management via a setup key. The test env has no signal/TURN, so the
- * peer registers but stays offline (connected:false) — enough for the Peer/User
- * views, which just need a selectable peer.
- *
- * The client MUST talk to management directly (http://management:80), NOT
- * through caddy — the gRPC/h2c handshake breaks through caddy in this env.
- */
+// Spins up a real NetBird peer in docker, registering via a setup key. The test
+// env has no signal/TURN, so the peer registers but stays offline. The client
+// MUST reach management directly (http://management:80); caddy breaks h2c.
 import { execSync } from "child_process";
 import { expect, type Page } from "@playwright/test";
 import {
@@ -33,12 +27,7 @@ function sh(cmd: string): string {
     .trim();
 }
 
-/**
- * Registers a docker peer and resolves once it appears in /api/peers.
- * `hostname` doubles as the container name and the peer's account name.
- * Optionally assigns the peer to `autoGroupIds` (via the setup key), so it can
- * participate in seeded policies for the Peer view.
- */
+// `hostname` doubles as the container name and the peer's account name.
 export async function registerDockerPeer(
   page: Page,
   hostname: string,
@@ -48,17 +37,12 @@ export async function registerDockerPeer(
   return runDockerPeerWithKey(page, hostname, key.key);
 }
 
-/**
- * Runs a docker peer with an ALREADY-GENERATED setup key (e.g. one produced by
- * the in-app "Generate Key" during a placeholder install) and waits for it to
- * appear in /api/peers. Unlike registerDockerPeer it does not mint a key.
- */
+// Runs a peer with an already-generated setup key instead of minting one.
 export async function runDockerPeerWithKey(
   page: Page,
   hostname: string,
   key: string,
 ): Promise<RegisteredPeer> {
-  // Clean any stale container with the same name from a previous run.
   removeDockerContainer(hostname);
   sh(
     [
@@ -87,7 +71,7 @@ export async function runDockerPeerWithKey(
   return found!;
 }
 
-/** Just removes the container (peer/key cleanup is caller's responsibility). */
+// Peer and setup-key cleanup is the caller's responsibility.
 export function removeDockerContainer(hostname: string) {
   try {
     sh(`docker rm -f ${hostname}`);
@@ -96,7 +80,6 @@ export function removeDockerContainer(hostname: string) {
   }
 }
 
-/** Tears down the container and deletes the peer + its setup key. */
 export async function cleanupDockerPeer(page: Page, hostname: string) {
   removeDockerContainer(hostname);
   await deletePeersByPrefix(page, hostname);

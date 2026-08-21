@@ -7,11 +7,6 @@ import {
   resetDraftState,
 } from "../helpers/control-center";
 
-/**
- * Draft-mode extras not covered by the matrix/connections specs: creating a
- * draft NETWORK frame via the canvas menu (+ its right-click frame actions),
- * and the Auto Arrange toolbar button.
- */
 test.describe.serial("Control Center Draft Extras @control-center", () => {
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
     await resetDraftState(page);
@@ -26,8 +21,6 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     const frame = canvasNode(page, "network-new-");
     await expect(frame).toHaveCount(1);
 
-    // A draft network frame's right-click menu (draft-only Edit is present):
-    // Edit · Add Resource · Add Resource Group · Add Routing Peer · Remove.
     await frame.click({ button: "right" });
     const menu = page.getByTestId("cc-node-context-menu");
     await expect(menu).toBeVisible();
@@ -54,7 +47,6 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     const groups = canvasNode(page, "group-new-");
     await expect(groups).toHaveCount(2);
 
-    // Auto Arrange lays the canvas out so they no longer share a position.
     await page.getByTestId("cc-toolbar-arrange").click();
 
     await expect
@@ -62,7 +54,6 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
         const a = await groups.nth(0).boundingBox();
         const b = await groups.nth(1).boundingBox();
         if (!a || !b) return false;
-        // Different position after arrange (allow a small epsilon).
         return Math.abs(a.x - b.x) > 5 || Math.abs(a.y - b.y) > 5;
       })
       .toBe(true);
@@ -76,7 +67,6 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     const frame = canvasNode(page, "network-new-");
     await expect(frame).toHaveCount(1);
 
-    // Frame context menu → Edit → the network modal (draft: pure-data rename).
     await frame.click({ button: "right" });
     const menu = page.getByTestId("cc-node-context-menu");
     await expect(menu).toBeVisible();
@@ -86,7 +76,6 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     await page.getByTestId("network-name-input").fill(newName);
     await page.getByTestId("submit-network").click({ force: true });
 
-    // The frame label follows the rename immediately (no deploy).
     await expect(frame).toContainText(newName);
   });
 
@@ -95,8 +84,6 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
   }) => {
     await enterDraft(page);
 
-    // Create a standalone draft resource (opens the editor; the node is added
-    // on save).
     await createViaCanvasMenu(page, "new-resource");
     await page.getByTestId("resource-name-input").fill("toggle-res");
     await page.getByTestId("resource-address-input").fill("10.5.6.7/32");
@@ -112,7 +99,6 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
       return menu;
     };
 
-    // Enabled resource offers "Disable"; toggling flips the menu to "Enable".
     let menu = await openMenu();
     await menu.getByTestId("cc-menu-disable").click();
 
@@ -120,7 +106,6 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     await expect(menu.getByTestId("cc-menu-enable")).toBeVisible();
     await menu.getByTestId("cc-menu-enable").click();
 
-    // Back to enabled → "Disable" again.
     menu = await openMenu();
     await expect(menu.getByTestId("cc-menu-disable")).toBeVisible();
     await page.keyboard.press("Escape");
@@ -139,7 +124,6 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     await expect(menu).toBeVisible();
     await menu.getByTestId("cc-menu-add-routing-peer").click();
 
-    // The routing-peer modal (peer/group tabs) opens.
     await expect(page.getByTestId("routing-peer-tab-peer")).toBeVisible();
     await expect(page.getByTestId("routing-peer-tab-group")).toBeVisible();
     await page.keyboard.press("Escape");

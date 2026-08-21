@@ -30,12 +30,8 @@ export function useUserView() {
         data: {
           peer,
           enabled: true,
-          // Draft-style card look (bg + border), read-only: no connect
-          // handles in live mode.
           variant: "card",
           showHandles: false,
-          // No click action — highlighting goes through the header's
-          // Focus tool (armed clicks land in onNodeClick).
         },
         position: { x: 0, y: 0 },
       });
@@ -59,7 +55,7 @@ export function useUserView() {
         const sources = rule.sources as Group[];
         return sources?.some((d) => allUserGroups.includes(d.id));
       }),
-      // Ascending — disabled first (live/draft parity; see usePeerView).
+      // ascending, so disabled policies come first (live/draft parity)
       "enabled",
     );
 

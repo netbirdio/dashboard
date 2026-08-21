@@ -9,12 +9,8 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
 
-// Deletes an EXISTING network by its canvas node id. Draft records a
-// delete-network change (resources/routers cascade) applied on review & deploy;
-// live deletes immediately (DELETE /networks/{id}) — live changes never go
-// through the changeset. Draft not-yet-created networks Remove instead, never
-// delete here. Resolves true only when the network was actually deleted, so
-// callers can navigate out of its view.
+// Deletes an EXISTING network by its canvas node id. Resolves true only once the
+// network is really gone, so callers can navigate out of its view.
 export function useDeleteNetwork() {
   const reactFlow = useReactFlow();
   const { isDraft } = useDraftMode();
@@ -49,7 +45,6 @@ export function useDeleteNetwork() {
         return true;
       }
 
-      // Live — immediate delete, same confirm copy as the networks page.
       const choice = await confirm({
         title: `Delete network '${network.name}'?`,
         description:
@@ -59,9 +54,7 @@ export function useDeleteNetwork() {
         type: "danger",
       });
       if (!choice) return false;
-      // Remove the frame only AFTER the DELETE succeeds — an optimistic remove
-      // would desync the canvas (frame gone, network still live) on failure,
-      // with no rollback.
+      // Remove the frame only AFTER the DELETE succeeds: there is no rollback.
       const promise = deleteCall({}, `/${network.id}`).then(() => {
         removeNodeWithEdges(nodeId);
         mutate("/networks");
@@ -77,7 +70,7 @@ export function useDeleteNetwork() {
         await promise;
         return true;
       } catch {
-        // The frame stays on the canvas; notify() surfaced the error.
+        // notify() already surfaced the error.
         return false;
       }
     },

@@ -132,9 +132,7 @@ type ModalProps = {
   cell?: string;
   postureCheckTemplates?: PostureCheck[];
   useSave?: boolean;
-  // Runs right before the modal saves (useSave mode). Return false to abort —
-  // e.g. a "you are in live mode" confirmation. Save proceeds when it resolves
-  // truthy (or when not provided).
+  // Return false to abort the save (useSave mode only).
   onBeforeSave?: () => Promise<boolean> | boolean;
   allowEditPeers?: boolean;
   initialProtocol?: Protocol;
@@ -144,13 +142,10 @@ type ModalProps = {
   initialTab?: string;
   disableDestinationSelector?: boolean;
   additionalResources?: NetworkResource[];
-  // Draft-only placeholder peers (not installed yet) offered in the peer
-  // selectors alongside the real peers.
+  // Draft-only placeholder peers, not installed yet.
   additionalPeers?: Peer[];
-  // Set when the policy is created by connecting onto a network (or one of
-  // its resources/resource-groups) in the draft canvas: the destination
-  // selector offers ONLY the network's resources and groups (no peers), and
-  // the policy is locked one-way — resource access is never bidirectional.
+  // Set when the policy is drawn onto a network in the draft canvas: the
+  // destination is that network's resources only, and the policy is one-way.
   destinationScope?: PolicyDestinationScope;
 };
 
@@ -266,15 +261,13 @@ export function AccessControlModalContent({
     onSuccess && onSuccess(data);
   };
 
-  // Save button behaviour: in useSave mode run the optional confirm, then the
-  // real save; otherwise just hand the data back to the caller (draft mode).
   const saveOrClose = async () => {
     if (!useSave) return close();
     if (onBeforeSave && !(await onBeforeSave())) return;
     submit();
   };
 
-  // Network-scoped destinations are resource access — one-way by nature.
+  // Resource access is never bidirectional.
   useEffect(() => {
     if (destinationScope && direction !== "in") setDirection("in");
   }, [destinationScope, direction, setDirection]);

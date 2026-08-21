@@ -45,12 +45,8 @@ export const applyD3HierarchicalLayout = (
   const destinationResourceNodes = simulationNodes.filter(
     (n) => n.type === "destinationResourceNode",
   );
-  // The single-group view mirrors policies where the selected group is the
-  // destination to the LEFT (sources → policy → selected group); the view
-  // stamps those policy nodes with data.side === "left".
-  // Agent-network policies share the policy column with access-control ones —
-  // both are "what authorizes this" and the overlay mirrors the same
-  // source → policy → destination shape.
+  // The single-group view mirrors policies that target the selected group to
+  // the left, stamping those policy nodes with data.side === "left".
   const policyNodes = simulationNodes.filter(
     (n) =>
       (n.type === "policyNode" || n.type === "agentPolicyNode") &&
@@ -63,8 +59,7 @@ export const applyD3HierarchicalLayout = (
   const resourceNodes = simulationNodes.filter(
     (n) => n.type === "resourceNode",
   );
-  // Providers are destinations: they sit in the destination column next to
-  // groups and resources.
+  // Providers are destinations, so they share the destination column.
   const providerNodes = simulationNodes.filter(
     (n) => n.type === "providerNode",
   );
@@ -86,7 +81,6 @@ export const applyD3HierarchicalLayout = (
     ];
   }
 
-  // Source Peer (user view) — same pitch as the destination column.
   centerNodesVertically(
     sourcePeerNodes,
     startX - 100,
@@ -103,9 +97,8 @@ export const applyD3HierarchicalLayout = (
     );
   }
 
-  // Groups or Source Groups — in the peer/group/user views the source column
-  // shares the destination column's pitch (one rhythm on both sides, and the
-  // draft rebuild mirrors it); the drilled network view keeps the base pitch.
+  // Outside the drilled network view the source column shares the destination
+  // column's pitch, and the draft rebuild mirrors it.
   centerNodesVertically(
     groupNodes,
     startX,
@@ -115,8 +108,7 @@ export const applyD3HierarchicalLayout = (
     centerY,
   );
   if (view === "group") {
-    // Mirror image of the destination column: sources of the policies that
-    // target the selected group sit on the far left.
+    // Sources of policies targeting the selected group sit on the far left.
     centerNodesVertically(
       sourceGroupNodes,
       startX - (options?.destinationGroup?.width ?? columnWidth),
@@ -159,8 +151,6 @@ export const applyD3HierarchicalLayout = (
     centerY + 5,
   );
 
-  // centerNodesVertically already set node.x/node.y — read the placed
-  // positions straight out (no simulation needed).
   const updatedNodes: Node[] = simulationNodes.map((node) => ({
     ...node,
     position: { x: node.x, y: node.y },

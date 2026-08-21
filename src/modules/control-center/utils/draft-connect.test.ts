@@ -6,8 +6,6 @@ import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { DraftConnectDeps, handleDraftConnect } from "./draft-connect";
 
-// ---- Fixtures -------------------------------------------------------------
-
 const peerA: Peer = { id: "a", name: "Peer A" } as Peer;
 const peerB: Peer = { id: "b", name: "Peer B" } as Peer;
 const groupAll: Group = { id: "g-all", name: "All" };
@@ -198,7 +196,6 @@ describe("connect node ↔ node (create-policy modal)", () => {
 
   it("always resets both peer/resource prefills first (no stale leaks)", () => {
     handleDraftConnect(connect("group-g-all", "group-g-dev"), deps);
-    // Both single-entity slots explicitly cleared even for group↔group.
     expect(deps.setPolicySourceResource).toHaveBeenCalledWith(undefined);
     expect(deps.setPolicyDestinationResource).toHaveBeenCalledWith(undefined);
   });

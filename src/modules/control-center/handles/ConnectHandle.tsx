@@ -54,8 +54,8 @@ export const ConnectHandle = ({
     [type, position],
   );
 
-  // Selector form: re-renders only when the flags flip, not on every
-  // pointer move of a connect drag (this handle renders in EVERY node).
+  // Selector form: this handle renders in EVERY node, so it must re-render
+  // when the flags flip, not on every pointer move of a connect drag.
   const connectionState = useConnection((c) =>
     !c.inProgress
       ? "idle"

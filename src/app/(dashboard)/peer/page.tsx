@@ -115,10 +115,7 @@ export default function PeerPage() {
   );
 }
 
-// Route the user back to the list view that matches the peer's kind
-// (a real user owner → /peers/users, otherwise /peers/servers). Used
-// for the breadcrumb and the Cancel back-button so they don't bounce
-// through the legacy /peers redirect.
+// Linking to the matching list view avoids the legacy /peers redirect.
 function peerListPath(user: User | undefined): string {
   const hasRealUser = !!user && !user.is_service_user;
   return hasRealUser ? "/peers/users" : "/peers/servers";

@@ -265,7 +265,6 @@ export const useAccessControl = ({
 
     let authorizedGroups: AuthorizedGroups = {};
     if (protocol === "netbird-ssh") {
-      // Set port 22 for SSH protocol
       newPorts = ["22"];
       newPortRanges = [];
 

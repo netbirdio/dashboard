@@ -1,9 +1,5 @@
 import { useStore } from "@xyflow/react";
 
-// ---------------------------------------------------------------------------
-// Edge node subscription
-// ---------------------------------------------------------------------------
-
 export type EdgeNodeRect = {
   x: number;
   y: number;
@@ -12,11 +8,7 @@ export type EdgeNodeRect = {
 };
 
 // Position/size of an edge's endpoint node, subscribed with VALUE equality.
-// Edges must use this instead of useInternalNode: xyflow rebuilds its
-// internal node lookup on every drag tick, so useInternalNode re-rendered
-// EVERY edge per tick — unrelated edges' dash animations visibly flickered
-// while dragging one node. With value equality an edge only re-renders when
-// one of its own endpoints actually moved or resized.
+// useInternalNode instead re-renders EVERY edge on every drag tick.
 export function useEdgeNodeRect(nodeId: string): EdgeNodeRect | null {
   return useStore(
     (s) => {

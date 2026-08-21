@@ -35,8 +35,7 @@ export const CreateGroupNameModal = ({
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
     const trimmed = trim(newName);
-    // "All" is the system group — a user group with that name would be
-    // misidentified by every name-based system-group check.
+    // "All" is the system group; name-based checks would misidentify a copy.
     if (trimmed === "All") {
       setError('The name "All" is reserved. Please choose another name.');
     } else {

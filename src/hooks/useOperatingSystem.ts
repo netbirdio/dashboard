@@ -2,10 +2,6 @@
 
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
-/**
- * Get the operating system of the user based on the user agent of the browser
- * This is used for the setup modal to show the correct installation guide
- */
 export default function useOperatingSystem() {
   const isBrowser = typeof window !== "undefined";
   const userAgent = isBrowser ? navigator.userAgent.toLowerCase() : "";
@@ -13,20 +9,15 @@ export default function useOperatingSystem() {
     ? /(iP*)/g.test(navigator.userAgent) && navigator.maxTouchPoints > 2
     : false;
   if (iOS) return OperatingSystem.IOS;
-  // For FreeBSD, we return Linux as we currently don't have an official installation guide for FreeBSD
+  // FreeBSD has no official installation guide, so treat it as Linux.
   if (userAgent.toLowerCase().includes("freebsd")) return OperatingSystem.LINUX;
   return getOperatingSystem(userAgent);
 }
 
-// Platform detection for shortcut badges (⌥/⌘ glyphs on macOS, "Alt"/"Ctrl" text elsewhere).
 export const isMac =
   typeof navigator !== "undefined" &&
   /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent);
 
-/**
- * Get the operating system based on a string (user agent, api response, etc.)
- * Falls back to Linux if the operating system is not recognized
- */
 export const getOperatingSystem = (os: string) => {
   if (!os) return OperatingSystem.LINUX as const;
   if (os.toLowerCase().includes("freebsd"))

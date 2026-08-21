@@ -27,10 +27,6 @@ type StandaloneResourceNodeData = {
   draftNetwork?: DraftNetworkRef;
 };
 
-// A STANDALONE resource (not inside a network frame): a card like the
-// peer/group nodes. While unassigned it shows a floating "No Network" control;
-// once assigned, the network shows inline after the name. The context-menu halo
-// sits on the whole card, not the icon box.
 export const StandaloneResourceNode = ({
   id,
   data,
@@ -38,8 +34,7 @@ export const StandaloneResourceNode = ({
 }: {
   id: string;
   data: StandaloneResourceNodeData;
-  // Drilled views already show the network in the header, so the inline
-  // "- Network" suffix is redundant there.
+  // Drilled views already show the network in their header.
   hideNetwork?: boolean;
 }) => {
   const { showHandles = false } = data;
@@ -56,19 +51,16 @@ export const StandaloneResourceNode = ({
   if (!resource) return null;
 
   const Icon = RESOURCE_TYPE_ICONS[resource.type ?? "host"] ?? GlobeIcon;
-  // Draft resources are editable on click; the LIVE single-network view renders
-  // the same card read-only.
+  // The live single-network view renders the same card read-only.
   const editable = isDraft;
-  // "Assigned" only once the ref points at a real network (id) or a draft frame
-  // (clientId) — an empty ref still reads as "No Network".
+  // An empty ref still reads as "No Network".
   const network = data.draftNetwork;
   const hasNetwork = !!(network?.networkId || network?.networkClientId);
 
   return (
     <div
       className={cn(
-        // min width matches NETWORK_FRAME_CHILD_WIDTH_MULTI so it doesn't
-        // collapse below framed rows.
+        // min-w matches NETWORK_FRAME_CHILD_WIDTH_MULTI, the framed row width.
         "relative rounded-lg transition-colors group/node w-full min-w-[185px]",
         "cursor-pointer border bg-nb-gray-940 border-nb-gray-850 hover:bg-nb-gray-930 hover:border-nb-gray-800 px-3 py-2.5",
         isTarget && "hover:ring-2 hover:ring-white",
@@ -79,8 +71,7 @@ export const StandaloneResourceNode = ({
         if (editable) setResourceEditor({ nodeId: id });
       }}
     >
-      {/* Floating "No Network" control that opens the network picker. Hidden
-          for drilled children — they're already shown inside their network. */}
+      {/* Hidden for drilled children: they sit inside their network. */}
       {!hasNetwork && editable && !hideNetwork && (
         <div className={"absolute bottom-full left-0 mb-3 nodrag"}>
           <Button
@@ -113,9 +104,7 @@ export const StandaloneResourceNode = ({
             }
           >
             <span className={"truncate max-w-[120px]"}>{resource.name}</span>
-            {/* Network shown inline after the name; clickable to reopen the
-                picker for draft resources (existing ones can't be reassigned
-                in v1). */}
+            {/* Existing resources can't be reassigned in v1. */}
             {hasNetwork && !hideNetwork && (
               <span
                 className={cn(

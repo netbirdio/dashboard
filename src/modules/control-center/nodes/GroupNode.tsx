@@ -42,15 +42,13 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
     enabled !== undefined,
   );
   const isEnabled = enabled ?? sourceGroupEnabled;
-  // Selector form: re-renders only when the boolean flips, not on every
-  // pointer move of a connect drag.
+  // Selector form: re-renders only when the boolean flips, not per pointer move.
   const isTarget = useConnection(
     (c) => c.inProgress && c.fromNode.id !== id,
   );
   const isNew = !group?.id;
   const isContextMenuActive = useIsContextMenuTarget(id);
   const { selectedDestinationGroup } = useDestinationGroup();
-  // Panel selection is keyed by group id, or by node id for draft groups.
   const isPanelActive =
     selectedDestinationGroup !== "" &&
     (selectedDestinationGroup === group?.id || selectedDestinationGroup === id);

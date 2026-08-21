@@ -69,8 +69,7 @@ interface CanvasState {
   setSelectedUser: (v: string) => void;
   selectedDestinationGroup: string;
   setSelectedDestinationGroup: (v: string) => void;
-  // Live-mode resource editor target (real ids) — opens the networks page's
-  // resource modal; its save PUTs immediately (behind a warning confirm).
+  // Opens the networks page's resource modal; its save PUTs immediately.
   liveResourceEditor: { resourceId: string; networkId: string } | null;
   setLiveResourceEditor: (
     v: { resourceId: string; networkId: string } | null,
@@ -79,19 +78,14 @@ interface CanvasState {
   setContextMenuNodeId: (v: string) => void;
   loggedInUser: User | undefined;
   forceSingleGroupViewRef: React.MutableRefObject<(id: string) => void>;
-  // Live policy saves patch the canvas in place from the API response —
-  // wired from useSelectNodeHandlers (same circular-dependency ref pattern
-  // as the force*ViewRefs). No-op in draft mode.
+  // Wired from useSelectNodeHandlers (circular dependency); no-op in draft.
   refreshLiveViewRef: React.MutableRefObject<(policy: Policy) => void>;
 }
 
 const CanvasStateContext = createContext<CanvasState | null>(null);
 
-// The right-clicked node (context-menu halo) lives in a tiny external store,
-// NOT a context: a context value changes identity when the id changes, so
-// every node reading it re-renders on each right-click (laggy on big
-// canvases). With useSyncExternalStore each node subscribes to a BOOLEAN (am I
-// the target?), so only the node whose halo actually toggles re-renders.
+// Not a context: a context value would re-render every reading node on each
+// right-click; here a node subscribes to a boolean.
 let haloNodeId = "";
 const haloListeners = new Set<() => void>();
 const haloStore = {
@@ -106,8 +100,6 @@ const haloStore = {
   },
 };
 
-// True while this node's context menu is open. Re-renders only this node when
-// its own state flips (see haloStore).
 export function useIsContextMenuTarget(nodeId: string): boolean {
   return useSyncExternalStore(
     haloStore.subscribe,
@@ -116,39 +108,25 @@ export function useIsContextMenuTarget(nodeId: string): boolean {
   );
 }
 
-// Lightweight UI state the NODE COMPONENTS need. Split from CanvasState so
-// nodes don't subscribe to the nodes/edges arrays — the full context changes
-// identity on every canvas update (drag ticks, layout reconciles) and
-// re-rendered every node on the canvas (visible lag with many networks).
+// Split from CanvasState so nodes don't subscribe to nodes/edges, which change
+// identity on every canvas update.
 interface CanvasUIState {
-  // The account network-range IP shown on placeholder peer cards. Sourced here
-  // (once) so PeerNode doesn't call the account fetch hook per node; it's a
-  // stable string that only changes when the account's range does.
   placeholderIp: string;
 }
 
 const CanvasUIContext = createContext<CanvasUIState | null>(null);
 
-// Group-details selection in its OWN context so clicking a group (opening
-// the panel) doesn't re-render EVERY node component — a visible freeze on big
-// canvases. Only GroupNode (its highlight) subscribes here.
+// Its own context so opening the group panel doesn't re-render every node.
 interface DestinationGroupState {
   selectedDestinationGroup: string;
   setSelectedDestinationGroup: (v: string) => void;
-  // Generic focus target (no panel): clicking a peer in the user view
-  // focuses its path the same way a group click does — the dim hook keys
-  // on either.
+  // Focus target without a panel; the dim hook keys on this or the group above.
   focusedNodeId: string;
   setFocusedNodeId: (v: string) => void;
-  // Focus tool: armed via the "F" key; the next node click sets focusedNodeId.
-  // Stays armed so further clicks re-target until the pill's X (or a pane
-  // click) exits.
+  // Armed by the "F" key; stays armed so further clicks re-target.
   highlightArmed: boolean;
   setHighlightArmed: (v: boolean) => void;
-  // Peer whose groups panel is open (real peer id) — the peer-side twin of
-  // selectedDestinationGroup; only one of the two panels shows at a time.
-  // Lives here (narrow context) so PeerNode can ring the selected peer
-  // without subscribing to CanvasState.
+  // Only one of the two panels shows at a time.
   selectedPeerPanel: string;
   setSelectedPeerPanel: (v: string) => void;
 }
@@ -192,8 +170,7 @@ export function CanvasStateProvider({
 }) {
   const [nodes, setNodes] = useNodesState<Node>([]);
 
-  // Test-only observability: the canvas lives only in React (not persisted),
-  // so mirror a lightweight projection onto window for e2e assertions.
+  // The canvas lives only in React, so mirror a projection onto window for e2e.
   useEffect(() => {
     if (process.env.APP_ENV !== "test") return;
     (window as unknown as { __ccDraftCanvas?: unknown }).__ccDraftCanvas = {
@@ -207,10 +184,8 @@ export function CanvasStateProvider({
     };
   }, [nodes]);
 
-  // applyNodeChanges keeps replaced nodes at their original index, so a
-  // reparent issued through `instance.setNodes` (frame drop adoption,
-  // assign-to-network) can leave a child in front of its frame — ReactFlow
-  // then drops the containment. Reconcile parents-before-children to fix that.
+  // applyNodeChanges keeps a reparented child at its old index, which can put
+  // it in front of its frame and makes ReactFlow drop the containment.
   const onNodesChange: OnNodesChange<Node> = useCallback(
     (changes) =>
       setNodes((prev) =>
@@ -247,8 +222,6 @@ export function CanvasStateProvider({
   const [focusedNodeId, setFocusedNodeId] = useState("");
   const [highlightArmed, setHighlightArmed] = useState(false);
   const [contextMenuNodeId, setContextMenuNodeIdState] = useState("");
-  // Keep the halo store in sync with the menu-target state. The store drives
-  // the per-node halo (useIsContextMenuTarget) without re-rendering every node.
   const setContextMenuNodeId = useCallback((v: string) => {
     haloStore.set(v);
     setContextMenuNodeIdState(v);
@@ -257,8 +230,7 @@ export function CanvasStateProvider({
   const forceSingleGroupViewRef = useRef<(id: string) => void>(() => {});
   const refreshLiveViewRef = useRef<(policy: Policy) => void>(() => {});
 
-  // Placeholder peer cards show an IP derived from the account's network range.
-  // Read it once here (a stable string) instead of in every PeerNode.
+  // Read once here (a stable string) instead of in every PeerNode.
   const account = useAccount();
   const placeholderIp = useMemo(
     () => getIpPlaceholderFromRange(account?.settings?.network_range),
@@ -350,14 +322,11 @@ export function CanvasStateProvider({
   );
 }
 
-// ---- UI Context (for header, empty states, canvas interactions) ----
-
 interface ControlCenterUIContextType {
   networkOptions: SelectOption[];
   currentNetwork: Network | undefined;
   onViewChange: (view: FlowView) => void;
-  // targetRect: the clicked frame's rect — the canvas transition dives into
-  // it; without one (dropdown/back picks) it zooms from the viewport center.
+  // Without a targetRect the transition zooms from the viewport center.
   onNetworkSelect: (
     id: string,
     targetRect?: Rect | null,
@@ -396,8 +365,7 @@ export function ControlCenterUIProvider({
     setSelectedPeerPanel,
   } = useDestinationGroup();
 
-  // Mode switches (draft ⇄ live) close the group panel and drop any node
-  // selection/focus — both reference nodes of the mode being torn down.
+  // A mode switch tears down its nodes, so drop panels, selection and focus.
   const prevDraftRef = useRef(isDraft);
   useEffect(() => {
     if (prevDraftRef.current === isDraft) return;
@@ -411,13 +379,11 @@ export function ControlCenterUIProvider({
         ? prev.map((n) => (n.selected ? { ...n, selected: false } : n))
         : prev,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setters are stable, `canvas` re-identifies often
   }, [isDraft]);
 
-  // Entering a network — drilling into a frame (draft) or the single-network
-  // view (live) — closes any open group/peer panel: it belongs to the view
-  // just left. Only on the transition IN, so a panel opened while inside a
-  // network isn't force-closed.
+  // An open panel belongs to the view just left. Only on the transition IN, so
+  // a panel opened inside the network stays.
   const enteredNetwork = isDraft
     ? !!drillDownNetworkNodeId
     : !!canvas.selectedNetwork;
@@ -429,7 +395,7 @@ export function ControlCenterUIProvider({
       canvas.setSelectedDestinationGroup("");
       setSelectedPeerPanel("");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setters are stable, `canvas` re-identifies often
   }, [enteredNetwork]);
 
   const { applySingleGroupView } = useGroupView();
@@ -447,7 +413,6 @@ export function ControlCenterUIProvider({
     },
   });
 
-  // Wire up circular dependency refs
   canvas.forceSingleGroupViewRef.current = handlers.forceSingleGroupView;
   canvas.refreshLiveViewRef.current = handlers.refreshLiveView;
 
@@ -477,8 +442,7 @@ export function ControlCenterUIProvider({
         {sidebar}
         <div className={"w-full h-full relative overflow-hidden"}>
           {children}
-          {/* Always mounted (renders null while closed) — remounting per open
-              would rebuild the full peer/resource lists every time. */}
+          {/* Always mounted: remounting per open rebuilds the full lists. */}
           <DestinationGroupPanel
             groupId={canvas.selectedDestinationGroup}
             onClose={() => canvas.setSelectedDestinationGroup("")}
@@ -487,8 +451,6 @@ export function ControlCenterUIProvider({
             peerId={selectedPeerPanel}
             onClose={() => setSelectedPeerPanel("")}
           />
-          {/* Live resource editor — the networks page's modal, PUTs on
-              save. The canvas node is patched from the response. */}
           {canvas.liveResourceEditor &&
             (() => {
               const network = data.networks?.find(
@@ -499,9 +461,8 @@ export function ControlCenterUIProvider({
               );
               if (!network || !resource) return null;
               return (
-                // The modal reads assignedPolicies from useNetworksContext, so
-                // wrap it in the same providers the networks page (and the
-                // draft resource modal) mount above it, or it crashes.
+                // The modal reads useNetworksContext, so it crashes without
+                // these providers.
                 <NetworkAccessControlProvider>
                   <NetworkProvider network={network}>
                     <NetworkResourceModal

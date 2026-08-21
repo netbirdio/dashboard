@@ -17,14 +17,9 @@ import {
   submitCreatePolicyModal,
 } from "../helpers/control-center";
 
-/**
- * Matrix-driven tests for the control-center node-interaction matrix.
- * Every node-pair connect, drop, menu, and negative case gets an explicit
- * expectation — positives assert the modal/edge/changeset, negatives assert
- * a strict no-op.
- */
+// Matrix-driven tests for the node-interaction matrix: every connect, drop and
+// menu case gets an explicit expectation, negatives a strict no-op.
 
-// Node kinds placeable from the components panel, with their canvas id prefix.
 const KIND = {
   group: { template: "cc-template-group", prefix: "group-new-" },
   peer: { template: "cc-template-peer-server", prefix: "peer-draft-" },
@@ -67,14 +62,12 @@ async function edgeCount(page: Page) {
 
 test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
-    // Prime the API-token cache (its first read navigates to /team/users) up
-    // front, so a mid-test listGroups() call doesn't navigate off the canvas.
+    // Prime the API-token cache up front: its first read navigates to
+    // /team/users, taking a mid-test listGroups() off the canvas.
     await listGroups(page);
     await resetDraftState(page);
     await enterDraft(page);
   });
-
-  // ── Connect matrix: pairs that OPEN the create-policy modal ──────────────
 
   const MODAL_PAIRS: [Kind, Kind][] = [
     ["group", "group"],
@@ -83,9 +76,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     ["peer", "peer"],
     ["peer", "resource"],
     ["group", "resource"],
-    // resource as drag-source flips roles but still opens the modal
     ["resource", "group"],
-    // toward a network frame the modal opens with a scoped destination
     ["group", "network"],
     ["peer", "network"],
   ];
@@ -104,14 +95,11 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
         source === "resource" || source === "network" ? "sl" : "sr",
       );
       await expectPolicyModalThenDismiss(page);
-      // Dismissing the modal must not leave a policy or edge behind.
       await expect(canvasNode(page, "policy-new-")).toHaveCount(0);
       const changes = await readDraftChanges(page);
       expect(changes.filter((c) => c.type === "create-policy")).toHaveLength(0);
     });
   }
-
-  // ── Connect matrix: strict no-op pairs ────────────────────────────────────
 
   const NOOP_PAIRS: [Kind, Kind][] = [
     ["resource", "resource"],
@@ -149,15 +137,12 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     expect(await edgeCount(page)).toBe(0);
   });
 
-  // ── Direct connects onto an existing blank policy (no modal) ─────────────
-
   test("Blank policy completes via direct connects and enters the changeset", async ({
     dashboardAsOwner: page,
   }) => {
     await createViaCanvasMenu(page, "new-policy", { fx: 0.6, fy: 0.5 });
     const policy = canvasNode(page, "policy-new-");
     await expect(policy).toHaveCount(1);
-    // A blank (incomplete) policy is canvas-only.
     const g1 = await place(page, "group", 0.35, 0.5);
     const g2 = await place(page, "group", 0.85, 0.5);
     await expectChangeCount(page, 2); // just the two groups
@@ -170,7 +155,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
 
     await connectNodes(page, g2, policy, "sl");
     expect(await edgeCount(page)).toBe(2);
-    // Both sides set → the create-policy change appears without any modal.
     await expectChangeCount(page, 3);
     const changes = await readDraftChanges(page);
     expect(changes.filter((c) => c.type === "create-policy")).toHaveLength(1);
@@ -184,7 +168,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const g1 = await place(page, "group", 0.35, 0.5);
     await connectNodes(page, g1, policy, "sr");
     expect(await edgeCount(page)).toBe(1);
-    // Same group, same side again → duplicate guard.
     await connectNodes(page, g1, policy, "sr");
     expect(await edgeCount(page)).toBe(1);
   });
@@ -200,9 +183,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await connectNodes(page, group, policy, "sr");
     await connectNodes(page, resource, policy, "sl");
 
-    // The policy is a complete change (both sides set, the resource tracked).
-    // What blocks the deploy is the resource itself: it has an address but no
-    // network, so its create-resource change carries the "No Network" issue.
+    // The resource, not the policy, blocks: it has an address but no network.
     await expectChangeCount(page, 3);
     const changes = await readDraftChanges(page);
     expect(changes.filter((c) => c.type === "create-policy")).toHaveLength(1);
@@ -213,16 +194,13 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     ).toBeFalsy();
   });
 
-  // ── Network flows ─────────────────────────────────────────────────────────
-
   test("Connect network → policy opens the destination picker", async ({
     dashboardAsOwner: page,
   }) => {
     await createViaCanvasMenu(page, "new-policy", { fx: 0.35, fy: 0.5 });
     const network = await place(page, "network", 0.75, 0.5);
     await connectNodes(page, network, canvasNode(page, "policy-new-"), "sl");
-    // The empty network opens the picker in its no-resources state, so assert
-    // the "Select Destination" modal rather than the resource selector.
+    // An empty network opens the picker in its no-resources state.
     await expect(
       page.getByRole("heading", { name: "Select Destination" }),
     ).toBeVisible();
@@ -235,7 +213,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const resource = await place(page, "resource", 0.35, 0.5);
     const network = await place(page, "network", 0.75, 0.5);
     await connectNodes(page, resource, network, "sl");
-    // No policy modal — the resource joins the frame.
     await expect(createPolicyHeading(page)).not.toBeVisible();
     await expect
       .poll(async () => {
@@ -247,8 +224,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       })
       .toMatch(/^network-new-/);
   });
-
-  // ── Canvas context-menu creation ──────────────────────────────────────────
 
   test("Canvas context menu offers all creation entries", async ({
     dashboardAsOwner: page,
@@ -283,19 +258,15 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await expectChangeCount(page, 1);
   });
 
-  // ── Drop-into matrix ──────────────────────────────────────────────────────
-
   test("A no-network draft resource drops into a group and shows No Network in Details", async ({
     dashboardAsOwner: page,
   }) => {
     const group = await place(page, "group", 0.45, 0.35);
     const resource = await place(page, "resource", 0.75, 0.65);
     await dragNodeOnto(page, resource, group);
-    // The resource is absorbed as a member even without a network.
     await expect(canvasNode(page, "resource-new-")).toHaveCount(0);
     await expect(group).toContainText(/1\s*resource/i);
 
-    // Its Details row carries the "No Network" alert.
     await clickContextMenuItem(page, group, "view-details");
     await page.getByRole("tab", { name: /Resources/ }).click();
     await expect(page.getByText("No network")).toBeVisible();
@@ -308,24 +279,19 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const g1 = await place(page, "group", 0.45, 0.35);
     const g2 = await place(page, "group", 0.75, 0.65);
     await dragNodeOnto(page, g1, g2);
-    // Groups aren't droppable into groups — both remain.
     await expect(canvasNode(page, "group-new-")).toHaveCount(2);
     await expectChangeCount(page, 2);
   });
-
-  // ── Context menus, rename, remove/delete semantics ────────────────────────
 
   test("Placeholder peer rename follows into its install-peer entry", async ({
     dashboardAsOwner: page,
   }) => {
     const peer = await place(page, "peer", 0.6, 0.5);
-    // Placing a placeholder tracks exactly one pending install step.
     await expectChangeCount(page, 1);
     await clickContextMenuItem(page, peer, "rename");
     await page.getByTestId("cc-rename-input").fill("build-server-1");
     await page.getByTestId("cc-rename-submit").click();
     await expect(peer).toContainText("build-server-1");
-    // Renaming updates the entry in place — no extra change.
     await expectChangeCount(page, 1);
     const changes = await readDraftChanges(page);
     const install = changes.find((c) => c.type === "install-peer");
@@ -367,7 +333,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await expect(menu).toBeVisible();
     await expect(menu.getByTestId("cc-menu-remove")).toBeVisible();
     await expect(menu.getByTestId("cc-menu-rename")).toBeVisible();
-    // Delete is reserved for entities that exist in the API.
+    // Delete is only offered for entities that exist in the API.
     await expect(menu.getByTestId("cc-menu-delete")).toHaveCount(0);
     await page.keyboard.press("Escape");
   });
@@ -389,7 +355,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await expect(node).toHaveCount(0);
     // No connected policies were touched → nothing to deploy.
     await expectChangeCount(page, 0);
-    // The group still exists in the account.
     const after = await listGroups(page);
     expect(after.some((g) => g.id === all!.id)).toBe(true);
   });
@@ -399,18 +364,14 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   }) => {
     const group = await place(page, "group", 0.6, 0.5);
     await expectChangeCount(page, 1);
-    // Clicking selects the node (and opens its panel). Wait for the selection
-    // to register; the panel's search input then holds focus, and React Flow
-    // ignores delete keys while an input is focused — blur it so Backspace
-    // reaches the canvas and removes the still-selected node.
+    // React Flow ignores delete keys while an input is focused, and the panel's
+    // search takes focus on click, so blur it before pressing Backspace.
     await group.click();
     await expect(group).toHaveClass(/selected/);
     await page.evaluate(
       () => (document.activeElement as HTMLElement | null)?.blur(),
     );
     await page.keyboard.press("Backspace");
-    // Keyboard removal routes through the same Remove semantics as the
-    // context menu: node gone AND the pending create-group cancelled.
     await expect(canvasNode(page, "group-new-")).toHaveCount(0);
     await expectChangeCount(page, 0);
   });
@@ -427,10 +388,8 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     // Reserved system name.
     await input.fill("All");
     await expect(page.getByTestId("cc-rename-submit")).toBeDisabled();
-    // Duplicate of another draft group on the canvas.
     await input.fill(secondName.split("\n")[0].trim());
     await expect(page.getByTestId("cc-rename-submit")).toBeDisabled();
-    // A unique name is accepted.
     await input.fill("unique-name-ok");
     await expect(page.getByTestId("cc-rename-submit")).toBeEnabled();
     await page.keyboard.press("Escape");
@@ -451,7 +410,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     );
     await page.mouse.down();
     await page.mouse.move(peerBox.x + 60, peerBox.y + 60, { steps: 4 });
-    // Over the group: the solid drop-target ring highlights it.
     await page.mouse.move(
       groupBox.x + groupBox.width / 2,
       groupBox.y + groupBox.height / 2,
@@ -460,7 +418,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await expect(group.locator(".cc-group-node")).toHaveClass(/ring-2/);
 
     await page.mouse.up();
-    // Drag treatment cleared, membership recorded.
     await expect(group.locator(".cc-group-node")).not.toHaveClass(
       /border-white/,
     );
@@ -483,8 +440,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     );
     await expect(allNode).toHaveCount(1);
 
-    // Dropping a peer onto "All" is a no-op: the peer stays on canvas.
-    // (The placed placeholder itself tracks one install-peer step.)
+    // The peer stays on canvas; the placeholder itself tracks one install step.
     const peer = await place(page, "peer", 0.75, 0.65);
     await dragNodeOnto(page, peer, allNode);
     await expect(
@@ -492,8 +448,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     ).toHaveCount(1);
     await expectChangeCount(page, 1);
 
-    // But adding that draft peer to a NORMAL group also bumps All's count —
-    // every peer is implicitly in All once installed.
+    // Every peer is implicitly in All once installed, so All's count bumps too.
     const group = await place(page, "group", 0.35, 0.35);
     await dragNodeOnto(page, peer, group);
     await expect(group).toContainText(/1\s*peer/i);
@@ -510,18 +465,15 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const g2 = await place(page, "group", 0.8, 0.4);
     await connectNodes(page, g1, g2);
     await submitCreatePolicyModal(page);
-    // A second, off-path policy: Focus is only offered when it declutters
-    // (isFocusWorthy needs 2+ policies), and this peer + its policy are what dim.
+    // Focus is only offered with 2+ policies (isFocusWorthy).
     const peer = await place(page, "peer", 0.6, 0.8);
     await connectNodes(page, peer, g2);
     await submitCreatePolicyModal(page);
 
     await g1.click();
-    // The group panel opens, but nothing dims — focus is context-menu only.
     await expect(page.locator(".cc-dimmed")).toHaveCount(0);
     await page.keyboard.press("Escape");
 
-    // Focus via context menu DOES dim off-path nodes.
     await clickContextMenuItem(page, g1, "focus");
     await expect(page.locator(".react-flow__node.cc-dimmed")).not.toHaveCount(
       0,
@@ -532,9 +484,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test("Groups added while editing a policy join their side's column", async ({
     dashboardAsOwner: page,
   }) => {
-    // Build a group→group policy, then edit it and add one inline group to
-    // each side. The new nodes must land IN the existing columns (same x,
-    // stacked below) without needing Auto Arrange.
+    // The added groups must land in the existing columns without Auto Arrange.
     const g1 = await place(page, "group", 0.4, 0.4);
     const g2 = await place(page, "group", 0.8, 0.4);
     await connectNodes(page, g1, g2);
@@ -547,16 +497,14 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     for (const side of ["source", "destination"] as const) {
       const selector = page.getByTestId(`${side}-group-selector`);
       const search = page.getByTestId(`${side}-group-selector-search`);
-      // A still-closing Radix popover (from the previous side) can swallow the
-      // trigger click, so retry opening until the search is on screen.
+      // A still-closing Radix popover can swallow the trigger click.
       await expect(async () => {
         await selector.click();
         await expect(search).toBeVisible({ timeout: 1000 });
       }).toPass();
       await search.fill(`cc-col-${side}`);
       await page.keyboard.press("Enter");
-      // Close the popover with an in-modal click, not Escape — Escape can close
-      // the whole modal once the popover is already gone.
+      // Escape would close the whole modal once the popover is already gone.
       await modalTitle.click();
       await expect(search).toBeHidden();
     }
@@ -570,8 +518,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       [g1Name, "cc-col-source", g2Name],
       [g2Name, "cc-col-destination", g1Name],
     ] as const) {
-      // Layout reconciles after save — poll until the joined group has settled
-      // into the anchor's column (nearer it than the other column) below it.
+      // Layout reconciles after save, so poll until the group has settled.
       await expect
         .poll(async () => {
           const canvas = await readDraftCanvas(page);
@@ -594,8 +541,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   test("Review warns about placeholder-peer policies and unassigned resources", async ({
     dashboardAsOwner: page,
   }) => {
-    // A "complete-looking" policy whose destination is an uninstalled peer,
-    // plus a standalone resource with no network.
     const group = await place(page, "group", 0.35, 0.35);
     const peer = await place(page, "peer", 0.75, 0.35);
     await place(page, "resource", 0.55, 0.7);
@@ -605,9 +550,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await page.getByTestId("policy-continue").click();
     await page.getByTestId("submit-policy").click();
 
-    // Only the group is deployable — but Review must explain the rest:
-    // warnings for the blocked policy/resource plus the peer's own
-    // amber "Install" step row.
+    // Only the group is deployable; Review must still explain the rest.
     await page.getByTestId("cc-draft-review").click();
     await expect(
       page.getByRole("heading", { name: "Review & Deploy" }),
@@ -630,8 +573,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await connectNodes(page, g2, policy, "sl");
     await expectChangeCount(page, 3);
 
-    // Removing the source group strips it from the policy → the policy is
-    // incomplete again and its pending create disappears.
     await clickContextMenuItem(page, g1, "remove");
     await expect(canvasNode(page, "group-new-")).toHaveCount(1);
     const changes = await readDraftChanges(page);

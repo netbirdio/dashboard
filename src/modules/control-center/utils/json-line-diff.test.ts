@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { diffBodies, diffLines, formatBody } from "./json-line-diff";
 
-// The code view renders these: a create is all additions, a delete is all
-// removals, and a modification is a real line diff of the two JSON bodies.
-
 describe("diffLines", () => {
   it("treats a null before as all additions (create)", () => {
     const out = diffLines(null, "a\nb");
@@ -29,7 +26,6 @@ describe("diffLines", () => {
     const before = ["{", '  "n": 1,', '  "keep": true', "}"].join("\n");
     const after = ["{", '  "n": 2,', '  "keep": true', "}"].join("\n");
     const out = diffLines(before, after);
-    // The braces and the "keep" line survive as context; only "n" flips.
     expect(out.filter((l) => l.kind === "context").map((l) => l.text)).toEqual([
       "{",
       '  "keep": true',
@@ -48,7 +44,6 @@ describe("formatBody / diffBodies", () => {
 
   it("diffs two objects field-by-field", () => {
     const out = diffBodies({ name: "A", enabled: false }, { name: "A", enabled: true });
-    // name line is identical → context; the enabled line changes.
     expect(out.some((l) => l.kind === "remove" && l.text.includes("false"))).toBe(true);
     expect(out.some((l) => l.kind === "add" && l.text.includes("true"))).toBe(true);
     expect(out.some((l) => l.kind === "context" && l.text.includes('"name"'))).toBe(true);

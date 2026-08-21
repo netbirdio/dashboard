@@ -31,34 +31,16 @@ import {
   routerUpdateBody,
 } from "@/modules/control-center/utils/changeset-request";
 
-// Executes the draft changeset against the API in CHANGE_DEPLOY_ORDER
-// dependency order: groups first (so policies can resolve them by name), then
-// networks, resources, routers, policies, and the deletes last (a group can
-// only be deleted once nothing references it). Stops on the first failure —
-// succeeded changes stay in the set marked done and are skipped on a retry
-// unless the user edited them in between (a completed CREATE is skipped either
-// way, since the entity already exists).
-//
-// Every request body is shaped by the shared helpers in changeset-request.ts —
-// the SAME functions the Review & Deploy code view renders — so what a user
-// reviews is exactly what gets sent. Deploy only supplies the resolvers that
-// turn draft client-ids/names into the real API ids it creates as it runs.
-// Per-change progress shown in the Review & Deploy modal while a deploy runs.
+// Executes the draft changeset in CHANGE_DEPLOY_ORDER, stopping on the first failure.
 export type DeployStatus = "deploying" | "done" | "error";
 
-// Identifies a change BY CONTENT. The changeset coalesces later edits into the
-// existing entry, so ids are stable across an edit and can't be used on their
-// own to decide whether a retry still needs to send it.
+// Identifies a change BY CONTENT: ids stay stable across an edit.
 const changeSignature = (change: DraftChange) => JSON.stringify(change);
 
 export function useDeployChangeset() {
   const { changes } = useDraftChangeset();
   const { groups, networks, networkResources } = useControlCenterData();
-  // Draft client ids → real API ids, PERSISTED across deploy() calls: a
-  // retried run skips the completed create (doneIds), so it can no longer
-  // reseed these maps. Persisting them (client ids are stable, unique per
-  // draft session) lets a retried dependent still resolve a network/resource
-  // created in the earlier run.
+  // Draft client ids → real API ids, persisted across deploy() calls so retries resolve them.
   const networkClientToId = useRef(new Map<string, string>());
   const resourceClientToId = useRef(
     new Map<string, { id: string; type?: NetworkResource["type"] }>(),
@@ -69,16 +51,11 @@ export function useDeployChangeset() {
   const resourceRequest = useApiCall<NetworkResource>("/networks", true);
   const routerRequest = useApiCall<NetworkRouter>("/networks", true);
   const [isDeploying, setIsDeploying] = useState(false);
-  // Per-change status drives the in-modal spinner / green check. Changes are
-  // NOT removed as they succeed (they stay visible with a check);
-  // doneSignatures skips them on a retry after a partial failure. Both reset
-  // once the changeset empties (the modal clears it after a successful deploy
-  // closes).
+  // Succeeded changes are NOT removed; they stay visible with a check.
   const [deployStatus, setDeployStatus] = useState<
     Record<string, DeployStatus>
   >({});
-  // change id → the payload that was deployed under it, so a retry can tell an
-  // untouched change from one the user edited in between.
+  // change id → the payload deployed under it, so a retry can spot an edit.
   const doneSignatures = useRef(new Map<string, string>());
   useEffect(() => {
     if (changes.length === 0 && doneSignatures.current.size > 0) {
@@ -94,9 +71,6 @@ export function useDeployChangeset() {
     const nameToId = new Map<string, string>();
     groups?.forEach((g) => g.id && nameToId.set(g.name, g.id));
 
-    // Draft network / resource client ids → API ids (persisted refs, see
-    // above), filled as the creates respond; consumed by dependent
-    // resources/routers/policies.
     const networkClientMap = networkClientToId.current;
     const resourceClientMap = resourceClientToId.current;
     const resolveNetworkId = (change: {
@@ -109,9 +83,7 @@ export function useDeployChangeset() {
         (change.networkClientId
           ? networkClientMap.get(change.networkClientId)
           : undefined) ??
-        // Retry fallback: a network created in an earlier (partial) run is no
-        // longer in the map after a reload, but it now exists live — match it
-        // by name so its dependents can still deploy.
+        // Retry fallback: a network created in an earlier run is gone from the map.
         networks?.find((n) => n.name === change.networkName)?.id;
       if (!id) {
         throw new Error(
@@ -135,8 +107,7 @@ export function useDeployChangeset() {
       });
     };
 
-    // Draft resources deploy before policies — resolve their "new-…" ids (and
-    // take the authoritative type from the created resource).
+    // Draft resources deploy before policies, so their "new-…" ids resolve here.
     const resolveResource = (
       r?: PolicyRuleResource,
     ): PolicyRuleResource | undefined => {
@@ -151,16 +122,13 @@ export function useDeployChangeset() {
       return { id: created.id, type: created.type ?? r.type };
     };
 
-    // Deploy-time resolvers: draft references become the real ids created
-    // earlier in this run.
     const resolvers: RequestResolvers = {
       resolveGroupIds,
       resolveResource,
       resolveNetworkId,
       groupIdForRef: (ref) => nameToId.get(ref) ?? ref,
       normalizeAddress: normalizeHostCIDR,
-      // The group POST/PUT sends resources as {id, type} objects; look the type
-      // up from the just-created draft resources first, then the live list.
+      // The group POST/PUT sends resources as {id, type} objects.
       resourceType: (id) =>
         resourceClientMap.get(id)?.type ??
         networkResources?.find((res) => res.id === id)?.type,
@@ -176,9 +144,7 @@ export function useDeployChangeset() {
           return;
         }
         case "update-group": {
-          // Merge membership against the group's CURRENT state — the SWR
-          // snapshot may be stale (or outdated by earlier steps of this same
-          // deploy run), which would silently drop members added elsewhere.
+          // Merge against the CURRENT state: a stale SWR snapshot would drop members.
           const base =
             (await groupRequest
               .get(`/${change.groupId}`)
@@ -276,8 +242,7 @@ export function useDeployChangeset() {
       }
     };
 
-    // install-peer entries aren't API calls — the user performs them by
-    // installing/selecting the peer. They stay pending through a deploy.
+    // install-peer entries aren't API calls; the user performs them by hand.
     const ordered = changes
       .filter((c) => c.type !== "install-peer")
       .sort(
@@ -288,13 +253,7 @@ export function useDeployChangeset() {
 
     const run = async () => {
       for (const change of ordered) {
-        // Skip what a previous (partial) run already deployed; their green
-        // check stays. Coalescing keeps a change's id when the user edits the
-        // same entity again, so the id alone can't tell "already sent" from
-        // "sent, then edited" — compare the payload too, or an edit made after
-        // a partial failure would never be sent and would then be cleared with
-        // the changeset. Creates are the exception: the entity exists now, so a
-        // second POST would duplicate it (see the note above executeChange).
+        // Coalescing keeps a change's id across edits, so compare the payload too.
         const deployed = doneSignatures.current.get(change.id);
         if (
           deployed !== undefined &&
@@ -321,16 +280,12 @@ export function useDeployChangeset() {
       }
     };
 
-    // Progress is shown per-change IN the modal (spinner → green check), so
-    // there's no aggregate loading toast; only a failure raises a toast, the
-    // same red "Code N: …" notification the rest of the app uses.
+    // Progress shows per-change in the modal, so only a failure raises a toast.
     try {
       await run();
       return true;
     } catch (err) {
-      // notify() renders the red "Code N: …" toast from a rejected promise.
-      // Give it a no-op catch first so the brief window before notify attaches
-      // its own handler doesn't log an unhandled rejection.
+      // The no-op catch avoids an unhandled rejection before notify attaches its handler.
       const rejected = Promise.reject(err);
       void rejected.catch(() => {});
       notify({

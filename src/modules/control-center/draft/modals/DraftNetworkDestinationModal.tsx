@@ -22,12 +22,8 @@ import {
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { getDraftResource } from "@/modules/control-center/utils/helpers";
 
-// Minimal destination picker: a POLICY connected with a network
-// frame (either drag direction) — the policy modal's destination selector,
-// limited to the network's own resources and the resource-groups represented
-// in it (groups XOR one resource). The pick lands on that policy's
-// destination side. Peer/group drags onto the frame open the create-policy
-// modal instead (see handleDraftConnect).
+// Destination picker for a POLICY connected with a network frame: the policy
+// modal's destination selector, limited to that network's resources and groups.
 export const DraftNetworkDestinationModal = () => {
   const { networkDestinationPicker, setNetworkDestinationPicker } =
     useDraftMode();
@@ -68,9 +64,6 @@ const PickerContent = ({
   const policyNode = nodes.find((n) => n.id === policyNodeId);
   const policy = (policyNode?.data as { policy?: Policy })?.policy;
 
-  // The network's contents: its contained draft resources, plus every
-  // resource-group represented inside it (groups assigned to contained
-  // resources, and resource-group rows rendered in the frame).
   const children = useMemo(
     () => nodes.filter((n) => n.parentId === networkNodeId),
     [nodes, networkNodeId],
@@ -79,8 +72,7 @@ const PickerContent = ({
     const draft = children
       .map((n) => getDraftResource(n))
       .filter(Boolean) as NetworkResource[];
-    // Existing-network cards have no draft children — offer the API
-    // resources of that network instead.
+    // Existing-network cards have no draft children; use the API resources.
     if (draft.length > 0 || !network?.id) return draft;
     return (networkResources ?? []).filter((r) =>
       (network.resources ?? []).includes(r.id),
@@ -115,9 +107,8 @@ const PickerContent = ({
     typeof g === "string" ? g : g.id ?? g.name;
   const hasPick = !!pickedResource || pickedGroups.length > 0;
 
-  // The pick lands on the policy's destination side — same guards as a
-  // direct handle drop (groups append and dedup, a resource only fills an
-  // empty side; groups XOR one resource).
+  // Same guards as a direct handle drop: groups append and dedup, a resource
+  // only fills an empty side.
   const onConnect = () => {
     const rule = policy?.rules?.[0];
     if (!policy || !rule || rule.destinationResource) return onClose();
@@ -166,8 +157,7 @@ const PickerContent = ({
               placeholder={"Select destination(s)..."}
               showResources={true}
               showResourceCounter={true}
-              // Land on the tab that has content: Resources when the network
-              // has no resource-groups, Groups otherwise (tab order stays).
+              // Land on the tab that has content.
               initialTab={groupIds.length === 0 ? "resources" : "groups"}
               hideAllGroup={true}
               saveGroupAssignments={false}

@@ -25,7 +25,6 @@ export enum NodeType {
   SelectPeerNode = "selectPeerNode",
   SelectGroupNode = "selectGroupNode",
   SelectUserNode = "selectUserNode",
-  // Agent Network overlay (only built when the feature is enabled).
   AgentPolicyNode = "agentPolicyNode",
   ProviderNode = "providerNode",
 }

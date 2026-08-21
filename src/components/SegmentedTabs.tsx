@@ -6,9 +6,8 @@ import React from "react";
 type Props = {
   value?: string;
   onChange?: (value: string) => void;
-  // "automatic" (default) activates a tab on focus; "manual" only on
-  // click/Enter. Use "manual" when onChange drives side effects (e.g. opening
-  // a popover) that must not fire on hover/focus.
+  // "automatic" activates a tab on focus; use "manual" when onChange drives
+  // side effects that must not fire on hover or focus.
   activationMode?: "automatic" | "manual";
   children: React.ReactNode;
 };

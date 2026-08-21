@@ -19,14 +19,11 @@ import {
 } from "@/modules/control-center/utils/helpers";
 import { DRILLED_RESOURCE_SPACING } from "@/modules/control-center/utils/drilled-layout";
 
-// Base z-index for network frames — their resource children render at
-// FRAME_Z + 1, so both sit above default (0) nodes and no plain node can slip
-// between the frame and its resources.
+// Children render at parentZ + 1, so no plain node (z 0) slips between a frame
+// and its resources.
 const FRAME_Z = 1;
 
-// The "+N more" cell a network frame shows in its last grid slot once its
-// resources overflow the visible cap. Frame-relative rect + the hidden count;
-// NetworkNode renders it as an overlay (see MoreResourcesNode).
+// Frame-relative rect NetworkNode overlays once resources overflow the cap.
 export type FrameMoreCell = {
   x: number;
   y: number;
@@ -46,21 +43,13 @@ const sameMoreCell = (a?: FrameMoreCell, b?: FrameMoreCell) => {
   );
 };
 
-// Reconciling layout for network frames: resources fill a row-major grid
-// under the header (column count targets a viewport-shaped frame, see
-// getFrameGridColumns), 16px inset, the frame grows/shrinks to fit. Only
-// writes when a position/size actually drifted, so it settles once ReactFlow
-// reports measured dimensions. Overflow past the visible cap collapses into a
-// "+N more" cell NetworkNode overlays on the last grid slot (rect computed
-// here) — so the frame's only children are resource nodes.
+// Only writes on actual drift, so the layout settles once ReactFlow measures.
 export function useNetworkFrameLayout() {
   const { nodes, setNodes } = useCanvasState();
   const { drillDownNetworkNodeId } = useDraftMode();
 
   useEffect(() => {
-    // Mid-drag the grid can't change (membership changes land on drag stop)
-    // — skip the O(frames × nodes) reconcile per pointer-move tick; the
-    // effect reruns when the drag ends (dragging flags clear).
+    // Membership lands on drag stop, so skip the reconcile per pointer-move tick.
     if (nodes.some((n) => n.dragging)) return;
     const frames = nodes.filter(isFrameNode);
     if (frames.length === 0) return;
@@ -68,37 +57,29 @@ export function useNetworkFrameLayout() {
     const updates = new Map<string, Partial<Node>>();
 
     frames.forEach((frame) => {
-      // While a frame is drilled, the others are hidden and frozen — writing
-      // to them would fight the drill-down's hidden flags.
+      // Writing to a non-drilled frame would fight the drill-down's hidden flags.
       if (drillDownNetworkNodeId && frame.id !== drillDownNetworkNodeId) {
         return;
       }
-      // A hidden frame with no active drill is mid-exit-choreography (or
-      // about to be healed by the drill hook's repair) — freeze it: laying
-      // its children back into the parent grid now would visibly yank the
-      // still-shown drilled cards.
+      // A hidden frame with no drill is mid-exit: re-laying its children now
+      // would yank the still-shown drilled cards.
       if (frame.hidden && frame.id !== drillDownNetworkNodeId) {
         return;
       }
-      // Drilled RENDERING only once the swap happened (frame hidden) — the
-      // drill id is set before the zoom-in choreography, and the frame must
-      // keep its parent look while still visible.
+      // The drill id is set before the zoom-in, so the frame keeps its parent
+      // look until the swap hides it.
       const drilled = frame.id === drillDownNetworkNodeId && !!frame.hidden;
       const resources = nodes.filter((n) => n.parentId === frame.id);
-      // Parent grid: order by visual position so the cells read top-to-bottom.
-      // Drilled: keep a STABLE order (insertion order) instead — re-sorting by
-      // position every reconcile meant moving one drilled card reshuffled the
-      // grid indices of all the others (a visible "auto-arrange" on every drag).
+      // Drilled keeps insertion order: sorting by position lets one moved card
+      // reshuffle every other grid index.
       if (!drilled) {
         resources.sort(
           (a, b) => a.position.y - b.position.y || a.position.x - b.position.x,
         );
       }
 
-      // Parent view caps visible cells at NETWORK_FRAME_MAX_VISIBLE. Past the
-      // cap the LAST cell becomes a "+N more" cell (NetworkNode renders it from
-      // the rect computed below), so one real resource yields its slot to it.
-      // The drill-down shows everything in a square-ish grid, no overflow.
+      // Past the cap the last cell becomes "+N more", so one resource yields
+      // its slot; the drill-down shows everything.
       const hasMore = !drilled && resources.length > NETWORK_FRAME_MAX_VISIBLE;
       const visibleResources = drilled
         ? resources
@@ -110,20 +91,12 @@ export function useNetworkFrameLayout() {
         ? resources.length - visibleResources.length
         : 0;
 
-      // The "+N more" cell shares the resources' grid, so count it toward the
-      // column decision.
       const cellCount = visibleResources.length + (hasMore ? 1 : 0);
-      // Drilled: a single column at the shared drilled layout's FIXED pitch
-      // — pixel-identical to the live single-network view's resource column
-      // (measured-height pitches would drift a few px per row).
+      // Drilled uses the drilled layout's FIXED pitch, pixel-identical to live.
       const cols = drilled ? 1 : cellCount > 1 ? 2 : 1;
-      // Empty / single-resource parent frames mirror the two-resource size so
-      // the frame doesn't jump as the first resources land: a lone resource
-      // spans both columns' worth of width (→ same frame width as two
-      // resources), and the height already matches (both are one row).
+      // A lone resource spans both columns so the frame doesn't jump as the
+      // first resources land.
       const sparse = !drilled && resources.length <= 1;
-      // Multi-column rows hug their content; a single row spans the frame's
-      // card width — the two-column width when sparse.
       const childWidth =
         cols > 1
           ? NETWORK_FRAME_CHILD_WIDTH_MULTI
@@ -145,8 +118,6 @@ export function useNetworkFrameLayout() {
         }
       });
 
-      // Places a cell at row-major grid index `index`, advancing the running
-      // row cursor (y / rowMaxHeight); returns the cell's top-left.
       let y = NETWORK_FRAME_HEADER + NETWORK_FRAME_PADDING_Y;
       let rowMaxHeight = 0;
       const placeCell = (index: number, cellHeight: number) => {
@@ -165,11 +136,8 @@ export function useNetworkFrameLayout() {
       };
 
       visibleResources.forEach((child, index) => {
-        // Parent-view rows occupy FIXED slots (fallback height, not the
-        // measured size): measured heights land one commit after mount, and
-        // re-laying out per measurement made rows and the "+N more" cell
-        // visibly shift while re-rendering every frame (lag). The row node
-        // itself is stamped to the slot height so visuals match geometry.
+        // Parent-view rows use FIXED slot heights: measured heights land a
+        // commit later, so re-laying out per measurement shifts rows.
         const desired = placeCell(
           index,
           drilled
@@ -178,14 +146,10 @@ export function useNetworkFrameLayout() {
         );
         const childUpdate: Partial<Node> = {};
         if (child.hidden) childUpdate.hidden = false;
-        // Parent-view rows are non-selectable (a full-width row gets caught by
-        // any rubber-band graze → phantom Create-Group members). Drilled cards
-        // are individual, so they're selectable for "select → Create Group".
+        // A full-width parent row grazed by a rubber-band selection yields
+        // phantom Create-Group members.
         if (child.selectable !== drilled) childUpdate.selectable = drilled;
-        // A drilled resource the user dragged holds its own position (it
-        // renders standalone, like the live single-network view) — don't snap
-        // it back to the grid slot. In the parent view the row is grid-managed
-        // again, so the marker is dropped and the slot position restored.
+        // A dragged drilled resource holds its own position.
         const freePos = drilled && !!child.data?.drilledFreePos;
         if (
           !freePos &&
@@ -193,10 +157,8 @@ export function useNetworkFrameLayout() {
         ) {
           childUpdate.position = desired;
         }
-        // Drilled: pin each child after its FIRST placement (drilled slots are
-        // a fixed pitch, so the initial position is final) — later reconciles
-        // then leave it alone, so moving or absorbing a sibling never re-grids
-        // the rest. The parent view drops the marker and re-grids.
+        // Pin each drilled child after its FIRST placement, so touching a
+        // sibling never re-grids the rest.
         if (drilled && !freePos) {
           childUpdate.data = {
             ...(childUpdate.data ?? child.data),
@@ -205,10 +167,7 @@ export function useNetworkFrameLayout() {
         } else if (!drilled && child.data?.drilledFreePos) {
           childUpdate.data = { ...child.data, drilledFreePos: undefined };
         }
-        // Sync the width/height and clear any stale fade mask left by the
-        // old overflow treatment (rows are solid; overflow is a "+N more"
-        // cell). Drilled cards auto-size like live/standalone ones
-        // (min-width from the card itself) — no forced size.
+        // Drilled cards auto-size like standalone ones, so no forced size.
         const desiredWidth = drilled ? undefined : childWidth;
         const desiredHeight = drilled ? undefined : NETWORK_FRAME_FALLBACK_ROW;
         if (
@@ -229,11 +188,8 @@ export function useNetworkFrameLayout() {
         }
       });
 
-      // The "+N more" cell takes the slot after the last visible resource. It
-      // adopts its row sibling's measured height (so the row isn't inflated to
-      // the fallback), or the fallback when it starts a fresh row. NetworkNode
-      // renders it from this frame-relative rect (a resource row's box);
-      // placing it advances the row cursor, so the height below accounts for it.
+      // The cell adopts its row sibling's height so the row isn't inflated to
+      // the fallback.
       const moreCell: FrameMoreCell | undefined = hasMore
         ? (() => {
             const sharesRow = visibleResources.length % cols > 0;
@@ -249,12 +205,8 @@ export function useNetworkFrameLayout() {
           })()
         : undefined;
 
-      // Bottom band: the "Add Resource" button is present in BOTH modes now
-      // (live adds against the real API), so its band is always reserved
-      // (overflow lives in-grid as the "+N more" cell, not a footer).
       const addBand = NETWORK_FRAME_ADD_ROW;
-      // Empty frames reserve one row (getNetworkFrameHeight) so they're the
-      // same height as one/two resources.
+      // Empty frames reserve one row so they match the one-resource height.
       const height =
         visibleResources.length > 0
           ? y + rowMaxHeight + addBand
@@ -264,11 +216,6 @@ export function useNetworkFrameLayout() {
       if (frame.style?.height !== height || frame.style?.width !== width) {
         frameUpdate.style = { ...frame.style, width, height };
       }
-      // Keep the frame on its own z-layer so a plain node (peer, user device,
-      // …) can never render BETWEEN the frame box and its resource children
-      // (ReactFlow gives children parentZ + 1). Frames sit at FRAME_Z (≥ 1),
-      // children at FRAME_Z + 1 — both above default (0) nodes, so those stay
-      // fully behind. Drag/drop elevations (≥ FRAME_Z) are left alone.
       if (
         frame.zIndex === undefined ||
         (typeof frame.zIndex === "number" && frame.zIndex < FRAME_Z)

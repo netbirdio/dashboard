@@ -5,16 +5,8 @@ export function generateRandomName(prefix?: string): string {
 }
 
 /**
- * Run an action (click, goto, ...) and wait until every API request whose
- * URL contains `pattern` has finished (response received or failed), plus a
- * short quiet window to catch request chains where one response triggers
- * the next fetch.
- *
- * Use this to make navigation deterministic: e.g. when opening the services
- * page, the table only renders fully after /api/reverse-proxies/* calls
- * return, so asserting on rows right after the click races the backend.
- *
- * Returns whatever the action returns.
+ * Run an action and wait until every request matching `pattern` has settled,
+ * plus a quiet window to catch chains where one response triggers the next.
  */
 export async function waitForApiCalls<T>(
   page: Page,
@@ -49,8 +41,6 @@ export async function waitForApiCalls<T>(
   try {
     const result = await action();
     const deadline = Date.now() + timeoutMs;
-    // Wait until: at least one matching request was seen (unless none ever
-    // fires), none are in flight, and the network has been quiet for quietMs.
     while (Date.now() < deadline) {
       const quietFor = Date.now() - lastActivity;
       if (inFlight === 0 && quietFor >= quietMs) {
@@ -66,11 +56,6 @@ export async function waitForApiCalls<T>(
   }
 }
 
-/**
- * Apply a single-choice (radio) table filter via the new TableFilters UI:
- * open the "Filters" popover, pick the filter by column id, then select the
- * option by its visible label (e.g. "Active", "Inactive", "All").
- */
 export async function applyRadioTableFilter(
   page: Page,
   filterId: string,
@@ -85,13 +70,8 @@ export async function applyRadioTableFilter(
 }
 
 /**
- * Drive the app's edition (cloud/licensed/oss) through its test-only
- * `netbird-test-edition` localStorage override. Call this before navigating.
- *
- * The value persists for the whole browser context, and the owner page is
- * shared across every spec in a worker — so any spec that depends on the
- * edition (cloud-only UI such as the Billing Admin role, billing modals, ...)
- * must set the one it needs instead of relying on the default.
+ * Call before navigating. The override persists for the whole browser context
+ * and the page is shared per worker, so edition-dependent specs must set it.
  */
 export async function setTestEdition(
   page: Page,
@@ -107,15 +87,13 @@ export async function setTestEdition(
 }
 
 /**
- * Clear stale Radix scroll-lock and overlay from body.
- * Some Radix modals leave `data-scroll-locked`, `pointer-events: none`,
- * or a stale overlay div blocking the entire page.
+ * Some Radix modals leave scroll-lock, `pointer-events: none` or a stale
+ * overlay div behind, blocking the entire page.
  */
 export async function clearScrollLock(page: Page) {
   await page.evaluate(() => {
     document.body.removeAttribute("data-scroll-locked");
     document.body.style.removeProperty("pointer-events");
-    // Remove stale Radix dialog overlays that block pointer events
     document
       .querySelectorAll('div[data-state="open"].fixed[class*="backdrop-blur"]')
       .forEach((el) => el.remove());

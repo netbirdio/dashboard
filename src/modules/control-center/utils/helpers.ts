@@ -11,9 +11,7 @@ import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 
-// Client-side ids for draft entities (changeset entry ids, `new-…` client ids,
-// canvas node ids). crypto.randomUUID is missing in non-secure contexts and
-// older Safari, hence the timestamp+random fallback.
+// crypto.randomUUID is missing in non-secure contexts and older Safari.
 export const draftUid = () =>
   typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
@@ -43,8 +41,6 @@ export const getNetworksFromPolicy = (networks: Network[], policy: Policy) => {
   });
 };
 
-// Shared "X Peer(s), Y Resource(s)" label used by GroupNode and the
-// components sidebar so a group reads the same on the canvas and in the list.
 export const getGroupCountLabel = (group?: Group) => {
   const peerCount = group?.peers_count || 0;
   const resourceCount = group?.resources_count || 0;
@@ -53,18 +49,12 @@ export const getGroupCountLabel = (group?: Group) => {
   const resources = singularize("Resources", resourceCount, true);
   if (resourceCount === 0) return peers;
   if (peerCount === 0) return resources;
-  // Lead with the bigger side (ties keep resources first).
   return peerCount > resourceCount
     ? `${peers}, ${resources}`
     : `${resources}, ${peers}`;
 };
 
-// Policy-embedded groups (rule.sources / rule.destinations) carry a peers_count
-// snapshot from when the policy was fetched, which goes stale as peers join or
-// leave the group. /groups is authoritative — override the counts from it so a
-// group reads the same on the canvas as it does in the group list. Falls back
-// to the embedded snapshot when the group isn't in the list (e.g. draft-only
-// groups that don't exist server-side yet).
+// Policy-embedded groups carry a stale count snapshot; /groups is authoritative.
 export const withFreshGroupCounts = (
   group: Group,
   groups?: Group[],
@@ -147,11 +137,7 @@ export const getResourcePolicyByGroups = (
   });
 };
 
-// Policies that grant access to any of the given resources — either directly
-// (destinationResource id) or via a destination group the resource belongs
-// to. Used when an existing network/resource is dropped onto the draft
-// canvas: its policies are drawn alongside it (mirror of dropping an
-// existing policy, which draws its sources/destinations).
+// Counts a direct destinationResource and a destination group the resource is in.
 export const getPoliciesTargetingResources = (
   resources: NetworkResource[],
   policies: Policy[],
@@ -176,11 +162,7 @@ export const getPoliciesTargetingResources = (
   });
 };
 
-// Whether a GROUP node may be dropped INTO a network frame (it becomes a
-// resource-group row): allowed when the group is EMPTY (no peers/resources,
-// no draft-added members) or when at least one of the network's resources
-// (API list + draft/standalone resources assigned to the frame) belongs to
-// the group.
+// A group becomes a resource-group row only when empty, or when it owns a resource.
 export const canDropGroupIntoNetwork = (
   groupNode: CanvasNode,
   frameNode: CanvasNode,
@@ -198,9 +180,7 @@ export const canDropGroupIntoNetwork = (
   ) {
     return true;
   }
-  // A draft group carrying UNASSIGNED draft resources (grouped standalone
-  // cards) may drop into any network — the drop assigns those resources to
-  // it (see useDragToGroup).
+  // A group carrying unassigned draft resources may drop into any network.
   const carriedDraftResources = (
     groupNode.data as { draftResources?: NetworkResource[] }
   )?.draftResources;
@@ -211,8 +191,6 @@ export const canDropGroupIntoNetwork = (
     frameNode.data as { network?: { id?: string; resources?: string[] } }
   )?.network;
 
-  // The network's resources: the API list plus draft/standalone resource
-  // nodes assigned to this frame (children or a matching draftNetwork ref).
   const resourceIds = new Set<string>(network?.resources ?? []);
   nodes.forEach((n) => {
     const ref = (n.data as { draftNetwork?: DraftNetworkRef })?.draftNetwork;
@@ -246,10 +224,7 @@ export const canDropGroupIntoNetwork = (
   });
 };
 
-// Z-index that puts a node above everything settled on the canvas — dropped
-// and dragged nodes call this so they paint over frames (which elevate to
-// maxZ+2 themselves; their children render at parent+1, so +2 beats both).
-// Drag-time elevations (>= 1000) are transient and ignored.
+// Children render at parent+1, so +2 beats both; drag-time elevations (>= 1000) don't count.
 export const getTopZIndex = (nodes: CanvasNode[]) => {
   const maxZ = Math.max(
     0,
@@ -266,9 +241,7 @@ export function useSourceGroupEnabled(sourceId: string) {
   return node?.data?.enabled ?? false;
 }
 
-// `skip` when the caller already has an explicit enabled flag (the common
-// case) — getNodes()/getEdges() copy the full arrays, and running that on
-// every render of every node component added up on big canvases.
+// Pass `skip` when the caller has an explicit enabled flag: getEdges() copies the array.
 export function useAnySourceGroupEnabled(sourceId: string, skip = false) {
   const { getEdges } = useReactFlow();
   if (skip) return false;
@@ -277,10 +250,7 @@ export function useAnySourceGroupEnabled(sourceId: string, skip = false) {
   return incomingEdges.some((e) => e?.data?.enabled);
 }
 
-// Initial group-view pick — always tries to show a non-empty canvas:
-// 1. a non-"All" group that is a policy source, 2. "All" if it is one
-// (a populated All view beats an empty group), 3. any non-"All" group,
-// 4. whatever is left.
+// Prefers a group that is a policy source, so the initial canvas isn't empty.
 export function getFirstGroup(groups?: Group[], policies?: Policy[]) {
   const sortedGroups = orderBy(groups, "peers_count", "desc");
   const groupsWithoutAll = sortedGroups?.filter((g) => g.name !== "All");
@@ -308,14 +278,9 @@ export function getFirstGroup(groups?: Group[], policies?: Policy[]) {
   return sortedGroups?.[0];
 }
 
-// NetBird's default peer network range, used when the account has no custom
-// `settings.network_range`.
 const DEFAULT_NETWORK_RANGE = "100.64.0.0/10";
 
-// Placeholder for the IP slot of not-yet-installed peers, derived from the
-// account's peer network range: octets fully fixed by the prefix are kept,
-// the rest become "x" — 100.64.0.0/10 → "100.x.x.x", 10.20.0.0/16 →
-// "10.20.x.x", 192.168.1.0/24 → "192.168.1.x".
+// Octets fixed by the prefix are kept, the rest become "x": 10.20.0.0/16 → "10.20.x.x".
 export const getIpPlaceholderFromRange = (range?: string) => {
   const [address, prefixStr] = (range || DEFAULT_NETWORK_RANGE).split("/");
   const octets = address?.split(".") ?? [];
@@ -325,15 +290,13 @@ export const getIpPlaceholderFromRange = (range?: string) => {
   return octets.map((o, i) => (i < fixedOctets ? o : "x")).join(".");
 };
 
-// Default names per placeholder kind ("Agent", "Agent (1)", …).
 export const PLACEHOLDER_BASE_NAMES: Record<string, string> = {
   agent: "Agent",
   server: "Server",
   "user-device": "User Device",
 };
 
-// A short random suffix that keeps a bound placeholder group's name unique
-// even when two placeholders share a base name ("Agent", "Agent").
+// Keeps a bound group's name unique when two placeholders share a base name.
 export const makeBoundGroupSuffix = () =>
   (typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
@@ -342,12 +305,7 @@ export const makeBoundGroupSuffix = () =>
     .replace(/[^a-z0-9]/gi, "")
     .slice(0, 5);
 
-// A bound group's display name: the placeholder's name tagged "(Draft)",
-// e.g. "Agent (Draft)". A random suffix is inserted only when that name is
-// already taken ("Agent (a3f9c) (Draft)"). The group is hidden and
-// short-lived (created at setup-key generation, deleted once the peer is
-// matched or the draft is abandoned), so the name is just a recognizable
-// label that reads as temporary.
+// The group is hidden and short-lived, so the name only has to read as temporary.
 export const draftBoundGroupName = (
   placeholderName: string,
   taken: Set<string>,
@@ -361,17 +319,10 @@ export const draftBoundGroupName = (
   return candidate;
 };
 
-// Only server/agent placeholders get a hidden bound group for install
-// matching (user devices don't).
 export const kindHasBoundGroup = (kind?: string) =>
   kind === "server" || kind === "agent";
 
-// A placeholder peer node (Server / Agent / User Device, not installed yet)
-// as a pseudo-Peer: unique draft id ("draft-<uuid>", from node id
-// "peer-draft-<uuid>") plus its canvas name — lets placeholders participate
-// in policies and the policy modal's peer selector before they exist in the
-// API. A user-device select node with a peer chosen is that real peer, not
-// a placeholder anymore.
+// Pseudo-Peer so a not-yet-installed placeholder can take part in policies and selectors.
 export const getPlaceholderPeer = (node?: CanvasNode): Peer | undefined => {
   const data = node?.data as
     | {
@@ -397,9 +348,7 @@ export const getPlaceholderPeer = (node?: CanvasNode): Peer | undefined => {
       PLACEHOLDER_BASE_NAMES[data.placeholderKind] ??
       "Peer",
     ip: "",
-    // The kind rides along in `os` so peer selectors/badges can show the
-    // Server/Agent/User-Device icon instead of a (wrong) OS logo — see
-    // PeerOperatingSystemIcon; getOperatingSystem treats it as unknown.
+    // The kind rides in `os` so selectors show the placeholder icon, not a wrong OS logo.
     os: `draft-${data.placeholderKind}`,
     setupKey: data.setupKey,
     setupKeyId: data.setupKeyId,
@@ -425,11 +374,7 @@ export const getPlaceholderSetupKey = (
   return undefined;
 };
 
-// Suggested install hostname for a placeholder peer: its canvas name,
-// sanitized (lowercase, dashes), made unique across the other draft peers on
-// the canvas by appending -1, -2, … Names are unique, but sanitizing can
-// still collide — "Agent (1)" and "Agent 1" both become "agent-1" — so
-// hostnames are assigned greedily in node order.
+// Sanitizing can collide ("Agent (1)" and "Agent 1"), so hostnames go in node order.
 export const getPlaceholderHostname = (
   nodes: CanvasNode[],
   nodeId: string,
@@ -451,15 +396,13 @@ export const getPlaceholderHostname = (
     if (forNodeId === nodeId) result = candidate;
   };
   nodes.forEach((n) => {
-    // Skips non-placeholders and user-device selects that picked a peer.
     const peer = getPlaceholderPeer(n);
     if (peer?.id && !seenIds.has(peer.id)) {
       seenIds.add(peer.id);
       assign(peer.name ?? "", n.id);
       return;
     }
-    // Placeholders absorbed into a group live on the group node instead
-    // (data.draftPeers) — a group can appear twice, dedup by id.
+    // Placeholders absorbed into a group live on the group node, which can appear twice.
     const held = (n.data as { draftPeers?: Peer[] })?.draftPeers;
     held?.forEach((p) => {
       if (!p.id || seenIds.has(p.id)) return;
@@ -470,11 +413,7 @@ export const getPlaceholderHostname = (
   return result;
 };
 
-// Policies that referenced one of the grouped entities as their single
-// source/destination get rewritten to point at the group instead — the
-// entity's node leaves the canvas when it's grouped, so the reference would
-// otherwise dangle with no connection. Returns the updated policies; run
-// them through updateDraftPolicy (which records changes + redraws edges).
+// A grouped entity's node leaves the canvas, so a policy naming it alone points at the group.
 export const getPolicyRegroupUpdates = (
   nodes: CanvasNode[],
   groupedIds: Set<string>,
@@ -509,13 +448,7 @@ export const getPolicyRegroupUpdates = (
   return updates;
 };
 
-// Shared core of the two policy gates below. A policy needs both a source and
-// a destination, and neither side may reference a draft resource ("new-…" id)
-// that isn't tracked (it wouldn't be created on deploy). The one difference is
-// placeholder peers ("draft-…" id): they don't exist in the API until
-// installed, so a DEPLOYABLE policy can't reference one — but a TRACKABLE one
-// can (it enters the changeset and surfaces the missing peer as a blocking
-// issue rather than vanishing from Review & Deploy).
+// Deployable forbids placeholder peers; trackable allows them so they surface as issues.
 const policyComplete = (
   policy: Policy,
   trackedResourceClientIds: Set<string> | undefined,
@@ -528,9 +461,8 @@ const policyComplete = (
     (rule.destinations?.length ?? 0) > 0 || !!rule.destinationResource;
   const isOkResource = (r?: { id: string }) => {
     if (!r?.id) return true;
-    // Placeholder peers don't exist in the API until installed.
     if (r.id.startsWith("draft-")) return !peerMustBeInstalled;
-    // Draft resources deploy first and resolve — but only tracked ones.
+    // Draft resources deploy first and resolve, but only tracked ones.
     if (r.id.startsWith("new-")) {
       return trackedResourceClientIds?.has(r.id) ?? false;
     }
@@ -544,30 +476,18 @@ const policyComplete = (
   );
 };
 
-// A policy that can actually be POSTed on deploy: both sides set, no
-// uninstalled placeholder peer, referenced draft resources tracked.
 export const isDeployablePolicy = (
   policy: Policy,
-  // Client ids of draft resources that ARE tracked (complete) — a policy
-  // referencing a "new-…" resource is deployable only when the resource
-  // itself will be created on deploy.
   trackedResourceClientIds?: Set<string>,
 ) => policyComplete(policy, trackedResourceClientIds, true);
 
-// A policy complete enough to enter the changeset: both sides set and any
-// referenced draft resource tracked. It MAY still reference an uninstalled
-// placeholder peer — the policy is listed as an ordinary change; that peer's
-// own install-peer issue is what blocks the deploy, so the policy isn't hidden
-// for it. A policy still missing a side stays canvas-only (visibly unfinished,
-// not listed).
+// A policy still missing a side stays canvas-only, not listed.
 export const isTrackablePolicy = (
   policy: Policy,
   trackedResourceClientIds?: Set<string>,
 ) => policyComplete(policy, trackedResourceClientIds, false);
 
-// Derived resource type for canvas display; the API derives the
-// authoritative type on create. Mirrors ResourceSingleAddressInput: letters
-// → domain, "/" → subnet, otherwise a single host address.
+// Canvas-display guess only; the API derives the authoritative type on create.
 export const deriveResourceType = (
   address: string,
 ): "domain" | "host" | "subnet" => {
@@ -576,11 +496,7 @@ export const deriveResourceType = (
   return "host";
 };
 
-// A network node that renders/behaves as a draft-canvas FRAME. Frame-ness is
-// an explicit `data.frame` flag (set on existing networks dropped as frames),
-// with the `network-new-` id kept as a built-in fallback for draft networks
-// (always frames) — so it is NOT tied to the id prefix. Distinct from
-// `isDraftNetworkNode` (a not-yet-created network: `network-new-`).
+// Frame-ness is the explicit `data.frame` flag; the `network-new-` id is only a fallback.
 export const isFrameNode = (node?: {
   id: string;
   data?: unknown;
@@ -589,14 +505,7 @@ export const isFrameNode = (node?: {
   (node.id.startsWith("network-new-") ||
     !!(node.data as { frame?: boolean } | undefined)?.frame);
 
-// ReactFlow requires parent nodes to PRECEDE their children in the nodes
-// array. Reparenting callers (frame drop adoption, assign-to-network) build a
-// correctly ordered array, but on a controlled flow `instance.setNodes`
-// round-trips through applyNodeChanges, which keeps replaced nodes at their
-// ORIGINAL index — a resource older than its frame silently stays in front of
-// it and renders unparented at frame-relative coordinates. Reconciles the
-// invariant: children re-emit right after their parent (stable otherwise).
-// Returns the SAME array when nothing is violated (per-change hot path).
+// ReactFlow requires parents to PRECEDE their children; applyNodeChanges won't reorder.
 export const ensureParentsBeforeChildren = (
   nodes: CanvasNode[],
 ): CanvasNode[] => {
@@ -627,23 +536,17 @@ export const ensureParentsBeforeChildren = (
   return out;
 };
 
-// A frame for a network that does NOT exist yet — it's tracked as a
-// create-network change and is editable/removable as a draft. Existing
-// networks dropped as frames are not draft networks.
+// A frame for a network that does NOT exist yet.
 export const isDraftNetworkNode = (node?: { id: string }): boolean =>
   !!node && node.id.startsWith("network-new-");
 
-// The parent-network reference a draft resource node carries (set by the
-// draft resource editor / drag-onto-network).
 export type DraftNetworkRef = {
   networkId?: string;
   networkClientId?: string;
   name: string;
 };
 
-// A draft resource node's pseudo-NetworkResource (counterpart of
-// getPlaceholderPeer): pseudo id "new-<uuid>" from node id
-// resource-new-<uuid>. Returns undefined for real resources.
+// Pseudo-NetworkResource for a draft resource node; undefined for real ones.
 export const getDraftResource = (
   node?: CanvasNode,
 ): NetworkResource | undefined => {
@@ -660,12 +563,9 @@ export const getDraftResource = (
   } as NetworkResource;
 };
 
-// A draft resource is complete (and thus changeset-worthy) once it has a
-// name, a valid-enough address, and a parent network.
 export const isCompleteDraftResource = (node?: CanvasNode): boolean => {
   const resource = getDraftResource(node);
-  // Check the RAW name — getDraftResource defaults it to "Resource", which
-  // would make the name requirement always pass.
+  // Check the RAW name: getDraftResource defaults it to "Resource".
   const rawName = (node?.data as { resource?: { name?: string } })?.resource
     ?.name;
   const network = (node?.data as { draftNetwork?: DraftNetworkRef })
@@ -673,8 +573,7 @@ export const isCompleteDraftResource = (node?: CanvasNode): boolean => {
   return !!rawName && !!resource?.address && !!network?.name;
 };
 
-// Membership edge (resource → network): subtle dashed line showing the
-// parent-network relationship when both are on canvas. Display-only.
+// Display-only dashed line showing a resource's parent network.
 export const makeMembershipEdge = (
   resourceNodeId: string,
   networkNodeId: string,
@@ -686,58 +585,34 @@ export const makeMembershipEdge = (
   data: { membership: true },
 });
 
-// Draft network frame (a bordered container node that wraps its resource
-// nodes as ReactFlow children). Children stack under the header with a
-// NETWORK_FRAME_PADDING_X/Y around the content; the actual row
-// heights are measured at runtime (useNetworkFrameLayout) — the constants
-// below only seed the initial placement until nodes report their size.
+// Seed the initial placement only; real row heights are measured (useNetworkFrameLayout).
 export const NETWORK_FRAME_WIDTH = 300;
-// Height of the frame's header band; the content area starts below it.
 export const NETWORK_FRAME_HEADER = 72;
-// Content padding inside the frame: X = left/right, Y = below the header
-// and above the bottom edge.
 export const NETWORK_FRAME_PADDING_X = 20;
 export const NETWORK_FRAME_PADDING_Y = 14;
 export const NETWORK_FRAME_GAP = 0;
-// Vertical spacing between resource rows (tighter than the column gap).
 export const NETWORK_FRAME_ROW_GAP = 4;
-// Estimated resource card height before measurement.
 export const NETWORK_FRAME_FALLBACK_ROW = 58;
 
 export const NETWORK_FRAME_CHILD_WIDTH =
   NETWORK_FRAME_WIDTH - NETWORK_FRAME_PADDING_X * 2;
-// Row width in MULTI-column layouts — rows hug their content there, a
-// full-width row per column would leave a big gap between the columns.
+// Rows hug their content in multi-column layouts, else the columns gap apart.
 export const NETWORK_FRAME_CHILD_WIDTH_MULTI = 185;
 
-// Parent (collapsed) frame view shows at most this many grid cells; once
-// resources exceed the cap the last cell becomes a "+N more" cell (occupying
-// one slot) and the rest are hidden. Everything is visible in the drill-down.
+// Past this cap the last cell becomes "+N more"; the drill-down shows everything.
 export const NETWORK_FRAME_MAX_VISIBLE = 6;
-// Fixed height of the bottom "Add Resource" button — NetworkNode pins it
-// (h-9 = 36px) so the gap below the resources is exact, not dependent on the
-// button's ambiguous intrinsic size.
+// NetworkNode pins the button (h-9) so the gap below the resources is exact.
 export const NETWORK_FRAME_ADD_BUTTON_H = 36;
-// Gap between the last resource row and the bottom "Add Resource" button.
-// Deliberately larger than NETWORK_FRAME_ROW_GAP so the button reads as a
-// separate action, not just another resource row.
+// Larger than NETWORK_FRAME_ROW_GAP so the button reads as a separate action.
 export const NETWORK_FRAME_ADD_GAP = 12;
-// Padding between the "Add Resource" button and the frame's bottom edge.
-// Matches the button container's `pb-5` (20px) in NetworkNode.
+// Matches the button container's `pb-5` in NetworkNode.
 export const NETWORK_FRAME_ADD_PAD = 20;
-// Vertical band the frame reserves below the resources for the add button:
-// the top gap + the button height + the bottom padding. The button is
-// bottom-pinned with NETWORK_FRAME_ADD_PAD below it, leaving
-// NETWORK_FRAME_ADD_GAP above it.
 export const NETWORK_FRAME_ADD_ROW =
   NETWORK_FRAME_ADD_GAP + NETWORK_FRAME_ADD_BUTTON_H + NETWORK_FRAME_ADD_PAD;
-// Empty frames get a little extra height so the centered "Add Resource"
-// button has breathing room (only the empty state — 1+ resources keep the
-// one-row height).
+// Breathing room for the centered "Add Resource" button of an empty frame.
 export const NETWORK_FRAME_EMPTY_EXTRA_H = 28;
 
-// Drill-down grid math: the column count targets a square-ish frame
-// (width ≈ height in pixels) — cols = sqrt(N * cellH / cellW).
+// The column count targets a square-ish frame (width ≈ height in pixels).
 export const getFrameGridColumns = (count: number) => {
   if (count <= 2) return 1;
   const cellW = NETWORK_FRAME_CHILD_WIDTH + NETWORK_FRAME_GAP;
@@ -745,7 +620,6 @@ export const getFrameGridColumns = (count: number) => {
   return Math.max(1, Math.round(Math.sqrt(count * (cellH / cellW))));
 };
 
-// Frame width for a column count (1 column = NETWORK_FRAME_WIDTH).
 export const getNetworkFrameWidth = (
   cols: number,
   childWidth = NETWORK_FRAME_CHILD_WIDTH,
@@ -754,12 +628,7 @@ export const getNetworkFrameWidth = (
   cols * childWidth +
   (cols - 1) * NETWORK_FRAME_GAP;
 
-// Frame body = header + resource rows + the bottom "Add Resource" band. An
-// empty frame still reserves ONE row (Math.max(count, 1)) so it's about the
-// single/two-resource height, plus a little extra so its centered button
-// breathes. Seed height; useNetworkFrameLayout reconciles it from measured
-// rows (and swaps the add band for the "+N More" footer once resources
-// overflow the visible cap).
+// An empty frame still reserves one row so it keeps the one-resource height.
 export const getNetworkFrameHeight = (resourceCount: number) =>
   NETWORK_FRAME_HEADER +
   NETWORK_FRAME_PADDING_Y +
@@ -770,9 +639,7 @@ export const getNetworkFrameHeight = (resourceCount: number) =>
   NETWORK_FRAME_ADD_ROW +
   (resourceCount === 0 ? NETWORK_FRAME_EMPTY_EXTRA_H : 0);
 
-// Initial child position of the i-th resource inside its network frame
-// (relative coordinates — the resource node carries parentId); corrected by
-// the measured layout once heights are known.
+// Frame-relative; corrected by the measured layout once heights are known.
 export const getFrameChildPosition = (index: number) => ({
   x: NETWORK_FRAME_PADDING_X,
   y:
@@ -781,9 +648,7 @@ export const getFrameChildPosition = (index: number) => ({
     index * (NETWORK_FRAME_FALLBACK_ROW + NETWORK_FRAME_ROW_GAP),
 });
 
-// Seed grid for a LIVE overview frame — the same grid useNetworkFrameLayout
-// reconciles to (2 columns, NETWORK_FRAME_MAX_VISIBLE cap with a "+N more"
-// cell taking the last slot, fallback row heights).
+// Seed grid for a live overview frame; must match what useNetworkFrameLayout reconciles to.
 export const getLiveFrameGrid = (resourceCount: number) => {
   const hasMore = resourceCount > NETWORK_FRAME_MAX_VISIBLE;
   const visibleCount = hasMore
@@ -809,8 +674,7 @@ export const getLiveFrameGrid = (resourceCount: number) => {
   });
   return {
     width: getNetworkFrameWidth(cols, childWidth),
-    // Both modes reserve the bottom Add-Resource band; empty frames mirror
-    // the reconciler's empty height.
+    // Empty frames mirror the reconciler's empty height.
     height:
       resourceCount > 0
         ? NETWORK_FRAME_HEADER +
@@ -830,9 +694,7 @@ export function isFocusWorthy(
   nodes: { id: string; type?: string }[],
   edges: { source: string; target: string }[],
 ): boolean {
-  // Focus only pays off when there is something to dim AWAY: at least two
-  // policies on the canvas (with one, everything is on the one path). The
-  // node itself just needs a path to trace — a single edge suffices.
+  // Focus only pays off when there is something to dim away.
   if (!edges.some((e) => e.source === nodeId || e.target === nodeId)) {
     return false;
   }
@@ -840,11 +702,7 @@ export function isFocusWorthy(
   return policyCount >= 2;
 }
 
-// Resources a policy actually reaches — directly (destinationResource) or
-// through a destination group — sort to the TOP of a network frame, so
-// connected resources stay visible above the "+N more" cap. SHARED by the
-// live networks overview and the draft build so both frames agree on the
-// order. Stable: each half keeps its relative order.
+// Policy-reached resources sort to the TOP so they stay above the "+N more" cap.
 export function orderFrameResources(
   resources: NetworkResource[],
   networkPolicyIds: string[] | undefined,
@@ -873,11 +731,7 @@ export function orderFrameResources(
   return [...resources.filter(isTargeted), ...resources.filter((r) => !isTargeted(r))];
 }
 
-// Canvas nodes subscribed STRUCTURALLY (ids, data refs, parentId and —
-// optionally — selection), ignoring positions/measure/drag state: for
-// always-mounted consumers (components panel, toolbars) that only derive
-// from node data, so node drags don't re-render them every tick. Positions
-// must be read imperatively (reactFlow.getNodes()) when needed.
+// Ignores positions/measure/drag state so node drags don't re-render mounted consumers.
 export function useStructuralNodes(options?: { selection?: boolean }) {
   const withSelection = options?.selection ?? false;
   return useStore(
@@ -897,24 +751,15 @@ export function useStructuralNodes(options?: { selection?: boolean }) {
   );
 }
 
-// Grid x-origin right of the policies column — SHARED by the live overview
-// and the draft build so the policy → network gap reads identical.
+// Shared by the live overview and the draft build so the policy → network gap matches.
 export const FRAME_GRID_BASE_X = 1050;
 export const FRAME_GRID_GAP_X = 280;
 export const FRAME_GRID_GAP_Y = 200;
 
-// The networks-view source/policy columns position node TOPS, while the
-// frame grid centers frames on the column midline — without compensating
-// for node height, a lone source peer or policy hangs visibly below its
-// frame. Half the typical node height (peer/group card ≈ 60px), SHARED by
-// the live overview and the draft build.
+// The grid centers frames on the column midline, so a lone source peer would hang low.
 export const SOURCE_NODE_HALF_HEIGHT = 30;
 
-// Staggered grid for network frames (draft build + live networks overview):
-// cols ≈ √(n·avgCellH/cellW) for a ~1:1 block; each column packs frames by
-// their own heights; odd columns start half a typical cell lower so edges
-// flow between frames. Mutates the frames' positions in place and centers
-// the block vertically on `centerMidY`.
+// Odd columns start half a cell lower so edges flow between frames; mutates in place.
 export function packFrameGrid(
   frames: CanvasNode[],
   baseX: number,
@@ -932,8 +777,7 @@ export function packFrameGrid(
   const columnY = Array.from({ length: cols }, (_, col) =>
     col % 2 === 1 ? avgH / 2 : 0,
   );
-  // Deterministic order by network NAME — live and draft fill the grid
-  // identically regardless of how their builds enumerated the frames.
+  // Order by name so live and draft fill the grid identically.
   const nameOf = (n: CanvasNode) =>
     ((n.data as { network?: { name?: string } })?.network?.name ?? "")
       .toLowerCase();
@@ -953,11 +797,7 @@ export function packFrameGrid(
   });
 }
 
-// Stable-orders `items` by each item's id position in `order`. Ids absent from
-// `order` keep their relative order at the end (Array.prototype.sort is
-// stable). The side panels freeze `order` per open. That way a save, and the
-// SWR mutate after it (which can return the peers/resources/groups arrays in a
-// different order), never reshuffles the rows the user is looking at.
+// The side panels freeze `order` per open so a save's mutate never reshuffles rows.
 export function pinByOrder<T>(
   items: T[],
   order: string[],

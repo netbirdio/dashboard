@@ -17,11 +17,9 @@ type CreateGroupOptions = {
   position: XYPosition;
   peers?: Peer[];
   resources?: NetworkResource[];
-  // Grouped UNASSIGNED draft resources — their nodes leave the canvas, so their
-  // data rides on the group node (dropping the group into a frame assigns them).
+  // Their canvas nodes are removed, so the data rides on the group node.
   unassignedDraftResources?: NetworkResource[];
-  // Grouping resources inside a drilled network: create the group as a
-  // resourceGroupNode child of this frame instead of a standalone node. Draft.
+  // Set when grouping inside a drilled network: the group becomes a frame child.
   frameId?: string;
 };
 
@@ -46,27 +44,23 @@ export function useCreateGroupOnCanvas() {
         (resources?.map((r) => r.id).filter(Boolean) as string[]) ?? [];
       const draftPeers = peers?.filter((p) => p.id?.startsWith("draft-")) ?? [];
 
-      // Draft: no API call — put the group on the canvas and record the change.
       if (isDraft) {
         const group: Group = {
           name,
           peers_count: peerIds.length,
           resources_count: resourceIds.length,
         };
-        // The resourcegroup-new- id keeps Rename working (matches the frame
-        // resource-group menu's prefix check).
+        // The resourcegroup-new- prefix is what the frame's Rename menu checks.
         if (frameId) {
           const nodeId = `resourcegroup-new-${draftUid()}`;
           reactFlow.addNodes({
             id: nodeId,
             type: NodeType.ResourceGroupNode,
             parentId: frameId,
-            // drilledFreePos keeps the frame layout from snapping this new node
-            // to the bottom grid slot (drilled places children by index).
+            // drilledFreePos exempts this from the frame's grid slots.
             position,
             style: { width: NETWORK_FRAME_CHILD_WIDTH },
-            // Seed dims so a child added into a hidden (drilled) frame measures
-            // on mount instead of flashing unmeasured.
+            // Seed dims so a child in a hidden frame doesn't flash unmeasured.
             initialWidth: NETWORK_FRAME_CHILD_WIDTH,
             initialHeight: NETWORK_FRAME_FALLBACK_ROW,
             data: {

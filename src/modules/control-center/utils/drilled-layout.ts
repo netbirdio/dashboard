@@ -3,11 +3,8 @@ import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layout
 import { DEFAULT_LAYOUT_CONFIG } from "@/modules/control-center/utils/graph-builder";
 import { getFrameChildPosition } from "@/modules/control-center/utils/helpers";
 
-// THE single-network ("drilled") layout — one definition shared by every way
-// of looking at one network: the live single-network view, the draft
-// drill-down (clicked from the draft canvas), and entering draft from the
-// live drilled view. Groups/peers left, policies middle, the resource column
-// right at a fixed pitch.
+// The one single-network ("drilled") layout, shared by the live
+// single-network view and the draft drill-down so both stay identical.
 export const DRILLED_RESOURCE_SPACING = 95;
 
 const DRILLED_LAYOUT_CONFIG = {
@@ -19,11 +16,8 @@ const DRILLED_LAYOUT_CONFIG = {
 };
 
 export const applyDrilledLayout = (nodes: Node[], edges: Edge[]) => {
-  // The layout stacks each column in ARRAY order, and live vs draft build
-  // their arrays differently (policy iteration vs draft canvas order) — sort
-  // the group columns by name so both views agree. In-place slot swap: only
-  // group nodes move relative to each other, everything else keeps its index
-  // (parents stay before children).
+  // The layout stacks each column in array order and live vs draft build their
+  // arrays differently, so name-sort the group columns to make both agree.
   const groupName = (n: Node) =>
     (n.data as { group?: { name?: string } })?.group?.name ?? "";
   const arranged = [...nodes];
@@ -48,17 +42,15 @@ export const applyDrilledLayout = (nodes: Node[], edges: Edge[]) => {
   );
 };
 
-// Where the (hidden) frame must sit so its FIRST child cell lands exactly on
-// the layout's resource-column start — the draft drill-down places resources
-// as frame children, the live view as top-level column nodes; this keeps the
-// two pixel-identical.
+// Where the hidden frame must sit so its first child cell lands exactly on the
+// layout's resource-column start, keeping draft and live pixel-identical.
 export const getDrilledFrameAnchor = (resourceCount: number) => {
   const firstCell = getFrameChildPosition(0);
   return {
     x: DEFAULT_LAYOUT_CONFIG.peersAndResources.width - firstCell.x,
     y:
-      // The layout centers the network/resource column at centerY + 5
-      // (see applyD3HierarchicalLayout's "Networks" column) — mirror it.
+      // Mirrors applyD3HierarchicalLayout, which centers the column at
+      // centerY + 5.
       5 -
       ((Math.max(resourceCount, 1) - 1) * DRILLED_RESOURCE_SPACING) / 2 -
       firstCell.y,

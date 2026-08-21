@@ -23,14 +23,11 @@ export type OnDropAction = ({
 // Pointer travel (px) below which a pointerdown/up pair counts as a click.
 const CLICK_MOVE_THRESHOLD = 5;
 
-// Gap kept between a click-added node and its neighbors.
 const DROP_GAP = 24;
-// A node that hasn't rendered yet has no measured size — drop actions center
-// a ~200x60 card on the position, so reserve roughly that footprint for it.
-// Existing nodes are checked against their actual measured rects.
+// An unrendered node has no measured size, so reserve roughly the card footprint.
 const ESTIMATED_NODE_WIDTH = 220;
 const ESTIMATED_NODE_HEIGHT = 84;
-// Distance (flow px) between candidate spots when probing for free space.
+// Distance in flow px between candidate spots.
 const SEARCH_STEP = 48;
 
 // Visible canvas area in flow coordinates.
@@ -58,8 +55,7 @@ const isInsideView = (center: XYPosition, view: FlowRect) =>
   center.y - ESTIMATED_NODE_HEIGHT / 2 >= view.top &&
   center.y + ESTIMATED_NODE_HEIGHT / 2 <= view.bottom;
 
-// Candidate spots on growing rings around the desired position — nearest
-// spots are tried first, in any direction.
+// Growing rings around the desired position: nearest spots first.
 function* ringCandidates(center: XYPosition, maxRadius: number) {
   for (let radius = SEARCH_STEP; radius <= maxRadius; radius += SEARCH_STEP) {
     const samples = Math.max(
@@ -76,10 +72,7 @@ function* ringCandidates(center: XYPosition, maxRadius: number) {
   }
 }
 
-// Where a click-added node should land: the desired spot if free, otherwise
-// the nearest free spot the user can currently see, otherwise the nearest
-// free spot outside the view (`outsideView: true` — the caller zooms out to
-// reveal it).
+// Nearest free spot to `desired`; `outsideView` tells the caller to zoom out.
 const findFreeDropPosition = (
   nodes: Node[],
   desired: XYPosition,
@@ -96,7 +89,7 @@ const findFreeDropPosition = (
     }
   }
 
-  // Everything the user sees is occupied — keep searching beyond the view.
+  // Everything the user sees is occupied, so search beyond the view.
   for (const candidate of ringCandidates(desired, viewRadius * 4)) {
     if (isSpotFree(nodes, candidate)) {
       return { position: candidate, outsideView: true };
@@ -160,18 +153,13 @@ export const useDragAndDrop = () => {
 
   const { isDragging, setIsDragging, setDropAction, dropAction } = context;
 
-  // Where the pointer went down — releasing within CLICK_MOVE_THRESHOLD px is
-  // a click, not a drag.
   const dragStartPosition = useRef<XYPosition | undefined>(undefined);
   const canDropIntoFrame = useRef(false);
-  // Skip the click-to-place "reveal" (fitBounds) for templates that open a
-  // modal instead of placing a node: zooming while a modal takes focus is
-  // disorienting, and when drilled the frame fills the view so the free-spot
-  // search lands far outside and zooms into nothing.
+  // Templates that open a modal skip the reveal: zooming under a modal is
+  // disorienting.
   const skipClickReveal = useRef(false);
 
-  // Resolve the network frame under a screen point (walking a frame child up
-  // to its parent), for the drop-target highlight.
+  // Walks a frame child up to its parent frame.
   const frameUnderPoint = useCallback(
     (clientX: number, clientY: number): string | undefined => {
       const overId =
@@ -222,7 +210,6 @@ export const useDragAndDrop = () => {
 
   const onDragEnd = useCallback(
     (event: PointerEvent) => {
-      // Clear any frame drop-target highlight raised during the drag.
       if (canDropIntoFrame.current) setFrameDropTarget(undefined);
       if (!isDragging) {
         setIsDragging(false);
@@ -237,10 +224,7 @@ export const useDragAndDrop = () => {
         ? Math.hypot(event.clientX - start.x, event.clientY - start.y)
         : Infinity;
 
-      // A plain click (no real drag) adds the node at the viewport center —
-      // or, when that spot is occupied, the nearest visible free spot. When
-      // the whole view is full, the node lands just outside it and the
-      // viewport zooms out enough to reveal it.
+      // A plain click adds the node at the viewport center, or the nearest free spot.
       if (moved < CLICK_MOVE_THRESHOLD) {
         const rect = document
           .querySelector(".react-flow")
@@ -307,8 +291,6 @@ export const useDragAndDrop = () => {
           x: event.clientX,
           y: event.clientY,
         });
-        // When the pointer is over a frame's child (a resource row), resolve
-        // to the frame itself.
         const overId =
           elementUnderPointer
             ?.closest(".react-flow__node")
@@ -344,8 +326,7 @@ export const useDragAndDrop = () => {
     };
   }, [onDragEnd, isDragging]);
 
-  // A real drag (past the click threshold) hides the components panel so the
-  // canvas is visible; plain clicks (click-to-place) keep it open.
+  // A real drag hides the components panel; plain clicks keep it open.
   const { setComponentsPanelOpen } = useDraftMode();
   useEffect(() => {
     if (!isDragging) return;
@@ -357,8 +338,6 @@ export const useDragAndDrop = () => {
         event.clientY - start.y,
       );
       if (moved >= CLICK_MOVE_THRESHOLD) setComponentsPanelOpen(false);
-      // Highlight the network frame under the pointer (resource drags only) —
-      // the same white border a canvas resource-drag shows.
       if (canDropIntoFrame.current) {
         setFrameDropTarget(frameUnderPoint(event.clientX, event.clientY));
       }
@@ -376,7 +355,6 @@ export const useDragAndDrop = () => {
 export const useDragAndDropPosition = () => {
   const [position, setPosition] = useState<XYPosition | undefined>(undefined);
 
-  // Tracks the pointer position for the `DragGhost` component.
   const onDrag = useCallback((event: PointerEvent) => {
     event.preventDefault();
     setPosition({ x: event.clientX, y: event.clientY });

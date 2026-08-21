@@ -15,10 +15,6 @@ type Props = {
   network: Network;
 };
 
-// Live single-network view's routing-peers control — the same button group +
-// dropdown as the draft frame's floating bar. Rows open the real routing-peer
-// modal (its save PUTs); Add (and the "No Routing Peer" status click) opens
-// the same modal to POST a new routing peer against this network.
 export const NetworkRoutingPeerCount = ({ network }: Props) => {
   const { peers } = usePeers();
   const { groups } = useGroups();
@@ -52,7 +48,7 @@ export const NetworkRoutingPeerCount = ({ network }: Props) => {
           };
         }),
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on network?.id so revalidation doesn't rebuild rows
     [apiRouters, peers, groups, network?.id],
   );
 

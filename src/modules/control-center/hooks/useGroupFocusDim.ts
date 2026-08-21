@@ -5,13 +5,9 @@ import {
 } from "@/modules/control-center/contexts/ControlCenterContext";
 import { isFocusWorthy } from "@/modules/control-center/utils/helpers";
 
-// Focus highlight (live AND draft): while a node is explicitly focused (its
-// context-menu Focus item or the header's armed Focus tool), everything NOT
-// on the node's path dims to grayscale (via `cc-dimmed`, globals.css); the
-// node, the policies it feeds, and the networks/destinations those reach stay
-// lit. Merely opening a group's side panel (left click) does NOT focus.
-// Selector nodes (pick a peer/group/user) aren't real entities and can never
-// be focused.
+// Focus highlight (live and draft): while a node is explicitly focused,
+// everything off its edge path dims to grayscale (`cc-dimmed`, globals.css).
+// Selector nodes aren't real entities and can never be focused.
 const SELECTOR_NODE_TYPES = new Set([
   "selectPeerNode",
   "selectGroupNode",
@@ -25,8 +21,8 @@ export function useGroupFocusDim() {
   useEffect(() => {
     const MANAGED = new Set(["cc-dimmed", "cc-unfocusable"]);
     const clear = () => {
-      // draggable: true is the focus-root marker (see below) — nothing else
-      // sets a per-node draggable, so clearing it can't clobber other state.
+      // draggable:true is the focus marker; nothing else sets a per-node
+      // draggable, so clearing it can't clobber other state.
       if (nodes.some((n) => MANAGED.has(n.className ?? "") || n.draggable)) {
         setNodes((prev) =>
           prev.map((n) =>
@@ -48,9 +44,8 @@ export function useGroupFocusDim() {
     };
 
     if (!focusedNodeId) {
-      // Focus Mode armed but nothing targeted yet: mark the nodes that CAN'T
-      // be focused (selectors, nodes without a single edge) so the armed
-      // hover ring / pointer skips them (cc-unfocusable, globals.css).
+      // Armed but untargeted: mark what can't be focused so the armed hover
+      // ring and pointer skip those nodes.
       if (highlightArmed) {
         setNodes((prev) => {
           let changed = false;
@@ -60,8 +55,7 @@ export function useGroupFocusDim() {
               !isFocusWorthy(n.id, prev, edges)
                 ? "cc-unfocusable"
                 : undefined;
-            // Built-in draggable:false (live frame rows) survives; only the
-            // focus-root true marker gets cleared.
+            // Built-in draggable:false (live frame rows) survives.
             const drag = n.draggable === false ? false : undefined;
             if (
               (n.className ?? undefined) === cls &&
@@ -84,18 +78,14 @@ export function useGroupFocusDim() {
       clear();
       return;
     }
-    // No edges = no path to trace — dimming the rest of the canvas would
-    // just gray everything out for nothing.
+    // No edges means no path to trace; dimming would gray out everything.
     if (!edges.some((e) => e.source === root.id || e.target === root.id)) {
       clear();
       return;
     }
 
-    // Forward closure (everything the group's traffic reaches) PLUS the
-    // backward closure (everything feeding it) — a destination group's path
-    // lies upstream (peer/group views: peer → policy → group). The two
-    // closures stay separate: alternating directions would flood the whole
-    // connected component.
+    // A destination group's path lies upstream, so both closures are needed.
+    // They stay separate: alternating directions would flood the component.
     const keep = new Set<string>([root.id]);
     const forward = new Set<string>([root.id]);
     const backward = new Set<string>([root.id]);
@@ -115,7 +105,6 @@ export function useGroupFocusDim() {
     }
     forward.forEach((id) => keep.add(id));
     backward.forEach((id) => keep.add(id));
-    // Frame children ride with their kept frame.
     nodes.forEach((n) => {
       if (n.parentId && keep.has(n.parentId)) keep.add(n.id);
     });
@@ -123,13 +112,9 @@ export function useGroupFocusDim() {
     setNodes((prev) => {
       let changed = false;
       const next = prev.map((n) => {
-        // No ring on the focused node — the dim around it is signal enough.
         const cls = keep.has(n.id) ? undefined : "cc-dimmed";
-        // Focus mode turns global nodesDraggable off, but every node ON the
-        // path stays movable/clickable — per-node draggable overrides the
-        // global flag. Dimmed nodes are locked (pointer-events none), and
-        // nodes built with an explicit draggable:false (live frame rows)
-        // keep it.
+        // Focus mode turns global nodesDraggable off, so nodes on the path need
+        // a per-node draggable to stay movable; dimmed ones stay locked.
         const drag =
           n.draggable === false
             ? false
@@ -158,6 +143,6 @@ export function useGroupFocusDim() {
       });
       return changed ? next : prev;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setNodes/setEdges are stable dispatchers, not dim triggers
   }, [focusedNodeId, highlightArmed, nodes, edges]);
 }

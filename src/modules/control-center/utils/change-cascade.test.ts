@@ -6,7 +6,6 @@ import {
   reduceRemoveChange,
 } from "@/modules/control-center/utils/change-cascade";
 
-// Minimal change factories — only the fields the cascade reads.
 const createGroup = (name: string, resourceIds: string[] = []): DraftChange => ({
   id: `id-cg-${name}`,
   type: "create-group",
@@ -105,8 +104,6 @@ describe("reduceRemoveChange", () => {
     const grp = createGroup("Web");
     const policy = createPolicy("new-p1", [{ name: "Web" }], [{ id: "g-dest" }]);
     const out = reduceRemoveChange([grp, policy], grp);
-    // Web was the policy's ONLY source → the policy is no longer valid and is
-    // dropped along with the group.
     expect(out.find((c) => c.id === policy.id)).toBeUndefined();
     expect(out).toEqual([]);
   });
@@ -149,8 +146,7 @@ describe("reduceRemoveChange", () => {
     };
     const out = reduceRemoveChange([grp, policy], grp);
     const rule = (out.find((c) => c.id === policy.id) as any).policy.rules[0];
-    // authorized_groups is keyed by group NAME, so a leftover key would be sent
-    // to the API as if it were a group id.
+    // authorized_groups is keyed by group NAME, so a leftover key is sent as id.
     expect(rule.authorized_groups).toEqual({ Other: ["admin"] });
   });
 
@@ -178,8 +174,6 @@ describe("reduceRemoveChange", () => {
     };
     const res = createResource("new-res1");
     const out = reduceRemoveChange([update, res], res);
-    // The group edit only existed to add that resource — keeping it would
-    // deploy a pointless GET + PUT and show an empty "Update group" row.
     expect(out).toEqual([]);
   });
 
@@ -226,7 +220,6 @@ describe("reduceRemoveChange", () => {
       resourceIds: [],
     };
     const out = reduceRemoveChange([update, peer], peer);
-    // The group edit only existed to add that placeholder.
     expect(out).toEqual([]);
   });
 

@@ -27,11 +27,8 @@ import {
 import { Peer } from "@/interfaces/Peer";
 import { Group } from "@/interfaces/Group";
 
-// Renders the "Install NetBird" modal once for the whole canvas, driven by the
-// shared installModal state (opened from the components sidebar or a placeholder
-// peer node's Install button). Server/Agent installs arrive without a setup key
-// — the key is generated inside the modal on demand and written back onto the
-// placeholder node so reopening Install reuses it.
+// Server/Agent installs arrive without a setup key: it is generated on demand
+// and written back onto the placeholder node so reopening Install reuses it.
 export const DraftInstallPeerModal = () => {
   const { installModal, setInstallModal } = useDraftMode();
   const { oidcUser: user } = useOidcUser();
@@ -52,8 +49,7 @@ export const DraftInstallPeerModal = () => {
     );
   }, [installModal, changes]);
 
-  // The placeholder's canvas name — drives the setup key name and its bound
-  // group name.
+  // Drives the setup key name and the bound group name.
   const placeholderName = React.useMemo(() => {
     const nodeId = installModal?.nodeId;
     if (!nodeId) return undefined;
@@ -68,23 +64,16 @@ export const DraftInstallPeerModal = () => {
     );
   }, [installModal, reactFlow]);
 
-  // Suggested hostname for the install commands, used only as a matching
-  // fallback. Server/Agent placeholders match by their hidden bound group
-  // (reliable; see resolveAutoGroups / useDraftPeerUpgrade), so they don't
-  // need a hostname suggestion at all. Only bound-group-less placeholders
-  // (user devices) get one so the upgrade watcher can find them.
+  // Only a matching fallback: bound-group placeholders match by that group, so
+  // just user devices need a hostname for the upgrade watcher.
   const hostname = React.useMemo(() => {
     if (!installModal?.nodeId) return undefined;
     if (kindHasBoundGroup(installModal.placeholderKind)) return undefined;
     return getPlaceholderHostname(reactFlow.getNodes(), installModal.nodeId);
   }, [installModal, reactFlow]);
 
-  // The hostname is written onto the node (like the setup key) so the
-  // upgrade watcher can match the registering peer even if placeholders are
-  // added/removed later (which would shift the computed suffixes). A
-  // placeholder absorbed into a group has no node — the hostname lands on
-  // its entry in the group node's draftPeers instead. (Server/Agent get no
-  // hostname; the bound group is their match key.)
+  // The hostname is persisted because later placeholder adds/removes would
+  // shift the computed suffixes the watcher matches on.
   React.useEffect(() => {
     const nodeId = installModal?.nodeId;
     if (!nodeId || !hostname) return;
@@ -115,11 +104,8 @@ export const DraftInstallPeerModal = () => {
     });
   }, [installModal, hostname, reactFlow]);
 
-  // Existing groups the placeholder was assigned to on the canvas become
-  // the setup key's auto-assigned groups — the peer registers already
-  // grouped. Draft groups have no API id yet, so they can't ride on the
-  // key; their membership deploys with the changeset instead (the upgrade
-  // sweep records the real peer id into the create-group entry).
+  // Canvas group assignments ride on the setup key so the peer registers
+  // already grouped. Draft groups have no API id yet and deploy separately.
   const autoGroups = React.useMemo(() => {
     const nodeId = installModal?.nodeId;
     if (!nodeId) return undefined;
@@ -135,10 +121,8 @@ export const DraftInstallPeerModal = () => {
     return ids.size > 0 ? Array.from(ids) : undefined;
   }, [installModal, reactFlow]);
 
-  // Write fields onto the placeholder's own node, or — if it was absorbed into
-  // a group (no own node) — onto its entry in that group's draftPeers. Mirrors
-  // the installHostname effect so the setup-key artifacts (key id, bound group)
-  // are stored for grouped placeholders too, and therefore get cleaned up.
+  // A placeholder absorbed into a group has no node of its own; its fields live
+  // on its entry in that group's draftPeers.
   const writeToPlaceholder = React.useCallback(
     (draftId: string, patch: Record<string, unknown>) => {
       const nodeId = `peer-${draftId}`;
@@ -168,8 +152,7 @@ export const DraftInstallPeerModal = () => {
     [reactFlow],
   );
 
-  // Read a placeholder's kind/name/boundGroupId from its own node, or from its
-  // draftPeers entry when absorbed (kind rides on the pseudo-peer's os).
+  // The kind rides on the absorbed pseudo-peer's os field.
   const readPlaceholder = React.useCallback(
     (draftId: string) => {
       const nodeId = `peer-${draftId}`;
@@ -209,14 +192,8 @@ export const DraftInstallPeerModal = () => {
     [reactFlow],
   );
 
-  // Server/Agent placeholders get a hidden, throwaway BOUND identity group,
-  // created directly in the API the moment the user generates the setup key
-  // (never before — opening/closing the modal leaks nothing, and it's never a
-  // draft changeset entry). Its real id rides on the key as an auto-group so
-  // the registering peer lands in a unique group; that's how the upgrade
-  // watcher matches it back to this placeholder (useDraftPeerUpgrade), after
-  // which the group is deleted again. The group id is stored on the node so a
-  // reopened Install reuses it instead of creating another.
+  // The hidden bound group is created only when the user generates the key, so
+  // opening the modal leaks nothing, and rides on it as the watcher's match key.
   const resolveAutoGroups = React.useCallback(async (): Promise<string[]> => {
     const nodeId = installModal?.nodeId;
     const extra = autoGroups ?? [];
@@ -225,7 +202,6 @@ export const DraftInstallPeerModal = () => {
     const data = readPlaceholder(draftId);
     if (!kindHasBoundGroup(data.placeholderKind)) return extra;
 
-    // Already created on a previous generate — reuse it.
     let boundId = data.boundGroupId;
     if (!boundId) {
       const label =
@@ -239,8 +215,7 @@ export const DraftInstallPeerModal = () => {
         resources: [],
       });
       boundId = created?.id;
-      // Store onto the node OR its group's draftPeers entry (absorbed) so a
-      // reopened Install reuses it and cleanup can later delete it.
+      // Stored so a reopened Install reuses it and cleanup can delete it.
       if (boundId) writeToPlaceholder(draftId, { boundGroupId: boundId });
     }
     return boundId ? [boundId, ...extra.filter((g) => g !== boundId)] : extra;
@@ -289,17 +264,12 @@ export const DraftInstallPeerModal = () => {
           onSetupKeyGenerated={(key) => {
             const nodeId = installModal.nodeId;
             if (!nodeId || !key?.key) return;
-            // Store the key string (for reuse) AND its id (so an abandoned
-            // draft can delete the key it created — see cleanup on removal) —
-            // onto the node OR, for an absorbed placeholder, its draftPeers
-            // entry.
+            // The key id lets an abandoned draft delete the key it created.
             const draftId = nodeId.replace("peer-", "");
             writeToPlaceholder(draftId, {
               setupKey: key.key,
               setupKeyId: key.id,
             });
-            // Flip its changeset issue badge to "Waiting" (the canvas now polls
-            // /peers for the machine to register).
             if (key.id) markInstallPeerWaiting(draftId, key.id);
           }}
         />

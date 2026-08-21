@@ -5,25 +5,15 @@ import {
   EMPTY_STATE_ZOOM,
 } from "@/modules/control-center/utils/layouts";
 
-// Reusable "dive / fly-out" scene transition for the control-center canvas.
-//
-// A single canvas can't crossfade, so the swap happens in a ~2-frame
-// invisible window:
-//   1. camera ACCELERATES (easeInHalf) while the canvas fades out — at max
-//      speed exactly when opacity hits 0
-//   2. scene swapped while invisible; camera teleported to the reveal start
-//   3. canvas fades in while the camera DECELERATES (easeOutHalf) into its
-//      final viewport
-// The two half-eases stitch into one continuous ease-in-out zoom across the
-// swap. Callers describe the pre-swap motion, swap, and final viewport;
-// fades/timing/velocity are owned here so all transitions feel identical.
+// Dive / fly-out scene transition for the canvas. A single canvas can't
+// crossfade, so the scene swaps inside a ~2-frame invisible window and the two
+// half-eases stitch into one ease-in-out zoom.
 
 export const easeInHalf = (t: number) => t * t;
 export const easeOutHalf = (t: number) => 1 - (1 - t) * (1 - t);
 
-// Run `cb` after the just-committed (invisible) swap has had a couple of real
-// frames to render, so a heavy swap drains while masked instead of stealing
-// the reveal tween's opening frames. Backstopped for backgrounded tabs.
+// Give the invisible swap a couple of real frames so a heavy swap drains while
+// masked instead of stealing the reveal tween's opening frames.
 const afterSwapSettled = (cb: () => void) => {
   if (typeof requestAnimationFrame !== "function") {
     setTimeout(cb, FADE_IN_DELAY);
@@ -45,24 +35,22 @@ const afterSwapSettled = (cb: () => void) => {
   setTimeout(run, REVEAL_WAIT_MAX_MS);
 };
 
-// Timing (ms). FADE_OUT and the pre-swap motion share a duration so the
-// motion is still at full speed when the canvas turns invisible.
+// The fade-out and the pre-swap motion overlap so the motion is still at full
+// speed when the canvas turns invisible.
 const FADE_OUT = 200;
 const PRE_SWAP_MOTION = 240;
 const SWAP_AT = 210;
-// Fallback settle delay only when rAF is unavailable (SSR safety).
+// Fallback settle delay when rAF is unavailable (SSR).
 const FADE_IN_DELAY = 30;
-// Frames to let the swap commit before revealing (see afterSwapSettled).
 const REVEAL_WAIT_FRAMES = 2;
 const REVEAL_WAIT_MAX_MS = 200;
 export const FADE_IN = 220;
 export const REVEAL = 450;
 
-// Matches the app-wide fit parameters (live view init, drill fits).
+// Must match the app-wide fit parameters (live view init, drill fits).
 export const CANVAS_FIT = { padding: 0.1, maxZoom: 0.8 } as const;
 
-// A node's rect for transition targets (style size wins — frames carry their
-// size there — falling back to the measured DOM size).
+// Style size wins over the measured DOM size: frames carry their size there.
 export const getNodeRect = (node?: Node | null): Rect | null =>
   node
     ? {
@@ -80,13 +68,10 @@ const setTransitionActive = (value: boolean) => {
   transitionActive = value;
   transitionListeners.forEach((l) => l());
 };
-// View-init effects call their own fitView after a rebuild — during a
-// transition the reveal owns the camera, so those fits must be skipped.
+// The reveal owns the camera, so view-init fitViews must be skipped.
 export const isCanvasTransitionActive = () => transitionActive;
 
-// Reactive subscription for React components (overlays outside the canvas
-// pane, which the transition's opacity fade doesn't cover, use this to stay
-// hidden until the dive/fly-out has settled).
+// Overlays outside the canvas pane aren't covered by the opacity fade.
 export const useCanvasTransitionActive = () =>
   useSyncExternalStore(
     (cb) => {
@@ -98,25 +83,17 @@ export const useCanvasTransitionActive = () =>
   );
 
 export type CanvasTransitionOptions = {
-  // Pre-swap camera motion. "in" dives into `target` (an inner rect of it);
-  // "out" pulls straight back from the current viewport.
+  // "in" dives into `target`; "out" pulls back from the current viewport.
   direction: "in" | "out";
   target?: Rect | null;
-  // Swap the scene while invisible (hide/show/replace nodes, change views).
+  // Runs while the canvas is invisible.
   swap: () => void;
-  // Where the camera ends. A viewport → the reveal starts at
-  // `growFrom · final` and decelerates into it (nodes grow in). null/absent
-  // → `reveal` is called instead (must be a decelerating camera move, e.g.
-  // fitView with easeOutHalf) after an optional `revealFrom` teleport.
+  // Where the camera ends. Absent → `reveal` runs instead (must decelerate).
   finalViewport?: () => Viewport | null;
-  // Teleport target for the reveal start when finalViewport isn't known
-  // (e.g. a close-up on a frame the camera then flies out of).
+  // Teleport target for the reveal start when finalViewport isn't known.
   revealFrom?: () => Rect | null;
   reveal?: () => void;
-  // Reveal start scale relative to the final viewport. Defaults by
-  // direction: "in" grows the new scene in (0.7 → 1), "out" starts CLOSE
-  // and settles outward (1.45 → 1) — the back motion must mirror the dive,
-  // zooming out of the frame, not growing the overview in.
+  // Reveal start scale relative to the final viewport ("out" starts CLOSE).
   growFrom?: number;
   onDone?: () => void;
 };
@@ -136,7 +113,6 @@ export function runCanvasTransition(
 ) {
   const pane = document.querySelector<HTMLElement>(".react-flow");
   if (!pane) {
-    // No pane to fade — degrade to an instant swap + reveal.
     swap();
     reveal?.();
     onDone?.();
@@ -147,13 +123,12 @@ export function runCanvasTransition(
 
   // 1. Fade out + accelerating camera motion.
   pane.style.transition = `opacity ${FADE_OUT}ms ease-in`;
-  // Reflow so the transition reliably animates (setting transition and
-  // opacity in the same frame can skip it — the swap would happen visibly).
+  // Reflow, or setting transition and opacity in one frame can skip the fade.
   void pane.offsetWidth;
   pane.style.opacity = "0";
 
   if (direction === "in" && target) {
-    // Dive toward the target's center (an inner rect → real zoom-in).
+    // An inner rect of the target makes this a real zoom-in.
     reactFlow.fitBounds(
       {
         x: target.x + target.width * 0.25,
@@ -171,9 +146,6 @@ export function runCanvasTransition(
     });
   }
 
-  // A fit viewport over the currently visible top-level nodes — the default
-  // grow-in destination when the caller doesn't provide one (e.g. live view
-  // rebuilds where the new scene only exists after the swap).
   const computeSceneViewport = (): Viewport | null => {
     const visible = reactFlow
       .getNodes()
@@ -185,8 +157,7 @@ export function runCanvasTransition(
     const bw = Math.max(b.width, 1);
     const bh = Math.max(b.height, 1);
     const pad = 1 - 2 * CANVAS_FIT.padding;
-    // Clamped to the canvas min zoom — setViewport doesn't clamp (unlike
-    // user zooming), so a huge scene must not fly out past the zoom limit.
+    // setViewport doesn't clamp zoom the way user zooming does.
     const zoom = Math.max(
       Math.min((W * pad) / bw, (H * pad) / bh, CANVAS_FIT.maxZoom),
       DEFAULT_MIN_ZOOM,
@@ -237,13 +208,9 @@ export function runCanvasTransition(
     // 3. Fade in + decelerating reveal.
     afterSwapSettled(() => {
       const autoReveal = !finalVp && !reveal && !revealFrom;
-      // Late scene viewport: for view rebuilds the new nodes only exist (and
-      // are measured) after the swap committed — compute the grow-in
-      // destination now so ALL callers share the same motion.
+      // View rebuilds only have measured nodes once the swap committed.
       const lateVp = autoReveal ? computeSceneViewport() : null;
-      // No nodes to frame (e.g. an empty network's drilled view) — settle at
-      // the shared empty-state camera instead of leaving the camera at the
-      // zoomed-in dive position (which read as "too zoomed in").
+      // With no nodes to frame, settle at the empty-state camera.
       const emptyVp =
         autoReveal && !lateVp
           ? {
@@ -273,19 +240,13 @@ export function runCanvasTransition(
         });
       }
       onDone?.();
-      // Ungate out-of-pane overlays (the empty states) once the canvas is
-      // fully opaque again — they're outside the pane, so appearing while it's
-      // still faint reads as a flash. They then ease in with a short fade
-      // (animate-in) over the solid canvas as the reveal zoom settles, so it's
-      // neither a flash nor a laggy late pop-in.
+      // Ungate the out-of-pane overlays only once the canvas is fully opaque.
       setTimeout(() => setTransitionActive(false), FADE_IN);
     });
   }, SWAP_AT);
 }
 
-// Drill INTO something: dives toward the clicked node (or zooms from the
-// center when there's none — dropdown picks), swaps the scene invisibly and
-// grows the new scene in.
+// Dives toward the clicked node, or zooms from the center when there is none.
 export const drillInto = (
   reactFlow: ReactFlowInstance,
   target: Node | Rect | null | undefined,
@@ -300,9 +261,7 @@ export const drillInto = (
     ...options,
   });
 
-// Drill back OUT: zooms outward while fading, swaps invisibly, then grows
-// the parent scene in (or flies out of `from`, e.g. the frame the drill
-// came from, when given).
+// Zooms outward, then grows the parent scene in (or flies out of `from`).
 export const drillOutOf = (
   reactFlow: ReactFlowInstance,
   swap: () => void,

@@ -41,8 +41,7 @@ type NetworkNodeType = {
 
 type NetworkNodeProps = Node<NetworkNodeType, "networkNode">;
 
-// Renders as a FRAME: its resources are ReactFlow child nodes (plus a "+N more"
-// cell past the visible cap), and the frame is sized via the node style.
+// Resources are ReactFlow child nodes; the frame is sized via the node style.
 export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   const {
     isDraft,
@@ -58,17 +57,14 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   );
   const showHalo = useIsContextMenuTarget(id);
 
-  // Hovering the floating controls must neither highlight the frame nor
-  // reveal its ConnectHandle — both key off the node's `group/node` hover,
-  // which fires for any descendant.
+  // Hovering the floating controls must neither highlight the frame nor reveal
+  // its ConnectHandle; both key off `group/node`, which any descendant fires.
   const [controlsHovered, setControlsHovered] = React.useState(false);
 
   const n = data.network as Network;
 
-  // Draft members: resource nodes assigned to this network (by node id for
-  // draft networks, API id otherwise). Store selector with value-equality, NOT
-  // CanvasState — subscribing to the nodes array re-rendered every frame on
-  // every canvas update (drag ticks, layout reconciles).
+  // Store selector with value equality, NOT useCanvasState: subscribing to the
+  // nodes array re-rendered every frame on every canvas update.
   const draftResources = useStore(
     (s) =>
       s.nodes
@@ -93,13 +89,11 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
       ),
   );
 
-  // Only the COUNT is needed (from network.resources ids), so no frame ever
-  // subscribes to /networks/resources — that was one SWR subscription per frame
-  // on the networks overview.
+  // Only the count is needed, so no frame subscribes to /networks/resources:
+  // that was one SWR subscription per frame on the networks overview.
   const resourceCount = (n?.resources || []).length + draftResources.length;
 
-  // Resource-group child rows have no draftNetwork ref (so they're not counted
-  // above) but still occupy a grid cell and count toward the frame.
+  // Resource-group rows have no draftNetwork ref but still occupy a grid cell.
   const resourceGroupCount = useStore(
     (s) =>
       s.nodes.filter(
@@ -107,20 +101,13 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           node.parentId === id && node.type === NodeType.ResourceGroupNode,
       ).length,
   );
-  // Drives the header count and whether Add Resource is centered (empty) or a
-  // bottom row (has content).
   const frameCellCount = resourceCount + resourceGroupCount;
 
-  // Parent view caps visible cells; useNetworkFrameLayout hides the overflow
-  // and returns the rect for a "+N more" cell in the last grid slot (cleared
-  // while drilled, since drilling reveals everything).
+  // Rect computed by useNetworkFrameLayout; cleared while drilled.
   const moreCell = data.moreCell;
 
-  // The frame's routers: draft create-router changes plus, for existing
-  // networks, the API rows. ALL frames fetch their API rows LAZILY (first
-  // popover open) — a routers GET per frame on mount lagged views with many
-  // networks. Until loaded, the indicator combines routing_peers_count (from
-  // /networks) with the draft-change rows, which need no fetch.
+  // API router rows are fetched lazily on first popover open: a routers GET per
+  // frame on mount lagged views with many networks.
   const [routersRequested, setRoutersRequested] = React.useState(false);
   const { rows: routerRows, isLoading: routerRowsLoading } =
     useFrameRouterRows(id, routersRequested);
@@ -137,8 +124,8 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         isDraft && !isDrilled ? () => setDrillDownNetworkNodeId(id) : undefined
       }
       className={cn(
-        // transition-colors (not -all) so reparenting a resource — which
-        // resizes the frame — snaps instead of animating the width/height.
+        // transition-colors, not -all, so a frame resize snaps instead of
+        // animating the width/height.
         "relative transition-colors border bg-nb-gray-940",
         data.enabled === false && "opacity-60",
         "w-full h-full rounded-xl border border-nb-gray-800 group group/node",
@@ -147,8 +134,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         isDraft &&
           isTarget &&
           "hover:ring-2 hover:ring-white/60 hover:bg-nb-gray-930",
-        // Drop indicator while dragging a resource onto the frame; set on the
-        // node's data by useDragToGroup during the drag.
+        // Set on the node's data by useDragToGroup during a drag.
         data.dropTarget && "border-white bg-nb-gray-930",
         showHalo && "ring-2 ring-sky-500",
       )}
@@ -169,7 +155,6 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           >
             <NetworkIcon size={12} className={"shrink-0 text-nb-gray-300"} />
             <span className={"truncate"}>{n?.name}</span>
-            {/* NEW badge only for draft networks (no API id). */}
             {!n?.id && <SmallBadge />}
           </div>
           <div className={cn("text-nb-gray-400 whitespace-nowrap mt-0.5")}>
@@ -180,9 +165,8 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         </div>
       </div>
 
-      {/* Add Resource — always in a draft frame. Empty frames center it; with
-          resources it's a full-width row pinned to the bottom band the layout
-          reserves (the "+N more" footer stacks above it). */}
+      {/* Empty frames center the button; with resources it's a full-width row
+          in the bottom band the layout reserves. */}
       <FrameAddResourceButton
         id={id}
         frameCellCount={frameCellCount}
@@ -190,13 +174,9 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
         setControlsHovered={setControlsHovered}
       />
 
-      {/* Routing-peers button group floating above the frame. Add is
-          draft-only; live frames are read-only (click drills). */}
       <div
-        // Hovering the floating controls (DOM children of the node, so
-        // ReactFlow's onNodeMouseEnter fires) must not highlight the frame.
-        // ReactFlow fires enter outer→inner and leave inner→outer, so these
-        // run after (enter) / before (leave) its handler and win.
+        // ReactFlow fires enter outer→inner and leave inner→outer, so these run
+        // after (enter) / before (leave) its own node handler and win.
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={() => {
           setHoveredNetworkNodeId(null);
@@ -217,14 +197,12 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           compact
           onOpenChange={(open) => open && setRoutersRequested(true)}
           onPrefetch={() => setRoutersRequested(true)}
-          // Adds work in BOTH modes — live opens the real modal (POSTs),
-          // draft records a change.
+          // Live opens the real modal; draft records a change.
           onAdd={() => setRoutingPeerModal({ networkNodeId: id })}
         />
       </div>
 
-      {/* Edge anchors for LIVE frames — draft frames use FullAreaTargetHandle
-          instead. */}
+      {/* Draft frames use FullAreaTargetHandle instead. */}
       {!isDraft && (
         <>
           <Handle
@@ -252,8 +230,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
       )}
       {isDraft && <FullAreaTargetHandle isConnectable={isTarget} />}
 
-      {/* Overflow "+N more" cell in the frame's last grid slot (positioned by
-          useNetworkFrameLayout). Clicks bubble to the frame → drill in. */}
+      {/* Clicks bubble to the frame and drill in. */}
       {!isDrilled && moreCell && (
         <MoreResourcesNode
           count={moreCell.count}
@@ -269,8 +246,8 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   );
 };
 
-// Split into its own component so LIVE frames never mount useDraftNodeCreation
-// (it pulls useControlCenterData — six SWR subscriptions per frame).
+// Split out so live frames never mount useDraftNodeCreation, which pulls six
+// SWR subscriptions per frame.
 const FrameAddResourceButton = ({
   id,
   frameCellCount,
@@ -285,9 +262,8 @@ const FrameAddResourceButton = ({
   const { setResourceEditor } = useDraftMode();
   return (
     <div
-      // Wrapper stays click-through (pointer-events-none) so dragging empty
-      // frame content still moves the frame; only the button captures events
-      // and blocks the drag (nodrag).
+      // Click-through wrapper so dragging empty frame content still moves the
+      // frame; only the button captures events and blocks the drag.
       className={cn(
         "absolute inset-x-0 bottom-0 pointer-events-none",
         frameCellCount === 0
@@ -303,9 +279,8 @@ const FrameAddResourceButton = ({
           "!px-3 !py-0 h-9 nodrag pointer-events-auto",
           frameCellCount > 0 && "w-full",
         )}
-        // Open the resource modal so an IP/CIDR/domain is entered — the row is
-        // created into the frame only once the modal saves. Clicks must not
-        // bubble (live frame click drills).
+        // The row is created only once the modal saves. Clicks must not bubble;
+        // a frame click drills in.
         onClick={(e) => {
           e.stopPropagation();
           setResourceEditor({ createInNetworkNodeId: id });

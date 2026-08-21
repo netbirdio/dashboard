@@ -17,12 +17,9 @@ import {
 import { cleanupDockerPeer, registerDockerPeer } from "../helpers/docker-peer";
 
 /**
- * Live PEER view, exercised with a REAL docker peer registered via a setup key
- * (the test env has no peers otherwise). Registration is confirmed working
- * against management directly; the peer stays offline (no signal/TURN) but is
- * selectable, which is all the Peer view needs.
- *
- * These are slow: registering a peer takes ~10–20s.
+ * Live PEER view with a REAL docker peer registered via a setup key (the test
+ * env has no peers otherwise). It stays offline but is selectable, which is
+ * all the view needs. Registering takes ~10-20s.
  */
 test.describe.serial("Control Center Peers @control-center", () => {
   const PREFIX = "cc-peer-";
@@ -45,15 +42,12 @@ test.describe.serial("Control Center Peers @control-center", () => {
     // Registration + render can take a while under emulation.
     test.setTimeout(120_000);
 
-    // Clean slate so the peer view auto-selects OUR peer (peers[0]) and the
-    // group view logic isn't confused by leftover fixtures.
+    // Clean slate so the peer view auto-selects our peer (peers[0]).
     await deletePoliciesBySubstring(page, PREFIX);
     await deletePeersByPrefix(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
 
-    // A source group the peer belongs to, plus a policy from it — so the peer
-    // view (which shows policies where the peer's groups are sources) renders
-    // a real graph, not just the lone peer node.
+    // The peer view only graphs policies where the peer's groups are sources.
     const srcGroup = await createGroup(page, generateRandomName(PREFIX));
     const dstGroup = await createGroup(page, generateRandomName(PREFIX));
     const policy = await createPolicy(
@@ -71,14 +65,12 @@ test.describe.serial("Control Center Peers @control-center", () => {
     await openControlCenter(page, "peers");
     await dismissBlockingOverlays(page);
 
-    // The peer is auto-selected; its select node and its policy render.
     await expect(
       page.locator('.react-flow__node[data-id="select-peer-node"]'),
     ).toBeVisible({ timeout: 15_000 });
     await expect(canvasNode(page, `policy-${policy.id}`)).toBeVisible({
       timeout: 15_000,
     });
-    // The peer's name is shown on the canvas.
     await expect(page.getByText(host).first()).toBeVisible();
   });
 });

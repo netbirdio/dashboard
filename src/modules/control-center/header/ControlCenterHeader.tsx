@@ -54,9 +54,7 @@ import {
   useStructuralNodes,
 } from "@/modules/control-center/utils/helpers";
 
-// Width for the network selector: sized to its LONGEST option label
-// (~6.5px/char at the trigger's text-xs medium, plus icon/chevron/padding
-// chrome), clamped to 256px max so short names don't need the full column.
+// Sized to the longest option label (~6.5px/char at text-xs), clamped to 256px.
 const networkSelectorWidth = (labels: unknown[]) => {
   const longest = labels.reduce<number>(
     (m, l) => Math.max(m, typeof l === "string" ? l.length : 0),
@@ -65,11 +63,6 @@ const networkSelectorWidth = (labels: unknown[]) => {
   return Math.min(256, Math.max(150, 86 + longest * 6.5));
 };
 
-// Network actions (⋮) next to the network selector, in BOTH modes. Edit and
-// Delete are mode-aware: draft records to the changeset (deploys later), live
-// hits the API immediately. Delete on an existing network confirms + deletes;
-// on a draft-created one it's Remove (cancels the pending create). onDeleted
-// lets the caller leave the just-deleted network's view.
 function NetworkActionsMenu({
   networkNodeId,
   onDeleted,
@@ -87,9 +80,7 @@ function NetworkActionsMenu({
   );
 
   const handleDelete = React.useCallback(async () => {
-    // Draft-created network → Remove (canvas-only, never confirms); existing
-    // one → Delete (confirm + changeset delete). Only leave the view once it's
-    // actually gone (deleteNetwork resolves false on cancel).
+    // deleteNetwork resolves false when the confirmation is cancelled.
     const removed = isDraftNew
       ? (removeNodeWithEdges(networkNodeId), true)
       : await deleteNetwork(networkNodeId);
@@ -138,9 +129,6 @@ function NetworkActionsMenu({
   );
 }
 
-// "Add Resource" button for the drilled single-network top bar. Opens the
-// resource editor targeting this network (draft: the row is created into the
-// frame on save; live: a real POST).
 function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
   const { setResourceEditor } = useDraftMode();
   return (
@@ -162,8 +150,6 @@ function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
   );
 }
 
-// The drilled single-network header (draft), mirroring the live one: back
-// arrow, network selector, the shared RoutingPeersBar, and Add Resource.
 function DraftDrillDownHeader() {
   const {
     drillDownNetworkNodeId,
@@ -176,14 +162,11 @@ function DraftDrillDownHeader() {
     !!drillDownNetworkNodeId,
   );
 
-  // Controlled so a canvas click closes it — the dropdown floats over the
-  // ReactFlow pane, whose stopPropagation hides the click from Radix's own
-  // outside-detection (same as the live selector).
+  // Controlled because the ReactFlow pane's stopPropagation hides canvas
+  // clicks from Radix's own outside-detection.
   const [selectOpen, setSelectOpen] = React.useState(false);
   useCloseOnCanvasClick(selectOpen, () => setSelectOpen(false));
 
-  // Overview (not drilled): lists the frames on the canvas; picking one drills
-  // into it (the drill effect plays the dive transition itself).
   const frameOptions = React.useMemo(() => {
     const options: SelectOption[] = sortBy(
       nodes
@@ -197,7 +180,6 @@ function DraftDrillDownHeader() {
         })),
       "label",
     );
-    // Mirrors the live selector: "All Networks" (value "") is the overview.
     options.unshift({
       value: "",
       label: "All Networks",
@@ -208,12 +190,10 @@ function DraftDrillDownHeader() {
 
   const drilled = !!drillDownNetworkNodeId;
 
-  // The all-networks OVERVIEW selector only belongs to draft sessions entered
-  // from the networks view. The DRILL-DOWN header is view-agnostic, so it
-  // still renders once the user drills into a network from any entry view.
+  // The overview selector belongs only to networks-view drafts; the
+  // drill-down header itself is view-agnostic.
   if (!drilled && currentView !== FlowView.NETWORKS) return null;
 
-  // Overview with no frames on the canvas → nothing to select.
   if (!drilled && frameOptions.length <= 1) return null;
 
   return (
@@ -230,8 +210,6 @@ function DraftDrillDownHeader() {
             <ArrowLeftIcon size={14} />
           </Button>
         )}
-        {/* Network selector + attached ✎ edit segment (when drilled) as one
-          control; "All Networks" selects the overview. */}
         <div className={"flex min-w-0 items-stretch"}>
           <div
             key={"draft-network-select"}
@@ -251,7 +229,6 @@ function DraftDrillDownHeader() {
               onOpenChange={setSelectOpen}
               popoverMinWidth={200}
               className={cn(
-                // Same treatment as the live network selector.
                 "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
                 // Square the right corners so the ✎ segment attaches flush.
                 drilled && "!rounded-r-none",
@@ -267,8 +244,6 @@ function DraftDrillDownHeader() {
           )}
         </div>
       </div>
-      {/* Routing peers and resources only make sense on a specific network.
-          Add Resource sits right after the routing-peers bar. */}
       {drilled && (
         <div className={"flex flex-wrap gap-3 md:gap-4"}>
           <RoutingPeersBar
@@ -293,18 +268,15 @@ function HeaderTopLeft() {
   const { networks } = useControlCenterData();
   const hasNetworks = (networks?.length ?? 0) > 0;
 
-  // Controlled so a click on the canvas closes it (the dropdown floats over
-  // the ReactFlow pane, whose stopPropagation hides the click from Radix's own
-  // outside-detection — see the hook).
+  // Controlled because the ReactFlow pane's stopPropagation hides canvas
+  // clicks from Radix's own outside-detection.
   const [networkSelectOpen, setNetworkSelectOpen] = React.useState(false);
   useCloseOnCanvasClick(networkSelectOpen, () => setNetworkSelectOpen(false));
 
   return (
     <div className={"pointer-events-auto min-w-0 text-sm"}>
-      {/* Keys keep each control's identity stable while its conditional
-          siblings mount/unmount — without them, picking a network inserts
-          the back button and React REMOUNTS the network SelectDropdown
-          (its just-closing popover flashes). */}
+      {/* Keys keep each control's identity stable as conditional siblings
+          mount, so picking a network doesn't remount the SelectDropdown. */}
       <div className={"flex flex-wrap gap-3 md:gap-4"}>
         {!isDraft && (
           <div className={"flex flex-wrap min-w-0 max-w-full gap-3 md:gap-4"}>
@@ -325,9 +297,6 @@ function HeaderTopLeft() {
               <FlowSelector value={currentView} onChange={onViewChange} />
             )}
 
-            {/* Network selector + attached ✎ edit segment (once drilled), one
-              control mirroring the draft header. Edit opens the real network
-              modal (PUT) for the existing network. */}
             {currentView === "networks" && hasNetworks && (
               <div
                 key={"network-select"}
@@ -354,7 +323,6 @@ function HeaderTopLeft() {
                     className={cn(
                       // Fixed height matching the RoutingPeersBar next to it.
                       "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
-                      // Square the right corners so the ✎ segment attaches flush.
                       selectedNetwork && "!rounded-r-none",
                     )}
                     size={"xs"}
@@ -371,9 +339,6 @@ function HeaderTopLeft() {
           </div>
         )}
 
-        {/* Draft: the drill-down breadcrumb is the only top-left
-              control — exiting draft happens via Cancel / Review & Deploy
-              in the DraftModeSwitcher. */}
         {isDraft && <DraftDrillDownHeader />}
 
         {!isDraft && selectedNetwork && currentNetwork && (
@@ -393,15 +358,13 @@ function HeaderTopLeft() {
   );
 }
 
-// Top-center pill naming the active mode — armed it prompts for a node,
-// focused it names the target; the X exits.
 function FocusModePill() {
   const { highlightArmed, setHighlightArmed, focusedNodeId, setFocusedNodeId } =
     useDestinationGroup();
   const nodes = useStructuralNodes();
   const show = highlightArmed || focusedNodeId !== "";
 
-  // "F" arms/exits the mode, Escape exits (pane clicks intentionally don't).
+  // "F" arms/exits, Escape exits; pane clicks intentionally don't.
   React.useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && show && !e.defaultPrevented) {
@@ -424,7 +387,6 @@ function FocusModePill() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [show, setHighlightArmed, setFocusedNodeId]);
 
-  // Name of whatever is focused — peer, resource, group, policy or network.
   const focusedName = React.useMemo(() => {
     if (!focusedNodeId) return "";
     const data = nodes.find((n) => n.id === focusedNodeId)?.data as
@@ -457,7 +419,6 @@ function FocusModePill() {
           transition={{ type: "spring", stiffness: 400, damping: 32 }}
         >
           <div className={"py-4"}>
-            {/* Same surface as the Live/Draft switcher. */}
             <div
               className={
                 "flex items-center gap-2 pl-3.5 pr-1.5 py-1.5 rounded-full border border-nb-gray-900 bg-nb-gray-930 text-xs font-medium text-nb-gray-200"
@@ -529,7 +490,6 @@ function FeedbackButton() {
         target={"_blank"}
         rel={"noopener noreferrer"}
       >
-        {/* Same button style as the draft-mode Cancel button. */}
         <Button variant={"secondary"} size={"xs"} className={"h-[39px] px-4.5"}>
           <MessageSquareShare size={14} />
           Feedback

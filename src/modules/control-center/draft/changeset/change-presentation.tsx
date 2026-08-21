@@ -21,10 +21,9 @@ import {
   DraftChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 
-// Shared presentation for a change in the Review & Deploy list — the entity
-// icon, name, and kind/issue badges.
+// Shared presentation for a change in the Review & Deploy list.
 
-// Entity icon — the verb lives in the badge.
+// Entity icon; the verb lives in the badge.
 export const changeIcon = (change: DraftChange, size = 14) => {
   switch (change.type) {
     case "create-group":
@@ -47,19 +46,17 @@ export const changeIcon = (change: DraftChange, size = 14) => {
     case "update-router":
       return <WaypointsIcon size={size} />;
     case "install-peer":
-      // Match the placeholder's canvas icon by kind.
       return change.kind === "agent" ? (
         <BotIcon size={size} />
       ) : change.kind === "user-device" ? (
         <MonitorSmartphoneIcon size={size} />
       ) : (
-        // Server glyph reads visually heavier than the others — nudge it down.
+        // Server glyph reads heavier than the others, so shrink it.
         <ServerIcon size={size - 2} />
       );
   }
 };
 
-// The entity's display name only (no verb, no type).
 export const entityName = (change: DraftChange): string => {
   switch (change.type) {
     case "create-router":
@@ -95,8 +92,7 @@ const KIND_BADGES: Record<
     icon: <SquareMinusIcon size={13} />,
     className: "bg-red-900/30 text-red-400 border border-red-500/20",
   },
-  // Not an API call — a step the USER performs (install / select the peer).
-  // Deploy leaves these pending; amber signals action required.
+  // Not an API call but a step the user performs; deploy leaves these pending.
   install: {
     label: "Install",
     icon: <TriangleAlertIcon size={13} />,
@@ -104,11 +100,7 @@ const KIND_BADGES: Record<
   },
 };
 
-// Blocking-issue badge (e.g. "No Network") — replaces the diffstat/kind badge
-// on a change that can't deploy until it's fixed. Amber "action required",
-// same palette as the "Install" action badge. When onClick is given the badge
-// is the fix affordance (rendered as a role=button span, since it lives inside
-// the accordion trigger button and can't nest a real <button>).
+// A role=button span, not a <button>: it lives inside the accordion trigger.
 export const IssueBadge = ({
   label,
   onClick,
@@ -116,7 +108,6 @@ export const IssueBadge = ({
 }: {
   label: string;
   onClick?: () => void;
-  // "In progress" (peer waiting to register): spinner instead of the alert.
   waiting?: boolean;
 }) => {
   const className = cn(
@@ -156,7 +147,6 @@ export const IssueBadge = ({
     >
       {Leading}
       {label}
-      {/* Chevron hints the badge is clickable (opens the fix). */}
       <ChevronRightIcon size={12} className={"-mr-0.5 opacity-70"} />
     </span>
   );
@@ -177,8 +167,6 @@ export const KindBadge = ({ kind }: { kind: ChangeKind }) => {
   );
 };
 
-// GitHub-style diffstat: "+N -M" plus a 5-square proportion bar. Shown in the
-// accordion header whenever the change produces a diff.
 export const DiffStat = ({
   additions,
   deletions,

@@ -24,33 +24,29 @@ type ResourceGroupNode = Node<
   "resourceGroupNode"
 >;
 
-// A resource group shown INSIDE a network frame: same row anatomy as the draft
-// resource node but flat (no card background/border/padding). Laid out by the
-// frame like resources; dragging it moves the whole frame.
+// A resource group shown INSIDE a network frame: a flat row (no card
+// background), laid out by the frame like its resources.
 export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => {
   const { group, showHandles = true } = data;
   const { isDraft, drillDownNetworkNodeId } = useDraftMode();
   const { selectedDestinationGroup, setSelectedDestinationGroup } =
     useDestinationGroup();
   const isContextTarget = useIsContextMenuTarget(id);
-  // Panel selection is keyed by group id, or by node id for draft groups —
-  // same rule as GroupNode.
+  // Panel selection is keyed by group id, or by node id for draft groups.
   const isPanelActive =
     selectedDestinationGroup !== "" &&
     (selectedDestinationGroup === group?.id || selectedDestinationGroup === id);
   const showHalo = isPanelActive || isContextTarget;
-  // Framed rows accept connection DROPS in every view; only dragging FROM the
-  // row stays drill-down-only (same rule as ResourceNode).
+  // Framed rows accept drops in every view; dragging FROM one is
+  // drill-down-only.
   const isFramed = !!parentId?.startsWith("network-");
   const handlesActive = !isFramed || drillDownNetworkNodeId === parentId;
   const isTarget = useConnection(
     (c) => c.inProgress && c.fromNode.id !== id,
   );
 
-  // While drilled, the parent frame is HIDDEN — the same signal ResourceNode
-  // uses to swap its flat row for a card; here the row promotes to a full
-  // GroupNode card. (Boolean store selector, not useInternalNode — see
-  // ResourceNode for why.)
+  // While drilled the parent frame is HIDDEN and the row promotes to a full
+  // GroupNode card. Boolean store selector on purpose, not useInternalNode.
   const parentFrameHidden = useStore((st) =>
     parentId ? !!st.nodeLookup.get(parentId)?.hidden : false,
   );
@@ -75,11 +71,8 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
   return (
     <div
       className={cn(
-        // h-full + centering: the frame layout stamps a fixed slot height on
-        // framed rows (deterministic grid — no measure-based re-layout).
+        // The frame layout stamps a fixed slot height on framed rows.
         "cc-frame-row relative rounded-lg transition-all group/node w-full h-full flex flex-col justify-center",
-        // Draft opens the group panel; live drills into the network (via
-        // onNodeClick).
         "cursor-pointer",
       )}
       onClick={() => {
@@ -90,8 +83,7 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
         <div
           className={cn(
             "cc-frame-row-icon h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 group-hover/node:bg-nb-gray-800 transition-all",
-            // Rings live on the icon box, not the whole row: white while a
-            // connection drag hovers, sky halo for the context menu.
+            // Rings live on the icon box, not the whole row.
             isTarget && "group-hover/node:ring-2 group-hover/node:ring-white",
             showHalo && "ring-2 ring-sky-500",
           )}
@@ -118,10 +110,8 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
           </span>
         </div>
       </div>
-      {/* AllHandles always render (invisible edge anchors) — a row created with
-          showHandles false (grouping resources inside a drilled frame) still
-          has to resolve a policy drop and anchor its edges; showHandles only
-          gates the visible connect bubble. */}
+      {/* AllHandles always render: even a showHandles-false row has to anchor
+          edges. showHandles only gates the visible connect bubble. */}
       <AllHandles />
       {showHandles && isDraft && handlesActive && (
         <ConnectHandle type={"source"} position={Position.Left} />

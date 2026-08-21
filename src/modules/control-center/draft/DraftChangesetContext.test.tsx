@@ -171,7 +171,6 @@ describe("group changes", () => {
         peerIds: ["p1"],
       }),
     );
-    // Net state equals live, so nothing is left to deploy.
     expect(result.current.changes).toHaveLength(0);
   });
 

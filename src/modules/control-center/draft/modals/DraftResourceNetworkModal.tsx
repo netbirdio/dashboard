@@ -23,10 +23,8 @@ import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNod
 import { NetworkModalContent } from "@/modules/networks/NetworkModal";
 import { SmallBadge } from "@components/ui/SmallBadge";
 
-// "No Network" picker for a standalone draft resource: assign it to an
-// existing network (a draft frame on canvas or a real API network) or create
-// a new draft network (name + description via the networks-page modal) and
-// drop the resource into it.
+// "No Network" picker for a standalone draft resource: assign it to an existing
+// network (a canvas frame or a real API network) or to a new draft network.
 export const DraftResourceNetworkModal = () => {
   const { resourceNetworkPicker, setResourceNetworkPicker } = useDraftMode();
   return (
@@ -62,18 +60,14 @@ const PickerContent = ({
   const [creating, setCreating] = React.useState(false);
   const [selected, setSelected] = React.useState("");
 
-  // Network dropdown options — draft frames on canvas + every real network.
-  // Values are prefixed so the pick can tell them apart. Creating a new
-  // network lives OUTSIDE the select (a dedicated button below) so it can't
-  // scroll away or get filtered out with many networks.
+  // Values are prefixed so the pick can tell a canvas frame from a real
+  // network.
   const options: SelectOption[] = React.useMemo(() => {
     const frameNodes = reactFlow.getNodes().filter(isFrameNode);
     const frames = frameNodes.map((n) => {
       const name =
         (n.data as { network?: { name?: string } })?.network?.name ??
         "Network";
-      // A draft-created network (not deployed yet) — flag it like everywhere
-      // else draft-only entities are listed.
       const isNew = n.id.startsWith("network-new-");
       return {
         value: `frame:${n.id}`,
@@ -102,8 +96,8 @@ const PickerContent = ({
     return [...frames, ...api];
   }, [reactFlow, networks]);
 
-  // The resource may have no canvas node anymore (absorbed into a group as
-  // a member) — those assign through the group-held path instead.
+  // The resource may have no canvas node anymore (absorbed into a group), and
+  // those assign through the group-held path.
   const isHeld = !reactFlow.getNodes().some((n) => n.id === resourceNodeId);
   const heldResourceId = resourceNodeId.replace("resource-", "");
 
@@ -148,9 +142,8 @@ const PickerContent = ({
       name: values.name,
       description: values.description,
     });
-    // The frame reaches the ReactFlow store only after the next React
-    // commit — assigning immediately (or on a 0ms timeout) can run before
-    // it exists, silently leaving the resource unparented. Wait for it.
+    // The frame reaches the ReactFlow store only after the next React commit;
+    // assigning before that silently leaves the resource unparented.
     const tryAssign = (attempt = 0) => {
       const frame = reactFlow.getNodes().find((n) => n.id === networkNodeId);
       if (frame) {
@@ -193,8 +186,7 @@ const PickerContent = ({
             searchPlaceholder={"Search networks..."}
             placeholder={"Select or create a network..."}
             maxHeight={190}
-            // "Create New Network" pinned below the options — always visible
-            // regardless of scroll or search.
+            // Pinned below the options so scroll or search can't hide it.
             footer={(close) => (
               <div className={"p-2"}>
                 <button
@@ -214,8 +206,7 @@ const PickerContent = ({
             )}
           />
         </div>
-        {/* Same separator color as the header (the footer's built-in border
-            is a slightly different gray). */}
+        {/* Same separator color as the header. */}
         <Separator />
         <ModalFooter className={"items-center"} separator={false}>
           <div className={"flex gap-3 w-full justify-end"}>
@@ -228,8 +219,7 @@ const PickerContent = ({
           </div>
         </ModalFooter>
       </ModalContent>
-      {/* "Create New Network" opens ON TOP of the picker — Cancel there
-          returns to the picker instead of dismissing everything. */}
+      {/* Opens ON TOP of the picker so Cancel returns to it. */}
       <Modal
         open={creating}
         onOpenChange={(open) => !open && setCreating(false)}

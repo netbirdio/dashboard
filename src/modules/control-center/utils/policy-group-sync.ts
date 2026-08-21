@@ -1,15 +1,8 @@
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
 
-// Canvas policy nodes and their edges carry a `data.policy` snapshot whose
-// rule sides hold COPIES of group objects. Group mutations (rename, member
-// counts) patch the group NODES — these copies must follow, otherwise the
-// policy edit modal (seeded from the policy node) and the PeerGroupSelector
-// show the stale name/counts until an Auto Arrange or draft rebuild.
-//
-// Identity-stable: returns the input array when nothing matched, and keeps
-// untouched items/rules/sides identical (the canvas re-render rules depend
-// on it).
+// Policy node snapshots hold COPIES of group objects, so renames must be
+// patched into them too.
 export const patchGroupInPolicies = <
   T extends { data?: Record<string, unknown> },
 >(
@@ -61,15 +54,11 @@ export const patchGroupInPolicies = <
   return anyChanged ? next : items;
 };
 
-// Matcher for "the same group" following the canvas convention: existing
-// groups match by id; draft groups (no id yet) match by name against other
-// id-less references.
+// Existing groups match by id; draft groups (no id yet) match by name.
 export const sameGroupMatcher = (group: Group) => (g: Group) =>
   group.id ? g.id === group.id : !g.id && g.name === group.name;
 
-// Removing an existing group must also remove it from every policy that
-// references it before the group DELETE is sent. Keep this as a pure helper so
-// the canvas and the changeset use the exact same policy shape.
+// A group must leave every referencing policy before its DELETE is sent.
 export const removeGroupFromPolicy = (policy: Policy, group: Group): Policy => {
   const matches = sameGroupMatcher(group);
   let changed = false;

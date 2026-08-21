@@ -83,9 +83,8 @@ type MenuItem = {
 interface NodeContextMenuProps {
   position: MenuPosition | null;
   nodeId: string;
-  // Close just the menu (after picking an item — keeps any panel it opened).
+  // Closes just the menu, keeping any panel it opened.
   onClose: () => void;
-  // Dismiss everything (menu + panel + components) on an outside click.
   onDismiss: () => void;
 }
 
@@ -96,7 +95,6 @@ export const NodeContextMenu = ({
   onDismiss,
 }: NodeContextMenuProps) => {
   const menuRef = useRef<HTMLDivElement>(null);
-  // Where the menu renders — flipped/clamped away from the viewport edges.
   const menuPosition = useEdgeAwareMenuPosition(position, menuRef);
   const {
     nodes,
@@ -124,9 +122,6 @@ export const NodeContextMenu = ({
   const { onNetworkSelect } = useControlCenterUI();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const { groups, policies } = useControlCenterData();
-  // Group deletability mirrors the Groups page: an IdP-issued group can't be
-  // deleted, it needs the delete permission, and it must be unused everywhere
-  // (policies, DNS, routes, setup keys, users, resources, peers).
   const { data: groupsUsage } = useGroupsUsage();
   const {
     trackSetPolicyEnabled,
@@ -146,11 +141,8 @@ export const NodeContextMenu = ({
   const { syncDraftResource } = useDraftNetworkActions();
   const deleteNetwork = useDeleteNetwork();
 
-  // The rename modal must survive the menu closing (position → null), so the
-  // target node is snapshotted separately. It targets either a group node or
-  // a placeholder peer. The target stays set through the close animation
-  // (separate open flag) — clearing it on close would flip the title back to
-  // the group default while the modal fades out.
+  // The rename target outlives both the menu closing (position → null) and the
+  // modal's close animation; clearing it early flips the title back mid-fade.
   const [renameTarget, setRenameTarget] = useState<Node | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const openRename = useCallback((target: Node) => {
@@ -187,9 +179,8 @@ export const NodeContextMenu = ({
     [nodes, renameTarget],
   );
 
-  // Group names must be unique across API groups AND the draft groups on the
-  // canvas (name-based matching becomes ambiguous otherwise), and "All" is
-  // reserved for the system group.
+  // Group names must be unique across API and draft groups (name-based matching
+  // becomes ambiguous otherwise); "All" is reserved for the system group.
   const groupTakenNames = useMemo(() => {
     const currentGroup = getNodeGroup(renameTarget ?? undefined);
     const names = new Set<string>(["All"]);
@@ -202,8 +193,8 @@ export const NodeContextMenu = ({
     return Array.from(names);
   }, [groups, nodes, renameTarget]);
 
-  // Placeholder names live only on the canvas node — the real name comes from
-  // the machine once the peer is installed.
+  // Placeholder names live only on the canvas node; an installed peer takes its
+  // name from the machine.
   const renamePlaceholder = useCallback(
     (id: string, name: string) => {
       setNodes((prev) =>
@@ -213,7 +204,6 @@ export const NodeContextMenu = ({
             : n,
         ),
       );
-      // The pending install-peer entry follows the rename.
       const kind = nodes.find((n) => n.id === id)?.data?.placeholderKind as
         | "user-device"
         | "server"
@@ -226,7 +216,6 @@ export const NodeContextMenu = ({
     [setNodes, nodes, trackInstallPeer],
   );
 
-  // Rename a draft resource node (canvas + changeset re-sync for saved ones).
   const renameResource = useCallback(
     (id: string, name: string) => {
       setNodes((prev) =>
@@ -250,9 +239,6 @@ export const NodeContextMenu = ({
     [setNodes, syncDraftResource],
   );
 
-  // Enable/disable a resource on the canvas (dims the node), mirroring the
-  // policy Enable/Disable toggle. For an EXISTING resource it also records an
-  // update-resource change so the enabled state deploys.
   const toggleResourceEnabled = useCallback(
     (id: string) => {
       const target = nodes.find((n) => n.id === id);
@@ -265,8 +251,7 @@ export const NodeContextMenu = ({
         ),
       );
       // Draft resources carry their enabled state via their create-resource
-      // change (re-sync after the canvas update). Existing resources record an
-      // update-resource change.
+      // change, so they only need a re-sync after the canvas update.
       if (id.startsWith("resource-new-")) {
         setTimeout(() => syncDraftResource(id), 0);
         return;
@@ -290,8 +275,7 @@ export const NodeContextMenu = ({
           description: resource.description,
           enabled,
           groupIds,
-          // Only `enabled` changes here — the rest mirror the live resource, so
-          // toggling back to the original drops the change.
+          // Only `enabled` changes here, so toggling it back drops the change.
           original: {
             enabled: resource.enabled ?? true,
             name: resource.name,
@@ -305,8 +289,6 @@ export const NodeContextMenu = ({
     [nodes, setNodes, trackUpdateResource, syncDraftResource],
   );
 
-  // Delete an EXISTING resource: confirm, record the delete-resource change,
-  // then take it off the canvas.
   const deleteResource = useCallback(
     async (id: string) => {
       const target = nodes.find((n) => n.id === id);
@@ -345,9 +327,8 @@ export const NodeContextMenu = ({
     [nodes, nodeId],
   );
 
-  // Whether a group can actually be deleted via the API — same rule as the
-  // Groups page's action menu (see GroupsActionCell / GroupProvider). Delete is
-  // only offered when this is true so we never surface an action that fails.
+  // Same rule as the Groups page: IdP-issued groups and groups still in use
+  // can't be deleted. Delete is only offered when true, never surfaced to fail.
   const canDeleteGroup = useCallback(
     (group?: Group) => {
       if (!group?.id) return false;
@@ -428,15 +409,11 @@ export const NodeContextMenu = ({
     setEdges,
   ]);
 
-  // Canvas-only policy removal — shared with the Delete/Backspace keys via
-  // useNodeRemoval (see the hook for the changeset semantics).
   const { removePolicyFromCanvas } = useNodeRemoval();
   const handleRemovePolicyFromCanvas = useCallback(() => {
     if (node) removePolicyFromCanvas(node);
   }, [node, removePolicyFromCanvas]);
 
-  // Delete an EXISTING policy: confirm, record the delete-policy change, then
-  // take it off the canvas.
   const handleDeletePolicy = useCallback(async () => {
     if (!nodePolicy) return;
     const choice = await confirm({
@@ -463,8 +440,7 @@ export const NodeContextMenu = ({
     removeNodeWithEdges,
   ]);
 
-  // The canvas node's policy may predate the last save — the SWR list is the
-  // freshest copy of a live policy.
+  // The canvas node's policy may predate the last save; the SWR list is fresher.
   const livePolicy = useMemo(
     () =>
       (nodePolicy?.id && policies?.find((p) => p.id === nodePolicy.id)) ||
@@ -472,17 +448,13 @@ export const NodeContextMenu = ({
     [policies, nodePolicy],
   );
 
-  // Opens the editor directly; the "you are in live mode" confirmation is
-  // deferred to when the user clicks Save Changes (onBeforeSave in the modal).
+  // The "you are in live mode" confirmation is deferred to the modal's Save.
   const handleLiveEditPolicy = useCallback(() => {
     if (!livePolicy?.id) return;
     setSelectedPolicy(livePolicy.id);
     setPolicyModalOpen(true);
   }, [livePolicy, setSelectedPolicy, setPolicyModalOpen]);
 
-  // "View Details" on a network frame drills into its single-network view —
-  // the draft drill in draft, the live drill (with the frame rect for the
-  // dive animation) in live. Same as clicking the frame.
   const handleViewNetworkDetails = useCallback(
     (frameNode: Node) => {
       if (isDraft) {
@@ -518,8 +490,6 @@ export const NodeContextMenu = ({
       { enabled, rules: serializeRules(livePolicy.rules, enabled) },
       (p) => {
         mutate("/policies");
-        // Same in-place canvas patch as a live modal save — no fitView,
-        // no refetch wait.
         refreshLiveViewRef.current(p);
       },
       enabled
@@ -527,9 +497,6 @@ export const NodeContextMenu = ({
         : "The policy was successfully disabled",
     );
   }, [livePolicy, confirm, updatePolicy, serializeRules, refreshLiveViewRef]);
-
-  // ---- Live resource actions (edit / disable) — confirmed like every
-  // live action. The node carries the resource + its network ref. ----
 
   const liveResourceOf = useCallback((n: Node) => {
     const resource = (n.data as { resource?: NetworkResource })?.resource;
@@ -610,12 +577,8 @@ export const NodeContextMenu = ({
     [liveResourceOf, confirm, resourceRequest, setNodes],
   );
 
-  // "Focus" (live AND draft): enters Focus Mode on this node — dims
-  // everything off its edge path. Only shown where it declutters
-  // (isFocusWorthy: 4+ edges, 2+ policies in the neighborhood).
   const focusItems = useCallback(
     (n: Node): MenuItem[] => {
-      // Already focused → no Focus entry on the focused node itself.
       if (focusedNodeId === n.id) return [];
       if (!isFocusWorthy(n.id, nodes, edges)) return [];
       return [
@@ -631,8 +594,6 @@ export const NodeContextMenu = ({
 
   const [peerRenameTarget, setPeerRenameTarget] = useState<Peer | null>(null);
 
-  // Delete a policy against the account (live only): confirm, DELETE, then drop
-  // the node from the canvas.
   const handleLiveDeletePolicy = useCallback(async () => {
     if (!livePolicy?.id) return;
     const choice = await confirm({
@@ -647,8 +608,6 @@ export const NodeContextMenu = ({
     await deletePolicy(livePolicy, () => removeNodeWithEdges(nodeId));
   }, [livePolicy, confirm, deletePolicy, removeNodeWithEdges, nodeId]);
 
-  // Delete a peer against the account (live only): confirm, DELETE /peers/{id},
-  // refresh, then drop the node from the canvas.
   const handleLiveDeletePeer = useCallback(
     async (peer: Peer) => {
       const choice = await confirm({
@@ -674,9 +633,7 @@ export const NodeContextMenu = ({
     [confirm, peerRequest, removeNodeWithEdges, nodeId],
   );
 
-  // "Details" for peers (live AND draft): opens the peer's groups panel —
-  // the same panel a left-click opens. Placeholders included: their group
-  // assignments become the setup key's auto-groups.
+  // A placeholder's group assignments become the setup key's auto-groups.
   const peerDetailsItems = useCallback(
     (n: Node): MenuItem[] => {
       const isPeer =
@@ -697,9 +654,7 @@ export const NodeContextMenu = ({
           },
         },
       ];
-      // Existing peers rename through the peers page's Edit Peer Name modal
-      // (a real PUT — peer names aren't draft-managed). Placeholders keep
-      // their canvas-only rename.
+      // Peer names aren't draft-managed: renaming an existing peer is a real PUT.
       const realPeer = (n.data as { peer?: Peer })?.peer;
       if (realPeer?.id && permission.peers.update) {
         items.push({
@@ -708,7 +663,6 @@ export const NodeContextMenu = ({
           onClick: () => setPeerRenameTarget(realPeer),
         });
       }
-      // Live only: delete the peer from the account (DELETE /peers/{id}).
       // Draft mode manages peers on the canvas (Remove), never a real delete.
       if (!isDraft && realPeer?.id && permission.peers.delete) {
         items.push({
@@ -729,8 +683,6 @@ export const NodeContextMenu = ({
     ],
   );
 
-  // Renames an existing peer (PUT, same payload shape as the peer page) and
-  // patches every canvas node carrying it so the rename shows immediately.
   const renameLivePeer = useCallback(
     async (peer: Peer, name: string) => {
       await peerRequest.put(
@@ -754,9 +706,6 @@ export const NodeContextMenu = ({
     [peerRequest, setNodes],
   );
 
-  // ---- Live group actions (rename / delete) — like the live policy
-  // actions, every one confirms first since it hits the real account. ----
-
   const handleLiveRenameGroup = useCallback(
     async (target: Node) => {
       const group = getNodeGroup(target);
@@ -776,7 +725,6 @@ export const NodeContextMenu = ({
     [confirm, openRename],
   );
 
-  // The actual PUT once the rename modal saves (live mode only).
   const liveRenameGroup = useCallback(
     async (target: Node, name: string) => {
       const groupId = getNodeGroup(target)?.id;
@@ -784,15 +732,12 @@ export const NodeContextMenu = ({
       if (!group?.id) return;
       const toIds = (list?: (string | { id?: string })[]) =>
         (list ?? []).map((x) => (typeof x === "string" ? x : x.id ?? ""));
-      // Resources pass through untouched: the group PUT wants them as
-      // {id, type} objects and rejects bare id strings ("could not parse
-      // json"), same as every other group PUT in the app (useGroupHelper).
+      // The group PUT wants resources as {id, type} objects and rejects bare
+      // id strings ("could not parse json").
       await groupRequest.put(
         { name, peers: toIds(group.peers), resources: group.resources },
         `/${group.id}`,
       );
-      // Canvas nodes carry the group in their data — patch the name in
-      // place so the rename shows without a view rebuild.
       setNodes((prev) =>
         prev.map((n) => {
           const g = getNodeGroup(n);
@@ -806,15 +751,13 @@ export const NodeContextMenu = ({
   );
 
   const items: MenuItem[] = useMemo(() => {
-    // This menu is always mounted and subscribes to the canvas nodes, so
-    // rebuilding the list while closed would scan every node/edge
-    // (isFocusWorthy) on every drag frame for nothing.
+    // Always mounted and subscribed to the canvas nodes: rebuilding while
+    // closed would rescan every node and edge on every drag frame.
     if (!position) return [];
     if (!node) return [];
 
-    // Live mode: policy, group, resource and network-frame nodes get a menu
-    // (see onNodeContextMenu). Actions act on the real account immediately
-    // (behind confirmations) — live changes never deploy via the changeset.
+    // Live actions hit the real account immediately, behind confirmations;
+    // they never go through the changeset.
     if (!isDraft) {
       if (node.type === "policyNode") {
         if (!nodePolicy?.id) return [];
@@ -848,8 +791,6 @@ export const NodeContextMenu = ({
         }
         return items;
       }
-      // Groups: panel + rename (behind a live-mode warning, like the policy
-      // actions). "All" is managed by the system.
       if (isGroupNode(node)) {
         const group = getNodeGroup(node);
         const items: MenuItem[] = [
@@ -873,8 +814,6 @@ export const NodeContextMenu = ({
         }
         return items;
       }
-      // Resources: Edit + Disable/Enable (no Delete in live) — the same
-      // confirmations as the other live actions.
       const isResourceNode =
         node.type === "resourceNode" || node.type === "destinationResourceNode";
       if (isResourceNode && liveResourceOf(node)) {
@@ -902,10 +841,8 @@ export const NodeContextMenu = ({
         }
         return items;
       }
-      // Network frames: live account actions — Add Resource / Routing Peer
-      // create immediately against the API, Delete removes the network now.
-      // (Passing the real `network` — not a networkNodeId — routes the
-      // routing-peer modal to its live POST path.)
+      // Passing the real `network`, not a networkNodeId, routes the
+      // routing-peer modal to its live POST path.
       if (node.type === "networkNode" && isFrameNode(node)) {
         const liveNetwork = (node.data as { network?: Network })?.network;
         if (!liveNetwork?.id) return [];
@@ -953,14 +890,11 @@ export const NodeContextMenu = ({
         icon: <CircleMinusIcon size={14} />,
         onClick: () => removeGroup(node),
       };
-      // Opens the group panel (name/metadata + assign peers) — the same thing
-      // a left-click on the node does; surfaced here so it's discoverable.
       const edit: MenuItem = {
         label: "View Details",
         icon: <EyeIcon size={14} />,
         onClick: () => setSelectedDestinationGroup(group?.id || node.id),
       };
-      // "All" can neither be renamed nor deleted.
       if (isAllGroup(group)) return [...focus, edit, remove];
 
       const items: MenuItem[] = [...focus, edit];
@@ -972,8 +906,6 @@ export const NodeContextMenu = ({
         });
       }
       items.push(remove);
-      // Only offer Delete when the group can really be deleted (unused,
-      // not IdP-issued, permitted) — matches the Groups page.
       if (!isNewGroup(group) && canDeleteGroup(group)) {
         items.push({
           label: "Delete",
@@ -1005,10 +937,8 @@ export const NodeContextMenu = ({
           ),
           onClick: handleTogglePolicy,
         },
-        // Remove is canvas-only (the policy node goes; its sources and
-        // destinations stay on the canvas — nothing is deleted).
-        // Delete is reserved for policies that exist in the API and will
-        // really be deleted on deploy.
+        // Remove is canvas-only; Delete is reserved for policies that exist in
+        // the API and will really be deleted on deploy.
         {
           label: "Remove",
           icon: <CircleMinusIcon size={14} />,
@@ -1027,10 +957,8 @@ export const NodeContextMenu = ({
       ];
     }
 
-    // Placeholder peers (Server / Agent / User Device) — canvas-only rename,
-    // plus Details (group assignments become the setup key's auto-groups).
-    // A user-device select node with a peer chosen is that peer already, so
-    // it falls through to the plain Remove below.
+    // A user-device select node with a peer chosen is that peer already, so it
+    // falls through to the plain Remove below.
     if (canRenamePeerNode(node)) {
       return [
         ...focusItems(node),
@@ -1048,9 +976,7 @@ export const NodeContextMenu = ({
       ];
     }
 
-    // Network frames (draft or existing dropped onto the canvas): frame
-    // actions apply to both; Edit (name + description) is draft-only, since
-    // v1 doesn't rename existing networks.
+    // Edit is draft-only: v1 doesn't rename existing networks.
     if (node.type === "networkNode" && isFrameNode(node)) {
       const draftNetwork = isDraftNetworkNode(node);
       return [
@@ -1072,8 +998,7 @@ export const NodeContextMenu = ({
         {
           label: "Add Resource",
           icon: <WorkflowIcon size={14} />,
-          // Open the editor so an IP/CIDR/domain is entered; the row is
-          // created into the frame only on save.
+          // The row is created into the frame only on save.
           onClick: () => setResourceEditor({ createInNetworkNodeId: nodeId }),
         },
         {
@@ -1086,8 +1011,8 @@ export const NodeContextMenu = ({
           icon: <Share2Icon size={14} />,
           onClick: () => setRoutingPeerModal({ networkNodeId: nodeId }),
         },
-        // Draft networks Remove (cancels their pending create); existing ones
-        // Delete (marked for deletion, removed from the account on deploy).
+        // Remove cancels a draft network's pending create; Delete marks an
+        // existing one for removal on deploy.
         draftNetwork
           ? {
               label: "Remove",
@@ -1103,10 +1028,8 @@ export const NodeContextMenu = ({
       ];
     }
 
-    // Draft resource groups inside a frame: Rename / Remove. resourceGroupNode
-    // isn't in GROUP_NODE_TYPES, so a folded existing group would otherwise fall
-    // through to the remove-only default. New groups are always renameable;
-    // folded existing ones follow canRenameGroup (IdP-issued groups can't).
+    // resourceGroupNode isn't in GROUP_NODE_TYPES, so a folded existing group
+    // would otherwise fall through to the remove-only default.
     if (
       nodeId.startsWith("resourcegroup-new-") ||
       node.type === "resourceGroupNode"
@@ -1128,10 +1051,8 @@ export const NodeContextMenu = ({
       return items;
     }
 
-    // Resource nodes (draft or existing): Edit + Enable/Disable for all;
-    // Rename for draft only. An existing resource INSIDE a network can only be
-    // Deleted (not removed from canvas); draft/standalone resources are
-    // Removed.
+    // An existing resource inside a network can only be Deleted, never removed
+    // from the canvas; draft and standalone resources are Removed.
     if (node.type === "resourceNode") {
       const isDraftRes = nodeId.startsWith("resource-new-");
       const isFramed = !!node.parentId?.startsWith("network-");
@@ -1156,7 +1077,6 @@ export const NodeContextMenu = ({
         icon: resEnabled ? <PowerOffIcon size={14} /> : <PowerIcon size={14} />,
         onClick: () => toggleResourceEnabled(nodeId),
       });
-      // Existing resource inside a network → Delete only; otherwise Remove.
       if (!isDraftRes && isFramed) {
         items.push({
           label: "Delete",
@@ -1228,8 +1148,6 @@ export const NodeContextMenu = ({
 
   useEffect(() => {
     if (!position) return;
-    // An outside click/scroll dismisses everything; item clicks stopPropagation
-    // so they don't reach this listener.
     document.addEventListener("click", onDismiss);
     document.addEventListener("scroll", onDismiss, true);
     return () => {
@@ -1252,15 +1170,14 @@ export const NodeContextMenu = ({
         >
           {items.map((item, i) => (
             <React.Fragment key={item.label}>
-              {/* Separate the destructive Delete action from the rest. */}
               {item.danger && i > 0 && !items[i - 1].danger && (
                 <div className={"-mx-1 my-1 h-px bg-nb-gray-910"} />
               )}
               <button
                 data-testid={`cc-menu-${menuItemSlug(item.label)}`}
                 onClick={(e) => {
-                  // Keep this click from reaching the document listener (which
-                  // would dismiss the panel this item may have just opened).
+                  // The document listener would dismiss the panel this item
+                  // may have just opened.
                   e.stopPropagation();
                   item.onClick?.();
                   onClose();
@@ -1334,8 +1251,6 @@ export const NodeContextMenu = ({
         }}
       />
 
-      {/* Existing peers rename through the peers page's modal — a real PUT,
-          not a draft change. */}
       <Modal
         open={!!peerRenameTarget}
         onOpenChange={(open) => !open && setPeerRenameTarget(null)}

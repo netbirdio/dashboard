@@ -77,7 +77,6 @@ export default function NetworkRoutingPeerModal({
   );
 }
 
-// Pure-data result for useSave={false} callers (control-center draft mode).
 export type RoutingPeerModalResult = {
   peer?: Peer;
   peerGroups: Group[];
@@ -91,8 +90,7 @@ type ContentProps = {
   router?: NetworkRouter;
   onCreated?: (r: NetworkRouter) => void;
   onUpdated?: (r: NetworkRouter) => void;
-  // false → no API calls: the modal hands the router data back via onSaved
-  // (draft mode).
+  // false → no API calls; the data comes back via onSaved (draft mode).
   useSave?: boolean;
   onSaved?: (r: RoutingPeerModalResult) => void;
 };
@@ -213,8 +211,7 @@ export function RoutingPeerModalContent({
 
   const canContinue = routingPeer !== undefined || routingPeerGroups.length > 0;
 
-  // Draft mode: hand the validated selection back — group creation and the
-  // API call happen on deploy via the changeset.
+  // Group creation and the API call happen later, on deploy.
   const saveDraft = () => {
     onSaved?.({
       peer: type === "peer" ? routingPeer : undefined,

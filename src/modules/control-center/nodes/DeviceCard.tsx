@@ -52,7 +52,6 @@ export const DeviceCard = ({
       >
         {device && <PeerOSIcon os={device.os} size={isSmall ? 14 : 16} />}
         {resource && (
-          // Type-less draft resources (no address yet) get the default icon.
           <ResourceIcon
             type={resource.type ?? "host"}
             size={isSmall ? 14 : 15}
@@ -80,16 +79,14 @@ export const DeviceCard = ({
       <div
         className={cn(
           "flex flex-col justify-center leading-tight",
-          // Peers sit a hair tighter than resources; default-size peers use no
-          // gap to match the placeholder card.
+          // Peers sit a hair tighter than resources, matching the placeholder
+          // peer card so installed and not-yet-installed peers line up.
           device ? (isSmall ? "gap-0.5" : "gap-0") : "gap-px",
         )}
       >
         <span
           className={cn(
             "font-normal text-nb-gray-100 flex items-center gap-2",
-            // Metrics match the placeholder peer card so installed and
-            // not-yet-installed peers share the title/subtitle gap.
             isSmall
               ? "text-[0.72rem]"
               : "mb-1 mt-1 text-[0.85rem] relative top-[0.05rem]",

@@ -11,20 +11,14 @@ const GROUP_NODE_TYPES = new Set<string>([
   NodeType.DestinationGroupNode,
 ]);
 
-// The one Remove implementation shared by the context menu's "Remove" items
-// and the Delete/Backspace keys: Remove is canvas-only and never confirms,
-// but it still has to keep the changeset honest (cancel pending creates,
-// record the disconnect of an existing policy, clear group refs, …) — which
-// React Flow's raw node deletion would silently skip.
+// Remove is canvas-only and never confirms, but it still has to keep the
+// changeset honest, which React Flow's raw node deletion would skip.
 export function useNodeRemoval() {
   const { removeGroup, removeNodeWithEdges } = useDraftGroupActions();
   const { trackDeletePolicy, trackUpdatePolicy } = useDraftChangeset();
 
-  // Remove a policy from the CANVAS (no confirm, nothing deleted): the
-  // policy node and its edges go away; its source and destination nodes STAY
-  // on the canvas. A draft-created policy drops its pending create, an
-  // existing policy records an update-policy change with emptied sides
-  // (superseding any pending update/toggle) so the disconnect deploys.
+  // A draft-created policy drops its pending create; an existing policy records
+  // an update-policy with emptied sides so the disconnect deploys.
   const removePolicyFromCanvas = useCallback(
     (node: Node) => {
       const nodePolicy = node.data?.policy as Policy | undefined;
@@ -63,9 +57,8 @@ export function useNodeRemoval() {
     [trackDeletePolicy, trackUpdatePolicy, removeNodeWithEdges],
   );
 
-  // Mirrors the context menu: every draft node offers Remove EXCEPT an
-  // existing framed resource (Delete only — it can't silently detach from
-  // its network) and the live-view selector nodes.
+  // Every draft node offers Remove EXCEPT an existing framed resource (Delete
+  // only, it can't silently detach from its network) and the selector nodes.
   const canRemoveNode = useCallback((node: Node) => {
     if (
       node.type === NodeType.SelectPeerNode ||

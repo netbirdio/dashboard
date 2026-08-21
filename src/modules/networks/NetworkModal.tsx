@@ -59,8 +59,7 @@ type ContentProps = {
   onCreated?: (network: Network) => void;
   onUpdated?: (network: Network) => void;
   network?: Network;
-  // Pure-data mode (draft canvas): no API calls — the values return via
-  // onSaved and the caller owns closing the modal.
+  // Pure-data mode (draft canvas): no API calls, values return via onSaved.
   useSave?: boolean;
   onSaved?: (values: { name: string; description: string }) => void;
 };

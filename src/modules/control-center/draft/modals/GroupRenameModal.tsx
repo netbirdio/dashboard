@@ -15,8 +15,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   onRename: (name: string) => void;
   currentName: string;
-  // Names that are already in use (group names, placeholder peer names on the
-  // canvas, …) — a match blocks the rename.
+  // Group names, placeholder peer names on the canvas, …
   takenNames: string[];
   duplicateError?: string;
   title?: string;

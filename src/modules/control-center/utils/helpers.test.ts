@@ -184,7 +184,6 @@ describe("getPlaceholderHostname", () => {
       placeholderKind: "server",
       placeholderName: "My DB Server!",
     }),
-    // Select node with a chosen peer — no longer a placeholder.
     node("peer-1", { placeholderKind: "user-device", peer: { id: "1" } }),
     node("group-1", { group: { name: "All" } }),
   ];
@@ -196,7 +195,6 @@ describe("getPlaceholderHostname", () => {
 
   it("keeps hostnames unique across draft peers", () => {
     expect(getPlaceholderHostname(canvas, "peer-draft-b")).toBe("agent-1");
-    // Sanitization collision gets the next suffix.
     expect(getPlaceholderHostname(canvas, "peer-draft-c")).toBe("agent-1-1");
   });
 
@@ -223,7 +221,6 @@ describe("getPolicyRegroupUpdates", () => {
     const rule = updates[0].rules[0];
     expect(rule.sourceResource).toBe(undefined);
     expect(rule.sources).toEqual([group]);
-    // The other side is untouched.
     expect(rule.destinations).toEqual([{ name: "X" }]);
   });
 
@@ -322,8 +319,7 @@ describe("isTrackablePolicy — both-sides policies enter the changeset even wit
   });
 
   it("a policy referencing an uninstalled placeholder peer IS trackable", () => {
-    // The difference from isDeployablePolicy: trackable, so it shows in Review
-    // & Deploy (as a blocking issue), rather than vanishing.
+    // Trackable so Review & Deploy shows it as a blocking issue.
     const policy = makePolicy("p", {
       sourceResource: { id: "draft-x", type: "peer" },
       destinations: [{ name: "G" } as Group],
@@ -377,7 +373,6 @@ describe("draft resources", () => {
       }),
     );
     expect(resource).toMatchObject({ id: "new-r1", name: "DB", type: "host" });
-    // Real resources are not draft resources.
     expect(getDraftResource(node("resource-r1", { resource: {} }))).toBe(
       undefined,
     );
@@ -396,8 +391,7 @@ describe("draft resources", () => {
   });
 
   it("isCompleteDraftResource fails when the name is missing (not just empty)", () => {
-    // getDraftResource defaults name to "Resource"; the gate must check the raw
-    // name so an address+network resource with no user-set name isn't complete.
+    // getDraftResource defaults the name, so the gate checks the raw one.
     const noName = node("resource-new-r1", {
       resource: { address: "10.0.0.5" },
       draftNetwork: { networkClientId: "new-n1", name: "Office" },
@@ -448,7 +442,6 @@ describe("getPoliciesTargetingResources — policies drawn when an existing netw
         [p],
       ),
     ).toEqual([p]);
-    // group ids as plain strings too
     expect(
       getPoliciesTargetingResources([resource("r1", ["g2"])], [p]),
     ).toEqual([p]);
@@ -572,9 +565,7 @@ describe("pinByOrder", () => {
   });
 
   it("keeps rows put when the input array is reordered (post-save mutate)", () => {
-    // The panel captured this order when it opened...
     const order = ["p1", "p2", "p3"];
-    // ...then a save + SWR mutate returned the list in a different order.
     const afterMutate = [{ id: "p3" }, { id: "p1" }, { id: "p2" }];
     expect(pinByOrder(afterMutate, order, idOf).map(idOf)).toEqual([
       "p1",
@@ -585,8 +576,6 @@ describe("pinByOrder", () => {
 
   it("appends ids missing from the order, preserving their relative order", () => {
     const items = [{ id: "new2" }, { id: "a" }, { id: "new1" }, { id: "b" }];
-    // Only a, b were known at open; new1/new2 registered afterwards and sort
-    // to the end in the order they appear in the input (stable sort).
     expect(pinByOrder(items, ["a", "b"], idOf).map(idOf)).toEqual([
       "a",
       "b",
@@ -617,7 +606,6 @@ describe("withFreshGroupCounts", () => {
     const result = withFreshGroupCounts(stale, groups);
     expect(result.peers_count).toBe(4);
     expect(result.resources_count).toBe(2);
-    // Non-count fields are preserved from the embedded group.
     expect(result.name).toBe("Ops");
   });
 

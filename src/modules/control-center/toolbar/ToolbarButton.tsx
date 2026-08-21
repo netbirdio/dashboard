@@ -47,9 +47,7 @@ export const ToolbarButton = ({
     </button>
   );
 
-  // A bare shortcut still gets a tooltip — the keycap on its own. Buttons that
-  // carry an inline label need no tooltip text, but their shortcut would
-  // otherwise be undiscoverable.
+  // A bare shortcut still gets a tooltip, or it would be undiscoverable.
   if (!tooltip && !shortcut) return button;
 
   return (

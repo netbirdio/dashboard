@@ -1,7 +1,4 @@
-// A tiny line-level diff used by the Review & Deploy code view to render an API
-// request body GitHub-style. No dependency: creates are all-add, deletes are
-// all-remove, and modifications use a classic LCS line diff (fine for the small
-// JSON payloads a single change produces).
+// Line-level diff for the Review & Deploy code view.
 
 export type DiffLineKind = "add" | "remove" | "context";
 
@@ -12,8 +9,7 @@ export interface DiffLine {
 
 const splitLines = (s: string): string[] => (s === "" ? [] : s.split("\n"));
 
-// Longest-common-subsequence line diff. Bottom-up DP table, then walk it from
-// the top-left preferring removals on ties so identical blocks stay aligned.
+// Ties prefer removals so identical blocks stay aligned.
 function lcsDiff(a: string[], b: string[]): DiffLine[] {
   const n = a.length;
   const m = b.length;
@@ -50,8 +46,6 @@ function lcsDiff(a: string[], b: string[]): DiffLine[] {
   return out;
 }
 
-// Diff two already-formatted strings. `null` before → pure additions (create);
-// `null` after → pure removals (delete).
 export function diffLines(
   before: string | null,
   after: string | null,
@@ -66,15 +60,12 @@ export function diffLines(
   return lcsDiff(splitLines(before), splitLines(after));
 }
 
-// Pretty-print a request body the way the diff renders it (stable 2-space
-// JSON). Undefined bodies (DELETE has none) become null so the caller can
-// signal "no body on this side".
+// A DELETE has no body, so undefined maps to null.
 export function formatBody(body: unknown): string | null {
   if (body === undefined) return null;
   return JSON.stringify(body, null, 2);
 }
 
-// Convenience: diff two request bodies directly.
 export function diffBodies(
   before: unknown,
   after: unknown,
@@ -82,7 +73,6 @@ export function diffBodies(
   return diffLines(formatBody(before), formatBody(after));
 }
 
-// Added / removed line counts for the GitHub-style diffstat.
 export function diffStat(lines: DiffLine[]): {
   additions: number;
   deletions: number;

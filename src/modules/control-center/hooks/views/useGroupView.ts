@@ -21,8 +21,7 @@ export function useGroupView() {
     useControlCenterData();
   const agentNetwork = useAgentNetworkOverlay();
 
-  // policiesOverride: rebuild from fresher data than the SWR cache (e.g. the
-  // PUT response of a policy update) — see refreshLiveView.
+  // policiesOverride rebuilds from data fresher than the SWR cache.
   const applySingleGroupView = (
     groupId: string,
     policiesOverride?: Policy[],
@@ -54,8 +53,8 @@ export function useGroupView() {
         (s) => s.id === groupId,
       );
 
-      // side: "left" mirrors the policy column to the left of the selected
-      // group when the group is only a destination (sources → policy → group).
+      // side "left" mirrors the policy column when the group is only a
+      // destination.
       addNode(allNodes, {
         id: `policy-${policy.id}`,
         type: "policyNode",
@@ -77,8 +76,8 @@ export function useGroupView() {
           addNode(allNodes, {
             id: `source-group-${source.id}`,
             type: "sourceGroupNode",
-            // Explicit enabled — GroupNode's fallback checks INCOMING edges,
-            // and source groups only have outgoing ones (they'd render dimmed).
+            // Explicit: GroupNode's fallback checks incoming edges, which
+            // source groups don't have.
             data: { group: withFreshGroupCounts(source, groups), enabled },
             position: { x: 0, y: 0 },
           });

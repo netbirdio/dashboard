@@ -15,10 +15,7 @@ import {
   sortRoutingPeerRows,
 } from "@/modules/control-center/panels/RoutingPeersBar";
 
-// RoutingPeersBar rows for a draft network frame: the frame's create-router
-// changes plus, for existing networks, the API routers. Draft rows carry an
-// onEdit opening the routing-peer modal prefilled (the save replaces the
-// change). `enabled` gates the API fetch (skip it for live network cards).
+// `enabled` defers the routers fetch until a frame actually needs it.
 export function useFrameRouterRows(
   networkNodeId: string | undefined,
   enabled: boolean,
@@ -28,9 +25,7 @@ export function useFrameRouterRows(
   const { groups } = useGroups();
   const { setRoutingPeerModal } = useDraftMode();
 
-  // Targeted store selector (string equality) — this hook renders in EVERY
-  // network frame; subscribing to the whole nodes array re-rendered them all
-  // on every canvas update.
+  // This hook runs in every frame; subscribing to all nodes re-rendered them all.
   const networkId = useStore((s) =>
     networkNodeId
       ? (
@@ -65,8 +60,7 @@ export function useFrameRouterRows(
     if (!networkNodeId) return [];
     const list: RoutingPeerRow[] = [];
     (apiRouters ?? []).forEach((r) => {
-      // A pending update-router edit for this API router overlays the live
-      // values so the frame reflects the draft change before deploy.
+      // A pending update-router edit overlays the live values before deploy.
       const pending = changes.find(
         (c): c is UpdateRouterChange =>
           c.type === "update-router" && c.routerId === r.id,
@@ -85,9 +79,6 @@ export function useFrameRouterRows(
         isGroup: !peerId,
         peersCount: !peerId ? group?.peers_count ?? 0 : undefined,
         enabled,
-        // API routers open the real routing-peer modal; in draft its save
-        // records an update-router change (a re-edit supersedes the pending
-        // one, keyed by router id).
         onEdit: () => setRoutingPeerModal({ networkNodeId, router: r }),
       });
     });
@@ -124,7 +115,6 @@ export function useFrameRouterRows(
   return {
     rows,
     count: getRoutingPeerCount(rows),
-    // Lazy live fetch in flight (no rows yet) — the popover shows skeletons.
     isLoading: enabled && !!networkId && isApiLoading,
   };
 }

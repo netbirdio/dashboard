@@ -81,8 +81,8 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
         isConnectable={false}
       />
 
-      {/* Draft connect handles: dragging from the right adds the target group
-          as a destination, from the left as a source. */}
+      {/* Dragging right adds the target group as a destination, left as a
+          source. */}
       {isDraft && (
         <>
           <ConnectHandle type={"source"} position={Position.Left} />

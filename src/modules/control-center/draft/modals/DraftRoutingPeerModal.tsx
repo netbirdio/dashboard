@@ -8,11 +8,8 @@ import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangeset
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { RoutingPeerModalContent } from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
 
-// The networks page's routing-peer modal, run in pure-data mode
-// (useSave={false}) for draft targets — the result lands in the changeset,
-// never a live PUT. editChangeId prefills from an existing create-router
-// change (and the save replaces it); `router` prefills from a real API router
-// (and the save records an update-router change). Both deploy with the rest.
+// The networks page's routing-peer modal, run in pure-data mode for draft
+// targets: the result lands in the changeset instead of a live PUT.
 export const DraftRoutingPeerModal = () => {
   const { isDraft, routingPeerModal, setRoutingPeerModal } = useDraftMode();
   const { addRouterFromSelection, updateRouterFromSelection } =
@@ -36,10 +33,8 @@ export const DraftRoutingPeerModal = () => {
           c.id === routingPeerModal.editChangeId && c.type === "create-router",
       )
     : undefined;
-  // Prefill for edit mode — a NetworkRouter shaped from the draft change.
-  // Placeholder-peer routers ("draft-…" ids) skip the peer prefill: the
-  // modal would try to fetch them from the API. An API router preset
-  // (read-only view) is passed through as-is.
+  // Placeholder-peer routers ("draft-…" ids) skip the peer prefill, since the
+  // modal would try to fetch them from the API.
   const routerPreset: NetworkRouter | undefined =
     editChange?.type === "create-router"
       ? {
@@ -55,15 +50,12 @@ export const DraftRoutingPeerModal = () => {
         }
       : routingPeerModal?.router;
 
-  // An existing API router picked from a routing-peers dropdown, with no draft
-  // create-router behind it. In LIVE mode the edit hits the real network via
-  // the modal's own save (PUT); in DRAFT mode (a carried-over frame's dropdown)
-  // it records an update-router change that deploys with the rest.
+  // An existing API router with no draft create-router behind it: live edits
+  // PUT through the modal, draft records an update-router change.
   const isApiRouterEdit = !!routingPeerModal?.router && !editChange;
   const isLiveApiEdit = !isDraft && isApiRouterEdit;
   const isDraftApiEdit = isDraft && isApiRouterEdit;
-  // Live "Add Routing Peer" (empty-state / header, no frame node): a real
-  // network with no preset router — the modal's own save POSTs a new router.
+  // Live "Add Routing Peer": the modal's own save POSTs a new router.
   const isLiveCreate =
     !isDraft &&
     !!network?.id &&
@@ -125,7 +117,7 @@ export const DraftRoutingPeerModal = () => {
             useSave={false}
             onSaved={(result) => {
               if (networkNodeId) {
-                // Editing replaces the change (same dedup rules re-apply).
+                // Editing replaces the change so the dedup rules re-apply.
                 if (editChange) removeChange(editChange.id);
                 addRouterFromSelection({ networkNodeId, ...result });
               }

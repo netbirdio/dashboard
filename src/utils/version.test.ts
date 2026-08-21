@@ -11,7 +11,6 @@ describe("isNativeSSHSupported", () => {
     { version: "v0.61.0", shouldSupport: true, desc: "above minimum" },
     { version: "v1.0.0", shouldSupport: true, desc: "above minimum" },
 
-    // Edge cases
     { version: "development", shouldSupport: true, desc: "development build" },
     { version: "0.60.0", shouldSupport: true, desc: "no v prefix" },
     { version: "0.59.11", shouldSupport: false, desc: "no v prefix" },
@@ -47,8 +46,7 @@ describe("compareVersions (version >= minVersion)", () => {
     { version: "0.60.0", min: "0.60.0", expected: true, desc: "equal" },
     { version: "0.60.1", min: "0.60.0", expected: true, desc: "newer patch" },
     { version: "0.59.9", min: "0.60.0", expected: false, desc: "older patch" },
-    // Suffixed builds must compare on the release only — the trailing build
-    // number is not a fourth release component.
+    // A build suffix is not a fourth release component.
     {
       version: "0.60.0-beta.1",
       min: "0.60.1",
@@ -74,8 +72,6 @@ describe("compareVersions (version >= minVersion)", () => {
 
 describe("isNewerVersion (update available)", () => {
   it.each([
-    // The shape enterprise/cloud installations report: same release, plus a
-    // build tag. Not an update.
     {
       current: "0.77.0+enterprise.1",
       latest: "0.77.0",

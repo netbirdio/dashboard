@@ -123,8 +123,6 @@ type GhostData = {
   initialY: number;
 };
 
-// Bridges Virtuoso's scroll container into the styled ScrollArea viewport
-// (same pattern as VirtualScrollAreaList / PeerSelector).
 const VirtuosoScroller = forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -157,9 +155,7 @@ export const ControlCenterComponentsPanel = () => {
     drillDownNetworkNodeId,
   } = useDraftMode();
 
-  // Stable identity: this wrapper re-renders on every draft-context change, and
-  // a fresh closure here would defeat PanelContent's memo and rebuild every
-  // entity row — even while the panel is closed.
+  // A fresh closure here would defeat PanelContent's memo.
   const onClose = useCallback(
     () => setComponentsPanelOpen(false),
     [setComponentsPanelOpen],
@@ -186,34 +182,26 @@ const PanelContent = React.memo(
   }: {
     open: boolean;
     onClose: () => void;
-    // Passed down (not read via useDraftMode) so PanelContent — mounted for
-    // the whole session — doesn't re-render on every draft-context change.
+    // A prop, not useDraftMode: this component is always mounted.
     setResourceEditor: ReturnType<typeof useDraftMode>["setResourceEditor"];
     drillDownNetworkNodeId: string | null;
   }) => {
     const drilled = !!drillDownNetworkNodeId;
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState<PanelCategory>("peers");
-    // Every filter compares against the TRIMMED term: a whitespace-only search
-    // must stay a no-op, otherwise it silently empties the category page (no
-    // name contains a literal space) with no search affordance to explain it.
+    // Filters compare the trimmed term so a whitespace-only search is a no-op.
     const query = search.trim();
     const isSearching = query.length > 0;
     const searchRef = useRef<HTMLInputElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<VirtuosoHandle>(null);
 
-    // Virtuoso keeps its scroll offset across data swaps — reset to the top
-    // when the tab or search mode changes. Imperative reset instead of a
-    // remount key: remounting blanked the list for a frame (visible blink).
+    // Virtuoso keeps its scroll offset across data swaps; a remount key blinked.
     React.useEffect(() => {
       listRef.current?.scrollTo({ top: 0 });
     }, [category, isSearching]);
 
-    // autoFocus only fires on mount — focus explicitly on every open.
-    // Closing clears the search so the panel reopens fresh, and releases
-    // focus back to the canvas — the panel only hides, so a still-focused
-    // search input would keep swallowing the canvas shortcuts.
+    // The panel only hides, so a still-focused input keeps eating canvas shortcuts.
     React.useEffect(() => {
       if (open) {
         searchRef.current?.focus();
@@ -267,11 +255,7 @@ const PanelContent = React.memo(
     const { addNewGroup } = useDraftGroupActions();
     const { drawPolicyOnCanvas } = useControlCenterPolicy();
 
-    // Existing policy: draw it with its sources/destinations — nodes already on
-    // the canvas are connected, missing ones are created around the drop point.
-    // A pending update-policy change wins over the API data, so a policy edited
-    // or disconnected in this draft (e.g. Remove emptied its sides) comes back
-    // in its draft state, not its deployed one.
+    // A pending update-policy change wins over API data, so draft edits persist.
     const handleExistingPolicyDrop = useCallback(
       (policy: Policy, position?: XYPosition) => {
         const pending = changes.find(
@@ -284,13 +268,8 @@ const PanelContent = React.memo(
       [drawPolicyOnCanvas, changes],
     );
 
-    // Like handleExistingPolicyDrop, but for existing networks/resources: also
-    // draws the policies granting access to the dropped resources.
     const drawResourcePolicies = useCallback(
       (droppedResources: NetworkResource[], position?: XYPosition) => {
-        // Pending update-policy changes win over API data (see
-        // handleExistingPolicyDrop) — a policy disconnected in this draft
-        // doesn't get re-drawn with its deployed sides.
         const draftPolicies = (policies ?? []).map((p) => {
           const pending = changes.find(
             (c) => c.type === "update-policy" && c.policyId === p.id,
@@ -302,8 +281,7 @@ const PanelContent = React.memo(
           draftPolicies,
         );
         if (related.length === 0) return;
-        // Next tick — the dropped nodes must be committed to the canvas
-        // before drawPolicyOnCanvas connects the policies' edges to them.
+        // The dropped nodes must land on the canvas before their edges attach.
         setTimeout(() => {
           related.forEach((policy, i) => {
             const anchor = position
@@ -347,10 +325,7 @@ const PanelContent = React.memo(
           addNewGroup(pos);
           return;
         }
-        // A resource opens the editor first so an IP/CIDR/domain is entered;
-        // the card is created only on save. When drilled, it's created into the
-        // drilled network; otherwise a drop onto a frame (targetNodeId, already
-        // resolved to the frame id) assigns it there, else it's standalone.
+        // A resource needs an address, so its card is only created on modal save.
         if (kind === "resource") {
           const targetFrame = drilled
             ? drillDownNetworkNodeId
@@ -396,8 +371,7 @@ const PanelContent = React.memo(
           },
           {
             canDropIntoFrame: kind === "resource",
-            // Resource opens the editor modal — never zoom the canvas on a
-            // click-to-place (especially disorienting when drilled).
+            // The editor modal opens instead, so never zoom on click-to-place.
             skipClickReveal: kind === "resource",
           },
         );
@@ -411,8 +385,6 @@ const PanelContent = React.memo(
         data: Peer | Group | NetworkResource | Network,
         position?: XYPosition,
       ) => {
-        // Existing networks drop as a full frame (chrome + existing resources
-        // as children), plus the policies that grant access to its resources.
         if (type === NodeType.NetworkNode) {
           const network = data as Network;
           dropExistingNetworkFrame(network, position);
@@ -438,8 +410,7 @@ const PanelContent = React.memo(
           nodeData = { group: data as Group, enabled: true, showHandles: true };
           nodeId = `group-${data.id}`;
         } else if (type === NodeType.ResourceNode) {
-          // Existing resources already live in a network — stamp its ref so
-          // the standalone card shows the network name (read-only in v1).
+          // Stamp the network ref so the standalone card shows its name.
           const resourceData = data as NetworkResource;
           const network = networks?.find((n) =>
             n.resources?.some((r) => r === resourceData.id),
@@ -516,8 +487,7 @@ const PanelContent = React.memo(
     const { data: peers } = useFetchApi<Peer[]>("/peers");
     const { data: groups } = useFetchApi<Group[]>("/groups");
 
-    // Structural subscription (ids/data/parentId; never positions) — the
-    // canvas context re-rendered this whole list on every drag tick.
+    // Structural only: position updates would re-render this list every drag tick.
     const canvasNodes = useStructuralNodes();
     const account = useAccount();
     const canvasNodeIds = useMemo(
@@ -525,9 +495,8 @@ const PanelContent = React.memo(
       [canvasNodes],
     );
 
-    // A resource folded into a group's frame row has no `resource-<id>` node of
-    // its own, but IS represented — treat it as on-canvas so the panel greys it
-    // out and re-dropping can't spawn a duplicate (with a stray edge to the row).
+    // A resource folded into a group's frame row has no node but is still
+    // on-canvas, so a second drop must be blocked.
     const foldedResourceIds = useMemo(() => {
       const groupIds = new Set<string>();
       canvasNodes.forEach((n) => {
@@ -547,9 +516,7 @@ const PanelContent = React.memo(
     }, [canvasNodes, resources]);
 
 
-    // Entities marked for deletion in the draft can't be re-added — they'd be
-    // gone right after deploy, and re-dropping one would draw it back fully
-    // connected without touching the changeset.
+    // Entities marked for deletion can't be re-added: they'd vanish on deploy.
     const pendingDeleteIds = useMemo(() => {
       const ids = {
         group: new Set<string>(),
@@ -563,10 +530,7 @@ const PanelContent = React.memo(
         else if (c.type === "delete-resource") ids.resource.add(c.resourceId);
         else if (c.type === "delete-network") {
           ids.network.add(c.networkId);
-          // Deleting a network takes its resources with it (one DELETE
-          // /networks/{id}, cascaded server-side), so they must be blocked
-          // too — otherwise a resource could be dragged back and would
-          // vanish again on deploy with no delete change of its own.
+          // The server cascades a network delete to its resources.
           networks
             ?.find((n) => n.id === c.networkId)
             ?.resources?.forEach((rid) => ids.resource.add(rid));
@@ -575,8 +539,7 @@ const PanelContent = React.memo(
       return ids;
     }, [changes, networks]);
 
-    // A category word ("peer"/"peers", "group"/"groups", …) reveals the whole
-    // matching section (all items + create templates), not just name matches.
+    // A category word reveals the whole matching section, not just name matches.
     const categoryMatch = useCallback(
       (keywords: string[]) => {
         const s = query.toLowerCase();
@@ -611,8 +574,6 @@ const PanelContent = React.memo(
     const filteredResources = useMemo(() => {
       if (!resources) return [];
       let list = resources;
-      // Drilled into a single network: only that network's OWN existing
-      // resources (a draft network has none yet — its resources are draft).
       if (drilled) {
         if (drillDownNetworkNodeId!.startsWith("network-new-")) return [];
         const realId = drillDownNetworkNodeId!.replace("network-", "");
@@ -651,8 +612,6 @@ const PanelContent = React.memo(
       return policies.filter((p) => p.name?.toLowerCase().includes(lower));
     }, [policies, query, policiesCategory]);
 
-    // Groups that only exist in the draft (dropped onto the canvas, not created
-    // yet) — listed with a NEW badge so the panel reflects them immediately.
     const draftGroups = useMemo(() => {
       const seen = new Set<string>();
       const result: { nodeId: string; group: Group }[] = [];
@@ -668,14 +627,11 @@ const PanelContent = React.memo(
       return result.filter((r) => r.group.name.toLowerCase().includes(lower));
     }, [canvasNodes, query, groupsCategory]);
 
-    // Resources created in this draft — listed with a NEW badge, disabled
-    // (they're already on the canvas by construction).
     const draftResources = useMemo(() => {
       const result: { nodeId: string; resource: NetworkResource }[] = [];
       canvasNodes.forEach((n) => {
         const resource = getDraftResource(n);
         if (!resource) return;
-        // Drilled: only draft resources that belong to THIS network.
         if (drilled) {
           const dn = (
             n.data as {
@@ -703,8 +659,6 @@ const PanelContent = React.memo(
       drillDownNetworkNodeId,
     ]);
 
-    // Placeholder peers dropped in this draft (Server / Agent / User
-    // Device) — NEW badge, disabled (already on canvas by construction).
     const draftPeers = useMemo(() => {
       const result: { nodeId: string; peer: Peer }[] = [];
       canvasNodes.forEach((n) => {
@@ -716,7 +670,6 @@ const PanelContent = React.memo(
       return result.filter((r) => r.peer.name.toLowerCase().includes(lower));
     }, [canvasNodes, query, peersCategory]);
 
-    // Draft-created policies — NEW badge, disabled.
     const draftPolicies = useMemo(() => {
       const seen = new Set<string>();
       const result: { nodeId: string; policy: Policy }[] = [];
@@ -736,16 +689,14 @@ const PanelContent = React.memo(
     }, [canvasNodes, query, policiesCategory]);
 
     const filteredNetworks = useMemo(() => {
-      // Drilled into a single network — no other networks are addable here.
+      // No other network is addable while drilled into one.
       if (!networks || drilled) return [];
       if (!query || resourcesCategory) return networks;
       const lower = query.toLowerCase();
       return networks.filter((n) => n.name.toLowerCase().includes(lower));
     }, [networks, query, resourcesCategory, drilled]);
 
-    // Networks created in this draft (frames) — NEW badge, disabled.
     const draftNetworks = useMemo(() => {
-      // Drilled into a single network — the networks list is hidden entirely.
       if (drilled) return [];
       const result: {
         nodeId: string;
@@ -794,7 +745,6 @@ const PanelContent = React.memo(
           (t) =>
             (t.kind === "resource" &&
               (resourcesCategory || matchesSearch(t.label))) ||
-            // Networks can't be created while drilled into one.
             (!drilled &&
               t.kind === "network" &&
               (networksCategory || matchesSearch(t.label))),
@@ -803,7 +753,6 @@ const PanelContent = React.memo(
     );
     const showPolicyTemplate = policiesCategory || matchesSearch("Policy");
 
-    // Row builders — shared between category pages and search results.
     const buildPeerTemplateRows = () =>
       filteredPeerTemplates.map((tpl) => (
         <TemplateItem
@@ -874,8 +823,7 @@ const PanelContent = React.memo(
       draftPeers.map(({ nodeId, peer }) => (
         <PanelListItem key={nodeId} disabled onCanvas>
           <DeviceCard
-            // Same dimmed IP placeholder as the canvas card — assigned on
-            // install, derived from the account's peer network range.
+            // The real IP is only assigned on install.
             device={{
               ...peer,
               ip: getIpPlaceholderFromRange(account?.settings?.network_range),
@@ -1007,9 +955,6 @@ const PanelContent = React.memo(
         const onCanvas =
           canvasNodeIds.has(`resource-${resource.id}`) ||
           foldedResourceIds.has(resource.id ?? "");
-        // Existing resources already live in a network — show "name - network"
-        // (like the global search) and, since v1 doesn't reassign existing
-        // resources, they must NOT drop into another network frame.
         const network = networks?.find((n) =>
           n.resources?.some((r) => r === resource.id),
         );
@@ -1158,7 +1103,6 @@ const PanelContent = React.memo(
                   {pendingDelete && <DeletedBadge />}
                 </span>
                 <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
-                  {/* Same fallback as PolicyNode: empty label = all protocols */}
                   {protocolLabel || "All"}
                 </span>
               </div>
@@ -1167,11 +1111,7 @@ const PanelContent = React.memo(
         );
       });
 
-    // While searching, results span every category; otherwise the rail
-    // decides. Create-new templates always live in their own "Add New"
-    // section so they're clearly separated from existing entities. Rows are
-    // built lazily — only for the visible view — so opening the panel
-    // doesn't render every entity list up front.
+    // Rows build lazily so opening the panel doesn't render every entity list.
     const sections: { title?: string; rows: React.ReactNode[] }[] = (
       isSearching
         ? [
@@ -1242,8 +1182,6 @@ const PanelContent = React.memo(
           ]
     ).filter((sec) => sec.rows.length > 0);
 
-    // Flattened for virtualization: headings and rows become one list, only
-    // the visible slice is rendered (like PeerSelector).
     const flatRows: FlatRow[] = sections.flatMap((section, si) => [
       ...(section.title
         ? [
@@ -1275,9 +1213,7 @@ const PanelContent = React.memo(
               : { x: "-50%", y: 14, opacity: 0 }
           }
           transition={{ duration: 0.1, ease: "easeOut" }}
-          // The global Escape shortcut is input-aware and stays quiet while
-          // focus is inside the panel (search input, category buttons) — so
-          // Esc is also handled here, where it always reaches us.
+          // The global Escape shortcut stays quiet while focus is in the panel.
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               e.stopPropagation();
@@ -1286,8 +1222,7 @@ const PanelContent = React.memo(
           }}
           className={cn(
             !open && "pointer-events-none",
-            // Node picker floating above the bottom toolbar — and above the
-            // group panel (z-20), which must never cover it.
+            // Must stay above the group panel (z-20).
             "absolute bottom-[80px] left-1/2 z-30",
             "w-[480px] max-w-[calc(100%-48px)] h-[420px] max-h-[calc(100%-170px)]",
             "border border-nb-gray-910 rounded-lg flex flex-col overflow-hidden",
@@ -1311,13 +1246,11 @@ const PanelContent = React.memo(
               className={"py-3.5"}
               hideEnterIcon
             />
-            {/* ESC badge instead of an X — an X next to the search reads as
-                "clear the search"; this closes the whole panel. */}
+            {/* Not an X: an X next to a search reads as "clear the search". */}
             <button
               onClick={onClose}
               className={cn(
                 "shrink-0 px-1.5 py-0.5 rounded border border-nb-gray-900 bg-nb-gray-920",
-                // Keycap: 2px "side" below + faint highlight on top.
                 "shadow-[0_2px_0_0_#1e2123,inset_0_1px_0_0_rgba(255,255,255,0.05)]",
                 "text-[8px] font-medium tracking-wide text-nb-gray-350",
                 "hover:bg-nb-gray-910 hover:text-nb-gray-200 transition-colors",
@@ -1369,17 +1302,11 @@ const PanelContent = React.memo(
               >
                 <Virtuoso
                   ref={listRef}
-                  // The panel stays mounted while closed (it only fades), so
-                  // Virtuoso keeps its invisible-mount measurements (wrong/no
-                  // scrollbar). Remount on every open for a fresh measure;
-                  // per-tab remounts blinked the list, so those only scroll to
-                  // top (see the effect above).
+                  // The panel only fades when closed, so remount to re-measure.
                   key={open ? "open" : "closed"}
                   data={flatRows}
                   overscan={300}
-                  // Exact row height (h-[52px]) — an overestimate inflates the
-                  // scrollbar until every item is measured (visibly off on
-                  // heading-heavy tabs like Networks & Resources).
+                  // Exact row height: an overestimate inflates the scrollbar.
                   defaultItemHeight={52}
                   computeItemKey={(index) => flatRows[index].key}
                   itemContent={(index, row) => (
@@ -1437,7 +1364,6 @@ const PanelContent = React.memo(
 
 PanelContent.displayName = "PanelContent";
 
-// Marks an existing entity that a pending delete change will remove on deploy.
 const DeletedBadge = () => (
   <span
     className={
@@ -1520,8 +1446,7 @@ const PanelListItem = React.memo(
             : "hover:bg-nb-gray-900/50 cursor-grab active:cursor-grabbing",
         )}
       >
-        {/* Only the entity content dims when disabled — the badge stays
-            readable. */}
+        {/* Only the entity content dims, so the badge stays readable. */}
         <div
           className={cn(
             "flex items-center flex-1 min-w-0",

@@ -34,19 +34,16 @@ export function addDestinationResourceNodes(
       nodes.push({
         id: nodeId,
         type: "destinationResourceNode",
-        // standalone: card look (bg+border) like the peer nodes elsewhere.
         data: { peer, enabled, standalone: true },
         position: { x: 0, y: 0 },
       });
     } else if (resource) {
-      // Stamp the resource's network so the card shows "Name - Network"
-      // inline, same as draft mode (without the ref it shows nothing).
+      // Without the network ref the card shows no network at all.
       const net = networks?.find((n) => n.resources?.includes(resource.id));
       nodes.push({
         id: nodeId,
         type: "destinationResourceNode",
-        // standalone: render as the StandaloneResourceNode CARD (bg+border)
-        // like the single-network views — not the transparent DeviceCard.
+        // standalone selects the card look, not the transparent DeviceCard.
         data: {
           resource,
           enabled,

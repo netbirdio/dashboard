@@ -11,15 +11,6 @@ import {
   reviewButton,
 } from "../helpers/control-center";
 
-/**
- * End-to-end DRAFT → DEPLOY: build a changeset with two groups and a policy
- * connecting them, deploy, and verify all three land in the real account in
- * dependency order (the policy references the groups' REAL ids, which only
- * works if the groups were created first). The matrix specs assert the
- * changeset but never actually deploy a multi-entity draft — this fills that
- * gap. IDs are captured from the POST responses so cleanup is precise (the
- * canvas assigns generic names like "Group"/"Policy").
- */
 test.describe.serial("Control Center Deploy @control-center", () => {
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
     await resetDraftState(page);
@@ -45,7 +36,7 @@ test.describe.serial("Control Center Deploy @control-center", () => {
     await connectNodes(page, groups.nth(1), policy, "sl");
     await expectChangeCount(page, 3);
 
-    // Collect ids created during deploy so cleanup is exact.
+    // The canvas assigns generic names, so capture the ids for exact cleanup.
     const createdGroupIds: string[] = [];
     const createdPolicyIds: string[] = [];
     const collectCreatedIds = async (resp: Response) => {
@@ -71,12 +62,11 @@ test.describe.serial("Control Center Deploy @control-center", () => {
     });
 
     try {
-      // Two groups + one policy were created against the account.
       await expect.poll(() => createdGroupIds.length).toBe(2);
       await expect.poll(() => createdPolicyIds.length).toBe(1);
 
-      // The deployed policy references BOTH new groups by their REAL ids —
-      // proof the groups were created before the policy (dependency order).
+      // Real group ids in the deployed policy prove the groups were created
+      // before it.
       const policies = await listPolicies(page);
       const deployed = policies.find((p) => p.id === createdPolicyIds[0]);
       expect(deployed).toBeTruthy();
@@ -90,7 +80,7 @@ test.describe.serial("Control Center Deploy @control-center", () => {
       // The owner page is worker-scoped, so an attached listener would keep
       // reading response bodies for every later test on this worker.
       page.off("response", collectCreatedIds);
-      // Cleanup: policy first (a group in use can't be deleted), then groups.
+      // Policy first: a group in use can't be deleted.
       for (const pid of createdPolicyIds) await deletePolicyById(page, pid);
       for (const gid of createdGroupIds) await deleteGroup(page, gid);
     }

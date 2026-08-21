@@ -35,12 +35,10 @@ const intersects = (a: Node, b: Node) => {
 
 describe("resolveNodeOverlaps", () => {
   it("moves a small node off a larger one it landed on", () => {
-    // Frame-sized anchor with a resource dropped right on top of it.
     const frame = makeNode("frame", 1050, 0, 400, 300);
     const resource = makeNode("res", 1200, 100, 250, 66);
     resolveNodeOverlaps([frame, resource]);
 
-    // The larger node anchors; the smaller one is pushed clear.
     expect(frame.position).toEqual({ x: 1050, y: 0 });
     expect(intersects(frame, resource)).toBe(false);
   });
@@ -57,8 +55,6 @@ describe("resolveNodeOverlaps", () => {
   });
 
   it("leaves non-overlapping layouts untouched (entry-layout parity)", () => {
-    // Tight column rhythm: 100 pitch, 80-tall nodes — gaps smaller than the
-    // resolve margin must NOT be spread apart.
     const col = [0, 100, 200].map((y, i) => makeNode(`n${i}`, 1000, y, 250, 80));
     const before = col.map((n) => ({ ...n.position }));
     resolveNodeOverlaps(col);
@@ -105,10 +101,7 @@ const at = (nodes: Node[], id: string) =>
   nodes.find((n) => n.id === id)!.position;
 
 describe("applyDraftBuildLayout", () => {
-  // Source → policy → destination must read left-to-right for EVERY
-  // destination type. The hierarchical layout buckets by node type, so a
-  // destination peer starts life stacked on the sources at x 0 and a
-  // standalone resource inside the frame grid's territory.
+  // The hierarchical layout buckets by node type, so destinations start off.
   const cases: Array<[string, string]> = [
     ["peer", "peerNode"],
     ["group", "destinationGroupNode"],
@@ -147,15 +140,11 @@ describe("applyDraftBuildLayout", () => {
       expect(at(updatedNodes, "src").x).toBe(0);
       expect(at(updatedNodes, "pol").x).toBe(500);
       expect(at(updatedNodes, "dst").x).toBe(1000);
-      // The frame grid clears the destination column instead of sharing
-      // its band (and being nudged apart by the overlap pass).
       expect(at(updatedNodes, "net").x).toBeGreaterThan(1250);
     });
   });
 
   it("keeps the live frame-grid origin when frames are the only destinations", () => {
-    // Live-parity: the networks overview has nothing but frames on the
-    // destination side, so entering draft must not shift the grid.
     const nodes = [
       node("src", "groupNode", { group: { id: "g", name: "Src" } }),
       policyNode("pol", "P"),
@@ -170,9 +159,7 @@ describe("applyDraftBuildLayout", () => {
   });
 
   it("re-centers a lone source left behind by the destination restack", () => {
-    // Both peers start in the same layout bucket, centered as a pair; once
-    // the destination moves to its own column the source must not stay at
-    // the pair's top offset.
+    // Both peers start centered as a pair; the source must not keep that y.
     const nodes = [
       node("src", "peerNode", { placeholderName: "Server" }),
       node("dst", "peerNode", { placeholderName: "Agent" }),

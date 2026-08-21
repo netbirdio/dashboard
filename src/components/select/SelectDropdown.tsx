@@ -28,9 +28,7 @@ export interface SelectOption {
   searchValue?: string;
   className?: string;
   disabled?: boolean;
-  // Optional section label. When any option carries a `group`, the
-  // dropdown renders a header above each group and orders sections by
-  // the first option that names them.
+  // Section label for grouped rendering.
   group?: string;
 }
 
@@ -55,20 +53,14 @@ interface SelectDropdownProps {
   iconSize?: number;
   truncate?: boolean;
   compact?: boolean;
-  // Pinned content below the scrollable options (e.g. a "create new" action)
-  // — always visible regardless of scroll or search. Receives a callback
-  // that closes the popover.
+  // Pinned below the options, outside the scroll area and the search filter.
   footer?: (close: () => void) => React.ReactNode;
-  // Optional controlled open state. When omitted the dropdown manages its own
-  // (existing behaviour); when provided, the caller drives open/close — e.g.
-  // to dismiss it on a click the Popover's own outside-detection can't see
-  // (a ReactFlow pane that stops pointer propagation).
+  // For dismissals the Popover's own outside-detection can't see (a ReactFlow
+  // pane that stops pointer propagation).
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  // Defer onChange until after the popover's close animation (~180ms). OFF by
-  // default so ordinary dropdowns report synchronously (pre-existing behaviour);
-  // the control center opts in because its onChange rebuilds the whole canvas
-  // and janks if it fires mid-animation.
+  // Defers onChange until after the close animation, for handlers heavy
+  // enough to jank mid-animation.
   deferChange?: boolean;
   "data-testid"?: string;
 }
@@ -106,8 +98,6 @@ export function SelectDropdown({
     const isSelected = value == selectedValue;
     setOpen(false);
     if (!isSelected) {
-      // Fire after the close animation (see deferChange prop) so a heavy
-      // onChange doesn't jank mid-animation; otherwise report synchronously.
       if (deferChange) setTimeout(() => onChange?.(selectedValue), 180);
       else onChange?.(selectedValue);
     }
@@ -140,10 +130,8 @@ export function SelectDropdown({
     });
   }, [options, debouncedSearch]);
 
-  // When options carry a `group`, split them into ordered sections so a
-  // header can render above each. Section order follows the first option
-  // that names the group; empty groups (after search) drop out. Returns
-  // null when no option is grouped so the flat render path is used.
+  // Section order follows the first option naming each group; null falls back
+  // to the flat render path.
   const groupedItems = React.useMemo(() => {
     if (!filteredItems.some((item) => item.group)) return null;
     const order: string[] = [];

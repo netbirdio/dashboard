@@ -5,15 +5,9 @@ import {
 } from "@/modules/control-center/draft/DraftChangesetContext";
 
 // Removing a changeset entry must leave the draft as if the change had never
-// been made: the entry AND everything that only makes sense because of it are
-// dropped, and references to a removed draft entity are cleared. This module is
-// the PURE half — it computes the resulting changeset (reduceRemoveChange) and
-// a human side-effect preview (previewRemoveChange). The canvas half lives in
-// hooks/useRemoveChange.ts. Keeping this pure makes the cascade rules unit-
-// testable (see change-cascade.test.ts).
+// been made. The canvas half lives in hooks/useRemoveChange.ts.
 
-/** Canvas node id that a change's entity renders as (undefined for routers,
- * which are a routing edge, not a node). */
+/** Canvas node id a change's entity renders as; routers have none. */
 export function changeNodeId(change: DraftChange): string | undefined {
   switch (change.type) {
     case "create-group":
@@ -44,8 +38,7 @@ export function changeNodeId(change: DraftChange): string | undefined {
   }
 }
 
-// A policy rule's sources/destinations hold group OBJECTS (draft groups have a
-// name and no id). Drop the ones matching a removed draft group by name.
+// A draft group has a name and no id, so it can only be matched by name.
 const dropGroupFromRule = (
   groups: Group[] | string[] | null | undefined,
   name: string,
@@ -56,13 +49,7 @@ const dropGroupFromRule = (
       )
     : groups;
 
-/**
- * Strip a removed DRAFT group (referenced by name, since it has no API id yet)
- * out of every other change: resource/router groupIds and policy rule
- * source/destination group lists. A router left targeting only that group is
- * dropped (routing a network to nothing is meaningless). Mirror-delete of
- * renameGroupInPolicies in DraftChangesetContext.
- */
+/** Strip a removed DRAFT group out of every other change. */
 export function dropGroupNameReferences(
   changes: DraftChange[],
   name: string,
@@ -73,8 +60,7 @@ export function dropGroupNameReferences(
       return [{ ...c, groupIds: c.groupIds.filter((g) => g !== name) }];
     }
     if (c.type === "create-router" || c.type === "update-router") {
-      // The group was this router's only target → the router no longer routes
-      // anything, so drop it.
+      // The group was this router's only target, so it routes nothing now.
       return c.groupId === name ? [] : [c];
     }
     if (c.type === "create-policy" || c.type === "update-policy") {
@@ -87,9 +73,7 @@ export function dropGroupNameReferences(
               ...r,
               sources: dropGroupFromRule(r.sources, name) as any,
               destinations: dropGroupFromRule(r.destinations, name) as any,
-              // An SSH rule's authorized_groups is keyed by group NAME while the
-              // draft group has no id; a stale key would be sent to the API as
-              // if it were a group id. Absent stays absent.
+              // authorized_groups is keyed by group name, not id.
               ...(r.authorized_groups
                 ? {
                     authorized_groups: Object.fromEntries(
@@ -108,8 +92,6 @@ export function dropGroupNameReferences(
   });
 }
 
-// Clear a removed draft resource/peer (referenced by its client id) out of a
-// policy rule's single-entity source/destination slots.
 const clearResourceRef = (change: DraftChange, refId: string): DraftChange => {
   if (change.type !== "create-policy" && change.type !== "update-policy") {
     return change;
@@ -131,10 +113,7 @@ const clearResourceRef = (change: DraftChange, refId: string): DraftChange => {
   };
 };
 
-// A policy needs at least one source AND one destination (group or single
-// resource). Removing an endpoint can leave a policy change one-sided, which is
-// invalid — such changes are dropped (a create is cancelled; an existing
-// policy's edit is reverted to live rather than emptying a side on the API).
+// A policy needs both sides, so one left one-sided by a removal is dropped.
 const isTrackablePolicyChange = (c: DraftChange): boolean => {
   if (c.type !== "create-policy" && c.type !== "update-policy") return true;
   const r = c.policy.rules?.[0];
@@ -150,19 +129,11 @@ const isTrackablePolicyChange = (c: DraftChange): boolean => {
 const dropUntrackablePolicies = (changes: DraftChange[]): DraftChange[] =>
   changes.filter(isTrackablePolicyChange);
 
-// An update-group left with nothing to do would deploy as a pointless GET + PUT
-// and show as an empty "Update group" row. The rule itself is owned by the
-// changeset (isNoopGroupUpdate) so the cascade and the trackers can't drift.
+// A no-op update-group would deploy as a pointless PUT and show an empty row.
 const isSpentGroupUpdate = (c: DraftChange): boolean =>
   c.type === "update-group" && isNoopGroupUpdate(c);
 
-/**
- * The resulting changeset after removing `change`, with cascade. Pure — the
- * canvas is updated separately by useRemoveChange. Covers:
- * - create-X : drop the change + anything that only exists because of it.
- * - update-X / delete-X : drop only the target (reverting to live is a canvas
- *   restore, not a changeset cascade — the entity has just this one change).
- */
+/** The changeset after removing `change`, with cascade. */
 export function reduceRemoveChange(
   changes: DraftChange[],
   change: DraftChange,
@@ -171,15 +142,13 @@ export function reduceRemoveChange(
 
   switch (change.type) {
     case "create-group":
-      // The group is referenced by NAME everywhere it's used; a policy left
-      // one-sided by its removal is dropped.
+      // The group is referenced by NAME everywhere it's used.
       return dropUntrackablePolicies(
         dropGroupNameReferences(withoutTarget, change.name),
       );
 
     case "create-network": {
-      // Decision: contained resources DETACH to standalone (kept, flagged "No
-      // Network"), routers pointing at the draft network are dropped.
+      // Contained resources detach to standalone instead of being deleted.
       const clientId = change.clientId;
       return withoutTarget.flatMap((c): DraftChange[] => {
         if (c.type === "create-resource" && c.networkClientId === clientId) {
@@ -208,7 +177,6 @@ export function reduceRemoveChange(
       return dropUntrackablePolicies(
         withoutTarget
           .map((c): DraftChange => {
-            // Drop the resource from any group's membership.
             if (
               (c.type === "create-group" || c.type === "update-group") &&
               c.resourceIds.includes(clientId)
@@ -218,7 +186,6 @@ export function reduceRemoveChange(
                 resourceIds: c.resourceIds.filter((r) => r !== clientId),
               };
             }
-            // Clear it from any policy that used it as a destination/source.
             return clearResourceRef(c, clientId);
           })
           .filter((c) => !isSpentGroupUpdate(c)),
@@ -230,7 +197,6 @@ export function reduceRemoveChange(
       return dropUntrackablePolicies(
         withoutTarget
           .flatMap((c): DraftChange[] => {
-            // A router routed through this placeholder peer is dropped.
             if (
               (c.type === "create-router" || c.type === "update-router") &&
               c.peerId === clientId
@@ -251,25 +217,17 @@ export function reduceRemoveChange(
             }
             return clearResourceRef(c, clientId);
           })
-          // Dropping the placeholder can empty an update-group that only
-          // existed to add it, same as the create-resource branch above.
           .filter((c) => !isSpentGroupUpdate(c)),
       );
     }
 
-    // create-policy, create-router, and every update-*/delete-* need no
-    // changeset cascade beyond dropping the target.
     default:
       return withoutTarget;
   }
 }
 
-// ── Preview (warn dialog) ────────────────────────────────────────────────
-
 export type CascadePreview = {
-  // Short lead line for the confirm dialog.
   summary: string;
-  // Bulleted specifics ("also removes this group from 2 policies", …).
   effects: string[];
 };
 
@@ -284,10 +242,7 @@ type PreviewEdge = { source: string; target: string; data?: any };
 const plural = (n: number, one: string, many = one + "s") =>
   `${n} ${n === 1 ? one : many}`;
 
-/**
- * Human-readable side effects of removing `change`, computed from the same
- * references the mutation walks. Pure so it's unit-testable.
- */
+/** Human-readable side effects of removing `change`, for the confirm dialog. */
 export function previewRemoveChange(
   change: DraftChange,
   changes: DraftChange[],

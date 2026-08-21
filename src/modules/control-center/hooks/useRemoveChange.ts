@@ -19,18 +19,7 @@ import {
   buildStandaloneResourceNode,
 } from "@/modules/control-center/utils/draft-node-factory";
 
-/**
- * Removing a changeset entry reverts the draft as if that change had never
- * happened, cascading to BOTH the canvas and the dependent changes. The
- * changeset outcome is the pure reduceRemoveChange (tested); this hook applies
- * the matching canvas mutation per change type:
- *   - create-X  → remove the node(s)/edges (network detaches its resources).
- *   - update-X  → patch the node's data back to the live values.
- *   - delete-X  → restore the node(s) from live (drawPolicyOnCanvas re-adds
- *                 policy-attached endpoints; the node factory rebuilds frames).
- *   - install-peer → delegate to removeNodeWithEdges (it also sweeps the
- *                 placeholder's setup-key / bound-group artifacts).
- */
+/** Reverts the draft as if the removed change had never happened. */
 export function useRemoveChange() {
   const { nodes, edges, setNodes, setEdges } = useCanvasState();
   const { changes, replaceChanges } = useDraftChangeset();
@@ -45,8 +34,6 @@ export function useRemoveChange() {
     [changes, nodes, edges],
   );
 
-  // Drop a set of node ids (and any of their frame children) + every edge that
-  // touches them.
   const dropNodes = useCallback(
     (ids: Set<string>) => {
       setNodes((prev) =>
@@ -59,7 +46,6 @@ export function useRemoveChange() {
     [setNodes, setEdges],
   );
 
-  // Policies (live) that reference an entity id in a group/resource slot.
   const livePoliciesReferencing = useCallback(
     (pred: (p: NonNullable<typeof policies>[number]) => boolean) =>
       (policies ?? []).filter(pred),
@@ -68,8 +54,7 @@ export function useRemoveChange() {
 
   const removeWithCascade = useCallback(
     (change: DraftChange) => {
-      // install-peer: the canvas hook also deletes the generated setup key and
-      // bound group, so use it wholesale (it updates the changeset too).
+      // removeNodeWithEdges also sweeps the setup key and the bound group.
       if (change.type === "install-peer") {
         if (change.installedPeerId) {
           replaceChanges(changes.filter((c) => c.id !== change.id));
@@ -79,10 +64,8 @@ export function useRemoveChange() {
         return;
       }
 
-      // Changeset: fully specified + tested.
       replaceChanges(reduceRemoveChange(changes, change));
 
-      // Canvas: per type.
       switch (change.type) {
         case "create-group": {
           const ids = new Set(
@@ -115,7 +98,6 @@ export function useRemoveChange() {
                 const isChild = n.parentId === frameId;
                 const refsFrame = dn?.networkClientId === change.clientId;
                 if (!isChild && !refsFrame) return n;
-                // Detach to standalone: drop the frame parenting + network ref.
                 const { draftNetwork, ...restData } = (n.data as any) ?? {};
                 const { width, height, ...restStyle } = (n.style as any) ?? {};
                 return {
@@ -129,7 +111,6 @@ export function useRemoveChange() {
                 } as Node;
               }),
           );
-          // Drop routing edges into the removed frame.
           setEdges((prev) =>
             prev.filter(
               (e) => !((e.data as any)?.router && e.target === frameId),
@@ -140,7 +121,7 @@ export function useRemoveChange() {
         case "create-router": {
           const netId = change.networkId ?? change.networkClientId;
           const frameId = `network-${netId}`;
-          // A draft group's router edge id isn't peer-scoped — match by target.
+          // A draft group's router edge id isn't peer-scoped, so match by target.
           const src = change.peerId ? `peer-${change.peerId}` : undefined;
           setEdges((prev) =>
             prev.filter(
@@ -155,7 +136,6 @@ export function useRemoveChange() {
           return;
         }
 
-        // ── update-X → revert node data to live ──
         case "update-group": {
           const live = groups?.find((g) => g.id === change.groupId);
           if (!live) return;

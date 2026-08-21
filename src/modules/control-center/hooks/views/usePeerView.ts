@@ -42,7 +42,7 @@ export function usePeerView() {
         const sources = rule.sources as Group[];
         return sources?.some((d) => peerGroups?.some((pg) => pg.id === d.id));
       }),
-      // Ascending — disabled policies first (live/draft layout parity).
+      // Ascending: disabled policies first (live/draft layout parity).
       "enabled",
     );
 
@@ -93,7 +93,7 @@ export function usePeerView() {
       );
     });
 
-    // Union of the providers reachable through any group this peer belongs to.
+    // Union over every group this peer belongs to.
     peerGroups.forEach((g) =>
       addAgentNetworkProviderNodes(
         g.id ?? "",

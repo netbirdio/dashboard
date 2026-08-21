@@ -3,9 +3,8 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type ShortcutMap = Record<string, () => void>;
 
-// Only genuine text-entry contexts block shortcuts. Focused buttons must NOT
-// (a click leaves the button focused) — else hotkeys go dead after any button
-// press.
+// Focused buttons must not block shortcuts: a click leaves the button focused,
+// so hotkeys would go dead after any button press.
 const TEXT_ENTRY_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
 export function isInputFocused(): boolean {
@@ -18,10 +17,7 @@ export function isInputFocused(): boolean {
   return false;
 }
 
-/**
- * Draft-only keyboard shortcuts; ignored while an input is focused. Reads the
- * map through a ref so callers needn't memoize it.
- */
+// Reads the map through a ref so callers needn't memoize it.
 export function useControlCenterShortcuts(
   shortcuts: ShortcutMap,
   enabled: boolean = true,
@@ -36,10 +32,8 @@ export function useControlCenterShortcuts(
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isInputFocused()) return;
 
-      // Alt combos ("alt+<key>") take priority; plain-key shortcuts never fire
-      // while Ctrl/Cmd/Alt is held (so e.g. Ctrl+C doesn't toggle the
-      // components panel). Alt combos match on e.code (Option+digit types
-      // special characters on macOS).
+      // Alt combos take priority and match on e.code, since Option+digit types
+      // special characters on macOS.
       const lower = e.key.toLowerCase();
       const codeKey = e.code?.startsWith("Digit")
         ? e.code.slice(5)
@@ -55,9 +49,8 @@ export function useControlCenterShortcuts(
           !e.altKey &&
           (shortcutsRef.current[e.key] || shortcutsRef.current[lower]));
       if (handler) {
-        // Always cancel the keystroke — a handler may move focus into an
-        // input (e.g. C opens the components panel, which focuses its
-        // search), and without this the pressed key would be typed there.
+        // A handler may move focus into an input, and without this the pressed
+        // key would be typed there.
         e.preventDefault();
         handler();
       }

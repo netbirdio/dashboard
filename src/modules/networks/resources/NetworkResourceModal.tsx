@@ -76,7 +76,6 @@ export default function NetworkResourceModal({
   );
 }
 
-// Pure-data result for useSave={false} callers (control-center draft mode).
 export type ResourceModalResult = {
   name: string;
   description: string;
@@ -90,13 +89,11 @@ type ModalProps = {
   network: Network;
   resource?: NetworkResource;
   initialTab?: string;
-  // false → no API calls: the modal hands the resource data back via
-  // onSaved (draft mode). The Access Control tab is hidden — draft policies
-  // are drawn on the canvas instead.
+  // false → no API calls: the data comes back via onSaved and the Access
+  // Control tab is hidden.
   useSave?: boolean;
   onSaved?: (data: ResourceModalResult) => void;
-  // Extra uniqueness names for useSave={false} (e.g. draft resources on the
-  // canvas that don't exist in the API yet).
+  // Extra uniqueness names for resources that don't exist in the API yet.
   takenNames?: string[];
 };
 
@@ -167,9 +164,8 @@ export function ResourceModalContent({
 
   const nameError = useMemo(() => {
     if (name === "") return "";
-    // Compared case-insensitively to match resourceExists — otherwise two
-    // draft resources differing only in case both validate, and the deploy
-    // then hits the very clash this check exists to prevent.
+    // Compared case-insensitively to match resourceExists, or two drafts
+    // differing only in case both validate and clash on deploy.
     const normalized = name.trim().toLowerCase();
     if (
       resourceExists(name, resource?.id) ||
@@ -180,7 +176,6 @@ export function ResourceModalContent({
     return "";
   }, [name, resourceExists, resource?.id, resource?.name, takenNames]);
 
-  // Draft mode: no API call — hand the validated data back to the caller.
   const saveDraft = () => {
     onSaved?.({
       name: name.trim(),
@@ -266,7 +261,7 @@ export function ResourceModalContent({
             ? `${resource.name}`
             : network?.name
             ? `Add new resource to "${network.name}"`
-            : // No network yet (draft canvas) — assigned later, so avoid an empty "".
+            : // No network yet on the draft canvas, so avoid an empty string.
               "Add a new resource"
         }
         color={"yellow"}
@@ -413,8 +408,7 @@ export function ResourceModalContent({
                           ) : useSave ? (
                             " Please review them in the Access Control tab."
                           ) : (
-                            // Draft has no Access Control tab — policies are
-                            // edited on the canvas instead.
+                            // Draft has no Access Control tab.
                             " Review them on the canvas before you deploy."
                           )}
                         </Callout>
@@ -427,9 +421,8 @@ export function ResourceModalContent({
           </div>
         </TabsContent>
 
-        {/* Draft mode never mounts this tab: its policies live in local state
-            that saveDraft discards, so configuring them here would silently
-            lose them. */}
+        {/* Draft never mounts this tab: its policies live in local state that
+            saveDraft discards, so they would be silently lost. */}
         {useSave && (
           <TabsContent value={"access-control"} className={"pb-8"}>
             <NetworkResourceAccessControl
@@ -460,7 +453,6 @@ export function ResourceModalContent({
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           {!useSave ? (
-            // Draft mode: single-step save, no Access Control step.
             <>
               <ModalClose asChild={true}>
                 <Button variant={"secondary"}>Cancel</Button>

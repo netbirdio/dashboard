@@ -23,8 +23,6 @@ import {
   reviewButton,
 } from "../helpers/control-center";
 
-// Removing a change from Review & Deploy cascades to the canvas AND to
-// dependent changes (useRemoveChange + reduceRemoveChange).
 test.describe
   .serial("Control Center Draft — remove change cascade @control-center", () => {
   const PREFIX = "cc-rm-";
@@ -39,9 +37,7 @@ test.describe
     await deleteGroupsByPrefix(page, PREFIX);
   });
 
-  // Seed one policy between two fresh groups and open the draft group view
-  // (which auto-selects the sole policy-bearing group), returning the policy
-  // node. Clean-slated so the auto-select is deterministic.
+  // Clean-slated so the draft group view's auto-select is deterministic.
   async function seedPolicyGroupView(page: Page) {
     await deletePoliciesBySubstring(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
@@ -60,15 +56,13 @@ test.describe
     return { policy, policyNode };
   }
 
-  // Open Review & Deploy (the header button can sit under the billing-modal
-  // backdrop — clear it and force the click).
+  // The header button can sit under the billing-modal backdrop.
   const openReview = async (page: Page) => {
     await dismissBlockingOverlays(page);
     await reviewButton(page).click({ force: true });
     await expect(page.getByTestId("cc-deploy")).toBeVisible();
   };
 
-  // Remove the (single) change of `type` from the open review list, confirm.
   const removeChangeRow = async (page: Page, type: string) => {
     const row = page.getByTestId(`cc-change-${type}`).first();
     await expect(row).toBeVisible();
@@ -84,7 +78,6 @@ test.describe
     const frame = canvasNode(page, "network-new-");
     await expect(frame).toHaveCount(1);
 
-    // Drill in and add a resource INTO the network.
     await dismissBlockingOverlays(page);
     await frame.click({ force: true });
     await page.getByTestId("cc-add-resource").click();
@@ -97,12 +90,10 @@ test.describe
     await expect(page.getByTestId("cc-change-create-network")).toBeVisible();
     await expect(page.getByTestId("cc-change-create-resource")).toBeVisible();
 
-    // Remove the create-network change → warn dialog lists the detach.
     await removeChangeRow(page, "create-network");
     await expect(page.getByText(/Detaches 1 resource/i)).toBeVisible();
     await page.getByTestId("confirmation.confirm").click();
 
-    // The network change is gone; the resource survives, now flagged No Network.
     await expect(
       page.getByTestId("cc-change-create-network"),
     ).not.toBeVisible();
@@ -127,12 +118,10 @@ test.describe
     await expect(page.getByTestId("cc-change-create-policy")).toBeVisible();
     await expect(page.getByTestId("cc-change-create-group")).toHaveCount(2);
 
-    // Remove one group → dialog warns it's removed from 1 policy.
     await removeChangeRow(page, "create-group");
     await expect(page.getByText(/Removes it from 1 policy/i)).toBeVisible();
     await page.getByTestId("confirmation.confirm").click();
 
-    // The policy became one-sided → dropped; one group remains.
     await expect(page.getByTestId("cc-change-create-policy")).not.toBeVisible();
     await expect(page.getByTestId("cc-change-create-group")).toHaveCount(1);
   });
@@ -147,12 +136,10 @@ test.describe
     const frame = canvasNode(page, `network-${network.id}`);
     await expect(frame).toBeVisible();
 
-    // Delete the existing network in draft → delete-network change; frame goes.
     await clickContextMenuItem(page, frame, "delete");
     await page.getByTestId("confirmation.confirm").click();
     await expect(frame).not.toBeVisible();
 
-    // Remove the delete-network change → the frame comes back.
     await openReview(page);
     await removeChangeRow(page, "delete-network");
     await expect(page.getByText(/Restore the network/i)).toBeVisible();
@@ -173,7 +160,6 @@ test.describe
   }) => {
     const { policy, policyNode } = await seedPolicyGroupView(page);
 
-    // Disable the (enabled) existing policy in draft → an update-policy change.
     await clickContextMenuItem(page, policyNode, "disable");
 
     await openReview(page);
@@ -182,7 +168,6 @@ test.describe
     await expect(page.getByText(/Revert your changes/i)).toBeVisible();
     await page.getByTestId("confirmation.confirm").click();
 
-    // The edit is gone from the changeset (reverted to live).
     await expect(page.getByTestId("cc-change-update-policy")).not.toBeVisible();
     // The live policy was never changed.
     await expect
@@ -202,7 +187,6 @@ test.describe
   }) => {
     const { policy, policyNode } = await seedPolicyGroupView(page);
 
-    // Delete the existing policy in draft → delete-policy; node goes.
     await clickContextMenuItem(page, policyNode, "delete");
     await page.getByTestId("confirmation.confirm").click();
     await expect(policyNode).not.toBeVisible();

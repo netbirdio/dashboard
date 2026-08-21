@@ -27,8 +27,7 @@ import {
 } from "@/modules/control-center/utils/drilled-layout";
 import { isMac } from "@hooks/useOperatingSystem";
 
-// Undo/redo shortcut badges: ⌘ icon on macOS, "Ctrl" text on Windows/Linux;
-// the big-arrow icon stands in for Shift on both.
+// The big-arrow icon stands in for Shift in the shortcut badges.
 const UndoShortcut = isMac ? (
   <span className="flex items-center gap-0.5">
     <CommandIcon size={10} className="relative -top-[1px]" />Z
@@ -77,13 +76,8 @@ export const CanvasToolbar = () => {
   const handleFitView = () =>
     reactFlow.fitView({ padding: 0.1, duration: 500, maxZoom: 0.8 });
 
-  // Re-arranges with the layout the draft was entered with — arranging an
-  // untouched canvas reproduces the initial positions instead of drifting.
-  // Reads and writes the canvas through the ReactFlow instance, never
-  // useCanvasState: that context changes identity on every nodes update, so
-  // even destructuring its setters re-rendered the toolbar on every drag tick.
-  // Arrange only repositions existing nodes, so the replace-style changes
-  // `instance.setNodes/setEdges` round-trip through onNodesChange are enough.
+  // Reads and writes through the ReactFlow instance, never useCanvasState: that
+  // context changes identity on every nodes update and re-renders the toolbar.
   const handleArrange = () => {
     const nodes = reactFlow.getNodes();
     const edges = reactFlow.getEdges();
@@ -101,9 +95,8 @@ export const CanvasToolbar = () => {
       }, 50);
     };
 
-    // Drilled into a network: re-run the shared single-network layout, with
-    // the frame re-anchored so the resource grid lands on the layout's
-    // resource column (same math as useNetworkDrillDown).
+    // The frame is re-anchored so the resource grid lands on the layout's
+    // resource column, as in useNetworkDrillDown.
     if (drillDownNetworkNodeId) {
       const frameId = drillDownNetworkNodeId;
       const keptTop = nodes
@@ -142,7 +135,7 @@ export const CanvasToolbar = () => {
     "-": handleZoomOut,
   });
 
-  // Spacebar hold-to-pan (needs keyup, so handled separately)
+  // Spacebar hold-to-pan needs keyup, so it is handled separately.
   const toolBeforeSpaceRef = React.useRef<CanvasTool | null>(null);
 
   useEffect(() => {

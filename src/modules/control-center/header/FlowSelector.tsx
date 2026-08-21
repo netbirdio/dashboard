@@ -28,9 +28,8 @@ type Props = {
 export const FlowSelector = ({ value, onChange }: Props) => {
   const { only: agentNetworkOnly } = useAgentNetworkMode();
 
-  // Controlled so a canvas click closes it — the dropdown floats over the
-  // ReactFlow pane, whose stopPropagation hides the click from Radix's own
-  // outside-detection (same as the network selector).
+  // Controlled so a canvas click closes it: the ReactFlow pane's
+  // stopPropagation hides the click from Radix's outside-detection.
   const [selectOpen, setSelectOpen] = React.useState(false);
   useCloseOnCanvasClick(selectOpen, () => setSelectOpen(false));
 
@@ -102,8 +101,7 @@ export const FlowSelector = ({ value, onChange }: Props) => {
               Group
             </SegmentedTabs.Trigger>
             {/* The agent-network repackaging drops Networks as a top-level
-                pivot. Keep it for everyone else so flag-off behaviour is
-                unchanged. */}
+                pivot. */}
             {!agentNetworkOnly && (
               <SegmentedTabs.Trigger
                 value={FlowView.NETWORKS}

@@ -32,9 +32,8 @@ export const ChangeCodeView = ({ change, live }: Props) => {
   const lines = useMemo(() => {
     const diff = changeDiffLines(change, live);
     if (diff.length > 0) return diff;
-    // Never show an empty body. A create/update/install renders its request
-    // body as added lines; a bodiless DELETE with no reconstructable "before"
-    // falls back to its request line so there's always something to read.
+    // Never show an empty body: a bodiless DELETE with no reconstructable
+    // "before" falls back to its request line.
     const formatted = formatBody(after.body);
     if (formatted !== null) {
       return formatted
@@ -44,8 +43,7 @@ export const ChangeCodeView = ({ change, live }: Props) => {
     return [{ kind: "context" as const, text: `${after.method} ${after.path}` }];
   }, [change, live, after]);
 
-  // Old/new line numbers, GitHub unified-diff style: removed lines number the
-  // old side, added lines the new side, context both.
+  // Unified-diff numbering: removed lines number the old side, added the new.
   const numbered = useMemo(() => {
     let oldN = 0;
     let newN = 0;
@@ -66,10 +64,8 @@ export const ChangeCodeView = ({ change, live }: Props) => {
 
   return (
     <div className={"flex flex-col gap-2"}>
-      {/* Bounded, scrollable code block so a long diff doesn't grow the
-          accordion. Built from Radix primitives so the VIEWPORT (not a
-          fixed-height root) carries the max-height — sizes to content up to
-          24rem, then scrolls. */}
+      {/* Radix primitives so the VIEWPORT (not a fixed-height root) carries the
+          max-height: sizes to content up to 24rem, then scrolls. */}
       <ScrollAreaPrimitive.Root className={"relative overflow-hidden w-full"}>
         <ScrollAreaPrimitive.Viewport
           className={"max-h-[24rem] w-full rounded-[inherit]"}

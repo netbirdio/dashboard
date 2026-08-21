@@ -10,9 +10,8 @@ export interface AgentNetworkOverlay {
   providerById: Map<string, AIProvider>;
 }
 
-// The agent-network data the overlay needs. AIProvidersProvider already owns
-// these fetches (and gates them on the feature flag), so the views read from it
-// rather than hitting the endpoints again.
+// AIProvidersProvider owns these fetches and gates them on the feature flag, so
+// the views read from it rather than hitting the endpoints again.
 export function useAgentNetworkOverlay(): AgentNetworkOverlay {
   const { providers, policies } = useAIProviders();
   const providerById = useMemo(() => {
@@ -23,14 +22,8 @@ export function useAgentNetworkOverlay(): AgentNetworkOverlay {
   return { policies, providerById };
 }
 
-// Appends every Provider a group can reach through an agent-network policy:
-//
-//   sourceNodeId → agent-policy-<policyId> → provider-<providerId>
-//
-// which mirrors the access-control shape so both policy kinds read the same on
-// the canvas. Node and edge ids are stable, so a provider or policy reached
-// from several groups is added once (addNode/addEdge dedupe by id). A no-op
-// when the feature is off or unused — `policies` is empty then.
+// Appends `sourceNodeId → agent-policy-<id> → provider-<id>`, mirroring the
+// access-control shape. Ids are stable, so nodes reached twice are added once.
 export function addAgentNetworkProviderNodes(
   groupId: string,
   sourceNodeId: string,
