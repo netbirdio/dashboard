@@ -38,11 +38,11 @@ const bootWasmClient = async (page: Page, wasmUrl: string): Promise<string> =>
     });
 
     const go = new (window as any).Go();
-    const module = await WebAssembly.instantiateStreaming(
+    const wasmModule = await WebAssembly.instantiateStreaming(
       fetch(url),
       go.importObject,
     );
-    void go.run(module.instance);
+    void go.run(wasmModule.instance);
 
     const deadline = Date.now() + 30_000;
     while (Date.now() < deadline) {
@@ -54,7 +54,7 @@ const bootWasmClient = async (page: Page, wasmUrl: string): Promise<string> =>
     return "NetBirdClient never appeared";
   }, wasmUrl);
 
-test.describe("WASM client @wasm", () => {
+test.describe.serial("WASM client @wasm", () => {
   test("the pinned WASM client instantiates", async ({
     dashboardAsOwner: page,
   }) => {

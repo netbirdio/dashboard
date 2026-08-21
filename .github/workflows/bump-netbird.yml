@@ -22,6 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: main
           token: ${{ secrets.NETBIRD_DEV_BOT_GITHUB_TOKEN }}
 
       - name: Configure git
@@ -29,34 +30,43 @@ jobs:
           git config --global user.email "dev@netbird.io"
           git config --global user.name "netbirddev"
 
+      # The tag rides in env and is validated before use, so a crafted dispatch
+      # input cannot expand into shell source or reach the sed expression.
       - name: Update the default wasm path
         id: bump
+        env:
+          TAG: ${{ inputs.tag }}
         run: |
-          tag="${{ inputs.tag }}"
-          sed -i "s|https://pkgs.netbird.io/wasm/client/v[0-9.]*|https://pkgs.netbird.io/wasm/client/${tag}|" src/utils/config.ts
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Refusing tag '$TAG': expected vMAJOR.MINOR.PATCH"
+            exit 1
+          fi
 
-          version="${tag#v}"
-          branch="bump-netbird-wasm-${version}"
+          sed -i "s|https://pkgs.netbird.io/wasm/client/v[0-9.]*|https://pkgs.netbird.io/wasm/client/${TAG}|" src/utils/config.ts
+
+          branch="bump-netbird-wasm-${TAG#v}"
           echo "branch=${branch}" >> "$GITHUB_OUTPUT"
 
           git checkout -b "${branch}"
           git add src/utils/config.ts
           if git diff --cached --quiet; then
             echo "no_changes=true" >> "$GITHUB_OUTPUT"
-            echo "Default wasm path already at ${tag}, nothing to do"
+            echo "Default wasm path already at ${TAG}, nothing to do"
             exit 0
           fi
           echo "no_changes=false" >> "$GITHUB_OUTPUT"
-          git commit -m "Bump the WASM client to ${tag}"
+          git commit -m "Bump the WASM client to ${TAG}"
           git push --set-upstream origin "${branch}"
 
       - name: Create pull request
         if: steps.bump.outputs.no_changes != 'true'
         env:
           GH_TOKEN: ${{ secrets.NETBIRD_DEV_BOT_GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          BRANCH: ${{ steps.bump.outputs.branch }}
         run: |
           gh pr create \
             --base main \
-            --head "${{ steps.bump.outputs.branch }}" \
-            --title "Bump the WASM client to ${{ inputs.tag }}" \
-            --body "Automated wasm path bump triggered by netbird release ${{ inputs.tag }}."
+            --head "$BRANCH" \
+            --title "Bump the WASM client to ${TAG}" \
+            --body "Automated wasm path bump triggered by netbird release ${TAG}."
