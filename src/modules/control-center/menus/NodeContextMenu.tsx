@@ -784,12 +784,11 @@ export const NodeContextMenu = ({
       if (!group?.id) return;
       const toIds = (list?: (string | { id?: string })[]) =>
         (list ?? []).map((x) => (typeof x === "string" ? x : x.id ?? ""));
+      // Resources pass through untouched: the group PUT wants them as
+      // {id, type} objects and rejects bare id strings ("could not parse
+      // json"), same as every other group PUT in the app (useGroupHelper).
       await groupRequest.put(
-        {
-          name,
-          peers: toIds(group.peers),
-          resources: toIds(group.resources as (string | { id?: string })[]),
-        },
+        { name, peers: toIds(group.peers), resources: group.resources },
         `/${group.id}`,
       );
       // Canvas nodes carry the group in their data — patch the name in
@@ -861,7 +860,11 @@ export const NodeContextMenu = ({
             onClick: () => setSelectedDestinationGroup(group?.id || node.id),
           },
         ];
-        if (!isAllGroup(group) && canRenameGroup(group)) {
+        if (
+          !isAllGroup(group) &&
+          canRenameGroup(group) &&
+          permission.groups.update
+        ) {
           items.push({
             label: "Rename",
             icon: <PencilLineIcon size={14} />,
@@ -878,23 +881,26 @@ export const NodeContextMenu = ({
         const resEnabled =
           (node.data as { resource?: { enabled?: boolean } })?.resource
             ?.enabled ?? true;
-        return [
-          ...focusItems(node),
-          {
-            label: "Edit",
-            icon: <SquarePenIcon size={14} />,
-            onClick: () => void handleLiveEditResource(node),
-          },
-          {
-            label: resEnabled ? "Disable" : "Enable",
-            icon: resEnabled ? (
-              <PowerOffIcon size={14} />
-            ) : (
-              <PowerIcon size={14} />
-            ),
-            onClick: () => void handleLiveToggleResource(node),
-          },
-        ];
+        const items: MenuItem[] = [...focusItems(node)];
+        if (permission.networks.update) {
+          items.push(
+            {
+              label: "Edit",
+              icon: <SquarePenIcon size={14} />,
+              onClick: () => void handleLiveEditResource(node),
+            },
+            {
+              label: resEnabled ? "Disable" : "Enable",
+              icon: resEnabled ? (
+                <PowerOffIcon size={14} />
+              ) : (
+                <PowerIcon size={14} />
+              ),
+              onClick: () => void handleLiveToggleResource(node),
+            },
+          );
+        }
+        return items;
       }
       // Network frames: live account actions — Add Resource / Routing Peer
       // create immediately against the API, Delete removes the network now.
@@ -1192,6 +1198,7 @@ export const NodeContextMenu = ({
     livePolicy,
     permission.policies.update,
     permission.policies.delete,
+    permission.groups.update,
     permission.networks.update,
     permission.networks.delete,
     handleLiveEditPolicy,
