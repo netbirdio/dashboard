@@ -4,7 +4,8 @@ import { join } from "path";
 import type { Peer } from "../../src/interfaces/Peer";
 import { generateKeypair } from "../../src/utils/wireguard";
 import { apiDelete, apiGet, apiPost, managementOrigin } from "../helpers/api";
-import { expect,test } from "../helpers/fixtures";
+import { expect, test } from "../helpers/fixtures";
+import { generateRandomName } from "../helpers/utils";
 
 /**
  * Guards the pinned default WASM client, which is what a version bump changes:
@@ -75,51 +76,69 @@ test.describe.serial("WASM client @wasm", () => {
     ).toBeGreaterThan(0);
 
     const keypair = generateKeypair();
-    const name = `e2e-wasm-${keypair.publicKey.slice(0, 6).toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+    const name = generateRandomName("e2e-wasm-");
     await apiPost(page, `/peers/${peers[0].id}/temporary-access`, {
       name,
       wg_pub_key: keypair.publicKey,
       rules: ["tcp/22022"],
     });
 
-    expect(await bootWasmClient(page, pinnedWasmPath())).toBe("ok");
-
-    const mgmt = await managementOrigin(page);
-    const started = await page.evaluate(
-      async ({ privateKey, managementURL, deviceName }) => {
-        const client = await (window as any).NetBirdClient({
-          privateKey,
-          managementURL,
-          deviceName,
-        });
-        (window as any).__e2eWasmClient = client;
-        try {
-          await client.start();
-          return "ok";
-        } catch (error) {
-          return String(error);
-        }
-      },
-      { privateKey: keypair.privateKey, managementURL: mgmt, deviceName: name },
-    );
-    expect(started, "the client should log in and sync").toBe("ok");
-
-    // Management's view proves the login round trip: the registered peer shows
-    // up connected under the name it was registered with.
     let created: Peer | undefined;
-    for (let attempt = 0; attempt < 30 && !created?.connected; attempt++) {
-      await page.waitForTimeout(2_000);
-      const all = await apiGet<Peer[]>(page, "/peers");
-      created = all.find((p) => p.name === name);
-    }
-    expect(created, "the registered peer should appear").toBeTruthy();
-    expect(created!.connected, "the registered peer should be connected").toBe(
-      true,
-    );
+    try {
+      expect(await bootWasmClient(page, pinnedWasmPath())).toBe("ok");
 
-    await page.evaluate(async () => {
-      await (window as any).__e2eWasmClient?.stop?.();
-    });
-    if (created) await apiDelete(page, `/peers/${created.id}`);
+      const mgmt = await managementOrigin(page);
+      const started = await page.evaluate(
+        async ({ privateKey, managementURL, deviceName }) => {
+          const client = await (window as any).NetBirdClient({
+            privateKey,
+            managementURL,
+            deviceName,
+          });
+          (window as any).__e2eWasmClient = client;
+          try {
+            await client.start();
+            return "ok";
+          } catch (error) {
+            return String(error);
+          }
+        },
+        {
+          privateKey: keypair.privateKey,
+          managementURL: mgmt,
+          deviceName: name,
+        },
+      );
+      expect(started, "the client should log in and sync").toBe("ok");
+
+      // Management's view proves the login round trip: the registered peer
+      // shows up connected under the name it was registered with. Polled via
+      // the API because the connected flag is management state, not a page
+      // response.
+      for (let attempt = 0; attempt < 30 && !created?.connected; attempt++) {
+        await page.waitForTimeout(2_000);
+        const all = await apiGet<Peer[]>(page, "/peers");
+        created = all.find((p) => p.name === name);
+      }
+      expect(created, "the registered peer should appear").toBeTruthy();
+      expect(
+        created!.connected,
+        "the registered peer should be connected",
+      ).toBe(true);
+    } finally {
+      // Best-effort: a throw here would mask the failure under test, and the
+      // registered peer must not outlive the test in the shared environment.
+      try {
+        await page.evaluate(async () => {
+          await (window as any).__e2eWasmClient?.stop?.();
+        });
+        const leftover =
+          created ??
+          (await apiGet<Peer[]>(page, "/peers")).find((p) => p.name === name);
+        if (leftover) await apiDelete(page, `/peers/${leftover.id}`);
+      } catch {
+        // The assertion that failed is the story; a cleanup miss is not.
+      }
+    }
   });
 });
