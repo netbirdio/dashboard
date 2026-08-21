@@ -1,0 +1,62 @@
+name: Bump netbird wasm client
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'NetBird release tag (e.g. v0.78.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.NETBIRD_DEV_BOT_GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config --global user.email "dev@netbird.io"
+          git config --global user.name "netbirddev"
+
+      - name: Update the default wasm path
+        id: bump
+        run: |
+          tag="${{ inputs.tag }}"
+          sed -i "s|https://pkgs.netbird.io/wasm/client/v[0-9.]*|https://pkgs.netbird.io/wasm/client/${tag}|" src/utils/config.ts
+
+          version="${tag#v}"
+          branch="bump-netbird-wasm-${version}"
+          echo "branch=${branch}" >> "$GITHUB_OUTPUT"
+
+          git checkout -b "${branch}"
+          git add src/utils/config.ts
+          if git diff --cached --quiet; then
+            echo "no_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Default wasm path already at ${tag}, nothing to do"
+            exit 0
+          fi
+          echo "no_changes=false" >> "$GITHUB_OUTPUT"
+          git commit -m "Bump the WASM client to ${tag}"
+          git push --set-upstream origin "${branch}"
+
+      - name: Create pull request
+        if: steps.bump.outputs.no_changes != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.NETBIRD_DEV_BOT_GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "${{ steps.bump.outputs.branch }}" \
+            --title "Bump the WASM client to ${{ inputs.tag }}" \
+            --body "Automated wasm path bump triggered by netbird release ${{ inputs.tag }}."
