@@ -167,9 +167,14 @@ export function ResourceModalContent({
 
   const nameError = useMemo(() => {
     if (name === "") return "";
+    // Compared case-insensitively to match resourceExists — otherwise two
+    // draft resources differing only in case both validate, and the deploy
+    // then hits the very clash this check exists to prevent.
+    const normalized = name.trim().toLowerCase();
     if (
       resourceExists(name, resource?.id) ||
-      (name.trim() !== resource?.name && takenNames?.includes(name.trim()))
+      (normalized !== resource?.name?.toLowerCase() &&
+        takenNames?.some((n) => n.toLowerCase() === normalized))
     )
       return "A resource with this name already exists. Please use another name.";
     return "";
@@ -393,7 +398,7 @@ export function ResourceModalContent({
                             ? "this policy"
                             : "these policies"}
                           .
-                          {isAddressValid || resource ? (
+                          {useSave && (isAddressValid || resource) ? (
                             <>
                               {" "}
                               Please review them in the{" "}
@@ -405,8 +410,12 @@ export function ResourceModalContent({
                               </InlineButtonLink>{" "}
                               tab.
                             </>
-                          ) : (
+                          ) : useSave ? (
                             " Please review them in the Access Control tab."
+                          ) : (
+                            // Draft has no Access Control tab — policies are
+                            // edited on the canvas instead.
+                            " Review them on the canvas before you deploy."
                           )}
                         </Callout>
                       )}
@@ -418,17 +427,22 @@ export function ResourceModalContent({
           </div>
         </TabsContent>
 
-        <TabsContent value={"access-control"} className={"pb-8"}>
-          <NetworkResourceAccessControl
-            existingPolicies={existingPolicies || []}
-            newPolicies={policies}
-            onNewPoliciesChange={setPolicies}
-            address={address}
-            resourceName={name}
-            resourceId={resource?.id}
-            hasResourceGroups={groups.length > 0}
-          />
-        </TabsContent>
+        {/* Draft mode never mounts this tab: its policies live in local state
+            that saveDraft discards, so configuring them here would silently
+            lose them. */}
+        {useSave && (
+          <TabsContent value={"access-control"} className={"pb-8"}>
+            <NetworkResourceAccessControl
+              existingPolicies={existingPolicies || []}
+              newPolicies={policies}
+              onNewPoliciesChange={setPolicies}
+              address={address}
+              resourceName={name}
+              resourceId={resource?.id}
+              hasResourceGroups={groups.length > 0}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       <ModalFooter className={"items-center"}>

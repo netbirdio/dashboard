@@ -84,7 +84,9 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
       const length = items.length - 1;
       if (e.code === "ArrowUp" || (e.key === "Tab" && e.shiftKey)) {
         e.preventDefault();
-        const newSelected = selected === 0 ? length : selected - 1;
+        // Wrap from ANY non-positive index: a read-only list starts at -1
+        // (nothing highlighted), which must land on the last row, not -2.
+        const newSelected = selected <= 0 ? length : selected - 1;
         setSelected(newSelected);
         scrollToItem(newSelected);
       } else if (e.key === "ArrowDown" || e.key === "Tab") {
@@ -94,6 +96,10 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
         scrollToItem(newSelected);
       }
       if (e.key === "Enter") {
+        // Nothing highlighted (-1 on read-only lists, see autoSelectFirst) or a
+        // stale index: leave Enter alone rather than consuming it and handing
+        // onSelect an undefined item.
+        if (selected < 0 || selected >= items.length) return;
         e.preventDefault();
         onSelect?.(items[selected]);
       }
