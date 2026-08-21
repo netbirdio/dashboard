@@ -52,9 +52,10 @@ test.describe("WASM client @wasm", () => {
       void go.run(wasmModule.instance);
 
       // The Go runtime publishes its exports partway through startup, so the
-      // constructor appears some time after go.run() returns. The dashboard
-      // gives it 10s before reporting a load failure.
-      const deadline = Date.now() + 15_000;
+      // constructor appears some time after go.run() returns. This matches the
+      // deadline the dashboard applies to the same wait, so an artifact this
+      // test accepts is one the dashboard can also load.
+      const deadline = Date.now() + 10_000;
       while (Date.now() < deadline) {
         if (typeof (window as any).NetBirdClient === "function") {
           return "ok";
