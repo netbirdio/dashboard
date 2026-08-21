@@ -13,6 +13,8 @@ import {
   PolicyDestinationScope,
   AccessControlUpdateModal,
 } from "@/modules/access-control/AccessControlModal";
+import AgentPolicyModal from "@/modules/agent-network/AgentPolicyModal";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { Modal } from "@components/modal/Modal";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { Group } from "@/interfaces/Group";
@@ -50,6 +52,8 @@ interface PolicyContextType {
   // Restricts the create-policy modal's destination to a network's contents
   // (set when connecting onto a frame / framed resource / resource-group).
   setPolicyDestinationScope: (scope?: PolicyDestinationScope) => void;
+  // Agent Network overlay: open the agent-policy editor for a provider path.
+  openAgentPolicy: (id: string) => void;
 }
 
 const PolicyContext = createContext<PolicyContextType | null>(null);
@@ -100,6 +104,20 @@ export function ControlCenterPolicyProvider({
 
   const [selectedPolicy, setSelectedPolicy] = useState("");
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
+  // Agent-network policy nodes (id prefix `agent-policy-`) edit through the
+  // agent-network domain, not /policies — so they get their own modal and
+  // read the policy from the AIProviders context.
+  const [selectedAgentPolicy, setSelectedAgentPolicy] = useState("");
+  const [agentPolicyModalOpen, setAgentPolicyModalOpen] = useState(false);
+  const { policies: agentPolicyDomain } = useAIProviders();
+  const currentAgentPolicy = useMemo(
+    () => agentPolicyDomain?.find((p) => p.id === selectedAgentPolicy),
+    [agentPolicyDomain, selectedAgentPolicy],
+  );
+  const openAgentPolicy = (id: string) => {
+    setSelectedAgentPolicy(id);
+    setAgentPolicyModalOpen(true);
+  };
   const [createPolicyModal, setCreatePolicyModal] = useState(false);
   const [policyInitialName, setPolicyInitialName] = useState("");
   const [policyDestinationScope, setPolicyDestinationScope] = useState<
@@ -703,28 +721,29 @@ export function ControlCenterPolicyProvider({
 
   const value = useMemo(
     () => ({
-      selectedPolicy,
       setSelectedPolicy,
-      policyModalOpen,
       setPolicyModalOpen,
       updateDraftPolicy,
       drawPolicyOnCanvas,
       setCreatePolicyModal,
-      policyInitialName,
       setPolicyInitialName,
-      policySourceResource,
       setPolicySourceResource,
-      policyDestinationResource,
       setPolicyDestinationResource,
-      policySourceGroups,
       setPolicySourceGroups,
-      policyDestinationGroups,
       setPolicyDestinationGroups,
       setPolicyDestinationScope,
+      openAgentPolicy,
     }),
     [
+      selectedPolicy,
+      policyModalOpen,
       currentPolicy,
       createPolicyModal,
+      policyInitialName,
+      policySourceResource,
+      policyDestinationResource,
+      policySourceGroups,
+      policyDestinationGroups,
       // updateDraftPolicy/drawPolicyOnCanvas close over the changeset, draft
       // flag and entity data — keep the memoized value fresh so consumers
       // (onNodeConnect, sidebar drops) don't act on stale state.
@@ -774,6 +793,11 @@ export function ControlCenterPolicyProvider({
           />
         </Modal>
       )}
+      <AgentPolicyModal
+        open={agentPolicyModalOpen}
+        onOpenChange={setAgentPolicyModalOpen}
+        policy={currentAgentPolicy}
+      />
       {children}
     </PolicyContext.Provider>
   );

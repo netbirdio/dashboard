@@ -18,6 +18,7 @@ import PeersProvider from "@/contexts/PeersProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { Network } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
+import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
 import {
   CanvasStateProvider,
   ControlCenterUIProvider,
@@ -72,25 +73,29 @@ export default function ControlCenter() {
       <DragAndDropProvider>
         <ReactFlowProvider>
           <PoliciesProvider>
-            <PeersProvider>
-              <CanvasStateProvider>
-                <GroupsProvider>
-                  <DraftChangesetProvider>
-                    <DraftHistoryProvider>
-                      <ControlCenterPolicyProvider>
-                        <PageContainer>
-                          <ControlCenterUIProvider
-                            sidebar={<ControlCenterComponentsPanel />}
-                          >
-                            <ControlCenterCanvas />
-                          </ControlCenterUIProvider>
-                        </PageContainer>
-                      </ControlCenterPolicyProvider>
-                    </DraftHistoryProvider>
-                  </DraftChangesetProvider>
-                </GroupsProvider>
-              </CanvasStateProvider>
-            </PeersProvider>
+            {/* Agent Network domain data for the provider / agent-policy
+                overlay and its editor modal. */}
+            <AIProvidersProvider>
+              <PeersProvider>
+                <CanvasStateProvider>
+                  <GroupsProvider>
+                    <DraftChangesetProvider>
+                      <DraftHistoryProvider>
+                        <ControlCenterPolicyProvider>
+                          <PageContainer>
+                            <ControlCenterUIProvider
+                              sidebar={<ControlCenterComponentsPanel />}
+                            >
+                              <ControlCenterCanvas />
+                            </ControlCenterUIProvider>
+                          </PageContainer>
+                        </ControlCenterPolicyProvider>
+                      </DraftHistoryProvider>
+                    </DraftChangesetProvider>
+                  </GroupsProvider>
+                </CanvasStateProvider>
+              </PeersProvider>
+            </AIProvidersProvider>
           </PoliciesProvider>
         </ReactFlowProvider>
       </DragAndDropProvider>

@@ -8,6 +8,10 @@ import {
   DEFAULT_LAYOUT_CONFIG,
 } from "@/modules/control-center/utils/graph-builder";
 import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
+import {
+  addAgentNetworkProviderNodes,
+  useAgentNetworkOverlay,
+} from "./agent-network-overlay";
 import { addDestinationResourceNodes, ViewResult } from "./types";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
@@ -15,6 +19,7 @@ import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
 export function useGroupView() {
   const { policies, peers, networks, networkResources, groups, isDataReady } =
     useControlCenterData();
+  const agentNetwork = useAgentNetworkOverlay();
 
   // policiesOverride: rebuild from fresher data than the SWR cache (e.g. the
   // PUT response of a policy update) — see refreshLiveView.
@@ -141,6 +146,14 @@ export function useGroupView() {
         networks,
       );
     });
+
+    addAgentNetworkProviderNodes(
+      groupId,
+      `select-group-node`,
+      allNodes,
+      allEdges,
+      agentNetwork,
+    );
 
     return applyD3HierarchicalLayout(
       allNodes,

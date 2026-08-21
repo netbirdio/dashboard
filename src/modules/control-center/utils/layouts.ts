@@ -52,7 +52,9 @@ export const applyD3HierarchicalLayout = (
   // both are "what authorizes this" and the overlay mirrors the same
   // source → policy → destination shape.
   const policyNodes = simulationNodes.filter(
-    (n) => n.type === "policyNode" && n.data?.side !== "left",
+    (n) =>
+      (n.type === "policyNode" || n.type === "agentPolicyNode") &&
+      n.data?.side !== "left",
   );
   const leftPolicyNodes = simulationNodes.filter(
     (n) => n.type === "policyNode" && n.data?.side === "left",
@@ -60,6 +62,11 @@ export const applyD3HierarchicalLayout = (
   const networkNodes = simulationNodes.filter((n) => n.type === "networkNode");
   const resourceNodes = simulationNodes.filter(
     (n) => n.type === "resourceNode",
+  );
+  // Providers are destinations: they sit in the destination column next to
+  // groups and resources.
+  const providerNodes = simulationNodes.filter(
+    (n) => n.type === "providerNode",
   );
   const peerNodes = simulationNodes.filter((n) => n.type === "peerNode");
   const expandedGroupPeers = simulationNodes.filter(
@@ -139,7 +146,7 @@ export const applyD3HierarchicalLayout = (
   );
 
   centerNodesVertically(
-    [...destinationGroupNodes, ...destinationResourceNodes],
+    [...destinationGroupNodes, ...destinationResourceNodes, ...providerNodes],
     startX + (options?.destinationGroup?.width ?? columnWidth),
     options?.destinationGroup?.spacing ?? nodeSpacing,
     centerY,

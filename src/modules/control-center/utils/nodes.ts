@@ -1,7 +1,9 @@
+import { AgentPolicyNode } from "@/modules/control-center/nodes/AgentPolicyNode";
 import { GroupNode } from "@/modules/control-center/nodes/GroupNode";
 import { NetworkNode } from "@/modules/control-center/nodes/NetworkNode";
 import { PeerNode } from "@/modules/control-center/nodes/PeerNode";
 import { PolicyNode } from "@/modules/control-center/nodes/PolicyNode";
+import { ProviderNode } from "@/modules/control-center/nodes/ProviderNode";
 import { ResourceNode } from "@/modules/control-center/nodes/ResourceNode";
 import { ResourceGroupNode } from "@/modules/control-center/nodes/ResourceGroupNode";
 import { SelectGroupNode } from "@/modules/control-center/nodes/SelectGroupNode";
@@ -23,6 +25,9 @@ export enum NodeType {
   SelectPeerNode = "selectPeerNode",
   SelectGroupNode = "selectGroupNode",
   SelectUserNode = "selectUserNode",
+  // Agent Network overlay (only built when the feature is enabled).
+  AgentPolicyNode = "agentPolicyNode",
+  ProviderNode = "providerNode",
 }
 
 export const NODE_TYPES = {
@@ -40,4 +45,6 @@ export const NODE_TYPES = {
   [NodeType.SelectPeerNode]: SelectPeerNode,
   [NodeType.SelectGroupNode]: SelectGroupNode,
   [NodeType.SelectUserNode]: SelectUserNode,
+  [NodeType.AgentPolicyNode]: AgentPolicyNode,
+  [NodeType.ProviderNode]: ProviderNode,
 };

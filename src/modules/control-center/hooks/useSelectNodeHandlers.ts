@@ -75,7 +75,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     selectedUser,
     setSelectedUser,
     setSelectedDestinationGroup,
-    selectedDestinationGroup,
     setLiveResourceEditor,
     loggedInUser,
   } = useCanvasState();
@@ -86,7 +85,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     networks,
     groups,
     users,
-    networkResources,
     isLoading,
   } = useControlCenterData();
 
@@ -96,7 +94,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setHighlightArmed,
     setSelectedPeerPanel,
   } = useDestinationGroup();
-  const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
+  const { setSelectedPolicy, setPolicyModalOpen, openAgentPolicy } =
+    useControlCenterPolicy();
   const { isDraft } = useDraftMode();
   const { confirm } = useDialog();
 
@@ -395,12 +394,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     [],
   );
 
-  const onGroupSelect = useCallback((groupId: string) => {
-    resetView();
-    setCurrentView(FlowView.GROUPS);
-    setSelectedGroup(groupId);
-  }, []);
-
   const onViewChange = (view: FlowView) => {
     resetView();
     setSelectedDestinationGroup("");
@@ -439,12 +432,10 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         _node.type === "destinationGroupNode";
       const isPolicyNode = _node.type === "policyNode";
 
-      // A live frame's resource row drills into its network, same as the
-      // frame itself (rows are separate nodes, so the frame click never
-      // fires for them).
       // A live frame's resource / resource-group row drills into its network,
-      // same as the frame. Only in the overview (!selectedNetwork) — inside the
-      // drilled view these rows are already there, so a click is a no-op.
+      // same as the frame itself (rows are separate nodes, so the frame click
+      // never fires for them). Only in the overview (!selectedNetwork) — inside
+      // the drilled view these rows are already there, so a click is a no-op.
       const frameChildNetworkId =
         !isDraft &&
         !selectedNetwork &&
@@ -459,8 +450,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       const groupId = isGroupNode
         ? (_node.data as any)?.group?.id || (isDraft ? _node.id : _node.id.replace("group-", ""))
         : "";
-      // Inline policy pills (all-networks view) use per-network node ids
-      // ("policy-<pid>-net-<nid>") — the data carries the real policy id.
+      // Draft policy nodes are keyed by clientId — prefer the id the data
+      // carries.
       const policyId = isPolicyNode
         ? (_node.data as any)?.policy?.id ?? _node.id.replace("policy-", "")
         : "";
@@ -515,6 +506,10 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       if (policyId) {
         setSelectedPolicy(policyId);
         setPolicyModalOpen(true);
+      }
+      // Agent-network policies are edited through their own modal.
+      if (_node.type === "agentPolicyNode") {
+        openAgentPolicy(_node.id.replace("agent-policy-", ""));
       }
       // Live resources open the real editor (networks page modal) — its
       // save PUTs, so confirm first, like the live policy actions. Framed
@@ -574,6 +569,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       setHighlightArmed,
       setSelectedPolicy,
       setPolicyModalOpen,
+      openAgentPolicy,
       setSelectedPeerPanel,
       setLiveResourceEditor,
       confirm,
@@ -712,15 +708,10 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   ]);
 
   return {
-    fitView,
-    handleGroupChange,
-    handlePeerChange,
-    handleUserChange,
     forceSingleGroupView,
-    onDestinationGroupSelect,
-    onNetworkSelect,
     refreshLiveView,
     onViewChange,
+    onNetworkSelect,
     onNodeClick,
   };
 }

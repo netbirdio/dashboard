@@ -8,6 +8,10 @@ import {
   DEFAULT_LAYOUT_CONFIG,
 } from "@/modules/control-center/utils/graph-builder";
 import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
+import {
+  addAgentNetworkProviderNodes,
+  useAgentNetworkOverlay,
+} from "./agent-network-overlay";
 import { addDestinationResourceNodes, ViewResult } from "./types";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
@@ -15,6 +19,7 @@ import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
 export function usePeerView() {
   const { policies, peers, networks, networkResources, groups, isDataReady } =
     useControlCenterData();
+  const agentNetwork = useAgentNetworkOverlay();
 
   const applyPeerView = (
     peerId: string,
@@ -87,6 +92,17 @@ export function usePeerView() {
         networks,
       );
     });
+
+    // Union of the providers reachable through any group this peer belongs to.
+    peerGroups.forEach((g) =>
+      addAgentNetworkProviderNodes(
+        g.id ?? "",
+        `select-peer-node`,
+        allNodes,
+        allEdges,
+        agentNetwork,
+      ),
+    );
 
     return applyD3HierarchicalLayout(
       allNodes,
