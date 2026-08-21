@@ -496,37 +496,55 @@ export function useDraftGroupActions() {
   );
 
   // Delete: records a delete-group change (DELETE on deploy) and removes every
-  // canvas instance of the group.
-  const deleteGroup = useCallback(
-    (node: Node) => {
-      const group = getNodeGroup(node);
-      if (!group) return;
+  // canvas instance of the groups. The whole batch is resolved in ONE pass —
+  // deleting group by group would rebuild each policy from a canvas that
+  // hasn't absorbed the previous delete yet, and since trackUpdatePolicy
+  // supersedes per policy, the earlier group would reappear in the payload and
+  // its DELETE would be rejected.
+  const deleteGroups = useCallback(
+    (nodes: Node[]) => {
+      const groups: Group[] = [];
+      nodes.forEach((node) => {
+        const group = getNodeGroup(node);
+        if (!group) return;
+        if (isNewGroup(group)) {
+          removeGroup(node);
+          return;
+        }
+        if (!groups.some((g) => g.id === group.id)) groups.push(group);
+      });
+      if (groups.length === 0) return;
 
-      if (isNewGroup(group)) {
-        removeGroup(node);
-        return;
-      }
-
-      // A group DELETE is rejected while a policy still references it. Remove
-      // this group from each policy's tracked payload before scheduling the
-      // delete; use the direct tracker because a now-empty policy side still
-      // has to be sent to release the group reference.
+      // A group DELETE is rejected while a policy still references it. Strip
+      // every group in the batch from each policy's tracked payload before
+      // scheduling the deletes; use the direct tracker because a now-empty
+      // policy side still has to be sent to release the group reference.
       const policyUpdates = new Map<string, Policy>();
       reactFlow.getNodes().forEach((candidate) => {
         const policy = candidate.data?.policy as Policy | undefined;
         if (!policy?.id) return;
-        const updated = removeGroupFromPolicy(policy, group);
+        const updated = groups.reduce(
+          (acc, group) => removeGroupFromPolicy(acc, group),
+          policy,
+        );
         if (updated !== policy) policyUpdates.set(policy.id, updated);
       });
       policyUpdates.forEach((policy) =>
         trackUpdatePolicy({ policyId: policy.id!, policy }),
       );
 
-      trackDeleteGroup({ groupId: group.id, name: group.name });
+      groups.forEach((group) =>
+        trackDeleteGroup({ groupId: group.id, name: group.name }),
+      );
+
+      const deletedIds = new Set(groups.map((g) => g.id));
       const instanceIds = new Set(
         reactFlow
           .getNodes()
-          .filter((n) => isGroupNode(n) && getNodeGroup(n)?.id === group.id)
+          .filter((n) => {
+            const groupId = isGroupNode(n) ? getNodeGroup(n)?.id : undefined;
+            return !!groupId && deletedIds.has(groupId);
+          })
           .map((n) => n.id),
       );
       setNodes((prev) =>
@@ -584,10 +602,10 @@ export function useDraftGroupActions() {
       });
       if (!choice) return false;
 
-      deletable.forEach((n) => deleteGroup(n));
+      deleteGroups(deletable);
       return true;
     },
-    [confirm, deleteGroup],
+    [confirm, deleteGroups],
   );
 
   return {
@@ -595,7 +613,6 @@ export function useDraftGroupActions() {
     renameGroup,
     removeGroupMember,
     removeGroup,
-    deleteGroup,
     confirmAndDeleteGroups,
     removeNodeWithEdges,
   };
