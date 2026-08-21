@@ -47,19 +47,28 @@ jobs:
           branch="bump-netbird-wasm-${TAG#v}"
           echo "branch=${branch}" >> "$GITHUB_OUTPUT"
 
+          # The branch name is derived from the tag, so a re-dispatch of the
+          # same release would collide with the branch and pull request an
+          # earlier run left behind.
+          if git ls-remote --exit-code --heads origin "${branch}" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Branch ${branch} already exists, ${TAG} was handled by an earlier run"
+            exit 0
+          fi
+
           git checkout -b "${branch}"
           git add src/utils/config.ts
           if git diff --cached --quiet; then
-            echo "no_changes=true" >> "$GITHUB_OUTPUT"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "Default wasm path already at ${TAG}, nothing to do"
             exit 0
           fi
-          echo "no_changes=false" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
           git commit -m "Bump the WASM client to ${TAG}"
           git push --set-upstream origin "${branch}"
 
       - name: Create pull request
-        if: steps.bump.outputs.no_changes != 'true'
+        if: steps.bump.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.NETBIRD_DEV_BOT_GITHUB_TOKEN }}
           TAG: ${{ inputs.tag }}
