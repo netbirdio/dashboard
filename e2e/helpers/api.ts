@@ -82,6 +82,19 @@ export async function apiGet<T>(page: Page, path: string): Promise<T> {
   return resp.json();
 }
 
+export async function apiPost<T>(
+  page: Page,
+  path: string,
+  body: unknown,
+): Promise<T> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.post(`${origin}/api${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: body,
+  });
+  return resp.json();
+}
+
 export async function apiDelete(page: Page, path: string): Promise<void> {
   const { token, origin } = await getApiContext(page);
   await page.request.delete(`${origin}/api${path}`, {

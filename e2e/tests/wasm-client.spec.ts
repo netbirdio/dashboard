@@ -1,8 +1,11 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import type { Peer } from "../../src/interfaces/Peer";
-import { apiDelete, apiGet } from "../helpers/api";
+import type { ReverseProxy } from "../../src/interfaces/ReverseProxy";
+import { apiDelete, apiGet, apiPost, deleteServicesByPrefix } from "../helpers/api";
 import { expect, test } from "../helpers/fixtures";
+import { CUSTOM_PORTS_DOMAIN } from "../helpers/reverse-proxy-l4";
+import { generateRandomName } from "../helpers/utils";
 
 /**
  * Guards the pinned default WASM client, which is what a version bump changes:
@@ -61,21 +64,45 @@ test.describe.serial("WASM client @wasm", () => {
   test("the remote-access flow brings the pinned WASM client online", async ({
     dashboardAsOwner: page,
   }) => {
-    test.setTimeout(180_000);
+    test.setTimeout(300_000);
 
-    // The SSH page needs a peer to target; the environment always has peers
-    // once its clusters are online. The SSH session itself will fail against
-    // it, which is fine: the flow under test ends when the client is online.
-    const peers = await apiGet<Peer[]>(page, "/peers");
-    expect(
-      peers.length,
-      "the environment should have a peer to target",
-    ).toBeGreaterThan(0);
-    const before = new Set(peers.map((p) => p.id));
+    // The SSH page needs a peer to target. A fresh account has none, so one is
+    // minted the way the environment supports: exposing a service makes a proxy
+    // register an embedded peer for the account. The SSH session itself will
+    // fail against it, which is fine: the flow under test ends when the
+    // browser client is online.
+    await deleteServicesByPrefix(page, "wasm-e2e-");
+    const serviceName = generateRandomName("wasm-e2e-");
+    await apiPost<ReverseProxy>(page, "/reverse-proxies/services", {
+      name: serviceName,
+      domain: `${serviceName}.${CUSTOM_PORTS_DOMAIN}`,
+      enabled: true,
+      targets: [
+        {
+          target_type: "host",
+          protocol: "http",
+          host: "10.99.99.40",
+          port: 80,
+          enabled: true,
+        },
+      ],
+    });
+
+    let target: Peer | undefined;
+    for (let attempt = 0; attempt < 45 && !target; attempt++) {
+      await page.waitForTimeout(2_000);
+      const all = await apiGet<Peer[]>(page, "/peers");
+      target = all.find((p) => p.name.startsWith("proxy-"));
+    }
+    expect(target, "exposing a service should register a proxy peer").toBeTruthy();
+
+    const before = new Set(
+      (await apiGet<Peer[]>(page, "/peers")).map((p) => p.id),
+    );
 
     // Mounting the page runs the dashboard's own chain: load the pinned wasm,
     // generate a key, register temporary access, start the client.
-    await page.goto(`/peer/ssh?id=${peers[0].id}&user=root&port=22022`);
+    await page.goto(`/peer/ssh?id=${target!.id}&user=root&port=22022`);
 
     // Management's view proves the round trip: the flow's ephemeral peer shows
     // up connected. Polled via the API because the connected flag is
@@ -99,10 +126,11 @@ test.describe.serial("WASM client @wasm", () => {
       ).toBe(true);
     } finally {
       // Best-effort: a throw here would mask the failure under test, and the
-      // ephemeral peer must not outlive the test in the shared environment.
+      // test's artifacts must not outlive it in the shared environment.
       try {
         await page.goto("/peers");
         if (created) await apiDelete(page, `/peers/${created.id}`);
+        await deleteServicesByPrefix(page, "wasm-e2e-");
       } catch {
         // The assertion that failed is the story; a cleanup miss is not.
       }
