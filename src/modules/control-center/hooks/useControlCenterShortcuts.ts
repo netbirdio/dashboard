@@ -24,7 +24,9 @@ export function useControlCenterShortcuts(
 ) {
   const { isDraft } = useDraftMode();
   const shortcutsRef = useRef(shortcuts);
-  shortcutsRef.current = shortcuts;
+  useEffect(() => {
+    shortcutsRef.current = shortcuts;
+  });
 
   useEffect(() => {
     if (!isDraft || !enabled) return;
