@@ -10,8 +10,7 @@ import { DraftChange } from "@/modules/control-center/draft/DraftChangesetContex
 // testable (see change-cascade.test.ts).
 
 /** Canvas node id that a change's entity renders as (undefined for routers,
- * which are a routing edge, not a node). Single source of truth shared by the
- * removal hook and the preview. */
+ * which are a routing edge, not a node). */
 export function changeNodeId(change: DraftChange): string | undefined {
   switch (change.type) {
     case "create-group":
@@ -281,7 +280,7 @@ export function previewRemoveChange(
         ids.add(e.source);
       }
     }
-    return ids.size;
+    return ids;
   };
 
   switch (change.type) {
@@ -294,16 +293,7 @@ export function previewRemoveChange(
         )
         .map((n) => n.id);
       const policyCount = new Set(
-        nodeIds.flatMap((id) => {
-          const out: string[] = [];
-          for (const e of edges) {
-            if (e.source === id && e.target.startsWith("policy-"))
-              out.push(e.target);
-            if (e.target === id && e.source.startsWith("policy-"))
-              out.push(e.source);
-          }
-          return out;
-        }),
+        nodeIds.flatMap((id) => [...policiesTouchingNode(id)]),
       ).size;
       const resourceCount = changes.filter(
         (c) =>
@@ -371,7 +361,7 @@ export function previewRemoveChange(
         };
       }
       const nodeId = `peer-${change.clientId}`;
-      const policyCount = policiesTouchingNode(nodeId);
+      const policyCount = policiesTouchingNode(nodeId).size;
       const routerCount = changes.filter(
         (c) =>
           (c.type === "create-router" || c.type === "update-router") &&

@@ -1,12 +1,12 @@
 import { useReactFlow, XYPosition } from "@xyflow/react";
 import { useCallback, useState } from "react";
-import { useGroups } from "@/contexts/GroupsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
+  draftUid,
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_FALLBACK_ROW,
 } from "@/modules/control-center/utils/helpers";
@@ -25,14 +25,8 @@ type CreateGroupOptions = {
   frameId?: string;
 };
 
-const uid = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
 export function useCreateGroupOnCanvas() {
   const reactFlow = useReactFlow();
-  const { createOrUpdate } = useGroups();
   const { isDraft } = useDraftMode();
   const { trackCreateGroup } = useDraftChangeset();
   const [modalOpen, setModalOpen] = useState(false);
@@ -62,7 +56,7 @@ export function useCreateGroupOnCanvas() {
         // The resourcegroup-new- id keeps Rename working (matches the frame
         // resource-group menu's prefix check).
         if (frameId) {
-          const nodeId = `resourcegroup-new-${uid()}`;
+          const nodeId = `resourcegroup-new-${draftUid()}`;
           reactFlow.addNodes({
             id: nodeId,
             type: NodeType.ResourceGroupNode,
@@ -91,7 +85,7 @@ export function useCreateGroupOnCanvas() {
           return group;
         }
 
-        const nodeId = `group-new-${uid()}`;
+        const nodeId = `group-new-${draftUid()}`;
         reactFlow.addNodes({
           id: nodeId,
           type: "groupNode",
@@ -110,29 +104,8 @@ export function useCreateGroupOnCanvas() {
         trackCreateGroup({ clientId: nodeId, name, peerIds, resourceIds });
         return group;
       }
-
-      const createdGroup = await createOrUpdate({
-        name,
-        peers: peerIds,
-        resources: resourceIds,
-      });
-
-      if (!createdGroup?.id) return undefined;
-
-      reactFlow.addNodes({
-        id: `group-${createdGroup.id}`,
-        type: "groupNode",
-        data: {
-          group: createdGroup,
-          enabled: true,
-          showHandles: false,
-        },
-        position,
-      });
-
-      return createdGroup;
     },
-    [createOrUpdate, reactFlow, isDraft, trackCreateGroup],
+    [reactFlow, isDraft, trackCreateGroup],
   );
 
   return {

@@ -164,7 +164,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     ],
   );
 
-  // Alt/⌥+1…7 create at the viewport center (draft-only, input-aware).
+  // Alt/⌥+1…6 create at the viewport center (draft-only, input-aware).
   const viewportCenter = useCallback(
     () =>
       reactFlow.screenToFlowPosition({

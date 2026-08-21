@@ -15,6 +15,7 @@ import {
   sameGroupMatcher,
 } from "@/modules/control-center/utils/policy-group-sync";
 import {
+  draftUid,
   getTopZIndex,
   isDraftNetworkNode,
   isFrameNode,
@@ -43,11 +44,6 @@ export const canRenameGroup = (group?: Group) =>
   !!group &&
   !isAllGroup(group) &&
   (isNewGroup(group) || !group.issued || group.issued === GroupIssued.API);
-
-const uid = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export const getNextNewGroupName = (taken: Set<string>) => {
   let name = "Group";
@@ -93,7 +89,7 @@ export function useDraftGroupActions() {
       changes.forEach((c) => c.type === "create-group" && taken.add(c.name));
 
       const name = getNextNewGroupName(taken);
-      const nodeId = `group-new-${uid()}`;
+      const nodeId = `group-new-${draftUid()}`;
       setNodes((prev) =>
         prev.concat({
           id: nodeId,

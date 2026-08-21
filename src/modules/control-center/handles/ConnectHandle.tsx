@@ -18,9 +18,6 @@ import {
 type Props = {
   position?: Position;
   type?: "source" | "target";
-  style?: React.CSSProperties;
-  // Horizontal shift in px (positive → right).
-  offsetX?: number;
   // Force the bubble hidden even while the node is hovered.
   hidden?: boolean;
 };
@@ -48,8 +45,6 @@ const generateHandleId = (type: "source" | "target", position: Position) => {
 export const ConnectHandle = ({
   position = Position.Right,
   type = "source",
-  style,
-  offsetX,
   hidden = false,
 }: Props) => {
   const nodeId = useNodeId();
@@ -99,8 +94,6 @@ export const ConnectHandle = ({
           ...(isHorizontal
             ? { width: "1em", height: "4em" }
             : { width: "4em", height: "1em" }),
-          ...(offsetX ? { marginLeft: offsetX } : {}),
-          ...style,
         }}
       >
         <div

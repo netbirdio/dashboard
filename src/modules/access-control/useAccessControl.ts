@@ -133,7 +133,7 @@ export const useAccessControl = ({
   ] = useGroupHelper({
     initial: firstRule
       ? (firstRule.sources as Group[])
-      : (initialSourceGroups as Group[]) ?? [],
+      : initialSourceGroups ?? [],
   });
 
   const [

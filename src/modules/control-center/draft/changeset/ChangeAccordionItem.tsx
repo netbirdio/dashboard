@@ -74,7 +74,7 @@ export const ChangeAccordionItem = ({
     () => buildChangeRequest(change, live),
     [change, live],
   );
-  const copyText = request ? toCurl(request) : apiCall;
+  const copyText = toCurl(request);
   // Copy via notify() directly so the toast can title "Copied as cURL request"
   // and describe the actual request (e.g. DELETE /groups/...).
   const [copied, setCopied] = useState(false);
@@ -216,8 +216,7 @@ export const ChangeAccordionItem = ({
 
           <span className={"flex-1"} />
 
-          {/* Right: issue badge (blocking, click to fix) → diffstat (code
-              mode) → kind badge */}
+          {/* Right: issue badge (blocking, click to fix) → diffstat → kind badge */}
           {issue ? (
             <IssueBadge
               label={issue.label}
@@ -268,18 +267,16 @@ export const ChangeAccordionItem = ({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align={"end"}>
-              {request && (
-                <DropdownMenuItem
-                  className={"gap-2"}
-                  onClick={() => {
-                    doCopy(false);
-                    setMenuOpen(false);
-                  }}
-                >
-                  <CopyIcon size={14} />
-                  Copy cURL
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem
+                className={"gap-2"}
+                onClick={() => {
+                  doCopy(false);
+                  setMenuOpen(false);
+                }}
+              >
+                <CopyIcon size={14} />
+                Copy cURL
+              </DropdownMenuItem>
               <DropdownMenuItem
                 variant={"danger"}
                 className={"gap-2"}
@@ -298,7 +295,7 @@ export const ChangeAccordionItem = ({
         {/* No outer padding — the content is flush; rows/code carry their own
             insets (peer-overview style rows, edge-to-edge code). */}
         <div className={"border-t border-nb-gray-910 min-w-0"}>
-          <ChangeCodeView change={change} live={live} hideHeader={true} />
+          <ChangeCodeView change={change} live={live} />
         </div>
       </AccordionContent>
     </AccordionItem>

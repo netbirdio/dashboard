@@ -7,11 +7,11 @@ export type NavigationGuard = (proceed: () => void) => void;
 
 let activeGuard: NavigationGuard | null = null;
 
-export function setNavigationGuard(guard: NavigationGuard) {
+function setNavigationGuard(guard: NavigationGuard) {
   activeGuard = guard;
 }
 
-export function clearNavigationGuard(guard: NavigationGuard) {
+function clearNavigationGuard(guard: NavigationGuard) {
   if (activeGuard === guard) activeGuard = null;
 }
 

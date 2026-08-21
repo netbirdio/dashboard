@@ -292,18 +292,6 @@ p {
     pointer-events: none;
 }
 
-/* The FOCUSED node keeps its own ring for the whole focus session — the
-   focus-mode sky accent (no glow). */
-.react-flow__node.cc-focus-root > * {
-    box-shadow: 0 0 0 2px rgb(56 189 248); /* sky-400 */
-}
-.react-flow__node.cc-focus-root > .cc-frame-row {
-    box-shadow: none;
-}
-.react-flow__node.cc-focus-root > .cc-frame-row .cc-frame-row-icon {
-    box-shadow: 0 0 0 2px rgb(250 204 21);
-}
-
 /* Unfocusable nodes (selectors, nodes without edges) are marked with
    cc-unfocusable by useGroupFocusDim while the mode is armed. */
 .cc-focus-armed .react-flow__node:not(.cc-unfocusable) {

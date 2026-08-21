@@ -134,13 +134,10 @@ export const applyDraftBuildLayout = (
       !destinationIds.has(n.id) &&
       n.position.x < 240,
   );
-  const draftDisplayName = (n: Node) =>
-    (
-      (n.data as { group?: { name?: string }; peer?: { name?: string } })
-        ?.group?.name ??
-      (n.data as { peer?: { name?: string } })?.peer?.name ??
-      ""
-    ).toLowerCase();
+  const draftDisplayName = (n: Node) => {
+    const d = n.data as { group?: { name?: string }; peer?: { name?: string } };
+    return (d?.group?.name ?? d?.peer?.name ?? "").toLowerCase();
+  };
   if (sourceColumn.length > 0) {
     // Name-sorted like the live overview.
     sourceColumn.sort((a, b) =>

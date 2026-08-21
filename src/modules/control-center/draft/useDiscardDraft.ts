@@ -11,7 +11,7 @@ import { usePlaceholderArtifacts } from "@/modules/control-center/hooks/usePlace
 // by accident. Deploy uses exitAfterDeploy: the changes were applied, nothing
 // to confirm.
 export function useDiscardDraft() {
-  const { setIsDraft, newDraftSession } = useDraftMode();
+  const { setIsDraft } = useDraftMode();
   const { changeCount, clearChanges } = useDraftChangeset();
   const { setLayoutInitialized } = useCanvasState();
   const { confirm } = useDialog();
@@ -87,31 +87,5 @@ export function useDiscardDraft() {
     return true;
   }, [changeCount, confirm, exitDraft]);
 
-  // Starts a fresh draft (rebuilt from live). Warns — not as a destructive
-  // error, just a heads-up — while changes are pending.
-  const startNewDraft = useCallback(async () => {
-    if (changeCount > 0) {
-      const choice = await confirm({
-        title: "Start a new draft?",
-        description: "Your existing draft and its changes will be lost.",
-        confirmText: "New Draft",
-        cancelText: "Cancel",
-        type: "warning",
-        dismissOnOutsideClick: true,
-      });
-      if (!choice) return false;
-    }
-    sweepPlaceholderArtifacts();
-    clearChanges();
-    newDraftSession();
-    return true;
-  }, [
-    changeCount,
-    confirm,
-    clearChanges,
-    newDraftSession,
-    sweepPlaceholderArtifacts,
-  ]);
-
-  return { discardAndExit, exitAfterDeploy, startNewDraft };
+  return { discardAndExit, exitAfterDeploy };
 }

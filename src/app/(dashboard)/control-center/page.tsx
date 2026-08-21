@@ -164,7 +164,7 @@ function ControlCenterCanvas() {
   const closeNodeContextMenu = React.useCallback(() => {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
-  }, [canvas, setSelectedPeerPanel]);
+  }, [canvas]);
 
   // Outside click dismisses everything at once (menu + panels + components
   // picker). The group panel may register a discard-confirm guard, so wait on
@@ -268,14 +268,7 @@ function ControlCenterCanvas() {
       <DraftNetworkEditModal />
       <DraftLeaveGuard />
       <ReactFlow
-        className={
-          [
-            draft.isSelectMode && "select-mode",
-            highlightArmed && "cc-focus-armed",
-          ]
-            .filter(Boolean)
-            .join(" ") || undefined
-        }
+        className={highlightArmed ? "cc-focus-armed" : undefined}
         edges={canvas.edges}
         nodes={canvas.nodes}
         onNodesChange={canvas.onNodesChange}

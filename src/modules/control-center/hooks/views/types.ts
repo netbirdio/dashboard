@@ -2,16 +2,6 @@ import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { Edge, Node } from "@xyflow/react";
-import { Group } from "@/interfaces/Group";
-
-export interface ViewDataDeps {
-  policies: Policy[];
-  peers: Peer[];
-  networks: any[];
-  networkResources: NetworkResource[];
-  groups: Group[];
-  selectedDestinationGroup: string;
-}
 
 export interface ViewResult {
   updatedNodes: Node[];

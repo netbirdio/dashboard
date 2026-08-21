@@ -22,7 +22,7 @@ import { cleanupDockerPeer, registerDockerPeer } from "../helpers/docker-peer";
  * against management directly; the peer stays offline (no signal/TURN) but is
  * selectable, which is all the Peer view needs.
  *
- * These are @slow: registering a peer takes ~10–20s.
+ * These are slow: registering a peer takes ~10–20s.
  */
 test.describe.serial("Control Center Peers @control-center", () => {
   const PREFIX = "cc-peer-";
@@ -63,7 +63,7 @@ test.describe.serial("Control Center Peers @control-center", () => {
       dstGroup.id,
     );
 
-    const host = "cc-peer-" + generateRandomName();
+    const host = generateRandomName(PREFIX);
     hosts.push(host);
     const peer = await registerDockerPeer(page, host, [srcGroup.id]);
     expect(peer.name).toBe(host);

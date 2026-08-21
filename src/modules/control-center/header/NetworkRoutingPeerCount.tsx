@@ -1,5 +1,4 @@
 import useFetchApi from "@utils/api";
-import * as React from "react";
 import { useMemo } from "react";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { usePeers } from "@/contexts/PeersProvider";
@@ -49,7 +48,6 @@ export const NetworkRoutingPeerCount = ({ network }: Props) => {
             isGroup: !r.peer,
             peersCount: !r.peer ? group?.peers_count ?? 0 : undefined,
             enabled: r.enabled,
-            // Opens the real routing-peer modal (its save PUTs).
             onEdit: () => setRoutingPeerModal({ network, router: r }),
           };
         }),

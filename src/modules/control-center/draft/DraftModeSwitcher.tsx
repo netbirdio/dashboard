@@ -4,7 +4,6 @@ import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import {
   ChevronDownIcon,
-  CirclePlusIcon,
   GitPullRequestArrowIcon,
   PencilLineIcon,
 } from "lucide-react";
@@ -16,11 +15,6 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { DraftStartPopover } from "@/modules/control-center/draft/DraftStartPopover";
 import { ReviewDeployModal } from "@/modules/control-center/draft/modals/ReviewDeployModal";
 import { useDiscardDraft } from "@/modules/control-center/draft/useDiscardDraft";
-
-// Toggle the Live/Draft segmented control. While off, draft is entered via a
-// "New Draft" button that starts from an empty canvas, and Cancel is the only
-// way back to live.
-const showDraftSwitcher = true;
 
 type Props = {};
 export const DraftModeSwitcher = ({}: Props) => {
@@ -142,38 +136,19 @@ export const DraftModeSwitcher = ({}: Props) => {
           </div>
           {/* Mode indicator while drafting — Draft is active, Live switches
               back (destroys the draft, confirmed when there are changes). */}
-          {showDraftSwitcher && modeTabs(false)}
+          {modeTabs(false)}
         </>
       )}
-      {!isDraft &&
-        (showDraftSwitcher ? (
-          <DraftStartPopover
-            open={startOpen}
-            onOpenChange={setStartOpen}
-            onStartBlank={startBlankDraft}
-            onUseCurrent={startCurrentDraft}
-          >
-            {modeTabs(true)}
-          </DraftStartPopover>
-        ) : (
-          <Button
-            variant={"secondary"}
-            size={"xs"}
-            className={"h-[39px] !px-3 whitespace-nowrap"}
-            onClick={() => startBlankDraft()}
-            data-testid={"cc-new-draft"}
-          >
-            <CirclePlusIcon size={14} />
-            New Draft
-            {/* Same Beta treatment as the sidebar's Reverse Proxy entry. */}
-            <SmallBadge
-              text={"Beta"}
-              variant={"sky"}
-              className={"text-[8px] leading-none py-[3px] px-[5px]"}
-              textClassName={"top-0"}
-            />
-          </Button>
-        ))}
+      {!isDraft && (
+        <DraftStartPopover
+          open={startOpen}
+          onOpenChange={setStartOpen}
+          onStartBlank={startBlankDraft}
+          onUseCurrent={startCurrentDraft}
+        >
+          {modeTabs(true)}
+        </DraftStartPopover>
+      )}
 
       <ReviewDeployModal
         open={reviewOpen}

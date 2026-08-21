@@ -16,18 +16,15 @@ import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon
 // Traffic light: gray = 0, yellow = 1, green ≥ 2 (HA).
 export const RoutingPeersIndicator = ({
   count,
-  hideWhenZero = false,
   dotSize = 8,
   className,
   zeroLabel,
 }: {
   count: number;
-  hideWhenZero?: boolean;
   dotSize?: number;
   className?: string;
   zeroLabel?: string;
 }) => {
-  if (hideWhenZero && count === 0) return null;
   // The status bar (has a zeroLabel) flags "no routing peers" with a yellow
   // AlertTriangle, same as a resource's "No Network" — a missing router means
   // the network can't route. Elsewhere the traffic-light dot is kept.
@@ -94,9 +91,8 @@ const MAX_LIST_HEIGHT = 195;
 
 // Routing-peers button group `[● status ⌄ | ⊕ Add]`: the status button opens
 // a PeerSelector-style popover (search + one row per router); with no routers
-// it triggers onAdd directly. Without onAdd the bar is read-only (no Add
-// segment). Shared by the draft network frame's floating bar, the live
-// network frames, and the live single-network header.
+// it triggers onAdd directly. Shared by the draft network frame's floating
+// bar, the live network frames, and the live single-network header.
 export const RoutingPeersBar = ({
   rows,
   count,
@@ -108,7 +104,7 @@ export const RoutingPeersBar = ({
 }: {
   rows: RoutingPeerRow[];
   count: number;
-  onAdd?: () => void;
+  onAdd: () => void;
   // Fired on trigger hover — frames prefetch their rows so the popover
   // usually opens with data already there (no skeleton flash).
   onPrefetch?: () => void;
@@ -188,7 +184,7 @@ export const RoutingPeersBar = ({
               // the just-added routing peer becomes a row.
               if (!hasRouters) {
                 e.preventDefault();
-                onAdd?.();
+                onAdd();
               }
             }}
             className={cn(
@@ -304,7 +300,7 @@ export const RoutingPeersBar = ({
       </Popover>
       {/* Trailing "Add" only once there's a routing peer — with none, the
           status button itself ("No Routing Peer") adds the first. */}
-      {hasRouters && onAdd && (
+      {hasRouters && (
         <button
           type={"button"}
           onClick={(e) => {

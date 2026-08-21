@@ -475,8 +475,7 @@ const InstallNetBirdWithSetupKeyButton = ({
       .post({
         name,
         type: "one-off",
-        // 1 day expiration (seconds)
-        expires_in: 24 * 60 * 60,
+        expires_in: 24 * 60 * 60, // 1 day expiration in seconds
         revoked: false,
         auto_groups: [],
         usage_limit: 1,

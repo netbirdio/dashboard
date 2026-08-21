@@ -82,7 +82,6 @@ export type ResourceModalResult = {
   description: string;
   address: string;
   groups: Group[];
-  enabled: boolean;
 };
 
 type ModalProps = {
@@ -183,7 +182,6 @@ export function ResourceModalContent({
       description,
       address: normalizeHostCIDR(address),
       groups,
-      enabled,
     });
   };
 

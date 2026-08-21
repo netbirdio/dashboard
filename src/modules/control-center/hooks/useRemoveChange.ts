@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Edge, Node } from "@xyflow/react";
+import { Node } from "@xyflow/react";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
@@ -141,11 +141,7 @@ export function useRemoveChange() {
           const netId = change.networkId ?? change.networkClientId;
           const frameId = `network-${netId}`;
           // A draft group's router edge id isn't peer-scoped — match by target.
-          const src = change.peerId
-            ? `peer-${change.peerId}`
-            : change.groupId
-            ? undefined
-            : undefined;
+          const src = change.peerId ? `peer-${change.peerId}` : undefined;
           setEdges((prev) =>
             prev.filter(
               (e) =>

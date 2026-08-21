@@ -61,7 +61,7 @@ function getIntersectingFrame(
 // draft ids — the upgrade flow swaps them for the real id on install.
 const getDraggedItemId = getGroupableEntityId;
 
-export function groupContainsItem(groupNode: Node, itemId: string): boolean {
+function groupContainsItem(groupNode: Node, itemId: string): boolean {
   const group = groupNode.data?.group as Group | undefined;
   if (!group) return false;
 
@@ -600,14 +600,6 @@ export function useDragToGroup() {
       }
 
       if (!DROPPABLE_NODE_TYPES.has(draggedNode.type ?? "")) return;
-
-      setNodes((prev) =>
-        prev.map((n) => {
-          if (!GROUP_NODE_TYPES.has(n.type ?? "")) return n;
-          if (!n.data.dropTarget) return n;
-          return { ...n, data: { ...n.data, dropTarget: false } };
-        }),
-      );
 
       const targetGroup = getIntersectingGroup(draggedNode, reactFlow);
       if (!targetGroup) return;

@@ -22,10 +22,8 @@ export function useGroupFocusDim() {
   const { nodes, edges, setNodes, setEdges } = useCanvasState();
   const { focusedNodeId, highlightArmed } = useDestinationGroup();
 
-  const focusNode = focusedNodeId;
-
   useEffect(() => {
-    const MANAGED = new Set(["cc-dimmed", "cc-unfocusable", "cc-focus-root"]);
+    const MANAGED = new Set(["cc-dimmed", "cc-unfocusable"]);
     const clear = () => {
       // draggable: true is the focus-root marker (see below) — nothing else
       // sets a per-node draggable, so clearing it can't clobber other state.
@@ -49,7 +47,7 @@ export function useGroupFocusDim() {
       }
     };
 
-    if (!focusNode) {
+    if (!focusedNodeId) {
       // Focus Mode armed but nothing targeted yet: mark the nodes that CAN'T
       // be focused (selectors, nodes without a single edge) so the armed
       // hover ring / pointer skips them (cc-unfocusable, globals.css).
@@ -81,7 +79,7 @@ export function useGroupFocusDim() {
       clear();
       return;
     }
-    const root = nodes.find((n) => n.id === focusNode);
+    const root = nodes.find((n) => n.id === focusedNodeId);
     if (!root) {
       clear();
       return;
@@ -161,5 +159,5 @@ export function useGroupFocusDim() {
       return changed ? next : prev;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusNode, highlightArmed, nodes, edges]);
+  }, [focusedNodeId, highlightArmed, nodes, edges]);
 }

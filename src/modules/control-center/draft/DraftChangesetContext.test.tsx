@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import React from "react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
 import {
@@ -42,8 +42,6 @@ const makePolicy = (
     },
   ],
 });
-
-beforeEach(() => window.localStorage.clear());
 
 describe("group changes", () => {
   it("a rename of a draft-only group folds into its create change", () => {
@@ -691,13 +689,11 @@ describe("canvas warnings", () => {
 });
 
 describe("getChangeIssue / hasBlockingIssues", () => {
-  const resourceChange = (
-    net: Partial<Pick<DraftChange & { type: "create-resource" }, never>> & {
-      networkId?: string;
-      networkClientId?: string;
-      networkName?: string;
-    },
-  ): DraftChange =>
+  const resourceChange = (net: {
+    networkId?: string;
+    networkClientId?: string;
+    networkName?: string;
+  }): DraftChange =>
     ({
       id: "c1",
       type: "create-resource",

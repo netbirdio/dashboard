@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
+import { draftUid } from "@/modules/control-center/utils/helpers";
 
 // Every draft action is recorded as a change describing the API call needed on
 // deploy. Nothing hits the API until the changeset is deployed. Changes are
@@ -522,70 +523,12 @@ export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "delete-group",
 ];
 
-// Non-blocking Review & Deploy warnings (the draft equivalent of the live
-// "no access control policies" confirmations): unreachable resources and
-// resources nothing grants access to. Warnings never block deploying.
-export const getDraftWarnings = (changes: DraftChange[]): string[] => {
-  const warnings: string[] = [];
-  const networks = changes.filter(
-    (c): c is CreateNetworkChange => c.type === "create-network",
-  );
-  const resources = changes.filter(
-    (c): c is CreateResourceChange => c.type === "create-resource",
-  );
-  const routers = changes.filter(
-    (c): c is CreateRouterChange => c.type === "create-router",
-  );
-
-  networks.forEach((n) => {
-    const hasResources = resources.some(
-      (r) => r.networkClientId === n.clientId,
-    );
-    const hasRouter = routers.some((r) => r.networkClientId === n.clientId);
-    if (hasResources && !hasRouter) {
-      warnings.push(
-        `Network “${n.name}” has no routing peers, so its resources won't be reachable.`,
-      );
-    }
-  });
-
-  const policyChanges = changes.filter(
-    (c): c is CreatePolicyChange | UpdatePolicyChange =>
-      c.type === "create-policy" || c.type === "update-policy",
-  );
-  resources.forEach((res) => {
-    const direct = policyChanges.some(
-      (p) => p.policy.rules?.[0]?.destinationResource?.id === res.clientId,
-    );
-    const viaGroup = policyChanges.some((p) => {
-      const destinations =
-        (p.policy.rules?.[0]?.destinations as (Group | string)[]) ?? [];
-      // res.groupIds mixes API ids and draft-group names; destinations mix
-      // group objects and raw id strings — match on whichever form is there.
-      return destinations.some((g) =>
-        typeof g === "string"
-          ? res.groupIds.includes(g)
-          : res.groupIds.includes(g.name) ||
-            (!!g.id && res.groupIds.includes(g.id)),
-      );
-    });
-    if (!direct && !viaGroup) {
-      warnings.push(
-        `Resource “${res.name}” is not referenced by any policy, so no peer will have access.`,
-      );
-    }
-  });
-
-  return warnings;
-};
-
-// Canvas-only states that silently withhold changes from deploy — surfaced in
-// Review & Deploy so the user learns WHY something they built isn't listed:
+// Describes the canvas-only states that silently withhold changes from deploy:
 // policies referencing uninstalled placeholder peers (hard requirement — the
 // peer must exist before the policy can). A draft resource with an address but
 // no network now enters the changeset as a blocking ISSUE (getChangeIssue), so
 // it's listed rather than silently withheld; only a resource still missing an
-// address never reaches the changeset and is warned about here.
+// address never reaches the changeset and is described here.
 export const getCanvasWarnings = (
   nodes: {
     id: string;
@@ -639,11 +582,6 @@ export const getCanvasWarnings = (
 
   return warnings;
 };
-
-const uid = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 // Groups are referenced by API id when they exist, otherwise by name: a group
 // that only lives in the draft has no id, and group names are unique, so the
@@ -876,7 +814,7 @@ export function DraftChangesetProvider({
     }) => {
       setChanges((prev) => [
         ...prev,
-        { id: uid(), type: "create-group", clientId, name, peerIds, resourceIds },
+        { id: draftUid(), type: "create-group", clientId, name, peerIds, resourceIds },
       ]);
     },
     [],
@@ -916,7 +854,7 @@ export function DraftChangesetProvider({
             next = [
               ...prev,
               {
-                id: uid(),
+                id: draftUid(),
                 type: "update-group",
                 groupId,
                 name: to,
@@ -987,7 +925,7 @@ export function DraftChangesetProvider({
         return [
           ...prev,
           {
-            id: uid(),
+            id: draftUid(),
             type: "update-group",
             groupId,
             name: groupName,
@@ -1073,7 +1011,7 @@ export function DraftChangesetProvider({
         return [
           ...prev,
           applyTo({
-            id: uid(),
+            id: draftUid(),
             type: "update-group",
             groupId,
             name: groupName,
@@ -1139,7 +1077,7 @@ export function DraftChangesetProvider({
     }) => {
       setChanges((prev) => [
         ...prev,
-        { id: uid(), type: "create-network", clientId, name, description },
+        { id: draftUid(), type: "create-network", clientId, name, description },
       ]);
     },
     [],
@@ -1212,7 +1150,7 @@ export function DraftChangesetProvider({
             c.id === existing.id ? { ...existing, ...params } : c,
           );
         }
-        return [...prev, { id: uid(), type: "update-network", ...params }];
+        return [...prev, { id: draftUid(), type: "update-network", ...params }];
       });
     },
     [],
@@ -1230,7 +1168,7 @@ export function DraftChangesetProvider({
             c.id === existing.id ? { ...existing, ...params } : c,
           );
         }
-        return [...prev, { id: uid(), type: "create-resource", ...params }];
+        return [...prev, { id: draftUid(), type: "create-resource", ...params }];
       });
     },
     [],
@@ -1298,7 +1236,7 @@ export function DraftChangesetProvider({
             c.id === existing.id ? { ...existing, ...change } : c,
           );
         }
-        return [...prev, { id: uid(), type: "update-resource", ...change }];
+        return [...prev, { id: draftUid(), type: "update-resource", ...change }];
       });
     },
     [],
@@ -1315,7 +1253,7 @@ export function DraftChangesetProvider({
               c.resourceId === params.resourceId
             ),
         ),
-        { id: uid(), type: "delete-resource", ...params },
+        { id: draftUid(), type: "delete-resource", ...params },
       ]);
     },
     [],
@@ -1343,7 +1281,7 @@ export function DraftChangesetProvider({
             return false;
           return true;
         }),
-        { id: uid(), type: "delete-network", ...params },
+        { id: draftUid(), type: "delete-network", ...params },
       ]);
     },
     [],
@@ -1390,7 +1328,7 @@ export function DraftChangesetProvider({
             c.groupId === params.groupId,
         );
         if (duplicate) return prev;
-        return [...prev, { id: uid(), type: "create-router", ...params }];
+        return [...prev, { id: draftUid(), type: "create-router", ...params }];
       });
     },
     [],
@@ -1436,7 +1374,7 @@ export function DraftChangesetProvider({
             c.id === existing.id ? { ...existing, ...params } : c,
           );
         }
-        return [...prev, { id: uid(), type: "update-router", ...params }];
+        return [...prev, { id: draftUid(), type: "update-router", ...params }];
       });
     },
     [],
@@ -1457,7 +1395,7 @@ export function DraftChangesetProvider({
         );
         return [
           ...filtered,
-          { id: uid(), type: "delete-group", groupId, name },
+          { id: draftUid(), type: "delete-group", groupId, name },
         ];
       });
     },
@@ -1469,7 +1407,7 @@ export function DraftChangesetProvider({
       setChanges((prev) => [
         ...prev,
         {
-          id: uid(),
+          id: draftUid(),
           type: "create-policy",
           clientId,
           name: policy.name ?? "Policy",
@@ -1498,7 +1436,7 @@ export function DraftChangesetProvider({
         return [
           ...filtered,
           {
-            id: uid(),
+            id: draftUid(),
             type: "update-policy",
             policyId,
             name: policy.name ?? "Policy",
@@ -1559,7 +1497,7 @@ export function DraftChangesetProvider({
         return [
           ...prev,
           {
-            id: uid(),
+            id: draftUid(),
             type: "update-policy",
             policyId,
             name,
@@ -1595,7 +1533,7 @@ export function DraftChangesetProvider({
         }
         return [
           ...prev,
-          { id: uid(), type: "install-peer", clientId, name, kind },
+          { id: draftUid(), type: "install-peer", clientId, name, kind },
         ];
       });
     },
@@ -1652,7 +1590,7 @@ export function DraftChangesetProvider({
         );
         return [
           ...filtered,
-          { id: uid(), type: "delete-policy", policyId, name },
+          { id: draftUid(), type: "delete-policy", policyId, name },
         ];
       });
     },

@@ -11,6 +11,14 @@ import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 
+// Client-side ids for draft entities (changeset entry ids, `new-…` client ids,
+// canvas node ids). crypto.randomUUID is missing in non-secure contexts and
+// older Safari, hence the timestamp+random fallback.
+export const draftUid = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
 export const getDestinationGroupsFromPolicy = (policy: Policy) => {
   const rule = policy.rules?.[0];
   if (!rule) return [];
@@ -43,7 +51,6 @@ export const getGroupCountLabel = (group?: Group) => {
   if (peerCount === 0 && resourceCount === 0) return "No Peers";
   const peers = singularize("Peers", peerCount, true);
   const resources = singularize("Resources", resourceCount, true);
-  // A zero side is omitted.
   if (resourceCount === 0) return peers;
   if (peerCount === 0) return resources;
   // Lead with the bigger side (ties keep resources first).
@@ -666,19 +673,6 @@ export const isCompleteDraftResource = (node?: CanvasNode): boolean => {
   return !!rawName && !!resource?.address && !!network?.name;
 };
 
-// Routing edge (peer/group → network): gray dashed "routes" line, visually
-// distinct from policy edges; never opens the policy modal.
-export const makeRouterEdge = (
-  sourceNodeId: string,
-  networkNodeId: string,
-): CanvasEdge => ({
-  id: `router-${sourceNodeId}-${networkNodeId}`,
-  source: sourceNodeId,
-  target: networkNodeId,
-  type: "floating-straight",
-  data: { router: true, label: "routes" },
-});
-
 // Membership edge (resource → network): subtle dashed line showing the
 // parent-network relationship when both are on canvas. Display-only.
 export const makeMembershipEdge = (
@@ -912,10 +906,9 @@ export const FRAME_GRID_GAP_Y = 200;
 // The networks-view source/policy columns position node TOPS, while the
 // frame grid centers frames on the column midline — without compensating
 // for node height, a lone source peer or policy hangs visibly below its
-// frame. Half the typical node heights (peer/group card ≈ 60px, policy
-// pill ≈ 34px), SHARED by the live overview and the draft build.
+// frame. Half the typical node height (peer/group card ≈ 60px), SHARED by
+// the live overview and the draft build.
 export const SOURCE_NODE_HALF_HEIGHT = 30;
-export const POLICY_NODE_HALF_HEIGHT = 17;
 
 // Staggered grid for network frames (draft build + live networks overview):
 // cols ≈ √(n·avgCellH/cellW) for a ~1:1 block; each column packs frames by

@@ -9,18 +9,15 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { trim } from "lodash";
-import { Group } from "@/interfaces/Group";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRename: (name: string) => void;
   currentName: string;
-  // Duplicate check against group names; ignored when takenNames is set.
-  groups: Group[] | undefined;
-  // Generic duplicate check (e.g. placeholder peer names on the canvas) —
-  // takes precedence over the groups check.
-  takenNames?: string[];
+  // Names that are already in use (group names, placeholder peer names on the
+  // canvas, …) — a match blocks the rename.
+  takenNames: string[];
   duplicateError?: string;
   title?: string;
   description?: string;
@@ -32,7 +29,6 @@ export const GroupRenameModal = ({
   onOpenChange,
   onRename,
   currentName,
-  groups,
   takenNames,
   duplicateError = "This group already exists. Please choose another name.",
   title = "Rename Group",
@@ -51,10 +47,7 @@ export const GroupRenameModal = ({
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
     const exists =
-      newName !== currentName &&
-      (takenNames
-        ? takenNames.includes(trim(newName))
-        : !!groups?.find((g) => g.name === newName));
+      newName !== currentName && takenNames.includes(trim(newName));
     setError(exists ? duplicateError : "");
     setName(newName);
   };

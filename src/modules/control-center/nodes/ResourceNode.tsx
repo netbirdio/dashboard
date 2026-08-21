@@ -6,12 +6,15 @@ import {
   useConnection,
   useStore,
 } from "@xyflow/react";
-import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
+import { GlobeIcon } from "lucide-react";
 import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
-import { StandaloneResourceNode } from "@/modules/control-center/nodes/StandaloneResourceNode";
+import {
+  RESOURCE_TYPE_ICONS,
+  StandaloneResourceNode,
+} from "@/modules/control-center/nodes/StandaloneResourceNode";
 import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
@@ -39,12 +42,6 @@ type ResourceNode = Node<
   },
   "resourceNode"
 >;
-
-const TYPE_ICONS = {
-  domain: GlobeIcon,
-  subnet: NetworkIcon,
-  host: WorkflowIcon,
-};
 
 export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   const { enabled, resource, peer, showHandles = false, className } = data;
@@ -105,7 +102,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
   // A resource INSIDE a network frame: a flat row managed by the frame (no
   // card border/bg). The context-menu halo lives on the icon box here.
   if (cardResource && isFramed) {
-    const Icon = TYPE_ICONS[cardResource.type ?? "host"] ?? GlobeIcon;
+    const Icon = RESOURCE_TYPE_ICONS[cardResource.type ?? "host"] ?? GlobeIcon;
     return (
       <div
         className={cn(

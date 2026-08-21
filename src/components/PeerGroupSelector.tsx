@@ -644,17 +644,15 @@ export function PeerGroupSelector({
                       </CommandItem>
                     )}
 
-                    {groupIds &&
-                      filteredGroups.length === 0 &&
-                      !searchedGroupNotFound && (
-                        <DropdownInfoText
-                          className={"mt-5 mb-5 max-w-sm mx-auto"}
-                        >
-                          {search !== ""
-                            ? "There are no groups matching your search. Please try a different search term."
-                            : "There are no groups that contain resources yet."}
-                        </DropdownInfoText>
-                      )}
+                    {groupIds && filteredGroups.length === 0 && (
+                      <DropdownInfoText
+                        className={"mt-5 mb-5 max-w-sm mx-auto"}
+                      >
+                        {search !== ""
+                          ? "There are no groups matching your search. Please try a different search term."
+                          : "There are no groups that contain resources yet."}
+                      </DropdownInfoText>
+                    )}
 
                     {filteredGroups.slice(0, slice).map((option) => {
                       const isSelected =
@@ -794,7 +792,6 @@ const TabTriggers = ({
   showClusters = false,
   hideGroupsTab = false,
   tabOrder,
-  initialTab,
 }: {
   searchRef: React.MutableRefObject<HTMLInputElement | null>;
   showResources?: boolean;
@@ -802,9 +799,6 @@ const TabTriggers = ({
   showClusters?: boolean;
   hideGroupsTab?: boolean;
   tabOrder?: PeerGroupSelectorTab[];
-  // Tab the dropdown opens on (when nothing is selected yet) — unlike
-  // tabOrder it does NOT reorder the tab triggers.
-  initialTab?: PeerGroupSelectorTab;
 }) => {
   const tabCount =
     (!hideGroupsTab ? 1 : 0) +

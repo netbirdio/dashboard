@@ -44,7 +44,6 @@ export function useControlCenterData() {
           }) as SelectOption,
       ) || [],
       "label",
-      "asc",
     );
     allNetworks.unshift({
       value: "",
@@ -55,14 +54,7 @@ export function useControlCenterData() {
   }, [networks]);
 
   const isDataReady = (): boolean =>
-    !!policies &&
-    !isLoading &&
-    !!groups &&
-    !isGroupsLoading &&
-    !!networks &&
-    !isNetworksLoading &&
-    !!networkResources &&
-    !isResourcesLoading;
+    !!policies && !!groups && !!networks && !!networkResources && !isLoading;
 
   return {
     policies,
@@ -71,12 +63,8 @@ export function useControlCenterData() {
     networkResources,
     groups,
     users,
-    isPoliciesLoading,
     isPeersLoading,
     isNetworksLoading,
-    isResourcesLoading,
-    isGroupsLoading,
-    isUsersLoading,
     isLoading,
     isDataReady,
     networkOptions,

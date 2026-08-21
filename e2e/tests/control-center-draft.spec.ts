@@ -1,4 +1,4 @@
-import { expect,Page } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { deleteGroup, listGroups } from "../helpers/api";
 import {
   canvasNode,

@@ -137,9 +137,7 @@ test.describe.serial("Control Center Draft Extras @control-center", () => {
     await frame.click({ button: "right" });
     const menu = page.getByTestId("cc-node-context-menu");
     await expect(menu).toBeVisible();
-    await menu
-      .getByRole("button", { name: "Add Routing Peer", exact: true })
-      .click();
+    await menu.getByTestId("cc-menu-add-routing-peer").click();
 
     // The routing-peer modal (peer/group tabs) opens.
     await expect(page.getByTestId("routing-peer-tab-peer")).toBeVisible();

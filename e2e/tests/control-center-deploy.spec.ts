@@ -1,4 +1,4 @@
-import { expect } from "@playwright/test";
+import { expect, type Response } from "@playwright/test";
 import { test } from "../helpers/fixtures";
 import { deleteGroup, deletePolicyById, listPolicies } from "../helpers/api";
 import {
@@ -48,7 +48,7 @@ test.describe.serial("Control Center Deploy @control-center", () => {
     // Collect ids created during deploy so cleanup is exact.
     const createdGroupIds: string[] = [];
     const createdPolicyIds: string[] = [];
-    page.on("response", async (resp) => {
+    const collectCreatedIds = async (resp: Response) => {
       if (resp.request().method() !== "POST") return;
       const url = resp.url();
       if (url.includes("/api/groups")) {
@@ -58,7 +58,8 @@ test.describe.serial("Control Center Deploy @control-center", () => {
         const b = await resp.json().catch(() => null);
         if (b?.id) createdPolicyIds.push(b.id);
       }
-    });
+    };
+    page.on("response", collectCreatedIds);
 
     await reviewButton(page).click();
     await expect(page.getByTestId("cc-deploy")).toBeVisible();
@@ -86,6 +87,9 @@ test.describe.serial("Control Center Deploy @control-center", () => {
       ].map((x: any) => (typeof x === "string" ? x : x?.id));
       for (const gid of createdGroupIds) expect(refIds).toContain(gid);
     } finally {
+      // The owner page is worker-scoped, so an attached listener would keep
+      // reading response bodies for every later test on this worker.
+      page.off("response", collectCreatedIds);
       // Cleanup: policy first (a group in use can't be deleted), then groups.
       for (const pid of createdPolicyIds) await deletePolicyById(page, pid);
       for (const gid of createdGroupIds) await deleteGroup(page, gid);

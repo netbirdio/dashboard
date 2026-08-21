@@ -31,38 +31,21 @@ import {
 
 interface PolicyContextType {
   // Edit existing policy
-  selectedPolicy: string;
   setSelectedPolicy: (id: string) => void;
-  policyModalOpen: boolean;
   setPolicyModalOpen: (open: boolean) => void;
-  currentPolicy: Policy | undefined;
-  handlePolicyChange: (updated: Policy) => void;
   // Draft: record an update change for the policy and redraw it on canvas.
   updateDraftPolicy: (policy: Policy) => void;
   // Draws a policy with its sources/destinations on the canvas — existing
   // nodes are connected, missing ones created (used when dropping an existing
   // policy from the components sidebar).
   drawPolicyOnCanvas: (policy: Policy, fallbackPosition?: XYPosition) => void;
-  // Records a freshly built draft policy (client id, group changes, tracked
-  // when deployable) and draws it — the create modal's save path, also used
-  // by the network destination picker.
-  addPolicyEdge: (policy: Policy) => void;
-  // Where a dropped "new policy" template landed — the created policy node
-  // falls back to this position when no matched nodes exist yet.
-  setPolicyDropPosition: (position?: XYPosition) => void;
   // Create new policy (draft connect)
-  createPolicyModal: boolean;
   setCreatePolicyModal: (open: boolean) => void;
   // Prefilled name, e.g. "All to New Group" when connecting two nodes.
-  policyInitialName: string;
   setPolicyInitialName: (name: string) => void;
-  policySourceResource: PolicyRuleResource | undefined;
   setPolicySourceResource: (r: PolicyRuleResource | undefined) => void;
-  policyDestinationResource: PolicyRuleResource | undefined;
   setPolicyDestinationResource: (r: PolicyRuleResource | undefined) => void;
-  policySourceGroups: Group[];
   setPolicySourceGroups: (g: Group[]) => void;
-  policyDestinationGroups: Group[];
   setPolicyDestinationGroups: (g: Group[]) => void;
   // Restricts the create-policy modal's destination to a network's contents
   // (set when connecting onto a frame / framed resource / resource-group).
@@ -88,8 +71,7 @@ export function ControlCenterPolicyProvider({
 }) {
   const { policies, peers, networkResources, networks, groups } =
     useControlCenterData();
-  const { nodes, edges, setLayoutInitialized, refreshLiveViewRef } =
-    useCanvasState();
+  const { nodes, refreshLiveViewRef } = useCanvasState();
   const { isDraft } = useDraftMode();
   const {
     changes,
@@ -209,8 +191,8 @@ export function ControlCenterPolicyProvider({
     const rule = policy.rules?.[0];
     if (!rule) return;
     const referenced = [
-      ...(((rule.sources as (Group | string)[]) ?? []) || []),
-      ...(((rule.destinations as (Group | string)[]) ?? []) || []),
+      ...((rule.sources as (Group | string)[]) ?? []),
+      ...((rule.destinations as (Group | string)[]) ?? []),
     ];
     referenced.forEach((g) => {
       if (typeof g === "string" || g.id) return;
@@ -242,12 +224,6 @@ export function ControlCenterPolicyProvider({
         .filter(Boolean) as NonNullable<ReturnType<typeof getDraftResource>>[],
     [nodes],
   );
-
-  // Where the last "new policy" template was dropped.
-  const policyDropPositionRef = React.useRef<XYPosition | undefined>(undefined);
-  const setPolicyDropPosition = (position?: XYPosition) => {
-    policyDropPositionRef.current = position;
-  };
 
   // Draws (or redraws) a policy's node and edges on the canvas: missing
   // source/destination nodes are created, the policy node's data is updated
@@ -645,8 +621,7 @@ export function ControlCenterPolicyProvider({
       }
     }
 
-    drawPolicyOnCanvas(policy, policyDropPositionRef.current);
-    policyDropPositionRef.current = undefined;
+    drawPolicyOnCanvas(policy);
   };
 
   // Shared with the unit tests — see isTrackablePolicy in utils/helpers.
@@ -732,13 +707,8 @@ export function ControlCenterPolicyProvider({
       setSelectedPolicy,
       policyModalOpen,
       setPolicyModalOpen,
-      currentPolicy,
-      handlePolicyChange,
       updateDraftPolicy,
       drawPolicyOnCanvas,
-      addPolicyEdge,
-      setPolicyDropPosition,
-      createPolicyModal,
       setCreatePolicyModal,
       policyInitialName,
       setPolicyInitialName,
@@ -753,15 +723,8 @@ export function ControlCenterPolicyProvider({
       setPolicyDestinationScope,
     }),
     [
-      selectedPolicy,
-      policyModalOpen,
       currentPolicy,
       createPolicyModal,
-      policyInitialName,
-      policySourceResource,
-      policyDestinationResource,
-      policySourceGroups,
-      policyDestinationGroups,
       // updateDraftPolicy/drawPolicyOnCanvas close over the changeset, draft
       // flag and entity data — keep the memoized value fresh so consumers
       // (onNodeConnect, sidebar drops) don't act on stale state.
@@ -796,7 +759,6 @@ export function ControlCenterPolicyProvider({
       {createPolicyModal && (
         <Modal open={createPolicyModal} onOpenChange={setCreatePolicyModal}>
           <AccessControlModalContent
-            key={createPolicyModal ? 1 : 0}
             onSuccess={addPolicyEdge}
             // In draft the modal must not call the API — it hands the policy
             // data back and the changeset applies it on deploy.

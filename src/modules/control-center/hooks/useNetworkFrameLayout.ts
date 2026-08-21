@@ -55,7 +55,7 @@ const sameMoreCell = (a?: FrameMoreCell, b?: FrameMoreCell) => {
 // here) — so the frame's only children are resource nodes.
 export function useNetworkFrameLayout() {
   const { nodes, setNodes } = useCanvasState();
-  const { isDraft, drillDownNetworkNodeId } = useDraftMode();
+  const { drillDownNetworkNodeId } = useDraftMode();
 
   useEffect(() => {
     // Mid-drag the grid can't change (membership changes land on drag stop)
@@ -66,19 +66,6 @@ export function useNetworkFrameLayout() {
     if (frames.length === 0) return;
 
     const updates = new Map<string, Partial<Node>>();
-    // Legacy utility children from older drafts: the "Add Resource" row became
-    // a bottom button and the overflow row became a "+N more" overlay cell
-    // (neither is a child node anymore), so any persisted ones are swept off
-    // the canvas.
-    const obsolete = new Set<string>();
-    nodes.forEach((n) => {
-      if (
-        n.parentId?.startsWith("network-") &&
-        (n.id.startsWith("add-resource-") || n.id.startsWith("overflow-"))
-      ) {
-        obsolete.add(n.id);
-      }
-    });
 
     frames.forEach((frame) => {
       // While a frame is drilled, the others are hidden and frozen — writing
@@ -97,9 +84,7 @@ export function useNetworkFrameLayout() {
       // drill id is set before the zoom-in choreography, and the frame must
       // keep its parent look while still visible.
       const drilled = frame.id === drillDownNetworkNodeId && !!frame.hidden;
-      const resources = nodes.filter(
-        (n) => n.parentId === frame.id && !obsolete.has(n.id),
-      );
+      const resources = nodes.filter((n) => n.parentId === frame.id);
       // Parent grid: order by visual position so the cells read top-to-bottom.
       // Drilled: keep a STABLE order (insertion order) instead — re-sorting by
       // position every reconcile meant moving one drilled card reshuffled the
@@ -286,9 +271,7 @@ export function useNetworkFrameLayout() {
       // fully behind. Drag/drop elevations (≥ FRAME_Z) are left alone.
       if (
         frame.zIndex === undefined ||
-        (typeof frame.zIndex === "number" &&
-          frame.zIndex < FRAME_Z &&
-          frame.zIndex !== 1000)
+        (typeof frame.zIndex === "number" && frame.zIndex < FRAME_Z)
       ) {
         frameUpdate.zIndex = FRAME_Z;
       }
@@ -301,16 +284,14 @@ export function useNetworkFrameLayout() {
       }
     });
 
-    if (updates.size === 0 && obsolete.size === 0) {
+    if (updates.size === 0) {
       return;
     }
     setNodes((prev) =>
-      prev
-        .filter((n) => !obsolete.has(n.id))
-        .map((n) => {
-          const update = updates.get(n.id);
-          return update ? { ...n, ...update } : n;
-        }),
+      prev.map((n) => {
+        const update = updates.get(n.id);
+        return update ? { ...n, ...update } : n;
+      }),
     );
-  }, [nodes, setNodes, isDraft, drillDownNetworkNodeId]);
+  }, [nodes, setNodes, drillDownNetworkNodeId]);
 }

@@ -58,8 +58,6 @@ type Props = {
   isUserDevice?: boolean;
   // Preset hostname woven into the install commands (netbird up --hostname).
   hostname?: string;
-  // Options for the in-modal key generator (server flow without a key).
-  ephemeralKey?: boolean;
   // Group ids auto-assigned to peers registering with the generated key
   // (e.g. a draft placeholder's group memberships).
   autoGroups?: string[];
@@ -80,7 +78,6 @@ export default function SetupModal({
   style,
   isUserDevice,
   hostname,
-  ephemeralKey,
   autoGroups,
   resolveAutoGroups,
   keyName,
@@ -102,7 +99,6 @@ export default function SetupModal({
         showOnlyRoutingPeerOS={showOnlyRoutingPeerOS}
         isUserDevice={isUserDevice}
         hostname={hostname}
-        ephemeralKey={ephemeralKey}
         autoGroups={autoGroups}
         resolveAutoGroups={resolveAutoGroups}
         keyName={keyName}
@@ -122,7 +118,6 @@ type SetupModalContentProps = {
   title?: string;
   hostname?: string;
   isUserDevice?: boolean;
-  ephemeralKey?: boolean;
   autoGroups?: string[];
   resolveAutoGroups?: () => Promise<string[]>;
   keyName?: string;
@@ -139,7 +134,6 @@ export function SetupModalContent({
   title,
   hostname,
   isUserDevice,
-  ephemeralKey,
   autoGroups,
   resolveAutoGroups,
   keyName,
@@ -199,7 +193,6 @@ export function SetupModalContent({
       </div>
       <SetupKeyGenerator
         generatedKey={generatedKey}
-        ephemeral={ephemeralKey}
         autoGroups={autoGroups}
         resolveAutoGroups={resolveAutoGroups}
         keyName={keyName}
@@ -533,8 +526,6 @@ export const RoutingPeerSetupKeyInfo = () => {
 type SetupKeyGeneratorProps = {
   generatedKey?: SetupKey;
   onGenerated: (key: SetupKey) => void;
-  // Ephemeral peers (agents) disappear when offline for a while.
-  ephemeral?: boolean;
   // Group ids auto-assigned to peers registering with this key.
   autoGroups?: string[];
   // Resolved when the user clicks Generate — takes precedence over autoGroups.
@@ -550,7 +541,6 @@ type SetupKeyGeneratorProps = {
 function SetupKeyGenerator({
   generatedKey,
   onGenerated,
-  ephemeral = false,
   autoGroups,
   resolveAutoGroups,
   keyName,
@@ -577,7 +567,7 @@ function SetupKeyGenerator({
           revoked: false,
           auto_groups: groupIds ?? [],
           usage_limit: 1,
-          ephemeral,
+          ephemeral: false,
           allow_extra_dns_labels: false,
         }),
       )

@@ -150,13 +150,13 @@ export function policyRequestBody(policy: Policy, r: RequestResolvers) {
 // POST /groups. Placeholder members that never installed keep their "draft-"
 // ids (not in the API); draft resources ("new-…") apply membership through the
 // resource's own `groups` field, so both are filtered here.
-export function groupCreateBody(change: CreateGroupChange, r?: RequestResolvers) {
+export function groupCreateBody(change: CreateGroupChange, r: RequestResolvers) {
   return {
     name: change.name,
     peers: change.peerIds.filter((id) => !id.startsWith("draft-")),
     resources: change.resourceIds
       .filter((id) => !id.startsWith("new-"))
-      .map((id) => ({ id, type: r?.resourceType(id) }) as WireResource),
+      .map((id) => ({ id, type: r.resourceType(id) }) as WireResource),
   };
 }
 
@@ -166,7 +166,7 @@ export function groupCreateBody(change: CreateGroupChange, r?: RequestResolvers)
 export function mergeGroupMembers(
   base: { peers?: (GroupPeer | string)[]; resources?: (GroupResource | string)[] },
   change: UpdateGroupChange,
-  r?: RequestResolvers,
+  r: RequestResolvers,
 ) {
   const peers = new Set(toIds(base.peers));
   const resources = new Set(toIds(base.resources));
@@ -184,7 +184,7 @@ export function mergeGroupMembers(
   return {
     peers: Array.from(peers),
     resources: Array.from(resources).map(
-      (id) => ({ id, type: typeById.get(id) ?? r?.resourceType(id) }) as WireResource,
+      (id) => ({ id, type: typeById.get(id) ?? r.resourceType(id) }) as WireResource,
     ),
   };
 }

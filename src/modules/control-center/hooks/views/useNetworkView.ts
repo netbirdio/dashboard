@@ -1,6 +1,5 @@
 import { Edge, Node } from "@xyflow/react";
 import { useMemo } from "react";
-import { forEach } from "lodash";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
 import {
@@ -17,6 +16,7 @@ import {
   packFrameGrid,
   SOURCE_NODE_HALF_HEIGHT,
   orderFrameResources,
+  withFreshGroupCounts,
 } from "@/modules/control-center/utils/helpers";
 import { ViewResult } from "./types";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
@@ -53,7 +53,7 @@ export function useNetworkView() {
 
     const networkPolicies = network.policies || [];
 
-    forEach(networkPolicies, (p) => {
+    networkPolicies.forEach((p) => {
       const policy = effectivePolicies?.find(
         (policyItem) => policyItem.id === p,
       );
@@ -77,7 +77,7 @@ export function useNetworkView() {
             type: "groupNode",
             // No onClick → the click falls through to onNodeClick, which opens
             // the group's side panel (same as every other view).
-            data: { group, enabled },
+            data: { group: withFreshGroupCounts(group, groups), enabled },
             position: { x: 0, y: 0 },
           });
 
@@ -183,7 +183,7 @@ export function useNetworkView() {
             addNode(allNodes, {
               id: `group-${group.id}`,
               type: "destinationGroupNode",
-              data: { group, enabled },
+              data: { group: withFreshGroupCounts(group, groups), enabled },
               position: { x: 0, y: 0 },
             });
 
@@ -210,7 +210,7 @@ export function useNetworkView() {
             addNode(allNodes, {
               id: `group-${group.id}`,
               type: "groupNode",
-              data: { group, enabled },
+              data: { group: withFreshGroupCounts(group, groups), enabled },
               position: { x: 0, y: 0 },
             });
 
@@ -242,7 +242,6 @@ export function useNetworkView() {
     // layout must not touch their frame-relative positions, and ReactFlow
     // needs parents to precede children in the array.
     const childNodes: Node[] = [];
-    const hidePolicies = !selectedNetwork;
 
     networks!.forEach((network) => {
       // Live networks render as FRAMES too (same chrome as draft frames,
@@ -330,7 +329,6 @@ export function useNetworkView() {
         type: "networkNode",
         data: {
           network,
-          selectedNetwork,
           frame: true,
           enabled: networkEnabled,
         },
@@ -383,7 +381,7 @@ export function useNetworkView() {
 
       const networkPolicies = network.policies || [];
       if (networkPolicies.length > 0) {
-        forEach(networkPolicies, (p) => {
+        networkPolicies.forEach((p) => {
           const policy = (policiesOverride ?? policies!).find(
             (policyItem) => policyItem.id === p,
           );
@@ -432,7 +430,7 @@ export function useNetworkView() {
               // POLICY NODES in the overview, like the draft build: source
               // → policy → network, all smart edges — live and draft read
               // the same.
-              if (hidePolicies && sourceIds.length > 0) {
+              if (sourceIds.length > 0) {
                 addNode(allNodes, {
                   id: `policy-${policy.id}`,
                   type: "policyNode",
@@ -514,9 +512,9 @@ export function useNetworkView() {
 
   // PRECOMPUTED while the user is on another view (this hook lives in the
   // always-mounted UI provider and the data is fetched globally): the build
-  // runs a synchronous d3-force simulation, and computing it at switch time
-  // visibly froze the tab change. The memo re-runs only when the underlying
-  // data (or the selected network) changes.
+  // walks every network, policy and resource and packs the frame grid, and
+  // doing that at switch time visibly froze the tab change. The memo re-runs
+  // only when the underlying data (or the selected network) changes.
   // Deps must cover EVERYTHING isDataReady() checks — if a late-loading
   // dataset (groups) wasn't a dep, the memo cached `undefined` forever and
   // the networks tab rendered nothing.

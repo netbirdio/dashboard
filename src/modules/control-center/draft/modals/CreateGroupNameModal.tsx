@@ -16,9 +16,6 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   onSuccess: (name: string) => void;
   groups: Group[] | undefined;
-  // Extra names to reject (e.g. draft groups already on the canvas that are
-  // not part of `groups` yet).
-  takenNames?: string[];
 };
 
 export const CreateGroupNameModal = ({
@@ -26,7 +23,6 @@ export const CreateGroupNameModal = ({
   onOpenChange,
   onSuccess,
   groups,
-  takenNames,
 }: Props) => {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -44,9 +40,7 @@ export const CreateGroupNameModal = ({
     if (trimmed === "All") {
       setError('The name "All" is reserved. Please choose another name.');
     } else {
-      const exists =
-        groups?.some((g) => g.name === trimmed) ||
-        takenNames?.includes(trimmed);
+      const exists = groups?.some((g) => g.name === trimmed);
       setError(
         exists ? "This group already exists. Please choose another name." : "",
       );

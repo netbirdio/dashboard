@@ -1,20 +1,13 @@
 import TruncatedText from "@components/ui/TruncatedText";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { cn } from "@utils/helpers";
-import {
-  BotIcon,
-  GlobeIcon,
-  LucideIcon,
-  MonitorSmartphoneIcon,
-  NetworkIcon,
-  ServerIcon,
-  WorkflowIcon,
-} from "lucide-react";
 import * as React from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
+import { ResourceIcon } from "@/assets/icons/ResourceIcon";
 import { NetworkResource } from "@/interfaces/Network";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
+import { PLACEHOLDER_ICONS } from "@/modules/peers/PeerOperatingSystemIcon";
 import { OSLogo } from "@/modules/peers/PeerOSCell";
 
 type DeviceCardSize = "default" | "small";
@@ -122,15 +115,8 @@ export const DeviceCard = ({
   );
 };
 
-// Draft placeholder peers carry their kind in `os` (see getPlaceholderPeer).
-const DRAFT_KIND_ICONS: Record<string, LucideIcon> = {
-  "draft-agent": BotIcon,
-  "draft-server": ServerIcon,
-  "draft-user-device": MonitorSmartphoneIcon,
-};
-
 const PeerOSIcon = ({ os, size = 16 }: { os: string; size?: number }) => {
-  const DraftIcon = DRAFT_KIND_ICONS[os];
+  const DraftIcon = PLACEHOLDER_ICONS[os];
   if (DraftIcon) {
     return (
       <div
@@ -156,23 +142,4 @@ const PeerOSIcon = ({ os, size = 16 }: { os: string; size?: number }) => {
       <OSLogo os={os} />
     </div>
   );
-};
-
-const ResourceIcon = ({
-  type,
-  size = 15,
-}: {
-  type: "domain" | "host" | "subnet";
-  size?: number;
-}) => {
-  switch (type) {
-    case "domain":
-      return <GlobeIcon size={size} />;
-    case "subnet":
-      return <NetworkIcon size={size} />;
-    case "host":
-      return <WorkflowIcon size={size} />;
-    default:
-      return <WorkflowIcon size={size} />;
-  }
 };

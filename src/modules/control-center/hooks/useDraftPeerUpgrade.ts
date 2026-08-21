@@ -9,7 +9,10 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
+import {
+  draftUid,
+  getPlaceholderPeer,
+} from "@/modules/control-center/utils/helpers";
 
 export type PlaceholderUpgrade = {
   // Canvas node id being replaced (peer-draft-… or, on re-selection of a
@@ -24,11 +27,6 @@ export type PlaceholderUpgrade = {
 // deployable, so they enter the changeset). User-device select nodes keep
 // their dropdown (placeholderKind stays on the node); installed server/agent
 // placeholders become regular peer cards.
-const uid = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
 export function usePlaceholderUpgrade() {
   const reactFlow = useReactFlow();
   const { updateDraftPolicy } = useControlCenterPolicy();
@@ -70,7 +68,7 @@ export function usePlaceholderUpgrade() {
             )?.network;
             if (!networkNode || !network) return;
             trackCreateRouter({
-              clientId: `new-${uid()}`,
+              clientId: `new-${draftUid()}`,
               networkId: network.id,
               networkClientId: network.id
                 ? undefined

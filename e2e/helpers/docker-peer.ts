@@ -45,37 +45,7 @@ export async function registerDockerPeer(
   autoGroupIds: string[] = [],
 ): Promise<RegisteredPeer> {
   const key = await createSetupKey(page, hostname, autoGroupIds);
-  // Clean any stale container with the same name from a previous run.
-  try {
-    sh(`docker rm -f ${hostname}`);
-  } catch {
-    /* none */
-  }
-  sh(
-    [
-      "docker run -d",
-      `--name ${hostname}`,
-      `--network ${NETWORK}`,
-      "--cap-add=NET_ADMIN --cap-add=SYS_ADMIN",
-      `-e NB_SETUP_KEY=${key.key}`,
-      `-e NB_MANAGEMENT_URL=${MGMT_URL}`,
-      `-e NB_HOSTNAME=${hostname}`,
-      IMAGE,
-    ].join(" "),
-  );
-
-  let found: RegisteredPeer | undefined;
-  await expect
-    .poll(
-      async () => {
-        const peers = (await listPeers(page)) as RegisteredPeer[];
-        found = peers.find((p) => p.name === hostname);
-        return !!found;
-      },
-      { timeout: 45_000, intervals: [2000, 2000, 3000] },
-    )
-    .toBe(true);
-  return found!;
+  return runDockerPeerWithKey(page, hostname, key.key);
 }
 
 /**
@@ -88,11 +58,8 @@ export async function runDockerPeerWithKey(
   hostname: string,
   key: string,
 ): Promise<RegisteredPeer> {
-  try {
-    sh(`docker rm -f ${hostname}`);
-  } catch {
-    /* none */
-  }
+  // Clean any stale container with the same name from a previous run.
+  removeDockerContainer(hostname);
   sh(
     [
       "docker run -d",
@@ -131,11 +98,7 @@ export function removeDockerContainer(hostname: string) {
 
 /** Tears down the container and deletes the peer + its setup key. */
 export async function cleanupDockerPeer(page: Page, hostname: string) {
-  try {
-    sh(`docker rm -f ${hostname}`);
-  } catch {
-    /* none */
-  }
+  removeDockerContainer(hostname);
   await deletePeersByPrefix(page, hostname);
   await deleteSetupKeysByPrefix(page, hostname);
 }

@@ -3,13 +3,13 @@ import { compareVersions, isNativeSSHSupported, isNewerVersion } from "./version
 
 describe("isNativeSSHSupported", () => {
   it.each([
-    { version: "v0.59.9", shouldSupport: false },
-    { version: "v0.59.10", shouldSupport: false },
-    { version: "v0.59.11", shouldSupport: false },
-    { version: "v0.60.0", shouldSupport: true },
-    { version: "v0.60.1", shouldSupport: true },
-    { version: "v0.61.0", shouldSupport: true },
-    { version: "v1.0.0", shouldSupport: true },
+    { version: "v0.59.9", shouldSupport: false, desc: "below minimum" },
+    { version: "v0.59.10", shouldSupport: false, desc: "below minimum" },
+    { version: "v0.59.11", shouldSupport: false, desc: "below minimum" },
+    { version: "v0.60.0", shouldSupport: true, desc: "exact minimum" },
+    { version: "v0.60.1", shouldSupport: true, desc: "above minimum" },
+    { version: "v0.61.0", shouldSupport: true, desc: "above minimum" },
+    { version: "v1.0.0", shouldSupport: true, desc: "above minimum" },
 
     // Edge cases
     { version: "development", shouldSupport: true, desc: "development build" },
@@ -44,9 +44,9 @@ describe("isNativeSSHSupported", () => {
 
 describe("compareVersions (version >= minVersion)", () => {
   it.each([
-    { version: "0.60.0", min: "0.60.0", expected: true },
-    { version: "0.60.1", min: "0.60.0", expected: true },
-    { version: "0.59.9", min: "0.60.0", expected: false },
+    { version: "0.60.0", min: "0.60.0", expected: true, desc: "equal" },
+    { version: "0.60.1", min: "0.60.0", expected: true, desc: "newer patch" },
+    { version: "0.59.9", min: "0.60.0", expected: false, desc: "older patch" },
     // Suffixed builds must compare on the release only — the trailing build
     // number is not a fourth release component.
     {

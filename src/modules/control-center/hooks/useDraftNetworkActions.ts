@@ -4,12 +4,12 @@ import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
+  draftUid,
   getDraftResource,
   getFrameChildPosition,
   getNetworkFrameHeight,
@@ -18,11 +18,6 @@ import {
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_WIDTH,
 } from "@/modules/control-center/utils/helpers";
-
-const uid = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 // The (id XOR clientId) + display-name reference a network node resolves to.
 // An existing-network frame keeps its real id on data.network → networkId;
@@ -44,7 +39,6 @@ export const getNetworkRef = (node?: Node): DraftNetworkRef | undefined => {
 // API is called on deploy.
 export function useDraftNetworkActions() {
   const reactFlow = useReactFlow();
-  const { peers } = useControlCenterData();
   const { updateDraftPolicy } = useControlCenterPolicy();
   const { drillDownNetworkNodeId } = useDraftMode();
   const {
@@ -545,6 +539,23 @@ export function useDraftNetworkActions() {
     [reactFlow, updateDraftNetwork, changes],
   );
 
+  // Groups typed straight into the modal's selector are draft groups.
+  const ensureDraftGroupChange = useCallback(
+    (group?: Group) => {
+      if (!group || group.id) return;
+      const exists = changes.some(
+        (c) => c.type === "create-group" && c.name === group.name,
+      );
+      if (!exists) {
+        trackCreateGroup({
+          clientId: `group-new-${group.name}`,
+          name: group.name,
+        });
+      }
+    },
+    [changes, trackCreateGroup],
+  );
+
   // Applies the routing-peer modal's pick: records the create-router change
   // (with the modal's settings) — routers have no canvas representation, the
   // frame's routing-peer count reflects the changeset. Id-less groups picked
@@ -567,21 +578,10 @@ export function useDraftNetworkActions() {
       const group = peerGroups[0];
       if (!networkRef || (peer ? !peer.id : !group?.name)) return;
 
-      // Groups typed straight into the modal's selector are draft groups.
-      if (group && !group.id) {
-        const exists = changes.some(
-          (c) => c.type === "create-group" && c.name === group.name,
-        );
-        if (!exists) {
-          trackCreateGroup({
-            clientId: `group-new-${group.name}`,
-            name: group.name,
-          });
-        }
-      }
+      ensureDraftGroupChange(group);
 
       trackCreateRouter({
-        clientId: `new-${uid()}`,
+        clientId: `new-${draftUid()}`,
         networkId: networkRef.networkId,
         networkClientId: networkRef.networkClientId,
         networkName: networkRef.name,
@@ -594,7 +594,7 @@ export function useDraftNetworkActions() {
         enabled,
       });
     },
-    [reactFlow, changes, trackCreateGroup, trackCreateRouter],
+    [reactFlow, ensureDraftGroupChange, trackCreateRouter],
   );
 
   // Applies the routing-peer modal's pick to an EXISTING (API) router as a
@@ -624,18 +624,7 @@ export function useDraftNetworkActions() {
       const group = peerGroups[0];
       if (peer ? !peer.id : !group?.name) return;
 
-      // Groups typed straight into the modal's selector are draft groups.
-      if (group && !group.id) {
-        const exists = changes.some(
-          (c) => c.type === "create-group" && c.name === group.name,
-        );
-        if (!exists) {
-          trackCreateGroup({
-            clientId: `group-new-${group.name}`,
-            name: group.name,
-          });
-        }
-      }
+      ensureDraftGroupChange(group);
 
       trackUpdateRouter({
         routerId,
@@ -650,7 +639,7 @@ export function useDraftNetworkActions() {
         enabled,
       });
     },
-    [changes, trackCreateGroup, trackUpdateRouter],
+    [ensureDraftGroupChange, trackUpdateRouter],
   );
 
   return {

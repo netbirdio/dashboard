@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { mutate } from "swr";
 import { useApiCall } from "@utils/api";
-import { Group, GroupPeer } from "@/interfaces/Group";
+import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 
 // The real API artifacts a server/agent placeholder creates when its setup key
@@ -13,9 +13,6 @@ export type PlaceholderArtifacts = {
   boundGroupId?: string;
   setupKeyId?: string;
 };
-
-const idsOf = (peers?: GroupPeer[] | string[]) =>
-  (peers ?? []).map((p) => (typeof p === "string" ? p : p.id));
 
 export function usePlaceholderArtifacts() {
   const groupRequest = useApiCall<Group>("/groups", true);
@@ -59,7 +56,7 @@ export function usePlaceholderArtifacts() {
           const group = await groupRequest
             .get(`/${boundGroupId}`)
             .catch(() => undefined);
-          if (group && idsOf(group.peers).length > 0) {
+          if (group && (group.peers?.length ?? 0) > 0) {
             await groupRequest
               .put({ ...group, peers: [] }, `/${boundGroupId}`)
               .catch(() => {});

@@ -139,13 +139,9 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   // Count ALL pending rows (install steps included) so the header matches the
   // "Review & Deploy" button badge and the number of rows shown below.
   const totalCount = changes.length;
-  const description = useMemo(
-    () =>
-      `Review ${totalCount} change${
-        totalCount !== 1 ? "s" : ""
-      } before deploying to your network.`,
-    [totalCount],
-  );
+  const description = `Review ${totalCount} change${
+    totalCount !== 1 ? "s" : ""
+  } before deploying to your network.`;
 
   const handleDeploy = async () => {
     const ok = await deploy();

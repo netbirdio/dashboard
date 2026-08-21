@@ -6,7 +6,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import FullTooltip from "@components/FullTooltip";
 import {
   SelectDropdown,
   SelectOption,

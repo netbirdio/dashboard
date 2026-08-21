@@ -10,7 +10,7 @@ import { getFrameChildPosition } from "@/modules/control-center/utils/helpers";
 // right at a fixed pitch.
 export const DRILLED_RESOURCE_SPACING = 95;
 
-export const DRILLED_LAYOUT_CONFIG = {
+const DRILLED_LAYOUT_CONFIG = {
   ...DEFAULT_LAYOUT_CONFIG,
   peersAndResources: {
     ...DEFAULT_LAYOUT_CONFIG.peersAndResources,

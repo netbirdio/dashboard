@@ -1,12 +1,6 @@
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import {
-  Handle,
-  type Node,
-  Position,
-  useConnection,
-  useNodeId,
-} from "@xyflow/react";
+import { Handle, type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
 import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
@@ -27,9 +21,8 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
   const label = getPolicyProtocolAndPortText(data.policy);
   const isActive = rule?.enabled;
   const { isDraft } = useDraftMode();
-  const nodeId = useNodeId();
   const isDropTarget = useConnection(
-    (c) => c.inProgress && c.fromNode?.id !== nodeId,
+    (c) => c.inProgress && c.fromNode?.id !== id,
   );
 
   const showHalo = useIsContextMenuTarget(id);
@@ -81,51 +74,9 @@ export const PolicyNode = ({ data, id }: PolicyNode) => {
         isConnectable={false}
       />
       <Handle
-        type="source"
-        position={Position.Left}
-        id={"sl"}
-        className={"opacity-0"}
-        isConnectable={false}
-      />
-      <Handle
-        type="source"
-        position={Position.Top}
-        id={"st"}
-        className={"opacity-0"}
-        isConnectable={false}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id={"sb"}
-        className={"opacity-0"}
-        isConnectable={false}
-      />
-      <Handle
         type="target"
         position={Position.Left}
         id={"tl"}
-        className={"opacity-0"}
-        isConnectable={false}
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
-        id={"tr"}
-        className={"opacity-0"}
-        isConnectable={false}
-      />
-      <Handle
-        type="target"
-        position={Position.Top}
-        id={"tt"}
-        className={"opacity-0"}
-        isConnectable={false}
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id={"tb"}
         className={"opacity-0"}
         isConnectable={false}
       />

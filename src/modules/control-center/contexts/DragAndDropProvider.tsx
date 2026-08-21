@@ -148,8 +148,6 @@ export function DragAndDropProvider({
   );
 }
 
-export default DragAndDropContext;
-
 export const useDragAndDrop = () => {
   const { screenToFlowPosition, getNodes, fitBounds, setNodes } =
     useReactFlow();

@@ -20,6 +20,7 @@ import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { DROPPABLE_INTO_GROUP_NODE_TYPES as GROUPABLE_NODE_TYPES } from "@/modules/control-center/utils/node-capabilities";
 import {
   getDraftResource,
   getPlaceholderPeer,
@@ -27,14 +28,6 @@ import {
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_FALLBACK_ROW,
 } from "@/modules/control-center/utils/helpers";
-
-const GROUPABLE_NODE_TYPES = new Set([
-  "peerNode",
-  "sourcePeerNode",
-  "expandedGroupPeer",
-  "resourceNode",
-  "destinationResourceNode",
-]);
 
 const PEER_NODE_TYPES = new Set([
   "peerNode",

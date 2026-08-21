@@ -135,11 +135,7 @@ export function DraftHistoryProvider({
     committed.current = snap;
   };
 
-  const applyRef = useRef((snap: Snapshot) => {
-    setNodes(snap.nodes);
-    setEdges(snap.edges);
-    replaceChanges(snap.changes);
-  });
+  const applyRef = useRef<(snap: Snapshot) => void>(() => {});
   applyRef.current = (snap: Snapshot) => {
     setNodes(snap.nodes);
     setEdges(snap.edges);

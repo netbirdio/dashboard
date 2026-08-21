@@ -22,16 +22,6 @@ export function useUserView() {
     const allEdges: Edge[] = [];
 
     const userPeers = peers?.filter((p) => p.user_id === userId) || [];
-    if (userPeers.length === 0) {
-      return applyD3HierarchicalLayout(
-        [],
-        [],
-        400,
-        120,
-        "user",
-        DEFAULT_LAYOUT_CONFIG,
-      );
-    }
 
     userPeers.forEach((peer) => {
       allNodes.push({
@@ -73,7 +63,7 @@ export function useUserView() {
       "enabled",
     );
 
-    userPolicies?.forEach((policy, policyIndex) => {
+    userPolicies?.forEach((policy) => {
       const enabled = policy.enabled;
       const policyNodeId = `policy-${policy.id}`;
 
@@ -81,7 +71,7 @@ export function useUserView() {
         id: policyNodeId,
         type: "policyNode",
         data: { policy },
-        position: { x: 600, y: policyIndex * 120 },
+        position: { x: 0, y: 0 },
       });
 
       const rule = policy.rules?.[0];
@@ -106,7 +96,7 @@ export function useUserView() {
       });
 
       const destinations = (rule?.destinations as Group[]) || [];
-      destinations.forEach((destination, destIndex) => {
+      destinations.forEach((destination) => {
         const destinationNodeId = `group-${destination.id}`;
         const destinationNodeExists = allNodes.some(
           (n) => n.id === destinationNodeId,
@@ -117,7 +107,7 @@ export function useUserView() {
             id: destinationNodeId,
             type: "destinationGroupNode",
             data: { group: withFreshGroupCounts(destination, groups) },
-            position: { x: 900, y: policyIndex * 120 + destIndex * 60 },
+            position: { x: 0, y: 0 },
           });
         }
 

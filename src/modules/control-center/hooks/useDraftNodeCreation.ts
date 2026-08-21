@@ -4,6 +4,7 @@ import { NodeType } from "@/modules/control-center/utils/nodes";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
+  draftUid,
   getFrameChildPosition,
   getNetworkFrameHeight,
   getTopZIndex,
@@ -17,11 +18,6 @@ import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkAct
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 import type { Policy } from "@/interfaces/Policy";
 import type { Network } from "@/interfaces/Network";
-
-const uid = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 // Unique per-drop placeholder names: "Agent", "Agent (1)", … (same pattern
 // as draft groups). Renamed placeholders free their default name again.
@@ -98,7 +94,7 @@ export function useDraftNodeCreation() {
   // IS tracked so Review & Deploy tells the user this step is on them.
   const addPeerPlaceholder = useCallback(
     (kind: PeerPlaceholderKind, position?: XYPosition) => {
-      const nodeId = `peer-draft-${uid()}`;
+      const nodeId = `peer-draft-${draftUid()}`;
       const name = getNextPlaceholderName(kind, reactFlow.getNodes());
       placeNode(
         {
@@ -126,7 +122,7 @@ export function useDraftNodeCreation() {
   const addBlankPolicy = useCallback(
     (position?: XYPosition) => {
       const name = getNextPolicyName(policies, reactFlow.getNodes());
-      const clientId = `new-${uid()}`;
+      const clientId = `new-${draftUid()}`;
       const policy: Policy = {
         id: clientId,
         name,
@@ -174,7 +170,7 @@ export function useDraftNodeCreation() {
       // A preset name (from the "Create New Network" modal) is used verbatim;
       // an auto-drop gets the next unique "Network (n)".
       const name = preset?.name || getNextUniqueName("Network", taken);
-      const nodeId = `network-new-${uid()}`;
+      const nodeId = `network-new-${draftUid()}`;
       placeNode(
         {
           id: nodeId,
@@ -216,7 +212,7 @@ export function useDraftNodeCreation() {
       });
       const name = getNextUniqueName("Resource", takenResources);
 
-      const nodeId = `resource-new-${uid()}`;
+      const nodeId = `resource-new-${draftUid()}`;
       placeNode(
         {
           id: nodeId,
@@ -271,7 +267,7 @@ export function useDraftNodeCreation() {
           }
         : getFrameChildPosition(-1);
 
-      const nodeId = `resource-new-${uid()}`;
+      const nodeId = `resource-new-${draftUid()}`;
       reactFlow.setNodes((prev) =>
         prev.concat({
           id: nodeId,
@@ -326,7 +322,7 @@ export function useDraftNodeCreation() {
       changes.forEach((c) => c.type === "create-group" && taken.add(c.name));
       const name = getNextNewGroupName(taken);
 
-      const nodeId = `resourcegroup-new-${uid()}`;
+      const nodeId = `resourcegroup-new-${draftUid()}`;
       reactFlow.setNodes((prev) =>
         prev.concat({
           id: nodeId,

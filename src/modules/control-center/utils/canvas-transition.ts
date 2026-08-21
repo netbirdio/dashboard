@@ -55,13 +55,8 @@ const FADE_IN_DELAY = 30;
 // Frames to let the swap commit before revealing (see afterSwapSettled).
 const REVEAL_WAIT_FRAMES = 2;
 const REVEAL_WAIT_MAX_MS = 200;
-// Exported so out-of-pane overlays (e.g. drill-down empty states) can grow
-// in with the exact same fade/zoom timing and curve as the canvas reveal.
 export const FADE_IN = 220;
 export const REVEAL = 450;
-// "in" direction grow-in start scale (mirrors runCanvasTransition's default
-// growFrom for direction "in").
-export const GROW_IN_FROM = 0.7;
 
 // Matches the app-wide fit parameters (live view init, drill fits).
 export const CANVAS_FIT = { padding: 0.1, maxZoom: 0.8 } as const;

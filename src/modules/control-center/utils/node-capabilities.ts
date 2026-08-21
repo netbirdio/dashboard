@@ -5,8 +5,9 @@ import {
 } from "@/modules/control-center/utils/helpers";
 
 // Capability predicates for canvas nodes — the single place that answers
-// "what can this node do in draft mode". Wired into the node context menu
-// and drag-to-group; node-capabilities.test.ts documents the full matrix.
+// "what can this node do in draft mode". Wired into the node context menu,
+// drag-to-group and the draft toolbar's create-group gate;
+// node-capabilities.test.ts documents the full matrix.
 
 // A placeholder that hasn't materialized yet (Server / Agent / User Device
 // without a chosen peer). A user-device select node that picked a peer IS

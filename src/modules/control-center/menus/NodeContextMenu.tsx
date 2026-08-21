@@ -130,7 +130,6 @@ export const NodeContextMenu = ({
   const { data: groupsUsage } = useGroupsUsage();
   const {
     trackSetPolicyEnabled,
-    trackUpdatePolicy,
     trackDeletePolicy,
     trackUpdateResource,
     trackDeleteResource,
@@ -808,6 +807,10 @@ export const NodeContextMenu = ({
   );
 
   const items: MenuItem[] = useMemo(() => {
+    // This menu is always mounted and subscribes to the canvas nodes, so
+    // rebuilding the list while closed would scan every node/edge
+    // (isFocusWorthy) on every drag frame for nothing.
+    if (!position) return [];
     if (!node) return [];
 
     // Live mode: policy, group, resource and network-frame nodes get a menu
@@ -846,8 +849,8 @@ export const NodeContextMenu = ({
         }
         return items;
       }
-      // Groups: panel + rename/delete (both behind live-mode warnings, like
-      // the policy actions). "All" is managed by the system.
+      // Groups: panel + rename (behind a live-mode warning, like the policy
+      // actions). "All" is managed by the system.
       if (isGroupNode(node)) {
         const group = getNodeGroup(node);
         const items: MenuItem[] = [
@@ -873,8 +876,8 @@ export const NodeContextMenu = ({
         node.type === "resourceNode" || node.type === "destinationResourceNode";
       if (isResourceNode && liveResourceOf(node)) {
         const resEnabled =
-          ((node.data as { resource?: { enabled?: boolean } })?.resource
-            ?.enabled ?? true) !== false;
+          (node.data as { resource?: { enabled?: boolean } })?.resource
+            ?.enabled ?? true;
         return [
           ...focusItems(node),
           {
@@ -1175,6 +1178,7 @@ export const NodeContextMenu = ({
       },
     ];
   }, [
+    position,
     isDraft,
     node,
     focusItems,
@@ -1300,7 +1304,6 @@ export const NodeContextMenu = ({
             ? resourceCurrentName
             : getNodeGroup(renameTarget ?? undefined)?.name ?? ""
         }
-        groups={isPlaceholderRename || isResourceRename ? undefined : groups}
         takenNames={
           isPlaceholderRename
             ? placeholderTakenNames

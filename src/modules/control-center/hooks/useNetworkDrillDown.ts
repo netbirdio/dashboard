@@ -4,6 +4,7 @@ import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterC
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
 import {
+  DRILLED_RESOURCE_SPACING,
   applyDrilledLayout,
   getDrilledFrameAnchor,
 } from "@/modules/control-center/utils/drilled-layout";
@@ -14,6 +15,9 @@ import {
 } from "@/modules/control-center/utils/canvas-transition";
 import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 import {
+  NETWORK_FRAME_HEADER,
+  NETWORK_FRAME_PADDING_X,
+  NETWORK_FRAME_PADDING_Y,
   NETWORK_FRAME_WIDTH,
   getNetworkFrameHeight,
 } from "@/modules/control-center/utils/helpers";
@@ -114,8 +118,11 @@ export function useNetworkDrillDown() {
             // Drilled grid slot (single column, fixed pitch).
             const i = frameChildIndexById.get(n.id) ?? 0;
             extend(
-              frameAnchor.x + 20,
-              frameAnchor.y + 86 + i * 95,
+              frameAnchor.x + NETWORK_FRAME_PADDING_X,
+              frameAnchor.y +
+                NETWORK_FRAME_HEADER +
+                NETWORK_FRAME_PADDING_Y +
+                i * DRILLED_RESOURCE_SPACING,
               n.measured?.width ?? 200,
               n.measured?.height ?? 66,
             );

@@ -22,9 +22,6 @@ export async function dismissBlockingOverlays(page: Page) {
   await clearScrollLock(page);
 }
 
-export const CHANGES_KEY = "netbird-control-center-draft-changes";
-export const CANVAS_KEY = "netbird-control-center-draft-canvas";
-
 export type FlowView = "peers" | "users" | "groups" | "networks";
 
 export async function openControlCenter(page: Page, tab?: FlowView) {
@@ -69,29 +66,12 @@ export async function enterDraft(page: Page) {
   await expect(page.getByTestId("cc-toolbar-add")).toBeVisible();
 }
 
-export async function exitDraftDiscarding(page: Page) {
-  // The Live tab is hidden — Cancel is the way back to live.
-  const cancel = page.getByTestId("cc-draft-cancel");
-  if (!(await cancel.isVisible().catch(() => false))) return;
-  await cancel.click();
-  const confirm = page.getByTestId("confirmation.confirm");
-  if (await confirm.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await confirm.click();
-  }
-  await expect(page.getByTestId("cc-toolbar-add")).not.toBeVisible();
-}
-
-/** Clears draft localStorage and makes sure we're on a clean live canvas. */
+/**
+ * Makes sure we're on a clean live canvas. Draft state is React-only, so the
+ * full page load inside openControlCenter is what discards any previous draft.
+ */
 export async function resetDraftState(page: Page) {
   await openControlCenter(page);
-  await page.evaluate(
-    ([changes, canvas]) => {
-      localStorage.removeItem(changes);
-      localStorage.removeItem(canvas);
-    },
-    [CHANGES_KEY, CANVAS_KEY],
-  );
-  await exitDraftDiscarding(page);
 }
 
 export async function readDraftChanges(page: Page): Promise<any[]> {
@@ -131,10 +111,6 @@ async function mouseDrag(
   await page.waitForTimeout(120);
 }
 
-/**
- * Drags a components-panel template onto the canvas. The panel uses a custom
- * pointer-based drag (not HTML5 DnD), so raw mouse events are required.
- */
 // The components panel groups its create-templates under category tabs and
 // opens on "peers", so a group/resource/network template isn't on screen until
 // its tab is selected. Networks share the Resources tab.
@@ -145,6 +121,10 @@ function categoryForTemplate(templateTestId: string): string {
   return "resources";
 }
 
+/**
+ * Drags a components-panel template onto the canvas. The panel uses a custom
+ * pointer-based drag (not HTML5 DnD), so raw mouse events are required.
+ */
 export async function dragTemplateToCanvas(
   page: Page,
   templateTestId: string,

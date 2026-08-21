@@ -103,15 +103,11 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
         </div>
       </div>
 
-      {showHandles ? (
+      <AllHandles />
+      {showHandles && (
         <>
-          <AllHandles />
           <ConnectHandle type={"source"} position={Position.Left} />
           <ConnectHandle type={"source"} position={Position.Right} />
-        </>
-      ) : (
-        <>
-          <AllHandles />
         </>
       )}
     </div>

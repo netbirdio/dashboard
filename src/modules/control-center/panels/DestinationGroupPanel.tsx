@@ -97,6 +97,158 @@ export function usePanelWidth() {
   return width;
 }
 
+export const setEquals = (a: Set<string>, b: Set<string>) =>
+  a.size === b.size && [...a].every((id) => b.has(id));
+
+// Canvas edge margin.
+const PANEL_MARGIN = 24;
+
+export type PanelPlacement = { left: number; top: number; height: number };
+
+// Shared placement for the group/peer panels: anchored to the canvas' right
+// edge, spanning the canvas between `top` and `bottom` so the panel never
+// covers the header action row or the bottom draft toolbar. Null until the
+// canvas has been measured.
+export function usePanelPlacement({
+  openKey,
+  panelWidth,
+  top,
+  bottom,
+  onPlaced,
+}: {
+  openKey: string;
+  panelWidth: number;
+  top: number;
+  bottom: number;
+  // Runs after every (re)placement from the open effect, with the measured
+  // canvas rect — the group panel uses it to pan the selected node clear of
+  // the panel.
+  onPlaced?: (container: DOMRect, placement: PanelPlacement) => void;
+}) {
+  const [placement, setPlacement] = useState<PanelPlacement | null>(null);
+  // Both callbacks below are only read from async callbacks (the placement
+  // timer, the resize listener), so syncing the refs in an effect keeps them
+  // current without touching a ref during render.
+  const onPlacedRef = useRef(onPlaced);
+  useEffect(() => {
+    onPlacedRef.current = onPlaced;
+  });
+
+  // Width changes while OPEN (the header action row grows with the
+  // change-count badge on every applied toggle) reposition in place — going
+  // through the open effect below unmounted the panel for a frame (flash)
+  // and replayed the slide-in.
+  useEffect(() => {
+    setPlacement((p) => {
+      if (!p) return p;
+      const container = document
+        .querySelector(".react-flow")
+        ?.getBoundingClientRect();
+      if (!container) return p;
+      return { ...p, left: container.width - panelWidth - PANEL_MARGIN };
+    });
+  }, [panelWidth]);
+
+  // panelWidth is read via a ref below so an open panel doesn't re-run the
+  // whole open sequence (placement reset + pan) when the width shifts.
+  const panelWidthRef = useRef(panelWidth);
+  useEffect(() => {
+    panelWidthRef.current = panelWidth;
+  });
+
+  // Keep the panel fitted when the window/canvas is resized. The open effect
+  // below only runs on open, so a resize would otherwise leave the box sized
+  // for the old container (clipped or floating off the edge).
+  useEffect(() => {
+    const onResize = () => {
+      setPlacement((p) => {
+        if (!p) return p;
+        const container = document
+          .querySelector(".react-flow")
+          ?.getBoundingClientRect();
+        if (!container) return p;
+        return {
+          left: container.width - panelWidthRef.current - PANEL_MARGIN,
+          top,
+          height: container.height - top - bottom,
+        };
+      });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [top, bottom]);
+
+  useEffect(() => {
+    if (!openKey) {
+      setPlacement(null);
+      return;
+    }
+    // Post-layout: the panel width settles via ResizeObserver a frame after
+    // mount, so measure after that. Switching from one group/peer to another
+    // keeps the CURRENT placement mounted (no unmount frame, no replayed
+    // slide-in) — only the box is refreshed and onPlaced runs again.
+    const timer = window.setTimeout(() => {
+      const container = document
+        .querySelector(".react-flow")
+        ?.getBoundingClientRect();
+      if (!container) return;
+      const next = {
+        left: container.width - panelWidthRef.current - PANEL_MARGIN,
+        top,
+        height: container.height - top - bottom,
+      };
+      setPlacement(next);
+      onPlacedRef.current?.(container, next);
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, [openKey, top, bottom]);
+
+  return placement;
+}
+
+// Shared close plumbing for the group/peer panels: registers the discard
+// guard the external close paths (the canvas pane click in page.tsx) consult,
+// and closes on Esc — unless something above us (e.g. a Radix modal) already
+// handled the key. Returns the guarded close for the panel's own ESC keycap.
+export function usePanelCloseGuard(
+  openKey: string,
+  confirmDiscard: () => Promise<boolean>,
+  onClose: () => void,
+) {
+  const requestClose = async () => {
+    if (await confirmDiscard()) onClose();
+  };
+  // Both are read only from the listeners registered below, so an effect-time
+  // sync is enough and keeps render free of ref writes.
+  const requestCloseRef = useRef(requestClose);
+  const confirmDiscardRef = useRef(confirmDiscard);
+  useEffect(() => {
+    requestCloseRef.current = requestClose;
+    confirmDiscardRef.current = confirmDiscard;
+  });
+
+  useEffect(() => {
+    if (!openKey) return;
+    groupPanelCloseGuard.current = () => confirmDiscardRef.current();
+    return () => {
+      groupPanelCloseGuard.current = null;
+    };
+  }, [openKey]);
+
+  useEffect(() => {
+    if (!openKey) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.defaultPrevented) {
+        void requestCloseRef.current();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [openKey]);
+
+  return requestClose;
+}
+
 // Same row treatment as the components panel's PanelListItem; in draft it
 // carries a PeerGroupSelector-style membership checkbox.
 export const MemberRow = ({
@@ -157,8 +309,8 @@ const DraftStatusChip = ({
   </Button>
 );
 
-// Draft peer row action: user devices open the setup stepper ("Setup
-// Device"), servers/agents the install modal ("Install").
+// Draft peer row action: user devices ("Install or assign") open the setup
+// stepper, servers/agents ("Install") the install modal.
 const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
   const { setInstallModal, setUserDeviceModal } = useDraftMode();
   const isUserDevice = draftPeer.os === "draft-user-device";
@@ -260,13 +412,10 @@ export const DestinationGroupPanel = ({
     });
     if (isDraft) {
       changes.forEach((c) => {
-        const matches =
+        if (
           (c.type === "create-group" && c.name === group?.name) ||
-          (c.type === "update-group" && c.groupId === realGroupId);
-        if (c.type === "create-group" && matches) {
-          c.peerIds.forEach((id) => added.add(id));
-          c.resourceIds.forEach((id) => added.add(id));
-        } else if (c.type === "update-group" && matches) {
+          (c.type === "update-group" && c.groupId === realGroupId)
+        ) {
           c.peerIds.forEach((id) => added.add(id));
           c.resourceIds.forEach((id) => added.add(id));
         }
@@ -404,8 +553,6 @@ export const DestinationGroupPanel = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, memberResourcesKey]);
 
-  const setEquals = (a: Set<string>, b: Set<string>) =>
-    a.size === b.size && [...a].every((id) => b.has(id));
   const dirty =
     !setEquals(selectedPeerIds, memberPeerIds) ||
     !setEquals(selectedResourceIds, memberResourceIds);
@@ -718,7 +865,8 @@ export const DestinationGroupPanel = ({
 
   // Draft: EVERY peer/resource is listed (members first, checked) so the
   // checkbox doubles as assign/unassign, the same pattern as PeerGroupSelector.
-  // Live: members only. The members-first order here is only a SEED. It's
+  // Read-only panels (the "All" group, or a draft group with no canvas node)
+  // list members only. The members-first order here is only a SEED. It's
   // pinned below to the sequence captured when the panel opened.
   const peerCandidates = useMemo(() => {
     if (!canEditMembers) return groupPeers;
@@ -813,99 +961,18 @@ export const DestinationGroupPanel = ({
   const totalResources =
     (networkResources ?? []).length + draftMemberResources.length;
 
-  // ---- Placement: open NEXT TO the clicked group node, not glued to the
-  // right edge. Node on the right half → panel opens to its left (and vice
-  // versa); node low on the canvas → the vertical clamp pushes the panel up.
-  // The panel never covers the top controls row or the bottom draft toolbar,
-  // and is capped in height rather than running the full canvas.
-  const [placement, setPlacement] = useState<{
-    left: number;
-    top: number;
-    height: number;
-    // Entry-animation offset: the panel slides in FROM the node's direction
-    // (origin-aware, like the components panel rising from the toolbar).
-    dx: number;
-    dy: number;
-  } | null>(null);
-
-  // canvas edge margin
-  const MARGIN = 24;
-  // On the right side nothing sits below the header actions row, and the
-  // bottom toolbar is centered — the panel can run nearly edge to edge.
-  // TOP clears the header actions row.
-  const TOP = 75;
-  const BOTTOM = 19;
-
-  // Width changes while OPEN (the header action row grows with the
-  // change-count badge on every applied toggle) reposition in place — going
-  // through the open effect below unmounted the panel for a frame (flash)
-  // and replayed the slide-in.
-  useEffect(() => {
-    setPlacement((p) => {
-      if (!p) return p;
-      const container = document
-        .querySelector(".react-flow")
-        ?.getBoundingClientRect();
-      if (!container) return p;
-      return { ...p, left: container.width - panelWidth - MARGIN };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panelWidth]);
-
-  // panelWidth is read via a ref here so an open panel doesn't re-run the
-  // whole open sequence (placement reset + pan) when the width shifts.
-  const panelWidthRef = useRef(panelWidth);
-  panelWidthRef.current = panelWidth;
-
-  // Keep the panel fitted when the window/canvas is resized. The open effect
-  // below only runs on open, so a resize would otherwise leave the box sized
-  // for the old container (clipped or floating off the edge). Recompute
-  // left/top/height against the new container size.
-  useEffect(() => {
-    const onResize = () => {
-      setPlacement((p) => {
-        if (!p) return p;
-        const container = document
-          .querySelector(".react-flow")
-          ?.getBoundingClientRect();
-        if (!container) return p;
-        return {
-          ...p,
-          left: container.width - panelWidthRef.current - MARGIN,
-          top: TOP,
-          height: container.height - TOP - BOTTOM,
-        };
-      });
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  useEffect(() => {
-    if (!groupId) {
-      setPlacement(null);
-      return;
-    }
-    // Post-layout: the panel width settles via ResizeObserver a frame after
-    // mount, so measure after that. Switching from one group to another
-    // keeps the CURRENT placement mounted (no unmount frame, no replayed
-    // slide-in) — only the box is refreshed and the pan below runs.
-    const timer = window.setTimeout(() => {
-      const container = document
-        .querySelector(".react-flow")
-        ?.getBoundingClientRect();
-      if (!container) return;
-      const height = container.height - TOP - BOTTOM;
-      const left = container.width - panelWidthRef.current - MARGIN;
-      // Anchored to the right side, sliding in from the right (like the
-      // bottom toolbar slides up from the bottom) — but only on a fresh
-      // open; while already open just update the box in place.
-      setPlacement((p) =>
-        p ? { ...p, left, top: TOP, height } : { left, top: TOP, height, dx: 48, dy: 0 },
-      );
-
-      // If the panel covers the selected group's node, pan the canvas left
-      // just far enough that the node clears the panel (small margin).
+  // ---- Placement: anchored to the canvas' right edge, sliding in from the
+  // right (like the bottom toolbar slides up). It never covers the header
+  // actions row or the bottom draft toolbar; if the selected node would sit
+  // under the panel the canvas pans left so the node clears it.
+  const placement = usePanelPlacement({
+    openKey: groupId,
+    panelWidth,
+    // On the right side nothing sits below the header actions row, and the
+    // bottom toolbar is centered — the panel can run nearly edge to edge.
+    top: 75,
+    bottom: 19,
+    onPlaced: (container, { left, top, height }) => {
       const node = reactFlow
         .getNodes()
         .find(
@@ -924,15 +991,14 @@ export const DestinationGroupPanel = ({
       const nodeRight = nodeLeft + (node.measured?.width ?? 0) * zoom;
       const nodeBottom = nodeTop + (node.measured?.height ?? 0) * zoom;
       const overlaps =
-        nodeRight > left && nodeBottom > TOP && nodeTop < TOP + height;
+        nodeRight > left && nodeBottom > top && nodeTop < top + height;
       if (!overlaps) return;
+      // Pan left just far enough that the node clears the panel.
       const delta = nodeRight - left + 64;
       const vp = reactFlow.getViewport();
       void reactFlow.setViewport({ ...vp, x: vp.x - delta }, { duration: 300 });
-    }, 60);
-    return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]);
+    },
+  });
 
   // Implicit closes (Esc, the ESC keycap, canvas pane clicks) confirm first
   // when there are unassigned toggles; the explicit Cancel button discards
@@ -952,40 +1018,11 @@ export const DestinationGroupPanel = ({
       dismissOnOutsideClick: true,
     }));
   };
-  const requestClose = async () => {
-    if (await confirmDiscard()) onClose();
-  };
-  const requestCloseRef = useRef(requestClose);
-  requestCloseRef.current = requestClose;
-
-  // External close paths (pane click in page.tsx) consult the same dialog.
-  const confirmDiscardRef = useRef(confirmDiscard);
-  confirmDiscardRef.current = confirmDiscard;
-  useEffect(() => {
-    if (!groupId) return;
-    groupPanelCloseGuard.current = () => confirmDiscardRef.current();
-    return () => {
-      groupPanelCloseGuard.current = null;
-    };
-  }, [groupId]);
-
-  // Esc closes the panel (unless something above us — e.g. a Radix modal —
-  // already handled it).
-  useEffect(() => {
-    if (!groupId) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !e.defaultPrevented) {
-        void requestCloseRef.current();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [groupId]);
+  const requestClose = usePanelCloseGuard(groupId, confirmDiscard, onClose);
 
   // Singleton: always mounted so the (large) peer/resource lists aren't
   // rebuilt on every open — nothing renders while no group is selected or
-  // until the spot next to the node is known; the entry animation then
-  // plays from the node's direction.
+  // until the panel's box is known.
   if (!groupId || !placement) return null;
 
   return (
@@ -994,7 +1031,7 @@ export const DestinationGroupPanel = ({
     // only plays when the panel opens from closed (mounts from null).
     <motion.div
       id={"cc-group-panel"}
-      initial={{ opacity: 0, x: placement.dx, y: placement.dy }}
+      initial={{ opacity: 0, x: 48, y: 0 }}
       animate={{ opacity: 1, x: 0, y: 0 }}
       // Same spring as the bottom toolbar sliding up from the bottom.
       transition={{ type: "spring", stiffness: 400, damping: 32 }}

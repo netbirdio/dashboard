@@ -367,7 +367,6 @@ describe("connect node ↔ network (destination picker & membership)", () => {
   it("policy destination handle → network opens the picker for that policy", () => {
     const blank = makePolicy("new-1");
     const deps = {
-      ...withNetworkDeps(),
       ...makeDeps([
         draftNetworkNode,
         node("policy-new-1", "policyNode", { policy: blank }),
@@ -444,7 +443,6 @@ describe("connect node ↔ network (destination picker & membership)", () => {
   it("network's left connector → policy opens the picker for that policy", () => {
     const blank = makePolicy("new-1");
     const deps = {
-      ...withNetworkDeps(),
       ...makeDeps([
         draftNetworkNode,
         node("policy-new-1", "policyNode", { policy: blank }),

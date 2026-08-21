@@ -1,84 +1,13 @@
 import { Edge, Node } from "@xyflow/react";
-import * as d3 from "d3";
 
 interface SimulationNode extends Node {
   x: number;
   y: number;
-  vx?: number;
-  vy?: number;
 }
 
 export const DEFAULT_MAX_ZOOM = 1.6;
 export const DEFAULT_MIN_ZOOM = 0.2;
 export const EMPTY_STATE_ZOOM = 0.65;
-
-export const applyD3ForceLayout = (nodes: Node[], edges: Edge[]) => {
-  const simulationNodes: SimulationNode[] = nodes.map((node) => ({
-    ...node,
-    x: node.position?.x || 0,
-    y: node.position?.y || 0,
-  }));
-
-  const simulationLinks = edges.map((edge) => ({
-    ...edge,
-    source: edge.source,
-    target: edge.target,
-  }));
-
-  const simulation = d3
-    .forceSimulation(simulationNodes)
-    .force(
-      "link",
-      d3
-        .forceLink(simulationLinks)
-        .id((d: any) => d.id)
-        // Reduced distance to minimize crossings
-        .distance(60)
-        // Reduced strength to maintain radial structure
-        .strength(0.05),
-    )
-    .force("collision", d3.forceCollide().radius(300));
-
-  // Run simulation for fewer iterations to preserve radial structure.
-  // Stop once alpha decayed past the point of visible movement (~300 ticks)
-  // — blindly running 1000 synchronous ticks froze the main thread on views
-  // with many nodes.
-  simulation.stop();
-  for (let i = 0; i < 1000 && simulation.alpha() > 0.005; i++) {
-    simulation.tick();
-  }
-
-  const updatedNodes: Node[] = simulationNodes.map((node) => ({
-    ...node,
-    position: {
-      x: node.x,
-      y: node.y,
-    },
-  }));
-
-  const updatedEdges: Edge[] = edges.map((edge) => {
-    const sourceNode = simulationNodes.find((n) => n.id === edge.source);
-    const targetNode = simulationNodes.find((n) => n.id === edge.target);
-
-    return {
-      ...edge,
-      data: {
-        ...edge.data,
-        points:
-          sourceNode && targetNode
-            ? [
-                { x: sourceNode.x, y: sourceNode.y },
-                { x: targetNode.x, y: targetNode.y },
-              ]
-            : undefined,
-      },
-    };
-  });
-
-  simulation.stop();
-
-  return { updatedNodes, updatedEdges };
-};
 
 export const applyD3HierarchicalLayout = (
   nodes: Node[],
@@ -119,6 +48,9 @@ export const applyD3HierarchicalLayout = (
   // The single-group view mirrors policies where the selected group is the
   // destination to the LEFT (sources → policy → selected group); the view
   // stamps those policy nodes with data.side === "left".
+  // Agent-network policies share the policy column with access-control ones —
+  // both are "what authorizes this" and the overlay mirrors the same
+  // source → policy → destination shape.
   const policyNodes = simulationNodes.filter(
     (n) => n.type === "policyNode" && n.data?.side !== "left",
   );

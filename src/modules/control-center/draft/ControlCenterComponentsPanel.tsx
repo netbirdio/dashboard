@@ -25,7 +25,6 @@ import {
   LucideIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
-  PlusIcon,
   ServerIcon,
   ShieldIcon,
   TextSearchIcon,
@@ -784,7 +783,6 @@ const PanelContent = React.memo(
           icon={tpl.icon}
           label={tpl.label}
           description={tpl.description}
-          draggable
           onPointerDown={(e) => handlePeerTemplateDragStart(e, tpl)}
           data-testid={`cc-template-peer-${tpl.key}`}
         />
@@ -798,7 +796,6 @@ const PanelContent = React.memo(
               icon={ShieldIcon}
               label={"Policy"}
               description={"Control access between sources and destinations"}
-              draggable
               onPointerDown={(e) => handlePolicyDragStart(e)}
               data-testid={"cc-template-policy"}
             />,
@@ -812,7 +809,6 @@ const PanelContent = React.memo(
           icon={tpl.icon}
           label={tpl.label}
           description={tpl.description}
-          draggable
           onPointerDown={(e) => handleBlankDragStart(e, tpl.kind)}
           data-testid={`cc-template-${tpl.kind}`}
         />
@@ -825,7 +821,6 @@ const PanelContent = React.memo(
           icon={tpl.icon}
           label={tpl.label}
           description={tpl.description}
-          draggable
           onPointerDown={(e) => handleBlankDragStart(e, tpl.kind)}
           data-testid={`cc-template-${tpl.kind}`}
         />
@@ -1419,32 +1414,24 @@ PanelContent.displayName = "PanelContent";
 const TemplateItem = React.memo(
   ({
     icon: Icon,
-    iconNode,
     label,
     description,
-    draggable,
     onPointerDown,
-    onClick,
     "data-testid": dataTestId,
   }: {
     icon?: LucideIcon;
-    iconNode?: React.ReactNode;
     label: string;
     description?: string;
-    draggable?: boolean;
     onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
-    onClick?: () => void;
     "data-testid"?: string;
   }) => {
     return (
       <div
         onPointerDown={onPointerDown}
-        onClick={onClick}
         data-testid={dataTestId}
-        className={cn(
-          "group/item flex items-center h-[52px] rounded-md px-1 transition-colors hover:bg-nb-gray-900/50",
-          draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
-        )}
+        className={
+          "group/item flex items-center h-[52px] rounded-md px-1 transition-colors hover:bg-nb-gray-900/50 cursor-grab active:cursor-grabbing"
+        }
       >
         <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
           <div
@@ -1452,7 +1439,7 @@ const TemplateItem = React.memo(
               "h-8 w-8 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 text-nb-gray-300"
             }
           >
-            {iconNode ?? (Icon && <Icon size={14} />)}
+            {Icon && <Icon size={14} />}
           </div>
           <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
             <span className={"text-xs text-nb-gray-100"}>{label}</span>
@@ -1461,17 +1448,10 @@ const TemplateItem = React.memo(
             </span>
           </div>
         </div>
-        {draggable ? (
-          <GripVerticalIcon
-            size={14}
-            className="shrink-0 ml-auto mr-3 text-nb-gray-400"
-          />
-        ) : (
-          <PlusIcon
-            size={14}
-            className="shrink-0 ml-auto mr-3 text-nb-gray-400"
-          />
-        )}
+        <GripVerticalIcon
+          size={14}
+          className="shrink-0 ml-auto mr-3 text-nb-gray-400"
+        />
       </div>
     );
   },
@@ -1482,13 +1462,11 @@ TemplateItem.displayName = "TemplateItem";
 const PanelListItem = React.memo(
   ({
     children,
-    className,
     onPointerDown,
     disabled,
     onCanvas,
     "data-testid": dataTestId,
   }: PropsWithChildren<{
-    className?: string;
     onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
     disabled?: boolean;
     onCanvas?: boolean;
@@ -1503,7 +1481,6 @@ const PanelListItem = React.memo(
           disabled
             ? "cursor-default"
             : "hover:bg-nb-gray-900/50 cursor-grab active:cursor-grabbing",
-          className,
         )}
       >
         {/* Only the entity content dims when disabled — the badge stays

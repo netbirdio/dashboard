@@ -18,11 +18,8 @@ import {
   getFrameChildPosition,
   getLiveFrameGrid,
   isFrameNode,
-  NETWORK_FRAME_ADD_ROW,
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_FALLBACK_ROW,
-  NETWORK_FRAME_PADDING_Y,
-  NETWORK_FRAME_WIDTH,
   orderFrameResources,
 } from "@/modules/control-center/utils/helpers";
 import { handleDraftConnect } from "@/modules/control-center/utils/draft-connect";
@@ -99,9 +96,7 @@ export function useDraft() {
     useControlCenterData();
   const {
     isDraft,
-    setIsDraft,
     activeTool,
-    setActiveTool,
     draftSession,
     blankDraftRef,
     startedBlank,
@@ -852,9 +847,6 @@ export function useDraft() {
 
   return {
     isDraft,
-    setIsDraft,
-    activeTool,
-    setActiveTool,
     isSelectMode,
     startedBlank,
     onNodeConnect,

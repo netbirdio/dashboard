@@ -85,7 +85,6 @@ test.describe.serial("Control Center Drill-down @control-center", () => {
     await expect(page.getByTestId("cc-drill-back")).toBeVisible();
     await expect(page.getByTestId("cc-add-resource")).toBeVisible();
 
-    // The drilled canvas menu swaps in resource/routing-peer entries.
     await page.mouse.click(0, 0); // close any transient menu
     // Add a resource straight into the drilled network.
     await page.getByTestId("cc-add-resource").click();

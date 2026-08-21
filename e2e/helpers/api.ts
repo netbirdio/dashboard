@@ -32,7 +32,7 @@ async function getApiContext(
   // The predicate runs for EVERY response the page receives and returns
   // whether it's the one we want: a successful GET to the management API.
   // Non-matching responses (4xx/5xx, non-GET, non-API) are skipped — the
-  // wait keeps going until a match or the 10s timeout. Network-level
+  // wait keeps going until a match or the 30s timeout. Network-level
   // request failures never produce a response, so they can't match either;
   // if nothing succeeds, this throws a TimeoutError.
   // Set E2E_DEBUG_API=1 to log every API response the predicate considers.

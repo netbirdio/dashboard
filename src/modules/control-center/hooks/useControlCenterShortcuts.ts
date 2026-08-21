@@ -36,10 +36,10 @@ export function useControlCenterShortcuts(
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isInputFocused()) return;
 
-      // Modifier combos ("ctrl+<key>" / "alt+<key>" / "shift+<key>") take
-      // priority; plain-key shortcuts never fire while Ctrl/Cmd/Alt is held (so
-      // e.g. Ctrl+C doesn't toggle the components panel). Alt combos match on
-      // e.code (Option+digit types special characters on macOS).
+      // Alt combos ("alt+<key>") take priority; plain-key shortcuts never fire
+      // while Ctrl/Cmd/Alt is held (so e.g. Ctrl+C doesn't toggle the
+      // components panel). Alt combos match on e.code (Option+digit types
+      // special characters on macOS).
       const lower = e.key.toLowerCase();
       const codeKey = e.code?.startsWith("Digit")
         ? e.code.slice(5)
@@ -47,11 +47,9 @@ export function useControlCenterShortcuts(
         ? e.code.slice(3).toLowerCase()
         : undefined;
       const handler =
-        (e.ctrlKey && shortcutsRef.current[`ctrl+${lower}`]) ||
         (e.altKey &&
           (shortcutsRef.current[`alt+${lower}`] ||
             (codeKey && shortcutsRef.current[`alt+${codeKey}`]))) ||
-        (e.shiftKey && shortcutsRef.current[`shift+${lower}`]) ||
         (!e.ctrlKey &&
           !e.metaKey &&
           !e.altKey &&

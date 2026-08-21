@@ -67,7 +67,6 @@ export const parseNodeId = (id: string): NodeInfo | undefined => {
   if (id.startsWith("network-new-")) return { kind: "network", id };
   if (id.startsWith("network-")) return { kind: "network", id: id.replace("network-", "") };
   if (id.startsWith("policy-")) return { kind: "policy", id: id.replace("policy-", "") };
-  if (id.startsWith("expanded-peer-")) return { kind: "peer", id: id.replace("expanded-peer-", "") };
   if (id.startsWith("source-peer-")) return { kind: "peer", id: id.replace("source-peer-", "") };
   if (id.startsWith("destination-resource-")) return { kind: "resource", id: id.replace("destination-resource-", "") };
   return undefined;

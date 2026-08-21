@@ -32,9 +32,11 @@ import {
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
 import {
-  groupPanelCloseGuard,
   MemberRow,
   PanelVirtuosoScroller,
+  setEquals,
+  usePanelCloseGuard,
+  usePanelPlacement,
   usePanelWidth,
 } from "@/modules/control-center/panels/DestinationGroupPanel";
 
@@ -116,8 +118,6 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [peerId, assignedKey]);
 
-  const setEquals = (a: Set<string>, b: Set<string>) =>
-    a.size === b.size && [...a].every((id) => b.has(id));
   const dirty = !setEquals(selectedRefs, assignedRefs);
 
   const toggleGroup = (g: Group) => {
@@ -278,74 +278,12 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
 
   // ---- Placement (same as the group panel: right side, full height) ----
 
-  const [placement, setPlacement] = useState<{
-    left: number;
-    top: number;
-    height: number;
-  } | null>(null);
-
-  const MARGIN = 24;
-  const TOP = 80;
-  const BOTTOM = 24;
-
-  useEffect(() => {
-    setPlacement((p) => {
-      if (!p) return p;
-      const container = document
-        .querySelector(".react-flow")
-        ?.getBoundingClientRect();
-      if (!container) return p;
-      return { ...p, left: container.width - panelWidth - MARGIN };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panelWidth]);
-
-  const panelWidthRef = useRef(panelWidth);
-  panelWidthRef.current = panelWidth;
-
-  // Keep the panel fitted when the window/canvas is resized. The open effect
-  // below only runs on open, so a resize would otherwise leave the box sized
-  // for the old container.
-  useEffect(() => {
-    const onResize = () => {
-      setPlacement((p) => {
-        if (!p) return p;
-        const container = document
-          .querySelector(".react-flow")
-          ?.getBoundingClientRect();
-        if (!container) return p;
-        return {
-          left: container.width - panelWidthRef.current - MARGIN,
-          top: TOP,
-          height: container.height - TOP - BOTTOM,
-        };
-      });
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  useEffect(() => {
-    if (!peerId) {
-      setPlacement(null);
-      return;
-    }
-    // Switching peers keeps the mounted panel (no unmount frame / replayed
-    // slide-in) — only the box refreshes.
-    const timer = window.setTimeout(() => {
-      const container = document
-        .querySelector(".react-flow")
-        ?.getBoundingClientRect();
-      if (!container) return;
-      setPlacement({
-        left: container.width - panelWidthRef.current - MARGIN,
-        top: TOP,
-        height: container.height - TOP - BOTTOM,
-      });
-    }, 60);
-    return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [peerId]);
+  const placement = usePanelPlacement({
+    openKey: peerId,
+    panelWidth,
+    top: 80,
+    bottom: 24,
+  });
 
   // ---- Close handling (same discard guard as the group panel) ----
 
@@ -364,32 +302,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
       dismissOnOutsideClick: true,
     }));
   };
-  const requestClose = async () => {
-    if (await confirmDiscard()) onClose();
-  };
-  const requestCloseRef = useRef(requestClose);
-  requestCloseRef.current = requestClose;
-  const confirmDiscardRef = useRef(confirmDiscard);
-  confirmDiscardRef.current = confirmDiscard;
-
-  useEffect(() => {
-    if (!peerId) return;
-    groupPanelCloseGuard.current = () => confirmDiscardRef.current();
-    return () => {
-      groupPanelCloseGuard.current = null;
-    };
-  }, [peerId]);
-
-  useEffect(() => {
-    if (!peerId) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !e.defaultPrevented) {
-        void requestCloseRef.current();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [peerId]);
+  const requestClose = usePanelCloseGuard(peerId, confirmDiscard, onClose);
 
   if (!peerId || !placement) return null;
 

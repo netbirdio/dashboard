@@ -14,11 +14,11 @@ import {
 // restored node is indistinguishable from one carried in on draft entry.
 
 /** An existing group node, in the shape useDraft draws source groups. */
-export function buildGroupNode(group: Group, enabled = true): Node {
+export function buildGroupNode(group: Group): Node {
   return {
     id: `group-${group.id}`,
     type: "groupNode",
-    data: { group, enabled, showHandles: true },
+    data: { group, enabled: true, showHandles: true },
     position: { x: 0, y: 0 },
   };
 }
@@ -43,7 +43,7 @@ export function buildStandaloneResourceNode(
 
 /**
  * Rebuild an existing network as a frame plus its resource children — the
- * restore counterpart of carryNetworkFrame (useDraft.ts:457-513). Returns the
+ * restore counterpart of useDraft's carryNetworkFrame. Returns the
  * frame node followed by its children (parent-before-child, as React Flow
  * requires). Positions/sizes come from the same capped grid the live overview
  * uses so the reconciler settles without a reshuffle.

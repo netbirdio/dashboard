@@ -31,11 +31,11 @@ import {
   routerUpdateBody,
 } from "@/modules/control-center/utils/changeset-request";
 
-// Executes the draft changeset against the API in CRUD dependency order:
-// groups are created first (so policies can resolve them by name), then group
-// updates, policy creates/updates/deletes, and group deletes last (a group can
+// Executes the draft changeset against the API in CHANGE_DEPLOY_ORDER
+// dependency order: groups first (so policies can resolve them by name), then
+// networks, resources, routers, policies, and the deletes last (a group can
 // only be deleted once nothing references it). Stops on the first failure —
-// completed changes are removed from the set, so a retry resumes cleanly.
+// succeeded changes stay in the set marked done and are skipped on a retry.
 //
 // Every request body is shaped by the shared helpers in changeset-request.ts —
 // the SAME functions the Review & Deploy code view renders — so what a user
@@ -48,10 +48,10 @@ export function useDeployChangeset() {
   const { changes } = useDraftChangeset();
   const { groups, networks, networkResources } = useControlCenterData();
   // Draft client ids → real API ids, PERSISTED across deploy() calls: a
-  // partial deploy removes each completed create from the changeset, so on a
-  // retry the create is gone and can no longer seed these maps. Persisting
-  // them (client ids are stable, unique per draft session) lets a retried
-  // dependent still resolve a network/resource created in the earlier run.
+  // retried run skips the completed create (doneIds), so it can no longer
+  // reseed these maps. Persisting them (client ids are stable, unique per
+  // draft session) lets a retried dependent still resolve a network/resource
+  // created in the earlier run.
   const networkClientToId = useRef(new Map<string, string>());
   const resourceClientToId = useRef(
     new Map<string, { id: string; type?: NetworkResource["type"] }>(),

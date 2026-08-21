@@ -14,7 +14,7 @@ import {
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 
-const TYPE_ICONS = {
+export const RESOURCE_TYPE_ICONS = {
   domain: GlobeIcon,
   subnet: NetworkIcon,
   host: WorkflowIcon,
@@ -29,9 +29,8 @@ type StandaloneResourceNodeData = {
 
 // A STANDALONE resource (not inside a network frame): a card like the
 // peer/group nodes. While unassigned it shows a floating "No Network" control;
-// once assigned, the network shows inline after the name. Existing dropped
-// resources are read-only (v1). The context-menu halo sits on the whole card,
-// not the icon box.
+// once assigned, the network shows inline after the name. The context-menu halo
+// sits on the whole card, not the icon box.
 export const StandaloneResourceNode = ({
   id,
   data,
@@ -56,7 +55,7 @@ export const StandaloneResourceNode = ({
   const resource = isDraftResource ? getDraftResource(node) : data.resource;
   if (!resource) return null;
 
-  const Icon = TYPE_ICONS[resource.type ?? "host"] ?? GlobeIcon;
+  const Icon = RESOURCE_TYPE_ICONS[resource.type ?? "host"] ?? GlobeIcon;
   // Draft resources are editable on click; the LIVE single-network view renders
   // the same card read-only.
   const editable = isDraft;
