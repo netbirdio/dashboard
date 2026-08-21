@@ -8,6 +8,10 @@ import {
 } from "@/modules/control-center/utils/graph-builder";
 import { applyDrilledLayout } from "@/modules/control-center/utils/drilled-layout";
 import {
+  nodeYNudge,
+  POLICY_COLUMN_Y_OFFSET,
+} from "@/modules/control-center/utils/layouts";
+import {
   FRAME_GRID_BASE_X,
   getLiveFrameGrid,
   isFrameNode,
@@ -439,7 +443,7 @@ export function useNetworkView() {
     sources.forEach((n, i) => {
       n.position = {
         x: 0,
-        y: -sourcesHeight / 2 + i * SOURCE_SPACING,
+        y: -sourcesHeight / 2 + i * SOURCE_SPACING + nodeYNudge(n.type),
       };
     });
     const policyName = (n: Node) =>
@@ -451,7 +455,7 @@ export function useNetworkView() {
     policyNodes.forEach((n, i) => {
       n.position = {
         x: 500,
-        y: -policiesHeight / 2 + i * POLICY_SPACING + 14,
+        y: -policiesHeight / 2 + i * POLICY_SPACING + POLICY_COLUMN_Y_OFFSET,
       };
     });
     packFrameGrid(frames, FRAME_GRID_BASE_X, SOURCE_NODE_HALF_HEIGHT);

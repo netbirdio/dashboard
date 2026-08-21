@@ -94,7 +94,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
               {group.name}
               {isNew && <SmallBadge />}
             </div>
-            <div className={"text-nb-gray-400 whitespace-nowrap text-xs"}>
+            <div className={"text-nb-gray-400 whitespace-nowrap text-sm"}>
               {countLabel}
             </div>
           </div>

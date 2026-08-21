@@ -7,7 +7,11 @@ import {
 } from "@/modules/control-center/utils/canvas-transition";
 import React, { useCallback, useEffect } from "react";
 import { FlowView } from "@/modules/control-center/header/FlowSelector";
-import { DEFAULT_MIN_ZOOM, EMPTY_STATE_ZOOM } from "@/modules/control-center/utils/layouts";
+import {
+  DEFAULT_MIN_ZOOM,
+  EMPTY_STATE_ZOOM,
+  nodeYNudge,
+} from "@/modules/control-center/utils/layouts";
 import {
   getFirstGroup,
   getPlaceholderPeer,
@@ -553,7 +557,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
             {
               id: "select-peer-node",
               type: "selectPeerNode",
-              position: { x: 0, y: 0 },
+              position: { x: 0, y: nodeYNudge("selectPeerNode") },
               data: {
                 currentPeer: initialPeerId,
                 onPeerChange: handlePeerChange,
@@ -591,7 +595,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
             {
               id: "select-user-node",
               type: "selectUserNode",
-              position: { x: -550, y: 0 },
+              position: { x: -550, y: nodeYNudge("selectUserNode") },
               data: {
                 currentUser: initialUserId,
                 onUserChange: handleUserChange,

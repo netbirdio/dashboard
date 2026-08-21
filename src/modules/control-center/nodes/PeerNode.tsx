@@ -96,7 +96,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
         className={cn(
           "relative rounded-lg transition-all group/node border bg-nb-gray-940 border-nb-gray-850",
           // Same fixed height as real peer nodes / GroupNode (64px inner).
-          "hover:bg-nb-gray-930 hover:border-nb-gray-800 pr-5 pl-3 h-[64px] flex items-center",
+          "hover:bg-nb-gray-930 hover:border-nb-gray-800 pr-5 pl-4 h-[64px] flex items-center",
           isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
           showHalo && "ring-2 ring-sky-500",
         )}
@@ -177,7 +177,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
       className={cn(
         // Fixed height matching GroupNode so peers, selects and groups line up.
         // The unnamed `group` lets DeviceCard's icon box light up on hover.
-        "relative rounded-lg transition-all group group/node pr-5 pl-3 h-[64px] flex items-center border",
+        "relative rounded-lg transition-all group group/node pr-5 pl-4 h-[64px] flex items-center border",
         variant === "card" &&
           "bg-nb-gray-940 border-nb-gray-850 hover:bg-nb-gray-930 hover:border-nb-gray-800",
         variant === "default" && "border-transparent",

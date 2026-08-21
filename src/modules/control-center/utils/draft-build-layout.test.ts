@@ -5,6 +5,7 @@ import {
   resolveNodeOverlaps,
 } from "./draft-build-layout";
 import { FRAME_GRID_BASE_X } from "./helpers";
+import { nodeYNudge } from "./layouts";
 
 const makeNode = (
   id: string,
@@ -170,7 +171,7 @@ describe("applyDraftBuildLayout", () => {
       edge("pol", "dst"),
     ]);
 
-    expect(at(updatedNodes, "src").y).toBe(0);
-    expect(at(updatedNodes, "dst").y).toBe(0);
+    expect(at(updatedNodes, "src").y).toBe(nodeYNudge("peerNode"));
+    expect(at(updatedNodes, "dst").y).toBe(nodeYNudge("peerNode"));
   });
 });

@@ -9,6 +9,18 @@ export const DEFAULT_MAX_ZOOM = 1.6;
 export const DEFAULT_MIN_ZOOM = 0.2;
 export const EMPTY_STATE_ZOOM = 0.65;
 
+export const POLICY_COLUMN_Y_OFFSET = 18;
+
+const NODE_Y_NUDGE: Record<string, number> = {
+  peerNode: 3,
+  sourcePeerNode: 3,
+  expandedGroupPeer: 3,
+  selectPeerNode: 2,
+  selectUserNode: 2,
+};
+
+export const nodeYNudge = (type?: string) => (type && NODE_Y_NUDGE[type]) || 0;
+
 export const applyD3HierarchicalLayout = (
   nodes: Node[],
   edges: Edge[],
@@ -128,13 +140,13 @@ export const applyD3HierarchicalLayout = (
     policyNodes,
     startX + (options?.policy?.width ?? columnWidth),
     options?.policy?.spacing ?? nodeSpacing,
-    centerY + 14,
+    centerY + POLICY_COLUMN_Y_OFFSET,
   );
   centerNodesVertically(
     leftPolicyNodes,
     startX - (options?.policy?.width ?? columnWidth),
     options?.policy?.spacing ?? nodeSpacing,
-    centerY + 14,
+    centerY + POLICY_COLUMN_Y_OFFSET,
   );
 
   centerNodesVertically(
@@ -192,6 +204,7 @@ const centerNodesVertically = (
   const startY = centerY - totalHeight / 2;
   nodesList.forEach((node, index) => {
     node.x = x;
-    node.y = (enable ? startY : 0) + index * nodeSpacing;
+    node.y =
+      (enable ? startY : 0) + index * nodeSpacing + nodeYNudge(node.type);
   });
 };

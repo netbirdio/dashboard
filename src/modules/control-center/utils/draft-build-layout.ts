@@ -1,12 +1,16 @@
 import { Edge, Node } from "@xyflow/react";
-import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
 import { DEFAULT_LAYOUT_CONFIG } from "@/modules/control-center/utils/graph-builder";
 import {
   FRAME_GRID_BASE_X,
-  SOURCE_NODE_HALF_HEIGHT,
   isFrameNode,
   packFrameGrid,
+  SOURCE_NODE_HALF_HEIGHT,
 } from "@/modules/control-center/utils/helpers";
+import {
+  applyD3HierarchicalLayout,
+  nodeYNudge,
+  POLICY_COLUMN_Y_OFFSET,
+} from "@/modules/control-center/utils/layouts";
 
 // Fresh rebuild nodes aren't measured yet, hence the fallback chain.
 const nodeRect = (n: Node) => {
@@ -53,9 +57,7 @@ export const resolveNodeOverlaps = (nodes: Node[]) => {
         { dx: other.x - rect.width - OVERLAP_MARGIN - rect.x, dy: 0 },
         { dx: 0, dy: other.y + other.height + OVERLAP_MARGIN - rect.y },
         { dx: 0, dy: other.y - rect.height - OVERLAP_MARGIN - rect.y },
-      ].sort(
-        (a, b) => Math.abs(a.dx + a.dy) - Math.abs(b.dx + b.dy),
-      );
+      ].sort((a, b) => Math.abs(a.dx + a.dy) - Math.abs(b.dx + b.dy));
       const move = candidates[0];
       node.position = {
         x: node.position.x + move.dx,
@@ -118,7 +120,10 @@ export const applyDraftBuildLayout = (
     const sourcePitch = carriesFrames ? baseSpacing : 100;
     const colHeight = (sourceColumn.length - 1) * sourcePitch;
     sourceColumn.forEach((n, i) => {
-      n.position = { x: 0, y: -colHeight / 2 + i * sourcePitch };
+      n.position = {
+        x: 0,
+        y: -colHeight / 2 + i * sourcePitch + nodeYNudge(n.type),
+      };
     });
   }
   if (carriesFrames) {
@@ -128,14 +133,15 @@ export const applyDraftBuildLayout = (
     );
     if (policyColumn.length > 0) {
       const policyName = (n: Node) =>
-        ((n.data as { policy?: { name?: string } })?.policy?.name ?? "")
-          .toLowerCase();
+        (
+          (n.data as { policy?: { name?: string } })?.policy?.name ?? ""
+        ).toLowerCase();
       policyColumn.sort((a, b) => policyName(a).localeCompare(policyName(b)));
       const colHeight = (policyColumn.length - 1) * 90;
       policyColumn.forEach((n, i) => {
         n.position = {
           x: 500,
-          y: -colHeight / 2 + i * 90 + 14,
+          y: -colHeight / 2 + i * 90 + POLICY_COLUMN_Y_OFFSET,
         };
       });
     }
@@ -169,7 +175,10 @@ export const applyDraftBuildLayout = (
     );
     const colHeight = (destColumn.length - 1) * 100;
     destColumn.forEach((n, i) => {
-      n.position = { x: DEST_COLUMN_X, y: -colHeight / 2 + i * 100 };
+      n.position = {
+        x: DEST_COLUMN_X,
+        y: -colHeight / 2 + i * 100 + nodeYNudge(n.type),
+      };
     });
   }
 
