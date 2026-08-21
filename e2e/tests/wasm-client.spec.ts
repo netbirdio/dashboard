@@ -1,10 +1,10 @@
+import type { Page } from "@playwright/test";
 import { readFileSync } from "fs";
 import { join } from "path";
-import type { Page } from "@playwright/test";
-import { test, expect } from "../helpers/fixtures";
-import { apiDelete, apiGet, apiPost, managementOrigin } from "../helpers/api";
-import { generateKeypair } from "../../src/utils/wireguard";
 import type { Peer } from "../../src/interfaces/Peer";
+import { generateKeypair } from "../../src/utils/wireguard";
+import { apiDelete, apiGet, apiPost, managementOrigin } from "../helpers/api";
+import { expect,test } from "../helpers/fixtures";
 
 /**
  * Guards the pinned default WASM client, which is what a version bump changes:
