@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Policy } from "@/interfaces/Policy";
 import {
   CreateGroupChange,
@@ -12,8 +12,16 @@ import {
 import {
   buildBeforeRequest,
   buildChangeRequest,
+  changeDiffLines,
   LiveData,
+  toCurl,
 } from "./changeset-request";
+
+// toCurl reads the account's management origin; the real loader needs Next's
+// build-time config files, which the unit env doesn't have.
+vi.mock("@utils/config", () => ({
+  default: () => ({ apiOrigin: "https://api.netbird.io" }),
+}));
 
 // The request the code view shows must match what deploy sends: group objects
 // become ids, draft-only members are filtered, deletes carry no body, and an
@@ -180,6 +188,34 @@ describe("buildBeforeRequest", () => {
     expect(before?.body).toBeUndefined();
   });
 
+  it("renders an update-group's resources in the same wire shape as the after side", () => {
+    const change: UpdateGroupChange = {
+      id: "u3",
+      type: "update-group",
+      groupId: "g1",
+      name: "Servers",
+      originalName: "Servers",
+      peerIds: [],
+      resourceIds: [],
+    };
+    const live: LiveData = {
+      groups: [
+        {
+          id: "g1",
+          name: "Servers",
+          // Live groups carry object members; a bare id string is tolerated too.
+          resources: [{ id: "res1", type: "host" }, "res2" as any],
+        },
+      ],
+      networkResources: [{ id: "res2", name: "db", type: "subnet" } as any],
+    };
+    const before = buildBeforeRequest(change, live);
+    expect((before?.body as any).resources).toEqual([
+      { id: "res1", type: "host" },
+      { id: "res2", type: "subnet" },
+    ]);
+  });
+
   it("returns null for a create (nothing exists yet)", () => {
     const change: CreatePolicyChange = {
       id: "c1",
@@ -189,6 +225,57 @@ describe("buildBeforeRequest", () => {
       policy: policy(),
     };
     expect(buildBeforeRequest(change, {})).toBeNull();
+  });
+});
+
+describe("changeDiffLines", () => {
+  it("an unchanged resource member produces no resource diff lines", () => {
+    const change: UpdateGroupChange = {
+      id: "d1",
+      type: "update-group",
+      groupId: "g1",
+      name: "Servers",
+      originalName: "Servers",
+      peerIds: ["p2"],
+      resourceIds: [],
+    };
+    const live: LiveData = {
+      groups: [
+        {
+          id: "g1",
+          name: "Servers",
+          peers: [{ id: "p9", name: "keep" }],
+          resources: [{ id: "res1", type: "host" }],
+        },
+      ],
+      networkResources: [{ id: "res1", name: "db", type: "host" } as any],
+    };
+    const changed = changeDiffLines(change, live)
+      .filter((l) => l.kind !== "context")
+      .map((l) => l.text)
+      .join("\n");
+    // Only the added peer moves; membership the draft never touched must not
+    // show up as a removal plus an addition.
+    expect(changed).toContain("p2");
+    expect(changed).not.toContain("res1");
+    expect(changed).not.toContain("host");
+  });
+});
+
+describe("toCurl", () => {
+  it("escapes apostrophes so the single-quoted body stays pasteable", () => {
+    const change: CreateGroupChange = {
+      id: "c9",
+      type: "create-group",
+      clientId: "group-new-9",
+      name: "Eduard's Devices",
+      peerIds: [],
+      resourceIds: [],
+    };
+    const curl = toCurl(buildChangeRequest(change));
+    expect(curl).toContain(`Eduard'\\''s Devices`);
+    // A bare apostrophe would close the -d payload early and break the command.
+    expect(curl).not.toContain(`Eduard's`);
   });
 });
 

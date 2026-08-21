@@ -35,7 +35,9 @@ import {
 // dependency order: groups first (so policies can resolve them by name), then
 // networks, resources, routers, policies, and the deletes last (a group can
 // only be deleted once nothing references it). Stops on the first failure —
-// succeeded changes stay in the set marked done and are skipped on a retry.
+// succeeded changes stay in the set marked done and are skipped on a retry
+// unless the user edited them in between (a completed CREATE is skipped either
+// way, since the entity already exists).
 //
 // Every request body is shaped by the shared helpers in changeset-request.ts —
 // the SAME functions the Review & Deploy code view renders — so what a user
@@ -43,6 +45,11 @@ import {
 // turn draft client-ids/names into the real API ids it creates as it runs.
 // Per-change progress shown in the Review & Deploy modal while a deploy runs.
 export type DeployStatus = "deploying" | "done" | "error";
+
+// Identifies a change BY CONTENT. The changeset coalesces later edits into the
+// existing entry, so ids are stable across an edit and can't be used on their
+// own to decide whether a retry still needs to send it.
+const changeSignature = (change: DraftChange) => JSON.stringify(change);
 
 export function useDeployChangeset() {
   const { changes } = useDraftChangeset();
@@ -63,16 +70,19 @@ export function useDeployChangeset() {
   const routerRequest = useApiCall<NetworkRouter>("/networks", true);
   const [isDeploying, setIsDeploying] = useState(false);
   // Per-change status drives the in-modal spinner / green check. Changes are
-  // NOT removed as they succeed (they stay visible with a check); doneIds
-  // skips them on a retry after a partial failure. Both reset once the
-  // changeset empties (the modal clears it after a successful deploy closes).
+  // NOT removed as they succeed (they stay visible with a check);
+  // doneSignatures skips them on a retry after a partial failure. Both reset
+  // once the changeset empties (the modal clears it after a successful deploy
+  // closes).
   const [deployStatus, setDeployStatus] = useState<
     Record<string, DeployStatus>
   >({});
-  const doneIds = useRef(new Set<string>());
+  // change id → the payload that was deployed under it, so a retry can tell an
+  // untouched change from one the user edited in between.
+  const doneSignatures = useRef(new Map<string, string>());
   useEffect(() => {
-    if (changes.length === 0 && doneIds.current.size > 0) {
-      doneIds.current.clear();
+    if (changes.length === 0 && doneSignatures.current.size > 0) {
+      doneSignatures.current.clear();
       setDeployStatus({});
     }
   }, [changes.length]);
@@ -278,9 +288,21 @@ export function useDeployChangeset() {
 
     const run = async () => {
       for (const change of ordered) {
-        // Skip changes a previous (partial) run already deployed — re-running
-        // a create would duplicate it. Their green check stays.
-        if (doneIds.current.has(change.id)) continue;
+        // Skip what a previous (partial) run already deployed; their green
+        // check stays. Coalescing keeps a change's id when the user edits the
+        // same entity again, so the id alone can't tell "already sent" from
+        // "sent, then edited" — compare the payload too, or an edit made after
+        // a partial failure would never be sent and would then be cleared with
+        // the changeset. Creates are the exception: the entity exists now, so a
+        // second POST would duplicate it (see the note above executeChange).
+        const deployed = doneSignatures.current.get(change.id);
+        if (
+          deployed !== undefined &&
+          (change.type.startsWith("create-") ||
+            deployed === changeSignature(change))
+        ) {
+          continue;
+        }
         setDeployStatus((p) => ({ ...p, [change.id]: "deploying" }));
         try {
           await executeChange(change);
@@ -294,7 +316,7 @@ export function useDeployChangeset() {
             code: e?.code ?? 0,
           };
         }
-        doneIds.current.add(change.id);
+        doneSignatures.current.set(change.id, changeSignature(change));
         setDeployStatus((p) => ({ ...p, [change.id]: "done" }));
       }
     };

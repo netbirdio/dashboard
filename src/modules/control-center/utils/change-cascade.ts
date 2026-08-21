@@ -1,5 +1,8 @@
 import { Group } from "@/interfaces/Group";
-import { DraftChange } from "@/modules/control-center/draft/DraftChangesetContext";
+import {
+  DraftChange,
+  isNoopGroupUpdate,
+} from "@/modules/control-center/draft/DraftChangesetContext";
 
 // Removing a changeset entry must leave the draft as if the change had never
 // been made: the entry AND everything that only makes sense because of it are
@@ -84,6 +87,18 @@ export function dropGroupNameReferences(
               ...r,
               sources: dropGroupFromRule(r.sources, name) as any,
               destinations: dropGroupFromRule(r.destinations, name) as any,
+              // An SSH rule's authorized_groups is keyed by group NAME while the
+              // draft group has no id; a stale key would be sent to the API as
+              // if it were a group id. Absent stays absent.
+              ...(r.authorized_groups
+                ? {
+                    authorized_groups: Object.fromEntries(
+                      Object.entries(r.authorized_groups).filter(
+                        ([key]) => key !== name,
+                      ),
+                    ),
+                  }
+                : {}),
             })),
           },
         },
@@ -135,6 +150,12 @@ const isTrackablePolicyChange = (c: DraftChange): boolean => {
 const dropUntrackablePolicies = (changes: DraftChange[]): DraftChange[] =>
   changes.filter(isTrackablePolicyChange);
 
+// An update-group left with nothing to do would deploy as a pointless GET + PUT
+// and show as an empty "Update group" row. The rule itself is owned by the
+// changeset (isNoopGroupUpdate) so the cascade and the trackers can't drift.
+const isSpentGroupUpdate = (c: DraftChange): boolean =>
+  c.type === "update-group" && isNoopGroupUpdate(c);
+
 /**
  * The resulting changeset after removing `change`, with cascade. Pure — the
  * canvas is updated separately by useRemoveChange. Covers:
@@ -185,20 +206,22 @@ export function reduceRemoveChange(
     case "create-resource": {
       const clientId = change.clientId;
       return dropUntrackablePolicies(
-        withoutTarget.map((c): DraftChange => {
-          // Drop the resource from any group's membership.
-          if (
-            (c.type === "create-group" || c.type === "update-group") &&
-            c.resourceIds.includes(clientId)
-          ) {
-            return {
-              ...c,
-              resourceIds: c.resourceIds.filter((r) => r !== clientId),
-            };
-          }
-          // Clear it from any policy that used it as a destination/source.
-          return clearResourceRef(c, clientId);
-        }),
+        withoutTarget
+          .map((c): DraftChange => {
+            // Drop the resource from any group's membership.
+            if (
+              (c.type === "create-group" || c.type === "update-group") &&
+              c.resourceIds.includes(clientId)
+            ) {
+              return {
+                ...c,
+                resourceIds: c.resourceIds.filter((r) => r !== clientId),
+              };
+            }
+            // Clear it from any policy that used it as a destination/source.
+            return clearResourceRef(c, clientId);
+          })
+          .filter((c) => !isSpentGroupUpdate(c)),
       );
     }
 
@@ -227,7 +250,10 @@ export function reduceRemoveChange(
               };
             }
             return clearResourceRef(c, clientId);
-          }),
+          })
+          // Dropping the placeholder can empty an update-group that only
+          // existed to add it, same as the create-resource branch above.
+          .filter((c) => !isSpentGroupUpdate(c)),
       );
     }
 

@@ -135,6 +135,71 @@ describe("reduceRemoveChange", () => {
     ).toBeUndefined();
   });
 
+  it("create-group removal drops its stale SSH authorized_groups key", () => {
+    const grp = createGroup("Web");
+    const policy = createPolicy(
+      "new-p1",
+      [{ name: "Web" }, { name: "Other" }],
+      [{ id: "g-dest" }],
+    );
+    (policy as any).policy.rules[0].protocol = "netbird-ssh";
+    (policy as any).policy.rules[0].authorized_groups = {
+      Web: ["root"],
+      Other: ["admin"],
+    };
+    const out = reduceRemoveChange([grp, policy], grp);
+    const rule = (out.find((c) => c.id === policy.id) as any).policy.rules[0];
+    // authorized_groups is keyed by group NAME, so a leftover key would be sent
+    // to the API as if it were a group id.
+    expect(rule.authorized_groups).toEqual({ Other: ["admin"] });
+  });
+
+  it("leaves authorized_groups absent on a rule that never had it", () => {
+    const grp = createGroup("Web");
+    const policy = createPolicy(
+      "new-p1",
+      [{ name: "Web" }, { name: "Other" }],
+      [{ id: "g-dest" }],
+    );
+    const out = reduceRemoveChange([grp, policy], grp);
+    const rule = (out.find((c) => c.id === policy.id) as any).policy.rules[0];
+    expect("authorized_groups" in rule).toBe(false);
+  });
+
+  it("create-resource removal prunes an update-group left with nothing to do", () => {
+    const update: DraftChange = {
+      id: "id-ug-g1",
+      type: "update-group",
+      groupId: "g1",
+      name: "Servers",
+      originalName: "Servers",
+      peerIds: [],
+      resourceIds: ["new-res1"],
+    };
+    const res = createResource("new-res1");
+    const out = reduceRemoveChange([update, res], res);
+    // The group edit only existed to add that resource — keeping it would
+    // deploy a pointless GET + PUT and show an empty "Update group" row.
+    expect(out).toEqual([]);
+  });
+
+  it("keeps an update-group that still carries other membership", () => {
+    const update: DraftChange = {
+      id: "id-ug-g1",
+      type: "update-group",
+      groupId: "g1",
+      name: "Servers",
+      originalName: "Servers",
+      peerIds: [],
+      resourceIds: ["new-res1", "keep"],
+    };
+    const res = createResource("new-res1");
+    const out = reduceRemoveChange([update, res], res);
+    expect((out.find((c) => c.id === update.id) as any).resourceIds).toEqual([
+      "keep",
+    ]);
+  });
+
   it("install-peer removal drops routers through it and clears group membership", () => {
     const peer = installPeer("draft-1");
     const grp = createGroup("Web");
@@ -147,6 +212,22 @@ describe("reduceRemoveChange", () => {
     expect((out.find((c) => c.id === grp.id) as any).peerIds).toEqual([
       "real-peer",
     ]);
+  });
+
+  it("install-peer removal prunes an update-group left with nothing to do", () => {
+    const peer = installPeer("draft-1");
+    const update: DraftChange = {
+      id: "id-ug-g1",
+      type: "update-group",
+      groupId: "g1",
+      name: "Servers",
+      originalName: "Servers",
+      peerIds: ["draft-1"],
+      resourceIds: [],
+    };
+    const out = reduceRemoveChange([update, peer], peer);
+    // The group edit only existed to add that placeholder.
+    expect(out).toEqual([]);
   });
 
   it("update/delete changes drop only the target", () => {

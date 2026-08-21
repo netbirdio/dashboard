@@ -150,6 +150,90 @@ describe("group changes", () => {
     expect(result.current.changes[1]).toMatchObject({ peerIds: ["real-1"] });
   });
 
+  it("re-adding a removed EXISTING member reverts the change instead of adding it", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackRemoveGroupMembers({
+        groupId: "g1",
+        groupName: "G",
+        peerIds: ["p1"],
+      }),
+    );
+    expect(result.current.changes[0]).toMatchObject({
+      type: "update-group",
+      removedPeerIds: ["p1"],
+    });
+
+    act(() =>
+      result.current.trackAddGroupMembers({
+        groupId: "g1",
+        groupName: "G",
+        peerIds: ["p1"],
+      }),
+    );
+    // Net state equals live, so nothing is left to deploy.
+    expect(result.current.changes).toHaveLength(0);
+  });
+
+  it("removing an existing member again after a revert is still tracked", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackRemoveGroupMembers({
+        groupId: "g1",
+        groupName: "G",
+        peerIds: ["p1"],
+      }),
+    );
+    act(() =>
+      result.current.trackAddGroupMembers({
+        groupId: "g1",
+        groupName: "G",
+        peerIds: ["p1"],
+      }),
+    );
+    act(() =>
+      result.current.trackRemoveGroupMembers({
+        groupId: "g1",
+        groupName: "G",
+        peerIds: ["p1"],
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    expect(result.current.changes[0]).toMatchObject({
+      type: "update-group",
+      peerIds: [],
+      removedPeerIds: ["p1"],
+    });
+  });
+
+  it("a revert keeps unrelated pending edits on the same group", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackRenameGroup({ groupId: "g1", from: "A", to: "B" }),
+    );
+    act(() =>
+      result.current.trackRemoveGroupMembers({
+        groupId: "g1",
+        groupName: "B",
+        peerIds: ["p1"],
+      }),
+    );
+    act(() =>
+      result.current.trackAddGroupMembers({
+        groupId: "g1",
+        groupName: "B",
+        peerIds: ["p1"],
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    expect(result.current.changes[0]).toMatchObject({
+      type: "update-group",
+      name: "B",
+      peerIds: [],
+      removedPeerIds: [],
+    });
+  });
+
   it("deleting a draft-only group just drops its create change", () => {
     const { result } = setup();
     act(() =>

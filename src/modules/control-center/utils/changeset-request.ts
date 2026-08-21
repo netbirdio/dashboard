@@ -189,6 +189,23 @@ export function mergeGroupMembers(
   };
 }
 
+// The before-side counterpart of mergeGroupMembers' resource mapping. It has to
+// resolve types the exact same way, or an unchanged member renders as a removed
+// line plus an added line and inflates the diffstat.
+const wireResources = (
+  resources: (GroupResource | string)[] | null | undefined,
+  r: RequestResolvers,
+): WireResource[] =>
+  (resources ?? []).flatMap((res) => {
+    const id = typeof res === "string" ? res : res?.id;
+    if (!id) return [];
+    const type =
+      typeof res === "string"
+        ? undefined
+        : (res.type as NetworkResource["type"] | undefined);
+    return [{ id, type: type ?? r.resourceType(id) }];
+  });
+
 export function groupUpdateBody(
   name: string,
   members: { peers: string[]; resources: WireResource[] },
@@ -415,7 +432,10 @@ export function toCurl(request: ChangeRequest): string {
   ];
   if (request.body !== undefined) {
     parts.push(`-H 'Content-Type: application/json'`);
-    parts.push(`-d '${JSON.stringify(request.body, null, 2)}'`);
+    // A name or description with an apostrophe would otherwise close the
+    // single-quoted body early and break the command when pasted into a shell.
+    const json = JSON.stringify(request.body, null, 2).replace(/'/g, `'\\''`);
+    parts.push(`-d '${json}'`);
   }
   return parts.join(" \\\n  ");
 }
@@ -457,7 +477,7 @@ export function buildBeforeRequest(
         body: {
           name: group.name,
           peers: toIds(group.peers),
-          resources: toIds(group.resources),
+          resources: wireResources(group.resources, r),
         },
       };
     }

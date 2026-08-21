@@ -117,8 +117,20 @@ export function DraftHistoryProvider({
   // wrong (older) snapshot — overshooting the intermediate state — and the
   // effect-cleanup clearTimeout then discarded the in-flight edit so redo
   // could never restore it.
+  // Handle of the armed debounced capture, so captureNow can cancel it.
+  const pendingCapture = useRef<number | null>(null);
+
   const captureNow = useRef(() => {});
   captureNow.current = () => {
+    // Cancel the armed capture before flushing. Its closure holds the
+    // pre-undo state and only the effect cleanup clears it, which React runs
+    // in a later task — so an already-expired timer could otherwise fire
+    // after undo() rewound the stacks, pushing a duplicate undo entry, wiping
+    // redo and restoring the edit as committed.
+    if (pendingCapture.current !== null) {
+      window.clearTimeout(pendingCapture.current);
+      pendingCapture.current = null;
+    }
     const snap = latest.current;
     if (!committed.current) {
       committed.current = snap;
@@ -178,7 +190,8 @@ export function DraftHistoryProvider({
         return;
       }
     }
-    const timer = setTimeout(() => {
+    const timer = window.setTimeout(() => {
+      pendingCapture.current = null;
       const snap: Snapshot = { nodes, edges, changes };
       if (!committed.current) {
         committed.current = snap;
@@ -202,7 +215,11 @@ export function DraftHistoryProvider({
       committed.current = snap;
       setVersion((v) => v + 1);
     }, CAPTURE_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
+    pendingCapture.current = timer;
+    return () => {
+      window.clearTimeout(timer);
+      if (pendingCapture.current === timer) pendingCapture.current = null;
+    };
   }, [isDraft, nodes, edges, changes]);
 
   const undo = useCallback(() => {

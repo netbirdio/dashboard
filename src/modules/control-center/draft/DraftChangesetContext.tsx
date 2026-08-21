@@ -44,6 +44,16 @@ export interface UpdateGroupChange {
   removedResourceIds?: string[];
 }
 
+// An update-group whose edits have all been reverted. Such a change must be
+// dropped rather than deployed: its PUT body would equal the live group, and
+// leaving it around also makes later membership edits misread it.
+export const isNoopGroupUpdate = (change: UpdateGroupChange) =>
+  change.name === change.originalName &&
+  change.peerIds.length === 0 &&
+  change.resourceIds.length === 0 &&
+  (change.removedPeerIds?.length ?? 0) === 0 &&
+  (change.removedResourceIds?.length ?? 0) === 0;
+
 export interface DeleteGroupChange {
   id: string;
   type: "delete-group";
@@ -902,25 +912,47 @@ export function DraftChangesetProvider({
             c.type === "update-group" && c.groupId === groupId,
         );
         if (existing) {
-          return prev.map((c) =>
-            c.id === existing.id
-              ? {
-                  ...existing,
-                  peerIds: [...new Set([...existing.peerIds, ...peerIds])],
-                  resourceIds: [
-                    ...new Set([...existing.resourceIds, ...resourceIds]),
-                  ],
-                  // Re-adding a member that was removed in the draft reverts
-                  // the removal.
-                  removedPeerIds: existing.removedPeerIds?.filter(
-                    (id) => !peerIds.includes(id),
-                  ),
-                  removedResourceIds: existing.removedResourceIds?.filter(
-                    (id) => !resourceIds.includes(id),
-                  ),
-                }
-              : c,
+          // Re-adding a member the draft had removed is a pure REVERT: the
+          // member is still in the live group, so it only leaves the removed
+          // list and must NOT also join the add list. Doing both left an "add"
+          // that never nets out — the change stayed in Review & Deploy and
+          // deployed a PUT equal to live, and a later removal of that member
+          // looked like a draft revert and vanished silently.
+          const revertedPeers = new Set(
+            peerIds.filter((id) => existing.removedPeerIds?.includes(id)),
           );
+          const revertedResources = new Set(
+            resourceIds.filter((id) =>
+              existing.removedResourceIds?.includes(id),
+            ),
+          );
+          const updated: UpdateGroupChange = {
+            ...existing,
+            peerIds: [
+              ...new Set([
+                ...existing.peerIds,
+                ...peerIds.filter((id) => !revertedPeers.has(id)),
+              ]),
+            ],
+            resourceIds: [
+              ...new Set([
+                ...existing.resourceIds,
+                ...resourceIds.filter((id) => !revertedResources.has(id)),
+              ]),
+            ],
+            removedPeerIds: existing.removedPeerIds?.filter(
+              (id) => !peerIds.includes(id),
+            ),
+            removedResourceIds: existing.removedResourceIds?.filter(
+              (id) => !resourceIds.includes(id),
+            ),
+          };
+          // Reverting the last pending removal can empty the change; drop it
+          // rather than deploy a no-op PUT (same rule as
+          // trackRemoveGroupMembers).
+          return isNoopGroupUpdate(updated)
+            ? prev.filter((c) => c.id !== existing.id)
+            : prev.map((c) => (c.id === existing.id ? updated : c));
         }
         return [
           ...prev,
@@ -998,13 +1030,7 @@ export function DraftChangesetProvider({
         };
         if (existing) {
           const updated = applyTo(existing);
-          const noop =
-            updated.name === updated.originalName &&
-            updated.peerIds.length === 0 &&
-            updated.resourceIds.length === 0 &&
-            (updated.removedPeerIds?.length ?? 0) === 0 &&
-            (updated.removedResourceIds?.length ?? 0) === 0;
-          return noop
+          return isNoopGroupUpdate(updated)
             ? prev.filter((c) => c.id !== existing.id)
             : prev.map((c) => (c.id === existing.id ? updated : c));
         }
