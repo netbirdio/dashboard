@@ -1,7 +1,7 @@
 "use client";
 
 import { useApiCall } from "@utils/api";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 // DiscoveredModel is one model the vendor says this credential can reach.
 export type DiscoveredModel = {
@@ -62,11 +62,21 @@ export function useDiscoveredModels() {
     notSupported: false,
   });
 
+  // Each call takes the next generation, and only the newest one is allowed to
+  // write state. A discovery answers one specific provider, endpoint and
+  // credential; the operator can change any of those while it is in flight, and
+  // a slow first response landing after a fast second would otherwise fill the
+  // model picker with models belonging to a configuration no longer on screen —
+  // and those ids are what gets registered on save.
+  const generation = useRef(0);
+
   const discover = useCallback(
     async (req: DiscoveryRequest) => {
+      const gen = ++generation.current;
       setState({ models: [], isLoading: true, notSupported: false });
       try {
         const res = await request.post(req);
+        if (gen !== generation.current) return [];
         setState({
           models: res?.models ?? [],
           isLoading: false,
@@ -74,6 +84,7 @@ export function useDiscoveredModels() {
         });
         return res?.models ?? [];
       } catch (e) {
+        if (gen !== generation.current) return [];
         // 422 is the API saying this provider has no listing endpoint, which
         // is a fact about the catalog entry rather than a failure — the caller
         // keeps the catalog list and says so quietly.
@@ -94,10 +105,12 @@ export function useDiscoveredModels() {
     [request],
   );
 
-  const reset = useCallback(
-    () => setState({ models: [], isLoading: false, notSupported: false }),
-    [],
-  );
+  // reset bumps the generation too, so a request already in flight cannot
+  // repopulate the list it was just cleared from.
+  const reset = useCallback(() => {
+    generation.current += 1;
+    setState({ models: [], isLoading: false, notSupported: false });
+  }, []);
 
   return { ...state, discover, reset } as const;
 }

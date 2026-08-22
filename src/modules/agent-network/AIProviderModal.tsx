@@ -201,7 +201,7 @@ export default function AIProviderModal({
   const [upstreamUrl, setUpstreamUrl] = useState<string>(
     provider?.upstreamUrl ?? "",
   );
-  const [apiKey, setApiKey] = useState(isEdit ? "••••••••" : "");
+  const [apiKey, setApiKey] = useState(isEdit ? MASKED_API_KEY : "");
   const [bootstrapCluster, setBootstrapCluster] = useState<string>("");
   const [models, setModels] = useState<EditableModel[]>(() =>
     (provider?.models ?? []).map(withModelKey),
@@ -367,7 +367,7 @@ export default function AIProviderModal({
       setProviderId(provider.providerId);
       setName(provider.name);
       setUpstreamUrl(provider.upstreamUrl);
-      setApiKey("••••••••");
+      setApiKey(MASKED_API_KEY);
       setBootstrapCluster("");
       setModels(provider.models.map(withModelKey));
       setExtraValues(provider.extraValues ?? {});
@@ -460,7 +460,7 @@ export default function AIProviderModal({
         skipTlsVerification: isCustomKind ? skipTlsVerification : false,
         metadataDisabled,
         // Only forward the API key when the user actually rotated it
-        ...(apiKey && apiKey !== "••••••••" ? { apiKey } : {}),
+        ...(apiKey && apiKey !== MASKED_API_KEY ? { apiKey } : {}),
       });
       handleClose();
       return;
@@ -559,17 +559,37 @@ export default function AIProviderModal({
   // Editing a saved provider shows a masked api key, never the real one, so
   // discovery reuses the stored credential by record id instead. A new
   // provider has to supply the key the operator is typing.
+  //
+  // That reuse is only right while the form still describes the record the
+  // credential belongs to. The API resolves a provider_id request entirely
+  // from the stored row — vendor, upstream and key — so switching the vendor
+  // dropdown and then asking by record id answers with the OLD vendor's models
+  // and offers them for the new one. A replacement key typed over the mask is
+  // the same mistake in the other direction: the operator wants that key
+  // tested, not the one already saved.
+  //
+  // Changing only the upstream URL deliberately keeps the saved path. The
+  // browser never holds the key, so asking against the edited URL is not
+  // something it can do until the record is saved.
+  const useSavedCredential =
+    isEdit &&
+    !!provider?.id &&
+    providerId === provider.providerId &&
+    apiKey.trim() === MASKED_API_KEY;
+
   const canDiscoverModels = useMemo(() => {
-    if (isEdit && provider?.id) return true;
+    if (useSavedCredential) return true;
     return (
       upstreamUrl.trim() !== "" &&
       apiKey.trim() !== "" &&
-      apiKey !== MASKED_API_KEY
+      // Compared trimmed on both sides: an untrimmed compare lets a padded
+      // mask through, and the request then sends the mask as the credential.
+      apiKey.trim() !== MASKED_API_KEY
     );
-  }, [isEdit, provider?.id, upstreamUrl, apiKey]);
+  }, [useSavedCredential, upstreamUrl, apiKey]);
 
   const loadModelsFromProvider = () => {
-    if (isEdit && provider?.id) {
+    if (useSavedCredential && provider?.id) {
       void discovered.discover({
         catalog_provider_id: providerId,
         provider_id: provider.id,
@@ -582,6 +602,16 @@ export default function AIProviderModal({
       api_key: apiKey.trim(),
     });
   };
+
+  // A discovery result describes one provider, endpoint and credential. Once
+  // any of those changes on screen, the previous answer is about a
+  // configuration that is no longer being edited, so it is dropped rather than
+  // left populating the model picker — whose ids are what save() registers.
+  // reset also invalidates any request still in flight.
+  const resetDiscovered = discovered.reset;
+  useEffect(() => {
+    resetDiscovered();
+  }, [resetDiscovered, providerId, upstreamUrl, apiKey, open]);
 
   // Discovered models NetBird cannot price. Registering one at the 0 it
   // arrives with would record every request against it as free, so the
@@ -835,14 +865,14 @@ export default function AIProviderModal({
                       onClick={() => keyFileInputRef.current?.click()}
                     >
                       <UploadIcon size={14} />
-                      {keyFileName || (isEdit && apiKey === "••••••••")
+                      {keyFileName || (isEdit && apiKey === MASKED_API_KEY)
                         ? "Replace JSON key"
                         : "Upload JSON key"}
                     </Button>
                     <span className={"text-xs text-nb-gray-300 truncate"}>
                       {keyFileName
                         ? keyFileName
-                        : isEdit && apiKey === "••••••••"
+                        : isEdit && apiKey === MASKED_API_KEY
                         ? "A key is already stored"
                         : "No file selected"}
                     </span>
