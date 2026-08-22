@@ -177,11 +177,6 @@ const withModelKey = (m: ProviderModel): EditableModel => ({
 // configuration, while zero on both is the shape an unpriced model arrives in.
 const hasNoPrice = (m: ProviderModel) => !m.inputPer1k && !m.outputPer1k;
 
-// MAX_LISTED_UNPRICED bounds the ids named in the save confirmation. A vendor
-// list can run to dozens; past a handful the names stop informing the decision
-// and the dialog just gets taller than the screen.
-const MAX_LISTED_UNPRICED = 5;
-
 // sortUnpricedFirst floats the rows needing a rate to the top, keeping the
 // relative order within each half so the vendor's own ordering survives.
 const sortUnpricedFirst = <T extends ProviderModel>(rows: T[]): T[] =>
@@ -471,17 +466,14 @@ export default function AIProviderModal({
     const unpriced = submittedModels.filter(hasNoPrice);
     if (unpriced.length > 0) {
       const proceed = await confirm({
-        title: `Save with ${unpriced.length} unpriced ${
-          unpriced.length === 1 ? "model" : "models"
-        }?`,
-        description: `${unpriced
-          .slice(0, MAX_LISTED_UNPRICED)
-          .map((m) => m.id)
-          .join(", ")}${
-          unpriced.length > MAX_LISTED_UNPRICED
-            ? ` and ${unpriced.length - MAX_LISTED_UNPRICED} more`
-            : ""
-        } have no input or output rate. Requests to them are charged $0 and their spend will not appear in usage or count against budgets.`,
+        title:
+          unpriced.length === 1
+            ? "Save with 1 unpriced model?"
+            : `Save with ${unpriced.length} unpriced models?`,
+        description:
+          "Usage for models without input and output rates is tracked at $0 " +
+          "and won't count toward budget limits. You can set the rates now, " +
+          "or save and update them later.",
         confirmText: "Save anyway",
         cancelText: "Set rates first",
         type: "warning",
