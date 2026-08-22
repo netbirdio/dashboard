@@ -471,9 +471,8 @@ export default function AIProviderModal({
             ? "Save with 1 unpriced model?"
             : `Save with ${unpriced.length} unpriced models?`,
         description:
-          "Usage for models without input and output rates is tracked at $0 " +
-          "and won't count toward budget limits. You can set the rates now, " +
-          "or save and update them later.",
+          "Models without rates are tracked at $0 and don’t count toward " +
+          "budget limits. Set rates now or later.",
         confirmText: "Save anyway",
         cancelText: "Set rates first",
         type: "warning",
