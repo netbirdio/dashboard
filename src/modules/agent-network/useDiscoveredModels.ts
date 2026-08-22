@@ -11,8 +11,16 @@ export type DiscoveredModel = {
   id: string;
   label?: string;
   // false when NetBird's shipped pricing table has no rate for this model. The
-  // operator has to supply one, or requests to it record a cost of zero.
+  // rates below are then all zero and the operator has to supply them, or
+  // requests to it record a cost of zero.
   pricing_known: boolean;
+  // The default rates this model would be billed at, from the same table the
+  // proxy uses — so a prefilled row shows what a request actually costs.
+  input_per_1k: number;
+  output_per_1k: number;
+  cached_input_per_1k?: number;
+  cache_read_per_1k?: number;
+  cache_creation_per_1k?: number;
 };
 
 type DiscoveryResponse = { models: DiscoveredModel[] };

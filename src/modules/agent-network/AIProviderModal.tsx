@@ -19,6 +19,7 @@ import Paragraph from "@components/Paragraph";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import useFetchApi from "@utils/api";
+import { cn } from "@utils/helpers";
 import {
   AlertCircleIcon,
   ArrowRightLeft,
@@ -588,18 +589,46 @@ export default function AIProviderModal({
     );
   }, [useSavedCredential, upstreamUrl, apiKey]);
 
-  const loadModelsFromProvider = () => {
-    if (useSavedCredential && provider?.id) {
-      void discovered.discover({
-        catalog_provider_id: providerId,
-        provider_id: provider.id,
-      });
-      return;
-    }
-    void discovered.discover({
-      catalog_provider_id: providerId,
-      upstream_url: upstreamUrl.trim(),
-      api_key: apiKey.trim(),
+  const loadModelsFromProvider = async () => {
+    const found = await discovered.discover(
+      useSavedCredential && provider?.id
+        ? { catalog_provider_id: providerId, provider_id: provider.id }
+        : {
+            catalog_provider_id: providerId,
+            upstream_url: upstreamUrl.trim(),
+            api_key: apiKey.trim(),
+          },
+    );
+    if (found.length === 0) return;
+
+    // Expand the whole list into editable rows, priced. Leaving them behind a
+    // dropdown made the operator add and price each one by hand, which is the
+    // work this endpoint exists to remove — and the rates it returns are the
+    // ones the proxy bills with, so a prefilled row is accurate, not a guess.
+    setModels((prev) => {
+      // An id already on the form keeps its row untouched. The operator may
+      // have set a rate deliberately, and a refresh must not overwrite that
+      // with the default it was edited away from.
+      const existing = new Set(prev.map((m) => m.id));
+      const added = found
+        .filter((m) => !existing.has(m.id))
+        .map((m) =>
+          withModelKey({
+            id: m.id,
+            // A model NetBird cannot price arrives at zero and is flagged in
+            // the row rather than dropped: the vendor says this credential
+            // can reach it, so hiding it would hide a model they really have.
+            inputPer1k: m.input_per_1k,
+            outputPer1k: m.output_per_1k,
+            cachedInputPer1k: m.cached_input_per_1k,
+            cacheReadPer1k: m.cache_read_per_1k,
+            cacheCreationPer1k: m.cache_creation_per_1k,
+          }),
+        );
+      // Drop the blank starter row: it exists to be filled, and there is now
+      // something to fill the list with.
+      const kept = prev.filter((m) => m.id !== "");
+      return [...kept, ...added];
     });
   };
 
@@ -613,12 +642,19 @@ export default function AIProviderModal({
     resetDiscovered();
   }, [resetDiscovered, providerId, upstreamUrl, apiKey, open]);
 
-  // Discovered models NetBird cannot price. Registering one at the 0 it
-  // arrives with would record every request against it as free, so the
-  // operator is told which rows need a rate before saving.
-  const unpricedDiscovered = useMemo(
-    () => discovered.models.filter((m) => !m.pricing_known).map((m) => m.id),
-    [discovered.models],
+  // Rows carrying no price at all. Saving one records every request against
+  // that model as free, so the row is outlined and a single line says so —
+  // derived from the rates actually on the form rather than from the discovery
+  // response, so the warning clears the moment the operator types a rate, and
+  // covers a hand-added row just as well as a discovered one.
+  const unpricedModelIds = useMemo(
+    () =>
+      new Set(
+        models
+          .filter((m) => m.id !== "" && !m.inputPer1k && !m.outputPer1k)
+          .map((m) => m.id),
+      ),
+    [models],
   );
   const usedModelIds = useMemo(
     () => new Set(models.map((m) => m.id)),
@@ -1420,12 +1456,13 @@ export default function AIProviderModal({
                 )}
               </div>
 
-              {unpricedDiscovered.length > 0 && (
-                <HelpText className={"!mb-0 text-orange-400"}>
-                  NetBird has no default price for{" "}
-                  {unpricedDiscovered.join(", ")}. Set input and output rates
-                  before saving, or requests to those models record a cost of
-                  zero.
+              {unpricedModelIds.size > 0 && (
+                <HelpText className={"!mb-0 text-yellow-400"}>
+                  {unpricedModelIds.size === 1
+                    ? "1 model has no cost set"
+                    : `${unpricedModelIds.size} models have no cost set`}{" "}
+                  (outlined below). Requests to them record a cost of zero until
+                  you set input and output rates.
                 </HelpText>
               )}
 
@@ -1435,6 +1472,7 @@ export default function AIProviderModal({
                   row={row}
                   catalogModels={catalogModelOptions}
                   usedIds={usedModelIds}
+                  needsPrice={unpricedModelIds.has(row.id)}
                   onChangeId={(id) => {
                     const fromCatalog = catalogModelOptions.find(
                       (m) => m.id === id,
@@ -1686,6 +1724,7 @@ function ModelRowEditor({
   row,
   catalogModels,
   usedIds,
+  needsPrice,
   onChangeId,
   onChangeInput,
   onChangeOutput,
@@ -1699,6 +1738,10 @@ function ModelRowEditor({
   row: ProviderModel;
   catalogModels: CatalogModelOption[];
   usedIds: Set<string>;
+  // The row carries no price, so every request against it would record as
+  // free. Outlined rather than blocked: zero is a legitimate rate for a
+  // self-hosted model, and only the operator knows which case this is.
+  needsPrice: boolean;
   onChangeId: (id: string) => void;
   onChangeInput: (n: number) => void;
   onChangeOutput: (n: number) => void;
@@ -1786,9 +1829,12 @@ function ModelRowEditor({
 
   return (
     <div
-      className={
-        "flex flex-col gap-2 p-3 rounded border border-nb-gray-800 bg-nb-gray-900/20"
-      }
+      className={cn(
+        "flex flex-col gap-2 p-3 rounded border bg-nb-gray-900/20",
+        needsPrice
+          ? "border-yellow-500/60 bg-yellow-500/5"
+          : "border-nb-gray-800",
+      )}
     >
       <div className={"flex items-end gap-2"}>
         <div className={"flex-1 min-w-0"}>
