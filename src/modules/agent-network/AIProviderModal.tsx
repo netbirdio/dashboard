@@ -1510,18 +1510,24 @@ export default function AIProviderModal({
               </div>
 
               {unpricedModelIds.size > 0 && (
-                // The dark: variant is not optional — HelpText hardcodes
-                // dark:text-nb-gray-300, which beats an unprefixed colour and
-                // leaves the warning looking like ordinary help text.
-                <HelpText
-                  className={"!mb-0 text-yellow-600 dark:text-yellow-400"}
+                // A callout rather than a line of help text: this is the one
+                // thing on the tab that costs money to miss, and it sat in the
+                // same grey run of prose as everything else.
+                <Callout
+                  variant={"warning"}
+                  icon={
+                    <AlertCircleIcon
+                      size={14}
+                      className={"shrink-0 relative top-[3px]"}
+                    />
+                  }
                 >
                   {unpricedModelIds.size === 1
-                    ? "1 model has"
-                    : `${unpricedModelIds.size} models have`}{" "}
-                  no cost set (highlighted below). Requests are charged $0 until
-                  input and output rates are configured.
-                </HelpText>
+                    ? "The model below has"
+                    : `The ${unpricedModelIds.size} models below have`}{" "}
+                  no cost set. Usage is tracked at $0 and won&apos;t count
+                  toward budget limits.
+                </Callout>
               )}
 
               {models.map((row, idx) => (
