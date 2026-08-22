@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import { useDialog } from "@/contexts/DialogProvider";
 import {
   ReverseProxyDomain,
   ReverseProxyDomainType,
@@ -171,6 +172,28 @@ const withModelKey = (m: ProviderModel): EditableModel => ({
   _key: `model-${modelKeySeq++}`,
 });
 
+// hasNoPrice reports a row that would meter every request against it as free.
+// Both rates, not either: a model priced on input alone is a deliberate
+// configuration, while zero on both is the shape an unpriced model arrives in.
+const hasNoPrice = (m: ProviderModel) => !m.inputPer1k && !m.outputPer1k;
+
+// MAX_LISTED_UNPRICED bounds the ids named in the save confirmation. A vendor
+// list can run to dozens; past a handful the names stop informing the decision
+// and the dialog just gets taller than the screen.
+const MAX_LISTED_UNPRICED = 5;
+
+// sortUnpricedFirst floats the rows needing a rate to the top, keeping the
+// relative order within each half so the vendor's own ordering survives.
+const sortUnpricedFirst = <T extends ProviderModel>(rows: T[]): T[] =>
+  rows
+    .map((row, index) => ({ row, index }))
+    .sort(
+      (a, b) =>
+        Number(hasNoPrice(b.row)) - Number(hasNoPrice(a.row)) ||
+        a.index - b.index,
+    )
+    .map(({ row }) => row);
+
 export default function AIProviderModal({
   open,
   onOpenChange,
@@ -186,6 +209,7 @@ export default function AIProviderModal({
     ReverseProxyDomain[]
   >("/reverse-proxies/domains");
   const { catalog: catalogList, getById } = useProviderCatalog();
+  const { confirm } = useDialog();
 
   const isEdit = !!provider;
   // The endpoint lives on the account-level Settings row, bootstrapped once
@@ -439,6 +463,31 @@ export default function AIProviderModal({
         seenModelIds.add(m.id);
         return true;
       });
+
+    // Saving an unpriced model is silent and irreversible in effect: every
+    // request against it records $0, and the usage that was already spent
+    // cannot be re-priced afterwards. The inline warning is easy to scroll
+    // past on a long vendor list, so confirm at the point of no return.
+    const unpriced = submittedModels.filter(hasNoPrice);
+    if (unpriced.length > 0) {
+      const proceed = await confirm({
+        title: `Save with ${unpriced.length} unpriced ${
+          unpriced.length === 1 ? "model" : "models"
+        }?`,
+        description: `${unpriced
+          .slice(0, MAX_LISTED_UNPRICED)
+          .map((m) => m.id)
+          .join(", ")}${
+          unpriced.length > MAX_LISTED_UNPRICED
+            ? ` and ${unpriced.length - MAX_LISTED_UNPRICED} more`
+            : ""
+        } have no input or output rate. Requests to them are charged $0 and their spend will not appear in usage or count against budgets.`,
+        confirmText: "Save anyway",
+        cancelText: "Set rates first",
+        type: "warning",
+      });
+      if (!proceed) return;
+    }
     // Identity overrides are only forwarded when the catalog entry
     // flags either shape (HeaderPair or JSONMetadata) as customizable.
     // Sending them on a non-customizable provider would be a no-op
@@ -628,7 +677,11 @@ export default function AIProviderModal({
       // Drop the blank starter row: it exists to be filled, and there is now
       // something to fill the list with.
       const kept = prev.filter((m) => m.id !== "");
-      return [...kept, ...added];
+      // Unpriced rows first — they are the ones needing attention, and a long
+      // vendor list would otherwise bury them. Sorted here, once, rather than
+      // on every render: re-sorting live would make a row jump out from under
+      // the cursor the moment a rate was typed into it.
+      return sortUnpricedFirst([...kept, ...added]);
     });
   };
 
@@ -650,9 +703,7 @@ export default function AIProviderModal({
   const unpricedModelIds = useMemo(
     () =>
       new Set(
-        models
-          .filter((m) => m.id !== "" && !m.inputPer1k && !m.outputPer1k)
-          .map((m) => m.id),
+        models.filter((m) => m.id !== "" && hasNoPrice(m)).map((m) => m.id),
       ),
     [models],
   );
@@ -1450,19 +1501,26 @@ export default function AIProviderModal({
                   </HelpText>
                 )}
                 {discovered.error && (
-                  <HelpText className={"!mb-0 text-orange-400"}>
+                  <HelpText
+                    className={"!mb-0 text-orange-500 dark:text-orange-400"}
+                  >
                     {discovered.error}
                   </HelpText>
                 )}
               </div>
 
               {unpricedModelIds.size > 0 && (
-                <HelpText className={"!mb-0 text-yellow-400"}>
+                // The dark: variant is not optional — HelpText hardcodes
+                // dark:text-nb-gray-300, which beats an unprefixed colour and
+                // leaves the warning looking like ordinary help text.
+                <HelpText
+                  className={"!mb-0 text-yellow-600 dark:text-yellow-400"}
+                >
                   {unpricedModelIds.size === 1
-                    ? "1 model has no cost set"
-                    : `${unpricedModelIds.size} models have no cost set`}{" "}
-                  (outlined below). Requests to them record a cost of zero until
-                  you set input and output rates.
+                    ? "1 model has"
+                    : `${unpricedModelIds.size} models have`}{" "}
+                  no cost set (highlighted below). Requests are charged $0 until
+                  input and output rates are configured.
                 </HelpText>
               )}
 
