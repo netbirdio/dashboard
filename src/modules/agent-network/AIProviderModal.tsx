@@ -1435,6 +1435,15 @@ export default function AIProviderModal({
                 )}
               </div>
 
+              {!discovered.isLoading &&
+                !discovered.error &&
+                discovered.models.length > 0 && (
+                  <HelpText className={"!mb-0"}>
+                    {discovered.models.length} models loaded. Use the{" "}
+                    <strong>Add More</strong> button to search and pick models.
+                  </HelpText>
+                )}
+
               {unpricedModelIds.size > 0 && (
                 // A callout rather than a line of help text: this is the one
                 // thing on the tab that costs money to miss, and it sat in the
@@ -1497,14 +1506,6 @@ export default function AIProviderModal({
                 />
               ))}
 
-              {!discovered.isLoading &&
-                !discovered.error &&
-                discovered.models.length > 0 && (
-                  <HelpText className={"!mb-0"}>
-                    {discovered.models.length} models loaded. Use the{" "}
-                    <strong>Add More</strong> button to search and pick models.
-                  </HelpText>
-                )}
               <Button
                 variant={"dotted"}
                 className={"w-full"}
