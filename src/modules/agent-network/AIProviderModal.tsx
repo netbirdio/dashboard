@@ -798,7 +798,7 @@ export default function AIProviderModal({
 
               <FormRow
                 label={"Provider"}
-                helpText={"API provider to expose through NetBird."}
+                helpText={"AI provider and upstream URL to expose through NetBird."}
               >
                 <SelectDropdown
                   value={providerId}
@@ -853,30 +853,11 @@ export default function AIProviderModal({
                   placeholder={"Select provider..."}
                 />
               </FormRow>
-
-              <FormRow
-                label={
-                  providerId === "kimi_api" ? (
-                    <>
-                      Upstream URL
-                      <HelpTooltip
-                        content={
-                          "Moonshot AI's international platform endpoint. Keep the bare host. Moonshot serves both API shapes with the same key: the path an agent calls rides through to Moonshot, so its base URL picks the shape (Claude Code appends /anthropic; Kimi CLI and OpenAI shaped callers use the bare endpoint). Mainland China accounts use api.moonshot.cn instead."
-                        }
-                      />
-                    </>
-                  ) : (
-                    "Upstream URL"
-                  )
-                }
-                helpText={upstreamUrlHelpText(providerId)}
-              >
-                <Input
-                  value={upstreamUrl}
-                  onChange={(e) => setUpstreamUrl(e.target.value)}
-                  placeholder={upstreamUrlPlaceholder(providerId)}
-                />
-              </FormRow>
+              <Input
+                value={upstreamUrl}
+                onChange={(e) => setUpstreamUrl(e.target.value)}
+                placeholder={upstreamUrlPlaceholder(providerId)}
+              />
 
               {isCustomKind && (
                 <FancyToggleSwitch
