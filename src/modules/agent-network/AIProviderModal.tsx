@@ -177,17 +177,6 @@ const withModelKey = (m: ProviderModel): EditableModel => ({
 // configuration, while zero on both is the shape an unpriced model arrives in.
 const hasNoPrice = (m: ProviderModel) => !m.inputPer1k && !m.outputPer1k;
 
-// sortUnpricedFirst floats the rows needing a rate to the top, keeping the
-// relative order within each half so the vendor's own ordering survives.
-const sortUnpricedFirst = <T extends ProviderModel>(rows: T[]): T[] =>
-  rows
-    .map((row, index) => ({ row, index }))
-    .sort(
-      (a, b) =>
-        Number(hasNoPrice(b.row)) - Number(hasNoPrice(a.row)) ||
-        a.index - b.index,
-    )
-    .map(({ row }) => row);
 
 export default function AIProviderModal({
   open,
@@ -639,41 +628,6 @@ export default function AIProviderModal({
             api_key: apiKey.trim(),
           },
     );
-    if (found.length === 0) return;
-
-    // Expand the whole list into editable rows, priced. Leaving them behind a
-    // dropdown made the operator add and price each one by hand, which is the
-    // work this endpoint exists to remove — and the rates it returns are the
-    // ones the proxy bills with, so a prefilled row is accurate, not a guess.
-    setModels((prev) => {
-      // An id already on the form keeps its row untouched. The operator may
-      // have set a rate deliberately, and a refresh must not overwrite that
-      // with the default it was edited away from.
-      const existing = new Set(prev.map((m) => m.id));
-      const added = found
-        .filter((m) => !existing.has(m.id))
-        .map((m) =>
-          withModelKey({
-            id: m.id,
-            // A model NetBird cannot price arrives at zero and is flagged in
-            // the row rather than dropped: the vendor says this credential
-            // can reach it, so hiding it would hide a model they really have.
-            inputPer1k: m.input_per_1k,
-            outputPer1k: m.output_per_1k,
-            cachedInputPer1k: m.cached_input_per_1k,
-            cacheReadPer1k: m.cache_read_per_1k,
-            cacheCreationPer1k: m.cache_creation_per_1k,
-          }),
-        );
-      // Drop the blank starter row: it exists to be filled, and there is now
-      // something to fill the list with.
-      const kept = prev.filter((m) => m.id !== "");
-      // Unpriced rows first — they are the ones needing attention, and a long
-      // vendor list would otherwise bury them. Sorted here, once, rather than
-      // on every render: re-sorting live would make a row jump out from under
-      // the cursor the moment a rate was typed into it.
-      return sortUnpricedFirst([...kept, ...added]);
-    });
   };
 
   // A discovery result describes one provider, endpoint and credential. Once
@@ -1543,6 +1497,14 @@ export default function AIProviderModal({
                 />
               ))}
 
+              {!discovered.isLoading &&
+                !discovered.error &&
+                discovered.models.length > 0 && (
+                  <HelpText className={"!mb-0"}>
+                    {discovered.models.length} models loaded. Use the{" "}
+                    <strong>Add More</strong> button to search and pick models.
+                  </HelpText>
+                )}
               <Button
                 variant={"dotted"}
                 className={"w-full"}
@@ -1888,6 +1850,8 @@ function ModelRowEditor({
               }}
               options={dropdownOptions}
               placeholder={"Select a model..."}
+              showSearch
+              searchPlaceholder={"Search models..."}
             />
           ) : hasCatalog ? (
             <div className={"flex gap-2"}>
