@@ -490,7 +490,7 @@ export default function AIProviderModal({
         skipTlsVerification: isCustomKind ? skipTlsVerification : false,
         metadataDisabled,
         // Only forward the API key when the user actually rotated it
-        ...(apiKey && apiKey !== MASKED_API_KEY ? { apiKey } : {}),
+        ...(apiKey && apiKey.trim() !== MASKED_API_KEY ? { apiKey } : {}),
       });
       handleClose();
       return;
@@ -598,13 +598,16 @@ export default function AIProviderModal({
   // the same mistake in the other direction: the operator wants that key
   // tested, not the one already saved.
   //
-  // Changing only the upstream URL deliberately keeps the saved path. The
-  // browser never holds the key, so asking against the edited URL is not
-  // something it can do until the record is saved.
+  // Changing the upstream URL invalidates the saved path: discovery sends
+  // provider_id and the API resolves the URL from the stored row, so a changed
+  // URL would silently test the old endpoint. Require a freshly entered key
+  // when the URL differs; canDiscoverModels will block discovery until the
+  // operator provides one.
   const useSavedCredential =
     isEdit &&
     !!provider?.id &&
     providerId === provider.providerId &&
+    upstreamUrl === provider.upstreamUrl &&
     apiKey.trim() === MASKED_API_KEY;
 
   const canDiscoverModels = useMemo(() => {
