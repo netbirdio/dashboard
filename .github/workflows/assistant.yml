@@ -1,0 +1,47 @@
+name: Assistant Tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'assistant/**'
+      - '.github/workflows/assistant.yml'
+  pull_request:
+    paths:
+      - 'assistant/**'
+      - '.github/workflows/assistant.yml'
+
+# Cancel superseded runs on the same ref so a new push doesn't queue behind an
+# outdated one (mirrors unit-tests.yml).
+concurrency:
+  group: assistant-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bun:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: setup-bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+        working-directory: assistant
+
+      - name: Typecheck
+        run: bun run typecheck
+        working-directory: assistant
+
+      # tests/env.ts supplies every variable the suite needs, so no secrets here.
+      # tests/presidio.test.ts self-skips without a reachable analyzer: the image is
+      # heavy and we keep CI fast, so run those locally with
+      # `docker compose -f docker/docker-compose.yml up -d presidio`.
+      - name: Run tests
+        run: bun test
+        working-directory: assistant

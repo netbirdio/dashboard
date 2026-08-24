@@ -6,9 +6,16 @@ node_modules
 .git
 .gitignore
 
-test
-grafana-dashboard.json
-*.md
+tests
+coverage
+docker
+# The eval harness makes paid API calls; it has no place in a shipped image.
+evals
+
+# Markdown must NOT be excluded recursively: src/agent/instructions.md and
+# src/agent/skills/*.md are the system prompt and ship in the image.
+/README.md
+
 .idea
 .vscode
 .DS_Store

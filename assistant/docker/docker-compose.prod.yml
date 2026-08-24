@@ -10,41 +10,29 @@ services:
   app:
     image: ${ASSISTANT_IMAGE:-netbird-assistant:latest}
     restart: unless-stopped
-    env_file: .env
+    env_file: ../.env
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgres://netbird:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/netbird_assistant
       PRESIDIO_URL: http://presidio:3000
     ports:
       - "8787:8787"
+    # The analyzer is a privacy control, so we would rather boot late than serve
+    # the first requests with PII redaction failing open.
     depends_on:
-      postgres:
-        condition: service_healthy
       presidio:
-        condition: service_started
+        condition: service_healthy
     logging: *logging
 
   # The PII backstop's analyzer. Internal only — never published.
   presidio:
     image: ${PRESIDIO_IMAGE:-ghcr.io/data-privacy-stack/presidio-analyzer:2.2.364}
     restart: unless-stopped
-    logging: *logging
-
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: netbird
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: netbird_assistant
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    # Probing /analyze rather than a liveness route: it is the call the app
+    # actually makes, so readiness includes the NLP models being loaded.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U netbird -d netbird_assistant"]
+      test: ["CMD", "python", "-c", "import urllib.request,json;d=json.dumps({'text':'ping','language':'en'}).encode();urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:3000/analyze',data=d,headers={'Content-Type':'application/json'}),timeout=5)"]
       interval: 10s
-      timeout: 3s
-      retries: 5
+      timeout: 10s
+      retries: 6
+      start_period: 90s
     logging: *logging
-
-volumes:
-  pgdata:

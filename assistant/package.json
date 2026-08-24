@@ -1,26 +1,23 @@
 {
   "name": "netbird-assistant",
   "version": "0.1.0",
-  "description": "Standalone AI assistant server for NetBird — validates JWTs, drives Anthropic models, returns tool calls to the caller.",
+  "description": "Standalone AI assistant server for NetBird \u2014 validates JWTs, drives Anthropic models, returns tool calls to the caller.",
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --watch agent/index.ts",
-    "start": "bun agent/index.ts",
-    "migrate": "bun agent/db/migrate.ts",
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "eval": "bun evals/run.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.38",
     "ai": "^7.0.65",
     "hono": "^4.13.2",
-    "hono-rate-limiter": "^0.5.3",
     "jose": "^6.1.0",
     "lru-cache": "^11.5.2",
     "minisearch": "^7.2.0",
-    "prom-client": "^15.1.3",
-    "prometheus-remote-write": "^0.5.1",
     "yaml": "^2.9.0",
     "zod": "^4.1.0"
   },

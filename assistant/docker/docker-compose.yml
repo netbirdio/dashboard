@@ -1,25 +1,8 @@
+# Dev stack, such as it is: only the analyzer runs in Docker. The agent itself
+# runs on the host under `bun --watch` and reaches this over loopback.
 name: netbird-assistant-dev
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: netbird-assistant-dev-db
-    environment:
-      POSTGRES_USER: netbird
-      POSTGRES_PASSWORD: netbird
-      POSTGRES_DB: netbird_assistant
-    ports:
-      - "55432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    configs:
-      - source: postgres_init
-        target: /docker-entrypoint-initdb.d/10-test-db.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U netbird -d netbird_assistant"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
 
   # The PII backstop's analyzer. Without it the backstop fails open.
   # Loopback only: the host-run agent needs it, nothing else may see it.
@@ -28,11 +11,11 @@ services:
     container_name: netbird-assistant-dev-presidio
     ports:
       - "127.0.0.1:5002:3000"
-
-configs:
-  postgres_init:
-    content: |
-      CREATE DATABASE netbird_assistant_test OWNER netbird;
-
-volumes:
-  pgdata:
+    # Probing /analyze rather than a liveness route: it is the call the agent
+    # actually makes, so readiness includes the NLP models being loaded.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,json;d=json.dumps({'text':'ping','language':'en'}).encode();urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:3000/analyze',data=d,headers={'Content-Type':'application/json'}),timeout=5)"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 90s
