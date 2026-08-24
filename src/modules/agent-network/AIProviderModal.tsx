@@ -28,6 +28,7 @@ import {
   ExternalLinkIcon,
   KeyRound,
   ListIcon,
+  Loader2,
   MinusCircleIcon,
   PlusCircle,
   PlusIcon,
@@ -220,6 +221,11 @@ export default function AIProviderModal({
   const [createdProvider, setCreatedProvider] = useState<
     AIProvider | undefined
   >();
+  // Loading models saves before it asks, and that save waits on the vendor.
+  // Without its own flag the button would sit idle-looking through the slowest
+  // part of the operation — a timeout can take seconds with nothing on screen,
+  // and the obvious response to that is to press it again.
+  const [savingBeforeDiscovery, setSavingBeforeDiscovery] = useState(false);
   // The record on the server this modal is working against: the one it was
   // opened on, or the one it created in order to load models.
   const targetProvider = provider ?? createdProvider;
@@ -711,13 +717,22 @@ export default function AIProviderModal({
       return;
     }
 
-    const saved = await persistForDiscovery();
+    setSavingBeforeDiscovery(true);
+    let saved: AIProvider | undefined;
+    try {
+      saved = await persistForDiscovery();
+    } finally {
+      setSavingBeforeDiscovery(false);
+    }
     if (!saved) return;
     await discovered.discover({
       catalog_provider_id: providerId,
       provider_id: saved.id,
     });
   };
+
+  // One flag for the button: the two phases are one action to the operator.
+  const discoveryInFlight = savingBeforeDiscovery || discovered.isLoading;
 
   // A discovery result describes one provider, endpoint and credential. Once
   // any of those changes on screen, the previous answer is about a
@@ -1496,11 +1511,17 @@ export default function AIProviderModal({
                 <Button
                   variant={"secondary"}
                   size={"xs"}
-                  disabled={discovered.isLoading || !canDiscoverModels}
+                  disabled={discoveryInFlight || !canDiscoverModels}
                   onClick={loadModelsFromProvider}
                 >
-                  <RefreshCwIcon size={13} />
-                  {discovered.isLoading
+                  {discoveryInFlight ? (
+                    <Loader2 size={13} className={"animate-spin"} />
+                  ) : (
+                    <RefreshCwIcon size={13} />
+                  )}
+                  {savingBeforeDiscovery
+                    ? "Saving provider…"
+                    : discovered.isLoading
                     ? "Loading models…"
                     : "Load models from provider"}
                 </Button>
@@ -1509,7 +1530,7 @@ export default function AIProviderModal({
                     Enter the endpoint URL and API key first.
                   </HelpText>
                 )}
-                {canDiscoverModels && !useSavedCredential && (
+                {canDiscoverModels && !useSavedCredential && !discoveryInFlight && (
                   <HelpText className={"!mb-0"}>
                     This saves the provider first, so the endpoint and key are
                     checked before the vendor is asked.
@@ -1530,7 +1551,7 @@ export default function AIProviderModal({
                 )}
               </div>
 
-              {!discovered.isLoading &&
+              {!discoveryInFlight &&
                 !discovered.error &&
                 discovered.models.length > 0 && (
                   <HelpText className={"!mb-0"}>
@@ -1664,7 +1685,7 @@ export default function AIProviderModal({
                   <Button
                     variant={"primary"}
                     onClick={handleSubmit}
-                    disabled={!canContinueFromProvider}
+                    disabled={!canContinueFromProvider || discoveryInFlight}
                   >
                     {isEdit ? (
                       "Save Changes"
@@ -1686,7 +1707,7 @@ export default function AIProviderModal({
                 <Button
                   variant={"primary"}
                   onClick={handleSubmit}
-                  disabled={!canContinueFromProvider}
+                  disabled={!canContinueFromProvider || discoveryInFlight}
                 >
                   {isEdit ? (
                     "Save Changes"

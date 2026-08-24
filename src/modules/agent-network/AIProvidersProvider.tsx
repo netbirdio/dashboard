@@ -1,6 +1,7 @@
 "use client";
 
 import { notify } from "@components/Notification";
+import { IconCircleX } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
 import React, {
   createContext,
@@ -213,6 +214,18 @@ function fromAPI(p: APIProvider): AIProvider {
     denyRatePct: 0,
     enabled: p.enabled,
   };
+}
+
+// notify() renders green with a check mark unless it is told otherwise: its red
+// styling comes from the promise path, and none of these use it. A failure that
+// looks like a success is worse than saying nothing, so every failure toast in
+// this file goes through here.
+function notifyFailure(props: { title: string; description: string }) {
+  return notify({
+    ...props,
+    backgroundColor: "bg-red-500",
+    icon: <IconCircleX size={20} />,
+  });
 }
 
 function toAPIModels(models: ProviderModel[]): APIProviderModel[] {
@@ -599,7 +612,15 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     true,
     agentNetworkEnabled,
   );
-  const providersApi = useApiCall<APIProvider>("/agent-network/providers");
+  // ignoreError: saving a provider checks its url and credential against the
+  // vendor first, so a 422 naming the field to fix is an ordinary outcome of
+  // the form. The default handler sends anything in 401..500 to the global
+  // error boundary, which tears the page down under the modal — the operator
+  // sees the toast, loses the form, and has nowhere to correct the key.
+  const providersApi = useApiCall<APIProvider>(
+    "/agent-network/providers",
+    true,
+  );
 
   const { data: apiPolicies, mutate: mutatePolicies } = useFetchApi<
     APIPolicy[]
@@ -677,7 +698,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         });
         return fromAPI(created);
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to connect provider",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -724,7 +745,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         });
         return true;
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to update provider",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -753,7 +774,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Endpoint will be torn down on next mapping update.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to remove provider",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -773,7 +794,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         });
         return policyFromAPI(created);
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to create policy",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -809,7 +830,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Settings saved.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to update policy",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -837,7 +858,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Policy deleted.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to remove policy",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -857,7 +878,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         });
         return guardrailFromAPI(created);
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to create guardrail",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -886,7 +907,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Settings saved.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to update guardrail",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -906,7 +927,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
             "Existing policies still reference this guardrail until you detach it.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to remove guardrail",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -926,7 +947,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         });
         return budgetRuleFromAPI(created);
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to create global limit",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -960,7 +981,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Settings saved.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to update global limit",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -988,7 +1009,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Global limit deleted.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to remove global limit",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -1007,7 +1028,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       } catch (err) {
         const code = (err as { code?: number })?.code;
         if (code !== 409) {
-          notify({
+          notifyFailure({
             title: "Failed to set up the agent network endpoint",
             description: err instanceof Error ? err.message : String(err),
           });
@@ -1029,7 +1050,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       // row there is nothing to echo — and no row to update; the backend
       // would 404 the PUT anyway.
       if (!settings) {
-        notify({
+        notifyFailure({
           title: "Failed to update account controls",
           description: "Agent Network has not been set up yet.",
         });
@@ -1044,7 +1065,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         });
         return true;
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to update account controls",
           description: err instanceof Error ? err.message : String(err),
         });
