@@ -574,7 +574,7 @@ export default function AIProviderModal({
   // read this one list, so merging here is all the wiring either needs.
   //
   // A catalog entry wins on collision. Both sides price from the same table,
-  // so the rates agree; the catalog's label is the curated one.
+  // so their rates agree; the catalog's label is the curated one.
   const catalogModelOptions = useMemo<CatalogModelOption[]>(() => {
     const base = catalog?.models ?? [];
     if (discovered.models.length === 0) return base;
@@ -585,11 +585,12 @@ export default function AIProviderModal({
       .map<CatalogModelOption>((m) => ({
         id: m.id,
         label: m.label || m.id,
-        // The rates the response carries, not zeros. A Bedrock listing
-        // returns geography-prefixed ids that never match a catalog entry by
-        // string, so every one of them arrives through this branch — zeroing
-        // here priced a whole provider's models at nothing while the API was
-        // reporting what each of them costs.
+        // The rates the response carries. Bedrock is why this matters: its
+        // listing returns geography-prefixed ids, which never match a catalog
+        // entry by string, so every one of them arrives through this branch.
+        // The backend prices them off the normalized id and reports the rate
+        // for each — dropping it here registered a whole account's models at
+        // zero while the API was saying what they cost.
         input_per_1k: m.input_per_1k,
         output_per_1k: m.output_per_1k,
         cached_input_per_1k: m.cached_input_per_1k,
