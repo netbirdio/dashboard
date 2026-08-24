@@ -22,6 +22,9 @@ const config = [
       "playwright-report/**",
       "test-logs/**",
       "next-env.d.ts",
+      // A separate Bun service with its own tsconfig and its own CI job
+      // (.github/workflows/assistant.yml); Next.js rules do not apply to it.
+      "assistant/**",
     ],
   },
 
