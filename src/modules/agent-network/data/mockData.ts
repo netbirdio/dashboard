@@ -14,6 +14,7 @@ export type AIProviderId =
   | "mistral_api"
   | "kimi_api"
   | "litellm_proxy"
+  | "agentgateway"
   | "portkey"
   | "bifrost"
   | "cloudflare_ai_gateway"

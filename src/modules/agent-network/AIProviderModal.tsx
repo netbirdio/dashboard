@@ -114,6 +114,8 @@ function upstreamUrlPlaceholder(providerId: AIProviderId): string {
       return "https://openrouter.ai/api/v1";
     case "litellm_proxy":
       return "https://your-litellm-host";
+    case "agentgateway":
+      return "https://your-agentgateway-proxy";
     case "portkey":
       return "https://api.portkey.ai";
     case "vllm":
@@ -141,6 +143,8 @@ function upstreamUrlHelpText(providerId: AIProviderId): string {
       return "Vercel AI Gateway uses a fixed endpoint; only the API key varies by operator. Apps choose the upstream provider with the model prefix, e.g. openai/gpt-5.4 or anthropic/claude-opus-4.6.";
     case "openrouter":
       return "OpenRouter uses a fixed endpoint, openrouter.ai/api/v1; apps choose the upstream provider via the model prefix, e.g. anthropic/claude-* or openai/gpt-*.";
+    case "agentgateway":
+      return "The agentgateway proxy listener URL reachable from the NetBird proxy. Keep this listener private so requests cannot bypass NetBird's identity enforcement.";
     case "vllm":
       return "Your local vLLM server's OpenAI-compatible base URL.";
     default:
@@ -288,6 +292,10 @@ export default function AIProviderModal({
   // entry, so this never double-counts.
   const customizableIdentity =
     customizableHeaderPair || customizableJsonMetadata;
+  const fixedHeaderPair =
+    catalog?.identity_injection?.header_pair?.customizable === false
+      ? catalog.identity_injection.header_pair
+      : undefined;
   // Defaults shown as input placeholders. The first non-empty source
   // wins; HeaderPair vs JSONMetadata are exclusive so either branch
   // is empty when the other is set.
@@ -306,20 +314,18 @@ export default function AIProviderModal({
   const jsonMetadataHeader =
     catalog?.identity_injection?.json_metadata?.header ?? "";
 
-  // showMappings reveals the Mappings tab for provider types whose
-  // downstream gateway keys identity off NetBird-stamped headers.
-  // For non-customizable shapes (LiteLLM, Portkey) the mapping is
-  // fixed in v1 — the tab is read-only. For customizable shapes
-  // (Bifrost) the operator picks the wire header names, so the tab
-  // renders editable inputs.
+  // The management catalog owns the general identity-injection contract.
+  // Bedrock retains its separate request-metadata mapping, and fixed HeaderPair
+  // providers without tailored guidance get the generic read-only view.
   const showMappings =
-    providerId === "litellm_proxy" ||
-    providerId === "portkey" ||
-    providerId === "bifrost" ||
-    providerId === "cloudflare_ai_gateway" ||
-    providerId === "vercel_ai_gateway" ||
-    providerId === "openrouter" ||
-    providerId === "bedrock_api";
+    !!catalog?.identity_injection || providerId === "bedrock_api";
+  const hasSpecializedFixedHeaderPairView = [
+    "litellm_proxy",
+    "vercel_ai_gateway",
+    "openrouter",
+  ].includes(providerId);
+  const showGenericFixedHeaderPair =
+    !!fixedHeaderPair && !hasSpecializedFixedHeaderPairView;
 
   // If the user flips provider type while viewing the Mappings tab and
   // the new type doesn't show mappings, snap back to the Provider tab
@@ -945,7 +951,9 @@ export default function AIProviderModal({
                 <FormRow
                   label={
                     <>
-                      Provider API key
+                      {providerId === "agentgateway"
+                        ? "Virtual API key"
+                        : "Provider API key"}
                       <HelpTooltip
                         content={
                           <>
@@ -960,7 +968,11 @@ export default function AIProviderModal({
                       />
                     </>
                   }
-                  helpText={"The API key issued by the provider."}
+                  helpText={
+                    providerId === "agentgateway"
+                      ? "The raw virtual key configured for strict API-key authentication on agentgateway."
+                      : "The API key issued by the provider."
+                  }
                 >
                   <Input
                     type={"password"}
@@ -973,6 +985,8 @@ export default function AIProviderModal({
                         ? "sk-..."
                         : providerId === "anthropic_api"
                         ? "sk-ant-..."
+                        : providerId === "agentgateway"
+                        ? "Paste the virtual API key"
                         : "Paste your API key"
                     }
                   />
@@ -1216,6 +1230,76 @@ export default function AIProviderModal({
                     placeholder={identityDefaultGroups || "netbird_groups"}
                   />
                 </FormRow>
+              </div>
+            </TabsContent>
+          )}
+
+          {showMappings && showGenericFixedHeaderPair && (
+            <TabsContent value={"mappings"} className={"pb-8"}>
+              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the trusted NetBird identity headers below onto upstream requests."
+                  }
+                />
+
+                <div>
+                  <Label>Trusted Identity Headers</Label>
+                  <HelpText className={"mb-0"}>
+                    NetBird removes caller-supplied values before adding the
+                    authenticated identity shown below. The upstream listener
+                    must remain reachable only through the NetBird proxy.
+                    {providerId === "agentgateway" && (
+                      <>
+                        {" "}
+                        The virtual key authenticates NetBird but does not make
+                        headers from another network path trustworthy.
+                      </>
+                    )}
+                  </HelpText>
+                </div>
+
+                <div
+                  className={
+                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
+                  }
+                >
+                  {fixedHeaderPair?.end_user_id_header && (
+                    <MappingRow
+                      header={fixedHeaderPair.end_user_id_header}
+                      sourceLabel={"User identity"}
+                    />
+                  )}
+                  {fixedHeaderPair?.tags_header && (
+                    <MappingRow
+                      header={fixedHeaderPair.tags_header}
+                      sourceLabel={"Authorizing groups (CSV)"}
+                    />
+                  )}
+                </div>
+
+                {providerId === "agentgateway" && (
+                  <HelpText className={"mb-0"}>
+                    <code
+                      className={
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                      }
+                    >
+                      x-netbird-groups
+                    </code>{" "}
+                    contains sorted group display names for attribution. It is
+                    not a delimiter-safe set of stable group IDs and must not
+                    be used as an agentgateway authorization claim.
+                  </HelpText>
+                )}
               </div>
             </TabsContent>
           )}
