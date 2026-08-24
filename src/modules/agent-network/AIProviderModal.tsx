@@ -323,6 +323,8 @@ export default function AIProviderModal({
     "litellm_proxy",
     "vercel_ai_gateway",
     "openrouter",
+    "portkey",
+    "bedrock_api",
   ].includes(providerId);
   const showGenericFixedHeaderPair =
     !!fixedHeaderPair && !hasSpecializedFixedHeaderPairView;
@@ -571,6 +573,11 @@ export default function AIProviderModal({
       label: p.name,
       searchValue: `${p.name} ${p.id}`,
       group: groupLabel[p.kind] ?? "Other",
+      renderItem: () => (
+        <span data-testid={`agent-network-provider-option-${p.id}`}>
+          {p.name}
+        </span>
+      ),
       icon: ({ size }: { size?: number }) => (
         <AIProviderLogo providerId={p.id as AIProviderId} size={size ?? 16} />
       ),
@@ -732,7 +739,10 @@ export default function AIProviderModal({
 
   return (
     <Modal open={open} onOpenChange={(o) => (o ? null : handleClose())}>
-      <ModalContent maxWidthClass={"max-w-2xl"}>
+      <ModalContent
+        maxWidthClass={"max-w-2xl"}
+        data-testid={"agent-network-provider-modal"}
+      >
         <ModalHeader
           icon={<AgentNetworkIcon className={"fill-netbird"} size={18} />}
           title={isEdit ? "Edit Provider" : "Connect Provider"}
@@ -750,7 +760,11 @@ export default function AIProviderModal({
               <Sparkles size={14} />
               Provider
             </TabsTrigger>
-            <TabsTrigger value={"models"} disabled={!canContinueFromProvider}>
+            <TabsTrigger
+              value={"models"}
+              disabled={!canContinueFromProvider}
+              data-testid={"agent-network-provider-models-tab"}
+            >
               <Boxes size={14} />
               Models
             </TabsTrigger>
@@ -758,6 +772,7 @@ export default function AIProviderModal({
               <TabsTrigger
                 value={"mappings"}
                 disabled={!canContinueFromProvider}
+                data-testid={"agent-network-provider-mappings-tab"}
               >
                 <ArrowRightLeft size={14} />
                 Mappings
@@ -804,6 +819,7 @@ export default function AIProviderModal({
                 helpText={"AI provider and upstream URL to expose through NetBird."}
               >
                 <SelectDropdown
+                  data-testid={"agent-network-provider-type"}
                   value={providerId}
                   onChange={(v) => {
                     const next = v as AIProviderId;
@@ -857,6 +873,7 @@ export default function AIProviderModal({
                 />
               </FormRow>
               <Input
+                data-testid={"agent-network-provider-upstream-url"}
                 value={upstreamUrl}
                 onChange={(e) => setUpstreamUrl(e.target.value)}
                 placeholder={upstreamUrlPlaceholder(providerId)}
@@ -975,6 +992,7 @@ export default function AIProviderModal({
                   }
                 >
                   <Input
+                    data-testid={"agent-network-provider-api-key"}
                     type={"password"}
                     showPasswordToggle
                     value={apiKey}
@@ -1028,6 +1046,7 @@ export default function AIProviderModal({
                 helpText={"Shown in the Agent Network table."}
               >
                 <Input
+                  data-testid={"agent-network-provider-name"}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={"e.g. OpenAI"}
@@ -1235,7 +1254,11 @@ export default function AIProviderModal({
           )}
 
           {showMappings && showGenericFixedHeaderPair && (
-            <TabsContent value={"mappings"} className={"pb-8"}>
+            <TabsContent
+              value={"mappings"}
+              className={"pb-8"}
+              data-testid={"agent-network-provider-identity-mappings"}
+            >
               <div className={"px-8 pt-3 flex-col flex gap-4"}>
                 <FancyToggleSwitch
                   value={!metadataDisabled}
@@ -1276,29 +1299,33 @@ export default function AIProviderModal({
                     <MappingRow
                       header={fixedHeaderPair.end_user_id_header}
                       sourceLabel={"User identity"}
+                      data-testid={"agent-network-provider-user-mapping"}
                     />
                   )}
                   {fixedHeaderPair?.tags_header && (
                     <MappingRow
                       header={fixedHeaderPair.tags_header}
                       sourceLabel={"Authorizing groups (CSV)"}
+                      data-testid={"agent-network-provider-groups-mapping"}
                     />
                   )}
                 </div>
 
                 {providerId === "agentgateway" && (
-                  <HelpText className={"mb-0"}>
-                    <code
-                      className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
-                      }
-                    >
-                      x-netbird-groups
-                    </code>{" "}
-                    contains sorted group display names for attribution. It is
-                    not a delimiter-safe set of stable group IDs and must not
-                    be used as an agentgateway authorization claim.
-                  </HelpText>
+                  <div data-testid={"agent-network-provider-groups-guidance"}>
+                    <HelpText className={"mb-0"}>
+                      <code
+                        className={
+                          "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        }
+                      >
+                        x-netbird-groups
+                      </code>{" "}
+                      contains sorted group display names for attribution. It
+                      is not a delimiter-safe set of stable group IDs and must
+                      not be used as an agentgateway authorization claim.
+                    </HelpText>
+                  </div>
                 )}
               </div>
             </TabsContent>
@@ -1521,13 +1548,15 @@ export default function AIProviderModal({
             <div className={"px-8 pt-3 flex-col flex gap-3"}>
               <div>
                 <Label>Models</Label>
-                <HelpText>
-                  Models exposed through this endpoint, with the per-1k
-                  input/output prices used for cost tracking. Empty = all
-                  catalog models allowed at catalog prices. Cache rates left
-                  empty fall back to NetBird&apos;s defaults for the model; 0
-                  bills cached tokens at the input rate.
-                </HelpText>
+                <div data-testid={"agent-network-provider-models-help"}>
+                  <HelpText>
+                    Models exposed through this endpoint, with the per-1k
+                    input/output prices used for cost tracking. Empty = all
+                    catalog models allowed at catalog prices. Cache rates left
+                    empty fall back to NetBird&apos;s defaults for the model; 0
+                    bills cached tokens at the input rate.
+                  </HelpText>
+                </div>
               </div>
 
               <div className={"flex items-center gap-3"}>
@@ -1671,6 +1700,7 @@ export default function AIProviderModal({
                   variant={"primary"}
                   onClick={() => setTab("models")}
                   disabled={!canContinueFromProvider}
+                  data-testid={"agent-network-provider-continue"}
                 >
                   Continue
                 </Button>
@@ -1689,6 +1719,7 @@ export default function AIProviderModal({
                     variant={"primary"}
                     onClick={() => setTab("mappings")}
                     disabled={!canContinueFromProvider}
+                    data-testid={"agent-network-provider-continue"}
                   >
                     Continue
                   </Button>
@@ -1697,6 +1728,7 @@ export default function AIProviderModal({
                     variant={"primary"}
                     onClick={handleSubmit}
                     disabled={!canContinueFromProvider}
+                    data-testid={"agent-network-provider-submit"}
                   >
                     {isEdit ? (
                       "Save Changes"
@@ -1719,6 +1751,7 @@ export default function AIProviderModal({
                   variant={"primary"}
                   onClick={handleSubmit}
                   disabled={!canContinueFromProvider}
+                  data-testid={"agent-network-provider-submit"}
                 >
                   {isEdit ? (
                     "Save Changes"
@@ -2101,12 +2134,15 @@ function ModelRowEditor({
 function MappingRow({
   header,
   sourceLabel,
+  "data-testid": dataTestId,
 }: {
   header: string;
   sourceLabel: string;
+  "data-testid"?: string;
 }) {
   return (
     <div
+      data-testid={dataTestId}
       className={
         "flex items-center gap-3 px-4 py-3 border-b border-nb-gray-900 last:border-b-0"
       }

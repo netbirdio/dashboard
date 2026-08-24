@@ -4,108 +4,94 @@
  * Exercises the catalog-driven provider flow against a management build that
  * includes the agentgateway catalog entry. Older builds skip the test.
  */
-import { type Browser, expect, type Page, test } from "@playwright/test";
 import {
   deleteAgentNetworkProvidersByPrefix,
   listAgentNetworkCatalog,
   supportsAgentNetworkSettingsBootstrap,
 } from "../helpers/api";
-import { loginToApp } from "../helpers/auth";
+import { navigateTo } from "../helpers/auth";
+import { expect, test } from "../helpers/fixtures";
 import { generateRandomName } from "../helpers/utils";
 
 const AGENT_NETWORK_CONFIG_KEY = "netbird-test-agent-network";
 const AGENTGATEWAY_CATALOG_ID = "agentgateway";
 const PROVIDER_PREFIX = "e2e-agentgateway-";
 
-async function newAgentNetworkPage(browser: Browser): Promise<{
-  page: Page;
-  close: () => Promise<void>;
-}> {
-  const context = await browser.newContext({
-    storageState: "e2e/fixtures/auth/owner.json",
-  });
-  await context.addInitScript(
-    ([key, value]) => {
-      try {
-        window.localStorage.setItem(key as string, value as string);
-      } catch (e) {}
-    },
-    [AGENT_NETWORK_CONFIG_KEY, "enabled"],
-  );
-  const page = await context.newPage();
-  await loginToApp(page, "owner");
-  return { page, close: () => context.close() };
-}
-
 test.describe
   .serial("Agent Network agentgateway provider @agent-network", () => {
   test("connect agentgateway with its trusted identity mapping", async ({
-    browser,
+    dashboardAsOwner: page,
   }) => {
-    const { page, close } = await newAgentNetworkPage(browser);
+    await page.addInitScript(
+      ([key, value]) => {
+        try {
+          window.localStorage.setItem(key as string, value as string);
+        } catch {}
+      },
+      [AGENT_NETWORK_CONFIG_KEY, "enabled"],
+    );
+
+    const catalog = await listAgentNetworkCatalog(page);
+    test.skip(
+      !catalog.some((entry) => entry.id === AGENTGATEWAY_CATALOG_ID),
+      `management catalog has no ${AGENTGATEWAY_CATALOG_ID} entry`,
+    );
+    test.skip(
+      !(await supportsAgentNetworkSettingsBootstrap(page)),
+      "management build does not support Agent Network settings bootstrap",
+    );
+
+    await deleteAgentNetworkProvidersByPrefix(page, PROVIDER_PREFIX);
     try {
-      const catalog = await listAgentNetworkCatalog(page);
-      test.skip(
-        !catalog.some((entry) => entry.id === AGENTGATEWAY_CATALOG_ID),
-        `management catalog has no ${AGENTGATEWAY_CATALOG_ID} entry`,
-      );
-      test.skip(
-        !(await supportsAgentNetworkSettingsBootstrap(page)),
-        "management build does not support Agent Network settings bootstrap",
-      );
-
-      await deleteAgentNetworkProvidersByPrefix(page, PROVIDER_PREFIX);
-      await page.goto("/agent-network/providers");
-      await page.keyboard.press("Escape");
+      await navigateTo(page, "/agent-network/providers");
 
       await page
-        .getByRole("button", { name: "Connect Provider" })
+        .getByTestId("connect-agent-network-provider")
         .first()
         .click({ force: true });
       await page
-        .getByRole("button", { name: /OpenAI API/ })
-        .first()
+        .getByTestId("agent-network-provider-type")
         .click({ force: true });
       await page
-        .getByPlaceholder("Search providers...")
+        .getByTestId("select-dropdown-search")
         .fill(AGENTGATEWAY_CATALOG_ID);
       await page
-        .getByText(AGENTGATEWAY_CATALOG_ID, { exact: true })
-        .first()
+        .getByTestId("agent-network-provider-option-agentgateway")
         .click({ force: true });
 
       const upstreamURL = "https://agentgateway.e2e.example";
       await page
-        .getByPlaceholder("https://your-agentgateway-proxy")
+        .getByTestId("agent-network-provider-upstream-url")
         .fill(upstreamURL);
       await page
-        .getByPlaceholder("Paste the virtual API key")
+        .getByTestId("agent-network-provider-api-key")
         .fill("e2e-agentgateway-virtual-key");
 
       const providerName = generateRandomName(PROVIDER_PREFIX);
-      await page.locator('input[value="agentgateway"]').fill(providerName);
+      await page.getByTestId("agent-network-provider-name").fill(providerName);
 
-      await page.getByRole("tab", { name: "Models" }).click({ force: true });
-      await expect(page.getByText(/Empty = all catalog models/)).toBeVisible();
-      await page.getByRole("button", { name: "Continue" }).click();
+      await page
+        .getByTestId("agent-network-provider-models-tab")
+        .click({ force: true });
+      await expect(
+        page.getByTestId("agent-network-provider-models-help"),
+      ).toContainText("Empty = all catalog models");
+      await page
+        .getByTestId("agent-network-provider-continue")
+        .click({ force: true });
 
-      await expect(page.getByRole("tab", { name: "Mappings" })).toHaveAttribute(
-        "data-state",
-        "active",
-      );
-      await expect(page.getByText("x-netbird-user-id")).toBeVisible();
-      await expect(page.getByText("x-netbird-groups")).toBeVisible();
       await expect(
-        page.getByText("User identity", { exact: true }),
-      ).toBeVisible();
+        page.getByTestId("agent-network-provider-mappings-tab"),
+      ).toHaveAttribute("data-state", "active");
       await expect(
-        page.getByText("Authorizing groups (CSV)", { exact: true }),
-      ).toBeVisible();
+        page.getByTestId("agent-network-provider-user-mapping"),
+      ).toContainText("x-netbird-user-id");
       await expect(
-        page.getByText(
-          /must not be used as an agentgateway authorization claim/,
-        ),
-      ).toBeVisible();
+        page.getByTestId("agent-network-provider-groups-mapping"),
+      ).toContainText("x-netbird-groups");
+      await expect(
+        page.getByTestId("agent-network-provider-groups-guidance"),
+      ).toContainText("must not be used as an agentgateway authorization claim");
 
       const createResponse = page.waitForResponse(
         (response) =>
@@ -113,10 +99,9 @@ test.describe
           response.request().method() === "POST",
         { timeout: 30_000 },
       );
-      await page
-        .getByRole("button", { name: "Connect Provider" })
-        .last()
-        .click({ force: true });
+      await page.getByTestId("agent-network-provider-submit").click({
+        force: true,
+      });
       const created = await createResponse;
       expect([200, 201]).toContain(created.status());
 
@@ -131,22 +116,33 @@ test.describe
       expect(body).not.toHaveProperty("identity_header_user_id");
       expect(body).not.toHaveProperty("identity_header_groups");
 
-      await expect(page.getByText(providerName).first()).toBeVisible();
-      await expect(page.getByText("All models").first()).toBeVisible();
-
-      await page.getByText(providerName).first().click({ force: true });
+      await expect(page.getByTestId(providerName)).toBeVisible();
       await expect(
-        page.getByText("Edit Provider", { exact: true }),
-      ).toBeVisible();
-      await expect(page.locator(`input[value="${upstreamURL}"]`)).toBeVisible();
-      await page.getByRole("tab", { name: "Mappings" }).click({ force: true });
-      await expect(page.getByText("x-netbird-user-id")).toBeVisible();
-      await expect(page.getByText("x-netbird-groups")).toBeVisible();
-      await page.keyboard.press("Escape");
+        page.getByTestId(`provider-models-${providerName}`),
+      ).toHaveText("All models");
 
-      await deleteAgentNetworkProvidersByPrefix(page, PROVIDER_PREFIX);
+      await page.getByTestId(providerName).click({ force: true });
+      await expect(
+        page.getByTestId("agent-network-provider-modal"),
+      ).toBeVisible();
+      await expect(
+        page.getByTestId("agent-network-provider-upstream-url"),
+      ).toHaveValue(upstreamURL);
+      await page
+        .getByTestId("agent-network-provider-mappings-tab")
+        .click({ force: true });
+      await expect(
+        page.getByTestId("agent-network-provider-user-mapping"),
+      ).toContainText("x-netbird-user-id");
+      await expect(
+        page.getByTestId("agent-network-provider-groups-mapping"),
+      ).toContainText("x-netbird-groups");
+      await page
+        .getByTestId("agent-network-provider-modal")
+        .getByTestId("modal-close")
+        .click({ force: true });
     } finally {
-      await close();
+      await deleteAgentNetworkProvidersByPrefix(page, PROVIDER_PREFIX);
     }
   });
 });

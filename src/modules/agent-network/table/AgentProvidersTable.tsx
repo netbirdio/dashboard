@@ -70,10 +70,20 @@ function NameCell({ provider }: { provider: AIProvider }) {
 
 function ModelsCell({ provider }: { provider: AIProvider }) {
   if (provider.models.length === 0) {
-    return <span className={"text-xs text-nb-gray-400"}>All Models</span>;
+    return (
+      <span
+        className={"text-xs text-nb-gray-400"}
+        data-testid={`provider-models-${provider.name}`}
+      >
+        All Models
+      </span>
+    );
   }
   return (
-    <span className={"text-xs text-nb-gray-300"}>
+    <span
+      className={"text-xs text-nb-gray-300"}
+      data-testid={`provider-models-${provider.name}`}
+    >
       {provider.models.length} Models
     </span>
   );
@@ -212,7 +222,11 @@ const AddProviderButton = () => {
   // button instead of a wizard that can only fail.
   if (!permission?.["agent_network.providers"]?.create) return null;
   return (
-    <Button variant={"primary"} onClick={openWizard}>
+    <Button
+      variant={"primary"}
+      onClick={openWizard}
+      data-testid={"connect-agent-network-provider"}
+    >
       <PlusCircle size={16} />
       Connect Provider
     </Button>
