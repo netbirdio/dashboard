@@ -567,8 +567,8 @@ export default function AIProviderModal({
   // catalog does not already carry. Both the per-row picker and "Add More"
   // read this one list, so merging here is all the wiring either needs.
   //
-  // A catalog entry wins on collision — it carries prices, and the discovery
-  // response deliberately carries none.
+  // A catalog entry wins on collision. Both sides price from the same table,
+  // so their rates agree; the catalog's label is the curated one.
   const catalogModelOptions = useMemo<CatalogModelOption[]>(() => {
     const base = catalog?.models ?? [];
     if (discovered.models.length === 0) return base;
@@ -579,8 +579,17 @@ export default function AIProviderModal({
       .map<CatalogModelOption>((m) => ({
         id: m.id,
         label: m.label || m.id,
-        input_per_1k: 0,
-        output_per_1k: 0,
+        // The rates the response carries. Bedrock is why this matters: its
+        // listing returns geography-prefixed ids, which never match a catalog
+        // entry by string, so every one of them arrives through this branch.
+        // The backend prices them off the normalized id and reports the rate
+        // for each — dropping it here registered a whole account's models at
+        // zero while the API was saying what they cost.
+        input_per_1k: m.input_per_1k,
+        output_per_1k: m.output_per_1k,
+        cached_input_per_1k: m.cached_input_per_1k,
+        cache_read_per_1k: m.cache_read_per_1k,
+        cache_creation_per_1k: m.cache_creation_per_1k,
         pricing_known: m.pricing_known,
       }));
     return [...base, ...extra];
