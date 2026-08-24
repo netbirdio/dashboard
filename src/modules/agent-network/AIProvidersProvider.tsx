@@ -495,7 +495,10 @@ type AIProvidersContextValue = {
   closeWizard: () => void;
   isWizardOpen: boolean;
   addProvider: (input: ProviderConnectInput) => Promise<AIProvider | undefined>;
-  updateProvider: (id: string, updates: ProviderUpdateInput) => Promise<void>;
+  // Resolves false when the save was refused — the backend checks a provider's
+  // url and credential before storing them, so a rejected edit must leave the
+  // form open with what the operator typed still in it.
+  updateProvider: (id: string, updates: ProviderUpdateInput) => Promise<boolean>;
   toggleProvider: (id: string) => Promise<void>;
   deleteProvider: (id: string) => Promise<void>;
   addPolicy: (
@@ -687,7 +690,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const updateProvider = useCallback(
     async (id: string, updates: ProviderUpdateInput) => {
       const existing = (apiProviders ?? []).find((p) => p.id === id);
-      if (!existing) return;
+      if (!existing) return false;
       const merged: APIProviderRequest = {
         provider_id: updates.providerId ?? existing.provider_id,
         name: updates.name ?? existing.name,
@@ -719,11 +722,13 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           title: "Provider updated",
           description: "Settings saved.",
         });
+        return true;
       } catch (err) {
         notify({
           title: "Failed to update provider",
           description: err instanceof Error ? err.message : String(err),
         });
+        return false;
       }
     },
     [apiProviders, providersApi, mutate],

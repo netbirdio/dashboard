@@ -480,7 +480,7 @@ export default function AIProviderModal({
         }
       : {};
     if (isEdit && provider) {
-      await updateProvider(provider.id, {
+      const saved = await updateProvider(provider.id, {
         providerId,
         name,
         upstreamUrl,
@@ -492,6 +492,11 @@ export default function AIProviderModal({
         // Only forward the API key when the user actually rotated it
         ...(apiKey && apiKey.trim() !== MASKED_API_KEY ? { apiKey } : {}),
       });
+      // The url and credential are checked against the vendor before the
+      // change is stored, so a save can be refused for a reason the operator
+      // has to fix here. Closing would throw away the key they just typed —
+      // and it never comes back from the API to be typed over again.
+      if (!saved) return;
       handleClose();
       return;
     }
@@ -505,7 +510,7 @@ export default function AIProviderModal({
       );
       if (!bootstrapped) return;
     }
-    await addProvider({
+    const created = await addProvider({
       providerId,
       name,
       upstreamUrl,
@@ -517,6 +522,7 @@ export default function AIProviderModal({
       models: submittedModels,
       enabled: true,
     });
+    if (!created) return;
     handleClose();
   };
 
@@ -567,8 +573,8 @@ export default function AIProviderModal({
   // catalog does not already carry. Both the per-row picker and "Add More"
   // read this one list, so merging here is all the wiring either needs.
   //
-  // A catalog entry wins on collision — it carries prices, and the discovery
-  // response deliberately carries none.
+  // A catalog entry wins on collision. Both sides price from the same table,
+  // so the rates agree; the catalog's label is the curated one.
   const catalogModelOptions = useMemo<CatalogModelOption[]>(() => {
     const base = catalog?.models ?? [];
     if (discovered.models.length === 0) return base;
@@ -579,8 +585,16 @@ export default function AIProviderModal({
       .map<CatalogModelOption>((m) => ({
         id: m.id,
         label: m.label || m.id,
-        input_per_1k: 0,
-        output_per_1k: 0,
+        // The rates the response carries, not zeros. A Bedrock listing
+        // returns geography-prefixed ids that never match a catalog entry by
+        // string, so every one of them arrives through this branch — zeroing
+        // here priced a whole provider's models at nothing while the API was
+        // reporting what each of them costs.
+        input_per_1k: m.input_per_1k,
+        output_per_1k: m.output_per_1k,
+        cached_input_per_1k: m.cached_input_per_1k,
+        cache_read_per_1k: m.cache_read_per_1k,
+        cache_creation_per_1k: m.cache_creation_per_1k,
         pricing_known: m.pricing_known,
       }));
     return [...base, ...extra];
