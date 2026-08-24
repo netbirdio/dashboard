@@ -162,12 +162,17 @@ export function useAssistantRuntime({
   const { origin } = useAssistantSidebar();
 
   // Read at send time through a ref: the transport is built once per
-  // conversation, and the page can change between two messages.
+  // conversation, and the page can change between two messages. The write has
+  // to happen in render — an effect would leave the transport a commit behind
+  // the page the user is looking at — and the read happens inside a send-time
+  // callback, which the lint rule cannot see through.
   const contextRef = useRef(pageContext);
+  // eslint-disable-next-line react-hooks/refs -- deliberate: see above
   contextRef.current = pageContext;
 
   const transport = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs -- contextRef is read in prepareSendMessagesRequest, at send time
       new DefaultChatTransport<UIMessage>({
         api: `${origin}/v1/chat`,
         fetch: friendlyFetch(authedFetch),
@@ -312,6 +317,11 @@ export function useAssistantRuntime({
       });
     },
   });
+  // The ref breaks the cycle between useChat and the tool runner it calls:
+  // runClientTool needs the chat to send results back, and useChat needs
+  // runClientTool to hand it tool calls. Assigning in render keeps the first
+  // tool call of the first turn from finding an empty ref.
+  // eslint-disable-next-line react-hooks/refs -- deliberate: see above
   chatRef.current = chat;
 
   // Status line + question card, derived from the streaming message.
