@@ -69,15 +69,12 @@ const jsonError = (code: string, message: string) =>
 
 describe("friendlyFetch", () => {
   it("carries the server's own message and code, unmapped", async () => {
+    // The server's own wording for rate_limited, which differs from the
+    // status-based fallback for 429 — so this pins pass-through, not the map.
+    const served =
+      "You're sending requests faster than the assistant can take them. Wait a few seconds and try again.";
     const fetchFn = vi.fn(
-      async () =>
-        new Response(
-          jsonError(
-            "usage_limit",
-            "The AI assistant has reached its usage limit for this account.",
-          ),
-          { status: 402 },
-        ),
+      async () => new Response(jsonError("rate_limited", served), { status: 429 }),
     );
 
     const err = await friendlyFetch(fetchFn as never)(
@@ -87,11 +84,9 @@ describe("friendlyFetch", () => {
       (e) => e as AssistantHttpError,
     );
     expect(err).toBeInstanceOf(AssistantHttpError);
-    expect(err!.status).toBe(402);
-    expect(err!.code).toBe("usage_limit");
-    expect(err!.message).toBe(
-      "The AI assistant has reached its usage limit for this account.",
-    );
+    expect(err!.status).toBe(429);
+    expect(err!.code).toBe("rate_limited");
+    expect(err!.message).toBe(served);
   });
 
   it("falls back to a status-based sentence when the reply carried no message", async () => {
