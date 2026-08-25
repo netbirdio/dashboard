@@ -37,6 +37,7 @@ jobs:
         # account-wide settings toggles, real peer registrations, absolute
         # canvas counts) are kept in separate environments.
         group:
+          - control-center-matrix
           - control-center-draft
           - control-center-live
           - platform

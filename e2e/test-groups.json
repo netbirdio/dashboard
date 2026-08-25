@@ -1,6 +1,8 @@
 {
+  "control-center-matrix": [
+    "control-center-draft-matrix.spec.ts"
+  ],
   "control-center-draft": [
-    "control-center-draft-matrix.spec.ts",
     "control-center-draft-connections.spec.ts",
     "control-center-draft.spec.ts",
     "control-center-draft-extras.spec.ts",
