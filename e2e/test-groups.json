@@ -1,0 +1,57 @@
+{
+  "control-center-draft": [
+    "control-center-draft-matrix.spec.ts",
+    "control-center-draft-connections.spec.ts",
+    "control-center-draft.spec.ts",
+    "control-center-draft-extras.spec.ts",
+    "control-center-drilldown.spec.ts",
+    "control-center-draft-shortcuts.spec.ts"
+  ],
+  "control-center-live": [
+    "control-center-live.spec.ts",
+    "control-center-draft-install.spec.ts",
+    "control-center-draft-remove.spec.ts",
+    "control-center-peers.spec.ts",
+    "control-center-deploy.spec.ts"
+  ],
+  "platform": [
+    "onboarding-form.spec.ts",
+    "networks.spec.ts",
+    "network-routes.spec.ts",
+    "access-control.spec.ts",
+    "access-control-groups.spec.ts",
+    "setup-keys.spec.ts",
+    "setup-modal-linux.spec.ts",
+    "error-request-id.spec.ts"
+  ],
+  "agent-proxy-dns": [
+    "edition-gating.spec.ts",
+    "agent-network-focused-view.spec.ts",
+    "agent-network-cache-accounting.spec.ts",
+    "agent-network-kimi-provider.spec.ts",
+    "agent-network-settings-shapes.spec.ts",
+    "reverse-proxy-services-https.spec.ts",
+    "reverse-proxy-services-tcp.spec.ts",
+    "reverse-proxy-services-tls.spec.ts",
+    "reverse-proxy-services-udp.spec.ts",
+    "reverse-proxy-services-udp-no-custom-ports.spec.ts",
+    "reverse-proxy-custom-domains.spec.ts",
+    "dns-nameservers.spec.ts",
+    "dns-zones.spec.ts",
+    "dns-settings.spec.ts"
+  ],
+  "settings-team": [
+    "team-users-approval-and-billing.spec.ts",
+    "settings-networks.spec.ts",
+    "reverse-proxy-crowdsec.spec.ts",
+    "settings-notifications-webhook.spec.ts",
+    "team-service-users.spec.ts",
+    "settings-clients.spec.ts",
+    "team-users.spec.ts",
+    "settings-authentication.spec.ts",
+    "settings-notifications-email.spec.ts",
+    "settings-notifications-slack.spec.ts",
+    "settings-permissions.spec.ts",
+    "settings-groups.spec.ts"
+  ]
+}
