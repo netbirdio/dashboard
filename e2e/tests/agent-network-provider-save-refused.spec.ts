@@ -31,6 +31,15 @@ const TITLE_TESTID = "notification-title";
 // fields is at fault, without a status code and without echoing the URL.
 const REFUSAL = "the upstream url could not be reached: no such host";
 
+// Matched case-insensitively on purpose. The backend lowercases its messages
+// (WriteError does, and the copy is written for it) while the toast uppercases
+// the first character before rendering. Asserting either spelling would pin
+// the test to that transform rather than to the sentence the operator reads.
+const REFUSAL_TEXT = new RegExp(
+  REFUSAL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+  "i",
+);
+
 async function newAgentNetworkPage(browser: Browser): Promise<{
   page: Page;
   close: () => Promise<void>;
@@ -104,7 +113,7 @@ test.describe
       await expect(title).toContainText("Request failed with status code 422");
       await expect(
         page.locator("[data-toast-notification]").first(),
-      ).toContainText(REFUSAL);
+      ).toContainText(REFUSAL_TEXT);
 
       // ---- and only that toast ----
       // The save path used to add its own on top, so the count is the
