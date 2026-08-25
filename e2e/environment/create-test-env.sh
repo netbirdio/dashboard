@@ -595,6 +595,8 @@ initEnvironment() {
   echo -e "\nCreating proxy access tokens...\n"
   init_proxy_tokens
 
+  exportGeoDatabases
+
   echo -e "\nStarting reverse proxy services...\n"
   $DOCKER_COMPOSE_COMMAND up -d reverse-proxy reverse-proxy-no-ports
 
@@ -766,7 +768,41 @@ ZITADEL_FIRSTINSTANCE_ORG_MACHINE_PAT_EXPIRATIONDATE=$ZIDATE_TOKEN_EXPIRATION_DA
 EOF
 }
 
+# Copies management's geolocation databases out of its data volume into
+# ./geo-cache so CI can cache them across runs. Management has finished
+# loading them by the time its API serves requests. A no-op when the
+# cache already holds both files, and never fatal: a failed export just
+# means the next run downloads again.
+exportGeoDatabases() {
+  mkdir -p geo-cache
+  if compgen -G "geo-cache/GeoLite2-City_*.mmdb" > /dev/null \
+    && compgen -G "geo-cache/geonames_*.db" > /dev/null; then
+    return
+  fi
+  echo -e "\nExporting geolocation databases for caching...\n"
+  rm -rf geo-dump
+  if $DOCKER_COMPOSE_COMMAND cp management:/var/lib/netbird ./geo-dump; then
+    cp geo-dump/GeoLite2-City_*.mmdb geo-dump/geonames_*.db geo-cache/ 2>/dev/null \
+      || echo "WARN: no geolocation databases found in management data dir"
+    rm -rf geo-dump
+  else
+    echo "WARN: could not copy management data dir; geolocation databases not cached"
+  fi
+}
+
 renderDockerCompose() {
+  # Cached geolocation databases (restored by CI into ./geo-cache) are
+  # mounted into management's data dir so it skips the slow first-boot
+  # download from pkgs.netbird.io. With no cache the mounts are omitted
+  # and management downloads as before.
+  local geo_mounts=""
+  local f
+  for f in geo-cache/GeoLite2-City_*.mmdb geo-cache/geonames_*.db; do
+    [ -f "$f" ] || continue
+    geo_mounts+="
+      - ./${f}:/var/lib/netbird/$(basename "$f")"
+  done
+
   cat <<EOF
 version: "3.4"
 services:
@@ -800,7 +836,7 @@ services:
      - NB_TRAFFIC_FLOW_INTERVAL=20s
      - NB_SINGLE_INSTANCE_MODE=true
     volumes:
-      - netbird_management:/var/lib/netbird
+      - netbird_management:/var/lib/netbird${geo_mounts}
       - ./management.json:/etc/netbird/management.json
     command: [
       "--port", "80",

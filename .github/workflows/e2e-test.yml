@@ -144,6 +144,13 @@ jobs:
           done
           exit $status
 
+      - name: Restore geolocation database cache
+        id: geo-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: e2e/environment/geo-cache
+          key: geolite-dbs-v1
+
       - name: Build dashboard and set up test environment
         env:
           MANAGEMENT_IMAGE_TAG: ${{ steps.management_tag.outputs.tag }}
@@ -177,6 +184,16 @@ jobs:
             exit 1
           fi
           cat env-setup.log
+
+      # Saved right after env setup rather than in a post step, so a later
+      # test failure doesn't lose the cache. All six jobs race to save on
+      # a miss; the first wins and the rest log a harmless "already exists".
+      - name: Save geolocation database cache
+        if: always() && steps.geo-cache.outputs.cache-hit != 'true' && hashFiles('e2e/environment/geo-cache/**') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: e2e/environment/geo-cache
+          key: geolite-dbs-v1
 
       - name: Run Playwright tests
         id: playwright
