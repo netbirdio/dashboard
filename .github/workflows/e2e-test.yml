@@ -149,10 +149,25 @@ jobs:
           REVERSE_PROXY_IMAGE_TAG: ${{ steps.reverse_proxy_tag.outputs.tag }}
         # The docker environment (image pulls, Zitadel bootstrap) is
         # network-bound and the Next build is CPU-bound, so they overlap.
+        # The build reads .test-config.json via the @/config/test alias,
+        # and create-test-env.sh renders that file only after the Zitadel
+        # bootstrap — so the build waits for it before starting.
         run: |
           (cd ./e2e/environment && bash create-test-env.sh) > env-setup.log 2>&1 &
           ENV_PID=$!
-          APP_ENV=test npx next build
+          until [ -s .test-config.json ] && jq empty .test-config.json 2>/dev/null; do
+            if ! kill -0 "$ENV_PID" 2>/dev/null; then break; fi
+            sleep 2
+          done
+          if ! [ -s .test-config.json ]; then
+            echo "::error::create-test-env.sh exited before rendering .test-config.json"
+            cat env-setup.log
+            exit 1
+          fi
+          if ! APP_ENV=test npx next build; then
+            kill "$ENV_PID" 2>/dev/null || true
+            exit 1
+          fi
           if ! wait "$ENV_PID"; then
             echo "::error::Test environment setup failed"
             cat env-setup.log
