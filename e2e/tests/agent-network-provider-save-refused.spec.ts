@@ -90,10 +90,14 @@ test.describe
       await page.locator('input[value="OpenAI API"]').fill(providerName);
       await page.getByPlaceholder("sk-...").first().fill("sk-e2e-refused-key");
 
-      await page
+      // The submit lives on the Models tab — the Provider tab's primary button
+      // only advances to it.
+      await page.getByRole("tab", { name: "Models" }).click({ force: true });
+      const submit = page
         .getByRole("button", { name: /Connect Provider/ })
-        .last()
-        .click({ force: true });
+        .last();
+      await expect(submit).toBeEnabled();
+      await submit.click({ force: true });
 
       // ---- the toast says what the API said ----
       const title = page.getByTestId(TITLE_TESTID).first();
@@ -119,9 +123,15 @@ test.describe
       ).toHaveCount(0);
 
       // ---- the form is still there, still holding what was typed ----
+      // The submit only exists while the modal is open, so its presence is the
+      // check that nothing closed underneath the toast.
+      await expect(submit).toBeVisible();
+      await page.getByRole("tab", { name: "Provider" }).click({ force: true });
       await expect(
         page.locator(`input[value="${providerName}"]`),
       ).toBeVisible();
+      // The key matters most: the API never returns one, so a form that lost
+      // it leaves the operator with nothing to correct.
       await expect(
         page.locator('input[value="sk-e2e-refused-key"]'),
       ).toBeVisible();
