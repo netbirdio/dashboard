@@ -61,9 +61,13 @@ wait_proxy_cluster() {
   SERVICE_NAME=${1:-reverse-proxy}
   echo -n "Waiting for $SERVICE_NAME to register with management "
   set +e
-  # 240s: in CI the dashboard build runs concurrently with this setup and
-  # can slow management's startup past the old 120s budget.
-  local attempts=120
+  # 480s: management downloads its geolocation databases on first boot
+  # (the proxy specs need /locations/countries, so it cannot be disabled
+  # there), and a slow pkgs.netbird.io can stall that well past the old
+  # 120s budget. The proxies skip their download entirely via
+  # NB_PROXY_DISABLE_GEOLOCATION. The loop exits as soon as the sync
+  # lands, so healthy runs pay nothing.
+  local attempts=240
   local i
   for ((i = 1; i <= attempts; i++)); do
     if $DOCKER_COMPOSE_COMMAND logs "$SERVICE_NAME" 2>&1 | grep -q "Initial mapping sync complete"; then
@@ -847,6 +851,11 @@ services:
     networks: [netbird]
     env_file:
       - ./proxy.env
+    environment:
+      # No spec exercises country-based enforcement, and skipping the
+      # GeoLite2 download removes a startup stall of up to 2 minutes
+      # when pkgs.netbird.io is slow.
+      - NB_PROXY_DISABLE_GEOLOCATION=true
     volumes:
       - ./proxy-certs:/certs:ro
     command: [
@@ -868,6 +877,9 @@ services:
     networks: [netbird]
     env_file:
       - ./proxy-no-ports.env
+    environment:
+      # See the primary proxy: no spec needs geo enforcement.
+      - NB_PROXY_DISABLE_GEOLOCATION=true
     volumes:
       # Distinct cert dir so this proxy has a distinct identity from the
       # primary proxy; a shared cert makes both register under the same
