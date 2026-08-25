@@ -26,24 +26,6 @@ env:
 jobs:
   playwright-run:
     runs-on: ubuntu-latest
-    strategy:
-      # One failing group must not cancel the others: their reports are
-      # still needed to see the full failure picture.
-      fail-fast: false
-      matrix:
-        # Groups are defined in e2e/test-groups.json, split by conflict
-        # domain: each group gets its own isolated test environment, so
-        # specs that fight over shared account state (fixed proxy ports,
-        # account-wide settings toggles, real peer registrations, absolute
-        # canvas counts) are kept in separate environments.
-        group:
-          - control-center-matrix
-          - control-center-draft
-          - control-center-live
-          - platform
-          - agent-proxy-dns
-          - settings-team
-    name: playwright-run (${{ matrix.group }})
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -119,31 +101,6 @@ jobs:
           echo "Using reverse-proxy tag: $TAG"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Verify test group coverage
-        # Every spec must be assigned to exactly one group in
-        # e2e/test-groups.json, so a new spec cannot silently run in no
-        # shard. login.spec.ts is exempt: it runs in every group as the
-        # auth dependency.
-        run: |
-          cd e2e
-          status=0
-          for spec in tests/*.spec.ts; do
-            name=$(basename "$spec")
-            [ "$name" = "login.spec.ts" ] && continue
-            count=$(jq --arg f "$name" '[.[][] | select(. == $f)] | length' test-groups.json)
-            if [ "$count" -ne 1 ]; then
-              echo "::error::$name is assigned to $count groups in e2e/test-groups.json (must be exactly 1)"
-              status=1
-            fi
-          done
-          for entry in $(jq -r '.[][]' test-groups.json); do
-            if [ ! -f "tests/$entry" ]; then
-              echo "::error::e2e/test-groups.json lists $entry, which does not exist in e2e/tests/"
-              status=1
-            fi
-          done
-          exit $status
-
       - name: Restore geolocation database cache
         id: geo-cache
         uses: actions/cache/restore@v4
@@ -186,8 +143,7 @@ jobs:
           cat env-setup.log
 
       # Saved right after env setup rather than in a post step, so a later
-      # test failure doesn't lose the cache. All six jobs race to save on
-      # a miss; the first wins and the rest log a harmless "already exists".
+      # test failure doesn't lose the cache.
       - name: Save geolocation database cache
         if: always() && steps.geo-cache.outputs.cache-hit != 'true' && hashFiles('e2e/environment/geo-cache/**') != ''
         uses: actions/cache/save@v4
@@ -199,9 +155,7 @@ jobs:
         id: playwright
         run: |
           set -o pipefail
-          FILES=$(jq -r --arg g "${{ matrix.group }}" '.[$g][]' e2e/test-groups.json | tr '\n' ' ')
-          # login.spec.ts always runs: it is the auth dependency project.
-          npx playwright test --config=e2e/playwright.config.ts login.spec.ts $FILES 2>&1 | tee playwright-output.log
+          npx playwright test --config=e2e/playwright.config.ts 2>&1 | tee playwright-output.log
 
       - name: Append Playwright summary to job summary
         if: always() && hashFiles('e2e/test-results/results.json') != ''
@@ -212,7 +166,7 @@ jobs:
             skipped=$(jq '.stats.skipped // 0' e2e/test-results/results.json)
             duration=$(jq '.stats.duration // 0' e2e/test-results/results.json)
             {
-              echo '### Playwright results (${{ matrix.group }})'
+              echo '### Playwright results'
               echo ''
               echo "| Passed | Failed | Skipped | Duration |"
               echo "|--------|--------|---------|----------|"
@@ -230,23 +184,23 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report-${{ matrix.group }}
+          name: playwright-report
           path: e2e/playwright-report/
 
       - uses: actions/upload-artifact@v7
         if: ${{ failure() }}
         with:
-          name: playwright-traces-${{ matrix.group }}
+          name: playwright-traces
           path: e2e/test-results/
 
       - uses: actions/upload-artifact@v7
         if: ${{ failure() }}
         with:
-          name: management-logs-${{ matrix.group }}
+          name: management-logs
           path: e2e/environment/management.log
 
       - uses: actions/upload-artifact@v7
         if: ${{ failure() }}
         with:
-          name: reverse-proxy-logs-${{ matrix.group }}
+          name: reverse-proxy-logs
           path: e2e/environment/reverse-proxy.log
