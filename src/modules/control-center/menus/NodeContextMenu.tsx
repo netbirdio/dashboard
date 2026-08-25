@@ -1,3 +1,21 @@
+import { Modal } from "@components/modal/Modal";
+import { notify } from "@components/Notification";
+import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
+import { useApiCall } from "@utils/api";
+import { cn } from "@utils/helpers";
+import { Node } from "@xyflow/react";
+import {
+  CircleMinusIcon,
+  EyeIcon,
+  FocusIcon,
+  PencilLineIcon,
+  PowerIcon,
+  PowerOffIcon,
+  Share2Icon,
+  SquarePenIcon,
+  TrashIcon,
+  WorkflowIcon,
+} from "lucide-react";
 import React, {
   useCallback,
   useEffect,
@@ -5,40 +23,26 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  CircleMinusIcon,
-  FocusIcon,
-  EyeIcon,
-  WorkflowIcon,
-  PencilLineIcon,
-  Share2Icon,
-  SquarePenIcon,
-  PowerIcon,
-  PowerOffIcon,
-  TrashIcon,
-} from "lucide-react";
-import { Node } from "@xyflow/react";
-import { cn } from "@utils/helpers";
 import { mutate } from "swr";
-import { notify } from "@components/Notification";
-import { useApiCall } from "@utils/api";
-import { Group, GroupIssued } from "@/interfaces/Group";
-import { Peer } from "@/interfaces/Peer";
-import { Policy } from "@/interfaces/Policy";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
+import { Group, GroupIssued } from "@/interfaces/Group";
+import { Network, NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
+import { Policy } from "@/interfaces/Policy";
 import {
   useCanvasState,
   useControlCenterUI,
   useDestinationGroup,
 } from "@/modules/control-center/contexts/ControlCenterContext";
-import { getNodeRect } from "@/modules/control-center/utils/canvas-transition";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import useGroupsUsage from "@/modules/groups/useGroupsUsage";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { GroupRenameModal } from "@/modules/control-center/draft/modals/GroupRenameModal";
+import { useCanDeleteGroup } from "@/modules/control-center/hooks/useCanDeleteGroup";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useDeleteNetwork } from "@/modules/control-center/hooks/useDeleteNetwork";
 import {
   canRenameGroup,
   getNodeGroup,
@@ -47,26 +51,25 @@ import {
   isNewGroup,
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
-import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
-import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
-import { useDeleteNetwork } from "@/modules/control-center/hooks/useDeleteNetwork";
-import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
-import { Modal } from "@components/modal/Modal";
-import { GroupRenameModal } from "@/modules/control-center/draft/modals/GroupRenameModal";
-import { EditPeerNameModal } from "@/modules/peers/EditPeerNameModal";
+import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
+import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
 import { menuItemSlug } from "@/modules/control-center/menus/menuItemTestId";
+import { getNodeRect } from "@/modules/control-center/utils/canvas-transition";
 import {
   DraftNetworkRef,
   getPlaceholderPeer,
+  getResourceDraftGroupIds,
+  getResourceLiveBaseline,
+  getResourceNodeEnabled,
   isDraftNetworkNode,
   isFocusWorthy,
   isFrameNode,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
-import { Network, NetworkResource } from "@/interfaces/Network";
 import { canRenamePeerNode } from "@/modules/control-center/utils/node-capabilities";
+import { EditPeerNameModal } from "@/modules/peers/EditPeerNameModal";
 
 type MenuPosition = {
   x: number;
@@ -122,8 +125,9 @@ export const NodeContextMenu = ({
   const { onNetworkSelect } = useControlCenterUI();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const { groups, policies } = useControlCenterData();
-  const { data: groupsUsage } = useGroupsUsage();
+  const { canDeleteGroup } = useCanDeleteGroup();
   const {
+    changes,
     trackSetPolicyEnabled,
     trackDeletePolicy,
     trackUpdateResource,
@@ -242,17 +246,25 @@ export const NodeContextMenu = ({
   const toggleResourceEnabled = useCallback(
     (id: string) => {
       const target = nodes.find((n) => n.id === id);
-      const enabled = !(
-        (target?.data as { enabled?: boolean })?.enabled ?? true
-      );
+      const enabled = !getResourceNodeEnabled(target);
+      const isDraftResource = id.startsWith("resource-new-");
       setNodes((prev) =>
         prev.map((n) =>
-          n.id === id ? { ...n, data: { ...n.data, enabled } } : n,
+          n.id === id
+            ? {
+                ...n,
+                // A draft resource has no live twin, so there the flag IS the
+                // state; an existing one needs its own key to stay separable.
+                data: isDraftResource
+                  ? { ...n.data, enabled }
+                  : { ...n.data, resourceEnabled: enabled },
+              }
+            : n,
         ),
       );
       // Draft resources carry their enabled state via their create-resource
       // change, so they only need a re-sync after the canvas update.
-      if (id.startsWith("resource-new-")) {
+      if (isDraftResource) {
         setTimeout(() => syncDraftResource(id), 0);
         return;
       }
@@ -261,8 +273,12 @@ export const NodeContextMenu = ({
       const net = (target?.data as { draftNetwork?: DraftNetworkRef })
         ?.draftNetwork;
       if (resource?.id && net?.networkId) {
-        const groupIds = (
-          (resource.groups as (string | { id?: string })[]) ?? []
+        // trackUpdateResource replaces the pending change wholesale, so this must
+        // carry the CURRENT groups; the live ones would revert a pending edit.
+        const groupIds = getResourceDraftGroupIds(target);
+        const live = getResourceLiveBaseline(target);
+        const originalGroupIds = (
+          (live?.groups as (string | { id?: string })[]) ?? []
         )
           .map((g) => (typeof g === "string" ? g : g.id ?? ""))
           .filter(Boolean);
@@ -275,13 +291,14 @@ export const NodeContextMenu = ({
           description: resource.description,
           enabled,
           groupIds,
-          // Only `enabled` changes here, so toggling it back drops the change.
+          // Live state, so toggling back to it drops the change. Not `resource`:
+          // that already holds any earlier name/address edit.
           original: {
-            enabled: resource.enabled ?? true,
-            name: resource.name,
-            address: resource.address,
-            description: resource.description,
-            groupIds,
+            enabled: live?.enabled ?? true,
+            name: live?.name ?? resource.name,
+            address: live?.address ?? resource.address,
+            description: live?.description,
+            groupIds: originalGroupIds,
           },
         });
       }
@@ -327,29 +344,6 @@ export const NodeContextMenu = ({
     [nodes, nodeId],
   );
 
-  // Same rule as the Groups page: IdP-issued groups and groups still in use
-  // can't be deleted. Delete is only offered when true, never surfaced to fail.
-  const canDeleteGroup = useCallback(
-    (group?: Group) => {
-      if (!group?.id) return false;
-      if (group.issued === GroupIssued.INTEGRATION) return false;
-      if (!permission.groups.delete) return false;
-      const usage = groupsUsage?.find((g) => g.id === group.id);
-      if (!usage) return false;
-      const inUse =
-        (usage.peers_count ?? 0) > 0 ||
-        (usage.policies_count ?? 0) > 0 ||
-        (usage.nameservers_count ?? 0) > 0 ||
-        (usage.zones_count ?? 0) > 0 ||
-        (usage.routes_count ?? 0) > 0 ||
-        (usage.setup_keys_count ?? 0) > 0 ||
-        (usage.users_count ?? 0) > 0 ||
-        (usage.resources_count ?? 0) > 0;
-      return !inUse;
-    },
-    [groupsUsage, permission.groups.delete],
-  );
-
   const handleRemove = useCallback(() => {
     removeNodeWithEdges(nodeId);
   }, [nodeId, removeNodeWithEdges]);
@@ -359,6 +353,13 @@ export const NodeContextMenu = ({
     ? nodeId.replace("policy-", "")
     : "";
   const policyEnabled = nodePolicy?.rules?.[0]?.enabled ?? nodePolicy?.enabled;
+  // A deletion-emptied policy keeps its node, so Disable stays reachable — and
+  // trackSetPolicyEnabled refuses it. The item goes rather than flipping the canvas alone.
+  const policyMarkedForDeletion =
+    !!policyClientId &&
+    changes.some(
+      (c) => c.type === "delete-policy" && c.policyId === policyClientId,
+    );
 
   const handleTogglePolicy = useCallback(() => {
     if (!nodePolicy) return;
@@ -898,7 +899,14 @@ export const NodeContextMenu = ({
       if (isAllGroup(group)) return [...focus, edit, remove];
 
       const items: MenuItem[] = [...focus, edit];
-      if (canRenameGroup(group)) {
+      // A draft group's rename deploys inside its own create, so it needs `create`;
+      // the live branch checks `update` for an existing group.
+      const mayRename =
+        canRenameGroup(group) &&
+        (isNewGroup(group)
+          ? permission.groups.create
+          : permission.groups.update);
+      if (mayRename) {
         items.push({
           label: "Rename",
           icon: <PencilLineIcon size={14} />,
@@ -918,42 +926,61 @@ export const NodeContextMenu = ({
     }
 
     if (node.type === "policyNode") {
+      // Draft is deferred, not exempt: Approve & Deploy sends the same calls the live
+      // branch gates. A DRAFT policy has no API object yet, so it needs `create`.
+      const isDraftPolicy = nodeId.startsWith("policy-new-");
+      const mayWrite = isDraftPolicy
+        ? permission.policies.create
+        : permission.policies.update;
       return [
         ...focusItems(node),
-        {
-          label: "Edit",
-          icon: <SquarePenIcon size={14} />,
-          onClick: () => {
-            setSelectedPolicy(policyClientId);
-            setPolicyModalOpen(true);
-          },
-        },
-        {
-          label: policyEnabled ? "Disable" : "Enable",
-          icon: policyEnabled ? (
-            <PowerOffIcon size={14} />
-          ) : (
-            <PowerIcon size={14} />
-          ),
-          onClick: handleTogglePolicy,
-        },
-        // Remove is canvas-only; Delete is reserved for policies that exist in
-        // the API and will really be deleted on deploy.
-        {
-          label: "Remove",
-          icon: <CircleMinusIcon size={14} />,
-          onClick: () => void handleRemovePolicyFromCanvas(),
-        },
-        ...(nodeId.startsWith("policy-new-")
+        ...(mayWrite
+          ? [
+              {
+                label: "Edit",
+                icon: <SquarePenIcon size={14} />,
+                onClick: () => {
+                  setSelectedPolicy(policyClientId);
+                  setPolicyModalOpen(true);
+                },
+              },
+            ]
+          : []),
+        ...(policyMarkedForDeletion || !mayWrite
           ? []
           : [
+              {
+                label: policyEnabled ? "Disable" : "Enable",
+                icon: policyEnabled ? (
+                  <PowerOffIcon size={14} />
+                ) : (
+                  <PowerIcon size={14} />
+                ),
+                onClick: handleTogglePolicy,
+              },
+            ]),
+        // Off the canvas an existing policy deploys as a deletion, so it gets
+        // Delete and its confirmation rather than a silent Remove.
+        ...(isDraftPolicy
+          ? mayWrite
+            ? [
+                {
+                  label: "Remove",
+                  icon: <CircleMinusIcon size={14} />,
+                  onClick: () => void handleRemovePolicyFromCanvas(),
+                },
+              ]
+            : []
+          : permission.policies.delete
+          ? [
               {
                 label: "Delete",
                 icon: <TrashIcon size={14} />,
                 onClick: handleDeletePolicy,
                 danger: true,
               },
-            ]),
+            ]
+          : []),
       ];
     }
 
@@ -979,6 +1006,9 @@ export const NodeContextMenu = ({
     // Edit is draft-only: v1 doesn't rename existing networks.
     if (node.type === "networkNode" && isFrameNode(node)) {
       const draftNetwork = isDraftNetworkNode(node);
+      const mayWrite = draftNetwork
+        ? permission.networks.create
+        : permission.networks.update;
       return [
         {
           label: "View Details",
@@ -986,7 +1016,7 @@ export const NodeContextMenu = ({
           onClick: () => handleViewNetworkDetails(node),
         },
         ...focusItems(node),
-        ...(draftNetwork
+        ...(draftNetwork && mayWrite
           ? [
               {
                 label: "Edit",
@@ -995,36 +1025,49 @@ export const NodeContextMenu = ({
               },
             ]
           : []),
-        {
-          label: "Add Resource",
-          icon: <WorkflowIcon size={14} />,
-          // The row is created into the frame only on save.
-          onClick: () => setResourceEditor({ createInNetworkNodeId: nodeId }),
-        },
-        {
-          label: "Add Resource Group",
-          icon: <GroupBadgeIcon size={14} />,
-          onClick: () => addResourceGroupToFrame(nodeId),
-        },
-        {
-          label: "Add Routing Peer",
-          icon: <Share2Icon size={14} />,
-          onClick: () => setRoutingPeerModal({ networkNodeId: nodeId }),
-        },
+        ...(mayWrite
+          ? [
+              {
+                label: "Add Resource",
+                icon: <WorkflowIcon size={14} />,
+                // The row is created into the frame only on save.
+                onClick: () =>
+                  setResourceEditor({ createInNetworkNodeId: nodeId }),
+              },
+              {
+                label: "Add Resource Group",
+                icon: <GroupBadgeIcon size={14} />,
+                onClick: () => addResourceGroupToFrame(nodeId),
+              },
+              {
+                label: "Add Routing Peer",
+                icon: <Share2Icon size={14} />,
+                onClick: () => setRoutingPeerModal({ networkNodeId: nodeId }),
+              },
+            ]
+          : []),
         // Remove cancels a draft network's pending create; Delete marks an
         // existing one for removal on deploy.
-        draftNetwork
-          ? {
-              label: "Remove",
-              icon: <CircleMinusIcon size={14} />,
-              onClick: handleRemove,
-            }
-          : {
-              label: "Delete",
-              icon: <TrashIcon size={14} />,
-              danger: true,
-              onClick: () => deleteNetwork(nodeId),
-            },
+        ...(draftNetwork
+          ? mayWrite
+            ? [
+                {
+                  label: "Remove",
+                  icon: <CircleMinusIcon size={14} />,
+                  onClick: handleRemove,
+                },
+              ]
+            : []
+          : permission.networks.delete
+          ? [
+              {
+                label: "Delete",
+                icon: <TrashIcon size={14} />,
+                danger: true,
+                onClick: () => deleteNetwork(nodeId),
+              },
+            ]
+          : []),
       ];
     }
 
@@ -1036,7 +1079,12 @@ export const NodeContextMenu = ({
     ) {
       const isNewResourceGroup = nodeId.startsWith("resourcegroup-new-");
       const items: MenuItem[] = [];
-      if (isNewResourceGroup || canRenameGroup(getNodeGroup(node))) {
+      const mayRename =
+        (isNewResourceGroup || canRenameGroup(getNodeGroup(node))) &&
+        (isNewResourceGroup
+          ? permission.groups.create
+          : permission.groups.update);
+      if (mayRename) {
         items.push({
           label: "Rename",
           icon: <PencilLineIcon size={14} />,
@@ -1056,35 +1104,47 @@ export const NodeContextMenu = ({
     if (node.type === "resourceNode") {
       const isDraftRes = nodeId.startsWith("resource-new-");
       const isFramed = !!node.parentId?.startsWith("network-");
-      const resEnabled = (node.data as { enabled?: boolean }).enabled ?? true;
-      const items: MenuItem[] = [
-        ...focusItems(node),
-        {
+      const resEnabled = getResourceNodeEnabled(node);
+      // Resources live under a network, so they carry the networks permission.
+      const mayWrite = isDraftRes
+        ? permission.networks.create
+        : permission.networks.update;
+      const items: MenuItem[] = [...focusItems(node)];
+      if (mayWrite) {
+        items.push({
           label: "Edit",
           icon: <SquarePenIcon size={14} />,
           onClick: () => setResourceEditor({ nodeId }),
-        },
-      ];
-      if (isDraftRes) {
+        });
+      }
+      if (isDraftRes && mayWrite) {
         items.push({
           label: "Rename",
           icon: <PencilLineIcon size={14} />,
           onClick: () => openRename(node),
         });
       }
-      items.push({
-        label: resEnabled ? "Disable" : "Enable",
-        icon: resEnabled ? <PowerOffIcon size={14} /> : <PowerIcon size={14} />,
-        onClick: () => toggleResourceEnabled(nodeId),
-      });
-      if (!isDraftRes && isFramed) {
+      if (mayWrite) {
         items.push({
-          label: "Delete",
-          icon: <TrashIcon size={14} />,
-          onClick: () => deleteResource(nodeId),
-          danger: true,
+          label: resEnabled ? "Disable" : "Enable",
+          icon: resEnabled ? (
+            <PowerOffIcon size={14} />
+          ) : (
+            <PowerIcon size={14} />
+          ),
+          onClick: () => toggleResourceEnabled(nodeId),
         });
-      } else {
+      }
+      if (!isDraftRes && isFramed) {
+        if (permission.networks.delete) {
+          items.push({
+            label: "Delete",
+            icon: <TrashIcon size={14} />,
+            onClick: () => deleteResource(nodeId),
+            danger: true,
+          });
+        }
+      } else if (mayWrite) {
         items.push({
           label: "Remove",
           icon: <CircleMinusIcon size={14} />,
@@ -1116,9 +1176,12 @@ export const NodeContextMenu = ({
     nodeId,
     nodePolicy,
     livePolicy,
+    permission.policies.create,
     permission.policies.update,
     permission.policies.delete,
+    permission.groups.create,
     permission.groups.update,
+    permission.networks.create,
     permission.networks.update,
     permission.networks.delete,
     handleLiveEditPolicy,
@@ -1127,6 +1190,7 @@ export const NodeContextMenu = ({
     handleLiveDeletePolicy,
     deleteNetwork,
     policyEnabled,
+    policyMarkedForDeletion,
     handleRemove,
     removeGroup,
     setSelectedDestinationGroup,

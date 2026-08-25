@@ -338,7 +338,7 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     await page.keyboard.press("Escape");
   });
 
-  test("Removing an existing group is canvas-only (no API delete tracked)", async ({
+  test("Removing an existing group tracks no group delete", async ({
     dashboardAsOwner: page,
   }) => {
     const groups = await listGroups(page);

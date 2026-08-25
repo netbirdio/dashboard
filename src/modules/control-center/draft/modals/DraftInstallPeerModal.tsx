@@ -1,8 +1,4 @@
-import * as React from "react";
 import { useOidcUser } from "@axa-fr/react-oidc";
-import { useReactFlow } from "@xyflow/react";
-import { CheckCircle2Icon } from "lucide-react";
-import { useApiCall } from "@utils/api";
 import Button from "@components/Button";
 import {
   Modal,
@@ -11,21 +7,27 @@ import {
   ModalFooter,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useApiCall } from "@utils/api";
+import { useReactFlow } from "@xyflow/react";
+import { CheckCircle2Icon } from "lucide-react";
+import * as React from "react";
+import { Group } from "@/interfaces/Group";
+import { Peer } from "@/interfaces/Peer";
+import { SetupKey } from "@/interfaces/SetupKey";
 import {
   InstallPeerChange,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { usePlaceholderArtifacts } from "@/modules/control-center/hooks/usePlaceholderArtifacts";
 import {
   draftBoundGroupName,
   getPlaceholderHostname,
   kindHasBoundGroup,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
-import { Peer } from "@/interfaces/Peer";
-import { Group } from "@/interfaces/Group";
+import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
 // Server/Agent installs arrive without a setup key: it is generated on demand
 // and written back onto the placeholder node so reopening Install reuses it.
@@ -34,8 +36,12 @@ export const DraftInstallPeerModal = () => {
   const { oidcUser: user } = useOidcUser();
   const reactFlow = useReactFlow();
   const groupRequest = useApiCall<Group>("/groups", true);
+  const keyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const { groups } = useControlCenterData();
-  const { changes, markInstallPeerWaiting } = useDraftChangeset();
+  const { changes, markInstallPeerWaiting, clearInstallPeerKey } =
+    useDraftChangeset();
+  const { registerArtifacts, registeredSetupKeyId, revokeSetupKey } =
+    usePlaceholderArtifacts();
 
   const installedChange = React.useMemo(() => {
     const nodeId = installModal?.nodeId;
@@ -64,25 +70,43 @@ export const DraftInstallPeerModal = () => {
     );
   }, [installModal, reactFlow]);
 
-  // Only a matching fallback: bound-group placeholders match by that group, so
-  // just user devices need a hostname for the upgrade watcher.
+  // Only a matching fallback for user devices; bound-group placeholders match by group.
   const hostname = React.useMemo(() => {
-    if (!installModal?.nodeId) return undefined;
+    const nodeId = installModal?.nodeId;
+    if (!nodeId) return undefined;
     if (kindHasBoundGroup(installModal.placeholderKind)) return undefined;
-    return getPlaceholderHostname(reactFlow.getNodes(), installModal.nodeId);
+    const all = reactFlow.getNodes();
+    const own = all.find((n) => n.id === nodeId);
+    let stamped = (own?.data as { installHostname?: string } | undefined)
+      ?.installHostname;
+    if (!stamped) {
+      const draftId = nodeId.replace("peer-", "");
+      for (const n of all) {
+        const held = n.data?.draftPeers as
+          | (Peer & { installHostname?: string })[]
+          | undefined;
+        const entry = held?.find((p) => p.id === draftId);
+        if (entry?.installHostname) {
+          stamped = entry.installHostname;
+          break;
+        }
+      }
+    }
+    return stamped ?? getPlaceholderHostname(all, nodeId);
   }, [installModal, reactFlow]);
 
-  // The hostname is persisted because later placeholder adds/removes would
-  // shift the computed suffixes the watcher matches on.
+  // Only the FIRST stamp counts — the copied command and the watcher carry it. The
+  // timestamp lets the watcher refuse peers that pre-date this install.
   React.useEffect(() => {
     const nodeId = installModal?.nodeId;
     if (!nodeId || !hostname) return;
     const draftId = nodeId.replace("peer-", "");
+    const stamp = { installHostname: hostname, installStartedAt: Date.now() };
     reactFlow.setNodes((prev) => {
       if (prev.some((n) => n.id === nodeId)) {
         return prev.map((n) =>
-          n.id === nodeId && n.data.installHostname !== hostname
-            ? { ...n, data: { ...n.data, installHostname: hostname } }
+          n.id === nodeId && !n.data.installHostname
+            ? { ...n, data: { ...n.data, ...stamp } }
             : n,
         );
       }
@@ -96,7 +120,7 @@ export const DraftInstallPeerModal = () => {
           data: {
             ...n.data,
             draftPeers: held.map((p) =>
-              p.id === draftId ? { ...p, installHostname: hostname } : p,
+              p.id === draftId && !p.installHostname ? { ...p, ...stamp } : p,
             ),
           },
         };
@@ -163,16 +187,18 @@ export const DraftInstallPeerModal = () => {
           placeholderKind?: string;
           placeholderName?: string;
           boundGroupId?: string;
+          setupKeyId?: string;
         };
         return {
           placeholderKind: d?.placeholderKind,
           placeholderName: d?.placeholderName,
           boundGroupId: d?.boundGroupId,
+          setupKeyId: d?.setupKeyId,
         };
       }
       for (const n of all) {
         const held = n.data?.draftPeers as
-          | (Peer & { boundGroupId?: string })[]
+          | (Peer & { boundGroupId?: string; setupKeyId?: string })[]
           | undefined;
         const entry = held?.find((p) => p.id === draftId);
         if (entry) {
@@ -180,6 +206,7 @@ export const DraftInstallPeerModal = () => {
             placeholderKind: (entry.os ?? "").replace("draft-", "") || undefined,
             placeholderName: entry.name,
             boundGroupId: entry.boundGroupId,
+            setupKeyId: entry.setupKeyId,
           };
         }
       }
@@ -187,13 +214,42 @@ export const DraftInstallPeerModal = () => {
         placeholderKind?: string;
         placeholderName?: string;
         boundGroupId?: string;
+        setupKeyId?: string;
       };
     },
     [reactFlow],
   );
 
-  // The hidden bound group is created only when the user generates the key, so
-  // opening the modal leaks nothing, and rides on it as the watcher's match key.
+  // Undo can restore a node whose key was revoked on removal, and SetupModal hides
+  // its generator whenever a key is passed. Clear a dead key on open so it returns.
+  const [keyRevoked, setKeyRevoked] = React.useState(false);
+  React.useEffect(() => {
+    const nodeId = installModal?.nodeId;
+    if (!nodeId || !installModal?.setupKey) {
+      setKeyRevoked(false);
+      return;
+    }
+    const draftId = nodeId.replace("peer-", "");
+    const setupKeyId = readPlaceholder(draftId).setupKeyId;
+    if (!setupKeyId) return;
+    let cancelled = false;
+    void (async () => {
+      const key = await keyRequest.get(`/${setupKeyId}`).catch(() => undefined);
+      if (cancelled) return;
+      // Absent counts as dead too: teardown may already have deleted it.
+      if (key && !key.revoked) return;
+      setKeyRevoked(true);
+      writeToPlaceholder(draftId, { setupKey: undefined, setupKeyId: undefined });
+      clearInstallPeerKey(draftId);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the open modal, not on the identity of the readers
+  }, [installModal?.nodeId, installModal?.setupKey]);
+
+  // The bound group is created only when the user generates the key, so opening
+  // the modal creates nothing, and rides on the key as the watcher's match key.
   const resolveAutoGroups = React.useCallback(async (): Promise<string[]> => {
     const nodeId = installModal?.nodeId;
     const extra = autoGroups ?? [];
@@ -215,8 +271,11 @@ export const DraftInstallPeerModal = () => {
         resources: [],
       });
       boundId = created?.id;
-      // Stored so a reopened Install reuses it and cleanup can delete it.
-      if (boundId) writeToPlaceholder(draftId, { boundGroupId: boundId });
+      // Stored so a reopened Install reuses it; registered so teardown owns it.
+      if (boundId) {
+        writeToPlaceholder(draftId, { boundGroupId: boundId });
+        registerArtifacts(draftId, { boundGroupId: boundId });
+      }
     }
     return boundId ? [boundId, ...extra.filter((g) => g !== boundId)] : extra;
   }, [
@@ -224,6 +283,7 @@ export const DraftInstallPeerModal = () => {
     autoGroups,
     readPlaceholder,
     writeToPlaceholder,
+    registerArtifacts,
     groupRequest,
     groups,
   ]);
@@ -254,7 +314,7 @@ export const DraftInstallPeerModal = () => {
         <SetupModal
           user={user}
           isUserDevice={installModal.isUserDevice}
-          setupKey={installModal.setupKey}
+          setupKey={keyRevoked ? undefined : installModal.setupKey}
           hostname={hostname}
           autoGroups={autoGroups}
           resolveAutoGroups={resolveAutoGroups}
@@ -266,11 +326,26 @@ export const DraftInstallPeerModal = () => {
             if (!nodeId || !key?.key) return;
             // The key id lets an abandoned draft delete the key it created.
             const draftId = nodeId.replace("peer-", "");
+            // Undo can strip the previous key off the node while it stays live; a
+            // superseded credential must not stay usable alongside its replacement.
+            const superseded = registeredSetupKeyId(draftId);
+            if (superseded && superseded !== key.id) {
+              revokeSetupKey(superseded);
+            }
             writeToPlaceholder(draftId, {
               setupKey: key.key,
               setupKeyId: key.id,
             });
-            if (key.id) markInstallPeerWaiting(draftId, key.id);
+            if (key.id) {
+              // Registered as a pair so a reused group shares its new key's
+              // teardown generation.
+              const boundGroupId = readPlaceholder(draftId).boundGroupId;
+              registerArtifacts(draftId, {
+                setupKeyId: key.id,
+                ...(boundGroupId ? { boundGroupId } : {}),
+              });
+              markInstallPeerWaiting(draftId, key.id);
+            }
           }}
         />
       )}

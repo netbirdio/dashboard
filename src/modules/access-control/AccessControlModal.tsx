@@ -4,6 +4,7 @@ import Button from "@components/Button";
 import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
+import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -45,18 +46,17 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useUsers } from "@/contexts/UsersProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
+import { SSHAccessType } from "@/modules/access-control/ssh/SSHAccessType";
+import { SSHAuthorizedGroups } from "@/modules/access-control/ssh/SSHAuthorizedGroups";
 import { useAccessControl } from "@/modules/access-control/useAccessControl";
 import { PostureCheckTab } from "@/modules/posture-checks/ui/PostureCheckTab";
 import { PostureCheckTabTrigger } from "@/modules/posture-checks/ui/PostureCheckTabTrigger";
-import { SSHAccessType } from "@/modules/access-control/ssh/SSHAccessType";
-import { SSHAuthorizedGroups } from "@/modules/access-control/ssh/SSHAuthorizedGroups";
-import { useUsers } from "@/contexts/UsersProvider";
-import { HelpTooltip } from "@components/HelpTooltip";
 
 type Props = {
   children?: React.ReactNode;
@@ -261,10 +261,17 @@ export function AccessControlModalContent({
     onSuccess && onSuccess(data);
   };
 
+  const [isSaving, setIsSaving] = useState(false);
   const saveOrClose = async () => {
     if (!useSave) return close();
-    if (onBeforeSave && !(await onBeforeSave())) return;
-    submit();
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      if (onBeforeSave && !(await onBeforeSave())) return;
+      submit();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Resource access is never bidirectional.
@@ -672,7 +679,9 @@ export function AccessControlModalContent({
 
                   <Button
                     variant={"primary"}
-                    disabled={submitDisabled || !permission.policies.create}
+                    disabled={
+                      submitDisabled || isSaving || !permission.policies.create
+                    }
                     onClick={() => void saveOrClose()}
                     data-testid={"submit-policy"}
                   >
@@ -689,7 +698,9 @@ export function AccessControlModalContent({
               </ModalClose>
               <Button
                 variant={"primary"}
-                disabled={submitDisabled || !permission.policies.update}
+                disabled={
+                  submitDisabled || isSaving || !permission.policies.update
+                }
                 onClick={() => void saveOrClose()}
                 data-testid={"submit-policy"}
               >

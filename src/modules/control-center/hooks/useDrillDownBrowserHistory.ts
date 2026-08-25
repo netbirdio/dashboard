@@ -81,6 +81,9 @@ export function useDrillDownBrowserHistory() {
   }, [activeSignature]);
 
   useEffect(() => {
+    // The record object is never reassigned, so capturing it here keeps the
+    // cleanup honest about which timers it clears.
+    const pendingTimers = pendingConsumeRef.current;
     const onPopState = () => {
       if (suppressPopRef.current > 0) {
         suppressPopRef.current -= 1;
@@ -88,13 +91,28 @@ export function useDrillDownBrowserHistory() {
       }
       const key = ownedStackRef.current.pop();
       if (!key) return;
+      // The browser just consumed this entry itself; a consume timer still
+      // scheduled for it would back past it into foreign history.
+      const pending = pendingTimers[key];
+      if (pending) {
+        clearTimeout(pending);
+        delete pendingTimers[key];
+      }
       // Mark inactive BEFORE exiting so the state change doesn't re-consume
       // the entry the browser just popped.
       prevActiveRef.current[key] = false;
       levelsRef.current.find((l) => l.key === key)?.exit();
     };
     window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      // A consume timer firing after unmount would undo whatever navigation
+      // caused the unmount.
+      Object.keys(pendingTimers).forEach((key) => {
+        clearTimeout(pendingTimers[key]);
+        delete pendingTimers[key];
+      });
+    };
     // Unmounting while drilled leaves the entry, but it points at the same URL.
   }, []);
 }

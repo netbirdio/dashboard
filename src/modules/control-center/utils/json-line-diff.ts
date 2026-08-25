@@ -9,8 +9,61 @@ export interface DiffLine {
 
 const splitLines = (s: string): string[] => (s === "" ? [] : s.split("\n"));
 
-// Ties prefer removals so identical blocks stay aligned.
+// Past this many trimmed lines per side the LCS matrix allocates tens of millions
+// of cells synchronously in render, so the diff falls back to a multiset classification.
+const MAX_LCS_WINDOW = 1500;
+
+// Order-insensitive fallback: a line is context while the other side still has an
+// unmatched copy. O(n + m); positions are not compared.
+function multisetDiff(a: string[], b: string[]): DiffLine[] {
+  const remaining = new Map<string, number>();
+  for (const line of b) remaining.set(line, (remaining.get(line) ?? 0) + 1);
+  const out: DiffLine[] = [];
+  for (const line of a) {
+    const left = remaining.get(line) ?? 0;
+    if (left > 0) {
+      remaining.set(line, left - 1);
+      out.push({ kind: "context", text: line });
+    } else {
+      out.push({ kind: "remove", text: line });
+    }
+  }
+  // What no a-line consumed is an addition; emitted in b's order.
+  for (const line of b) {
+    const left = remaining.get(line) ?? 0;
+    if (left > 0) {
+      remaining.set(line, left - 1);
+      out.push({ kind: "add", text: line });
+    }
+  }
+  return out;
+}
+
 function lcsDiff(a: string[], b: string[]): DiffLine[] {
+  // JSON bodies are mostly identical line for line, so trimming the common
+  // prefix and suffix keeps the quadratic matrix at the changed region only.
+  let start = 0;
+  while (start < a.length && start < b.length && a[start] === b[start]) {
+    start++;
+  }
+  let endA = a.length;
+  let endB = b.length;
+  while (endA > start && endB > start && a[endA - 1] === b[endB - 1]) {
+    endA--;
+    endB--;
+  }
+  const midA = a.slice(start, endA);
+  const midB = b.slice(start, endB);
+  const mid =
+    midA.length > MAX_LCS_WINDOW || midB.length > MAX_LCS_WINDOW
+      ? multisetDiff(midA, midB)
+      : lcsDiffCore(midA, midB);
+  const context = (text: string): DiffLine => ({ kind: "context", text });
+  return [...a.slice(0, start).map(context), ...mid, ...a.slice(endA).map(context)];
+}
+
+// Ties prefer removals so identical blocks stay aligned.
+function lcsDiffCore(a: string[], b: string[]): DiffLine[] {
   const n = a.length;
   const m = b.length;
   const dp: number[][] = Array.from({ length: n + 1 }, () =>

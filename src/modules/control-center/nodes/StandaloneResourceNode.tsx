@@ -10,6 +10,7 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
   getDraftResource,
+  getResourceNodeEnabled,
 } from "@/modules/control-center/utils/helpers";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
@@ -65,7 +66,8 @@ export const StandaloneResourceNode = ({
         "cursor-pointer border bg-nb-gray-940 border-nb-gray-850 hover:bg-nb-gray-930 hover:border-nb-gray-800 px-3 py-2.5",
         isTarget && "hover:ring-2 hover:ring-white",
         showHalo && "ring-2 ring-sky-500",
-        data.enabled === false && "opacity-60",
+        (data.enabled === false || !getResourceNodeEnabled({ id, data })) &&
+          "opacity-60",
       )}
       onClick={() => {
         if (editable) setResourceEditor({ nodeId: id });

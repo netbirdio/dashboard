@@ -1,30 +1,31 @@
 import { Edge, Node } from "@xyflow/react";
+import { sortBy } from "lodash";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
-import {
-  addNode,
-  addEdge,
-} from "@/modules/control-center/utils/graph-builder";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { applyDrilledLayout } from "@/modules/control-center/utils/drilled-layout";
+import {
+  addEdge,
+  addNode,
+} from "@/modules/control-center/utils/graph-builder";
+import {
+  FRAME_GRID_BASE_X,
+  getLiveFrameGrid,
+  getResourcePolicyByGroups,
+  isFrameNode,
+  NETWORK_FRAME_FALLBACK_ROW,
+  orderFrameResources,
+  packFrameGrid,
+  SOURCE_NODE_HALF_HEIGHT,
+  withFreshGroupCounts,
+} from "@/modules/control-center/utils/helpers";
 import {
   nodeYNudge,
   POLICY_COLUMN_Y_OFFSET,
 } from "@/modules/control-center/utils/layouts";
-import {
-  FRAME_GRID_BASE_X,
-  getLiveFrameGrid,
-  isFrameNode,
-  NETWORK_FRAME_FALLBACK_ROW,
-  getResourcePolicyByGroups,
-  packFrameGrid,
-  SOURCE_NODE_HALF_HEIGHT,
-  orderFrameResources,
-  withFreshGroupCounts,
-} from "@/modules/control-center/utils/helpers";
 import { ViewResult } from "./types";
-import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
 export function useNetworkView() {
   const { selectedNetwork, layoutInitialized } = useCanvasState();
@@ -175,24 +176,32 @@ export function useNetworkView() {
             );
             if (!resourceGroup) return;
 
+            // addNode keeps the first type, which would fold the destination into the
+            // sources column; clone it under the draft path's id scheme instead.
+            const existing = allNodes.find((x) => x.id === `group-${group.id}`);
+            const destNodeId =
+              existing && existing.type !== "destinationGroupNode"
+                ? `dest-group-${group.id}-${policy.id}`
+                : `group-${group.id}`;
+
             addNode(allNodes, {
-              id: `group-${group.id}`,
+              id: destNodeId,
               type: "destinationGroupNode",
               data: { group: withFreshGroupCounts(group, groups), enabled },
               position: { x: 0, y: 0 },
             });
 
             addEdge(allEdges, {
-              id: `policy-${policy.id}-group-${group.id}`,
+              id: `policy-${policy.id}-${destNodeId}`,
               source: `policy-${policy.id}`,
-              target: `group-${group.id}`,
+              target: destNodeId,
               type: "smart",
               data: { enabled, policy },
             });
 
             addEdge(allEdges, {
-              id: `group-${group.id}-resource-${resource.id}`,
-              source: `group-${group.id}`,
+              id: `${destNodeId}-resource-${resource.id}`,
+              source: destNodeId,
               // Without this React Flow picks the left handle instead.
               sourceHandle: "sr",
               target: `resource-${resource.id}`,
@@ -233,6 +242,7 @@ export function useNetworkView() {
     // Appended after the layout: their positions are frame-relative, and
     // ReactFlow needs parents first.
     const childNodes: Node[] = [];
+    const enabledSourceGroupIds = new Set<string>();
 
     networks!.forEach((network) => {
       const childResources = (network.resources ?? [])
@@ -350,77 +360,78 @@ export function useNetworkView() {
         });
       });
 
-      const networkPolicies = network.policies || [];
-      if (networkPolicies.length > 0) {
-        networkPolicies.forEach((p) => {
-          const policy = (policiesOverride ?? policies!).find(
-            (policyItem) => policyItem.id === p,
-          );
-          if (policy) {
-            const enabled = policy.rules?.[0]?.enabled;
-            const rule = policy.rules?.[0];
-            if (rule) {
-              const ruleSourceGroups = (rule.sources as Group[]) || [];
-              const sourceResource = rule.sourceResource;
-              const sourcePeer =
-                sourceResource?.id && sourceResource.type === "peer"
-                  ? peers?.find((pr) => pr.id === sourceResource.id)
-                  : undefined;
-              const sourceIds: string[] = [];
+      // Ascending like the sibling views: addNode's last write decides a shared
+      // source node's dimming, so disabled policies must come first.
+      sortBy(networkPolicyObjs, "enabled").forEach((policy) => {
+        const enabled = policy.rules?.[0]?.enabled;
+        const rule = policy.rules?.[0];
+        if (!rule) return;
 
-              ruleSourceGroups.forEach((group) => {
-                addNode(allNodes, {
-                  id: `group-${group.id}`,
-                  type: "groupNode",
-                  data: { group, enabled },
-                  position: { x: 0, y: 0 },
-                });
-                sourceIds.push(`group-${group.id}`);
-              });
+        const ruleSourceGroups = (rule.sources as Group[]) || [];
+        const sourceResource = rule.sourceResource;
+        const sourcePeer =
+          sourceResource?.id && sourceResource.type === "peer"
+            ? peers?.find((pr) => pr.id === sourceResource.id)
+            : undefined;
+        const sourceIds: string[] = [];
 
-              if (sourcePeer) {
-                addNode(allNodes, {
-                  id: `peer-${sourcePeer.id}`,
-                  type: "peerNode",
-                  data: {
-                    peer: sourcePeer,
-                    enabled: true,
-                    variant: "card",
-                    showHandles: false,
-                  },
-                  position: { x: 0, y: 0 },
-                });
-                sourceIds.push(`peer-${sourcePeer.id}`);
-              }
-
-              if (sourceIds.length > 0) {
-                addNode(allNodes, {
-                  id: `policy-${policy.id}`,
-                  type: "policyNode",
-                  data: { policy, enabled },
-                  position: { x: 0, y: 0 },
-                });
-                sourceIds.forEach((sourceId) => {
-                  addEdge(allEdges, {
-                    id: `${sourceId}-policy-${policy.id}`,
-                    source: sourceId,
-                    target: `policy-${policy.id}`,
-                    type: "smart",
-                    data: { enabled, policy },
-                  });
-                });
-                addEdge(allEdges, {
-                  id: `policy-${policy.id}-network-${network.id}`,
-                  source: `policy-${policy.id}`,
-                  target: `network-${network.id}`,
-                  type: "smart",
-                  data: { enabled, policy },
-                });
-              }
-            }
-          }
+        ruleSourceGroups.forEach((group) => {
+          addNode(allNodes, {
+            id: `group-${group.id}`,
+            type: "groupNode",
+            data: { group: withFreshGroupCounts(group, groups), enabled },
+            position: { x: 0, y: 0 },
+          });
+          if (enabled) enabledSourceGroupIds.add(`group-${group.id}`);
+          sourceIds.push(`group-${group.id}`);
         });
-      }
+
+        if (sourcePeer) {
+          addNode(allNodes, {
+            id: `peer-${sourcePeer.id}`,
+            type: "peerNode",
+            data: {
+              peer: sourcePeer,
+              enabled: true,
+              variant: "card",
+              showHandles: false,
+            },
+            position: { x: 0, y: 0 },
+          });
+          sourceIds.push(`peer-${sourcePeer.id}`);
+        }
+
+        if (sourceIds.length > 0) {
+          addNode(allNodes, {
+            id: `policy-${policy.id}`,
+            type: "policyNode",
+            data: { policy, enabled },
+            position: { x: 0, y: 0 },
+          });
+          sourceIds.forEach((sourceId) => {
+            addEdge(allEdges, {
+              id: `${sourceId}-policy-${policy.id}`,
+              source: sourceId,
+              target: `policy-${policy.id}`,
+              type: "smart",
+              data: { enabled, policy },
+            });
+          });
+          addEdge(allEdges, {
+            id: `policy-${policy.id}-network-${network.id}`,
+            source: `policy-${policy.id}`,
+            target: `network-${network.id}`,
+            type: "smart",
+            data: { enabled, policy },
+          });
+        }
+      });
+    });
+
+    // The enabled sort orders policies only WITHIN a network; without this a
+    // group's dimming would follow the API's network order.
+    allNodes.forEach((n) => {
+      if (enabledSourceGroupIds.has(n.id)) n.data.enabled = true;
     });
 
     const frames = allNodes.filter((n) => isFrameNode(n));

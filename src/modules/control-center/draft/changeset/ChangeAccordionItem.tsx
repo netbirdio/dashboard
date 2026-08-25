@@ -44,6 +44,7 @@ import { DeployStatus } from "@/modules/control-center/hooks/useDeployChangeset"
 
 type Props = {
   change: DraftChange;
+  changes: DraftChange[];
   live: LiveData;
   onDiscard: () => void;
   previewRemove: (change: DraftChange) => CascadePreview;
@@ -55,6 +56,7 @@ type Props = {
 
 export const ChangeAccordionItem = ({
   change,
+  changes,
   live,
   onDiscard,
   previewRemove,
@@ -87,7 +89,7 @@ export const ChangeAccordionItem = ({
     [change, live],
   );
   const showStat = stat.additions + stat.deletions > 0;
-  const issue = getChangeIssue(change);
+  const issue = getChangeIssue(change, changes);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const { confirm } = useDialog();

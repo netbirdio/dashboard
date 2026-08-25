@@ -1,18 +1,19 @@
-import type { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef } from "react";
 
 type AppRouterInstance = ReturnType<typeof useRouter>;
 
 export type NavigationGuard = (proceed: () => void) => void;
 
-let activeGuard: NavigationGuard | null = null;
+const guards: NavigationGuard[] = [];
 
 function setNavigationGuard(guard: NavigationGuard) {
-  activeGuard = guard;
+  guards.push(guard);
 }
 
 function clearNavigationGuard(guard: NavigationGuard) {
-  if (activeGuard === guard) activeGuard = null;
+  const index = guards.lastIndexOf(guard);
+  if (index !== -1) guards.splice(index, 1);
 }
 
 export function useSetNavigationGuard(guard: NavigationGuard | null) {
@@ -29,39 +30,25 @@ export function useSetNavigationGuard(guard: NavigationGuard | null) {
   }, [enabled]);
 }
 
-const INSTALLED = Symbol.for("netbird.navigation-guard-installed");
-
-function getSharedAppRouter(): AppRouterInstance | undefined {
-  return (window as { next?: { router?: AppRouterInstance } }).next?.router;
-}
-
-export function useNavigationGuard() {
-  if (typeof window === "undefined") return;
-  installNavigationGuard();
-}
-
-function installNavigationGuard() {
-  const router = getSharedAppRouter();
-  if (!router?.push || !router.replace) {
-    console.error(
-      "navigation-guard: window.next.router is unavailable; " +
-        "programmatic navigation will not be guarded.",
-    );
-    return;
-  }
-  const target = router as AppRouterInstance &
-    Record<symbol, boolean | undefined>;
-  if (target[INSTALLED]) return;
-  target[INSTALLED] = true;
-
-  const guarded =
-    <A extends unknown[]>(original: (...args: A) => void) =>
-    (...args: A) => {
-      const guard = activeGuard;
-      if (!guard) return original(...args);
-      guard(() => original(...args));
+// Guarded at the CALL SITE: the App Router exposes no global instance to patch.
+// Anything that can navigate away from guarded work pushes through this.
+export function useGuardedRouter(): AppRouterInstance {
+  const router = useRouter();
+  return useMemo(() => {
+    const guarded =
+      <A extends unknown[]>(original: (...args: A) => void) =>
+      (...args: A) => {
+        const guard = guards[guards.length - 1];
+        if (!guard) return original(...args);
+        guard(() => original(...args));
+      };
+    return {
+      ...router,
+      push: guarded(router.push.bind(router)),
+      replace: guarded(router.replace.bind(router)),
+      back: guarded(router.back.bind(router)),
+      forward: guarded(router.forward.bind(router)),
+      refresh: guarded(router.refresh.bind(router)),
     };
-
-  router.push = guarded(router.push.bind(router));
-  router.replace = guarded(router.replace.bind(router));
+  }, [router]);
 }

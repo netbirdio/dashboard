@@ -5,8 +5,8 @@ import { useSWRConfig } from "swr";
 import { Network } from "@/interfaces/Network";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { NetworkModalContent } from "@/modules/networks/NetworkModal";
 
 // The networks page's modal in pure-data mode (useSave={false}): name and
@@ -58,6 +58,16 @@ const EditorContent = ({
 
   if (network?.id) {
     const existing = network;
+    // The frame carries the PATCHED draft state, so a previous edit must not become
+    // the "original" — renaming back would then never clear the change.
+    const pendingUpdate = changes.find(
+      (c) => c.type === "update-network" && c.networkId === existing.id,
+    ) as { originalName?: string; originalDescription?: string } | undefined;
+    const liveNetwork = networks?.find((n) => n.id === existing.id);
+    const original = liveNetwork ?? {
+      name: pendingUpdate?.originalName ?? existing.name,
+      description: pendingUpdate?.originalDescription ?? existing.description,
+    };
     // Patch the frame in place so the canvas reflects the edit immediately.
     const patchFrame = (name: string, description?: string) => {
       if (!frame) return;
@@ -100,9 +110,9 @@ const EditorContent = ({
           trackUpdateNetwork({
             networkId: existing.id,
             name: values.name,
-            originalName: existing.name,
+            originalName: original.name,
             description: values.description,
-            originalDescription: existing.description,
+            originalDescription: original.description,
           });
           onClose();
         }}

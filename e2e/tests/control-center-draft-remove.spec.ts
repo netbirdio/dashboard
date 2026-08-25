@@ -155,6 +155,20 @@ test.describe
       .toBe(true);
   });
 
+  // Off the canvas it deploys as a deletion, so Delete owns it, not Remove.
+  test("An existing policy offers Delete but not Remove", async ({
+    dashboardAsOwner: page,
+  }) => {
+    const { policyNode } = await seedPolicyGroupView(page);
+
+    await policyNode.click({ button: "right" });
+    const menu = page.getByTestId("cc-node-context-menu");
+    await expect(menu).toBeVisible();
+    await expect(menu.getByTestId("cc-menu-delete")).toBeVisible();
+    await expect(menu.getByTestId("cc-menu-remove")).toHaveCount(0);
+    await page.keyboard.press("Escape");
+  });
+
   test("Removing an update-policy change reverts the policy to live", async ({
     dashboardAsOwner: page,
   }) => {

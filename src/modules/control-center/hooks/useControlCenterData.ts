@@ -54,7 +54,12 @@ export function useControlCenterData() {
   }, [networks]);
 
   const isDataReady = (): boolean =>
-    !!policies && !!groups && !!networks && !!networkResources && !isLoading;
+    !!policies &&
+    !!peers &&
+    !!groups &&
+    !!networks &&
+    !!networkResources &&
+    !isLoading;
 
   return {
     policies,

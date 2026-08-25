@@ -12,7 +12,9 @@ export function addDestinationResourceNodes(
   policy: Policy,
   nodes: Node[],
   edges: Edge[],
-  peers: Peer[],
+  // A failed /peers request resolves to undefined; the view degrades to
+  // resource lookups instead of crashing.
+  peers: Peer[] | undefined,
   networkResources: NetworkResource[],
   networks?: Network[],
 ) {
@@ -22,7 +24,7 @@ export function addDestinationResourceNodes(
   if (!destinationPolicyResource) return;
 
   const type = destinationPolicyResource.type;
-  const peer = peers.find((p) => p.id === destinationPolicyResource.id);
+  const peer = peers?.find((p) => p.id === destinationPolicyResource.id);
   const resource = networkResources.find(
     (r) => r.id === destinationPolicyResource.id,
   );

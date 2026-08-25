@@ -305,7 +305,8 @@ export const makeBoundGroupSuffix = () =>
     .replace(/[^a-z0-9]/gi, "")
     .slice(0, 5);
 
-// The group is hidden and short-lived, so the name only has to read as temporary.
+// The group IS visible in group lists (the API has no hidden flag), so the name
+// has to read as temporary and disposable to anyone who stumbles on it.
 export const draftBoundGroupName = (
   placeholderName: string,
   taken: Set<string>,
@@ -486,6 +487,90 @@ export const isTrackablePolicy = (
   policy: Policy,
   trackedResourceClientIds?: Set<string>,
 ) => policyComplete(policy, trackedResourceClientIds, false);
+
+// `data.enabled` is a DIMMING flag (the owning network's state), NOT the resource's
+// own; a draft resource has no live twin, so there the flag IS the state.
+export const getResourceNodeEnabled = (node?: {
+  id: string;
+  data?: unknown;
+}): boolean => {
+  const data = node?.data as
+    | {
+        enabled?: boolean;
+        resourceEnabled?: boolean;
+        resource?: { enabled?: boolean };
+      }
+    | undefined;
+  if (node?.id.startsWith("resource-new-")) return data?.enabled ?? true;
+  return data?.resourceEnabled ?? data?.resource?.enabled ?? true;
+};
+
+// `data.resource` is NOT the live snapshot — saveDraftResource writes edits into
+// it — so the live values are stashed once, on the first edit.
+export const getResourceLiveBaseline = (node?: {
+  data?: unknown;
+}): NetworkResource | undefined => {
+  const data = node?.data as
+    | { liveResource?: NetworkResource; resource?: NetworkResource }
+    | undefined;
+  return data?.liveResource ?? data?.resource;
+};
+
+export const withResourceLiveBaseline = (
+  data: Record<string, unknown>,
+): Record<string, unknown> =>
+  data.liveResource ? data : { ...data, liveResource: data.resource };
+
+// Edits land on `resourceGroupIds` while `resource.groups` stays live, so reading
+// the latter as the current value silently reverts a pending group edit.
+export const getResourceDraftGroupIds = (node?: {
+  data?: unknown;
+}): string[] => {
+  const data = node?.data as
+    | { resourceGroupIds?: string[]; resource?: NetworkResource }
+    | undefined;
+  if (data?.resourceGroupIds) return data.resourceGroupIds;
+  return ((data?.resource?.groups as (string | { id?: string })[]) ?? [])
+    .map((g) => (typeof g === "string" ? g : g.id ?? ""))
+    .filter(Boolean);
+};
+
+// A placeholder dragged into a group is absorbed into that group node's
+// draftPeers and loses its own node, so removing it by node id finds nothing.
+export const findPlaceholderHolder = (
+  nodes: CanvasNode[],
+  draftId: string,
+): CanvasNode | undefined =>
+  nodes.find((n) =>
+    (n.data?.draftPeers as { id?: string }[] | undefined)?.some(
+      (p) => p.id === draftId,
+    ),
+  );
+
+// Also out of addedMembers, so the group's membership change nets back out.
+export const dropAbsorbedPlaceholder = (
+  nodes: CanvasNode[],
+  draftId: string,
+): CanvasNode[] =>
+  nodes.map((n) => {
+    const held = n.data?.draftPeers as { id?: string }[] | undefined;
+    if (!held?.some((p) => p.id === draftId)) return n;
+    const members = n.data?.addedMembers as Set<string> | undefined;
+    return {
+      ...n,
+      data: {
+        ...n.data,
+        draftPeers: held.filter((p) => p.id !== draftId),
+        ...(members
+          ? {
+              addedMembers: new Set(
+                Array.from(members).filter((id) => id !== draftId),
+              ),
+            }
+          : {}),
+      },
+    };
+  });
 
 // Canvas-display guess only; the API derives the authoritative type on create.
 export const deriveResourceType = (

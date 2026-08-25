@@ -1,11 +1,126 @@
 import { Group } from "@/interfaces/Group";
-import {
+import { NetworkResource } from "@/interfaces/Network";
+import { Policy } from "@/interfaces/Policy";
+// Types only: DraftChangesetContext imports the reducers below, so a value import
+// here would close the cycle.
+import type {
+  DeletePolicyChange,
   DraftChange,
-  isNoopGroupUpdate,
+  PolicyGroupDeletion,
+  UpdateGroupChange,
+  UpdatePolicyChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 
 // Removing a changeset entry must leave the draft as if the change had never
 // been made. The canvas half lives in hooks/useRemoveChange.ts.
+
+// A fully reverted update-group must be dropped: its PUT body equals the live group.
+export const isNoopGroupUpdate = (change: UpdateGroupChange) =>
+  change.name === change.originalName &&
+  change.peerIds.length === 0 &&
+  change.resourceIds.length === 0 &&
+  (change.removedPeerIds?.length ?? 0) === 0 &&
+  (change.removedResourceIds?.length ?? 0) === 0;
+
+// Either side stripped bare authorizes nothing, so the policy deploys as a deletion.
+// Narrower than `isDeployablePolicy` on purpose: a policy pointing at an uninstalled
+// placeholder is a pending change blocked by its install-peer issue, not a deletion.
+export const isEmptiedPolicy = (policy: Policy) => {
+  const rule = policy.rules?.[0];
+  if (!rule) return false;
+  const hasSource = (rule.sources?.length ?? 0) > 0 || !!rule.sourceResource;
+  const hasDestination =
+    (rule.destinations?.length ?? 0) > 0 || !!rule.destinationResource;
+  return !hasSource || !hasDestination;
+};
+
+// Mutually exclusive by construction: CHANGE_DEPLOY_ORDER sends the update and
+// then the delete, so recording either one must clear the other.
+export const isPendingPolicyWrite = (
+  change: DraftChange,
+): change is UpdatePolicyChange | DeletePolicyChange =>
+  change.type === "update-policy" || change.type === "delete-policy";
+
+const groupKey = (g: Group | string) => (typeof g === "string" ? g : g.id ?? "");
+
+/**
+ * Puts the group entries `source` holds back into `target`, side by side. Rebases a
+ * deletion tag onto a hand edit: only the old baseline knows what was taken out.
+ */
+const reinstateGroups = (
+  target: Policy,
+  source: Policy,
+  groupIds: string[],
+): Policy => {
+  const add = (
+    into: Group[] | string[] | null | undefined,
+    from: Group[] | string[] | null | undefined,
+  ) => {
+    if (!Array.isArray(from)) return into;
+    const kept = Array.isArray(into) ? (into as (Group | string)[]) : [];
+    const present = new Set(kept.map(groupKey));
+    // A hand edit that re-added the group itself must not get a second copy.
+    const missing = (from as (Group | string)[]).filter(
+      (g) => groupIds.includes(groupKey(g)) && !present.has(groupKey(g)),
+    );
+    return missing.length === 0 ? into : ([...kept, ...missing] as Group[]);
+  };
+
+  return {
+    ...target,
+    rules: target.rules?.map((rule, i) => {
+      const from = source.rules?.[i];
+      if (!from) return rule;
+      return {
+        ...rule,
+        sources: add(rule.sources, from.sources) as typeof rule.sources,
+        destinations: add(
+          rule.destinations,
+          from.destinations,
+        ) as typeof rule.destinations,
+      };
+    }),
+  };
+};
+
+/**
+ * Deletions ACCUMULATE and the baseline stays the EARLIEST one — only it still holds
+ * every group being taken out. An untagged (ordinary) edit does NOT clear the tag:
+ * the strip lives on inside it, so the tag is REBASED and marked `handEdited`.
+ */
+export const mergeGroupDeletions = (
+  superseded: PolicyGroupDeletion | undefined,
+  incoming: PolicyGroupDeletion | undefined,
+  // The policy being written now. Absent when the edit leaves it authorizing
+  // nothing: that is a delete request, so the tag really does go.
+  nextPolicy?: Policy,
+  // True when the replaced write held work of the user's own rather than existing only
+  // for an earlier deletion.
+  supersedesUserWrite?: boolean,
+): PolicyGroupDeletion | undefined => {
+  if (incoming) {
+    if (!superseded) {
+      return supersedesUserWrite ? { ...incoming, handEdited: true } : incoming;
+    }
+    return {
+      groupIds: Array.from(
+        new Set([...superseded.groupIds, ...incoming.groupIds]),
+      ),
+      basePolicy: superseded.basePolicy,
+      ...(superseded.handEdited ? { handEdited: true } : {}),
+    };
+  }
+  if (!superseded || !nextPolicy) return undefined;
+  return {
+    groupIds: superseded.groupIds,
+    basePolicy: reinstateGroups(
+      nextPolicy,
+      superseded.basePolicy,
+      superseded.groupIds,
+    ),
+    handEdited: true,
+  };
+};
 
 /** Canvas node id a change's entity renders as; routers have none. */
 export function changeNodeId(change: DraftChange): string | undefined {
@@ -49,6 +164,30 @@ const dropGroupFromRule = (
       )
     : groups;
 
+/** The policy with a removed DRAFT group (id-less, matched by name) stripped out. */
+export const stripDraftGroupFromPolicy = (
+  policy: Policy,
+  name: string,
+): Policy => ({
+  ...policy,
+  rules: policy.rules?.map((r) => ({
+    ...r,
+    sources: dropGroupFromRule(r.sources, name) as typeof r.sources,
+    destinations: dropGroupFromRule(
+      r.destinations,
+      name,
+    ) as typeof r.destinations,
+    // authorized_groups is keyed by group name, not id.
+    ...(r.authorized_groups
+      ? {
+          authorized_groups: Object.fromEntries(
+            Object.entries(r.authorized_groups).filter(([key]) => key !== name),
+          ),
+        }
+      : {}),
+  })),
+});
+
 /** Strip a removed DRAFT group out of every other change. */
 export function dropGroupNameReferences(
   changes: DraftChange[],
@@ -64,53 +203,29 @@ export function dropGroupNameReferences(
       return c.groupId === name ? [] : [c];
     }
     if (c.type === "create-policy" || c.type === "update-policy") {
-      return [
-        {
-          ...c,
-          policy: {
-            ...c.policy,
-            rules: c.policy.rules?.map((r) => ({
-              ...r,
-              sources: dropGroupFromRule(r.sources, name) as any,
-              destinations: dropGroupFromRule(r.destinations, name) as any,
-              // authorized_groups is keyed by group name, not id.
-              ...(r.authorized_groups
-                ? {
-                    authorized_groups: Object.fromEntries(
-                      Object.entries(r.authorized_groups).filter(
-                        ([key]) => key !== name,
-                      ),
-                    ),
-                  }
-                : {}),
-            })),
-          },
-        },
-      ];
+      return [{ ...c, policy: stripDraftGroupFromPolicy(c.policy, name) }];
     }
     return [c];
   });
 }
 
+/** The policy with any source/destination resource ref to `refId` cleared. */
+export const clearPolicyResourceRef = (policy: Policy, refId: string): Policy => ({
+  ...policy,
+  rules: policy.rules?.map((r) => ({
+    ...r,
+    sourceResource:
+      r.sourceResource?.id === refId ? undefined : r.sourceResource,
+    destinationResource:
+      r.destinationResource?.id === refId ? undefined : r.destinationResource,
+  })),
+});
+
 const clearResourceRef = (change: DraftChange, refId: string): DraftChange => {
   if (change.type !== "create-policy" && change.type !== "update-policy") {
     return change;
   }
-  return {
-    ...change,
-    policy: {
-      ...change.policy,
-      rules: change.policy.rules?.map((r) => ({
-        ...r,
-        sourceResource:
-          r.sourceResource?.id === refId ? undefined : r.sourceResource,
-        destinationResource:
-          r.destinationResource?.id === refId
-            ? undefined
-            : r.destinationResource,
-      })),
-    },
-  };
+  return { ...change, policy: clearPolicyResourceRef(change.policy, refId) };
 };
 
 // A policy needs both sides, so one left one-sided by a removal is dropped.
@@ -133,6 +248,248 @@ const dropUntrackablePolicies = (changes: DraftChange[]): DraftChange[] =>
 const isSpentGroupUpdate = (c: DraftChange): boolean =>
   c.type === "update-group" && isNoopGroupUpdate(c);
 
+const dropGroupIdsFromPolicy = (policy: Policy, groupIds: string[]): Policy => {
+  // Only an EXISTING group deploys as a delete-group, so groupIds holds real ids only
+  // and the `""` of a draft group matches nothing.
+  const drop = (side: Group[] | string[] | null | undefined) =>
+    Array.isArray(side)
+      ? ((side as (Group | string)[]).filter(
+          (g) => !groupIds.includes(groupKey(g)),
+        ) as Group[])
+      : side;
+  return {
+    ...policy,
+    rules: policy.rules?.map((r) => ({
+      ...r,
+      sources: drop(r.sources) as typeof r.sources,
+      destinations: drop(r.destinations) as typeof r.destinations,
+    })),
+  };
+};
+
+/**
+ * Groups a `delete-group` is pending for, id → name. Referencing resources and routers
+ * deploy BEFORE the delete and are never stripped — a landed reference fails it for good.
+ */
+export const pendingGroupDeletions = (
+  changes: DraftChange[],
+): Map<string, string> =>
+  new Map(
+    changes.flatMap((c) =>
+      c.type === "delete-group" ? ([[c.groupId, c.name]] as const) : [],
+    ),
+  );
+
+/** The pending-deletion groups a resource or router change still references. */
+export const deletedGroupRefs = (
+  change: DraftChange,
+  deleted: Map<string, string>,
+): string[] => {
+  if (deleted.size === 0) return [];
+  if (change.type === "create-resource" || change.type === "update-resource") {
+    return change.groupIds.filter((id) => deleted.has(id));
+  }
+  if (change.type === "create-router" || change.type === "update-router") {
+    return change.groupId && deleted.has(change.groupId)
+      ? [change.groupId]
+      : [];
+  }
+  return [];
+};
+
+export const policyGroupIds = (policy: Policy): string[] => {
+  const ids = new Set<string>();
+  policy.rules?.forEach((rule) => {
+    [rule.sources, rule.destinations].forEach((side) => {
+      if (!Array.isArray(side)) return;
+      (side as (Group | string)[]).forEach((g) => {
+        const key = groupKey(g);
+        if (key) ids.add(key);
+      });
+    });
+  });
+  return Array.from(ids);
+};
+
+/**
+ * The policy write a policy still owes to group deletions in flight. Discarding a
+ * pending write restores the LIVE policy — doomed groups included — so the strip is
+ * re-recorded under the same change id.
+ */
+export function pendingGroupDeletionWrite(
+  changes: DraftChange[],
+  live: Policy,
+  changeId: string,
+): UpdatePolicyChange | DeletePolicyChange | undefined {
+  if (!live.id) return undefined;
+  const referenced = new Set(policyGroupIds(live));
+  const groupIds = changes.flatMap((c) =>
+    c.type === "delete-group" && referenced.has(c.groupId) ? [c.groupId] : [],
+  );
+  if (groupIds.length === 0) return undefined;
+
+  const policy = dropGroupIdsFromPolicy(live, groupIds);
+  const groupDeletion = { groupIds, basePolicy: live };
+  const name = live.name ?? "Policy";
+  // Same update-versus-delete decision deleteGroups makes.
+  return isEmptiedPolicy(policy)
+    ? { id: changeId, type: "delete-policy", policyId: live.id, name, groupDeletion }
+    : {
+        id: changeId,
+        type: "update-policy",
+        policyId: live.id,
+        name,
+        policy,
+        origin: "edit",
+        groupDeletion,
+      };
+}
+
+/**
+ * The policy a pending write leaves on the canvas. A deletion-driven `delete-policy` is
+ * rebuilt from its baseline minus the strip — LIVE would redraw the doomed groups.
+ */
+export const pendingPolicyView = (
+  change?: DraftChange,
+): Policy | undefined => {
+  if (!change || !isPendingPolicyWrite(change)) return undefined;
+  if (change.type === "update-policy") return change.policy;
+  const tag = change.groupDeletion;
+  return tag ? dropGroupIdsFromPolicy(tag.basePolicy, tag.groupIds) : undefined;
+};
+
+/**
+ * The resources a restore should build its rows from: pending child edits and
+ * deletions outlive the network's restore.
+ */
+export function pendingResourceViews(
+  resources: NetworkResource[] | undefined,
+  changes: DraftChange[],
+): NetworkResource[] {
+  const deleted = new Set(
+    changes.flatMap((c) => (c.type === "delete-resource" ? [c.resourceId] : [])),
+  );
+  const edits = new Map(
+    changes.flatMap((c) =>
+      c.type === "update-resource" ? ([[c.resourceId, c]] as const) : [],
+    ),
+  );
+  return (resources ?? []).flatMap((r) => {
+    if (deleted.has(r.id)) return [];
+    const edit = edits.get(r.id);
+    if (!edit) return [r];
+    return [
+      {
+        ...r,
+        name: edit.name,
+        address: edit.address,
+        description: edit.description,
+        enabled: edit.enabled,
+      },
+    ];
+  });
+}
+
+/**
+ * Puts a restored group back into the policy writes its deletion forced, rebuilding from
+ * each write's pre-strip baseline — live would also undo a hand edit made after the deletion.
+ */
+export function restoreDeletedGroupInPolicies(
+  changes: DraftChange[],
+  groupId: string,
+): DraftChange[] {
+  return changes.flatMap((c): DraftChange[] => {
+    // Draft policies are stripped too (a create-policy deploys BEFORE the
+    // delete-group) and restored in place: a create is the user's own work.
+    if (c.type === "create-policy") {
+      if (!c.groupDeletion?.groupIds.includes(groupId)) return [c];
+      const { groupIds, basePolicy, handEdited } = c.groupDeletion;
+      const remaining = groupIds.filter((id) => id !== groupId);
+      const policy = dropGroupIdsFromPolicy(basePolicy, remaining);
+      return [
+        {
+          ...c,
+          name: policy.name ?? c.name,
+          policy,
+          groupDeletion:
+            remaining.length > 0
+              ? {
+                  groupIds: remaining,
+                  basePolicy,
+                  ...(handEdited && { handEdited }),
+                }
+              : undefined,
+        },
+      ];
+    }
+    if (!isPendingPolicyWrite(c) || !c.groupDeletion) return [c];
+    const { groupIds, basePolicy, handEdited } = c.groupDeletion;
+    if (!groupIds.includes(groupId)) return [c];
+    const remaining = groupIds.filter((id) => id !== groupId);
+    // The write existed only for the deletion being discarded; a hand-edited one
+    // survives, since its baseline carries that edit.
+    if (remaining.length === 0 && !handEdited) return [];
+    const policy = dropGroupIdsFromPolicy(basePolicy, remaining);
+    // An inert tag is no tag: with nothing left stripped there is nothing to restore.
+    const groupDeletion =
+      remaining.length > 0
+        ? { groupIds: remaining, basePolicy, ...(handEdited && { handEdited }) }
+        : undefined;
+    const name = policy.name ?? c.name;
+    // Putting a group back can take the policy off the emptied path, so the
+    // update-versus-delete decision is made again rather than carried over.
+    return [
+      isEmptiedPolicy(policy)
+        ? {
+            id: c.id,
+            type: "delete-policy",
+            policyId: c.policyId,
+            name,
+            groupDeletion,
+          }
+        : {
+            id: c.id,
+            type: "update-policy",
+            policyId: c.policyId,
+            name,
+            policy,
+            origin: "edit",
+            groupDeletion,
+          },
+    ];
+  });
+}
+
+/**
+ * Detaches a removed draft network's resources to "No Network" and drops its
+ * routers, which are meaningless without it.
+ */
+export function detachChangesFromDraftNetwork(
+  changes: DraftChange[],
+  clientId: string,
+): DraftChange[] {
+  return changes.flatMap((c): DraftChange[] => {
+    if (c.type === "create-resource" && c.networkClientId === clientId) {
+      return [
+        {
+          ...c,
+          networkId: undefined,
+          networkClientId: undefined,
+          networkName: "",
+        },
+      ];
+    }
+    if (
+      (c.type === "create-router" || c.type === "update-router") &&
+      "networkClientId" in c &&
+      c.networkClientId === clientId
+    ) {
+      return [];
+    }
+    return [c];
+  });
+}
+
 /** The changeset after removing `change`, with cascade. */
 export function reduceRemoveChange(
   changes: DraftChange[],
@@ -147,30 +504,11 @@ export function reduceRemoveChange(
         dropGroupNameReferences(withoutTarget, change.name),
       );
 
-    case "create-network": {
-      // Contained resources detach to standalone instead of being deleted.
-      const clientId = change.clientId;
-      return withoutTarget.flatMap((c): DraftChange[] => {
-        if (c.type === "create-resource" && c.networkClientId === clientId) {
-          return [
-            {
-              ...c,
-              networkId: undefined,
-              networkClientId: undefined,
-              networkName: "",
-            },
-          ];
-        }
-        if (
-          (c.type === "create-router" || c.type === "update-router") &&
-          "networkClientId" in c &&
-          c.networkClientId === clientId
-        ) {
-          return [];
-        }
-        return [c];
-      });
-    }
+    case "delete-group":
+      return restoreDeletedGroupInPolicies(withoutTarget, change.groupId);
+
+    case "create-network":
+      return detachChangesFromDraftNetwork(withoutTarget, change.clientId);
 
     case "create-resource": {
       const clientId = change.clientId;
@@ -270,7 +608,9 @@ export function previewRemoveChange(
         .filter(
           (n) =>
             n.id === change.clientId ||
-            (n.data?.group && n.data.group.name === change.name),
+            (n.data?.group &&
+              n.data.group.name === change.name &&
+              !n.data.group.id),
         )
         .map((n) => n.id);
       const policyCount = new Set(

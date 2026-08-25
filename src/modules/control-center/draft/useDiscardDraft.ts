@@ -1,5 +1,4 @@
 import { useCallback } from "react";
-import { useReactFlow } from "@xyflow/react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
@@ -12,37 +11,11 @@ export function useDiscardDraft() {
   const { changeCount, clearChanges } = useDraftChangeset();
   const { setLayoutInitialized } = useCanvasState();
   const { confirm } = useDialog();
-  const reactFlow = useReactFlow();
-  const deleteArtifacts = usePlaceholderArtifacts();
+  const { flushArtifacts } = usePlaceholderArtifacts();
 
-  // Uninstalled placeholders left real setup keys and hidden bound groups
-  // behind, which would otherwise stay orphaned in the account.
-  const sweepPlaceholderArtifacts = useCallback(() => {
-    reactFlow.getNodes().forEach((n) => {
-      if (n.id.startsWith("peer-draft-")) {
-        const d = n.data as { boundGroupId?: string; setupKeyId?: string };
-        if (d?.boundGroupId || d?.setupKeyId) {
-          deleteArtifacts({
-            boundGroupId: d.boundGroupId,
-            setupKeyId: d.setupKeyId,
-          });
-        }
-        return;
-      }
-      // Placeholders absorbed into a group carry their artifacts on draftPeers.
-      const held = n.data?.draftPeers as
-        | { id?: string; boundGroupId?: string; setupKeyId?: string }[]
-        | undefined;
-      held?.forEach((p) => {
-        if (p?.id?.startsWith("draft-") && (p.boundGroupId || p.setupKeyId)) {
-          deleteArtifacts({
-            boundGroupId: p.boundGroupId,
-            setupKeyId: p.setupKeyId,
-          });
-        }
-      });
-    });
-  }, [reactFlow, deleteArtifacts]);
+  // Uninstalled placeholders left real setup keys and bound groups behind; the
+  // registry covers every one created this session.
+  const sweepPlaceholderArtifacts = flushArtifacts;
 
   const exitDraft = useCallback(() => {
     sweepPlaceholderArtifacts();

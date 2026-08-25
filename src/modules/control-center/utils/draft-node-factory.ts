@@ -28,8 +28,10 @@ export function buildStandaloneResourceNode(
     id: `resource-${resource.id}`,
     type: "resourceNode",
     data: {
+      // `enabled` is the owning frame's dim flag; the resource's OWN state flows via
+      // getResourceNodeEnabled — duplicated here it would survive a draft toggle.
+      enabled: true,
       resource,
-      enabled: resource.enabled ?? true,
       showHandles: true,
       draftNetwork: { networkId: network.id, name: network.name },
     },

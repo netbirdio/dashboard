@@ -1,3 +1,15 @@
+import { isMac } from "@hooks/useOperatingSystem";
+import { useReactFlow, XYPosition } from "@xyflow/react";
+import {
+  BotIcon,
+  FolderGit2,
+  NetworkIcon,
+  OptionIcon,
+  ServerIcon,
+  ShieldIcon,
+  WaypointsIcon,
+  WorkflowIcon,
+} from "lucide-react";
 import React, {
   useCallback,
   useEffect,
@@ -6,24 +18,13 @@ import React, {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import {
-  BotIcon,
-  FolderGit2,
-  WorkflowIcon,
-  NetworkIcon,
-  OptionIcon,
-  ServerIcon,
-  ShieldIcon,
-  WaypointsIcon,
-} from "lucide-react";
-import { useReactFlow, XYPosition } from "@xyflow/react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
-import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useEdgeAwareMenuPosition } from "@/modules/control-center/hooks/useEdgeAwareMenuPosition";
 import { menuItemSlug } from "@/modules/control-center/menus/menuItemTestId";
-import { isMac } from "@hooks/useOperatingSystem";
 
 type MenuPosition = {
   x: number;
@@ -66,6 +67,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   const { addNewGroup } = useDraftGroupActions();
   const { addPeerPlaceholder, addBlankNode, addBlankPolicy } =
     useDraftNodeCreation();
+  const { permission } = usePermissions();
 
   // When drilled into a network the network/resource row swaps: no "New
   // Network", "New Resource" assigns into it, and "Add Routing Peer" appears.
@@ -73,24 +75,26 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
 
   // Same "New …" set as the components picker; each action takes the flow
   // position to create at (right-click point or viewport center).
+  // Gated on the same create permissions the deploy pre-flight checks
+  // (CHANGE_PERMISSION); a queued change it refuses would dead-end the draft.
   const draftItemGroups: {
     label: string;
     icon: React.ReactNode;
     shortcut: React.ReactNode;
     action: (pos: XYPosition) => void;
-  }[][] = useMemo(
-    () => [
+  }[][] = useMemo(() => {
+    const groups = [
       [
         {
           label: "New Server",
           icon: <ServerIcon size={14} />,
-          shortcut: shortcutLabel(1),
+          permitted: true,
           action: (pos: XYPosition) => addPeerPlaceholder("server", pos),
         },
         {
           label: "New Agent",
           icon: <BotIcon size={14} />,
-          shortcut: shortcutLabel(2),
+          permitted: true,
           action: (pos: XYPosition) => addPeerPlaceholder("agent", pos),
         },
       ],
@@ -98,13 +102,13 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
         {
           label: "New Policy",
           icon: <ShieldIcon size={14} />,
-          shortcut: shortcutLabel(3),
+          permitted: permission.policies.create,
           action: (pos: XYPosition) => addBlankPolicy(pos),
         },
         {
           label: "New Group",
           icon: <FolderGit2 size={14} />,
-          shortcut: shortcutLabel(4),
+          permitted: permission.groups.create,
           action: (pos: XYPosition) =>
             addNewGroup({ x: pos.x - 100, y: pos.y - 30 }),
         },
@@ -114,7 +118,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
             {
               label: "New Resource",
               icon: <WorkflowIcon size={14} />,
-              shortcut: shortcutLabel(5),
+              permitted: permission.networks.create,
               // Created into the drilled network. Pass the right-click point so
               // the card lands under the cursor instead of the frame's next
               // grid slot (parity with the non-drilled createStandaloneAt).
@@ -127,7 +131,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
             {
               label: "Add Routing Peer",
               icon: <WaypointsIcon size={14} />,
-              shortcut: shortcutLabel(6),
+              permitted: permission.networks.create,
               action: () =>
                 setRoutingPeerModal({
                   networkNodeId: drillDownNetworkNodeId!,
@@ -138,31 +142,44 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
             {
               label: "New Network",
               icon: <NetworkIcon size={14} />,
-              shortcut: shortcutLabel(5),
+              permitted: permission.networks.create,
               action: (pos: XYPosition) => addBlankNode("network", pos),
             },
             {
               label: "New Resource",
               icon: <WorkflowIcon size={14} />,
-              shortcut: shortcutLabel(6),
+              permitted: permission.networks.create,
               // Open the editor first — a resource must have an IP/CIDR/domain;
               // the card is created at this spot only once the modal saves.
               action: (pos: XYPosition) =>
                 setResourceEditor({ createStandaloneAt: pos }),
             },
           ],
-    ],
-    [
-      drilled,
-      drillDownNetworkNodeId,
-      addNewGroup,
-      addBlankPolicy,
-      addPeerPlaceholder,
-      addBlankNode,
-      setResourceEditor,
-      setRoutingPeerModal,
-    ],
-  );
+    ];
+    let digit = 0;
+    return groups
+      .map((group) =>
+        group
+          .filter((item) => item.permitted)
+          .map(({ permitted: _permitted, ...item }) => ({
+            ...item,
+            shortcut: shortcutLabel(++digit),
+          })),
+      )
+      .filter((group) => group.length > 0);
+  }, [
+    drilled,
+    drillDownNetworkNodeId,
+    addNewGroup,
+    addBlankPolicy,
+    addPeerPlaceholder,
+    addBlankNode,
+    setResourceEditor,
+    setRoutingPeerModal,
+    permission.policies.create,
+    permission.groups.create,
+    permission.networks.create,
+  ]);
 
   // Alt/⌥+1…6 create at the viewport center (draft-only, input-aware).
   const viewportCenter = useCallback(

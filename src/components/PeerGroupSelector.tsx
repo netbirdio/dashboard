@@ -13,6 +13,7 @@ import GroupBadge from "@components/ui/GroupBadge";
 import GroupBadgeWithEditPeers from "@components/ui/GroupBadgeWithEditPeers";
 import ResourceBadge from "@components/ui/ResourceBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import TruncatedText from "@components/ui/TruncatedText";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
 import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
@@ -45,11 +46,64 @@ import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
-import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
-import TruncatedText from "@components/ui/TruncatedText";
+import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 
-type PeerGroupSelectorTab = "peers" | "groups" | "resources" | "clusters";
+export type PeerGroupSelectorTab =
+  | "peers"
+  | "groups"
+  | "resources"
+  | "clusters";
+
+export const getOpeningTab = (params: {
+  currentTab: PeerGroupSelectorTab;
+  hasResource: boolean;
+  resourceType?: "peer" | string;
+  hasSelectedCluster: boolean;
+  showClusters: boolean;
+  showPeers: boolean;
+  showResources: boolean;
+  hideGroupsTab: boolean;
+  tabOrder?: PeerGroupSelectorTab[];
+  initialTab?: PeerGroupSelectorTab;
+}): PeerGroupSelectorTab => {
+  const {
+    currentTab,
+    hasResource,
+    resourceType,
+    hasSelectedCluster,
+    showClusters,
+    showPeers,
+    showResources,
+    hideGroupsTab,
+    tabOrder,
+    initialTab,
+  } = params;
+
+  const renderable = (tab: PeerGroupSelectorTab): boolean => {
+    if (tabOrder && !tabOrder.includes(tab)) return false;
+    if (tab === "groups") return !hideGroupsTab;
+    if (tab === "peers") return showPeers;
+    if (tab === "resources") return showResources;
+    return showClusters;
+  };
+
+  const defaultTab = (): PeerGroupSelectorTab => {
+    if (initialTab) return initialTab;
+    if (tabOrder?.[0]) return tabOrder[0];
+    if (hideGroupsTab) return showPeers ? "peers" : "resources";
+    return "groups";
+  };
+
+  if (hasResource) {
+    if (resourceType === "peer") return showPeers ? "peers" : defaultTab();
+    return showResources ? "resources" : defaultTab();
+  }
+  if (hasSelectedCluster && showClusters) return "clusters";
+  if (renderable(currentTab)) return currentTab;
+  if (initialTab && renderable(initialTab)) return initialTab;
+  return defaultTab();
+};
 
 export type ClusterOption = {
   /** Apex domain; also what downstream stores in target_id / proxy_cluster. */
@@ -302,18 +356,6 @@ export function PeerGroupSelector({
 
   const [tab, setTab] = useState<PeerGroupSelectorTab>(getDefaultTab);
 
-  const getOpeningTab = (): PeerGroupSelectorTab => {
-    if (resource) {
-      if (resource.type === "peer") {
-        return showPeers ? "peers" : getDefaultTab();
-      }
-      return showResources ? "resources" : getDefaultTab();
-    }
-    if (selectedCluster && showClusters) return "clusters";
-    if (values.length > 0 && !hideGroupsTab) return "groups";
-    return getDefaultTab();
-  };
-
   useEffect(() => {
     if (open) {
       setTimeout(() => {
@@ -395,7 +437,22 @@ export function PeerGroupSelector({
     <Popover
       open={open}
       onOpenChange={(isOpen) => {
-        if (isOpen) setTab(getOpeningTab());
+        if (isOpen) {
+          setTab(
+            getOpeningTab({
+              currentTab: tab,
+              hasResource: !!resource,
+              resourceType: resource?.type,
+              hasSelectedCluster: !!selectedCluster,
+              showClusters,
+              showPeers,
+              showResources,
+              hideGroupsTab,
+              tabOrder,
+              initialTab,
+            }),
+          );
+        }
         setOpen(isOpen);
         if (!isOpen && search.length > 0) {
           setTimeout(() => {
@@ -451,9 +508,7 @@ export function PeerGroupSelector({
                   useHover={true}
                   data-cy={"cluster-badge"}
                   variant={"gray-ghost"}
-                  className={
-                    "py-[3px] transition-all group whitespace-nowrap"
-                  }
+                  className={"py-[3px] transition-all group whitespace-nowrap"}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -1131,9 +1186,7 @@ const ClustersList = ({
 
   return (
     <Radio defaultValue={value} name={"cluster"} value={value}>
-      <ScrollArea
-        className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}
-      >
+      <ScrollArea className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}>
         {clusters.map((c) => (
           <CommandItem
             key={c.domain}

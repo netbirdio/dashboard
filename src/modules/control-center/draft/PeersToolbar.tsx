@@ -1,26 +1,27 @@
+import { useReactFlow, useStoreApi, useViewport } from "@xyflow/react";
+import { CircleXIcon, FolderPlusIcon, TrashIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo } from "react";
-import { CircleXIcon, FolderPlusIcon, TrashIcon } from "lucide-react";
-import { useReactFlow, useStoreApi, useViewport } from "@xyflow/react";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { Group } from "@/interfaces/Group";
+import { NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
-import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { CreateGroupNameModal } from "@/modules/control-center/draft/modals/CreateGroupNameModal";
+import { useCanDeleteGroup } from "@/modules/control-center/hooks/useCanDeleteGroup";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useCreateGroupOnCanvas } from "@/modules/control-center/hooks/useCreateGroupOnCanvas";
 import {
   GROUP_NODE_TYPES,
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
-import { CreateGroupNameModal } from "@/modules/control-center/draft/modals/CreateGroupNameModal";
+import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
 import { ToolbarButton } from "@/modules/control-center/toolbar/ToolbarButton";
 import { ToolbarContainer } from "@/modules/control-center/toolbar/ToolbarContainer";
 import { ToolbarGroup } from "@/modules/control-center/toolbar/ToolbarGroup";
-import { Peer } from "@/interfaces/Peer";
-import { NetworkResource } from "@/interfaces/Network";
-import { Group } from "@/interfaces/Group";
-import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
-import { DROPPABLE_INTO_GROUP_NODE_TYPES as GROUPABLE_NODE_TYPES } from "@/modules/control-center/utils/node-capabilities";
+import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
 import {
   getDraftResource,
   getPlaceholderPeer,
@@ -28,6 +29,7 @@ import {
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_FALLBACK_ROW,
 } from "@/modules/control-center/utils/helpers";
+import { DROPPABLE_INTO_GROUP_NODE_TYPES as GROUPABLE_NODE_TYPES } from "@/modules/control-center/utils/node-capabilities";
 
 const PEER_NODE_TYPES = new Set([
   "peerNode",
@@ -272,33 +274,43 @@ export const PeersToolbar = () => {
 
   const handleCancel = clearSelection;
 
-  const { removeGroup, confirmAndDeleteGroups, removeNodeWithEdges } =
-    useDraftGroupActions();
+  const { removeGroups, confirmAndDeleteGroups } = useDraftGroupActions();
+  const { removeNode } = useNodeRemoval();
 
   const handleRemoveGroups = React.useCallback(() => {
-    selectedGroupNodes.forEach((n) => removeGroup(n));
+    removeGroups(selectedGroupNodes);
     clearSelection();
-  }, [selectedGroupNodes, removeGroup, clearSelection]);
+  }, [selectedGroupNodes, removeGroups, clearSelection]);
+
+  // Filtered through the same predicate the node menu uses.
+  const { deletableGroupNodes } = useCanDeleteGroup();
+  const deletableSelectedGroups = React.useMemo(
+    () => deletableGroupNodes(selectedGroupNodes),
+    [deletableGroupNodes, selectedGroupNodes],
+  );
 
   const handleDeleteGroups = React.useCallback(() => {
-    void confirmAndDeleteGroups(selectedGroupNodes).then(() =>
+    void confirmAndDeleteGroups(deletableSelectedGroups).then(() =>
       clearSelection(),
     );
-  }, [selectedGroupNodes, confirmAndDeleteGroups, clearSelection]);
+  }, [deletableSelectedGroups, confirmAndDeleteGroups, clearSelection]);
 
-  // Groups go through removeGroup so a new group's pending changes drop too.
+  // Everything goes through the removal gate — bulk Remove must not be the way
+  // around the protections keyboard Delete enforces.
   const handleRemoveSelection = React.useCallback(() => {
+    removeGroups(
+      mixedSelectionNodes.filter((n) => GROUP_NODE_TYPES.has(n.type ?? "")),
+    );
     mixedSelectionNodes.forEach((n) => {
-      if (GROUP_NODE_TYPES.has(n.type ?? "")) removeGroup(n);
-      else removeNodeWithEdges(n.id);
+      if (!GROUP_NODE_TYPES.has(n.type ?? "")) removeNode(n);
     });
     clearSelection();
-  }, [mixedSelectionNodes, removeGroup, removeNodeWithEdges, clearSelection]);
+  }, [mixedSelectionNodes, removeGroups, removeNode, clearSelection]);
 
   const handleRemoveGroupables = React.useCallback(() => {
-    selectedGroupableNodes.forEach((n) => removeNodeWithEdges(n.id));
+    selectedGroupableNodes.forEach((n) => removeNode(n));
     clearSelection();
-  }, [selectedGroupableNodes, removeNodeWithEdges, clearSelection]);
+  }, [selectedGroupableNodes, removeNode, clearSelection]);
 
   useControlCenterShortcuts(
     { g: handleOpenModal },
@@ -348,13 +360,15 @@ export const PeersToolbar = () => {
                     <CircleXIcon size={14} />
                     <span className="text-xs ml-2">Remove</span>
                   </ToolbarButton>
-                  <ToolbarButton
-                    onClick={handleDeleteGroups}
-                    className="px-3 text-red-500 hover:text-red-400"
-                  >
-                    <TrashIcon size={14} />
-                    <span className="text-xs ml-2">Delete</span>
-                  </ToolbarButton>
+                  {deletableSelectedGroups.length > 0 && (
+                    <ToolbarButton
+                      onClick={handleDeleteGroups}
+                      className="px-3 text-red-500 hover:text-red-400"
+                    >
+                      <TrashIcon size={14} />
+                      <span className="text-xs ml-2">Delete</span>
+                    </ToolbarButton>
+                  )}
                 </>
               ) : (
                 <ToolbarButton

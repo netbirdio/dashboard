@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { useReactFlow } from "@xyflow/react";
+import { Accordion } from "@components/Accordion";
 import Button from "@components/Button";
+import FullTooltip from "@components/FullTooltip";
+import InlineLink from "@components/InlineLink";
 import {
   Modal,
   ModalClose,
@@ -8,18 +9,19 @@ import {
   ModalFooter,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import { Accordion } from "@components/Accordion";
-import FullTooltip from "@components/FullTooltip";
-import InlineLink from "@components/InlineLink";
-import Paragraph from "@components/Paragraph";
 import { notify } from "@components/Notification";
+import Paragraph from "@components/Paragraph";
+import { cn } from "@utils/helpers";
+import { useReactFlow } from "@xyflow/react";
 import {
   ExternalLinkIcon,
   GitPullRequestArrowIcon,
   ListTodoIcon,
   Loader2,
 } from "lucide-react";
-import { cn } from "@utils/helpers";
+import React, { useCallback, useMemo, useRef } from "react";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
 import {
   CHANGE_DEPLOY_ORDER,
   DraftChange,
@@ -27,13 +29,12 @@ import {
   hasBlockingIssues,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
 import { useRemoveChange } from "@/modules/control-center/hooks/useRemoveChange";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
-import { getPlaceholderSetupKey } from "@/modules/control-center/utils/helpers";
 import { LiveData } from "@/modules/control-center/utils/changeset-request";
+import { getPlaceholderSetupKey } from "@/modules/control-center/utils/helpers";
 
 type Props = {
   open: boolean;
@@ -49,6 +50,7 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
     useControlCenterData();
   const { setResourceNetworkPicker, setInstallModal, setUserDeviceModal } =
     useDraftMode();
+  const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const reactFlow = useReactFlow();
 
   const live: LiveData = useMemo(
@@ -58,11 +60,11 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
 
   // Freeze the snapshot the rows render against during a deploy: the SWR mutate
   // that runs as changes land would recompute each row's diff and flip its badge.
+  // Released when the RUN ends, not when the changeset empties: the deploy's own
+  // `finally` revalidation is what makes the snapshot stale. Derived in render on purpose.
   const frozenLive = useRef<LiveData | null>(null);
-  if (isDeploying && !frozenLive.current) frozenLive.current = live;
-  useEffect(() => {
-    if (changes.length === 0) frozenLive.current = null;
-  }, [changes.length]);
+  if (!isDeploying) frozenLive.current = null;
+  else if (!frozenLive.current) frozenLive.current = live;
   const renderLive = frozenLive.current ?? live;
 
   // Remount the accordion only when the modal OPENS; doing it on close flashes
@@ -93,6 +95,17 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   // so the user returns to the changeset when the fix closes.
   const resolveIssue = useCallback(
     (change: DraftChange) => {
+      if (change.type === "create-policy") {
+        // Same pair the policy node's own Edit item uses.
+        setSelectedPolicy(change.clientId);
+        setPolicyModalOpen(true);
+        return;
+      }
+      if (change.type === "update-policy") {
+        setSelectedPolicy(change.policyId);
+        setPolicyModalOpen(true);
+        return;
+      }
       if (change.type === "create-resource") {
         setResourceNetworkPicker({ nodeId: `resource-${change.clientId}` });
         return;
@@ -119,6 +132,8 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
       setResourceNetworkPicker,
       setInstallModal,
       setUserDeviceModal,
+      setSelectedPolicy,
+      setPolicyModalOpen,
       reactFlow,
     ],
   );
@@ -185,11 +200,15 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                 <ChangeAccordionItem
                   key={change.id}
                   change={change}
+                  changes={changes}
                   live={renderLive}
                   onDiscard={() => removeWithCascade(change)}
                   previewRemove={previewRemove}
                   onResolveIssue={
-                    getChangeIssue(change) ? resolveIssue : undefined
+                    // An issue about a group deleted elsewhere has no fix on this row.
+                    getChangeIssue(change, changes)?.resolvable
+                      ? resolveIssue
+                      : undefined
                   }
                   disabled={isDeploying}
                   status={deployStatus[change.id]}

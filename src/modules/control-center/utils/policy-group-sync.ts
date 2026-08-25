@@ -1,5 +1,6 @@
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
+import { isEmptiedPolicy } from "@/modules/control-center/utils/change-cascade";
 
 // Policy node snapshots hold COPIES of group objects, so renames must be
 // patched into them too.
@@ -91,4 +92,42 @@ export const removeGroupFromPolicy = (policy: Policy, group: Group): Policy => {
   });
 
   return changed ? { ...policy, rules } : policy;
+};
+
+// Computed once so the confirm dialog and the changeset agree on the blast radius.
+// `emptied` deploy as DELETIONS, so the user must be told before confirming; each
+// entry carries the pre-strip policy so discarding ONE deletion can rebuild the write.
+export type GroupDeletionPolicyUpdate = {
+  policy: Policy;
+  basePolicy: Policy;
+  groupIds: string[];
+};
+
+export const groupDeletionPolicyUpdates = (
+  policyNodes: { data?: Record<string, unknown> }[],
+  groups: Group[],
+): {
+  updates: Map<string, GroupDeletionPolicyUpdate>;
+  emptied: Policy[];
+} => {
+  const updates = new Map<string, GroupDeletionPolicyUpdate>();
+  const emptied: Policy[] = [];
+
+  policyNodes.forEach((node) => {
+    const policy = node.data?.policy as Policy | undefined;
+    // A self-referencing policy draws twice, so the first node wins.
+    if (!policy?.id || updates.has(policy.id)) return;
+    const groupIds: string[] = [];
+    const updated = groups.reduce((acc, group) => {
+      const next = removeGroupFromPolicy(acc, group);
+      // Identity change means this group was really in the policy.
+      if (next !== acc && group.id) groupIds.push(group.id);
+      return next;
+    }, policy);
+    if (updated === policy) return;
+    updates.set(policy.id, { policy: updated, basePolicy: policy, groupIds });
+    if (isEmptiedPolicy(updated)) emptied.push(updated);
+  });
+
+  return { updates, emptied };
 };

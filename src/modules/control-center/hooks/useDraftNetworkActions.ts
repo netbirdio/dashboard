@@ -1,3 +1,5 @@
+import { notify } from "@components/Notification";
+import useFetchApi from "@utils/api";
 import { useCallback } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
 import { Group } from "@/interfaces/Group";
@@ -13,10 +15,13 @@ import {
   getDraftResource,
   getFrameChildPosition,
   getNetworkFrameHeight,
+  getResourceLiveBaseline,
+  getResourceNodeEnabled,
   isFrameNode,
   makeMembershipEdge,
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_WIDTH,
+  withResourceLiveBaseline,
 } from "@/modules/control-center/utils/helpers";
 
 export const getNetworkRef = (node?: Node): DraftNetworkRef | undefined => {
@@ -33,6 +38,7 @@ export const getNetworkRef = (node?: Node): DraftNetworkRef | undefined => {
 // Changeset-only: the API is called on deploy.
 export function useDraftNetworkActions() {
   const reactFlow = useReactFlow();
+  const { data: networks } = useFetchApi<Network[]>("/networks");
   const { updateDraftPolicy } = useControlCenterPolicy();
   const { drillDownNetworkNodeId } = useDraftMode();
   const {
@@ -353,62 +359,87 @@ export function useDraftNetworkActions() {
       network: DraftNetworkRef;
     }) => {
       const { nodeId, name, address, description, groupIds, network } = params;
-      reactFlow.setNodes((prev) =>
-        prev.map((n) =>
-          n.id === nodeId
-            ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  // Preserve an existing resource's real id.
-                  resource: {
-                    ...(n.data as { resource?: NetworkResource }).resource,
-                    name,
-                    address,
-                    description,
+      // Read BEFORE the write below: setNodes lands synchronously, so reading
+      // afterwards would report the just-saved values as the live ones.
+      const preEdit = reactFlow.getNodes().find((n) => n.id === nodeId);
+      const applyNodeEdit = (draftNetwork?: DraftNetworkRef) =>
+        reactFlow.setNodes((prev) =>
+          prev.map((n) =>
+            n.id === nodeId
+              ? {
+                  ...n,
+                  data: {
+                    // Writing the edit into `resource` below destroys the live
+                    // values, so stash them first — the revert check needs them.
+                    ...withResourceLiveBaseline(n.data),
+                    resource: {
+                      ...(n.data as { resource?: NetworkResource }).resource,
+                      name,
+                      address,
+                      description,
+                    },
+                    resourceGroupIds: groupIds,
+                    ...(draftNetwork ? { draftNetwork } : {}),
                   },
-                  resourceGroupIds: groupIds,
-                },
-              }
-            : n,
-        ),
-      );
+                }
+              : n,
+          ),
+        );
       // Existing resources keep their network: v1 doesn't reassign.
       if (!nodeId.startsWith("resource-new-")) {
-        const node = reactFlow.getNodes().find((n) => n.id === nodeId);
-        const resource = (node?.data as { resource?: NetworkResource })
+        const resource = (preEdit?.data as { resource?: NetworkResource })
           ?.resource;
-        const enabled =
-          (node?.data as { enabled?: boolean })?.enabled ??
-          resource?.enabled ??
-          true;
-        if (resource?.id && network.networkId) {
-          const originalGroupIds = (
-            (resource.groups as (string | { id?: string })[]) ?? []
-          )
-            .map((g) => (typeof g === "string" ? g : g.id ?? ""))
-            .filter(Boolean);
-          trackUpdateResource({
-            resourceId: resource.id,
-            networkId: network.networkId,
-            name,
-            networkName: network.name,
-            address,
-            description,
-            enabled,
-            groupIds,
-            // Live state — an edit reverted field-for-field drops the change.
-            original: {
-              enabled: resource.enabled ?? true,
-              name: resource.name,
-              address: resource.address,
-              description: resource.description,
-              groupIds: originalGroupIds,
-            },
-          });
+        // The draftNetwork stamp can be missing when /networks was stale at draft
+        // build, so resolve the owning network by resource id at save time.
+        let resolved = network;
+        if (resource?.id && !resolved.networkId) {
+          const owner = networks?.find(
+            (n) => n.resources?.includes(resource.id),
+          );
+          if (owner) resolved = { networkId: owner.id, name: owner.name };
         }
+        if (!resource?.id || !resolved.networkId) {
+          // Applying the node edit without tracking a change would show a
+          // rename the deploy never carries, so refuse the save outright.
+          notify({
+            title: resource?.name ?? name,
+            description:
+              "The resource's network could not be determined, so the edit was not saved.",
+            backgroundColor: "bg-red-500",
+          });
+          return;
+        }
+        // Never node.data.enabled — see getResourceNodeEnabled.
+        const enabled = getResourceNodeEnabled(preEdit);
+        // Not `resource`: on a second edit that already holds the first one.
+        const live = getResourceLiveBaseline(preEdit);
+        const originalGroupIds = (
+          (live?.groups as (string | { id?: string })[]) ?? []
+        )
+          .map((g) => (typeof g === "string" ? g : g.id ?? ""))
+          .filter(Boolean);
+        applyNodeEdit(network.networkId ? undefined : resolved);
+        trackUpdateResource({
+          resourceId: resource.id,
+          networkId: resolved.networkId,
+          name,
+          networkName: resolved.name,
+          address,
+          description,
+          enabled,
+          groupIds,
+          // Live state — an edit reverted field-for-field drops the change.
+          original: {
+            enabled: live?.enabled ?? true,
+            name: live?.name ?? resource.name,
+            address: live?.address ?? resource.address,
+            description: live?.description,
+            groupIds: originalGroupIds,
+          },
+        });
         return;
       }
+      applyNodeEdit();
 
       // Leaving draftNetwork unset makes the card read "No Network".
       if (!network.networkClientId && !network.networkId) {
@@ -441,7 +472,13 @@ export function useDraftNetworkActions() {
         setTimeout(() => syncDraftResource(nodeId), 0);
       }
     },
-    [reactFlow, assignResourceToNetwork, syncDraftResource, trackUpdateResource],
+    [
+      reactFlow,
+      networks,
+      assignResourceToNetwork,
+      syncDraftResource,
+      trackUpdateResource,
+    ],
   );
 
   const renameDraftNetwork = useCallback(

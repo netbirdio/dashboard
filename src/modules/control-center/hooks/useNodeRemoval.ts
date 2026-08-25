@@ -11,54 +11,29 @@ const GROUP_NODE_TYPES = new Set<string>([
   NodeType.DestinationGroupNode,
 ]);
 
-// Remove is canvas-only and never confirms, but it still has to keep the
-// changeset honest, which React Flow's raw node deletion would skip.
+// Remove never confirms, but it still keeps the changeset honest — React Flow's
+// raw node deletion would skip the policy strips.
 export function useNodeRemoval() {
-  const { removeGroup, removeNodeWithEdges } = useDraftGroupActions();
-  const { trackDeletePolicy, trackUpdatePolicy } = useDraftChangeset();
+  const { removeGroups, removeNodeWithEdges } = useDraftGroupActions();
+  const { trackDeletePolicy } = useDraftChangeset();
 
-  // A draft-created policy drops its pending create; an existing policy records
-  // an update-policy with emptied sides so the disconnect deploys.
+  // Off the canvas a policy authorizes nothing, so it deploys as a deletion.
   const removePolicyFromCanvas = useCallback(
     (node: Node) => {
       const nodePolicy = node.data?.policy as Policy | undefined;
       if (!nodePolicy) return;
-      const policyClientId = node.id.replace("policy-", "");
 
-      if (node.id.startsWith("policy-new-")) {
-        trackDeletePolicy({
-          policyId: policyClientId,
-          name: nodePolicy.name ?? "Policy",
-        });
-      } else {
-        const rule = nodePolicy.rules?.[0];
-        trackUpdatePolicy({
-          policyId: policyClientId,
-          policy: {
-            ...nodePolicy,
-            rules: rule
-              ? [
-                  {
-                    ...rule,
-                    sources: [],
-                    destinations: [],
-                    sourceResource: undefined,
-                    destinationResource: undefined,
-                  },
-                  ...(nodePolicy.rules?.slice(1) ?? []),
-                ]
-              : nodePolicy.rules,
-          },
-        });
-      }
-
+      trackDeletePolicy({
+        policyId: node.id.replace("policy-", ""),
+        name: nodePolicy.name ?? "Policy",
+      });
       removeNodeWithEdges(node.id);
     },
-    [trackDeletePolicy, trackUpdatePolicy, removeNodeWithEdges],
+    [trackDeletePolicy, removeNodeWithEdges],
   );
 
-  // Every draft node offers Remove EXCEPT an existing framed resource (Delete
-  // only, it can't silently detach from its network) and the selector nodes.
+  // Remove is withheld where taking the node off the canvas amounts to deleting
+  // the entity itself — those get Delete, which confirms.
   const canRemoveNode = useCallback((node: Node) => {
     if (
       node.type === NodeType.SelectPeerNode ||
@@ -66,6 +41,9 @@ export function useNodeRemoval() {
       node.type === NodeType.SelectUserNode
     ) {
       return false;
+    }
+    if (node.type === NodeType.PolicyNode) {
+      return node.id.startsWith("policy-new-");
     }
     if (node.type === NodeType.ResourceNode) {
       const isDraftResource = node.id.startsWith("resource-new-");
@@ -75,21 +53,28 @@ export function useNodeRemoval() {
     return true;
   }, []);
 
-  const removeNode = useCallback(
-    (node: Node) => {
-      if (!canRemoveNode(node)) return;
-      if (GROUP_NODE_TYPES.has(node.type ?? "")) {
-        removeGroup(node);
-        return;
-      }
-      if (node.type === NodeType.PolicyNode) {
-        removePolicyFromCanvas(node);
-        return;
-      }
-      removeNodeWithEdges(node.id);
+  // Group nodes go through removeGroups as ONE batch: per-node calls each read the
+  // same pre-removal store, so only the last policy strip would survive.
+  const removeNodes = useCallback(
+    (nodes: Node[]) => {
+      const removable = nodes.filter(canRemoveNode);
+      removeGroups(removable.filter((n) => GROUP_NODE_TYPES.has(n.type ?? "")));
+      removable.forEach((node) => {
+        if (GROUP_NODE_TYPES.has(node.type ?? "")) return;
+        if (node.type === NodeType.PolicyNode) {
+          removePolicyFromCanvas(node);
+          return;
+        }
+        removeNodeWithEdges(node.id);
+      });
     },
-    [canRemoveNode, removeGroup, removePolicyFromCanvas, removeNodeWithEdges],
+    [canRemoveNode, removeGroups, removePolicyFromCanvas, removeNodeWithEdges],
   );
 
-  return { removeNode, canRemoveNode, removePolicyFromCanvas };
+  const removeNode = useCallback(
+    (node: Node) => removeNodes([node]),
+    [removeNodes],
+  );
+
+  return { removeNode, removeNodes, canRemoveNode, removePolicyFromCanvas };
 }

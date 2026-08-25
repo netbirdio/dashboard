@@ -1,5 +1,13 @@
-import { Modal } from "@components/modal/Modal";
+import Button from "@components/Button";
+import {
+  Modal,
+  ModalClose,
+  ModalContent,
+  ModalFooter,
+} from "@components/modal/Modal";
+import ModalHeader from "@components/modal/ModalHeader";
 import { useReactFlow } from "@xyflow/react";
+import { Share2Icon } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { Network, NetworkRouter } from "@/interfaces/Network";
@@ -33,16 +41,17 @@ export const DraftRoutingPeerModal = () => {
           c.id === routingPeerModal.editChangeId && c.type === "create-router",
       )
     : undefined;
-  // Placeholder-peer routers ("draft-…" ids) skip the peer prefill, since the
-  // modal would try to fetch them from the API.
+  // The placeholder is not listable in the peer dropdown and the modal refuses to
+  // save without a selection, so editing is blocked until the peer installs.
+  const isPlaceholderBound =
+    editChange?.type === "create-router" &&
+    !!editChange.peerId?.startsWith("draft-");
+
   const routerPreset: NetworkRouter | undefined =
     editChange?.type === "create-router"
       ? {
           id: editChange.clientId,
-          peer:
-            editChange.peerId && !editChange.peerId.startsWith("draft-")
-              ? editChange.peerId
-              : "",
+          peer: !isPlaceholderBound ? editChange.peerId ?? "" : "",
           peer_groups: editChange.groupId ? [editChange.groupId] : [],
           metric: editChange.metric ?? 9999,
           masquerade: editChange.masquerade ?? true,
@@ -76,7 +85,27 @@ export const DraftRoutingPeerModal = () => {
       onOpenChange={(open) => !open && setRoutingPeerModal(null)}
     >
       {routingPeerModal &&
-        (isLiveApiEdit ? (
+        (isPlaceholderBound ? (
+          <ModalContent maxWidthClass={"max-w-md"}>
+            <ModalHeader
+              icon={<Share2Icon size={20} />}
+              color={"netbird"}
+              title={"Routing peer not installed yet"}
+              description={
+                "This routing peer uses a peer that hasn't been installed. " +
+                "Install it to edit these settings, or remove this change " +
+                "and add the routing peer again."
+              }
+            />
+            <ModalFooter>
+              <ModalClose asChild={true}>
+                <Button variant={"primary"} className={"w-full"}>
+                  Got it
+                </Button>
+              </ModalClose>
+            </ModalFooter>
+          </ModalContent>
+        ) : isLiveApiEdit ? (
           <RoutingPeerModalContent
             network={network as Network}
             router={routingPeerModal.router}

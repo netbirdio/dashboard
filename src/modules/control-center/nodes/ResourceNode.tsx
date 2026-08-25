@@ -20,6 +20,7 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
   getDraftResource,
+  getResourceNodeEnabled,
   useAnySourceGroupEnabled,
 } from "@/modules/control-center/utils/helpers";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
@@ -93,7 +94,8 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
           // The frame layout stamps a fixed slot height on framed rows.
           "h-full flex flex-col justify-center",
           "cursor-pointer",
-          data.enabled === false && "opacity-60",
+          (data.enabled === false || !getResourceNodeEnabled(node)) &&
+            "opacity-60",
           className,
         )}
         onClick={() => {

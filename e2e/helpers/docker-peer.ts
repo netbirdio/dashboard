@@ -1,7 +1,7 @@
 // Spins up a real NetBird peer in docker, registering via a setup key. The test
 // env has no signal/TURN, so the peer registers but stays offline. The client
 // MUST reach management directly (http://management:80); caddy breaks h2c.
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { expect, type Page } from "@playwright/test";
 import {
   createSetupKey,
@@ -21,8 +21,10 @@ type RegisteredPeer = {
   connected: boolean;
 };
 
-function sh(cmd: string): string {
-  return execSync(cmd, { stdio: ["ignore", "pipe", "pipe"] })
+// argv, not a shell string: the setup key comes back from the management API
+// and must never be parsed by a shell.
+function docker(args: string[]): string {
+  return execFileSync("docker", args, { stdio: ["ignore", "pipe", "pipe"] })
     .toString()
     .trim();
 }
@@ -44,18 +46,23 @@ export async function runDockerPeerWithKey(
   key: string,
 ): Promise<RegisteredPeer> {
   removeDockerContainer(hostname);
-  sh(
-    [
-      "docker run -d",
-      `--name ${hostname}`,
-      `--network ${NETWORK}`,
-      "--cap-add=NET_ADMIN --cap-add=SYS_ADMIN",
-      `-e NB_SETUP_KEY=${key}`,
-      `-e NB_MANAGEMENT_URL=${MGMT_URL}`,
-      `-e NB_HOSTNAME=${hostname}`,
-      IMAGE,
-    ].join(" "),
-  );
+  docker([
+    "run",
+    "-d",
+    "--name",
+    hostname,
+    "--network",
+    NETWORK,
+    "--cap-add=NET_ADMIN",
+    "--cap-add=SYS_ADMIN",
+    "-e",
+    `NB_SETUP_KEY=${key}`,
+    "-e",
+    `NB_MANAGEMENT_URL=${MGMT_URL}`,
+    "-e",
+    `NB_HOSTNAME=${hostname}`,
+    IMAGE,
+  ]);
   let found: RegisteredPeer | undefined;
   await expect
     .poll(
@@ -74,7 +81,7 @@ export async function runDockerPeerWithKey(
 // Peer and setup-key cleanup is the caller's responsibility.
 export function removeDockerContainer(hostname: string) {
   try {
-    sh(`docker rm -f ${hostname}`);
+    docker(["rm", "-f", hostname]);
   } catch {
     /* none */
   }

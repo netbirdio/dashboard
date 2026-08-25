@@ -219,10 +219,10 @@ function ControlCenterCanvas() {
   const stableOnNodeDragStart = useStableHandler(onNodeDragStart);
   const stableOnNodeDrag = useStableHandler(onNodeDrag);
   const stableOnNodeDragStop = useStableHandler(onNodeDragStop);
-  const { removeNode } = useNodeRemoval();
+  const { removeNodes } = useNodeRemoval();
   const stableOnBeforeDelete = useStableHandler(
     async ({ nodes }: { nodes: FlowNode[]; edges: FlowEdge[] }) => {
-      if (draft.isDraft) nodes.forEach((n) => removeNode(n));
+      if (draft.isDraft) removeNodes(nodes);
       return false;
     },
   );

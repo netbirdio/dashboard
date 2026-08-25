@@ -1,5 +1,6 @@
 "use client";
 
+import { Edge, Node } from "@xyflow/react";
 import React, {
   createContext,
   useCallback,
@@ -9,14 +10,14 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Edge, Node } from "@xyflow/react";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import {
   DraftChange,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
+import { deployInFlight } from "@/modules/control-center/hooks/useDeployChangeset";
 
 // Canvas and changeset are captured together so undoing a tracked action also
 // rolls back its recorded change.
@@ -191,6 +192,9 @@ export function DraftHistoryProvider({
   }, [isDraft, nodes, edges, changes]);
 
   const undo = useCallback(() => {
+    // Inert during a deploy: replaceChanges would rewrite the changeset under
+    // the running loop, and a retry would re-send the undone payloads.
+    if (deployInFlight.current) return;
     // Flush any pending edit so we step back exactly one state.
     captureNow.current();
     const prev = undoStack.current.pop();
@@ -203,6 +207,7 @@ export function DraftHistoryProvider({
   }, []);
 
   const redo = useCallback(() => {
+    if (deployInFlight.current) return;
     // A pending edit invalidates redo, so capture it first.
     captureNow.current();
     const next = redoStack.current.pop();

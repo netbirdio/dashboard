@@ -9,10 +9,7 @@ import { useControlCenterData } from "@/modules/control-center/hooks/useControlC
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import {
-  draftUid,
-  getPlaceholderPeer,
-} from "@/modules/control-center/utils/helpers";
+import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
 
 export type PlaceholderUpgrade = {
   // Canvas node id being replaced (peer-draft-… or peer-<oldPeerId>).
@@ -25,7 +22,7 @@ export type PlaceholderUpgrade = {
 export function usePlaceholderUpgrade() {
   const reactFlow = useReactFlow();
   const { updateDraftPolicy } = useControlCenterPolicy();
-  const { replacePeerIdInGroups, trackCreateRouter, markInstallPeerInstalled } =
+  const { replacePeerIdInGroups, markInstallPeerInstalled } =
     useDraftChangeset();
 
   return useCallback(
@@ -42,34 +39,6 @@ export function usePlaceholderUpgrade() {
           name: u.peer.name,
         }),
       );
-
-      // Read pre-swap: edge sources still carry the old node ids.
-      const routerEdges = reactFlow
-        .getEdges()
-        .filter((e) => (e.data as { router?: boolean })?.router);
-      withOldIds.forEach((u) => {
-        routerEdges
-          .filter((e) => e.source === u.nodeId)
-          .forEach((e) => {
-            const networkNode = reactFlow
-              .getNodes()
-              .find((n) => n.id === e.target);
-            const network = (
-              networkNode?.data as { network?: { id?: string; name: string } }
-            )?.network;
-            if (!networkNode || !network) return;
-            trackCreateRouter({
-              clientId: `new-${draftUid()}`,
-              networkId: network.id,
-              networkClientId: network.id
-                ? undefined
-                : networkNode.id.replace("network-", ""),
-              networkName: network.name,
-              peerId: u.peer.id as string,
-              peerName: u.peer.name,
-            });
-          });
-      });
 
       reactFlow.setNodes((prev) =>
         prev.map((n) => {
@@ -170,7 +139,6 @@ export function usePlaceholderUpgrade() {
       reactFlow,
       updateDraftPolicy,
       replacePeerIdInGroups,
-      trackCreateRouter,
       markInstallPeerInstalled,
     ],
   );
@@ -182,7 +150,7 @@ export function useDraftPeerUpgrade() {
   const { nodes } = useCanvasState();
   const { peers } = useControlCenterData();
   const upgrade = usePlaceholderUpgrade();
-  const deleteArtifacts = usePlaceholderArtifacts();
+  const { deleteArtifacts } = usePlaceholderArtifacts();
   // State lands asynchronously, so the re-running effect must not upgrade twice.
   const upgraded = useRef(new Set<string>());
   // Placeholders whose artifacts were already scheduled for deletion.
@@ -200,12 +168,22 @@ export function useDraftPeerUpgrade() {
       setupKeyId?: string;
     }[] = [];
 
-    const findMatch = (installHostname: string) =>
-      peers.find(
-        (p) =>
-          (p.hostname === installHostname || p.name === installHostname) &&
-          !onCanvas.has(`peer-${p.id}`),
-      );
+    // A peer's name is a user-editable label, and absorbing a pre-existing peer
+    // would deploy the drafted access against the wrong machine.
+    const registrationTime = (p: Peer) => {
+      const raw = p.created_at ?? p.last_login ?? p.last_seen;
+      const t = raw ? new Date(raw).getTime() : NaN;
+      return Number.isFinite(t) ? t : undefined;
+    };
+    const findMatch = (installHostname: string, installStartedAt?: number) =>
+      peers.find((p) => {
+        if (p.hostname !== installHostname || onCanvas.has(`peer-${p.id}`)) {
+          return false;
+        }
+        if (!installStartedAt) return true;
+        const registeredAt = registrationTime(p);
+        return registeredAt !== undefined && registeredAt >= installStartedAt;
+      });
 
     // The setup key auto-assigns a unique bound group, so the registering peer
     // is the only new peer in it.
@@ -220,11 +198,13 @@ export function useDraftPeerUpgrade() {
       const data = node.data as {
         placeholderKind?: string;
         installHostname?: string;
+        installStartedAt?: number;
         boundGroupId?: string;
         setupKeyId?: string;
         peer?: Peer;
         draftPeers?: (Peer & {
           installHostname?: string;
+          installStartedAt?: number;
           boundGroupId?: string;
           setupKeyId?: string;
         })[];
@@ -237,7 +217,9 @@ export function useDraftPeerUpgrade() {
         if (upgraded.current.has(pseudoNodeId)) return;
         const match =
           (p.boundGroupId ? findByGroup(p.boundGroupId) : undefined) ??
-          (p.installHostname ? findMatch(p.installHostname) : undefined);
+          (p.installHostname
+            ? findMatch(p.installHostname, p.installStartedAt)
+            : undefined);
         if (!match?.id) return;
         upgraded.current.add(pseudoNodeId);
         upgrades.push({ nodeId: pseudoNodeId, peer: match });
@@ -258,7 +240,9 @@ export function useDraftPeerUpgrade() {
       if (upgraded.current.has(node.id)) return;
       const match =
         (data.boundGroupId ? findByGroup(data.boundGroupId) : undefined) ??
-        (data.installHostname ? findMatch(data.installHostname) : undefined);
+        (data.installHostname
+          ? findMatch(data.installHostname, data.installStartedAt)
+          : undefined);
       if (!match?.id) return;
       upgraded.current.add(node.id);
       upgrades.push({ nodeId: node.id, peer: match });
@@ -276,8 +260,12 @@ export function useDraftPeerUpgrade() {
     });
 
     upgrade(upgrades);
-    artifactsToDelete.forEach(({ boundGroupId, setupKeyId }) =>
-      deleteArtifacts({ boundGroupId, setupKeyId }),
+    // A real peer now, so no undo can put its artifacts back to work.
+    artifactsToDelete.forEach(({ nodeId, boundGroupId, setupKeyId }) =>
+      deleteArtifacts(nodeId.replace("peer-", ""), {
+        boundGroupId,
+        setupKeyId,
+      }),
     );
   }, [isDraft, peers, nodes, upgrade, deleteArtifacts]);
 

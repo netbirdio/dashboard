@@ -1,6 +1,5 @@
-import { normalizeHostCIDR } from "@utils/ip";
 import loadConfig from "@utils/config";
-import { diffBodies, DiffLine } from "@/modules/control-center/utils/json-line-diff";
+import { normalizeHostCIDR } from "@utils/ip";
 import { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
@@ -18,6 +17,7 @@ import {
   UpdateResourceChange,
   UpdateRouterChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
+import { diffBodies, DiffLine } from "@/modules/control-center/utils/json-line-diff";
 
 // The request-body shape is shared by the deploy executor and the Review &
 // Deploy code view so the two can never drift. Only the RESOLVERS differ:
@@ -75,17 +75,10 @@ export const toIds = (
     .map((i) => (typeof i === "string" ? i : i.id))
     .filter(Boolean) as string[];
 
+// Every rule travels, each with its own action: a toggle or edit rebuilt from
+// this body must not rewrite an API-created multi-rule or "drop" policy.
 export function policyRequestBody(policy: Policy, r: RequestResolvers) {
-  const rule = policy.rules?.[0];
-  if (!rule) throw new Error("Policy has no rule.");
-
-  const isSsh = rule.protocol === "netbird-ssh";
-  const authorizedGroups: Record<string, string[]> = {};
-  if (isSsh && rule.authorized_groups) {
-    Object.entries(rule.authorized_groups).forEach(([nameOrId, usernames]) => {
-      authorizedGroups[r.groupIdForRef(nameOrId)] = usernames as string[];
-    });
-  }
+  if (!policy.rules?.length) throw new Error("Policy has no rule.");
 
   return {
     name: policy.name,
@@ -97,12 +90,21 @@ export function policyRequestBody(policy: Policy, r: RequestResolvers) {
         | (PostureCheck | string)[]
         | undefined) ?? []
     ).map((c) => (typeof c === "string" ? c : c.id)),
-    rules: [
-      {
+    rules: policy.rules.map((rule) => {
+      const isSsh = rule.protocol === "netbird-ssh";
+      const authorizedGroups: Record<string, string[]> = {};
+      if (isSsh && rule.authorized_groups) {
+        Object.entries(rule.authorized_groups).forEach(
+          ([nameOrId, usernames]) => {
+            authorizedGroups[r.groupIdForRef(nameOrId)] = usernames as string[];
+          },
+        );
+      }
+      return {
         name: policy.name,
         description: policy.description ?? "",
         bidirectional: rule.bidirectional,
-        action: "accept",
+        action: rule.action ?? "accept",
         protocol: rule.protocol,
         enabled: rule.enabled,
         sources: rule.sourceResource
@@ -116,8 +118,8 @@ export function policyRequestBody(policy: Policy, r: RequestResolvers) {
         ports: isSsh ? ["22"] : rule.ports,
         port_ranges: isSsh ? [] : rule.port_ranges,
         authorized_groups: isSsh ? authorizedGroups : undefined,
-      },
-    ],
+      };
+    }),
   };
 }
 
@@ -134,10 +136,12 @@ export function groupCreateBody(change: CreateGroupChange, r: RequestResolvers) 
 }
 
 // A PUT /groups/{id} must send the CURRENT members plus draft adds, minus the
-// draft removals.
+// draft removals. Structural rather than UpdateGroupChange: a create-group RETRY
+// is also a PUT, and it derives its removals instead of carrying them.
 export function mergeGroupMembers(
   base: { peers?: (GroupPeer | string)[]; resources?: (GroupResource | string)[] },
-  change: UpdateGroupChange,
+  change: Pick<UpdateGroupChange, "peerIds" | "resourceIds"> &
+    Partial<Pick<UpdateGroupChange, "removedPeerIds" | "removedResourceIds">>,
   r: RequestResolvers,
 ) {
   const peers = new Set(toIds(base.peers));
@@ -245,16 +249,32 @@ export function routerUpdateBody(
   };
 }
 
-// The key generated when a placeholder is installed, NOT a deploy call. Its
-// hidden auto_group has no id until generation, hence the id placeholder.
-export function setupKeyCreateBody(change: InstallPeerChange) {
+// The key generated when a placeholder is installed, NOT a deploy call. Its bound
+// auto_group has no id until generation, hence the id placeholder; canvas group
+// memberships ride on the key too.
+export function setupKeyCreateBody(
+  change: InstallPeerChange,
+  live: LiveData = {},
+) {
   const isUserDevice = change.kind === "user-device";
+  const canvasGroups = (live.draftChanges ?? []).flatMap((c) => {
+    if (
+      (c.type !== "create-group" && c.type !== "update-group") ||
+      !c.peerIds.includes(change.clientId)
+    ) {
+      return [];
+    }
+    return [
+      c.type === "update-group" ? c.groupId : idPlaceholder("GROUP", c.name),
+    ];
+  });
+  const boundGroup = isUserDevice ? [] : [idPlaceholder("GROUP", change.name)];
   return {
     name: `Draft ${change.name}`,
     type: "one-off",
     expires_in: 24 * 60 * 60,
     revoked: false,
-    auto_groups: isUserDevice ? [] : [idPlaceholder("GROUP", change.name)],
+    auto_groups: Array.from(new Set([...boundGroup, ...canvasGroups])),
     usage_limit: 1,
     ephemeral: false,
     allow_extra_dns_labels: false,
@@ -269,8 +289,17 @@ const methodPath = (change: DraftChange): { method: HttpMethod; path: string } =
 // An EXISTING group ref resolves to its real id so the preview matches the
 // deployed request; a draft group has no id yet and shows as a placeholder.
 export function previewResolvers(live: LiveData = {}): RequestResolvers {
+  // Preview must never throw, so an ambiguous group name renders as a placeholder
+  // rather than one candidate picked at random — the deploy refuses to guess.
   const nameToId = new Map<string, string>();
-  live.groups?.forEach((g) => g.id && nameToId.set(g.name, g.id));
+  const ambiguousNames = new Set<string>();
+  live.groups?.forEach((g) => {
+    if (!g.id) return;
+    if (nameToId.has(g.name)) ambiguousNames.add(g.name);
+    else nameToId.set(g.name, g.id);
+  });
+  const idForName = (name: string) =>
+    ambiguousNames.has(name) ? undefined : nameToId.get(name);
   const liveGroupIds = new Set(
     (live.groups ?? []).map((g) => g.id).filter(Boolean) as string[],
   );
@@ -281,7 +310,7 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
 
   const resolveGroupRef = (ref: string) => {
     if (liveGroupIds.has(ref)) return ref;
-    return nameToId.get(ref) ?? idPlaceholder("GROUP", ref);
+    return idForName(ref) ?? idPlaceholder("GROUP", ref);
   };
 
   return {
@@ -289,7 +318,7 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
       list?.map((g) =>
         typeof g === "string"
           ? resolveGroupRef(g)
-          : g.id ?? nameToId.get(g.name) ?? idPlaceholder("GROUP", g.name),
+          : g.id ?? idForName(g.name) ?? idPlaceholder("GROUP", g.name),
       ),
     resolveResource: (r) => {
       if (!r || !r.id.startsWith("new-")) return r;
@@ -322,7 +351,7 @@ export function buildChangeRequest(
   const { method, path } = methodPath(change);
 
   if (change.type === "install-peer") {
-    return { method, path, body: setupKeyCreateBody(change) };
+    return { method, path, body: setupKeyCreateBody(change, live) };
   }
 
   switch (change.type) {
@@ -431,7 +460,9 @@ export function buildBeforeRequest(
         body: {
           name: resource.name,
           description: resource.description ?? "",
-          address: resource.address,
+          // Shaped like the "after" side, which normalizes: a live bare IP
+          // would otherwise diff against its own /32.
+          address: r.normalizeAddress(resource.address),
           enabled: resource.enabled,
           groups: toIds(resource.groups),
         },

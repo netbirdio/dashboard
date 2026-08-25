@@ -107,17 +107,22 @@ const PickerContent = ({
     typeof g === "string" ? g : g.id ?? g.name;
   const hasPick = !!pickedResource || pickedGroups.length > 0;
 
-  // Same guards as a direct handle drop: groups append and dedup, a resource
-  // only fills an empty side.
+  // Same guards as a direct handle drop; a blocked pick disables Connect and
+  // says why — closing silently would read as success.
+  const rule = policy?.rules?.[0];
+  const existingDestinations = (rule?.destinations as (Group | string)[]) ?? [];
+  const blockedReason = rule?.destinationResource
+    ? "This policy already has a resource destination. Remove it from the policy first."
+    : pickedResource && existingDestinations.length > 0
+      ? "This policy already has group destinations, and a resource can't be combined with them. Pick groups instead."
+      : null;
+
   const onConnect = () => {
-    const rule = policy?.rules?.[0];
-    if (!policy || !rule || rule.destinationResource) return onClose();
-    const existing = (rule.destinations as (Group | string)[]) ?? [];
-    if (pickedResource && existing.length > 0) return onClose();
+    if (!policy || !rule || blockedReason) return;
     const merged = [
-      ...existing,
+      ...existingDestinations,
       ...pickedGroups.filter(
-        (g) => !existing.some((e) => groupKey(e) === groupKey(g)),
+        (g) => !existingDestinations.some((e) => groupKey(e) === groupKey(g)),
       ),
     ] as Group[];
     updateDraftPolicy({
@@ -171,6 +176,14 @@ const PickerContent = ({
             />
           </div>
         )}
+        {blockedReason && (
+          <div
+            className={"text-sm text-yellow-400 pt-3"}
+            data-testid={"network-destination-blocked"}
+          >
+            {blockedReason}
+          </div>
+        )}
       </div>
       <ModalFooter className={"items-center"} separator={false}>
         <div className={"flex gap-3 w-full justify-end"}>
@@ -183,7 +196,7 @@ const PickerContent = ({
             variant={"primary"}
             className={"w-full"}
             onClick={onConnect}
-            disabled={!hasPick}
+            disabled={!hasPick || !!blockedReason}
           >
             Connect
           </Button>

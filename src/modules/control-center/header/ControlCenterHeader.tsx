@@ -28,6 +28,7 @@ import {
   XIcon,
 } from "lucide-react";
 import React from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useDestinationGroup } from "@/modules/control-center/contexts/ControlCenterContext";
 import {
   useCanvasState,
@@ -70,7 +71,8 @@ function NetworkActionsMenu({
   networkNodeId: string;
   onDeleted?: () => void;
 }) {
-  const { setNetworkEditor } = useDraftMode();
+  const { isDraft, setNetworkEditor } = useDraftMode();
+  const { permission } = usePermissions();
   const reactFlow = useReactFlow();
   const { removeNodeWithEdges } = useDraftGroupActions();
   const deleteNetwork = useDeleteNetwork();
@@ -78,6 +80,11 @@ function NetworkActionsMenu({
   const isDraftNew = isDraftNetworkNode(
     reactFlow.getNodes().find((n) => n.id === networkNodeId),
   );
+
+  // Live actions hit the API directly and follow the node menu's gates; draft
+  // ones only queue changes, which the deploy pre-flight re-checks.
+  const mayEdit = isDraft || permission.networks.update;
+  const mayDelete = isDraft || permission.networks.delete;
 
   const handleDelete = React.useCallback(async () => {
     // deleteNetwork resolves false when the confirmation is cancelled.
@@ -93,6 +100,8 @@ function NetworkActionsMenu({
     onDeleted,
   ]);
 
+  if (!mayEdit && !mayDelete) return null;
+
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
@@ -107,23 +116,29 @@ function NetworkActionsMenu({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={"start"} className={"w-[180px]"}>
-        <DropdownMenuItem onClick={() => setNetworkEditor({ networkNodeId })}>
-          <div className={"flex gap-3 items-center"}>
-            <SquarePenIcon size={14} className={"shrink-0"} />
-            Edit
-          </div>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleDelete} variant={"danger"}>
-          <div className={"flex gap-3 items-center"}>
-            {isDraftNew ? (
-              <CircleMinusIcon size={14} className={"shrink-0"} />
-            ) : (
-              <Trash2Icon size={14} className={"shrink-0"} />
-            )}
-            {isDraftNew ? "Remove" : "Delete"}
-          </div>
-        </DropdownMenuItem>
+        {mayEdit && (
+          <DropdownMenuItem
+            onClick={() => setNetworkEditor({ networkNodeId })}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <SquarePenIcon size={14} className={"shrink-0"} />
+              Edit
+            </div>
+          </DropdownMenuItem>
+        )}
+        {mayEdit && mayDelete && <DropdownMenuSeparator />}
+        {mayDelete && (
+          <DropdownMenuItem onClick={handleDelete} variant={"danger"}>
+            <div className={"flex gap-3 items-center"}>
+              {isDraftNew ? (
+                <CircleMinusIcon size={14} className={"shrink-0"} />
+              ) : (
+                <Trash2Icon size={14} className={"shrink-0"} />
+              )}
+              {isDraftNew ? "Remove" : "Delete"}
+            </div>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -266,7 +281,12 @@ function HeaderTopLeft() {
   const { networkOptions, currentNetwork, onViewChange, onNetworkSelect } =
     useControlCenterUI();
   const { networks } = useControlCenterData();
+  const { permission } = usePermissions();
   const hasNetworks = (networks?.length ?? 0) > 0;
+  // Live-only header: the ⋯ menu self-hides on missing permissions, and the
+  // select's squared corner must follow it.
+  const showNetworkActions =
+    permission.networks.update || permission.networks.delete;
 
   // Controlled because the ReactFlow pane's stopPropagation hides canvas
   // clicks from Radix's own outside-detection.
@@ -323,12 +343,12 @@ function HeaderTopLeft() {
                     className={cn(
                       // Fixed height matching the RoutingPeersBar next to it.
                       "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
-                      selectedNetwork && "!rounded-r-none",
+                      selectedNetwork && showNetworkActions && "!rounded-r-none",
                     )}
                     size={"xs"}
                   />
                 </div>
-                {selectedNetwork && (
+                {selectedNetwork && showNetworkActions && (
                   <NetworkActionsMenu
                     networkNodeId={`network-${selectedNetwork}`}
                     onDeleted={() => onNetworkSelect("")}
@@ -347,10 +367,12 @@ function HeaderTopLeft() {
               key={"network-routing-peers"}
               network={currentNetwork}
             />
-            <AddResourceButton
-              key={"network-add-resource"}
-              networkNodeId={`network-${selectedNetwork}`}
-            />
+            {permission.networks.update && (
+              <AddResourceButton
+                key={"network-add-resource"}
+                networkNodeId={`network-${selectedNetwork}`}
+              />
+            )}
           </div>
         )}
       </div>

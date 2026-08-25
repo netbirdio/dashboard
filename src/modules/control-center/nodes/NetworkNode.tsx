@@ -1,3 +1,5 @@
+import Button from "@components/Button";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn, singularize } from "@utils/helpers";
 import {
   Handle,
@@ -7,30 +9,30 @@ import {
   useStore,
 } from "@xyflow/react";
 import { CirclePlusIcon, NetworkIcon } from "lucide-react";
-import {
-  getRoutingPeerCount,
-  RoutingPeersBar,
-} from "@/modules/control-center/panels/RoutingPeersBar";
-import { useFrameRouterRows } from "@/modules/control-center/hooks/useFrameRouterRows";
-import Button from "@components/Button";
 import * as React from "react";
-import { SmallBadge } from "@components/ui/SmallBadge";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   useDraftMode,
   useNetworkHover,
 } from "@/modules/control-center/draft/DraftModeContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
-import { MoreResourcesNode } from "@/modules/control-center/nodes/MoreResourcesNode";
-import { NodeType } from "@/modules/control-center/utils/nodes";
+import { useFrameRouterRows } from "@/modules/control-center/hooks/useFrameRouterRows";
 import type { FrameMoreCell } from "@/modules/control-center/hooks/useNetworkFrameLayout";
+import { MoreResourcesNode } from "@/modules/control-center/nodes/MoreResourcesNode";
+import {
+  getRoutingPeerCount,
+  RoutingPeersBar,
+} from "@/modules/control-center/panels/RoutingPeersBar";
 import {
   DraftNetworkRef,
   getDraftResource,
   NETWORK_FRAME_HEADER,
 } from "@/modules/control-center/utils/helpers";
+import { NodeType } from "@/modules/control-center/utils/nodes";
 
 type NetworkNodeType = {
   network: Network;
@@ -89,9 +91,23 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
       ),
   );
 
+  const { changes } = useDraftChangeset();
+  const { groups } = useGroups();
+
+  // Pending delete-resource changes must lower the header count immediately;
+  // the live id list still contains the doomed resources until deploy.
+  const deletedResourceCount = React.useMemo(() => {
+    const liveIds = new Set(n?.resources ?? []);
+    return changes.filter(
+      (c) => c.type === "delete-resource" && liveIds.has(c.resourceId),
+    ).length;
+  }, [changes, n?.resources]);
+
   // Only the count is needed, so no frame subscribes to /networks/resources:
   // that was one SWR subscription per frame on the networks overview.
-  const resourceCount = (n?.resources || []).length + draftResources.length;
+  const resourceCount =
+    Math.max(0, (n?.resources || []).length - deletedResourceCount) +
+    draftResources.length;
 
   // Resource-group rows have no draftNetwork ref but still occupy a grid cell.
   const resourceGroupCount = useStore(
@@ -112,11 +128,30 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
   const { rows: routerRows, isLoading: routerRowsLoading } =
     useFrameRouterRows(id, routersRequested);
 
-  // Frames count peers, not routers (see getRoutingPeerCount).
+  // A pending update-router that disables a live router must drop its peers from
+  // the badge before the lazy rows fetch runs.
+  const liveNetworkId = n?.id;
+  const draftDisabledRouterPeers = React.useMemo(
+    () =>
+      changes.reduce((sum, c) => {
+        if (c.type !== "update-router" || c.enabled !== false) return sum;
+        if (!liveNetworkId || c.networkId !== liveNetworkId) return sum;
+        if (c.peerId) return sum + 1;
+        const group = groups?.find(
+          (g) => g.id === c.groupId || g.name === c.groupId,
+        );
+        return sum + (group?.peers_count ?? 0);
+      }, 0),
+    [changes, groups, liveNetworkId],
+  );
+
+  // Frames count peers, not routers (see getRoutingPeerCount). Until the lazy fetch
+  // delivers exact rows, the live count is overlaid with the draft's creates and disables.
   const routingPeersCount =
     routersRequested && !routerRowsLoading
       ? getRoutingPeerCount(routerRows)
-      : (n?.routing_peers_count ?? 0) + getRoutingPeerCount(routerRows);
+      : Math.max(0, (n?.routing_peers_count ?? 0) - draftDisabledRouterPeers) +
+        getRoutingPeerCount(routerRows);
 
   return (
     <div

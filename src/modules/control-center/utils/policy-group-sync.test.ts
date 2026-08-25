@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
 import {
+  groupDeletionPolicyUpdates,
   patchGroupInPolicies,
   removeGroupFromPolicy,
   sameGroupMatcher,
@@ -116,5 +117,81 @@ describe("patchGroupInPolicies", () => {
 
     expect(next.rules[0].sources).toEqual([{ id: "g2", name: "Dev" }]);
     expect(next.rules[0].destinations).toEqual([{ id: "g3", name: "QA" }]);
+  });
+});
+
+// trackUpdatePolicy reads a both-sides-bare rule as a deletion, so the confirm
+// dialog needs the same answer the changeset gets.
+describe("groupDeletionPolicyUpdates", () => {
+  const named = (id: string, name: string, sources: (Group | string)[], destinations: (Group | string)[]) => ({
+    id: `policy-${id}`,
+    data: {
+      policy: {
+        id,
+        name,
+        enabled: true,
+        rules: [{ name, enabled: true, sources, destinations }],
+      },
+    },
+  });
+  const ops = { id: "g1", name: "Ops" } as Group;
+  const dev = { id: "g2", name: "Dev" } as Group;
+
+  it("reports a policy stripped bare on both sides as emptied", () => {
+    const { updates, emptied } = groupDeletionPolicyUpdates(
+      [named("p1", "Self", [ops], [ops])],
+      [ops],
+    );
+    expect(updates.size).toBe(1);
+    expect(emptied.map((p) => p.name)).toEqual(["Self"]);
+  });
+
+  // A rule with an empty side authorizes nothing and the API rejects it, so this
+  // is a deletion too. Reporting it as an ordinary update is what let the confirm
+  // dialog stay silent and the deploy then die on assertDeployable mid-run.
+  it("reports a policy left with an empty side as emptied", () => {
+    const { updates, emptied } = groupDeletionPolicyUpdates(
+      [named("p1", "OnlySource", [ops], [dev])],
+      // Ops is the ONLY source, so the rule ends up with no source at all.
+      [ops],
+    );
+    expect(updates.size).toBe(1);
+    expect(emptied.map((p) => p.name)).toEqual(["OnlySource"]);
+  });
+
+  it("does not report a policy that keeps a group on EACH side", () => {
+    const qa = { id: "g4", name: "QA" } as Group;
+    const { updates, emptied } = groupDeletionPolicyUpdates(
+      [named("p1", "Kept", [ops, qa], [dev])],
+      // Ops goes, but QA still holds the source side up.
+      [ops],
+    );
+    // A real update: one side lost a group but the policy still authorizes.
+    expect(updates.size).toBe(1);
+    expect(emptied).toEqual([]);
+  });
+
+  it("counts a batch that empties a policy only between them", () => {
+    const { emptied } = groupDeletionPolicyUpdates(
+      [named("p1", "Both", [ops], [dev])],
+      [ops, dev],
+    );
+    expect(emptied.map((p) => p.name)).toEqual(["Both"]);
+  });
+
+  it("ignores policies no deleted group touches", () => {
+    const { updates, emptied } = groupDeletionPolicyUpdates(
+      [named("p1", "Untouched", [dev], [dev])],
+      [ops],
+    );
+    expect(updates.size).toBe(0);
+    expect(emptied).toEqual([]);
+  });
+
+  it("skips a draft policy with no id, which has nothing to update", () => {
+    const node = { id: "policy-new-1", data: { policy: { name: "Draft", rules: [{ sources: [ops], destinations: [ops] }] } } };
+    const { updates, emptied } = groupDeletionPolicyUpdates([node as never], [ops]);
+    expect(updates.size).toBe(0);
+    expect(emptied).toEqual([]);
   });
 });

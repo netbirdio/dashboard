@@ -1,37 +1,33 @@
-import { FolderGit2, Loader2, SearchIcon } from "lucide-react";
-import * as React from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { useSWRConfig } from "swr";
-import { useApiCall } from "@utils/api";
-import { notify } from "@components/Notification";
-import { useDialog } from "@/contexts/DialogProvider";
 import Button from "@components/Button";
-import { cn } from "@utils/helpers";
-import { MemoizedScrollArea } from "@components/ScrollArea";
-import { Virtuoso } from "react-virtuoso";
 import { DropdownInfoText } from "@components/DropdownInfoText";
+import { notify } from "@components/Notification";
+import { MemoizedScrollArea } from "@components/ScrollArea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { SmallBadge } from "@components/ui/SmallBadge";
+import { useApiCall } from "@utils/api";
+import { cn } from "@utils/helpers";
+import { motion } from "framer-motion";
+import { FolderGit2, Loader2, SearchIcon } from "lucide-react";
+import * as React from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Virtuoso } from "react-virtuoso";
+import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import {
-  getGroupCountLabel,
-  getPlaceholderPeer,
-  pinByOrder,
-  useStructuralNodes,
-} from "@/modules/control-center/utils/helpers";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   getNodeGroup,
   isAllGroup,
   isGroupNode,
   useDraftGroupActions,
 } from "@/modules/control-center/hooks/useDraftGroupActions";
+import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import {
+  canEditGroupMembers,
   MemberRow,
   PanelVirtuosoScroller,
   setEquals,
@@ -39,6 +35,12 @@ import {
   usePanelPlacement,
   usePanelWidth,
 } from "@/modules/control-center/panels/DestinationGroupPanel";
+import {
+  getGroupCountLabel,
+  getPlaceholderPeer,
+  pinByOrder,
+  useStructuralNodes,
+} from "@/modules/control-center/utils/helpers";
 
 interface PeerGroupsPanelProps {
   // Real peer id; empty means closed.
@@ -53,6 +55,10 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   const { peers, groups } = useControlCenterData();
   const nodes = useStructuralNodes();
   const { isDraft } = useDraftMode();
+  const { permission } = usePermissions();
+  // Gated PER TARGET: the list mixes existing groups (groups.update) with
+  // draft-created ones (groups.create).
+  const canEditGroup = (g: Group) => canEditGroupMembers(permission.groups, g);
   const { changes, trackAddGroupMembers } = useDraftChangeset();
   const { removeGroupMember } = useDraftGroupActions();
   const { addMemberToGroup } = useDragToGroup();
@@ -77,6 +83,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
       : [];
     return [...(groups ?? []), ...draftGroups].filter((g) => !isAllGroup(g));
   }, [groups, changes, isDraft]);
+  const canEditAnyGroup = allGroups.some(canEditGroup);
 
   const assignedRefs = useMemo(() => {
     const assigned = new Set<string>();
@@ -122,7 +129,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   const [saving, setSaving] = useState(false);
 
   const saveAssignments = async () => {
-    if (!peer?.id) return;
+    if (!peer?.id || !canEditAnyGroup) return;
     // Narrowed once here; the async IIFE below re-widens peer.id otherwise.
     const peerId = peer.id;
     const added = allGroups.filter(
@@ -351,7 +358,11 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
                   <div className={cn("px-3 pb-0.5", index === 0 && "pt-3")}>
                     <MemberRow
                       checked={selectedRefs.has(groupRef(g))}
-                      onToggle={peer ? () => toggleGroup(g) : undefined}
+                      onToggle={
+                        peer && canEditGroup(g)
+                          ? () => toggleGroup(g)
+                          : undefined
+                      }
                     >
                       <div className={"flex items-center gap-2 pl-2 py-0.5"}>
                         <div
@@ -404,44 +415,46 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
         </TabsContent>
       </Tabs>
 
-      <div
-        className={
-          "shrink-0 border-t border-nb-gray-910 px-5 py-4 flex items-center justify-between"
-        }
-      >
-        <span className={"text-xs text-nb-gray-400"}>
-          {`${selectedRefs.size} of ${allGroups.length} Assigned`}
-        </span>
-        <div className={"flex items-center gap-3"}>
-          <Button
-            variant={"secondary"}
-            size={"xs"}
-            className={"py-2.5"}
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant={"primary"}
-            size={"xs"}
-            className={"relative py-2.5"}
-            disabled={!dirty || saving}
-            onClick={() => void saveAssignments()}
-          >
-            <span className={cn(saving && "invisible")}>
-              {isDraft ? "Assign" : "Save"}
-            </span>
-            {saving && (
-              <Loader2
-                size={14}
-                className={
-                  "animate-spin absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                }
-              />
-            )}
-          </Button>
+      {canEditAnyGroup && (
+        <div
+          className={
+            "shrink-0 border-t border-nb-gray-910 px-5 py-4 flex items-center justify-between"
+          }
+        >
+          <span className={"text-xs text-nb-gray-400"}>
+            {`${selectedRefs.size} of ${allGroups.length} Assigned`}
+          </span>
+          <div className={"flex items-center gap-3"}>
+            <Button
+              variant={"secondary"}
+              size={"xs"}
+              className={"py-2.5"}
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={"primary"}
+              size={"xs"}
+              className={"relative py-2.5"}
+              disabled={!dirty || saving}
+              onClick={() => void saveAssignments()}
+            >
+              <span className={cn(saving && "invisible")}>
+                {isDraft ? "Assign" : "Save"}
+              </span>
+              {saving && (
+                <Loader2
+                  size={14}
+                  className={
+                    "animate-spin absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                  }
+                />
+              )}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </motion.div>
   );
 };

@@ -2,6 +2,7 @@ import { Node } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
+import { isEmptiedPolicy } from "./change-cascade";
 import {
   deriveResourceType,
   getDraftResource,
@@ -15,6 +16,12 @@ import {
   getPoliciesTargetingResources,
   getPolicyRegroupUpdates,
   isCompleteDraftResource,
+  dropAbsorbedPlaceholder,
+  findPlaceholderHolder,
+  getResourceDraftGroupIds,
+  getResourceLiveBaseline,
+  getResourceNodeEnabled,
+  withResourceLiveBaseline,
   isDeployablePolicy,
   isTrackablePolicy,
   pinByOrder,
@@ -255,6 +262,92 @@ describe("getPolicyRegroupUpdates", () => {
     expect(updates[0].id).toBe("p3");
     expect(updates[0].rules[0].sources).toEqual([group]);
     expect(updates[0].rules[0].destinations).toEqual([group]);
+  });
+});
+
+describe("an absorbed placeholder has no node of its own", () => {
+  const holder = {
+    id: "group-g1",
+    position: { x: 0, y: 0 },
+    data: {
+      group: { id: "g1", name: "G" },
+      draftPeers: [
+        { id: "draft-a", setupKeyId: "k-a", boundGroupId: "bg-a" },
+        { id: "draft-b" },
+      ],
+      addedMembers: new Set(["draft-a", "draft-b", "p1"]),
+    },
+  } as never;
+  const other = { id: "peer-p9", position: { x: 0, y: 0 }, data: {} } as never;
+
+  it("finds the group node holding it", () => {
+    expect(findPlaceholderHolder([other, holder], "draft-a")?.id).toBe(
+      "group-g1",
+    );
+    expect(findPlaceholderHolder([other, holder], "draft-zz")).toBeUndefined();
+  });
+
+  it("drops it from draftPeers and from addedMembers", () => {
+    const [, next] = dropAbsorbedPlaceholder([other, holder], "draft-a");
+    expect(next.data.draftPeers).toEqual([{ id: "draft-b" }]);
+    expect(Array.from(next.data.addedMembers as Set<string>)).toEqual([
+      "draft-b",
+      "p1",
+    ]);
+  });
+
+  it("leaves nodes that do not hold it untouched", () => {
+    const input = [other, holder];
+    const next = dropAbsorbedPlaceholder(input, "draft-zz");
+    expect(next[0]).toBe(other);
+    expect(next[1]).toBe(holder);
+  });
+});
+
+describe("getResourceNodeEnabled — the resource's state, not the frame's dim", () => {
+  const existing = (data: Record<string, unknown>) => ({
+    id: "resource-r1",
+    data,
+  });
+
+  it("reads an existing resource's own enabled flag, not the node's", () => {
+    // What useNetworkView/useDraft actually build.
+    expect(
+      getResourceNodeEnabled(
+        existing({ enabled: true, resource: { id: "r1", enabled: false } }),
+      ),
+    ).toBe(false);
+    expect(
+      getResourceNodeEnabled(
+        existing({ enabled: false, resource: { id: "r1", enabled: true } }),
+      ),
+    ).toBe(true);
+  });
+
+  it("prefers a draft toggle over the live value, and live over nothing", () => {
+    expect(
+      getResourceNodeEnabled(
+        existing({ resourceEnabled: false, resource: { id: "r1", enabled: true } }),
+      ),
+    ).toBe(false);
+    expect(
+      getResourceNodeEnabled(existing({ resource: { id: "r1", enabled: false } })),
+    ).toBe(false);
+    expect(getResourceNodeEnabled(existing({ resource: { id: "r1" } }))).toBe(true);
+  });
+
+  it("uses the node flag for a draft resource, which has no live twin", () => {
+    expect(
+      getResourceNodeEnabled({ id: "resource-new-1", data: { enabled: false } }),
+    ).toBe(false);
+    expect(
+      getResourceNodeEnabled({ id: "resource-new-1", data: { enabled: true } }),
+    ).toBe(true);
+    expect(getResourceNodeEnabled({ id: "resource-new-1", data: {} })).toBe(true);
+  });
+
+  it("defaults to enabled when there is nothing to read", () => {
+    expect(getResourceNodeEnabled(undefined)).toBe(true);
   });
 });
 
@@ -628,5 +721,130 @@ describe("withFreshGroupCounts", () => {
       { id: "g1", name: "Ops", peers_count: 5 },
     ]);
     expect(stale.peers_count).toBe(1);
+  });
+});
+
+// `data.resource` is overwritten by the resource editor, so it is only the live
+// snapshot until the first edit. Revert detection needs the real one.
+describe("the live resource baseline survives an edit", () => {
+  const live = { id: "r1", name: "db", address: "10.0.0.1/32", enabled: false };
+
+  it("falls back to data.resource before anything is captured", () => {
+    expect(getResourceLiveBaseline({ data: { resource: live } })).toBe(live);
+  });
+
+  it("prefers the captured baseline once data.resource holds an edit", () => {
+    const edited = { ...live, name: "db2" };
+    expect(
+      getResourceLiveBaseline({ data: { resource: edited, liveResource: live } })
+        ?.name,
+    ).toBe("db");
+  });
+
+  it("captures on the first edit and leaves it alone on the second", () => {
+    const first = withResourceLiveBaseline({ resource: live });
+    expect(first.liveResource).toBe(live);
+
+    const edited = { ...live, name: "db2" };
+    const second = withResourceLiveBaseline({
+      ...first,
+      resource: edited,
+    });
+    // Capturing again here is what made a revert to "db" look like a change.
+    expect(second.liveResource).toBe(live);
+  });
+
+  it("returns undefined when there is nothing to read", () => {
+    expect(getResourceLiveBaseline(undefined)).toBeUndefined();
+    expect(getResourceLiveBaseline({ data: {} })).toBeUndefined();
+  });
+});
+
+describe("getResourceDraftGroupIds — the draft's groups, not the live ones", () => {
+  it("prefers a pending group edit over the live membership", () => {
+    expect(
+      getResourceDraftGroupIds({
+        data: {
+          resourceGroupIds: ["g9"],
+          resource: { id: "r1", groups: [{ id: "g1" }] },
+        },
+      }),
+    ).toEqual(["g9"]);
+  });
+
+  it("normalises live groups from objects or bare ids", () => {
+    expect(
+      getResourceDraftGroupIds({
+        data: { resource: { id: "r1", groups: [{ id: "g1" }, "g2"] } },
+      }),
+    ).toEqual(["g1", "g2"]);
+  });
+
+  it("keeps an explicit empty edit rather than falling back to live", () => {
+    expect(
+      getResourceDraftGroupIds({
+        data: { resourceGroupIds: [], resource: { id: "r1", groups: ["g1"] } },
+      }),
+    ).toEqual([]);
+  });
+
+  it("is empty when there is nothing to read", () => {
+    expect(getResourceDraftGroupIds(undefined)).toEqual([]);
+  });
+});
+
+// The gap that let a group deletion record an undeployable change: the tracker tested
+// both-sides-bare while the deploy sink asserts both-sides-present, so a ONE-sided
+// policy satisfied neither and travelled to the API as an update the sink refused.
+describe("isEmptiedPolicy and isDeployablePolicy leave no gap between them", () => {
+  const sided = (
+    sources: Partial<Group>[],
+    destinations: Partial<Group>[],
+  ): Policy =>
+    ({
+      id: "p1",
+      name: "P",
+      enabled: true,
+      rules: [
+        {
+          name: "P",
+          enabled: true,
+          bidirectional: true,
+          action: "accept",
+          protocol: "all",
+          ports: [],
+          sources,
+          destinations,
+        },
+      ],
+    }) as unknown as Policy;
+
+  const A = { id: "gA", name: "A" };
+  const B = { id: "gB", name: "B" };
+
+  it.each([
+    ["both sides bare", sided([], [])],
+    ["no source", sided([], [B])],
+    ["no destination", sided([A], [])],
+  ])("treats %s as emptied, which the sink also refuses", (_label, policy) => {
+    expect(isEmptiedPolicy(policy)).toBe(true);
+    expect(isDeployablePolicy(policy)).toBe(false);
+  });
+
+  it("treats a policy with both sides as neither emptied nor undeployable", () => {
+    const policy = sided([A], [B]);
+    expect(isEmptiedPolicy(policy)).toBe(false);
+    expect(isDeployablePolicy(policy)).toBe(true);
+  });
+
+  // The one asymmetry that is deliberate: a policy pointing at an uninstalled
+  // placeholder peer is a real pending change, blocked by that peer's own
+  // install-peer issue. Turning it into a policy DELETION would be wrong.
+  it("does not call a policy waiting on an uninstalled peer emptied", () => {
+    const policy = sided([A], []);
+    policy.rules[0].destinationResource = { id: "draft-abc", type: "host" };
+    expect(isEmptiedPolicy(policy)).toBe(false);
+    expect(isDeployablePolicy(policy)).toBe(false);
+    expect(isTrackablePolicy(policy)).toBe(true);
   });
 });

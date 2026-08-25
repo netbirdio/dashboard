@@ -1,5 +1,8 @@
 "use client";
 
+import { Modal } from "@components/modal/Modal";
+import { useReactFlow, XYPosition } from "@xyflow/react";
+import { sortBy } from "lodash";
 import React, {
   createContext,
   useContext,
@@ -7,24 +10,21 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { sortBy } from "lodash";
+import { useDialog } from "@/contexts/DialogProvider";
+import { useGroups } from "@/contexts/GroupsProvider";
+import { Group } from "@/interfaces/Group";
+import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import {
   AccessControlModalContent,
-  PolicyDestinationScope,
   AccessControlUpdateModal,
+  PolicyDestinationScope,
 } from "@/modules/access-control/AccessControlModal";
 import AgentPolicyModal from "@/modules/agent-network/AgentPolicyModal";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
-import { Modal } from "@components/modal/Modal";
-import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
-import { Group } from "@/interfaces/Group";
-import { useGroups } from "@/contexts/GroupsProvider";
-import { useDialog } from "@/contexts/DialogProvider";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useReactFlow, XYPosition } from "@xyflow/react";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   getDraftResource,
   getPlaceholderPeer,
@@ -74,7 +74,7 @@ export function ControlCenterPolicyProvider({
     trackUpdatePolicy,
     trackDeletePolicy,
     trackCreateGroup,
-    removeChange,
+    patchPendingPolicyUpdate,
   } = useDraftChangeset();
   const { setDropdownOptions } = useGroups();
   const reactFlow = useReactFlow();
@@ -615,12 +615,12 @@ export function ControlCenterPolicyProvider({
         return;
       }
     }
-    // A pending edit on an incomplete policy would ship that broken state.
+    // A pending edit survives the strip, blocked by its Incomplete issue — not via
+    // trackUpdatePolicy, which would read the emptied policy as a deletion.
     if (!isCompletePolicy(policy)) {
-      const pending = changes.find(
-        (c) => c.type === "update-policy" && c.policyId === policy.id,
-      );
-      if (pending) removeChange(pending.id);
+      // Functional update only: deferred strips hold a pre-removal `changes` closure,
+      // and a whole-set write would resurrect what the removal untracked.
+      patchPendingPolicyUpdate({ policyId: policy.id, policy });
       drawPolicyOnCanvas(policy);
       return;
     }

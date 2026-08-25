@@ -1,3 +1,6 @@
+import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
+import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
+import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { cn, singularize } from "@utils/helpers";
 import {
   AlertTriangleIcon,
@@ -8,9 +11,8 @@ import {
 import * as React from "react";
 import Skeleton from "react-loading-skeleton";
 import CircleIcon from "@/assets/icons/CircleIcon";
-import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
-import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
-import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
 export const RoutingPeersIndicator = ({
@@ -105,6 +107,12 @@ export const RoutingPeersBar = ({
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const contentRef = React.useRef<HTMLDivElement>(null);
 
+  const { isDraft } = useDraftMode();
+  const { permission } = usePermissions();
+  // Live Add/row-edit hit the routers API directly, so they follow the node menu's
+  // networks.update gate; draft actions only queue changes the pre-flight re-checks.
+  const canManage = isDraft || permission.networks.update;
+
   // The ReactFlow pane stops pointerdown before it bubbles to Radix's
   // outside-dismiss, so canvas clicks only reach a capture-phase listener.
   React.useEffect(() => {
@@ -125,8 +133,13 @@ export const RoutingPeersBar = ({
   const hasRouters = rows.length > 0 || count > 0;
   // VirtualScrollAreaList keys items by `id`.
   const virtualRows = React.useMemo(
-    () => rows.map((row) => ({ ...row, id: row.key })),
-    [rows],
+    () =>
+      rows.map((row) => ({
+        ...row,
+        id: row.key,
+        onEdit: canManage ? row.onEdit : undefined,
+      })),
+    [rows, canManage],
   );
 
   return (
@@ -155,7 +168,7 @@ export const RoutingPeersBar = ({
               // preventDefault Radix latches `open` and the popover springs out.
               if (!hasRouters) {
                 e.preventDefault();
-                onAdd();
+                if (canManage) onAdd();
               }
             }}
             className={cn(
@@ -260,7 +273,7 @@ export const RoutingPeersBar = ({
         </PopoverContent>
       </Popover>
       {/* With no routers the status button itself adds the first. */}
-      {hasRouters && (
+      {hasRouters && canManage && (
         <button
           type={"button"}
           onClick={(e) => {

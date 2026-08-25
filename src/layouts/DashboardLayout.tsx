@@ -5,7 +5,6 @@ import { useOidcUser } from "@axa-fr/react-oidc";
 import Button from "@components/Button";
 import { UserAvatar } from "@components/ui/UserAvatar";
 import { cn } from "@utils/helpers";
-import { useNavigationGuard } from "@utils/navigation-guard";
 import { isNetBirdCloud } from "@utils/netbird";
 import { useIsSm, useIsXs } from "@utils/responsive";
 import { AnimatePresence, motion } from "framer-motion";
@@ -34,8 +33,6 @@ export default function DashboardLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  useNavigationGuard();
-
   return (
     <ApplicationProvider>
       <DistributorProvider>

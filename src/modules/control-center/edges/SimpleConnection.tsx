@@ -3,8 +3,8 @@ import React from "react";
 import { useSourceGroupEnabled } from "@/modules/control-center/utils/helpers";
 
 type Props = {
-  data: {
-    enabled: boolean;
+  data?: {
+    enabled?: boolean;
   };
 } & EdgeProps;
 
@@ -28,7 +28,10 @@ export function SimpleConnection({
     targetPosition,
   });
 
-  const enabled = useSourceGroupEnabled(source);
+  // The edge's own flag wins: some views (users) set enabled on the EDGE while
+  // their source node carries none, and the node lookup would default to false.
+  const nodeEnabled = useSourceGroupEnabled(source);
+  const enabled = data?.enabled ?? nodeEnabled;
 
   return (
     <BaseEdge

@@ -1,4 +1,17 @@
+import Button from "@components/Button";
+import { Checkbox } from "@components/Checkbox";
+import { DropdownInfoText } from "@components/DropdownInfoText";
+import { notify } from "@components/Notification";
+import {
+  MemoizedScrollArea,
+  ScrollAreaViewport,
+} from "@components/ScrollArea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
+import { SmallBadge } from "@components/ui/SmallBadge";
+import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
+import { type Edge, useReactFlow } from "@xyflow/react";
+import { motion } from "framer-motion";
 import {
   DownloadIcon,
   Layers3Icon,
@@ -7,51 +20,40 @@ import {
   SearchIcon,
   TriangleAlertIcon,
 } from "lucide-react";
-import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { useSWRConfig } from "swr";
-import { type Edge, useReactFlow } from "@xyflow/react";
-import { useApiCall } from "@utils/api";
-import { notify } from "@components/Notification";
-import { useDialog } from "@/contexts/DialogProvider";
-import Button from "@components/Button";
-import {
-  MemoizedScrollArea,
-  ScrollAreaViewport,
-} from "@components/ScrollArea";
 import { Virtuoso } from "react-virtuoso";
-import { Checkbox } from "@components/Checkbox";
-import { DropdownInfoText } from "@components/DropdownInfoText";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
+import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
-import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
+import { useAccount } from "@/modules/account/useAccount";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import {
+  getNodeGroup,
+  isAllGroup,
+  isGroupNode,
+  isNewGroup,
+  useDraftGroupActions,
+} from "@/modules/control-center/hooks/useDraftGroupActions";
+import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
+import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 import {
   getGroupPeers,
   getGroupResources,
 } from "@/modules/control-center/utils/graph-builder";
-import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   getIpPlaceholderFromRange,
   getPlaceholderPeer,
   pinByOrder,
   useStructuralNodes,
 } from "@/modules/control-center/utils/helpers";
-import { useAccount } from "@/modules/account/useAccount";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
-import {
-  getNodeGroup,
-  isAllGroup,
-  isGroupNode,
-  useDraftGroupActions,
-} from "@/modules/control-center/hooks/useDraftGroupActions";
 
 interface DestinationGroupPanelProps {
   // Real group id, or the canvas node id for draft groups without an API id.
@@ -91,6 +93,13 @@ export function usePanelWidth() {
 
 export const setEquals = (a: Set<string>, b: Set<string>) =>
   a.size === b.size && [...a].every((id) => b.has(id));
+
+// Draft mode is gated too: an assignment queues an update-group the deploy
+// pre-flight refuses, and a draft-created group's members deploy inside its create-group.
+export const canEditGroupMembers = (
+  groups: { create: boolean; update: boolean },
+  group: Group | undefined,
+) => (isNewGroup(group) ? groups.create : groups.update);
 
 const PANEL_MARGIN = 24;
 
@@ -312,6 +321,7 @@ export const DestinationGroupPanel = ({
   const nodes = useStructuralNodes();
   const { setNodes, setEdges } = useCanvasState();
   const { isDraft, setResourceNetworkPicker } = useDraftMode();
+  const { permission } = usePermissions();
   const { changes } = useDraftChangeset();
   const { removeGroupMember } = useDraftGroupActions();
   const { addMemberToGroup } = useDragToGroup();
@@ -451,7 +461,9 @@ export const DestinationGroupPanel = ({
   ]);
 
   const canEditMembers =
-    !isAllGroup(group) && (isDraft ? !!groupNode : !!realGroupId);
+    !isAllGroup(group) &&
+    canEditGroupMembers(permission.groups, group) &&
+    (isDraft ? !!groupNode : !!realGroupId);
   const memberPeerIds = useMemo(
     () => new Set(groupPeers.map((p) => p.id ?? "")),
     [groupPeers],
