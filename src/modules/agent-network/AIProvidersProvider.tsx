@@ -612,15 +612,12 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     true,
     agentNetworkEnabled,
   );
-  // ignoreError: saving a provider checks its url and credential against the
-  // vendor first, so a 422 naming the field to fix is an ordinary outcome of
-  // the form. The default handler sends anything in 401..500 to the global
-  // error boundary, which tears the page down under the modal — the operator
-  // sees the toast, loses the form, and has nowhere to correct the key.
-  const providersApi = useApiCall<APIProvider>(
-    "/agent-network/providers",
-    true,
-  );
+  // Default error handling on purpose: a failed save raises the shared
+  // "Request failed with status code N" toast, which carries the message the
+  // API sent — for a refused provider that is the sentence naming the url or
+  // the credential. The save paths below stay silent on failure rather than
+  // adding a second toast that says the same thing in different words.
+  const providersApi = useApiCall<APIProvider>("/agent-network/providers");
 
   const { data: apiPolicies, mutate: mutatePolicies } = useFetchApi<
     APIPolicy[]
@@ -697,11 +694,9 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: `${created.name} is now available on your agent network endpoint.`,
         });
         return fromAPI(created);
-      } catch (err) {
-        notifyFailure({
-          title: "Failed to connect provider",
-          description: err instanceof Error ? err.message : String(err),
-        });
+      } catch {
+        // Reported already by the shared request-failed toast. Returning
+        // undefined is what keeps the modal open on the fields to correct.
         return undefined;
       }
     },
@@ -744,11 +739,8 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Settings saved.",
         });
         return true;
-      } catch (err) {
-        notifyFailure({
-          title: "Failed to update provider",
-          description: err instanceof Error ? err.message : String(err),
-        });
+      } catch {
+        // Reported already by the shared request-failed toast.
         return false;
       }
     },
