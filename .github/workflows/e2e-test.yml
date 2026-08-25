@@ -165,7 +165,9 @@ jobs:
             cat env-setup.log
             exit 1
           fi
-          if ! APP_ENV=test npx next build; then
+          # Lowest CPU priority: the containers must win the scheduler, or
+          # the build can starve management past the proxy-registration wait.
+          if ! nice -n 19 env APP_ENV=test npx next build; then
             kill "$ENV_PID" 2>/dev/null || true
             exit 1
           fi

@@ -61,7 +61,9 @@ wait_proxy_cluster() {
   SERVICE_NAME=${1:-reverse-proxy}
   echo -n "Waiting for $SERVICE_NAME to register with management "
   set +e
-  local attempts=60
+  # 240s: in CI the dashboard build runs concurrently with this setup and
+  # can slow management's startup past the old 120s budget.
+  local attempts=120
   local i
   for ((i = 1; i <= attempts; i++)); do
     if $DOCKER_COMPOSE_COMMAND logs "$SERVICE_NAME" 2>&1 | grep -q "Initial mapping sync complete"; then
