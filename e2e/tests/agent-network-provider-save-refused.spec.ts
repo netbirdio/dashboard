@@ -162,10 +162,14 @@ test.describe
       // ---- styled as a failure, not a success ----
       // notify() paints the icon tile green with a check unless the caller
       // says otherwise, which is how a refusal once looked like a success.
-      await expect(page.getByTestId("notification-icon")).toHaveAttribute(
-        "data-variant",
-        "error",
-      );
+      //
+      // A failure reaches the tile two ways — notify()'s own error state, and
+      // a caller passing its own colour and icon, which is what the shared
+      // request-failed toast does — so what has to hold is the negative: this
+      // is not the default success tile.
+      const icon = page.getByTestId("notification-icon");
+      await expect(icon).toBeVisible();
+      await expect(icon).not.toHaveAttribute("data-variant", "success");
 
       // ---- the form is still there, still holding what was typed ----
       // The submit only exists while the modal is open, so its presence is the
