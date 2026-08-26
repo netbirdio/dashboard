@@ -3,9 +3,13 @@
  *
  * Saving a provider checks its upstream URL and credential against the vendor
  * before storing anything, so a 422 naming the field to correct is an ordinary
- * outcome of the form rather than a server fault. Three things have to hold,
+ * outcome of the form rather than a server fault. Four things have to hold,
  * and each one has been wrong at some point:
  *
+ *   - while the check runs the submit says so and refuses a second click. The
+ *     vendor call is the slow part and an unreachable upstream drags it out to
+ *     a timeout, which looked exactly like a button that had not registered
+ *     the first click.
  *   - exactly ONE toast, the shared "Request failed with status code N", which
  *     quotes the API's own sentence. A second toast from the save path said the
  *     same thing under a vaguer title.
@@ -60,6 +64,11 @@ async function newAgentNetworkPage(browser: Browser): Promise<{
   return { page, close: () => context.close() };
 }
 
+// How long the mocked create takes to answer. The real check is a vendor round
+// trip, so a save is never instant; holding the response gives the in-flight
+// assertions a window to run in without racing the toast.
+const REFUSAL_DELAY_MS = 1500;
+
 // refuseProviderCreate answers the create with the 422 the credential check
 // produces. Only POST is intercepted: the page still lists providers, and the
 // settings bootstrap that may precede the create is left alone.
@@ -67,6 +76,7 @@ async function refuseProviderCreate(page: Page) {
   await page.route(PROVIDERS_ENDPOINT, async (route) => {
     if (route.request().method() !== "POST") return route.continue();
     const origin = route.request().headers()["origin"] || "*";
+    await new Promise((resolve) => setTimeout(resolve, REFUSAL_DELAY_MS));
     await route.fulfill({
       status: 422,
       headers: {
@@ -100,13 +110,20 @@ test.describe
       await page.getByPlaceholder("sk-...").first().fill("sk-e2e-refused-key");
 
       // The submit lives on the Models tab — the Provider tab's primary button
-      // only advances to it.
+      // only advances to it. Matched on both spellings of its label so the
+      // same locator follows it into the in-flight state.
       await page.getByRole("tab", { name: "Models" }).click({ force: true });
       const submit = page
-        .getByRole("button", { name: /Connect Provider/ })
+        .getByRole("button", { name: /Connect(ing)? [Pp]rovider/ })
         .last();
       await expect(submit).toBeEnabled();
       await submit.click({ force: true });
+
+      // ---- the wait is visible while it lasts ----
+      // A second create is not idempotent, so the button has to say it is
+      // working and stop taking clicks rather than sit there looking untouched.
+      await expect(submit).toContainText("Connecting provider");
+      await expect(submit).toBeDisabled();
 
       // ---- the toast says what the API said ----
       const title = page.getByTestId(TITLE_TESTID).first();
@@ -133,8 +150,12 @@ test.describe
 
       // ---- the form is still there, still holding what was typed ----
       // The submit only exists while the modal is open, so its presence is the
-      // check that nothing closed underneath the toast.
+      // check that nothing closed underneath the toast. It also has to come
+      // back out of the in-flight state, or the retry the toast asks for is
+      // impossible.
       await expect(submit).toBeVisible();
+      await expect(submit).toBeEnabled();
+      await expect(submit).toContainText("Connect Provider");
       await page.getByRole("tab", { name: "Provider" }).click({ force: true });
       await expect(
         page.locator(`input[value="${providerName}"]`),

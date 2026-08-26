@@ -204,6 +204,10 @@ export default function AIProviderModal({
   const settingsBootstrapped = !!settings;
 
   const [tab, setTab] = useState<string>("provider");
+  // A save reaches the vendor to check the url and credential before storing
+  // anything, so it holds for as long as that round trip takes — up to a
+  // timeout. Nothing else on the footer moves while it does.
+  const [saveInFlight, setSaveInFlight] = useState(false);
   const [providerId, setProviderId] = useState<AIProviderId>(
     provider?.providerId ?? "openai_api",
   );
@@ -480,51 +484,56 @@ export default function AIProviderModal({
           identityHeaderGroups: identityHeaderGroups.trim(),
         }
       : {};
-    if (isEdit && provider) {
-      const saved = await updateProvider(provider.id, {
+    setSaveInFlight(true);
+    try {
+      if (isEdit && provider) {
+        const saved = await updateProvider(provider.id, {
+          providerId,
+          name,
+          upstreamUrl,
+          models: submittedModels,
+          extraValues: sanitizedExtraValues,
+          ...identityOverrides,
+          skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+          metadataDisabled,
+          // Only forward the API key when the user actually rotated it
+          ...(apiKey && apiKey.trim() !== MASKED_API_KEY ? { apiKey } : {}),
+        });
+        // The url and credential are checked against the vendor before the
+        // change is stored, so a save can be refused for a reason the operator
+        // has to fix here. Closing would throw away the key they just typed —
+        // and it never comes back from the API to be typed over again.
+        if (!saved) return;
+        handleClose();
+        return;
+      }
+      // First create: bootstrap the account's endpoint before the provider
+      // exists, as an explicit settings POST. A failure keeps the wizard open
+      // (the provider isn't created either) so the operator sees the error and
+      // can retry — this used to be a silent backend side effect.
+      if (!settingsBootstrapped) {
+        const bootstrapped = await bootstrapAgentNetworkSettings(
+          bootstrapCluster.trim(),
+        );
+        if (!bootstrapped) return;
+      }
+      const created = await addProvider({
         providerId,
         name,
         upstreamUrl,
-        models: submittedModels,
+        apiKey,
         extraValues: sanitizedExtraValues,
         ...identityOverrides,
         skipTlsVerification: isCustomKind ? skipTlsVerification : false,
         metadataDisabled,
-        // Only forward the API key when the user actually rotated it
-        ...(apiKey && apiKey.trim() !== MASKED_API_KEY ? { apiKey } : {}),
+        models: submittedModels,
+        enabled: true,
       });
-      // The url and credential are checked against the vendor before the
-      // change is stored, so a save can be refused for a reason the operator
-      // has to fix here. Closing would throw away the key they just typed —
-      // and it never comes back from the API to be typed over again.
-      if (!saved) return;
+      if (!created) return;
       handleClose();
-      return;
+    } finally {
+      setSaveInFlight(false);
     }
-    // First create: bootstrap the account's endpoint before the provider
-    // exists, as an explicit settings POST. A failure keeps the wizard open
-    // (the provider isn't created either) so the operator sees the error and
-    // can retry — this used to be a silent backend side effect.
-    if (!settingsBootstrapped) {
-      const bootstrapped = await bootstrapAgentNetworkSettings(
-        bootstrapCluster.trim(),
-      );
-      if (!bootstrapped) return;
-    }
-    const created = await addProvider({
-      providerId,
-      name,
-      upstreamUrl,
-      apiKey,
-      extraValues: sanitizedExtraValues,
-      ...identityOverrides,
-      skipTlsVerification: isCustomKind ? skipTlsVerification : false,
-      metadataDisabled,
-      models: submittedModels,
-      enabled: true,
-    });
-    if (!created) return;
-    handleClose();
   };
 
   // providerOptions are sorted into three groups, first-party AI Providers
@@ -652,6 +661,24 @@ export default function AIProviderModal({
   // Named rather than used inline: it gates the Load button, the Save button
   // and the result line, so one definition keeps them from drifting apart.
   const discoveryInFlight = discovered.isLoading;
+
+  // The footer renders the same submit twice — once on the models tab and once
+  // on the mappings tab — so its state is defined once here.
+  const submitDisabled =
+    !canContinueFromProvider || discoveryInFlight || saveInFlight;
+  const submitLabel = saveInFlight ? (
+    <>
+      <Loader2 size={16} className={"animate-spin"} />
+      {isEdit ? "Saving changes…" : "Connecting provider…"}
+    </>
+  ) : isEdit ? (
+    "Save Changes"
+  ) : (
+    <>
+      <PlusCircle size={16} />
+      Connect Provider
+    </>
+  );
 
   // A discovery result describes one provider, endpoint and credential. Once
   // any of those changes on screen, the previous answer is about a
@@ -1596,16 +1623,9 @@ export default function AIProviderModal({
                   <Button
                     variant={"primary"}
                     onClick={handleSubmit}
-                    disabled={!canContinueFromProvider || discoveryInFlight}
+                    disabled={submitDisabled}
                   >
-                    {isEdit ? (
-                      "Save Changes"
-                    ) : (
-                      <>
-                        <PlusCircle size={16} />
-                        Connect Provider
-                      </>
-                    )}
+                    {submitLabel}
                   </Button>
                 )}
               </>
@@ -1618,16 +1638,9 @@ export default function AIProviderModal({
                 <Button
                   variant={"primary"}
                   onClick={handleSubmit}
-                  disabled={!canContinueFromProvider || discoveryInFlight}
+                  disabled={submitDisabled}
                 >
-                  {isEdit ? (
-                    "Save Changes"
-                  ) : (
-                    <>
-                      <PlusCircle size={16} />
-                      Connect Provider
-                    </>
-                  )}
+                  {submitLabel}
                 </Button>
               </>
             )}
