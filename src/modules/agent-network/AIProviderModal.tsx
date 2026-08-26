@@ -971,6 +971,7 @@ export default function AIProviderModal({
                   helpText={"The API key issued by the provider."}
                 >
                   <Input
+                    data-testid={"agent-network-provider-key-input"}
                     type={"password"}
                     showPasswordToggle
                     value={apiKey}
@@ -1022,6 +1023,7 @@ export default function AIProviderModal({
                 helpText={"Shown in the Agent Network table."}
               >
                 <Input
+                  data-testid={"agent-network-provider-name-input"}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={"e.g. OpenAI"}
@@ -1625,6 +1627,7 @@ export default function AIProviderModal({
                 ) : (
                   <Button
                     variant={"primary"}
+                    data-testid={"agent-network-provider-submit"}
                     onClick={handleSubmit}
                     disabled={submitDisabled}
                   >
@@ -1640,6 +1643,7 @@ export default function AIProviderModal({
                 </Button>
                 <Button
                   variant={"primary"}
+                  data-testid={"agent-network-provider-submit"}
                   onClick={handleSubmit}
                   disabled={submitDisabled}
                 >

@@ -21,6 +21,13 @@
  * The refusal is mocked rather than provoked: the backend check ships with a
  * management build these tests do not pin, and what is under test here is the
  * dashboard's handling of the response, not the vendor call that produces it.
+ *
+ * Like the other agent-network specs, this one builds its own context rather
+ * than taking the shared dashboardAsOwner fixture: the Agent Network menu is
+ * deployment-gated behind a localStorage override that has to be in place
+ * before the first navigation, which addInitScript on an own context is the
+ * way to do. The route interception below is a second reason — the shared page
+ * is worker-scoped, and a 422 left on it would follow every later test.
  */
 import { type Browser, expect, type Page, test } from "@playwright/test";
 import { loginToApp, navigateTo } from "../helpers/auth";
@@ -108,24 +115,36 @@ test.describe
         .click({ force: true });
 
       const providerName = generateRandomName(PROVIDER_PREFIX);
-      await page.locator('input[value="OpenAI API"]').fill(providerName);
-      await page.getByPlaceholder("sk-...").first().fill("sk-e2e-refused-key");
+      await page
+        .getByTestId("agent-network-provider-name-input")
+        .fill(providerName);
+      await page
+        .getByTestId("agent-network-provider-key-input")
+        .fill("sk-e2e-refused-key");
 
       // The submit lives on the Models tab — the Provider tab's primary button
-      // only advances to it. Matched on both spellings of its label so the
-      // same locator follows it into the in-flight state.
+      // only advances to it.
       await page.getByRole("tab", { name: "Models" }).click({ force: true });
-      const submit = page
-        .getByRole("button", { name: /Connect(ing)? [Pp]rovider/ })
-        .last();
+      const submit = page.getByTestId("agent-network-provider-submit");
       await expect(submit).toBeEnabled();
+
+      const refusal = page.waitForResponse(
+        (resp) =>
+          PROVIDERS_ENDPOINT.test(resp.url()) &&
+          resp.request().method() === "POST",
+        { timeout: 30_000 },
+      );
       await submit.click({ force: true });
 
       // ---- the wait is visible while it lasts ----
       // A second create is not idempotent, so the button has to say it is
       // working and stop taking clicks rather than sit there looking untouched.
+      // Asserted before the response is awaited: the mock holds it open for
+      // exactly this window.
       await expect(submit).toContainText("Connecting provider");
       await expect(submit).toBeDisabled();
+
+      expect((await refusal).status()).toBe(422);
 
       // ---- the toast says what the API said ----
       const title = page.getByTestId(TITLE_TESTID).first();
@@ -143,12 +162,10 @@ test.describe
       // ---- styled as a failure, not a success ----
       // notify() paints the icon tile green with a check unless the caller
       // says otherwise, which is how a refusal once looked like a success.
-      await expect(
-        page.locator("[data-toast-notification] .bg-red-500").first(),
-      ).toBeVisible();
-      await expect(
-        page.locator("[data-toast-notification] .bg-green-500"),
-      ).toHaveCount(0);
+      await expect(page.getByTestId("notification-icon")).toHaveAttribute(
+        "data-variant",
+        "error",
+      );
 
       // ---- the form is still there, still holding what was typed ----
       // The submit only exists while the modal is open, so its presence is the
@@ -160,13 +177,13 @@ test.describe
       await expect(submit).toContainText("Connect Provider");
       await page.getByRole("tab", { name: "Provider" }).click({ force: true });
       await expect(
-        page.locator(`input[value="${providerName}"]`),
-      ).toBeVisible();
+        page.getByTestId("agent-network-provider-name-input"),
+      ).toHaveValue(providerName);
       // The key matters most: the API never returns one, so a form that lost
       // it leaves the operator with nothing to correct.
       await expect(
-        page.locator('input[value="sk-e2e-refused-key"]'),
-      ).toBeVisible();
+        page.getByTestId("agent-network-provider-key-input"),
+      ).toHaveValue("sk-e2e-refused-key");
     } finally {
       await close();
     }
