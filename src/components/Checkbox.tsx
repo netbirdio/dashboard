@@ -39,6 +39,7 @@ const Checkbox = React.forwardRef<
         "peer h-5 w-5 shrink-0 rounded-[4px] border",
         "ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-neutral-900 data-[state=checked]:text-neutral-50 ",
+        "disabled:data-[state=unchecked]:border-dashed dark:disabled:data-[state=unchecked]:border-nb-gray-700",
         "data-[state=indeterminate]:bg-neutral-900 data-[state=indeterminate]:text-neutral-50",
         className,
       )}
