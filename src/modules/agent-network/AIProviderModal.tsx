@@ -616,27 +616,24 @@ export default function AIProviderModal({
   // provider has to supply the key the operator is typing.
   //
   // That reuse is only right while the form still describes the record the
-  // credential belongs to. The API resolves a provider_id request entirely
-  // from the stored row — vendor, upstream and key — so switching the vendor
-  // dropdown and then asking by record id answers with the OLD vendor's models
-  // and offers them for the new one. A replacement key typed over the mask is
-  // the same mistake in the other direction: the operator wants that key
-  // tested, not the one already saved.
+  // credential belongs to. The API takes the vendor from the stored row, so
+  // switching the vendor dropdown and then asking by record id answers with
+  // the OLD vendor's models and offers them for the new one. A replacement key
+  // typed over the mask is the same mistake in the other direction: the
+  // operator wants that key tested, not the one already saved.
   //
-  // Changing the upstream URL invalidates the saved path: discovery sends
-  // provider_id and the API resolves the URL from the stored row, so a changed
-  // URL would silently test the old endpoint. Require a freshly entered key
-  // when the URL differs; canDiscoverModels will block discovery until the
-  // operator provides one.
+  // A retyped URL is neither. It is sent with the record id and overrides the
+  // stored upstream, so the endpoint on the form is the one listed against —
+  // asking for the key back would be asking for something the API never
+  // returned.
   const useSavedCredential =
     isEdit &&
     !!provider?.id &&
     providerId === provider.providerId &&
-    upstreamUrl === provider.upstreamUrl &&
     apiKey.trim() === MASKED_API_KEY;
 
   const canDiscoverModels = useMemo(() => {
-    if (useSavedCredential) return true;
+    if (useSavedCredential) return upstreamUrl.trim() !== "";
     return (
       upstreamUrl.trim() !== "" &&
       apiKey.trim() !== "" &&
@@ -649,7 +646,11 @@ export default function AIProviderModal({
   const loadModelsFromProvider = async () => {
     await discovered.discover(
       useSavedCredential && provider?.id
-        ? { catalog_provider_id: providerId, provider_id: provider.id }
+        ? {
+            catalog_provider_id: providerId,
+            provider_id: provider.id,
+            upstream_url: upstreamUrl.trim(),
+          }
         : {
             catalog_provider_id: providerId,
             upstream_url: upstreamUrl.trim(),
@@ -1471,7 +1472,9 @@ export default function AIProviderModal({
                 </Button>
                 {!canDiscoverModels && (
                   <HelpText className={"!mb-0"}>
-                    Enter the endpoint URL and API key first.
+                    {useSavedCredential
+                      ? "Enter the endpoint URL first."
+                      : "Enter the endpoint URL and API key first."}
                   </HelpText>
                 )}
                 {discovered.notSupported && (

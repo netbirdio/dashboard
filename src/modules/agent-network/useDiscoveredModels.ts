@@ -27,6 +27,8 @@ type DiscoveryResponse = { models: DiscoveredModel[] };
 
 type DiscoveryRequest = {
   catalog_provider_id: string;
+  // Sent alongside provider_id, this overrides the record's stored upstream,
+  // which is how a retyped URL is listed against before it is saved.
   upstream_url?: string;
   // Exactly one of these. api_key is for a provider being typed in and not yet
   // saved; provider_id reuses a saved record's stored credential, which is how
