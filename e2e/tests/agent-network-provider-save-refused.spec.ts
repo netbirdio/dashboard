@@ -23,7 +23,7 @@
  * dashboard's handling of the response, not the vendor call that produces it.
  */
 import { type Browser, expect, type Page, test } from "@playwright/test";
-import { loginToApp } from "../helpers/auth";
+import { loginToApp, navigateTo } from "../helpers/auth";
 import { generateRandomName } from "../helpers/utils";
 
 const AGENT_NETWORK_CONFIG_KEY = "netbird-test-agent-network";
@@ -97,8 +97,10 @@ test.describe
     try {
       await refuseProviderCreate(page);
 
-      await page.goto("/agent-network/providers");
-      await page.keyboard.press("Escape");
+      // navigateTo rather than goto: it dismisses the setup modal that greets a
+      // fresh account and clears the scroll lock it leaves behind, either of
+      // which swallows the clicks below.
+      await navigateTo(page, "/agent-network/providers");
 
       await page
         .getByRole("button", { name: "Connect Provider" })

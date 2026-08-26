@@ -511,7 +511,10 @@ type AIProvidersContextValue = {
   // Resolves false when the save was refused — the backend checks a provider's
   // url and credential before storing them, so a rejected edit must leave the
   // form open with what the operator typed still in it.
-  updateProvider: (id: string, updates: ProviderUpdateInput) => Promise<boolean>;
+  updateProvider: (
+    id: string,
+    updates: ProviderUpdateInput,
+  ) => Promise<boolean>;
   toggleProvider: (id: string) => Promise<void>;
   deleteProvider: (id: string) => Promise<void>;
   addPolicy: (
@@ -686,19 +689,24 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
 
   const addProvider = useCallback(
     async (input: ProviderConnectInput) => {
+      let created: APIProvider;
       try {
-        const created = await providersApi.post(toCreateRequest(input));
-        await mutate();
-        notify({
-          title: "AI provider connected",
-          description: `${created.name} is now available on your agent network endpoint.`,
-        });
-        return fromAPI(created);
+        created = await providersApi.post(toCreateRequest(input));
       } catch {
         // Reported already by the shared request-failed toast. Returning
         // undefined is what keeps the modal open on the fields to correct.
         return undefined;
       }
+      // Outside the catch: the provider exists from here on, and a failed
+      // revalidation is a stale list rather than a failed create. Reporting it
+      // as one would hold the modal open on a form whose next submit creates a
+      // second provider.
+      await mutate().catch(() => undefined);
+      notify({
+        title: "AI provider connected",
+        description: `${created.name} is now available on your agent network endpoint.`,
+      });
+      return fromAPI(created);
     },
     [providersApi, mutate],
   );
@@ -706,7 +714,16 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const updateProvider = useCallback(
     async (id: string, updates: ProviderUpdateInput) => {
       const existing = (apiProviders ?? []).find((p) => p.id === id);
-      if (!existing) return false;
+      if (!existing) {
+        // The update merges onto the record as this browser last saw it, so a
+        // provider deleted elsewhere leaves nothing to merge onto. Silence
+        // here read as a save that did nothing.
+        notifyFailure({
+          title: "Provider not updated",
+          description: "This provider is no longer available. Reload the page.",
+        });
+        return false;
+      }
       const merged: APIProviderRequest = {
         provider_id: updates.providerId ?? existing.provider_id,
         name: updates.name ?? existing.name,
@@ -733,16 +750,18 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       };
       try {
         await providersApi.put(merged, `/${id}`);
-        await mutate();
-        notify({
-          title: "Provider updated",
-          description: "Settings saved.",
-        });
-        return true;
       } catch {
         // Reported already by the shared request-failed toast.
         return false;
       }
+      // See addProvider: a failed revalidation is a stale list, not a failed
+      // write, and must not send the operator back to resubmit one.
+      await mutate().catch(() => undefined);
+      notify({
+        title: "Provider updated",
+        description: "Settings saved.",
+      });
+      return true;
     },
     [apiProviders, providersApi, mutate],
   );
