@@ -213,22 +213,6 @@ export default function AIProviderModal({
   );
   const [apiKey, setApiKey] = useState(isEdit ? MASKED_API_KEY : "");
   const [bootstrapCluster, setBootstrapCluster] = useState<string>("");
-  // Loading models saves the provider first, so a modal opened on "Connect"
-  // can be addressing a stored record by the time the operator presses Save.
-  // Everything that needs the record on the server reads targetProvider;
-  // isEdit keeps meaning "opened on an existing provider", which is what the
-  // titles and the masked-key state are about.
-  const [createdProvider, setCreatedProvider] = useState<
-    AIProvider | undefined
-  >();
-  // Loading models saves before it asks, and that save waits on the vendor.
-  // Without its own flag the button would sit idle-looking through the slowest
-  // part of the operation — a timeout can take seconds with nothing on screen,
-  // and the obvious response to that is to press it again.
-  const [savingBeforeDiscovery, setSavingBeforeDiscovery] = useState(false);
-  // The record on the server this modal is working against: the one it was
-  // opened on, or the one it created in order to load models.
-  const targetProvider = provider ?? createdProvider;
   const [models, setModels] = useState<EditableModel[]>(() =>
     (provider?.models ?? []).map(withModelKey),
   );
@@ -389,10 +373,6 @@ export default function AIProviderModal({
 
   const reset = () => {
     setTab("provider");
-    // A record created to load models belongs to the session that created it.
-    // Carrying it into the next one would send that session's edits to the
-    // wrong provider.
-    setCreatedProvider(undefined);
     if (isEdit && provider) {
       setProviderId(provider.providerId);
       setName(provider.name);
@@ -451,26 +431,23 @@ export default function AIProviderModal({
     return out;
   }, [catalog?.extra_headers, extraValues]);
 
-  // Drop rows the operator never filled in (an added-but-empty custom row, or
-  // the empty fallback row when the catalog is exhausted) — the API rejects
-  // models without an id, which would fail the whole save over a leftover
-  // blank line. Duplicate ids are collapsed to the first row too: the catalog
-  // dropdown can't offer an id twice, but two custom rows can be typed with
-  // the same id, and shipping both would send an ambiguous price.
-  const submittableModels = () => {
-    const seen = new Set<string>();
-    return models
-      .map((m) => ({ ...m, id: m.id.trim() }))
-      .filter((m) => {
-        if (m.id === "" || seen.has(m.id)) return false;
-        seen.add(m.id);
-        return true;
-      });
-  };
-
   const handleSubmit = async () => {
     if (!catalog) return;
-    const submittedModels = submittableModels();
+    // Drop rows the operator never filled in (an added-but-empty custom
+    // row, or the empty fallback row when the catalog is exhausted) —
+    // the API rejects models without an id, which would fail the whole
+    // save over a leftover blank line. Duplicate ids are collapsed to the
+    // first row too: the catalog dropdown can't offer an id twice, but two
+    // custom rows can be typed with the same id, and shipping both would
+    // send an ambiguous price for the model.
+    const seenModelIds = new Set<string>();
+    const submittedModels = models
+      .map((m) => ({ ...m, id: m.id.trim() }))
+      .filter((m) => {
+        if (m.id === "" || seenModelIds.has(m.id)) return false;
+        seenModelIds.add(m.id);
+        return true;
+      });
 
     // Saving an unpriced model is silent and irreversible in effect: every
     // request against it records $0, and the usage that was already spent
@@ -503,8 +480,8 @@ export default function AIProviderModal({
           identityHeaderGroups: identityHeaderGroups.trim(),
         }
       : {};
-    if (targetProvider) {
-      const saved = await updateProvider(targetProvider.id, {
+    if (isEdit && provider) {
+      const saved = await updateProvider(provider.id, {
         providerId,
         name,
         upstreamUrl,
@@ -643,9 +620,10 @@ export default function AIProviderModal({
   // when the URL differs; canDiscoverModels will block discovery until the
   // operator provides one.
   const useSavedCredential =
-    !!targetProvider?.id &&
-    providerId === targetProvider.providerId &&
-    upstreamUrl === targetProvider.upstreamUrl &&
+    isEdit &&
+    !!provider?.id &&
+    providerId === provider.providerId &&
+    upstreamUrl === provider.upstreamUrl &&
     apiKey.trim() === MASKED_API_KEY;
 
   const canDiscoverModels = useMemo(() => {
@@ -659,80 +637,21 @@ export default function AIProviderModal({
     );
   }, [useSavedCredential, upstreamUrl, apiKey]);
 
-  // persistForDiscovery stores what is on screen so the listing can be asked
-  // for by record id. The save is where the upstream and the credential are
-  // checked against the vendor, so a wrong key fails against the form's own
-  // fields with the reason attached — rather than the listing failing later
-  // with the key held only in the browser.
-  //
-  // Returns the stored record, or undefined when the save was refused; the
-  // helpers have already told the operator why.
-  const persistForDiscovery = async (): Promise<AIProvider | undefined> => {
-    const identityOverrides = customizableIdentity
-      ? {
-          identityHeaderUserId: identityHeaderUserId.trim(),
-          identityHeaderGroups: identityHeaderGroups.trim(),
-        }
-      : {};
-    const common = {
-      providerId,
-      name,
-      upstreamUrl,
-      extraValues: sanitizedExtraValues,
-      ...identityOverrides,
-      skipTlsVerification: isCustomKind ? skipTlsVerification : false,
-      metadataDisabled,
-      models: submittableModels(),
-    };
-
-    if (targetProvider) {
-      const saved = await updateProvider(targetProvider.id, {
-        ...common,
-        ...(apiKey && apiKey.trim() !== MASKED_API_KEY ? { apiKey } : {}),
-      });
-      return saved ? targetProvider : undefined;
-    }
-
-    // A provider cannot exist before the account has an endpoint.
-    if (!settingsBootstrapped) {
-      const bootstrapped = await bootstrapAgentNetworkSettings(
-        bootstrapCluster.trim(),
-      );
-      if (!bootstrapped) return undefined;
-    }
-
-    const created = await addProvider({ ...common, apiKey, enabled: true });
-    if (created) setCreatedProvider(created);
-    return created;
-  };
-
   const loadModelsFromProvider = async () => {
-    // The form still describes the stored record, so its credential is the one
-    // to test and there is nothing to write first.
-    if (useSavedCredential && targetProvider?.id) {
-      await discovered.discover({
-        catalog_provider_id: providerId,
-        provider_id: targetProvider.id,
-      });
-      return;
-    }
-
-    setSavingBeforeDiscovery(true);
-    let saved: AIProvider | undefined;
-    try {
-      saved = await persistForDiscovery();
-    } finally {
-      setSavingBeforeDiscovery(false);
-    }
-    if (!saved) return;
-    await discovered.discover({
-      catalog_provider_id: providerId,
-      provider_id: saved.id,
-    });
+    await discovered.discover(
+      useSavedCredential && provider?.id
+        ? { catalog_provider_id: providerId, provider_id: provider.id }
+        : {
+            catalog_provider_id: providerId,
+            upstream_url: upstreamUrl.trim(),
+            api_key: apiKey.trim(),
+          },
+    );
   };
 
-  // One flag for the button: the two phases are one action to the operator.
-  const discoveryInFlight = savingBeforeDiscovery || discovered.isLoading;
+  // Named rather than used inline: it gates the Load button, the Save button
+  // and the result line, so one definition keeps them from drifting apart.
+  const discoveryInFlight = discovered.isLoading;
 
   // A discovery result describes one provider, endpoint and credential. Once
   // any of those changes on screen, the previous answer is about a
@@ -1519,21 +1438,13 @@ export default function AIProviderModal({
                   ) : (
                     <RefreshCwIcon size={13} />
                   )}
-                  {savingBeforeDiscovery
-                    ? "Saving provider…"
-                    : discovered.isLoading
+                  {discoveryInFlight
                     ? "Loading models…"
                     : "Load models from provider"}
                 </Button>
                 {!canDiscoverModels && (
                   <HelpText className={"!mb-0"}>
                     Enter the endpoint URL and API key first.
-                  </HelpText>
-                )}
-                {canDiscoverModels && !useSavedCredential && !discoveryInFlight && (
-                  <HelpText className={"!mb-0"}>
-                    This saves the provider first, so the endpoint and key are
-                    checked before the vendor is asked.
                   </HelpText>
                 )}
                 {discovered.notSupported && (
