@@ -61,7 +61,6 @@ export function ControlCenterEmptyStates() {
           >
             <GetStartedTest
               showBackground={false}
-              cardClassName={"bg-transparent border-0"}
               icon={
                 <SquareIcon
                   icon={
@@ -117,7 +116,6 @@ export function ControlCenterEmptyStates() {
           <div className={"absolute left-0 top-0 z-10 w-full mt-28"}>
             <GetStartedTest
               showBackground={false}
-              cardClassName={"bg-transparent border-0"}
               icon={
                 <SquareIcon
                   icon={
