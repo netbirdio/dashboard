@@ -111,6 +111,16 @@ const DropdownMenuItem = React.forwardRef<
     },
     ref,
   ) => {
+    const safeRel = React.useMemo(() => {
+      if (target !== "_blank") return rel;
+
+      const tokens = new Set((rel ?? "").split(/\s+/).filter(Boolean));
+      tokens.add("noopener");
+      tokens.add("noreferrer");
+
+      return Array.from(tokens).join(" ");
+    }, [target, rel]);
+
     return (
       <DropdownMenuPrimitive.Item
         ref={ref}
@@ -130,7 +140,7 @@ const DropdownMenuItem = React.forwardRef<
         {...props}
       >
         {href ? (
-          <a href={href} target={target} rel={rel}>
+          <a href={href} target={target} rel={safeRel}>
             {props.children}
           </a>
         ) : (

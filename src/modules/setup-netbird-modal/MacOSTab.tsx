@@ -65,6 +65,7 @@ export default function MacOSTab({
                 href={pkgsDownloadUrl("macos/universal")}
                 passHref
                 target={"_blank"}
+                rel="noopener noreferrer"
               >
                 <Button variant={"primary"}>
                   <DownloadIcon size={14} />
@@ -155,7 +156,12 @@ export default function MacOSTab({
                 <Steps.Step step={1}>
                   <p>Download and install HomeBrew</p>
                   <div className={"flex gap-4"}>
-                    <Link href={"https://brew.sh/"} passHref target={"_blank"}>
+                    <Link
+                      href={"https://brew.sh/"}
+                      passHref
+                      target={"_blank"}
+                      rel="noopener noreferrer"
+                    >
                       <Button variant={"primary"}>
                         <ExternalLinkIcon size={14} />
                         HomeBrew Installation Guide
