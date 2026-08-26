@@ -99,7 +99,7 @@ export default function SidebarItem({
   if (!visible) return;
 
   return (
-    <Collapsible.Root open={open} onOpenChange={setOpen}>
+    <Collapsible.Root open={open} onOpenChange={setOpen} data-nav-item={href || undefined}>
       <Collapsible.Trigger asChild>
         <li className={"px-3 cursor-pointer list-none"}>
           <button
@@ -114,7 +114,7 @@ export default function SidebarItem({
                 : "text-gray-600 hover:bg-gray-200 dark:text-nb-gray-400 dark:hover:bg-nb-gray-900/50",
             )}
             onClick={handleClick}
-            data-cy={"left-navigation-item"}
+            data-testid={"left-navigation-item"}
           >
             {isChild && isNavigationCollapsed && !mobileNavOpen && (
               <div

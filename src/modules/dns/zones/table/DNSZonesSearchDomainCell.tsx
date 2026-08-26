@@ -18,6 +18,7 @@ export const DNSZonesSearchDomainCell = ({ zone }: Props) => {
         disabled={!permission?.dns?.update}
         checked={zone?.enable_search_domain}
         size={"small"}
+        data-testid="dns-zone-search-domain-toggle"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

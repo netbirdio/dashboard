@@ -2,7 +2,7 @@ import { cn } from "@utils/helpers";
 import LoadingIcon from "@/assets/icons/LoadingIcon";
 
 type Props = {
-  fullScreen?: boolean
+  fullScreen?: boolean;
 };
 export default function FullScreenLoading({ fullScreen = true }: Props) {
   return (

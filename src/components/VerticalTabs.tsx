@@ -67,17 +67,21 @@ function Trigger({
   children,
   value,
   disabled = false,
+  "data-testid": dataTestId,
 }: {
   children: React.ReactNode;
   value: string;
   disabled?: boolean;
+  "data-testid"?: string;
 }) {
   const currentValue = useTabContext();
   const pathname = usePathname();
   const router = useRouter();
   return (
     <TabsTrigger
+      data-settings-tab={value}
       disabled={disabled}
+      data-testid={dataTestId}
       className={cn(
         "py-2 text-base rounded-md w-full transition-all data-[disabled]:opacity-10",
         "lg:pl-6 lg:pr-8 pl-4 pr-4 text-center lg:text-left",

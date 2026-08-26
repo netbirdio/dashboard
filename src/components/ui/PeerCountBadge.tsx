@@ -37,8 +37,7 @@ export default function PeerCountBadge({
     return peerCount;
   }, [currentGroup]);
 
-  const canRedirect =
-    !!group?.id && group?.name !== "All" && !disableRedirect;
+  const canRedirect = !!group?.id && group?.name !== "All" && !disableRedirect;
 
   const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();

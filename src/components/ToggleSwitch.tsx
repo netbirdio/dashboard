@@ -37,10 +37,10 @@ const switchVariants = cva("", {
 const ToggleSwitch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root> &
-    SwitchVariants & { dataCy?: string }
+    SwitchVariants & { "data-testid"?: string }
 >(
   (
-    { className, size = "default", variant = "default", dataCy, ...props },
+    { className, size = "default", variant = "default", "data-testid": dataTestId, ...props },
     ref,
   ) => (
     <SwitchPrimitives.Root
@@ -50,7 +50,7 @@ const ToggleSwitch = React.forwardRef<
         switchVariants({ size, variant }),
       )}
       {...props}
-      data-cy={dataCy}
+      data-testid={dataTestId}
       onClick={(e) => {
         e.stopPropagation();
         props.onClick?.(e);

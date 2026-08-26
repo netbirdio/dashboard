@@ -45,16 +45,19 @@ function Trigger({
   value,
   disabled = false,
   className,
+  "data-testid": dataTestId,
 }: {
   children: React.ReactNode;
   value: string;
   disabled?: boolean;
   className?: string;
+  "data-testid"?: string;
 }) {
   const currentValue = useTabContext();
   return (
     <TabsTrigger
       disabled={disabled}
+      data-testid={dataTestId}
       className={cn(
         "px-4 py-2 text-sm rounded-md w-full transition-all data-[disabled]:opacity-10",
         value == currentValue

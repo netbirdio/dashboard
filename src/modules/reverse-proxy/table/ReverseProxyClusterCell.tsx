@@ -10,7 +10,7 @@ import {
   ReverseProxyDomainType,
 } from "@/interfaces/ReverseProxy";
 import FullTooltip from "@components/FullTooltip";
-import { isNetBirdHosted } from "@/utils/netbird";
+import { isNetBirdCloud } from "@/utils/netbird";
 import InlineLink from "@components/InlineLink";
 
 type Props = {
@@ -43,9 +43,7 @@ export default function ReverseProxyClusterCell({
         }
       >
         <span
-          className={
-            "inline-flex items-center gap-1.5 truncate cursor-help"
-          }
+          className={"inline-flex items-center gap-1.5 truncate cursor-help"}
         >
           <Globe size={11} className={"shrink-0"} />
           All
@@ -75,9 +73,7 @@ export default function ReverseProxyClusterCell({
         }
       >
         <span
-          className={
-            "inline-flex items-center gap-1.5 truncate cursor-help"
-          }
+          className={"inline-flex items-center gap-1.5 truncate cursor-help"}
         >
           <Server size={11} className={"shrink-0"} />
           {reverseProxy.proxy_cluster}
@@ -96,7 +92,7 @@ export default function ReverseProxyClusterCell({
   return (
     <FullTooltip
       content={
-        isNetBirdHosted() ? (
+        isNetBirdCloud() ? (
           <div className={"text-xs max-w-xs"}>
             Cluster {reverseProxy.proxy_cluster} is offline. Please try again in
             a few minutes. If the issue persists, check{" "}

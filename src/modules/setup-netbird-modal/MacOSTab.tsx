@@ -9,7 +9,7 @@ import Code from "@components/Code";
 import Separator from "@components/Separator";
 import Steps from "@components/Steps";
 import TabsContentPadding, { TabsContent } from "@components/Tabs";
-import { GRPC_API_ORIGIN } from "@utils/netbird";
+import { GRPC_API_ORIGIN, pkgsDownloadUrl } from "@utils/netbird";
 import {
   BeerIcon,
   DownloadIcon,
@@ -21,6 +21,7 @@ import Link from "next/link";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
+  ManagementUrlStep,
   NetBirdUpCommand,
   RoutingPeerSetupKeyInfo,
 } from "@/modules/setup-netbird-modal/SetupModal";
@@ -61,7 +62,7 @@ export default function MacOSTab({
             </div>
             <div className={"flex gap-4 mt-1 flex-wrap"}>
               <Link
-                href={"https://pkgs.netbird.io/macos/universal"}
+                href={pkgsDownloadUrl("macos/universal")}
                 passHref
                 target={"_blank"}
               >
@@ -75,12 +76,7 @@ export default function MacOSTab({
 
           {GRPC_API_ORIGIN && (
             <Steps.Step step={baseMgmtStep}>
-              <p>
-                {`Click on "Settings" then "Advanced Settings" from the NetBird icon in your system tray and enter the following "Management URL"`}
-              </p>
-              <Code>
-                <Code.Line>{GRPC_API_ORIGIN}</Code.Line>
-              </Code>
+              <ManagementUrlStep trayName={"menu bar"} />
             </Steps.Step>
           )}
 
@@ -95,20 +91,18 @@ export default function MacOSTab({
                 {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
               </p>
 
-              <Code>
-                <NetBirdUpCommand
-                  setupKey={setupKey}
-                  setupKeyPlaceholder={setupKeyPlaceholder}
-                  hostname={hostname}
-                />
-              </Code>
+              <NetBirdUpCommand
+                setupKey={setupKey}
+                setupKeyPlaceholder={setupKeyPlaceholder}
+                hostname={hostname}
+              />
             </Steps.Step>
           ) : (
             <>
               <Steps.Step step={runStep}>
                 <p>
                   {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  Click on "Connect" from the NetBird icon in your system tray
+                  Click on "Connect" from the NetBird icon in your menu bar
                 </p>
               </Steps.Step>
               <Steps.Step step={runStep + 1} line={false}>
@@ -138,13 +132,11 @@ export default function MacOSTab({
                     Run NetBird {!usingSetupKeyParam && "and log in the browser"}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
-                  <Code>
-                    <NetBirdUpCommand
-                      setupKey={setupKey}
-                      setupKeyPlaceholder={setupKeyPlaceholder}
-                      hostname={hostname}
-                    />
-                  </Code>
+                  <NetBirdUpCommand
+                    setupKey={setupKey}
+                    setupKeyPlaceholder={setupKeyPlaceholder}
+                    hostname={hostname}
+                  />
                 </Steps.Step>
               </Steps>
             </AccordionContent>
@@ -199,13 +191,11 @@ export default function MacOSTab({
                     Run NetBird {!usingSetupKeyParam && "and log in the browser"}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
-                  <Code>
-                    <NetBirdUpCommand
-                      setupKey={setupKey}
-                      setupKeyPlaceholder={setupKeyPlaceholder}
-                      hostname={hostname}
-                    />
-                  </Code>
+                  <NetBirdUpCommand
+                    setupKey={setupKey}
+                    setupKeyPlaceholder={setupKeyPlaceholder}
+                    hostname={hostname}
+                  />
                 </Steps.Step>
               </Steps>
             </AccordionContent>

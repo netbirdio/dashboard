@@ -1,6 +1,7 @@
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
+import FullTooltip from "@components/FullTooltip";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
@@ -15,9 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@components/Select";
+import Separator from "@components/Separator";
 import { useExpirationState } from "@hooks/useExpirationState";
 import { convertToSeconds } from "@hooks/useTimeFormatter";
 import * as Tabs from "@radix-ui/react-tabs";
+import { IconDevicesCheck } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
 import {
@@ -31,9 +34,13 @@ import {
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
+import { AccountMFASettings } from "@/cloud/mfa/AccountMFASettings";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Account } from "@/interfaces/Account";
+import { LockedFeatureBadge } from "@/modules/billing/locked-feature/LockedFeatureBadge";
+import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
+import { isNetBirdCloud } from "@utils/netbird";
 
 type Props = {
   account: Account;
@@ -43,6 +50,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
+
+  // Check if any mdm & edr integration is enabled
+  const { isAnyIntegrationEnabled, activeIntegrationName } = useIntegrations();
 
   /**
    * Peer approval enabled
@@ -138,10 +148,12 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             peer_inactivity_expiration: 600,
             extra: {
               ...account.settings?.extra,
-              peer_approval_enabled: peerApproval,
+              peer_approval_enabled: isAnyIntegrationEnabled
+                ? false
+                : peerApproval,
               user_approval_required: userApprovalRequired,
             },
-            local_mfa_enabled: isLocalMFAEnabled
+            local_mfa_enabled: isLocalMFAEnabled,
           },
         } as Account)
         .then(() => {
@@ -155,6 +167,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             peerInactivityExpirationEnabled,
             peerInactivityExpiresIn,
             peerInactivityExpireInterval,
+            isLocalMFAEnabled,
           ]);
         }),
       loadingMessage: "Saving the authentication settings...",
@@ -191,6 +204,16 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                 Authentication
                 <ExternalLinkIcon size={12} />
               </InlineLink>
+              or{" "}
+              <InlineLink
+                href={
+                  "https://docs.netbird.io/how-to/multi-factor-authentication"
+                }
+                target={"_blank"}
+              >
+                MFA
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
             </Paragraph>
           </div>
 
@@ -198,18 +221,56 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             variant={"primary"}
             disabled={!hasChanges || !permission.settings.update}
             onClick={saveChanges}
-            data-cy={"save-authentication-settings"}
+            data-testid={"save-authentication-settings"}
           >
             Save Changes
           </Button>
         </div>
 
-        <div className={"flex flex-col gap-6 w-full mt-8 mb-3"}>
+        <div
+          className={"flex flex-col gap-6 w-full mt-8 mb-3"}
+          data-auth-setting={"toggles"}
+        >
+          <FullTooltip
+            content={
+              <div className={"text-xs max-w-sm"}>
+                Peer approval is disabled because the {activeIntegrationName}{" "}
+                integration is enabled. If you want to enable peer approval,
+                please disable first the {activeIntegrationName} integration.
+              </div>
+            }
+            disabled={!isAnyIntegrationEnabled}
+          >
+            <div className={"w-full"} data-auth-setting={"peer-approval"}>
+              <LockedFeatureBadge
+                featureText={"Peer approval"}
+                feature={"DEVICE_APPROVALS"}
+                disabled={peerApproval}
+              >
+                <FancyToggleSwitch
+                  value={peerApproval}
+                  onChange={setPeerApproval}
+                  data-testid={"peer-approval"}
+                  label={
+                    <>
+                      <IconDevicesCheck size={15} />
+                      Peer Approval
+                    </>
+                  }
+                  disabled={
+                    isAnyIntegrationEnabled || !permission.settings.update
+                  }
+                  helpText={"Require peers to be approved by an administrator."}
+                />
+              </LockedFeatureBadge>
+            </div>
+          </FullTooltip>
+
           <div className={"flex flex-col"}>
             <FancyToggleSwitch
               value={userApprovalRequired}
               onChange={setUserApprovalRequired}
-              dataCy={"user-approval-required"}
+              data-testid={"user-approval-required"}
               label={
                 <>
                   <ShieldUserIcon size={15} />
@@ -226,47 +287,48 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             />
           </div>
 
-          {!account.settings.local_auth_disabled && account.settings.embedded_idp_enabled ?
-            (
-              <div className={"flex flex-col"}>
-                <FancyToggleSwitch
-                  value={isLocalMFAEnabled}
-                  onChange={setIsLocalMFAEnabled}
-                  dataCy={"local-mfa-enabled"}
-                  label={
-                    <>
-                      <KeyRound size={15} />
-                      Enable Local MFA
-                      <SmallBadge
-                        text={"Beta"}
-                        variant={"sky"}
-                        className={"text-[9px] leading-none py-[3px] px-[5px]"}
-                        textClassName={"top-0"}
-                      />
-                    </>
-                  }
-                  helpText={
-                    <>
-                      Require multi-factor authentication for users
-                      <br />
-                      authenticating with local credentials.
-                    </>
-                  }
-                  disabled={!permission.settings.update}
-                />
-              </div>
-            ) : null
-          }
+          {!account.settings.local_auth_disabled &&
+          account.settings.embedded_idp_enabled ? (
+            <div className={"flex flex-col"}>
+              <FancyToggleSwitch
+                value={isLocalMFAEnabled}
+                onChange={setIsLocalMFAEnabled}
+                data-testid={"local-mfa-enabled"}
+                label={
+                  <>
+                    <KeyRound size={15} />
+                    Enable Local MFA
+                    <SmallBadge
+                      text={"Beta"}
+                      variant={"sky"}
+                      className={"text-[9px] leading-none py-[3px] px-[5px]"}
+                      textClassName={"top-0"}
+                    />
+                  </>
+                }
+                helpText={
+                  <>
+                    Require multi-factor authentication for users
+                    <br />
+                    authenticating with local credentials.
+                  </>
+                }
+                disabled={!permission.settings.update}
+              />
+            </div>
+          ) : null}
 
-
-          <div className={"flex flex-col"}>
+          <div
+            className={"flex flex-col"}
+            data-auth-setting={"peer-session-expiration"}
+          >
             <FancyToggleSwitch
               value={loginExpiration}
               onChange={(state) => {
                 setLoginExpiration(state);
                 !state && setPeerInactivityExpirationEnabled(false);
               }}
-              dataCy={"peer-login-expiration"}
+              data-testid={"peer-login-expiration"}
               label={
                 <>
                   <TimerResetIcon size={15} />
@@ -304,7 +366,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                     maxWidthClass={"min-w-[100px]"}
                     min={1}
                     disabled={!loginExpiration || !permission.settings.update}
-                    data-cy={"peer-login-expiration-input"}
+                    data-testid={"peer-login-expiration-input"}
                     max={180}
                     className={"w-full"}
                     value={expiresIn}
@@ -318,7 +380,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                   >
                     <SelectTrigger
                       className="w-full"
-                      data-cy={"peer-login-expiration-select"}
+                      data-testid={"peer-login-expiration-select"}
                     >
                       <div className={"flex items-center gap-3"}>
                         <CalendarClock
@@ -327,12 +389,12 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                         />
                         <SelectValue
                           placeholder="Select interval..."
-                          data-cy={"peer-login-expiration-select-value"}
+                          data-testid={"peer-login-expiration-select-value"}
                         />
                       </div>
                     </SelectTrigger>
                     <SelectContent
-                      data-cy={"peer-login-expiration-select-content"}
+                      data-testid={"peer-login-expiration-select-content"}
                     >
                       <SelectItem value="days">Days</SelectItem>
                       <SelectItem value="hours">Hours</SelectItem>
@@ -344,7 +406,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                 variant={"blank"}
                 value={peerInactivityExpirationEnabled}
                 onChange={setPeerInactivityExpirationEnabled}
-                dataCy={"peer-inactivity-expiration"}
+                data-testid={"peer-inactivity-expiration"}
                 label={<>Require login after disconnect</>}
                 disabled={!permission.settings.update}
                 helpText={
@@ -358,6 +420,17 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
           </div>
         </div>
       </div>
+
+      {isNetBirdCloud() && (
+        <>
+          <Separator />
+          <div className={"p-default py-8 max-w-2xl"}>
+            <div className={"max-w-6xl"}>
+              <AccountMFASettings />
+            </div>
+          </div>
+        </>
+      )}
     </Tabs.Content>
   );
 }

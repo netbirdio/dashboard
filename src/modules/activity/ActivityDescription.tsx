@@ -223,8 +223,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value>
-        was blocked
+        <Value>{event.meta.email}</Value> was blocked
       </div>
     );
 
@@ -232,8 +231,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value>
-        was unblocked
+        <Value>{event.meta.email}</Value> was unblocked
       </div>
     );
 
@@ -359,12 +357,19 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
-  if (event.activity_code == "peer.login.expire")
+  if (event.activity_code == "peer.login.expire") {
     return (
       <div className={"inline"}>
-        Login of the peer <Value>{m.name}</Value> is expired
+        Login of the peer <Value>{m.name}</Value> expired
+        {m.reason && (
+          <>
+            {" "}
+            due to <Value>{m.reason}</Value>
+          </>
+        )}
       </div>
     );
+  }
 
   if (event.activity_code == "peer.ssh.disable")
     return (
@@ -645,6 +650,30 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "integrated-validator.peer.compliance-bypassed")
+    return (
+      <div className={"inline"}>
+        Peer <Value>{m?.name}</Value> with the NetBird IP <Value>{m?.ip}</Value>{" "}
+        compliance bypassed for <Value>{m?.platform}</Value> integration
+        {m?.original_reason && (
+          <>
+            {" "}
+            (original non-compliant reason: <Value>{m?.original_reason}</Value>)
+          </>
+        )}
+      </div>
+    );
+
+  if (
+    event.activity_code == "integrated-validator.peer.compliance-bypass-revoked"
+  )
+    return (
+      <div className={"inline"}>
+        Peer <Value>{m?.name}</Value> with the NetBird IP <Value>{m?.ip}</Value>{" "}
+        compliance bypass revoked for <Value>{m?.platform}</Value> integration
+      </div>
+    );
+
   /**
    * Resource
    */
@@ -839,7 +868,7 @@ export default function ActivityDescription({ event }: Props) {
       <div className={"inline"}>
         Service <Value>{m.domain}</Value> in cluster{" "}
         <Value>{m.proxy_cluster}</Value> was updated with authentication{" "}
-        <Value>{m.auth === "true" ? "Enabled" : "Disabled"}</Value>
+        <Value>{m.auth ? "Enabled" : "Disabled"}</Value>
       </div>
     );
 
@@ -848,6 +877,69 @@ export default function ActivityDescription({ event }: Props) {
       <div className={"inline"}>
         Service <Value>{m.domain}</Value> in cluster{" "}
         <Value>{m.proxy_cluster}</Value> was deleted
+      </div>
+    );
+
+  /**
+   * Distributor
+   */
+
+  if (event.activity_code == "reseller.msp.created")
+    return (
+      <div className={"inline"}>
+        Customer <Value>{m.msp_name}</Value> with domain{" "}
+        <Value>{m.msp_domain}</Value> was created
+      </div>
+    );
+
+  if (event.activity_code == "reseller.activated")
+    return <div className={"inline"}>Distributor account was activated</div>;
+
+  if (event.activity_code == "reseller.msp.deleted")
+    return (
+      <div className={"inline"}>
+        Customer <Value>{m.msp_name}</Value> with domain{" "}
+        <Value>{m.msp_domain}</Value> was deleted
+      </div>
+    );
+
+  if (event.activity_code == "reseller.msp.unlinked")
+    return (
+      <div className={"inline"}>
+        Customer <Value>{m.msp_name}</Value> with domain{" "}
+        <Value>{m.msp_domain}</Value> was unlinked
+      </div>
+    );
+
+  if (event.activity_code == "reseller.msp.invite.requested")
+    return (
+      <div className={"inline"}>
+        Invite requested for customer <Value>{m.msp_name}</Value> with domain{" "}
+        <Value>{m.msp_domain}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "reseller.msp.invite.accepted")
+    return (
+      <div className={"inline"}>
+        Invite accepted by customer <Value>{m.msp_name}</Value> with domain{" "}
+        <Value>{m.msp_domain}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "reseller.msp.invite.declined")
+    return (
+      <div className={"inline"}>
+        Invite declined by customer <Value>{m.msp_name}</Value> with domain{" "}
+        <Value>{m.msp_domain}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "reseller.msp.updated")
+    return (
+      <div className={"inline"}>
+        Customer <Value>{m.msp_name}</Value> with domain{" "}
+        <Value>{m.msp_domain}</Value> was updated
       </div>
     );
 

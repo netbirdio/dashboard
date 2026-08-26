@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import FullScreenLoading from "@/components/ui/FullScreenLoading";
 import { fetchInstanceStatus } from "@/utils/unauthenticatedApi";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 
 interface InstanceSetupContextType {
   setupRequired: boolean;
@@ -40,7 +40,7 @@ export default function InstanceSetupProvider({
   const shouldBypass = bypassRoutes.includes(pathname) || isOIDCCallback();
 
   // Skip setup check for NetBird hosted (cloud) deployments
-  const isCloud = isNetBirdHosted();
+  const isCloud = isNetBirdCloud();
   const isSetupPage = pathname === "/setup";
 
   // Check instance status on mount

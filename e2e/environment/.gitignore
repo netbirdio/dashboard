@@ -1,0 +1,12 @@
+# Ignore zitadel environment
+.env
+Caddyfile
+management.json
+turnserver.conf
+zitadel.env
+proxy.env
+proxy-no-ports.env
+proxy-certs/
+proxy-certs-no-ports/
+docker-compose.yml
+/machinekey

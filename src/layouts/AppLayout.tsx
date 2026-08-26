@@ -11,15 +11,17 @@ import localFont from "next/font/local";
 import React, { Suspense } from "react";
 import { Toaster } from "sonner";
 import OIDCProvider from "@/auth/OIDCProvider";
+import { useAWSMarketplace } from "@/cloud/aws/useAWSMarketplace";
 import FullScreenLoading from "@/components/ui/FullScreenLoading";
 import AnalyticsProvider, {
   GoogleTagManagerHeadScript,
 } from "@/contexts/AnalyticsProvider";
 import DialogProvider from "@/contexts/DialogProvider";
 import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
-import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
 import InstanceSetupProvider from "@/contexts/InstanceSetupProvider";
 import { NavigationEvents } from "@/contexts/NavigationEvents";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
+import { useSignupSource } from "@/hooks/useSignupSource";
 
 const inter = localFont({
   src: "../assets/fonts/Inter.ttf",
@@ -37,8 +39,11 @@ export const viewport: Viewport = {
 export default function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  useAWSMarketplace();
+  useSignupSource();
+
   return (
-    <html lang="en">
+    <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <head>
         <GoogleTagManagerHeadScript />
       </head>
@@ -46,7 +51,7 @@ export default function AppLayout({
         <Suspense fallback={<FullScreenLoading />}>
           <AnalyticsProvider>
             <DialogProvider>
-              <GlobalThemeProvider>
+              <ThemeProvider>
                 <ErrorBoundaryProvider>
                   <InstanceSetupProvider>
                     <OIDCProvider>
@@ -56,7 +61,7 @@ export default function AppLayout({
                     </OIDCProvider>
                   </InstanceSetupProvider>
                 </ErrorBoundaryProvider>
-              </GlobalThemeProvider>
+              </ThemeProvider>
             </DialogProvider>
             <Toaster
               position="top-center"

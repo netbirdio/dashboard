@@ -27,7 +27,7 @@ export default function GroupedRouteNameCell({
         active={groupedRoute.enabled}
         inactiveDot={"gray"}
         text={groupedRoute.network_id}
-        dataCy={groupedRoute.network_id}
+        data-testid={groupedRoute.network_id}
       >
         <DescriptionWithTooltip
           className={"mt-1"}

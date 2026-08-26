@@ -28,6 +28,7 @@ export const SelectDropdownSearchInput = forwardRef<HTMLInputElement, Props>(
             "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
           )}
           ref={ref}
+          data-testid="select-dropdown-search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={placeholder}

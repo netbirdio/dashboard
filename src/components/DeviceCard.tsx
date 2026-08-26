@@ -29,7 +29,7 @@ export const DeviceCard = ({
     return description !== undefined
       ? description
       : address || device?.ip || resource?.address;
-  }, [description, address, device]);
+  }, [description, address, device, resource]);
 
   return (
     <div

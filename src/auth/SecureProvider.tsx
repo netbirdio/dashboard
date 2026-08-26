@@ -4,7 +4,9 @@ import * as React from "react";
 import { useEffect } from "react";
 
 const QUERY_PARAMS_KEY = "netbird-query-params";
-const PRESERVE_QUERY_PARAMS_PATHS = ["/peer/ssh", "/peer/rdp"];
+
+type StoredQueryParams = { path: string; params: string };
+
 const VALID_PARAMS = [
   "tab",
   "search",
@@ -21,6 +23,15 @@ const VALID_PARAMS = [
   "port",
 ];
 
+function filterAllowedParams(raw: string): string {
+  const input = new URLSearchParams(raw);
+  const output = new URLSearchParams();
+  for (const key of VALID_PARAMS) {
+    for (const v of input.getAll(key)) output.append(key, v);
+  }
+  return output.toString();
+}
+
 type Props = {
   children: React.ReactNode;
 };
@@ -29,15 +40,32 @@ export const SecureProvider = ({ children }: Props) => {
   const currentPath = usePathname();
 
   useEffect(() => {
-    if (isAuthenticated && !PRESERVE_QUERY_PARAMS_PATHS.includes(currentPath)) {
-      localStorage.removeItem(QUERY_PARAMS_KEY);
-    } else if (!isAuthenticated) {
+    if (isAuthenticated) {
+      try {
+        const stored = localStorage.getItem(QUERY_PARAMS_KEY);
+        if (stored && !window.location.search) {
+          const data: StoredQueryParams = JSON.parse(stored);
+          if (data?.path === currentPath && data?.params) {
+            localStorage.removeItem(QUERY_PARAMS_KEY);
+            window.history.replaceState(
+              null,
+              "",
+              `${currentPath}?${data.params}`,
+            );
+          }
+        }
+      } catch (e) {}
+    } else {
       try {
         const params = window.location.search.substring(1);
         if (params) {
-          const urlParams = new URLSearchParams(params);
-          if (VALID_PARAMS.some((param) => urlParams.has(param))) {
-            localStorage.setItem(QUERY_PARAMS_KEY, JSON.stringify(params));
+          const filtered = filterAllowedParams(params);
+          if (filtered) {
+            const data: StoredQueryParams = {
+              path: currentPath,
+              params: filtered,
+            };
+            localStorage.setItem(QUERY_PARAMS_KEY, JSON.stringify(data));
           }
         }
       } catch (e) {}

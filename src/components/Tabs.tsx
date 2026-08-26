@@ -80,13 +80,16 @@ TabsList.displayName = TabsPrimitive.List.displayName;
 
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> & {
+    "data-testid"?: string;
+  }
+>(({ className, "data-testid": dataTestId, ...props }, ref) => {
   const currentValue = useTabContext();
 
   return (
     <TabsPrimitive.Trigger ref={ref} asChild={true} {...props}>
       <div
+        data-testid={dataTestId}
         className={cn(
           "inline-flex items-center transition-all justify-center whitespace-nowrap px-3 pt-1.5 pb-3 text-sm font-normal",
           "data-[state=active]:text-netbird cursor-pointer  dark:data-[state=active]:text-netbird group/trigger gap-2",

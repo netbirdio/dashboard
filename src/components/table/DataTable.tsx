@@ -62,8 +62,12 @@ const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
     const val = row.getValue(columnId);
     if (!val) return false;
     if (typeof val !== "string") return false;
-    const lowerCaseValue = removeAllSpaces(trim(value.toLowerCase()));
-    return val.toLowerCase().includes(lowerCaseValue);
+    // Strip spaces from BOTH the query and the value so multi-word searches
+    // ("OpenAI API") match values that contain spaces ("openai api …").
+    // Previously only the query was stripped, so any multi-word search failed.
+    const needle = removeAllSpaces(trim(value.toLowerCase()));
+    const haystack = removeAllSpaces(val.toLowerCase());
+    return haystack.includes(needle);
   } catch (e) {
     return false;
   }

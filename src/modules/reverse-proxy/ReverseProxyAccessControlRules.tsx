@@ -3,8 +3,7 @@ import { Label } from "@components/Label";
 import HelpText from "@components/HelpText";
 import Button from "@components/Button";
 import { Input } from "@components/Input";
-import cidr from "ip-cidr";
-import { isIPv6 } from "@utils/ip";
+import { hostSuffixFor, isIPv6, isValidIP } from "@utils/ip";
 import {
   FlagIcon,
   MinusCircleIcon,
@@ -95,35 +94,26 @@ function rulesReducer(state: AccessRule[], action: RulesAction): AccessRule[] {
   }
 }
 
-function pushCidrRules(
-  rules: AccessRule[],
-  values: string[] | undefined,
-  action: AccessAction,
-) {
-  values?.forEach((v) => {
-    const isIp = v.includes(":") ? v.endsWith("/128") : v.endsWith("/32");
-    rules.push({
-      id: nextId(),
-      action,
-      type: isIp ? "ip" : "cidr",
-      value: isIp ? v.replace(/\/(32|128)$/, "") : v,
-    });
-  });
-}
-
 function restrictionsToRules(
   restrictions: AccessRestrictions | undefined,
 ): AccessRule[] {
   if (!restrictions) return [];
   const rules: AccessRule[] = [];
-  pushCidrRules(rules, restrictions.blocked_cidrs, "block");
-  restrictions.blocked_countries?.forEach((v) =>
-    rules.push({ id: nextId(), action: "block", type: "country", value: v }),
-  );
-  pushCidrRules(rules, restrictions.allowed_cidrs, "allow");
   restrictions.allowed_countries?.forEach((v) =>
     rules.push({ id: nextId(), action: "allow", type: "country", value: v }),
   );
+  restrictions.blocked_countries?.forEach((v) =>
+    rules.push({ id: nextId(), action: "block", type: "country", value: v }),
+  );
+  const cidrToRule = (v: string, action: AccessAction) => {
+    const isHostV4 = v.endsWith("/32");
+    const isHostV6 = v.endsWith("/128");
+    const isIp = isHostV4 || isHostV6;
+    const value = isHostV4 ? v.slice(0, -3) : isHostV6 ? v.slice(0, -4) : v;
+    rules.push({ id: nextId(), action, type: isIp ? "ip" : "cidr", value });
+  };
+  restrictions.allowed_cidrs?.forEach((v) => cidrToRule(v, "allow"));
+  restrictions.blocked_cidrs?.forEach((v) => cidrToRule(v, "block"));
   return rules;
 }
 
@@ -142,11 +132,11 @@ function rulesToRestrictions(
       if (rule.action === "allow") allowed_countries.push(rule.value);
       else blocked_countries.push(rule.value);
     } else {
-      const suffix = rule.value.includes(":") ? "/128" : "/32";
-      const value =
-        rule.type === "ip" && !rule.value.includes("/")
-          ? `${rule.value}${suffix}`
-          : rule.value;
+      let value = rule.value;
+      if (rule.type === "ip" && !value.includes("/")) {
+        const suffix = hostSuffixFor(value);
+        if (suffix !== null) value = `${value}/${suffix}`;
+      }
       if (rule.action === "allow") allowed_cidrs.push(value);
       else blocked_cidrs.push(value);
     }
@@ -186,11 +176,11 @@ function validateRule(rule: AccessRule): string {
       const suffix = isIPv6(val) ? 128 : 32;
       val = `${val}/${suffix}`;
     }
-    if (!cidr.isValidAddress(val)) {
+    if (!isValidIP(val)) {
       return "Please enter a valid IP address, e.g., 85.203.15.42 or 2001:db8::1";
     }
   } else {
-    if (!rule.value.includes("/") || !cidr.isValidAddress(rule.value)) {
+    if (!rule.value.includes("/") || !isValidIP(rule.value)) {
       return "Please enter a valid CIDR block, e.g., 74.125.0.0/16 or 2001:db8::/64";
     }
   }
@@ -251,7 +241,6 @@ export const ReverseProxyAccessControlRules = ({
           onChange={setCrowdsecMode}
         />
       )}
-
       <div>
         <Label>Access Control Rules</Label>
         <HelpText>
@@ -263,9 +252,16 @@ export const ReverseProxyAccessControlRules = ({
       </div>
       {rules.length > 0 && (
         <div className="flex flex-col gap-3 mt-1 mb-4">
-          {rules.map((rule) => (
-            <div key={rule.id} className="flex items-center">
-              <div className="w-[160px] shrink-0 [&_button]:rounded-r-none [&_button]:w-[160px]">
+          {rules.map((rule, ruleIndex) => (
+            <div
+              key={rule.id}
+              className="flex items-center"
+              data-testid={`access-rule-${ruleIndex}`}
+            >
+              <div
+                className="w-[160px] shrink-0 [&_button]:rounded-r-none [&_button]:w-[160px]"
+                data-testid={"access-rule-action"}
+              >
                 <SelectDropdown
                   value={rule.action}
                   onChange={(v) =>
@@ -281,7 +277,10 @@ export const ReverseProxyAccessControlRules = ({
                 />
               </div>
 
-              <div className="w-[160px] shrink-0 -ml-px [&_button]:rounded-none [&_button]:w-[160px]">
+              <div
+                className="w-[160px] shrink-0 -ml-px [&_button]:rounded-none [&_button]:w-[160px]"
+                data-testid={"access-rule-type"}
+              >
                 <SelectDropdown
                   value={rule.type}
                   onChange={(v) =>
@@ -332,6 +331,7 @@ export const ReverseProxyAccessControlRules = ({
                     error={errors[rule.id]}
                     errorTooltip={true}
                     maxWidthClass="w-full"
+                    data-testid="access-rule-value"
                   />
                 )}
               </div>
@@ -341,6 +341,7 @@ export const ReverseProxyAccessControlRules = ({
                 className="h-[42px] w-[42px] !px-0 shrink-0 ml-2"
                 onClick={() => dispatch({ type: "remove", id: rule.id })}
                 aria-label="Remove rule"
+                data-testid="remove-access-rule"
               >
                 <MinusCircleIcon size={14} />
               </Button>
@@ -348,17 +349,16 @@ export const ReverseProxyAccessControlRules = ({
           ))}
         </div>
       )}
-      <div className="flex gap-2">
-        <Button
-          variant="dotted"
-          className="flex-1"
-          size="sm"
-          onClick={() => dispatch({ type: "add" })}
-        >
-          <PlusIcon size={14} />
-          Add Rule
-        </Button>
-      </div>
+      <Button
+        variant="dotted"
+        className="w-full"
+        size="sm"
+        onClick={() => dispatch({ type: "add" })}
+        data-testid="add-access-rule"
+      >
+        <PlusIcon size={14} />
+        Add Rule
+      </Button>
     </div>
   );
 };

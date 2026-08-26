@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import ButtonGroup from "@components/ButtonGroup";
 import { Checkbox } from "@components/Checkbox";
 import FullTooltip from "@components/FullTooltip";
 import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
@@ -29,7 +30,7 @@ import {
   TableFilterDef,
   TableFiltersButton,
 } from "@components/table/TableFilters";
-import AddPeerButton from "@components/ui/AddPeerButton";
+import AddPeerDropdown from "@components/ui/AddPeerDropdown";
 import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import {
   ColumnDef,
@@ -37,7 +38,9 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import { trim, uniqBy } from "lodash";
-import { MonitorDotIcon } from "lucide-react";
+import { AlertTriangle, MonitorDotIcon, ShieldCheck } from "lucide-react";
+import { useBypassedPeers } from "@/cloud/edr/useBypass";
+import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -118,6 +121,11 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     accessorKey: "approval_required",
     sortingFn: "basic",
     accessorFn: (peer) => peer.approval_required,
+  },
+  {
+    id: "force_approved",
+    accessorKey: "force_approved",
+    accessorFn: (peer) => peer.force_approved,
   },
   {
     id: "connected",
@@ -263,7 +271,11 @@ type Props = {
   peers?: Peer[];
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  // The active subset, URL-backed by the page so it survives remounts (e.g.
+  // SWR revalidate-on-focus). undefined = show all; the in-toolbar switch
+  // flips it via onKindChange.
   kind?: PeersTableKind;
+  onKindChange?: (kind: PeersTableKind | undefined) => void;
 };
 
 // Peers split into two kinds:
@@ -280,6 +292,7 @@ export default function PeersTable({
   isLoading,
   headingTarget,
   kind,
+  onKindChange,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
@@ -307,6 +320,11 @@ export default function PeersTable({
 
   const pendingApprovalCount =
     kindFilteredPeers?.filter((p) => p.approval_required).length || 0;
+
+  const { bypassedPeerIds } = useBypassedPeers();
+  const bypassedCount = bypassedPeerIds.size;
+
+  const { isAnyIntegrationEnabled } = useIntegrations();
 
   const tableGroups =
     (uniqBy(
@@ -339,6 +357,12 @@ export default function PeersTable({
       setSelectedRows({});
     }
   };
+
+  // Clear any selection carried over from the previous subset so hidden peers
+  // aren't acted on by bulk actions when the kind changes.
+  useEffect(() => {
+    setSelectedRows({});
+  }, [kind]);
 
   const [showBrowserPeers, setShowBrowserPeers] = useState(false);
 
@@ -473,6 +497,7 @@ export default function PeersTable({
           select: permission.groups.read,
           connected: false,
           approval_required: false,
+          force_approved: false,
           group_name_strings: false,
           group_names: false,
           ip: false,
@@ -486,17 +511,18 @@ export default function PeersTable({
           ipv6: false,
         }}
         isLoading={isLoading}
+        // Treat a selected kind as an active filter: when peers exist but the
+        // chosen kind has none, render the table's normal "Could not find any
+        // results" empty state (with column headers) instead of the
+        // "Get Started" card. With no peers at all (kind unselected), the card
+        // still shows.
+        hasServerSideFilters={kind !== undefined && (peers?.length ?? 0) > 0}
         getStartedCard={
-          <NoPeersGettingStarted
-            showBackground={true}
-            isUserDevice={kind ? kind === "users" : undefined}
-          />
+          <NoPeersGettingStarted showBackground={true} />
         }
         rightSide={() => (
           <>
-            {peers && peers.length > 0 && (
-              <AddPeerButton isUserDevice={kind === "users"} />
-            )}
+            {peers && peers.length > 0 && <AddPeerDropdown />}
           </>
         )}
         aboveTable={(table) => (
@@ -511,6 +537,34 @@ export default function PeersTable({
               disabled={peers?.length == 0}
             />
 
+            <ButtonGroup disabled={isLoading}>
+              <ButtonGroup.Button
+                className={"h-[42px]"}
+                variant={kind === "users" ? "tertiary" : "secondary"}
+                onClick={() => {
+                  // Reset to the first page: the new subset may have fewer
+                  // pages than the current index, which would show an empty
+                  // table (page index doesn't auto-reset on data change).
+                  table.setPageIndex(0);
+                  onKindChange?.(kind === "users" ? undefined : "users");
+                }}
+              >
+                User Devices
+              </ButtonGroup.Button>
+              <ButtonGroup.Button
+                // Drop the left border so it doesn't stack with the first
+                // button's right border into a doubled divider.
+                className={"h-[42px] !border-l-0"}
+                variant={kind === "servers" ? "tertiary" : "secondary"}
+                onClick={() => {
+                  table.setPageIndex(0);
+                  onKindChange?.(kind === "servers" ? undefined : "servers");
+                }}
+              >
+                Servers
+              </ButtonGroup.Button>
+            </ButtonGroup>
+
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
@@ -522,39 +576,128 @@ export default function PeersTable({
             />
 
             {pendingApprovalCount > 0 && (
-              <Button
-                disabled={peers?.length == 0}
-                onClick={() => {
-                  table.setPageIndex(0);
-                  let current =
-                    table.getColumn("approval_required")?.getFilterValue() ===
-                    undefined
-                      ? true
-                      : undefined;
-
-                  table.setColumnFilters([
-                    {
-                      id: "connected",
-                      value: undefined,
-                    },
-                    {
-                      id: "approval_required",
-                      value: current,
-                    },
-                  ]);
-
-                  resetSelectedRows();
-                }}
-                variant={
-                  table.getColumn("approval_required")?.getFilterValue() ===
-                  true
-                    ? "tertiary"
-                    : "secondary"
+              <FullTooltip
+                content={
+                  <div className={"text-xs max-w-xs"}>
+                    {isAnyIntegrationEnabled
+                      ? "Peers that failed compliance checks and need attention"
+                      : "Peers waiting for administrator approval"}
+                  </div>
                 }
               >
-                Pending Approvals
-                <NotificationCountBadge count={pendingApprovalCount} />
-              </Button>
+                <Button
+                  disabled={peers?.length == 0}
+                  onClick={() => {
+                    table.setPageIndex(0);
+                    let current =
+                      table.getColumn("approval_required")?.getFilterValue() ===
+                      undefined
+                        ? true
+                        : undefined;
+                    let connectedFilter = table
+                      .getColumn("connected")
+                      ?.getFilterValue();
+                    let groupFilters = table
+                      .getColumn("group_names")
+                      ?.getFilterValue();
+
+                    table.setColumnFilters([
+                      {
+                        id: "connected",
+                        value: connectedFilter,
+                      },
+                      {
+                        id: "approval_required",
+                        value: current,
+                      },
+                      {
+                        id: "force_approved",
+                        value: undefined,
+                      },
+                      {
+                        id: "group_names",
+                        value: groupFilters ?? [],
+                      },
+                    ]);
+
+                    resetSelectedRows();
+                  }}
+                  variant={
+                    table.getColumn("approval_required")?.getFilterValue() ===
+                    true
+                      ? "tertiary"
+                      : "secondary"
+                  }
+                >
+                  {isAnyIntegrationEnabled ? (
+                    <>
+                      <AlertTriangle size={16} />
+                      Non-Compliant
+                    </>
+                  ) : (
+                    "Pending Approvals"
+                  )}
+                  <NotificationCountBadge count={pendingApprovalCount} />
+                </Button>
+              </FullTooltip>
+            )}
+
+            {bypassedCount > 0 && (
+              <FullTooltip
+                content={
+                  <div className={"text-xs max-w-xs"}>
+                    Peers with compliance checks bypassed by an administrator
+                  </div>
+                }
+              >
+                <Button
+                  disabled={peers?.length == 0}
+                  onClick={() => {
+                    table.setPageIndex(0);
+                    let current =
+                      table.getColumn("force_approved")?.getFilterValue() ===
+                      undefined
+                        ? true
+                        : undefined;
+                    let connectedFilter = table
+                      .getColumn("connected")
+                      ?.getFilterValue();
+                    let groupFilters = table
+                      .getColumn("group_names")
+                      ?.getFilterValue();
+
+                    table.setColumnFilters([
+                      {
+                        id: "connected",
+                        value: connectedFilter,
+                      },
+                      {
+                        id: "approval_required",
+                        value: undefined,
+                      },
+                      {
+                        id: "force_approved",
+                        value: current,
+                      },
+                      {
+                        id: "group_names",
+                        value: groupFilters ?? [],
+                      },
+                    ]);
+
+                    resetSelectedRows();
+                  }}
+                  variant={
+                    table.getColumn("force_approved")?.getFilterValue() === true
+                      ? "tertiary"
+                      : "secondary"
+                  }
+                >
+                  <ShieldCheck size={16} />
+                  Bypassed
+                  <NotificationCountBadge count={bypassedCount} />
+                </Button>
+              </FullTooltip>
             )}
 
             {browserPeers?.length > 0 && (
@@ -568,7 +711,7 @@ export default function PeersTable({
                 }
               >
                 <Button
-                  className={"h-[44px]"}
+                  className={"h-[42px]"}
                   variant={showBrowserPeers ? "tertiary" : "secondary"}
                   onClick={() => {
                     setShowBrowserPeers(!showBrowserPeers);

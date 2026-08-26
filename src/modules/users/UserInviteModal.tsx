@@ -13,7 +13,7 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { SegmentedTabs } from "@components/SegmentedTabs";
-import { IconMailForward, IconLink, IconUserPlus } from "@tabler/icons-react";
+import { IconLink, IconMailForward, IconUserPlus } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn, validator } from "@utils/helpers";
 import { AlarmClock, CopyIcon, MailIcon, User2 } from "lucide-react";
@@ -29,7 +29,7 @@ import { Group } from "@/interfaces/Group";
 import { Role, User, UserInvite } from "@/interfaces/User";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 
 type UserCreationMode = "create" | "invite";
 
@@ -163,7 +163,9 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
               )}
             </Code>
             {isInviteSuccess && (
-              <Paragraph className={"mt-3 text-xs text-nb-gray-400 text-center"}>
+              <Paragraph
+                className={"mt-3 text-xs text-nb-gray-400 text-center"}
+              >
                 Expires on{" "}
                 {new Date(successData.invite.expires_at).toLocaleString()}
               </Paragraph>
@@ -209,7 +211,7 @@ export function UserInviteModalContent({
       initial: groups,
     });
 
-  const isCloud = isNetBirdHosted();
+  const isCloud = isNetBirdCloud();
   const [mode, setMode] = useState<UserCreationMode>("invite");
 
   const createUser = async () => {
@@ -282,7 +284,8 @@ export function UserInviteModalContent({
   };
 
   const getDescription = () => {
-    if (isCloud) return "Invite a user to your network and set their permissions.";
+    if (isCloud)
+      return "Invite a user to your network and set their permissions.";
     if (mode === "create") {
       return "Create a NetBird user account with email and password.";
     }
@@ -323,7 +326,9 @@ export function UserInviteModalContent({
           "mx-auto text-center flex flex-col items-center justify-center mt-6"
         }
       >
-        <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>{getTitle()}</h2>
+        <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
+          {getTitle()}
+        </h2>
         <Paragraph className={cn("text-sm text-center max-w-xs")}>
           {getDescription()}
         </Paragraph>

@@ -327,6 +327,7 @@ export default function SetupKeysTable({
                   className={""}
                   onClick={() => setOpen(true)}
                   disabled={!permission.setup_keys.create}
+                  data-testid="open-create-setup-key"
                 >
                   <PlusCircle size={16} />
                   Create Key
@@ -357,6 +358,7 @@ export default function SetupKeysTable({
                 className={"ml-auto"}
                 onClick={() => setOpen(true)}
                 disabled={!permission.setup_keys.create}
+                data-testid="open-create-setup-key"
               >
                 <PlusCircle size={16} />
                 Create Key

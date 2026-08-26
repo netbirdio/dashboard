@@ -155,6 +155,7 @@ export function DNSZoneModalContent({
             error={domainError}
             value={domain}
             onChange={(e) => setDomain(e.target.value)}
+            data-testid="dns-zone-domain-input"
           />
         </div>
         <div className={"mb-2"}>
@@ -168,12 +169,14 @@ export function DNSZoneModalContent({
             values={groups}
             showResources={false}
             showResourceCounter={false}
+            data-testid="dns-zone-groups-selector"
           />
         </div>
 
         <FancyToggleSwitch
           value={searchDomainsEnabled}
           onChange={setSearchDomainsEnabled}
+          data-testid="dns-zone-search-domains"
           label={
             <>
               <ScanSearch size={15} />
@@ -188,6 +191,7 @@ export function DNSZoneModalContent({
         <FancyToggleSwitch
           value={enabled}
           onChange={setEnabled}
+          data-testid="dns-zone-enabled"
           label={
             <>
               <Power size={15} />
@@ -216,6 +220,7 @@ export function DNSZoneModalContent({
             variant={"primary"}
             onClick={handleOnSubmit}
             disabled={!canUpdateOrCreate}
+            data-testid="submit-dns-zone"
           >
             {zone ? "Save Changes" : "Add Zone"}
           </Button>

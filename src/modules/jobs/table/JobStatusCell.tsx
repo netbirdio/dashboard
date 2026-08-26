@@ -12,7 +12,7 @@ export default function JobStatusCell({ job }: Readonly<Props>) {
   return (
     <div
       className={cn("flex gap-2.5 items-center text-nb-gray-300 text-sm")}
-      data-cy={"job-status-cell"}
+      data-testid={"job-status-cell"}
     >
       <span
         className={cn(

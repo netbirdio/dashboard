@@ -78,7 +78,7 @@ interface MultiSelectProps {
   saveGroupAssignments?: boolean;
   showRoutes?: boolean;
   disabledGroups?: Group[];
-  dataCy?: string;
+  "data-testid"?: string;
   showResourceCounter?: boolean;
   showResources?: boolean;
   showPeers?: boolean;
@@ -119,7 +119,7 @@ export function PeerGroupSelector({
   saveGroupAssignments = true,
   showRoutes = false,
   disabledGroups,
-  dataCy = "group-selector-dropdown",
+  "data-testid": dataTestId = "group-selector-dropdown",
   showResourceCounter = true,
   showResources = false,
   showPeers = false,
@@ -169,8 +169,16 @@ export function PeerGroupSelector({
 
   const [open, setOpen] = useState(false);
 
+  const visibleDropdownOptions = useMemo(
+    () =>
+      hideAllGroup
+        ? dropdownOptions.filter((g) => g.name !== "All")
+        : dropdownOptions,
+    [dropdownOptions, hideAllGroup],
+  );
+
   const sortedDropdownOptions = useSortedDropdownOptions(
-    dropdownOptions,
+    visibleDropdownOptions,
     values,
     open,
   );
@@ -191,10 +199,6 @@ export function PeerGroupSelector({
     );
     let uniqueGroups = unionBy(sortedGroups, dropdownOptions, "name");
     uniqueGroups = unionBy(clientGroups, uniqueGroups, "name");
-
-    uniqueGroups = hideAllGroup
-      ? uniqueGroups.filter((group) => group.name !== "All")
-      : uniqueGroups;
 
     setDropdownOptions(uniqueGroups);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -389,7 +393,7 @@ export function PeerGroupSelector({
               "disabled:pointer-events-none disabled:opacity-60 transition-all",
             )}
             disabled={disabled}
-            data-cy={dataCy}
+            data-testid={dataTestId}
             ref={inputRef}
           >
             <div
@@ -497,7 +501,7 @@ export function PeerGroupSelector({
               )}
             </div>
 
-            <div className={"pl-2"} data-cy={"group-selector-open-close"}>
+            <div className={"pl-2"} data-testid={`${dataTestId}-open-close`}>
               <ChevronsUpDown
                 size={18}
                 className={
@@ -521,7 +525,7 @@ export function PeerGroupSelector({
           <CommandList className={"w-full"}>
             <div className={"relative"}>
               <CommandInput
-                data-cy={"group-search-input"}
+                data-testid={`${dataTestId}-search`}
                 className={cn(
                   "min-h-[42px] w-full relative",
                   "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
@@ -1029,7 +1033,7 @@ const ResourcesList = ({
               <div className={"flex items-center gap-2"}>
                 <Badge
                   useHover={true}
-                  data-cy={"group-badge"}
+                  data-testid={"group-badge"}
                   variant={"gray-ghost"}
                   className={cn("transition-all group whitespace-nowrap h-7")}
                   onClick={(e) => {
@@ -1205,7 +1209,7 @@ const PeersList = ({
               <div className={"flex items-center gap-2"}>
                 <Badge
                   useHover={false}
-                  data-cy={"group-badge"}
+                  data-testid={"group-badge"}
                   variant={"gray-ghost"}
                   className={cn(
                     "transition-all group whitespace-nowrap h-7 px-2",

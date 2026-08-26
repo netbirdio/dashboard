@@ -29,10 +29,58 @@ export interface OktaIntegration {
   connector_id?: string;
 }
 
+export interface ScimIntegration {
+  id: string;
+  provider: IdentityProvider;
+  enabled: boolean;
+  group_prefixes: string[];
+  user_group_prefixes: string[];
+  auth_token: string;
+  last_synced_at?: Date;
+  connector_id?: string;
+}
+
 export interface IdentityProviderLog {
   id: number;
   level: string;
   timestamp: Date;
+}
+
+export interface EnterpriseConnection {
+  id: string;
+  enabled: boolean;
+  name: string;
+  strategy: string;
+  discovery_domain: string;
+  client_id: string;
+  scopes: string[];
+  domains: EnterpriseConnectionDomain[];
+}
+
+export interface EnterpriseConnectionDomain {
+  name: string;
+  validation_token: string;
+  validation_status: DomainValidationStatus;
+  validation_last_updated: Date;
+}
+
+export enum DomainValidationStatus {
+  PENDING = "pending",
+  VERIFIED = "verified",
+  FAILED = "failed",
+}
+
+export interface SSOConnection {
+  id: string;
+  strategy: string;
+  provider: string;
+  name: string;
+}
+
+export enum IdentityProvider {
+  GENERIC = "generic",
+  JUMPCLOUD = "jumpcloud",
+  ENTRA = "entra",
 }
 
 export type SSOIdentityProviderType =

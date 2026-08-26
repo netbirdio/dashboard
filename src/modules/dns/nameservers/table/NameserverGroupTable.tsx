@@ -36,7 +36,6 @@ import { NameserverGroup } from "@/interfaces/Nameserver";
 import NameserverModal from "@/modules/dns/nameservers/NameserverModal";
 import NameserverTemplateModal from "@/modules/dns/nameservers/NameserverTemplateModal";
 import NameserverActionCell from "@/modules/dns/nameservers/table/NameserverActionCell";
-import NameserverActiveCell from "@/modules/dns/nameservers/table/NameserverActiveCell";
 import NameserverDistributionGroupsCell from "@/modules/dns/nameservers/table/NameserverDistributionGroupsCell";
 import NameserverMatchDomainsCell from "@/modules/dns/nameservers/table/NameserverMatchDomainsCell";
 import NameserverNameCell from "@/modules/dns/nameservers/table/NameserverNameCell";
@@ -66,10 +65,6 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
   {
     accessorKey: "enabled",
     sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
-    },
-    cell: ({ row }) => <NameserverActiveCell ns={row.original} />,
   },
   {
     accessorFn: (row) => row.domains?.length || 0,
@@ -241,6 +236,7 @@ export default function NameserverGroupTable({
           domain_list: false,
           ns_list: false,
           group_names_filter: false,
+          enabled: false,
         }}
         onRowClick={(row, cell) => {
           setCurrentRow(row.original);
@@ -294,6 +290,7 @@ export default function NameserverGroupTable({
                         variant={"primary"}
                         className={""}
                         disabled={!permission.nameservers.create}
+                        data-testid="open-add-nameserver"
                       >
                         <PlusCircle size={16} />
                         Add Nameserver
@@ -327,6 +324,7 @@ export default function NameserverGroupTable({
                   variant={"primary"}
                   className={"ml-auto"}
                   disabled={!permission.nameservers.create}
+                  data-testid="open-add-nameserver"
                 >
                   <PlusCircle size={16} />
                   Add Nameserver

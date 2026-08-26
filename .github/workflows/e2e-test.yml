@@ -1,0 +1,162 @@
+name: Playwright E2E Tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # `edited` is included so that updating the PR description (e.g. to set
+    # `management-cloud-tag: <tag>` or `reverse-proxy-tag: <tag>`) re-triggers
+    # the e2e run with the new tag.
+    types: [opened, synchronize, reopened, edited]
+  workflow_dispatch:
+    inputs:
+      management-cloud-tag:
+        description: 'Management Cloud image tag'
+        required: true
+        type: string
+        default: 'main'
+      reverse-proxy-tag:
+        description: 'Reverse Proxy image tag'
+        required: true
+        type: string
+        default: 'main'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  playwright-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          fetch-depth: 0
+
+      - name: setup-node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.CI_DOCKER_PULL_GITHUB_TOKEN }}
+
+      - run: echo '{}' > .local-config.json
+
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      - name: Resolve management-cloud image tag
+        id: management_tag
+        env:
+          INPUT_TAG: ${{ inputs.management-cloud-tag }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # Use workflow_dispatch input if provided, otherwise parse PR body.
+          # Falls back to `main` when not specified.
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG=$(printf '%s' "$PR_BODY" \
+              | grep -iE '^[[:space:]]*management-cloud-tag:[[:space:]]*[A-Za-z0-9._-]+[[:space:]]*$' \
+              | head -n1 \
+              | sed -E 's/^[[:space:]]*[Mm]anagement-cloud-tag:[[:space:]]*([A-Za-z0-9._-]+)[[:space:]]*$/\1/' \
+              || true)
+            if [ -z "$TAG" ]; then
+              TAG="main"
+            fi
+          fi
+          echo "Using management-cloud tag: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve reverse-proxy image tag
+        id: reverse_proxy_tag
+        env:
+          INPUT_TAG: ${{ inputs.reverse-proxy-tag }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG=$(printf '%s' "$PR_BODY" \
+              | grep -iE '^[[:space:]]*reverse-proxy-tag:[[:space:]]*[A-Za-z0-9._-]+[[:space:]]*$' \
+              | head -n1 \
+              | sed -E 's/^[[:space:]]*[Rr]everse-proxy-tag:[[:space:]]*([A-Za-z0-9._-]+)[[:space:]]*$/\1/' \
+              || true)
+            if [ -z "$TAG" ]; then
+              TAG="main"
+            fi
+          fi
+          echo "Using reverse-proxy tag: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Setup test environment
+        env:
+          MANAGEMENT_IMAGE_TAG: ${{ steps.management_tag.outputs.tag }}
+          REVERSE_PROXY_IMAGE_TAG: ${{ steps.reverse_proxy_tag.outputs.tag }}
+        run: cd ./e2e/environment && bash create-test-env.sh
+
+      - name: Run Playwright tests
+        id: playwright
+        run: |
+          set -o pipefail
+          npm run test:ci 2>&1 | tee playwright-output.log
+
+      - name: Append Playwright summary to job summary
+        if: always() && hashFiles('e2e/test-results/results.json') != ''
+        run: |
+          if [ -f e2e/test-results/results.json ]; then
+            passed=$(jq '.stats.expected // 0' e2e/test-results/results.json)
+            failed=$(jq '.stats.unexpected // 0' e2e/test-results/results.json)
+            skipped=$(jq '.stats.skipped // 0' e2e/test-results/results.json)
+            duration=$(jq '.stats.duration // 0' e2e/test-results/results.json)
+            {
+              echo '### Playwright results'
+              echo ''
+              echo "| Passed | Failed | Skipped | Duration |"
+              echo "|--------|--------|---------|----------|"
+              echo "| $passed | $failed | $skipped | ${duration}ms |"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Collect container logs
+        if: failure()
+        run: |
+          cd e2e/environment
+          docker compose logs management --tail=500 --no-color > management.log 2>&1 || true
+          docker compose logs reverse-proxy --tail=500 --no-color > reverse-proxy.log 2>&1 || true
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ failure() }}
+        with:
+          name: playwright-traces
+          path: e2e/test-results/
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ failure() }}
+        with:
+          name: management-logs
+          path: e2e/environment/management.log
+
+      - uses: actions/upload-artifact@v7
+        if: ${{ failure() }}
+        with:
+          name: reverse-proxy-logs
+          path: e2e/environment/reverse-proxy.log

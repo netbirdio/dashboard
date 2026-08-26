@@ -70,6 +70,7 @@ export default function PermissionsTab({ account }: Props) {
             variant={"primary"}
             disabled={!hasChanges || !permission.settings.update}
             onClick={saveChanges}
+            data-testid="save-permissions-settings"
           >
             Save Changes
           </Button>
@@ -79,6 +80,7 @@ export default function PermissionsTab({ account }: Props) {
           <FancyToggleSwitch
             value={userViewBlocked}
             onChange={setUserViewBlocked}
+            data-testid="restrict-regular-users"
             label={
               <>
                 <GaugeIcon size={15} />

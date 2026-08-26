@@ -9,10 +9,11 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import SmallParagraph from "@components/SmallParagraph";
 import { Tabs, TabsList, TabsTrigger } from "@components/Tabs";
+import { Mark } from "@components/ui/Mark";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
-import { getNetBirdUpCommand } from "@utils/netbird";
+import { getNetBirdUpCommand, GRPC_API_ORIGIN } from "@utils/netbird";
 import {
   CopyIcon,
   ExternalLinkIcon,
@@ -48,6 +49,7 @@ type Props = {
   setupKey?: string;
   showOnlyRoutingPeerOS?: boolean;
   className?: string;
+  style?: React.CSSProperties;
   // Tri-state audience selector:
   //   true      – user device (laptop/phone): mobile shown, Docker hidden.
   //   false     – server: mobile hidden, Docker shown, key-generation UI.
@@ -62,10 +64,19 @@ export default function SetupModal({
   setupKey,
   showOnlyRoutingPeerOS = false,
   className,
+  style,
   isUserDevice,
 }: Readonly<Props>) {
   return (
-    <ModalContent showClose={showClose} className={className}>
+    <ModalContent
+      showClose={showClose}
+      className={cn(
+        "outline-none focus:outline-none focus-visible:outline-none",
+        className,
+      )}
+      style={style}
+      data-testid={"setup-netbird-modal"}
+    >
       <SetupModalContent
         user={user}
         setupKey={setupKey}
@@ -360,33 +371,57 @@ type NetBirdUpCommandProps = {
   setupKey?: string;
   setupKeyPlaceholder?: string;
   hostname?: string;
+  // Shell line-continuation character used for the *visual* multi-line
+  // display. Unix shells use "\"; Windows Command Prompt uses "^". The
+  // copied command (codeToCopy) is always a clean single line regardless,
+  // so it runs on any shell.
+  continuation?: string;
 };
 
 // NetBirdUpCommand renders `netbird up` inside a <Code> block. When
-// extra flags are present it splits across multiple lines with shell
-// continuations so long commands stay readable and still copy/paste
-// cleanly into a terminal.
+// extra flags are present it splits across multiple lines with the
+// shell's line-continuation character (purely visual) so long commands
+// stay readable; the clipboard always gets the single-line form.
 export const NetBirdUpCommand = ({
   setupKey,
   setupKeyPlaceholder,
   hostname,
+  continuation = "\\",
 }: NetBirdUpCommandProps) => {
   const keyValue = setupKey ?? setupKeyPlaceholder;
   const hasKey = !!keyValue;
   const hasHostname = !!hostname;
 
+  // Canonical, OS-agnostic single-line command for the clipboard. The
+  // copy button always yields this, so the pasted command runs on every
+  // shell (bash, zsh, cmd, PowerShell) regardless of how it's displayed
+  // — the line continuations below are purely a visual aid.
+  const copyCommand = [
+    getNetBirdUpCommand(),
+    hasKey && `--setup-key ${keyValue}`,
+    hasHostname && `--hostname '${hostname}'`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   if (!hasKey && !hasHostname) {
-    return <Code.Line>{getNetBirdUpCommand()}</Code.Line>;
+    return (
+      <Code codeToCopy={copyCommand}>
+        <Code.Line>{getNetBirdUpCommand()}</Code.Line>
+      </Code>
+    );
   }
 
   return (
-    <>
-      <Code.Line>{getNetBirdUpCommand()} \</Code.Line>
+    <Code codeToCopy={copyCommand}>
+      <Code.Line>
+        {getNetBirdUpCommand()} {continuation}
+      </Code.Line>
       {hasKey && (
         <Code.Line>
           {"  --setup-key "}
           <span className={"text-netbird"}>{keyValue}</span>
-          {hasHostname && " \\"}
+          {hasHostname && ` ${continuation}`}
         </Code.Line>
       )}
       {hasHostname && (
@@ -395,6 +430,36 @@ export const NetBirdUpCommand = ({
           <span className={"text-netbird"}>{`'${hostname}'`}</span>
         </Code.Line>
       )}
+    </Code>
+  );
+};
+
+type ManagementUrlStepProps = {
+  // The desktop client calls it the system tray on Windows and the menu bar
+  // on macOS; use the platform's own term so the step matches what the user
+  // is looking at.
+  trayName: string;
+};
+
+// ManagementUrlStep tells a desktop-client user where to point the client at
+// this self-hosted management server: the first-run "Set up NetBird" screen,
+// or Settings > General once the client is past it.
+export const ManagementUrlStep = ({ trayName }: ManagementUrlStepProps) => {
+  return (
+    <>
+      <p>
+        On first launch, NetBird asks where to connect. Select{" "}
+        <Mark>Self-hosted</Mark> and enter the following{" "}
+        <Mark>Management server URL</Mark>
+      </p>
+      <Code>
+        <Code.Line>{GRPC_API_ORIGIN}</Code.Line>
+      </Code>
+      <p className={"mt-2 text-xs text-nb-gray-300 font-normal"}>
+        Already past that screen? Click the NetBird icon in your {trayName},
+        open <Mark>Settings</Mark> and set <Mark>Management Server</Mark> to{" "}
+        <Mark>Self-hosted</Mark> under <Mark>General</Mark>.
+      </p>
     </>
   );
 };

@@ -54,6 +54,7 @@ export default function AuthPasswordModal({
             type="password"
             value={isMasked ? "**********" : password}
             name={"service-password"}
+            data-testid={"password-input"}
             showPasswordToggle={!isMasked}
             onChange={(e) => {
               if (isMasked) {
@@ -77,7 +78,7 @@ export default function AuthPasswordModal({
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" onClick={handleRemove}>
+                <Button variant="danger-text" data-testid="remove-password" onClick={handleRemove}>
                   Remove
                 </Button>
                 <div className="flex gap-3">
@@ -104,6 +105,7 @@ export default function AuthPasswordModal({
                     variant="primary"
                     onClick={handleSave}
                     disabled={!password.trim()}
+                    data-testid="submit-password"
                   >
                     Add Password
                   </Button>

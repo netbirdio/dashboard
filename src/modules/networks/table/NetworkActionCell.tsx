@@ -31,13 +31,14 @@ export default function NetworkActionCell({ network }: Readonly<Props>) {
             e.preventDefault();
           }}
         >
-          <Button variant={"secondary"} className={"!px-3"}>
+          <Button variant={"secondary"} className={"!px-3"} data-testid="network-actions">
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-auto" align="end">
           <DropdownMenuItem
             onClick={() => router.push(`/network?id=${network.id}`)}
+            data-testid="view-network-details"
           >
             <div className={"flex gap-3 items-center"}>
               <EyeIcon size={14} className={"shrink-0"} />
@@ -47,6 +48,7 @@ export default function NetworkActionCell({ network }: Readonly<Props>) {
           <DropdownMenuItem
             onClick={() => openEditNetworkModal(network)}
             disabled={!permission.networks.update}
+            data-testid="rename-network"
           >
             <div className={"flex gap-3 items-center"}>
               <PencilLineIcon size={14} className={"shrink-0"} />

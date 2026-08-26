@@ -8,7 +8,7 @@ import {
   ModalFooter,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import cidr from "ip-cidr";
+import { isValidIP } from "@utils/ip";
 import { trim } from "lodash";
 import React, { useMemo, useState } from "react";
 
@@ -47,7 +47,7 @@ const config: Record<
     description: "Update the NetBird IPv6 address for this peer.",
     placeholder: "e.g., fd00:1234::1",
     errorMessage: "Please enter a valid IPv6 address, e.g., fd00:1234::1",
-    validate: (ip: string) => cidr.isValidAddress(ip) && ip.includes(":"),
+    validate: (ip: string) => isValidIP(ip) && ip.includes(":"),
   },
 };
 

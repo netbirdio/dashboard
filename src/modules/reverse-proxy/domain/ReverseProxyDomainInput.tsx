@@ -4,7 +4,7 @@ import { Label } from "@components/Label";
 import { Callout } from "@components/Callout";
 import React from "react";
 import { CustomDomainSelector } from "./CustomDomainSelector";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import InlineLink from "@components/InlineLink";
 
 type Props = {
@@ -40,6 +40,7 @@ export default function ReverseProxyDomainInput({
         <div className="flex-1 min-w-0">
           <Input
             autoFocus
+            data-testid="proxy-subdomain-input"
             value={subdomain}
             onChange={(e) => {
               onSubdomainChange(
@@ -60,12 +61,13 @@ export default function ReverseProxyDomainInput({
             value={baseDomain}
             onChange={onBaseDomainChange}
             className="!rounded-l-none"
+            data-testid="proxy-domain-selector"
           />
         </div>
       </div>
 
       {clusterOffline &&
-        (isNetBirdHosted() ? (
+        (isNetBirdCloud() ? (
           <Callout variant={"warning"} className={"mt-3"}>
             Cluster {clusterOffline.clusterName} is offline. Please try again in
             a few minutes. If the issue persists, check{" "}

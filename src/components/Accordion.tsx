@@ -47,7 +47,8 @@ const AccordionContent = React.forwardRef<
     const el = wrapperRef.current?.closest("[data-state]");
     if (!el) return;
 
-    const update = () => setIsOpen(el.getAttribute("data-state") === "open");
+    const update = () =>
+      setIsOpen(el.getAttribute("data-state") === "open");
     update();
 
     const observer = new MutationObserver(update);

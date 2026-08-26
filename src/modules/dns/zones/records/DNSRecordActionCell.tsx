@@ -22,6 +22,7 @@ export const DNSRecordActionCell = ({ record }: Props) => {
         size={"sm"}
         onClick={() => openRecordModal(zone, record)}
         disabled={!permission?.dns?.update}
+        data-testid="edit-dns-record"
       >
         <PenSquare size={16} />
         Edit
@@ -31,6 +32,7 @@ export const DNSRecordActionCell = ({ record }: Props) => {
         size={"sm"}
         onClick={() => deleteRecord(zone, record)}
         disabled={!permission?.dns?.delete}
+        data-testid="delete-dns-record"
       >
         <Trash2 size={16} />
         Delete

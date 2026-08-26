@@ -176,7 +176,7 @@ export const useNetBirdClient = () => {
       try {
         netBirdClient.current = await (window as any).NetBirdClient({
           privateKey,
-          logLevel: "warn",
+          logLevel: "info",
           managementURL: config.apiOrigin,
         });
 
@@ -289,12 +289,7 @@ export const useNetBirdClient = () => {
           {
             name,
             wg_pub_key: keyPairs.publicKey,
-            rules: rules ?? [
-              "tcp/22022",
-              "tcp/3389",
-              "tcp/44338",
-              "netbird-ssh/22",
-            ],
+            rules: rules ?? ["tcp/22022", "tcp/3389", "tcp/44338", "netbird-ssh/22"],
           },
           `/${peerId}/temporary-access`,
         );

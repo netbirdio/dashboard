@@ -13,6 +13,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import PageContainer from "@/layouts/PageContainer";
 import ActivityTable from "@/modules/activity/ActivityTable";
+import { EventStreamingCard } from "@/modules/integrations/event-streaming/EventStreamingCard";
 
 export default function Activity() {
   const { permission } = usePermissions();
@@ -52,6 +53,7 @@ export default function Activity() {
         </Paragraph>
       </div>
       <RestrictedAccess page={"Activity"} hasAccess={permission.events.read}>
+        <EventStreamingCard />
         <ActivityTable
           events={events}
           isLoading={isLoading}

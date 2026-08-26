@@ -29,6 +29,7 @@ export default function ReverseProxyActionCell({
       <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger
           asChild={true}
+          data-testid="service-actions"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -40,6 +41,7 @@ export default function ReverseProxyActionCell({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-auto" align="end">
           <DropdownMenuItem
+            data-testid="edit-service"
             data-proxy-edit-action={reverseProxy.id}
             onClick={(e) => {
               e.stopPropagation();
@@ -54,6 +56,7 @@ export default function ReverseProxyActionCell({
           </DropdownMenuItem>
 
           <DropdownMenuItem
+            data-testid="disable-service"
             onClick={(e) => {
               e.stopPropagation();
               setOpen(false);
@@ -70,6 +73,7 @@ export default function ReverseProxyActionCell({
           <DropdownMenuSeparator />
 
           <DropdownMenuItem
+            data-testid="delete-service"
             onClick={(e) => {
               e.stopPropagation();
               handleDelete(reverseProxy);

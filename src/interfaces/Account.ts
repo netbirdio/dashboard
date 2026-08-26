@@ -8,6 +8,9 @@ export interface Account {
     extra: {
       peer_approval_enabled: boolean;
       user_approval_required: boolean;
+      network_traffic_logs_enabled: boolean;
+      network_traffic_packet_counter_enabled: boolean;
+      network_traffic_logs_groups: string[];
     };
     peer_login_expiration_enabled: boolean;
     peer_expose_enabled?: boolean;
@@ -27,12 +30,21 @@ export interface Account {
     embedded_idp_enabled?: boolean;
     auto_update_version: string;
     auto_update_always: boolean;
+    metrics_push_enabled?: boolean;
     local_auth_disabled?: boolean;
     local_mfa_enabled?: boolean;
     ipv6_enabled_groups?: string[];
     network_range_v6?: string;
+    agent_network_only?: boolean;
+    dashboard_features?: AccountDashboardFeatures;
   };
   onboarding?: AccountOnboarding;
+}
+
+// AccountDashboardFeatures holds per-account dashboard section visibility
+// overrides. Omitted keys follow the default dashboard behavior.
+export interface AccountDashboardFeatures {
+  agent_network?: boolean;
 }
 
 export interface AccountOnboarding {

@@ -55,7 +55,7 @@ export default function AccessTokenActionCell({
         variant={"danger-outline"}
         size={"sm"}
         onClick={handleConfirm}
-        data-cy={"access-token-delete"}
+        data-testid={"access-token-delete"}
       >
         <Trash2 size={16} />
         Delete

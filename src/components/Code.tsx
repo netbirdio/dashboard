@@ -66,7 +66,7 @@ export default function Code({
         <span
           onClick={handleCopy}
           className={"absolute right-0 top-0 pt-3 pr-3 cursor-pointer z-10"}
-          data-cy="copy-to-clipboard"
+          data-testid="copy-to-clipboard"
         >
           {copied ? <CheckIcon size={16} /> : <CopyIcon size={16} />}
         </span>

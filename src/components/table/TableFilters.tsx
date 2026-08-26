@@ -63,7 +63,11 @@ export function TableFiltersButton<TData>({
       }}
     >
       <PopoverTrigger asChild>
-        <Button variant={"secondary"} disabled={disabled}>
+        <Button
+          variant={"secondary"}
+          disabled={disabled}
+          data-testid={"table-filters-button"}
+        >
           <FilterIcon size={16} className={"shrink-0"} />
           <span className={"flex items-center gap-1.5"}>
             Filters
@@ -127,6 +131,7 @@ export function TableFiltersButton<TData>({
               return (
                 <button
                   key={f.id}
+                  data-testid={`table-filter-${f.id}`}
                   className={
                     "w-full text-left px-2 py-1.5 rounded hover:bg-nb-gray-900 transition-colors text-sm flex items-center gap-2.5 text-nb-gray-200"
                   }

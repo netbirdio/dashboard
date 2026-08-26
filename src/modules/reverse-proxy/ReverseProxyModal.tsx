@@ -587,12 +587,16 @@ export default function ReverseProxyModal({
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList justify={"start"} className={"px-8"}>
-            <TabsTrigger value={"targets"}>
+            <TabsTrigger value={"targets"} data-testid="proxy-tab-targets">
               <ReverseProxyIcon size={14} />
               Service
             </TabsTrigger>
             {!isL4Mode && (
-              <TabsTrigger value={"auth"} disabled={!canContinueToSettings}>
+              <TabsTrigger
+                value={"auth"}
+                disabled={!canContinueToSettings}
+                data-testid="proxy-tab-auth"
+              >
                 <LockKeyhole size={14} />
                 Authentication
               </TabsTrigger>
@@ -600,11 +604,16 @@ export default function ReverseProxyModal({
             <TabsTrigger
               value={"access-control"}
               disabled={!canContinueToSettings}
+              data-testid="proxy-tab-access-control"
             >
               <ShieldCheckIcon size={14} />
               Access Control
             </TabsTrigger>
-            <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
+            <TabsTrigger
+              value={"settings"}
+              disabled={!canContinueToSettings}
+              data-testid="proxy-tab-settings"
+            >
               <Settings size={14} />
               Advanced Settings
             </TabsTrigger>
@@ -679,6 +688,7 @@ export default function ReverseProxyModal({
                 {serviceMode === ServiceMode.HTTP &&
                   (selectedDomain?.supports_private === true ? (
                     <SettingCard.Item
+                      data-testid="auth-netbird-only-card"
                       label={
                         <>
                           <NetworkIcon size={15} />
@@ -710,6 +720,7 @@ export default function ReverseProxyModal({
                       }
                     >
                       <SettingCard.Item
+                        data-testid="auth-netbird-only-card"
                         label={
                           <>
                             <NetworkIcon size={15} />
@@ -728,6 +739,7 @@ export default function ReverseProxyModal({
                 {!isPrivate && (
                   <>
                     <SettingCard.Item
+                      data-testid="auth-sso-card"
                       label={
                         <>
                           <Users size={15} />
@@ -739,6 +751,7 @@ export default function ReverseProxyModal({
                       onClick={() => setSsoModalOpen(true)}
                     />
                     <SettingCard.Item
+                      data-testid="auth-password-card"
                       label={
                         <>
                           <RectangleEllipsis size={15} />
@@ -750,6 +763,7 @@ export default function ReverseProxyModal({
                       onClick={() => setPasswordModalOpen(true)}
                     />
                     <SettingCard.Item
+                      data-testid="auth-pin-card"
                       label={
                         <>
                           <Binary size={15} />
@@ -761,6 +775,7 @@ export default function ReverseProxyModal({
                       onClick={() => setPinModalOpen(true)}
                     />
                     <SettingCard.Item
+                      data-testid="auth-header-card"
                       label={
                         <>
                           <FileCode2Icon size={15} />
@@ -807,17 +822,18 @@ export default function ReverseProxyModal({
             <div className={"px-8 flex-col flex gap-6"}>
               {(serviceMode === ServiceMode.TCP ||
                 serviceMode === ServiceMode.TLS) && (
-                <FancyToggleSwitch
-                  value={proxyProtocol}
-                  onChange={setProxyProtocol}
-                  label={
-                    <>
-                      <MapPinned size={15} />
-                      Preserve Client Source IP
-                    </>
-                  }
-                  helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
-                />
+                  <FancyToggleSwitch
+                    value={proxyProtocol}
+                    onChange={setProxyProtocol}
+                    data-testid="toggle-preserve-client-ip"
+                    label={
+                      <>
+                        <MapPinned size={15} />
+                        Preserve Client Source IP
+                      </>
+                    }
+                    helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
+                  />
               )}
 
               {isL4Mode && (
@@ -852,6 +868,7 @@ export default function ReverseProxyModal({
                       maxWidthClass="w-[180px]"
                       errorTooltip={true}
                       error={timeoutError}
+                      data-testid="connection-timeout-input"
                     />
                   </div>
                 </>
@@ -860,19 +877,21 @@ export default function ReverseProxyModal({
               {!isL4Mode && (
                 <div className={"flex flex-col gap-4"}>
                   <FancyToggleSwitch
-                    value={passHostHeader}
-                    onChange={setPassHostHeader}
-                    label={
-                      <>
-                        <GlobeIcon size={15} />
-                        Pass Host Header
-                      </>
-                    }
-                    helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
-                  />
+                      value={passHostHeader}
+                      onChange={setPassHostHeader}
+                      data-testid="toggle-pass-host-header"
+                      label={
+                        <>
+                          <GlobeIcon size={15} />
+                          Pass Host Header
+                        </>
+                      }
+                      helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
+                    />
                   <FancyToggleSwitch
                     value={rewriteRedirects}
                     onChange={setRewriteRedirects}
+                    data-testid="toggle-rewrite-redirects"
                     label={
                       <>
                         <ArrowRight size={15} />
@@ -962,6 +981,7 @@ export default function ReverseProxyModal({
                     </ModalClose>
                     <Button
                       variant={"primary"}
+                      data-testid="proxy-continue"
                       onClick={() =>
                         setTab(isL4Mode ? "access-control" : "auth")
                       }
@@ -982,6 +1002,7 @@ export default function ReverseProxyModal({
                     </Button>
                     <Button
                       variant={"primary"}
+                      data-testid="proxy-continue"
                       onClick={() => setTab("access-control")}
                     >
                       Continue
@@ -999,6 +1020,7 @@ export default function ReverseProxyModal({
                     </Button>
                     <Button
                       variant={"primary"}
+                      data-testid="proxy-continue"
                       onClick={() => setTab("settings")}
                       disabled={accessControlHasErrors}
                     >
@@ -1017,6 +1039,7 @@ export default function ReverseProxyModal({
                     </Button>
                     <Button
                       variant={"primary"}
+                      data-testid="submit-service"
                       disabled={
                         !canSaveService ||
                         !permission?.services?.create ||
@@ -1038,6 +1061,7 @@ export default function ReverseProxyModal({
                 </ModalClose>
                 <Button
                   variant={"primary"}
+                  data-testid="proxy-save"
                   disabled={
                     !canSaveService ||
                     !permission?.services?.update ||

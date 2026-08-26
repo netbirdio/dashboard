@@ -90,13 +90,13 @@ export const ReverseProxyServiceModeSelector = ({
         <SelectTrigger className="max-w-[240px] min-w-[200px]">
           <div
             className={"flex items-center gap-2 whitespace-nowrap"}
-            data-cy={"service-mode-select-button"}
+            data-testid={"service-mode-select-button"}
           >
             {selectedMode.icon}
             <SelectValue placeholder="Select type..." />
           </div>
         </SelectTrigger>
-        <SelectContent data-cy={"service-mode-selection"}>
+        <SelectContent data-testid={"service-mode-selection"}>
           {Object.entries(SERVICE_MODES)
             .filter(
               ([mode]) =>
@@ -106,6 +106,7 @@ export const ReverseProxyServiceModeSelector = ({
               <SelectItem
                 key={mode}
                 value={mode}
+                data-testid={`service-mode-option-${mode}`}
                 extra={
                   <HelpTooltip
                     triggerClassName={"ml-[0.01rem]"}

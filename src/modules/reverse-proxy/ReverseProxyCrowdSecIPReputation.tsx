@@ -77,7 +77,7 @@ export const ReverseProxyCrowdSecIPReputation = ({
       </div>
 
       <Select value={value} onValueChange={(v) => onChange(v as CrowdSecMode)}>
-        <SelectTrigger className="w-[260px]">
+        <SelectTrigger className="w-[260px]" data-testid="crowdsec-mode-trigger">
           <div className="flex items-center gap-2 whitespace-nowrap">
             {selected.icon}
             <SelectValue />
@@ -88,6 +88,7 @@ export const ReverseProxyCrowdSecIPReputation = ({
             <SelectItem
               key={mode}
               value={mode}
+              data-testid={`crowdsec-mode-${mode}`}
               extra={
                 config.description ? (
                   <HelpTooltip

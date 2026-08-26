@@ -93,7 +93,7 @@ export default function ReverseProxyHTTPTargets({
                       />
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="default-outline" className="!px-3">
+                          <Button variant="default-outline" className="!px-3" data-testid="target-row-actions">
                             <MoreVertical size={16} className="shrink-0" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -101,13 +101,17 @@ export default function ReverseProxyHTTPTargets({
                           className="w-auto min-w-[200px]"
                           align="end"
                         >
-                          <DropdownMenuItem onClick={() => onEditTarget(index)}>
+                          <DropdownMenuItem
+                            data-testid="edit-target"
+                            onClick={() => onEditTarget(index)}
+                          >
                             <div className="flex gap-3 items-center">
                               <Edit size={14} className="shrink-0" />
                               Edit Target
                             </div>
                           </DropdownMenuItem>
                           <DropdownMenuItem
+                            data-testid="remove-target"
                             variant={"danger"}
                             onClick={() => onRemoveTarget(index)}
                           >
@@ -131,6 +135,7 @@ export default function ReverseProxyHTTPTargets({
         variant="dotted"
         className={cn("w-full mt-1", targets?.length > 0 && "mt-1")}
         size="sm"
+        data-testid="add-target"
         onClick={onAddTarget}
         disabled={!!(initialNetwork && !initialNetwork.resources?.length)}
       >

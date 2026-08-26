@@ -7,7 +7,7 @@ import { DialogContent, DialogTitle } from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect, useMemo, useReducer, useState } from "react";
@@ -304,7 +304,7 @@ export const Onboarding = ({
             "h-full w-screen fixed z-[50] left-0 top-0 bg-nb-gray-950 flex overflow-y-auto"
           }
         >
-          <div>
+          <div data-testid={"regular-onboarding"}>
             <VisuallyHidden asChild>
               <DialogTitle>Onboarding</DialogTitle>
             </VisuallyHidden>
@@ -356,8 +356,8 @@ export const Onboarding = ({
                 >
                   {isOnboardingPending && (
                     <Stepper
-                      step={isNetBirdHosted() ? step : step - 1}
-                      maxSteps={isNetBirdHosted() ? maxSteps : maxSteps - 1}
+                      step={isNetBirdCloud() ? step : step - 1}
+                      maxSteps={isNetBirdCloud() ? maxSteps : maxSteps - 1}
                     />
                   )}
 
@@ -396,6 +396,7 @@ export const Onboarding = ({
                       }}
                     />
                   )}
+
                   {step === 2 && (
                     <OnboardingIntent
                       useCases={useCases}

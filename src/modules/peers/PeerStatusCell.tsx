@@ -5,10 +5,11 @@ type Props = {
   peer: Peer;
 };
 
-// Approval state moved to:
+// Approval / compliance UI moved to:
 //   • PeerIssueIcon (warning icon in the peer name cell)
-//   • PeerActionCell (Approve menu item)
-// Kept as a no-op so the existing "status" column slot still renders.
+//   • PeerActionCell (Approve / Bypass / Revoke Bypass menu items)
+// Kept as a no-op cell so the existing "status" column slot still
+// renders without breaking the column layout.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function PeerStatusCell(_: Props) {
   return null;

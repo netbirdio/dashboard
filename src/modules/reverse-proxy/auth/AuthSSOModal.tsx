@@ -70,7 +70,7 @@ export default function AuthSSOModal({
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" onClick={handleRemove}>
+                <Button variant="danger-text" data-testid="remove-sso" onClick={handleRemove}>
                   Remove
                 </Button>
                 <div className="flex gap-3">
@@ -89,7 +89,11 @@ export default function AuthSSOModal({
                   <ModalClose asChild>
                     <Button variant="secondary">Cancel</Button>
                   </ModalClose>
-                  <Button variant="primary" onClick={handleSave}>
+                  <Button
+                    variant="primary"
+                    onClick={handleSave}
+                    data-testid="submit-sso"
+                  >
                     Add SSO
                   </Button>
                 </div>
