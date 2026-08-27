@@ -61,7 +61,7 @@ function EndpointBadge({ endpoint }: { endpoint: string }) {
       <button
         type={"button"}
         className={
-          "inline-flex items-center gap-1.5 rounded-md border border-nb-gray-700 bg-nb-gray-800/60 px-2.5 py-1.5 text-[11px] font-medium text-nb-gray-200 hover:bg-nb-gray-800 hover:text-white transition-colors shrink-0"
+          "inline-flex items-center gap-1.5 rounded-md border border-nb-gray-700 bg-nb-gray-800/60 px-2.5 py-1.5 text-[11px] font-medium text-nb-gray-300 dark:text-nb-gray-200 hover:bg-nb-gray-800 dark:hover:text-white transition-colors shrink-0"
         }
         onClick={() => copy("Endpoint copied to clipboard")}
         aria-label={"Copy endpoint"}
@@ -72,7 +72,7 @@ function EndpointBadge({ endpoint }: { endpoint: string }) {
       <button
         type={"button"}
         className={
-          "inline-flex items-center gap-1.5 rounded-md border border-nb-gray-700 bg-nb-gray-800/60 px-2.5 py-1.5 text-[11px] font-medium text-nb-gray-200 hover:bg-nb-gray-800 hover:text-white transition-colors shrink-0"
+          "inline-flex items-center gap-1.5 rounded-md border border-nb-gray-700 bg-nb-gray-800/60 px-2.5 py-1.5 text-[11px] font-medium text-nb-gray-300 dark:text-nb-gray-200 hover:bg-nb-gray-800 dark:hover:text-white transition-colors shrink-0"
         }
         onClick={() => setConnectOpen(true)}
         aria-label={"Agent config"}

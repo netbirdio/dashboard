@@ -173,7 +173,7 @@ export const RoutingPeersBar = ({
             }}
             className={cn(
               "flex items-center gap-2 pl-3.5 pr-3 text-xs text-gray-400 whitespace-nowrap outline-none",
-              "hover:text-white hover:bg-nb-gray-910 transition-colors",
+              "hover:text-nb-gray-50 hover:bg-nb-gray-910 transition-colors",
             )}
           >
             <RoutingPeersIndicator
@@ -283,7 +283,7 @@ export const RoutingPeersBar = ({
           className={cn(
             "flex items-center gap-1.5 px-3 text-xs whitespace-nowrap outline-none",
             "border-l border-gray-700/40 text-gray-400",
-            "hover:text-white hover:bg-nb-gray-910 transition-colors",
+            "hover:text-nb-gray-50 hover:bg-nb-gray-910 transition-colors",
           )}
         >
           <CirclePlusIcon size={12} className={"shrink-0"} />
