@@ -10,3 +10,5 @@ proxy-certs/
 proxy-certs-no-ports/
 docker-compose.yml
 /machinekey
+geo-cache/
+geo-dump/

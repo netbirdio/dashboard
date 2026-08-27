@@ -18,8 +18,7 @@ type Props = {
 const OFFSET = 4;
 
 export function SmartEdge({ id, source, target, data }: Props) {
-  // Value-equality subscriptions — see useEdgeNodeRect (unrelated edges
-  // must not re-render/flicker while another node drags).
+  // Value-equality subscriptions so unrelated edges don't re-render on drag.
   const sourceRect = useEdgeNodeRect(source);
   const targetRect = useEdgeNodeRect(target);
 
@@ -42,7 +41,7 @@ export function SmartEdge({ id, source, target, data }: Props) {
   const tCx = tPos.x + tW / 2;
   const sourceIsLeft = sCx < tCx;
 
-  // Policy nodes have fixed sides: sources enter left, destinations exit right
+  // Policy nodes have fixed sides: sources enter left, destinations exit right.
   let sx: number, sy: number, tx: number, ty: number;
   let sourcePosition: Position, targetPosition: Position;
 

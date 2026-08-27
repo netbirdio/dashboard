@@ -3,8 +3,8 @@
 import "@xyflow/react/dist/style.css";
 import {
   Background,
-  EdgeTypes,
   type Edge as FlowEdge,
+  EdgeTypes,
   type Node as FlowNode,
   NodeTypes,
   ReactFlow,
@@ -12,39 +12,14 @@ import {
   SelectionMode,
 } from "@xyflow/react";
 import React, { useState } from "react";
+import { useSWRConfig } from "swr";
+import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
+import { Network } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
-import { EDGE_TYPES } from "@/modules/control-center/utils/edges";
-import {
-  DEFAULT_MAX_ZOOM,
-  DEFAULT_MIN_ZOOM,
-  EMPTY_STATE_ZOOM,
-} from "@/modules/control-center/utils/layouts";
-import { NODE_TYPES } from "@/modules/control-center/utils/nodes";
-import { DragAndDropProvider } from "@/modules/control-center/contexts/DragAndDropProvider";
-import { ConnectionLine } from "@/modules/control-center/edges/ConnectionLine";
-import { ControlCenterComponentsPanel } from "@/modules/control-center/draft/ControlCenterComponentsPanel";
-import {
-  DraftModeProvider,
-  useDraftMode,
-  useNetworkHover,
-} from "@/modules/control-center/draft/DraftModeContext";
-import { CanvasContextMenu } from "@/modules/control-center/menus/CanvasContextMenu";
-import { NodeContextMenu } from "@/modules/control-center/menus/NodeContextMenu";
-import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
-import { DraftInstallPeerModal } from "@/modules/control-center/draft/modals/DraftInstallPeerModal";
-import { DraftUserDeviceModal } from "@/modules/control-center/draft/modals/DraftUserDeviceModal";
-import { DraftResourceEditorModal } from "@/modules/control-center/draft/modals/DraftResourceEditorModal";
-import { DraftResourceNetworkModal } from "@/modules/control-center/draft/modals/DraftResourceNetworkModal";
-import { DraftNetworkDestinationModal } from "@/modules/control-center/draft/modals/DraftNetworkDestinationModal";
-import { DraftNetworkEditModal } from "@/modules/control-center/draft/modals/DraftNetworkEditModal";
-import { DraftRoutingPeerModal } from "@/modules/control-center/draft/modals/DraftRoutingPeerModal";
-import { DraftLeaveGuard } from "@/modules/control-center/draft/DraftLeaveGuard";
-import { useDraft } from "@/modules/control-center/hooks/useDraft";
-import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
-import { ControlCenterHeader } from "@/modules/control-center/header/ControlCenterHeader";
-import { ControlCenterEmptyStates } from "@/modules/control-center/header/ControlCenterEmptyStates";
+import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
+import { CanvasAgentBridge } from "@/modules/control-center/agent/CanvasAgentBridge";
 import {
   CanvasStateProvider,
   ControlCenterUIProvider,
@@ -52,21 +27,47 @@ import {
   useControlCenterUI,
   useDestinationGroup,
 } from "@/modules/control-center/contexts/ControlCenterContext";
-import { groupPanelCloseGuard } from "@/modules/control-center/panels/DestinationGroupPanel";
 import { ControlCenterPolicyProvider } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { DragAndDropProvider } from "@/modules/control-center/contexts/DragAndDropProvider";
+import { ControlCenterComponentsPanel } from "@/modules/control-center/draft/ControlCenterComponentsPanel";
 import { DraftChangesetProvider } from "@/modules/control-center/draft/DraftChangesetContext";
 import { DraftHistoryProvider } from "@/modules/control-center/draft/DraftHistoryContext";
+import { DraftLeaveGuard } from "@/modules/control-center/draft/DraftLeaveGuard";
+import {
+  DraftModeProvider,
+  useDraftMode,
+  useNetworkHover,
+} from "@/modules/control-center/draft/DraftModeContext";
+import { DraftInstallPeerModal } from "@/modules/control-center/draft/modals/DraftInstallPeerModal";
+import { DraftNetworkDestinationModal } from "@/modules/control-center/draft/modals/DraftNetworkDestinationModal";
+import { DraftNetworkEditModal } from "@/modules/control-center/draft/modals/DraftNetworkEditModal";
+import { DraftResourceEditorModal } from "@/modules/control-center/draft/modals/DraftResourceEditorModal";
+import { DraftResourceNetworkModal } from "@/modules/control-center/draft/modals/DraftResourceNetworkModal";
+import { DraftRoutingPeerModal } from "@/modules/control-center/draft/modals/DraftRoutingPeerModal";
+import { DraftUserDeviceModal } from "@/modules/control-center/draft/modals/DraftUserDeviceModal";
+import { PeersToolbar } from "@/modules/control-center/draft/PeersToolbar";
+import { ConnectionLine } from "@/modules/control-center/edges/ConnectionLine";
+import { ControlCenterEmptyStates } from "@/modules/control-center/header/ControlCenterEmptyStates";
+import { ControlCenterHeader } from "@/modules/control-center/header/ControlCenterHeader";
 import { useAssistantPanelPan } from "@/modules/control-center/hooks/useAssistantPanelPan";
+import { useDraft } from "@/modules/control-center/hooks/useDraft";
 import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import { useDrillDownBrowserHistory } from "@/modules/control-center/hooks/useDrillDownBrowserHistory";
 import { useGroupFocusDim } from "@/modules/control-center/hooks/useGroupFocusDim";
+import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
+import { CanvasContextMenu } from "@/modules/control-center/menus/CanvasContextMenu";
+import { NodeContextMenu } from "@/modules/control-center/menus/NodeContextMenu";
+import { groupPanelCloseGuard } from "@/modules/control-center/panels/DestinationGroupPanel";
+import { EDGE_TYPES } from "@/modules/control-center/utils/edges";
 import { isFrameNode } from "@/modules/control-center/utils/helpers";
-import GroupsProvider from "@/contexts/GroupsProvider";
+import {
+  DEFAULT_MAX_ZOOM,
+  DEFAULT_MIN_ZOOM,
+  EMPTY_STATE_ZOOM,
+} from "@/modules/control-center/utils/layouts";
+import { NODE_TYPES } from "@/modules/control-center/utils/nodes";
 import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
 import { NetworkProvider } from "@/modules/networks/NetworkProvider";
-import { Network } from "@/interfaces/Network";
-import { useSWRConfig } from "swr";
-import { CanvasAgentBridge } from "@/modules/control-center/agent/CanvasAgentBridge";
 
 export default function ControlCenter() {
   return (
@@ -74,25 +75,27 @@ export default function ControlCenter() {
       <DragAndDropProvider>
         <ReactFlowProvider>
           <PoliciesProvider>
-            <PeersProvider>
-              <CanvasStateProvider>
-                <GroupsProvider>
-                <DraftChangesetProvider>
-                  <DraftHistoryProvider>
-                  <ControlCenterPolicyProvider>
-                  <PageContainer>
-                    <ControlCenterUIProvider
-                      sidebar={<ControlCenterComponentsPanel />}
-                    >
-                      <ControlCenterCanvas />
-                    </ControlCenterUIProvider>
-                  </PageContainer>
-                  </ControlCenterPolicyProvider>
-                  </DraftHistoryProvider>
-                </DraftChangesetProvider>
-                </GroupsProvider>
-              </CanvasStateProvider>
-            </PeersProvider>
+            <AIProvidersProvider>
+              <PeersProvider>
+                <CanvasStateProvider>
+                  <GroupsProvider>
+                    <DraftChangesetProvider>
+                      <DraftHistoryProvider>
+                        <ControlCenterPolicyProvider>
+                          <PageContainer>
+                            <ControlCenterUIProvider
+                              sidebar={<ControlCenterComponentsPanel />}
+                            >
+                              <ControlCenterCanvas />
+                            </ControlCenterUIProvider>
+                          </PageContainer>
+                        </ControlCenterPolicyProvider>
+                      </DraftHistoryProvider>
+                    </DraftChangesetProvider>
+                  </GroupsProvider>
+                </CanvasStateProvider>
+              </PeersProvider>
+            </AIProvidersProvider>
           </PoliciesProvider>
         </ReactFlowProvider>
       </DragAndDropProvider>
@@ -108,8 +111,6 @@ function ControlCenterCanvas() {
   const ui = useControlCenterUI();
   const draft = useDraft();
   const { componentsPanelOpen, setComponentsPanelOpen } = useDraftMode();
-  // In focus mode dragging is disabled, so a drag pans the canvas rather than
-  // nudging a dimmed node.
   const { focusedNodeId, highlightArmed, setSelectedPeerPanel } =
     useDestinationGroup();
   const focusMode = focusedNodeId !== "";
@@ -122,9 +123,7 @@ function ControlCenterCanvas() {
   const { mutate } = useSWRConfig();
   const onLiveNetworkCreated = React.useCallback(
     async (network: Network) => {
-      // Drill only after /networks includes the new one — the single-network
-      // view builds from the revalidated list. Instant: the add-resource prompt
-      // opens right after, so an animation would play behind the dialog.
+      // The single-network view builds from the revalidated /networks list.
       await mutate("/networks");
       ui.onNetworkSelect(network.id, null, true);
     },
@@ -135,9 +134,7 @@ function ControlCenterCanvas() {
     canvas.setLayoutInitialized(false);
   }, [canvas]);
 
-  // GraphView's memo only bails when every other prop keeps identity; per-render
-  // callbacks would re-render the whole canvas each drag tick, so route handlers
-  // through a stable wrapper.
+  // Per-render callbacks would re-render the whole canvas each drag tick.
   const useStableHandler = <A extends unknown[], R>(
     fn: (...args: A) => R,
   ): ((...args: A) => R) => {
@@ -153,31 +150,25 @@ function ControlCenterCanvas() {
   } | null>(null);
   const nodeContextMenuOpen = nodeContextMenuPos !== null;
   const anyMenuOpen = contextMenuOpen || nodeContextMenuOpen;
-  // While an empty-state overlay is up (live empty views or the draft start
-  // screen), lock canvas interactions. A blank draft has no overlay, so it
-  // stays interactive.
+  // A blank draft has no overlay, so it stays interactive.
   const emptyState =
     canvas.nodes.length === 0 &&
     !componentsPanelOpen &&
     !(draft.isDraft && draft.startedBlank);
   const canInteract = !anyMenuOpen && !draft.isSelectMode && !emptyState;
 
-  // Close only the menu (not panels), so picking e.g. "Details" keeps the
-  // panel it just opened.
+  // Closes only the menu, so picking e.g. "Details" keeps the panel it opened.
   const closeNodeContextMenu = React.useCallback(() => {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
-  }, [canvas, setSelectedPeerPanel]);
+  }, [canvas]);
 
-  // Outside click dismisses everything at once (menu + panels + components
-  // picker). The group panel may register a discard-confirm guard, so wait on
-  // it before closing.
+  // The group panel may register a discard-confirm guard; wait on it first.
   const dismissCanvasOverlays = React.useCallback(() => {
     setNodeContextMenuPos(null);
     canvas.setContextMenuNodeId("");
     setComponentsPanelOpen(false);
-    // Focus Mode intentionally SURVIVES pane clicks — it only exits via the
-    // pill's X or Escape (FocusModeButton).
+    // Focus mode intentionally survives pane clicks.
     const guard = groupPanelCloseGuard.current;
     const closeGroupPanel = () => {
       canvas.setSelectedDestinationGroup("");
@@ -194,8 +185,7 @@ function ControlCenterCanvas() {
   const stableOnNodeClick = useStableHandler(ui.onNodeClick);
   const stableOnNodeContextMenu = useStableHandler(
     (event: React.MouseEvent, node: FlowNode) => {
-      // Live mode shows our menu only for these node types; every other node
-      // keeps the browser's default menu.
+      // In live mode every other node keeps the browser's default menu.
       const LIVE_MENU_TYPES = new Set([
         "policyNode",
         "groupNode",
@@ -217,8 +207,7 @@ function ControlCenterCanvas() {
   const stableOnPaneClick = useStableHandler(() => dismissCanvasOverlays());
   const stableOnNodeMouseEnter = useStableHandler(
     (_: React.MouseEvent, node: FlowNode) => {
-      // Resource rows are separate nodes, not DOM children, so map a hover on
-      // any child back to its frame.
+      // Resource rows are separate nodes, not DOM children of the frame.
       const frameId = isFrameNode(node)
         ? node.id
         : node.parentId?.startsWith("network-")
@@ -233,13 +222,10 @@ function ControlCenterCanvas() {
   const stableOnNodeDragStart = useStableHandler(onNodeDragStart);
   const stableOnNodeDrag = useStableHandler(onNodeDrag);
   const stableOnNodeDragStop = useStableHandler(onNodeDragStop);
-  // Live mode never deletes (the canvas mirrors the account). In draft the keys
-  // act like the menu's Remove, routed through useNodeRemoval for the changeset
-  // bookkeeping; React Flow's raw deletion is always blocked.
-  const { removeNode } = useNodeRemoval();
+  const { removeNodes } = useNodeRemoval();
   const stableOnBeforeDelete = useStableHandler(
     async ({ nodes }: { nodes: FlowNode[]; edges: FlowEdge[] }) => {
-      if (draft.isDraft) nodes.forEach((n) => removeNode(n));
+      if (draft.isDraft) removeNodes(nodes);
       return false;
     },
   );
@@ -250,8 +236,8 @@ function ControlCenterCanvas() {
 
   return (
     <>
-      {/* Kept mounted here so the live "Add Network" flow survives the empty
-          state unmounting once the first network is created. */}
+      {/* Kept mounted so the live "Add Network" flow survives the empty state
+          unmounting. */}
       <NetworkAccessControlProvider>
         <NetworkProvider
           onNetworkCreated={onLiveNetworkCreated}
@@ -273,14 +259,7 @@ function ControlCenterCanvas() {
       {/* Publishes the canvas to the assistant for as long as this page is up. */}
       <CanvasAgentBridge onConnect={draft.onNodeConnect} />
       <ReactFlow
-        className={
-          [
-            draft.isSelectMode && "select-mode",
-            highlightArmed && "cc-focus-armed",
-          ]
-            .filter(Boolean)
-            .join(" ") || undefined
-        }
+        className={highlightArmed ? "cc-focus-armed" : undefined}
         edges={canvas.edges}
         nodes={canvas.nodes}
         onNodesChange={canvas.onNodesChange}
@@ -300,13 +279,12 @@ function ControlCenterCanvas() {
         nodeTypes={NODE_TYPES as unknown as NodeTypes}
         edgeTypes={EDGE_TYPES as unknown as EdgeTypes}
         fitView={false}
-        // Don't re-sort edges into elevated SVG groups on select/drag start —
-        // the DOM reshuffle restarts every edge's dash animation (visible
-        // flicker the moment a drag begins).
+        // Elevating edges restarts their dash animation, which flickers on
+        // drag start.
         elevateEdgesOnSelect={false}
         defaultViewport={DEFAULT_VIEWPORT}
-        // Center the origin on mount — defaultViewport {0,0} anchors it at
-        // the screen corner, so the first fit would animate in from far away.
+        // Without this the origin sits in the screen corner and the first fit
+        // animates in from far away.
         onInit={stableOnInit}
         maxZoom={DEFAULT_MAX_ZOOM}
         minZoom={DEFAULT_MIN_ZOOM}
@@ -314,11 +292,10 @@ function ControlCenterCanvas() {
         panOnDrag={canInteract}
         panOnScroll={draft.isSelectMode && !emptyState}
         zoomOnScroll={canInteract}
-        zoomOnPinch={canInteract}
+        zoomOnPinch={!anyMenuOpen && !emptyState}
         zoomOnDoubleClick={canInteract}
-        // Not gated on anyMenuOpen: flipping these re-renders every node wrapper
-        // and lagged right-click. Nodes staying interactive behind the menu is
-        // harmless; pan/zoom stay locked via canInteract.
+        // Not gated on anyMenuOpen: flipping these re-renders every node
+        // wrapper and lagged right-click.
         nodesDraggable={!emptyState && !focusMode}
         nodesConnectable={!emptyState}
         elementsSelectable={!emptyState}

@@ -7,7 +7,11 @@ import {
 } from "@/modules/control-center/utils/canvas-transition";
 import React, { useCallback, useEffect } from "react";
 import { FlowView } from "@/modules/control-center/header/FlowSelector";
-import { DEFAULT_MIN_ZOOM, EMPTY_STATE_ZOOM } from "@/modules/control-center/utils/layouts";
+import {
+  DEFAULT_MIN_ZOOM,
+  EMPTY_STATE_ZOOM,
+  nodeYNudge,
+} from "@/modules/control-center/utils/layouts";
 import {
   getFirstGroup,
   getPlaceholderPeer,
@@ -46,12 +50,10 @@ interface ForceEntityViewConfig {
   applyView: (id: string) => any;
 }
 
-// First-open fly-in starts this fraction zoomed out from the fitted view;
-// small values read as no motion, large ones overshoot.
+// First-open fly-in starts this fraction zoomed out from the fitted view.
 const FIRST_FIT_START_ZOOM_FACTOR = 0.55;
 const FIT_ANIMATION_MS = 800;
-// Ease-out: default ease-in-out barely moves for the first ~150ms (reads as a
-// stall) before catching up.
+// Ease-out: the default ease-in-out barely moves for the first ~150ms.
 const fitEase = (t: number) => t * (2 - t);
 
 export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
@@ -75,7 +77,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     selectedUser,
     setSelectedUser,
     setSelectedDestinationGroup,
-    selectedDestinationGroup,
     setLiveResourceEditor,
     loggedInUser,
   } = useCanvasState();
@@ -86,7 +87,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     networks,
     groups,
     users,
-    networkResources,
     isLoading,
   } = useControlCenterData();
 
@@ -96,7 +96,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setHighlightArmed,
     setSelectedPeerPanel,
   } = useDestinationGroup();
-  const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
+  const { setSelectedPolicy, setPolicyModalOpen, openAgentPolicy } =
+    useControlCenterPolicy();
   const { isDraft } = useDraftMode();
   const { confirm } = useDialog();
 
@@ -110,14 +111,13 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     },
   } = params;
 
-  // A warm-cache remount paints nodes at the origin (top-left flash) before
-  // the camera fits, so the first fit hides the viewport (cc-prefit), fits
-  // while hidden, then reveals — animating in from a zoomed-out start.
+  // A warm-cache remount paints nodes at the origin before the camera fits, so
+  // the first fit hides the viewport (cc-prefit) and animates in zoomed out.
   const firstFitRef = React.useRef(true);
   const instantFitRef = React.useRef(false);
 
   const fitView = (newNodes?: Node[]) => {
-    // A running canvas transition owns the camera — its reveal does the fit.
+    // A running canvas transition owns the camera; its reveal does the fit.
     if (isCanvasTransitionActive()) return;
     const target = newNodes ?? nodes;
     const instant = instantFitRef.current;
@@ -129,15 +129,12 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       : null;
     flowEl?.classList.add("cc-prefit");
     const reveal = () => flowEl?.classList.remove("cc-prefit");
-    // The view can initialize before ReactFlow has rendered/measured the new
-    // nodes (warm-cache remount) — fitView would then compute bounds from
-    // unmeasured nodes and misalign the camera. Wait (bounded) until every
-    // target node is in the store with a measured size.
+    // The view can initialize before ReactFlow has measured the new nodes, and
+    // fitView would then compute bounds from unmeasured nodes.
     const attempt = (triesLeft: number) => {
       if (target.length === 0) {
-        // Center the flow origin mid-screen (a raw {0,0} viewport anchors it
-        // at the top-left corner, making the next view's fit animation fly in
-        // from far away).
+        // A raw {0,0} viewport anchors the origin top-left, so the next view's
+        // fit animation flies in from far away.
         void reactFlow.setCenter(0, 0, { zoom: EMPTY_STATE_ZOOM });
         reveal();
         return;
@@ -146,8 +143,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       const allMeasured = target.every((n) => {
         const s = stored.get(n.id);
         if (!s) return false;
-        // Style-sized nodes (network frames) don't need to wait for the
-        // ResizeObserver — their geometry is already known.
+        // Style-sized nodes (network frames) already know their geometry.
         if (Number(s.style?.width) > 0 && Number(s.style?.height) > 0) {
           return true;
         }
@@ -173,8 +169,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         void reactFlow.fitView({ ...fitOptions, duration: FIT_ANIMATION_MS });
         return;
       }
-      // Fit while hidden to learn the target camera, snap to a zoomed-out
-      // start, reveal, then animate in.
       void reactFlow.fitView({ ...fitOptions, duration: 0 }).then(() => {
         const end = reactFlow.getViewport();
         const rect = flowEl?.getBoundingClientRect();
@@ -192,8 +186,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
           zoom: startZoom,
         });
         reveal();
-        // Next frame, not this tick: the snap must paint first, or d3 reads the
-        // current transform (still `end`) and tweens end→end — no fly-in.
+        // Next frame, not this tick: the snap must paint first, or d3 still
+        // reads `end` as the current transform and tweens end→end.
         window.requestAnimationFrame(() => {
           void reactFlow.setViewport(end, {
             duration: FIT_ANIMATION_MS,
@@ -210,21 +204,15 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       config;
     const shouldRecalculate = selectedValue !== id;
 
-    // Compute the view layout ONCE, before touching state — it's a synchronous
-    // d3 simulation and must not run inside the setNodes updater (React
-    // double-invokes updaters under StrictMode/concurrent rendering, which ran
-    // the layout twice). applyView is a pure function of the SWR data + id; it
-    // does not read the canvas store, so hoisting it out is safe.
+    // Compute the layout ONCE, outside the setNodes updater: it's a synchronous
+    // d3 simulation and React double-invokes updaters under StrictMode.
     const result = applyView(id);
 
     if (shouldRecalculate) setSelected(id);
 
     if (result) {
-      // The select node may have just been set by the caller (the view-init
-      // effect does setNodes([selectNode]) immediately before this) and not
-      // yet be committed — so read/patch it from the updater's `prev`, NOT
-      // reactFlow.getNodes(), which wouldn't see it yet. The updater stays
-      // pure (no side effects): it only derives the next nodes from prev.
+      // The caller's setNodes([selectNode]) may not be committed yet, so patch
+      // the select node from the updater's `prev`, not reactFlow.getNodes().
       setNodes((prev) => {
         const source = prev.find((n) => n.id === selectNodeId);
         if (!source) return prev;
@@ -235,14 +223,12 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       });
       setEdges(result.updatedEdges);
       setLayoutInitialized(true);
-      // fitView only needs the node ids to fit — it reads their geometry from
-      // the store at rAF time — so a stub id for the select node is enough.
+      // fitView reads geometry from the store at rAF time, so a stub id works.
       if (shouldRecalculate)
         fitView([...result.updatedNodes, { id: selectNodeId } as Node]);
       return;
     }
 
-    // No view result — just stamp the select node's data key.
     if (shouldRecalculate) {
       setNodes((prev) =>
         prev.map((n) =>
@@ -281,11 +267,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       applyView: applyUserView,
     });
 
-  // Rebuilds the CURRENT live view from the API response of a policy update
-  // (the SWR cache still holds the pre-save list until its background
-  // revalidation lands). Surviving nodes keep their positions and the camera
-  // stays put — no layoutInitialized reset, no fitView; added/removed
-  // sources, destinations and edges reconcile through the rebuild itself.
+  // Rebuilds the current live view from a policy PUT response, since the SWR
+  // cache still holds the pre-save list. Positions and the camera stay put.
   const refreshLiveView = (updatedPolicy: Policy) => {
     if (isDraft || !policies) return;
     const patched = policies.map((p) =>
@@ -312,9 +295,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     if (!result) return;
 
     setNodes((prev) => {
-      // Keep positions of nodes the user already sees (only top-level ones —
-      // frame children stay frame-relative); brand-new nodes take their
-      // layout positions.
+      // Keep positions of nodes the user already sees; only top-level ones,
+      // since frame children stay frame-relative.
       const prevPositions = new Map(
         prev.filter((n) => !n.parentId).map((n) => [n.id, n.position]),
       );
@@ -322,7 +304,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         const position = !n.parentId ? prevPositions.get(n.id) : undefined;
         return position ? { ...n, position } : n;
       });
-      // The select node isn't part of view results — carry it over.
       const selects = prev.filter((n) => n.id.startsWith("select-"));
       return [...merged, ...selects];
     });
@@ -370,11 +351,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setLayoutInitialized(false);
   };
 
-  // Selecting a network plays the shared canvas transition: dive IN toward
-  // the clicked frame (or a plain zoom-in for dropdown picks, where there's
-  // no rect), fly OUT when going back to the overview. The view rebuild
-  // happens in the invisible swap window; the transition's reveal owns the
-  // camera (the init effect's fitView is suppressed meanwhile).
+  // The view rebuild happens in the transition's invisible swap window, and
+  // its reveal owns the camera (the init effect's fitView is suppressed).
   const onNetworkSelect = useCallback(
     (networkId: string, targetRect?: Rect | null, instant?: boolean) => {
       setInstantDrill(!!instant);
@@ -391,15 +369,9 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       if (networkId) drillInto(reactFlow, targetRect, swap);
       else drillOutOf(reactFlow, swap);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- must stay identity-stable for onNodeClick's deps
     [],
   );
-
-  const onGroupSelect = useCallback((groupId: string) => {
-    resetView();
-    setCurrentView(FlowView.GROUPS);
-    setSelectedGroup(groupId);
-  }, []);
 
   const onViewChange = (view: FlowView) => {
     resetView();
@@ -417,13 +389,10 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     } catch (e) {}
   };
 
-  // Clicking a group opens its panel; clicking it again keeps it open (no
-  // toggle) — the panel only closes on a click outside (pane click / Esc).
+  // The group panel never toggles; it closes only on a click outside.
   const onDestinationGroupSelect = useCallback(
     (groupId: string) => {
-      // Focus Mode is sticky — opening a group's panel while focused keeps
-      // the focus (the dim stays keyed on the focused node). One panel at a
-      // time: the group panel supersedes the peer panel.
+      // One panel at a time: the group panel supersedes the peer panel.
       setSelectedPeerPanel("");
       setSelectedDestinationGroup(groupId);
     },
@@ -439,12 +408,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         _node.type === "destinationGroupNode";
       const isPolicyNode = _node.type === "policyNode";
 
-      // A live frame's resource row drills into its network, same as the
-      // frame itself (rows are separate nodes, so the frame click never
-      // fires for them).
-      // A live frame's resource / resource-group row drills into its network,
-      // same as the frame. Only in the overview (!selectedNetwork) — inside the
-      // drilled view these rows are already there, so a click is a no-op.
+      // Rows are separate nodes, so the frame click never fires for them.
+      // Overview only: inside the drilled view the rows are already there.
       const frameChildNetworkId =
         !isDraft &&
         !selectedNetwork &&
@@ -455,24 +420,18 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       const networkId = isNetworkNode
         ? _node.id.replace("network-", "")
         : frameChildNetworkId;
-      // Draft groups have no API id yet — the panel is keyed by node id then.
+      // Draft groups have no API id yet, so the panel is keyed by node id.
       const groupId = isGroupNode
         ? (_node.data as any)?.group?.id || (isDraft ? _node.id : _node.id.replace("group-", ""))
         : "";
-      // Inline policy pills (all-networks view) use per-network node ids
-      // ("policy-<pid>-net-<nid>") — the data carries the real policy id.
+      // Draft policy nodes are keyed by clientId.
       const policyId = isPolicyNode
         ? (_node.data as any)?.policy?.id ?? _node.id.replace("policy-", "")
         : "";
 
-      // Focus Mode armed: the click PICKS the focus target instead of its
-      // normal action, then picking disarms — the focus is sticky (clicking
-      // around doesn't re-target; Esc / the pill's X / the header button
-      // exit). A node with no edges has no path to trace, so it's ignored
-      // and the mode stays armed.
+      // Focus Mode armed: the click picks the focus target instead of running
+      // its normal action. An unfocusable node leaves the mode armed.
       if (highlightArmed) {
-        // The view's selector nodes (pick a peer/group/user) aren't real
-        // entities — they can't be focused.
         if (
           _node.type === "selectPeerNode" ||
           _node.type === "selectGroupNode" ||
@@ -480,45 +439,40 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         ) {
           return;
         }
-        // Only busy nodes are worth focusing (4+ edges, 2+ policies).
         if (
           !isFocusWorthy(_node.id, reactFlow.getNodes(), reactFlow.getEdges())
         ) {
           return;
         }
-        // One focus at a time — the highlight supersedes a group focus.
+        // One focus at a time: the highlight supersedes a group focus.
         setSelectedDestinationGroup("");
         setFocusedNodeId(_node.id);
         setHighlightArmed(false);
         return;
       }
 
-      // Draft network clicks are handled by the node itself (frame
-      // drill-down) — selecting a live network view there would leak a
-      // draft-only id into the live selection.
+      // Draft network clicks are handled by the node itself; a live network
+      // view here would leak a draft-only id into the live selection.
       if (networkId && currentView === FlowView.NETWORKS && !isDraft) {
-        // The dive-in targets the clicked frame (a resource row resolves to
-        // its parent frame).
         const frame = reactFlow
           .getNodes()
           .find((n) => n.id === `network-${networkId}`);
         onNetworkSelect(networkId, getNodeRect(frame));
       }
       if (groupId) {
-        // Every view (live networks included): clicking a group opens its
-        // side panel — the focus-dim effect highlights its path.
         onDestinationGroupSelect(groupId);
       }
-      // Clicking a policy opens the editor directly (live and draft alike). In
-      // live the "you are in live mode" confirmation is deferred to when the
-      // user clicks Save Changes (onBeforeSave in ControlCenterPolicyModals).
+      // In live, the "you are in live mode" confirmation is deferred to Save
+      // Changes (onBeforeSave in ControlCenterPolicyModals).
       if (policyId) {
         setSelectedPolicy(policyId);
         setPolicyModalOpen(true);
       }
-      // Live resources open the real editor (networks page modal) — its
-      // save PUTs, so confirm first, like the live policy actions. Framed
-      // overview rows keep drilling into their network instead.
+      if (_node.type === "agentPolicyNode") {
+        openAgentPolicy(_node.id.replace("agent-policy-", ""));
+      }
+      // The live resource editor's save PUTs immediately, so confirm first.
+      // Framed overview rows keep drilling into their network instead.
       const isResourceNode =
         _node.type === "resourceNode" ||
         _node.type === "destinationResourceNode";
@@ -548,9 +502,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
           })();
         }
       }
-      // Clicking a peer opens its groups panel (the peer-side twin of the
-      // group panel) — placeholders included: their assignments become the
-      // setup key's auto-assigned groups and deploy once the peer installs.
+      // Placeholders included: their group assignments become the setup key's
+      // auto-assigned groups and deploy once the peer installs.
       const isPeerNode =
         _node.type === "peerNode" ||
         _node.type === "sourcePeerNode" ||
@@ -574,6 +527,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       setHighlightArmed,
       setSelectedPolicy,
       setPolicyModalOpen,
+      openAgentPolicy,
       setSelectedPeerPanel,
       setLiveResourceEditor,
       confirm,
@@ -582,8 +536,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
 
   useEffect(() => {
     if (isLoading) return;
-    // Draft mode manages its own canvas (useDraft); don't let the live view
-    // initialization run/fitView while drafting.
+    // Draft mode manages its own canvas (useDraft).
     if (isDraft) return;
     if (layoutInitialized) return;
 
@@ -604,7 +557,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
             {
               id: "select-peer-node",
               type: "selectPeerNode",
-              position: { x: 0, y: 0 },
+              position: { x: 0, y: nodeYNudge("selectPeerNode") },
               data: {
                 currentPeer: initialPeerId,
                 onPeerChange: handlePeerChange,
@@ -642,7 +595,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
             {
               id: "select-user-node",
               type: "selectUserNode",
-              position: { x: -550, y: 0 },
+              position: { x: -550, y: nodeYNudge("selectUserNode") },
               data: {
                 currentUser: initialUserId,
                 onUserChange: handleUserChange,
@@ -712,15 +665,10 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
   ]);
 
   return {
-    fitView,
-    handleGroupChange,
-    handlePeerChange,
-    handleUserChange,
     forceSingleGroupView,
-    onDestinationGroupSelect,
-    onNetworkSelect,
     refreshLiveView,
     onViewChange,
+    onNetworkSelect,
     onNodeClick,
   };
 }

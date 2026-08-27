@@ -1,84 +1,25 @@
 import { Edge, Node } from "@xyflow/react";
-import * as d3 from "d3";
 
 interface SimulationNode extends Node {
   x: number;
   y: number;
-  vx?: number;
-  vy?: number;
 }
 
 export const DEFAULT_MAX_ZOOM = 1.6;
 export const DEFAULT_MIN_ZOOM = 0.2;
 export const EMPTY_STATE_ZOOM = 0.65;
 
-export const applyD3ForceLayout = (nodes: Node[], edges: Edge[]) => {
-  const simulationNodes: SimulationNode[] = nodes.map((node) => ({
-    ...node,
-    x: node.position?.x || 0,
-    y: node.position?.y || 0,
-  }));
+export const POLICY_COLUMN_Y_OFFSET = 18;
 
-  const simulationLinks = edges.map((edge) => ({
-    ...edge,
-    source: edge.source,
-    target: edge.target,
-  }));
-
-  const simulation = d3
-    .forceSimulation(simulationNodes)
-    .force(
-      "link",
-      d3
-        .forceLink(simulationLinks)
-        .id((d: any) => d.id)
-        // Reduced distance to minimize crossings
-        .distance(60)
-        // Reduced strength to maintain radial structure
-        .strength(0.05),
-    )
-    .force("collision", d3.forceCollide().radius(300));
-
-  // Run simulation for fewer iterations to preserve radial structure.
-  // Stop once alpha decayed past the point of visible movement (~300 ticks)
-  // — blindly running 1000 synchronous ticks froze the main thread on views
-  // with many nodes.
-  simulation.stop();
-  for (let i = 0; i < 1000 && simulation.alpha() > 0.005; i++) {
-    simulation.tick();
-  }
-
-  const updatedNodes: Node[] = simulationNodes.map((node) => ({
-    ...node,
-    position: {
-      x: node.x,
-      y: node.y,
-    },
-  }));
-
-  const updatedEdges: Edge[] = edges.map((edge) => {
-    const sourceNode = simulationNodes.find((n) => n.id === edge.source);
-    const targetNode = simulationNodes.find((n) => n.id === edge.target);
-
-    return {
-      ...edge,
-      data: {
-        ...edge.data,
-        points:
-          sourceNode && targetNode
-            ? [
-                { x: sourceNode.x, y: sourceNode.y },
-                { x: targetNode.x, y: targetNode.y },
-              ]
-            : undefined,
-      },
-    };
-  });
-
-  simulation.stop();
-
-  return { updatedNodes, updatedEdges };
+const NODE_Y_NUDGE: Record<string, number> = {
+  peerNode: 3,
+  sourcePeerNode: 3,
+  expandedGroupPeer: 3,
+  selectPeerNode: 2,
+  selectUserNode: 2,
 };
+
+export const nodeYNudge = (type?: string) => (type && NODE_Y_NUDGE[type]) || 0;
 
 export const applyD3HierarchicalLayout = (
   nodes: Node[],
@@ -116,11 +57,12 @@ export const applyD3HierarchicalLayout = (
   const destinationResourceNodes = simulationNodes.filter(
     (n) => n.type === "destinationResourceNode",
   );
-  // The single-group view mirrors policies where the selected group is the
-  // destination to the LEFT (sources → policy → selected group); the view
-  // stamps those policy nodes with data.side === "left".
+  // The single-group view mirrors policies that target the selected group to
+  // the left, stamping those policy nodes with data.side === "left".
   const policyNodes = simulationNodes.filter(
-    (n) => n.type === "policyNode" && n.data?.side !== "left",
+    (n) =>
+      (n.type === "policyNode" || n.type === "agentPolicyNode") &&
+      n.data?.side !== "left",
   );
   const leftPolicyNodes = simulationNodes.filter(
     (n) => n.type === "policyNode" && n.data?.side === "left",
@@ -128,6 +70,10 @@ export const applyD3HierarchicalLayout = (
   const networkNodes = simulationNodes.filter((n) => n.type === "networkNode");
   const resourceNodes = simulationNodes.filter(
     (n) => n.type === "resourceNode",
+  );
+  // Providers are destinations, so they share the destination column.
+  const providerNodes = simulationNodes.filter(
+    (n) => n.type === "providerNode",
   );
   const peerNodes = simulationNodes.filter((n) => n.type === "peerNode");
   const expandedGroupPeers = simulationNodes.filter(
@@ -147,7 +93,6 @@ export const applyD3HierarchicalLayout = (
     ];
   }
 
-  // Source Peer (user view) — same pitch as the destination column.
   centerNodesVertically(
     sourcePeerNodes,
     startX - 100,
@@ -164,9 +109,8 @@ export const applyD3HierarchicalLayout = (
     );
   }
 
-  // Groups or Source Groups — in the peer/group/user views the source column
-  // shares the destination column's pitch (one rhythm on both sides, and the
-  // draft rebuild mirrors it); the drilled network view keeps the base pitch.
+  // Outside the drilled network view the source column shares the destination
+  // column's pitch, and the draft rebuild mirrors it.
   centerNodesVertically(
     groupNodes,
     startX,
@@ -176,8 +120,7 @@ export const applyD3HierarchicalLayout = (
     centerY,
   );
   if (view === "group") {
-    // Mirror image of the destination column: sources of the policies that
-    // target the selected group sit on the far left.
+    // Sources of policies targeting the selected group sit on the far left.
     centerNodesVertically(
       sourceGroupNodes,
       startX - (options?.destinationGroup?.width ?? columnWidth),
@@ -197,17 +140,17 @@ export const applyD3HierarchicalLayout = (
     policyNodes,
     startX + (options?.policy?.width ?? columnWidth),
     options?.policy?.spacing ?? nodeSpacing,
-    centerY + 14,
+    centerY + POLICY_COLUMN_Y_OFFSET,
   );
   centerNodesVertically(
     leftPolicyNodes,
     startX - (options?.policy?.width ?? columnWidth),
     options?.policy?.spacing ?? nodeSpacing,
-    centerY + 14,
+    centerY + POLICY_COLUMN_Y_OFFSET,
   );
 
   centerNodesVertically(
-    [...destinationGroupNodes, ...destinationResourceNodes],
+    [...destinationGroupNodes, ...destinationResourceNodes, ...providerNodes],
     startX + (options?.destinationGroup?.width ?? columnWidth),
     options?.destinationGroup?.spacing ?? nodeSpacing,
     centerY,
@@ -220,8 +163,6 @@ export const applyD3HierarchicalLayout = (
     centerY + 5,
   );
 
-  // centerNodesVertically already set node.x/node.y — read the placed
-  // positions straight out (no simulation needed).
   const updatedNodes: Node[] = simulationNodes.map((node) => ({
     ...node,
     position: { x: node.x, y: node.y },
@@ -263,6 +204,7 @@ const centerNodesVertically = (
   const startY = centerY - totalHeight / 2;
   nodesList.forEach((node, index) => {
     node.x = x;
-    node.y = (enable ? startY : 0) + index * nodeSpacing;
+    node.y =
+      (enable ? startY : 0) + index * nodeSpacing + nodeYNudge(node.type);
   });
 };

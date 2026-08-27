@@ -169,6 +169,11 @@ export type AIAccessLogEntry = {
   id: string;
   serviceId: string;
   providerId: AIProviderId;
+  // Raw vendor label the request parser stamped ("openai", "anthropic"),
+  // before it was normalised into a catalog id. Empty when the request never
+  // got far enough to be recognised as an LLM call — providerId collapses that
+  // case into "custom", so only this field can tell the two apart.
+  providerVendor?: string;
   // Config-row id of the provider the router actually selected
   // (llm.resolved_provider_id metadata). Empty for legacy entries
   // and non-agent-network requests where the router didn't run.

@@ -41,14 +41,10 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
     await expect(groups).toHaveCount(2);
     await expectChangeCount(page, 2);
 
-    // Drag from the first group's right handle onto the second group —
-    // the create-policy modal opens prefilled with both sides.
     await connectNodes(page, groups.nth(0), groups.nth(1));
     await expect(page.getByTestId("create-policy-title")).toBeVisible();
     await submitCreatePolicyModal(page);
 
-    // A complete policy lands on canvas with two edges and a tracked
-    // create-policy change (2 groups + 1 policy = 3).
     await expect(canvasNode(page, "policy-new-")).toHaveCount(1);
     await expect(page.locator(".react-flow__edge")).toHaveCount(2);
     await expectChangeCount(page, 3);
@@ -78,16 +74,11 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
     await expect(page.getByTestId("create-policy-title")).toBeVisible();
     await submitCreatePolicyModal(page);
 
-    // The policy node and edges exist on canvas…
     await expect(canvasNode(page, "policy-new-")).toHaveCount(1);
-    // …and the policy is tracked as an ordinary create-policy change. The
-    // reference to an uninstalled placeholder peer does NOT withhold it —
-    // instead the peer's own install-peer change carries the blocking issue
-    // that gates the deploy until the peer installs.
+    // The placeholder's install-peer change gates the deploy, not the policy.
     const changes = await readDraftChanges(page);
     expect(changes.filter((c) => c.type === "create-policy")).toHaveLength(1);
     expect(changes.filter((c) => c.type === "install-peer")).toHaveLength(1);
-    // group create + placeholder install + policy create.
     await expectChangeCount(page, 3);
   });
 
@@ -110,22 +101,19 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
     await submitCreatePolicyModal(page);
     await expectChangeCount(page, 3);
 
-    // Rename the source group via its context menu.
     const sourceGroup = groups.nth(0);
     const newName = generateRandomName("cc-renamed-");
     await clickContextMenuItem(page, sourceGroup, "rename");
     await page.getByTestId("cc-rename-input").fill(newName);
     await page.getByTestId("cc-rename-submit").click();
 
-    // The canvas node shows the new name…
     await expect(sourceGroup).toContainText(newName);
-    // …the rename folded into the create-group entry (still 3 changes)…
+    // The rename folds into the create-group entry instead of adding one.
     await expectChangeCount(page, 3);
     const changes = await readDraftChanges(page);
     expect(
       changes.some((c) => c.type === "create-group" && c.name === newName),
     ).toBe(true);
-    // …and the policy's group reference followed the rename.
     const policy = changes.find((c) => c.type === "create-policy");
     const rule = policy.policy.rules[0];
     const referenced = [
@@ -134,8 +122,7 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
     ].map((g) => (typeof g === "string" ? g : g.name));
     expect(referenced).toContain(newName);
 
-    // Reopening the policy editor must show the renamed group SELECTED in
-    // the group selector (the modal seeds from the canvas policy node).
+    // The editor seeds from the canvas policy node, so it must show the rename.
     const policyNode = canvasNode(page, "policy-new-");
     await clickContextMenuItem(page, policyNode, "edit");
     await expect(page.getByTestId("source-group-selector")).toContainText(
@@ -162,27 +149,21 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
     await connectNodes(page, groups.nth(0), groups.nth(1));
     await expect(page.getByTestId("create-policy-title")).toBeVisible();
 
-    // Type a brand-new group name into the destination selector and add it.
     const inlineName = generateRandomName("cc-inline-");
     const selector = page.getByTestId("destination-group-selector");
     const search = page.getByTestId("destination-group-selector-search");
-    // The Radix popover open can be swallowed while the create-policy modal
-    // is still animating in, so retry the trigger click until the search is
-    // on screen (same hardening as the matrix "edit policy" test).
+    // The popover open can be swallowed while the modal is still animating in.
     await expect(async () => {
       await selector.click();
       await expect(search).toBeVisible({ timeout: 1000 });
     }).toPass();
     await search.fill(inlineName);
     await page.keyboard.press("Enter");
-    // Close the popover with an in-modal click, not Escape — Escape can close
-    // the whole create-policy modal once the popover is already gone.
+    // Escape would close the whole modal once the popover is already gone.
     await page.getByTestId("create-policy-title").click();
     await expect(search).toBeHidden();
     await submitCreatePolicyModal(page);
 
-    // The inline group exists on canvas as its own draft node and as a
-    // create-group change.
     await expect(
       page.locator(".react-flow__node", { hasText: inlineName }),
     ).toHaveCount(1);
@@ -212,16 +193,13 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
     const policyNode = canvasNode(page, "policy-new-");
     await expect(policyNode).toHaveCount(1);
 
-    // Edit via context menu, rename the policy on the General tab.
     const newName = generateRandomName("cc-policy-");
     await clickContextMenuItem(page, policyNode, "edit");
     await expect(page.getByTestId("update-policy-title")).toBeVisible();
-    // The name field lives on the Name & Description tab.
     await page.getByRole("tab", { name: "Name & Description" }).click();
     await page.getByTestId("policy-name").fill(newName);
     await page.getByTestId("submit-policy").click();
 
-    // Canvas node text and the pending create-policy entry both updated.
     await expect(policyNode).toContainText(newName);
     const changes = await readDraftChanges(page);
     const policy = changes.find((c) => c.type === "create-policy");
@@ -247,8 +225,6 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
     await submitCreatePolicyModal(page);
     await expectChangeCount(page, 3);
 
-    // Remove is canvas-only: no confirm dialog, pending create cancelled,
-    // endpoint groups stay on canvas.
     const policyNode = canvasNode(page, "policy-new-");
     await clickContextMenuItem(page, policyNode, "remove");
     await expect(page.getByTestId("confirmation.confirm")).not.toBeVisible();
@@ -276,21 +252,16 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
     const peer = page.locator('.react-flow__node[data-id^="peer-"]');
     await expect(peer).toHaveCount(1);
 
-    // Dragging the peer NODE onto the group absorbs it as a member: the
-    // peer node leaves the canvas and the group's counter increments.
     await dragNodeOnto(page, peer, group);
     await expect(peer).toHaveCount(0);
     await expect(group).toContainText(/1\s*peer/i);
 
-    // The membership folded into the group's create entry.
     const changes = await readDraftChanges(page);
     const createGroupChange = changes.find((c) => c.type === "create-group");
     expect(createGroupChange.peerIds).toHaveLength(1);
-    // group create + the peer's pending install step
     await expectChangeCount(page, 2);
 
-    // The group's Details panel lists the dropped (placeholder) peer even
-    // though it isn't in the API peer list.
+    // The placeholder isn't in the API peer list but must still be listed.
     await clickContextMenuItem(page, group, "view-details");
     await expect(
       page.getByText("Server", { exact: false }).last(),
@@ -301,16 +272,13 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
   test("Should delete an existing group in draft and deploy the deletion", async ({
     dashboardAsOwner: page,
   }) => {
-    // Seed a real group via the API, then re-open the canvas so the
-    // dashboard and the components panel know it. (The API helper navigates
-    // away to capture the auth token, so this has to be a fresh open.)
+    // The API helper navigates away to capture the token, so re-open the canvas.
     const name = generateRandomName("cc-delete-");
     const seeded = await createGroup(page, name);
     await openControlCenter(page);
     await enterDraft(page);
 
-    // Pull the existing group onto the canvas from the components panel
-    // (search narrows the virtualized list so the row is rendered).
+    // Search narrows the virtualized list so the row actually renders.
     await dragTemplateToCanvas(page, `cc-panel-group-${seeded.id}`, undefined, {
       search: name,
     });
@@ -320,7 +288,6 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
     );
     await expect(groupNode).toHaveCount(1);
 
-    // Delete (not Remove) an existing group: confirmed, tracked, deployed.
     await clickContextMenuItem(page, groupNode, "delete");
     await expect(page.getByTestId("confirmation.title")).toContainText(name);
     await page.getByTestId("confirmation.confirm").click();
@@ -342,9 +309,7 @@ test.describe.serial("Control Center Draft Connections @control-center", () => {
     expect(remaining.some((g) => g.id === seeded.id)).toBe(false);
   });
 
-  // Safety net: clear any seeded groups left behind by failed runs. Reuses
-  // the worker page — a fresh context has to log in and warm the API token
-  // again, which alone can outrun the hook timeout.
+  // Reuses the worker page: a fresh context's login can outrun the hook timeout.
   test.afterAll(async ({ dashboardAsOwner: page }) => {
     const groups = await listGroups(page).catch(() => []);
     for (const g of groups) {

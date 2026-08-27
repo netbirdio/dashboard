@@ -15,9 +15,8 @@ type Props = {
   className?: string;
 };
 
-// Draft placeholder peers have no OS yet — their pseudo-peer carries the
-// kind in `os` (see getPlaceholderPeer) and shows the kind's icon.
-const PLACEHOLDER_ICONS: Record<string, LucideIcon> = {
+// Placeholder peers have no OS yet: their pseudo-peer carries the kind in `os`.
+export const PLACEHOLDER_ICONS: Record<string, LucideIcon> = {
   "draft-agent": BotIcon,
   "draft-server": ServerIcon,
   "draft-user-device": MonitorSmartphoneIcon,

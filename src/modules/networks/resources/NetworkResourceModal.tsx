@@ -76,13 +76,11 @@ export default function NetworkResourceModal({
   );
 }
 
-// Pure-data result for useSave={false} callers (control-center draft mode).
 export type ResourceModalResult = {
   name: string;
   description: string;
   address: string;
   groups: Group[];
-  enabled: boolean;
 };
 
 type ModalProps = {
@@ -91,13 +89,11 @@ type ModalProps = {
   network: Network;
   resource?: NetworkResource;
   initialTab?: string;
-  // false → no API calls: the modal hands the resource data back via
-  // onSaved (draft mode). The Access Control tab is hidden — draft policies
-  // are drawn on the canvas instead.
+  // false → no API calls: the data comes back via onSaved and the Access
+  // Control tab is hidden.
   useSave?: boolean;
   onSaved?: (data: ResourceModalResult) => void;
-  // Extra uniqueness names for useSave={false} (e.g. draft resources on the
-  // canvas that don't exist in the API yet).
+  // Extra uniqueness names for resources that don't exist in the API yet.
   takenNames?: string[];
 };
 
@@ -168,22 +164,24 @@ export function ResourceModalContent({
 
   const nameError = useMemo(() => {
     if (name === "") return "";
+    // Compared case-insensitively to match resourceExists, or two drafts
+    // differing only in case both validate and clash on deploy.
+    const normalized = name.trim().toLowerCase();
     if (
       resourceExists(name, resource?.id) ||
-      (name.trim() !== resource?.name && takenNames?.includes(name.trim()))
+      (normalized !== resource?.name?.toLowerCase() &&
+        takenNames?.some((n) => n.toLowerCase() === normalized))
     )
       return "A resource with this name already exists. Please use another name.";
     return "";
   }, [name, resourceExists, resource?.id, resource?.name, takenNames]);
 
-  // Draft mode: no API call — hand the validated data back to the caller.
   const saveDraft = () => {
     onSaved?.({
       name: name.trim(),
       description,
       address: normalizeHostCIDR(address),
       groups,
-      enabled,
     });
   };
 
@@ -263,7 +261,7 @@ export function ResourceModalContent({
             ? `${resource.name}`
             : network?.name
             ? `Add new resource to "${network.name}"`
-            : // No network yet (draft canvas) — assigned later, so avoid an empty "".
+            : // No network yet on the draft canvas, so avoid an empty string.
               "Add a new resource"
         }
         color={"yellow"}
@@ -395,7 +393,7 @@ export function ResourceModalContent({
                             ? "this policy"
                             : "these policies"}
                           .
-                          {isAddressValid || resource ? (
+                          {useSave && (isAddressValid || resource) ? (
                             <>
                               {" "}
                               Please review them in the{" "}
@@ -407,8 +405,11 @@ export function ResourceModalContent({
                               </InlineButtonLink>{" "}
                               tab.
                             </>
-                          ) : (
+                          ) : useSave ? (
                             " Please review them in the Access Control tab."
+                          ) : (
+                            // Draft has no Access Control tab.
+                            " Review them on the canvas before you deploy."
                           )}
                         </Callout>
                       )}
@@ -420,17 +421,21 @@ export function ResourceModalContent({
           </div>
         </TabsContent>
 
-        <TabsContent value={"access-control"} className={"pb-8"}>
-          <NetworkResourceAccessControl
-            existingPolicies={existingPolicies || []}
-            newPolicies={policies}
-            onNewPoliciesChange={setPolicies}
-            address={address}
-            resourceName={name}
-            resourceId={resource?.id}
-            hasResourceGroups={groups.length > 0}
-          />
-        </TabsContent>
+        {/* Draft never mounts this tab: its policies live in local state that
+            saveDraft discards, so they would be silently lost. */}
+        {useSave && (
+          <TabsContent value={"access-control"} className={"pb-8"}>
+            <NetworkResourceAccessControl
+              existingPolicies={existingPolicies || []}
+              newPolicies={policies}
+              onNewPoliciesChange={setPolicies}
+              address={address}
+              resourceName={name}
+              resourceId={resource?.id}
+              hasResourceGroups={groups.length > 0}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       <ModalFooter className={"items-center"}>
@@ -448,7 +453,6 @@ export function ResourceModalContent({
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           {!useSave ? (
-            // Draft mode: single-step save, no Access Control step.
             <>
               <ModalClose asChild={true}>
                 <Button variant={"secondary"}>Cancel</Button>

@@ -23,11 +23,7 @@ import {
   ResourceModalResult,
 } from "@/modules/networks/resources/NetworkResourceModal";
 
-// Draft resource editor — the networks page's resource modal in pure-data
-// mode (useSave={false}): no API call; data lands on the canvas node and a
-// create-resource change. Two modes: edit an existing resource node, or
-// CREATE into a frame — the node is only born on save. Parent network is the
-// frame, so no network selector.
+// The networks page's resource modal in pure-data mode (useSave={false}): no API call.
 export const DraftResourceEditorModal = () => {
   const { resourceEditor, setResourceEditor } = useDraftMode();
   return (
@@ -36,8 +32,7 @@ export const DraftResourceEditorModal = () => {
       onOpenChange={(open) => !open && setResourceEditor(null)}
     >
       {resourceEditor && (
-        // NetworkProvider needs the access-control context above it (same
-        // nesting as the live network page).
+        // NetworkProvider needs the access-control context above it.
         <NetworkAccessControlProvider>
           <NetworkProvider>
             <EditorContent
@@ -73,8 +68,6 @@ const EditorContent = ({
   const frame = editor.createInNetworkNodeId
     ? reactFlow.getNodes().find((n) => n.id === editor.createInNetworkNodeId)
     : undefined;
-  // Draft resources carry their data via getDraftResource; existing ones
-  // (edited in place) prefill from their real resource on the node.
   const draftResource =
     getDraftResource(node) ??
     (node?.data as { resource?: NetworkResource })?.resource;
@@ -86,14 +79,13 @@ const EditorContent = ({
           "",
       }
     : isCreate
-      ? // Standalone create — no network yet; assigned later via "No Network".
+      ? // Standalone create: no network yet, assigned later.
         undefined
       : (node?.data as { draftNetwork?: DraftNetworkRef })?.draftNetwork;
   const groupIds =
     (node?.data as { resourceGroupIds?: string[] })?.resourceGroupIds ?? [];
 
-  // Other draft resources on the canvas — API resources are covered by the
-  // modal's own resourceExists check.
+  // API resources are already covered by the modal's own resourceExists check.
   const takenNames = reactFlow
     .getNodes()
     .filter((n) => n.id !== editor.nodeId)
@@ -101,8 +93,7 @@ const EditorContent = ({
     .filter(Boolean) as string[];
 
   const onSaved = (result: ResourceModalResult) => {
-    // Groups typed straight into the selector need their create-group
-    // change (draft groups are referenced by name).
+    // Groups typed into the selector need their own create-group change.
     result.groups.forEach((g) => {
       if (g.id) return;
       const exists = changes.some(
@@ -124,16 +115,14 @@ const EditorContent = ({
       });
 
     if (isCreate) {
-      // The node is only born now, on save — into its frame, or standalone at
-      // the drop/click position (a plain "No Network" card until assigned).
+      // The node is only born now, on save.
       const nodeId = editor.createInNetworkNodeId
         ? addResourceToFrame(
             editor.createInNetworkNodeId,
             editor.createAt ?? undefined,
           )
         : addDraftResource(editor.createStandaloneAt ?? undefined);
-      // Next tick — the freshly created node must be committed to the
-      // canvas before saveDraftResource stamps its data.
+      // The node must be committed to the canvas before saveDraftResource stamps its data.
       if (nodeId) setTimeout(() => save(nodeId), 0);
     } else if (editor.nodeId) {
       save(editor.nodeId);
@@ -141,11 +130,7 @@ const EditorContent = ({
     onClose();
   };
 
-  // LIVE mode: the frame's "Add Resource" creates against the REAL network
-  // (the modal's own save POSTs); mutate lands via SWR revalidation. The live
-  // single-network view has no frame node (it lays resources out directly), so
-  // fall back to the real network from the API list by id — same fallback the
-  // network edit modal uses.
+  // The live single-network view has no frame node, so fall back to the API list by id.
   if (!isDraft && editor.createInNetworkNodeId) {
     const liveNetworkId = editor.createInNetworkNodeId.replace("network-", "");
     const liveNetwork =
@@ -156,13 +141,7 @@ const EditorContent = ({
       <ResourceModalContent
         network={liveNetwork}
         onCreated={async () => {
-          // The modal POSTed the resource against the real network. Nothing
-          // has told the canvas yet: revalidate the network + resource lists,
-          // then force the live view to rebuild (the init effect is gated on
-          // layoutInitialized) so the new resource appears. Same rebuild
-          // drilling in/out triggers, which is why it only showed after
-          // navigating. Await the mutations first so the rebuild reads the
-          // fresh data.
+          // Nothing told the canvas about the POSTed resource: revalidate, then rebuild.
           await Promise.all([
             mutate("/networks"),
             mutate("/networks/resources"),
@@ -182,7 +161,7 @@ const EditorContent = ({
         isCreate
           ? undefined
           : ({
-              // The modal treats this as "edit" — fields prefill from the node.
+              // Passing a resource makes the modal treat this as an edit.
               id: draftResource?.id ?? "",
               name: draftResource?.name ?? "",
               description: draftResource?.description ?? "",

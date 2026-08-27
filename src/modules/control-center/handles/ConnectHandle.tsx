@@ -18,9 +18,6 @@ import {
 type Props = {
   position?: Position;
   type?: "source" | "target";
-  style?: React.CSSProperties;
-  // Horizontal shift in px (positive → right).
-  offsetX?: number;
   // Force the bubble hidden even while the node is hovered.
   hidden?: boolean;
 };
@@ -48,8 +45,6 @@ const generateHandleId = (type: "source" | "target", position: Position) => {
 export const ConnectHandle = ({
   position = Position.Right,
   type = "source",
-  style,
-  offsetX,
   hidden = false,
 }: Props) => {
   const nodeId = useNodeId();
@@ -59,8 +54,8 @@ export const ConnectHandle = ({
     [type, position],
   );
 
-  // Selector form: re-renders only when the flags flip, not on every
-  // pointer move of a connect drag (this handle renders in EVERY node).
+  // Selector form: this handle renders in EVERY node, so it must re-render
+  // when the flags flip, not on every pointer move of a connect drag.
   const connectionState = useConnection((c) =>
     !c.inProgress
       ? "idle"
@@ -99,8 +94,6 @@ export const ConnectHandle = ({
           ...(isHorizontal
             ? { width: "1em", height: "4em" }
             : { width: "4em", height: "1em" }),
-          ...(offsetX ? { marginLeft: offsetX } : {}),
-          ...style,
         }}
       >
         <div

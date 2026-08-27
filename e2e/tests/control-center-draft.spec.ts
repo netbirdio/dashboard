@@ -1,5 +1,4 @@
-import { Page, expect } from "@playwright/test";
-import { test } from "../helpers/fixtures";
+import { expect } from "@playwright/test";
 import { deleteGroup, listGroups } from "../helpers/api";
 import {
   canvasNode,
@@ -9,11 +8,11 @@ import {
   resetDraftState,
   reviewButton,
 } from "../helpers/control-center";
+import { test } from "../helpers/fixtures";
+import { visitByNavigation } from "../helpers/navigation";
 
 test.describe.serial("Control Center Draft Mode @control-center", () => {
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
-    // Every test starts from a clean live view: no leftover draft storage
-    // from a previous (possibly failed) test.
     await resetDraftState(page);
   });
 
@@ -24,7 +23,6 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
     await expect(page.getByTestId("cc-draft-cancel")).toBeVisible();
     await expectChangeCount(page, 0);
 
-    // No pending changes — switching back to live must not ask to confirm.
     await page.getByTestId("cc-mode-live").click();
     await expect(page.getByTestId("confirmation.confirm")).not.toBeVisible();
     await expect(page.getByTestId("cc-toolbar-add")).not.toBeVisible();
@@ -48,8 +46,7 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
     const groupNode = canvasNode(page, "group-new-");
     await expect(groupNode).toHaveCount(1);
 
-    // History snapshots are debounced (300ms) — wait for Undo to arm
-    // instead of clicking immediately.
+    // History snapshots are debounced, so wait for Undo to arm.
     const undo = page.getByTestId("cc-toolbar-undo");
     await expect(undo).toBeEnabled();
     await undo.click();
@@ -70,8 +67,7 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
     await dragTemplateToCanvas(page, "cc-template-group");
     await expectChangeCount(page, 1);
 
-    // Draft state lives only in React for the session, so a reload drops it and
-    // returns to live: the draft toolbar is gone and nothing is restored.
+    // Draft state lives only in React, so a reload drops it.
     await page.reload();
     await expect(page.locator(".react-flow__pane")).toBeVisible();
     await expect(page.getByTestId("cc-mode-draft")).toBeVisible();
@@ -86,17 +82,33 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
     await dragTemplateToCanvas(page, "cc-template-group");
     await expectChangeCount(page, 1);
 
-    // Cancelling the confirmation keeps the draft.
     await page.getByTestId("cc-draft-cancel").click();
     await expect(page.getByText("Discard draft changes?")).toBeVisible();
     await page.getByTestId("confirmation.cancel").click();
     await expect(page.getByTestId("cc-toolbar-add")).toBeVisible();
     await expectChangeCount(page, 1);
 
-    // Confirming discards and returns to live.
     await page.getByTestId("cc-draft-cancel").click();
     await page.getByTestId("confirmation.confirm").click();
     await expect(page.getByTestId("cc-toolbar-add")).not.toBeVisible();
+  });
+
+  test("Should confirm before leaving draft via sidebar navigation", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await enterDraft(page);
+    await dragTemplateToCanvas(page, "cc-template-group");
+    await expectChangeCount(page, 1);
+
+    await visitByNavigation(page, "Peers");
+    await expect(page.getByText("Discard draft changes?")).toBeVisible();
+    await page.getByTestId("confirmation.cancel").click();
+    await expect(page).toHaveURL(/control-center/);
+    await expectChangeCount(page, 1);
+
+    await visitByNavigation(page, "Peers");
+    await page.getByTestId("confirmation.confirm").click();
+    await expect(page).toHaveURL(/peers/);
   });
 
   test("Should deploy a created group to the live account", async ({
@@ -122,10 +134,8 @@ test.describe.serial("Control Center Draft Mode @control-center", () => {
     expect([200, 201]).toContain(response.status());
     const created = await response.json();
 
-    // Deploy exits the draft back to the rebuilt live view.
     await expect(page.getByTestId("cc-toolbar-add")).not.toBeVisible();
 
-    // The group really exists in the account — then clean it up.
     const groups = await listGroups(page);
     expect(groups.some((g) => g.id === created.id)).toBe(true);
     await deleteGroup(page, created.id);

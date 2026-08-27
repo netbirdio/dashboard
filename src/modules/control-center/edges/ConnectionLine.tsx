@@ -10,8 +10,6 @@ export const ConnectionLine = ({
   fromY,
   toX,
   toY,
-  fromPosition,
-  toPosition,
 }: ConnectionLineComponentProps) => {
   const { fromHandle, toHandle } = useConnection();
 

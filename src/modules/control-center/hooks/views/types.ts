@@ -2,16 +2,6 @@ import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { Edge, Node } from "@xyflow/react";
-import { Group } from "@/interfaces/Group";
-
-export interface ViewDataDeps {
-  policies: Policy[];
-  peers: Peer[];
-  networks: any[];
-  networkResources: NetworkResource[];
-  groups: Group[];
-  selectedDestinationGroup: string;
-}
 
 export interface ViewResult {
   updatedNodes: Node[];
@@ -22,7 +12,9 @@ export function addDestinationResourceNodes(
   policy: Policy,
   nodes: Node[],
   edges: Edge[],
-  peers: Peer[],
+  // A failed /peers request resolves to undefined; the view degrades to
+  // resource lookups instead of crashing.
+  peers: Peer[] | undefined,
   networkResources: NetworkResource[],
   networks?: Network[],
 ) {
@@ -32,7 +24,7 @@ export function addDestinationResourceNodes(
   if (!destinationPolicyResource) return;
 
   const type = destinationPolicyResource.type;
-  const peer = peers.find((p) => p.id === destinationPolicyResource.id);
+  const peer = peers?.find((p) => p.id === destinationPolicyResource.id);
   const resource = networkResources.find(
     (r) => r.id === destinationPolicyResource.id,
   );
@@ -44,19 +36,16 @@ export function addDestinationResourceNodes(
       nodes.push({
         id: nodeId,
         type: "destinationResourceNode",
-        // standalone: card look (bg+border) like the peer nodes elsewhere.
         data: { peer, enabled, standalone: true },
         position: { x: 0, y: 0 },
       });
     } else if (resource) {
-      // Stamp the resource's network so the card shows "Name - Network"
-      // inline, same as draft mode (without the ref it shows nothing).
+      // Without the network ref the card shows no network at all.
       const net = networks?.find((n) => n.resources?.includes(resource.id));
       nodes.push({
         id: nodeId,
         type: "destinationResourceNode",
-        // standalone: render as the StandaloneResourceNode CARD (bg+border)
-        // like the single-network views — not the transparent DeviceCard.
+        // standalone selects the card look, not the transparent DeviceCard.
         data: {
           resource,
           enabled,

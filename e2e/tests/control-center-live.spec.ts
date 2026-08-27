@@ -22,7 +22,6 @@ import {
   switchFlowView,
 } from "../helpers/control-center";
 
-/** Opens a node's live context menu and returns the menu locator (no click). */
 async function openNodeMenu(page: Page, node: Locator) {
   await dismissBlockingOverlays(page);
   await node.click({ button: "right" });
@@ -31,16 +30,8 @@ async function openNodeMenu(page: Page, node: Locator) {
   return menu;
 }
 
-/**
- * Control Center LIVE mode. The test environment has no real peers, so these
- * cover the peer-independent live surface: mode/view switching and the
- * networks view (networks render as frames whether or not they have peers or
- * resources). Live actions hit the account immediately — the opposite of the
- * draft changeset — which is exactly what the network CRUD tests assert.
- *
- * Networks-view frames also let us exercise the new NetworkActionsMenu (the ⋮
- * that replaced the standalone edit button) and the live node context menu.
- */
+// The test environment has no real peers, so these cover the peer-independent
+// live surface: mode/view switching and the networks view.
 test.describe.serial("Control Center Live Mode @control-center", () => {
   const PREFIX = "cc-live-";
 
@@ -55,17 +46,9 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     await deleteGroupsByPrefix(page, PREFIX);
   });
 
-  /**
-   * Seeds a bidirectional policy between two fresh groups and opens the live
-   * Group view. In the clean test account the seeded group is the only one
-   * with a policy, so the view auto-selects it and its policy node renders.
-   * Returns the policy + group ids and the policy node locator.
-   */
   async function seedPolicyAndOpenGroupView(page: Page, enabled = true) {
-    // Start from a clean slate: the group view auto-selects a group that HAS a
-    // policy, so leaving prior tests' policies around makes which group (and
-    // thus which policy node) renders non-deterministic. With exactly one
-    // PREFIX policy, the view deterministically lands on our group.
+    // The group view auto-selects a group that HAS a policy, so stale policies
+    // would make the rendered group non-deterministic.
     await deletePoliciesBySubstring(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
 
@@ -81,9 +64,7 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     );
 
     const policyNode = canvasNode(page, `policy-${policy.id}`);
-    // The group view builds from a fresh fetch and auto-selects a group that
-    // has a policy; a stale SWR read or a transient build/fit race can briefly
-    // fail to place our node. Re-open the view until the node is on canvas.
+    // A stale SWR read or a build/fit race can fail to place the node.
     for (let attempt = 0; attempt < 3; attempt++) {
       await openControlCenter(page, "groups");
       const shown = await policyNode
@@ -101,14 +82,12 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
   }) => {
     await openControlCenter(page);
 
-    // Live is the active mode; the draft toolbar is absent.
     await expect(page.getByTestId("cc-mode-live")).toHaveAttribute(
       "data-state",
       "active",
     );
     await expect(page.getByTestId("cc-toolbar-add")).not.toBeVisible();
 
-    // The live-only flow selector is present.
     await expect(page.getByTestId("cc-flow-networks")).toBeVisible();
     await expect(page.getByTestId("cc-flow-peers")).toBeVisible();
   });
@@ -147,7 +126,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const frame = canvasNode(page, `network-${network.id}`);
     await expect(frame).toBeVisible();
 
-    // Selecting the network (drilling into the frame) reveals the header ⋮.
     await dismissBlockingOverlays(page);
     await frame.click({ force: true });
     const actions = page.getByRole("button", { name: "Network actions" });
@@ -155,7 +133,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     await actions.click();
     await page.getByRole("menuitem", { name: "Edit" }).click();
 
-    // The live edit modal is the real network modal — saving PUTs immediately.
     const nameInput = page.getByTestId("network-name-input");
     await expect(nameInput).toBeVisible();
     await nameInput.fill(renamed);
@@ -170,7 +147,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const response = await putResponse;
     expect([200, 201]).toContain(response.status());
 
-    // The account really reflects the rename (live, no deploy step).
     await expect
       .poll(async () => {
         const nets = await listNetworks(page);
@@ -189,11 +165,9 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const frame = canvasNode(page, `network-${network.id}`);
     await expect(frame).toBeVisible();
 
-    // Live delete is immediate (a real DELETE), behind a confirmation.
     await clickContextMenuItem(page, frame, "delete");
     await page.getByTestId("confirmation.confirm").click();
 
-    // Gone from the account and from the canvas.
     await expect
       .poll(async () => {
         const nets = await listNetworks(page);
@@ -213,8 +187,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const frame = canvasNode(page, `network-${network.id}`);
     await expect(frame).toBeVisible();
 
-    // Live network frame menu: Add Resource · Add Routing Peer · Delete
-    // (no draft-only "Edit"/"Add Resource Group" here).
     const menu = await openNodeMenu(page, frame);
     await expect(menu.getByTestId("cc-menu-add-resource")).toBeVisible();
     await expect(menu.getByTestId("cc-menu-add-routing-peer")).toBeVisible();
@@ -239,13 +211,11 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const frame = canvasNode(page, `network-${network.id}`);
     await expect(frame).toBeVisible();
 
-    // Drill into the network so its resources render as their own nodes.
     await dismissBlockingOverlays(page);
     await frame.click({ force: true });
     const resNode = canvasNode(page, `resource-${resource.id}`);
     await expect(resNode).toBeVisible({ timeout: 15_000 });
 
-    // Live resource menu: Edit + Disable (enabled), and NO Delete in live.
     const menu = await openNodeMenu(page, resNode);
     await expect(menu.getByTestId("cc-menu-edit")).toBeVisible();
     await expect(menu.getByTestId("cc-menu-disable")).toBeVisible();
@@ -270,24 +240,19 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const frame = canvasNode(page, `network-${network.id}`);
     await expect(frame).toBeVisible();
 
-    // Drill into the network so the resource renders as its own node.
     await dismissBlockingOverlays(page);
     await frame.click({ force: true });
     const resNode = canvasNode(page, `resource-${resource.id}`);
     await expect(resNode).toBeVisible({ timeout: 15_000 });
 
-    // Edit via the resource menu, behind the live-mode confirmation.
     const menu = await openNodeMenu(page, resNode);
     await menu.getByTestId("cc-menu-edit").click();
     await expect(page.getByText("You are in live mode")).toBeVisible();
     await page.getByTestId("confirmation.confirm").click();
 
-    // The modal must OPEN. It used to crash on render ("assignedPolicies is
-    // not a function") because it wasn't wrapped in the NetworkProvider that
-    // supplies it.
+    // The modal crashes on render unless it is wrapped in a NetworkProvider.
     await expect(page.getByTestId("resource-name-input")).toBeVisible();
 
-    // Change the address and save → immediate PUT.
     await page.getByTestId("resource-address-input").fill("10.0.0.9/32");
     const putResponse = page.waitForResponse(
       (resp) =>
@@ -297,8 +262,8 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
       { timeout: 30_000 },
     );
     await page.getByTestId("submit-route").click();
-    // The group has no policy → the "No Access Control Policies" confirm gates
-    // the PUT (scope to that dialog so a stale confirm can't shadow it).
+    // The group has no policy, so this confirm gates the PUT; scope it so a
+    // stale confirm can't shadow the testid.
     const noPolicyDialog = page
       .getByRole("dialog")
       .filter({ hasText: "No Access Control Policies" });
@@ -318,8 +283,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const frame = canvasNode(page, `network-${network.id}`);
     await expect(frame).toBeVisible();
 
-    // Add a resource straight from the frame's right-click menu. This is a live
-    // POST against the real network (draft mode would only touch the changeset).
     await clickContextMenuItem(page, frame, "add-resource");
     await page.getByTestId("resource-name-input").fill(base + "-r");
     await page.getByTestId("resource-address-input").fill("10.0.0.9/32");
@@ -332,9 +295,8 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
       { timeout: 30_000 },
     );
     await page.getByTestId("submit-resource").click();
-    // No groups picked → a "No Access Control Policies" confirmation always
-    // gates the POST here. Scope to THAT dialog (a stale confirm dialog from a
-    // prior step can otherwise shadow the testid).
+    // No groups picked, so this confirm gates the POST; scope it so a stale
+    // confirm can't shadow the testid.
     const noPolicyDialog = page
       .getByRole("dialog")
       .filter({ hasText: "No Access Control Policies" });
@@ -344,9 +306,7 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     expect([200, 201]).toContain(response.status());
     const created = (await response.json()) as { id: string };
 
-    // The regression: the new resource must appear on the canvas immediately,
-    // as the frame's child row, WITHOUT drilling in and back out to force a
-    // rebuild (the live view init is gated on layoutInitialized).
+    // The node must appear without drilling in and out to force a rebuild.
     await expect(canvasNode(page, `resource-${created.id}`)).toBeVisible({
       timeout: 15_000,
     });
@@ -357,21 +317,15 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
   }) => {
     const { policyNode } = await seedPolicyAndOpenGroupView(page);
 
-    // Live policy menu: Edit · Disable (enabled) · Delete.
     const menu = await openNodeMenu(page, policyNode);
     await expect(menu.getByTestId("cc-menu-edit")).toBeVisible();
     await expect(menu.getByTestId("cc-menu-disable")).toBeVisible();
     await expect(menu.getByTestId("cc-menu-delete")).toBeVisible();
 
-    // Edit opens the policy modal directly (on the Policy tab); the "you are in
-    // live mode" confirmation is deferred to Save (a live edit hits the account
-    // at once).
     const modalTitle = page.getByTestId("update-policy-title");
     await menu.getByTestId("cc-menu-edit").click();
     await expect(modalTitle).toBeVisible();
 
-    // Saving warns first; cancelling the warning aborts the save (no PUT) and
-    // leaves the modal open.
     await page.getByTestId("submit-policy").click();
     await expect(page.getByText("You are in live mode")).toBeVisible();
     await page.getByTestId("confirmation.cancel").click();
@@ -386,15 +340,11 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
   }) => {
     const { policyNode } = await seedPolicyAndOpenGroupView(page);
 
-    // Left-clicking a policy opens the editor directly (live and draft alike);
-    // the live-mode warning is deferred to Save, since the save PUTs to the
-    // account immediately.
     const modalTitle = page.getByTestId("update-policy-title");
     await dismissBlockingOverlays(page);
     await policyNode.click();
     await expect(modalTitle).toBeVisible();
 
-    // Saving warns first; cancelling the warning aborts the save (no PUT).
     await page.getByTestId("submit-policy").click();
     await expect(page.getByText("You are in live mode")).toBeVisible();
     await page.getByTestId("confirmation.cancel").click();
@@ -417,14 +367,12 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
       { timeout: 30_000 },
     );
     await menu.getByTestId("cc-menu-disable").click();
-    // Live toggle confirms first.
     await expect(page.getByText("You are in live mode")).toBeVisible();
     await page.getByTestId("confirmation.confirm").click();
 
     const response = await putResponse;
     expect([200, 201]).toContain(response.status());
 
-    // The policy is really disabled on the account.
     await expect
       .poll(async () => {
         const policies = await listPolicies(page);
@@ -448,14 +396,12 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
       { timeout: 30_000 },
     );
     await menu.getByTestId("cc-menu-delete").click();
-    // Live delete confirms with an "cannot be undone" danger dialog.
     await expect(page.getByText(/cannot be undone/i)).toBeVisible();
     await page.getByTestId("confirmation.confirm").click();
 
     const response = await delResponse;
     expect([200, 204]).toContain(response.status());
 
-    // Gone from the account and off the canvas.
     await expect
       .poll(async () => {
         const policies = await listPolicies(page);
@@ -487,7 +433,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const response = await putResponse;
     expect([200, 201]).toContain(response.status());
 
-    // The policy is really enabled on the account.
     await expect
       .poll(async () => {
         const policies = await listPolicies(page);
@@ -505,11 +450,9 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const pill = page.getByText("Select a node to focus");
     await expect(pill).not.toBeVisible();
 
-    // "F" arms focus mode (input-aware, no modifiers).
     await page.locator("body").press("f");
     await expect(pill).toBeVisible();
 
-    // "F" again disarms it.
     await page.locator("body").press("f");
     await expect(pill).not.toBeVisible();
   });
@@ -521,16 +464,14 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const groupNode = canvasNode(page, `group-${dst.id}`);
     await expect(groupNode).toBeVisible();
 
-    // Rename first (a transient confirmation dialog, unlike the panel below).
-    // Rename is a live action → "live mode" confirmation; cancel it.
+    // Rename first: its dialog is transient, unlike the panel below.
     let menu = await openNodeMenu(page, groupNode);
     await menu.getByTestId("cc-menu-rename").click();
     await expect(page.getByText("You are in live mode")).toBeVisible();
     await page.getByTestId("confirmation.cancel").click();
     await expect(page.getByTestId("confirmation.cancel")).not.toBeVisible();
 
-    // View Details opens the group panel (same as a left-click). Done last —
-    // the panel overlays the canvas and would block further node interactions.
+    // Done last: the panel overlays the canvas and blocks node interactions.
     menu = await openNodeMenu(page, groupNode);
     await menu.getByTestId("cc-menu-view-details").click();
     await expect(page.locator("#cc-group-panel")).toBeVisible();
@@ -546,7 +487,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
 
     const menu = await openNodeMenu(page, groupNode);
     await menu.getByTestId("cc-menu-rename").click();
-    // Live rename confirms first, then opens the rename modal.
     await expect(page.getByText("You are in live mode")).toBeVisible();
     await page.getByTestId("confirmation.confirm").click();
 
@@ -561,7 +501,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const response = await putResponse;
     expect([200, 201]).toContain(response.status());
 
-    // The account reflects the rename.
     await expect
       .poll(async () => {
         const groups = await listGroups(page);
@@ -573,12 +512,10 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
   test("Should save group resource membership in live mode (correct payload)", async ({
     dashboardAsOwner: page,
   }) => {
-    // Clean slate so the group view deterministically lands on our group (it
-    // auto-selects a group that HAS a policy; see seedPolicyAndOpenGroupView).
+    // Clean slate so the group view deterministically lands on our group.
     await deletePoliciesBySubstring(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
 
-    // A group shown in the group view + an (unassigned) resource to add to it.
     const base = generateRandomName(PREFIX);
     const src = await createGroup(page, base + "-src");
     const dst = await createGroup(page, base + "-dst");
@@ -596,19 +533,15 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const groupNode = canvasNode(page, `group-${dst.id}`);
     await expect(groupNode).toBeVisible({ timeout: 15_000 });
 
-    // Open the group's side panel and switch to its Resources tab.
     await dismissBlockingOverlays(page);
     await groupNode.click();
     const panel = page.locator("#cc-group-panel");
     await expect(panel).toBeVisible();
     await panel.getByRole("tab", { name: "Resources" }).click();
 
-    // Toggle the resource on (clicking the row flips its checkbox).
     await panel.getByText(base + "-r").click();
 
-    // Save → the PUT must SUCCEED. The regression sent resources as bare id
-    // strings, which the API rejected with 400 "could not parse json"; the fix
-    // sends them as {id, type} objects like the networks/groups pages.
+    // The API rejects resources sent as bare id strings instead of {id, type}.
     const putResponse = page.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/groups/${dst.id}`) &&
@@ -621,7 +554,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const response = await putResponse;
     expect([200, 201]).toContain(response.status());
 
-    // The resource really landed in the group on the account.
     await expect
       .poll(async () => {
         const groups = await listGroups(page);
@@ -645,9 +577,8 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     const panel = page.locator("#cc-group-panel");
     await expect(panel).toBeVisible();
 
-    // Shrink the window. The panel must re-fit against the new canvas size
-    // (the open-time placement effect only runs on open, so without the resize
-    // listener the box would stay sized for the old, wider viewport).
+    // The placement effect only runs on open, so this exercises the resize
+    // listener.
     await page.setViewportSize({ width: 1200, height: 800 });
     await expect
       .poll(async () => {
@@ -665,10 +596,7 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
   test("Should highlight a node's connections (focus mode) and exit", async ({
     dashboardAsOwner: page,
   }) => {
-    // Focus/Highlight is only offered when it declutters: isFocusWorthy needs
-    // 2+ policy nodes on the canvas. Seed ONE source group feeding TWO
-    // policies so the group view (which auto-selects the sole source group)
-    // renders both policy nodes.
+    // Focus is only offered with 2+ policy nodes, hence two policies.
     await deletePoliciesBySubstring(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
     const src = await createGroup(page, generateRandomName(PREFIX));
@@ -685,20 +613,16 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     await openControlCenter(page, "groups");
     const policyNode = canvasNode(page, `policy-${p1.id}`);
     await expect(policyNode).toBeVisible({ timeout: 15_000 });
-    // Both policies rendered → the graph is focus-worthy.
     await expect(
       page.locator('.react-flow__node[data-id^="policy-"]'),
     ).toHaveCount(2);
 
-    // "Focus" enters focus mode.
     const menu = await openNodeMenu(page, policyNode);
     await menu.getByTestId("cc-menu-focus").click();
 
-    // The focus pill names the active mode; off-path nodes dim (cc-dimmed).
     await expect(page.getByText(/Focusing on/i)).toBeVisible();
     await expect(page.locator(".cc-dimmed").first()).toBeVisible();
 
-    // Exit via the pill's close button; the dim clears.
     await page.getByRole("button", { name: "Exit Focus" }).click();
     await expect(page.getByText(/Focusing on/i)).not.toBeVisible();
     await expect(page.locator(".cc-dimmed")).toHaveCount(0);

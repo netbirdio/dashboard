@@ -1,6 +1,5 @@
-// Context-menu entries are identified in e2e by a stable `cc-menu-<action>` /
-// `cc-canvas-menu-<action>` test id derived from the label, so tests never have
-// to match the visible copy.
+// Menu entries carry a stable `cc-menu-<action>` test id derived from the
+// label, so e2e never has to match the visible copy.
 export const menuItemSlug = (label: string) =>
   label
     .toLowerCase()

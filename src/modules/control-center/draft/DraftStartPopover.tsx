@@ -12,22 +12,14 @@ import {
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  // Enter draft on an empty canvas.
   onStartBlank: () => void;
-  // Enter draft rebuilt from what's on the canvas right now.
   onUseCurrent: () => void;
-  // The anchor the popover positions against (the Live/Draft switcher).
+  // the element the popover anchors to
   children: React.ReactNode;
 };
 
-// Floating chooser shown when the user opens a draft: build from scratch, or
-// carry over the current live view. Styled like the components panel (a
-// floating card, no dark overlay) and anchored under the switcher.
-//
-// modal: Radix disables outside pointer events while open, so ANY click
-// (canvas included — a plain outside listener never sees it because the
-// ReactFlow pane stops propagation) closes the popover, and clicking the
-// Draft tab again toggles it. This is why there's no manual dismissal logic.
+// `modal` makes Radix block outside pointer events, so even a canvas click (the
+// ReactFlow pane stops propagation) closes it; no manual dismissal needed.
 export const DraftStartPopover = ({
   open,
   onOpenChange,
@@ -37,8 +29,8 @@ export const DraftStartPopover = ({
 }: Props) => {
   const choose = (fn: () => void) => {
     onOpenChange(false);
-    // Defer past the close: this modal popover's scroll-lock teardown forces a
-    // reflow that thrashed against the canvas rebuild when run in the same tick.
+    // Defer past the close: the scroll-lock teardown forces a reflow that
+    // thrashed against the canvas rebuild when run in the same tick.
     requestAnimationFrame(() => fn());
   };
 
@@ -78,7 +70,6 @@ export const DraftStartPopover = ({
   );
 };
 
-// Mirrors the components panel's TemplateItem row.
 const StartOption = ({
   icon: Icon,
   label,

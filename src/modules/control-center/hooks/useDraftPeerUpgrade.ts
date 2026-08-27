@@ -12,27 +12,17 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { getPlaceholderPeer } from "@/modules/control-center/utils/helpers";
 
 export type PlaceholderUpgrade = {
-  // Canvas node id being replaced (peer-draft-… or, on re-selection of a
-  // user-device select node, peer-<oldPeerId>).
+  // Canvas node id being replaced (peer-draft-… or peer-<oldPeerId>).
   nodeId: string;
   peer: Peer;
 };
 
-// Swaps placeholder/select peer nodes for real peers in place — same
-// position, edges rewired to the new id — and re-records every draft policy
-// referencing the old ids with the real peer id (making those policies
-// deployable, so they enter the changeset). User-device select nodes keep
-// their dropdown (placeholderKind stays on the node); installed server/agent
-// placeholders become regular peer cards.
-const uid = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
+// Swaps placeholders for real peers in place, re-recording the draft policies
+// that referenced the old ids so they become deployable.
 export function usePlaceholderUpgrade() {
   const reactFlow = useReactFlow();
   const { updateDraftPolicy } = useControlCenterPolicy();
-  const { replacePeerIdInGroups, trackCreateRouter, untrackInstallPeer } =
+  const { replacePeerIdInGroups, markInstallPeerInstalled } =
     useDraftChangeset();
 
   return useCallback(
@@ -43,47 +33,17 @@ export function usePlaceholderUpgrade() {
         oldId: u.nodeId.replace("peer-", ""),
       }));
 
-      // The peer now exists (installed / selected) — its pending
-      // install-peer step is resolved.
-      withOldIds.forEach((u) => untrackInstallPeer(u.oldId));
-
-      // Routing edges from upgraded placeholders become deployable — record
-      // their create-router changes with the real peer id. (Read pre-swap:
-      // edge sources still carry the old node ids.)
-      const routerEdges = reactFlow
-        .getEdges()
-        .filter((e) => (e.data as { router?: boolean })?.router);
-      withOldIds.forEach((u) => {
-        routerEdges
-          .filter((e) => e.source === u.nodeId)
-          .forEach((e) => {
-            const networkNode = reactFlow
-              .getNodes()
-              .find((n) => n.id === e.target);
-            const network = (
-              networkNode?.data as { network?: { id?: string; name: string } }
-            )?.network;
-            if (!networkNode || !network) return;
-            trackCreateRouter({
-              clientId: `new-${uid()}`,
-              networkId: network.id,
-              networkClientId: network.id
-                ? undefined
-                : networkNode.id.replace("network-", ""),
-              networkName: network.name,
-              peerId: u.peer.id as string,
-              peerName: u.peer.name,
-            });
-          });
-      });
+      withOldIds.forEach((u) =>
+        markInstallPeerInstalled(u.oldId, {
+          id: u.peer.id as string,
+          name: u.peer.name,
+        }),
+      );
 
       reactFlow.setNodes((prev) =>
         prev.map((n) => {
           const up = withOldIds.find((u) => u.nodeId === n.id);
           if (up) {
-            // Every upgraded placeholder becomes a plain peer card — user
-            // devices included (re-selection now lives in the setup modal,
-            // not on the node).
             return {
               ...n,
               id: `peer-${up.peer.id}`,
@@ -95,8 +55,6 @@ export function usePlaceholderUpgrade() {
               },
             };
           }
-          // Group nodes tracking the placeholder as an added member (it was
-          // grouped before installing) follow the rename to the real id.
           const members = n.data?.addedMembers as Set<string> | undefined;
           const held = n.data?.draftPeers as Peer[] | undefined;
           const heldHits =
@@ -116,8 +74,7 @@ export function usePlaceholderUpgrade() {
               data: {
                 ...n.data,
                 addedMembers: next,
-                // The real peer is in the API list now — the held draft
-                // object is obsolete.
+                // The real peer is in the API list now; drop the held draft.
                 ...(heldHits
                   ? {
                       draftPeers: held!.filter(
@@ -153,7 +110,6 @@ export function usePlaceholderUpgrade() {
         }),
       );
 
-      // Re-record the policies that referenced the old ids.
       const policyUpdates: Policy[] = [];
       reactFlow.getNodes().forEach((n) => {
         const policy = (n.data as { policy?: Policy })?.policy;
@@ -180,8 +136,7 @@ export function usePlaceholderUpgrade() {
         });
       });
       if (policyUpdates.length > 0) {
-        // Next tick — the node swap must be committed to the canvas before
-        // drawPolicyOnCanvas rebuilds the policies' edges against it.
+        // The node swap must commit before the policy edges are rebuilt on it.
         setTimeout(() => policyUpdates.forEach((p) => updateDraftPolicy(p)), 0);
       }
     },
@@ -189,26 +144,19 @@ export function usePlaceholderUpgrade() {
       reactFlow,
       updateDraftPolicy,
       replacePeerIdInGroups,
-      trackCreateRouter,
-      untrackInstallPeer,
+      markInstallPeerInstalled,
     ],
   );
 }
 
-// Watches the peers list while a draft is open: when a placeholder's
-// installed machine registers, the placeholder upgrades in place via
-// usePlaceholderUpgrade. Server/Agent placeholders are matched by membership
-// in the hidden group their setup key auto-assigned (reliable); hostname is a
-// fallback. Once matched, that throwaway group has served its purpose and is
-// deleted from the API.
+// Upgrades a placeholder in place once its installed machine registers.
 export function useDraftPeerUpgrade() {
   const { isDraft } = useDraftMode();
   const { nodes } = useCanvasState();
   const { peers } = useControlCenterData();
   const upgrade = usePlaceholderUpgrade();
-  const deleteArtifacts = usePlaceholderArtifacts();
-  // The effect re-runs on every nodes/peers change — never upgrade a node
-  // twice (state updates land asynchronously).
+  const { deleteArtifacts } = usePlaceholderArtifacts();
+  // State lands asynchronously, so the re-running effect must not upgrade twice.
   const upgraded = useRef(new Set<string>());
   // Placeholders whose artifacts were already scheduled for deletion.
   const cleaned = useRef(new Set<string>());
@@ -218,24 +166,32 @@ export function useDraftPeerUpgrade() {
 
     const onCanvas = new Set(nodes.map((n) => n.id));
     const upgrades: PlaceholderUpgrade[] = [];
-    // Hidden artifacts (bound group + setup key) to delete once their peer
-    // has been matched — they only existed to find it.
+    // The bound group + setup key only existed to find the peer.
     const artifactsToDelete: {
       nodeId: string;
       boundGroupId?: string;
       setupKeyId?: string;
     }[] = [];
 
-    const findMatch = (installHostname: string) =>
-      peers.find(
-        (p) =>
-          (p.hostname === installHostname || p.name === installHostname) &&
-          !onCanvas.has(`peer-${p.id}`),
-      );
+    // A peer's name is a user-editable label, and absorbing a pre-existing peer
+    // would deploy the drafted access against the wrong machine.
+    const registrationTime = (p: Peer) => {
+      const raw = p.created_at ?? p.last_login ?? p.last_seen;
+      const t = raw ? new Date(raw).getTime() : NaN;
+      return Number.isFinite(t) ? t : undefined;
+    };
+    const findMatch = (installHostname: string, installStartedAt?: number) =>
+      peers.find((p) => {
+        if (p.hostname !== installHostname || onCanvas.has(`peer-${p.id}`)) {
+          return false;
+        }
+        if (!installStartedAt) return true;
+        const registeredAt = registrationTime(p);
+        return registeredAt !== undefined && registeredAt >= installStartedAt;
+      });
 
-    // The reliable match: the placeholder's setup key auto-assigns its unique
-    // BOUND identity group, so the registering peer is the (only) new peer
-    // that landed in that group.
+    // The setup key auto-assigns a unique bound group, so the registering peer
+    // is the only new peer in it.
     const findByGroup = (groupId: string) =>
       peers.find(
         (p) =>
@@ -247,30 +203,31 @@ export function useDraftPeerUpgrade() {
       const data = node.data as {
         placeholderKind?: string;
         installHostname?: string;
+        installStartedAt?: number;
         boundGroupId?: string;
         setupKeyId?: string;
         peer?: Peer;
         draftPeers?: (Peer & {
           installHostname?: string;
+          installStartedAt?: number;
           boundGroupId?: string;
           setupKeyId?: string;
         })[];
       };
 
-      // Placeholders absorbed into a group (no own node anymore) install
-      // from the group panel — their pending entries ride on the group node.
+      // Placeholders absorbed into a group ride on the group node.
       data?.draftPeers?.forEach((p) => {
         if (!p.id) return;
         const pseudoNodeId = `peer-${p.id}`;
         if (upgraded.current.has(pseudoNodeId)) return;
-        // Bound-group match first (reliable); hostname is the fallback.
         const match =
           (p.boundGroupId ? findByGroup(p.boundGroupId) : undefined) ??
-          (p.installHostname ? findMatch(p.installHostname) : undefined);
+          (p.installHostname
+            ? findMatch(p.installHostname, p.installStartedAt)
+            : undefined);
         if (!match?.id) return;
         upgraded.current.add(pseudoNodeId);
         upgrades.push({ nodeId: pseudoNodeId, peer: match });
-        // Drop the setup key + bound group the placeholder created once matched.
         if (
           (p.boundGroupId || p.setupKeyId) &&
           !cleaned.current.has(pseudoNodeId)
@@ -286,16 +243,14 @@ export function useDraftPeerUpgrade() {
 
       if (!data?.placeholderKind || data.peer) return;
       if (upgraded.current.has(node.id)) return;
-      // Bound-group match first; hostname is the fallback (user devices, or a
-      // key generated without a bound group).
       const match =
         (data.boundGroupId ? findByGroup(data.boundGroupId) : undefined) ??
-        (data.installHostname ? findMatch(data.installHostname) : undefined);
+        (data.installHostname
+          ? findMatch(data.installHostname, data.installStartedAt)
+          : undefined);
       if (!match?.id) return;
       upgraded.current.add(node.id);
       upgrades.push({ nodeId: node.id, peer: match });
-      // The bound group + setup key only existed to find this peer — drop
-      // them now that it's matched.
       if (
         (data.boundGroupId || data.setupKeyId) &&
         !cleaned.current.has(node.id)
@@ -310,16 +265,16 @@ export function useDraftPeerUpgrade() {
     });
 
     upgrade(upgrades);
-    artifactsToDelete.forEach(({ boundGroupId, setupKeyId }) =>
-      deleteArtifacts({ boundGroupId, setupKeyId }),
+    // A real peer now, so no undo can put its artifacts back to work.
+    artifactsToDelete.forEach(({ nodeId, boundGroupId, setupKeyId }) =>
+      deleteArtifacts(nodeId.replace("peer-", ""), {
+        boundGroupId,
+        setupKeyId,
+      }),
     );
   }, [isDraft, peers, nodes, upgrade, deleteArtifacts]);
 
-  // A placeholder is "waiting" once its setup key is generated (setupKeyId /
-  // boundGroupId written to the node or its group-panel entry) and it hasn't
-  // upgraded yet. getPlaceholderPeer returns undefined after upgrade (the node
-  // becomes a real peer), and absorbed entries are dropped, so this clears
-  // itself.
+  // Waiting = a setup key was generated but the peer hasn't registered yet.
   const hasWaitingInstall = useMemo(
     () =>
       nodes.some((n) => {
@@ -338,9 +293,7 @@ export function useDraftPeerUpgrade() {
     [nodes],
   );
 
-  // While a placeholder waits for its machine to register, /peers won't change
-  // on its own (SWR only revalidates on focus/reconnect). Poll it so the
-  // watcher above picks up the new peer and upgrades the placeholder in place.
+  // SWR only revalidates /peers on focus/reconnect, so poll while one waits.
   useEffect(() => {
     if (!isDraft || !hasWaitingInstall) return;
     const id = window.setInterval(() => void mutate("/peers"), 5000);

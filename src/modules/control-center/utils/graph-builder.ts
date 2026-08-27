@@ -3,8 +3,6 @@ import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
 
-// Add a node; if one with the same id already exists, merge `node.data` into
-// it rather than duplicating.
 export function addNode(nodes: Node[], node: Node): void {
   const existing = nodes.find((n) => n.id === node.id);
   if (!existing) {
@@ -14,8 +12,6 @@ export function addNode(nodes: Node[], node: Node): void {
   }
 }
 
-// Add an edge; if one with the same id already exists, merge `edge.data` into
-// it rather than duplicating.
 export function addEdge(edges: Edge[], edge: Edge): void {
   const existing = edges.find((e) => e.id === edge.id);
   if (!existing) {
@@ -25,7 +21,6 @@ export function addEdge(edges: Edge[], edge: Edge): void {
   }
 }
 
-// Default layout config shared by all hierarchical views (peer, group, user, network).
 export const DEFAULT_LAYOUT_CONFIG = {
   policy: { width: 500, spacing: 60 },
   destinationGroup: { width: 1000, spacing: 100 },
@@ -47,59 +42,5 @@ export function getGroupResources(
     const resourceGroupIds =
       r.groups?.map((g) => (g as Group)?.id) || [];
     return resourceGroupIds.includes(groupId);
-  });
-}
-
-/**
- * Add a destination group's expanded content (its peers + resources) when it
- * is selected/expanded in the graph.
- */
-export function addExpandedGroupContent(
-  allNodes: Node[],
-  allEdges: Edge[],
-  peers: Peer[],
-  networkResources: NetworkResource[],
-  destinationGroupId: string,
-  enabled: boolean | undefined,
-  peerNodeType: string,
-  peerIdPrefix: string = "peer-",
-): void {
-  const resources = getGroupResources(networkResources, destinationGroupId);
-  const destinationPeers = getGroupPeers(peers, destinationGroupId);
-
-  destinationPeers.forEach((peer) => {
-    const peerNodeId = `${peerIdPrefix}${peer.id}`;
-    addNode(allNodes, {
-      id: peerNodeId,
-      type: peerNodeType,
-      data: { peer, enabled },
-      position: { x: 0, y: 0 },
-    });
-
-    addEdge(allEdges, {
-      id: `group-peer-${destinationGroupId}-${peer.id}`,
-      source: `group-${destinationGroupId}`,
-      target: peerNodeId,
-      type: "simple",
-      data: { enabled },
-    });
-  });
-
-  resources.forEach((resource) => {
-    const resourceNodeId = `resource-${resource.id}`;
-    addNode(allNodes, {
-      id: resourceNodeId,
-      type: "resourceNode",
-      data: { resource, enabled },
-      position: { x: 0, y: 0 },
-    });
-
-    addEdge(allEdges, {
-      id: `group-resource-${destinationGroupId}-${resource.id}`,
-      source: `group-${destinationGroupId}`,
-      target: resourceNodeId,
-      type: "simple",
-      data: { enabled },
-    });
   });
 }

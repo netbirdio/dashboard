@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Policy } from "@/interfaces/Policy";
 import {
   CreateGroupChange,
@@ -8,16 +8,20 @@ import {
   InstallPeerChange,
   UpdateGroupChange,
   UpdatePolicyChange,
+  UpdateResourceChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   buildBeforeRequest,
   buildChangeRequest,
+  changeDiffLines,
   LiveData,
+  toCurl,
 } from "./changeset-request";
 
-// The request the code view shows must match what deploy sends: group objects
-// become ids, draft-only members are filtered, deletes carry no body, and an
-// update's "before" is reconstructed from the live account.
+// The real config loader needs Next build-time files the unit env lacks.
+vi.mock("@utils/config", () => ({
+  default: () => ({ apiOrigin: "https://api.netbird.io" }),
+}));
 
 const policy = (over: Partial<Policy> = {}): Policy => ({
   name: "P",
@@ -70,8 +74,7 @@ describe("buildChangeRequest", () => {
     };
     const body = buildChangeRequest(change)?.body as any;
     expect(body.peers).toEqual(["p1"]);
-    // Resources go as {id, type} objects (bare id strings are rejected by the
-    // API); no live data here so the type is unresolved.
+    // Bare id strings are rejected by the API.
     expect(body.resources).toEqual([{ id: "r1", type: undefined }]);
   });
 
@@ -100,10 +103,37 @@ describe("buildChangeRequest", () => {
     };
     const live = { groups: [{ id: "grp-123", name: "Admins" }] };
     const body = buildChangeRequest(change, live)?.body as any;
-    // Draft stores authorized_groups keyed by NAME; deploy sends the id, so the
-    // preview must too.
+    // Draft keys authorized_groups by NAME; deploy sends the id.
     expect(body.rules[0].authorized_groups).toEqual({ "grp-123": ["root"] });
     expect(body.rules[0].ports).toEqual(["22"]);
+  });
+
+  it("a multi-rule drop policy keeps all rules and their actions", () => {
+    const multi = policy();
+    multi.rules = [
+      { ...multi.rules[0], action: "drop" },
+      {
+        ...multi.rules[0],
+        sources: [{ id: "g3", name: "QA" }],
+        ports: ["80"],
+      },
+    ];
+    // A pure toggle rebuilds the PUT body from this policy; hardcoding
+    // "accept" or reading only rules[0] would invert or truncate it.
+    const change: UpdatePolicyChange = {
+      id: "c6",
+      type: "update-policy",
+      policyId: "pol1",
+      name: "P",
+      origin: "toggle",
+      policy: { ...multi, id: "pol1", enabled: false },
+    };
+    const body = buildChangeRequest(change)?.body as any;
+    expect(body.rules).toHaveLength(2);
+    expect(body.rules[0].action).toBe("drop");
+    expect(body.rules[1].action).toBe("accept");
+    expect(body.rules[1].sources).toEqual(["g3"]);
+    expect(body.rules[1].ports).toEqual(["80"]);
   });
 
   it("delete-policy → DELETE with no body", () => {
@@ -180,6 +210,64 @@ describe("buildBeforeRequest", () => {
     expect(before?.body).toBeUndefined();
   });
 
+  it("renders an update-group's resources in the same wire shape as the after side", () => {
+    const change: UpdateGroupChange = {
+      id: "u3",
+      type: "update-group",
+      groupId: "g1",
+      name: "Servers",
+      originalName: "Servers",
+      peerIds: [],
+      resourceIds: [],
+    };
+    const live: LiveData = {
+      groups: [
+        {
+          id: "g1",
+          name: "Servers",
+          // A bare id string is tolerated alongside object members.
+          resources: [{ id: "res1", type: "host" }, "res2" as any],
+        },
+      ],
+      networkResources: [{ id: "res2", name: "db", type: "subnet" } as any],
+    };
+    const before = buildBeforeRequest(change, live);
+    expect((before?.body as any).resources).toEqual([
+      { id: "res1", type: "host" },
+      { id: "res2", type: "subnet" },
+    ]);
+  });
+
+  it("normalizes the resource address like the after side does", () => {
+    const change: UpdateResourceChange = {
+      id: "u4",
+      type: "update-resource",
+      resourceId: "res1",
+      networkId: "net-1",
+      networkName: "N",
+      name: "db",
+      address: "10.0.0.1",
+      enabled: true,
+      groupIds: ["g1"],
+    };
+    const live: LiveData = {
+      networkResources: [
+        {
+          id: "res1",
+          name: "db",
+          // Stored bare, e.g. created outside the dashboard.
+          address: "10.0.0.1",
+          enabled: true,
+          groups: ["g1"],
+        } as any,
+      ],
+    };
+    // Raw here would diff against its own /32 and report a change nobody made.
+    expect((buildBeforeRequest(change, live)?.body as any).address).toBe(
+      "10.0.0.1/32",
+    );
+  });
+
   it("returns null for a create (nothing exists yet)", () => {
     const change: CreatePolicyChange = {
       id: "c1",
@@ -189,6 +277,56 @@ describe("buildBeforeRequest", () => {
       policy: policy(),
     };
     expect(buildBeforeRequest(change, {})).toBeNull();
+  });
+});
+
+describe("changeDiffLines", () => {
+  it("an unchanged resource member produces no resource diff lines", () => {
+    const change: UpdateGroupChange = {
+      id: "d1",
+      type: "update-group",
+      groupId: "g1",
+      name: "Servers",
+      originalName: "Servers",
+      peerIds: ["p2"],
+      resourceIds: [],
+    };
+    const live: LiveData = {
+      groups: [
+        {
+          id: "g1",
+          name: "Servers",
+          peers: [{ id: "p9", name: "keep" }],
+          resources: [{ id: "res1", type: "host" }],
+        },
+      ],
+      networkResources: [{ id: "res1", name: "db", type: "host" } as any],
+    };
+    const changed = changeDiffLines(change, live)
+      .filter((l) => l.kind !== "context")
+      .map((l) => l.text)
+      .join("\n");
+    // Membership the draft never touched must not show as a remove plus add.
+    expect(changed).toContain("p2");
+    expect(changed).not.toContain("res1");
+    expect(changed).not.toContain("host");
+  });
+});
+
+describe("toCurl", () => {
+  it("escapes apostrophes so the single-quoted body stays pasteable", () => {
+    const change: CreateGroupChange = {
+      id: "c9",
+      type: "create-group",
+      clientId: "group-new-9",
+      name: "Eduard's Devices",
+      peerIds: [],
+      resourceIds: [],
+    };
+    const curl = toCurl(buildChangeRequest(change));
+    expect(curl).toContain(`Eduard'\\''s Devices`);
+    // A bare apostrophe would close the -d payload early.
+    expect(curl).not.toContain(`Eduard's`);
   });
 });
 
@@ -205,7 +343,7 @@ describe("id placeholders in preview", () => {
             name: "P",
             description: "",
             enabled: true,
-            // Draft group — no id yet.
+            // Draft group: no id yet.
             sources: [{ name: "Sales Team" }],
             destinations: [{ id: "g2", name: "Admins" }],
             bidirectional: true,
@@ -290,5 +428,79 @@ describe("id placeholders in preview", () => {
     };
     const body = buildChangeRequest(change)?.body as any;
     expect(body.auto_groups).toEqual(["{server_group_id}"]);
+  });
+
+  it("an install-peer's key preview lists the canvas groups it was added to", () => {
+    const change: InstallPeerChange = {
+      id: "i2",
+      type: "install-peer",
+      clientId: "draft-abc",
+      name: "Server",
+      kind: "server",
+    };
+    const live: LiveData = {
+      draftChanges: [
+        {
+          id: "g1",
+          type: "create-group",
+          clientId: "group-new-Web",
+          name: "Web",
+          peerIds: ["draft-abc"],
+          resourceIds: [],
+        },
+        {
+          id: "g2",
+          type: "update-group",
+          groupId: "grp-live",
+          name: "Ops",
+          originalName: "Ops",
+          peerIds: ["draft-abc"],
+          resourceIds: [],
+        },
+        {
+          id: "g3",
+          type: "update-group",
+          groupId: "grp-other",
+          name: "Other",
+          originalName: "Other",
+          peerIds: ["p-real"],
+          resourceIds: [],
+        },
+      ],
+    };
+    const body = buildChangeRequest(change, live)?.body as any;
+    // The generated key carries the memberships (resolveAutoGroups), so the
+    // preview must not understate them.
+    expect(body.auto_groups).toEqual([
+      "{server_group_id}",
+      "{web_group_id}",
+      "grp-live",
+    ]);
+  });
+
+  it("a user device's key preview carries its canvas groups, not []", () => {
+    const change: InstallPeerChange = {
+      id: "i3",
+      type: "install-peer",
+      clientId: "draft-usr",
+      name: "Laptop",
+      kind: "user-device",
+    };
+    const live: LiveData = {
+      draftChanges: [
+        {
+          id: "g1",
+          type: "update-group",
+          groupId: "grp-live",
+          name: "Ops",
+          originalName: "Ops",
+          peerIds: ["draft-usr"],
+          resourceIds: [],
+        },
+      ],
+    };
+    const body = buildChangeRequest(change, live)?.body as any;
+    // No bound group for user devices, but canvas memberships still ride the key.
+    expect(body.auto_groups).toEqual(["grp-live"]);
   });
 });

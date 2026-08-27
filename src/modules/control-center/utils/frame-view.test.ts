@@ -5,10 +5,6 @@ import {
   computeFrameEdgeTargets,
 } from "@/modules/control-center/utils/frame-view";
 
-// Parent view / drill-down: policy edges to framed resources attach to the
-// FRAME in the parent view and to the actual resource inside the drill-down;
-// the drill-down shows only the network's own world.
-
 const node = (id: string, extra: Partial<Node> = {}): Node => ({
   id,
   type: "peerNode",
@@ -24,7 +20,6 @@ const nodes: Node[] = [
   node("resource-new-r2", { type: "resourceNode", parentId: FRAME }),
   node("policy-new-p1", { type: "policyNode" }),
   node("peer-a"),
-  // Unrelated world.
   node("policy-new-p2", { type: "policyNode" }),
   node("group-g1", { type: "groupNode" }),
   node("peer-b"),
@@ -38,7 +33,6 @@ describe("computeFrameEdgeTargets (parent view ↔ drill-down)", () => {
     const edges = [smart("e1", "policy-new-p1", "resource-new-r1")];
     const next = computeFrameEdgeTargets(nodes, edges, null);
     expect(next?.[0].target).toBe(FRAME);
-    // The real target is kept for the reverse swap.
     expect((next?.[0].data as any).resourceTarget).toBe("resource-new-r1");
   });
 
@@ -87,13 +81,11 @@ describe("computeFrameEdgeTargets (parent view ↔ drill-down)", () => {
 
 describe("computeDrillDownKeepSet (single-network view)", () => {
   const edges: Edge[] = [
-    // peer-a → policy p1 → resource r1 (edge parent-view-attached to frame).
+    // peer-a → policy p1 → resource r1, frame-attached.
     smart("s1", "peer-a", "policy-new-p1"),
     smart("e1", "policy-new-p1", FRAME, { resourceTarget: "resource-new-r1" }),
-    // Unrelated policy p2: group-g1 → p2 → peer-b.
     smart("s2", "group-g1", "policy-new-p2"),
     smart("e2", "policy-new-p2", "peer-b"),
-    // Routing peer of the network.
     {
       id: "router-peer-r-network-new-n1",
       source: "peer-router",

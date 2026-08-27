@@ -5,7 +5,12 @@ import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterC
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
-import { DraftNetworkRef } from "@/modules/control-center/utils/helpers";
+import {
+  DraftNetworkRef,
+  getResourceDraftGroupIds,
+  getResourceLiveBaseline,
+  getResourceNodeEnabled,
+} from "@/modules/control-center/utils/helpers";
 
 /**
  * Per-node draft edits that aren't group or network specific: renaming a
@@ -78,15 +83,24 @@ export function useDraftNodeActions() {
   const setResourceEnabled = useCallback(
     (id: string, enabled: boolean) => {
       const target = reactFlow.getNodes().find((n) => n.id === id);
+      const isDraftResource = id.startsWith("resource-new-");
       setNodes((prev) =>
         prev.map((n) =>
-          n.id === id ? { ...n, data: { ...n.data, enabled } } : n,
+          n.id === id
+            ? {
+                ...n,
+                // A draft resource has no live twin, so there the flag IS the
+                // state; an existing one needs its own key to stay separable.
+                data: isDraftResource
+                  ? { ...n.data, enabled }
+                  : { ...n.data, resourceEnabled: enabled },
+              }
+            : n,
         ),
       );
       // Draft resources carry their enabled state via their create-resource
-      // change (re-sync after the canvas update). Existing resources record an
-      // update-resource change.
-      if (id.startsWith("resource-new-")) {
+      // change, so they only need a re-sync after the canvas update.
+      if (isDraftResource) {
         setTimeout(() => syncDraftResource(id), 0);
         return;
       }
@@ -95,8 +109,12 @@ export function useDraftNodeActions() {
       const net = (target?.data as { draftNetwork?: DraftNetworkRef })
         ?.draftNetwork;
       if (resource?.id && net?.networkId) {
-        const groupIds = (
-          (resource.groups as (string | { id?: string })[]) ?? []
+        // trackUpdateResource replaces the pending change wholesale, so this must
+        // carry the CURRENT groups; the live ones would revert a pending edit.
+        const groupIds = getResourceDraftGroupIds(target);
+        const live = getResourceLiveBaseline(target);
+        const originalGroupIds = (
+          (live?.groups as (string | { id?: string })[]) ?? []
         )
           .map((g) => (typeof g === "string" ? g : g.id ?? ""))
           .filter(Boolean);
@@ -109,14 +127,14 @@ export function useDraftNodeActions() {
           description: resource.description,
           enabled,
           groupIds,
-          // Only `enabled` changes here — the rest mirror the live resource, so
-          // toggling back to the original drops the change.
+          // Live state, so toggling back to it drops the change. Not `resource`:
+          // that already holds any earlier name/address edit.
           original: {
-            enabled: resource.enabled ?? true,
-            name: resource.name,
-            address: resource.address,
-            description: resource.description,
-            groupIds,
+            enabled: live?.enabled ?? true,
+            name: live?.name ?? resource.name,
+            address: live?.address ?? resource.address,
+            description: live?.description,
+            groupIds: originalGroupIds,
           },
         });
       }
@@ -125,9 +143,7 @@ export function useDraftNodeActions() {
   );
 
   const isResourceEnabled = useCallback(
-    (id: string) =>
-      ((nodes.find((n) => n.id === id)?.data as { enabled?: boolean })
-        ?.enabled ?? true) as boolean,
+    (id: string) => getResourceNodeEnabled(nodes.find((n) => n.id === id)),
     [nodes],
   );
 

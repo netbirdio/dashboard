@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
-import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
 import {
@@ -18,9 +17,6 @@ import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 export function useAutoArrange() {
   const reactFlow = useReactFlow();
   const { drillDownNetworkNodeId } = useDraftMode();
-  // Setters only — subscribing to nodes/edges would re-render every consumer on
-  // each drag tick; arrange reads them at call time via the store.
-  const { setNodes, setEdges } = useCanvasState();
 
   const fitView = useCallback(
     () => reactFlow.fitView({ padding: 0.1, duration: 500, maxZoom: 0.8 }),
@@ -44,9 +40,11 @@ export function useAutoArrange() {
       }, 50);
     };
 
-    // Drilled into a network: re-run the shared single-network layout, with
-    // the frame re-anchored so the resource grid lands on the layout's
-    // resource column (same math as useNetworkDrillDown).
+    // Reads and writes through the ReactFlow instance, never useCanvasState: that
+    // context changes identity on every nodes update and re-renders every consumer.
+    //
+    // Drilled into a network: the frame is re-anchored so the resource grid lands
+    // on the layout's resource column, as in useNetworkDrillDown.
     if (drillDownNetworkNodeId) {
       const frameId = drillDownNetworkNodeId;
       const keptTop = nodes
@@ -64,16 +62,16 @@ export function useAutoArrange() {
         const position = drilledPos.get(n.id);
         return position ? { ...n, position } : n;
       });
-      setNodes(arranged);
+      reactFlow.setNodes(arranged);
       refit(arranged);
       return;
     }
 
     const { updatedNodes, updatedEdges } = applyDraftBuildLayout(nodes, edges);
-    setNodes(updatedNodes);
-    setEdges(updatedEdges);
+    reactFlow.setNodes(updatedNodes);
+    reactFlow.setEdges(updatedEdges);
     refit(updatedNodes);
-  }, [reactFlow, drillDownNetworkNodeId, setNodes, setEdges]);
+  }, [reactFlow, drillDownNetworkNodeId]);
 
   return {
     arrange,

@@ -81,7 +81,6 @@ export default function NetworkRoutingPeerModal({
   );
 }
 
-// Pure-data result for useSave={false} callers (control-center draft mode).
 export type RoutingPeerModalResult = {
   peer?: Peer;
   peerGroups: Group[];
@@ -95,8 +94,7 @@ type ContentProps = {
   router?: NetworkRouter;
   onCreated?: (r: NetworkRouter) => void;
   onUpdated?: (r: NetworkRouter) => void;
-  // false → no API calls: the modal hands the router data back via onSaved
-  // (draft mode).
+  // false → no API calls; the data comes back via onSaved (draft mode).
   useSave?: boolean;
   onSaved?: (r: RoutingPeerModalResult) => void;
   /**
@@ -131,18 +129,20 @@ export function RoutingPeerModalContent({
   // A placeholder's id has no API row — resolve the prefill from `extraPeers`
   // instead of fetching a 404.
   const presetIsDraft = isDraftPeerId(router?.peer);
-  const { data: peer } = useFetchApi<Peer>(
+  const { data: peer, isLoading: peerLoading } = useFetchApi<Peer>(
     "/peers/" + router?.peer,
     true,
     false,
     router ? router.peer != "" && !presetIsDraft : false,
   );
 
-  const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(
-    presetIsDraft
-      ? extraPeers?.find((p) => p.id === router?.peer)
-      : peer,
+  const [selectedPeer, setSelectedPeer] = useState<Peer | undefined | null>(
+    null,
   );
+  const presetPeer = presetIsDraft
+    ? extraPeers?.find((p) => p.id === router?.peer)
+    : peer;
+  const routingPeer = selectedPeer === null ? presetPeer : selectedPeer;
 
   const [
     routingPeerGroups,
@@ -231,15 +231,13 @@ export function RoutingPeerModalContent({
 
   const canContinue = routingPeer !== undefined || routingPeerGroups.length > 0;
 
-  // Draft mode: hand the validated selection back — group creation and the
-  // API call happen on deploy via the changeset.
+  // Group creation and the API call happen later, on deploy.
   const saveDraft = () => {
     onSaved?.({
       peer: type === "peer" ? routingPeer : undefined,
       peerGroups: type === "peer" ? [] : routingPeerGroups,
       metric: parseInt(metric),
-      masquerade:
-        type === "peer" && isNonLinuxRoutingPeer ? true : masquerade,
+      masquerade: type === "peer" && isNonLinuxRoutingPeer ? true : masquerade,
       enabled,
     });
   };
@@ -282,7 +280,7 @@ export function RoutingPeerModalContent({
                 value={type}
                 onChange={(state) => {
                   setType(state);
-                  setRoutingPeer(undefined);
+                  setSelectedPeer(undefined);
                   setRoutingPeerGroups([]);
                 }}
               >
@@ -310,9 +308,10 @@ export function RoutingPeerModalContent({
                       network.
                     </HelpText>
                     <PeerSelector
-                      onChange={setRoutingPeer}
+                      onChange={setSelectedPeer}
                       value={routingPeer}
                       extraPeers={extraPeers}
+                      disabled={peerLoading}
                     />
                   </div>
                 </SegmentedTabs.Content>
@@ -494,8 +493,7 @@ const InstallNetBirdWithSetupKeyButton = ({
       .post({
         name,
         type: "one-off",
-        // 1 day expiration (seconds)
-        expires_in: 24 * 60 * 60,
+        expires_in: 24 * 60 * 60, // 1 day expiration in seconds
         revoked: false,
         auto_groups: [],
         usage_limit: 1,

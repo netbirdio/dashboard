@@ -21,7 +21,6 @@ interface Props {
   initialName: string;
 }
 
-// Name input with a live domain-name preview derived from the peer's dns_label.
 export function EditPeerNameModal({
   onSuccess,
   peer,

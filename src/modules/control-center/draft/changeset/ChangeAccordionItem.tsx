@@ -23,7 +23,6 @@ import {
   getChangeApiCall,
   getChangeIssue,
   getChangeKind,
-  useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   buildChangeRequest,
@@ -45,22 +44,19 @@ import { DeployStatus } from "@/modules/control-center/hooks/useDeployChangeset"
 
 type Props = {
   change: DraftChange;
+  changes: DraftChange[];
   live: LiveData;
   onDiscard: () => void;
-  // Side-effect preview for the remove confirmation (what else the removal
-  // touches on the canvas / in other changes).
   previewRemove: (change: DraftChange) => CascadePreview;
-  // Resolve a blocking issue on this change (assign a network / install the
-  // peer). Undefined for changes with no issue.
   onResolveIssue?: (change: DraftChange) => void;
   disabled: boolean;
-  // Deploy progress: undefined = not started; "deploying" spins + pulses;
-  // "done" shows a green check; "error" reverts to the actions menu.
+  // Undefined = deploy not started.
   status?: DeployStatus;
 };
 
 export const ChangeAccordionItem = ({
   change,
+  changes,
   live,
   onDiscard,
   previewRemove,
@@ -68,17 +64,12 @@ export const ChangeAccordionItem = ({
   disabled,
   status,
 }: Props) => {
-  const { changes } = useDraftChangeset();
   const apiCall = getChangeApiCall(change);
-  // Clicking the URL copies the full request as a curl command (API-docs
-  // format) with a <TOKEN> placeholder.
   const request = useMemo(
     () => buildChangeRequest(change, live),
     [change, live],
   );
-  const copyText = request ? toCurl(request) : apiCall;
-  // Copy via notify() directly so the toast can title "Copied as cURL request"
-  // and describe the actual request (e.g. DELETE /groups/...).
+  const copyText = toCurl(request);
   const [copied, setCopied] = useState(false);
   const doCopy = async (showInlineCheck: boolean) => {
     try {
@@ -89,21 +80,15 @@ export const ChangeAccordionItem = ({
         window.setTimeout(() => setCopied(false), 1200);
       }
     } catch {
-      // Clipboard unavailable — nothing to do.
+      // Clipboard unavailable.
     }
   };
 
-  // The header shows a GitHub-style +/- diffstat instead of the kind badge
-  // whenever the change produces a diff.
   const stat = useMemo(
     () => diffStat(changeDiffLines(change, live)),
     [change, live],
   );
   const showStat = stat.additions + stat.deletions > 0;
-  // A blocking issue (e.g. a resource with no network) replaces the
-  // diffstat/kind badge with an issue badge and rings the row.
-  // Passed the whole set: an issue that another change already explains (a router
-  // waiting on a placeholder peer's install step) isn't repeated here.
   const issue = getChangeIssue(change, changes);
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -136,12 +121,9 @@ export const ChangeAccordionItem = ({
       data-testid={`cc-change-${change.type}`}
       className={cn(
         "border border-nb-gray-910 rounded-lg bg-nb-gray-930/40 overflow-hidden min-w-0",
-        // The row being deployed pulses (no border color); state is conveyed by
-        // the spinner / green check in the header.
         status === "deploying" && "animate-pulse",
       )}
     >
-      {/* Fixed-height header; the trigger holds everything up to the badge. */}
       <AccordionPrimitive.Header
         className={
           "group/row flex items-stretch gap-3 pr-3 h-11 hover:bg-nb-gray-930/40 transition-colors"
@@ -179,7 +161,6 @@ export const ChangeAccordionItem = ({
               {entityName(change)}
             </span>
           </span>
-          {/* The whole URL is a copy affordance (peer-page hostname pattern). */}
           <span
             role={"button"}
             tabIndex={0}
@@ -220,8 +201,6 @@ export const ChangeAccordionItem = ({
 
           <span className={"flex-1"} />
 
-          {/* Right: issue badge (blocking, click to fix) → diffstat (code
-              mode) → kind badge */}
           {issue ? (
             <IssueBadge
               label={issue.label}
@@ -239,8 +218,6 @@ export const ChangeAccordionItem = ({
           )}
         </AccordionPrimitive.Trigger>
 
-        {/* While this change deploys the ⋮ becomes a spinner, then a green
-            check when it lands; other rows keep their menu (disabled). */}
         {status === "deploying" ? (
           <div
             className={"self-center shrink-0 p-1.5 text-white"}
@@ -256,7 +233,7 @@ export const ChangeAccordionItem = ({
             <CheckIcon size={16} />
           </div>
         ) : (
-          // More actions — outside the trigger (buttons can't nest).
+          // Outside the trigger: buttons can't nest.
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
             <DropdownMenuTrigger asChild={true}>
               <button
@@ -272,18 +249,16 @@ export const ChangeAccordionItem = ({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align={"end"}>
-              {request && (
-                <DropdownMenuItem
-                  className={"gap-2"}
-                  onClick={() => {
-                    doCopy(false);
-                    setMenuOpen(false);
-                  }}
-                >
-                  <CopyIcon size={14} />
-                  Copy cURL
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem
+                className={"gap-2"}
+                onClick={() => {
+                  doCopy(false);
+                  setMenuOpen(false);
+                }}
+              >
+                <CopyIcon size={14} />
+                Copy cURL
+              </DropdownMenuItem>
               <DropdownMenuItem
                 variant={"danger"}
                 className={"gap-2"}
@@ -299,10 +274,8 @@ export const ChangeAccordionItem = ({
       </AccordionPrimitive.Header>
 
       <AccordionContent animated={false}>
-        {/* No outer padding — the content is flush; rows/code carry their own
-            insets (peer-overview style rows, edge-to-edge code). */}
         <div className={"border-t border-nb-gray-910 min-w-0"}>
-          <ChangeCodeView change={change} live={live} hideHeader={true} />
+          <ChangeCodeView change={change} live={live} />
         </div>
       </AccordionContent>
     </AccordionItem>

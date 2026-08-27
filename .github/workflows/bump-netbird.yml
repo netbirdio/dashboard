@@ -1,0 +1,81 @@
+name: Bump netbird wasm client
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'NetBird release tag (e.g. v0.78.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.NETBIRD_DEV_BOT_GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config --global user.email "dev@netbird.io"
+          git config --global user.name "netbirddev"
+
+      # The tag rides in env and is validated before use, so a crafted dispatch
+      # input cannot expand into shell source or reach the sed expression.
+      - name: Update the default wasm path
+        id: bump
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Refusing tag '$TAG': expected vMAJOR.MINOR.PATCH"
+            exit 1
+          fi
+
+          sed -i "s|https://pkgs.netbird.io/wasm/client/v[0-9.]*|https://pkgs.netbird.io/wasm/client/${TAG}|" src/utils/config.ts
+
+          branch="bump-netbird-wasm-${TAG#v}"
+          echo "branch=${branch}" >> "$GITHUB_OUTPUT"
+
+          # The branch name is derived from the tag, so a re-dispatch of the
+          # same release would collide with the branch and pull request an
+          # earlier run left behind.
+          if git ls-remote --exit-code --heads origin "${branch}" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Branch ${branch} already exists, ${TAG} was handled by an earlier run"
+            exit 0
+          fi
+
+          git checkout -b "${branch}"
+          git add src/utils/config.ts
+          if git diff --cached --quiet; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Default wasm path already at ${TAG}, nothing to do"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          git commit -m "Bump the WASM client to ${TAG}"
+          git push --set-upstream origin "${branch}"
+
+      - name: Create pull request
+        if: steps.bump.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.NETBIRD_DEV_BOT_GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          BRANCH: ${{ steps.bump.outputs.branch }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "Bump the WASM client to ${TAG}" \
+            --body "Automated wasm path bump triggered by netbird release ${TAG}."

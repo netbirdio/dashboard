@@ -22,9 +22,6 @@ import { usePlaceholderUpgrade } from "@/modules/control-center/hooks/useDraftPe
 import { useStructuralNodes } from "@/modules/control-center/utils/helpers";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
-// Setup stepper for a user-device placeholder: step 1 installs NetBird, step
-// 2 selects the registered peer. Selecting upgrades the placeholder in place,
-// so group memberships and policies referencing it follow.
 export const DraftUserDeviceModal = () => {
   const { userDeviceModal, setUserDeviceModal } = useDraftMode();
   return (
@@ -93,8 +90,6 @@ const StepperContent = ({
         color={"netbird"}
       />
       <Separator />
-      {/* Same stepper treatment as the integrations setup modals
-          (CrowdStrike/FleetDM): plain step paragraphs, actions inline. */}
       <div className={"px-8 py-3 flex flex-col gap-0 z-0"}>
         <Steps>
           <Steps.Step step={1}>
@@ -135,8 +130,7 @@ const StepperContent = ({
           </Steps.Step>
         </Steps>
       </div>
-      {/* Same separator color as the header (the footer's built-in border
-          is a slightly different gray). */}
+      {/* The footer's built-in border is a slightly different gray. */}
       <Separator />
       <ModalFooter className={"items-center"} separator={false}>
         <div className={"flex gap-3 w-full justify-end"}>

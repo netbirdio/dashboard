@@ -13,6 +13,7 @@ import GroupBadge from "@components/ui/GroupBadge";
 import GroupBadgeWithEditPeers from "@components/ui/GroupBadgeWithEditPeers";
 import ResourceBadge from "@components/ui/ResourceBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import TruncatedText from "@components/ui/TruncatedText";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
 import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
@@ -45,15 +46,67 @@ import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
-import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
-import TruncatedText from "@components/ui/TruncatedText";
+import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 
-type PeerGroupSelectorTab = "peers" | "groups" | "resources" | "clusters";
+export type PeerGroupSelectorTab =
+  | "peers"
+  | "groups"
+  | "resources"
+  | "clusters";
+
+export const getOpeningTab = (params: {
+  currentTab: PeerGroupSelectorTab;
+  hasResource: boolean;
+  resourceType?: "peer" | string;
+  hasSelectedCluster: boolean;
+  showClusters: boolean;
+  showPeers: boolean;
+  showResources: boolean;
+  hideGroupsTab: boolean;
+  tabOrder?: PeerGroupSelectorTab[];
+  initialTab?: PeerGroupSelectorTab;
+}): PeerGroupSelectorTab => {
+  const {
+    currentTab,
+    hasResource,
+    resourceType,
+    hasSelectedCluster,
+    showClusters,
+    showPeers,
+    showResources,
+    hideGroupsTab,
+    tabOrder,
+    initialTab,
+  } = params;
+
+  const renderable = (tab: PeerGroupSelectorTab): boolean => {
+    if (tabOrder && !tabOrder.includes(tab)) return false;
+    if (tab === "groups") return !hideGroupsTab;
+    if (tab === "peers") return showPeers;
+    if (tab === "resources") return showResources;
+    return showClusters;
+  };
+
+  const defaultTab = (): PeerGroupSelectorTab => {
+    if (initialTab) return initialTab;
+    if (tabOrder?.[0]) return tabOrder[0];
+    if (hideGroupsTab) return showPeers ? "peers" : "resources";
+    return "groups";
+  };
+
+  if (hasResource) {
+    if (resourceType === "peer") return showPeers ? "peers" : defaultTab();
+    return showResources ? "resources" : defaultTab();
+  }
+  if (hasSelectedCluster && showClusters) return "clusters";
+  if (renderable(currentTab)) return currentTab;
+  if (initialTab && renderable(initialTab)) return initialTab;
+  return defaultTab();
+};
 
 export type ClusterOption = {
-  /** Cluster apex domain (e.g. "eu.proxy.netbird.io"); also the value
-   *  that downstream code stores in target_id / proxy_cluster. */
+  /** Apex domain; also what downstream stores in target_id / proxy_cluster. */
   domain: string;
   /** Human-friendly label; falls back to domain. */
   label?: string;
@@ -85,17 +138,13 @@ interface MultiSelectProps {
   showPeerCounter?: boolean;
   hideGroupsTab?: boolean;
   tabOrder?: PeerGroupSelectorTab[];
-  // Tab the dropdown opens on (when nothing is selected yet) — unlike
-  // tabOrder it does NOT reorder the tab triggers.
+  // Tab the dropdown opens on; unlike tabOrder it doesn't reorder triggers.
   initialTab?: PeerGroupSelectorTab;
   closeOnSelect?: boolean;
-  /** Show a Clusters tab. Off by default; flip on with clusters list. */
   showClusters?: boolean;
   /** Clusters offered in the Clusters tab. When empty the tab is hidden. */
   clusters?: ClusterOption[];
-  /** Currently-selected cluster (domain string), if any. */
   selectedCluster?: string;
-  /** Called when the user picks (or clears) a cluster. */
   onClusterChange?: (cluster?: string) => void;
   resource?: PolicyRuleResource;
   onResourceChange?: (resource?: PolicyRuleResource) => void;
@@ -106,12 +155,11 @@ interface MultiSelectProps {
   users?: User[];
   placeholderForSearch?: string;
   resourceIds?: string[];
-  // Limit the Groups tab to these ids (or names for draft groups) — e.g. the
-  // network destination picker. Also disables inline group creation.
+  // Limit the Groups tab to these ids (names for draft groups). Also
+  // disables inline group creation.
   groupIds?: string[];
   additionalResources?: NetworkResource[];
-  // Extra peers offered alongside the fetched ones (e.g. draft placeholder
-  // peers that don't exist in the API yet).
+  // Extra peers alongside the fetched ones (e.g. draft placeholder peers).
   additionalPeers?: Peer[];
   policies?: Policy[];
 }
@@ -308,20 +356,6 @@ export function PeerGroupSelector({
 
   const [tab, setTab] = useState<PeerGroupSelectorTab>(getDefaultTab);
 
-  // Opening the dropdown lands on the tab of the current selection: a chosen
-  // peer opens Peers, a resource opens Resources, groups open Groups.
-  const getOpeningTab = (): PeerGroupSelectorTab => {
-    if (resource) {
-      if (resource.type === "peer") {
-        return showPeers ? "peers" : getDefaultTab();
-      }
-      return showResources ? "resources" : getDefaultTab();
-    }
-    if (selectedCluster && showClusters) return "clusters";
-    if (values.length > 0 && !hideGroupsTab) return "groups";
-    return getDefaultTab();
-  };
-
   useEffect(() => {
     if (open) {
       setTimeout(() => {
@@ -403,7 +437,22 @@ export function PeerGroupSelector({
     <Popover
       open={open}
       onOpenChange={(isOpen) => {
-        if (isOpen) setTab(getOpeningTab());
+        if (isOpen) {
+          setTab(
+            getOpeningTab({
+              currentTab: tab,
+              hasResource: !!resource,
+              resourceType: resource?.type,
+              hasSelectedCluster: !!selectedCluster,
+              showClusters,
+              showPeers,
+              showResources,
+              hideGroupsTab,
+              tabOrder,
+              initialTab,
+            }),
+          );
+        }
         setOpen(isOpen);
         if (!isOpen && search.length > 0) {
           setTimeout(() => {
@@ -459,9 +508,7 @@ export function PeerGroupSelector({
                   useHover={true}
                   data-cy={"cluster-badge"}
                   variant={"gray-ghost"}
-                  className={
-                    "py-[3px] transition-all group whitespace-nowrap"
-                  }
+                  className={"py-[3px] transition-all group whitespace-nowrap"}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -513,7 +560,6 @@ export function PeerGroupSelector({
                           e.preventDefault();
                           e.stopPropagation();
                           if (disableInlineRemoveGroup) return;
-                          // Prevent removing the "All" group
                           if (peer != undefined && group.name == "All") return;
                           toggleGroupByName(group.name);
                         }}
@@ -644,17 +690,15 @@ export function PeerGroupSelector({
                       </CommandItem>
                     )}
 
-                    {groupIds &&
-                      filteredGroups.length === 0 &&
-                      !searchedGroupNotFound && (
-                        <DropdownInfoText
-                          className={"mt-5 mb-5 max-w-sm mx-auto"}
-                        >
-                          {search !== ""
-                            ? "There are no groups matching your search. Please try a different search term."
-                            : "There are no groups that contain resources yet."}
-                        </DropdownInfoText>
-                      )}
+                    {groupIds && filteredGroups.length === 0 && (
+                      <DropdownInfoText
+                        className={"mt-5 mb-5 max-w-sm mx-auto"}
+                      >
+                        {search !== ""
+                          ? "There are no groups matching your search. Please try a different search term."
+                          : "There are no groups that contain resources yet."}
+                      </DropdownInfoText>
+                    )}
 
                     {filteredGroups.slice(0, slice).map((option) => {
                       const isSelected =
@@ -685,7 +729,6 @@ export function PeerGroupSelector({
                             value={option.name + option.id}
                             disabled={isDisabled}
                             onSelect={() => {
-                              // Prevent removing the "All" group
                               if (peer != undefined && option.name == "All")
                                 return;
                               if (isDisabled) return;
@@ -794,7 +837,6 @@ const TabTriggers = ({
   showClusters = false,
   hideGroupsTab = false,
   tabOrder,
-  initialTab,
 }: {
   searchRef: React.MutableRefObject<HTMLInputElement | null>;
   showResources?: boolean;
@@ -802,9 +844,6 @@ const TabTriggers = ({
   showClusters?: boolean;
   hideGroupsTab?: boolean;
   tabOrder?: PeerGroupSelectorTab[];
-  // Tab the dropdown opens on (when nothing is selected yet) — unlike
-  // tabOrder it does NOT reorder the tab triggers.
-  initialTab?: PeerGroupSelectorTab;
 }) => {
   const tabCount =
     (!hideGroupsTab ? 1 : 0) +
@@ -1091,8 +1130,7 @@ const ResourcesList = ({
                     e.preventDefault();
                   }}
                 >
-                  {/* Draft resources without an address have no type yet —
-                      show the default (host) icon instead of none. */}
+                  {/* Draft resources without an address have no type yet. */}
                   {(res.type === "host" || !res.type) && (
                     <WorkflowIcon size={12} className={"shrink-0"} />
                   )}
@@ -1148,9 +1186,7 @@ const ClustersList = ({
 
   return (
     <Radio defaultValue={value} name={"cluster"} value={value}>
-      <ScrollArea
-        className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}
-      >
+      <ScrollArea className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}>
         {clusters.map((c) => (
           <CommandItem
             key={c.domain}

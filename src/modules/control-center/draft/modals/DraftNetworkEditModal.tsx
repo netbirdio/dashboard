@@ -5,14 +5,12 @@ import { useSWRConfig } from "swr";
 import { Network } from "@/interfaces/Network";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { NetworkModalContent } from "@/modules/networks/NetworkModal";
 
-// Draft network editor — the networks page's network modal in pure-data mode
-// (useSave={false}): name + description land on the draft network (canvas
-// node, create-network change, and every reference via renameDraftNetwork).
-// Opened from the node context menu's Edit and the drill-down header.
+// The networks page's modal in pure-data mode (useSave={false}): name and
+// description land on the draft network instead of hitting the API.
 export const DraftNetworkEditModal = () => {
   const { networkEditor, setNetworkEditor } = useDraftMode();
   return (
@@ -47,8 +45,7 @@ const EditorContent = ({
   const frame = reactFlow.getNodes().find((n) => n.id === networkNodeId);
   // The description lives only in the create-network change.
   const clientId = networkNodeId.replace("network-", "");
-  // The live single-network view has no frame node (it lays resources out
-  // directly), so fall back to the real network from the API list by id.
+  // The live single-network view has no frame node, so fall back to the API list.
   const network =
     (frame?.data as { network?: Network })?.network ??
     networks?.find((n) => n.id === clientId);
@@ -61,8 +58,17 @@ const EditorContent = ({
 
   if (network?.id) {
     const existing = network;
-    // Patch the frame's label/description in place so the canvas reflects the
-    // edit immediately (shared by both modes).
+    // The frame carries the PATCHED draft state, so a previous edit must not become
+    // the "original" — renaming back would then never clear the change.
+    const pendingUpdate = changes.find(
+      (c) => c.type === "update-network" && c.networkId === existing.id,
+    ) as { originalName?: string; originalDescription?: string } | undefined;
+    const liveNetwork = networks?.find((n) => n.id === existing.id);
+    const original = liveNetwork ?? {
+      name: pendingUpdate?.originalName ?? existing.name,
+      description: pendingUpdate?.originalDescription ?? existing.description,
+    };
+    // Patch the frame in place so the canvas reflects the edit immediately.
     const patchFrame = (name: string, description?: string) => {
       if (!frame) return;
       reactFlow.setNodes((prev) =>
@@ -80,8 +86,8 @@ const EditorContent = ({
       );
     };
 
-    // LIVE: edit the account directly (PUT /networks/{id}) — live changes are
-    // never deployed via the changeset, so they must hit the API now.
+    // Live changes are never deployed via the changeset, so they must hit the
+    // API now.
     if (!isDraft) {
       return (
         <NetworkModalContent
@@ -95,8 +101,6 @@ const EditorContent = ({
       );
     }
 
-    // DRAFT: record an update-network change; it deploys with the rest of the
-    // changeset. The frame's label follows the pending rename immediately.
     return (
       <NetworkModalContent
         network={existing}
@@ -106,9 +110,9 @@ const EditorContent = ({
           trackUpdateNetwork({
             networkId: existing.id,
             name: values.name,
-            originalName: existing.name,
+            originalName: original.name,
             description: values.description,
-            originalDescription: existing.description,
+            originalDescription: original.description,
           });
           onClose();
         }}

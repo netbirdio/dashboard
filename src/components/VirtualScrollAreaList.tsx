@@ -33,9 +33,7 @@ type Props<T extends { id?: string }> = {
   heightAdjustment?: number;
   groupKey?: (item: T) => string | undefined;
   itemKey?: (item: T) => string;
-  // Combobox lists highlight the first row on open so keyboard nav has a
-  // starting point. Read-only lists (view/hover-edit, no select) pass false so
-  // nothing looks pre-hovered — only a real mouse hover highlights a row.
+  // Read-only lists pass false so nothing looks pre-hovered.
   autoSelectFirst?: boolean;
 };
 
@@ -84,7 +82,8 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
       const length = items.length - 1;
       if (e.code === "ArrowUp" || (e.key === "Tab" && e.shiftKey)) {
         e.preventDefault();
-        const newSelected = selected === 0 ? length : selected - 1;
+        // A read-only list starts at -1, which must wrap to the last row.
+        const newSelected = selected <= 0 ? length : selected - 1;
         setSelected(newSelected);
         scrollToItem(newSelected);
       } else if (e.key === "ArrowDown" || e.key === "Tab") {
@@ -94,6 +93,8 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
         scrollToItem(newSelected);
       }
       if (e.key === "Enter") {
+        // Leave Enter alone rather than handing onSelect an undefined item.
+        if (selected < 0 || selected >= items.length) return;
         e.preventDefault();
         onSelect?.(items[selected]);
       }

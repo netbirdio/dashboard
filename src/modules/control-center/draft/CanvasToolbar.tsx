@@ -22,8 +22,7 @@ import { useAgentBusy } from "@/modules/control-center/agent/canvasAgentStore";
 import { useAutoArrange } from "@/modules/control-center/hooks/useAutoArrange";
 import { isMac } from "@hooks/useOperatingSystem";
 
-// Undo/redo shortcut badges: ⌘ icon on macOS, "Ctrl" text on Windows/Linux;
-// the big-arrow icon stands in for Shift on both.
+// The big-arrow icon stands in for Shift in the shortcut badges.
 const UndoShortcut = isMac ? (
   <span className="flex items-center gap-0.5">
     <CommandIcon size={10} className="relative -top-[1px]" />Z
@@ -84,7 +83,7 @@ export const CanvasToolbar = () => {
     "-": handleZoomOut,
   });
 
-  // Spacebar hold-to-pan (needs keyup, so handled separately)
+  // Spacebar hold-to-pan needs keyup, so it is handled separately.
   const toolBeforeSpaceRef = React.useRef<CanvasTool | null>(null);
 
   useEffect(() => {

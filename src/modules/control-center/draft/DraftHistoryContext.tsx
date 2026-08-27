@@ -1,5 +1,6 @@
 "use client";
 
+import { Edge, Node } from "@xyflow/react";
 import React, {
   createContext,
   useCallback,
@@ -9,19 +10,17 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Edge, Node } from "@xyflow/react";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import {
   DraftChange,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { isInputFocused } from "@/modules/control-center/hooks/useControlCenterShortcuts";
+import { deployInFlight } from "@/modules/control-center/hooks/useDeployChangeset";
 
-// Snapshot-based undo/redo for draft mode. Canvas (nodes/edges) and the
-// changeset are captured together so undoing a tracked action also rolls back
-// its recorded change. Snapshots are taken debounced, which collapses the
-// intermediate states of a node drag into a single entry.
+// Canvas and changeset are captured together so undoing a tracked action also
+// rolls back its recorded change.
 type Snapshot = {
   nodes: Node[];
   edges: Edge[];
@@ -31,11 +30,8 @@ type Snapshot = {
 const HISTORY_LIMIT = 50;
 const CAPTURE_DEBOUNCE_MS = 300;
 
-// addedMembers Sets aren't JSON-serializable — compare them as arrays.
-// Node positions and transient interaction state are EXCLUDED: moving nodes
-// around is not an undoable action (only real changes are — connections,
-// deletions, adds, data edits), and comparing positions made every drag
-// create history entries and stringify the canvas repeatedly.
+// Moving nodes isn't undoable, and diffing positions stringified the canvas on
+// every drag.
 const TRANSIENT_NODE_KEYS = new Set([
   "position",
   "positionAbsolute",
@@ -43,26 +39,15 @@ const TRANSIENT_NODE_KEYS = new Set([
   "selected",
   "measured",
   "internals",
-  // Drag-stop brings the moved node to the front — cosmetic, not undoable.
   "zIndex",
-  // Drop-target highlight flag flipped during drags.
   "dropTarget",
-  // Focus-mode dimming (useGroupFocusDim) — visual only.
   "className",
-  // Drill-down navigation hides/reveals nodes; frame overflow rows are
-  // hidden by the reconciling layout — derived state, not user changes.
+  // Derived by navigation and the reconciling frame layout, not by the user.
   "hidden",
-  // Stamped by the frame layout (rubber-band selection guard).
   "selectable",
-  // Frame/child sizes are reconciled from the grid; the "+N more" cell rect
-  // is computed. Real causes (adding/removing resources) are captured via
-  // parentId/data/ids anyway.
   "style",
   "moreCell",
-  // Edge layout artifacts and frame-attachment rewiring: edges re-target
-  // the frame while its children are framed (and back when drilled) — pure
-  // navigation. Real connects/removals create/delete edges, which the edge
-  // IDS capture.
+  // Edge layout artifacts; real connects still surface as changed edge ids.
   "points",
   "resourceTarget",
   "target",
@@ -100,25 +85,25 @@ export function DraftHistoryProvider({
 
   const undoStack = useRef<Snapshot[]>([]);
   const redoStack = useRef<Snapshot[]>([]);
-  // The last committed snapshot — what undo returns to.
+  // The last committed snapshot: what undo returns to.
   const committed = useRef<Snapshot | null>(null);
-  // Cached signature of `committed` (see the capture effect).
   const committedSig = useRef<string | null>(null);
   // Bumped whenever the stacks change so canUndo/canRedo re-render.
   const [, setVersion] = useState(0);
 
-  // Latest committed React state, mirrored each render so undo/redo can flush a
-  // still-pending (debounced) capture synchronously — see captureNow.
+  // Mirrored each render so undo/redo can flush a pending capture.
   const latest = useRef<Snapshot>({ nodes, edges, changes });
   latest.current = { nodes, edges, changes };
 
-  // Force the pending debounced capture to happen NOW. Undo/redo call this
-  // first: without it, undoing within the 300ms capture window popped the
-  // wrong (older) snapshot — overshooting the intermediate state — and the
-  // effect-cleanup clearTimeout then discarded the in-flight edit so redo
-  // could never restore it.
+  const pendingCapture = useRef<number | null>(null);
+
   const captureNow = useRef(() => {});
   captureNow.current = () => {
+    // Cancel first, or an expired timer fires after undo() rewound the stacks.
+    if (pendingCapture.current !== null) {
+      window.clearTimeout(pendingCapture.current);
+      pendingCapture.current = null;
+    }
     const snap = latest.current;
     if (!committed.current) {
       committed.current = snap;
@@ -135,20 +120,15 @@ export function DraftHistoryProvider({
     committed.current = snap;
   };
 
-  const applyRef = useRef((snap: Snapshot) => {
-    setNodes(snap.nodes);
-    setEdges(snap.edges);
-    replaceChanges(snap.changes);
-  });
+  const applyRef = useRef<(snap: Snapshot) => void>(() => {});
   applyRef.current = (snap: Snapshot) => {
     setNodes(snap.nodes);
     setEdges(snap.edges);
     replaceChanges(snap.changes);
   };
 
-  // Capture (debounced): push the previously committed snapshot when the
-  // draft state actually changed. Applying a snapshot sets `committed`
-  // synchronously, so undo/redo itself never records a history entry.
+  // Applying a snapshot sets `committed` synchronously, so undo/redo records
+  // no history entry of its own.
   useEffect(() => {
     if (!isDraft) {
       undoStack.current = [];
@@ -158,12 +138,10 @@ export function DraftHistoryProvider({
       setVersion((v) => v + 1);
       return;
     }
-    // Never capture mid-drag — the signature stringifies the whole canvas,
-    // which froze the drag whenever the debounce elapsed while moving. The
-    // drag-stop commit (dragging flags clear) re-arms the capture.
+    // Never capture mid-drag: the signature stringifies the whole canvas.
     if (nodes.some((n) => n.dragging)) return;
-    // Cheap structural pre-check (reference compares) — selection clicks
-    // and position-only changes must not run the expensive stringify.
+    // Cheap pre-check: selection and position-only changes must skip the
+    // stringify.
     const committedSnap = committed.current;
     if (committedSnap) {
       const structurallyEqual =
@@ -177,24 +155,24 @@ export function DraftHistoryProvider({
           );
         });
       if (structurallyEqual) {
-        // Keep the committed snapshot fresh (positions) without a capture.
+        // Keep the snapshot fresh without recording a capture.
         committed.current = { nodes, edges, changes };
         return;
       }
     }
-    const timer = setTimeout(() => {
+    const timer = window.setTimeout(() => {
+      pendingCapture.current = null;
       const snap: Snapshot = { nodes, edges, changes };
       if (!committed.current) {
         committed.current = snap;
         committedSig.current = signature(snap);
         return;
       }
-      // The committed signature is cached — stringifying the whole canvas
-      // TWICE per capture stalled the main thread on large drafts.
+      // The committed signature is cached: stringifying twice per capture
+      // stalled the main thread on large drafts.
       const snapSig = signature(snap);
       if (snapSig === (committedSig.current ?? signature(committed.current))) {
-        // No undoable change — but keep the committed snapshot fresh so a
-        // later undo doesn't restore stale node positions.
+        // No undoable change, but keep positions fresh for a later undo.
         committed.current = snap;
         committedSig.current = snapSig;
         return;
@@ -206,10 +184,17 @@ export function DraftHistoryProvider({
       committed.current = snap;
       setVersion((v) => v + 1);
     }, CAPTURE_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
+    pendingCapture.current = timer;
+    return () => {
+      window.clearTimeout(timer);
+      if (pendingCapture.current === timer) pendingCapture.current = null;
+    };
   }, [isDraft, nodes, edges, changes]);
 
   const undo = useCallback(() => {
+    // Inert during a deploy: replaceChanges would rewrite the changeset under
+    // the running loop, and a retry would re-send the undone payloads.
+    if (deployInFlight.current) return;
     // Flush any pending edit so we step back exactly one state.
     captureNow.current();
     const prev = undoStack.current.pop();
@@ -222,7 +207,8 @@ export function DraftHistoryProvider({
   }, []);
 
   const redo = useCallback(() => {
-    // A pending edit invalidates redo — capture it first (clears the stack).
+    if (deployInFlight.current) return;
+    // A pending edit invalidates redo, so capture it first.
     captureNow.current();
     const next = redoStack.current.pop();
     if (!next || !committed.current) return;
@@ -233,7 +219,6 @@ export function DraftHistoryProvider({
     setVersion((v) => v + 1);
   }, []);
 
-  // ⌘/Ctrl+Z undo, ⇧⌘/Ctrl+Z or Ctrl+Y redo (draft-only, input-aware).
   useEffect(() => {
     if (!isDraft) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -259,7 +244,7 @@ export function DraftHistoryProvider({
       canUndo: undoStack.current.length > 0,
       canRedo: redoStack.current.length > 0,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- canUndo/canRedo read the mutable ref stacks
     [undo, redo, undoStack.current.length, redoStack.current.length],
   );
 

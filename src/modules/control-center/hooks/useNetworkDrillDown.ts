@@ -4,6 +4,7 @@ import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterC
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
 import {
+  DRILLED_RESOURCE_SPACING,
   applyDrilledLayout,
   getDrilledFrameAnchor,
 } from "@/modules/control-center/utils/drilled-layout";
@@ -14,18 +15,16 @@ import {
 } from "@/modules/control-center/utils/canvas-transition";
 import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 import {
+  NETWORK_FRAME_HEADER,
+  NETWORK_FRAME_PADDING_X,
+  NETWORK_FRAME_PADDING_Y,
   NETWORK_FRAME_WIDTH,
   getNetworkFrameHeight,
 } from "@/modules/control-center/utils/helpers";
 
-// Drill-down: clicking a network frame enters a single-network
-// draft view — only the frame (full resource grid via useNetworkFrameLayout's
-// drilled branch), its routing peers, and the policies targeting its
-// resources (plus their sources) stay visible; everything else is hidden.
-// The kept world is RE-LAID OUT like the live single-network view (groups →
-// policies → network column, same spacing) so drilling in draft looks the
-// same as live; the parent positions are snapshotted and restored on exit
-// together with the viewport.
+// Drill-down keeps only the clicked frame, its routing peers and the policies
+// targeting its resources, re-laid out like the live single-network view.
+// Parent positions and the viewport are snapshotted and restored on exit.
 export function useNetworkDrillDown() {
   const { isDraft, drillDownNetworkNodeId, setDrillDownNetworkNodeId } =
     useDraftMode();
@@ -33,14 +32,12 @@ export function useNetworkDrillDown() {
   const reactFlow = useReactFlow();
   const prevRef = useRef<string | null>(null);
   const viewportRef = useRef<Viewport | null>(null);
-  // Parent-view positions of top-level nodes, restored on exit.
   const positionsRef = useRef<Map<string, XYPosition> | null>(null);
-  // True while the exit choreography plays — the reconciling repair must not
-  // unhide nodes mid-fade (it would swap the worlds while still visible).
+  // The reconciling repair must not unhide nodes while the exit fade plays; it
+  // would swap the worlds while both are visible.
   const exitingRef = useRef(false);
   const startRafRef = useRef<number | null>(null);
 
-  // Leaving draft or removing the drilled frame always exits the drill-down.
   useEffect(() => {
     if (!drillDownNetworkNodeId) return;
     if (!isDraft || !nodes.some((n) => n.id === drillDownNetworkNodeId)) {
@@ -55,14 +52,12 @@ export function useNetworkDrillDown() {
     if (drillDownNetworkNodeId) {
       if (drillDownNetworkNodeId === prev) return;
       const frameId = drillDownNetworkNodeId;
-      // Snapshot only when entering from the overview — recapturing on a
-      // network switch (still drilled) would save the DRILLED positions as the
-      // overview and collapse the frames onto each other on exit.
+      // Only snapshot when entering from the overview: recapturing on a network
+      // switch would save the DRILLED positions and collapse the frames on exit.
       const enteringFromOverview = prev == null;
       if (enteringFromOverview) viewportRef.current = reactFlow.getViewport();
-      // Committed state, NOT the reactFlow store — when the drill id is set
-      // in the same commit as a fresh canvas (entering draft from the live
-      // drilled view), the store may still hold the previous nodes.
+      // Committed state, not the reactFlow store: with the drill id set in the
+      // same commit as a fresh canvas, the store may still hold the old nodes.
       const keep = computeDrillDownKeepSet(nodes, edges, frameId);
 
       if (enteringFromOverview || !positionsRef.current) {
@@ -80,10 +75,8 @@ export function useNetworkDrillDown() {
       );
       const { updatedNodes } = applyDrilledLayout(keptTop, keptEdges);
       const drilledPos = new Map(updatedNodes.map((n) => [n.id, n.position]));
-      // The hidden frame anchors the resource grid — placed manually so the
-      // first child cell coincides with the layout's resource-column start
-      // (including the frame in the layout itself skews the column math).
-      // Indexed once — the slot lookup below was an O(nodes) filter per child.
+      // The hidden frame anchors the resource grid; including it in the layout
+      // itself skews the column math, so it is placed manually.
       const frameChildren = nodes.filter((n) => n.parentId === frameId);
       const frameChildIndexById = new Map(
         frameChildren.map((n, i) => [n.id, i] as [string, number]),
@@ -94,10 +87,8 @@ export function useNetworkDrillDown() {
 
       const pane = document.querySelector<HTMLElement>(".react-flow");
 
-      // The final fit viewport, computed MATHEMATICALLY from the precomputed
-      // positions (+ current measured sizes) — no waiting for the drilled
-      // grid to render/measure, so the fade-in can start immediately after
-      // the fade-out.
+      // Computed from the precomputed positions instead of waiting for the
+      // drilled grid to measure, so the fade-in can start immediately.
       const computeFinalViewport = (): Viewport => {
         let minX = Infinity,
           minY = Infinity,
@@ -111,11 +102,13 @@ export function useNetworkDrillDown() {
         };
         nodes.forEach((n) => {
           if (n.parentId === frameId) {
-            // Drilled grid slot (single column, fixed pitch).
             const i = frameChildIndexById.get(n.id) ?? 0;
             extend(
-              frameAnchor.x + 20,
-              frameAnchor.y + 86 + i * 95,
+              frameAnchor.x + NETWORK_FRAME_PADDING_X,
+              frameAnchor.y +
+                NETWORK_FRAME_HEADER +
+                NETWORK_FRAME_PADDING_Y +
+                i * DRILLED_RESOURCE_SPACING,
               n.measured?.width ?? 200,
               n.measured?.height ?? 66,
             );
@@ -130,13 +123,8 @@ export function useNetworkDrillDown() {
             n.measured?.height ?? 80,
           );
         });
-        // Empty network — nothing was kept and the frame has no children, so
-        // the loop above never extended the bounds. Left as-is they'd stay
-        // Infinity and the viewport math below resolves to ±Infinity: a blank
-        // canvas stranded at an invalid transform that can't be panned (pan
-        // deltas can't move ±Infinity). Frame the camera on the hidden frame's
-        // own rect instead, so drilling in lands ON the (empty) grid and a
-        // resource added there shows up centered rather than off to the side.
+        // Empty network: the bounds stayed Infinity, which resolves to a
+        // transform that can't be panned. Frame the hidden frame's rect instead.
         if (minX === Infinity) {
           const frame = nodes.find((n) => n.id === frameId);
           extend(
@@ -171,10 +159,8 @@ export function useNetworkDrillDown() {
             return { ...n, hidden, ...(position ? { position } : {}) };
           }),
         );
-        // Fit once the drilled layout settled (measured rows → full grid) —
-        // same fit parameters as the live views, so switching live ↔ draft
-        // keeps the camera identical. null → the caller drives the camera
-        // itself (the choreography's grow-in must not be snapped mid-flight).
+        // null means the caller drives the camera itself: the choreography's
+        // grow-in must not be snapped mid-flight.
         if (fitDuration === null) return;
         setTimeout(() => {
           const fitNodes = reactFlow.getNodes().filter((n) => keep.has(n.id));
@@ -188,14 +174,12 @@ export function useNetworkDrillDown() {
         }, 200);
       };
 
-      // Drill illusion via the shared canvas transition: dive INTO the
-      // clicked frame, swap invisibly, grow the drilled world in. Skipped
-      // when the frame is already hidden (entering draft from the live
-      // drilled view builds pre-drilled).
+      // The dive is skipped when the frame is already hidden: entering draft
+      // from the live drilled view is built pre-drilled.
       const frameNode = nodes.find((n) => n.id === frameId);
       if (frameNode && !frameNode.hidden) {
-        // Start the dive next frame so the drilled view (header switch) paints
-        // first — a same-frame kickoff made them compete and dropped frames.
+        // Start the dive next frame so the header switch paints first; a
+        // same-frame kickoff competes with it and drops frames.
         if (startRafRef.current != null)
           cancelAnimationFrame(startRafRef.current);
         startRafRef.current = requestAnimationFrame(() => {
@@ -210,22 +194,15 @@ export function useNetworkDrillDown() {
       return;
     }
 
-    // A dive queued for next frame but the drill was already left — drop it.
     if (startRafRef.current != null) {
       cancelAnimationFrame(startRafRef.current);
       startRafRef.current = null;
     }
 
-    // Not drilled: reconciling repair — top-level nodes must not be hidden.
-    // Covers the exit transition AND hidden leftovers from a restored or
-    // undone canvas (hidden flags persist in snapshots, the drill state
-    // doesn't). Frame children heal through useNetworkFrameLayout instead —
-    // its overflow rows are legitimately hidden in the parent view.
-    // When the whole draft is being left there's nothing to restore — the
-    // live snapshot replaces the canvas anyway.
+    // Reconciling repair: hidden flags persist in a restored or undone canvas
+    // but the drill state doesn't. Frame children heal in useNetworkFrameLayout.
     if (!isDraft) return;
-    // Exit transition: restore the snapshotted parent positions along with
-    // the hidden flags (the drill re-laid the kept world out).
+    // The drill re-laid the kept world out, so the positions come back too.
     const savedPositions = prev ? positionsRef.current : null;
     const restoreNodes = () => {
       setNodes((prevNodes) =>
@@ -239,10 +216,8 @@ export function useNetworkDrillDown() {
     };
     if (prev) positionsRef.current = null;
 
-    // Reverse drill illusion via the shared canvas transition: the drilled
-    // world zooms OUT while fading, the parent canvas is restored invisibly
-    // with the camera close-up ON the frame's parent position (wherever it
-    // sits), then the camera flies out of it into a centered fit.
+    // Reverse drill: the parent canvas is restored invisibly with the camera
+    // close-up on the frame's parent position, then flies out into a fit.
     const savedViewport = viewportRef.current;
     viewportRef.current = null;
     if (prev && savedViewport) {
@@ -262,16 +237,14 @@ export function useNetworkDrillDown() {
       return;
     }
 
-    // While the exit choreography is in flight, leave the hidden flags to it.
     if (exitingRef.current) return;
 
-    // Fallback / reconciling repair (no transition to play).
     if (savedPositions || nodes.some((n) => n.hidden && !n.parentId)) {
       restoreNodes();
     }
     if (prev && savedViewport) {
       reactFlow.setViewport(savedViewport, { duration: 400 });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setNodes/reactFlow are handles, not replay triggers
   }, [drillDownNetworkNodeId, isDraft, nodes, edges]);
 }

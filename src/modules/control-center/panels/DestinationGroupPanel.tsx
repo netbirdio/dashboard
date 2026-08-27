@@ -1,4 +1,17 @@
+import Button from "@components/Button";
+import { Checkbox } from "@components/Checkbox";
+import { DropdownInfoText } from "@components/DropdownInfoText";
+import { notify } from "@components/Notification";
+import {
+  MemoizedScrollArea,
+  ScrollAreaViewport,
+} from "@components/ScrollArea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
+import { SmallBadge } from "@components/ui/SmallBadge";
+import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
+import { type Edge, useReactFlow } from "@xyflow/react";
+import { motion } from "framer-motion";
 import {
   DownloadIcon,
   Layers3Icon,
@@ -7,34 +20,34 @@ import {
   SearchIcon,
   TriangleAlertIcon,
 } from "lucide-react";
-import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { useSWRConfig } from "swr";
-import { type Edge, useReactFlow } from "@xyflow/react";
-import { useApiCall } from "@utils/api";
-import { notify } from "@components/Notification";
-import { useDialog } from "@/contexts/DialogProvider";
-import Button from "@components/Button";
-import {
-  MemoizedScrollArea,
-  ScrollAreaViewport,
-} from "@components/ScrollArea";
 import { Virtuoso } from "react-virtuoso";
-import { Checkbox } from "@components/Checkbox";
-import { DropdownInfoText } from "@components/DropdownInfoText";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
+import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
-import { Peer } from "@/interfaces/Peer";
 import { NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
+import { useAccount } from "@/modules/account/useAccount";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import {
+  getNodeGroup,
+  isAllGroup,
+  isGroupNode,
+  isNewGroup,
+  useDraftGroupActions,
+} from "@/modules/control-center/hooks/useDraftGroupActions";
+import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
+import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
 import {
   getGroupPeers,
   getGroupResources,
 } from "@/modules/control-center/utils/graph-builder";
-import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   getDraftResource,
   getIpPlaceholderFromRange,
@@ -42,28 +55,15 @@ import {
   pinByOrder,
   useStructuralNodes,
 } from "@/modules/control-center/utils/helpers";
-import { useAccount } from "@/modules/account/useAccount";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useDragToGroup } from "@/modules/control-center/hooks/useDragToGroup";
-import {
-  getNodeGroup,
-  isAllGroup,
-  isGroupNode,
-  useDraftGroupActions,
-} from "@/modules/control-center/hooks/useDraftGroupActions";
 
 interface DestinationGroupPanelProps {
-  // Real group id, or — for draft groups without an API id — the canvas node id.
+  // Real group id, or the canvas node id for draft groups without an API id.
   groupId: string;
   onClose: () => void;
 }
 
 export const MIN_PANEL_WIDTH = 398;
 
-// Bridges Virtuoso's scroll container into the styled ScrollArea viewport
-// (same pattern as the components panel / PeerSelector).
 export const PanelVirtuosoScroller = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -71,18 +71,12 @@ export const PanelVirtuosoScroller = React.forwardRef<
 PanelVirtuosoScroller.displayName = "PanelVirtuosoScroller";
 
 
-// Close guard: while the panel holds unassigned toggles it registers a
-// confirm function here. External close paths (the canvas pane click in
-// page.tsx) must consult it before clearing the selection — resolves true
-// when closing is OK (nothing pending, or the user chose Discard).
+// External close paths must consult this before clearing the selection.
 export const groupPanelCloseGuard: {
   current: null | (() => Promise<boolean>);
 } = { current: null };
 
-// The panel's left edge lines up with the Cancel button of the header action
-// row above it (Cancel · Review & Deploy · Live/Draft — both are right-6
-// anchored), so the width tracks that row live: it grows with the
-// change-count badge and shrinks back to the Live/Draft tabs outside draft.
+// Tracks the header action row's width so the panel's left edge lines up with it.
 export function usePanelWidth() {
   const [width, setWidth] = useState(MIN_PANEL_WIDTH);
   useEffect(() => {
@@ -98,23 +92,155 @@ export function usePanelWidth() {
   return width;
 }
 
-// Same row treatment as the components panel's PanelListItem; in draft it
-// carries a PeerGroupSelector-style membership checkbox.
+export const setEquals = (a: Set<string>, b: Set<string>) =>
+  a.size === b.size && [...a].every((id) => b.has(id));
+
+// Draft mode is gated too: an assignment queues an update-group the deploy
+// pre-flight refuses, and a draft-created group's members deploy inside its create-group.
+export const canEditGroupMembers = (
+  groups: { create: boolean; update: boolean },
+  group: Group | undefined,
+) => (isNewGroup(group) ? groups.create : groups.update);
+
+const PANEL_MARGIN = 24;
+
+export type PanelPlacement = { left: number; top: number; height: number };
+
+// Anchored to the canvas' right edge, inset to clear the header row and the toolbar.
+export function usePanelPlacement({
+  openKey,
+  panelWidth,
+  top,
+  bottom,
+  onPlaced,
+}: {
+  openKey: string;
+  panelWidth: number;
+  top: number;
+  bottom: number;
+  onPlaced?: (container: DOMRect, placement: PanelPlacement) => void;
+}) {
+  const [placement, setPlacement] = useState<PanelPlacement | null>(null);
+  const onPlacedRef = useRef(onPlaced);
+  useEffect(() => {
+    onPlacedRef.current = onPlaced;
+  });
+
+  // Reposition in place on a width change; the open effect below replays the slide-in.
+  useEffect(() => {
+    setPlacement((p) => {
+      if (!p) return p;
+      const container = document
+        .querySelector(".react-flow")
+        ?.getBoundingClientRect();
+      if (!container) return p;
+      return { ...p, left: container.width - panelWidth - PANEL_MARGIN };
+    });
+  }, [panelWidth]);
+
+  // Read via a ref so a width shift doesn't re-run the open sequence on an open panel.
+  const panelWidthRef = useRef(panelWidth);
+  useEffect(() => {
+    panelWidthRef.current = panelWidth;
+  });
+
+  // The open effect only runs on open, so resizes must re-measure here.
+  useEffect(() => {
+    const onResize = () => {
+      setPlacement((p) => {
+        if (!p) return p;
+        const container = document
+          .querySelector(".react-flow")
+          ?.getBoundingClientRect();
+        if (!container) return p;
+        return {
+          left: container.width - panelWidthRef.current - PANEL_MARGIN,
+          top,
+          height: container.height - top - bottom,
+        };
+      });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [top, bottom]);
+
+  useEffect(() => {
+    if (!openKey) {
+      setPlacement(null);
+      return;
+    }
+    // The panel width settles via ResizeObserver a frame after mount.
+    const timer = window.setTimeout(() => {
+      const container = document
+        .querySelector(".react-flow")
+        ?.getBoundingClientRect();
+      if (!container) return;
+      const next = {
+        left: container.width - panelWidthRef.current - PANEL_MARGIN,
+        top,
+        height: container.height - top - bottom,
+      };
+      setPlacement(next);
+      onPlacedRef.current?.(container, next);
+    }, 60);
+    return () => window.clearTimeout(timer);
+  }, [openKey, top, bottom]);
+
+  return placement;
+}
+
+// Esc closes unless something above (e.g. a Radix modal) already handled the key.
+export function usePanelCloseGuard(
+  openKey: string,
+  confirmDiscard: () => Promise<boolean>,
+  onClose: () => void,
+) {
+  const requestClose = async () => {
+    if (await confirmDiscard()) onClose();
+  };
+  const requestCloseRef = useRef(requestClose);
+  const confirmDiscardRef = useRef(confirmDiscard);
+  useEffect(() => {
+    requestCloseRef.current = requestClose;
+    confirmDiscardRef.current = confirmDiscard;
+  });
+
+  useEffect(() => {
+    if (!openKey) return;
+    groupPanelCloseGuard.current = () => confirmDiscardRef.current();
+    return () => {
+      groupPanelCloseGuard.current = null;
+    };
+  }, [openKey]);
+
+  useEffect(() => {
+    if (!openKey) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !e.defaultPrevented) {
+        void requestCloseRef.current();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [openKey]);
+
+  return requestClose;
+}
+
 export const MemberRow = ({
   children,
   checked,
   onToggle,
 }: React.PropsWithChildren<{
   checked?: boolean;
-  // Absent = read-only row (live mode / "All" group): no checkbox, no hover.
+  // Absent = read-only row (live mode / "All" group).
   onToggle?: () => void;
 }>) => (
   <div
     onClick={onToggle}
     className={cn(
       "flex items-center h-[52px] rounded-md px-1 transition-colors",
-      // Row hover, EXCEPT while an inline action (the "Not installed" /
-      // "No Network" chip) is hovered — the chip is its own click target.
+      // No row hover while an inline chip is hovered: it owns the click.
       onToggle &&
         "hover:bg-nb-gray-900/50 [&:has(.cc-row-action:hover)]:bg-transparent cursor-pointer",
     )}
@@ -128,9 +254,6 @@ export const MemberRow = ({
   </div>
 );
 
-// Alert control on draft rows ("Not installed" / "No Network") — the exact
-// treatment of a standalone resource's floating "No Network" button. A CTA
-// when a flow resolves the state.
 const DraftStatusChip = ({
   label,
   icon,
@@ -158,20 +281,21 @@ const DraftStatusChip = ({
   </Button>
 );
 
-// Draft peer row action: user devices open the setup stepper ("Setup
-// Device"), servers/agents the install modal ("Install").
 const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
   const { setInstallModal, setUserDeviceModal } = useDraftMode();
   const isUserDevice = draftPeer.os === "draft-user-device";
   const kind = (draftPeer.os?.replace("draft-", "") ??
     "server") as PeerPlaceholderKind;
   const nodeId = `peer-${draftPeer.id}`;
+  const setupKey = (draftPeer as Peer & { setupKey?: string }).setupKey;
 
   return (
     <DraftStatusChip
-      label={isUserDevice ? "Install or assign" : "Install"}
+      label={isUserDevice ? "Install or assign" : setupKey ? "Waiting" : "Install"}
       icon={
-        isUserDevice ? undefined : (
+        isUserDevice ? undefined : setupKey ? (
+          <Loader2 size={12} className={"animate-spin text-nb-gray-300"} />
+        ) : (
           <DownloadIcon size={12} className={"text-yellow-400"} />
         )
       }
@@ -180,6 +304,7 @@ const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
           ? setUserDeviceModal({ nodeId, name: draftPeer.name ?? "Device" })
           : setInstallModal({
               isUserDevice: false,
+              setupKey,
               placeholderKind: kind,
               nodeId,
             })
@@ -193,12 +318,11 @@ export const DestinationGroupPanel = ({
   onClose,
 }: DestinationGroupPanelProps) => {
   const { peers, networkResources, groups } = useControlCenterData();
-  // Structural subscription — the panel derives from node data only, and a
-  // context nodes subscription re-rendered it (and its member lists) on
-  // every canvas update while open.
+  // Structural subscription: a nodes subscription re-renders the panel on every canvas update.
   const nodes = useStructuralNodes();
   const { setNodes, setEdges } = useCanvasState();
   const { isDraft, setResourceNetworkPicker } = useDraftMode();
+  const { permission } = usePermissions();
   const { changes } = useDraftChangeset();
   const { removeGroupMember } = useDraftGroupActions();
   const { addMemberToGroup } = useDragToGroup();
@@ -209,12 +333,7 @@ export const DestinationGroupPanel = ({
   const reactFlow = useReactFlow();
   const account = useAccount();
 
-  // In draft the canvas node is the source of truth (it carries renames and
-  // drag-added members); the API group is the live-mode fallback. A group can
-  // exist on the canvas more than once (source node + destination copy).
-  // A framed "resource group" (resourceGroupNode) is a group too — include it
-  // so its panel resolves members, even though it's kept out of the shared
-  // isGroupNode set (which routes menus/removal for the plain group nodes).
+  // A framed resource group counts as a group here; the shared isGroupNode set excludes it.
   const isPanelGroupNode = (n: (typeof nodes)[number]) =>
     isGroupNode(n) || n.type === "resourceGroupNode";
   const groupNodes = useMemo(
@@ -224,18 +343,17 @@ export const DestinationGroupPanel = ({
           isPanelGroupNode(n) &&
           (n.id === groupId || getNodeGroup(n)?.id === groupId),
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- render-local predicate would defeat the memo
     [nodes, groupId],
   );
   const groupNode = groupNodes[0];
 
+  // In draft the canvas node is the source of truth: it carries renames and drag-added members.
   const group: Group | undefined = useMemo(() => {
     if (isDraft && groupNode) return getNodeGroup(groupNode);
     return groups?.find((g) => g.id === groupId) ?? getNodeGroup(groupNode);
   }, [isDraft, groupNode, groups, groupId]);
 
-  // Open on the Resources tab when the group leans towards resources: a framed
-  // resource group, or any group that holds more resources than peers.
   const preferResourcesTab =
     groupNode?.type === "resourceGroupNode" ||
     !!groupNode?.parentId?.startsWith("network-") ||
@@ -243,12 +361,7 @@ export const DestinationGroupPanel = ({
 
   const realGroupId = group?.id ?? "";
 
-  // Draft membership edits live on the canvas nodes AND in the changeset. The
-  // changeset is authoritative: node data (addedMembers/removedMembers Sets) is
-  // transient — a canvas rebuild or an SWR mutate of /peers|/networks/resources
-  // drops it, which would resurrect a removed member even though the changeset
-  // still records the removal. Folding the changeset in makes the displayed
-  // membership survive both. Matches PeerGroupsPanel's derivation.
+  // The changeset is authoritative: a canvas rebuild or SWR mutate drops node data.
   const addedMembers = useMemo(() => {
     const added = new Set<string>();
     groupNodes.forEach((n) => {
@@ -257,13 +370,10 @@ export const DestinationGroupPanel = ({
     });
     if (isDraft) {
       changes.forEach((c) => {
-        const matches =
+        if (
           (c.type === "create-group" && c.name === group?.name) ||
-          (c.type === "update-group" && c.groupId === realGroupId);
-        if (c.type === "create-group" && matches) {
-          c.peerIds.forEach((id) => added.add(id));
-          c.resourceIds.forEach((id) => added.add(id));
-        } else if (c.type === "update-group" && matches) {
+          (c.type === "update-group" && c.groupId === realGroupId)
+        ) {
           c.peerIds.forEach((id) => added.add(id));
           c.resourceIds.forEach((id) => added.add(id));
         }
@@ -288,8 +398,7 @@ export const DestinationGroupPanel = ({
     return removed;
   }, [groupNodes, isDraft, changes, realGroupId]);
 
-  // Draft members (placeholder peers, draft resources) aren't in the API
-  // lists — their objects ride on the group node, stored at drop time.
+  // Draft members aren't in the API lists; their objects ride on the group node.
   const draftMemberPeers = useMemo(() => {
     const byId = new Map<string, Peer>();
     groupNodes.forEach((n) => {
@@ -311,8 +420,7 @@ export const DestinationGroupPanel = ({
     return [...byId.values()];
   }, [groupNodes, addedMembers]);
 
-  // Placeholder peers still ON the canvas are assignable from the panel too
-  // (checking one absorbs its node, exactly like dropping it on the group).
+  // Canvas placeholders are assignable too: checking one absorbs its node, like a drop.
   const canvasPlaceholderPeers = useMemo(() => {
     const byId = new Map<string, { peer: Peer; nodeId: string }>();
     nodes.forEach((n) => {
@@ -369,14 +477,10 @@ export const DestinationGroupPanel = ({
     draftMemberResources,
   ]);
 
-  // ---- Membership editing ("All" membership is automatic) ----
-  // Checking/unchecking only edits a LOCAL selection (the node's count text
-  // previews it, debounced). Confirm applies the diff in one go: draft →
-  // canvas + changeset; live → a real PUT behind a "you are in live mode"
-  // confirmation.
-
   const canEditMembers =
-    !isAllGroup(group) && (isDraft ? !!groupNode : !!realGroupId);
+    !isAllGroup(group) &&
+    canEditGroupMembers(permission.groups, group) &&
+    (isDraft ? !!groupNode : !!realGroupId);
   const memberPeerIds = useMemo(
     () => new Set(groupPeers.map((p) => p.id ?? "")),
     [groupPeers],
@@ -392,10 +496,7 @@ export const DestinationGroupPanel = ({
   const [selectedResourceIds, setSelectedResourceIds] = useState<Set<string>>(
     new Set(),
   );
-  // Sync the live selection from the actual membership — on open/group
-  // switch and after a save. Keyed by CONTENT, not set identity: canvas node
-  // updates rebuild the sets every time and identity-based deps wiped the
-  // in-progress selection.
+  // Keyed by CONTENT: node updates rebuild the sets, so identity deps wiped the selection.
   const memberPeersKey = useMemo(
     () => [...memberPeerIds].sort().join(","),
     [memberPeerIds],
@@ -408,17 +509,13 @@ export const DestinationGroupPanel = ({
     setSelectedPeerIds(
       new Set(memberPeersKey ? memberPeersKey.split(",") : []),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, memberPeersKey]);
   useEffect(() => {
     setSelectedResourceIds(
       new Set(memberResourcesKey ? memberResourcesKey.split(",") : []),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, memberResourcesKey]);
 
-  const setEquals = (a: Set<string>, b: Set<string>) =>
-    a.size === b.size && [...a].every((id) => b.has(id));
   const dirty =
     !setEquals(selectedPeerIds, memberPeerIds) ||
     !setEquals(selectedResourceIds, memberResourceIds);
@@ -429,11 +526,7 @@ export const DestinationGroupPanel = ({
     else next.add(id);
     return next;
   };
-  // Toggles only edit the LOCAL selection — Save applies everything at once
-  // (draft: one coalesced changeset entry; live: one PUT). The canvas preview is
-  // driven imperatively from HERE, not a selection effect: an effect can't tell a
-  // real toggle from the still-populating-on-open transient, which flashed a
-  // stale count onto the node.
+  // Previewed from here, not an effect: an effect can't tell a toggle from the open transient.
   const togglePeer = (peer: Peer) => {
     if (!peer.id) return;
     const next = toggleId(selectedPeerIds, peer.id);
@@ -447,9 +540,7 @@ export const DestinationGroupPanel = ({
     syncGroupEdges(next);
   };
 
-  // Live count preview while toggling (debounced below) writes the pending
-  // selection sizes into every canvas instance of the group so its subtitle
-  // ("No Peers, 2 Resources") follows the checkboxes.
+  // So the group's canvas subtitle follows the checkboxes.
   const syncNodeCounts = useCallback(
     (peersCount: number, resourcesCount: number) => {
       if (!group) return;
@@ -487,9 +578,7 @@ export const DestinationGroupPanel = ({
     [group, setNodes],
   );
 
-  // Live preview of the group↔resource connections while toggling — only in the
-  // drilled view, where resources are standalone nodes (`!parentId`); a framed
-  // row attaches differently. Reverted on close unless saved.
+  // Only for standalone resource nodes (`!parentId`); a framed row attaches differently.
   const syncGroupEdges = useCallback(
     (resourceIds: Set<string>) => {
       const gid = group?.id;
@@ -532,9 +621,7 @@ export const DestinationGroupPanel = ({
     [group, setEdges, reactFlow],
   );
 
-  // Closing / switching groups with unsaved toggles reverts the previewed
-  // counts to the actual membership. The ref updates AFTER effects run, so
-  // at cleanup time it still snapshots the previous group.
+  // Unsaved toggles revert on close.
   const restoreCountsRef = useRef<{
     sync: (p: number, r: number) => void;
     peers: number;
@@ -555,10 +642,7 @@ export const DestinationGroupPanel = ({
     };
   }, [groupId]);
 
-  // Revert the previewed connections on close unless saved. The refs are updated
-  // in an effect, NOT inline during render, so that on the closing render (where
-  // `group` is already undefined) the [groupId] cleanup below still sees the
-  // leaving group's syncer + membership — effect updates run after cleanups.
+  // Updated in an effect, so the cleanup below still sees the leaving group's values.
   const savedRef = useRef(false);
   const syncGroupEdgesRef = useRef(syncGroupEdges);
   const memberResourceIdsRef = useRef(memberResourceIds);
@@ -582,10 +666,7 @@ export const DestinationGroupPanel = ({
     if (!group) return;
     if (isDraft) {
       if (!groupNode) return;
-      // The debounced preview already wrote the selection counts to the
-      // nodes — reset to the actual membership first so the add/remove
-      // increments below land on the right baseline. All adds/removes
-      // coalesce into ONE update-group changeset entry.
+      // Reset to the actual membership so the increments below land on the right baseline.
       syncNodeCounts(memberPeerIds.size, memberResourceIds.size);
       (peers ?? []).forEach((p) => {
         if (!p.id) return;
@@ -605,8 +686,7 @@ export const DestinationGroupPanel = ({
           removeGroupMember(group, { resourceId: r.id });
         }
       });
-      // Draft members only appear as rows while they ARE members — the only
-      // possible edit is unassigning them.
+      // Draft members are rows only while they are members, so the only edit is unassigning.
       draftMemberPeers.forEach((p) => {
         if (p.id && !selectedPeerIds.has(p.id)) {
           removeGroupMember(group, { peerId: p.id });
@@ -617,8 +697,7 @@ export const DestinationGroupPanel = ({
           removeGroupMember(group, { resourceId: r.id });
         }
       });
-      // Checked canvas placeholders join the group — their node is absorbed,
-      // exactly like a drop.
+      // A checked canvas placeholder's node is absorbed, exactly like a drop.
       canvasPlaceholderPeers.forEach(({ peer, nodeId }, id) => {
         if (selectedPeerIds.has(id) && !memberPeerIds.has(id)) {
           addMemberToGroup(groupNode, { peer, draggedNodeId: nodeId });
@@ -633,9 +712,7 @@ export const DestinationGroupPanel = ({
           });
         }
       });
-      // Applying closes the panel. The unmount cleanup restores the counts
-      // snapshot — point it at the just-applied selection so it doesn't
-      // revert the apply.
+      // Point the unmount snapshot at the applied selection so the cleanup doesn't revert it.
       restoreCountsRef.current = {
         sync: syncNodeCounts,
         peers: selectedPeerIds.size,
@@ -659,9 +736,7 @@ export const DestinationGroupPanel = ({
     });
     if (!choice) return;
     setSaving(true);
-    // The group PUT wants peers as id strings but resources as {id, type}
-    // objects. Sending resource id strings makes the API reject the body
-    // ("could not parse json"). Mirror the networks/groups pages.
+    // Resources must be {id, type} objects; id strings make the API reject the body.
     const request = groupRequest
       .put(
         {
@@ -675,11 +750,7 @@ export const DestinationGroupPanel = ({
         `/${group.id}`,
       )
       .then(async (g) => {
-        // Membership shows on /groups, /peers (peer.groups) and
-        // /networks/resources (resource.groups). /policies embeds group member
-        // counts too, and the views rebuild their group nodes from it — refresh
-        // all four so the panel un-dirties AND other views/draft don't show
-        // stale counts.
+        // Membership shows on all four lists; skipping one leaves stale counts elsewhere.
         await Promise.all([
           mutate("/groups"),
           mutate("/peers"),
@@ -688,9 +759,7 @@ export const DestinationGroupPanel = ({
         ]);
         return g;
       });
-    // The promise drives the toast: green on success, red with the API error
-    // on failure (useApiCall runs with ignoreError=true and rejects, so a
-    // plain notify would have shown a green "success" for a failed save).
+    // useApiCall rejects (ignoreError=true), so the toast must be promise-driven.
     notify({
       title: group.name,
       description: `${group.name} was successfully saved.`,
@@ -698,17 +767,13 @@ export const DestinationGroupPanel = ({
     });
     try {
       await request;
-      // The toggles already previewed the new membership onto the canvas, so
-      // DON'T rebuild the view (that refit + auto-arranged it on every save) —
-      // just keep the preview: mark saved so close doesn't revert the edges, and
-      // point the count-restore snapshot at the applied selection.
+      // DON'T rebuild the view: the toggles already previewed it, and a rebuild refits.
       savedRef.current = true;
       restoreCountsRef.current = {
         sync: syncNodeCounts,
         peers: selectedPeerIds.size,
         resources: selectedResourceIds.size,
       };
-      // Close the panel (draft's Assign path closes too).
       onClose();
     } catch {
       // Re-sync so the optimistic canvas counts revert to the server truth.
@@ -729,27 +794,20 @@ export const DestinationGroupPanel = ({
 
   useEffect(() => {
     setSearch("");
-    // Resource-leaning groups open on the Resources tab; everything else Peers.
     setTab(preferResourcesTab ? "resources" : "peers");
-    // autoFocus only fires on mount — refocus when switching groups too.
+    // autoFocus only fires on mount, so refocus when switching groups too.
     searchInputRef.current?.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- must reset only on group switch
   }, [groupId]);
 
   const query = search.trim().toLowerCase();
 
-  // Draft: EVERY peer/resource is listed (members first, checked) so the
-  // checkbox doubles as assign/unassign, the same pattern as PeerGroupSelector.
-  // Live: members only. The members-first order here is only a SEED. It's
-  // pinned below to the sequence captured when the panel opened.
+  // Draft lists every peer so the checkbox doubles as assign/unassign.
   const peerCandidates = useMemo(() => {
     if (!canEditMembers) return groupPeers;
     return [
-      // Draft members (placeholder peers) aren't in the API list, so they lead
-      // the member section so the row count matches the group's counter.
       ...draftMemberPeers,
       ...(peers ?? []).filter((p) => p.id && memberPeerIds.has(p.id)),
-      // Canvas placeholders not yet in the group are assignable.
       ...[...canvasPlaceholderPeers.values()]
         .map(({ peer }) => peer)
         .filter((p) => p.id && !addedMembers.has(p.id)),
@@ -786,11 +844,7 @@ export const DestinationGroupPanel = ({
     addedMembers,
   ]);
 
-  // Row order FROZEN per open: the full ordered id sequence, captured once the
-  // data is ready. Toggling, saving, and the post-save SWR mutate (which can
-  // return the peers/resources arrays in a different order) all leave the rows
-  // where they were; ids that appear after open sort to the end. Null until
-  // the data is loaded.
+  // Row order frozen per open, so toggling and the post-save mutate don't reorder rows.
   const [rowOrder, setRowOrder] = useState<{
     peers: string[];
     resources: string[];
@@ -804,7 +858,7 @@ export const DestinationGroupPanel = ({
       peers: peerCandidates.map((p) => p.id ?? "").filter(Boolean),
       resources: resourceCandidates.map((r) => r.id),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- candidate lists are snapshotted, not tracked
   }, [rowOrder, groupId, peers, networkResources]);
 
   const peerRows = useMemo(() => {
@@ -832,7 +886,6 @@ export const DestinationGroupPanel = ({
     );
   }, [resourceCandidates, rowOrder, query]);
 
-  // Footer count — total assignable entities per tab.
   const totalPeers =
     (peers ?? []).filter((p) => p.id).length +
     draftMemberPeers.length +
@@ -841,99 +894,13 @@ export const DestinationGroupPanel = ({
   const totalResources =
     (networkResources ?? []).length + draftMemberResources.length;
 
-  // ---- Placement: open NEXT TO the clicked group node, not glued to the
-  // right edge. Node on the right half → panel opens to its left (and vice
-  // versa); node low on the canvas → the vertical clamp pushes the panel up.
-  // The panel never covers the top controls row or the bottom draft toolbar,
-  // and is capped in height rather than running the full canvas.
-  const [placement, setPlacement] = useState<{
-    left: number;
-    top: number;
-    height: number;
-    // Entry-animation offset: the panel slides in FROM the node's direction
-    // (origin-aware, like the components panel rising from the toolbar).
-    dx: number;
-    dy: number;
-  } | null>(null);
-
-  // canvas edge margin
-  const MARGIN = 24;
-  // On the right side nothing sits below the header actions row, and the
-  // bottom toolbar is centered — the panel can run nearly edge to edge.
-  // TOP clears the header actions row.
-  const TOP = 75;
-  const BOTTOM = 19;
-
-  // Width changes while OPEN (the header action row grows with the
-  // change-count badge on every applied toggle) reposition in place — going
-  // through the open effect below unmounted the panel for a frame (flash)
-  // and replayed the slide-in.
-  useEffect(() => {
-    setPlacement((p) => {
-      if (!p) return p;
-      const container = document
-        .querySelector(".react-flow")
-        ?.getBoundingClientRect();
-      if (!container) return p;
-      return { ...p, left: container.width - panelWidth - MARGIN };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panelWidth]);
-
-  // panelWidth is read via a ref here so an open panel doesn't re-run the
-  // whole open sequence (placement reset + pan) when the width shifts.
-  const panelWidthRef = useRef(panelWidth);
-  panelWidthRef.current = panelWidth;
-
-  // Keep the panel fitted when the window/canvas is resized. The open effect
-  // below only runs on open, so a resize would otherwise leave the box sized
-  // for the old container (clipped or floating off the edge). Recompute
-  // left/top/height against the new container size.
-  useEffect(() => {
-    const onResize = () => {
-      setPlacement((p) => {
-        if (!p) return p;
-        const container = document
-          .querySelector(".react-flow")
-          ?.getBoundingClientRect();
-        if (!container) return p;
-        return {
-          ...p,
-          left: container.width - panelWidthRef.current - MARGIN,
-          top: TOP,
-          height: container.height - TOP - BOTTOM,
-        };
-      });
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  useEffect(() => {
-    if (!groupId) {
-      setPlacement(null);
-      return;
-    }
-    // Post-layout: the panel width settles via ResizeObserver a frame after
-    // mount, so measure after that. Switching from one group to another
-    // keeps the CURRENT placement mounted (no unmount frame, no replayed
-    // slide-in) — only the box is refreshed and the pan below runs.
-    const timer = window.setTimeout(() => {
-      const container = document
-        .querySelector(".react-flow")
-        ?.getBoundingClientRect();
-      if (!container) return;
-      const height = container.height - TOP - BOTTOM;
-      const left = container.width - panelWidthRef.current - MARGIN;
-      // Anchored to the right side, sliding in from the right (like the
-      // bottom toolbar slides up from the bottom) — but only on a fresh
-      // open; while already open just update the box in place.
-      setPlacement((p) =>
-        p ? { ...p, left, top: TOP, height } : { left, top: TOP, height, dx: 48, dy: 0 },
-      );
-
-      // If the panel covers the selected group's node, pan the canvas left
-      // just far enough that the node clears the panel (small margin).
+  // Pans the canvas left if the selected node would sit under the panel.
+  const placement = usePanelPlacement({
+    openKey: groupId,
+    panelWidth,
+    top: 75,
+    bottom: 19,
+    onPlaced: (container, { left, top, height }) => {
       const node = reactFlow
         .getNodes()
         .find(
@@ -952,19 +919,15 @@ export const DestinationGroupPanel = ({
       const nodeRight = nodeLeft + (node.measured?.width ?? 0) * zoom;
       const nodeBottom = nodeTop + (node.measured?.height ?? 0) * zoom;
       const overlaps =
-        nodeRight > left && nodeBottom > TOP && nodeTop < TOP + height;
+        nodeRight > left && nodeBottom > top && nodeTop < top + height;
       if (!overlaps) return;
       const delta = nodeRight - left + 64;
       const vp = reactFlow.getViewport();
       void reactFlow.setViewport({ ...vp, x: vp.x - delta }, { duration: 300 });
-    }, 60);
-    return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]);
+    },
+  });
 
-  // Implicit closes (Esc, the ESC keycap, canvas pane clicks) confirm first
-  // when there are unassigned toggles; the explicit Cancel button discards
-  // without asking. Returns whether closing may proceed.
+  // Implicit closes (Esc, pane clicks) confirm first; the Cancel button just discards.
   const confirmDiscard = async () => {
     if (!dirty || !canEditMembers) return true;
     return !!(await confirm({
@@ -980,55 +943,20 @@ export const DestinationGroupPanel = ({
       dismissOnOutsideClick: true,
     }));
   };
-  const requestClose = async () => {
-    if (await confirmDiscard()) onClose();
-  };
-  const requestCloseRef = useRef(requestClose);
-  requestCloseRef.current = requestClose;
+  const requestClose = usePanelCloseGuard(groupId, confirmDiscard, onClose);
 
-  // External close paths (pane click in page.tsx) consult the same dialog.
-  const confirmDiscardRef = useRef(confirmDiscard);
-  confirmDiscardRef.current = confirmDiscard;
-  useEffect(() => {
-    if (!groupId) return;
-    groupPanelCloseGuard.current = () => confirmDiscardRef.current();
-    return () => {
-      groupPanelCloseGuard.current = null;
-    };
-  }, [groupId]);
-
-  // Esc closes the panel (unless something above us — e.g. a Radix modal —
-  // already handled it).
-  useEffect(() => {
-    if (!groupId) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !e.defaultPrevented) {
-        void requestCloseRef.current();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [groupId]);
-
-  // Singleton: always mounted so the (large) peer/resource lists aren't
-  // rebuilt on every open — nothing renders while no group is selected or
-  // until the spot next to the node is known; the entry animation then
-  // plays from the node's direction.
+  // Always mounted so the large member lists aren't rebuilt on every open.
   if (!groupId || !placement) return null;
 
   return (
-    // NO key: switching groups swaps the data inside the SAME panel element
-    // (no exit/enter animation, no subtree rebuild) — the entry animation
-    // only plays when the panel opens from closed (mounts from null).
+    // NO key: switching groups must not replay the entry animation.
     <motion.div
       id={"cc-group-panel"}
-      initial={{ opacity: 0, x: placement.dx, y: placement.dy }}
+      initial={{ opacity: 0, x: 48, y: 0 }}
       animate={{ opacity: 1, x: 0, y: 0 }}
-      // Same spring as the bottom toolbar sliding up from the bottom.
       transition={{ type: "spring", stiffness: 400, damping: 32 }}
       className={cn(
         "absolute z-20 flex flex-col",
-        // Same surface as the draft components panel.
         "rounded-lg border border-nb-gray-910 bg-nb-gray-935 shadow-xl",
       )}
       style={{
@@ -1042,14 +970,10 @@ export const DestinationGroupPanel = ({
         value={tab}
         onValueChange={(v) => {
           setTab(v);
-          // Same as the PeerGroupSelector tabs: switching puts the cursor
-          // straight back into the search.
           searchInputRef.current?.focus();
         }}
         className={"flex-1 min-h-0 flex flex-col"}
       >
-        {/* Search on top — same look as the PeerGroupSelector dropdown
-            search, with the ESC keycap top right (closes the panel). */}
         <div className={"relative shrink-0 flex items-center pr-4 pt-1"}>
           <input
             className={cn(
@@ -1067,15 +991,13 @@ export const DestinationGroupPanel = ({
                 : "Search resource..."
             }
           />
-          {/* top-1 mirrors the row's pt-1 so the icon centers on the INPUT,
-              not the padded row. */}
+          {/* top-1 mirrors the row's pt-1 so the icon centers on the input. */}
           <div
             className={"absolute left-0 top-1 bottom-0 flex items-center pl-5"}
           >
             <SearchIcon size={14} />
           </div>
-          {/* ESC badge instead of an X — an X next to the search reads as
-              "clear the search"; this closes the whole panel. */}
+          {/* ESC badge, not an X: an X here would read as "clear the search". */}
           <button
             onClick={() => void requestClose()}
             className={cn(
@@ -1117,13 +1039,10 @@ export const DestinationGroupPanel = ({
         </div>
 
         <TabsContent value={"peers"} className={"flex-1 min-h-0 m-0 p-0"}>
-          {/* Virtualized (react-virtuoso) — big accounts render only the
-              visible slice instead of every peer row. */}
           {peerRows.length > 0 ? (
             <MemoizedScrollArea withoutViewport={true} className={"h-full"}>
               <Virtuoso
-                // Remount per group: Virtuoso keeps its scroll offset across
-                // data swaps — switching groups would land mid-list.
+                // Remount per group: Virtuoso keeps its scroll offset across data swaps.
                 key={`${groupId}-peers`}
                 data={peerRows}
                 overscan={300}
@@ -1138,8 +1057,6 @@ export const DestinationGroupPanel = ({
                       }
                     >
                       <DeviceCard
-                        // Draft peers show the same dimmed "assigned on
-                        // install" IP placeholder as their canvas card.
                         device={
                           peer.id?.startsWith("draft-")
                             ? {
@@ -1153,7 +1070,6 @@ export const DestinationGroupPanel = ({
                         size="small"
                         className="flex-1"
                         nameMaxWidth="260px"
-                        // Draft peers wear the same NEW badge as on canvas.
                         badge={
                           peer.id?.startsWith("draft-") ? (
                             <SmallBadge />
@@ -1200,8 +1116,6 @@ export const DestinationGroupPanel = ({
                       }
                     >
                       <DeviceCard
-                        // Draft resources without an address show the same
-                        // dimmed placeholder as their canvas card.
                         resource={
                           resource.id?.startsWith("new-") && !resource.address
                             ? { ...resource, address: "IP, CIDR or Domain" }
@@ -1248,9 +1162,6 @@ export const DestinationGroupPanel = ({
         </TabsContent>
       </Tabs>
 
-      {/* Fixed footer — assigned count for the active tab on the left, Save
-          applies the whole selection at once (draft: one changeset entry;
-          live: one PUT behind the live-mode confirmation). */}
       {canEditMembers && (
         <div
           className={
@@ -1278,7 +1189,7 @@ export const DestinationGroupPanel = ({
               disabled={!dirty || saving}
               onClick={() => void saveMembership()}
             >
-              {/* Spinner while saving, but keep the label's width (no jump). */}
+              {/* Keep the label's width while saving so nothing jumps. */}
               <span className={cn(saving && "invisible")}>
                 {isDraft ? "Assign" : "Save"}
               </span>

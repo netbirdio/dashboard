@@ -6,8 +6,8 @@ import { AnnouncementBanner } from "@components/ui/AnnouncementBanner";
 import HelpAndSupportButton from "@components/ui/HelpAndSupportButton";
 import UserDropdown from "@components/ui/UserDropdown";
 import { cn } from "@utils/helpers";
+import { useGuardedRouter } from "@utils/navigation-guard";
 import { MenuIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import React from "react";
 import { DistributorTransferAccountModal } from "@/cloud/distributor/DistributorTransferAccountModal";
 import { MSPTenantsSwitcher } from "@/cloud/msp/MSPTenantsSwitcher";
@@ -21,7 +21,7 @@ import AssistantButton from "@/modules/assistant/AssistantButton";
 export const headerHeight = 65;
 
 export default function NavbarWithDropdown() {
-  const router = useRouter();
+  const router = useGuardedRouter();
   const { toggleMobileNav } = useApplicationContext();
   const { bannerHeight } = useAnnouncement();
   const { isRestricted } = usePermissions();
