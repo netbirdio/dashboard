@@ -541,9 +541,13 @@ export default function PeersTable({
               <ButtonGroup.Button
                 className={"h-[42px]"}
                 variant={kind === "users" ? "tertiary" : "secondary"}
-                onClick={() =>
-                  onKindChange?.(kind === "users" ? undefined : "users")
-                }
+                onClick={() => {
+                  // Reset to the first page: the new subset may have fewer
+                  // pages than the current index, which would show an empty
+                  // table (page index doesn't auto-reset on data change).
+                  table.setPageIndex(0);
+                  onKindChange?.(kind === "users" ? undefined : "users");
+                }}
               >
                 User Devices
               </ButtonGroup.Button>
@@ -552,9 +556,10 @@ export default function PeersTable({
                 // button's right border into a doubled divider.
                 className={"h-[42px] !border-l-0"}
                 variant={kind === "servers" ? "tertiary" : "secondary"}
-                onClick={() =>
-                  onKindChange?.(kind === "servers" ? undefined : "servers")
-                }
+                onClick={() => {
+                  table.setPageIndex(0);
+                  onKindChange?.(kind === "servers" ? undefined : "servers");
+                }}
               >
                 Servers
               </ButtonGroup.Button>

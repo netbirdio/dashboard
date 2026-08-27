@@ -18,9 +18,10 @@ import AnalyticsProvider, {
 } from "@/contexts/AnalyticsProvider";
 import DialogProvider from "@/contexts/DialogProvider";
 import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
-import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
 import InstanceSetupProvider from "@/contexts/InstanceSetupProvider";
 import { NavigationEvents } from "@/contexts/NavigationEvents";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
+import { useSignupSource } from "@/hooks/useSignupSource";
 
 const inter = localFont({
   src: "../assets/fonts/Inter.ttf",
@@ -39,14 +40,15 @@ export default function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   useAWSMarketplace();
+  useSignupSource();
 
   return (
-    <html lang="en">
+    <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <head>
         {/* Set the theme class before first paint to avoid a flash.
             Mirrors ThemeProvider (storageKey "netbird-theme", default "dark",
-            system-aware) — required because GlobalThemeProvider is ssr:false,
-            so the provider only applies the class after hydration. */}
+            system-aware) — required because the provider only applies the
+            class in an effect, after hydration. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('netbird-theme')||'dark';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList[d?'add':'remove']('dark');}catch(e){document.documentElement.classList.add('dark');}})();`,
@@ -58,7 +60,7 @@ export default function AppLayout({
         <Suspense fallback={<FullScreenLoading />}>
           <AnalyticsProvider>
             <DialogProvider>
-              <GlobalThemeProvider>
+              <ThemeProvider>
                 <ErrorBoundaryProvider>
                   <InstanceSetupProvider>
                     <OIDCProvider>
@@ -68,7 +70,7 @@ export default function AppLayout({
                     </OIDCProvider>
                   </InstanceSetupProvider>
                 </ErrorBoundaryProvider>
-              </GlobalThemeProvider>
+              </ThemeProvider>
             </DialogProvider>
             <Toaster
               position="top-center"

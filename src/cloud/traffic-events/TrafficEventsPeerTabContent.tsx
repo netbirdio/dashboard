@@ -31,10 +31,7 @@ import {
 } from "@/cloud/traffic-events/interfaces/TrafficEvent";
 import { TrafficEventsDetailRow } from "@/cloud/traffic-events/table/TrafficEventsDetailRow";
 import { TrafficEventsInboundOutboundFilter } from "@/cloud/traffic-events/TrafficEventsInboundOutboundFilter";
-import {
-  TrafficEventsTableColumns,
-  TrafficEventsTableProps,
-} from "@/cloud/traffic-events/TrafficEventsTable";
+import { TrafficEventsTableColumns } from "@/cloud/traffic-events/TrafficEventsTable";
 import { usePeer } from "@/contexts/PeerProvider";
 import { Pagination } from "@/interfaces/Pagination";
 import { useAccount } from "@/modules/account/useAccount";
@@ -284,7 +281,11 @@ const TrafficEventsPeerDetailTable = ({
   defaultDirection,
   defaultDateRange,
   totalEvents,
-}: TrafficEventsTableProps & {
+}: {
+  events?: TrafficEvent[];
+  isSettingEnabled: boolean;
+  isLoading: boolean;
+  headingTarget?: HTMLHeadingElement | null;
   trafficType: TrafficEventDirection;
   setTrafficType: (value: TrafficEventDirection) => void;
   pagination?: {

@@ -39,7 +39,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: netbirdio/IronRDP
-          latest: true
+          tag: v0.0.2
           fileName: "*.ts"
           out-file-path: 'public/ironrdp-pkg'
 
@@ -48,7 +48,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: netbirdio/IronRDP
-          latest: true
+          tag: v0.0.2
           fileName: "*.js"
           out-file-path: 'public/ironrdp-pkg'
 
@@ -57,7 +57,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: netbirdio/IronRDP
-          latest: true
+          tag: v0.0.2
           fileName: "ironrdp_web_bg.wasm"
           out-file-path: 'public/ironrdp-pkg'
 
@@ -99,12 +99,14 @@ jobs:
             type=sha
 
       - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.NB_DOCKER_USER }}
           password: ${{ secrets.NB_DOCKER_TOKEN }}
 
       - name: Log in to the GitHub Container registry
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -116,11 +118,12 @@ jobs:
         with:
           context: .
           file: docker/Dockerfile
-          push: true
+          push: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
           platforms: linux/amd64,linux/arm64,linux/arm
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - run: |
+      - if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: |
           echo '### Pushed tags' >> $GITHUB_STEP_SUMMARY
           echo '${{ steps.meta.outputs.tags }}' >> $GITHUB_STEP_SUMMARY

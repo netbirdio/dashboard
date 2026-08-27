@@ -2,6 +2,7 @@
 
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink from "@components/InlineLink";
@@ -18,33 +19,38 @@ import Paragraph from "@components/Paragraph";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import useFetchApi from "@utils/api";
+import { cn } from "@utils/helpers";
 import {
   AlertCircleIcon,
   ArrowRightLeft,
   Boxes,
+  ChevronRightIcon,
   ExternalLinkIcon,
   KeyRound,
+  ListIcon,
   MinusCircleIcon,
   PlusCircle,
   PlusIcon,
+  RefreshCwIcon,
+  ShieldOffIcon,
   Sparkles,
   UploadIcon,
 } from "lucide-react";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import { useDialog } from "@/contexts/DialogProvider";
 import {
   ReverseProxyDomain,
   ReverseProxyDomainType,
 } from "@/interfaces/ReverseProxy";
+import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   AIProvider,
   AIProviderId,
   ProviderModel,
 } from "@/modules/agent-network/data/mockData";
-import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
-import {
-  useAIProviders,
-} from "@/modules/agent-network/AIProvidersProvider";
+import { useDiscoveredModels } from "@/modules/agent-network/useDiscoveredModels";
 import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
 
 // EXTRA_HEADER_UI owns the dashboard copy for catalog-declared extra
@@ -109,6 +115,10 @@ function upstreamUrlPlaceholder(providerId: AIProviderId): string {
       return "https://your-litellm-host";
     case "portkey":
       return "https://api.portkey.ai";
+    case "vllm":
+      return "https://your-vllm-host:8000";
+    case "kimi_api":
+      return "https://api.moonshot.ai";
     case "custom":
       return "https://your-llm-host";
     default:
@@ -130,6 +140,8 @@ function upstreamUrlHelpText(providerId: AIProviderId): string {
       return "Vercel AI Gateway uses a fixed endpoint; only the API key varies by operator. Apps choose the upstream provider with the model prefix, e.g. openai/gpt-5.4 or anthropic/claude-opus-4.6.";
     case "openrouter":
       return "OpenRouter uses a fixed endpoint, openrouter.ai/api/v1; apps choose the upstream provider via the model prefix, e.g. anthropic/claude-* or openai/gpt-*.";
+    case "vllm":
+      return "Your local vLLM server's OpenAI-compatible base URL.";
     default:
       return "Where NetBird forwards the traffic.";
   }
@@ -141,23 +153,53 @@ type Props = {
   provider?: AIProvider;
 };
 
+// ModelRowEditor owns row-local UI state (custom/catalog mode, expanded cache
+// disclosure, in-progress price text). Keying the row list by array index would
+// let that state stick to a position rather than a row, so removing or
+// reordering a row would leak the removed row's state into its neighbour. Each
+// row carries a stable client-only key instead. _key is never sent to the API —
+// toAPIModels whitelists the wire fields.
+type EditableModel = ProviderModel & { _key: string };
+
+let modelKeySeq = 0;
+// MASKED_API_KEY is what the edit form shows in place of a stored credential.
+// The real key never reaches the browser, so anything equal to this is a
+// placeholder rather than something that can be sent to a vendor.
+const MASKED_API_KEY = "••••••••";
+
+const withModelKey = (m: ProviderModel): EditableModel => ({
+  ...m,
+  _key: `model-${modelKeySeq++}`,
+});
+
+// hasNoPrice reports a row that would meter every request against it as free.
+// Both rates, not either: a model priced on input alone is a deliberate
+// configuration, while zero on both is the shape an unpriced model arrives in.
+const hasNoPrice = (m: ProviderModel) => !m.inputPer1k && !m.outputPer1k;
+
+
 export default function AIProviderModal({
   open,
   onOpenChange,
   provider,
 }: Readonly<Props>) {
-  const { addProvider, updateProvider, settings } = useAIProviders();
+  const {
+    addProvider,
+    updateProvider,
+    settings,
+    bootstrapAgentNetworkSettings,
+  } = useAIProviders();
   const { data: domains, isLoading: domainsLoading } = useFetchApi<
     ReverseProxyDomain[]
   >("/reverse-proxies/domains");
   const { catalog: catalogList, getById } = useProviderCatalog();
+  const { confirm } = useDialog();
 
   const isEdit = !!provider;
-  // Cluster is no longer a per-provider concern: the backend pins it on
-  // the account-level Settings row, seeded by the first provider create.
-  // We auto-pick from the live /domains response and ship it as
-  // bootstrap_cluster on the create payload — the backend ignores it on
-  // subsequent creates and updates.
+  // The endpoint lives on the account-level Settings row, bootstrapped once
+  // via an explicit POST. We auto-pick a proxy cluster from the live /domains
+  // response and, when the account isn't bootstrapped yet, POST it as the
+  // settings proxy_address right before the first provider create.
   const settingsBootstrapped = !!settings;
 
   const [tab, setTab] = useState<string>("provider");
@@ -168,9 +210,12 @@ export default function AIProviderModal({
   const [upstreamUrl, setUpstreamUrl] = useState<string>(
     provider?.upstreamUrl ?? "",
   );
-  const [apiKey, setApiKey] = useState(isEdit ? "••••••••" : "");
+  const [apiKey, setApiKey] = useState(isEdit ? MASKED_API_KEY : "");
   const [bootstrapCluster, setBootstrapCluster] = useState<string>("");
-  const [models, setModels] = useState<ProviderModel[]>(provider?.models ?? []);
+  const [models, setModels] = useState<EditableModel[]>(() =>
+    (provider?.models ?? []).map(withModelKey),
+  );
+  const discovered = useDiscoveredModels();
 
   // Vertex AI authenticates with a service-account JSON key, not an API key.
   // We upload the file and store it base64-encoded in apiKey (the server
@@ -208,8 +253,17 @@ export default function AIProviderModal({
   const [identityHeaderGroups, setIdentityHeaderGroups] = useState<string>(
     provider?.identityHeaderGroups ?? "",
   );
+  const [skipTlsVerification, setSkipTlsVerification] = useState<boolean>(
+    provider?.skipTlsVerification ?? false,
+  );
+  const [metadataDisabled, setMetadataDisabled] = useState<boolean>(
+    provider?.metadataDisabled ?? false,
+  );
 
   const catalog = getById(providerId);
+  // Custom-kind providers (the generic "Custom" entry and named self-hosted
+  // ones like vLLM) share the self-hosted extras, e.g. Skip TLS verification.
+  const isCustomKind = catalog?.kind === "custom";
   const customizableHeaderPair =
     catalog?.identity_injection?.header_pair?.customizable === true;
   const customizableJsonMetadata =
@@ -250,7 +304,8 @@ export default function AIProviderModal({
     providerId === "bifrost" ||
     providerId === "cloudflare_ai_gateway" ||
     providerId === "vercel_ai_gateway" ||
-    providerId === "openrouter";
+    providerId === "openrouter" ||
+    providerId === "bedrock_api";
 
   // If the user flips provider type while viewing the Mappings tab and
   // the new type doesn't show mappings, snap back to the Provider tab
@@ -273,7 +328,7 @@ export default function AIProviderModal({
 
   // Auto-pick the first validated cluster on first render once the
   // /domains response lands. Only matters for the first-create flow —
-  // once settings is bootstrapped the bootstrap hint is ignored.
+  // once settings is bootstrapped no further bootstrap happens.
   React.useEffect(() => {
     if (settingsBootstrapped) return;
     if (bootstrapCluster) return;
@@ -321,17 +376,21 @@ export default function AIProviderModal({
       setProviderId(provider.providerId);
       setName(provider.name);
       setUpstreamUrl(provider.upstreamUrl);
-      setApiKey("••••••••");
+      setApiKey(MASKED_API_KEY);
       setBootstrapCluster("");
-      setModels(provider.models);
+      setModels(provider.models.map(withModelKey));
       setExtraValues(provider.extraValues ?? {});
       setIdentityHeaderUserId(provider.identityHeaderUserId ?? "");
       setIdentityHeaderGroups(provider.identityHeaderGroups ?? "");
+      setSkipTlsVerification(provider.skipTlsVerification ?? false);
+      setMetadataDisabled(provider.metadataDisabled ?? false);
     } else {
       const fallback = getById("openai_api");
       setProviderId("openai_api");
       setName(fallback ? fallback.name : "OpenAI API");
-      setUpstreamUrl(fallback?.default_host ? `https://${fallback.default_host}` : "");
+      setUpstreamUrl(
+        fallback?.default_host ? `https://${fallback.default_host}` : "",
+      );
       setApiKey("");
       setBootstrapCluster(
         settingsBootstrapped ? "" : validatedClusters[0]?.domain ?? "",
@@ -340,6 +399,8 @@ export default function AIProviderModal({
       setExtraValues({});
       setIdentityHeaderUserId("");
       setIdentityHeaderGroups("");
+      setSkipTlsVerification(false);
+      setMetadataDisabled(false);
     }
   };
 
@@ -353,8 +414,8 @@ export default function AIProviderModal({
     name.trim().length > 0 &&
     /^https?:\/\/[^\s]+$/i.test(upstreamUrl.trim()) &&
     apiKey.trim().length >= 4 &&
-    // First-create requires a cluster pick; once settings is bootstrapped
-    // the bootstrap hint is ignored so we don't need to gate on it.
+    // First-create bootstraps the settings row and needs a cluster pick;
+    // once settings is bootstrapped no cluster is involved.
     (settingsBootstrapped || bootstrapCluster.trim().length > 0);
 
   // Restrict extraValues to keys the current catalog entry declares.
@@ -371,6 +432,42 @@ export default function AIProviderModal({
 
   const handleSubmit = async () => {
     if (!catalog) return;
+    // Drop rows the operator never filled in (an added-but-empty custom
+    // row, or the empty fallback row when the catalog is exhausted) —
+    // the API rejects models without an id, which would fail the whole
+    // save over a leftover blank line. Duplicate ids are collapsed to the
+    // first row too: the catalog dropdown can't offer an id twice, but two
+    // custom rows can be typed with the same id, and shipping both would
+    // send an ambiguous price for the model.
+    const seenModelIds = new Set<string>();
+    const submittedModels = models
+      .map((m) => ({ ...m, id: m.id.trim() }))
+      .filter((m) => {
+        if (m.id === "" || seenModelIds.has(m.id)) return false;
+        seenModelIds.add(m.id);
+        return true;
+      });
+
+    // Saving an unpriced model is silent and irreversible in effect: every
+    // request against it records $0, and the usage that was already spent
+    // cannot be re-priced afterwards. The inline warning is easy to scroll
+    // past on a long vendor list, so confirm at the point of no return.
+    const unpriced = submittedModels.filter(hasNoPrice);
+    if (unpriced.length > 0) {
+      const proceed = await confirm({
+        title:
+          unpriced.length === 1
+            ? "Save with 1 unpriced model?"
+            : `Save with ${unpriced.length} unpriced models?`,
+        description:
+          "Models without rates are tracked at $0 and don’t count toward " +
+          "budget limits. Set rates now or later.",
+        confirmText: "Save anyway",
+        cancelText: "Set rates first",
+        type: "warning",
+      });
+      if (!proceed) return;
+    }
     // Identity overrides are only forwarded when the catalog entry
     // flags either shape (HeaderPair or JSONMetadata) as customizable.
     // Sending them on a non-customizable provider would be a no-op
@@ -387,38 +484,50 @@ export default function AIProviderModal({
         providerId,
         name,
         upstreamUrl,
-        models,
+        models: submittedModels,
         extraValues: sanitizedExtraValues,
         ...identityOverrides,
+        skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+        metadataDisabled,
         // Only forward the API key when the user actually rotated it
-        ...(apiKey && apiKey !== "••••••••" ? { apiKey } : {}),
+        ...(apiKey && apiKey.trim() !== MASKED_API_KEY ? { apiKey } : {}),
       });
       handleClose();
       return;
+    }
+    // First create: bootstrap the account's endpoint before the provider
+    // exists, as an explicit settings POST. A failure keeps the wizard open
+    // (the provider isn't created either) so the operator sees the error and
+    // can retry — this used to be a silent backend side effect.
+    if (!settingsBootstrapped) {
+      const bootstrapped = await bootstrapAgentNetworkSettings(
+        bootstrapCluster.trim(),
+      );
+      if (!bootstrapped) return;
     }
     await addProvider({
       providerId,
       name,
       upstreamUrl,
-      bootstrapCluster: settingsBootstrapped ? undefined : bootstrapCluster,
       apiKey,
       extraValues: sanitizedExtraValues,
       ...identityOverrides,
-      models,
+      skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+      metadataDisabled,
+      models: submittedModels,
       enabled: true,
     });
     handleClose();
   };
 
-  // providerOptions are sorted into three groups, gateways first, so
-  // the catalog Select makes the routing-layer entries (LiteLLM,
-  // Portkey) prominent. SelectDropdown renders section headers
-  // automatically when options carry a `group` value; the section
-  // order tracks first-occurrence in the array.
+  // providerOptions are sorted into three groups, first-party AI Providers
+  // first, then AI Gateways, then the self-hosted / custom catch-all.
+  // SelectDropdown renders section headers automatically when options carry a
+  // `group` value; the section order tracks first-occurrence in the array.
   const providerOptions = useMemo(() => {
     const groupRank: Record<string, number> = {
-      gateway: 0,
-      provider: 1,
+      provider: 0,
+      gateway: 1,
       custom: 2,
     };
     const groupLabel: Record<string, string> = {
@@ -454,27 +563,147 @@ export default function AIProviderModal({
   // Catalog options the user hasn't already added; falls back to a
   // generic empty row when the catalog is exhausted or there is no
   // catalog (custom providers).
-  const catalogModelOptions = useMemo(
-    () => catalog?.models ?? [],
-    [catalog],
+  // Merged: the catalog first, then anything the vendor reported that the
+  // catalog does not already carry. Both the per-row picker and "Add More"
+  // read this one list, so merging here is all the wiring either needs.
+  //
+  // A catalog entry wins on collision. Both sides price from the same table,
+  // so their rates agree; the catalog's label is the curated one.
+  const catalogModelOptions = useMemo<CatalogModelOption[]>(() => {
+    const base = catalog?.models ?? [];
+    if (discovered.models.length === 0) return base;
+
+    const known = new Set(base.map((m) => m.id));
+    const extra = discovered.models
+      .filter((m) => !known.has(m.id))
+      .map<CatalogModelOption>((m) => ({
+        id: m.id,
+        label: m.label || m.id,
+        // The rates the response carries. Bedrock is why this matters: its
+        // listing returns geography-prefixed ids, which never match a catalog
+        // entry by string, so every one of them arrives through this branch.
+        // The backend prices them off the normalized id and reports the rate
+        // for each — dropping it here registered a whole account's models at
+        // zero while the API was saying what they cost.
+        input_per_1k: m.input_per_1k,
+        output_per_1k: m.output_per_1k,
+        cached_input_per_1k: m.cached_input_per_1k,
+        cache_read_per_1k: m.cache_read_per_1k,
+        cache_creation_per_1k: m.cache_creation_per_1k,
+        pricing_known: m.pricing_known,
+      }));
+    return [...base, ...extra];
+  }, [catalog, discovered.models]);
+
+  // Editing a saved provider shows a masked api key, never the real one, so
+  // discovery reuses the stored credential by record id instead. A new
+  // provider has to supply the key the operator is typing.
+  //
+  // That reuse is only right while the form still describes the record the
+  // credential belongs to. The API resolves a provider_id request entirely
+  // from the stored row — vendor, upstream and key — so switching the vendor
+  // dropdown and then asking by record id answers with the OLD vendor's models
+  // and offers them for the new one. A replacement key typed over the mask is
+  // the same mistake in the other direction: the operator wants that key
+  // tested, not the one already saved.
+  //
+  // Changing the upstream URL invalidates the saved path: discovery sends
+  // provider_id and the API resolves the URL from the stored row, so a changed
+  // URL would silently test the old endpoint. Require a freshly entered key
+  // when the URL differs; canDiscoverModels will block discovery until the
+  // operator provides one.
+  const useSavedCredential =
+    isEdit &&
+    !!provider?.id &&
+    providerId === provider.providerId &&
+    upstreamUrl === provider.upstreamUrl &&
+    apiKey.trim() === MASKED_API_KEY;
+
+  const canDiscoverModels = useMemo(() => {
+    if (useSavedCredential) return true;
+    return (
+      upstreamUrl.trim() !== "" &&
+      apiKey.trim() !== "" &&
+      // Compared trimmed on both sides: an untrimmed compare lets a padded
+      // mask through, and the request then sends the mask as the credential.
+      apiKey.trim() !== MASKED_API_KEY
+    );
+  }, [useSavedCredential, upstreamUrl, apiKey]);
+
+  const loadModelsFromProvider = async () => {
+    const found = await discovered.discover(
+      useSavedCredential && provider?.id
+        ? { catalog_provider_id: providerId, provider_id: provider.id }
+        : {
+            catalog_provider_id: providerId,
+            upstream_url: upstreamUrl.trim(),
+            api_key: apiKey.trim(),
+          },
+    );
+  };
+
+  // A discovery result describes one provider, endpoint and credential. Once
+  // any of those changes on screen, the previous answer is about a
+  // configuration that is no longer being edited, so it is dropped rather than
+  // left populating the model picker — whose ids are what save() registers.
+  // reset also invalidates any request still in flight.
+  const resetDiscovered = discovered.reset;
+  useEffect(() => {
+    resetDiscovered();
+  }, [resetDiscovered, providerId, upstreamUrl, apiKey, open]);
+
+  // Rows carrying no price at all. Saving one records every request against
+  // that model as free, so the row is outlined and a single line says so —
+  // derived from the rates actually on the form rather than from the discovery
+  // response, so the warning clears the moment the operator types a rate, and
+  // covers a hand-added row just as well as a discovered one.
+  const unpricedModelIds = useMemo(
+    () =>
+      new Set(
+        models.filter((m) => m.id !== "" && hasNoPrice(m)).map((m) => m.id),
+      ),
+    [models],
   );
-  const usedModelIds = useMemo(() => new Set(models.map((m) => m.id)), [models]);
+  const usedModelIds = useMemo(
+    () => new Set(models.map((m) => m.id)),
+    [models],
+  );
   const addModel = () => {
     const next = catalogModelOptions.find((m) => !usedModelIds.has(m.id));
     if (next) {
       setModels((prev) => [
         ...prev,
-        {
+        withModelKey({
           id: next.id,
           inputPer1k: next.input_per_1k,
           outputPer1k: next.output_per_1k,
-        },
+          cachedInputPer1k: next.cached_input_per_1k,
+          cacheReadPer1k: next.cache_read_per_1k,
+          cacheCreationPer1k: next.cache_creation_per_1k,
+        }),
       ]);
       return;
     }
     // No catalog match left — append an empty row the operator can fill.
-    setModels((prev) => [...prev, { id: "", inputPer1k: 0, outputPer1k: 0 }]);
+    setModels((prev) => [
+      ...prev,
+      withModelKey({ id: "", inputPer1k: 0, outputPer1k: 0 }),
+    ]);
   };
+
+  // Which cache-rate fields apply to this provider's models, derived
+  // from the catalog's pricing surfaces: "openai" bills cached prompt
+  // tokens as a discounted SUBSET of input (one rate), "anthropic" /
+  // "bedrock" bill two ADDITIVE buckets (cache read + cache write).
+  // Gateways/custom entries (and older backends) declare no surfaces —
+  // NetBird can't know the upstream shape, so every field is offered.
+  const pricingSurfaces = catalog?.pricing_surfaces ?? [];
+  const showCachedInputRate =
+    pricingSurfaces.length === 0 || pricingSurfaces.includes("openai");
+  const showCacheBucketRates =
+    pricingSurfaces.length === 0 ||
+    pricingSurfaces.includes("anthropic") ||
+    pricingSurfaces.includes("bedrock");
 
   return (
     <Modal open={open} onOpenChange={(o) => (o ? null : handleClose())}>
@@ -496,10 +725,7 @@ export default function AIProviderModal({
               <Sparkles size={14} />
               Provider
             </TabsTrigger>
-            <TabsTrigger
-              value={"models"}
-              disabled={!canContinueFromProvider}
-            >
+            <TabsTrigger value={"models"} disabled={!canContinueFromProvider}>
               <Boxes size={14} />
               Models
             </TabsTrigger>
@@ -529,15 +755,16 @@ export default function AIProviderModal({
                   No active proxy clusters are available. Connect at least one
                   proxy under
                   <InlineLink href={"/reverse-proxy/services"}>
-                    {" "}Reverse Proxy
-                  </InlineLink>
-                  {" "}before adding a provider.
+                    {" "}
+                    Reverse Proxy
+                  </InlineLink>{" "}
+                  before adding a provider.
                 </Callout>
               )}
 
               <FormRow
                 label={"Provider"}
-                helpText={"API provider to expose through NetBird."}
+                helpText={"AI provider and upstream URL to expose through NetBird."}
               >
                 <SelectDropdown
                   value={providerId}
@@ -592,17 +819,48 @@ export default function AIProviderModal({
                   placeholder={"Select provider..."}
                 />
               </FormRow>
+              <Input
+                value={upstreamUrl}
+                onChange={(e) => setUpstreamUrl(e.target.value)}
+                placeholder={upstreamUrlPlaceholder(providerId)}
+              />
 
-              <FormRow
-                label={"Upstream URL"}
-                helpText={upstreamUrlHelpText(providerId)}
-              >
-                <Input
-                  value={upstreamUrl}
-                  onChange={(e) => setUpstreamUrl(e.target.value)}
-                  placeholder={upstreamUrlPlaceholder(providerId)}
+              {isCustomKind && (
+                <FancyToggleSwitch
+                  value={skipTlsVerification}
+                  onChange={setSkipTlsVerification}
+                  label={
+                    <>
+                      <ShieldOffIcon size={15} />
+                      Skip TLS Verification
+                      <span onClick={(e) => e.stopPropagation()}>
+                        <HelpTooltip
+                          interactive
+                          content={
+                            <>
+                              Skips certificate validation on requests to this
+                              provider. Useful for quick testing against
+                              endpoints with self-signed certificates. For
+                              production we recommend mounting trusted
+                              certificates on your proxy instances instead.{" "}
+                              <InlineLink
+                                href={
+                                  "https://docs.netbird.io/agent-network/providers#skip-tls-verification"
+                                }
+                                target={"_blank"}
+                              >
+                                Learn more
+                                <ExternalLinkIcon size={12} />
+                              </InlineLink>
+                            </>
+                          }
+                        />
+                      </span>
+                    </>
+                  }
+                  helpText={"Disable upstream TLS certificate validation."}
                 />
-              </FormRow>
+              )}
 
               {providerId === "vertex_ai_api" ? (
                 <FormRow
@@ -614,7 +872,9 @@ export default function AIProviderModal({
                           <>
                             Upload the Vertex AI service account JSON key.
                             NetBird base64-encodes it and prefixes it with{" "}
-                            <code className={"text-nb-gray-200"}>keyfile::</code>{" "}
+                            <code className={"text-nb-gray-200"}>
+                              keyfile::
+                            </code>{" "}
                             before injecting it on every upstream request, so
                             agents never see the key.
                           </>
@@ -630,14 +890,14 @@ export default function AIProviderModal({
                       onClick={() => keyFileInputRef.current?.click()}
                     >
                       <UploadIcon size={14} />
-                      {keyFileName || (isEdit && apiKey === "••••••••")
+                      {keyFileName || (isEdit && apiKey === MASKED_API_KEY)
                         ? "Replace JSON key"
                         : "Upload JSON key"}
                     </Button>
                     <span className={"text-xs text-nb-gray-300 truncate"}>
                       {keyFileName
                         ? keyFileName
-                        : isEdit && apiKey === "••••••••"
+                        : isEdit && apiKey === MASKED_API_KEY
                         ? "A key is already stored"
                         : "No file selected"}
                     </span>
@@ -678,7 +938,7 @@ export default function AIProviderModal({
                     onChange={(e) => setApiKey(e.target.value)}
                     customPrefix={<KeyRound size={14} />}
                     placeholder={
-                      providerId === "openai_api"
+                      providerId === "openai_api" || providerId === "kimi_api"
                         ? "sk-..."
                         : providerId === "anthropic_api"
                         ? "sk-ant-..."
@@ -688,7 +948,8 @@ export default function AIProviderModal({
                 </FormRow>
               )}
               {(catalog?.extra_headers ?? []).map((h) => {
-                const ui = EXTRA_HEADER_UI[h.name] ?? fallbackExtraHeaderUI(h.name);
+                const ui =
+                  EXTRA_HEADER_UI[h.name] ?? fallbackExtraHeaderUI(h.name);
                 return (
                   <FormRow
                     key={h.name}
@@ -717,22 +978,39 @@ export default function AIProviderModal({
                   </FormRow>
                 );
               })}
-                <FormRow
-                    label={"Display name"}
-                    helpText={"Shown in the Agent Network table."}
-                >
-                    <Input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder={"e.g. OpenAI"}
-                    />
-                </FormRow>
+              <FormRow
+                label={"Display name"}
+                helpText={"Shown in the Agent Network table."}
+              >
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={"e.g. OpenAI"}
+                />
+              </FormRow>
             </div>
           </TabsContent>
 
           {showMappings && providerId === "litellm_proxy" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
               <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                {/* The forwarding toggle sits first: it gates the identity
+                    mappings described below, so turning it off makes the fixed
+                    mapping that follows moot. */}
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the identity mappings below onto LiteLLM requests."
+                  }
+                />
+
                 <div>
                   <Label>Identity Mappings</Label>
                   <HelpText className={"mb-0"}>
@@ -744,8 +1022,8 @@ export default function AIProviderModal({
                     >
                       metadata.tags
                     </code>{" "}
-                    in the JSON body so LiteLLM can enforce tag budgets and rate limits.
-                    The user identity is sent in the{" "}
+                    in the JSON body so LiteLLM can enforce tag budgets and rate
+                    limits. The user identity is sent in the{" "}
                     <code
                       className={
                         "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
@@ -753,10 +1031,9 @@ export default function AIProviderModal({
                     >
                       x-litellm-end-user-id
                     </code>{" "}
-                    header. The proxy strips any client-supplied value
-                    first, so an app can&apos;t spoof identity. The
-                    configured API key must be a LiteLLM virtual key
-                    with{" "}
+                    header. The proxy strips any client-supplied value first, so
+                    an app can&apos;t spoof identity. The configured API key
+                    must be a LiteLLM virtual key with{" "}
                     <code
                       className={
                         "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
@@ -792,11 +1069,11 @@ export default function AIProviderModal({
                 <div>
                   <Label>Identity Headers</Label>
                   <HelpText className={"mb-0"}>
-                    Pick which wire headers carry the caller&apos;s identity
-                    on every upstream request. The proxy strips any
-                    client-supplied value first, so an app can&apos;t spoof
-                    identity. Leave a field empty to disable stamping for that
-                    dimension. The defaults shown as placeholders use the{" "}
+                    Pick which wire headers carry the caller&apos;s identity on
+                    every upstream request. The proxy strips any client-supplied
+                    value first, so an app can&apos;t spoof identity. Leave a
+                    field empty to disable stamping for that dimension. The
+                    defaults shown as placeholders use the{" "}
                     <code
                       className={
                         "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
@@ -804,8 +1081,8 @@ export default function AIProviderModal({
                     >
                       x-bf-dim-*
                     </code>{" "}
-                    family (Prometheus / OTEL — requires a matching
-                    declaration in your gateway&apos;s{" "}
+                    family (Prometheus / OTEL — requires a matching declaration
+                    in your gateway&apos;s{" "}
                     <code
                       className={
                         "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
@@ -821,30 +1098,38 @@ export default function AIProviderModal({
                     >
                       x-bf-lh-*
                     </code>{" "}
-                    to use Bifrost&apos;s always-on log-metadata path
-                    instead — no gateway-side config needed there.
+                    to use Bifrost&apos;s always-on log-metadata path instead —
+                    no gateway-side config needed there.
                   </HelpText>
                 </div>
 
                 <FormRow
                   label={"User identity header"}
-                  helpText={"Wire header name receiving the caller's user email (or peer name when unlinked). Leave empty to skip."}
+                  helpText={
+                    "Wire header name receiving the caller's user email (or peer name when unlinked). Leave empty to skip."
+                  }
                 >
                   <Input
                     value={identityHeaderUserId}
                     onChange={(e) => setIdentityHeaderUserId(e.target.value)}
-                    placeholder={identityDefaultUser || "x-bf-dim-netbird_user_id"}
+                    placeholder={
+                      identityDefaultUser || "x-bf-dim-netbird_user_id"
+                    }
                   />
                 </FormRow>
 
                 <FormRow
                   label={"Groups header"}
-                  helpText={"Wire header name receiving the caller's NetBird groups as a comma-separated list. Leave empty to skip."}
+                  helpText={
+                    "Wire header name receiving the caller's NetBird groups as a comma-separated list. Leave empty to skip."
+                  }
                 >
                   <Input
                     value={identityHeaderGroups}
                     onChange={(e) => setIdentityHeaderGroups(e.target.value)}
-                    placeholder={identityDefaultGroups || "x-bf-dim-netbird_groups"}
+                    placeholder={
+                      identityDefaultGroups || "x-bf-dim-netbird_groups"
+                    }
                   />
                 </FormRow>
               </div>
@@ -866,18 +1151,20 @@ export default function AIProviderModal({
                       {jsonMetadataHeader || "metadata"}
                     </code>{" "}
                     header with the caller&apos;s identity so the gateway&apos;s
-                    logs and analytics key off the real user, not whichever
-                    app process happens to hold the API token. Pick the JSON
-                    key names that match your existing log filters; leave a
-                    field empty to omit that key from the JSON. The proxy
-                    strips any client-supplied value first, so an app
-                    can&apos;t spoof identity.
+                    logs and analytics key off the real user, not whichever app
+                    process happens to hold the API token. Pick the JSON key
+                    names that match your existing log filters; leave a field
+                    empty to omit that key from the JSON. The proxy strips any
+                    client-supplied value first, so an app can&apos;t spoof
+                    identity.
                   </HelpText>
                 </div>
 
                 <FormRow
                   label={"User identity key"}
-                  helpText={"JSON key receiving the caller's user email (or peer name when unlinked). Leave empty to skip."}
+                  helpText={
+                    "JSON key receiving the caller's user email (or peer name when unlinked). Leave empty to skip."
+                  }
                 >
                   <Input
                     value={identityHeaderUserId}
@@ -888,7 +1175,9 @@ export default function AIProviderModal({
 
                 <FormRow
                   label={"Groups key"}
-                  helpText={"JSON key receiving the caller's NetBird groups as a comma-separated string. Leave empty to skip."}
+                  helpText={
+                    "JSON key receiving the caller's NetBird groups as a comma-separated string. Leave empty to skip."
+                  }
                 >
                   <Input
                     value={identityHeaderGroups}
@@ -914,12 +1203,11 @@ export default function AIProviderModal({
                     >
                       x-portkey-metadata
                     </code>{" "}
-                    header with a JSON object so Portkey&apos;s analytics
-                    and budgets key off the real caller. The proxy strips
-                    any client-supplied value first, so an app can&apos;t
-                    spoof identity. Per Portkey&apos;s 128-character cap
-                    each value is truncated when needed. The mapping is
-                    fixed in this release.
+                    header with a JSON object so Portkey&apos;s analytics and
+                    budgets key off the real caller. The proxy strips any
+                    client-supplied value first, so an app can&apos;t spoof
+                    identity. Per Portkey&apos;s 128-character cap each value is
+                    truncated when needed. The mapping is fixed in this release.
                   </HelpText>
                 </div>
 
@@ -930,6 +1218,61 @@ export default function AIProviderModal({
                 >
                   <MappingRow header={"_user"} sourceLabel={"User Email"} />
                   <MappingRow header={"groups"} sourceLabel={"Groups"} />
+                </div>
+              </div>
+            </TabsContent>
+          )}
+
+          {showMappings && providerId === "bedrock_api" && (
+            <TabsContent value={"mappings"} className={"pb-8"}>
+              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                {/* The forwarding toggle sits first: it gates the identity
+                    metadata described below, so turning it off makes the fixed
+                    mapping that follows moot. */}
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the identity metadata below onto Bedrock requests."
+                  }
+                />
+
+                <div>
+                  <Label>Identity Metadata</Label>
+                  <HelpText className={"mb-0"}>
+                    NetBird stamps the caller&apos;s identity into the{" "}
+                    <InlineLink
+                      href={
+                        "https://docs.aws.amazon.com/bedrock/latest/userguide/cost-mgmt-request-metadata.html"
+                      }
+                      target={"_blank"}
+                    >
+                      <code
+                        className={
+                          "text-xs font-mono bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        }
+                      >
+                        X-Amzn-Bedrock-Request-Metadata
+                      </code>
+                    </InlineLink>{" "}
+                    header, so you can break Bedrock spend down by user and
+                    group. Client-supplied values are stripped and sanitized.
+                  </HelpText>
+                </div>
+
+                <div
+                  className={
+                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
+                  }
+                >
+                  <MappingRow header={"user"} sourceLabel={"User Email"} />
+                  <MappingRow header={"group"} sourceLabel={"Groups"} />
                 </div>
               </div>
             </TabsContent>
@@ -974,9 +1317,9 @@ export default function AIProviderModal({
                     >
                       group_by=tag
                     </code>
-                    ). Header names are fixed by Vercel&apos;s API contract
-                    — renaming would silently disable attribution. The
-                    proxy strips any client-supplied value first.
+                    ). Header names are fixed by Vercel&apos;s API contract —
+                    renaming would silently disable attribution. The proxy
+                    strips any client-supplied value first.
                   </HelpText>
                 </div>
 
@@ -997,11 +1340,11 @@ export default function AIProviderModal({
 
                 <HelpText className={"mb-0"}>
                   <strong>Caveats:</strong> Vercel caps tags at 10 per request
-                  (each 1–64 chars) and the user value at 256 chars. Members
-                  of more than 10 groups will see Vercel reject the request
-                  with HTTP 400 — re-scope group memberships if you hit it.
-                  Vercel charges $0.075 per 1,000 unique user/tag values
-                  written; budget accordingly for high-cardinality use cases.
+                  (each 1–64 chars) and the user value at 256 chars. Members of
+                  more than 10 groups will see Vercel reject the request with
+                  HTTP 400 — re-scope group memberships if you hit it. Vercel
+                  charges $0.075 per 1,000 unique user/tag values written;
+                  budget accordingly for high-cardinality use cases.
                 </HelpText>
               </div>
             </TabsContent>
@@ -1022,10 +1365,10 @@ export default function AIProviderModal({
                     >
                       user
                     </code>{" "}
-                    field — that&apos;s the OpenAI-standard field
-                    OpenRouter consults for per-user analytics. The proxy
-                    overwrites any client-supplied value first, so an app
-                    can&apos;t spoof identity.
+                    field — that&apos;s the OpenAI-standard field OpenRouter
+                    consults for per-user analytics. The proxy overwrites any
+                    client-supplied value first, so an app can&apos;t spoof
+                    identity.
                   </HelpText>
                 </div>
 
@@ -1043,16 +1386,17 @@ export default function AIProviderModal({
                 <HelpText className={"mb-0"}>
                   <strong>No groups dimension.</strong> OpenRouter does not
                   document a per-request tag, label, or team field — only
-                  per-user identity. NetBird&apos;s group memberships are
-                  not propagated to OpenRouter; if you need per-group
-                  attribution, query NetBird&apos;s own access log instead
-                  of OpenRouter&apos;s analytics.
+                  per-user identity. NetBird&apos;s group memberships are not
+                  propagated to OpenRouter; if you need per-group attribution,
+                  query NetBird&apos;s own access log instead of
+                  OpenRouter&apos;s analytics.
                 </HelpText>
                 <HelpText className={"mb-0"}>
-                  <strong>App branding</strong> (HTTP-Referer + X-OpenRouter-Title)
-                  is set per-provider on the Provider tab, not per-request.
-                  Operators who fill those in get their app surfaced on
-                  OpenRouter&apos;s public rankings and per-app analytics.
+                  <strong>App branding</strong> (HTTP-Referer +
+                  X-OpenRouter-Title) is set per-provider on the Provider tab,
+                  not per-request. Operators who fill those in get their app
+                  surfaced on OpenRouter&apos;s public rankings and per-app
+                  analytics.
                 </HelpText>
               </div>
             </TabsContent>
@@ -1065,16 +1409,81 @@ export default function AIProviderModal({
                 <HelpText>
                   Models exposed through this endpoint, with the per-1k
                   input/output prices used for cost tracking. Empty = all
-                  catalog models allowed at catalog prices.
+                  catalog models allowed at catalog prices. Cache rates left
+                  empty fall back to NetBird&apos;s defaults for the model; 0
+                  bills cached tokens at the input rate.
                 </HelpText>
               </div>
 
+              <div className={"flex items-center gap-3"}>
+                <Button
+                  variant={"secondary"}
+                  size={"xs"}
+                  disabled={discovered.isLoading || !canDiscoverModels}
+                  onClick={loadModelsFromProvider}
+                >
+                  <RefreshCwIcon size={13} />
+                  {discovered.isLoading
+                    ? "Loading models…"
+                    : "Load models from provider"}
+                </Button>
+                {!canDiscoverModels && (
+                  <HelpText className={"!mb-0"}>
+                    Enter the endpoint URL and API key first.
+                  </HelpText>
+                )}
+                {discovered.notSupported && (
+                  <HelpText className={"!mb-0"}>
+                    This provider has no model listing endpoint — the catalog
+                    list is used instead.
+                  </HelpText>
+                )}
+                {discovered.error && (
+                  <HelpText
+                    className={"!mb-0 text-orange-500 dark:text-orange-400"}
+                  >
+                    {discovered.error}
+                  </HelpText>
+                )}
+              </div>
+
+              {!discovered.isLoading &&
+                !discovered.error &&
+                discovered.models.length > 0 && (
+                  <HelpText className={"!mb-0"}>
+                    {discovered.models.length} models loaded. Use the{" "}
+                    <strong>Add More</strong> button to search and pick models.
+                  </HelpText>
+                )}
+
+              {unpricedModelIds.size > 0 && (
+                // A callout rather than a line of help text: this is the one
+                // thing on the tab that costs money to miss, and it sat in the
+                // same grey run of prose as everything else.
+                <Callout
+                  variant={"warning"}
+                  icon={
+                    <AlertCircleIcon
+                      size={14}
+                      className={"shrink-0 relative top-[3px]"}
+                    />
+                  }
+                >
+                  {unpricedModelIds.size === 1
+                    ? "The model below has"
+                    : `The ${unpricedModelIds.size} models below have`}{" "}
+                  no cost set. Usage is tracked at $0 and won&apos;t count
+                  toward budget limits.
+                </Callout>
+              )}
+
               {models.map((row, idx) => (
                 <ModelRowEditor
-                  key={idx}
+                  key={row._key}
                   row={row}
                   catalogModels={catalogModelOptions}
                   usedIds={usedModelIds}
+                  needsPrice={unpricedModelIds.has(row.id)}
                   onChangeId={(id) => {
                     const fromCatalog = catalogModelOptions.find(
                       (m) => m.id === id,
@@ -1084,6 +1493,9 @@ export default function AIProviderModal({
                         id,
                         inputPer1k: fromCatalog.input_per_1k,
                         outputPer1k: fromCatalog.output_per_1k,
+                        cachedInputPer1k: fromCatalog.cached_input_per_1k,
+                        cacheReadPer1k: fromCatalog.cache_read_per_1k,
+                        cacheCreationPer1k: fromCatalog.cache_creation_per_1k,
                       });
                     } else {
                       updateModel(idx, { id });
@@ -1091,6 +1503,17 @@ export default function AIProviderModal({
                   }}
                   onChangeInput={(n) => updateModel(idx, { inputPer1k: n })}
                   onChangeOutput={(n) => updateModel(idx, { outputPer1k: n })}
+                  showCachedInputRate={showCachedInputRate}
+                  showCacheBucketRates={showCacheBucketRates}
+                  onChangeCachedInput={(n) =>
+                    updateModel(idx, { cachedInputPer1k: n })
+                  }
+                  onChangeCacheRead={(n) =>
+                    updateModel(idx, { cacheReadPer1k: n })
+                  }
+                  onChangeCacheCreation={(n) =>
+                    updateModel(idx, { cacheCreationPer1k: n })
+                  }
                   onRemove={() => removeModel(idx)}
                 />
               ))}
@@ -1112,8 +1535,11 @@ export default function AIProviderModal({
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
               Learn more about
-              <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
-                Agent Network
+              <InlineLink
+                href={"https://docs.netbird.io/agent-network/providers"}
+                target={"_blank"}
+              >
+                Agent Network Providers
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
@@ -1171,10 +1597,7 @@ export default function AIProviderModal({
             )}
             {tab === "mappings" && (
               <>
-                <Button
-                  variant={"secondary"}
-                  onClick={() => setTab("models")}
-                >
+                <Button variant={"secondary"} onClick={() => setTab("models")}>
                   Back
                 </Button>
                 <Button
@@ -1220,100 +1643,342 @@ function FormRow({
   );
 }
 
+// CUSTOM_MODEL_OPTION is the sentinel value of the "Custom model…"
+// dropdown entry. Never a real model id (vendors don't use NUL-ish
+// double-underscore namespacing), never sent to the API — selecting it
+// only flips the row into free-text mode.
+const CUSTOM_MODEL_OPTION = "__netbird_custom_model__";
+
 type CatalogModelOption = {
   id: string;
   label: string;
   input_per_1k: number;
   output_per_1k: number;
+  cached_input_per_1k?: number;
+  cache_read_per_1k?: number;
+  cache_creation_per_1k?: number;
+  // false for a model the vendor reported but NetBird's pricing table does
+  // not know. It still lands with 0 rates, which is indistinguishable from a
+  // genuinely free model — so the Models tab names these explicitly rather
+  // than letting the operator register one that meters at zero.
+  pricing_known?: boolean;
 };
+
+// priceToInput renders a stored price as an editable string, always using "."
+// as the decimal separator regardless of the browser locale.
+function priceToInput(n: number): string {
+  return Number.isFinite(n) ? String(n) : "";
+}
+
+// priceFromInput parses an operator-typed price, accepting a "," as the decimal
+// separator (some keyboards/locales) and normalising it to a plain number.
+function priceFromInput(s: string): number {
+  return parseFloat(s.replace(/,/g, ".")) || 0;
+}
+
+// optionalPriceFromInput parses a price whose empty state is meaningful. It
+// reports undefined for anything that isn't a number ("", "abc") instead of
+// falling back to 0 — for cache rates an explicit 0 is a real setting ("bill
+// cached tokens at the input rate"), so a typo must not silently become one.
+function optionalPriceFromInput(s: string): number | undefined {
+  const t = s.trim();
+  if (t === "") return undefined;
+  const n = parseFloat(t.replace(/,/g, "."));
+  return Number.isFinite(n) ? n : undefined;
+}
+
+// OptionalPriceField is a price input whose EMPTY state is meaningful:
+// empty = undefined = "inherit NetBird's default rate for this model",
+// while an explicit 0 disables the cache discount. It must never coerce
+// one into the other, so it keeps its own string state and only reports
+// undefined for a blank box.
+function OptionalPriceField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | undefined;
+  onChange: (n: number | undefined) => void;
+}) {
+  const [str, setStr] = useState(() =>
+    value === undefined ? "" : priceToInput(value),
+  );
+  // Re-sync when the value is set from outside (catalog model pick),
+  // but not while the operator is mid-typing the same value.
+  useEffect(() => {
+    const parsed = optionalPriceFromInput(str);
+    if (parsed !== value) {
+      setStr(value === undefined ? "" : priceToInput(value));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <div className={"flex-1 min-w-0"}>
+      <Label>{label}</Label>
+      <Input
+        type={"text"}
+        inputMode={"decimal"}
+        value={str}
+        placeholder={"default"}
+        onChange={(e) => {
+          setStr(e.target.value);
+          onChange(optionalPriceFromInput(e.target.value));
+        }}
+      />
+    </div>
+  );
+}
 
 function ModelRowEditor({
   row,
   catalogModels,
   usedIds,
+  needsPrice,
   onChangeId,
   onChangeInput,
   onChangeOutput,
+  showCachedInputRate,
+  showCacheBucketRates,
+  onChangeCachedInput,
+  onChangeCacheRead,
+  onChangeCacheCreation,
   onRemove,
 }: {
   row: ProviderModel;
   catalogModels: CatalogModelOption[];
   usedIds: Set<string>;
+  // The row carries no price, so every request against it would record as
+  // free. Outlined rather than blocked: zero is a legitimate rate for a
+  // self-hosted model, and only the operator knows which case this is.
+  needsPrice: boolean;
   onChangeId: (id: string) => void;
   onChangeInput: (n: number) => void;
   onChangeOutput: (n: number) => void;
+  // Which cache-rate fields apply to this provider's billing shape;
+  // see the pricing_surfaces derivation in the modal body.
+  showCachedInputRate: boolean;
+  showCacheBucketRates: boolean;
+  onChangeCachedInput: (n: number | undefined) => void;
+  onChangeCacheRead: (n: number | undefined) => void;
+  onChangeCacheCreation: (n: number | undefined) => void;
   onRemove: () => void;
 }) {
+  // Editable text for the price fields. We keep the raw string locally so the
+  // operator can type intermediate values ("0.", "0,00") without the number
+  // round-trip clobbering the cursor. The number is propagated to the parent
+  // on every change; a "." is always shown even in comma-decimal locales.
+  const [inputStr, setInputStr] = useState(() => priceToInput(row.inputPer1k));
+  const [outputStr, setOutputStr] = useState(() =>
+    priceToInput(row.outputPer1k),
+  );
+  // Re-sync when the price is set from outside (e.g. picking a catalog model
+  // fills its prices), but not while the operator is mid-typing the same value.
+  useEffect(() => {
+    if (priceFromInput(inputStr) !== row.inputPer1k) {
+      setInputStr(priceToInput(row.inputPer1k));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row.inputPer1k]);
+  useEffect(() => {
+    if (priceFromInput(outputStr) !== row.outputPer1k) {
+      setOutputStr(priceToInput(row.outputPer1k));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row.outputPer1k]);
+
   // Whether this provider type ships a catalog of preset models.
   // Stable across keystrokes — we mustn't let this flip mid-typing or
   // React will unmount the input and steal focus.
   const hasCatalog = catalogModels.length > 0;
 
-  // Catalog options excluding the ones already on other rows. The
-  // current row's own id stays in the list so the dropdown can render
-  // its label.
+  // Custom-model entry: catalog providers get a "Custom model…" option
+  // that swaps the dropdown for a free-text input, so operators can add
+  // models NetBird doesn't list yet (e.g. a model released after this
+  // build). Rows loaded with an id the catalog doesn't know start in
+  // custom mode so their id is editable rather than trapped in a
+  // single-option dropdown.
+  const [customMode, setCustomMode] = useState(
+    () =>
+      hasCatalog &&
+      row.id !== "" &&
+      !catalogModels.some((m) => m.id === row.id),
+  );
+  // The catalog is fetched async, so an edit-modal row can mount before it
+  // arrives — the initializer then sees no catalog and leaves customMode off,
+  // trapping an unknown id in a dropdown that can't represent it. Re-evaluate
+  // once the catalog lands. Keyed on hasCatalog only: later catalog/row churn
+  // must not undo the operator's own custom-mode choice.
+  useEffect(() => {
+    if (!hasCatalog || row.id === "") return;
+    if (!catalogModels.some((m) => m.id === row.id)) setCustomMode(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasCatalog]);
+
+  // Catalog options excluding the ones already on other rows, plus the
+  // custom-model escape hatch.
   const dropdownOptions = useMemo(() => {
     const visible = catalogModels.filter(
       (m) => m.id === row.id || !usedIds.has(m.id),
     );
-    const seen = new Set(visible.map((m) => m.id));
     const opts = visible.map((m) => ({ value: m.id, label: m.label }));
-    if (row.id && !seen.has(row.id)) {
-      opts.unshift({ value: row.id, label: row.id });
-    }
+    opts.push({ value: CUSTOM_MODEL_OPTION, label: "Custom model…" });
     return opts;
   }, [catalogModels, usedIds, row.id]);
 
+  const showCacheLine = showCachedInputRate || showCacheBucketRates;
+  const hasCacheValues =
+    row.cachedInputPer1k !== undefined ||
+    row.cacheReadPer1k !== undefined ||
+    row.cacheCreationPer1k !== undefined;
+  // Cache rates live behind a per-row disclosure, collapsed by default:
+  // most operators keep NetBird's defaults, so the row stays compact.
+  // The collapsed summary ("· custom" vs "· default") signals when a
+  // row carries stored rates worth expanding.
+  const [cacheOpen, setCacheOpen] = useState(false);
+
   return (
     <div
-      className={
-        "flex items-end gap-2 p-3 rounded border border-nb-gray-800 bg-nb-gray-900/20"
-      }
+      className={cn(
+        "flex flex-col gap-2 p-3 rounded border bg-nb-gray-900/20",
+        needsPrice
+          ? "border-yellow-500/60 bg-yellow-500/5"
+          : "border-nb-gray-800",
+      )}
     >
-      <div className={"flex-1 min-w-0"}>
-        <Label>Model</Label>
-        {hasCatalog ? (
-          <SelectDropdown
-            value={row.id}
-            onChange={onChangeId}
-            options={dropdownOptions}
-            placeholder={"Select a model..."}
-          />
-        ) : (
+      <div className={"flex items-end gap-2"}>
+        <div className={"flex-1 min-w-0"}>
+          <Label>Model</Label>
+          {hasCatalog && !customMode ? (
+            <SelectDropdown
+              value={row.id}
+              onChange={(v) => {
+                if (v === CUSTOM_MODEL_OPTION) {
+                  setCustomMode(true);
+                  onChangeId("");
+                  return;
+                }
+                onChangeId(v);
+              }}
+              options={dropdownOptions}
+              placeholder={"Select a model..."}
+              showSearch
+              searchPlaceholder={"Search models..."}
+            />
+          ) : hasCatalog ? (
+            <div className={"flex gap-2"}>
+              <Input
+                value={row.id}
+                onChange={(e) => onChangeId(e.target.value)}
+                placeholder={"e.g. claude-fable-6"}
+                autoFocus={row.id === ""}
+              />
+              <Button
+                variant={"default-outline"}
+                className={"h-[42px] !px-3 shrink-0"}
+                title={"Pick from catalog instead"}
+                onClick={() => {
+                  setCustomMode(false);
+                  onChangeId("");
+                }}
+              >
+                <ListIcon size={15} />
+              </Button>
+            </div>
+          ) : (
+            <Input
+              value={row.id}
+              onChange={(e) => onChangeId(e.target.value)}
+              placeholder={"e.g. gpt-4o-mini"}
+            />
+          )}
+        </div>
+        <div className={"w-[120px] shrink-0"}>
+          <Label>Input $/1k</Label>
           <Input
-            value={row.id}
-            onChange={(e) => onChangeId(e.target.value)}
-            placeholder={"e.g. gpt-4o-mini"}
+            type={"text"}
+            inputMode={"decimal"}
+            value={inputStr}
+            onChange={(e) => {
+              setInputStr(e.target.value);
+              onChangeInput(priceFromInput(e.target.value));
+            }}
           />
-        )}
+        </div>
+        <div className={"w-[120px] shrink-0"}>
+          <Label>Output $/1k</Label>
+          <Input
+            type={"text"}
+            inputMode={"decimal"}
+            value={outputStr}
+            onChange={(e) => {
+              setOutputStr(e.target.value);
+              onChangeOutput(priceFromInput(e.target.value));
+            }}
+          />
+        </div>
+        <Button
+          variant={"default-outline"}
+          className={"h-[42px] !px-3"}
+          onClick={onRemove}
+        >
+          <MinusCircleIcon size={15} />
+        </Button>
       </div>
-      <div className={"w-[120px] shrink-0"}>
-        <Label>Input $/1k</Label>
-        <Input
-          type={"number"}
-          step={"0.0001"}
-          min={"0"}
-          value={row.inputPer1k}
-          onChange={(e) => onChangeInput(parseFloat(e.target.value) || 0)}
-        />
-      </div>
-      <div className={"w-[120px] shrink-0"}>
-        <Label>Output $/1k</Label>
-        <Input
-          type={"number"}
-          step={"0.0001"}
-          min={"0"}
-          value={row.outputPer1k}
-          onChange={(e) => onChangeOutput(parseFloat(e.target.value) || 0)}
-        />
-      </div>
-      <Button
-        variant={"default-outline"}
-        className={"h-[42px] !px-3"}
-        onClick={onRemove}
-      >
-        <MinusCircleIcon size={15} />
-      </Button>
+      {showCacheLine && (
+        <>
+          <button
+            type={"button"}
+            onClick={() => setCacheOpen((v) => !v)}
+            className={
+              "flex items-center gap-1 text-xs text-nb-gray-400 hover:text-nb-gray-200 transition-colors w-fit"
+            }
+          >
+            <ChevronRightIcon
+              size={13}
+              className={
+                "transition-transform " + (cacheOpen ? "rotate-90" : "")
+              }
+            />
+            Cache pricing
+            {!cacheOpen && (
+              <span className={"text-nb-gray-500"}>
+                {hasCacheValues ? "· custom" : "· default"}
+              </span>
+            )}
+          </button>
+          {cacheOpen && (
+            <div
+              className={
+                "flex items-end gap-2 pt-2 border-t border-nb-gray-900"
+              }
+            >
+              {showCachedInputRate && (
+                <OptionalPriceField
+                  label={"Cached input $/1k"}
+                  value={row.cachedInputPer1k}
+                  onChange={onChangeCachedInput}
+                />
+              )}
+              {showCacheBucketRates && (
+                <>
+                  <OptionalPriceField
+                    label={"Cache read $/1k"}
+                    value={row.cacheReadPer1k}
+                    onChange={onChangeCacheRead}
+                  />
+                  <OptionalPriceField
+                    label={"Cache write $/1k"}
+                    value={row.cacheCreationPer1k}
+                    onChange={onChangeCacheCreation}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -9,8 +9,9 @@ import { sortBy } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeProvider";
 import * as React from "react";
-import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
+import { getGroupCountLabel } from "@/modules/control-center/utils/helpers";
+import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
 
 type NodeProps = Node<
   {
@@ -41,18 +42,10 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
   );
 
   const group = groups?.find((g) => g.id === data.currentGroup);
+  const countLabel = getGroupCountLabel(group);
 
-  const countLabel = useMemo(() => {
-    const peerCount = group?.peers_count || 0;
-    const resourceCount = group?.resources_count || 0;
-    if (resourceCount === 0) {
-      return `${peerCount} Peer(s)`;
-    }
-    if (peerCount === 0) {
-      return `${resourceCount} Resource(s)`;
-    }
-    return `${peerCount} Peer(s), ${resourceCount} Resource(s)`;
-  }, [group]);
+  const [open, setOpen] = React.useState(false);
+  useCloseOnCanvasClick(open, () => setOpen(false));
 
   return (
     <div
@@ -62,11 +55,14 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
     >
       <SelectDropdown
         variant={"secondary"}
+        deferChange
         value={data.currentGroup}
         onChange={data.onChange}
         options={groupOptions}
         showSearch={true}
         searchPlaceholder={"Search groups..."}
+        open={open}
+        onOpenChange={setOpen}
         popoverWidth={280}
         className={"!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300"}
         size={"xs"}
@@ -76,7 +72,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
           {group && (
             <div
               className={
-                "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-3 pr-5 py-3 font-normal"
+                "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-4 pr-5 py-3.5 font-normal"
               }
             >
               <div className={"flex items-center gap-3 font-normal text-sm"}>
@@ -101,7 +97,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
                   </div>
                   <div
                     className={
-                      "text-nb-gray-400 whitespace-nowrap text-xs text-left"
+                      "text-nb-gray-400 whitespace-nowrap text-sm text-left"
                     }
                   >
                     {countLabel}

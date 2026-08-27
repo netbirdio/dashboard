@@ -12,12 +12,14 @@ export type AIProviderId =
   | "bedrock_api"
   | "vertex_ai_api"
   | "mistral_api"
+  | "kimi_api"
   | "litellm_proxy"
   | "portkey"
   | "bifrost"
   | "cloudflare_ai_gateway"
   | "vercel_ai_gateway"
   | "openrouter"
+  | "vllm"
   | "custom";
 
 export type AIProviderStatus = "active" | "warning" | "disabled";
@@ -41,6 +43,17 @@ export type ProviderModel = {
   id: string;
   inputPer1k: number;
   outputPer1k: number;
+  // Optional prompt-cache rates (USD per 1k tokens). undefined means
+  // "inherit NetBird's default rate for this model" — the backend folds
+  // the default in at synthesis time; an explicit 0 means "no discount,
+  // bill this cache bucket at the input rate". Keep undefined distinct
+  // from 0 when round-tripping.
+  // OpenAI shape: cached prompt tokens (a subset of input tokens).
+  cachedInputPer1k?: number;
+  // Anthropic shape: the two additive cache buckets (read ≈0.1x input,
+  // creation ≈1.25x input).
+  cacheReadPer1k?: number;
+  cacheCreationPer1k?: number;
 };
 
 export type AIProvider = {
@@ -60,6 +73,12 @@ export type AIProvider = {
   // the value stored here lands on the wire.
   identityHeaderUserId?: string;
   identityHeaderGroups?: string;
+  // Skip TLS certificate verification on upstream requests — for custom
+  // providers using self-signed certs. Off by default.
+  skipTlsVerification?: boolean;
+  // Disable identity metadata injection (caller user + authorizing group) on
+  // upstream requests, e.g. AWS Bedrock cost-allocation. Off by default.
+  metadataDisabled?: boolean;
   status: AIProviderStatus;
   models: ProviderModel[];
   allowedGroups: string[];
@@ -150,10 +169,19 @@ export type AIAccessLogEntry = {
   id: string;
   serviceId: string;
   providerId: AIProviderId;
+  // Raw vendor label the request parser stamped ("openai", "anthropic"),
+  // before it was normalised into a catalog id. Empty when the request never
+  // got far enough to be recognised as an LLM call — providerId collapses that
+  // case into "custom", so only this field can tell the two apart.
+  providerVendor?: string;
   // Config-row id of the provider the router actually selected
   // (llm.resolved_provider_id metadata). Empty for legacy entries
   // and non-agent-network requests where the router didn't run.
   resolvedProviderId: string;
+  // Provider-side session id grouping related calls. A single user can make
+  // several separate requests that the provider ties to one session
+  // (llm.session_id metadata). Empty when the provider didn't return one.
+  sessionId: string;
   timestamp: string;
   user: string;
   userId: string;
@@ -163,7 +191,17 @@ export type AIAccessLogEntry = {
   model: string;
   inputTokens: number;
   outputTokens: number;
+  // Prompt-cache buckets: read/write token counts and the cache share of costUsd. Optional — absent on older management servers.
+  cachedInputTokens?: number;
+  cacheCreationTokens?: number;
   costUsd: number;
+  cacheCostUsd?: number;
+  // Per-bucket cost breakdown. Undefined (not 0) when the server predates the
+  // breakdown, so the UI can tell "no split available" from "split is zero".
+  inputCostUsd?: number;
+  cachedInputCostUsd?: number;
+  cacheCreationCostUsd?: number;
+  outputCostUsd?: number;
   durationMs: number;
   decision: AIAccessLogDecision;
   denyReason?: string;
@@ -182,6 +220,39 @@ export type AIAccessLogEntry = {
   // calls like "GET /v1/models" are self-explanatory.
   method: string;
   path: string;
+};
+
+// AIAccessLogSession is a session-grouped view of access-log entries: all
+// requests sharing a provider session id (or a single session-less request,
+// keyed by its own id) folded into one summary plus its ordered entries.
+export type AIAccessLogSession = {
+  // Stable row id for table expansion: the session id, or the singleton
+  // request's id when the session id is empty. Mirrors the backend group key.
+  id: string;
+  sessionId: string; // empty for a session-less (singleton) request
+  user: string;
+  userId: string;
+  userGroups: string[];
+  startedAt: string;
+  endedAt: string;
+  requestCount: number;
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  cachedInputTokens?: number;
+  cacheCreationTokens?: number;
+  costUsd: number;
+  cacheCostUsd?: number;
+  // Per-bucket cost breakdown. Undefined (not 0) when the server predates the
+  // breakdown, so the UI can tell "no split available" from "split is zero".
+  inputCostUsd?: number;
+  cachedInputCostUsd?: number;
+  cacheCreationCostUsd?: number;
+  outputCostUsd?: number;
+  providers: string[]; // distinct vendor ids seen in the session
+  models: string[]; // distinct models seen in the session
+  decision: AIAccessLogDecision;
+  entries: AIAccessLogEntry[];
 };
 
 // Short labels for the proxy's llm_policy.reason deny codes. Keyed by the bare

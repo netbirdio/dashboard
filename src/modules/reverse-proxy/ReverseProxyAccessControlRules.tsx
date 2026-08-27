@@ -3,8 +3,7 @@ import { Label } from "@components/Label";
 import HelpText from "@components/HelpText";
 import Button from "@components/Button";
 import { Input } from "@components/Input";
-import cidr from "ip-cidr";
-import { hostSuffixFor, isIPv6 } from "@utils/ip";
+import { hostSuffixFor, isIPv6, isValidIP } from "@utils/ip";
 import {
   FlagIcon,
   MinusCircleIcon,
@@ -177,11 +176,11 @@ function validateRule(rule: AccessRule): string {
       const suffix = isIPv6(val) ? 128 : 32;
       val = `${val}/${suffix}`;
     }
-    if (!cidr.isValidAddress(val)) {
+    if (!isValidIP(val)) {
       return "Please enter a valid IP address, e.g., 85.203.15.42 or 2001:db8::1";
     }
   } else {
-    if (!rule.value.includes("/") || !cidr.isValidAddress(rule.value)) {
+    if (!rule.value.includes("/") || !isValidIP(rule.value)) {
       return "Please enter a valid CIDR block, e.g., 74.125.0.0/16 or 2001:db8::/64";
     }
   }

@@ -40,6 +40,11 @@ export default function UsageAndLogsPage() {
   const initialTab = VALID_TABS.has(queryTab) ? queryTab : TAB_USAGE;
   const [tab, setTab] = useState(initialTab);
 
+  // Access-log view mode: flat per-request rows, or grouped by provider session.
+  // Each mode hits its own endpoint and the provider is remounted on toggle
+  // (keyed below) so the two response shapes never cross.
+  const [groupBySession, setGroupBySession] = useState(false);
+
   // Default the access-log view to the last 14 days. Computed once on mount so
   // the window is stable across re-renders; resetting filters returns here.
   const defaultAccessLogFilters = useMemo(
@@ -120,11 +125,19 @@ export default function UsageAndLogsPage() {
                 <TabsContent value={TAB_ACCESS_LOGS} className={"pb-8"}>
                   <Suspense fallback={<SkeletonTable />}>
                     <ServerPaginationProvider
-                      url={"/agent-network/access-logs"}
+                      key={groupBySession ? "sessions" : "flat"}
+                      url={
+                        groupBySession
+                          ? "/agent-network/access-log-sessions"
+                          : "/agent-network/access-logs"
+                      }
                       defaultPageSize={25}
                       defaultFilters={defaultAccessLogFilters}
                     >
-                      <AgentAccessLogTable />
+                      <AgentAccessLogTable
+                        grouped={groupBySession}
+                        onGroupedChange={setGroupBySession}
+                      />
                     </ServerPaginationProvider>
                   </Suspense>
                 </TabsContent>

@@ -12,6 +12,7 @@ import * as React from "react";
 import { User } from "@/interfaces/User";
 import TruncatedText from "@components/ui/TruncatedText";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
 type UserNodeProps = Node<
@@ -76,6 +77,9 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
 
   const user = users?.find((u) => u.id === data.currentUser);
 
+  const [open, setOpen] = React.useState(false);
+  useCloseOnCanvasClick(open, () => setOpen(false));
+
   return (
     <div
       className={cn(
@@ -84,11 +88,14 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
     >
       <SelectDropdown
         variant={"secondary"}
+        deferChange
         value={data.currentUser}
         onChange={data.onUserChange}
         options={userSelectOptions}
         showSearch={true}
         searchPlaceholder={"Search user by name or email..."}
+        open={open}
+        onOpenChange={setOpen}
         popoverWidth={280}
         className={cn(
           "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300",
@@ -97,8 +104,9 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
         size={"xs"}
         maxHeight={300}
       >
+        {/* Same 64px inner height as GroupNode so nodes line up. */}
         <div
-          className={"flex items-center justify-between gap-8 pr-3 py-2 pl-3"}
+          className={"flex items-center justify-between gap-8 pr-3 pl-3 h-[64px]"}
         >
           {user && <SelectedUser user={user} />}
           <ChevronsUpDown size={18} className={"shrink-0"} />
@@ -138,7 +146,7 @@ export const SelectedUser = ({
     <div className={cn("flex items-center justify-center gap-2.5", className)}>
       <div
         className={
-          "w-8 h-8 rounded-full relative flex items-center justify-center text-neutral-700 dark:text-white uppercase text-md font-medium bg-nb-gray-900"
+          "w-8 h-8 rounded-full relative flex items-center justify-center text-neutral-700 dark:text-white uppercase text-md font-medium bg-nb-gray-850"
         }
         style={{
           color: generateColorFromUser(user),
