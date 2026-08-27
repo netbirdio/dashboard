@@ -41,7 +41,12 @@ export function SimpleConnection({
       path={edgePath}
       style={{
         strokeWidth: 1.5,
-        stroke: resolvedTheme === "light" ? "#b7c0c6" : "#7d7d7d",
+        /* Inline (not a stroke-* utility): xyflow's .react-flow__edge-path
+           sets stroke and loads after the Tailwind utilities. */
+        stroke:
+          resolvedTheme === "light"
+            ? "rgb(var(--nb-gray-700))"
+            : "rgb(var(--nb-gray-400))",
         strokeDasharray: "0, 0",
         opacity: enabled ? 1 : 0.6,
       }}
