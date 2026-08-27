@@ -2,12 +2,6 @@ import { cleanup, render } from "@testing-library/react";
 import { Position } from "@xyflow/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// The source node lookup: select-user-node carries no data.enabled, so the
-// helper's fallback reads false.
-vi.mock("@/modules/control-center/utils/helpers", () => ({
-  useSourceGroupEnabled: () => false,
-}));
-
 // Mocked rather than wrapped in the real ThemeProvider: the provider reads
 // window.matchMedia, which jsdom does not implement.
 const themeState = vi.hoisted(() => ({
@@ -21,7 +15,7 @@ vi.mock("@/contexts/ThemeProvider", () => ({
   }),
 }));
 
-const { SimpleConnection } = await import("./SimpleConnection");
+const { DirectionIn } = await import("./DirectionIn");
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -30,7 +24,7 @@ beforeEach(() => {
 
 const edgeProps = {
   id: "edge-1",
-  source: "select-user-node",
+  source: "policy-1",
   target: "peer-1",
   sourceX: 0,
   sourceY: 0,
@@ -40,44 +34,46 @@ const edgeProps = {
   targetPosition: Position.Left,
 };
 
-const renderEdge = (data?: { enabled?: boolean }) => {
+const renderEdge = (data: {
+  enabled: boolean;
+  type?: "smoothstep" | "straight" | "bezier";
+}) => {
   const { container } = render(
     <svg>
-      <SimpleConnection
-        {...(edgeProps as Parameters<typeof SimpleConnection>[0])}
-        data={data}
+      <DirectionIn
+        {...(edgeProps as unknown as Parameters<typeof DirectionIn>[0])}
+        data={{ type: "straight", ...data }}
       />
     </svg>,
   );
   return container.querySelector("path");
 };
 
-describe("SimpleConnection", () => {
-  it("honours the edge's own enabled flag over the source node's", () => {
+describe("DirectionIn", () => {
+  it("strokes enabled edges green (same in both themes) and animates them", () => {
     const path = renderEdge({ enabled: true });
-    expect(path?.style.opacity).toBe("1");
-  });
+    // jsdom normalizes the #0e9f6e literal to rgb() form.
+    expect(path?.style.stroke).toBe("rgb(14, 159, 110)");
+    expect(path?.classList.contains("cc-animated-edge")).toBe(true);
 
-  it("dims when the edge itself is disabled", () => {
-    const path = renderEdge({ enabled: false });
-    expect(path?.style.opacity).toBe("0.6");
-  });
-
-  it("falls back to the source node's enabled when the edge carries none", () => {
-    const path = renderEdge(undefined);
-    expect(path?.style.opacity).toBe("0.6");
-  });
-
-  // The stroke must stay on the theme-flipping ramp tokens (and inline —
-  // xyflow's .react-flow__edge-path would override a stroke-* utility).
-  it("strokes with the dark ramp token in dark mode", () => {
-    const path = renderEdge({ enabled: true });
-    expect(path?.style.stroke).toBe("rgb(var(--nb-gray-400))");
-  });
-
-  it("strokes with the light ramp token in light mode", () => {
     themeState.resolvedTheme = "light";
-    const path = renderEdge({ enabled: true });
+    cleanup();
+    const lightPath = renderEdge({ enabled: true });
+    expect(lightPath?.style.stroke).toBe("rgb(14, 159, 110)");
+  });
+
+  // Disabled edges must stay on the theme-flipping ramp tokens (and inline —
+  // xyflow's .react-flow__edge-path would override a stroke-* utility).
+  it("strokes disabled edges with the dark ramp token in dark mode", () => {
+    const path = renderEdge({ enabled: false });
+    expect(path?.style.stroke).toBe("rgb(var(--nb-gray-400))");
+    expect(path?.style.opacity).toBe("0.6");
+    expect(path?.classList.contains("cc-animated-edge")).toBe(false);
+  });
+
+  it("strokes disabled edges with the light ramp token in light mode", () => {
+    themeState.resolvedTheme = "light";
+    const path = renderEdge({ enabled: false });
     expect(path?.style.stroke).toBe("rgb(var(--nb-gray-700))");
   });
 });

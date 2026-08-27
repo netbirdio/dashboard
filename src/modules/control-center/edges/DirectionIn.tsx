@@ -76,11 +76,14 @@ export function DirectionIn({
       style={{
         opacity: enabled ? 1 : 0.6,
         strokeWidth: 2,
+        /* Green is intentionally identical in both themes; the neutral uses
+           ramp tokens inline — xyflow's .react-flow__edge-path sets stroke
+           and loads after the Tailwind utilities. */
         stroke: enabled
           ? "#0e9f6e"
           : resolvedTheme === "light"
-            ? "#b7c0c6"
-            : "#787878",
+          ? "rgb(var(--nb-gray-700))"
+          : "rgb(var(--nb-gray-400))",
         strokeDasharray: "5, 5",
       }}
       className={enabled ? "cc-animated-edge" : undefined}
