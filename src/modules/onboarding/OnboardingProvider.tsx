@@ -120,7 +120,10 @@ export const OnboardingProvider = ({
     // deciding, so a slow mode fetch can't briefly show the regular form to an
     // account that turns out to be Agent Network-only via config.
     if (agentNetworkModeLoading) return false;
-    if (!isNetBirdCloud()) return false;
+    // The regular flow shows on both cloud and self-hosted, but the signup
+    // survey relies on a JWT domain claim self-hosted IdPs don't emit, so it
+    // only counts toward showing (and is only rendered) on cloud — self-hosted
+    // starts directly at the intent step.
     const isSignupFormPending = isNetBirdCloud()
       ? !!account?.onboarding?.signup_form_pending
       : false;

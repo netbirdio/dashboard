@@ -17,11 +17,19 @@ import { loginToApp, navigateTo } from "../helpers/auth";
 
 const SIGNUP_SOURCE_KEY = "netbird-signup-source";
 const AGENT_NETWORK_SOURCE = "netbird.ai";
+// Drives the NETBIRD_AGENT_NETWORK_ONLY / _ENABLED deployment flags against the
+// test build (see testAgentNetworkOverride in utils/netbird.ts).
+const AGENT_NETWORK_CONFIG_KEY = "netbird-test-agent-network";
+
+type AgentNetworkConfig = "only" | "enabled" | "off";
 
 type AccountMock = {
   // undefined leaves the setting absent (as an un-onboarded account would be).
   agentNetworkOnly?: boolean;
   signupFormPending?: boolean;
+  // dashboardFeaturesAgentNetwork sets settings.dashboard_features.agent_network,
+  // which makes the Agent Network menu available without focusing the dashboard.
+  dashboardFeaturesAgentNetwork?: boolean;
 };
 
 // mockAccounts rewrites GET /accounts to inject the focused-view setting and
@@ -51,6 +59,11 @@ function mockAccounts(
       } else {
         body[0].settings.agent_network_only = applied;
       }
+      if (initial.dashboardFeaturesAgentNetwork !== undefined) {
+        body[0].settings.dashboard_features = {
+          agent_network: initial.dashboardFeaturesAgentNetwork,
+        };
+      }
       body[0].onboarding = {
         ...(body[0].onboarding ?? {}),
         signup_form_pending: !!initial.signupFormPending,
@@ -78,7 +91,10 @@ function mockAccounts(
 async function openWithAccount(
   browser: Browser,
   account: AccountMock,
-  opts: { signupSource?: boolean } = {},
+  opts: {
+    signupSource?: boolean;
+    agentNetworkConfig?: AgentNetworkConfig;
+  } = {},
 ): Promise<{
   page: Page;
   captured: { putBody?: any };
@@ -97,6 +113,16 @@ async function openWithAccount(
       [SIGNUP_SOURCE_KEY, AGENT_NETWORK_SOURCE],
     );
   }
+  if (opts.agentNetworkConfig) {
+    await context.addInitScript(
+      ([key, value]) => {
+        try {
+          window.localStorage.setItem(key as string, value as string);
+        } catch (e) {}
+      },
+      [AGENT_NETWORK_CONFIG_KEY, opts.agentNetworkConfig],
+    );
+  }
   const page = await context.newPage();
   const captured: { putBody?: any } = {};
   mockAccounts(page, account, captured);
@@ -108,6 +134,13 @@ function navItem(page: Page, text: string) {
   return page
     .getByTestId("left-navigation-item")
     .getByText(text, { exact: true });
+}
+
+// navItemContaining matches a sidebar entry by a substring of its label. Some
+// entries (Agent Network, Reverse Proxy) render a "Beta" badge inside the label
+// when the dashboard is not focused, so exact text matching would miss them.
+function navItemContaining(page: Page, text: string) {
+  return page.getByTestId("left-navigation-item").filter({ hasText: text });
 }
 
 // Regular dashboard sections that the focused view hides (gated on
@@ -179,6 +212,24 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
     }
   });
 
+  test("dashboard_features.agent_network makes the menu available without focusing", async ({
+    browser,
+  }) => {
+    const { page, close } = await openWithAccount(browser, {
+      dashboardFeaturesAgentNetwork: true,
+    });
+    try {
+      // The Agent Network menu is available (the label carries a "Beta" badge
+      // outside focused mode, so match on the label substring)...
+      await expect(navItemContaining(page, "Agent Network")).toBeVisible();
+      // ...but the dashboard is not focused: a regular section that focused
+      // mode hides (Reverse Proxy) is still present.
+      await expect(navItemContaining(page, "Reverse Proxy")).toBeVisible();
+    } finally {
+      await close();
+    }
+  });
+
   test("applies the focused view optimistically for a pending netbird.ai signup and persists it", async ({
     browser,
   }) => {
@@ -192,10 +243,14 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
       await expect(navItem(page, "Agent Network")).toBeVisible();
       await expect(navItem(page, "Networks")).toHaveCount(0);
 
-      // The signup source is persisted as the account setting.
+      // The signup source is persisted: focused view plus the Agent Network
+      // menu flag, so turning focus off later keeps access to Agent Network.
       await expect
         .poll(() => captured.putBody?.settings?.agent_network_only)
         .toBe(true);
+      expect(
+        captured.putBody?.settings?.dashboard_features?.agent_network,
+      ).toBe(true);
 
       // The focused view is retained after the write settles.
       await expect(navItem(page, "Networks")).toHaveCount(0);
@@ -203,6 +258,94 @@ test.describe.serial("Agent Network focused view @agent-network", () => {
       await close();
     }
   });
+
+  test("existing netbird.ai account gets dashboard_features, not the focused view", async ({
+    browser,
+  }) => {
+    // An existing account (signup form already submitted) with the netbird.ai
+    // source should have the Agent Network menu made available via
+    // dashboard_features, not the focused agent_network_only view.
+    const { page, captured, close } = await openWithAccount(
+      browser,
+      { signupFormPending: false },
+      { signupSource: true },
+    );
+    try {
+      await expect
+        .poll(
+          () => captured.putBody?.settings?.dashboard_features?.agent_network,
+        )
+        .toBe(true);
+      expect(captured.putBody?.settings?.agent_network_only).not.toBe(true);
+    } finally {
+      await close();
+    }
+  });
+
+  // Matrix of the two deployment flags (NETBIRD_AGENT_NETWORK_ONLY / _ENABLED,
+  // "off" = neither) crossed with the netbird.ai signup source, with no explicit
+  // account settings. The API defaults agent_network_only to false, so the
+  // deployment flags must still take effect. A present source implies a new
+  // signup (signup_form_pending), which focuses the dashboard optimistically
+  // regardless of the flags.
+  type Expectation = "hidden" | "available" | "focused";
+
+  const ENV_SIGNUP_MATRIX: {
+    env: AgentNetworkConfig;
+    signupSource: boolean;
+    expected: Expectation;
+  }[] = [
+    { env: "off", signupSource: false, expected: "hidden" },
+    { env: "off", signupSource: true, expected: "focused" },
+    { env: "enabled", signupSource: false, expected: "available" },
+    { env: "enabled", signupSource: true, expected: "focused" },
+    { env: "only", signupSource: false, expected: "focused" },
+    { env: "only", signupSource: true, expected: "focused" },
+  ];
+
+  async function expectAgentNetworkState(page: Page, expected: Expectation) {
+    // Peers always renders for an owner, confirming the sidebar loaded.
+    await expect(navItem(page, "Peers")).toBeVisible();
+
+    if (expected === "hidden") {
+      await expect(navItemContaining(page, "Agent Network")).toHaveCount(0);
+      // The regular dashboard stays intact.
+      await expect(navItemContaining(page, "Reverse Proxy")).toBeVisible();
+      return;
+    }
+
+    await expect(navItemContaining(page, "Agent Network")).toBeVisible();
+
+    if (expected === "focused") {
+      for (const label of FOCUS_HIDDEN_NAV) {
+        await expect(navItem(page, label)).toHaveCount(0);
+      }
+      return;
+    }
+
+    // available: the menu shows alongside the regular dashboard.
+    await expect(navItemContaining(page, "Reverse Proxy")).toBeVisible();
+  }
+
+  for (const { env, signupSource, expected } of ENV_SIGNUP_MATRIX) {
+    const sourceLabel = signupSource ? "netbird.ai" : "none";
+    test(`env=${env} signup_source=${sourceLabel} -> ${expected}`, async ({
+      browser,
+    }) => {
+      const { page, close } = await openWithAccount(
+        browser,
+        // A source present means a fresh netbird.ai signup (form still pending);
+        // otherwise a plain account with no agent-network settings.
+        { signupFormPending: signupSource },
+        { agentNetworkConfig: env, signupSource },
+      );
+      try {
+        await expectAgentNetworkState(page, expected);
+      } finally {
+        await close();
+      }
+    });
+  }
 
   test("exposes the focused-view toggle in client settings", async ({
     browser,

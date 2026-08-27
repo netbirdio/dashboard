@@ -45,7 +45,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
@@ -69,6 +69,7 @@ import {
 } from "@/modules/agent-network/agentAccessLogApi";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
+import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
 import AgentAccessLogExpandedRow from "@/modules/agent-network/AgentAccessLogExpandedRow";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
@@ -94,6 +95,7 @@ export default function AgentAccessLogTable({
   onGroupedChange,
 }: Readonly<Props>) {
   const { providers } = useAIProviders();
+  const { catalog } = useProviderCatalog();
   const { users } = useUsers();
   const { peers } = usePeers();
   const { groups } = useGroups();
@@ -178,10 +180,19 @@ export default function AgentAccessLogTable({
     return map;
   }, [providers]);
 
-  const resolveProvider = (entry: AIAccessLogEntry) =>
-    entry.resolvedProviderId
-      ? providerByConfigId.get(entry.resolvedProviderId)
-      : undefined;
+  // Catalog display names, for requests that carry a vendor but no resolved
+  // provider — so the column can say "OpenAI API" instead of "openai_api".
+  const catalogNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    catalog.forEach((p) => map.set(p.id, p.name));
+    return map;
+  }, [catalog]);
+
+  const providerDisplay = useCallback(
+    (entry: AIAccessLogEntry): ProviderDisplay =>
+      resolveProviderDisplay(entry, providerByConfigId, catalogNameById),
+    [providerByConfigId, catalogNameById],
+  );
 
   const columns = useMemo<ColumnDef<AIAccessLogEntry>[]>(
     () => [
@@ -222,14 +233,13 @@ export default function AgentAccessLogTable({
       },
       {
         id: "provider",
-        accessorFn: (row) => {
-          const resolved = resolveProvider(row);
-          // Include the resolved name, the raw vendor id, and the model so the
-          // search matches whether the operator types "OpenAI API" or "openai".
-          return `${resolved?.name ?? ""} ${row.providerId} ${
+        accessorFn: (row) =>
+          // Include the displayed name, the raw vendor label, and the model so
+          // the search matches whether the operator types "OpenAI API" or
+          // "openai".
+          `${providerDisplay(row).name} ${row.providerVendor ?? ""} ${
             row.model
-          }`.trim();
-        },
+          }`.trim(),
         header: ({ column }) => (
           <DataTableHeader column={column} name="provider" sorting={false}>
             Provider
@@ -238,7 +248,7 @@ export default function AgentAccessLogTable({
         cell: ({ row }) => (
           <ProviderCell
             entry={row.original}
-            resolved={resolveProvider(row.original)}
+            display={providerDisplay(row.original)}
           />
         ),
       },
@@ -261,13 +271,14 @@ export default function AgentAccessLogTable({
           </DataTableHeader>
         ),
         cell: ({ row }) => (
-          <span
-            className={
-              "text-nb-gray-300 text-[0.82rem] px-3 py-2 font-mono whitespace-nowrap"
-            }
-          >
-            ${row.original.costUsd.toFixed(4)}
-          </span>
+          <CostCell
+            costUsd={row.original.costUsd}
+            cacheCostUsd={row.original.cacheCostUsd}
+            inputCostUsd={row.original.inputCostUsd}
+            cachedInputCostUsd={row.original.cachedInputCostUsd}
+            cacheCreationCostUsd={row.original.cacheCreationCostUsd}
+            outputCostUsd={row.original.outputCostUsd}
+          />
         ),
       },
       {
@@ -315,7 +326,7 @@ export default function AgentAccessLogTable({
         enableGlobalFilter: false,
       },
     ],
-    [providerByConfigId, principalSearchById],
+    [providerDisplay, principalSearchById],
   );
 
   // Session-grouped columns. Filter ids (timestamp / user / group / provider /
@@ -370,7 +381,11 @@ export default function AgentAccessLogTable({
       },
       {
         id: "provider",
-        accessorFn: (row) => row.models.join(" "),
+        accessorFn: (row) =>
+          [
+            ...row.models,
+            ...row.entries.map((e) => providerDisplay(e).name),
+          ].join(" "),
         header: ({ column }) => (
           <DataTableHeader column={column} sorting={false}>
             Provider
@@ -379,7 +394,7 @@ export default function AgentAccessLogTable({
         cell: ({ row }) => (
           <SessionProviderCell
             session={row.original}
-            resolveProvider={resolveProvider}
+            providerDisplay={providerDisplay}
           />
         ),
       },
@@ -409,6 +424,8 @@ export default function AgentAccessLogTable({
               {
                 inputTokens: row.original.inputTokens,
                 outputTokens: row.original.outputTokens,
+                cachedInputTokens: row.original.cachedInputTokens,
+                cacheCreationTokens: row.original.cacheCreationTokens,
               } as AIAccessLogEntry
             }
           />
@@ -423,13 +440,14 @@ export default function AgentAccessLogTable({
           </DataTableHeader>
         ),
         cell: ({ row }) => (
-          <span
-            className={
-              "text-nb-gray-300 text-[0.82rem] px-3 py-2 font-mono whitespace-nowrap"
-            }
-          >
-            ${row.original.costUsd.toFixed(4)}
-          </span>
+          <CostCell
+            costUsd={row.original.costUsd}
+            cacheCostUsd={row.original.cacheCostUsd}
+            inputCostUsd={row.original.inputCostUsd}
+            cachedInputCostUsd={row.original.cachedInputCostUsd}
+            cacheCreationCostUsd={row.original.cacheCreationCostUsd}
+            outputCostUsd={row.original.outputCostUsd}
+          />
         ),
       },
       {
@@ -441,12 +459,13 @@ export default function AgentAccessLogTable({
           </DataTableHeader>
         ),
         // Same Reason cell as the flat view (deny reason, or the authorising
-        // policy link). A session is one policy decision in practice; surface a
-        // denied request when present, otherwise the first entry.
+        // policy link). Prefer an allowed request so a session that succeeded
+        // shows the authorising policy rather than an incidental deny reason;
+        // only surface a deny reason when every request was denied.
         cell: ({ row }) => {
           const entries = row.original.entries;
           const representative =
-            entries.find((e) => e.decision === "deny") ?? entries[0];
+            entries.find((e) => e.decision === "allow") ?? entries[0];
           return representative ? (
             <ReasonCell entry={representative} />
           ) : (
@@ -467,7 +486,7 @@ export default function AgentAccessLogTable({
         enableGlobalFilter: false,
       },
     ],
-    [providerByConfigId, principalSearchById],
+    [providerDisplay, principalSearchById],
   );
 
   const [sorting, setSorting] = useState<SortingState>([
@@ -965,95 +984,318 @@ function UserCell({ entry }: { entry: AIAccessLogEntry }) {
   );
 }
 
+// ProviderDisplay is what the Provider column shows for one request: the badge
+// id, the label, and whether the label names the provider that actually served
+// the request (resolved) or is only the API shape the client called.
+type ProviderDisplay = {
+  // Stable identity for deduping a session's providers: the config-row id when
+  // resolved, so two records of the same vendor stay distinct.
+  key: string;
+  logoId?: AIProviderId;
+  name: string;
+  resolved: boolean;
+  // Why the label isn't a configured provider — shown on hover. Unset when
+  // resolved.
+  hint?: string;
+};
+
+// resolveProviderDisplay maps a request to its Provider column content.
+//
+// A request the router matched carries resolved_provider_id — the config-row id
+// of the provider that served it, and the only unambiguous attribution (one
+// synth service fronts every provider, so serviceId can't disambiguate).
+//
+// A request rejected before routing carries no resolved id: a 403
+// (model_not_routable / no_authorised_provider) still has the parser's vendor,
+// so it's labelled with that vendor's catalog name; a 404 on an unrecognised
+// path has no vendor at all and reads as "Unknown". Neither may render the raw
+// catalog id, which used to surface in the column as "custom" or "openai_api".
+function resolveProviderDisplay(
+  entry: AIAccessLogEntry,
+  providerByConfigId: Map<string, AIProvider>,
+  catalogNameById: Map<string, string>,
+): ProviderDisplay {
+  const resolved = entry.resolvedProviderId
+    ? providerByConfigId.get(entry.resolvedProviderId)
+    : undefined;
+  if (resolved) {
+    return {
+      key: resolved.id,
+      logoId: resolved.providerId,
+      name: resolved.name,
+      resolved: true,
+    };
+  }
+
+  if (!entry.providerVendor) {
+    return {
+      key: "unknown",
+      name: "Unknown",
+      resolved: false,
+      hint: "Not attributed to a provider. The request was rejected before NetBird recognised it as an LLM call.",
+    };
+  }
+
+  // A vendor the dashboard has no catalog id for normalises to "custom" — itself
+  // a real catalog entry (the OpenAI-compatible catch-all). Resolving its name
+  // would label every unrecognised vendor with that one generic name, and keying
+  // on the id would collapse distinct vendors into a single item in the session
+  // column. Key and label those by the raw vendor label instead.
+  const unmappedVendor = entry.providerId === "custom";
+  return {
+    key: unmappedVendor
+      ? `vendor:${entry.providerVendor}`
+      : `vendor:${entry.providerId}`,
+    logoId: entry.providerId,
+    name: unmappedVendor
+      ? entry.providerVendor
+      : (catalogNameById.get(entry.providerId) ?? entry.providerVendor),
+    resolved: false,
+    hint: "Not attributed to a configured provider. This is the API shape the client called. Requests denied before routing never reach a provider.",
+  };
+}
+
 function ProviderCell({
   entry,
-  resolved,
+  display,
 }: {
   entry: AIAccessLogEntry;
-  resolved?: AIProvider;
+  display: ProviderDisplay;
 }) {
-  // Logo uses the catalog id of the resolved provider when available,
-  // falling back to the parser-level vendor (entry.providerId) for
-  // legacy entries the router didn't stamp.
-  const logoId = resolved?.providerId ?? entry.providerId;
-  const displayName = resolved?.name ?? entry.providerId;
+  const name = (
+    <span
+      className={cn(
+        "text-sm truncate",
+        display.resolved ? "text-nb-gray-200" : "text-nb-gray-400",
+      )}
+    >
+      {display.name}
+    </span>
+  );
   return (
     <div className={"flex items-center gap-2 py-2 px-3 whitespace-nowrap"}>
-      <AIProviderLogo providerId={logoId} size={20} />
+      <AIProviderLogo providerId={display.logoId} size={20} />
       <div className={"flex flex-col min-w-0"}>
-        <span className={"text-sm text-nb-gray-200 truncate"}>
-          {displayName}
-        </span>
+        {display.hint ? (
+          <FullTooltip content={display.hint}>{name}</FullTooltip>
+        ) : (
+          name
+        )}
         <code className={"text-[11px] text-nb-gray-400 font-mono truncate"}>
-          {entry.model}
+          {entry.model || "—"}
         </code>
       </div>
     </div>
   );
 }
 
+// TokenBreakdown is the hover content shared by the flat Tokens column and the
+// session's per-request rows: one line per token bucket plus a total. Buckets
+// default to 0 so it renders for denied requests that carry partial counts.
+function TokenBreakdown({ entry }: { entry: AIAccessLogEntry }) {
+  const cacheRead = entry.cachedInputTokens ?? 0;
+  const cacheWrite = entry.cacheCreationTokens ?? 0;
+  // Anthropic-shape cache buckets are additive to input tokens, so they count toward the total.
+  const total =
+    (entry.inputTokens ?? 0) +
+    (entry.outputTokens ?? 0) +
+    cacheRead +
+    cacheWrite;
+  return (
+    <div className={"text-xs flex flex-col gap-1"}>
+      <div className={"flex items-center gap-2 whitespace-nowrap"}>
+        <span className={"font-medium"}>
+          {(entry.inputTokens ?? 0).toLocaleString()}
+        </span>
+        <span className={"text-nb-gray-400"}>input</span>
+      </div>
+      <div className={"flex items-center gap-2 whitespace-nowrap"}>
+        <span className={"font-medium"}>
+          {(entry.outputTokens ?? 0).toLocaleString()}
+        </span>
+        <span className={"text-nb-gray-400"}>output</span>
+      </div>
+      <div className={"flex items-center gap-2 whitespace-nowrap"}>
+        <span className={"font-medium"}>{cacheRead.toLocaleString()}</span>
+        <span className={"text-nb-gray-400"}>cache read</span>
+      </div>
+      <div className={"flex items-center gap-2 whitespace-nowrap"}>
+        <span className={"font-medium"}>{cacheWrite.toLocaleString()}</span>
+        <span className={"text-nb-gray-400"}>cache write</span>
+      </div>
+      <div
+        className={
+          "border-t border-nb-gray-800 mt-0.5 pt-1 flex items-center gap-2 text-nb-gray-400 whitespace-nowrap"
+        }
+      >
+        <span className={"font-medium text-nb-gray-200"}>
+          {total.toLocaleString()}
+        </span>
+        <span>total</span>
+      </div>
+    </div>
+  );
+}
+
 function TokensCell({ entry }: { entry: AIAccessLogEntry }) {
+  // Cache-only requests carry no input/output but real cache read/write tokens,
+  // so weigh all four buckets — matching TokenBreakdown's total.
   if (
-    (entry.inputTokens === undefined || entry.inputTokens === 0) &&
-    (entry.outputTokens === undefined || entry.outputTokens === 0)
+    (entry.inputTokens ?? 0) === 0 &&
+    (entry.outputTokens ?? 0) === 0 &&
+    (entry.cachedInputTokens ?? 0) === 0 &&
+    (entry.cacheCreationTokens ?? 0) === 0
   ) {
     return <EmptyRow />;
   }
-  const total = (entry.inputTokens ?? 0) + (entry.outputTokens ?? 0);
   return (
-    <FullTooltip
-      content={
-        <div className={"text-xs flex flex-col gap-1"}>
-          <div className={"flex items-center gap-2 whitespace-nowrap"}>
-            <ArrowUpIcon size={12} className={"text-sky-400 shrink-0"} />
-            <span className={"font-medium"}>
-              {entry.inputTokens.toLocaleString()}
-            </span>
-            <span className={"text-nb-gray-400"}>input</span>
-          </div>
-          <div className={"flex items-center gap-2 whitespace-nowrap"}>
-            <ArrowDownIcon size={12} className={"text-netbird shrink-0"} />
-            <span className={"font-medium"}>
-              {entry.outputTokens.toLocaleString()}
-            </span>
-            <span className={"text-nb-gray-400"}>output</span>
-          </div>
-          <div
-            className={
-              "border-t border-nb-gray-800 mt-0.5 pt-1 flex items-center gap-2 text-nb-gray-400 whitespace-nowrap"
-            }
-          >
-            <span className={"w-3 shrink-0"} aria-hidden={true} />
-            <span className={"font-medium text-nb-gray-200"}>
-              {total.toLocaleString()}
-            </span>
-            <span>total</span>
-          </div>
-        </div>
-      }
-    >
+    <FullTooltip content={<TokenBreakdown entry={entry} />}>
       <div
         className={"flex flex-col text-xs gap-1 text-nb-gray-300 font-medium"}
       >
         <div className={"flex gap-2 items-center whitespace-nowrap"}>
           <ArrowUpIcon size={15} className={"text-sky-400"} />
           <span className={"sr-only"}>Input:</span>
-          {entry.inputTokens.toLocaleString()}
+          {(entry.inputTokens ?? 0).toLocaleString()}
         </div>
         <div className={"flex gap-2 items-center whitespace-nowrap"}>
           <ArrowDownIcon size={15} className={"text-netbird"} />
           <span className={"sr-only"}>Output:</span>
-          {entry.outputTokens.toLocaleString()}
+          {(entry.outputTokens ?? 0).toLocaleString()}
         </div>
       </div>
     </FullTooltip>
   );
 }
 
-// resolveProviderFn resolves a request's configured provider (by the router's
-// stamped resolved_provider_id) — shared by the session cells so they reuse the
-// flat row's provider resolution.
-type ResolveProviderFn = (entry: AIAccessLogEntry) => AIProvider | undefined;
+// CostRow is one line of the Cost hover breakdown: an amount plus its label.
+function CostRow({ amount, label }: { amount: number; label: string }) {
+  return (
+    <div className={"flex items-center gap-2 whitespace-nowrap"}>
+      <span className={"font-medium"}>${amount.toFixed(4)}</span>
+      <span className={"text-nb-gray-400 font-sans"}>{label}</span>
+    </div>
+  );
+}
+
+type CostFields = {
+  costUsd: number;
+  cacheCostUsd?: number;
+  inputCostUsd?: number;
+  cachedInputCostUsd?: number;
+  cacheCreationCostUsd?: number;
+  outputCostUsd?: number;
+};
+
+// hasCostBreakdown reports whether a request carries enough cost detail to be
+// worth a hover: a cache split or a per-bucket breakdown. Shared so the flat
+// Cost cell and the session rows attach the tooltip on the same condition.
+function hasCostBreakdown(f: CostFields): boolean {
+  const cache = f.cacheCostUsd ?? 0;
+  const perBucket = f.inputCostUsd !== undefined || f.outputCostUsd !== undefined;
+  return cache > 0 || perBucket;
+}
+
+// CostBreakdown is the hover content shared by the flat Cost column and the
+// session's per-request rows.
+//
+// Servers that send the per-bucket breakdown get one line per bucket the
+// provider bills separately (input / output / cache read / cache write). Older
+// servers send only the two aggregates, so the hover falls back to the coarse
+// "input + output" vs "cache" split derivable from those — the two shapes are
+// distinguished by whether inputCostUsd is defined, not by whether it is zero.
+function CostBreakdown({
+  costUsd,
+  cacheCostUsd,
+  inputCostUsd,
+  cachedInputCostUsd,
+  cacheCreationCostUsd,
+  outputCostUsd,
+}: CostFields) {
+  const cache = cacheCostUsd ?? 0;
+  const hasBreakdown =
+    inputCostUsd !== undefined || outputCostUsd !== undefined;
+  const cacheRead = cachedInputCostUsd ?? 0;
+  const cacheWrite = cacheCreationCostUsd ?? 0;
+  return (
+    <div className={"text-xs flex flex-col gap-1 font-mono"}>
+      {hasBreakdown ? (
+        <>
+          {/* All four buckets, including zeros: a zero cache-read line is
+              information (the request missed the cache), and a fixed set of
+              rows keeps the hover comparable between requests. */}
+          <CostRow amount={inputCostUsd ?? 0} label={"input"} />
+          <CostRow amount={outputCostUsd ?? 0} label={"output"} />
+          <CostRow amount={cacheRead} label={"cache read"} />
+          <CostRow amount={cacheWrite} label={"cache write"} />
+        </>
+      ) : (
+        <>
+          <CostRow amount={costUsd - cache} label={"input + output"} />
+          <CostRow amount={cache} label={"cache"} />
+        </>
+      )}
+      <div
+        className={
+          "border-t border-nb-gray-800 mt-0.5 pt-1 flex items-center gap-2 text-nb-gray-400 whitespace-nowrap"
+        }
+      >
+        <span className={"font-medium text-nb-gray-200"}>
+          ${costUsd.toFixed(4)}
+        </span>
+        <span className={"font-sans"}>total</span>
+      </div>
+    </div>
+  );
+}
+
+// CostCell renders the metered USD cost with a hover breakdown of the buckets
+// it was billed from (see CostBreakdown).
+function CostCell(fields: CostFields) {
+  const {
+    costUsd,
+    cacheCostUsd,
+    inputCostUsd,
+    cachedInputCostUsd,
+    cacheCreationCostUsd,
+    outputCostUsd,
+  } = fields;
+  const cache = cacheCostUsd ?? 0;
+
+  // Nothing was metered: the request never reached a provider (denied before
+  // routing), or ran on a model the proxy deliberately doesn't price. A dash
+  // reads as "not metered" — matching TokensCell — where "$0.0000" plus a
+  // tooltip of zeros would imply a priced request that happened to be free.
+  const buckets = [
+    inputCostUsd ?? 0,
+    cachedInputCostUsd ?? 0,
+    cacheCreationCostUsd ?? 0,
+    outputCostUsd ?? 0,
+  ];
+  if (costUsd === 0 && cache === 0 && buckets.every((b) => b === 0)) {
+    return <EmptyRow />;
+  }
+
+  const display = (
+    <span
+      className={
+        "text-nb-gray-300 text-[0.82rem] px-3 py-2 font-mono whitespace-nowrap"
+      }
+    >
+      ${costUsd.toFixed(4)}
+    </span>
+  );
+  // Nothing to break out: no cache spend and no per-bucket split to show.
+  if (!hasCostBreakdown(fields)) return display;
+
+  return (
+    <FullTooltip content={<CostBreakdown {...fields} />}>{display}</FullTooltip>
+  );
+}
+
+// ProviderDisplayFn maps a request to its Provider column content — shared by
+// the session cells so they label providers exactly like the flat rows.
+type ProviderDisplayFn = (entry: AIAccessLogEntry) => ProviderDisplay;
 
 // SessionActivityCell shows the session's last-activity date and its first→last
 // time-of-day span. The elapsed duration moves to the Requests column.
@@ -1078,33 +1320,55 @@ function SessionActivityCell({ session }: { session: AIAccessLogSession }) {
 // session's entries, resolved the same way as the flat Provider column.
 function SessionProviderCell({
   session,
-  resolveProvider,
+  providerDisplay,
 }: {
   session: AIAccessLogSession;
-  resolveProvider: ResolveProviderFn;
+  providerDisplay: ProviderDisplayFn;
 }) {
   const items = useMemo(() => {
-    const seen = new Map<string, { logoId: AIProviderId; name: string }>();
-    session.entries.forEach((e) => {
-      const resolved = resolveProvider(e);
-      const logoId = resolved?.providerId ?? e.providerId;
-      const name = resolved?.name ?? e.providerId;
-      if (!seen.has(logoId)) seen.set(logoId, { logoId, name });
-    });
-    return Array.from(seen.values());
-  }, [session.entries, resolveProvider]);
+    const collect = (predicate: (d: ProviderDisplay) => boolean) => {
+      const seen = new Map<string, ProviderDisplay>();
+      session.entries.forEach((e) => {
+        const display = providerDisplay(e);
+        if (!predicate(display) || seen.has(display.key)) return;
+        seen.set(display.key, display);
+      });
+      return Array.from(seen.values());
+    };
+    // Only count providers a request was actually routed to. Sessions commonly
+    // open with a request that never reached one (an unroutable model, or a
+    // probe on an unknown path the client then retried), and since entries run
+    // oldest-first that unattributed request would otherwise become the
+    // session's primary provider and inflate the "+N" count.
+    const resolved = collect((d) => d.resolved);
+    // Nothing was routed anywhere — a wholly denied session. Fall back to the
+    // vendor labels so the row still says what was attempted.
+    return resolved.length > 0 ? resolved : collect(() => true);
+  }, [session.entries, providerDisplay]);
 
   if (items.length === 0) return <EmptyRow />;
   const [primary] = items;
   const extra = items.length - 1;
+  const name = (
+    <span
+      className={cn(
+        "text-sm truncate",
+        primary.resolved ? "text-nb-gray-200" : "text-nb-gray-400",
+      )}
+    >
+      {primary.name}
+      {extra > 0 ? ` +${extra}` : ""}
+    </span>
+  );
   return (
     <div className={"flex items-center gap-2 py-2 px-3 whitespace-nowrap"}>
       <AIProviderLogo providerId={primary.logoId} size={20} />
       <div className={"flex flex-col min-w-0"}>
-        <span className={"text-sm text-nb-gray-200 truncate"}>
-          {primary.name}
-          {extra > 0 ? ` +${extra}` : ""}
-        </span>
+        {primary.hint ? (
+          <FullTooltip content={primary.hint}>{name}</FullTooltip>
+        ) : (
+          name
+        )}
         {session.models.length > 1 ? (
           <FullTooltip
             content={
@@ -1204,7 +1468,13 @@ function SessionEntriesRow({ session }: { session: AIAccessLogSession }) {
       >
         {[...session.entries].reverse().map((entry) => {
           const isOpen = open.includes(entry.id);
-          const total = (entry.inputTokens ?? 0) + (entry.outputTokens ?? 0);
+          // Sum all four buckets so cache-only requests count and the figure
+          // matches TokenBreakdown's total.
+          const total =
+            (entry.inputTokens ?? 0) +
+            (entry.outputTokens ?? 0) +
+            (entry.cachedInputTokens ?? 0) +
+            (entry.cacheCreationTokens ?? 0);
           const isError = entry.decision === "deny" || entry.status >= 400;
           return (
             <div key={entry.id}>
@@ -1277,20 +1547,30 @@ function SessionEntriesRow({ session }: { session: AIAccessLogSession }) {
                 >
                   {entry.model || "—"}
                 </code>
-                <span
-                  className={
-                    "text-xs text-nb-gray-400 font-mono whitespace-nowrap tabular-nums w-[110px] text-right shrink-0"
-                  }
+                <FullTooltip
+                  disabled={total === 0}
+                  content={<TokenBreakdown entry={entry} />}
                 >
-                  {total.toLocaleString()} tokens
-                </span>
-                <span
-                  className={
-                    "text-xs text-nb-gray-400 font-mono whitespace-nowrap tabular-nums w-[64px] text-right shrink-0"
-                  }
+                  <span
+                    className={
+                      "text-xs text-nb-gray-400 font-mono whitespace-nowrap tabular-nums w-[110px] text-right shrink-0"
+                    }
+                  >
+                    {total.toLocaleString()} tokens
+                  </span>
+                </FullTooltip>
+                <FullTooltip
+                  disabled={!hasCostBreakdown(entry)}
+                  content={<CostBreakdown {...entry} />}
                 >
-                  ${entry.costUsd.toFixed(4)}
-                </span>
+                  <span
+                    className={
+                      "text-xs text-nb-gray-400 font-mono whitespace-nowrap tabular-nums w-[64px] text-right shrink-0"
+                    }
+                  >
+                    ${entry.costUsd.toFixed(4)}
+                  </span>
+                </FullTooltip>
               </button>
               {isOpen && (
                 <div className={"border-t border-nb-gray-800/70"}>

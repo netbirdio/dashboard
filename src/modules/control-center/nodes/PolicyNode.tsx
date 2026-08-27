@@ -1,7 +1,11 @@
-import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import { Handle, type Node, Position } from "@xyflow/react";
+import { Handle, type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
+import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
+import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
 import { getPolicyProtocolAndPortText } from "@/modules/control-center/utils/helpers";
 import { Policy } from "@/interfaces/Policy";
 
@@ -12,16 +16,26 @@ type PolicyNode = Node<
   "policyNode"
 >;
 
-export const PolicyNode = ({ data }: PolicyNode) => {
+export const PolicyNode = ({ data, id }: PolicyNode) => {
   const rule = data.policy.rules?.[0];
   const label = getPolicyProtocolAndPortText(data.policy);
   const isActive = rule?.enabled;
+  const { isDraft } = useDraftMode();
+  const isDropTarget = useConnection(
+    (c) => c.inProgress && c.fromNode?.id !== id,
+  );
+
+  const showHalo = useIsContextMenuTarget(id);
 
   return (
     <div
       className={cn(
-        "relative bg-nb-gray-940 hover:bg-nb-gray-930 cursor-pointer border border-nb-gray-800 rounded-full flex justify-between overflow-hidden",
+        "relative group/node bg-nb-gray-940 hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer border border-nb-gray-850 rounded-full flex justify-between transition-all",
         !isActive && "opacity-60",
+        isDraft &&
+          isDropTarget &&
+          "hover:bg-nb-gray-930 hover:ring-2 ring-white",
+        showHalo && "ring-2 ring-sky-500",
       )}
     >
       <div className={"flex items-center justify-center"}>
@@ -39,6 +53,9 @@ export const PolicyNode = ({ data }: PolicyNode) => {
           }
         >
           <div className={"truncate max-w-[200px]"}>{rule?.name}</div>
+          {String(data.policy.id ?? "").startsWith("new-") && (
+            <SmallBadge className={"ml-1.5"} />
+          )}
         </div>
       </div>
       <div
@@ -54,13 +71,25 @@ export const PolicyNode = ({ data }: PolicyNode) => {
         position={Position.Right}
         id={"sr"}
         className={"opacity-0"}
+        isConnectable={false}
       />
       <Handle
         type="target"
         position={Position.Left}
         id={"tl"}
         className={"opacity-0"}
+        isConnectable={false}
       />
+
+      {/* Dragging right adds the target group as a destination, left as a
+          source. */}
+      {isDraft && (
+        <>
+          <ConnectHandle type={"source"} position={Position.Left} />
+          <ConnectHandle type={"source"} position={Position.Right} />
+          <FullAreaTargetHandle isConnectable={isDropTarget} />
+        </>
+      )}
     </div>
   );
 };

@@ -6,6 +6,8 @@ import useFetchApi from "@utils/api";
 import { Loader2Icon } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Peer } from "@/interfaces/Peer";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { RDPCertificateModal } from "@/modules/remote-access/rdp/RDPCertificateModal";
 import { RDPCredentialsModal } from "@/modules/remote-access/rdp/RDPCredentialsModal";
 import { useRDPQueryParams } from "@/modules/remote-access/rdp/useRDPQueryParams";
@@ -132,6 +134,8 @@ function RDPSession({ peer, ipVersion }: Props) {
         domain: credentials.domain,
         width: window.innerWidth,
         height: window.innerHeight,
+        dynamicResize:
+          getOperatingSystem(peer?.os) === OperatingSystem.WINDOWS,
       });
       if (result === RDPStatus.CONNECTED) {
         connected.current = true;
@@ -176,7 +180,18 @@ function RDPSession({ peer, ipVersion }: Props) {
     if (client.error) {
       sendErrorNotification("NetBird Client Error", client.error);
     }
-  }, [rdp, client]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rdp.error, client.error]);
+
+  /**
+   * Return to the credentials screen when an established session drops with an
+   * error, so the user can see what happened and retry.
+   */
+  useEffect(() => {
+    if (connected.current && rdp.error) {
+      reset();
+    }
+  }, [rdp.error, reset]);
 
   /**
    * Close credentials modal when RDP is connected

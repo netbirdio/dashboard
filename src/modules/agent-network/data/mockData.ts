@@ -12,6 +12,7 @@ export type AIProviderId =
   | "bedrock_api"
   | "vertex_ai_api"
   | "mistral_api"
+  | "kimi_api"
   | "litellm_proxy"
   | "portkey"
   | "bifrost"
@@ -42,6 +43,17 @@ export type ProviderModel = {
   id: string;
   inputPer1k: number;
   outputPer1k: number;
+  // Optional prompt-cache rates (USD per 1k tokens). undefined means
+  // "inherit NetBird's default rate for this model" — the backend folds
+  // the default in at synthesis time; an explicit 0 means "no discount,
+  // bill this cache bucket at the input rate". Keep undefined distinct
+  // from 0 when round-tripping.
+  // OpenAI shape: cached prompt tokens (a subset of input tokens).
+  cachedInputPer1k?: number;
+  // Anthropic shape: the two additive cache buckets (read ≈0.1x input,
+  // creation ≈1.25x input).
+  cacheReadPer1k?: number;
+  cacheCreationPer1k?: number;
 };
 
 export type AIProvider = {
@@ -64,6 +76,9 @@ export type AIProvider = {
   // Skip TLS certificate verification on upstream requests — for custom
   // providers using self-signed certs. Off by default.
   skipTlsVerification?: boolean;
+  // Disable identity metadata injection (caller user + authorizing group) on
+  // upstream requests, e.g. AWS Bedrock cost-allocation. Off by default.
+  metadataDisabled?: boolean;
   status: AIProviderStatus;
   models: ProviderModel[];
   allowedGroups: string[];
@@ -154,6 +169,11 @@ export type AIAccessLogEntry = {
   id: string;
   serviceId: string;
   providerId: AIProviderId;
+  // Raw vendor label the request parser stamped ("openai", "anthropic"),
+  // before it was normalised into a catalog id. Empty when the request never
+  // got far enough to be recognised as an LLM call — providerId collapses that
+  // case into "custom", so only this field can tell the two apart.
+  providerVendor?: string;
   // Config-row id of the provider the router actually selected
   // (llm.resolved_provider_id metadata). Empty for legacy entries
   // and non-agent-network requests where the router didn't run.
@@ -171,7 +191,17 @@ export type AIAccessLogEntry = {
   model: string;
   inputTokens: number;
   outputTokens: number;
+  // Prompt-cache buckets: read/write token counts and the cache share of costUsd. Optional — absent on older management servers.
+  cachedInputTokens?: number;
+  cacheCreationTokens?: number;
   costUsd: number;
+  cacheCostUsd?: number;
+  // Per-bucket cost breakdown. Undefined (not 0) when the server predates the
+  // breakdown, so the UI can tell "no split available" from "split is zero".
+  inputCostUsd?: number;
+  cachedInputCostUsd?: number;
+  cacheCreationCostUsd?: number;
+  outputCostUsd?: number;
   durationMs: number;
   decision: AIAccessLogDecision;
   denyReason?: string;
@@ -209,7 +239,16 @@ export type AIAccessLogSession = {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
+  cachedInputTokens?: number;
+  cacheCreationTokens?: number;
   costUsd: number;
+  cacheCostUsd?: number;
+  // Per-bucket cost breakdown. Undefined (not 0) when the server predates the
+  // breakdown, so the UI can tell "no split available" from "split is zero".
+  inputCostUsd?: number;
+  cachedInputCostUsd?: number;
+  cacheCreationCostUsd?: number;
+  outputCostUsd?: number;
   providers: string[]; // distinct vendor ids seen in the session
   models: string[]; // distinct models seen in the session
   decision: AIAccessLogDecision;

@@ -1,83 +1,113 @@
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import { Handle, type Node, Position } from "@xyflow/react";
+import { type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
-import { useAnySourceGroupEnabled } from "@/modules/control-center/utils/helpers";
+import {
+  useDestinationGroup,
+  useIsContextMenuTarget,
+} from "@/modules/control-center/contexts/ControlCenterContext";
+import {
+  getGroupCountLabel,
+  useAnySourceGroupEnabled,
+} from "@/modules/control-center/utils/helpers";
+import { AllHandles } from "@/modules/control-center/handles/AllHandles";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 
 type GroupNodeProps = Node<
   {
     group: Group;
     enabled?: boolean;
     hoverable?: boolean;
+    dropTarget?: boolean;
+    showHandles?: boolean;
     onClick?: (g: Group) => void;
   },
   "groupNode"
 >;
 
 export const GroupNode = ({ data, id }: GroupNodeProps) => {
-  const { enabled, group, hoverable = true, onClick } = data;
-  const sourceGroupEnabled = useAnySourceGroupEnabled(id);
+  const {
+    enabled,
+    group,
+    hoverable = true,
+    dropTarget,
+    showHandles = false,
+    onClick,
+  } = data;
+  const sourceGroupEnabled = useAnySourceGroupEnabled(
+    id,
+    enabled !== undefined,
+  );
   const isEnabled = enabled ?? sourceGroupEnabled;
+  // Selector form: re-renders only when the boolean flips, not per pointer move.
+  const isTarget = useConnection(
+    (c) => c.inProgress && c.fromNode.id !== id,
+  );
+  const isNew = !group?.id;
+  const isContextMenuActive = useIsContextMenuTarget(id);
+  const { selectedDestinationGroup } = useDestinationGroup();
+  const isPanelActive =
+    selectedDestinationGroup !== "" &&
+    (selectedDestinationGroup === group?.id || selectedDestinationGroup === id);
+  const showHalo = isPanelActive || isContextMenuActive;
 
-  const countLabel = useMemo(() => {
-    const peerCount = group?.peers_count || 0;
-    const resourceCount = group?.resources_count || 0;
-    if (resourceCount === 0) {
-      return `${peerCount} Peer(s)`;
-    }
-    if (peerCount === 0) {
-      return `${resourceCount} Resource(s)`;
-    }
-    return `${peerCount} Peer(s), ${resourceCount} Resource(s)`;
-  }, [group?.peers_count, group?.resources_count]);
+  const countLabel = useMemo(() => getGroupCountLabel(group), [group]);
 
   return (
     <div
       className={cn(
-        "cc-group-node bg-nb-gray-940  border border-nb-gray-800 rounded-lg overflow-hidden transition-all",
+        "relative cc-group-node bg-nb-gray-940 border rounded-lg transition-all group/node",
+        dropTarget
+          ? "border-white ring-2 ring-white/20 bg-nb-gray-930"
+          : "border-nb-gray-850",
         !isEnabled && "opacity-60",
-        hoverable && "hover:bg-nb-gray-930 cursor-pointer",
+        hoverable &&
+          "hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer",
+        isTarget && "hover:bg-nb-gray-930 hover:ring-2 ring-white",
+        showHalo && "ring-2 ring-sky-500",
       )}
       onClick={() => onClick?.(group)}
     >
       <div
         className={
-          "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-3 pr-5 py-3 font-normal"
+          "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-4 pr-7 py-3.5 font-normal"
         }
       >
         <div className={"flex items-center gap-3 font-normal text-sm"}>
           <div
-            className={
-              "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0"
-            }
+            className={cn(
+              "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 transition-all",
+              hoverable && "group-hover/node:bg-nb-gray-700",
+            )}
           >
             <GroupBadgeIcon id={group?.id} issued={group?.issued} size={14} />
           </div>
           <div>
-            <div className={" text-nb-gray-200 font-normal whitespace-nowrap"}>
+            <div
+              className={
+                "flex items-center gap-2 text-nb-gray-200 font-normal whitespace-nowrap"
+              }
+            >
               {group.name}
+              {isNew && <SmallBadge />}
             </div>
-            <div className={"text-nb-gray-400 whitespace-nowrap text-xs"}>
+            <div className={"text-nb-gray-400 whitespace-nowrap text-sm"}>
               {countLabel}
             </div>
           </div>
         </div>
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        id={"sr"}
-        className={"opacity-0"}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id={"tl"}
-        className={"opacity-0"}
-      />
+      <AllHandles />
+      {showHandles && (
+        <>
+          <ConnectHandle type={"source"} position={Position.Left} />
+          <ConnectHandle type={"source"} position={Position.Right} />
+        </>
+      )}
     </div>
   );
 };

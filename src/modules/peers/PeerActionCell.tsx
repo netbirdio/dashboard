@@ -273,7 +273,7 @@ export default function PeerActionCell() {
               >
                 <IconInfoCircle size={14} />
                 <span>
-                  Expiration is disabled for all peers added with an setup-key.
+                  Expiration is disabled for all peers added with a setup-key.
                 </span>
               </div>
             }
