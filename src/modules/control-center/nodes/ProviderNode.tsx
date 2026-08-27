@@ -4,11 +4,7 @@ import * as React from "react";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { AIProviderId } from "@/modules/agent-network/data/mockData";
 
-// AgentProviderNodeData is the shape of payload each provider node in
-// the Control Center graph carries. We don't depend on the full
-// Provider object from /agent-network/providers because the graph only
-// needs identity + display, and a thin payload keeps the React-Flow
-// node JSON cheap to clone.
+// Kept thin so the React Flow node JSON stays cheap to clone.
 export type AgentProviderNodeData = {
   id: string;
   providerId: AIProviderId;
@@ -19,10 +15,6 @@ export type AgentProviderNodeData = {
 
 type ProviderNodeProps = Node<AgentProviderNodeData, "providerNode">;
 
-// ProviderNode renders an agent-network provider in the Control Center
-// graph. Visually it follows the GroupNode template (avatar square +
-// title + subtitle) so providers feel like siblings to groups and
-// resources in the destination column of a Group view.
 export const ProviderNode = ({ data }: ProviderNodeProps) => {
   const enabled = data.enabled ?? true;
   return (
