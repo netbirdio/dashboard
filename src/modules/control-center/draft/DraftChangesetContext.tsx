@@ -9,27 +9,41 @@ import React, {
   useState,
 } from "react";
 import { Group } from "@/interfaces/Group";
+import { Permission } from "@/interfaces/Permission";
 import { Policy } from "@/interfaces/Policy";
-import { isDraftPeerId } from "@/modules/control-center/utils/helpers";
+import {
+  deletedGroupRefs,
+  detachChangesFromDraftNetwork,
+  isEmptiedPolicy,
+  isNoopGroupUpdate,
+  isPendingPolicyWrite,
+  mergeGroupDeletions,
+  pendingGroupDeletions,
+  reduceRemoveChange,
+} from "@/modules/control-center/utils/change-cascade";
+import {
+  draftUid,
+  isDraftPeerId,
+} from "@/modules/control-center/utils/helpers";
 
-// Every draft action is recorded as a change describing the API call needed on
-// deploy. Nothing hits the API until the changeset is deployed. Changes are
-// coalesced per entity: renaming a group twice stays one change, renaming or
-// filling a not-yet-created group folds into its create-group change, etc.
+export {
+  isEmptiedPolicy,
+  isPendingPolicyWrite,
+  mergeGroupDeletions,
+} from "@/modules/control-center/utils/change-cascade";
+
+// Nothing hits the API until the changeset is deployed; changes coalesce per entity.
 
 export interface CreateGroupChange {
   id: string;
   type: "create-group";
-  // Canvas node id of the new group (e.g. group-new-<uuid>); the group has no
-  // API id until deploy.
+  // Canvas node id; the group has no API id until deploy.
   clientId: string;
   name: string;
   peerIds: string[];
   resourceIds: string[];
 }
 
-// One CRUD update per existing group: carries the final name (rename) and the
-// members added in the draft — deployed as a single PUT.
 export interface UpdateGroupChange {
   id: string;
   type: "update-group";
@@ -38,8 +52,7 @@ export interface UpdateGroupChange {
   originalName: string;
   peerIds: string[];
   resourceIds: string[];
-  // EXISTING members removed in the draft (draft-added members that are
-  // removed again just leave the add lists above).
+  // EXISTING members only; draft-added members just leave the add lists above.
   removedPeerIds?: string[];
   removedResourceIds?: string[];
 }
@@ -57,22 +70,28 @@ export interface CreatePolicyChange {
   // Pseudo policy id used on canvas (e.g. new-<uuid> → node policy-new-<uuid>).
   clientId: string;
   name: string;
-  // Policy data from the modal — rules reference groups as objects; new groups
-  // have no id and are resolved by name on deploy.
+  // Rules reference groups as objects; new groups are resolved by name on deploy.
   policy: Policy;
+  groupDeletion?: PolicyGroupDeletion;
 }
 
-// One CRUD update per existing policy: the full policy data as it should be
-// after deploy (groups as objects, new ones without ids — resolved by name).
-// `origin` only affects the label: "toggle" reads Enable/Disable, "edit" reads
-// Update.
+// Set when a group deletion had to leave this policy. `basePolicy` is the policy
+// BEFORE the strip; a hand edit rebases the tag (see mergeGroupDeletions).
+export type PolicyGroupDeletion = {
+  groupIds: string[];
+  basePolicy: Policy;
+  handEdited?: boolean;
+};
+
 export interface UpdatePolicyChange {
   id: string;
   type: "update-policy";
   policyId: string;
   name: string;
   policy: Policy;
+  // Only affects the label: toggle reads Enable/Disable, edit Update.
   origin: "toggle" | "edit";
+  groupDeletion?: PolicyGroupDeletion;
 }
 
 export interface DeletePolicyChange {
@@ -80,9 +99,9 @@ export interface DeletePolicyChange {
   type: "delete-policy";
   policyId: string;
   name: string;
+  groupDeletion?: PolicyGroupDeletion;
 }
 
-// Networks only need a name — deployable the moment they hit the canvas.
 export interface CreateNetworkChange {
   id: string;
   type: "create-network";
@@ -92,10 +111,7 @@ export interface CreateNetworkChange {
   description?: string;
 }
 
-// Edits to an EXISTING (API) network — name / description. Keyed by the real
-// network id; deploy PUTs the full network. Draft networks fold their edits
-// into the create change (updateDraftNetwork) instead. Reverting every field
-// back to the live values drops the change.
+// Edits to an EXISTING (API) network; draft networks fold edits into their create.
 export interface UpdateNetworkChange {
   id: string;
   type: "update-network";
@@ -106,9 +122,7 @@ export interface UpdateNetworkChange {
   originalDescription?: string;
 }
 
-// Draft resources are recorded only once complete (name + address + network)
-// — the editor saves all required fields, incomplete resources are
-// canvas-only.
+// An incomplete draft resource stays canvas-only.
 export interface CreateResourceChange {
   id: string;
   type: "create-resource";
@@ -116,14 +130,13 @@ export interface CreateResourceChange {
   name: string;
   description?: string;
   address: string;
-  // Parent network: API id, or clientId of a draft network (resolved on
-  // deploy). networkName is display-only (labels), kept in sync on rename.
+  // Parent network: API id, or a draft network's clientId (resolved on deploy).
   networkId?: string;
   networkClientId?: string;
   networkName: string;
-  // API group ids or draft-group names (resolved like policy groups).
+  // API group ids or draft-group names, resolved on deploy.
   groupIds: string[];
-  // Canvas enabled state — defaults to enabled when absent.
+  // Defaults to enabled when absent.
   enabled?: boolean;
 }
 
@@ -141,21 +154,15 @@ export interface CreateRouterChange {
   // Exactly one of the two. groupId may be a draft-group name.
   peerId?: string;
   groupId?: string;
-  // Display-only for labels.
   peerName?: string;
   groupName?: string;
-  // Advanced settings from the routing-peer modal; deploy falls back to the
-  // live-modal defaults (9999 / true / true) when absent.
+  // Deploy falls back to the live-modal defaults (9999 / true / true).
   metric?: number;
   masquerade?: boolean;
   enabled?: boolean;
 }
 
-// Edits to an EXISTING (API) router — its peer/group and advanced settings.
-// Keyed by the real router id (plus its network); deploy PUTs the full router.
-// Draft-created routers fold their edits by dropping+re-adding the create
-// change instead. Same peer/group model as create-router (exactly one of
-// peerId/groupId; groupId may be a draft-group name resolved on deploy).
+// Edits to an EXISTING (API) router; draft routers re-record their create instead.
 export interface UpdateRouterChange {
   id: string;
   type: "update-router";
@@ -171,8 +178,7 @@ export interface UpdateRouterChange {
   enabled?: boolean;
 }
 
-// Edits to an EXISTING (API) resource — enable/disable and (future) field
-// edits. Keyed by the real resource id; deploy PUTs the full resource.
+// Edits to an EXISTING (API) resource; deploy PUTs the full resource.
 export interface UpdateResourceChange {
   id: string;
   type: "update-resource";
@@ -186,7 +192,6 @@ export interface UpdateResourceChange {
   groupIds: string[];
 }
 
-// Deletes an EXISTING (API) resource.
 export interface DeleteResourceChange {
   id: string;
   type: "delete-resource";
@@ -196,10 +201,6 @@ export interface DeleteResourceChange {
   networkName: string;
 }
 
-// Deleting a whole EXISTING network (real API id). Draft networks are never
-// deleted — they're removed from the canvas (untrackNetwork drops their
-// create). The API cascade removes the network's resources and routers
-// server-side, so we don't emit per-resource/router deletes for them.
 export interface DeleteNetworkChange {
   id: string;
   type: "delete-network";
@@ -207,11 +208,6 @@ export interface DeleteNetworkChange {
   name: string;
 }
 
-// A placeholder peer on the canvas (user device / server / agent). Not an
-// API call — the peer comes into existence by INSTALLING it (or, for a user
-// device, selecting an existing peer). Listed in Review & Deploy as a
-// pending action so drafts that depend on it aren't silently incomplete;
-// resolved (removed) by the placeholder upgrade once the real peer exists.
 export interface InstallPeerChange {
   id: string;
   type: "install-peer";
@@ -219,9 +215,9 @@ export interface InstallPeerChange {
   clientId: string;
   name: string;
   kind: "user-device" | "server" | "agent";
-  // Set once a setup key is generated for it: the peer is now "waiting" to
-  // register (the canvas polls /peers). Flips the issue badge to "Waiting".
+  // Set once a setup key is generated: the peer is waiting to register.
   setupKeyId?: string;
+  installedPeerId?: string;
 }
 
 export type DraftChange =
@@ -241,8 +237,7 @@ export type DraftChange =
   | DeleteNetworkChange
   | InstallPeerChange;
 
-// Git-style classification for diff coloring (+ green, ~ orange, − red,
-// install = pending action, blue).
+// Git-style classification for diff coloring.
 export type ChangeKind = "add" | "update" | "remove" | "install";
 
 export const getChangeKind = (change: DraftChange): ChangeKind => {
@@ -300,9 +295,7 @@ export const getChangeApiCall = (change: DraftChange): string => {
     case "delete-network":
       return `DELETE /networks/${change.networkId}`;
     case "install-peer":
-      // Not a DEPLOY call — the setup key (and its bound group) are created
-      // when the user installs (Generate Key), not on deploy. Shown as the
-      // request that fires then.
+      // Not a deploy call: the setup key is created when the user installs.
       return "POST /setup-keys";
   }
 };
@@ -354,9 +347,8 @@ export const getChangeLabel = (
           }”`,
         };
       }
-      // fall through to the create/update detail below
     }
-    // eslint-disable-next-line no-fallthrough
+     
     case "create-policy": {
       const rule = change.policy.rules?.[0];
       const names = (groups?: Group[] | string[] | null) =>
@@ -395,7 +387,6 @@ export const getChangeLabel = (
     }
     case "create-resource":
       return {
-        // No network yet → drop the "in …" clause (it's flagged as an issue).
         title: change.networkName
           ? `Create resource “${change.name}” in “${change.networkName}”`
           : `Create resource “${change.name}”`,
@@ -429,6 +420,12 @@ export const getChangeLabel = (
         detail: "its resources and routing peers are removed too",
       };
     case "install-peer":
+      if (change.installedPeerId) {
+        return {
+          title: `Peer “${change.name}” installed`,
+          detail: "it joined your network — nothing left to deploy for it",
+        };
+      }
       return {
         title: `Install peer “${change.name}”`,
         detail:
@@ -439,31 +436,40 @@ export const getChangeLabel = (
   }
 };
 
-// A BLOCKING issue on a change: unlike a warning, an issue keeps the change in
-// the set but prevents deploying until it's resolved. Two today:
-// - a draft resource created without a network — it can't be POSTed until it's
-//   assigned to one.
-// - a placeholder peer (server/agent/user device) that hasn't been installed
-//   yet — the real peer must exist before the changes referencing it deploy.
-//   (A policy referencing such a peer is listed as an ordinary change; that
-//   peer's own install-peer issue is what blocks the deploy.)
+// A blocking issue keeps the change in the set but prevents deploying.
 export type ChangeIssue = {
   label: string;
   message: string;
-  // A non-blocking "in progress" issue (peer waiting to register): the badge
-  // shows a spinner instead of the alert triangle.
+  // Non-blocking "in progress" issue: the badge shows a spinner.
   waiting?: boolean;
+  // Set when Review & Deploy can open a fix for it; an issue about ANOTHER change
+  // has no fix on this row.
+  resolvable?: boolean;
 };
 
+// `changes` is not optional: several issues are about how this change sits
+// against the REST of the changeset.
 export const getChangeIssue = (
   change: DraftChange,
-  /**
-   * The rest of the changeset, when the caller has it. Only used to avoid saying
-   * the same thing twice: a router waiting on a placeholder is explained by that
-   * peer's own install-peer step, which Review & Deploy already lists first.
-   */
-  changes?: DraftChange[],
+  changes: DraftChange[],
 ): ChangeIssue | undefined => {
+  // Stripped bare by a group deletion; blocked here so the deploy never
+  // refuses it mid-run.
+  if (change.type === "create-policy" && isEmptiedPolicy(change.policy)) {
+    return {
+      label: "Incomplete",
+      message: `Policy “${change.name}” lost a side to a group deletion. Give it a source and a destination, or remove it.`,
+      resolvable: true,
+    };
+  }
+  // A canvas removal can leave a pending edit's policy one-sided.
+  if (change.type === "update-policy" && isEmptiedPolicy(change.policy)) {
+    return {
+      label: "Incomplete",
+      message: `Policy “${change.name}” is missing a source or a destination. Give it both, or remove this change to revert to the live policy.`,
+      resolvable: true,
+    };
+  }
   if (
     change.type === "create-resource" &&
     !change.networkId &&
@@ -472,6 +478,30 @@ export const getChangeIssue = (
     return {
       label: "No Network",
       message: `Resource “${change.name}” has no network assigned. Assign it to a network before deploying.`,
+      resolvable: true,
+    };
+  }
+  // A group marked for deletion that this resource or router still names: both
+  // deploy BEFORE the delete, and a landed reference fails the DELETE for good.
+  const doomedGroups = pendingGroupDeletions(changes);
+  const deletedGroups = deletedGroupRefs(change, doomedGroups);
+  if (deletedGroups.length > 0) {
+    const list = deletedGroups
+      .map((id) => `“${doomedGroups.get(id)}”`)
+      .join(", ");
+    const subject =
+      change.type === "create-resource" || change.type === "update-resource"
+        ? `Resource “${change.name}”`
+        : change.type === "create-router" || change.type === "update-router"
+        ? `Routing peer in “${change.networkName}”`
+        : "This change";
+    return {
+      label: "Group deleted",
+      message: `${subject} references ${
+        deletedGroups.length === 1 ? "group" : "groups"
+      } ${list}, marked for deletion in this draft. The deletion is refused while anything references ${
+        deletedGroups.length === 1 ? "it" : "them"
+      } — take the group off this change, or discard the deletion.`,
     };
   }
   /*
@@ -498,13 +528,14 @@ export const getChangeIssue = (
     };
   }
   if (change.type === "install-peer") {
-    // Once a setup key exists the peer is waiting to register — show a spinner
-    // instead of the alert, but it still blocks deploy until it upgrades.
+    if (change.installedPeerId) return undefined;
+    // A peer waiting to register still blocks deploy until it upgrades.
     if (change.setupKeyId) {
       return {
         label: "Waiting",
         waiting: true,
         message: `Waiting for “${change.name}” to register after install.`,
+        resolvable: true,
       };
     }
     return {
@@ -513,21 +544,39 @@ export const getChangeIssue = (
         change.kind === "user-device"
           ? `Peer “${change.name}” must be installed or selected before deploying.`
           : `Peer “${change.name}” must be installed before deploying.`,
+      resolvable: true,
     };
   }
   return undefined;
 };
 
-// True when any change has a blocking issue — Review & Deploy disables deploy.
 export const hasBlockingIssues = (changes: DraftChange[]): boolean =>
   changes.some((c) => getChangeIssue(c, changes) !== undefined);
 
-// Canonical CRUD dependency order the deploy runs in (a network before its
-// resources, resources before routers/policies, deletes last). Shared by
-// useDeployChangeset (execution) and Review & Deploy (display) so the list
-// always reads in the order things actually happen. install-peer is a manual
-// user step, not an API call — it isn't in here; Review & Deploy lists those
-// first as prerequisites.
+// The permission each change type's request needs. Draft mode defers the write, it
+// does not exempt it; install-peer is the user's own manual step, not a deploy call.
+export const CHANGE_PERMISSION: Record<
+  Exclude<DraftChange["type"], "install-peer">,
+  { module: "groups" | "policies" | "networks"; action: keyof Permission }
+> = {
+  "create-group": { module: "groups", action: "create" },
+  "update-group": { module: "groups", action: "update" },
+  "delete-group": { module: "groups", action: "delete" },
+  "create-policy": { module: "policies", action: "create" },
+  "update-policy": { module: "policies", action: "update" },
+  "delete-policy": { module: "policies", action: "delete" },
+  // Resources and routers are addressed under a network and share its module.
+  "create-network": { module: "networks", action: "create" },
+  "update-network": { module: "networks", action: "update" },
+  "delete-network": { module: "networks", action: "delete" },
+  "create-resource": { module: "networks", action: "create" },
+  "update-resource": { module: "networks", action: "update" },
+  "delete-resource": { module: "networks", action: "delete" },
+  "create-router": { module: "networks", action: "create" },
+  "update-router": { module: "networks", action: "update" },
+};
+
+// Canonical CRUD dependency order, shared by deploy and Review & Deploy.
 export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "create-group",
   "update-group",
@@ -541,76 +590,12 @@ export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "update-policy",
   "delete-policy",
   "delete-resource",
-  // A whole-network delete cascades its resources/routers server-side, so it
-  // runs last — after any explicit policy/resource/group deletes.
+  // Cascades its resources/routers server-side, so it runs last.
   "delete-network",
   "delete-group",
 ];
 
-// Non-blocking Review & Deploy warnings (the draft equivalent of the live
-// "no access control policies" confirmations): unreachable resources and
-// resources nothing grants access to. Warnings never block deploying.
-export const getDraftWarnings = (changes: DraftChange[]): string[] => {
-  const warnings: string[] = [];
-  const networks = changes.filter(
-    (c): c is CreateNetworkChange => c.type === "create-network",
-  );
-  const resources = changes.filter(
-    (c): c is CreateResourceChange => c.type === "create-resource",
-  );
-  const routers = changes.filter(
-    (c): c is CreateRouterChange => c.type === "create-router",
-  );
-
-  networks.forEach((n) => {
-    const hasResources = resources.some(
-      (r) => r.networkClientId === n.clientId,
-    );
-    const hasRouter = routers.some((r) => r.networkClientId === n.clientId);
-    if (hasResources && !hasRouter) {
-      warnings.push(
-        `Network “${n.name}” has no routing peers, so its resources won't be reachable.`,
-      );
-    }
-  });
-
-  const policyChanges = changes.filter(
-    (c): c is CreatePolicyChange | UpdatePolicyChange =>
-      c.type === "create-policy" || c.type === "update-policy",
-  );
-  resources.forEach((res) => {
-    const direct = policyChanges.some(
-      (p) => p.policy.rules?.[0]?.destinationResource?.id === res.clientId,
-    );
-    const viaGroup = policyChanges.some((p) => {
-      const destinations =
-        (p.policy.rules?.[0]?.destinations as (Group | string)[]) ?? [];
-      // res.groupIds mixes API ids and draft-group names; destinations mix
-      // group objects and raw id strings — match on whichever form is there.
-      return destinations.some((g) =>
-        typeof g === "string"
-          ? res.groupIds.includes(g)
-          : res.groupIds.includes(g.name) ||
-            (!!g.id && res.groupIds.includes(g.id)),
-      );
-    });
-    if (!direct && !viaGroup) {
-      warnings.push(
-        `Resource “${res.name}” is not referenced by any policy, so no peer will have access.`,
-      );
-    }
-  });
-
-  return warnings;
-};
-
-// Canvas-only states that silently withhold changes from deploy — surfaced in
-// Review & Deploy so the user learns WHY something they built isn't listed:
-// policies referencing uninstalled placeholder peers (hard requirement — the
-// peer must exist before the policy can). A draft resource with an address but
-// no network now enters the changeset as a blocking ISSUE (getChangeIssue), so
-// it's listed rather than silently withheld; only a resource still missing an
-// address never reaches the changeset and is warned about here.
+// Canvas-only states that silently withhold changes from deploy.
 export const getCanvasWarnings = (
   nodes: {
     id: string;
@@ -634,7 +619,7 @@ export const getCanvasWarnings = (
       const hasBothSides =
         ((rule.sources?.length ?? 0) > 0 || !!rule.sourceResource) &&
         ((rule.destinations?.length ?? 0) > 0 || !!rule.destinationResource);
-      // Incomplete policies are visibly unfinished — no warning needed.
+      // Incomplete policies are visibly unfinished, so no warning is needed.
       if (!hasBothSides) return;
       const refs = [rule.sourceResource, rule.destinationResource];
       if (refs.some((r) => r?.id?.startsWith("draft-"))) {
@@ -665,14 +650,7 @@ export const getCanvasWarnings = (
   return warnings;
 };
 
-const uid = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-// Groups are referenced by API id when they exist, otherwise by name: a group
-// that only lives in the draft has no id, and group names are unique, so the
-// (always current) name on its create-group change is the stable key.
+// A draft-only group has no API id, so it is referenced by its (unique) name.
 type GroupRef = {
   groupId?: string;
 };
@@ -699,46 +677,34 @@ interface DraftChangesetContextType {
       groupName: string;
       peerIds?: string[];
       resourceIds?: string[];
+      // Only cancels a pending draft ADD; never records the removal of a live
+      // member and never creates a change where none exists.
+      pendingOnly?: boolean;
     },
   ) => void;
   trackDeleteGroup: (params: GroupRef & { name: string }) => void;
-  // Removes a draft-only group's pending changes without deleting anything
-  // (used when a new group is removed from the canvas).
   untrackNewGroup: (name: string) => void;
-  // Renames a member peer id inside every create/update-group change and
-  // every router change — used when a placeholder ("draft-…") upgrades to a
-  // real peer.
+  // Used when a placeholder ("draft-…") upgrades to a real peer.
   replacePeerIdInGroups: (oldId: string, newId: string, newName?: string) => void;
-  // Networks / resources / routers (draft-created; edits fold into creates).
   trackCreateNetwork: (params: {
     clientId: string;
     name: string;
     description?: string;
   }) => void;
-  // Rename/description edits fold into the create change and follow into
-  // dependent resource/router labels.
   updateDraftNetwork: (params: {
     clientId: string;
     name: string;
     description?: string;
   }) => void;
-  // Drops the network and cascades: dependent resources lose their network
-  // (change dropped — they're incomplete now), dependent routers dropped.
   untrackNetwork: (clientId: string) => void;
-  // Edits to an EXISTING (API) network (name/description) — one change per
-  // network id. Reverting to the live name+description drops the change.
   trackUpdateNetwork: (
     params: Omit<UpdateNetworkChange, "id" | "type">,
   ) => void;
-  // Upserts by clientId — the editor always saves the full resource.
+  // Upserts by clientId; the editor always saves the full resource.
   trackCreateResource: (params: Omit<CreateResourceChange, "id" | "type">) => void;
-  // Drops the resource change and removes its id from group memberships.
   untrackResource: (clientId: string) => void;
-  // Edits to an EXISTING resource (enable/disable, field edits) — one change
-  // per resource id.
   trackUpdateResource: (
     params: Omit<UpdateResourceChange, "id" | "type"> & {
-      // Live (pre-edit) state — a field-for-field revert drops the change.
       original?: {
         enabled: boolean;
         name: string;
@@ -748,39 +714,34 @@ interface DraftChangesetContextType {
       };
     },
   ) => void;
-  // Deletes an EXISTING resource (supersedes a pending update).
+  // Supersedes a pending update for the same resource.
   trackDeleteResource: (
     params: Omit<DeleteResourceChange, "id" | "type">,
   ) => void;
-  // Deletes a whole EXISTING network (cascades resources/routers server-side).
   trackDeleteNetwork: (
     params: Omit<DeleteNetworkChange, "id" | "type">,
   ) => void;
-  // Adds a group ref (API id or draft-group name) to a draft resource's
-  // create change — deploy applies groups via the resource's own `groups`
-  // field (group changes deploy before resources exist).
+  // Deploy applies these via the resource's own `groups` field: group changes
+  // deploy before the resource exists.
   addGroupToDraftResource: (clientId: string, groupRef: string) => void;
-  // Inverse of addGroupToDraftResource.
   removeGroupFromDraftResource: (clientId: string, groupRef: string) => void;
   trackCreateRouter: (params: Omit<CreateRouterChange, "id" | "type">) => void;
-  // Drops a router change by its network + peer/group reference.
-  untrackRouter: (params: {
-    // networkId or networkClientId
-    networkRef: string;
-    peerId?: string;
-    groupId?: string;
-  }) => void;
-  // Edits to an EXISTING (API) router — one change per router id (supersedes
-  // an earlier edit of the same router).
+  // Supersedes an earlier edit of the same router.
   trackUpdateRouter: (
     params: Omit<UpdateRouterChange, "id" | "type">,
   ) => void;
   trackCreatePolicy: (params: { clientId: string; policy: Policy }) => void;
-  // Edits from the policy modal — updates the pending create change for draft
-  // policies ("new-…" ids), records/replaces an update-policy change otherwise.
-  trackUpdatePolicy: (params: { policyId: string; policy: Policy }) => void;
-  // Enable/disable — folded into a pending create/update change when one
-  // exists, otherwise recorded as a toggle-flavored update-policy change.
+  // `groupDeletion` marks a write forced by a group deletion. An ordinary edit
+  // leaves it unset, which REBASES the tag onto the edit — see mergeGroupDeletions.
+  trackUpdatePolicy: (params: {
+    policyId: string;
+    policy: Policy;
+    groupDeletion?: PolicyGroupDeletion;
+  }) => void;
+  // Re-records a PENDING update-policy; a no-op when none exists. Unlike
+  // trackUpdatePolicy it never reads an emptied policy as a deletion.
+  patchPendingPolicyUpdate: (params: { policyId: string; policy: Policy }) => void;
+  // Folded into a pending create/update change when one exists.
   trackSetPolicyEnabled: (params: {
     policyId: string;
     name: string;
@@ -789,20 +750,23 @@ interface DraftChangesetContextType {
     policy: Policy;
   }) => void;
   trackDeletePolicy: (params: { policyId: string; name: string }) => void;
-  // Placeholder peers: pending installs listed in Review & Deploy. Upserted
-  // by clientId (renames update the entry), resolved on placeholder upgrade
-  // or canvas removal.
+  // Upserted by clientId; renames update the entry.
   trackInstallPeer: (params: {
     clientId: string;
     name: string;
     kind: InstallPeerChange["kind"];
   }) => void;
-  // Mark a tracked install-peer as waiting (its setup key was generated).
   markInstallPeerWaiting: (clientId: string, setupKeyId: string) => void;
+  // The key this entry was waiting on is dead, so the row goes back to "needs a
+  // key" rather than waiting on a registration that can never arrive.
+  clearInstallPeerKey: (clientId: string) => void;
+  markInstallPeerInstalled: (
+    clientId: string,
+    peer: { id: string; name?: string },
+  ) => void;
   untrackInstallPeer: (clientId: string) => void;
   removeChange: (id: string) => void;
   clearChanges: () => void;
-  // Wholesale restore — used by draft undo/redo history.
   replaceChanges: (changes: DraftChange[]) => void;
 }
 
@@ -820,9 +784,7 @@ export function useDraftChangeset(): DraftChangesetContextType {
   return ctx;
 }
 
-// Renames inside recorded changes: draft groups are referenced by name in
-// policies (sources/destinations), resources (groupIds), and routers
-// (groupId), so a later group rename must follow into them.
+// Draft groups are referenced by NAME, so a rename must follow into the changes.
 const renameGroupInPolicies = (
   changes: DraftChange[],
   from: string,
@@ -869,12 +831,9 @@ export function DraftChangesetProvider({
 }: {
   children: React.ReactNode;
 }) {
-  // Draft changes live only in React state — they exist for the lifetime of
-  // the draft session and are gone on reload (no persistence).
+  // Changes live only in React state: a reload loses the draft.
   const [changes, setChanges] = useState<DraftChange[]>([]);
 
-  // Test-only observability: the changeset lives only in React (not persisted),
-  // so expose it on window for e2e assertions in the test build.
   useEffect(() => {
     if (process.env.APP_ENV === "test") {
       (
@@ -897,7 +856,7 @@ export function DraftChangesetProvider({
     }) => {
       setChanges((prev) => [
         ...prev,
-        { id: uid(), type: "create-group", clientId, name, peerIds, resourceIds },
+        { id: draftUid(), type: "create-group", clientId, name, peerIds, resourceIds },
       ]);
     },
     [],
@@ -908,7 +867,6 @@ export function DraftChangesetProvider({
       setChanges((prev) => {
         let next: DraftChange[];
         if (!groupId) {
-          // New group — just update its pending create change.
           next = prev.map((c) =>
             c.type === "create-group" && c.name === from
               ? { ...c, name: to }
@@ -926,8 +884,6 @@ export function DraftChangesetProvider({
               existing.resourceIds.length === 0 &&
               (existing.removedPeerIds?.length ?? 0) === 0 &&
               (existing.removedResourceIds?.length ?? 0) === 0;
-            // Back to the original name with nothing else pending — the
-            // update is a no-op and the change disappears.
             next = reverted
               ? prev.filter((c) => c.id !== existing.id)
               : prev.map((c) =>
@@ -937,7 +893,7 @@ export function DraftChangesetProvider({
             next = [
               ...prev,
               {
-                id: uid(),
+                id: draftUid(),
                 type: "update-group",
                 groupId,
                 name: to,
@@ -967,7 +923,6 @@ export function DraftChangesetProvider({
     }) => {
       setChanges((prev) => {
         if (!groupId) {
-          // New group — members land directly in its create change.
           return prev.map((c) =>
             c.type === "create-group" && c.name === groupName
               ? {
@@ -985,30 +940,45 @@ export function DraftChangesetProvider({
             c.type === "update-group" && c.groupId === groupId,
         );
         if (existing) {
-          return prev.map((c) =>
-            c.id === existing.id
-              ? {
-                  ...existing,
-                  peerIds: [...new Set([...existing.peerIds, ...peerIds])],
-                  resourceIds: [
-                    ...new Set([...existing.resourceIds, ...resourceIds]),
-                  ],
-                  // Re-adding a member that was removed in the draft reverts
-                  // the removal.
-                  removedPeerIds: existing.removedPeerIds?.filter(
-                    (id) => !peerIds.includes(id),
-                  ),
-                  removedResourceIds: existing.removedResourceIds?.filter(
-                    (id) => !resourceIds.includes(id),
-                  ),
-                }
-              : c,
+          // Re-adding a draft-removed member is a pure revert: it is still live,
+          // so it only leaves the removed list.
+          const revertedPeers = new Set(
+            peerIds.filter((id) => existing.removedPeerIds?.includes(id)),
           );
+          const revertedResources = new Set(
+            resourceIds.filter((id) =>
+              existing.removedResourceIds?.includes(id),
+            ),
+          );
+          const updated: UpdateGroupChange = {
+            ...existing,
+            peerIds: [
+              ...new Set([
+                ...existing.peerIds,
+                ...peerIds.filter((id) => !revertedPeers.has(id)),
+              ]),
+            ],
+            resourceIds: [
+              ...new Set([
+                ...existing.resourceIds,
+                ...resourceIds.filter((id) => !revertedResources.has(id)),
+              ]),
+            ],
+            removedPeerIds: existing.removedPeerIds?.filter(
+              (id) => !peerIds.includes(id),
+            ),
+            removedResourceIds: existing.removedResourceIds?.filter(
+              (id) => !resourceIds.includes(id),
+            ),
+          };
+          return isNoopGroupUpdate(updated)
+            ? prev.filter((c) => c.id !== existing.id)
+            : prev.map((c) => (c.id === existing.id ? updated : c));
         }
         return [
           ...prev,
           {
-            id: uid(),
+            id: draftUid(),
             type: "update-group",
             groupId,
             name: groupName,
@@ -1022,23 +992,21 @@ export function DraftChangesetProvider({
     [],
   );
 
-  // Inverse of trackAddGroupMembers. Draft-added members simply leave the
-  // add lists; EXISTING members land in the removed lists (deploy drops them
-  // from the group's membership). A fully reverted update change disappears.
   const trackRemoveGroupMembers = useCallback(
     ({
       groupId,
       groupName,
       peerIds = [],
       resourceIds = [],
+      pendingOnly = false,
     }: GroupRef & {
       groupName: string;
       peerIds?: string[];
       resourceIds?: string[];
+      pendingOnly?: boolean;
     }) => {
       setChanges((prev) => {
         if (!groupId) {
-          // New group — members only exist in its create change.
           return prev.map((c) =>
             c.type === "create-group" && c.name === groupName
               ? {
@@ -1056,45 +1024,45 @@ export function DraftChangesetProvider({
             c.type === "update-group" && c.groupId === groupId,
         );
         const applyTo = (c: UpdateGroupChange): UpdateGroupChange => {
-          // Ids sitting in the add lists were draft-added — removing them is
-          // a pure revert. The rest are existing members → removed lists.
+          // Ids in the add lists were draft-added; the rest are existing members.
           const next: UpdateGroupChange = {
             ...c,
             peerIds: c.peerIds.filter((id) => !peerIds.includes(id)),
             resourceIds: c.resourceIds.filter(
               (id) => !resourceIds.includes(id),
             ),
-            removedPeerIds: [
-              ...new Set([
-                ...(c.removedPeerIds ?? []),
-                ...peerIds.filter((id) => !c.peerIds.includes(id)),
-              ]),
-            ],
-            removedResourceIds: [
-              ...new Set([
-                ...(c.removedResourceIds ?? []),
-                ...resourceIds.filter((id) => !c.resourceIds.includes(id)),
-              ]),
-            ],
+            ...(pendingOnly
+              ? {}
+              : {
+                  removedPeerIds: [
+                    ...new Set([
+                      ...(c.removedPeerIds ?? []),
+                      ...peerIds.filter((id) => !c.peerIds.includes(id)),
+                    ]),
+                  ],
+                  removedResourceIds: [
+                    ...new Set([
+                      ...(c.removedResourceIds ?? []),
+                      ...resourceIds.filter(
+                        (id) => !c.resourceIds.includes(id),
+                      ),
+                    ]),
+                  ],
+                }),
           };
           return next;
         };
         if (existing) {
           const updated = applyTo(existing);
-          const noop =
-            updated.name === updated.originalName &&
-            updated.peerIds.length === 0 &&
-            updated.resourceIds.length === 0 &&
-            (updated.removedPeerIds?.length ?? 0) === 0 &&
-            (updated.removedResourceIds?.length ?? 0) === 0;
-          return noop
+          return isNoopGroupUpdate(updated)
             ? prev.filter((c) => c.id !== existing.id)
             : prev.map((c) => (c.id === existing.id ? updated : c));
         }
+        if (pendingOnly) return prev;
         return [
           ...prev,
           applyTo({
-            id: uid(),
+            id: draftUid(),
             type: "update-group",
             groupId,
             name: groupName,
@@ -1108,10 +1076,15 @@ export function DraftChangesetProvider({
     [],
   );
 
+  // Draft groups are referenced BY NAME in resources, routers and policy rules,
+  // so dropping the create alone leaves those unresolvable at deploy.
   const untrackNewGroup = useCallback((name: string) => {
-    setChanges((prev) =>
-      prev.filter((c) => !(c.type === "create-group" && c.name === name)),
-    );
+    setChanges((prev) => {
+      const target = prev.find(
+        (c) => c.type === "create-group" && c.name === name,
+      );
+      return target ? reduceRemoveChange(prev, target) : prev;
+    });
   }, []);
 
   const replacePeerIdInGroups = useCallback(
@@ -1135,9 +1108,8 @@ export function DraftChangesetProvider({
             ],
           };
         });
-        // Renaming a router's peer to the real id can collide with a router the
-        // upgrade already recorded for the same (network, peer) — drop the dup
-        // so deploy doesn't POST the router twice.
+        // The real id can collide with a router already recorded for the same
+        // (network, peer); drop the dup so deploy POSTs it once.
         const seen = new Set<string>();
         return mapped.filter((c) => {
           if (c.type !== "create-router") return true;
@@ -1165,7 +1137,7 @@ export function DraftChangesetProvider({
     }) => {
       setChanges((prev) => [
         ...prev,
-        { id: uid(), type: "create-network", clientId, name, description },
+        { id: draftUid(), type: "create-network", clientId, name, description },
       ]);
     },
     [],
@@ -1200,26 +1172,19 @@ export function DraftChangesetProvider({
     [],
   );
 
+  // Same cascade as discarding the create-network change.
   const untrackNetwork = useCallback((clientId: string) => {
     setChanges((prev) =>
-      prev.filter((c) => {
-        if (c.type === "create-network" && c.clientId === clientId)
-          return false;
-        // A resource without its network is incomplete → out of the
-        // changeset; routers without their network are meaningless.
-        if (
-          (c.type === "create-resource" || c.type === "create-router") &&
-          c.networkClientId === clientId
-        )
-          return false;
-        return true;
-      }),
+      detachChangesFromDraftNetwork(
+        prev.filter(
+          (c) => !(c.type === "create-network" && c.clientId === clientId),
+        ),
+        clientId,
+      ),
     );
   }, []);
 
-  // Edits to an existing network (name/description) — one update-network per
-  // network id. Reverting name AND description back to the live values makes
-  // the change a no-op and it disappears.
+  // Reverting name AND description back to the live values drops the change.
   const trackUpdateNetwork = useCallback(
     (params: Omit<UpdateNetworkChange, "id" | "type">) => {
       setChanges((prev) => {
@@ -1238,7 +1203,7 @@ export function DraftChangesetProvider({
             c.id === existing.id ? { ...existing, ...params } : c,
           );
         }
-        return [...prev, { id: uid(), type: "update-network", ...params }];
+        return [...prev, { id: draftUid(), type: "update-network", ...params }];
       });
     },
     [],
@@ -1256,7 +1221,7 @@ export function DraftChangesetProvider({
             c.id === existing.id ? { ...existing, ...params } : c,
           );
         }
-        return [...prev, { id: uid(), type: "create-resource", ...params }];
+        return [...prev, { id: draftUid(), type: "create-resource", ...params }];
       });
     },
     [],
@@ -1281,14 +1246,10 @@ export function DraftChangesetProvider({
     );
   }, []);
 
-  // Edits to an existing resource (enable/disable, field edits) — one
-  // update-resource per resource id. Reverting `enabled` back to its original
-  // with nothing else changed drops the change.
   const trackUpdateResource = useCallback(
     (
       params: Omit<UpdateResourceChange, "id" | "type"> & {
-        // The resource's live (pre-edit) state — lets a field-for-field revert
-        // drop the change instead of shipping an empty PUT.
+        // Live (pre-edit) state: a field-for-field revert drops the change.
         original?: {
           enabled: boolean;
           name: string;
@@ -1315,8 +1276,6 @@ export function DraftChangesetProvider({
           (change.description ?? "") === (original.description ?? "") &&
           sameIds(change.groupIds, original.groupIds);
         if (isRevert) {
-          // Reverted to the live state — nothing to deploy. Drop any pending
-          // change for this resource rather than leaving a no-op PUT.
           return existing ? prev.filter((c) => c.id !== existing.id) : prev;
         }
         if (existing) {
@@ -1324,13 +1283,12 @@ export function DraftChangesetProvider({
             c.id === existing.id ? { ...existing, ...change } : c,
           );
         }
-        return [...prev, { id: uid(), type: "update-resource", ...change }];
+        return [...prev, { id: draftUid(), type: "update-resource", ...change }];
       });
     },
     [],
   );
 
-  // Deletes an existing resource — supersedes any pending update-resource.
   const trackDeleteResource = useCallback(
     (params: Omit<DeleteResourceChange, "id" | "type">) => {
       setChanges((prev) => [
@@ -1341,16 +1299,14 @@ export function DraftChangesetProvider({
               c.resourceId === params.resourceId
             ),
         ),
-        { id: uid(), type: "delete-resource", ...params },
+        { id: draftUid(), type: "delete-resource", ...params },
       ]);
     },
     [],
   );
 
-  // Deletes a whole EXISTING network. The API cascade removes its resources
-  // and routers, so any pending resource/router changes scoped to it are
-  // dropped (they'd be redundant or fail once the network is gone). Draft
-  // networks are never deleted this way — they use untrackNetwork.
+  // The API cascade removes the network's resources and routers, so pending
+  // changes scoped to it are dropped.
   const trackDeleteNetwork = useCallback(
     (params: Omit<DeleteNetworkChange, "id" | "type">) => {
       setChanges((prev) => [
@@ -1360,8 +1316,6 @@ export function DraftChangesetProvider({
               c.type === "update-resource" ||
               c.type === "delete-resource" ||
               c.type === "create-router" ||
-              // update-router / update-network for this network would PUT a
-              // router/network the cascade deletes server-side — drop them too.
               c.type === "update-router" ||
               c.type === "update-network") &&
             c.networkId === params.networkId
@@ -1369,7 +1323,7 @@ export function DraftChangesetProvider({
             return false;
           return true;
         }),
-        { id: uid(), type: "delete-network", ...params },
+        { id: draftUid(), type: "delete-network", ...params },
       ]);
     },
     [],
@@ -1416,40 +1370,12 @@ export function DraftChangesetProvider({
             c.groupId === params.groupId,
         );
         if (duplicate) return prev;
-        return [...prev, { id: uid(), type: "create-router", ...params }];
+        return [...prev, { id: draftUid(), type: "create-router", ...params }];
       });
     },
     [],
   );
 
-  const untrackRouter = useCallback(
-    ({
-      networkRef,
-      peerId,
-      groupId,
-    }: {
-      networkRef: string;
-      peerId?: string;
-      groupId?: string;
-    }) => {
-      setChanges((prev) =>
-        prev.filter(
-          (c) =>
-            !(
-              c.type === "create-router" &&
-              (c.networkId === networkRef ||
-                c.networkClientId === networkRef) &&
-              c.peerId === peerId &&
-              c.groupId === groupId
-            ),
-        ),
-      );
-    },
-    [],
-  );
-
-  // Edits to an existing router — one update-router per router id; a later
-  // edit of the same router supersedes the earlier one.
   const trackUpdateRouter = useCallback(
     (params: Omit<UpdateRouterChange, "id" | "type">) => {
       setChanges((prev) => {
@@ -1462,7 +1388,7 @@ export function DraftChangesetProvider({
             c.id === existing.id ? { ...existing, ...params } : c,
           );
         }
-        return [...prev, { id: uid(), type: "update-router", ...params }];
+        return [...prev, { id: draftUid(), type: "update-router", ...params }];
       });
     },
     [],
@@ -1472,10 +1398,11 @@ export function DraftChangesetProvider({
     ({ groupId, name }: GroupRef & { name: string }) => {
       setChanges((prev) => {
         if (!groupId) {
-          // Deleting a group that was never created = dropping its changes.
-          return prev.filter(
-            (c) => !(c.type === "create-group" && c.name === name),
+          // Same cascade as untrackNewGroup.
+          const target = prev.find(
+            (c) => c.type === "create-group" && c.name === name,
           );
+          return target ? reduceRemoveChange(prev, target) : prev;
         }
         // A pending update is moot once the group is deleted.
         const filtered = prev.filter(
@@ -1483,7 +1410,7 @@ export function DraftChangesetProvider({
         );
         return [
           ...filtered,
-          { id: uid(), type: "delete-group", groupId, name },
+          { id: draftUid(), type: "delete-group", groupId, name },
         ];
       });
     },
@@ -1495,7 +1422,7 @@ export function DraftChangesetProvider({
       setChanges((prev) => [
         ...prev,
         {
-          id: uid(),
+          id: draftUid(),
           type: "create-policy",
           clientId,
           name: policy.name ?? "Policy",
@@ -1507,32 +1434,126 @@ export function DraftChangesetProvider({
   );
 
   const trackUpdatePolicy = useCallback(
-    ({ policyId, policy }: { policyId: string; policy: Policy }) => {
+    ({
+      policyId,
+      policy,
+      groupDeletion,
+    }: {
+      policyId: string;
+      policy: Policy;
+      groupDeletion?: PolicyGroupDeletion;
+    }) => {
       setChanges((prev) => {
-        // Draft-created policy — the create change carries the latest data.
-        if (policyId.startsWith("new-")) {
+        const isDraftPolicy = policyId.startsWith("new-");
+        const supersededCreate = isDraftPolicy
+          ? prev.find(
+              (c): c is CreatePolicyChange =>
+                c.type === "create-policy" && c.clientId === policyId,
+            )
+          : undefined;
+        const superseded = prev.find(
+          (c): c is UpdatePolicyChange | DeletePolicyChange =>
+            isPendingPolicyWrite(c) && c.policyId === policyId,
+        );
+        const supersededTag =
+          supersededCreate?.groupDeletion ?? superseded?.groupDeletion;
+        // Untagged means the user's own edit or toggle, which must outlive the
+        // deletion — see mergeGroupDeletions. A delete-policy holds no such work.
+        const supersedesUserWrite =
+          !supersededTag &&
+          (!!supersededCreate || superseded?.type === "update-policy");
+        const isEmptied = isEmptiedPolicy(policy);
+        const merged = mergeGroupDeletions(
+          supersededTag,
+          groupDeletion,
+          // Withheld when the policy ends up authorizing nothing: that edit is a
+          // request to delete it, and discarding a group deletion must not resurrect it.
+          isEmptied ? undefined : policy,
+          supersedesUserWrite,
+        );
+        if (isEmptied) {
+          const name = policy.name ?? "Policy";
+          if (isDraftPolicy) {
+            // Deletion-emptied stays tagged and blocked — nothing restores a departed
+            // create-policy; an emptying the user did themselves (no tag) still drops it.
+            if (!merged) {
+              return prev.filter(
+                (c) => !(c.type === "create-policy" && c.clientId === policyId),
+              );
+            }
+            return prev.map((c) =>
+              c.type === "create-policy" && c.clientId === policyId
+                ? { ...c, name, policy, groupDeletion: merged }
+                : c,
+            );
+          }
+          const withoutUpdates = prev.filter(
+            (c) => !(c.type === "update-policy" && c.policyId === policyId),
+          );
+          // A delete already stands; only its tag needs the merge folded in.
+          return withoutUpdates.some(
+            (c) => c.type === "delete-policy" && c.policyId === policyId,
+          )
+            ? withoutUpdates.map((c) =>
+                c.type === "delete-policy" && c.policyId === policyId
+                  ? { ...c, groupDeletion: merged }
+                  : c,
+              )
+            : [
+                ...withoutUpdates,
+                {
+                  id: draftUid(),
+                  type: "delete-policy",
+                  policyId,
+                  name,
+                  groupDeletion: merged,
+                },
+              ];
+        }
+        // The create change carries the latest data and the tag: only the tag can
+        // put a deleted group back when that deletion is discarded.
+        if (isDraftPolicy) {
           return prev.map((c) =>
             c.type === "create-policy" && c.clientId === policyId
-              ? { ...c, name: policy.name ?? c.name, policy }
+              ? {
+                  ...c,
+                  name: policy.name ?? c.name,
+                  policy,
+                  groupDeletion: merged,
+                }
               : c,
           );
         }
-        // The full update supersedes earlier updates/toggles for this policy.
+        // Supersedes earlier updates/toggles and any pending delete.
         const filtered = prev.filter(
-          (c) => !(c.type === "update-policy" && c.policyId === policyId),
+          (c) => !(isPendingPolicyWrite(c) && c.policyId === policyId),
         );
         return [
           ...filtered,
           {
-            id: uid(),
+            id: draftUid(),
             type: "update-policy",
             policyId,
             name: policy.name ?? "Policy",
             policy,
             origin: "edit",
+            groupDeletion: merged,
           },
         ];
       });
+    },
+    [],
+  );
+
+  const patchPendingPolicyUpdate = useCallback(
+    ({ policyId, policy }: { policyId: string; policy: Policy }) => {
+      setChanges((prev) =>
+        prev.map((c) =>
+          c.type === "update-policy" && c.policyId === policyId
+            ? { ...c, name: policy.name ?? c.name, policy }
+            : c,
+        ),
+      );
     },
     [],
   );
@@ -1557,27 +1578,51 @@ export function DraftChangesetProvider({
         rules: p.rules?.map((r) => ({ ...r, enabled })),
       });
       setChanges((prev) => {
-        // Draft-created policy — flip the flag inside its create change.
         if (policyId.startsWith("new-")) {
           return prev.map((c) =>
             c.type === "create-policy" && c.clientId === policyId
-              ? { ...c, policy: setEnabled(c.policy) }
+              ? {
+                  ...c,
+                  policy: setEnabled(c.policy),
+                  // The baseline has to carry the toggle too, or restoring a
+                  // group would rebuild from it and drop the flip.
+                  groupDeletion: c.groupDeletion && {
+                    ...c.groupDeletion,
+                    basePolicy: setEnabled(c.groupDeletion.basePolicy),
+                  },
+                }
               : c,
           );
+        }
+        // A policy on its way out has no enabled state worth changing.
+        if (
+          prev.some(
+            (c) => c.type === "delete-policy" && c.policyId === policyId,
+          )
+        ) {
+          return prev;
         }
         const update = prev.find(
           (c): c is UpdatePolicyChange =>
             c.type === "update-policy" && c.policyId === policyId,
         );
         if (update) {
-          // A toggle-only change flipped back to the live state disappears;
-          // a pending edit just carries the new flag.
+          // A toggle-only change flipped back to the live state disappears.
           if (update.origin === "toggle" && enabled === originalEnabled) {
             return prev.filter((c) => c.id !== update.id);
           }
           return prev.map((c) =>
             c.id === update.id
-              ? { ...update, policy: setEnabled(update.policy) }
+              ? {
+                  ...update,
+                  policy: setEnabled(update.policy),
+                  // A toggle keeps the group sides, so the tag survives; the baseline
+                  // carries the flip (same rule as the update above).
+                  groupDeletion: update.groupDeletion && {
+                    ...update.groupDeletion,
+                    basePolicy: setEnabled(update.groupDeletion.basePolicy),
+                  },
+                }
               : c,
           );
         }
@@ -1585,7 +1630,7 @@ export function DraftChangesetProvider({
         return [
           ...prev,
           {
-            id: uid(),
+            id: draftUid(),
             type: "update-policy",
             policyId,
             name,
@@ -1621,7 +1666,7 @@ export function DraftChangesetProvider({
         }
         return [
           ...prev,
-          { id: uid(), type: "install-peer", clientId, name, kind },
+          { id: draftUid(), type: "install-peer", clientId, name, kind },
         ];
       });
     },
@@ -1636,6 +1681,36 @@ export function DraftChangesetProvider({
           c.clientId === clientId &&
           c.setupKeyId !== setupKeyId
             ? { ...c, setupKeyId }
+            : c,
+        ),
+      );
+    },
+    [],
+  );
+
+  const clearInstallPeerKey = useCallback((clientId: string) => {
+    setChanges((prev) => {
+      // Same array when nothing matched: every always-mounted draft consumer
+      // re-renders off this list.
+      const target = prev.find(
+        (c): c is InstallPeerChange =>
+          c.type === "install-peer" &&
+          c.clientId === clientId &&
+          c.setupKeyId !== undefined,
+      );
+      if (!target) return prev;
+      return prev.map((c) =>
+        c.id === target.id ? { ...target, setupKeyId: undefined } : c,
+      );
+    });
+  }, []);
+
+  const markInstallPeerInstalled = useCallback(
+    (clientId: string, peer: { id: string; name?: string }) => {
+      setChanges((prev) =>
+        prev.map((c) =>
+          c.type === "install-peer" && c.clientId === clientId
+            ? { ...c, installedPeerId: peer.id, name: peer.name ?? c.name }
             : c,
         ),
       );
@@ -1659,13 +1734,14 @@ export function DraftChangesetProvider({
             (c) => !(c.type === "create-policy" && c.clientId === policyId),
           );
         }
-        // A pending update is moot once the policy is deleted.
+        // A pending update is moot once the policy is deleted, and a delete
+        // already recorded by `isEmptiedPolicy` must not deploy twice.
         const filtered = prev.filter(
-          (c) => !(c.type === "update-policy" && c.policyId === policyId),
+          (c) => !(isPendingPolicyWrite(c) && c.policyId === policyId),
         );
         return [
           ...filtered,
-          { id: uid(), type: "delete-policy", policyId, name },
+          { id: draftUid(), type: "delete-policy", policyId, name },
         ];
       });
     },
@@ -1707,14 +1783,16 @@ export function DraftChangesetProvider({
       addGroupToDraftResource,
       removeGroupFromDraftResource,
       trackCreateRouter,
-      untrackRouter,
       trackUpdateRouter,
       trackCreatePolicy,
       trackUpdatePolicy,
+      patchPendingPolicyUpdate,
       trackSetPolicyEnabled,
       trackDeletePolicy,
       trackInstallPeer,
       markInstallPeerWaiting,
+      clearInstallPeerKey,
+      markInstallPeerInstalled,
       untrackInstallPeer,
       removeChange,
       clearChanges,
@@ -1741,14 +1819,16 @@ export function DraftChangesetProvider({
       addGroupToDraftResource,
       removeGroupFromDraftResource,
       trackCreateRouter,
-      untrackRouter,
       trackUpdateRouter,
       trackCreatePolicy,
       trackUpdatePolicy,
+      patchPendingPolicyUpdate,
       trackSetPolicyEnabled,
       trackDeletePolicy,
       trackInstallPeer,
       markInstallPeerWaiting,
+      clearInstallPeerKey,
+      markInstallPeerInstalled,
       untrackInstallPeer,
       removeChange,
       clearChanges,

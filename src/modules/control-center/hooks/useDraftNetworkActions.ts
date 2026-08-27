@@ -1,33 +1,30 @@
+import { notify } from "@components/Notification";
+import useFetchApi from "@utils/api";
 import { useCallback } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { pulseNodes } from "@/modules/control-center/utils/node-pulse";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
+  draftUid,
   getDraftResource,
   getFrameChildPosition,
   getNetworkFrameHeight,
+  getResourceLiveBaseline,
+  getResourceNodeEnabled,
   isFrameNode,
   makeMembershipEdge,
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_WIDTH,
+  withResourceLiveBaseline,
 } from "@/modules/control-center/utils/helpers";
 
-const uid = () =>
-  typeof crypto !== "undefined" && crypto.randomUUID
-    ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-// The (id XOR clientId) + display-name reference a network node resolves to.
-// An existing-network frame keeps its real id on data.network → networkId;
-// a draft network frame (no id yet) → networkClientId from its node id.
 export const getNetworkRef = (node?: Node): DraftNetworkRef | undefined => {
   const network = (node?.data as { network?: Network })?.network;
   if (!node || !network) return undefined;
@@ -39,13 +36,10 @@ export const getNetworkRef = (node?: Node): DraftNetworkRef | undefined => {
       };
 };
 
-// Everything draft networks/resources/routers do beyond dropping the node:
-// routing-peer connects, resource↔network membership, saving the resource
-// editor, and the network-rename follow-through. All changeset-only — the
-// API is called on deploy.
+// Changeset-only: the API is called on deploy.
 export function useDraftNetworkActions() {
   const reactFlow = useReactFlow();
-  const { peers } = useControlCenterData();
+  const { data: networks } = useFetchApi<Network[]>("/networks");
   const { updateDraftPolicy } = useControlCenterPolicy();
   const { drillDownNetworkNodeId } = useDraftMode();
   const {
@@ -59,16 +53,11 @@ export function useDraftNetworkActions() {
     updateDraftNetwork,
   } = useDraftChangeset();
 
-  // Frames a network node and pulses its border for a couple of seconds so a
-  // just-assigned resource is easy to spot landing in it. Runs after a short
-  // delay so the frame has resized and the layout reconciler has settled
-  // before we fit to it.
+  // Pulses a network frame so a just-assigned resource is easy to spot; delayed
+  // so the frame has resized and the layout settled before fitting.
   const highlightNetworkNode = useCallback(
     (networkNodeId: string) => {
-      // While drilled into a network the frame itself is hidden and the drilled
-      // world already fills the view — fitting to (and pulsing) the frame would
-      // fling the camera to a strange spot. Adding a resource here should just
-      // drop it into the grid, exactly like normal draft mode outside a frame.
+      // The drilled frame is hidden, so fitting to it would fling the camera.
       if (drillDownNetworkNodeId) return;
       window.setTimeout(() => {
         reactFlow.fitView({
@@ -83,8 +72,6 @@ export function useDraftNetworkActions() {
     [reactFlow, drillDownNetworkNodeId],
   );
 
-  // The id of the on-canvas frame for a network ref (real id or client id),
-  // or undefined when that network isn't on the canvas.
   const findNetworkNodeIdForRef = useCallback(
     (ref: DraftNetworkRef) =>
       reactFlow.getNodes().find((n) => {
@@ -98,10 +85,6 @@ export function useDraftNetworkActions() {
     [reactFlow],
   );
 
-  // Re-records the create-resource change from a draft resource node's
-  // current data — only complete resources are changeset-worthy. Policies
-  // referencing the resource are re-run so ones held back by an incomplete
-  // resource enter the changeset the moment it completes.
   const syncDraftResource = useCallback(
     (nodeId: string) => {
       const nodes = reactFlow.getNodes();
@@ -113,11 +96,10 @@ export function useDraftNetworkActions() {
       const groupIds =
         (node.data as { resourceGroupIds?: string[] })?.resourceGroupIds ?? [];
 
-      // Track once it has an address. Without a network it still enters the
-      // changeset — but as a blocking ISSUE (getChangeIssue → "No Network")
-      // that the user resolves in Review & Deploy — instead of being silently
-      // withheld. Only an address-less resource stays off the changeset: a
-      // resource IS its address, so there is nothing to deploy without one.
+      // Tracked as soon as it has an address; a missing network becomes a
+      // blocking issue rather than a withheld change. Only an address-less
+      // resource stays off the changeset: a resource IS its address, so there
+      // is nothing to deploy without one.
       if (!resource.address) {
         untrackResource(resource.id);
         return;
@@ -134,8 +116,6 @@ export function useDraftNetworkActions() {
         enabled: (node.data as { enabled?: boolean }).enabled ?? true,
       });
 
-      // Re-record policies referencing this resource (next tick — canvas
-      // updates from the caller must land first).
       const policyUpdates: Policy[] = [];
       nodes.forEach((n) => {
         const policy = (n.data as { policy?: Policy })?.policy;
@@ -163,10 +143,8 @@ export function useDraftNetworkActions() {
     [reactFlow, trackCreateResource, untrackResource, updateDraftPolicy],
   );
 
-  // Assigns (or re-assigns) a draft resource's parent network: node data +
-  // containment + change sync. Draft networks are FRAMES — the resource node
-  // becomes a ReactFlow child inside the frame (which grows to fit); other
-  // parents fall back to a membership edge.
+  // A frame parent makes the resource a ReactFlow child; anything else falls
+  // back to a membership edge.
   const assignResourceToNetwork = useCallback(
     ({
       resourceNodeId,
@@ -192,30 +170,21 @@ export function useDraftNetworkActions() {
           if (n.id === resourceNodeId) {
             return {
               ...n,
-              // Drop the transient drag flag. When this reparent comes from a
-              // drag (useDragToGroup), `reactFlow.setNodes` reads the xyflow
-              // STORE, which at drag-stop can still hold `dragging: true`
-              // (the drag-stop clear hasn't round-tripped back yet) — spreading
-              // `...n` would bake it in. useNetworkFrameLayout bails while any
-              // node is dragging, so a stuck flag freezes the child at its
-              // temporary slot until the frame is moved (which clears it).
+              // At drag-stop the xyflow store can still hold dragging: true,
+              // and a stuck flag freezes the child.
               dragging: false,
               data: { ...n.data, draftNetwork: networkRef },
               ...(isFrame
                 ? {
                     parentId: networkNodeId,
-                    // Index -1 sorts above every existing child so the assigned
-                    // resource lands FIRST; the reconciling layout re-sorts.
+                    // Index -1 sorts above existing children.
                     position: getFrameChildPosition(-1),
-                    // Laid out by the frame, full frame width; dragging one
-                    // moves the whole frame (intercepted in useDragToGroup).
                     style: { ...n.style, width: NETWORK_FRAME_CHILD_WIDTH },
                   }
                 : { parentId: undefined }),
             };
           }
-          // The frame grows to fit its members — and clears any drop-target
-          // highlight in the SAME update so it can't linger after the drop.
+          // Clear the highlight in the same update so it can't linger.
           if (isFrame && n.id === networkNodeId) {
             return {
               ...n,
@@ -227,7 +196,6 @@ export function useDraftNetworkActions() {
               },
             };
           }
-          // Any other frame that was highlighted mid-drag clears too.
           if (isFrameNode(n) && n.data.dropTarget) {
             return { ...n, data: { ...n.data, dropTarget: false } };
           }
@@ -248,8 +216,7 @@ export function useDraftNetworkActions() {
         }
         return next;
       });
-      // One parent network — old membership edges go either way; a frame
-      // parent shows containment instead of an edge.
+      // One parent network only, so old membership edges go either way.
       reactFlow.setEdges((prev) => {
         const kept = prev.filter(
           (e) => !e.id.startsWith(`member-${resourceNodeId}-`),
@@ -259,17 +226,13 @@ export function useDraftNetworkActions() {
           : kept.concat(makeMembershipEdge(resourceNodeId, networkNodeId));
       });
       setTimeout(() => syncDraftResource(resourceNodeId), 0);
-      // The network is on the canvas by definition here — draw the eye to it.
       highlightNetworkNode(networkNodeId);
     },
     [reactFlow, syncDraftResource, highlightNetworkNode],
   );
 
-  // Assigns a network to a draft resource held INSIDE a group (no canvas
-  // node — it was absorbed as a member): stamps the ref on every stored
-  // copy (the group panel's "No network" chip disappears) and, once the
-  // resource is complete (name + address), records its create-resource
-  // change with the holding groups as membership.
+  // A draft resource absorbed into a group has no canvas node, so the ref goes
+  // on every stored copy, with the holding groups as membership.
   const assignHeldResourceToNetwork = useCallback(
     ({
       resourceId,
@@ -325,16 +288,13 @@ export function useDraftNetworkActions() {
           enabled: true,
         });
       }
-      // If that network has a frame on the canvas, zoom to it and pulse.
       const nodeId = findNetworkNodeIdForRef(networkRef);
       if (nodeId) highlightNetworkNode(nodeId);
     },
     [reactFlow, trackCreateResource, findNetworkNodeIdForRef, highlightNetworkNode],
   );
 
-  // Assigns a standalone draft resource to an EXISTING (API) network that
-  // isn't a frame on the canvas — just stamps the network ref onto the node
-  // (the card keeps showing the network's name) and re-syncs the changeset.
+  // An EXISTING (API) network with no frame on the canvas: stamp the ref only.
   const assignResourceToExistingNetwork = useCallback(
     ({
       resourceNodeId,
@@ -349,7 +309,6 @@ export function useDraftNetworkActions() {
           n.id === resourceNodeId
             ? {
                 ...n,
-                // Detach from any frame it was in.
                 parentId: undefined,
                 data: {
                   ...n.data,
@@ -363,8 +322,6 @@ export function useDraftNetworkActions() {
         prev.filter((e) => !e.id.startsWith(`member-${resourceNodeId}-`)),
       );
       setTimeout(() => syncDraftResource(resourceNodeId), 0);
-      // Usually not a frame on canvas (that's this path's whole point), but if
-      // one happens to be, highlight it.
       const nodeId = findNetworkNodeIdForRef({
         networkId: network.id,
         name: network.name,
@@ -374,8 +331,6 @@ export function useDraftNetworkActions() {
     [reactFlow, syncDraftResource, findNetworkNodeIdForRef, highlightNetworkNode],
   );
 
-  // Saves the draft resource editor: node data (name/address/description,
-  // groups, parent network), containment/membership, change sync.
   const saveDraftResource = useCallback(
     (params: {
       nodeId: string;
@@ -386,84 +341,101 @@ export function useDraftNetworkActions() {
       network: DraftNetworkRef;
     }) => {
       const { nodeId, name, address, description, groupIds, network } = params;
-      reactFlow.setNodes((prev) =>
-        prev.map((n) =>
-          n.id === nodeId
-            ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  // Preserve an existing resource's real id (editing an
-                  // existing standalone resource updates the canvas only).
-                  resource: {
-                    ...(n.data as { resource?: NetworkResource }).resource,
-                    name,
-                    address,
-                    description,
+      // Read BEFORE the write below: setNodes lands synchronously, so reading
+      // afterwards would report the just-saved values as the live ones.
+      const preEdit = reactFlow.getNodes().find((n) => n.id === nodeId);
+      const applyNodeEdit = (draftNetwork?: DraftNetworkRef) =>
+        reactFlow.setNodes((prev) =>
+          prev.map((n) =>
+            n.id === nodeId
+              ? {
+                  ...n,
+                  data: {
+                    // Writing the edit into `resource` below destroys the live
+                    // values, so stash them first — the revert check needs them.
+                    ...withResourceLiveBaseline(n.data),
+                    resource: {
+                      ...(n.data as { resource?: NetworkResource }).resource,
+                      name,
+                      address,
+                      description,
+                    },
+                    resourceGroupIds: groupIds,
+                    ...(draftNetwork ? { draftNetwork } : {}),
                   },
-                  resourceGroupIds: groupIds,
-                },
-              }
-            : n,
-        ),
-      );
-      // Existing resource (real id): record an update-resource change with the
-      // edited fields. Existing resources keep their network (v1 doesn't
-      // reassign), so skip the draft containment/sync path below.
+                }
+              : n,
+          ),
+        );
+      // Existing resources keep their network: v1 doesn't reassign.
       if (!nodeId.startsWith("resource-new-")) {
-        const node = reactFlow.getNodes().find((n) => n.id === nodeId);
-        const resource = (node?.data as { resource?: NetworkResource })
+        const resource = (preEdit?.data as { resource?: NetworkResource })
           ?.resource;
-        const enabled =
-          (node?.data as { enabled?: boolean })?.enabled ??
-          resource?.enabled ??
-          true;
-        if (resource?.id && network.networkId) {
-          const originalGroupIds = (
-            (resource.groups as (string | { id?: string })[]) ?? []
-          )
-            .map((g) => (typeof g === "string" ? g : g.id ?? ""))
-            .filter(Boolean);
-          trackUpdateResource({
-            resourceId: resource.id,
-            networkId: network.networkId,
-            name,
-            networkName: network.name,
-            address,
-            description,
-            enabled,
-            groupIds,
-            // Live state — an edit reverted field-for-field drops the change.
-            original: {
-              enabled: resource.enabled ?? true,
-              name: resource.name,
-              address: resource.address,
-              description: resource.description,
-              groupIds: originalGroupIds,
-            },
-          });
+        // The draftNetwork stamp can be missing when /networks was stale at draft
+        // build, so resolve the owning network by resource id at save time.
+        let resolved = network;
+        if (resource?.id && !resolved.networkId) {
+          const owner = networks?.find(
+            (n) => n.resources?.includes(resource.id),
+          );
+          if (owner) resolved = { networkId: owner.id, name: owner.name };
         }
+        if (!resource?.id || !resolved.networkId) {
+          // Applying the node edit without tracking a change would show a
+          // rename the deploy never carries, so refuse the save outright.
+          notify({
+            title: resource?.name ?? name,
+            description:
+              "The resource's network could not be determined, so the edit was not saved.",
+            backgroundColor: "bg-red-500",
+          });
+          return;
+        }
+        // Never node.data.enabled — see getResourceNodeEnabled.
+        const enabled = getResourceNodeEnabled(preEdit);
+        // Not `resource`: on a second edit that already holds the first one.
+        const live = getResourceLiveBaseline(preEdit);
+        const originalGroupIds = (
+          (live?.groups as (string | { id?: string })[]) ?? []
+        )
+          .map((g) => (typeof g === "string" ? g : g.id ?? ""))
+          .filter(Boolean);
+        applyNodeEdit(network.networkId ? undefined : resolved);
+        trackUpdateResource({
+          resourceId: resource.id,
+          networkId: resolved.networkId,
+          name,
+          networkName: resolved.name,
+          address,
+          description,
+          enabled,
+          groupIds,
+          // Live state — an edit reverted field-for-field drops the change.
+          original: {
+            enabled: live?.enabled ?? true,
+            name: live?.name ?? resource.name,
+            address: live?.address ?? resource.address,
+            description: live?.description,
+            groupIds: originalGroupIds,
+          },
+        });
         return;
       }
+      applyNodeEdit();
 
-      // Standalone save with no network chosen yet — leave draftNetwork unset
-      // so the card reads "No Network". syncDraftResource still tracks it (a
-      // resource with an address), where it surfaces as a blocking "No
-      // Network" issue in Review & Deploy until a network is assigned.
+      // Leaving draftNetwork unset makes the card read "No Network".
       if (!network.networkClientId && !network.networkId) {
         setTimeout(() => syncDraftResource(nodeId), 0);
         return;
       }
 
-      // Containment / membership when the parent network is on the canvas
-      // (assign also stamps draftNetwork + syncs the change).
       const networkNodeId = network.networkClientId
         ? `network-${network.networkClientId}`
         : `network-${network.networkId}`;
       const nodesNow = reactFlow.getNodes();
       const networkOnCanvas = nodesNow.some((n) => n.id === networkNodeId);
-      // Already a child (created straight into this drilled network) — re-
-      // assigning would re-grid it, snapping a cursor drop to center; just sync.
+      // Re-assigning an existing child would re-grid it and snap a cursor drop
+      // to center.
       const alreadyChild = nodesNow.some(
         (n) => n.id === nodeId && n.parentId === networkNodeId,
       );
@@ -482,11 +454,15 @@ export function useDraftNetworkActions() {
         setTimeout(() => syncDraftResource(nodeId), 0);
       }
     },
-    [reactFlow, assignResourceToNetwork, syncDraftResource, trackUpdateResource],
+    [
+      reactFlow,
+      networks,
+      assignResourceToNetwork,
+      syncDraftResource,
+      trackUpdateResource,
+    ],
   );
 
-  // Renames a draft network on the canvas node + change + dependent
-  // resource nodes' network refs (labels).
   const renameDraftNetwork = useCallback(
     (node: Node, newName: string, description?: string) => {
       const network = (node.data as { network?: Network })?.network;
@@ -526,10 +502,25 @@ export function useDraftNetworkActions() {
     [reactFlow, updateDraftNetwork, changes],
   );
 
-  // Applies the routing-peer modal's pick: records the create-router change
-  // (with the modal's settings) — routers have no canvas representation, the
-  // frame's routing-peer count reflects the changeset. Id-less groups picked
-  // in the modal get their create-group change.
+  // Groups typed straight into the modal's selector are draft groups.
+  const ensureDraftGroupChange = useCallback(
+    (group?: Group) => {
+      if (!group || group.id) return;
+      const exists = changes.some(
+        (c) => c.type === "create-group" && c.name === group.name,
+      );
+      if (!exists) {
+        trackCreateGroup({
+          clientId: `group-new-${group.name}`,
+          name: group.name,
+        });
+      }
+    },
+    [changes, trackCreateGroup],
+  );
+
+  // Routers have no canvas node, so the frame's routing-peer count comes from
+  // the changeset.
   const addRouterFromSelection = useCallback(
     (params: {
       networkNodeId: string;
@@ -548,21 +539,10 @@ export function useDraftNetworkActions() {
       const group = peerGroups[0];
       if (!networkRef || (peer ? !peer.id : !group?.name)) return;
 
-      // Groups typed straight into the modal's selector are draft groups.
-      if (group && !group.id) {
-        const exists = changes.some(
-          (c) => c.type === "create-group" && c.name === group.name,
-        );
-        if (!exists) {
-          trackCreateGroup({
-            clientId: `group-new-${group.name}`,
-            name: group.name,
-          });
-        }
-      }
+      ensureDraftGroupChange(group);
 
       trackCreateRouter({
-        clientId: `new-${uid()}`,
+        clientId: `new-${draftUid()}`,
         networkId: networkRef.networkId,
         networkClientId: networkRef.networkClientId,
         networkName: networkRef.name,
@@ -575,12 +555,9 @@ export function useDraftNetworkActions() {
         enabled,
       });
     },
-    [reactFlow, changes, trackCreateGroup, trackCreateRouter],
+    [reactFlow, ensureDraftGroupChange, trackCreateRouter],
   );
 
-  // Applies the routing-peer modal's pick to an EXISTING (API) router as a
-  // draft update-router change. Mirrors addRouterFromSelection (id-less groups
-  // get their create-group change) but keys on the real router + network id.
   const updateRouterFromSelection = useCallback(
     (params: {
       networkId: string;
@@ -605,18 +582,7 @@ export function useDraftNetworkActions() {
       const group = peerGroups[0];
       if (peer ? !peer.id : !group?.name) return;
 
-      // Groups typed straight into the modal's selector are draft groups.
-      if (group && !group.id) {
-        const exists = changes.some(
-          (c) => c.type === "create-group" && c.name === group.name,
-        );
-        if (!exists) {
-          trackCreateGroup({
-            clientId: `group-new-${group.name}`,
-            name: group.name,
-          });
-        }
-      }
+      ensureDraftGroupChange(group);
 
       trackUpdateRouter({
         routerId,
@@ -631,7 +597,7 @@ export function useDraftNetworkActions() {
         enabled,
       });
     },
-    [changes, trackCreateGroup, trackUpdateRouter],
+    [ensureDraftGroupChange, trackUpdateRouter],
   );
 
   return {

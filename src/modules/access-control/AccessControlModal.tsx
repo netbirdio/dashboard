@@ -4,6 +4,7 @@ import Button from "@components/Button";
 import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
+import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -45,18 +46,17 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useUsers } from "@/contexts/UsersProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
+import { SSHAccessType } from "@/modules/access-control/ssh/SSHAccessType";
+import { SSHAuthorizedGroups } from "@/modules/access-control/ssh/SSHAuthorizedGroups";
 import { useAccessControl } from "@/modules/access-control/useAccessControl";
 import { PostureCheckTab } from "@/modules/posture-checks/ui/PostureCheckTab";
 import { PostureCheckTabTrigger } from "@/modules/posture-checks/ui/PostureCheckTabTrigger";
-import { SSHAccessType } from "@/modules/access-control/ssh/SSHAccessType";
-import { SSHAuthorizedGroups } from "@/modules/access-control/ssh/SSHAuthorizedGroups";
-import { useUsers } from "@/contexts/UsersProvider";
-import { HelpTooltip } from "@components/HelpTooltip";
 
 type Props = {
   children?: React.ReactNode;
@@ -132,9 +132,7 @@ type ModalProps = {
   cell?: string;
   postureCheckTemplates?: PostureCheck[];
   useSave?: boolean;
-  // Runs right before the modal saves (useSave mode). Return false to abort —
-  // e.g. a "you are in live mode" confirmation. Save proceeds when it resolves
-  // truthy (or when not provided).
+  // Return false to abort the save (useSave mode only).
   onBeforeSave?: () => Promise<boolean> | boolean;
   allowEditPeers?: boolean;
   initialProtocol?: Protocol;
@@ -144,13 +142,10 @@ type ModalProps = {
   initialTab?: string;
   disableDestinationSelector?: boolean;
   additionalResources?: NetworkResource[];
-  // Draft-only placeholder peers (not installed yet) offered in the peer
-  // selectors alongside the real peers.
+  // Draft-only placeholder peers, not installed yet.
   additionalPeers?: Peer[];
-  // Set when the policy is created by connecting onto a network (or one of
-  // its resources/resource-groups) in the draft canvas: the destination
-  // selector offers ONLY the network's resources and groups (no peers), and
-  // the policy is locked one-way — resource access is never bidirectional.
+  // Set when the policy is drawn onto a network in the draft canvas: the
+  // destination is that network's resources only, and the policy is one-way.
   destinationScope?: PolicyDestinationScope;
 };
 
@@ -266,15 +261,20 @@ export function AccessControlModalContent({
     onSuccess && onSuccess(data);
   };
 
-  // Save button behaviour: in useSave mode run the optional confirm, then the
-  // real save; otherwise just hand the data back to the caller (draft mode).
+  const [isSaving, setIsSaving] = useState(false);
   const saveOrClose = async () => {
     if (!useSave) return close();
-    if (onBeforeSave && !(await onBeforeSave())) return;
-    submit();
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      if (onBeforeSave && !(await onBeforeSave())) return;
+      submit();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  // Network-scoped destinations are resource access — one-way by nature.
+  // Resource access is never bidirectional.
   useEffect(() => {
     if (destinationScope && direction !== "in") setDirection("in");
   }, [destinationScope, direction, setDirection]);
@@ -679,7 +679,9 @@ export function AccessControlModalContent({
 
                   <Button
                     variant={"primary"}
-                    disabled={submitDisabled || !permission.policies.create}
+                    disabled={
+                      submitDisabled || isSaving || !permission.policies.create
+                    }
                     onClick={() => void saveOrClose()}
                     data-testid={"submit-policy"}
                   >
@@ -696,7 +698,9 @@ export function AccessControlModalContent({
               </ModalClose>
               <Button
                 variant={"primary"}
-                disabled={submitDisabled || !permission.policies.update}
+                disabled={
+                  submitDisabled || isSaving || !permission.policies.update
+                }
                 onClick={() => void saveOrClose()}
                 data-testid={"submit-policy"}
               >

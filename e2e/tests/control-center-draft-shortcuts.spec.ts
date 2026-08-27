@@ -8,20 +8,13 @@ import {
   resetDraftState,
 } from "../helpers/control-center";
 
-/**
- * Draft-mode keyboard shortcuts (Alt/⌥ + digit) create nodes at the viewport
- * centre — the same set as the canvas context menu:
- *   1 Server · 2 Agent · 3 Policy · 4 Group · 5 Network · 6 Resource
- * (draft-only, input-aware; see useControlCenterShortcuts / CanvasContextMenu).
- */
 test.describe.serial("Control Center Draft Shortcuts @control-center", () => {
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
     await resetDraftState(page);
   });
 
   test.afterAll(async ({ dashboardAsOwner: page }) => {
-    // A deployed/created draft group never hits the account (we discard), but
-    // be safe about any that leaked.
+    // Draft groups never hit the account; clean up any that leaked.
     await deleteGroupsByPrefix(page, "New Group");
   });
 
@@ -45,8 +38,7 @@ test.describe.serial("Control Center Draft Shortcuts @control-center", () => {
     await page.locator(".react-flow__pane").click();
     await page.keyboard.press("Alt+3");
 
-    // A blank policy is canvas-only until both sides are connected, so it
-    // renders but does not enter the changeset.
+    // A blank policy is canvas-only until both sides are connected.
     await expect(canvasNode(page, "policy-new-")).toHaveCount(1);
     await expectChangeCount(page, 0);
   });

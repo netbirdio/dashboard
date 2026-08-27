@@ -31,9 +31,7 @@ export default function DataTableGlobalSearch({
   }, [debouncedValue]);
 
   useEffect(() => {
-    // Coalesce undefined → "" so a reset (which clears the table's
-    // global filter to undefined) also clears the visible input text,
-    // not just the results.
+    // Coalesce undefined → "" so a reset also clears the visible input text.
     const next = globalSearch ?? "";
     if (next !== inputValue) {
       setInputValue(next);

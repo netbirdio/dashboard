@@ -1,14 +1,9 @@
 import { Edge, Node } from "@xyflow/react";
 
-// Pure logic behind the parent-view / drill-down frame rules, consumed by
-// useFrameEdgeAttachment and useNetworkDrillDown and unit-tested in
-// frame-view.test.ts.
+// Pure logic behind the parent-view / drill-down frame rules.
 
-// Edge-target resolution: a policy edge whose destination is a framed
-// resource targets the FRAME in the parent view and the actual resource
-// inside that frame's drill-down. The real target is kept on the edge
-// (data.resourceTarget) so the swap reverses cleanly. Returns null when
-// nothing needs to change.
+// A policy edge to a framed resource targets the FRAME in the parent view and
+// the resource in its drill-down; data.resourceTarget keeps the real target.
 export function computeFrameEdgeTargets(
   nodes: Node[],
   edges: Edge[],
@@ -23,15 +18,14 @@ export function computeFrameEdgeTargets(
 
   let changed = false;
   const next = edges.map((edge) => {
-    // Only policy edges — routing/membership edges target frames natively.
+    // Only policy edges: routing/membership edges target frames natively.
     if (edge.type !== "smart") return edge;
     const data = edge.data as { resourceTarget?: string } | undefined;
     const actual = data?.resourceTarget ?? edge.target;
     const frame = frameOf.get(actual);
 
     if (!frame) {
-      // The resource left its frame — restore the direct edge (a removed
-      // resource's policy edges are rebuilt by the removal sweep instead).
+      // The resource left its frame: restore the direct edge.
       if (
         data?.resourceTarget &&
         edge.target !== actual &&
@@ -58,14 +52,8 @@ export function computeFrameEdgeTargets(
   return changed ? next : null;
 }
 
-// What stays visible inside a frame's drill-down — mirroring the live
-// single-network view: the network's resources (WITHOUT the frame box) and
-// the policies whose destination lives in the frame — whether their edge
-// still attaches to the frame (parent view) or already to the resource
-// (post re-attachment flip) — plus those policies' source nodes. The frame
-// itself and its routing peers are hidden (routing state lives in the
-// header count, exactly like live mode); policies reaching the network only
-// via a resource-GROUP stay hidden (accepted gap).
+// What stays visible inside a frame's drill-down: the network's resources, the
+// policies whose destination lives in the frame, and those policies' sources.
 export function computeDrillDownKeepSet(
   nodes: Node[],
   edges: Edge[],

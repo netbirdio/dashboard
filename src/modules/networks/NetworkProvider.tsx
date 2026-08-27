@@ -24,8 +24,7 @@ type Props = {
   network?: Network;
   onResourceUpdate?: () => void;
   onResourceDelete?: () => void;
-  // Fired right after a network is created (before the add-resource prompt).
-  // The control-center canvas uses this to drill into the fresh network.
+  // Fired right after a network is created, before the add-resource prompt.
   onNetworkCreated?: (network: Network) => void;
   onResourceCreated?: (network?: Network) => void;
 };

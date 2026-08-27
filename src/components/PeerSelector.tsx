@@ -25,7 +25,7 @@ MapPinIcon.displayName = "MapPinIcon";
 
 interface MultiSelectProps {
   value?: Peer;
-  onChange: React.Dispatch<React.SetStateAction<Peer | undefined>>;
+  onChange: (peer: Peer | undefined) => void;
   excludedPeers?: string[];
   disabled?: boolean;
   /**
@@ -82,15 +82,11 @@ export function PeerSelector({
   // Serialised so the effect below reacts to a placeholder being renamed or
   // added, without depending on a fresh array identity each render.
   const extraKey = (extraPeers ?? []).map((p) => `${p.id}:${p.name}`).join("|");
-
-  // Update unfiltered items when peers change
   useEffect(() => {
     if (!peers && !extraPeers?.length) return;
 
-    // Sort
     let options = sortBy([...(peers ?? [])], "name") as Peer[];
 
-    // Filter out excluded peers
     if (excludedPeers) {
       options = options.filter((peer) => {
         if (!peer.id) return false;

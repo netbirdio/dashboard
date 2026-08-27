@@ -12,18 +12,11 @@ import {
   isPlaceholderPeerNode,
 } from "./node-capabilities";
 
-// The capability spec per canvas node kind — what each node can and cannot
-// do in draft mode. Connection rules live in draft-connect.test.ts; this
-// covers identity-level capabilities (rename / install / peer-select /
-// join-a-group).
-
 const node = (
   id: string,
   type: string,
   data: Record<string, unknown> = {},
 ): Node => ({ id, type, position: { x: 0, y: 0 }, data });
-
-// ---- Fixtures: one node per kind -------------------------------------------
 
 const serverPlaceholder = node("peer-draft-s", "peerNode", {
   placeholderKind: "server",
@@ -37,8 +30,6 @@ const userDevicePlaceholder = node("peer-draft-u", "peerNode", {
   placeholderKind: "user-device",
   placeholderName: "User Device",
 });
-// A user-device select node AFTER a peer was chosen — node id and data carry
-// the real peer.
 const userDeviceSelected = node("peer-p1", "peerNode", {
   placeholderKind: "user-device",
   peer: { id: "p1", name: "laptop" },

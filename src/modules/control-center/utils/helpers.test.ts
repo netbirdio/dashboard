@@ -2,6 +2,7 @@ import { Node } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
+import { isEmptiedPolicy } from "./change-cascade";
 import {
   deriveResourceType,
   getDraftResource,
@@ -11,9 +12,16 @@ import {
   canDropGroupIntoNetwork,
   getFirstGroup,
   getPlaceholderPeer,
+  getPlaceholderSetupKey,
   getPoliciesTargetingResources,
   getPolicyRegroupUpdates,
   isCompleteDraftResource,
+  dropAbsorbedPlaceholder,
+  findPlaceholderHolder,
+  getResourceDraftGroupIds,
+  getResourceLiveBaseline,
+  getResourceNodeEnabled,
+  withResourceLiveBaseline,
   isDeployablePolicy,
   isTrackablePolicy,
   pinByOrder,
@@ -117,6 +125,54 @@ describe("getPlaceholderPeer", () => {
     ).toBe(undefined);
     expect(getPlaceholderPeer(undefined)).toBe(undefined);
   });
+
+  it("carries the node's install artifacts (survive absorption into a group)", () => {
+    const peer = getPlaceholderPeer(
+      node("peer-draft-abc", {
+        placeholderKind: "agent",
+        setupKey: "KEY-1",
+        setupKeyId: "sk-1",
+        boundGroupId: "bg-1",
+        installHostname: "agent-1",
+      }),
+    );
+    expect(peer).toMatchObject({
+      id: "draft-abc",
+      setupKey: "KEY-1",
+      setupKeyId: "sk-1",
+      boundGroupId: "bg-1",
+      installHostname: "agent-1",
+    });
+  });
+});
+
+describe("getPlaceholderSetupKey", () => {
+  it("reads the key from the placeholder's own node", () => {
+    const canvas = [
+      node("peer-draft-a", { placeholderKind: "agent", setupKey: "KEY-A" }),
+    ];
+    expect(getPlaceholderSetupKey(canvas, "draft-a")).toBe("KEY-A");
+  });
+
+  it("reads the key from a group's draftPeers entry when absorbed", () => {
+    const canvas = [
+      node("group-1", {
+        group: { id: "1", name: "Servers" },
+        draftPeers: [{ id: "draft-b", name: "Server", setupKey: "KEY-B" }],
+      }),
+    ];
+    expect(getPlaceholderSetupKey(canvas, "draft-b")).toBe("KEY-B");
+  });
+
+  it("returns undefined before a key was generated", () => {
+    const canvas = [
+      node("peer-draft-a", { placeholderKind: "agent" }),
+      node("group-1", { draftPeers: [{ id: "draft-b", name: "Server" }] }),
+    ];
+    expect(getPlaceholderSetupKey(canvas, "draft-a")).toBe(undefined);
+    expect(getPlaceholderSetupKey(canvas, "draft-b")).toBe(undefined);
+    expect(getPlaceholderSetupKey(canvas, "draft-missing")).toBe(undefined);
+  });
 });
 
 describe("getPlaceholderHostname", () => {
@@ -135,7 +191,6 @@ describe("getPlaceholderHostname", () => {
       placeholderKind: "server",
       placeholderName: "My DB Server!",
     }),
-    // Select node with a chosen peer — no longer a placeholder.
     node("peer-1", { placeholderKind: "user-device", peer: { id: "1" } }),
     node("group-1", { group: { name: "All" } }),
   ];
@@ -147,7 +202,6 @@ describe("getPlaceholderHostname", () => {
 
   it("keeps hostnames unique across draft peers", () => {
     expect(getPlaceholderHostname(canvas, "peer-draft-b")).toBe("agent-1");
-    // Sanitization collision gets the next suffix.
     expect(getPlaceholderHostname(canvas, "peer-draft-c")).toBe("agent-1-1");
   });
 
@@ -174,7 +228,6 @@ describe("getPolicyRegroupUpdates", () => {
     const rule = updates[0].rules[0];
     expect(rule.sourceResource).toBe(undefined);
     expect(rule.sources).toEqual([group]);
-    // The other side is untouched.
     expect(rule.destinations).toEqual([{ name: "X" }]);
   });
 
@@ -209,6 +262,92 @@ describe("getPolicyRegroupUpdates", () => {
     expect(updates[0].id).toBe("p3");
     expect(updates[0].rules[0].sources).toEqual([group]);
     expect(updates[0].rules[0].destinations).toEqual([group]);
+  });
+});
+
+describe("an absorbed placeholder has no node of its own", () => {
+  const holder = {
+    id: "group-g1",
+    position: { x: 0, y: 0 },
+    data: {
+      group: { id: "g1", name: "G" },
+      draftPeers: [
+        { id: "draft-a", setupKeyId: "k-a", boundGroupId: "bg-a" },
+        { id: "draft-b" },
+      ],
+      addedMembers: new Set(["draft-a", "draft-b", "p1"]),
+    },
+  } as never;
+  const other = { id: "peer-p9", position: { x: 0, y: 0 }, data: {} } as never;
+
+  it("finds the group node holding it", () => {
+    expect(findPlaceholderHolder([other, holder], "draft-a")?.id).toBe(
+      "group-g1",
+    );
+    expect(findPlaceholderHolder([other, holder], "draft-zz")).toBeUndefined();
+  });
+
+  it("drops it from draftPeers and from addedMembers", () => {
+    const [, next] = dropAbsorbedPlaceholder([other, holder], "draft-a");
+    expect(next.data.draftPeers).toEqual([{ id: "draft-b" }]);
+    expect(Array.from(next.data.addedMembers as Set<string>)).toEqual([
+      "draft-b",
+      "p1",
+    ]);
+  });
+
+  it("leaves nodes that do not hold it untouched", () => {
+    const input = [other, holder];
+    const next = dropAbsorbedPlaceholder(input, "draft-zz");
+    expect(next[0]).toBe(other);
+    expect(next[1]).toBe(holder);
+  });
+});
+
+describe("getResourceNodeEnabled — the resource's state, not the frame's dim", () => {
+  const existing = (data: Record<string, unknown>) => ({
+    id: "resource-r1",
+    data,
+  });
+
+  it("reads an existing resource's own enabled flag, not the node's", () => {
+    // What useNetworkView/useDraft actually build.
+    expect(
+      getResourceNodeEnabled(
+        existing({ enabled: true, resource: { id: "r1", enabled: false } }),
+      ),
+    ).toBe(false);
+    expect(
+      getResourceNodeEnabled(
+        existing({ enabled: false, resource: { id: "r1", enabled: true } }),
+      ),
+    ).toBe(true);
+  });
+
+  it("prefers a draft toggle over the live value, and live over nothing", () => {
+    expect(
+      getResourceNodeEnabled(
+        existing({ resourceEnabled: false, resource: { id: "r1", enabled: true } }),
+      ),
+    ).toBe(false);
+    expect(
+      getResourceNodeEnabled(existing({ resource: { id: "r1", enabled: false } })),
+    ).toBe(false);
+    expect(getResourceNodeEnabled(existing({ resource: { id: "r1" } }))).toBe(true);
+  });
+
+  it("uses the node flag for a draft resource, which has no live twin", () => {
+    expect(
+      getResourceNodeEnabled({ id: "resource-new-1", data: { enabled: false } }),
+    ).toBe(false);
+    expect(
+      getResourceNodeEnabled({ id: "resource-new-1", data: { enabled: true } }),
+    ).toBe(true);
+    expect(getResourceNodeEnabled({ id: "resource-new-1", data: {} })).toBe(true);
+  });
+
+  it("defaults to enabled when there is nothing to read", () => {
+    expect(getResourceNodeEnabled(undefined)).toBe(true);
   });
 });
 
@@ -273,8 +412,7 @@ describe("isTrackablePolicy — both-sides policies enter the changeset even wit
   });
 
   it("a policy referencing an uninstalled placeholder peer IS trackable", () => {
-    // The difference from isDeployablePolicy: trackable, so it shows in Review
-    // & Deploy (as a blocking issue), rather than vanishing.
+    // Trackable so Review & Deploy shows it as a blocking issue.
     const policy = makePolicy("p", {
       sourceResource: { id: "draft-x", type: "peer" },
       destinations: [{ name: "G" } as Group],
@@ -328,7 +466,6 @@ describe("draft resources", () => {
       }),
     );
     expect(resource).toMatchObject({ id: "new-r1", name: "DB", type: "host" });
-    // Real resources are not draft resources.
     expect(getDraftResource(node("resource-r1", { resource: {} }))).toBe(
       undefined,
     );
@@ -347,8 +484,7 @@ describe("draft resources", () => {
   });
 
   it("isCompleteDraftResource fails when the name is missing (not just empty)", () => {
-    // getDraftResource defaults name to "Resource"; the gate must check the raw
-    // name so an address+network resource with no user-set name isn't complete.
+    // getDraftResource defaults the name, so the gate checks the raw one.
     const noName = node("resource-new-r1", {
       resource: { address: "10.0.0.5" },
       draftNetwork: { networkClientId: "new-n1", name: "Office" },
@@ -399,7 +535,6 @@ describe("getPoliciesTargetingResources — policies drawn when an existing netw
         [p],
       ),
     ).toEqual([p]);
-    // group ids as plain strings too
     expect(
       getPoliciesTargetingResources([resource("r1", ["g2"])], [p]),
     ).toEqual([p]);
@@ -523,9 +658,7 @@ describe("pinByOrder", () => {
   });
 
   it("keeps rows put when the input array is reordered (post-save mutate)", () => {
-    // The panel captured this order when it opened...
     const order = ["p1", "p2", "p3"];
-    // ...then a save + SWR mutate returned the list in a different order.
     const afterMutate = [{ id: "p3" }, { id: "p1" }, { id: "p2" }];
     expect(pinByOrder(afterMutate, order, idOf).map(idOf)).toEqual([
       "p1",
@@ -536,8 +669,6 @@ describe("pinByOrder", () => {
 
   it("appends ids missing from the order, preserving their relative order", () => {
     const items = [{ id: "new2" }, { id: "a" }, { id: "new1" }, { id: "b" }];
-    // Only a, b were known at open; new1/new2 registered afterwards and sort
-    // to the end in the order they appear in the input (stable sort).
     expect(pinByOrder(items, ["a", "b"], idOf).map(idOf)).toEqual([
       "a",
       "b",
@@ -568,7 +699,6 @@ describe("withFreshGroupCounts", () => {
     const result = withFreshGroupCounts(stale, groups);
     expect(result.peers_count).toBe(4);
     expect(result.resources_count).toBe(2);
-    // Non-count fields are preserved from the embedded group.
     expect(result.name).toBe("Ops");
   });
 
@@ -591,5 +721,130 @@ describe("withFreshGroupCounts", () => {
       { id: "g1", name: "Ops", peers_count: 5 },
     ]);
     expect(stale.peers_count).toBe(1);
+  });
+});
+
+// `data.resource` is overwritten by the resource editor, so it is only the live
+// snapshot until the first edit. Revert detection needs the real one.
+describe("the live resource baseline survives an edit", () => {
+  const live = { id: "r1", name: "db", address: "10.0.0.1/32", enabled: false };
+
+  it("falls back to data.resource before anything is captured", () => {
+    expect(getResourceLiveBaseline({ data: { resource: live } })).toBe(live);
+  });
+
+  it("prefers the captured baseline once data.resource holds an edit", () => {
+    const edited = { ...live, name: "db2" };
+    expect(
+      getResourceLiveBaseline({ data: { resource: edited, liveResource: live } })
+        ?.name,
+    ).toBe("db");
+  });
+
+  it("captures on the first edit and leaves it alone on the second", () => {
+    const first = withResourceLiveBaseline({ resource: live });
+    expect(first.liveResource).toBe(live);
+
+    const edited = { ...live, name: "db2" };
+    const second = withResourceLiveBaseline({
+      ...first,
+      resource: edited,
+    });
+    // Capturing again here is what made a revert to "db" look like a change.
+    expect(second.liveResource).toBe(live);
+  });
+
+  it("returns undefined when there is nothing to read", () => {
+    expect(getResourceLiveBaseline(undefined)).toBeUndefined();
+    expect(getResourceLiveBaseline({ data: {} })).toBeUndefined();
+  });
+});
+
+describe("getResourceDraftGroupIds — the draft's groups, not the live ones", () => {
+  it("prefers a pending group edit over the live membership", () => {
+    expect(
+      getResourceDraftGroupIds({
+        data: {
+          resourceGroupIds: ["g9"],
+          resource: { id: "r1", groups: [{ id: "g1" }] },
+        },
+      }),
+    ).toEqual(["g9"]);
+  });
+
+  it("normalises live groups from objects or bare ids", () => {
+    expect(
+      getResourceDraftGroupIds({
+        data: { resource: { id: "r1", groups: [{ id: "g1" }, "g2"] } },
+      }),
+    ).toEqual(["g1", "g2"]);
+  });
+
+  it("keeps an explicit empty edit rather than falling back to live", () => {
+    expect(
+      getResourceDraftGroupIds({
+        data: { resourceGroupIds: [], resource: { id: "r1", groups: ["g1"] } },
+      }),
+    ).toEqual([]);
+  });
+
+  it("is empty when there is nothing to read", () => {
+    expect(getResourceDraftGroupIds(undefined)).toEqual([]);
+  });
+});
+
+// The gap that let a group deletion record an undeployable change: the tracker tested
+// both-sides-bare while the deploy sink asserts both-sides-present, so a ONE-sided
+// policy satisfied neither and travelled to the API as an update the sink refused.
+describe("isEmptiedPolicy and isDeployablePolicy leave no gap between them", () => {
+  const sided = (
+    sources: Partial<Group>[],
+    destinations: Partial<Group>[],
+  ): Policy =>
+    ({
+      id: "p1",
+      name: "P",
+      enabled: true,
+      rules: [
+        {
+          name: "P",
+          enabled: true,
+          bidirectional: true,
+          action: "accept",
+          protocol: "all",
+          ports: [],
+          sources,
+          destinations,
+        },
+      ],
+    }) as unknown as Policy;
+
+  const A = { id: "gA", name: "A" };
+  const B = { id: "gB", name: "B" };
+
+  it.each([
+    ["both sides bare", sided([], [])],
+    ["no source", sided([], [B])],
+    ["no destination", sided([A], [])],
+  ])("treats %s as emptied, which the sink also refuses", (_label, policy) => {
+    expect(isEmptiedPolicy(policy)).toBe(true);
+    expect(isDeployablePolicy(policy)).toBe(false);
+  });
+
+  it("treats a policy with both sides as neither emptied nor undeployable", () => {
+    const policy = sided([A], [B]);
+    expect(isEmptiedPolicy(policy)).toBe(false);
+    expect(isDeployablePolicy(policy)).toBe(true);
+  });
+
+  // The one asymmetry that is deliberate: a policy pointing at an uninstalled
+  // placeholder peer is a real pending change, blocked by that peer's own
+  // install-peer issue. Turning it into a policy DELETION would be wrong.
+  it("does not call a policy waiting on an uninstalled peer emptied", () => {
+    const policy = sided([A], []);
+    policy.rules[0].destinationResource = { id: "draft-abc", type: "host" };
+    expect(isEmptiedPolicy(policy)).toBe(false);
+    expect(isDeployablePolicy(policy)).toBe(false);
+    expect(isTrackablePolicy(policy)).toBe(true);
   });
 });

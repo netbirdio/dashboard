@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 
-// Closes a controlled dropdown/popover on a click inside the ReactFlow canvas.
-// Radix's outside-click doesn't fire there (the pane stops pointer propagation
-// before the document listener sees it), so listen in the CAPTURE phase.
+// Radix's outside-click never fires inside the ReactFlow pane, which stops
+// pointer propagation, so listen in the CAPTURE phase.
 export function useCloseOnCanvasClick(open: boolean, close: () => void) {
   useEffect(() => {
     if (!open) return;

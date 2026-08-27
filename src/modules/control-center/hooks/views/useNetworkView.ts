@@ -1,26 +1,31 @@
 import { Edge, Node } from "@xyflow/react";
+import { sortBy } from "lodash";
 import { useMemo } from "react";
-import { forEach } from "lodash";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
-import {
-  addNode,
-  addEdge,
-} from "@/modules/control-center/utils/graph-builder";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { applyDrilledLayout } from "@/modules/control-center/utils/drilled-layout";
+import {
+  addEdge,
+  addNode,
+} from "@/modules/control-center/utils/graph-builder";
 import {
   FRAME_GRID_BASE_X,
   getLiveFrameGrid,
+  getResourcePolicyByGroups,
   isFrameNode,
   NETWORK_FRAME_FALLBACK_ROW,
-  getResourcePolicyByGroups,
+  orderFrameResources,
   packFrameGrid,
   SOURCE_NODE_HALF_HEIGHT,
-  orderFrameResources,
+  withFreshGroupCounts,
 } from "@/modules/control-center/utils/helpers";
+import {
+  nodeYNudge,
+  POLICY_COLUMN_Y_OFFSET,
+} from "@/modules/control-center/utils/layouts";
 import { ViewResult } from "./types";
-import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 
 export function useNetworkView() {
   const { selectedNetwork, layoutInitialized } = useCanvasState();
@@ -34,9 +39,8 @@ export function useNetworkView() {
     isDataReady,
   } = useControlCenterData();
 
-  // policiesOverride: rebuild from fresher data than the SWR cache (e.g. the
-  // PUT response of a policy update) — see refreshLiveView. Refreshes happen
-  // on an already-initialized layout, so the guard is skipped.
+  // A policiesOverride is fresher than the SWR cache, so it also bypasses the
+  // initialized-layout guard.
   const applySingleNetworkView = (
     networkId: string,
     policiesOverride?: Policy[],
@@ -53,7 +57,7 @@ export function useNetworkView() {
 
     const networkPolicies = network.policies || [];
 
-    forEach(networkPolicies, (p) => {
+    networkPolicies.forEach((p) => {
       const policy = effectivePolicies?.find(
         (policyItem) => policyItem.id === p,
       );
@@ -75,9 +79,8 @@ export function useNetworkView() {
           addNode(allNodes, {
             id: `group-${group.id}`,
             type: "groupNode",
-            // No onClick → the click falls through to onNodeClick, which opens
-            // the group's side panel (same as every other view).
-            data: { group, enabled },
+            // No onClick, so clicks fall through to onNodeClick's group panel.
+            data: { group: withFreshGroupCounts(group, groups), enabled },
             position: { x: 0, y: 0 },
           });
 
@@ -90,8 +93,6 @@ export function useNetworkView() {
           });
         });
 
-        // Single-peer sources (rule.sourceResource) connect to the policy
-        // like a source group would.
         const sourceResource = rule.sourceResource;
         if (sourceResource?.id && sourceResource.type === "peer") {
           const peer = peers?.find((p) => p.id === sourceResource.id);
@@ -99,7 +100,6 @@ export function useNetworkView() {
             addNode(allNodes, {
               id: `peer-${peer.id}`,
               type: "peerNode",
-              // Live view: card look, no connect handles (read-only).
               data: { peer, enabled: true, variant: "card", showHandles: false },
               position: { x: 0, y: 0 },
             });
@@ -116,8 +116,7 @@ export function useNetworkView() {
       }
     });
 
-    // Same policy-targeted-first order as the frames (orderFrameResources) —
-    // the drilled view and the draft drill-down must agree on the column.
+    // The drilled view and the draft drill-down must agree on this order.
     const resources = orderFrameResources(
       (network.resources || [])
         .map((r) => networkResources?.find((n) => n.id === r))
@@ -130,9 +129,7 @@ export function useNetworkView() {
       addNode(allNodes, {
         id: `resource-${resource.id}`,
         type: "resourceNode",
-        // The draftNetwork ref routes the node to the standalone CARD look,
-        // same as the draft drill-down. `drilled` suppresses the inline
-        // "- Network" suffix — the header already names the network here.
+        // `drilled` suppresses the "- Network" suffix the header already shows.
         data: {
           resource,
           enabled: true,
@@ -142,8 +139,7 @@ export function useNetworkView() {
         position: { x: 0, y: 0 },
       });
 
-      // Policies targeting this resource DIRECTLY (single-resource
-      // destination) — the group sweep below only covers group-mediated ones.
+      // The group sweep below only covers group-mediated policies.
       (effectivePolicies ?? []).forEach((policy) => {
         if (!networkPolicies.includes(policy.id || "")) return;
         if (policy.rules?.[0]?.destinationResource?.id !== resource.id) return;
@@ -180,26 +176,33 @@ export function useNetworkView() {
             );
             if (!resourceGroup) return;
 
+            // addNode keeps the first type, which would fold the destination into the
+            // sources column; clone it under the draft path's id scheme instead.
+            const existing = allNodes.find((x) => x.id === `group-${group.id}`);
+            const destNodeId =
+              existing && existing.type !== "destinationGroupNode"
+                ? `dest-group-${group.id}-${policy.id}`
+                : `group-${group.id}`;
+
             addNode(allNodes, {
-              id: `group-${group.id}`,
+              id: destNodeId,
               type: "destinationGroupNode",
-              data: { group, enabled },
+              data: { group: withFreshGroupCounts(group, groups), enabled },
               position: { x: 0, y: 0 },
             });
 
             addEdge(allEdges, {
-              id: `policy-${policy.id}-group-${group.id}`,
+              id: `policy-${policy.id}-${destNodeId}`,
               source: `policy-${policy.id}`,
-              target: `group-${group.id}`,
+              target: destNodeId,
               type: "smart",
               data: { enabled, policy },
             });
 
             addEdge(allEdges, {
-              id: `group-${group.id}-resource-${resource.id}`,
-              source: `group-${group.id}`,
-              // Leave from the group's RIGHT handle (toward the resource) —
-              // without it RF defaults to the first source handle ("sl", left).
+              id: `${destNodeId}-resource-${resource.id}`,
+              source: destNodeId,
+              // Without this React Flow picks the left handle instead.
               sourceHandle: "sr",
               target: `resource-${resource.id}`,
               type: "simple",
@@ -210,7 +213,7 @@ export function useNetworkView() {
             addNode(allNodes, {
               id: `group-${group.id}`,
               type: "groupNode",
-              data: { group, enabled },
+              data: { group: withFreshGroupCounts(group, groups), enabled },
               position: { x: 0, y: 0 },
             });
 
@@ -226,8 +229,6 @@ export function useNetworkView() {
       });
     });
 
-    // THE shared single-network layout (see drilled-layout.ts) — identical
-    // to the draft drill-down's arrangement.
     return applyDrilledLayout(allNodes, allEdges);
   };
 
@@ -238,34 +239,24 @@ export function useNetworkView() {
 
     const allNodes: Node[] = [];
     const allEdges: Edge[] = [];
-    // Frame children (resources) are appended AFTER the layout — the force
-    // layout must not touch their frame-relative positions, and ReactFlow
-    // needs parents to precede children in the array.
+    // Appended after the layout: their positions are frame-relative, and
+    // ReactFlow needs parents first.
     const childNodes: Node[] = [];
-    const hidePolicies = !selectedNetwork;
+    const enabledSourceGroupIds = new Set<string>();
 
     networks!.forEach((network) => {
-      // Live networks render as FRAMES too (same chrome as draft frames,
-      // read-only): resources live inside as children, the floating
-      // RoutingPeersBar shows the routers, clicking drills into the
-      // single-network view.
       const childResources = (network.resources ?? [])
         .map((rid) => networkResources?.find((r) => r.id === rid))
         .filter(Boolean) as NonNullable<typeof networkResources>;
 
-      // A network whose policies are ALL disabled dims like a disabled
-      // destination elsewhere (no policies → normal).
       const networkPolicyObjs = (network.policies ?? [])
         .map((pid) =>
           (policiesOverride ?? policies!).find((po) => po.id === pid),
         )
         .filter(Boolean) as Policy[];
 
-      // Destination RESOURCE-GROUPS live INSIDE the frame as rows, exactly
-      // like the draft build: a destination group qualifies when one of the
-      // network's resources belongs to it. Peer-only destination groups are
-      // SKIPPED here — they grant peer access, not network access, and have
-      // no business floating next to a network.
+      // A destination group becomes a frame row only if one of the network's
+      // resources belongs to it.
       const resourceIdSet = new Set(network.resources ?? []);
       const groupRows: Group[] = [];
       networkPolicyObjs.forEach((po) => {
@@ -279,16 +270,14 @@ export function useNetworkView() {
               ),
           );
           if (hasNetworkResource) {
-            // The policy-embedded group carries no counts (folded row showed
-            // "No Resources"); use the fresh SWR group instead.
+            // The policy-embedded group carries no counts.
             groupRows.push(groups?.find((x) => x.id === g.id) ?? g);
           }
         });
       });
 
-      // Fold grouped resources into their group row (matching draft): a resource
-      // already represented by a frame group row isn't ALSO listed on its own,
-      // unless a policy targets it directly (then it needs its own node).
+      // A resource covered by a group row is folded away, unless a policy
+      // targets it directly.
       const groupRowIds = new Set(groupRows.map((g) => g.id));
       const groupRowMemberIds = new Set<string>();
       childResources.forEach((r) => {
@@ -309,18 +298,14 @@ export function useNetworkView() {
           !groupRowMemberIds.has(r.id ?? "") || directTargetIds.has(r.id ?? ""),
       );
 
-      // Policy-reached resources sort to the top of the frame — shared rule
-      // with the draft build (orderFrameResources) so live and draft frames
-      // agree on the order.
       const orderedResources = orderFrameResources(
         foldedResources,
         network.policies,
         policiesOverride ?? policies,
       );
 
-      // Seed the frame with the SAME grid the reconciling layout produces
-      // (2 cols, visible cap, fallback rows) — a mismatched seed made every
-      // frame resize and its "+N more" cell shift right after mount.
+      // Seed the same grid the reconciling layout produces, or every frame
+      // resizes right after mount.
       const grid = getLiveFrameGrid(foldedResources.length + groupRows.length);
       const networkEnabled =
         networkPolicyObjs.length === 0 ||
@@ -330,36 +315,31 @@ export function useNetworkView() {
         type: "networkNode",
         data: {
           network,
-          selectedNetwork,
           frame: true,
           enabled: networkEnabled,
         },
-        // No explicit draggable — a per-node `draggable: true` OVERRIDES
-        // ReactFlow's global nodesDraggable, which must win in focus mode
-        // (group panel open → dragging pans, never moves nodes).
+        // No per-node `draggable`: it would override the global nodesDraggable
+        // that focus mode relies on.
         position: { x: 0, y: 0 },
         style: { width: grid.width, height: grid.height },
       });
       orderedResources.forEach((resource, idx) => {
-        // Group rows occupy the FIRST cells (same order as the draft build).
+        // Group rows occupy the first cells.
         const i = groupRows.length + idx;
         childNodes.push({
           id: `resource-${resource.id}`,
           type: "resourceNode",
           parentId: `network-${network.id}`,
           position: grid.cellPosition(i),
-          // Overflow past the visible cap starts hidden (the "+N more" cell
-          // stands in for it) — the reconciler keeps it that way.
+          // Overflow past the visible cap starts hidden behind "+N more".
           hidden: i >= grid.visibleCount,
           selectable: false,
-          // Draft row-drags move the whole frame (useDragToGroup intercepts);
-          // live has no such interception, so rows aren't draggable at all.
+          // Live has no drag interception, so rows aren't draggable at all.
           draggable: false,
-          // Same fixed slot size the frame layout stamps — seed === final.
           style: { width: grid.childWidth, height: NETWORK_FRAME_FALLBACK_ROW },
           data: {
             resource,
-            // Children are separate DOM nodes — they dim with their frame.
+            // Children are separate DOM nodes, so they dim with their frame.
             enabled: networkEnabled,
             draftNetwork: { networkId: network.id, name: network.name },
           },
@@ -367,8 +347,7 @@ export function useNetworkView() {
       });
       groupRows.forEach((g, i) => {
         childNodes.push({
-          // Per-network id — a group's resources may span networks, and a
-          // node id must be unique.
+          // A group's resources may span networks, so the id is per-network.
           id: `resource-group-${network.id}-${g.id}`,
           type: "resourceGroupNode",
           parentId: `network-${network.id}`,
@@ -381,97 +360,85 @@ export function useNetworkView() {
         });
       });
 
-      const networkPolicies = network.policies || [];
-      if (networkPolicies.length > 0) {
-        forEach(networkPolicies, (p) => {
-          const policy = (policiesOverride ?? policies!).find(
-            (policyItem) => policyItem.id === p,
-          );
-          if (policy) {
-            const enabled = policy.rules?.[0]?.enabled;
-            const rule = policy.rules?.[0];
-            if (rule) {
-              const ruleSourceGroups = (rule.sources as Group[]) || [];
-              const sourceResource = rule.sourceResource;
-              const sourcePeer =
-                sourceResource?.id && sourceResource.type === "peer"
-                  ? peers?.find((pr) => pr.id === sourceResource.id)
-                  : undefined;
-              const sourceIds: string[] = [];
+      // Ascending like the sibling views: addNode's last write decides a shared
+      // source node's dimming, so disabled policies must come first.
+      sortBy(networkPolicyObjs, "enabled").forEach((policy) => {
+        const enabled = policy.rules?.[0]?.enabled;
+        const rule = policy.rules?.[0];
+        if (!rule) return;
 
-              ruleSourceGroups.forEach((group) => {
-                addNode(allNodes, {
-                  id: `group-${group.id}`,
-                  type: "groupNode",
-                  // No onClick — clicking opens the group panel + focus
-                  // highlight via onNodeClick (like draft), not navigation.
-                  data: { group, enabled },
-                  position: { x: 0, y: 0 },
-                });
-                sourceIds.push(`group-${group.id}`);
-              });
+        const ruleSourceGroups = (rule.sources as Group[]) || [];
+        const sourceResource = rule.sourceResource;
+        const sourcePeer =
+          sourceResource?.id && sourceResource.type === "peer"
+            ? peers?.find((pr) => pr.id === sourceResource.id)
+            : undefined;
+        const sourceIds: string[] = [];
 
-              // A single-peer source (rule.sourceResource) connects like a
-              // source group.
-              if (sourcePeer) {
-                addNode(allNodes, {
-                  id: `peer-${sourcePeer.id}`,
-                  type: "peerNode",
-                  // Live view: card look, no connect handles (read-only).
-                  data: {
-                    peer: sourcePeer,
-                    enabled: true,
-                    variant: "card",
-                    showHandles: false,
-                  },
-                  position: { x: 0, y: 0 },
-                });
-                sourceIds.push(`peer-${sourcePeer.id}`);
-              }
-
-              // POLICY NODES in the overview, like the draft build: source
-              // → policy → network, all smart edges — live and draft read
-              // the same.
-              if (hidePolicies && sourceIds.length > 0) {
-                addNode(allNodes, {
-                  id: `policy-${policy.id}`,
-                  type: "policyNode",
-                  data: { policy, enabled },
-                  position: { x: 0, y: 0 },
-                });
-                sourceIds.forEach((sourceId) => {
-                  addEdge(allEdges, {
-                    id: `${sourceId}-policy-${policy.id}`,
-                    source: sourceId,
-                    target: `policy-${policy.id}`,
-                    type: "smart",
-                    data: { enabled, policy },
-                  });
-                });
-                addEdge(allEdges, {
-                  id: `policy-${policy.id}-network-${network.id}`,
-                  source: `policy-${policy.id}`,
-                  target: `network-${network.id}`,
-                  type: "smart",
-                  data: { enabled, policy },
-                });
-              }
-            }
-          }
+        ruleSourceGroups.forEach((group) => {
+          addNode(allNodes, {
+            id: `group-${group.id}`,
+            type: "groupNode",
+            data: { group: withFreshGroupCounts(group, groups), enabled },
+            position: { x: 0, y: 0 },
+          });
+          if (enabled) enabledSourceGroupIds.add(`group-${group.id}`);
+          sourceIds.push(`group-${group.id}`);
         });
-      }
+
+        if (sourcePeer) {
+          addNode(allNodes, {
+            id: `peer-${sourcePeer.id}`,
+            type: "peerNode",
+            data: {
+              peer: sourcePeer,
+              enabled: true,
+              variant: "card",
+              showHandles: false,
+            },
+            position: { x: 0, y: 0 },
+          });
+          sourceIds.push(`peer-${sourcePeer.id}`);
+        }
+
+        if (sourceIds.length > 0) {
+          addNode(allNodes, {
+            id: `policy-${policy.id}`,
+            type: "policyNode",
+            data: { policy, enabled },
+            position: { x: 0, y: 0 },
+          });
+          sourceIds.forEach((sourceId) => {
+            addEdge(allEdges, {
+              id: `${sourceId}-policy-${policy.id}`,
+              source: sourceId,
+              target: `policy-${policy.id}`,
+              type: "smart",
+              data: { enabled, policy },
+            });
+          });
+          addEdge(allEdges, {
+            id: `policy-${policy.id}-network-${network.id}`,
+            source: `policy-${policy.id}`,
+            target: `network-${network.id}`,
+            type: "smart",
+            data: { enabled, policy },
+          });
+        }
+      });
     });
 
-    // Same arrangement as the draft build: sources (groups/peers) left,
-    // policies in the middle column, network frames in the staggered grid
-    // on the right.
+    // The enabled sort orders policies only WITHIN a network; without this a
+    // group's dimming would follow the API's network order.
+    allNodes.forEach((n) => {
+      if (enabledSourceGroupIds.has(n.id)) n.data.enabled = true;
+    });
+
     const frames = allNodes.filter((n) => isFrameNode(n));
     const policyNodes = allNodes.filter((n) => n.type === "policyNode");
     const sources = allNodes.filter(
       (n) => !isFrameNode(n) && n.type !== "policyNode",
     );
-    // Name-sorted columns — the draft build sorts identically, so both
-    // modes read the same top-to-bottom.
     const displayName = (n: Node) =>
       (
         (n.data as { group?: { name?: string }; peer?: { name?: string } })
@@ -480,16 +447,14 @@ export function useNetworkView() {
         ""
       ).toLowerCase();
     sources.sort((a, b) => displayName(a).localeCompare(displayName(b)));
-    // Same anchors as the peer/group/user views (sources top-anchored at
-    // x 0, policies at x 500 / +14) so a policy and its source keep their
-    // position when switching views; the frame grid centers on the source
-    // column's midline (+half height) instead of shifting the columns up.
+    // Same anchors as the peer/group/user views, so nodes don't jump on a view
+    // switch.
     const SOURCE_SPACING = 160;
     const sourcesHeight = (sources.length - 1) * SOURCE_SPACING;
     sources.forEach((n, i) => {
       n.position = {
         x: 0,
-        y: -sourcesHeight / 2 + i * SOURCE_SPACING,
+        y: -sourcesHeight / 2 + i * SOURCE_SPACING + nodeYNudge(n.type),
       };
     });
     const policyName = (n: Node) =>
@@ -501,7 +466,7 @@ export function useNetworkView() {
     policyNodes.forEach((n, i) => {
       n.position = {
         x: 500,
-        y: -policiesHeight / 2 + i * POLICY_SPACING + 14,
+        y: -policiesHeight / 2 + i * POLICY_SPACING + POLICY_COLUMN_Y_OFFSET,
       };
     });
     packFrameGrid(frames, FRAME_GRID_BASE_X, SOURCE_NODE_HALF_HEIGHT);
@@ -512,17 +477,11 @@ export function useNetworkView() {
     };
   };
 
-  // PRECOMPUTED while the user is on another view (this hook lives in the
-  // always-mounted UI provider and the data is fetched globally): the build
-  // runs a synchronous d3-force simulation, and computing it at switch time
-  // visibly froze the tab change. The memo re-runs only when the underlying
-  // data (or the selected network) changes.
-  // Deps must cover EVERYTHING isDataReady() checks — if a late-loading
-  // dataset (groups) wasn't a dep, the memo cached `undefined` forever and
-  // the networks tab rendered nothing.
+  // Building at switch time visibly froze the tab change. Deps must cover
+  // everything isDataReady() checks, or the memo caches `undefined` forever.
   const precomputedNetworksView = useMemo(
     () => (isDataReady() ? buildNetworksView() : undefined),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- these helpers are re-created every render
     [networks, networkResources, policies, peers, groups, isLoading, selectedNetwork],
   );
 
@@ -531,8 +490,6 @@ export function useNetworkView() {
   ): ViewResult | undefined => {
     if (!isDataReady()) return;
     if (layoutInitialized && !policiesOverride) return;
-    // Fresh build for in-place refreshes (policy just saved); the cached
-    // result everywhere else.
     if (policiesOverride) return buildNetworksView(policiesOverride);
     return precomputedNetworksView;
   };

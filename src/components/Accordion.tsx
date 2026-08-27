@@ -39,14 +39,13 @@ AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
 const AccordionContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content> & {
-    // animated={false} toggles instantly (no height/opacity animation).
     animated?: boolean;
   }
 >(({ className, children, animated = true }, ref) => {
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
-  // The first data-state sync must not animate — otherwise every mount of an
-  // initially-open section visibly replays the expand animation.
+  // The first data-state sync must not animate, or every mount of an
+  // initially-open section replays the expand animation.
   const mounted = React.useRef(false);
 
   React.useLayoutEffect(() => {

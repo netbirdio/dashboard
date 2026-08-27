@@ -25,7 +25,6 @@ import {
   LucideIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
-  PlusIcon,
   ServerIcon,
   ShieldIcon,
   TextSearchIcon,
@@ -123,8 +122,6 @@ type GhostData = {
   initialY: number;
 };
 
-// Bridges Virtuoso's scroll container into the styled ScrollArea viewport
-// (same pattern as VirtualScrollAreaList / PeerSelector).
 const VirtuosoScroller = forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -157,12 +154,18 @@ export const ControlCenterComponentsPanel = () => {
     drillDownNetworkNodeId,
   } = useDraftMode();
 
+  // A fresh closure here would defeat PanelContent's memo.
+  const onClose = useCallback(
+    () => setComponentsPanelOpen(false),
+    [setComponentsPanelOpen],
+  );
+
   if (!isDraft) return null;
 
   return (
     <PanelContent
       open={componentsPanelOpen}
-      onClose={() => setComponentsPanelOpen(false)}
+      onClose={onClose}
       setResourceEditor={setResourceEditor}
       drillDownNetworkNodeId={drillDownNetworkNodeId}
     />
@@ -178,30 +181,26 @@ const PanelContent = React.memo(
   }: {
     open: boolean;
     onClose: () => void;
-    // Passed down (not read via useDraftMode) so PanelContent — mounted for
-    // the whole session — doesn't re-render on every draft-context change.
+    // A prop, not useDraftMode: this component is always mounted.
     setResourceEditor: ReturnType<typeof useDraftMode>["setResourceEditor"];
     drillDownNetworkNodeId: string | null;
   }) => {
     const drilled = !!drillDownNetworkNodeId;
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState<PanelCategory>("peers");
-    const isSearching = search.trim().length > 0;
+    // Filters compare the trimmed term so a whitespace-only search is a no-op.
+    const query = search.trim();
+    const isSearching = query.length > 0;
     const searchRef = useRef<HTMLInputElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<VirtuosoHandle>(null);
 
-    // Virtuoso keeps its scroll offset across data swaps — reset to the top
-    // when the tab or search mode changes. Imperative reset instead of a
-    // remount key: remounting blanked the list for a frame (visible blink).
+    // Virtuoso keeps its scroll offset across data swaps; a remount key blinked.
     React.useEffect(() => {
       listRef.current?.scrollTo({ top: 0 });
     }, [category, isSearching]);
 
-    // autoFocus only fires on mount — focus explicitly on every open.
-    // Closing clears the search so the panel reopens fresh, and releases
-    // focus back to the canvas — the panel only hides, so a still-focused
-    // search input would keep swallowing the canvas shortcuts.
+    // The panel only hides, so a still-focused input keeps eating canvas shortcuts.
     React.useEffect(() => {
       if (open) {
         searchRef.current?.focus();
@@ -291,10 +290,7 @@ const PanelContent = React.memo(
           addNewGroup(pos);
           return;
         }
-        // A resource opens the editor first so an IP/CIDR/domain is entered;
-        // the card is created only on save. When drilled, it's created into the
-        // drilled network; otherwise a drop onto a frame (targetNodeId, already
-        // resolved to the frame id) assigns it there, else it's standalone.
+        // A resource needs an address, so its card is only created on modal save.
         if (kind === "resource") {
           const targetFrame = drilled
             ? drillDownNetworkNodeId
@@ -340,8 +336,7 @@ const PanelContent = React.memo(
           },
           {
             canDropIntoFrame: kind === "resource",
-            // Resource opens the editor modal — never zoom the canvas on a
-            // click-to-place (especially disorienting when drilled).
+            // The editor modal opens instead, so never zoom on click-to-place.
             skipClickReveal: kind === "resource",
           },
         );
@@ -411,8 +406,7 @@ const PanelContent = React.memo(
     const { data: peers } = useFetchApi<Peer[]>("/peers");
     const { data: groups } = useFetchApi<Group[]>("/groups");
 
-    // Structural subscription (ids/data/parentId; never positions) — the
-    // canvas context re-rendered this whole list on every drag tick.
+    // Structural only: position updates would re-render this list every drag tick.
     const canvasNodes = useStructuralNodes();
     const account = useAccount();
     const canvasNodeIds = useMemo(
@@ -420,9 +414,8 @@ const PanelContent = React.memo(
       [canvasNodes],
     );
 
-    // A resource folded into a group's frame row has no `resource-<id>` node of
-    // its own, but IS represented — treat it as on-canvas so the panel greys it
-    // out and re-dropping can't spawn a duplicate (with a stray edge to the row).
+    // A resource folded into a group's frame row has no node but is still
+    // on-canvas, so a second drop must be blocked.
     const foldedResourceIds = useMemo(() => {
       const groupIds = new Set<string>();
       canvasNodes.forEach((n) => {
@@ -442,27 +435,37 @@ const PanelContent = React.memo(
     }, [canvasNodes, resources]);
 
 
-    // Groups marked for deletion in the draft can't be re-added — they'd be
-    // gone right after deploy.
-    const pendingDeleteGroupIds = useMemo(
-      () =>
-        new Set(
-          changes
-            .filter((c) => c.type === "delete-group")
-            .map((c) => (c.type === "delete-group" ? c.groupId : "")),
-        ),
-      [changes],
-    );
+    // Entities marked for deletion can't be re-added: they'd vanish on deploy.
+    const pendingDeleteIds = useMemo(() => {
+      const ids = {
+        group: new Set<string>(),
+        policy: new Set<string>(),
+        network: new Set<string>(),
+        resource: new Set<string>(),
+      };
+      changes.forEach((c) => {
+        if (c.type === "delete-group") ids.group.add(c.groupId);
+        else if (c.type === "delete-policy") ids.policy.add(c.policyId);
+        else if (c.type === "delete-resource") ids.resource.add(c.resourceId);
+        else if (c.type === "delete-network") {
+          ids.network.add(c.networkId);
+          // The server cascades a network delete to its resources.
+          networks
+            ?.find((n) => n.id === c.networkId)
+            ?.resources?.forEach((rid) => ids.resource.add(rid));
+        }
+      });
+      return ids;
+    }, [changes, networks]);
 
-    // A category word ("peer"/"peers", "group"/"groups", …) reveals the whole
-    // matching section (all items + create templates), not just name matches.
+    // A category word reveals the whole matching section, not just name matches.
     const categoryMatch = useCallback(
       (keywords: string[]) => {
-        const s = search.trim().toLowerCase();
+        const s = query.toLowerCase();
         if (!s) return false;
         return keywords.some((k) => k.includes(s) || s.includes(k));
       },
-      [search],
+      [query],
     );
     const peersCategory = categoryMatch(["peer", "peers", "device", "devices"]);
     const resourcesCategory = categoryMatch([
@@ -477,21 +480,19 @@ const PanelContent = React.memo(
 
     const filteredPeers = useMemo(() => {
       if (!peers) return [];
-      if (!search || peersCategory) return peers;
-      const lower = search.toLowerCase();
+      if (!query || peersCategory) return peers;
+      const lower = query.toLowerCase();
       return peers.filter(
         (p) =>
           p.name?.toLowerCase().includes(lower) ||
           p.ip?.toLowerCase().includes(lower) ||
           p.hostname?.toLowerCase().includes(lower),
       );
-    }, [peers, search, peersCategory]);
+    }, [peers, query, peersCategory]);
 
     const filteredResources = useMemo(() => {
       if (!resources) return [];
       let list = resources;
-      // Drilled into a single network: only that network's OWN existing
-      // resources (a draft network has none yet — its resources are draft).
       if (drilled) {
         if (drillDownNetworkNodeId!.startsWith("network-new-")) return [];
         const realId = drillDownNetworkNodeId!.replace("network-", "");
@@ -500,8 +501,8 @@ const PanelContent = React.memo(
         );
         list = resources.filter((r) => r.id && ids.has(r.id));
       }
-      if (!search || resourcesCategory) return list;
-      const lower = search.toLowerCase();
+      if (!query || resourcesCategory) return list;
+      const lower = query.toLowerCase();
       return list.filter(
         (r) =>
           r.name?.toLowerCase().includes(lower) ||
@@ -509,7 +510,7 @@ const PanelContent = React.memo(
       );
     }, [
       resources,
-      search,
+      query,
       resourcesCategory,
       drilled,
       drillDownNetworkNodeId,
@@ -518,20 +519,18 @@ const PanelContent = React.memo(
 
     const filteredGroups = useMemo(() => {
       if (!groups) return [];
-      if (!search || groupsCategory) return groups;
-      const lower = search.toLowerCase();
+      if (!query || groupsCategory) return groups;
+      const lower = query.toLowerCase();
       return groups.filter((g) => g.name?.toLowerCase().includes(lower));
-    }, [groups, search, groupsCategory]);
+    }, [groups, query, groupsCategory]);
 
     const filteredPolicies = useMemo(() => {
       if (!policies) return [];
-      if (!search || policiesCategory) return policies;
-      const lower = search.toLowerCase();
+      if (!query || policiesCategory) return policies;
+      const lower = query.toLowerCase();
       return policies.filter((p) => p.name?.toLowerCase().includes(lower));
-    }, [policies, search, policiesCategory]);
+    }, [policies, query, policiesCategory]);
 
-    // Groups that only exist in the draft (dropped onto the canvas, not created
-    // yet) — listed with a NEW badge so the panel reflects them immediately.
     const draftGroups = useMemo(() => {
       const seen = new Set<string>();
       const result: { nodeId: string; group: Group }[] = [];
@@ -542,19 +541,16 @@ const PanelContent = React.memo(
         seen.add(group.name);
         result.push({ nodeId: n.id, group });
       });
-      if (!search || groupsCategory) return result;
-      const lower = search.toLowerCase();
+      if (!query || groupsCategory) return result;
+      const lower = query.toLowerCase();
       return result.filter((r) => r.group.name.toLowerCase().includes(lower));
-    }, [canvasNodes, search, groupsCategory]);
+    }, [canvasNodes, query, groupsCategory]);
 
-    // Resources created in this draft — listed with a NEW badge, disabled
-    // (they're already on the canvas by construction).
     const draftResources = useMemo(() => {
       const result: { nodeId: string; resource: NetworkResource }[] = [];
       canvasNodes.forEach((n) => {
         const resource = getDraftResource(n);
         if (!resource) return;
-        // Drilled: only draft resources that belong to THIS network.
         if (drilled) {
           const dn = (
             n.data as {
@@ -569,33 +565,30 @@ const PanelContent = React.memo(
         }
         result.push({ nodeId: n.id, resource });
       });
-      if (!search || resourcesCategory) return result;
-      const lower = search.toLowerCase();
+      if (!query || resourcesCategory) return result;
+      const lower = query.toLowerCase();
       return result.filter((r) =>
         r.resource.name.toLowerCase().includes(lower),
       );
     }, [
       canvasNodes,
-      search,
+      query,
       resourcesCategory,
       drilled,
       drillDownNetworkNodeId,
     ]);
 
-    // Placeholder peers dropped in this draft (Server / Agent / User
-    // Device) — NEW badge, disabled (already on canvas by construction).
     const draftPeers = useMemo(() => {
       const result: { nodeId: string; peer: Peer }[] = [];
       canvasNodes.forEach((n) => {
         const peer = getPlaceholderPeer(n);
         if (peer) result.push({ nodeId: n.id, peer });
       });
-      if (!search || peersCategory) return result;
-      const lower = search.toLowerCase();
+      if (!query || peersCategory) return result;
+      const lower = query.toLowerCase();
       return result.filter((r) => r.peer.name.toLowerCase().includes(lower));
-    }, [canvasNodes, search, peersCategory]);
+    }, [canvasNodes, query, peersCategory]);
 
-    // Draft-created policies — NEW badge, disabled.
     const draftPolicies = useMemo(() => {
       const seen = new Set<string>();
       const result: { nodeId: string; policy: Policy }[] = [];
@@ -607,24 +600,22 @@ const PanelContent = React.memo(
         seen.add(policy.id);
         result.push({ nodeId: n.id, policy });
       });
-      if (!search || policiesCategory) return result;
-      const lower = search.toLowerCase();
+      if (!query || policiesCategory) return result;
+      const lower = query.toLowerCase();
       return result.filter((r) =>
         (r.policy.name ?? "").toLowerCase().includes(lower),
       );
-    }, [canvasNodes, search, policiesCategory]);
+    }, [canvasNodes, query, policiesCategory]);
 
     const filteredNetworks = useMemo(() => {
-      // Drilled into a single network — no other networks are addable here.
+      // No other network is addable while drilled into one.
       if (!networks || drilled) return [];
-      if (!search || resourcesCategory) return networks;
-      const lower = search.toLowerCase();
+      if (!query || resourcesCategory) return networks;
+      const lower = query.toLowerCase();
       return networks.filter((n) => n.name.toLowerCase().includes(lower));
-    }, [networks, search, resourcesCategory, drilled]);
+    }, [networks, query, resourcesCategory, drilled]);
 
-    // Networks created in this draft (frames) — NEW badge, disabled.
     const draftNetworks = useMemo(() => {
-      // Drilled into a single network — the networks list is hidden entirely.
       if (drilled) return [];
       const result: {
         nodeId: string;
@@ -644,15 +635,15 @@ const PanelContent = React.memo(
           ).length,
         });
       });
-      if (!search || resourcesCategory) return result;
-      const lower = search.toLowerCase();
+      if (!query || resourcesCategory) return result;
+      const lower = query.toLowerCase();
       return result.filter((r) => r.name.toLowerCase().includes(lower));
-    }, [canvasNodes, search, resourcesCategory, drilled]);
+    }, [canvasNodes, query, resourcesCategory, drilled]);
 
     const matchesSearch = useCallback(
       (label: string) =>
-        !search || label.toLowerCase().includes(search.toLowerCase()),
-      [search],
+        !query || label.toLowerCase().includes(query.toLowerCase()),
+      [query],
     );
     const filteredPeerTemplates = useMemo(
       () =>
@@ -673,7 +664,6 @@ const PanelContent = React.memo(
           (t) =>
             (t.kind === "resource" &&
               (resourcesCategory || matchesSearch(t.label))) ||
-            // Networks can't be created while drilled into one.
             (!drilled &&
               t.kind === "network" &&
               (networksCategory || matchesSearch(t.label))),
@@ -682,7 +672,6 @@ const PanelContent = React.memo(
     );
     const showPolicyTemplate = policiesCategory || matchesSearch("Policy");
 
-    // Row builders — shared between category pages and search results.
     const buildPeerTemplateRows = () =>
       filteredPeerTemplates.map((tpl) => (
         <TemplateItem
@@ -690,7 +679,6 @@ const PanelContent = React.memo(
           icon={tpl.icon}
           label={tpl.label}
           description={tpl.description}
-          draggable
           onPointerDown={(e) => handlePeerTemplateDragStart(e, tpl)}
           data-testid={`cc-template-peer-${tpl.key}`}
         />
@@ -704,7 +692,6 @@ const PanelContent = React.memo(
               icon={ShieldIcon}
               label={"Policy"}
               description={"Control access between sources and destinations"}
-              draggable
               onPointerDown={(e) => handlePolicyDragStart(e)}
               data-testid={"cc-template-policy"}
             />,
@@ -718,7 +705,6 @@ const PanelContent = React.memo(
           icon={tpl.icon}
           label={tpl.label}
           description={tpl.description}
-          draggable
           onPointerDown={(e) => handleBlankDragStart(e, tpl.kind)}
           data-testid={`cc-template-${tpl.kind}`}
         />
@@ -731,7 +717,6 @@ const PanelContent = React.memo(
           icon={tpl.icon}
           label={tpl.label}
           description={tpl.description}
-          draggable
           onPointerDown={(e) => handleBlankDragStart(e, tpl.kind)}
           data-testid={`cc-template-${tpl.kind}`}
         />
@@ -757,8 +742,7 @@ const PanelContent = React.memo(
       draftPeers.map(({ nodeId, peer }) => (
         <PanelListItem key={nodeId} disabled onCanvas>
           <DeviceCard
-            // Same dimmed IP placeholder as the canvas card — assigned on
-            // install, derived from the account's peer network range.
+            // The real IP is only assigned on install.
             device={{
               ...peer,
               ip: getIpPlaceholderFromRange(account?.settings?.network_range),
@@ -842,10 +826,11 @@ const PanelContent = React.memo(
     const buildNetworkRows = () =>
       filteredNetworks.map((network) => {
         const onCanvas = canvasNodeIds.has(`network-${network.id}`);
+        const pendingDelete = pendingDeleteIds.network.has(network.id ?? "");
         return (
           <PanelListItem
             key={network.id}
-            disabled={onCanvas}
+            disabled={onCanvas || pendingDelete}
             onCanvas={onCanvas}
             onPointerDown={(e) =>
               handleDragStart(e, NodeType.NetworkNode, network)
@@ -863,7 +848,7 @@ const PanelContent = React.memo(
               <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
                 <span
                   className={
-                    "text-xs text-nb-gray-100 flex items-center min-w-0"
+                    "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
                   }
                 >
                   <TruncatedText
@@ -871,6 +856,7 @@ const PanelContent = React.memo(
                     maxWidth={"150px"}
                     hideTooltip={true}
                   />
+                  {pendingDelete && <DeletedBadge />}
                 </span>
                 <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
                   {network.resources?.length
@@ -888,19 +874,17 @@ const PanelContent = React.memo(
         const onCanvas =
           canvasNodeIds.has(`resource-${resource.id}`) ||
           foldedResourceIds.has(resource.id ?? "");
-        // Existing resources already live in a network — show "name - network"
-        // (like the global search) and, since v1 doesn't reassign existing
-        // resources, they must NOT drop into another network frame.
         const network = networks?.find((n) =>
           n.resources?.some((r) => r === resource.id),
         );
         const displayResource = network
           ? { ...resource, name: `${resource.name} - ${network.name}` }
           : resource;
+        const pendingDelete = pendingDeleteIds.resource.has(resource.id ?? "");
         return (
           <PanelListItem
             key={resource.id}
-            disabled={onCanvas}
+            disabled={onCanvas || pendingDelete}
             onCanvas={onCanvas}
             onPointerDown={(e) =>
               handleDragStart(e, NodeType.ResourceNode, resource)
@@ -911,6 +895,7 @@ const PanelContent = React.memo(
               resource={displayResource}
               size="small"
               className="flex-1"
+              badge={pendingDelete ? <DeletedBadge /> : undefined}
             />
           </PanelListItem>
         );
@@ -962,7 +947,7 @@ const PanelContent = React.memo(
 
     const buildGroupRows = () =>
       filteredGroups.map((group) => {
-        const pendingDelete = pendingDeleteGroupIds.has(group.id ?? "");
+        const pendingDelete = pendingDeleteIds.group.has(group.id ?? "");
         const onCanvas = canvasNodeIds.has(`group-${group.id}`);
         return (
           <PanelListItem
@@ -991,15 +976,7 @@ const PanelContent = React.memo(
                     maxWidth={"150px"}
                     hideTooltip={true}
                   />
-                  {pendingDelete && (
-                    <span
-                      className={
-                        "text-[0.55rem] leading-none px-1 py-[0.3rem] rounded-[3px] bg-red-900/40 border border-red-500/20 text-red-400"
-                      }
-                    >
-                      DELETED
-                    </span>
-                  )}
+                  {pendingDelete && <DeletedBadge />}
                 </span>
                 <span className={"text-[0.72rem] text-nb-gray-400"}>
                   {getGroupCountLabel(group)}
@@ -1014,10 +991,11 @@ const PanelContent = React.memo(
       filteredPolicies.map((policy) => {
         const protocolLabel = getPolicyProtocolAndPortText(policy);
         const onCanvas = canvasNodeIds.has(`policy-${policy.id}`);
+        const pendingDelete = pendingDeleteIds.policy.has(policy.id ?? "");
         return (
           <PanelListItem
             key={policy.id}
-            disabled={onCanvas}
+            disabled={onCanvas || pendingDelete}
             onCanvas={onCanvas}
             onPointerDown={(e) => handlePolicyDragStart(e, policy)}
             data-testid={`cc-panel-policy-${policy.id}`}
@@ -1033,7 +1011,7 @@ const PanelContent = React.memo(
               <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
                 <span
                   className={
-                    "text-xs text-nb-gray-100 flex items-center min-w-0"
+                    "text-xs text-nb-gray-100 flex items-center gap-2 min-w-0"
                   }
                 >
                   <TruncatedText
@@ -1041,9 +1019,9 @@ const PanelContent = React.memo(
                     maxWidth={"150px"}
                     hideTooltip={true}
                   />
+                  {pendingDelete && <DeletedBadge />}
                 </span>
                 <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
-                  {/* Same fallback as PolicyNode: empty label = all protocols */}
                   {protocolLabel || "All"}
                 </span>
               </div>
@@ -1052,11 +1030,7 @@ const PanelContent = React.memo(
         );
       });
 
-    // While searching, results span every category; otherwise the rail
-    // decides. Create-new templates always live in their own "Add New"
-    // section so they're clearly separated from existing entities. Rows are
-    // built lazily — only for the visible view — so opening the panel
-    // doesn't render every entity list up front.
+    // Rows build lazily so opening the panel doesn't render every entity list.
     const sections: { title?: string; rows: React.ReactNode[] }[] = (
       isSearching
         ? [
@@ -1127,8 +1101,6 @@ const PanelContent = React.memo(
           ]
     ).filter((sec) => sec.rows.length > 0);
 
-    // Flattened for virtualization: headings and rows become one list, only
-    // the visible slice is rendered (like PeerSelector).
     const flatRows: FlatRow[] = sections.flatMap((section, si) => [
       ...(section.title
         ? [
@@ -1160,9 +1132,7 @@ const PanelContent = React.memo(
               : { x: "-50%", y: 14, opacity: 0 }
           }
           transition={{ duration: 0.1, ease: "easeOut" }}
-          // The global Escape shortcut is input-aware and stays quiet while
-          // focus is inside the panel (search input, category buttons) — so
-          // Esc is also handled here, where it always reaches us.
+          // The global Escape shortcut stays quiet while focus is in the panel.
           onKeyDown={(e) => {
             if (e.key === "Escape") {
               e.stopPropagation();
@@ -1171,8 +1141,7 @@ const PanelContent = React.memo(
           }}
           className={cn(
             !open && "pointer-events-none",
-            // Node picker floating above the bottom toolbar — and above the
-            // group panel (z-20), which must never cover it.
+            // Must stay above the group panel (z-20).
             "absolute bottom-[80px] left-1/2 z-30",
             "w-[480px] max-w-[calc(100%-48px)] h-[420px] max-h-[calc(100%-170px)]",
             "border border-nb-gray-910 rounded-lg flex flex-col overflow-hidden",
@@ -1196,13 +1165,11 @@ const PanelContent = React.memo(
               className={"py-3.5"}
               hideEnterIcon
             />
-            {/* ESC badge instead of an X — an X next to the search reads as
-                "clear the search"; this closes the whole panel. */}
+            {/* Not an X: an X next to a search reads as "clear the search". */}
             <button
               onClick={onClose}
               className={cn(
                 "shrink-0 px-1.5 py-0.5 rounded border border-nb-gray-900 bg-nb-gray-920",
-                // Keycap: 2px "side" below + faint highlight on top.
                 "shadow-[0_2px_0_0_#1e2123,inset_0_1px_0_0_rgba(255,255,255,0.05)]",
                 "text-[8px] font-medium tracking-wide text-nb-gray-350",
                 "hover:bg-nb-gray-910 hover:text-nb-gray-200 transition-colors",
@@ -1254,17 +1221,11 @@ const PanelContent = React.memo(
               >
                 <Virtuoso
                   ref={listRef}
-                  // The panel stays mounted while closed (it only fades), so
-                  // Virtuoso keeps its invisible-mount measurements (wrong/no
-                  // scrollbar). Remount on every open for a fresh measure;
-                  // per-tab remounts blinked the list, so those only scroll to
-                  // top (see the effect above).
+                  // The panel only fades when closed, so remount to re-measure.
                   key={open ? "open" : "closed"}
                   data={flatRows}
                   overscan={300}
-                  // Exact row height (h-[52px]) — an overestimate inflates the
-                  // scrollbar until every item is measured (visibly off on
-                  // heading-heavy tabs like Networks & Resources).
+                  // Exact row height: an overestimate inflates the scrollbar.
                   defaultItemHeight={52}
                   computeItemKey={(index) => flatRows[index].key}
                   itemContent={(index, row) => (
@@ -1322,35 +1283,37 @@ const PanelContent = React.memo(
 
 PanelContent.displayName = "PanelContent";
 
+const DeletedBadge = () => (
+  <span
+    className={
+      "text-[0.55rem] leading-none px-1 py-[0.3rem] rounded-[3px] bg-red-900/40 border border-red-500/20 text-red-400"
+    }
+  >
+    DELETED
+  </span>
+);
+
 const TemplateItem = React.memo(
   ({
     icon: Icon,
-    iconNode,
     label,
     description,
-    draggable,
     onPointerDown,
-    onClick,
     "data-testid": dataTestId,
   }: {
     icon?: LucideIcon;
-    iconNode?: React.ReactNode;
     label: string;
     description?: string;
-    draggable?: boolean;
     onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
-    onClick?: () => void;
     "data-testid"?: string;
   }) => {
     return (
       <div
         onPointerDown={onPointerDown}
-        onClick={onClick}
         data-testid={dataTestId}
-        className={cn(
-          "group/item flex items-center h-[52px] rounded-md px-1 transition-colors hover:bg-nb-gray-900/50",
-          draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
-        )}
+        className={
+          "group/item flex items-center h-[52px] rounded-md px-1 transition-colors hover:bg-nb-gray-900/50 cursor-grab active:cursor-grabbing"
+        }
       >
         <div className="flex items-center gap-2 flex-1 min-w-0 pl-2 py-0.5">
           <div
@@ -1358,7 +1321,7 @@ const TemplateItem = React.memo(
               "h-8 w-8 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 text-nb-gray-300"
             }
           >
-            {iconNode ?? (Icon && <Icon size={14} />)}
+            {Icon && <Icon size={14} />}
           </div>
           <div className={"flex flex-col gap-0.5 leading-tight min-w-0"}>
             <span className={"text-xs text-nb-gray-100"}>{label}</span>
@@ -1367,17 +1330,10 @@ const TemplateItem = React.memo(
             </span>
           </div>
         </div>
-        {draggable ? (
-          <GripVerticalIcon
-            size={14}
-            className="shrink-0 ml-auto mr-3 text-nb-gray-400"
-          />
-        ) : (
-          <PlusIcon
-            size={14}
-            className="shrink-0 ml-auto mr-3 text-nb-gray-400"
-          />
-        )}
+        <GripVerticalIcon
+          size={14}
+          className="shrink-0 ml-auto mr-3 text-nb-gray-400"
+        />
       </div>
     );
   },
@@ -1388,13 +1344,11 @@ TemplateItem.displayName = "TemplateItem";
 const PanelListItem = React.memo(
   ({
     children,
-    className,
     onPointerDown,
     disabled,
     onCanvas,
     "data-testid": dataTestId,
   }: PropsWithChildren<{
-    className?: string;
     onPointerDown?: React.PointerEventHandler<HTMLDivElement>;
     disabled?: boolean;
     onCanvas?: boolean;
@@ -1409,11 +1363,9 @@ const PanelListItem = React.memo(
           disabled
             ? "cursor-default"
             : "hover:bg-nb-gray-900/50 cursor-grab active:cursor-grabbing",
-          className,
         )}
       >
-        {/* Only the entity content dims when disabled — the badge stays
-            readable. */}
+        {/* Only the entity content dims, so the badge stays readable. */}
         <div
           className={cn(
             "flex items-center flex-1 min-w-0",

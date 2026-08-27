@@ -1,6 +1,5 @@
-import { normalizeHostCIDR } from "@utils/ip";
 import loadConfig from "@utils/config";
-import { diffBodies, DiffLine } from "@/modules/control-center/utils/json-line-diff";
+import { normalizeHostCIDR } from "@utils/ip";
 import { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
@@ -18,15 +17,11 @@ import {
   UpdateResourceChange,
   UpdateRouterChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
+import { diffBodies, DiffLine } from "@/modules/control-center/utils/json-line-diff";
 
-// The request-body SHAPE is defined once here and used by BOTH the deploy
-// executor (useDeployChangeset) and the Review & Deploy code view, so the
-// "code" a user reviews is literally the request that will be sent — the two
-// can never drift. The difference between deploy and preview is only the
-// RESOLVERS: deploy resolves draft client-ids/names to the real API ids it has
-// created during the run; preview resolves what it can from live data and
-// renders the rest as {x_group_id}-style id placeholders (see idPlaceholder)
-// so the reader sees exactly where deploy will fill in a not-yet-created id.
+// The request-body shape is shared by the deploy executor and the Review &
+// Deploy code view so the two can never drift. Only the RESOLVERS differ:
+// deploy resolves real API ids, preview renders {x_group_id} placeholders.
 
 export type HttpMethod = "POST" | "PUT" | "DELETE";
 
@@ -37,22 +32,16 @@ export interface ChangeRequest {
   body?: unknown;
 }
 
-// The live account data the viewer reads to reconstruct the "before" request
-// for updates/deletes. Sourced from useControlCenterData() (SWR).
 export interface LiveData {
   policies?: Policy[];
   groups?: Group[];
   networks?: Network[];
   networkResources?: NetworkResource[];
-  // The current changeset — lets the preview name draft entities (e.g. a
-  // draft resource's "new-…" id → its name) when building id placeholders.
+  // Lets the preview name draft entities when building id placeholders.
   draftChanges?: DraftChange[];
 }
 
-// A code-view placeholder for a real API id that doesn't exist yet because the
-// entity it belongs to is only in the draft (a group/network/resource that's
-// created on deploy). A single-brace, lower_snake token — label before kind so
-// it reads naturally — that signals "gets replaced on deploy", e.g.
+// A code-view stand-in for an id that only exists after deploy, e.g.
 // {sales_group_id}. Falls back to {group_id} when there's no name to embed.
 export function idPlaceholder(kind: string, label?: string): string {
   const slug = (label ?? "")
@@ -63,20 +52,14 @@ export function idPlaceholder(kind: string, label?: string): string {
   return slug ? `{${slug}_${k}_id}` : `{${k}_id}`;
 }
 
-// How draft references become wire values. Deploy and preview differ only here.
 export interface RequestResolvers {
-  // A rule's source/destination group list → id strings for the wire.
   resolveGroupIds: (list?: (Group | string)[] | null) => string[] | undefined;
-  // A rule resource: resolve a draft "new-" id to its real id/type.
   resolveResource: (r?: PolicyRuleResource) => PolicyRuleResource | undefined;
-  // A resource/router change → the network id it posts under.
   resolveNetworkId: (change: {
     networkId?: string;
     networkClientId?: string;
     networkName: string;
   }) => string;
-  // A single group ref (id or draft-group name) → id for resource/router groups
-  // and SSH authorized_groups keys.
   groupIdForRef: (ref: string) => string;
   /**
    * A router's peer ref → its wire value. A real id passes through; a draft
@@ -85,14 +68,11 @@ export interface RequestResolvers {
    * and printing one invites the reader to try.
    */
   peerIdForRef: (ref: string, label?: string) => string;
-  // Address normalizer (deploy and preview both apply normalizeHostCIDR).
   normalizeAddress: (address: string) => string;
-  // Resource id → its type. The group POST/PUT wants resources as {id, type}
-  // objects; bare id strings are rejected ("could not parse json").
+  // The group POST/PUT rejects bare resource ids; it wants {id, type} objects.
   resourceType: (id: string) => NetworkResource["type"] | undefined;
 }
 
-// A group's resources on the wire: {id, type} objects (never bare id strings).
 type WireResource = { id: string; type?: NetworkResource["type"] };
 
 export const toIds = (
@@ -102,23 +82,10 @@ export const toIds = (
     .map((i) => (typeof i === "string" ? i : i.id))
     .filter(Boolean) as string[];
 
-// ---------------------------------------------------------------------------
-// Pure body shapers — the single source of truth for every request body.
-// ---------------------------------------------------------------------------
-
-// POST/PUT /policies body from draft policy data: group objects → ids, posture
-// checks → ids, SSH specifics applied. Mirrors the live modal exactly.
+// Every rule travels, each with its own action: a toggle or edit rebuilt from
+// this body must not rewrite an API-created multi-rule or "drop" policy.
 export function policyRequestBody(policy: Policy, r: RequestResolvers) {
-  const rule = policy.rules?.[0];
-  if (!rule) throw new Error("Policy has no rule.");
-
-  const isSsh = rule.protocol === "netbird-ssh";
-  const authorizedGroups: Record<string, string[]> = {};
-  if (isSsh && rule.authorized_groups) {
-    Object.entries(rule.authorized_groups).forEach(([nameOrId, usernames]) => {
-      authorizedGroups[r.groupIdForRef(nameOrId)] = usernames as string[];
-    });
-  }
+  if (!policy.rules?.length) throw new Error("Policy has no rule.");
 
   return {
     name: policy.name,
@@ -130,12 +97,21 @@ export function policyRequestBody(policy: Policy, r: RequestResolvers) {
         | (PostureCheck | string)[]
         | undefined) ?? []
     ).map((c) => (typeof c === "string" ? c : c.id)),
-    rules: [
-      {
+    rules: policy.rules.map((rule) => {
+      const isSsh = rule.protocol === "netbird-ssh";
+      const authorizedGroups: Record<string, string[]> = {};
+      if (isSsh && rule.authorized_groups) {
+        Object.entries(rule.authorized_groups).forEach(
+          ([nameOrId, usernames]) => {
+            authorizedGroups[r.groupIdForRef(nameOrId)] = usernames as string[];
+          },
+        );
+      }
+      return {
         name: policy.name,
         description: policy.description ?? "",
         bidirectional: rule.bidirectional,
-        action: "accept",
+        action: rule.action ?? "accept",
         protocol: rule.protocol,
         enabled: rule.enabled,
         sources: rule.sourceResource
@@ -149,31 +125,31 @@ export function policyRequestBody(policy: Policy, r: RequestResolvers) {
         ports: isSsh ? ["22"] : rule.ports,
         port_ranges: isSsh ? [] : rule.port_ranges,
         authorized_groups: isSsh ? authorizedGroups : undefined,
-      },
-    ],
+      };
+    }),
   };
 }
 
-// POST /groups. Placeholder members that never installed keep their "draft-"
-// ids (not in the API); draft resources ("new-…") apply membership through the
-// resource's own `groups` field, so both are filtered here.
-export function groupCreateBody(change: CreateGroupChange, r?: RequestResolvers) {
+// Uninstalled placeholders keep their "draft-" ids (unknown to the API) and
+// draft resources apply membership through their own groups field, so both go.
+export function groupCreateBody(change: CreateGroupChange, r: RequestResolvers) {
   return {
     name: change.name,
     peers: change.peerIds.filter((id) => !id.startsWith("draft-")),
     resources: change.resourceIds
       .filter((id) => !id.startsWith("new-"))
-      .map((id) => ({ id, type: r?.resourceType(id) }) as WireResource),
+      .map((id) => ({ id, type: r.resourceType(id) }) as WireResource),
   };
 }
 
-// The merged membership a PUT /groups/{id} sends: the group's CURRENT members
-// plus draft additions minus draft removals. Deploy merges against a fresh GET;
-// preview merges against the live SWR snapshot — same shape either way.
+// A PUT /groups/{id} must send the CURRENT members plus draft adds, minus the
+// draft removals. Structural rather than UpdateGroupChange: a create-group RETRY
+// is also a PUT, and it derives its removals instead of carrying them.
 export function mergeGroupMembers(
   base: { peers?: (GroupPeer | string)[]; resources?: (GroupResource | string)[] },
-  change: UpdateGroupChange,
-  r?: RequestResolvers,
+  change: Pick<UpdateGroupChange, "peerIds" | "resourceIds"> &
+    Partial<Pick<UpdateGroupChange, "removedPeerIds" | "removedResourceIds">>,
+  r: RequestResolvers,
 ) {
   const peers = new Set(toIds(base.peers));
   const resources = new Set(toIds(base.resources));
@@ -181,7 +157,6 @@ export function mergeGroupMembers(
   change.resourceIds.forEach((id) => !id.startsWith("new-") && resources.add(id));
   change.removedPeerIds?.forEach((id) => peers.delete(id));
   change.removedResourceIds?.forEach((id) => resources.delete(id));
-  // Keep the base group's known resource types; resolve any newly-added ones.
   const typeById = new Map<string, NetworkResource["type"] | undefined>();
   (base.resources ?? []).forEach((res) => {
     if (typeof res !== "string" && res?.id) {
@@ -191,10 +166,26 @@ export function mergeGroupMembers(
   return {
     peers: Array.from(peers),
     resources: Array.from(resources).map(
-      (id) => ({ id, type: typeById.get(id) ?? r?.resourceType(id) }) as WireResource,
+      (id) => ({ id, type: typeById.get(id) ?? r.resourceType(id) }) as WireResource,
     ),
   };
 }
+
+// Must resolve types exactly like mergeGroupMembers, or an unchanged member
+// renders as a remove plus an add and inflates the diffstat.
+const wireResources = (
+  resources: (GroupResource | string)[] | null | undefined,
+  r: RequestResolvers,
+): WireResource[] =>
+  (resources ?? []).flatMap((res) => {
+    const id = typeof res === "string" ? res : res?.id;
+    if (!id) return [];
+    const type =
+      typeof res === "string"
+        ? undefined
+        : (res.type as NetworkResource["type"] | undefined);
+    return [{ id, type: type ?? r.resourceType(id) }];
+  });
 
 export function groupUpdateBody(
   name: string,
@@ -207,7 +198,6 @@ export function networkCreateBody(change: CreateNetworkChange) {
   return { name: change.name, description: change.description ?? "" };
 }
 
-// PUT /networks/{id} — same shape as create.
 export function networkUpdateBody(change: UpdateNetworkChange) {
   return { name: change.name, description: change.description ?? "" };
 }
@@ -238,9 +228,6 @@ export function resourceUpdateBody(
   };
 }
 
-// POST /networks/{id}/routers. Falls back to the live modal's defaults
-// (metric 9999, masquerade on, enabled) when the routing-peer modal left them
-// unset.
 export function routerCreateBody(
   change: CreateRouterChange,
   r: RequestResolvers,
@@ -255,8 +242,6 @@ export function routerCreateBody(
   };
 }
 
-// PUT /networks/{netId}/routers/{routerId} — same body shape as create; the
-// groupId (a real id or a draft-group name) resolves the same way.
 export function routerUpdateBody(
   change: UpdateRouterChange,
   r: RequestResolvers,
@@ -271,60 +256,68 @@ export function routerUpdateBody(
   };
 }
 
-// POST /setup-keys — the key generated when the user installs a server/agent
-// placeholder (Generate Key), NOT a deploy call. auto_groups binds the peer to
-// a hidden throwaway group created alongside the key; that group's real id
-// doesn't exist until generation, so the preview shows it as an id placeholder
-// ({<name>_group_id}) rather than a name. Mirrors DraftInstallPeerModal /
-// SetupKeyGenerator.
-export function setupKeyCreateBody(change: InstallPeerChange) {
+// The key generated when a placeholder is installed, NOT a deploy call. Its bound
+// auto_group has no id until generation, hence the id placeholder; canvas group
+// memberships ride on the key too.
+export function setupKeyCreateBody(
+  change: InstallPeerChange,
+  live: LiveData = {},
+) {
   const isUserDevice = change.kind === "user-device";
+  const canvasGroups = (live.draftChanges ?? []).flatMap((c) => {
+    if (
+      (c.type !== "create-group" && c.type !== "update-group") ||
+      !c.peerIds.includes(change.clientId)
+    ) {
+      return [];
+    }
+    return [
+      c.type === "update-group" ? c.groupId : idPlaceholder("GROUP", c.name),
+    ];
+  });
+  const boundGroup = isUserDevice ? [] : [idPlaceholder("GROUP", change.name)];
   return {
     name: `Draft ${change.name}`,
     type: "one-off",
     expires_in: 24 * 60 * 60,
     revoked: false,
-    auto_groups: isUserDevice ? [] : [idPlaceholder("GROUP", change.name)],
+    auto_groups: Array.from(new Set([...boundGroup, ...canvasGroups])),
     usage_limit: 1,
     ephemeral: false,
     allow_extra_dns_labels: false,
   };
 }
 
-// ---------------------------------------------------------------------------
-// Preview: build the request(s) shown in the Review & Deploy code view.
-// ---------------------------------------------------------------------------
-
 const methodPath = (change: DraftChange): { method: HttpMethod; path: string } => {
   const [method, path] = getChangeApiCall(change).split(" ");
   return { method: method as HttpMethod, path };
 };
 
-// Resolvers for display: an EXISTING group reference resolves to its real id
-// (so the preview matches the deployed request); a DRAFT group has no id yet,
-// so it's shown by name as a placeholder. `live.groups` supplies the name→id
-// map — the preview equivalent of deploy's `nameToId`, which is why references
-// keyed by name (SSH authorized_groups, resource/router groups) render as the
-// same ids deploy sends rather than as names.
+// An EXISTING group ref resolves to its real id so the preview matches the
+// deployed request; a draft group has no id yet and shows as a placeholder.
 export function previewResolvers(live: LiveData = {}): RequestResolvers {
+  // Preview must never throw, so an ambiguous group name renders as a placeholder
+  // rather than one candidate picked at random — the deploy refuses to guess.
   const nameToId = new Map<string, string>();
-  live.groups?.forEach((g) => g.id && nameToId.set(g.name, g.id));
+  const ambiguousNames = new Set<string>();
+  live.groups?.forEach((g) => {
+    if (!g.id) return;
+    if (nameToId.has(g.name)) ambiguousNames.add(g.name);
+    else nameToId.set(g.name, g.id);
+  });
+  const idForName = (name: string) =>
+    ambiguousNames.has(name) ? undefined : nameToId.get(name);
   const liveGroupIds = new Set(
     (live.groups ?? []).map((g) => g.id).filter(Boolean) as string[],
   );
-  // Draft resource client id ("new-…") → its name, so a policy referencing a
-  // not-yet-created resource shows a name placeholder rather than the id.
   const draftResourceNames = new Map<string, string>();
   live.draftChanges?.forEach((c) => {
     if (c.type === "create-resource") draftResourceNames.set(c.clientId, c.name);
   });
 
-  // A group reference (real id or draft-group name) → its wire value: a live
-  // id stays, a live name resolves to its id, and a group that only exists in
-  // the draft has no id yet → a placeholder the user must let deploy fill in.
   const resolveGroupRef = (ref: string) => {
     if (liveGroupIds.has(ref)) return ref;
-    return nameToId.get(ref) ?? idPlaceholder("GROUP", ref);
+    return idForName(ref) ?? idPlaceholder("GROUP", ref);
   };
 
   return {
@@ -332,7 +325,7 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
       list?.map((g) =>
         typeof g === "string"
           ? resolveGroupRef(g)
-          : g.id ?? nameToId.get(g.name) ?? idPlaceholder("GROUP", g.name),
+          : g.id ?? idForName(g.name) ?? idPlaceholder("GROUP", g.name),
       ),
     resolveResource: (r) => {
       if (!r || !r.id.startsWith("new-")) return r;
@@ -352,17 +345,13 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
   };
 }
 
-// Preview must never throw during render: a live policy with no rule (shouldn't
-// happen under the one-rule-per-policy invariant, but SWR data isn't trusted)
-// yields no body instead of crashing the modal. Deploy still throws — it wants
-// to surface that as a caught error.
+// Preview must never throw during render, so a live policy with no rule yields
+// no body instead of crashing the modal. Deploy still throws.
 const safePolicyBody = (policy: Policy, r: RequestResolvers) =>
   policy.rules?.[0] ? policyRequestBody(policy, r) : undefined;
 
-// The request a change WILL send once deployed (the diff's "after"). Every
-// change has one — install-peer sends its setup-key POST. DELETE requests
-// carry no body. `live` supplies the group's current membership so an
-// update-group shows the FULL resulting member list (not just the additions).
+// The request a change will send once deployed (the diff's "after"). `live`
+// supplies current membership so an update-group shows the full member list.
 export function buildChangeRequest(
   change: DraftChange,
   live: LiveData = {},
@@ -371,7 +360,7 @@ export function buildChangeRequest(
   const { method, path } = methodPath(change);
 
   if (change.type === "install-peer") {
-    return { method, path, body: setupKeyCreateBody(change) };
+    return { method, path, body: setupKeyCreateBody(change, live) };
   }
 
   switch (change.type) {
@@ -411,10 +400,8 @@ export function buildChangeRequest(
   }
 }
 
-// Render a request as a curl command matching the API docs — auth is a
-// `<TOKEN>` placeholder the user swaps for a personal access token. The base is
-// the account's configured management origin (api.netbird.io on cloud, the
-// self-hosted URL otherwise) — the same base the app's own requests use.
+// Renders a request as a curl command matching the API docs; auth is a
+// `<TOKEN>` placeholder the user swaps for a personal access token.
 export function toCurl(request: ChangeRequest): string {
   const base = loadConfig().apiOrigin + "/api";
   const parts = [
@@ -424,13 +411,13 @@ export function toCurl(request: ChangeRequest): string {
   ];
   if (request.body !== undefined) {
     parts.push(`-H 'Content-Type: application/json'`);
-    parts.push(`-d '${JSON.stringify(request.body, null, 2)}'`);
+    // An apostrophe would otherwise close the single-quoted body early.
+    const json = JSON.stringify(request.body, null, 2).replace(/'/g, `'\\''`);
+    parts.push(`-d '${json}'`);
   }
   return parts.join(" \\\n  ");
 }
 
-// The before→after diff a change produces (the code view's lines and the
-// header's +/- stat share this).
 export function changeDiffLines(
   change: DraftChange,
   live: LiveData = {},
@@ -466,7 +453,7 @@ export function buildBeforeRequest(
         body: {
           name: group.name,
           peers: toIds(group.peers),
-          resources: toIds(group.resources),
+          resources: wireResources(group.resources, r),
         },
       };
     }
@@ -482,7 +469,9 @@ export function buildBeforeRequest(
         body: {
           name: resource.name,
           description: resource.description ?? "",
-          address: resource.address,
+          // Shaped like the "after" side, which normalizes: a live bare IP
+          // would otherwise diff against its own /32.
+          address: r.normalizeAddress(resource.address),
           enabled: resource.enabled,
           groups: toIds(resource.groups),
         },
@@ -497,16 +486,13 @@ export function buildBeforeRequest(
         body: { name: network.name, description: network.description ?? "" },
       };
     }
-    // update-router has no "before": routers aren't in the global live data
-    // (they're fetched per-network, lazily) — it falls through to null and
-    // the code view renders the resulting PUT on its own.
+    // update-router has no "before": routers aren't in the global live data,
+    // so it falls through to null.
     case "delete-network": {
       const network = live.networks?.find((n) => n.id === change.networkId);
       if (!network) return null;
-      // No real request body for DELETE — this reconstructs what's being
-      // removed (the network plus its resources/routers, cascaded
-      // server-side) so the code view shows it as an all-minus diff, like the
-      // other deletes.
+      // DELETE has no real body; this reconstructs what's being removed so the
+      // code view shows an all-minus diff like the other deletes.
       return {
         method: "DELETE",
         path: `/networks/${change.networkId}`,

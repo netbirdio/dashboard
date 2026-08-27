@@ -1,5 +1,8 @@
 "use client";
 
+import { Modal } from "@components/modal/Modal";
+import { useReactFlow, XYPosition } from "@xyflow/react";
+import { sortBy } from "lodash";
 import React, {
   createContext,
   useContext,
@@ -7,22 +10,21 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { sortBy } from "lodash";
+import { useDialog } from "@/contexts/DialogProvider";
+import { useGroups } from "@/contexts/GroupsProvider";
+import { Group } from "@/interfaces/Group";
+import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import {
   AccessControlModalContent,
-  PolicyDestinationScope,
   AccessControlUpdateModal,
+  PolicyDestinationScope,
 } from "@/modules/access-control/AccessControlModal";
-import { Modal } from "@components/modal/Modal";
-import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
-import { Group } from "@/interfaces/Group";
-import { useGroups } from "@/contexts/GroupsProvider";
-import { useDialog } from "@/contexts/DialogProvider";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import AgentPolicyModal from "@/modules/agent-network/AgentPolicyModal";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useReactFlow, XYPosition } from "@xyflow/react";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   getDraftResource,
   getPlaceholderPeer,
@@ -30,43 +32,19 @@ import {
 } from "@/modules/control-center/utils/helpers";
 
 interface PolicyContextType {
-  // Edit existing policy
-  selectedPolicy: string;
   setSelectedPolicy: (id: string) => void;
-  policyModalOpen: boolean;
   setPolicyModalOpen: (open: boolean) => void;
-  currentPolicy: Policy | undefined;
-  handlePolicyChange: (updated: Policy) => void;
-  // Draft: record an update change for the policy and redraw it on canvas.
   updateDraftPolicy: (policy: Policy) => void;
-  // Draws a policy with its sources/destinations on the canvas — existing
-  // nodes are connected, missing ones created (used when dropping an existing
-  // policy from the components sidebar).
   drawPolicyOnCanvas: (policy: Policy, fallbackPosition?: XYPosition) => void;
-  // Records a freshly built draft policy (client id, group changes, tracked
-  // when deployable) and draws it — the create modal's save path, also used
-  // by the network destination picker.
-  addPolicyEdge: (policy: Policy) => void;
-  // Where a dropped "new policy" template landed — the created policy node
-  // falls back to this position when no matched nodes exist yet.
-  setPolicyDropPosition: (position?: XYPosition) => void;
-  // Create new policy (draft connect)
-  createPolicyModal: boolean;
   setCreatePolicyModal: (open: boolean) => void;
-  // Prefilled name, e.g. "All to New Group" when connecting two nodes.
-  policyInitialName: string;
   setPolicyInitialName: (name: string) => void;
-  policySourceResource: PolicyRuleResource | undefined;
   setPolicySourceResource: (r: PolicyRuleResource | undefined) => void;
-  policyDestinationResource: PolicyRuleResource | undefined;
   setPolicyDestinationResource: (r: PolicyRuleResource | undefined) => void;
-  policySourceGroups: Group[];
   setPolicySourceGroups: (g: Group[]) => void;
-  policyDestinationGroups: Group[];
   setPolicyDestinationGroups: (g: Group[]) => void;
-  // Restricts the create-policy modal's destination to a network's contents
-  // (set when connecting onto a frame / framed resource / resource-group).
+  // Restricts the create-policy modal's destination to a network's contents.
   setPolicyDestinationScope: (scope?: PolicyDestinationScope) => void;
+  openAgentPolicy: (id: string) => void;
 }
 
 const PolicyContext = createContext<PolicyContextType | null>(null);
@@ -88,8 +66,7 @@ export function ControlCenterPolicyProvider({
 }) {
   const { policies, peers, networkResources, networks, groups } =
     useControlCenterData();
-  const { nodes, edges, setLayoutInitialized, refreshLiveViewRef } =
-    useCanvasState();
+  const { nodes, refreshLiveViewRef } = useCanvasState();
   const { isDraft } = useDraftMode();
   const {
     changes,
@@ -97,14 +74,13 @@ export function ControlCenterPolicyProvider({
     trackUpdatePolicy,
     trackDeletePolicy,
     trackCreateGroup,
-    removeChange,
+    patchPendingPolicyUpdate,
   } = useDraftChangeset();
   const { setDropdownOptions } = useGroups();
   const reactFlow = useReactFlow();
   const { confirm } = useDialog();
 
-  // Live edits hit the account on save — confirm first (the modal calls this
-  // before its PUT via onBeforeSave; draft skips it).
+  // Live edits apply to the account immediately, so confirm before the PUT.
   const confirmLivePolicySave = () =>
     confirm({
       title: "Save policy changes?",
@@ -118,6 +94,19 @@ export function ControlCenterPolicyProvider({
 
   const [selectedPolicy, setSelectedPolicy] = useState("");
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
+  // Agent-network policies live in their own domain, not /policies, so they
+  // need their own modal.
+  const [selectedAgentPolicy, setSelectedAgentPolicy] = useState("");
+  const [agentPolicyModalOpen, setAgentPolicyModalOpen] = useState(false);
+  const { policies: agentPolicyDomain } = useAIProviders();
+  const currentAgentPolicy = useMemo(
+    () => agentPolicyDomain?.find((p) => p.id === selectedAgentPolicy),
+    [agentPolicyDomain, selectedAgentPolicy],
+  );
+  const openAgentPolicy = (id: string) => {
+    setSelectedAgentPolicy(id);
+    setAgentPolicyModalOpen(true);
+  };
   const [createPolicyModal, setCreatePolicyModal] = useState(false);
   const [policyInitialName, setPolicyInitialName] = useState("");
   const [policyDestinationScope, setPolicyDestinationScope] = useState<
@@ -132,10 +121,7 @@ export function ControlCenterPolicyProvider({
     Group[]
   >([]);
 
-  // The canvas node carries the freshest policy state: in draft the pending
-  // edits/toggles, in live the just-saved PUT response (refreshLiveView
-  // patches the node before the SWR cache revalidates). The API list is the
-  // fallback.
+  // The canvas node has the freshest policy state; the API list is the fallback.
   const currentPolicy = useMemo(() => {
     if (!selectedPolicy) return undefined;
     const node = nodes.find((n) => n.id === `policy-${selectedPolicy}`);
@@ -144,11 +130,7 @@ export function ControlCenterPolicyProvider({
     return policies?.find((p) => p.id === selectedPolicy);
   }, [policies, selectedPolicy, nodes]);
 
-  // Live-mode save: the canvas is patched in place from the PUT response —
-  // no layoutInitialized reset, no waiting for the SWR /policies
-  // revalidation (that lands in the background and matches what's already
-  // drawn). refreshLiveView rebuilds the current view with the fresh policy,
-  // keeping positions and camera.
+  // Patch the canvas from the PUT response so positions and camera survive.
   const handlePolicyChange = (updated: Policy) => {
     refreshLiveViewRef.current(updated);
     setTimeout(() => {
@@ -157,10 +139,8 @@ export function ControlCenterPolicyProvider({
     }, 500);
   };
 
-  // Draft groups must be selectable in the policy modal's group selectors —
-  // synced from the canvas as client-side options while drafting. Groups
-  // marked for deletion are excluded (they're gone after deploy) and restored
-  // if the delete change is discarded.
+  // Draft groups must be selectable in the policy modal's group selectors,
+  // groups marked for deletion must not.
   useEffect(() => {
     if (!isDraft || !setDropdownOptions) return;
     const draftGroups = new Map<string, Group>();
@@ -174,8 +154,6 @@ export function ControlCenterPolicyProvider({
         .map((c) => (c.type === "delete-group" ? c.groupId : "")),
     );
     setDropdownOptions((prev) => {
-      // Prune draft options that left the canvas (removed/renamed groups)
-      // and groups pending deletion.
       const kept = prev.filter((g) =>
         g.id ? !pendingDeleteIds.has(g.id) : draftGroups.has(g.name),
       );
@@ -194,7 +172,6 @@ export function ControlCenterPolicyProvider({
     });
   }, [nodes, isDraft, changes, groups, setDropdownOptions]);
 
-  // Draft-only options (no id) are removed once the draft is left.
   useEffect(() => {
     if (isDraft || !setDropdownOptions) return;
     setDropdownOptions((prev) => {
@@ -203,14 +180,14 @@ export function ControlCenterPolicyProvider({
     });
   }, [isDraft, setDropdownOptions]);
 
-  // Groups can also be typed directly into the modal's selector — every
-  // id-less group referenced by a draft policy needs a create-group change.
+  // Groups typed into the modal's selector have no id yet, so a draft policy
+  // referencing one still needs a create-group change.
   const ensureDraftGroupChanges = (policy: Policy) => {
     const rule = policy.rules?.[0];
     if (!rule) return;
     const referenced = [
-      ...(((rule.sources as (Group | string)[]) ?? []) || []),
-      ...(((rule.destinations as (Group | string)[]) ?? []) || []),
+      ...((rule.sources as (Group | string)[]) ?? []),
+      ...((rule.destinations as (Group | string)[]) ?? []),
     ];
     referenced.forEach((g) => {
       if (typeof g === "string" || g.id) return;
@@ -223,8 +200,7 @@ export function ControlCenterPolicyProvider({
     });
   };
 
-  // Placeholder peers (Server / Agent, not installed) as pseudo-peers — shown
-  // and selectable in the policy modal's peer selector with their draft ids.
+  // Uninstalled placeholders stay selectable in the modal's peer selector.
   const placeholderPeers = useMemo(
     () =>
       nodes
@@ -233,8 +209,6 @@ export function ControlCenterPolicyProvider({
     [nodes],
   );
 
-  // Draft resources as pseudo-resources — selectable policy destinations
-  // with their "new-…" ids (mirror of placeholderPeers).
   const draftResources = useMemo(
     () =>
       nodes
@@ -243,15 +217,7 @@ export function ControlCenterPolicyProvider({
     [nodes],
   );
 
-  // Where the last "new policy" template was dropped.
-  const policyDropPositionRef = React.useRef<XYPosition | undefined>(undefined);
-  const setPolicyDropPosition = (position?: XYPosition) => {
-    policyDropPositionRef.current = position;
-  };
-
-  // Draws (or redraws) a policy's node and edges on the canvas: missing
-  // source/destination nodes are created, the policy node's data is updated
-  // and its edges are fully replaced (an edit can change sources/destinations).
+  // The policy's edges are replaced wholesale: an edit can change either side.
   const drawPolicyOnCanvas = (policy: Policy, fallbackPosition?: XYPosition) => {
     const rule = policy?.rules?.[0];
     if (!rule) return;
@@ -266,16 +232,12 @@ export function ControlCenterPolicyProvider({
     const newNodes: any[] = [];
     const policyEdges: any[] = [];
 
-    // Anchor for nodes that don't exist yet: sources stack to the left of it,
-    // destinations to the right (used when dropping a policy from the
-    // sidebar; connect-created policies always have their endpoints already).
-    // When editing a policy already on canvas, its own position is the anchor.
+    // Anchor for new nodes: sources stack to its left, destinations right.
     const base = fallbackPosition ??
       findNode(policyNodeId)?.position ?? { x: 0, y: 0 };
     let newSourceCount = 0;
     let newDestCount = 0;
 
-    // Returns true when a new node was added.
     const ensureNode = (
       id: string,
       type: string,
@@ -295,8 +257,6 @@ export function ControlCenterPolicyProvider({
     };
 
 
-    // All of the policy's edges are rebuilt — stale ones are dropped when the
-    // canvas is updated below.
     const pushEdge = (id: string, source: string, target: string) => {
       if (!policyEdges.some((e) => e.id === id)) {
         policyEdges.push({
@@ -309,8 +269,7 @@ export function ControlCenterPolicyProvider({
       }
     };
 
-    // Detect self-referencing groups. Draft groups have no id yet — their
-    // (unique) name stands in as the key.
+    // Draft groups have no id yet, so their unique name stands in as the key.
     const groupKey = (g: Group | string) =>
       typeof g === "string" ? g : g.id ?? g.name;
     const sourceGroupIds = new Set(
@@ -323,7 +282,6 @@ export function ControlCenterPolicyProvider({
     const findGroupNode = (gid: string, groupName?: string) => {
       const byId = findNode(`group-${gid}`);
       if (byId) return `group-${gid}`;
-      // Fall back to matching by group name (draft groups have different ids)
       if (groupName) {
         const byName = currentNodes.find(
           (n) =>
@@ -337,10 +295,8 @@ export function ControlCenterPolicyProvider({
       return undefined;
     };
 
-    // New side nodes join the EXISTING column: aligned to its x, stacked
-    // below its lowest node — what Auto Arrange would produce — instead of
-    // landing at the anchor, which put new sources above the source column
-    // and new destinations below the policy when editing a policy in place.
+    // New side nodes join the existing column so they land where Auto Arrange
+    // would put them, not at the anchor.
     const sideColumnPositions = (groups: (Group | string)[] | undefined) => {
       const positions: XYPosition[] = [];
       for (const g of groups ?? []) {
@@ -375,11 +331,9 @@ export function ControlCenterPolicyProvider({
     const nextDestPosition = () =>
       nextInColumn(destColumn, newDestCount, base.x + 450);
 
-    // --- Source nodes ---
     const sourceNodeIds: string[] = [];
 
-    // Draft groups without an id get a "group-new-" node id so later
-    // connections from them resolve (see parseNodeId in useDraft).
+    // Draft groups need a `group-new-` node id so later connections resolve.
     const fallbackGroupNodeId = (g: Group | string | undefined, gid: string) =>
       typeof g === "object" && !g.id ? `group-new-${gid}` : `group-${gid}`;
 
@@ -406,7 +360,6 @@ export function ControlCenterPolicyProvider({
       sourceNodeIds.push(nodeId);
     }
 
-    // Source resource (peer)
     const sourceResource = rule.sourceResource;
     if (sourceResource?.id && sourceResource.type === "peer") {
       const peer = peers?.find((p) => p.id === sourceResource.id);
@@ -429,12 +382,10 @@ export function ControlCenterPolicyProvider({
         }
         sourceNodeIds.push(nodeId);
       } else if (findNode(`peer-${sourceResource.id}`)) {
-        // Placeholder peer (not installed) — connect its existing node.
         sourceNodeIds.push(`peer-${sourceResource.id}`);
       }
     }
 
-    // --- Destination nodes ---
     const destNodeIds: string[] = [];
 
     for (const dest of (rule.destinations as Group[]) ?? []) {
@@ -442,7 +393,6 @@ export function ControlCenterPolicyProvider({
       if (!gid) continue;
       const group = typeof dest === "string" ? undefined : dest;
 
-      // Check if this group is also a source (self-ref) — match by ID or name
       const isSelfRef =
         sourceGroupIds.has(gid) ||
         (group?.name &&
@@ -457,7 +407,6 @@ export function ControlCenterPolicyProvider({
       if (!isSelfRef) {
         nodeId = existingDestNode ?? fallbackGroupNodeId(dest, gid);
       } else {
-        // Self-ref: look for existing dest copy, then create one
         const existingDestCopy =
           currentNodes.find(
             (n) =>
@@ -493,7 +442,6 @@ export function ControlCenterPolicyProvider({
       destNodeIds.push(nodeId);
     }
 
-    // Destination resource
     const destResource = rule.destinationResource;
     if (destResource?.id) {
       if (destResource.type === "peer") {
@@ -517,7 +465,6 @@ export function ControlCenterPolicyProvider({
           }
           destNodeIds.push(nodeId);
         } else if (findNode(`peer-${destResource.id}`)) {
-          // Placeholder peer (not installed) — connect its existing node.
           destNodeIds.push(`peer-${destResource.id}`);
         }
       } else {
@@ -526,8 +473,7 @@ export function ControlCenterPolicyProvider({
         );
         if (resource) {
           const nodeId = `resource-${resource.id}`;
-          // Stamp the owning network (like the sidebar's resource drop) so
-          // the standalone card shows its name instead of "No Network".
+          // Without the owning network the standalone card reads "No Network".
           const owningNetwork = networks?.find((n) =>
             n.resources?.some((rid) => rid === resource.id),
           );
@@ -550,31 +496,23 @@ export function ControlCenterPolicyProvider({
           }
           destNodeIds.push(nodeId);
         } else if (findNode(`resource-${destResource.id}`)) {
-          // Draft resource ("new-…") — connect its existing node.
           destNodeIds.push(`resource-${destResource.id}`);
         }
       }
     }
 
-    // --- Position policy node between sources and destinations ---
     const allExistingNodes = [...sourceNodeIds, ...destNodeIds]
       .map((id) => findNode(id))
       .filter(Boolean);
 
-    // An explicit drop position always wins — the policy lands exactly where
-    // it was dropped and the missing pieces attach around it. Centering on
-    // the matched nodes is only for flows without a drop point (connect-drag,
-    // modal edits).
+    // An explicit drop position wins; otherwise center on the matched nodes.
     let policyPos = { x: base.x, y: base.y };
     if (!fallbackPosition && allExistingNodes.length > 0) {
       const bounds = reactFlow.getNodesBounds(allExistingNodes as any);
       const centerX = bounds.x + bounds.width / 2;
       const centerY = bounds.y + bounds.height / 2;
-      // A node's `position` is its TOP-LEFT, so drop it at the midpoint minus
-      // half its own size — otherwise it lands down-and-right of the true
-      // center (visibly off between two connected nodes). The pill has no
-      // fixed width; estimate from the name (status dot + paddings ≈ 64px,
-      // ~7px/char, capped at its max text width).
+      // A node's `position` is its top-left, so subtract half its own size.
+      // The pill has no fixed width; estimate it from the name.
       const POLICY_NODE_HEIGHT = 36;
       const name = policy.rules?.[0]?.name ?? policy.name ?? "";
       const policyNodeWidth = Math.min(248, 64 + Math.min(name.length, 26) * 7);
@@ -593,7 +531,6 @@ export function ControlCenterPolicyProvider({
       });
     }
 
-    // --- Edges ---
     for (const sourceId of sourceNodeIds) {
       pushEdge(`${sourceId}-${policyNodeId}`, sourceId, policyNodeId);
     }
@@ -601,8 +538,6 @@ export function ControlCenterPolicyProvider({
       pushEdge(`${policyNodeId}-${destId}`, policyNodeId, destId);
     }
 
-    // Apply: refresh the policy node's data, add missing nodes, and replace
-    // every edge of this policy with the rebuilt set.
     reactFlow.setNodes((prev) =>
       prev
         .map((n) =>
@@ -617,9 +552,7 @@ export function ControlCenterPolicyProvider({
     );
   };
 
-  // Create flow (drag-connect → modal). In draft the modal returns pure
-  // policy data (useSave=false): record the change, give the policy a client
-  // id and draw it — the API call happens on deploy.
+  // In draft the modal returns pure policy data; the API call happens on deploy.
   const addPolicyEdge = (policy: Policy) => {
     setCreatePolicyModal(false);
     setPolicyInitialName("");
@@ -637,21 +570,16 @@ export function ControlCenterPolicyProvider({
       }`;
       policy = { ...policy, id: clientId };
       ensureDraftGroupChanges(policy);
-      // Track once both sides are set (blank/one-sided policies stay
-      // canvas-only). A reference to an uninstalled placeholder peer doesn't
-      // withhold the policy — it enters the changeset with a blocking issue.
+      // Blank or one-sided policies stay canvas-only.
       if (isCompletePolicy(policy)) {
         trackCreatePolicy({ clientId, policy });
       }
     }
 
-    drawPolicyOnCanvas(policy, policyDropPositionRef.current);
-    policyDropPositionRef.current = undefined;
+    drawPolicyOnCanvas(policy);
   };
 
-  // Shared with the unit tests — see isTrackablePolicy in utils/helpers.
-  // Policies referencing draft resources are trackable only while the
-  // resource is tracked (complete).
+  // A policy on a draft resource is trackable only while that resource is.
   const trackedResourceClientIds = useMemo(
     () =>
       new Set(
@@ -661,23 +589,14 @@ export function ControlCenterPolicyProvider({
       ),
     [changes],
   );
-  // A policy enters the changeset once it's trackable (both sides set, draft
-  // resources tracked). It may still reference an uninstalled placeholder peer
-  // — it's listed as an ordinary change (not hidden); that peer's own
-  // install-peer issue blocks the deploy until it's installed, at which point
-  // usePlaceholderUpgrade re-records this change with the real id.
+  // A tracked policy may reference an uninstalled placeholder; that peer's own
+  // install-peer issue is what blocks the deploy.
   const isCompletePolicy = (policy: Policy) =>
     isTrackablePolicy(policy, trackedResourceClientIds);
 
-  // Applies an edited policy to the draft: record an update change and redraw
-  // — draft-created policies just update their create change. Used by the
-  // edit modal and by policy-handle drags (add source/destination).
   const updateDraftPolicy = (policy: Policy) => {
     if (!policy.id) return;
     ensureDraftGroupChanges(policy);
-    // Blank dropped policies ("new-…" without a create change) stay out of
-    // the changeset until they're real: the first edit/connect that gives
-    // them both a source and a destination records their create change.
     if (policy.id.startsWith("new-")) {
       const hasCreateChange = changes.some(
         (c) => c.type === "create-policy" && c.clientId === policy.id,
@@ -689,26 +608,19 @@ export function ControlCenterPolicyProvider({
         drawPolicyOnCanvas(policy);
         return;
       }
-      // Tracked but no longer trackable (a side was emptied, or a draft
-      // resource lost its network) — drop the pending create until it's
-      // complete again. An uninstalled placeholder peer does NOT drop it: the
-      // policy stays listed (that peer's install-peer issue blocks deploy).
+      // A side was emptied: drop the pending create until it is complete again.
       if (!isCompletePolicy(policy)) {
         trackDeletePolicy({ policyId: policy.id, name: policy.name ?? "Policy" });
         drawPolicyOnCanvas(policy);
         return;
       }
     }
-    // Existing policies: an incomplete state (e.g. its single-peer source
-    // was removed from the canvas) isn't trackable — a pending edit would
-    // ship that broken state, so it's dropped; the API policy stays as-is
-    // until the draft completes it again. (A referenced uninstalled peer keeps
-    // the update tracked and listed; its install-peer issue blocks deploy.)
+    // A pending edit survives the strip, blocked by its Incomplete issue — not via
+    // trackUpdatePolicy, which would read the emptied policy as a deletion.
     if (!isCompletePolicy(policy)) {
-      const pending = changes.find(
-        (c) => c.type === "update-policy" && c.policyId === policy.id,
-      );
-      if (pending) removeChange(pending.id);
+      // Functional update only: deferred strips hold a pre-removal `changes` closure,
+      // and a whole-set write would resurrect what the removal untracked.
+      patchPendingPolicyUpdate({ policyId: policy.id, policy });
       drawPolicyOnCanvas(policy);
       return;
     }
@@ -716,7 +628,6 @@ export function ControlCenterPolicyProvider({
     drawPolicyOnCanvas(policy);
   };
 
-  // Edit flow (policy modal in draft, useSave=false).
   const handleDraftPolicyUpdate = (updated: Policy) => {
     if (!selectedPolicy) return;
     updateDraftPolicy({ ...updated, id: selectedPolicy });
@@ -728,29 +639,18 @@ export function ControlCenterPolicyProvider({
 
   const value = useMemo(
     () => ({
-      selectedPolicy,
       setSelectedPolicy,
-      policyModalOpen,
       setPolicyModalOpen,
-      currentPolicy,
-      handlePolicyChange,
       updateDraftPolicy,
       drawPolicyOnCanvas,
-      addPolicyEdge,
-      setPolicyDropPosition,
-      createPolicyModal,
       setCreatePolicyModal,
-      policyInitialName,
       setPolicyInitialName,
-      policySourceResource,
       setPolicySourceResource,
-      policyDestinationResource,
       setPolicyDestinationResource,
-      policySourceGroups,
       setPolicySourceGroups,
-      policyDestinationGroups,
       setPolicyDestinationGroups,
       setPolicyDestinationScope,
+      openAgentPolicy,
     }),
     [
       selectedPolicy,
@@ -762,9 +662,7 @@ export function ControlCenterPolicyProvider({
       policyDestinationResource,
       policySourceGroups,
       policyDestinationGroups,
-      // updateDraftPolicy/drawPolicyOnCanvas close over the changeset, draft
-      // flag and entity data — keep the memoized value fresh so consumers
-      // (onNodeConnect, sidebar drops) don't act on stale state.
+      // The callbacks close over these, so consumers would see stale state.
       changes,
       isDraft,
       peers,
@@ -779,11 +677,8 @@ export function ControlCenterPolicyProvider({
         <AccessControlUpdateModal
           policy={currentPolicy}
           open={policyModalOpen}
-          // In draft the modal must not call the API — edits are recorded as
-          // update-policy changes and applied on deploy.
+          // In draft the modal must not call the API; edits apply on deploy.
           useSave={!isDraft}
-          // Live: the modal opens directly; the "you are in live mode"
-          // confirmation is deferred to when the user clicks Save Changes.
           onBeforeSave={isDraft ? undefined : confirmLivePolicySave}
           additionalPeers={isDraft ? placeholderPeers : undefined}
           additionalResources={isDraft ? draftResources : undefined}
@@ -796,10 +691,7 @@ export function ControlCenterPolicyProvider({
       {createPolicyModal && (
         <Modal open={createPolicyModal} onOpenChange={setCreatePolicyModal}>
           <AccessControlModalContent
-            key={createPolicyModal ? 1 : 0}
             onSuccess={addPolicyEdge}
-            // In draft the modal must not call the API — it hands the policy
-            // data back and the changeset applies it on deploy.
             useSave={!isDraft}
             initialName={policyInitialName || undefined}
             initialSourceResource={policySourceResource}
@@ -812,6 +704,11 @@ export function ControlCenterPolicyProvider({
           />
         </Modal>
       )}
+      <AgentPolicyModal
+        open={agentPolicyModalOpen}
+        onOpenChange={setAgentPolicyModalOpen}
+        policy={currentAgentPolicy}
+      />
       {children}
     </PolicyContext.Provider>
   );

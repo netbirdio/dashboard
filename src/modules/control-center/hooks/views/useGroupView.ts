@@ -8,6 +8,10 @@ import {
   DEFAULT_LAYOUT_CONFIG,
 } from "@/modules/control-center/utils/graph-builder";
 import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
+import {
+  addAgentNetworkProviderNodes,
+  useAgentNetworkOverlay,
+} from "./agent-network-overlay";
 import { addDestinationResourceNodes, ViewResult } from "./types";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
@@ -15,9 +19,9 @@ import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
 export function useGroupView() {
   const { policies, peers, networks, networkResources, groups, isDataReady } =
     useControlCenterData();
+  const agentNetwork = useAgentNetworkOverlay();
 
-  // policiesOverride: rebuild from fresher data than the SWR cache (e.g. the
-  // PUT response of a policy update) — see refreshLiveView.
+  // policiesOverride rebuilds from data fresher than the SWR cache.
   const applySingleGroupView = (
     groupId: string,
     policiesOverride?: Policy[],
@@ -49,8 +53,8 @@ export function useGroupView() {
         (s) => s.id === groupId,
       );
 
-      // side: "left" mirrors the policy column to the left of the selected
-      // group when the group is only a destination (sources → policy → group).
+      // side "left" mirrors the policy column when the group is only a
+      // destination.
       addNode(allNodes, {
         id: `policy-${policy.id}`,
         type: "policyNode",
@@ -72,8 +76,8 @@ export function useGroupView() {
           addNode(allNodes, {
             id: `source-group-${source.id}`,
             type: "sourceGroupNode",
-            // Explicit enabled — GroupNode's fallback checks INCOMING edges,
-            // and source groups only have outgoing ones (they'd render dimmed).
+            // Explicit: GroupNode's fallback checks incoming edges, which
+            // source groups don't have.
             data: { group: withFreshGroupCounts(source, groups), enabled },
             position: { x: 0, y: 0 },
           });
@@ -141,6 +145,14 @@ export function useGroupView() {
         networks,
       );
     });
+
+    addAgentNetworkProviderNodes(
+      groupId,
+      `select-group-node`,
+      allNodes,
+      allEdges,
+      agentNetwork,
+    );
 
     return applyD3HierarchicalLayout(
       allNodes,

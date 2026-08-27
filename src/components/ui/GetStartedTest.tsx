@@ -10,10 +10,9 @@ type Props = {
   description?: string;
   button?: React.ReactNode;
   learnMore?: React.ReactNode;
+  // Also drops the card chrome, for empty states that sit on a canvas rather
+  // than a table.
   showBackground?: boolean;
-  // Extra classes for the outer Card — e.g. `bg-transparent border-0` to drop
-  // the card chrome when the empty state sits on a canvas rather than a table.
-  cardClassName?: string;
 };
 
 export default function GetStartedTest({
@@ -23,11 +22,15 @@ export default function GetStartedTest({
   button,
   learnMore,
   showBackground = true,
-  cardClassName,
 }: Props) {
   return (
     <div className={"px-8 mt-8"}>
-      <Card className={cn("w-full relative overflow-hidden", cardClassName)}>
+      <Card
+        className={cn(
+          "w-full relative overflow-hidden",
+          !showBackground && "bg-transparent border-0",
+        )}
+      >
         {showBackground && (
           <>
             <div

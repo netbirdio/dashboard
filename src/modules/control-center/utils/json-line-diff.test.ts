@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diffBodies, diffLines, formatBody } from "./json-line-diff";
-
-// The code view renders these: a create is all additions, a delete is all
-// removals, and a modification is a real line diff of the two JSON bodies.
+import { diffBodies, diffLines, diffStat, formatBody } from "./json-line-diff";
 
 describe("diffLines", () => {
   it("treats a null before as all additions (create)", () => {
@@ -29,7 +26,6 @@ describe("diffLines", () => {
     const before = ["{", '  "n": 1,', '  "keep": true', "}"].join("\n");
     const after = ["{", '  "n": 2,', '  "keep": true', "}"].join("\n");
     const out = diffLines(before, after);
-    // The braces and the "keep" line survive as context; only "n" flips.
     expect(out.filter((l) => l.kind === "context").map((l) => l.text)).toEqual([
       "{",
       '  "keep": true',
@@ -48,7 +44,6 @@ describe("formatBody / diffBodies", () => {
 
   it("diffs two objects field-by-field", () => {
     const out = diffBodies({ name: "A", enabled: false }, { name: "A", enabled: true });
-    // name line is identical → context; the enabled line changes.
     expect(out.some((l) => l.kind === "remove" && l.text.includes("false"))).toBe(true);
     expect(out.some((l) => l.kind === "add" && l.text.includes("true"))).toBe(true);
     expect(out.some((l) => l.kind === "context" && l.text.includes('"name"'))).toBe(true);
@@ -57,5 +52,47 @@ describe("formatBody / diffBodies", () => {
   it("an undefined after (DELETE) removes the whole before body", () => {
     const out = diffBodies({ name: "A" }, undefined);
     expect(out.every((l) => l.kind === "remove")).toBe(true);
+  });
+});
+
+// The Review modal computes a stat for EVERY row at mount, so a large group
+// membership must never reach the quadratic LCS matrix.
+describe("large inputs", () => {
+  it("trims the common prefix/suffix and diffs only the changed window exactly", () => {
+    const lines = Array.from({ length: 20000 }, (_, i) => `"peer-${i}",`);
+    const before = lines.join("\n");
+    const edited = [...lines];
+    edited[10000] = '"peer-renamed",';
+    const after = edited.join("\n");
+
+    const out = diffLines(before, after);
+
+    expect(out).toHaveLength(20001);
+    expect(diffStat(out)).toEqual({ additions: 1, deletions: 1 });
+    expect(out[10000]).toEqual({ kind: "remove", text: '"peer-10000",' });
+    expect(out[10001]).toEqual({ kind: "add", text: '"peer-renamed",' });
+    expect(out[0].kind).toBe("context");
+    expect(out.at(-1)?.kind).toBe("context");
+  });
+
+  it("falls back to multiset counts when the changed window is huge", () => {
+    const base = Array.from({ length: 3000 }, (_, i) => `"peer-${i}",`);
+    // Reversing kills the common prefix/suffix so the whole body is the window.
+    const reordered = [...base].reverse();
+    const removed = new Set(['"peer-10",', '"peer-20",', '"peer-30",']);
+    const after = [
+      ...reordered.filter((l) => !removed.has(l)),
+      '"peer-new-1",',
+      '"peer-new-2",',
+      '"peer-new-3",',
+      '"peer-new-4",',
+      '"peer-new-5",',
+    ];
+
+    const out = diffLines(base.join("\n"), after.join("\n"));
+
+    // A pure reorder is not a change; only real membership diffs count.
+    expect(diffStat(out)).toEqual({ additions: 5, deletions: 3 });
+    expect(out.filter((l) => l.kind !== "add")).toHaveLength(base.length);
   });
 });

@@ -8,22 +8,18 @@ import {
   orderFrameResources,
 } from "@/modules/control-center/utils/helpers";
 
-// Pure node builders for RESTORING a live entity onto the draft canvas when a
-// delete/update change is removed. They mirror the shapes the initial draft
-// build produces (useDraft.ts carryNetworkFrame / group + resource passes) so a
-// restored node is indistinguishable from one carried in on draft entry.
+// Pure node builders that restore a live entity onto the draft canvas when its
+// change is removed, mirroring the shapes the draft build (useDraft.ts) makes.
 
-/** An existing group node, in the shape useDraft draws source groups. */
-export function buildGroupNode(group: Group, enabled = true): Node {
+export function buildGroupNode(group: Group): Node {
   return {
     id: `group-${group.id}`,
     type: "groupNode",
-    data: { group, enabled, showHandles: true },
+    data: { group, enabled: true, showHandles: true },
     position: { x: 0, y: 0 },
   };
 }
 
-/** A standalone (no-frame) existing resource node. */
 export function buildStandaloneResourceNode(
   resource: NetworkResource,
   network: Network,
@@ -32,8 +28,10 @@ export function buildStandaloneResourceNode(
     id: `resource-${resource.id}`,
     type: "resourceNode",
     data: {
+      // `enabled` is the owning frame's dim flag; the resource's OWN state flows via
+      // getResourceNodeEnabled — duplicated here it would survive a draft toggle.
+      enabled: true,
       resource,
-      enabled: resource.enabled ?? true,
       showHandles: true,
       draftNetwork: { networkId: network.id, name: network.name },
     },
@@ -41,23 +39,19 @@ export function buildStandaloneResourceNode(
   };
 }
 
-/**
- * Rebuild an existing network as a frame plus its resource children — the
- * restore counterpart of carryNetworkFrame (useDraft.ts:457-513). Returns the
- * frame node followed by its children (parent-before-child, as React Flow
- * requires). Positions/sizes come from the same capped grid the live overview
- * uses so the reconciler settles without a reshuffle.
- */
+// Children follow the frame: React Flow requires parent before child.
 export function buildNetworkFrame(
   network: Network,
   networkResources: NetworkResource[] | undefined,
   policies: Policy[] | undefined,
 ): { frame: Node; children: Node[] } {
   const frameId = `network-${network.id}`;
+  // Map network.resources (NOT the global list): orderFrameResources is a stable
+  // partition, so a different input order reshuffles the untargeted rows.
   const childResources = orderFrameResources(
-    (networkResources ?? []).filter((r) =>
-      network.resources?.includes(r.id ?? ""),
-    ),
+    (network.resources ?? [])
+      .map((rid) => (networkResources ?? []).find((r) => r.id === rid))
+      .filter(Boolean) as NetworkResource[],
     network.policies,
     policies,
   );

@@ -2,8 +2,7 @@ import { cn } from "@utils/helpers";
 import { MoreHorizontal } from "lucide-react";
 import * as React from "react";
 
-// NOT a ReactFlow node: NetworkNode overlays it at the rect
-// useNetworkFrameLayout computed. Clicking bubbles to the frame → drills in.
+// NOT a ReactFlow node: NetworkNode overlays it at an absolute rect.
 export const MoreResourcesNode = ({
   count,
   style,
@@ -13,8 +12,7 @@ export const MoreResourcesNode = ({
 }) => {
   return (
     <div
-      // Own hover group (`group/more`, not the frame's `group/node`) so
-      // hovering the parent frame doesn't light this cell up.
+      // Own hover group, so hovering the parent frame doesn't light this up.
       className={
         "absolute flex items-center rounded-lg transition-all group/more cursor-pointer"
       }

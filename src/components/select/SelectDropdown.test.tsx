@@ -8,13 +8,7 @@ import {
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { SelectDropdown, SelectOption } from "./SelectDropdown";
 
-// Consumer contract every dropdown depends on: selecting an option reports its
-// value via onChange, re-selecting the current value does NOT fire onChange,
-// and the trigger shows the selected label.
-
-// jsdom lacks the observers / layout APIs Radix Popover + cmdk + the option
-// rows (useIsVisible → IntersectionObserver) rely on. Report intersection
-// immediately so option rows mount, and stub the rest.
+// Report intersection immediately so option rows mount in jsdom.
 beforeAll(() => {
   class IO {
     private cb: IntersectionObserverCallback;
@@ -85,8 +79,7 @@ describe("SelectDropdown", () => {
   it("reports the picked option's value via onChange synchronously by default", async () => {
     const onChange = setup("a");
     fireEvent.click(screen.getByTestId("dd"));
-    // Target the option row (role=option) — the selected label also appears on
-    // the trigger, so a plain text query would be ambiguous.
+    // The selected label also appears on the trigger, so query the option row.
     const beta = await screen.findByRole("option", { name: "Beta" });
     fireEvent.click(beta);
     expect(onChange).toHaveBeenCalledWith("b");
@@ -97,8 +90,6 @@ describe("SelectDropdown", () => {
     fireEvent.click(screen.getByTestId("dd"));
     const beta = await screen.findByRole("option", { name: "Beta" });
     fireEvent.click(beta);
-    // Not fired synchronously — the control center opts into this so a heavy
-    // canvas-rebuilding onChange doesn't jank mid close-animation.
     expect(onChange).not.toHaveBeenCalled();
     await waitFor(() => expect(onChange).toHaveBeenCalledWith("b"));
   });

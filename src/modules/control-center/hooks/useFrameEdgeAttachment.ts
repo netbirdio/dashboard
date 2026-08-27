@@ -4,22 +4,16 @@ import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { computeFrameEdgeTargets } from "@/modules/control-center/utils/frame-view";
 import { isFrameNode } from "@/modules/control-center/utils/helpers";
 
-// Reconciling effect in the style of useNetworkFrameLayout — covers every
-// edge-producing path (connect drags, modal saves, sidebar drops, restored
-// persistence) and re-runs when the drill-down changes.
+// A reconciling effect so every edge-producing path is covered.
 export function useFrameEdgeAttachment() {
   const { nodes, edges, setEdges } = useCanvasState();
   const { drillDownNetworkNodeId } = useDraftMode();
 
   useEffect(() => {
-    // Mid-drag no edge can change frames (membership changes land on drag
-    // stop) — skip the per-pointer-move-tick recompute.
+    // No edge can change frames mid-drag; skip the per-tick recompute.
     if (nodes.some((n) => n.dragging)) return;
-    // Edges re-attach to the resources only once the swap happened (frame
-    // hidden) — the drill id is set before the zoom-in choreography. The
-    // reverse holds on exit: while the frame is STILL hidden (fade-out /
-    // invisible swap) the edges stay on the resources — flipping them onto a
-    // hidden frame would make them vanish mid-animation.
+    // Attach by frame VISIBILITY, not the drill id, which is set before the
+    // animation: an edge flipped onto a hidden frame vanishes mid-animation.
     const drilledFrameHidden =
       !!drillDownNetworkNodeId &&
       !!nodes.find((n) => n.id === drillDownNetworkNodeId)?.hidden;

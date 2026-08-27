@@ -47,7 +47,8 @@ export const ToolbarButton = ({
     </button>
   );
 
-  if (!tooltip) return button;
+  // A bare shortcut still gets a tooltip, or it would be undiscoverable.
+  if (!tooltip && !shortcut) return button;
 
   return (
     <FullTooltip
@@ -55,7 +56,12 @@ export const ToolbarButton = ({
         <span className="text-xs flex items-center gap-2">
           {tooltip}
           {shortcut && (
-            <kbd className="text-[0.67rem] font-mono text-nb-gray-400 ml-1 relative top-[1px]">
+            <kbd
+              className={cn(
+                "text-[0.67rem] font-mono text-nb-gray-400 relative top-[1px]",
+                tooltip && "ml-1",
+              )}
+            >
               {shortcut}
             </kbd>
           )}

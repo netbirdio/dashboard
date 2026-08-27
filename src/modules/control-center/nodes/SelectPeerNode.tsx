@@ -8,6 +8,7 @@ import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
@@ -38,7 +39,7 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
           value: p.id,
           label: p.name,
           icon: () => {
-            const os = p.os as unknown as OperatingSystem;
+            const os = getOperatingSystem(p.os);
             return (
               <div
                 className={cn(
@@ -86,7 +87,7 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
         maxHeight={300}
       >
         <div className={"flex items-center justify-between gap-8 pr-3 h-[64px]"}>
-          {peer && <DeviceCard device={peer} />}
+          {peer && <DeviceCard device={peer} className={"pl-4"} />}
           <ChevronsUpDown size={18} className={"shrink-0"} />
         </div>
       </SelectDropdown>

@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { useReactFlow } from "@xyflow/react";
+import { Accordion } from "@components/Accordion";
 import Button from "@components/Button";
+import FullTooltip from "@components/FullTooltip";
+import InlineLink from "@components/InlineLink";
 import {
   Modal,
   ModalClose,
@@ -8,18 +9,19 @@ import {
   ModalFooter,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import { Accordion } from "@components/Accordion";
-import FullTooltip from "@components/FullTooltip";
-import InlineLink from "@components/InlineLink";
-import Paragraph from "@components/Paragraph";
 import { notify } from "@components/Notification";
+import Paragraph from "@components/Paragraph";
+import { cn } from "@utils/helpers";
+import { useReactFlow } from "@xyflow/react";
 import {
   ExternalLinkIcon,
   GitPullRequestArrowIcon,
   ListTodoIcon,
   Loader2,
 } from "lucide-react";
-import { cn } from "@utils/helpers";
+import React, { useCallback, useMemo, useRef } from "react";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
 import {
   CHANGE_DEPLOY_ORDER,
   DraftChange,
@@ -27,17 +29,16 @@ import {
   hasBlockingIssues,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
 import { useRemoveChange } from "@/modules/control-center/hooks/useRemoveChange";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
 import { LiveData } from "@/modules/control-center/utils/changeset-request";
+import { getPlaceholderSetupKey } from "@/modules/control-center/utils/helpers";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  // Called after every change was applied successfully.
   onDeployed: () => void;
 };
 
@@ -49,6 +50,7 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
     useControlCenterData();
   const { setResourceNetworkPicker, setInstallModal, setUserDeviceModal } =
     useDraftMode();
+  const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
   const reactFlow = useReactFlow();
 
   const live: LiveData = useMemo(
@@ -56,52 +58,54 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
     [policies, groups, networks, networkResources, changes],
   );
 
-  // Freeze the live snapshot the rows render against from the moment a deploy
-  // starts until the changeset is reset. Without this, the SWR mutate that runs
-  // as changes land recomputes each row's diff mid-deploy — a deployed row's
-  // diff collapses to empty and briefly flips to the "Modify" kind badge, which
-  // reads as the changeset changing under the user. Cleared once the changeset
-  // empties (after a successful deploy's modal closes).
+  // Freeze the snapshot the rows render against during a deploy: the SWR mutate
+  // that runs as changes land would recompute each row's diff and flip its badge.
+  // Released when the RUN ends, not when the changeset empties: the deploy's own
+  // `finally` revalidation is what makes the snapshot stale. Derived in render on purpose.
   const frozenLive = useRef<LiveData | null>(null);
-  if (isDeploying && !frozenLive.current) frozenLive.current = live;
-  useEffect(() => {
-    if (changes.length === 0) frozenLive.current = null;
-  }, [changes.length]);
+  if (!isDeploying) frozenLive.current = null;
+  else if (!frozenLive.current) frozenLive.current = live;
   const renderLive = frozenLive.current ?? live;
 
-  // Remount the accordion (re-opening the first change) only when the modal
-  // OPENS — never on close, which would otherwise flash the first accordion
-  // open during the dialog's fade-out.
+  // Remount the accordion only when the modal OPENS; doing it on close flashes
+  // the first accordion open during the fade-out.
   const openKeyRef = useRef(0);
   const wasOpenRef = useRef(false);
   if (open && !wasOpenRef.current) openKeyRef.current += 1;
   wasOpenRef.current = open;
 
-  // install-peer rows are user steps, not API calls — Deploy needs at least
-  // one actual change.
+  // install-peer rows are user steps, not API calls.
   const deployableCount = changes.filter(
     (c) => c.type !== "install-peer",
   ).length;
-  // Hard issues BLOCK deploy (a change that can't be POSTed / completed
-  // as-is, e.g. a resource with no network or an uninstalled placeholder peer).
+  const installedCount = changes.filter(
+    (c) => c.type === "install-peer" && !!c.installedPeerId,
+  ).length;
   const hasIssues = hasBlockingIssues(changes);
 
-  // Order mirrors the real deploy sequence (CHANGE_DEPLOY_ORDER) so the list
-  // always tells the truth — a network is listed before the resources that
-  // depend on it, deletes last, etc. install-peer is a manual prerequisite
-  // (not part of the deploy order), so those rows sort to the very top.
+  // Order mirrors CHANGE_DEPLOY_ORDER so the list tells the truth. install-peer
+  // is a manual prerequisite, so those rows sort to the very top.
   const sortedChanges = useMemo(() => {
     const rank = (c: DraftChange) =>
       c.type === "install-peer" ? -1 : CHANGE_DEPLOY_ORDER.indexOf(c.type);
     return [...changes].sort((a, b) => rank(a) - rank(b));
   }, [changes]);
 
-  // Resolve a change's blocking issue: open the same fix the canvas offers —
-  // the network picker for a no-network resource, the install/setup modal for
-  // a placeholder peer. Review & Deploy stays OPEN behind the fix (it stacks
-  // on top) so the user returns to the changeset when it closes.
+  // Opens the same fix the canvas offers. Review & Deploy stays open behind it,
+  // so the user returns to the changeset when the fix closes.
   const resolveIssue = useCallback(
     (change: DraftChange) => {
+      if (change.type === "create-policy") {
+        // Same pair the policy node's own Edit item uses.
+        setSelectedPolicy(change.clientId);
+        setPolicyModalOpen(true);
+        return;
+      }
+      if (change.type === "update-policy") {
+        setSelectedPolicy(change.policyId);
+        setPolicyModalOpen(true);
+        return;
+      }
       if (change.type === "create-resource") {
         setResourceNetworkPicker({ nodeId: `resource-${change.clientId}` });
         return;
@@ -112,8 +116,10 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
           setUserDeviceModal({ nodeId, name: change.name });
           return;
         }
-        const node = reactFlow.getNodes().find((n) => n.id === nodeId);
-        const setupKey = (node?.data as { setupKey?: string })?.setupKey;
+        const setupKey = getPlaceholderSetupKey(
+          reactFlow.getNodes(),
+          change.clientId,
+        );
         setInstallModal({
           isUserDevice: false,
           setupKey,
@@ -126,37 +132,34 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
       setResourceNetworkPicker,
       setInstallModal,
       setUserDeviceModal,
+      setSelectedPolicy,
+      setPolicyModalOpen,
       reactFlow,
     ],
   );
 
-  // Count ALL pending rows (install steps included) so the header matches the
-  // "Review & Deploy" button badge and the number of rows shown below.
+  // Counts install steps too, so the header matches the button badge.
   const totalCount = changes.length;
-  const description = useMemo(
-    () =>
-      `Review ${totalCount} change${
-        totalCount !== 1 ? "s" : ""
-      } before deploying to your network.`,
-    [totalCount],
-  );
+  const description = `Review ${totalCount} change${
+    totalCount !== 1 ? "s" : ""
+  } before deploying to your network.`;
 
   const handleDeploy = async () => {
     const ok = await deploy();
-    // A partial failure keeps the modal open: the deployed items keep their
-    // green check and are skipped on retry, so the user can fix the cause and
-    // hit Deploy again to finish.
+    // A partial failure keeps the modal open; deployed items are skipped on
+    // retry.
     if (!ok) return;
     notify({
       title: "Deploy complete",
-      description: `Your ${deployableCount} change${
-        deployableCount !== 1 ? "s were" : " was"
-      } applied to your network.`,
+      description:
+        deployableCount > 0
+          ? `Your ${deployableCount} change${
+              deployableCount !== 1 ? "s were" : " was"
+            } applied to your network.`
+          : "Your installed peers are already live — no API changes were needed.",
     });
-    // Everything deployed. Switch to live first (the canvas rebuilds behind
-    // the modal), then close. Reset the changeset only AFTER the modal has
-    // closed, so the deployed items stay visible (green checks) and the modal
-    // never flashes an empty "no changes" state on the way out.
+    // Reset the changeset only AFTER the modal closed, or it flashes an empty
+    // "no changes" state on the way out.
     onDeployed();
     onOpenChange(false);
     window.setTimeout(() => clearChanges(), 400);
@@ -165,7 +168,7 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   return (
     <Modal
       open={open}
-      // Can't dismiss (outside click / Esc) mid-deploy — the run must finish.
+      // Can't dismiss mid-deploy: the run must finish.
       onOpenChange={(o) => {
         if (isDeploying && !o) return;
         onOpenChange(o);
@@ -179,19 +182,15 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
           color={"netbird"}
         />
 
-        {/* min-w-0: this is a grid item of ModalContent; without it the item
-            grows to the code's min-content width and overflows the modal. */}
+        {/* min-w-0: as a grid item of ModalContent it would otherwise grow to
+            the code's min-content width and overflow the modal. */}
         <div className={"px-8 pb-6 border-t border-nb-gray-910 pt-6 min-w-0"}>
-          {/* No inner scroll box — the modal auto-sizes to its content and the
-              overlay scrolls when it's taller than the viewport. */}
           {changes.length === 0 ? (
             <div className={"text-sm text-nb-gray-400 text-center py-10"}>
               No pending changes.
             </div>
           ) : (
             <Accordion
-              // Remount so the FIRST change (as sorted: install-peer / server
-              // / agent rows lead the list) opens by default on each (re)open.
               key={openKeyRef.current}
               type={"multiple"}
               defaultValue={sortedChanges[0] ? [sortedChanges[0].id] : []}
@@ -201,11 +200,15 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                 <ChangeAccordionItem
                   key={change.id}
                   change={change}
+                  changes={changes}
                   live={renderLive}
                   onDiscard={() => removeWithCascade(change)}
                   previewRemove={previewRemove}
                   onResolveIssue={
-                    getChangeIssue(change, changes) ? resolveIssue : undefined
+                    // An issue about a group deleted elsewhere has no fix on this row.
+                    getChangeIssue(change, changes)?.resolvable
+                      ? resolveIssue
+                      : undefined
                   }
                   disabled={isDeploying}
                   status={deployStatus[change.id]}
@@ -236,9 +239,8 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
                 Cancel
               </Button>
             </ModalClose>
-            {/* Tooltip only while blocked by issues — explains the disabled
-                Deploy (a disabled button emits no hover, so the wrapper div
-                that FullTooltip adds carries it). */}
+            {/* A disabled button emits no hover, so the wrapper div FullTooltip
+                adds carries the tooltip. */}
             <FullTooltip
               content={"Resolve issues before deploying"}
               disabled={!hasIssues}
@@ -246,13 +248,17 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
             >
               <Button
                 variant={"primary"}
-                disabled={deployableCount === 0 || isDeploying || hasIssues}
+                disabled={
+                  (deployableCount === 0 && installedCount === 0) ||
+                  isDeploying ||
+                  hasIssues
+                }
                 onClick={handleDeploy}
                 data-testid={"cc-deploy"}
                 className={"relative"}
               >
-                {/* While deploying, show only a centered spinner but keep the
-                    button's width: the label stays in place, just invisible. */}
+                {/* Hiding the label instead of removing it keeps the button's
+                    width while the spinner shows. */}
                 <span
                   className={cn(
                     "flex items-center gap-2",
