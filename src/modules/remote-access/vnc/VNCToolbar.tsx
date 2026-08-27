@@ -34,8 +34,13 @@ export default function VNCToolbar({
     }
   });
   const draggingRef = useRef(false);
+  // Mirrors xPercent so the pointerup handler below can persist the latest
+  // value without the listeners being torn down and re-registered on every
+  // drag frame. Synced from an effect, never during render.
   const xPercentRef = useRef(xPercent);
-  xPercentRef.current = xPercent;
+  useEffect(() => {
+    xPercentRef.current = xPercent;
+  }, [xPercent]);
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
