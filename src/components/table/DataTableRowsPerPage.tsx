@@ -57,7 +57,7 @@ export function DataTableRowsPerPage<TData>({
                   <div
                     className={cn(
                       "cursor-pointer",
-                      "flex gap-2 px-2 py-1.5 my-1 mx-1 rounded-md items-center hover:bg-nb-gray-800 text-nb-gray-400 hover:text-nb-gray-100",
+                      "flex gap-2 px-2 py-1.5 my-1 mx-1 rounded-md items-center hover:bg-gray-100 dark:hover:bg-nb-gray-800 text-nb-gray-400 hover:text-nb-gray-100",
                       table.getState().pagination.pageSize === val
                         ? "text-nb-gray-100"
                         : "",
