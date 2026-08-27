@@ -67,9 +67,12 @@ type DayBucket = {
 // /agent-network/usage/overview endpoint (day granularity); the shared filter
 // bar (Date / User / Group / Provider / Model) drives the query. With
 // selfScoped the server answers with the caller's own rows only, so the
-// identity and provider filters (which need permissions a plain user
-// doesn't hold, and would be overridden anyway) are dropped — Date stays.
-const SELF_SCOPED_FILTERS = { include: ["date"] as AccessLogFilterId[] };
+// identity filters (which the server overrides anyway) are dropped —
+// Date, Provider, and Model stay: the providers endpoint self-scopes too,
+// so the caller's own authorized providers back those options.
+const SELF_SCOPED_FILTERS = {
+  include: ["date", "provider", "model"] as AccessLogFilterId[],
+};
 
 export default function AgentOverviewPanel({
   selfScoped = false,

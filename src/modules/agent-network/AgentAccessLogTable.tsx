@@ -68,6 +68,16 @@ import {
   APIAgentNetworkAccessLogSession,
 } from "@/modules/agent-network/agentAccessLogApi";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+
+// Self-scoped callers keep the non-identity filters: the server pins
+// user/group to the caller regardless, while the provider and model
+// options come from the self-scoped providers list.
+const SELF_SCOPED_LOG_FILTER_IDS = new Set([
+  "timestamp",
+  "path",
+  "provider",
+  "model",
+]);
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
 import AgentAccessLogExpandedRow from "@/modules/agent-network/AgentAccessLogExpandedRow";
@@ -668,7 +678,7 @@ export default function AgentAccessLogTable({
   const filterDefs = useMemo<TableFilterDef[]>(
     () =>
       selfScoped
-        ? allFilterDefs.filter((d) => d.id === "timestamp" || d.id === "path")
+        ? allFilterDefs.filter((d) => SELF_SCOPED_LOG_FILTER_IDS.has(d.id))
         : allFilterDefs,
     [allFilterDefs, selfScoped],
   );

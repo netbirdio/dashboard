@@ -23,6 +23,7 @@ import {
 } from "@/modules/agent-network/data/mockData";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 
 export type APIProviderModel = {
   id: string;
@@ -587,10 +588,15 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   // without hitting agent-network endpoints in deployments that don't
   // have the feature — and on the caller's read grant per submodule, so
   // partially-granted roles (usage_viewer reads providers but no
-  // policies; self-scoped plain users read nothing here) don't fire
-  // requests that can only 403.
+  // policies) don't fire requests that can only 403.
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { permission } = usePermissions();
+  // Self-mode exception: the providers endpoint self-scopes on the server
+  // — a caller without the read grant gets the providers their own
+  // policies authorize (display surface only) — so a configured plain
+  // user fetches it too. That list feeds the provider filter on the
+  // self-scoped Usage & Logs view.
+  const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
 
   const {
     data: apiProviders,
@@ -600,7 +606,8 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     "/agent-network/providers",
     false,
     true,
-    agentNetworkEnabled && !!permission?.["agent_network.providers"]?.read,
+    (agentNetworkEnabled && !!permission?.["agent_network.providers"]?.read) ||
+      mySetupConfigured,
   );
   const providersApi = useApiCall<APIProvider>("/agent-network/providers");
 
