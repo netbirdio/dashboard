@@ -13,13 +13,13 @@ const variants = cva(
         default:
           "bg-neutral-100 border-neutral-200 text-neutral-700 dark:bg-nb-gray-900/50 dark:border-nb-gray-800/30 dark:text-nb-gray-200 border-b",
         important:
-          "bg-netbird-200 text-netbird-900 font-normal dark:bg-gradient-to-b dark:from-netbird dark:to-netbird-400 dark:text-black",
+          "bg-netbird-100 text-neutral-800 font-normal dark:bg-gradient-to-b dark:from-netbird dark:to-netbird-400 dark:text-black",
       },
       tagBadge: {
         default:
           "bg-neutral-200 text-neutral-700 dark:bg-nb-gray-200/10 dark:text-nb-gray-100 font-medium",
         important:
-          "bg-netbird-900 text-netbird-50 font-medium dark:bg-nb-gray-900 dark:text-nb-gray-200",
+          "bg-neutral-700 text-neutral-50 font-medium dark:bg-nb-gray-900 dark:text-nb-gray-200",
       },
       closeButton: {
         default:

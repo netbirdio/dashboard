@@ -68,7 +68,7 @@ export default function AgentNetworkConfigurationPage() {
           <GroupsProvider>
             <PeersProvider>
               <AIProvidersProvider>
-                <div className={"border-l border-nb-gray-930 w-full"}>
+                <div className={"w-full"}>
                   <Tabs.Content
                     value={TAB_BUDGET_SETTINGS}
                     className={"w-full"}
