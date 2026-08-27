@@ -67,10 +67,14 @@ const variants = cva("", {
       blueDark: ["hover:bg-sky-200 dark:hover:bg-sky-800"],
       "blue-darker": ["hover:bg-sky-200 dark:hover:bg-sky-800"],
       red: ["hover:bg-red-200 dark:hover:bg-red-950/40"],
-      gray: ["hover:bg-nb-gray-900"],
-      lightGray: ["hover:bg-nb-gray-900"],
-      grayer: ["hover:bg-nb-gray-900"],
-      "gray-ghost": ["hover:bg-nb-gray-800 cursor-pointer"],
+      /* Light mode hovers bg-gray-100 to match Button's secondary variant —
+         white-based chips and buttons sit side by side in table rows. */
+      gray: ["hover:bg-gray-100 dark:hover:bg-nb-gray-900"],
+      lightGray: ["hover:bg-gray-100 dark:hover:bg-nb-gray-900"],
+      grayer: ["hover:bg-gray-100 dark:hover:bg-nb-gray-900"],
+      "gray-ghost": [
+        "hover:bg-gray-100 dark:hover:bg-nb-gray-800 cursor-pointer",
+      ],
       green: ["hover:bg-green-200 dark:hover:bg-green-950/50"],
       netbird: ["hover:bg-netbird-200 dark:hover:bg-netbird-950/50"],
     },
