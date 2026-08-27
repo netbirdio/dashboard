@@ -8,6 +8,16 @@ vi.mock("@/modules/control-center/utils/helpers", () => ({
   useSourceGroupEnabled: () => false,
 }));
 
+// Mocked rather than wrapped in the real ThemeProvider: the provider reads
+// window.matchMedia, which jsdom does not implement.
+vi.mock("@/contexts/ThemeProvider", () => ({
+  useTheme: () => ({
+    theme: "dark",
+    resolvedTheme: "dark",
+    setTheme: () => undefined,
+  }),
+}));
+
 const { SimpleConnection } = await import("./SimpleConnection");
 
 afterEach(cleanup);
