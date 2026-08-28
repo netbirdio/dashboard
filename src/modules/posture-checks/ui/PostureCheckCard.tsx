@@ -129,7 +129,7 @@ export const PostureCheckCard = ({
           <div className={"flex gap-4 items-center px-8 pb-5"}>
             <div
               className={cn(
-                "h-9 w-9 shrink-0  shadow-xl  rounded-md flex items-center justify-center select-none",
+                "h-9 w-9 shrink-0  shadow-xl  rounded-md flex items-center justify-center select-none text-white",
                 iconClass,
               )}
             >

@@ -32,7 +32,7 @@ export const PostureCheckChecksCell = ({
           className,
         )}
       >
-        <div className={"flex -space-x-2 "}>
+        <div className={"flex -space-x-2 text-white"}>
           {check.checks.nb_version_check && (
             <NetBirdVersionTooltip
               version={check.checks.nb_version_check.min_version}
