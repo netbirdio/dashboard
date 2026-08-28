@@ -32,7 +32,7 @@ export const PostureCheckChecksCell = ({
           className,
         )}
       >
-        <div className={"flex -space-x-2 "}>
+        <div className={"flex -space-x-2 text-white"}>
           {check.checks.nb_version_check && (
             <NetBirdVersionTooltip
               version={check.checks.nb_version_check.min_version}
@@ -63,7 +63,7 @@ export const PostureCheckChecksCell = ({
             <OperatingSystemTooltip check={check.checks.os_version_check}>
               <div
                 className={cn(
-                  "bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300 h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
+                  "bg-gradient-to-tr from-[#616E79] to-[#A3ADB5] h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
                 )}
               >
                 <Disc3Icon size={14} />
@@ -89,7 +89,7 @@ export const PostureCheckChecksCell = ({
             <ProcessTooltip check={check.checks.process_check}>
               <div
                 className={cn(
-                  "bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300 h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
+                  "bg-gradient-to-tr from-[#616E79] to-[#A3ADB5] h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
                 )}
               >
                 <ServerCogIcon size={14} />

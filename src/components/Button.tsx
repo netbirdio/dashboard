@@ -24,40 +24,41 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default: [
-          "bg-white hover:text-black focus:ring-zinc-200/50  hover:bg-gray-100 border-gray-200 text-gray-900",
+          "bg-white hover:text-black focus:ring-zinc-200/50  hover:bg-gray-100 border-nb-gray-700 text-gray-900",
           "dark:focus:ring-zinc-800/50 dark:bg-nb-gray dark:text-gray-400 dark:border-gray-700/30 dark:hover:text-white dark:hover:bg-zinc-800/50",
         ],
         primary: [
+          "border-transparent",
           "dark:focus:ring-netbird-600/50 dark:ring-offset-neutral-950/50 enabled:dark:bg-netbird disabled:dark:bg-nb-gray-910 dark:text-gray-100 enabled:dark:hover:text-white enabled:dark:hover:bg-netbird-500/80",
           "enabled:bg-netbird enabled:text-white enabled:focus:ring-netbird-400/50 enabled:hover:bg-netbird-500",
         ],
         secondary: [
-          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-gray-200 text-gray-900",
+          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-nb-gray-700 text-gray-900",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-920 dark:text-gray-400 dark:border-gray-700/40 dark:hover:text-white dark:hover:bg-nb-gray-910",
         ],
         secondaryLighter: [
-          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-gray-200 text-gray-900",
+          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-nb-gray-700 text-gray-900",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-900/70 dark:text-gray-400 dark:border-gray-700/70 dark:hover:text-white dark:hover:bg-nb-gray-800/60",
         ],
         input: [
-          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-neutral-200 text-gray-900",
+          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-nb-gray-700 text-gray-900",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-900  dark:text-gray-400  dark:border-nb-gray-700 dark:hover:bg-nb-gray-900/80",
         ],
         dropdown: [
-          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-neutral-200 text-gray-900",
+          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-nb-gray-700 text-gray-900",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-900/40 dark:text-gray-400 dark:border-nb-gray-900 dark:hover:bg-nb-gray-900/50",
         ],
         dotted: [
-          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-gray-200 text-gray-900 border-dashed",
+          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-nb-gray-700 text-gray-900 border-dashed",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-900/30 dark:text-gray-400 dark:border-gray-500/40 dark:hover:text-white dark:hover:bg-nb-gray-900/50",
         ],
         tertiary: [
-          "bg-white hover:text-black focus:ring-zinc-200/50  hover:bg-gray-100 border-gray-200 text-gray-900",
+          "bg-white hover:text-black focus:ring-zinc-200/50  hover:bg-gray-100 border-nb-gray-700 text-gray-900",
           "dark:focus:ring-zinc-800/50 dark:bg-white dark:text-gray-800 dark:border-gray-700/40 dark:hover:bg-neutral-200 disabled:dark:bg-nb-gray-920 disabled:dark:text-nb-gray-300",
         ],
         white: [
@@ -65,24 +66,23 @@ export const buttonVariants = cva(
           "disabled:dark:bg-nb-gray-900 disabled:dark:text-nb-gray-300 disabled:dark:border-nb-gray-900",
         ],
         outline: [
-          "bg-white hover:text-black focus:ring-zinc-200/50  hover:bg-gray-100 border-gray-200 text-gray-900",
+          "bg-white hover:text-black focus:ring-zinc-200/50  hover:bg-gray-100 border-nb-gray-700 text-gray-900",
           "dark:focus:ring-zinc-800/50 dark:bg-transparent dark:text-netbird dark:border-netbird dark:hover:bg-nb-gray-900/30",
         ],
         "danger-outline": [
-          "", // TODO - add danger button styles for light mode
-          "enabled:dark:focus:ring-red-800/20 enabled:dark:focus:bg-red-950/40 enabled:hover:dark:bg-red-950/50 enabled:dark:hover:border-red-800/50 dark:bg-transparent dark:text-red-500",
-          "",
+          "bg-transparent text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 focus:ring-red-500/30",
+          "enabled:dark:focus:ring-red-800/20 enabled:dark:focus:bg-red-950/40 enabled:hover:dark:bg-red-950/50 enabled:dark:hover:border-red-800/50 dark:bg-transparent dark:text-red-500 dark:border-transparent",
         ],
         "danger-text": [
-          "dark:bg-transparent dark:text-red-500 dark:hover:text-red-600 dark:border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 dark:ring-offset-neutral-950/50 rounded-sm",
+          "bg-transparent text-red-500 hover:text-red-600 border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 ring-offset-nb-gray-950/50 rounded-sm",
         ],
         "default-outline": [
-          "dark:ring-offset-nb-gray-950/50 dark:focus:ring-nb-gray-500/20",
-          "dark:bg-transparent dark:text-nb-gray-400 dark:border-transparent dark:hover:text-white dark:hover:bg-nb-gray-900/30 dark:hover:border-nb-gray-800/50",
-          "data-[state=open]:dark:text-white data-[state=open]:dark:bg-nb-gray-900/30 data-[state=open]:dark:border-nb-gray-800/50",
+          "ring-offset-nb-gray-950/50 focus:ring-nb-gray-500/20",
+          "bg-transparent text-nb-gray-400 border-transparent hover:text-nb-gray-50 hover:bg-nb-gray-900/30 hover:border-nb-gray-800/50",
+          "data-[state=open]:text-nb-gray-50 data-[state=open]:bg-nb-gray-900/30 data-[state=open]:border-nb-gray-800/50",
         ],
         danger: [
-          "", // TODO - add danger button styles for light mode
+          "enabled:bg-red-600 enabled:text-white enabled:hover:bg-red-700 enabled:focus:bg-red-700 enabled:focus:ring-red-400/50 border-red-600 disabled:bg-red-300 disabled:text-white",
           "dark:focus:ring-red-700/20 dark:focus:bg-red-700 hover:dark:bg-red-700 dark:hover:border-red-800/50 dark:bg-red-600 dark:text-red-100",
         ],
       },
@@ -99,7 +99,10 @@ export const buttonVariants = cva(
       },
       border: {
         0: "border",
-        1: "border border-transparent",
+        /* No border-transparent here: it compiles after the variants' border
+           colors and would override them, leaving light mode outline-less.
+           Variants without a border color set border-transparent themselves. */
+        1: "border",
         2: "border border-t-0 border-b-0",
       },
     },

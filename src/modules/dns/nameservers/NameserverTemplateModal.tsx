@@ -142,7 +142,7 @@ function NameserverTemplate({
       <div
         className={cn(
           "w-1/4",
-          "bg-gradient-to-b h-full flex items-center justify-center from-white to-nb-gray-200 overflow-hidden p-4 border-r border-nb-gray-800",
+          "bg-gradient-to-b h-full flex items-center justify-center from-nb-gray-800 to-white dark:from-white dark:to-nb-gray-200 overflow-hidden p-4 border-r border-nb-gray-800",
         )}
       >
         {src && <Image src={src} alt={title} width={100} />}

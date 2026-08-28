@@ -44,7 +44,7 @@ export default function Code({
             : "bg-gray-50  border-neutral-200 dark:border-nb-gray-700 hover:dark:bg-nb-gray-900/80 dark:bg-nb-gray-900",
           dark
             ? "text-nb-gray-300 hover:text-nb-gray-300"
-            : "dark:text-nb-gray-200 hover:dark:text-nb-gray-200",
+            : "text-nb-gray-200 hover:text-nb-gray-200",
           "overflow-x-auto relative z-0 w-full",
           className,
         )}

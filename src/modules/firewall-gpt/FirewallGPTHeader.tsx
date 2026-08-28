@@ -63,7 +63,7 @@ const NewChatButton = ({ onClick }: { onClick?: () => void }) => {
   return (
     <button
       className={
-        "bg-nb-gray-900 hover:bg-nb-gray-900 hover:text-white px-4 py-2 rounded-md text-xs flex gap-2 leading-none items-center text-nb-gray-200 transition-all"
+        "bg-nb-gray-900 hover:bg-nb-gray-900 hover:text-nb-gray-50 px-4 py-2 rounded-md text-xs flex gap-2 leading-none items-center text-nb-gray-200 transition-all"
       }
       onClick={onClick}
     >

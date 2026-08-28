@@ -45,6 +45,15 @@ export default function AppLayout({
   return (
     <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <head>
+        {/* Set the theme class before first paint to avoid a flash.
+            Mirrors ThemeProvider (storageKey "netbird-theme", default "dark",
+            system-aware) — required because the provider only applies the
+            class in an effect, after hydration. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('netbird-theme')||'dark';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList[d?'add':'remove']('dark');}catch(e){document.documentElement.classList.add('dark');}})();`,
+          }}
+        />
         <GoogleTagManagerHeadScript />
       </head>
       <body className={cn(inter.className)}>

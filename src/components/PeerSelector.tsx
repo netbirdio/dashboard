@@ -110,7 +110,7 @@ export function PeerSelector({
             {value ? (
               <div
                 className={
-                  "flex items-center justify-between text-sm text-white w-full pr-4 pl-1"
+                  "flex items-center justify-between text-sm text-nb-gray-100 w-full pr-4 pl-1"
                 }
               >
                 <div className={"flex items-center gap-2.5 text-sm"}>
@@ -135,7 +135,7 @@ export function PeerSelector({
       </PopoverTrigger>
       <PopoverContent
         hideWhenDetached={false}
-        className="w-full p-0 shadow-sm shadow-nb-gray-950"
+        className="w-full p-0 shadow-sm dark:shadow-nb-gray-950"
         style={{
           width: width,
         }}
@@ -200,7 +200,7 @@ export function PeerSelector({
                       className={cn(
                         "flex items-center gap-2.5 text-sm",
                         value && value.id == option.id
-                          ? "text-white"
+                          ? "text-nb-gray-100"
                           : "text-nb-gray-300",
                       )}
                     >
@@ -230,7 +230,7 @@ export function PeerSelector({
                       className={cn(
                         "font-medium flex items-center gap-1 font-mono text-[10px]",
                         value && value.id == option.id
-                          ? "text-white"
+                          ? "text-nb-gray-100"
                           : "text-nb-gray-300",
                         !isSupported && "opacity-50",
                       )}

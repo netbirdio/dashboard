@@ -311,7 +311,10 @@ const DeploySuccess = ({
   return (
     <div className={"flex flex-col gap-4"}>
       <Callout variant={"info"}>
-        {resourceLabel} <span className={"text-white font-medium"}>{name}</span>{" "}
+        {resourceLabel}{" "}
+        <span className={"text-sky-900 dark:text-white font-medium"}>
+          {name}
+        </span>{" "}
         was created
         {ip ? (
           <>

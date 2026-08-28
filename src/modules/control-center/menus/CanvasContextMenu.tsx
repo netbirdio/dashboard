@@ -252,7 +252,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   }, [handleContextMenu, close]);
 
   const menuItemClass =
-    "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm text-nb-gray-300 transition-colors hover:bg-nb-gray-900 hover:text-gray-50 cursor-pointer";
+    "flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm text-nb-gray-300 transition-colors hover:bg-nb-gray-900 hover:text-nb-gray-50 cursor-pointer";
 
   const renderShortcut = (shortcut?: React.ReactNode) =>
     shortcut ? (
