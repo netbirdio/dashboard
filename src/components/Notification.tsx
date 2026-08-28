@@ -188,7 +188,7 @@ export default function Notification<T>({
                 ? "bg-red-500 text-white"
                 : backgroundColor
                 ? `${backgroundColor} text-white`
-                : "bg-green-500 text-white",
+                : "bg-green-100 text-green-700 dark:bg-green-500 dark:text-white",
             )}
           >
             {loading ? (

@@ -971,7 +971,8 @@ export const DestinationGroupPanel = ({
             className={cn(
               "shrink-0 px-1.5 py-0.5 rounded border border-nb-gray-900 bg-nb-gray-920",
               // Keycap: 2px "side" below + faint highlight on top.
-              "shadow-[0_2px_0_0_#1e2123,inset_0_1px_0_0_rgba(255,255,255,0.05)]",
+              "shadow-[0_2px_0_0_#cbd2d6,inset_0_1px_0_0_rgba(255,255,255,0.6)]",
+              "dark:shadow-[0_2px_0_0_#1e2123,inset_0_1px_0_0_rgba(255,255,255,0.05)]",
               "text-[8px] font-medium tracking-wide text-nb-gray-350",
               "hover:bg-nb-gray-910 hover:text-nb-gray-200 transition-colors",
             )}
