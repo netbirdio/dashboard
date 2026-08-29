@@ -11,19 +11,19 @@ import ModalHeader from "@components/modal/ModalHeader";
 import Paragraph from "@components/Paragraph";
 import Separator from "@components/Separator";
 import Steps from "@components/Steps";
-import { Lightbox } from "@components/ui/Lightbox";
 import { Mark } from "@components/ui/Mark";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle, TerminalSquare } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
-import sshImage from "@/assets/ssh/ssh-client.png";
 import { SegmentedTabs } from "@components/SegmentedTabs";
+import AndroidIcon from "@/assets/icons/AndroidIcon";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
+import { isNetbirdSSHProtocolSupported } from "@utils/version";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { PeerSSHPolicyModal } from "@/modules/peer/PeerSSHPolicyModal";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
 type Props = {
   open?: boolean;
@@ -39,6 +39,11 @@ export const PeerSSHInstructions = ({
   peer,
 }: Props) => {
   const [client, setClient] = useState("cli");
+  // Peers already on v0.61.0+ don't need to be told which release started
+  // requiring a policy.
+  const peerRequiresSSHPolicy = isNetbirdSSHProtocolSupported(
+    peer?.version ?? "",
+  );
   const [policyModal, setPolicyModal] = useState(false);
 
   // Enabling the SSH server and root login require root, or an administrator on
@@ -75,46 +80,60 @@ export const PeerSSHInstructions = ({
                 <NetBirdIcon size={16} />
                 Desktop Client
               </SegmentedTabs.Trigger>
+              <SegmentedTabs.Trigger value={"android"}>
+                <AndroidIcon size={16} className={"fill-nb-gray-400"} />
+                Android
+              </SegmentedTabs.Trigger>
             </SegmentedTabs.List>
           </SegmentedTabs>
 
           <Steps>
-            {client === "cli" ? (
-              <Steps.Step step={1}>
-                <p className={"font-normal"}>
-                  If you are using NetBird via CLI, you can enable SSH by
-                  running{" "}
-                  {isWindows
-                    ? "these commands in an elevated prompt"
-                    : "these commands as root"}
-                  . Run the first one only if NetBird is already running. On a
-                  machine where you do not have those rights, an administrator
-                  has to run them.
-                </p>
-                <Code codeToCopy={`${prefix}netbird down`}>
-                  <Code.Line>{`${prefix}netbird down`}</Code.Line>
-                </Code>
-                <Code>
-                  <Code.Line>{`${prefix}netbird up --allow-server-ssh --enable-ssh-root`}</Code.Line>
-                </Code>
-              </Steps.Step>
-            ) : (
-              <Steps.Step step={1}>
+            <Steps.Step step={1}>
+              {client === "cli" && (
+                <>
+                  <p className={"font-normal"}>
+                    If you are using NetBird via CLI, you can enable SSH by
+                    running{" "}
+                    {isWindows
+                      ? "these commands in an elevated prompt"
+                      : "these commands as root"}
+                    . Run the first one only if NetBird is already running. On a
+                    machine where you do not have those rights, an administrator
+                    has to run them.
+                  </p>
+                  <Code codeToCopy={`${prefix}netbird down`}>
+                    <Code.Line>{`${prefix}netbird down`}</Code.Line>
+                  </Code>
+                  <Code>
+                    <Code.Line>{`${prefix}netbird up --allow-server-ssh --enable-ssh-root`}</Code.Line>
+                  </Code>
+                </>
+              )}
+
+              {client === "gui" && (
                 <p className={"font-normal"}>
                   If you are using NetBird via the Desktop Client, click on the
-                  NetBird tray icon, go to <Mark>Settings</Mark> and click{" "}
-                  <Mark>Allow SSH</Mark>. If you want to enable Root Login go to{" "}
-                  <Mark>Settings &gt; Advanced Settings</Mark> and enable SSH
-                  Root Login under the SSH tab.
+                  NetBird tray icon, open <Mark>Settings</Mark> and turn on{" "}
+                  <Mark>Enable SSH Server</Mark> on the <Mark>SSH</Mark> tab. To
+                  log in as {isWindows ? "an administrator" : "root"}, enable{" "}
+                  <Mark>Allow Root Login</Mark> on the same tab.
                 </p>
-                <Lightbox image={sshImage} />
-              </Steps.Step>
-            )}
+              )}
+
+              {client === "android" && (
+                <p className={"font-normal"}>
+                  If you are using NetBird on Android, open the app, tap{" "}
+                  <Mark>Settings</Mark>, then <Mark>Advanced</Mark> and turn on{" "}
+                  <Mark>Enable SSH Server</Mark>.
+                </p>
+              )}
+            </Steps.Step>
 
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Starting from NetBird v0.61.0, SSH requires an explicit access
-                control policy to allow SSH connections to this machine.
+                {peerRequiresSSHPolicy
+                  ? "SSH requires an explicit access control policy to allow SSH connections to this machine."
+                  : "Starting from NetBird v0.61.0, SSH requires an explicit access control policy to allow SSH connections to this machine."}
               </p>
               <div className={"mt-2"}>
                 <Button
@@ -128,8 +147,8 @@ export const PeerSSHInstructions = ({
             </Steps.Step>
             <Steps.Step step={3} line={false}>
               <p className={"font-normal"}>
-                Once the NetBird SSH server is allowed on the client, <br />
-                click <Mark>Confirm & Enable</Mark> below to finish the setup.
+                Once the NetBird SSH server is enabled on the client, <br />
+                click <Mark>Finish Setup</Mark> below to complete the setup.
               </p>
             </Steps.Step>
           </Steps>
