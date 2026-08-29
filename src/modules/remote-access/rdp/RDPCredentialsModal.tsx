@@ -19,7 +19,10 @@ import Button from "@components/Button";
 import { Label } from "@components/Label";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
-import { IPVersionSelect } from "@/modules/remote-access/IPVersionSelect";
+import {
+  IPVersionSelect,
+  type IPVersion,
+} from "@/modules/remote-access/IPVersionSelect";
 import {
   RDP_DOCS_LINK,
   RDPCredentials,
@@ -51,7 +54,9 @@ export const RDPCredentialsModal = ({
   const [password, setPassword] = useState("");
 
   const [port, setPort] = useState("3389");
-  const [ipVersion, setIpVersion] = useState(
+  // Anything the URL carried other than a usable "6" falls back to "4", so the
+  // state is always one of the two the select and the credentials accept.
+  const [ipVersion, setIpVersion] = useState<IPVersion>(
     initialIpVersion === "6" && peer.ipv6 ? "6" : "4",
   );
 
