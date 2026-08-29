@@ -24,7 +24,10 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
-import { IPVersionSelect } from "@/modules/remote-access/IPVersionSelect";
+import {
+  IPVersionSelect,
+  type IPVersion,
+} from "@/modules/remote-access/IPVersionSelect";
 import { SSH_DOCS_LINK } from "@/modules/remote-access/ssh/useSSH";
 
 type Props = {
@@ -42,7 +45,7 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
 
   const initialPort = isNativeSSHSupported(peer.version) ? "22" : "44338";
   const [port, setPort] = useState(initialPort);
-  const [ipVersion, setIpVersion] = useState("4");
+  const [ipVersion, setIpVersion] = useState<IPVersion>("4");
 
   const userNameError = useMemo(() => {
     if (username?.length === 0) return "Username cannot be empty";

@@ -1,6 +1,6 @@
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 export interface VNCSettings {
   scale: boolean;
@@ -53,37 +53,54 @@ function parseSettings(p: URLSearchParams): VNCSettings {
   };
 }
 
+const emptyParams: VNCQueryParams = {
+  peerId: null,
+  mode: "attach",
+  username: "",
+  ipVersion: null,
+  settings: defaultSettings,
+  ready: false,
+};
+
+// paramsFrom reads one set of VNC parameters out of a query string.
+function paramsFrom(p: URLSearchParams, peerId: string): VNCQueryParams {
+  return {
+    peerId,
+    mode: parseMode(p.get("mode")),
+    username: p.get("user") || "",
+    ipVersion: p.get("ip_version"),
+    settings: parseSettings(p),
+    ready: true,
+  };
+}
+
 export function useVNCQueryParams() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [params, setParams] = useState<VNCQueryParams>({
-    peerId: null,
-    mode: "attach",
-    username: "",
-    ipVersion: null,
-    settings: defaultSettings,
-    ready: false,
-  });
   const [, setLocalQueryParams] = useLocalStorage("netbird-query-params", "");
 
-  useEffect(() => {
+  // The ordinary case: the parameters are in the URL, so they are derived
+  // during render rather than pushed into state from an effect.
+  const fromURL = useMemo(() => {
     const peerId = searchParams.get("id");
-    const mode = parseMode(searchParams.get("mode"));
-    const username = searchParams.get("user") || "";
-    const ipVersion = searchParams.get("ip_version");
-    const settings = parseSettings(
-      new URLSearchParams(searchParams.toString()),
-    );
+    if (!peerId) return null;
+    return paramsFrom(new URLSearchParams(searchParams.toString()), peerId);
+  }, [searchParams]);
 
-    if (peerId) {
-      setParams({ peerId, mode, username, ipVersion, settings, ready: true });
-      return;
-    }
+  // The restore case: an auth redirect dropped the query string, so it has to
+  // be read back from localStorage and put on the URL again. That genuinely
+  // belongs in an effect — localStorage cannot be read during render on a page
+  // Next prerenders, and the branch also rewrites the URL and clears the stored
+  // value. Only this branch sets state.
+  const [restored, setRestored] = useState<VNCQueryParams | null>(null);
 
-    // Restore from localStorage after auth redirect.
+  useEffect(() => {
+    if (fromURL) return;
+
     const storedParams = localStorage.getItem("netbird-query-params");
     if (!storedParams) {
-      setParams((prev) => ({ ...prev, ready: true }));
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
+      setRestored({ ...emptyParams, ready: true });
       return;
     }
 
@@ -92,35 +109,23 @@ export function useVNCQueryParams() {
       try {
         paramsString = JSON.parse(storedParams);
       } catch {
-        setParams((prev) => ({ ...prev, ready: true }));
+        setRestored({ ...emptyParams, ready: true });
         return;
       }
     }
 
     const urlParams = new URLSearchParams(paramsString);
     const storedPeerId = urlParams.get("id");
-
     if (!storedPeerId) {
-      setParams((prev) => ({ ...prev, ready: true }));
+      setRestored({ ...emptyParams, ready: true });
       return;
     }
 
-    const storedMode = parseMode(urlParams.get("mode"));
-    const storedUser = urlParams.get("user") || "";
-    const storedIpVersion = urlParams.get("ip_version");
-    const storedSettings = parseSettings(urlParams);
-
     router.replace(`/peer/vnc?${urlParams.toString()}`);
-    setParams({
-      peerId: storedPeerId,
-      mode: storedMode,
-      username: storedUser,
-      ipVersion: storedIpVersion,
-      settings: storedSettings,
-      ready: true,
-    });
-    setLocalQueryParams("");
-  }, [searchParams, router, setLocalQueryParams]);
 
-  return params;
+    setRestored(paramsFrom(urlParams, storedPeerId));
+    setLocalQueryParams("");
+  }, [fromURL, router, setLocalQueryParams]);
+
+  return fromURL ?? restored ?? emptyParams;
 }
