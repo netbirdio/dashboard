@@ -9,6 +9,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Peer } from "@/interfaces/Peer";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
+import { hasReportedCursor } from "@/modules/remote-access/osSupport";
 import {
   VNCStatus,
   useVNC,
@@ -459,7 +460,7 @@ function VNCSession({
           onPaste={vnc.viewOnly ? undefined : vnc.pasteFromHostClipboard}
           showRemoteCursor={vnc.showRemoteCursor}
           onToggleRemoteCursor={
-            vnc.viewOnly || peerOSType === OperatingSystem.APPLE
+            vnc.viewOnly || !hasReportedCursor(peer?.os)
               ? undefined
               : vnc.setShowRemoteCursor
           }

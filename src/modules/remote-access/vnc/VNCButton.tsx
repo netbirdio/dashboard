@@ -4,8 +4,10 @@ import { CircleHelpIcon, ScreenShareIcon } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
+import {
+  isMobileOS,
+  isVNCSupportedOnOS,
+} from "@/modules/remote-access/osSupport";
 import { VNCTooltip } from "@/modules/remote-access/vnc/VNCTooltip";
 
 type Props = {
@@ -13,28 +15,41 @@ type Props = {
   isDropdown?: boolean;
 };
 
-const VNC_SUPPORTED_OS = new Set([
-  OperatingSystem.LINUX,
-  OperatingSystem.WINDOWS,
-  OperatingSystem.APPLE,
-  OperatingSystem.FREEBSD,
-]);
+/**
+ * A window shaped roughly like what it will show. A phone is portrait, so the
+ * default landscape window would letterbox its screen down to a strip between
+ * two black margins. The peer's real dimensions are not known until the session
+ * negotiates them, so this goes on the operating system.
+ *
+ * Not as narrow as a phone, though. The viewer's toolbar does not wrap and its
+ * disconnected panels carry a sentence or two, so the window has to fit the
+ * chrome as well as the screen. Letterboxing a little at the sides is the
+ * cheaper of the two ways to be wrong.
+ */
+const viewerWindowSize = (os?: string) => {
+  if (!isMobileOS(os)) {
+    return { width: 1200, height: 800 };
+  }
+  // Bounded by the screen it opens on, so it is not clipped on a laptop.
+  const height = Math.min(900, Math.max(560, window.screen.availHeight - 120));
+  return { width: 760, height };
+};
 
 export const VNCButton = ({ peer, isDropdown = false }: Props) => {
   const { permission } = usePermissions();
 
-  const os = getOperatingSystem(peer?.os);
-  if (!VNC_SUPPORTED_OS.has(os)) return null;
+  if (!isVNCSupportedOnOS(peer?.os)) return null;
 
   const isVNCEnabled = peer?.local_flags?.server_vnc_allowed;
   const disabled = !peer.connected || !permission.peers.update || !isVNCEnabled;
   const hasPermission = permission.peers.update;
 
   const openVNCPage = () => {
+    const { width, height } = viewerWindowSize(peer?.os);
     window.open(
       `/peer/vnc?id=${peer.id}`,
       "_blank",
-      "noopener,noreferrer,width=1200,height=800,left=100,top=100,location=no,toolbar=no,menubar=no,status=no",
+      `noopener,noreferrer,width=${width},height=${height},left=100,top=100,location=no,toolbar=no,menubar=no,status=no`,
     );
   };
 
