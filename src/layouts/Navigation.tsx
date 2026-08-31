@@ -48,7 +48,7 @@ export default function Navigation({
     useAgentNetworkMode();
   // Caller-scoped: true whenever the caller's own policies grant access to
   // at least one provider, independent of any agent_network permission —
-  // this is what lets plain users (limited view included) reach My Setup
+  // this is what lets plain users (limited view included) reach Connect Agent
   // and the self-scoped Usage & Logs view.
   const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
 
@@ -215,8 +215,8 @@ export default function Navigation({
                   // Parent is visible when at least one child is permitted.
                   // Each page tracks its agent_network submodule, so delegated
                   // roles (agent_network_admin, usage_viewer) see exactly the
-                  // pages their grants cover. My Setup is caller-scoped and
-                  // needs no permission, so a configured setup alone also
+                  // pages their grants cover. Connect Agent is caller-scoped
+                  // and needs no permission, so a configured setup alone also
                   // surfaces the section — that is how plain users reach it.
                   visible={
                     (agentNetworkSurface &&
@@ -229,7 +229,7 @@ export default function Navigation({
                   }
                 >
                   <SidebarItem
-                    label="My Setup"
+                    label="Connect Agent"
                     isChild
                     href={"/agent-network/my-setup"}
                     exactPathMatch={true}

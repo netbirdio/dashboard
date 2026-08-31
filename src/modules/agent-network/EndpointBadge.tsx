@@ -4,15 +4,13 @@ import { HelpTooltip } from "@components/HelpTooltip";
 import useCopyToClipboard from "@hooks/useCopyToClipboard";
 import { Copy, Plug } from "lucide-react";
 import React, { useState } from "react";
-import AgentConnectModal, {
-  AgentConnectModalView,
-} from "@/modules/agent-network/AgentConnectModal";
+import { AgentConnectModalView } from "@/modules/agent-network/AgentConnectModal";
 
-// EndpointBadge is the "API Base URL" card with the Copy and Agent Config
-// actions — the one presentation of the endpoint everywhere it appears
-// (providers page, My Setup). When providerIds is passed the connect modal
-// gets them directly (caller-scoped pages outside AIProvidersProvider);
-// without it the modal reads the connected providers from context.
+// EndpointBadge is the "API Base URL" card — the one presentation of the
+// endpoint everywhere it appears (providers page, Connect Agent). The Agent
+// Config action only renders when providerIds is passed, i.e. on the
+// caller-scoped Connect Agent page that knows which providers the endpoint can
+// reach for the caller; the providers page shows just the URL and Copy.
 export default function EndpointBadge({
   endpoint,
   providerIds,
@@ -69,30 +67,26 @@ export default function EndpointBadge({
         <Copy size={12} />
         Copy
       </button>
-      <button
-        type={"button"}
-        className={
-          "inline-flex items-center gap-1.5 rounded-md border border-nb-gray-700 bg-nb-gray-800/60 px-2.5 py-1.5 text-[11px] font-medium text-nb-gray-200 hover:bg-nb-gray-800 hover:text-white transition-colors shrink-0"
-        }
-        onClick={() => setConnectOpen(true)}
-        aria-label={"Agent config"}
-      >
-        <Plug size={12} />
-        Agent Config
-      </button>
-      {providerIds ? (
-        <AgentConnectModalView
-          open={connectOpen}
-          onOpenChange={setConnectOpen}
-          endpoint={endpoint}
-          providerIds={providerIds}
-        />
-      ) : (
-        <AgentConnectModal
-          open={connectOpen}
-          onOpenChange={setConnectOpen}
-          endpoint={endpoint}
-        />
+      {providerIds && (
+        <>
+          <button
+            type={"button"}
+            className={
+              "inline-flex items-center gap-1.5 rounded-md border border-nb-gray-700 bg-nb-gray-800/60 px-2.5 py-1.5 text-[11px] font-medium text-nb-gray-200 hover:bg-nb-gray-800 hover:text-white transition-colors shrink-0"
+            }
+            onClick={() => setConnectOpen(true)}
+            aria-label={"Agent config"}
+          >
+            <Plug size={12} />
+            Agent Config
+          </button>
+          <AgentConnectModalView
+            open={connectOpen}
+            onOpenChange={setConnectOpen}
+            endpoint={endpoint}
+            providerIds={providerIds}
+          />
+        </>
       )}
     </div>
   );

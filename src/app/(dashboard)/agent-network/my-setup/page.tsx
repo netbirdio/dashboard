@@ -13,15 +13,15 @@ import {
   useMyAgentNetworkSetup,
 } from "@/modules/agent-network/useMyAgentNetworkSetup";
 
-// MyAgentNetworkPage is the caller-scoped self-service view: the endpoint to
-// configure tools with — presented exactly like the providers page presents
-// it, Copy and Agent Config included — plus the providers and models the
-// caller's own policies allow. It needs no agent_network permission (the
+// ConnectAgentPage is the caller-scoped self-service view: the endpoint to
+// configure tools with — Copy and Agent Config included, the one place the
+// agent config lives — plus the providers and models the caller's own
+// policies allow. It needs no agent_network permission (the
 // backing endpoint answers for the caller only), so every role, including
 // plain users in the limited view, can use it whenever their setup is
 // configured. The caller's own usage lives on the regular Usage & Logs page,
 // which the server scopes to them.
-export default function MyAgentNetworkPage() {
+export default function ConnectAgentPage() {
   const { setup, configured, isLoading } = useMyAgentNetworkSetup();
 
   return (
@@ -35,15 +35,16 @@ export default function MyAgentNetworkPage() {
           />
           <Breadcrumbs.Item
             href={"/agent-network/my-setup"}
-            label={"My Setup"}
+            label={"Connect Agent"}
             active
           />
         </Breadcrumbs>
-        <h1>My Setup</h1>
+        <h1>Connect Agent</h1>
         <Paragraph>
           Point your agent at the NetBird endpoint as its base URL. No provider
-          API key is needed on the client — NetBird authorizes each request
-          against your access policies and injects the upstream key.
+          API key is required on the client. NetBird authenticates you through
+          your identity provider and authorizes each request against your access
+          policies.
         </Paragraph>
 
         {isLoading ? (
@@ -51,7 +52,7 @@ export default function MyAgentNetworkPage() {
             <SkeletonTable />
           </div>
         ) : configured && setup ? (
-          <MySetupContent setup={setup} />
+          <ConnectAgentContent setup={setup} />
         ) : (
           <div className={"mt-4 text-sm text-nb-gray-400 max-w-xl"}>
             Agent Network is not set up for your user yet. Ask your
@@ -63,7 +64,7 @@ export default function MyAgentNetworkPage() {
   );
 }
 
-function MySetupContent({ setup }: { setup: APIMeSetup }) {
+function ConnectAgentContent({ setup }: { setup: APIMeSetup }) {
   // EndpointBadge builds https:// URLs from a bare host.
   const bareEndpoint = setup.endpoint.replace(/^https?:\/\//, "");
 

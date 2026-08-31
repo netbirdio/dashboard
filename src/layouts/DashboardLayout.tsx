@@ -69,7 +69,7 @@ function DashboardPageContent({
   // Network self-service pages are theirs by design: show the sidebar when
   // the caller's own setup is configured or their role reads an
   // agent_network surface (e.g. usage_viewer), so the limited view can
-  // still reach My Setup and Usage & Logs.
+  // still reach Connect Agent and Usage & Logs.
   const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
   const showNavigation =
     !isRestricted ||

@@ -2,7 +2,6 @@
 
 import Code from "@components/Code";
 import { Modal, ModalContent } from "@components/modal/Modal";
-import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import Paragraph from "@components/Paragraph";
 import SmallParagraph from "@components/SmallParagraph";
 import SquareIcon from "@components/SquareIcon";
@@ -11,14 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Plug } from "lucide-react";
 import * as React from "react";
 
-type Props = {
+type ViewProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   // Bare endpoint host, e.g. "sailcloth.eu.proxy.netbird.io".
   endpoint: string;
-};
-
-type ViewProps = Props & {
   // Catalog ids of the providers reachable through the endpoint.
   providerIds: string[];
 };
@@ -374,10 +370,9 @@ export function AgentConnectTabs({
   );
 }
 
-// AgentConnectModalView is the modal itself with the provider ids passed
-// explicitly. Used directly by caller-scoped surfaces (My Setup) that know
-// their providers from the me/setup answer and must not mount the
-// admin-permissioned AIProvidersProvider.
+// AgentConnectModalView is the modal itself. Used by the caller-scoped Connect
+// Agent page, which knows its providers from the me/setup answer and must not
+// mount the admin-permissioned AIProvidersProvider.
 export function AgentConnectModalView({
   open,
   onOpenChange,
@@ -408,17 +403,5 @@ export function AgentConnectModalView({
         <AgentConnectTabs endpoint={endpoint} providerIds={providerIds} />
       </ModalContent>
     </Modal>
-  );
-}
-
-export default function AgentConnectModal(props: Readonly<Props>) {
-  // Rendered inside <AIProvidersProvider> (providers page); the connected
-  // provider ids gate which per-tool config variants the tabs offer.
-  const { providers } = useAIProviders();
-  return (
-    <AgentConnectModalView
-      {...props}
-      providerIds={providers.map((p) => p.providerId)}
-    />
   );
 }
