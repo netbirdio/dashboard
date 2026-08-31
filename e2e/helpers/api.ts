@@ -89,9 +89,46 @@ async function apiDelete(page: Page, path: string): Promise<void> {
   });
 }
 
+async function apiPost<T>(
+  page: Page,
+  path: string,
+  body: unknown,
+): Promise<T> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.post(`${origin}/api${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: body,
+  });
+  if (!resp.ok()) {
+    throw new Error(
+      `POST ${path} returned ${resp.status()}: ${await resp.text()}`,
+    );
+  }
+  return resp.json();
+}
+
+async function apiPut<T>(page: Page, path: string, body: unknown): Promise<T> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.put(`${origin}/api${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: body,
+  });
+  if (!resp.ok()) {
+    throw new Error(
+      `PUT ${path} returned ${resp.status()}: ${await resp.text()}`,
+    );
+  }
+  return resp.json();
+}
+
 /** List all groups. */
 export async function listGroups(page: Page): Promise<Group[]> {
   return apiGet<Group[]>(page, "/groups");
+}
+
+/** Create a group by name. */
+export async function createGroup(page: Page, name: string): Promise<Group> {
+  return apiPost<Group>(page, "/groups", { name, peers: [] });
 }
 
 /** Delete a group by ID. */
@@ -507,4 +544,94 @@ export async function supportsAgentNetworkSettingsBootstrap(
   return (
     !!settings && typeof settings === "object" && "proxy_address" in settings
   );
+}
+
+/**
+ * Whether the management build under test serves the caller-scoped
+ * GET /agent-network/agent-config answer that backs the Connect Agent page.
+ * The endpoint answers 200 for every authenticated caller (an unconfigured
+ * caller gets configured=false, never an error), so any non-OK status means
+ * the build predates it.
+ */
+export async function supportsAgentNetworkAgentConfig(
+  page: Page,
+): Promise<boolean> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.get(
+    `${origin}/api/agent-network/agent-config`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return resp.ok();
+}
+
+type AgentNetworkPolicy = {
+  id: string;
+  name: string;
+};
+
+/** List Agent Network policies. */
+export async function listAgentNetworkPolicies(
+  page: Page,
+): Promise<AgentNetworkPolicy[]> {
+  return apiGet<AgentNetworkPolicy[]>(page, "/agent-network/policies");
+}
+
+/** Create an Agent Network policy. */
+export async function createAgentNetworkPolicy(
+  page: Page,
+  body: {
+    name: string;
+    source_groups: string[];
+    destination_provider_ids: string[];
+    enabled?: boolean;
+  },
+): Promise<AgentNetworkPolicy> {
+  return apiPost<AgentNetworkPolicy>(page, "/agent-network/policies", {
+    enabled: true,
+    ...body,
+  });
+}
+
+/** Delete all Agent Network policies whose name starts with the prefix. */
+export async function deleteAgentNetworkPoliciesByPrefix(
+  page: Page,
+  prefix: string,
+) {
+  const policies = await listAgentNetworkPolicies(page);
+  for (const p of policies) {
+    if (p.name.startsWith(prefix)) {
+      await apiDelete(page, `/agent-network/policies/${p.id}`);
+    }
+  }
+}
+
+type User = {
+  id: string;
+  role: string;
+  auto_groups: string[];
+  is_blocked: boolean;
+  is_current?: boolean;
+};
+
+/** The user the captured token belongs to. */
+export async function getCurrentUser(page: Page): Promise<User> {
+  const users = await apiGet<User[]>(page, "/users");
+  const current = users.find((u) => u.is_current);
+  if (!current) {
+    throw new Error("no is_current user in the /users answer");
+  }
+  return current;
+}
+
+/** Replace a user's auto-groups, keeping role and blocked state. */
+export async function updateUserAutoGroups(
+  page: Page,
+  user: User,
+  autoGroups: string[],
+): Promise<void> {
+  await apiPut(page, `/users/${user.id}`, {
+    role: user.role,
+    auto_groups: autoGroups,
+    is_blocked: !!user.is_blocked,
+  });
 }
