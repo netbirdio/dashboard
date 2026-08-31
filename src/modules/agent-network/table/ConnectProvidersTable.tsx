@@ -1,12 +1,17 @@
 "use client";
 
 import Badge from "@components/Badge";
+import Button from "@components/Button";
 import FullTooltip from "@components/FullTooltip";
+import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
+import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React from "react";
+import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { AIProviderId } from "@/modules/agent-network/data/mockData";
@@ -119,10 +124,16 @@ type Props = {
 // here to connect, edit, or delete.
 export default function ConnectProvidersTable({ providers }: Readonly<Props>) {
   const path = usePathname();
+  const router = useRouter();
   const [sorting, setSorting] = useLocalStorage<SortingState>(
     "netbird-table-sort" + path,
     [{ id: "name", desc: false }],
   );
+
+  // Whoever can edit policies can fix this themselves, so they get the action
+  // instead of being told to ask someone else.
+  const { permission } = usePermissions();
+  const canManagePolicies = !!permission?.["agent_network.policies"]?.update;
 
   return (
     <DataTable
@@ -133,6 +144,37 @@ export default function ConnectProvidersTable({ providers }: Readonly<Props>) {
       data={providers}
       showSearchAndFilters={false}
       initialPageSize={25}
+      // Nothing to list means no policy covers this caller yet, so the card
+      // says so rather than leaving an empty table behind.
+      getStartedCard={
+        <GetStartedTest
+          icon={
+            <SquareIcon
+              icon={
+                <AgentNetworkIcon className={"fill-nb-gray-200"} size={20} />
+              }
+              color={"gray"}
+              size={"large"}
+            />
+          }
+          title={"No providers available yet"}
+          description={
+            canManagePolicies
+              ? "No access policy covers your user yet. Add one of your groups to a policy to route your own agent through NetBird."
+              : "You don’t have access to any providers yet. Ask your administrator to add you to an Agent Network access policy."
+          }
+          button={
+            canManagePolicies ? (
+              <Button
+                variant={"primary"}
+                onClick={() => router.push("/agent-network/policies")}
+              >
+                Go to Policies
+              </Button>
+            ) : undefined
+          }
+        />
+      }
     />
   );
 }

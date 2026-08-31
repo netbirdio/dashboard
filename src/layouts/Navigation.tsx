@@ -51,6 +51,14 @@ export default function Navigation({
   // this is what lets plain users (limited view included) reach Connect Agent
   // and the self-scoped Usage & Logs view.
   const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
+  // Any agent_network grant at all — the delegated roles
+  // (agent_network_admin, usage_viewer) each hold a subset of these.
+  const hasAgentNetworkGrant =
+    !!permission?.["agent_network.providers"]?.read ||
+    !!permission?.["agent_network.policies"]?.read ||
+    !!permission?.["agent_network.usage"]?.read ||
+    !!permission?.["agent_network.logs"]?.read ||
+    !!permission?.["agent_network.settings"]?.read;
 
   return (
     <div
@@ -219,12 +227,7 @@ export default function Navigation({
                   // and needs no permission, so a configured setup alone also
                   // surfaces the section — that is how plain users reach it.
                   visible={
-                    (agentNetworkSurface &&
-                      (permission?.["agent_network.providers"]?.read ||
-                        permission?.["agent_network.policies"]?.read ||
-                        permission?.["agent_network.usage"]?.read ||
-                        permission?.["agent_network.logs"]?.read ||
-                        permission?.["agent_network.settings"]?.read)) ||
+                    (agentNetworkSurface && hasAgentNetworkGrant) ||
                     mySetupConfigured
                   }
                 >
@@ -233,7 +236,15 @@ export default function Navigation({
                     isChild
                     href={"/agent-network/connect"}
                     exactPathMatch={true}
-                    visible={mySetupConfigured}
+                    // Configured callers get it because it is their own setup;
+                    // anyone administering Agent Network gets it too, even
+                    // before a policy covers them, so the page they point
+                    // their own agent at is never missing from the section
+                    // they manage.
+                    visible={
+                      mySetupConfigured ||
+                      (agentNetworkSurface && hasAgentNetworkGrant)
+                    }
                   />
                   <SidebarItem
                     label="Providers"

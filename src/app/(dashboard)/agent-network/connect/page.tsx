@@ -17,13 +17,13 @@ import {
 // ConnectAgentPage is the caller-scoped self-service view: the endpoint to
 // configure tools with and the per-tool config that goes with it — the one
 // place the agent config lives — plus the providers and models the caller's
-// own policies allow. It needs no agent_network permission (the
-// backing endpoint answers for the caller only), so every role, including
-// plain users in the limited view, can use it whenever their setup is
-// configured. The caller's own usage lives on the regular Usage & Logs page,
+// own policies allow. It needs no agent_network permission (the backing
+// endpoint answers for the caller only), so every role, including plain users
+// in the limited view, gets the same config. A caller no policy covers yet
+// still gets it, with an empty provider list carrying the explanation. The caller's own usage lives on the regular Usage & Logs page,
 // which the server scopes to them.
 export default function ConnectAgentPage() {
-  const { setup, configured, isLoading } = useMyAgentNetworkSetup();
+  const { setup, isLoading } = useMyAgentNetworkSetup();
 
   return (
     <PageContainer>
@@ -52,44 +52,49 @@ export default function ConnectAgentPage() {
           <div className={"mt-4"}>
             <SkeletonTable />
           </div>
-        ) : configured && setup ? (
-          <ConnectAgentSetup setup={setup} />
         ) : (
-          <div className={"mt-4 text-sm text-nb-gray-400 max-w-xl"}>
-            Agent Network is not set up for your user yet. Ask your
-            administrator to add you to an access policy.
-          </div>
+          <ConnectAgentSetup setup={setup} />
         )}
       </div>
     </PageContainer>
   );
 }
 
-function ConnectAgentSetup({ setup }: { setup: APIMeSetup }) {
+function ConnectAgentSetup({ setup }: { setup?: APIMeSetup }) {
+  const providers = setup?.providers ?? [];
   // EndpointBadge builds https:// URLs from a bare host.
-  const bareEndpoint = setup.endpoint.replace(/^https?:\/\//, "");
-  const providerIds = setup.providers.map((provider) => provider.catalog_id);
+  const bareEndpoint = (setup?.endpoint ?? "").replace(/^https?:\/\//, "");
+  const providerIds = providers.map((provider) => provider.catalog_id);
 
   return (
     <>
-      <div className={"mt-4"}>
-        <EndpointBadge endpoint={bareEndpoint} />
-      </div>
+      {/* The server hands the endpoint to every member of an account that has
+          Agent Network set up, covered by a policy or not, so this renders for
+          everyone; it stays guarded because an account with no endpoint yet
+          has nothing to copy and no snippet that would work. */}
+      {bareEndpoint && (
+        <>
+          <div className={"mt-4"}>
+            <EndpointBadge endpoint={bareEndpoint} />
+          </div>
 
-      <div className={"max-w-3xl"}>
-        {/* Same 16px step the endpoint card sits below the description by. */}
-        <AgentConnectTabs
-          endpoint={bareEndpoint}
-          className={"mt-4"}
-          listClassName={"px-0"}
-          contentClassName={"px-0 py-2"}
-          providerIds={providerIds}
-        />
-      </div>
+          <div className={"max-w-3xl"}>
+            {/* Same 16px step the endpoint card sits below the description
+                by. */}
+            <AgentConnectTabs
+              endpoint={bareEndpoint}
+              className={"mt-4"}
+              listClassName={"px-0"}
+              contentClassName={"px-0 py-2"}
+              providerIds={providerIds}
+            />
+          </div>
+        </>
+      )}
 
       <div className={"max-w-3xl"}>
         <h2 className={"text-base mt-8 mb-0"}>Your Providers &amp; Models</h2>
-        <ConnectProvidersTable providers={setup.providers} />
+        <ConnectProvidersTable providers={providers} />
       </div>
     </>
   );
