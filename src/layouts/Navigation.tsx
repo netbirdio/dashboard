@@ -226,9 +226,13 @@ export default function Navigation({
                   // pages their grants cover. Connect Agent is caller-scoped
                   // and needs no permission, so a configured setup alone also
                   // surfaces the section — that is how plain users reach it.
+                  // The surface switch decides first: a deployment (or
+                  // account) with Agent Network off hides the section from
+                  // everyone, configured caller or not. Within it, one
+                  // permitted child or the caller's own setup surfaces it.
                   visible={
-                    (agentNetworkSurface && hasAgentNetworkGrant) ||
-                    mySetupConfigured
+                    agentNetworkSurface &&
+                    (hasAgentNetworkGrant || mySetupConfigured)
                   }
                 >
                   <SidebarItem
@@ -242,8 +246,8 @@ export default function Navigation({
                     // their own agent at is never missing from the section
                     // they manage.
                     visible={
-                      mySetupConfigured ||
-                      (agentNetworkSurface && hasAgentNetworkGrant)
+                      agentNetworkSurface &&
+                      (mySetupConfigured || hasAgentNetworkGrant)
                     }
                   />
                   <SidebarItem
@@ -274,10 +278,10 @@ export default function Navigation({
                     // A configured self-service caller gets the page too:
                     // the server scopes usage and logs to them.
                     visible={
-                      (agentNetworkSurface &&
-                        (permission?.["agent_network.usage"]?.read ||
-                          permission?.["agent_network.logs"]?.read)) ||
-                      mySetupConfigured
+                      agentNetworkSurface &&
+                      (permission?.["agent_network.usage"]?.read ||
+                        permission?.["agent_network.logs"]?.read ||
+                        mySetupConfigured)
                     }
                   />
                   <SidebarItem

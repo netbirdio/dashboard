@@ -23,6 +23,7 @@ import BillingProvider from "@/contexts/BillingProvider";
 import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
@@ -69,13 +70,16 @@ function DashboardPageContent({
   // Network self-service pages are theirs by design: show the sidebar when
   // the caller's own setup is configured or their role reads an
   // agent_network surface (e.g. usage_viewer), so the limited view can
-  // still reach Connect Agent and Usage & Logs.
+  // still reach Connect Agent and Usage & Logs. The surface switch still
+  // decides first — with Agent Network off there is nothing to reach.
   const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
+  const { enabled: agentNetworkSurface } = useAgentNetworkMode();
   const showNavigation =
     !isRestricted ||
-    mySetupConfigured ||
-    !!permission?.["agent_network.usage"]?.read ||
-    !!permission?.["agent_network.logs"]?.read;
+    (agentNetworkSurface &&
+      (mySetupConfigured ||
+        !!permission?.["agent_network.usage"]?.read ||
+        !!permission?.["agent_network.logs"]?.read));
 
   const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
   const { bannerHeight } = useAnnouncement();

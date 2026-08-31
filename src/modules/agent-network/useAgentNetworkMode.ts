@@ -7,6 +7,7 @@ import {
   SIGNUP_SOURCE_LOCAL_STORAGE_KEY,
 } from "@/hooks/useSignupSource";
 import { Account } from "@/interfaces/Account";
+import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 
 /**
  * Report whether a new account arrived from the netbird.ai signup source and
@@ -46,6 +47,16 @@ export const useAgentNetworkMode = () => {
     permission.accounts.read,
   );
 
+  // The caller-scoped agent config answers "configured" only when the account
+  // has an Agent Network endpoint, so it stands in as proof the surface
+  // exists for callers who cannot resolve the flag themselves — the same
+  // fallback shape as the grant check below, and gated the same way, so a
+  // deployment that turns the surface off still turns it off for everyone
+  // who can read that decision.
+  const { configured: agentConfigured, isLoading: isAgentConfigLoading } =
+    useMyAgentNetworkSetup();
+  const hasAgentConfig = !permission?.accounts?.read && agentConfigured;
+
   // Resolving the flag needs accounts read, which the delegated roles below
   // account admin (usage_viewer, and agent_network scopes granted to custom
   // roles) may not hold. For them, holding an explicit agent_network grant
@@ -79,8 +90,22 @@ export const useAgentNetworkMode = () => {
     const featureEnabled =
       account?.settings?.dashboard_features?.agent_network === true;
     const enabled =
-      only || featureEnabled || isAgentNetworkEnabled() || hasAgentNetworkGrant;
-    const loading = permission.accounts.read ? isLoading : false;
+      only ||
+      featureEnabled ||
+      isAgentNetworkEnabled() ||
+      hasAgentNetworkGrant ||
+      hasAgentConfig;
+    // Both answers gate the route tree, so neither may resolve late: the
+    // layout renders nothing while loading and 404s the moment it is false.
+    const loading =
+      (permission.accounts.read ? isLoading : false) || isAgentConfigLoading;
     return { only, enabled, loading } as const;
-  }, [accounts, isLoading, permission.accounts.read, hasAgentNetworkGrant]);
+  }, [
+    accounts,
+    isLoading,
+    permission.accounts.read,
+    hasAgentNetworkGrant,
+    hasAgentConfig,
+    isAgentConfigLoading,
+  ]);
 };
