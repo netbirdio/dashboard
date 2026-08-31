@@ -1,5 +1,6 @@
 "use client";
 
+import Badge from "@components/Badge";
 import FullTooltip from "@components/FullTooltip";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
@@ -44,29 +45,45 @@ const NAMED_MODELS = 2;
 
 function ModelsCell({ provider }: { provider: APIMeProvider }) {
   if (provider.all_models_allowed) {
-    return <span className={"text-xs text-nb-gray-400"}>All models</span>;
+    return <span className={"text-xs text-nb-gray-400"}>All Models</span>;
   }
+  // A short allow-list is spelled out as one chip per model, the way groups
+  // and providers are chipped elsewhere; a long one collapses to a count.
   if (provider.models.length <= NAMED_MODELS) {
     return (
-      <span className={"text-xs text-nb-gray-300"}>
-        {provider.models.join(", ")}
-      </span>
+      <div className={"flex items-center gap-2"}>
+        {provider.models.map((model) => (
+          <Badge
+            key={model}
+            variant={"gray-ghost"}
+            className={"whitespace-nowrap"}
+          >
+            {model}
+          </Badge>
+        ))}
+      </div>
     );
   }
   return (
-    <FullTooltip
-      content={
-        <div className={"flex flex-col gap-1 text-xs"}>
-          {provider.models.map((model) => (
-            <div key={model}>{model}</div>
-          ))}
-        </div>
-      }
-    >
-      <span className={"text-xs text-nb-gray-300"}>
-        {provider.models.length} available
-      </span>
-    </FullTooltip>
+    <div className={"flex"}>
+      <FullTooltip
+        content={
+          <div className={"flex flex-col gap-1 text-xs"}>
+            {provider.models.map((model) => (
+              <div key={model}>{model}</div>
+            ))}
+          </div>
+        }
+      >
+        <Badge
+          variant={"gray-ghost"}
+          useHover={true}
+          className={"whitespace-nowrap"}
+        >
+          {provider.models.length} Models
+        </Badge>
+      </FullTooltip>
+    </div>
   );
 }
 

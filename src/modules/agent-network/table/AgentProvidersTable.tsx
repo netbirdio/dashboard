@@ -70,11 +70,11 @@ function NameCell({ provider }: { provider: AIProvider }) {
 
 function ModelsCell({ provider }: { provider: AIProvider }) {
   if (provider.models.length === 0) {
-    return <span className={"text-xs text-nb-gray-400"}>All models</span>;
+    return <span className={"text-xs text-nb-gray-400"}>All Models</span>;
   }
   return (
     <span className={"text-xs text-nb-gray-300"}>
-      {provider.models.length} configured
+      {provider.models.length} Models
     </span>
   );
 }
