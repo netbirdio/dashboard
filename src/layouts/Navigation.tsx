@@ -208,7 +208,7 @@ export default function Navigation({
                   href={
                     permission?.["agent_network.providers"]?.read
                       ? "/agent-network/providers"
-                      : "/agent-network/my-setup"
+                      : "/agent-network/connect"
                   }
                   collapsible
                   exactPathMatch={false}
@@ -231,7 +231,7 @@ export default function Navigation({
                   <SidebarItem
                     label="Connect Agent"
                     isChild
-                    href={"/agent-network/my-setup"}
+                    href={"/agent-network/connect"}
                     exactPathMatch={true}
                     visible={mySetupConfigured}
                   />

@@ -1,27 +1,14 @@
 "use client";
 
 import Code from "@components/Code";
-import { Modal, ModalContent } from "@components/modal/Modal";
-import Paragraph from "@components/Paragraph";
-import SmallParagraph from "@components/SmallParagraph";
-import SquareIcon from "@components/SquareIcon";
 import { SelectDropdown } from "@components/select/SelectDropdown";
+import SmallParagraph from "@components/SmallParagraph";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
-import { Plug } from "lucide-react";
 import * as React from "react";
-
-type ViewProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  // Bare endpoint host, e.g. "sailcloth.eu.proxy.netbird.io".
-  endpoint: string;
-  // Catalog ids of the providers reachable through the endpoint.
-  providerIds: string[];
-};
 
 // Snippet renders a copyable Code block from a list of lines, with an optional
 // caption above it. Wrapped in min-w-0 so its scroll area handles long lines
-// instead of widening the modal. By default the displayed lines are what gets
+// instead of widening its container. By default the displayed lines are what gets
 // copied (joined with newlines); pass copyText to copy something different —
 // e.g. show a curl command across multiple lines but copy it as one line.
 function Snippet({
@@ -49,18 +36,22 @@ function Snippet({
 }
 
 // AgentConnectTabs renders the per-tool connect snippets (Claude Code, Codex,
-// OpenAI SDK, cURL) for a given endpoint. Extracted so it can be shown both
-// inside AgentConnectModal and inline in the onboarding "Configure your agent"
+// OpenAI SDK, cURL) for a given endpoint. Rendered inline wherever the config
+// belongs — the Connect Agent page and the onboarding "Configure your agent"
 // step. listClassName / contentClassName let the caller tune horizontal
-// padding — the modal indents to its gutter, the inline card uses none.
+// padding, since each host sits in a different gutter.
 export function AgentConnectTabs({
   endpoint,
+  className = "mt-2",
   listClassName = "px-8",
   contentClassName = "px-6 py-2",
   defaultTab = "claude-code",
   providerIds = [],
 }: {
   endpoint: string;
+  // Spacing above the tab strip, so each host can set the gap its own layout
+  // calls for.
+  className?: string;
   listClassName?: string;
   contentClassName?: string;
   // Which tab opens first. Callers that know the connected provider pass the
@@ -95,7 +86,7 @@ export function AgentConnectTabs({
   >(kimiOnlyAnthropicShape ? "kimi" : "anthropic");
 
   return (
-    <Tabs key={defaultTab} defaultValue={defaultTab} className={"mt-2"}>
+    <Tabs key={defaultTab} defaultValue={defaultTab} className={className}>
       <TabsList justify={"start"} className={listClassName}>
         <TabsTrigger value={"claude-code"}>Claude Code</TabsTrigger>
         <TabsTrigger value={"codex"}>Codex</TabsTrigger>
@@ -366,41 +357,5 @@ export function AgentConnectTabs({
         </div>
       </TabsContent>
     </Tabs>
-  );
-}
-
-// AgentConnectModalView is the modal itself. Used by the caller-scoped Connect
-// Agent page, which knows its providers from the me/setup answer and must not
-// mount the admin-permissioned AIProvidersProvider.
-export function AgentConnectModalView({
-  open,
-  onOpenChange,
-  endpoint,
-  providerIds,
-}: Readonly<ViewProps>) {
-  return (
-    <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent maxWidthClass={"max-w-2xl"}>
-        <div className={"px-8 pt-5"}>
-          <div className={"flex items-center gap-3"}>
-            <SquareIcon
-              color={"netbird"}
-              margin={""}
-              icon={<Plug size={16} />}
-            />
-            <h2 className={"text-lg my-0 leading-[1.5]"}>
-              Configure Your Agent
-            </h2>
-          </div>
-          <Paragraph className={"text-sm mt-3"}>
-            Point your agent at the NetBird endpoint as its base URL. No
-            provider API key is needed on the client. NetBird authorizes the
-            request against your policies and injects the upstream key.
-          </Paragraph>
-        </div>
-
-        <AgentConnectTabs endpoint={endpoint} providerIds={providerIds} />
-      </ModalContent>
-    </Modal>
   );
 }

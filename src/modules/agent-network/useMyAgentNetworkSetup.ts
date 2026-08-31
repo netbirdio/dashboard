@@ -28,7 +28,7 @@ export type APIMeSetup = {
  */
 export const useMyAgentNetworkSetup = () => {
   const { data: setup, isLoading } = useFetchApi<APIMeSetup>(
-    "/agent-network/me/setup",
+    "/agent-network/agent-config",
     true,
   );
   return {
