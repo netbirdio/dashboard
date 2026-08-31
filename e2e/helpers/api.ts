@@ -509,6 +509,8 @@ type User = {
   name: string;
   role: string;
   status: string;
+  auto_groups: string[];
+  is_blocked: boolean;
   is_current: boolean;
 };
 
@@ -645,14 +647,6 @@ export async function deleteAgentNetworkPoliciesByPrefix(
     }
   }
 }
-
-type User = {
-  id: string;
-  role: string;
-  auto_groups: string[];
-  is_blocked: boolean;
-  is_current?: boolean;
-};
 
 /** The user the captured token belongs to. */
 export async function getCurrentUser(page: Page): Promise<User> {
