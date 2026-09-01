@@ -22,9 +22,6 @@ import ApplicationProvider, {
 import BillingProvider from "@/contexts/BillingProvider";
 import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
-import { usePermissions } from "@/contexts/PermissionsProvider";
-import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
-import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
@@ -65,22 +62,10 @@ function DashboardPageContent({
   const { mobileNavOpen, toggleMobileNav } = useApplicationContext();
   const isSm = useIsSm();
   const isXs = useIsXs();
-  const { isRestricted, permission } = usePermissions();
-  // Restricted users normally get no navigation at all, but the Agent
-  // Network self-service pages are theirs by design: show the sidebar when
-  // the caller's own setup is configured or their role reads an
-  // agent_network surface (e.g. usage_viewer), so the limited view can
-  // still reach Connect Agent and Usage & Logs. The surface switch still
-  // decides first — with Agent Network off there is nothing to reach.
-  const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
-  const { enabled: agentNetworkSurface } = useAgentNetworkMode();
-  const showNavigation =
-    !isRestricted ||
-    (agentNetworkSurface &&
-      (mySetupConfigured ||
-        !!permission?.["agent_network.usage"]?.read ||
-        !!permission?.["agent_network.logs"]?.read));
-
+  // The sidebar renders for every role: Peers is visible to all of them, so
+  // there is always at least one item, and each remaining item decides for
+  // itself in Navigation. Gating the sidebar itself here once emptied it for
+  // the limited (user role) view, whose items were the Agent Network ones.
   const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
   const { bannerHeight } = useAnnouncement();
   return (
@@ -190,7 +175,7 @@ function DashboardPageContent({
                 height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}
             >
-              {showNavigation && <Navigation hideOnMobile />}
+              <Navigation hideOnMobile />
               <React.Fragment key={"page"}>{children}</React.Fragment>
             </div>
           </motion.div>
