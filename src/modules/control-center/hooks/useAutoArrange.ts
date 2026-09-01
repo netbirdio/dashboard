@@ -10,7 +10,7 @@ import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 
 /**
  * Auto Arrange — the toolbar button, the `A` shortcut and the assistant's
- * `cc_canvas`. Re-arranges with the layout the draft was entered with, so
+ * `control_center_canvas`. Re-arranges with the layout the draft was entered with, so
  * arranging an untouched canvas reproduces the initial positions instead of
  * drifting, then fits the camera to the result.
  */

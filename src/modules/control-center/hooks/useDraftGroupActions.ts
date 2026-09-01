@@ -833,7 +833,7 @@ export function useDraftGroupActions() {
     removeGroupMember,
     removeGroup,
     removeGroups,
-    // Unconfirmed single-group delete — the assistant's cc_node path; the menu
+    // Unconfirmed single-group delete — the assistant's control_center_node path; the menu
     // goes through confirmAndDeleteGroups instead.
     deleteGroup,
     confirmAndDeleteGroups,

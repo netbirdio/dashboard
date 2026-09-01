@@ -1,7 +1,24 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import {
+  AgentAddItem,
+  AgentCanvasAction,
+  AgentCanvasSnapshot,
+  AgentDraftAction,
+  AgentLink,
+  AgentNavigateInput,
+  AgentNode,
+  AgentNodeAction,
+  AgentNodeKind,
+  AgentPolicyEdit,
+  AgentStepResult,
+  beginAgentActivity,
+  beginAgentTurn,
+  CanvasAgentApi,
+  registerCanvasAgent,
+} from "@netbird/assistant-react";
 import { Connection, Node, useReactFlow } from "@xyflow/react";
+import { useEffect, useRef } from "react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -11,10 +28,13 @@ import {
   useControlCenterUI,
   useDestinationGroup,
 } from "@/modules/control-center/contexts/ControlCenterContext";
-import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useDiscardDraft } from "@/modules/control-center/draft/useDiscardDraft";
+import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { useAutoArrange } from "@/modules/control-center/hooks/useAutoArrange";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftEntityDrop } from "@/modules/control-center/hooks/useDraftEntityDrop";
 import {
   getNodeGroup,
@@ -29,9 +49,6 @@ import {
   useDragToGroup,
 } from "@/modules/control-center/hooks/useDragToGroup";
 import { useNodeRemoval } from "@/modules/control-center/hooks/useNodeRemoval";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDiscardDraft } from "@/modules/control-center/draft/useDiscardDraft";
 import { getNodeRect } from "@/modules/control-center/utils/canvas-transition";
 import {
   getDraftResource,
@@ -47,27 +64,10 @@ import {
   spawnNodes,
 } from "@/modules/control-center/utils/node-pulse";
 import { NodeType } from "@/modules/control-center/utils/nodes";
-import {
-  beginAgentActivity,
-  beginAgentTurn,
-  AgentAddItem,
-  AgentCanvasAction,
-  AgentCanvasSnapshot,
-  AgentDraftAction,
-  AgentLink,
-  AgentNavigateInput,
-  AgentNode,
-  AgentNodeAction,
-  AgentNodeKind,
-  AgentPolicyEdit,
-  AgentStepResult,
-  CanvasAgentApi,
-  registerCanvasAgent,
-} from "@/modules/control-center/agent/canvasAgentStore";
 
 /**
  * Publishes the canvas as an imperative API for the assistant, for as long as
- * the control-center page is mounted (see canvasAgentStore for why a
+ * the control-center page is mounted (see the SDK's canvas registry for why a
  * module-level registry and not a context).
  *
  * Every action routes through the same hooks the human UI uses — the components
@@ -102,15 +102,15 @@ export const CanvasAgentBridge = ({
   useEffect(() => {
     const api = buildApi(() => latest.current);
     // Test-only handle: e2e drives these actions directly, with no model in the
-    // loop (same idea as __ccDraftCanvas in CanvasStateProvider). `beginTurn` is
+    // loop (same idea as __controlCenterDraftCanvas in CanvasStateProvider). `beginTurn` is
     // the runtime's turn latch, exposed so a test can check the overlay survives
     // the gaps between steps.
     if (process.env.APP_ENV === "test") {
       (
         window as unknown as {
-          __ccAgent?: CanvasAgentApi & { beginTurn: () => () => void };
+          __controlCenterAgent?: CanvasAgentApi & { beginTurn: () => () => void };
         }
-      ).__ccAgent = { ...api, beginTurn: beginAgentTurn };
+      ).__controlCenterAgent = { ...api, beginTurn: beginAgentTurn };
     }
     return registerCanvasAgent(api);
   }, []);
@@ -230,8 +230,17 @@ let placement = {
 const wait = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
 const nextFrame = () =>
   new Promise((r) => window.requestAnimationFrame(() => r(undefined)));
-/** Lets a just-created node reach the React Flow store before it's edited. */
-const settle = () => wait(0);
+/**
+ * Lets a just-created node reach the React Flow store before it's edited.
+ * Two animation frames straddle at least one React commit; the trailing
+ * macrotask lets any commit-scheduled effects run too. A bare zero-timeout
+ * is not enough — under concurrent rendering it can fire pre-commit.
+ */
+const settle = async () => {
+  await nextFrame();
+  await nextFrame();
+  await wait(0);
+};
 
 const ok = (detail: string, nodeId?: string): AgentStepResult => ({
   ok: true,
@@ -347,7 +356,7 @@ function buildApi(deps: Deps): CanvasAgentApi {
         }
         if (!draftIsUntouched(d)) {
           return fail(
-            `Network “${network.name}” isn't on this draft canvas — add it with cc_add (existing_network) and drill in after.`,
+            `Network “${network.name}” isn't on this draft canvas — add it with control_center_add (existing_network) and drill in after.`,
           );
         }
       } else if (VIEWS[view] === d.canvas.currentView) {
@@ -358,13 +367,13 @@ function buildApi(deps: Deps): CanvasAgentApi {
         */
         return ok(
           `Already on the ${view} view. In a draft the canvas is what you've built, ` +
-            `not a tab — bring anything else you need onto it with cc_add ` +
+            `not a tab — bring anything else you need onto it with control_center_add ` +
             `(existing_peer, existing_group, existing_policy, existing_network).`,
         );
       } else if (!draftIsUntouched(d)) {
         return fail(
           "A draft is one canvas, not a set of tabs, and switching views would throw it away. " +
-            "Add what you need to see instead — cc_add with existing_peer / existing_group / " +
+            "Add what you need to see instead — control_center_add with existing_peer / existing_group / " +
             "existing_policy / existing_network brings the real thing onto this canvas.",
         );
       }
@@ -626,22 +635,20 @@ function buildApi(deps: Deps): CanvasAgentApi {
   };
 
   /*
-    The public surface. Everything except `snapshot` (a pure read) runs inside
-    `acting`, so the pane is dimmed and locked for exactly as long as the step
-    takes — the user can still reach the header, toolbar and Cancel.
+    The public surface. Everything except `getSnapshot` (a pure read) runs
+    inside `acting`, so the pane is dimmed and locked for exactly as long as
+    the step takes — the user can still reach the header, toolbar and Cancel.
   */
   return {
-    snapshot,
+    getSnapshot: snapshot,
     drainNotices: () => notices.splice(0, notices.length),
-    navigate: (input) => acting(() => navigate(input)),
-    draft: (action) => acting(() => draftAction(action)),
-    add: (items, final) => acting(() => add(items, final)),
-    connect: (links, final) =>
-      acting(() => connect(links, final)),
-    node: (actions, final) =>
-      acting(() => node(actions, final)),
-    policy: (edit, final) => acting(() => policy(edit, final)),
-    canvas: (action) => acting(() => canvasAction(action)),
+    goToView: (input) => acting(() => navigate(input)),
+    draftAction: (action) => acting(() => draftAction(action)),
+    addNodes: (items, final) => acting(() => add(items, final)),
+    connectNodes: (links, final) => acting(() => connect(links, final)),
+    editNodes: (actions, final) => acting(() => node(actions, final)),
+    editPolicy: (edit, final) => acting(() => policy(edit, final)),
+    canvasAction: (action) => acting(() => canvasAction(action)),
   };
 }
 const VIEWS: Record<string, FlowView> = {
@@ -841,8 +848,14 @@ async function addOne(
         description: item.description,
         bidirectional: item.bidirectional,
       });
-      await settle();
-      const created = d.reactFlow.getNodes().find((n) => !before.has(n.id));
+      // The node lands in reactFlow only after React commits; one settle tick
+      // is not guaranteed to run after that, so poll briefly for it.
+      let created: Node | undefined;
+      for (let i = 0; i < 20 && !created; i++) {
+        await settle();
+        created = d.reactFlow.getNodes().find((n) => !before.has(n.id));
+        if (!created) await wait(25);
+      }
       return ok(
         `Added an empty ${
           item.bidirectional === false ? "one-way " : ""
@@ -938,7 +951,7 @@ async function addOne(
 /**
  * Puts a new group's initial members in it, and returns how many landed.
  *
- * Same writer as a drop and as `cc_node` `add_to_group` (`addMemberToGroup`), so
+ * Same writer as a drop and as `control_center_node` `add_to_group` (`addMemberToGroup`), so
  * the changeset can't tell the difference — this only saves the round trips. It
  * exists because a group is nearly always created FOR something: "the databases",
  * "the printers". Naming those in the same call is one step the user watches
@@ -1002,9 +1015,14 @@ async function fillGroup(
   members: string[],
   d: BridgeDeps,
 ): Promise<number> {
-  // The group node is created in the commit before this one.
-  await settle();
-  const group = d.reactFlow.getNodes().find((n) => n.id === groupNodeId);
+  // The group node is created in the commit before this one; commits land
+  // asynchronously, so poll briefly instead of trusting a single tick.
+  let group: Node | undefined;
+  for (let i = 0; i < 20 && !group; i++) {
+    await settle();
+    group = d.reactFlow.getNodes().find((n) => n.id === groupNodeId);
+    if (!group) await wait(25);
+  }
   if (!group) return 0;
 
   let added = 0;
@@ -1015,13 +1033,19 @@ async function fillGroup(
     // draggedNodeId is the card to absorb; addMemberToGroup keeps a framed
     // resource's row where it is (its network needs to still show it).
     d.addMemberToGroup(group, { peer, resource, itemId, draggedNodeId: nodeId });
-    await settle();
     // Counted from the canvas, not from having called it: every early return in
     // addMemberToGroup (already a member, the system "All" group) is silent, and
     // a step reporting "2 of 2" when nothing joined is worse than one that admits
     // it did nothing.
-    const after = d.reactFlow.getNodes().find((n) => n.id === groupNodeId);
-    if (after && groupContainsItem(after, itemId)) added += 1;
+    for (let i = 0; i < 20; i++) {
+      await settle();
+      const after = d.reactFlow.getNodes().find((n) => n.id === groupNodeId);
+      if (after && groupContainsItem(after, itemId)) {
+        added += 1;
+        break;
+      }
+      await wait(25);
+    }
   }
   return added;
 }
@@ -1154,8 +1178,15 @@ async function nodeOne(
         itemId,
         draggedNodeId: target.id,
       });
-      await settle();
-      const filled = d.reactFlow.getNodes().find((n) => n.id === group.id);
+      // Membership lands in reactFlow only after React commits; one settle
+      // tick is not guaranteed to run after that, so poll briefly for it.
+      let filled: Node | undefined;
+      for (let i = 0; i < 20; i++) {
+        await settle();
+        filled = d.reactFlow.getNodes().find((n) => n.id === group.id);
+        if (filled && groupContainsItem(filled, itemId)) break;
+        await wait(25);
+      }
       if (!filled || !groupContainsItem(filled, itemId))
         return fail(
           `${refOf(target)} did not join “${getNodeGroup(group)?.name}” — it may already be in it.`,

@@ -249,7 +249,7 @@ const PanelContent = React.memo(
     );
 
     const { addNewGroup } = useDraftGroupActions();
-    // Placing an existing entity is shared with the assistant's cc_add — see
+    // Placing an existing entity is shared with the assistant's control_center_add — see
     // useDraftEntityDrop.
     const {
       dropExistingPeer,

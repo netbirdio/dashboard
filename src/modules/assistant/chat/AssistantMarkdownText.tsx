@@ -7,6 +7,7 @@ import {
   type SyntaxHighlighterProps,
   useIsMarkdownCodeBlock,
 } from "@assistant-ui/react-markdown";
+import { useVaultRestore } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import bash from "highlight.js/lib/languages/bash";
 import dockerfile from "highlight.js/lib/languages/dockerfile";
@@ -23,7 +24,6 @@ import { Check, Copy, ExternalLink } from "lucide-react";
 import type { ReactNode } from "react";
 import remarkGfm from "remark-gfm";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
-import { useRedactor } from "@/modules/assistant/utils/redaction";
 
 // Registered by hand rather than lowlight's `common` bundle, so only the
 // grammars a NetBird answer contains get bundled; anything else stays plain.
@@ -288,7 +288,7 @@ const components = {
 };
 
 export function AssistantMarkdownText() {
-  const { restore } = useRedactor();
+  const restore = useVaultRestore();
 
   return (
     <div className="assistant-markdown text-sm leading-relaxed text-nb-gray-100">

@@ -837,8 +837,8 @@ export function DraftChangesetProvider({
   useEffect(() => {
     if (process.env.APP_ENV === "test") {
       (
-        window as unknown as { __ccDraftChanges?: DraftChange[] }
-      ).__ccDraftChanges = changes;
+        window as unknown as { __controlCenterDraftChanges?: DraftChange[] }
+      ).__controlCenterDraftChanges = changes;
     }
   }, [changes]);
 

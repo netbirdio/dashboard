@@ -1,5 +1,5 @@
-import * as React from "react";
-import { useEffect } from "react";
+import { isMac } from "@hooks/useOperatingSystem";
+import { useAgentBusy } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import {
   ArrowBigUpIcon,
@@ -13,14 +13,14 @@ import {
   Redo2Icon,
   Undo2Icon,
 } from "lucide-react";
+import * as React from "react";
+import { useEffect } from "react";
+import { useDraftHistory } from "@/modules/control-center/draft/DraftHistoryContext";
 import {
   CanvasTool,
   useDraftMode,
 } from "@/modules/control-center/draft/DraftModeContext";
-import { useDraftHistory } from "@/modules/control-center/draft/DraftHistoryContext";
-import { useAgentBusy } from "@/modules/control-center/agent/canvasAgentStore";
 import { useAutoArrange } from "@/modules/control-center/hooks/useAutoArrange";
-import { isMac } from "@hooks/useOperatingSystem";
 
 // The big-arrow icon stands in for Shift in the shortcut badges.
 const UndoShortcut = isMac ? (
@@ -64,7 +64,7 @@ export const CanvasToolbar = () => {
   } = useDraftMode();
   const { undo, redo, canUndo, canRedo } = useDraftHistory();
   const agentBusy = useAgentBusy();
-  // Zoom / fit / arrange are shared with the assistant's cc_canvas — see
+  // Zoom / fit / arrange are shared with the assistant's control_center_canvas — see
   // useAutoArrange.
   const {
     arrange: handleArrange,

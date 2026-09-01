@@ -56,3 +56,6 @@ playwright-report*.zip
 src/.local-config*
 .deepsec/
 
+
+# Local SDK tarballs from the agent repo (packed by scripts, not committed)
+vendor/

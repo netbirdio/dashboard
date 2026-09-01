@@ -16,7 +16,7 @@ import {
  * Per-node draft edits that aren't group or network specific: renaming a
  * placeholder peer or a draft resource, enabling/disabling a resource, and
  * deleting an existing one. Shared by the node context menu and the
- * assistant's `cc_node`, so both write the same canvas state and the same
+ * assistant's `control_center_node`, so both write the same canvas state and the same
  * changeset entries.
  */
 export function useDraftNodeActions() {

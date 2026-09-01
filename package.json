@@ -23,13 +23,11 @@
     "test:ci": "cross-env APP_ENV=test next build && npx playwright test --config=e2e/playwright.config.ts"
   },
   "dependencies": {
-    "@ai-sdk/react": "^4.0.68",
     "@assistant-ui/react": "^0.15.8",
-    "@assistant-ui/react-ai-sdk": "^1.4.5",
     "@assistant-ui/react-markdown": "^0.14.9",
-    "@assistant-ui/styles": "^0.3.7",
     "@axa-fr/react-oidc": "^7.26.3",
     "@dagrejs/dagre": "^1.1.5",
+    "@netbird/assistant-react": "file:vendor/netbird-assistant-react-0.1.0.tgz",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-collapsible": "^1.1.12",
@@ -60,7 +58,6 @@
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
     "@xyflow/react": "^12.8.4",
-    "ai": "^7.0.65",
     "autoprefixer": "^10",
     "chart.js": "^4.4.8",
     "chroma-js": "^3.1.2",
@@ -77,6 +74,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "framer-motion": "^12.29.2",
+    "highlight.js": "^11.11.1",
     "ip-address": "^10.2.0",
     "js-cookie": "^3.0.7",
     "lodash": "4.18.1",
@@ -103,8 +101,7 @@
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.7",
     "timescape": "^0.7.1",
-    "typescript": "^5",
-    "zustand": "^5.0.15"
+    "typescript": "^5"
   },
   "overrides": {
     "minimatch": ">=10.2.1"

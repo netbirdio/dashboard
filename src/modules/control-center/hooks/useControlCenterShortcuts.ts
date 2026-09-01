@@ -1,5 +1,5 @@
+import { useAgentBusy } from "@netbird/assistant-react";
 import { useEffect, useRef } from "react";
-import { useAgentBusy } from "@/modules/control-center/agent/canvasAgentStore";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type ShortcutMap = Record<string, () => void>;

@@ -1,9 +1,3 @@
-// What a client-run tool hands back to the model.
-export interface ToolOutcome {
-  content: string;
-  isError: boolean;
-}
-
 // Only surfaces with their own URL: a modal covers the panel, so it has no chip.
 export type PageContextType =
   | "peer"
