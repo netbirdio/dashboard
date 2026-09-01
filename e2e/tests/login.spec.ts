@@ -13,11 +13,46 @@ const credentials: Record<TestUser, { username: string; password: string }> = {
   user: { username: "user@localhost.test", password: "testMe123@" },
 };
 
+// Temporary: the CI failures for the user fixture report only which locator
+// timed out, which cannot distinguish a blank page from a rendered app with an
+// empty sidebar. Dump what the page actually holds, into the run log. Remove
+// once the user login is green again.
+async function reportPageState(
+  page: import("@playwright/test").Page,
+  user: TestUser,
+  pageErrors: string[],
+) {
+  console.log(`--- ${user}: page state after login ---`);
+  console.log(`url: ${page.url()}`);
+  try {
+    const body = (await page.locator("body").innerText()).trim();
+    console.log(`body text (${body.length} chars): ${body.slice(0, 500)}`);
+    console.log(
+      `nav items in dom: ${await page
+        .getByTestId("left-navigation-item")
+        .count()}`,
+    );
+  } catch (e) {
+    console.log(`could not read the body: ${String(e)}`);
+  }
+  if (pageErrors.length > 0) {
+    console.log(`page errors:\n${pageErrors.join("\n")}`);
+  } else {
+    console.log("page errors: none");
+  }
+}
+
 async function loginAndSave(
   page: import("@playwright/test").Page,
   user: TestUser,
 ) {
   const { username, password } = credentials[user];
+
+  const pageErrors: string[] = [];
+  page.on("pageerror", (err) => pageErrors.push(`pageerror: ${err.message}`));
+  page.on("console", (msg) => {
+    if (msg.type() === "error") pageErrors.push(`console: ${msg.text()}`);
+  });
 
   await page.goto("/");
 
@@ -36,20 +71,31 @@ async function loginAndSave(
   const modal = page.getByTestId("setup-netbird-modal");
   const approval = page.getByText("User Approval Pending");
 
-  const after_login = await Promise.race([
-    skipButton.waitFor({ timeout: 15_000 }).then(() => "2fa" as const),
-    appNav.waitFor({ timeout: 15_000 }).then(() => "app" as const),
-    modal.waitFor({ timeout: 15_000 }).then(() => "modal" as const),
-    approval.waitFor({ timeout: 15_000 }).then(() => "approval" as const),
-  ]);
+  let after_login: "2fa" | "app" | "modal" | "approval";
+  try {
+    after_login = await Promise.race([
+      skipButton.waitFor({ timeout: 15_000 }).then(() => "2fa" as const),
+      appNav.waitFor({ timeout: 15_000 }).then(() => "app" as const),
+      modal.waitFor({ timeout: 15_000 }).then(() => "modal" as const),
+      approval.waitFor({ timeout: 15_000 }).then(() => "approval" as const),
+    ]);
+  } catch (e) {
+    await reportPageState(page, user, pageErrors);
+    throw e;
+  }
 
   if (after_login === "2fa") {
     await skipButton.click();
-    await Promise.race([
-      appNav.waitFor({ timeout: 15_000 }),
-      modal.waitFor({ timeout: 15_000 }),
-      approval.waitFor({ timeout: 15_000 }),
-    ]);
+    try {
+      await Promise.race([
+        appNav.waitFor({ timeout: 15_000 }),
+        modal.waitFor({ timeout: 15_000 }),
+        approval.waitFor({ timeout: 15_000 }),
+      ]);
+    } catch (e) {
+      await reportPageState(page, user, pageErrors);
+      throw e;
+    }
   }
 
   // Dismiss setup modal if present
