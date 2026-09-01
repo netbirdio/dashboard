@@ -21,6 +21,7 @@ async function reportPageState(
   page: import("@playwright/test").Page,
   user: TestUser,
   pageErrors: string[],
+  failedRequests: string[],
 ) {
   console.log(`--- ${user}: page state after login ---`);
   console.log(`url: ${page.url()}`);
@@ -40,6 +41,9 @@ async function reportPageState(
   } else {
     console.log("page errors: none");
   }
+  if (failedRequests.length > 0) {
+    console.log(`failed requests:\n${failedRequests.join("\n")}`);
+  }
 }
 
 async function loginAndSave(
@@ -49,9 +53,21 @@ async function loginAndSave(
   const { username, password } = credentials[user];
 
   const pageErrors: string[] = [];
-  page.on("pageerror", (err) => pageErrors.push(`pageerror: ${err.message}`));
+  const failedRequests: string[] = [];
+  page.on("pageerror", (err) => {
+    // The message alone came back empty for the crash under investigation, so
+    // record what was actually thrown along with where it came from.
+    pageErrors.push(
+      `pageerror: ${String(err)}\n${(err.stack ?? "no stack").slice(0, 800)}`,
+    );
+  });
   page.on("console", (msg) => {
     if (msg.type() === "error") pageErrors.push(`console: ${msg.text()}`);
+  });
+  page.on("response", (resp) => {
+    if (resp.status() >= 400) {
+      failedRequests.push(`${resp.status()} ${resp.url()}`);
+    }
   });
 
   await page.goto("/");
@@ -80,7 +96,7 @@ async function loginAndSave(
       approval.waitFor({ timeout: 15_000 }).then(() => "approval" as const),
     ]);
   } catch (e) {
-    await reportPageState(page, user, pageErrors);
+    await reportPageState(page, user, pageErrors, failedRequests);
     throw e;
   }
 
@@ -93,7 +109,7 @@ async function loginAndSave(
         approval.waitFor({ timeout: 15_000 }),
       ]);
     } catch (e) {
-      await reportPageState(page, user, pageErrors);
+      await reportPageState(page, user, pageErrors, failedRequests);
       throw e;
     }
   }
