@@ -13,11 +13,79 @@ const credentials: Record<TestUser, { username: string; password: string }> = {
   user: { username: "user@localhost.test", password: "testMe123@" },
 };
 
+// Temporary: the CI failures for the user fixture report only which locator
+// timed out, which cannot distinguish a blank page from a rendered app with an
+// empty sidebar. Dump what the page actually holds, into the run log. Remove
+// once the user login is green again.
+async function reportPageState(
+  page: import("@playwright/test").Page,
+  user: TestUser,
+  pageErrors: string[],
+  failedRequests: string[],
+) {
+  console.log(`--- ${user}: page state after login ---`);
+  console.log(`url: ${page.url()}`);
+  try {
+    const body = (await page.locator("body").innerText()).trim();
+    console.log(`body text (${body.length} chars): ${body.slice(0, 500)}`);
+    console.log(
+      `nav items in dom: ${await page
+        .getByTestId("left-navigation-item")
+        .count()}`,
+    );
+  } catch (e) {
+    console.log(`could not read the body: ${String(e)}`);
+  }
+  if (pageErrors.length > 0) {
+    console.log(`page errors:\n${pageErrors.join("\n")}`);
+  } else {
+    console.log("page errors: none");
+  }
+  if (failedRequests.length > 0) {
+    console.log(`failed requests:\n${failedRequests.join("\n")}`);
+  }
+}
+
 async function loginAndSave(
   page: import("@playwright/test").Page,
   user: TestUser,
 ) {
   const { username, password } = credentials[user];
+
+  const pageErrors: string[] = [];
+  const failedRequests: string[] = [];
+  page.on("pageerror", (err) => {
+    // The message alone came back empty for the crash under investigation, so
+    // record what was actually thrown along with where it came from.
+    pageErrors.push(
+      `pageerror: ${String(err)}\n${(err.stack ?? "no stack").slice(0, 800)}`,
+    );
+  });
+  page.on("console", (msg) => {
+    if (msg.type() === "error") pageErrors.push(`console: ${msg.text()}`);
+  });
+  // The body of a rejected API call carries the reason (permission denied,
+  // blocked, pending approval), which is what separates a misprovisioned test
+  // user from a dashboard that cannot render one.
+  const bodies: Promise<void>[] = [];
+  page.on("response", (resp) => {
+    if (resp.status() < 400) return;
+    const line = `${resp.status()} ${resp.url()}`;
+    if (!resp.url().includes("/api/")) {
+      failedRequests.push(line);
+      return;
+    }
+    bodies.push(
+      resp
+        .text()
+        .then((body) => {
+          failedRequests.push(`${line}\n    body: ${body.slice(0, 200)}`);
+        })
+        .catch(() => {
+          failedRequests.push(`${line} (body unavailable)`);
+        }),
+    );
+  });
 
   await page.goto("/");
 
@@ -36,20 +104,33 @@ async function loginAndSave(
   const modal = page.getByTestId("setup-netbird-modal");
   const approval = page.getByText("User Approval Pending");
 
-  const after_login = await Promise.race([
-    skipButton.waitFor({ timeout: 15_000 }).then(() => "2fa" as const),
-    appNav.waitFor({ timeout: 15_000 }).then(() => "app" as const),
-    modal.waitFor({ timeout: 15_000 }).then(() => "modal" as const),
-    approval.waitFor({ timeout: 15_000 }).then(() => "approval" as const),
-  ]);
+  let after_login: "2fa" | "app" | "modal" | "approval";
+  try {
+    after_login = await Promise.race([
+      skipButton.waitFor({ timeout: 15_000 }).then(() => "2fa" as const),
+      appNav.waitFor({ timeout: 15_000 }).then(() => "app" as const),
+      modal.waitFor({ timeout: 15_000 }).then(() => "modal" as const),
+      approval.waitFor({ timeout: 15_000 }).then(() => "approval" as const),
+    ]);
+  } catch (e) {
+    await Promise.allSettled(bodies);
+    await reportPageState(page, user, pageErrors, failedRequests);
+    throw e;
+  }
 
   if (after_login === "2fa") {
     await skipButton.click();
-    await Promise.race([
-      appNav.waitFor({ timeout: 15_000 }),
-      modal.waitFor({ timeout: 15_000 }),
-      approval.waitFor({ timeout: 15_000 }),
-    ]);
+    try {
+      await Promise.race([
+        appNav.waitFor({ timeout: 15_000 }),
+        modal.waitFor({ timeout: 15_000 }),
+        approval.waitFor({ timeout: 15_000 }),
+      ]);
+    } catch (e) {
+      await Promise.allSettled(bodies);
+      await reportPageState(page, user, pageErrors, failedRequests);
+      throw e;
+    }
   }
 
   // Dismiss setup modal if present
@@ -105,7 +186,7 @@ test.describe("Global Setup", () => {
         25_000,
       );
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.warn(
         `[setup] proxy clusters not confirmed online; reverse-proxy specs may be affected: ${
           (err as Error).message
