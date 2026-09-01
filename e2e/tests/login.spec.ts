@@ -64,10 +64,27 @@ async function loginAndSave(
   page.on("console", (msg) => {
     if (msg.type() === "error") pageErrors.push(`console: ${msg.text()}`);
   });
+  // The body of a rejected API call carries the reason (permission denied,
+  // blocked, pending approval), which is what separates a misprovisioned test
+  // user from a dashboard that cannot render one.
+  const bodies: Promise<void>[] = [];
   page.on("response", (resp) => {
-    if (resp.status() >= 400) {
-      failedRequests.push(`${resp.status()} ${resp.url()}`);
+    if (resp.status() < 400) return;
+    const line = `${resp.status()} ${resp.url()}`;
+    if (!resp.url().includes("/api/")) {
+      failedRequests.push(line);
+      return;
     }
+    bodies.push(
+      resp
+        .text()
+        .then((body) => {
+          failedRequests.push(`${line}\n    body: ${body.slice(0, 200)}`);
+        })
+        .catch(() => {
+          failedRequests.push(`${line} (body unavailable)`);
+        }),
+    );
   });
 
   await page.goto("/");
@@ -96,6 +113,7 @@ async function loginAndSave(
       approval.waitFor({ timeout: 15_000 }).then(() => "approval" as const),
     ]);
   } catch (e) {
+    await Promise.allSettled(bodies);
     await reportPageState(page, user, pageErrors, failedRequests);
     throw e;
   }
@@ -109,6 +127,7 @@ async function loginAndSave(
         approval.waitFor({ timeout: 15_000 }),
       ]);
     } catch (e) {
+      await Promise.allSettled(bodies);
       await reportPageState(page, user, pageErrors, failedRequests);
       throw e;
     }
@@ -167,7 +186,7 @@ test.describe("Global Setup", () => {
         25_000,
       );
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.warn(
         `[setup] proxy clusters not confirmed online; reverse-proxy specs may be affected: ${
           (err as Error).message
