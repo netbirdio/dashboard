@@ -13,7 +13,7 @@ import { NodeType } from "@/modules/control-center/utils/nodes";
 
 /**
  * Placing an EXISTING peer / group / resource / network / policy on the draft
- * canvas — the components panel's drops and the assistant's `cc_add` share this
+ * canvas — the components panel's drops and the assistant's `control_center_add` share this
  * so both produce the same nodes, the same network frames, and the same
  * automatically drawn policies.
  */

@@ -1,11 +1,9 @@
 // Renders a `render_component` tool call's args inline. Payloads are
-// validated server-side (assistant/agent/tools/ui.ts); unknown names render
-// nothing.
+// validated server-side; unknown names render nothing.
 "use client";
 
 import type { ToolCallMessagePartProps } from "@assistant-ui/react";
-import { useToolResults } from "@/modules/assistant/hooks/useAssistantTools";
-import { useRedactor } from "@/modules/assistant/utils/redaction";
+import { useVaultRestore } from "@netbird/assistant-react";
 
 interface CanvasPreview {
   component: "canvas_preview";
@@ -18,6 +16,8 @@ interface ResourceTable {
   component: "resource_table";
   columns: string[];
   ids: string[];
+  // One entry per id, column → display value (may carry vault tokens).
+  rows?: Record<string, string>[];
 }
 
 type UIComponent = CanvasPreview | ResourceTable;
@@ -39,7 +39,7 @@ function renderValue(value: unknown): string {
 function CanvasPreviewCard({
   component,
 }: Readonly<{ component: CanvasPreview }>) {
-  const { restore } = useRedactor();
+  const restore = useVaultRestore();
   // Streaming args arrive as partial JSON — fields exist one at a time.
   const entries = Object.entries(component.data ?? {});
   if (!component.title) return null;
@@ -80,21 +80,22 @@ function CanvasPreviewCard({
 function ResourceTableCard({
   component,
 }: Readonly<{ component: ResourceTable }>) {
-  const toolResults = useToolResults();
-  const { resolve, restore } = useRedactor();
+  const restore = useVaultRestore();
   // Streaming args arrive as partial JSON — the columns land before the ids.
   const columns = component.columns ?? [];
   const ids = component.ids ?? [];
+  const rows = component.rows ?? [];
 
-  // The server sends ids only — as tokens, since that's all the model holds —
-  // joined here against the real rows stored when the tool executed. Table
-  // data never passes through the model, so it can't garble values.
-  const cell = (token: string, column: string): string => {
-    const id = resolve(token) ?? token;
-    const value = toolResults.field(id, column);
-    if (column === "id") return restore(token);
-    if (column === "name" && value === undefined) return restore(token);
-    return value === undefined ? "—" : renderValue(value);
+  // Cell values ride in the args (the browser never fetched the raw rows —
+  // management reads are server tools); any string may carry vault tokens.
+  // Without a rows entry only id/name are recoverable from the vault.
+  const cell = (token: string, column: string, index: number): string => {
+    const provided = rows[index]?.[column];
+    if (typeof provided === "string" && provided.length) {
+      return restore(provided);
+    }
+    if (column === "id" || column === "name") return restore(token);
+    return "—";
   };
 
   if (columns.length === 0 || ids.length === 0) return null;
@@ -117,14 +118,14 @@ function ResourceTableCard({
           </tr>
         </thead>
         <tbody>
-          {ids.map((id) => (
+          {ids.map((id, index) => (
             <tr key={id}>
               {columns.map((column) => (
                 <td
                   key={column}
                   className="px-3.5 py-2.5 align-top text-nb-gray-200"
                 >
-                  {cell(id, column)}
+                  {cell(id, column, index)}
                 </td>
               ))}
             </tr>

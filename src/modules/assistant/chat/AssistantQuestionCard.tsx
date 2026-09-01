@@ -1,23 +1,13 @@
-// One card for both producers — the `question` event and the `suggestions`
-// pass — since the interaction is the same: answer, dismiss, or just type.
+// The card for a pending ask_user question: answer, dismiss, or just type.
 "use client";
 
+import {
+  type AssistantQuestion,
+  useVaultRestore,
+} from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import { ArrowUp, Check, X } from "lucide-react";
 import { useState } from "react";
-import { useRedactor } from "@/modules/assistant/utils/redaction";
-
-export interface QuestionOption {
-  label: string;
-  description?: string;
-}
-
-export interface AssistantQuestion {
-  id: string;
-  title: string;
-  options: QuestionOption[];
-  multi: boolean;
-}
 
 // "2", "1,3", "1 3" → option indices, or null when the text isn't a pick.
 // Deliberately strict: anything with a word in it must be sent as written.
@@ -50,7 +40,7 @@ export function AssistantQuestionCard({
   const [picked, setPicked] = useState<number[]>([]);
   // Restored at render only: the answer sends the option's label as written,
   // tokens included, so the model gets its own vocabulary back.
-  const { restore } = useRedactor();
+  const restore = useVaultRestore();
 
   const { multi, options } = question;
 

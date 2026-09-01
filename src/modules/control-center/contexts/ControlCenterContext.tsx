@@ -174,7 +174,7 @@ export function CanvasStateProvider({
   // The canvas lives only in React, so mirror a projection onto window for e2e.
   useEffect(() => {
     if (process.env.APP_ENV !== "test") return;
-    (window as unknown as { __ccDraftCanvas?: unknown }).__ccDraftCanvas = {
+    (window as unknown as { __controlCenterDraftCanvas?: unknown }).__controlCenterDraftCanvas = {
       nodes: nodes.map((n) => ({
         id: n.id,
         type: n.type,

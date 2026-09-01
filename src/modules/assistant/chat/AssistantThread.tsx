@@ -11,6 +11,11 @@ import {
   useAuiState,
 } from "@assistant-ui/react";
 import Paragraph from "@components/Paragraph";
+import {
+  type AssistantQuestion,
+  useAssistant,
+  useVaultRestore,
+} from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import {
   ArrowDown,
@@ -36,12 +41,10 @@ import { AssistantContextChip } from "@/modules/assistant/chat/AssistantContextC
 import { AssistantInlineComponent } from "@/modules/assistant/chat/AssistantInlineComponent";
 import { AssistantMarkdownText } from "@/modules/assistant/chat/AssistantMarkdownText";
 import {
-  type AssistantQuestion,
   AssistantQuestionCard,
   parseOptionNumbers,
 } from "@/modules/assistant/chat/AssistantQuestionCard";
 import { AssistantToolActivity } from "@/modules/assistant/chat/AssistantToolActivity";
-import { useRedactor } from "@/modules/assistant/utils/redaction";
 
 // Width of the `.nb-scrollbar` track, so overlays can stop short of it.
 const SCROLLBAR_WIDTH = 10;
@@ -77,10 +80,10 @@ const groupSteps = (part: { type: string; toolName?: string }) => {
 // Below this a summary hides more than it saves.
 const SUMMARIZE_FROM = 3;
 
-// Typed text passes through unchanged; a quick-reply pick appends the option's
-// label, which can carry tokens, so user bubbles restore too.
+// User bubbles get the vault pass too: text quoted back from an answer can
+// carry tokens, and restore() leaves everything else as typed.
 function RestoredText({ text }: Readonly<{ text: string }>) {
-  const { restore } = useRedactor();
+  const restore = useVaultRestore();
   return <span className="whitespace-pre-wrap">{restore(text)}</span>;
 }
 
@@ -100,7 +103,7 @@ const actionClass =
 // Not `ActionBarPrimitive.Copy`: `useCopyToClipboard` fires the dashboard's
 // standard notification.
 function CopyAction() {
-  const { restore } = useRedactor();
+  const restore = useVaultRestore();
   const text = useAuiState((s) =>
     s.message.parts
       .map((part) => (part.type === "text" ? part.text : ""))
@@ -291,8 +294,8 @@ function timeOfDayGreeting(): string {
   return "Good evening";
 }
 
-// Tasks, not questions. Local rather than `GET /v1/suggestions`: the server
-// sends full sentences.
+// Tasks, not questions: each one opens a piece of work rather than asking
+// something the assistant could answer in a sentence.
 const STARTERS: {
   label: string;
   prompt: string;
@@ -380,7 +383,6 @@ function EmptyState({ bottomOffset }: Readonly<{ bottomOffset: number }>) {
   );
 }
 
-// Hidden while a turn runs: its options answer the last message.
 function ThreadQuestion({
   question,
   onAnswer,
@@ -392,16 +394,16 @@ function ThreadQuestion({
 }>) {
   if (!question) return null;
 
+  // Shown even while the thread runs: the card answers a turn that is still
+  // in flight, with the server parked on the ask_user tool result.
   return (
-    <ThreadPrimitive.If running={false}>
-      <AssistantQuestionCard
-        // Resets the multi-select picks when a new question arrives.
-        key={question.id}
-        question={question}
-        onAnswer={onAnswer}
-        onDismiss={onDismiss}
-      />
-    </ThreadPrimitive.If>
+    <AssistantQuestionCard
+      // Resets the multi-select picks when a new question arrives.
+      key={question.id}
+      question={question}
+      onAnswer={onAnswer}
+      onDismiss={onDismiss}
+    />
   );
 }
 
@@ -415,16 +417,42 @@ function composerPlaceholder(question: AssistantQuestion | null): string {
 function Composer({
   question,
   onAnswer,
+  onAnswerText,
 }: Readonly<{
   question: AssistantQuestion | null;
   onAnswer: (indices: number[]) => void;
+  onAnswerText: (text: string) => void;
 }>) {
   const aui = useAui();
 
-  // Typing "1" or "1,3" while a card is up picks those options. Captured on
-  // the way down to beat the textarea's own Enter handler, which would submit
-  // the literal text.
-  const answerByNumber = (event: React.KeyboardEvent) => {
+  // "1" / "1,3" picks those options; anything else answers a pending ask_user
+  // question as written (its turn is still running, so the normal send path is
+  // closed). Returns false when the text wasn't consumed.
+  const submitAnswer = (): boolean => {
+    if (!question) return false;
+    const composer = aui.thread.composer();
+    const text = composer.getState().text;
+    const indices = parseOptionNumbers(
+      text,
+      question.options.length,
+      question.multi,
+    );
+    if (indices) {
+      composer.setText("");
+      onAnswer(indices);
+      return true;
+    }
+    if (text.trim()) {
+      composer.setText("");
+      onAnswerText(text.trim());
+      return true;
+    }
+    return false;
+  };
+
+  // Captured on the way down to beat the textarea's own Enter handler, which
+  // would submit the literal text.
+  const answerByKeyboard = (event: React.KeyboardEvent) => {
     if (!question) return;
     if (
       event.key !== "Enter" ||
@@ -433,23 +461,15 @@ function Composer({
     )
       return;
 
-    const composer = aui.thread.composer();
-    const indices = parseOptionNumbers(
-      composer.getState().text,
-      question.options.length,
-      question.multi,
-    );
-    if (!indices) return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    composer.setText("");
-    onAnswer(indices);
+    if (submitAnswer()) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   };
 
   return (
     <ComposerPrimitive.Root
-      onKeyDownCapture={answerByNumber}
+      onKeyDownCapture={answerByKeyboard}
       className={cn(
         "flex flex-col gap-1 rounded-2xl border pl-3 pr-2 py-2",
         // z-10 beats the context chip: its transform/opacity would paint it
@@ -467,18 +487,36 @@ function Composer({
       />
 
       <div className="flex items-center justify-end gap-2">
-        <ThreadPrimitive.If running={false}>
-          <ComposerPrimitive.Send
-            aria-label="Send"
+        {/* While an ask_user card is up the thread counts as running, which
+            would leave only Stop; this button routes the text to the answer. */}
+        {question && (
+          <button
+            type="button"
+            aria-label="Send answer"
+            onClick={submitAnswer}
             className={cn(
               "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
               "bg-netbird-500 text-white hover:bg-netbird-500/90",
-              "disabled:bg-nb-gray-900 disabled:text-nb-gray-500",
             )}
           >
             <ArrowUp size={16} />
-          </ComposerPrimitive.Send>
-        </ThreadPrimitive.If>
+          </button>
+        )}
+
+        {!question && (
+          <ThreadPrimitive.If running={false}>
+            <ComposerPrimitive.Send
+              aria-label="Send"
+              className={cn(
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors",
+                "bg-netbird-500 text-white hover:bg-netbird-500/90",
+                "disabled:bg-nb-gray-900 disabled:text-nb-gray-500",
+              )}
+            >
+              <ArrowUp size={16} />
+            </ComposerPrimitive.Send>
+          </ThreadPrimitive.If>
+        )}
 
         <ThreadPrimitive.If running>
           <ComposerPrimitive.Cancel
@@ -496,36 +534,33 @@ function Composer({
 }
 
 export interface AssistantThreadProps {
-  question: AssistantQuestion | null;
-  onDismissQuestion: () => void;
   context: PageContextEntry | null;
   onDismissContext: () => void;
-  status: string | null;
-  turnActive: boolean;
   className?: string;
 }
 
 export function AssistantThread({
-  question,
-  onDismissQuestion,
   context,
   onDismissContext,
-  status,
-  turnActive,
   className,
 }: Readonly<AssistantThreadProps>) {
-  const aui = useAui();
+  const {
+    statusLine: status,
+    turnActive,
+    pendingQuestion: question,
+    answerQuestion,
+    dismissQuestion,
+  } = useAssistant();
 
   const answer = (indices: number[]) => {
     if (!question) return;
-    aui.thread.append(
+    answerQuestion(
       indices.map((index) => question.options[index].label).join(", "),
     );
-    onDismissQuestion();
   };
 
   // The composer floats over the messages, so they need to end above it —
-  // measured, because the composer grows with the input and follow-up chips.
+  // measured, because the composer grows with the input and the question card.
   const composerRef = useRef<HTMLDivElement>(null);
   const [composerHeight, setComposerHeight] = useState(0);
 
@@ -578,7 +613,7 @@ export function AssistantThread({
         swallow clicks on the chips. */}
       <EmptyState bottomOffset={composerHeight} />
 
-      {/* Transparent bar so messages show through beside the follow-up chips. */}
+      {/* Transparent bar so messages show through beside the composer. */}
       <div
         ref={composerRef}
         className="absolute inset-x-0 bottom-0 pt-2"
@@ -600,7 +635,7 @@ export function AssistantThread({
           <ThreadQuestion
             question={question}
             onAnswer={answer}
-            onDismiss={onDismissQuestion}
+            onDismiss={dismissQuestion}
           />
         </div>
 
@@ -616,7 +651,11 @@ export function AssistantThread({
               entry={context}
               onDismiss={onDismissContext}
             />
-            <Composer question={question} onAnswer={answer} />
+            <Composer
+              question={question}
+              onAnswer={answer}
+              onAnswerText={answerQuestion}
+            />
           </div>
         </div>
       </div>

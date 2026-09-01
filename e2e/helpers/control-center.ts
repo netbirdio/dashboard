@@ -49,7 +49,7 @@ export async function resetDraftState(page: Page) {
 export async function readDraftChanges(page: Page): Promise<any[]> {
   return await page.evaluate(
     () =>
-      (window as unknown as { __ccDraftChanges?: any[] }).__ccDraftChanges ??
+      (window as unknown as { __controlCenterDraftChanges?: any[] }).__controlCenterDraftChanges ??
       [],
   );
 }
@@ -187,7 +187,7 @@ export async function createViaCanvasMenu(
 export async function readDraftCanvas(page: Page): Promise<any | null> {
   return await page.evaluate(
     () =>
-      (window as unknown as { __ccDraftCanvas?: unknown }).__ccDraftCanvas ??
+      (window as unknown as { __controlCenterDraftCanvas?: unknown }).__controlCenterDraftCanvas ??
       null,
   );
 }

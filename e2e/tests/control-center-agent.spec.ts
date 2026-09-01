@@ -12,7 +12,7 @@ import {
 
 /**
  * The assistant's control-center actions, driven the way the assistant drives
- * them — through the canvas API the page publishes (`window.__ccAgent` in the
+ * them — through the canvas API the page publishes (`window.__controlCenterAgent` in the
  * test build), with no model in the loop. What's under test is that those
  * actions really build a draft: nodes appear, changes get tracked, connects
  * land on a policy.
@@ -24,9 +24,9 @@ type Step = { ok: boolean; detail: string; nodeId?: string };
 async function agent<T>(page: Page, method: string, arg?: unknown): Promise<T> {
   return (await page.evaluate(
     async ([m, a]) => {
-      const api = (window as unknown as { __ccAgent?: Record<string, any> })
-        .__ccAgent;
-      if (!api) throw new Error("__ccAgent is not exposed — test build only");
+      const api = (window as unknown as { __controlCenterAgent?: Record<string, any> })
+        .__controlCenterAgent;
+      if (!api) throw new Error("__controlCenterAgent is not exposed — test build only");
       return await api[m as string](a);
     },
     [method, arg ?? undefined] as [string, unknown],
@@ -34,7 +34,7 @@ async function agent<T>(page: Page, method: string, arg?: unknown): Promise<T> {
 }
 
 const add = (page: Page, items: unknown[]) =>
-  agent<Step[]>(page, "add", items);
+  agent<Step[]>(page, "addNodes", items);
 
 /** Whether a node's card is inside the visible canvas — the user's own test. */
 async function nodeOnScreen(page: Page, nodeId: string): Promise<boolean> {
@@ -68,7 +68,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
   test("Should start an empty draft and add a server, an agent and a policy", async ({
     dashboardAsOwner: page,
   }) => {
-    const started = await agent<Step>(page, "draft", "new_empty");
+    const started = await agent<Step>(page, "draftAction", "new_empty");
     expect(started.ok).toBe(true);
     await expect(page.getByTestId("cc-draft-cancel")).toBeVisible();
 
@@ -103,7 +103,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
     expect(server.nodeId && policy.nodeId).toBeTruthy();
 
-    const links = await agent<Step[]>(page, "connect", [
+    const links = await agent<Step[]>(page, "connectNodes", [
       { from: server.nodeId, to: policy.nodeId },
     ]);
 
@@ -122,7 +122,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     const [group] = await add(page, [{ kind: "new_group" }]);
     expect(group.nodeId).toBeTruthy();
 
-    const renamed = await agent<Step[]>(page, "node", [
+    const renamed = await agent<Step[]>(page, "editNodes", [
       { node: group.nodeId, action: "rename", name: "Agent Renamed Group" },
     ]);
     expect(renamed[0].ok).toBe(true);
@@ -133,7 +133,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     );
     expect(names).toContain("Agent Renamed Group");
 
-    const removed = await agent<Step[]>(page, "node", [
+    const removed = await agent<Step[]>(page, "editNodes", [
       { node: group.nodeId, action: "remove" },
     ]);
     expect(removed[0].ok).toBe(true);
@@ -177,7 +177,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
 
     // Renaming to the SAME name it already has must not report "already exists"
     // against its own pending create.
-    const renamed = await agent<Step[]>(page, "node", [
+    const renamed = await agent<Step[]>(page, "editNodes", [
       { node: group.nodeId, action: "rename", name: "Agent Self Rename 2" },
     ]);
 
@@ -213,7 +213,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
   test("Should place a destination on the right without waiting for the arrange", async ({
     dashboardAsOwner: page,
   }) => {
-    await agent<Step>(page, "draft", "new_empty");
+    await agent<Step>(page, "draftAction", "new_empty");
 
     const [source, policy, destination] = await add(page, [
       { kind: "new_group", name: "Agent Role Sources", role: "source" },
@@ -265,7 +265,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
       { kind: "new_policy", name: "Agent Port Narrowing" },
     ]);
 
-    const edited = await agent<Step>(page, "policy", {
+    const edited = await agent<Step>(page, "editPolicy", {
       node: policy.nodeId,
       protocol: "tcp",
       ports: ["443"],
@@ -290,7 +290,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     await enterDraft(page);
     const [policy] = await add(page, [{ kind: "new_policy", name: "Agent ICMP" }]);
 
-    const edited = await agent<Step>(page, "policy", {
+    const edited = await agent<Step>(page, "editPolicy", {
       node: policy.nodeId,
       protocol: "icmp",
       ports: ["443"],
@@ -323,7 +323,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
       { kind: "new_group", name: "Agent Members" },
     ]);
 
-    const assigned = await agent<Step[]>(page, "node", [
+    const assigned = await agent<Step[]>(page, "editNodes", [
       { node: server.nodeId, action: "add_to_group", group: group.nodeId },
     ]);
 
@@ -340,7 +340,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
   test("Should place a group, a policy and a second group in reading order", async ({
     dashboardAsOwner: page,
   }) => {
-    await agent<Step>(page, "draft", "new_empty");
+    await agent<Step>(page, "draftAction", "new_empty");
 
     const [left, policy, right] = await add(page, [
       { kind: "new_group", name: "Agent Lane Sources" },
@@ -370,12 +370,12 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     ]);
 
     // policy → node puts the node on the DESTINATION side.
-    const links = await agent<Step[]>(page, "connect", [
+    const links = await agent<Step[]>(page, "connectNodes", [
       { from: policy.nodeId, to: resource.nodeId },
     ]);
     expect(links[0].ok).toBe(true);
 
-    const edited = await agent<Step>(page, "policy", {
+    const edited = await agent<Step>(page, "editPolicy", {
       node: policy.nodeId,
       bidirectional: true,
     });
@@ -391,12 +391,12 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     await enterDraft(page);
     await add(page, [{ kind: "new_group", name: "Agent Nav Guard" }]);
 
-    const step = await agent<Step>(page, "navigate", { view: "peers" });
+    const step = await agent<Step>(page, "goToView", { view: "peers" });
 
     // Never a failure, and never advice to leave the draft — that would discard
     // the user's work.
     expect(step.ok).toBe(true);
-    expect(step.detail).toContain("cc_add");
+    expect(step.detail).toContain("control_center_add");
     expect(step.detail).not.toContain("Leave draft");
     await expect(page.getByTestId("cc-draft-cancel")).toBeVisible();
   });
@@ -407,10 +407,10 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     await enterDraft(page);
     await add(page, [{ kind: "new_group", name: "Agent Nav Keep" }]);
 
-    const step = await agent<Step>(page, "navigate", { view: "groups" });
+    const step = await agent<Step>(page, "goToView", { view: "groups" });
 
     expect(step.ok).toBe(false);
-    expect(step.detail).toContain("cc_add");
+    expect(step.detail).toContain("control_center_add");
     // Still in the draft, still holding the change.
     await expect(page.getByTestId("cc-draft-cancel")).toBeVisible();
     await expectChangeCount(page, 1);
@@ -419,10 +419,10 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
   test("Should walk away from an untouched empty draft to navigate", async ({
     dashboardAsOwner: page,
   }) => {
-    await agent<Step>(page, "draft", "new_empty");
+    await agent<Step>(page, "draftAction", "new_empty");
     await expect(page.getByTestId("cc-draft-cancel")).toBeVisible();
 
-    const step = await agent<Step>(page, "navigate", { view: "groups" });
+    const step = await agent<Step>(page, "goToView", { view: "groups" });
 
     expect(step.ok).toBe(true);
     expect(step.detail).toContain("empty draft");
@@ -437,7 +437,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
   test("Should keep everything it places on screen", async ({
     dashboardAsOwner: page,
   }) => {
-    await agent<Step>(page, "draft", "new_empty");
+    await agent<Step>(page, "draftAction", "new_empty");
 
     const [source, policy, destination] = await add(page, [
       { kind: "new_group", name: "Agent Visible Sources", role: "source" },
@@ -541,7 +541,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     // A draft resource's node data holds a resource with NO id (it's derived from
     // the node id), so reading the raw field made this a silent no-op that still
     // reported success — the group came out empty.
-    const joined = await agent<Step[]>(page, "node", [
+    const joined = await agent<Step[]>(page, "editNodes", [
       { node: resource.nodeId, action: "add_to_group", group: group.nodeId },
     ]);
     expect(joined[0].ok).toBe(true);
@@ -603,10 +603,10 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     // steps, which is seconds long — the model has to answer in between.
     await page.evaluate(() => {
       const api = window as unknown as {
-        __ccAgent?: { beginTurn: () => () => void };
-        __ccEndTurn?: () => void;
+        __controlCenterAgent?: { beginTurn: () => () => void };
+        __controlCenterEndTurn?: () => void;
       };
-      api.__ccEndTurn = api.__ccAgent!.beginTurn();
+      api.__controlCenterEndTurn = api.__controlCenterAgent!.beginTurn();
     });
 
     await add(page, [{ kind: "new_group", name: "Agent Turn Group" }]);
@@ -616,7 +616,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     await expect(overlay).toHaveAttribute("data-busy", "true");
 
     await page.evaluate(() =>
-      (window as unknown as { __ccEndTurn: () => void }).__ccEndTurn(),
+      (window as unknown as { __controlCenterEndTurn: () => void }).__controlCenterEndTurn(),
     );
     await expect(overlay).toHaveAttribute("data-busy", "false", {
       timeout: 5000,
@@ -638,7 +638,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
 
     // Named by its ACCOUNT id, not its canvas node id — the natural thing to
     // pass after reading list_peers, and the path that left the card behind.
-    const assigned = await agent<Step[]>(page, "node", [
+    const assigned = await agent<Step[]>(page, "editNodes", [
       { node: peer.id, action: "add_to_group", group: group.nodeId },
     ]);
 
@@ -661,7 +661,7 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     const snapshot = await agent<{
       mode: string;
       nodes: { nodeId: string; kind: string; label: string }[];
-    }>(page, "snapshot");
+    }>(page, "getSnapshot");
 
     expect(snapshot.mode).toBe("draft");
     expect(
@@ -675,9 +675,9 @@ test.describe.serial("Control Center Assistant Actions @control-center", () => {
     await enterDraft(page);
     await add(page, [{ kind: "new_group" }, { kind: "new_policy" }]);
 
-    const arranged = await agent<Step>(page, "canvas", "auto_arrange");
+    const arranged = await agent<Step>(page, "canvasAction", "auto_arrange");
     expect(arranged.ok).toBe(true);
-    const fitted = await agent<Step>(page, "canvas", "fit_view");
+    const fitted = await agent<Step>(page, "canvasAction", "fit_view");
     expect(fitted.ok).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import useFetchApi from "@utils/api";
+import { useAssistantAvailable } from "@netbird/assistant-react";
 import loadConfig from "@utils/config";
 import { useIsMd } from "@utils/responsive";
 import {
@@ -20,24 +20,6 @@ import {
   PANEL_ON_LEFT,
   PANEL_WIDTH,
 } from "@/interfaces/Assistant";
-
-// A configured origin isn't enough — `/readyz` also covers the assistant's
-// Postgres and JWKS. Focus/reconnect revalidation keeps a long-lived tab honest.
-function useReachable(origin: string): boolean {
-  const { data, error } = useFetchApi<unknown>(
-    "/readyz",
-    true,
-    true,
-    !!origin,
-    {
-      origin,
-      shouldRetryOnError: false,
-    },
-  );
-  // SWR keeps the last good payload when a revalidation fails, so `data` alone
-  // would stay truthy after the server goes down; `error` reflects the latest probe.
-  return !error && !!data;
-}
 
 interface AssistantSidebarState {
   // Configured *and* the server answered; false leaves no trace in the UI.
@@ -63,7 +45,9 @@ export function AssistantSidebarProvider({
 }>) {
   const [open, setOpenState] = useState(false);
   const origin = useMemo(() => loadConfig().assistantApiOrigin, []);
-  const reachable = useReachable(origin);
+  // A configured origin isn't enough — the SDK probes the service's public
+  // health route, with focus/reconnect revalidation for long-lived tabs.
+  const reachable = useAssistantAvailable(origin);
   const hasRoomToReveal = useIsMd();
   const overlay = !hasRoomToReveal;
 

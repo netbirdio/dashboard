@@ -1,10 +1,7 @@
 "use client";
 
+import { useAgentBusy } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
-import { useSyncExternalStore } from "react";
-import { agentActivityStore } from "@/modules/control-center/agent/canvasAgentStore";
-
-const idle = { locked: false };
 
 /**
  * What the control centre looks like while the assistant is writing to it: dimmed
@@ -29,11 +26,7 @@ const idle = { locked: false };
  * to live inside <ReactFlow>, which only ever covered the pane.
  */
 export const AgentBusyOverlay = () => {
-  const { locked } = useSyncExternalStore(
-    agentActivityStore.subscribe,
-    agentActivityStore.get,
-    () => idle,
-  );
+  const locked = useAgentBusy();
 
   return (
     <div

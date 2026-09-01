@@ -2,145 +2,90 @@
 "use client";
 
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import { cn } from "@utils/helpers";
+import {
+  useOidcAccessToken,
+  useOidcIdToken,
+} from "@axa-fr/react-oidc";
+import {
+  AssistantProvider,
+  useAssistant,
+} from "@netbird/assistant-react";
+import loadConfig from "@utils/config";
+import { cn, sleep } from "@utils/helpers";
 import { PanelLeft, PanelRight, Plus } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isExpired } from "react-jwt";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import {
   CHAT_PAD,
   type PageContextEntry,
   PANEL_ON_LEFT,
   PANEL_WIDTH,
 } from "@/interfaces/Assistant";
-import { useActivePageContext } from "@/modules/assistant/AssistantChatContextProvider";
+import {
+  useActivePageContext,
+  usePageContextString,
+} from "@/modules/assistant/AssistantChatContextProvider";
 import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvider";
 import { useContextChip } from "@/modules/assistant/chat/AssistantContextChip";
-import type { AssistantQuestion } from "@/modules/assistant/chat/AssistantQuestionCard";
 import { AssistantThread } from "@/modules/assistant/chat/AssistantThread";
-import { useAssistantRuntime } from "@/modules/assistant/hooks/useAssistantRuntime";
-import {
-  ToolResultsProvider,
-  ToolResultStore,
-} from "@/modules/assistant/hooks/useAssistantTools";
-import { PII_PATTERNS } from "@/modules/assistant/utils/pii";
-import {
-  type CatalogScalarField,
-  type CatalogSource,
-  describePageContext,
-  Redactor,
-  RedactorProvider,
-  useNameCatalog,
-} from "@/modules/assistant/utils/redaction";
+import { openPageExecutor } from "@/modules/assistant/openPageExecutor";
 
-// What feeds typed-text redaction: the SWR keys whose rows carry known names,
-// and the identifying scalar fields on them. A typed name only tokenises if it
-// matches something listed here — the rest goes out as written.
-const CATALOG_SOURCES: readonly CatalogSource[] = [
-  { key: "/peers", type: "peer" },
-  { key: "/groups", type: "group" },
-  { key: "/policies", type: "policy" },
-  { key: "/networks", type: "network" },
-  { key: "/routes", type: "route" },
-  { key: "/dns/nameservers", type: "nsgroup" },
-  { key: "/setup-keys", type: "setup_key" },
-  { key: "/users?service_user=false", type: "user" },
-  { key: "/users?service_user=true", type: "user" },
-];
+const EXTRA_EXECUTORS = { dashboard_page_redirect: openPageExecutor };
 
-const SCALAR_FIELDS: Record<string, readonly CatalogScalarField[]> = {
-  "/peers": [
-    { field: "dns_label", type: "dns", label: "DNS label" },
-    { field: "hostname", type: "dns" },
-    { field: "ip", type: "ip" },
-    { field: "ipv6", type: "ip" },
-    { field: "connection_ip", type: "ip" },
-  ],
-  "/users?service_user=false": [{ field: "email", type: "email" }],
-  "/users?service_user=true": [{ field: "email", type: "email" }],
-};
+// The same token selection and expiry wait as useNetBirdFetch (src/utils/api),
+// shaped as the headers resolver the assistant SDK calls before every request.
+function useAssistantHeaders(): () => Promise<Record<string, string>> {
+  const { idToken } = useOidcIdToken();
+  const { accessToken } = useOidcAccessToken();
+  const tokenSource = loadConfig().tokenSource || "accessToken";
+  const token =
+    tokenSource.toLowerCase() === "idtoken" ? idToken : accessToken;
 
-interface ConversationProps {
-  toolResults: ToolResultStore;
-  redactor: Redactor;
+  // Read at request time through a ref: the resolver is captured once per
+  // conversation, and the OIDC client refreshes tokens behind it.
+  const tokenRef = useRef(token);
+  // eslint-disable-next-line react-hooks/refs -- deliberate: see above
+  tokenRef.current = token;
+
+  return useCallback(async () => {
+    let attempts = 4;
+    while (isExpired(tokenRef.current) && attempts > 0) {
+      await sleep(500);
+      attempts -= 1;
+    }
+    return { Authorization: `Bearer ${tokenRef.current}` };
+  }, []);
 }
 
-// One conversation. Remounted via `key` to start a new one.
-function AssistantConversation({
-  toolResults,
-  redactor,
-}: Readonly<ConversationProps>) {
-  const [question, setQuestion] = useState<AssistantQuestion | null>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  const [turnActive, setTurnActive] = useState(false);
-
-  const dismissQuestion = useCallback(() => setQuestion(null), []);
-
+// One conversation. The provider's runtime feeds assistant-ui exactly as before.
+function AssistantConversation() {
+  const { runtime } = useAssistant();
   const { entry, dismiss } = useActivePageContext();
-
-  // Read through a ref at send time, not captured: the runtime is built once
-  // per conversation, and the user can navigate between two messages.
-  const contextRef = useRef<{
-    entry: typeof entry;
-    name: string | undefined;
-  }>({ entry: null, name: undefined });
-
-  const pageContext = useCallback(
-    () =>
-      describePageContext(
-        contextRef.current.entry,
-        redactor,
-        contextRef.current.name,
-      ),
-    [redactor],
-  );
-
-  const runtime = useAssistantRuntime({
-    toolResults,
-    redactor,
-    onQuestion: setQuestion,
-    onStatus: setStatus,
-    onTurnActive: setTurnActive,
-    pageContext,
-  });
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <ToolResultsProvider value={toolResults}>
-        <RedactorProvider value={redactor}>
-          {entry && <ContextName entry={entry} contextRef={contextRef} />}
-          <AssistantThread
-            question={question}
-            onDismissQuestion={dismissQuestion}
-            status={status}
-            turnActive={turnActive}
-            context={entry}
-            onDismissContext={dismiss}
-          />
-        </RedactorProvider>
-      </ToolResultsProvider>
+      <AssistantThread context={entry} onDismissContext={dismiss} />
     </AssistantRuntimeProvider>
   );
 }
 
 // Renders nothing: the context's display name comes from a hook (the SWR
-// cache), but the runtime needs it as a plain value at send time.
+// cache), but the page-context getter needs it as a plain value at send time.
 function ContextName({
   entry,
-  contextRef,
+  onName,
 }: Readonly<{
   entry: PageContextEntry;
-  contextRef: React.MutableRefObject<{
-    entry: PageContextEntry | null;
-    name: string | undefined;
-  }>;
+  onName: (name: string | undefined) => void;
 }>) {
   const { name } = useContextChip(entry);
 
   useEffect(() => {
-    contextRef.current = { entry, name };
-    return () => {
-      contextRef.current = { entry: null, name: undefined };
-    };
-  }, [entry, name, contextRef]);
+    onName(name);
+    return () => onName(undefined);
+  }, [name, onName]);
 
   return null;
 }
@@ -171,28 +116,43 @@ function PanelButton({
   );
 }
 
+// Inside the provider so it can reset the SDK session alongside the remount.
+function NewChatButton({ onNewChat }: Readonly<{ onNewChat: () => void }>) {
+  const { newChat } = useAssistant();
+
+  return (
+    <PanelButton
+      label="New Chat"
+      onClick={() => {
+        newChat();
+        onNewChat();
+      }}
+    >
+      <Plus size={18} />
+    </PanelButton>
+  );
+}
+
 export function AssistantChatPanel() {
   const { available, open, setOpen, overlay, origin } = useAssistantSidebar();
 
-  const catalog = useNameCatalog(CATALOG_SOURCES, SCALAR_FIELDS);
+  const headers = useAssistantHeaders();
+  const router = useRouter();
+  const pathname = usePathname();
+  const pathRef = useRef(pathname ?? "/");
+  // eslint-disable-next-line react-hooks/refs -- read at tool-execution time
+  pathRef.current = pathname ?? "/";
+  const currentPath = useCallback(() => pathRef.current, []);
+  const navigate = useCallback((href: string) => router.push(href), [router]);
+  const { loggedInUser } = useLoggedInUser();
 
-  // Per-conversation fetched rows and token dictionary. New instances are a
-  // new conversation.
-  const [chat, setChat] = useState(() => ({
-    id: crypto.randomUUID(),
-    toolResults: new ToolResultStore(),
-    redactor: new Redactor({ catalog, patterns: PII_PATTERNS }),
-  }));
+  const { entry } = useActivePageContext();
+  const [contextName, setContextName] = useState<string | undefined>();
+  const pageContext = usePageContextString(contextName);
 
-  const startNewChat = useCallback(
-    () =>
-      setChat({
-        id: crypto.randomUUID(),
-        toolResults: new ToolResultStore(),
-        redactor: new Redactor({ catalog, patterns: PII_PATTERNS }),
-      }),
-    [catalog],
-  );
+  // Keys the SDK conversation; a fresh id starts a new one.
+  const [chatId, setChatId] = useState(() => crypto.randomUUID());
+  const startNewChat = useCallback(() => setChatId(crypto.randomUUID()), []);
 
   // autoFocus only fires on mount and the panel is always mounted, so opening
   // moves focus itself — a frame later, since an inert subtree can't take focus.
@@ -223,40 +183,47 @@ export function AssistantChatPanel() {
         overlay ? "z-50" : "z-0",
       )}
     >
-      {/* Rows pad themselves by CHAT_PAD so the scrollbar can sit on the panel's edge. */}
-      <div
-        className="flex min-h-0 flex-col"
-        style={{ width: overlay ? "100%" : PANEL_WIDTH }}
+      <AssistantProvider
+        host={origin}
+        headers={headers}
+        navigate={navigate}
+        currentPath={currentPath}
+        currentUserId={loggedInUser?.id}
+        pageContext={pageContext}
+        extraExecutors={EXTRA_EXECUTORS}
+        conversationId={chatId}
       >
-        <header
-          className="flex shrink-0 items-center gap-2 pb-2"
-          style={{
-            paddingLeft: HEADER_PAD_X,
-            paddingRight: HEADER_PAD_X,
-            paddingTop: CHAT_PAD.top,
-          }}
+        {entry && <ContextName entry={entry} onName={setContextName} />}
+
+        {/* Rows pad themselves by CHAT_PAD so the scrollbar can sit on the panel's edge. */}
+        <div
+          className="flex min-h-0 flex-col"
+          style={{ width: overlay ? "100%" : PANEL_WIDTH }}
         >
-          <PanelButton label="Close assistant" onClick={() => setOpen(false)}>
-            {PANEL_ON_LEFT ? <PanelLeft size={17} /> : <PanelRight size={17} />}
-          </PanelButton>
-
-          <span className="min-w-0 truncate text-sm font-medium text-nb-gray-100">
-            Assistant
-          </span>
-
-          <div className="ml-auto flex shrink-0 items-center gap-1">
-            <PanelButton label="New Chat" onClick={startNewChat}>
-              <Plus size={18} />
+          <header
+            className="flex shrink-0 items-center gap-2 pb-2"
+            style={{
+              paddingLeft: HEADER_PAD_X,
+              paddingRight: HEADER_PAD_X,
+              paddingTop: CHAT_PAD.top,
+            }}
+          >
+            <PanelButton label="Close assistant" onClick={() => setOpen(false)}>
+              {PANEL_ON_LEFT ? <PanelLeft size={17} /> : <PanelRight size={17} />}
             </PanelButton>
-          </div>
-        </header>
 
-        <AssistantConversation
-          key={chat.id}
-          toolResults={chat.toolResults}
-          redactor={chat.redactor}
-        />
-      </div>
+            <span className="min-w-0 truncate text-sm font-medium text-nb-gray-100">
+              Assistant
+            </span>
+
+            <div className="ml-auto flex shrink-0 items-center gap-1">
+              <NewChatButton onNewChat={startNewChat} />
+            </div>
+          </header>
+
+          <AssistantConversation />
+        </div>
+      </AssistantProvider>
     </aside>
   );
 }

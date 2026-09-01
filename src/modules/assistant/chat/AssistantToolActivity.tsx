@@ -1,35 +1,16 @@
 // One row of the activity trail, for both server-run and client-run tools.
 "use client";
 
+import {
+  CONTROL_CENTER_TOOLS,
+  describeControlCenterTool,
+  toolLabel,
+} from "@netbird/assistant-react";
+import { useVaultRestore } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import { AlertCircle, Check, ChevronRight, Loader2 } from "lucide-react";
 import { useState } from "react";
-import type { TrailDescription } from "@/modules/assistant/tools/control-center-call-tool";
-import { navigateToPage } from "@/modules/assistant/tools/navigate-to-page";
-import { useRedactor } from "@/modules/assistant/utils/redaction";
-import { ASSISTANT_TOOLS } from "@/modules/assistant/utils/tools";
-
-// Falls back to the raw name so a tool the dashboard doesn't know yet still renders.
-export const toolLabel = (name: string, running: boolean): string => {
-  const labels = ASSISTANT_TOOLS[name]?.labels;
-  if (!labels) return name.replaceAll("_", " ");
-  if (typeof labels === "string") return labels;
-  return labels[running ? 0 : 1];
-};
-
-// Also used for the runtime's status line, so the line and the row can't disagree.
-export function describeControlCenterTool(
-  name: string,
-  args: unknown,
-): TrailDescription {
-  const tool = ASSISTANT_TOOLS[name];
-  if (tool?.kind !== "control-center") return { label: name };
-  const input = (args && typeof args === "object" ? args : {}) as Record<
-    string,
-    unknown
-  >;
-  return { label: toolLabel(name, false), ...tool.describe?.(input) };
-}
+import { navigateToPage } from "@/modules/assistant/openPageExecutor";
 
 // Narrower than `ToolCallMessagePartProps` on purpose: grouped parts hand over
 // a part state, not the full props object, and this is all both have to agree on.
@@ -42,11 +23,11 @@ export interface ToolActivityProps {
 }
 
 // The first string in the input, since every tool takes exactly one that
-// matters; `open_page` instead shows the pushed route.
+// matters; `dashboard_page_redirect` instead shows the pushed route.
 function subjectOf(toolName: string, args: unknown): string | null {
   if (!args || typeof args !== "object") return null;
 
-  if (ASSISTANT_TOOLS[toolName]?.kind === "navigation") {
+  if (toolName === "dashboard_page_redirect") {
     const target = navigateToPage({ ...args });
     return "href" in target ? target.href : null;
   }
@@ -93,7 +74,7 @@ export function AssistantToolActivity({
   result,
 }: Readonly<ToolActivityProps>) {
   const [open, setOpen] = useState(false);
-  const { restore } = useRedactor();
+  const restore = useVaultRestore();
 
   const running = status?.type === "running";
   const failed = isError === true || status?.type === "incomplete";
@@ -105,10 +86,9 @@ export function AssistantToolActivity({
   const expandable = Boolean(request || outcome);
   // The canvas tools name their own move and subject — the generic first-string
   // rule surfaced raw enums ('new_empty') and half a connection.
-  const activity =
-    ASSISTANT_TOOLS[toolName]?.kind === "control-center"
-      ? describeControlCenterTool(toolName, args)
-      : null;
+  const activity = CONTROL_CENTER_TOOLS[toolName]
+    ? describeControlCenterTool(toolName, args)
+    : null;
   const subject = activity
     ? null
     : restoreOr(subjectOf(toolName, args), restore);

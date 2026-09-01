@@ -10,6 +10,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { PageContextEntry, PageContextType } from "@/interfaces/Assistant";
@@ -96,6 +97,40 @@ export function useActivePageContext(): {
     entry: state?.entry ?? null,
     dismiss: state?.dismiss ?? (() => {}),
   };
+}
+
+// The string the assistant reads. Real values — redaction happens server-side.
+function describePageContext(
+  entry: PageContextEntry | null,
+  name?: string,
+): string | null {
+  if (!entry) return null;
+  if (entry.id) {
+    const label = name ?? entry.label;
+    return `<page-context kind="${entry.type}" id="${entry.id}"${
+      label ? ` label="${label}"` : ""
+    } />`;
+  }
+  return entry.label
+    ? `<page-context kind="${entry.type}" label="${entry.label}" />`
+    : null;
+}
+
+/**
+ * Send-time getter for the page-context string; the chat panel hands it to the
+ * assistant provider. `name` is the entry's display name when the caller has
+ * one (the SWR row). Read through a ref because the getter is captured once
+ * per conversation and the user can navigate between two messages.
+ */
+export function usePageContextString(name?: string): () => string | null {
+  const { entry } = useActivePageContext();
+  const current = useRef({ entry, name });
+  // eslint-disable-next-line react-hooks/refs -- written in render on purpose: see above
+  current.current = { entry, name };
+  return useCallback(
+    () => describePageContext(current.current.entry, current.current.name),
+    [],
+  );
 }
 
 interface RouteRule {
