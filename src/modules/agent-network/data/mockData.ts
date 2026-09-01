@@ -1,4 +1,3 @@
-/* eslint-disable */
 // Mock data for the Agent Network section. No backend wired up yet.
 // All numbers, IDs, and text are static placeholders for click-through.
 

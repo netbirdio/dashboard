@@ -15,12 +15,12 @@ import React, { useState } from "react";
 import AIAccessIcon from "@/assets/icons/AgentNetworkIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { AIProvider } from "@/modules/agent-network/data/mockData";
-import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import AIProviderModal from "@/modules/agent-network/AIProviderModal";
-import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import { AIProvider } from "@/modules/agent-network/data/mockData";
 import AgentProviderActionCell from "@/modules/agent-network/table/AgentProviderActionCell";
+import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
 
 function NameCell({ provider }: { provider: AIProvider }) {
   const { getById } = useProviderCatalog();
