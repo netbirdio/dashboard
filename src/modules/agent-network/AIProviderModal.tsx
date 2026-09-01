@@ -337,23 +337,46 @@ export default function AIProviderModal({
       ),
     [domains],
   );
+  // Not every live cluster can host the endpoint. The agent network gateway is
+  // a private service — reachable only from connected peers, authenticated by
+  // their tunnel identity — which only a proxy running embedded in a netbird
+  // client (`netbird proxy`) can serve. supports_private is the flag for that,
+  // the same one the Reverse Proxy modal gates NetBird-Only Access on, and
+  // management refuses a bootstrap onto a cluster reporting it false. Picking
+  // from the filtered list keeps the wizard from proposing a cluster the API
+  // rejects — and the endpoint it assigns is immutable, so a wrong pick is not
+  // something the operator can edit away afterwards.
+  //
+  // Only an explicit false disqualifies a cluster: a management build that
+  // predates the flag reports nothing at all, and dropping every cluster there
+  // would block setup on a backend that would have accepted it — the same
+  // "nothing to judge" reading the server applies to an unreported capability.
+  const bootstrapClusters = useMemo(
+    () => validatedClusters.filter((d) => d.supports_private !== false),
+    [validatedClusters],
+  );
   // Wait for both requests before claiming there is nothing to pick, otherwise
   // the warning flashes while the settings row is still loading.
   const noClustersAvailable =
     !settingsBootstrapped &&
     !settingsLoading &&
     !domainsLoading &&
-    validatedClusters.length === 0;
+    bootstrapClusters.length === 0;
+  // Clusters exist, but every one of them reported having no embedded proxy:
+  // a different problem from having no proxy at all, and a different fix, so
+  // it gets its own message rather than "connect a proxy".
+  const clustersLackEmbeddedProxy =
+    noClustersAvailable && validatedClusters.length > 0;
 
-  // Auto-pick the first validated cluster on first render once the
+  // Auto-pick the first usable cluster on first render once the
   // /domains response lands. Only matters for the first-create flow —
   // once settings is bootstrapped no further bootstrap happens.
   React.useEffect(() => {
     if (settingsBootstrapped) return;
     if (bootstrapCluster) return;
-    if (validatedClusters.length === 0) return;
-    setBootstrapCluster(validatedClusters[0].domain);
-  }, [settingsBootstrapped, bootstrapCluster, validatedClusters]);
+    if (bootstrapClusters.length === 0) return;
+    setBootstrapCluster(bootstrapClusters[0].domain);
+  }, [settingsBootstrapped, bootstrapCluster, bootstrapClusters]);
 
   // Seed the upstream URL from the catalog entry once it lands — the
   // catalog is fetched async, so on first render `getById("openai_api")`
@@ -412,7 +435,7 @@ export default function AIProviderModal({
       );
       setApiKey("");
       setBootstrapCluster(
-        settingsBootstrapped ? "" : validatedClusters[0]?.domain ?? "",
+        settingsBootstrapped ? "" : bootstrapClusters[0]?.domain ?? "",
       );
       setModels([]);
       setExtraValues({});
@@ -763,6 +786,7 @@ export default function AIProviderModal({
             <div className={"px-8 pt-3 flex-col flex gap-6"}>
               {noClustersAvailable && (
                 <Callout
+                  data-testid="agent-network-no-cluster-callout"
                   variant={"warning"}
                   icon={
                     <AlertCircleIcon
@@ -771,7 +795,18 @@ export default function AIProviderModal({
                     />
                   }
                 >
-                  {canReadDomains ? (
+                  {canReadDomains && clustersLackEmbeddedProxy ? (
+                    <>
+                      No proxy cluster can host the agent network endpoint. It
+                      is reachable only from connected peers, which needs a
+                      cluster with at least one connected embedded proxy (
+                      <code>netbird proxy</code>). Connect one under
+                      <InlineLink href={"/reverse-proxy/services"}>
+                        {" "}Reverse Proxy
+                      </InlineLink>
+                      {" "}before adding a provider.
+                    </>
+                  ) : canReadDomains ? (
                     <>
                       No active proxy clusters are available. Connect at least
                       one proxy under
