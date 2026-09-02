@@ -1,6 +1,6 @@
 "use client";
 
-import { useApiCall } from "@utils/api";
+import { type ErrorResponse, useApiCall } from "@utils/api";
 import { useCallback, useRef, useState } from "react";
 
 // DiscoveredModel is one model the vendor says this credential can reach.
@@ -103,7 +103,7 @@ export function useDiscoveredModels() {
         // is only read as a fallback for a raw fetch rejection. Reading `status`
         // alone left this undefined on every API failure, so a provider with no
         // listing endpoint was reported as unreachable instead of falling back.
-        const failure = e as { code?: number; status?: number; message?: string };
+        const failure = e as Partial<ErrorResponse> & { status?: number };
         const status = failure?.code ?? failure?.status;
         setState({
           models: [],
