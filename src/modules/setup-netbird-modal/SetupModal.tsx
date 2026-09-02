@@ -50,12 +50,18 @@ type Props = {
   showOnlyRoutingPeerOS?: boolean;
   className?: string;
   style?: React.CSSProperties;
-  // Tri-state audience selector:
-  //   true      – user device (laptop/phone): mobile shown, Docker hidden.
-  //   false     – server: mobile hidden, Docker shown, key-generation UI.
-  //   undefined – legacy: keep historical heuristic (mobile shown unless
-  //               a setupKey is already provided; Docker shown).
+  // true = user device (mobile, no Docker), false = server (Docker plus key
+  // generation), undefined = legacy heuristic keyed off setupKey.
   isUserDevice?: boolean;
+  // Preset hostname for the install commands.
+  hostname?: string;
+  // Group ids auto-assigned to peers registering with the generated key.
+  autoGroups?: string[];
+  // Resolved when the key is generated; takes precedence over autoGroups.
+  resolveAutoGroups?: () => Promise<string[]>;
+  // Defaults to a timestamped name.
+  keyName?: string;
+  onSetupKeyGenerated?: (key: SetupKey) => void;
 };
 
 export default function SetupModal({
@@ -66,6 +72,11 @@ export default function SetupModal({
   className,
   style,
   isUserDevice,
+  hostname,
+  autoGroups,
+  resolveAutoGroups,
+  keyName,
+  onSetupKeyGenerated,
 }: Readonly<Props>) {
   return (
     <ModalContent
@@ -82,6 +93,11 @@ export default function SetupModal({
         setupKey={setupKey}
         showOnlyRoutingPeerOS={showOnlyRoutingPeerOS}
         isUserDevice={isUserDevice}
+        hostname={hostname}
+        autoGroups={autoGroups}
+        resolveAutoGroups={resolveAutoGroups}
+        keyName={keyName}
+        onSetupKeyGenerated={onSetupKeyGenerated}
       />
     </ModalContent>
   );
@@ -97,6 +113,10 @@ type SetupModalContentProps = {
   title?: string;
   hostname?: string;
   isUserDevice?: boolean;
+  autoGroups?: string[];
+  resolveAutoGroups?: () => Promise<string[]>;
+  keyName?: string;
+  onSetupKeyGenerated?: (key: SetupKey) => void;
 };
 
 export function SetupModalContent({
@@ -109,35 +129,28 @@ export function SetupModalContent({
   title,
   hostname,
   isUserDevice,
+  autoGroups,
+  resolveAutoGroups,
+  keyName,
+  onSetupKeyGenerated,
 }: Readonly<SetupModalContentProps>) {
   const os = useOperatingSystem();
   const [isFirstRun] = useLocalStorage<boolean>("netbird-first-run", true);
   const pathname = usePathname();
   const isInstallPage = pathname === "/install";
 
-  // Server flow generates its own setup key when the caller hasn't
-  // supplied one. The generated value lives here so the OS tabs and
-  // the in-modal banner stay in sync.
+  // Lifted here so every OS tab and the banner see the same generated key.
   const [generatedKey, setGeneratedKey] = useState<SetupKey | undefined>();
   const effectiveSetupKey = setupKey ?? generatedKey?.key;
 
-  // Visibility rules:
-  //   hideDocker  – only when explicitly a user-device flow.
-  //   hideMobile  – server flow (explicit false), or legacy callers
-  //                 that already have a setupKey (routing peers etc.).
-  //   showKeyGen  – server flow, and the caller didn't pre-supply a key.
+  // Legacy callers that already have a setupKey (routing peers) hide mobile.
   const hideDocker = isUserDevice === true;
   const hideMobile = isUserDevice === false || !!setupKey;
   const showKeyGenerator = isUserDevice === false && !setupKey;
 
-  // setupKeyPlaceholder keeps the `--setup-key SETUP_KEY` token visible
-  // in each OS tab before the operator clicks Generate, so the command
-  // reads as "this is where the value goes".
+  // Keeps the `--setup-key SETUP_KEY` token visible before a key exists.
   const setupKeyPlaceholder = showKeyGenerator ? "SETUP_KEY" : undefined;
 
-  // The setup-key generation banner is rendered as its own Step inside
-  // each OS tab. The state lives in the parent so all tabs see the
-  // same generated key (and the command updates everywhere).
   const setupKeyContent = showKeyGenerator ? (
     <>
       <div className={"flex items-center gap-1.5 flex-wrap"}>
@@ -164,7 +177,13 @@ export function SetupModalContent({
       </div>
       <SetupKeyGenerator
         generatedKey={generatedKey}
-        onGenerated={setGeneratedKey}
+        autoGroups={autoGroups}
+        resolveAutoGroups={resolveAutoGroups}
+        keyName={keyName}
+        onGenerated={(key) => {
+          setGeneratedKey(key);
+          onSetupKeyGenerated?.(key);
+        }}
       />
     </>
   ) : undefined;
@@ -347,9 +366,7 @@ export function SetupModalContent({
 
 type SetupKeyParameterProps = {
   setupKey?: string;
-  // Rendered in place of a real key — keeps the `--setup-key` token in
-  // view before the operator has generated one. Style matches the real
-  // key so the command reads as "this is where the value goes".
+  // Shown in place of a real key before one is generated.
   placeholder?: string;
 };
 
@@ -371,17 +388,11 @@ type NetBirdUpCommandProps = {
   setupKey?: string;
   setupKeyPlaceholder?: string;
   hostname?: string;
-  // Shell line-continuation character used for the *visual* multi-line
-  // display. Unix shells use "\"; Windows Command Prompt uses "^". The
-  // copied command (codeToCopy) is always a clean single line regardless,
-  // so it runs on any shell.
+  // Line-continuation char for the visual display (Unix "\", Windows cmd "^").
+  // The copied command is always a clean single line.
   continuation?: string;
 };
 
-// NetBirdUpCommand renders `netbird up` inside a <Code> block. When
-// extra flags are present it splits across multiple lines with the
-// shell's line-continuation character (purely visual) so long commands
-// stay readable; the clipboard always gets the single-line form.
 export const NetBirdUpCommand = ({
   setupKey,
   setupKeyPlaceholder,
@@ -392,10 +403,7 @@ export const NetBirdUpCommand = ({
   const hasKey = !!keyValue;
   const hasHostname = !!hostname;
 
-  // Canonical, OS-agnostic single-line command for the clipboard. The
-  // copy button always yields this, so the pasted command runs on every
-  // shell (bash, zsh, cmd, PowerShell) regardless of how it's displayed
-  // — the line continuations below are purely a visual aid.
+  // Single-line form for the clipboard, whatever the visual layout below.
   const copyCommand = [
     getNetBirdUpCommand(),
     hasKey && `--setup-key ${keyValue}`,
@@ -435,15 +443,10 @@ export const NetBirdUpCommand = ({
 };
 
 type ManagementUrlStepProps = {
-  // The desktop client calls it the system tray on Windows and the menu bar
-  // on macOS; use the platform's own term so the step matches what the user
-  // is looking at.
+  // "System tray" on Windows, "menu bar" on macOS.
   trayName: string;
 };
 
-// ManagementUrlStep tells a desktop-client user where to point the client at
-// this self-hosted management server: the first-run "Set up NetBird" screen,
-// or Settings > General once the client is past it.
 export const ManagementUrlStep = ({ trayName }: ManagementUrlStepProps) => {
   return (
     <>
@@ -497,35 +500,45 @@ export const RoutingPeerSetupKeyInfo = () => {
 type SetupKeyGeneratorProps = {
   generatedKey?: SetupKey;
   onGenerated: (key: SetupKey) => void;
+  // Group ids auto-assigned to peers registering with this key.
+  autoGroups?: string[];
+  // Takes precedence over autoGroups.
+  resolveAutoGroups?: () => Promise<string[]>;
+  // Defaults to a timestamped one.
+  keyName?: string;
 };
 
-// SetupKeyGenerator renders the inline banner that lets the operator
-// create a one-off setup key without leaving the install modal. The
-// resulting key is lifted to the parent so the OS tabs can splice it
-// into the `netbird up --setup-key=...` command.
 function SetupKeyGenerator({
   generatedKey,
   onGenerated,
+  autoGroups,
+  resolveAutoGroups,
+  keyName,
 }: SetupKeyGeneratorProps) {
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const generate = () => {
     setIsGenerating(true);
-    // No auto_groups: the "All" group can't be a setup-key auto-group,
-    // and we don't want to invent a default group on the operator's
-    // behalf here. They can edit the key afterwards if they want.
-    const request = setupKeyRequest
-      .post({
-        name: `Install setup key (${new Date().toLocaleString()})`,
-        type: "one-off",
-        expires_in: 24 * 60 * 60,
-        revoked: false,
-        auto_groups: [],
-        usage_limit: 1,
-        ephemeral: false,
-        allow_extra_dns_labels: false,
-      })
+    // The "All" group can't be a setup-key auto-group, so send none unless
+    // the caller supplies them.
+    const request = (
+      resolveAutoGroups
+        ? resolveAutoGroups()
+        : Promise.resolve(autoGroups ?? [])
+    )
+      .then((groupIds) =>
+        setupKeyRequest.post({
+          name: keyName || `Install setup key (${new Date().toLocaleString()})`,
+          type: "one-off",
+          expires_in: 24 * 60 * 60,
+          revoked: false,
+          auto_groups: groupIds ?? [],
+          usage_limit: 1,
+          ephemeral: false,
+          allow_extra_dns_labels: false,
+        }),
+      )
       .then((created) => {
         onGenerated(created);
         return created;
@@ -558,6 +571,7 @@ function SetupKeyGenerator({
           variant={"primary"}
           onClick={generate}
           disabled={isGenerating}
+          data-testid={"setup-generate-key"}
         >
           {isGenerating ? (
             <Loader2 size={14} className={"animate-spin"} />

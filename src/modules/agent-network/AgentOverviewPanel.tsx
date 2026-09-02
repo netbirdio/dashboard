@@ -26,7 +26,10 @@ import { Bar } from "react-chartjs-2";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
-import { useAccessLogFilters } from "@/modules/agent-network/AccessLogFilters";
+import {
+  AccessLogFilterId,
+  useAccessLogFilters,
+} from "@/modules/agent-network/AccessLogFilters";
 import {
   APIAgentNetworkUsageBucket,
   buildUsageOverviewQuery,
@@ -62,11 +65,23 @@ type DayBucket = {
 // chart with a Tokens / Cost switch, and a standard data table of the same
 // per-day buckets underneath. Data comes pre-aggregated from the server's
 // /agent-network/usage/overview endpoint (day granularity); the shared filter
-// bar (Date / User / Group / Provider / Model) drives the query.
-export default function AgentOverviewPanel() {
+// bar (Date / User / Group / Provider / Model) drives the query. With
+// selfScoped the server answers with the caller's own rows only, so the
+// identity filters (which the server overrides anyway) are dropped —
+// Date, Provider, and Model stay: the providers endpoint self-scopes too,
+// so the caller's own authorized providers back those options.
+const SELF_SCOPED_FILTERS = {
+  include: ["date", "provider", "model"] as AccessLogFilterId[],
+};
+
+export default function AgentOverviewPanel({
+  selfScoped = false,
+}: {
+  selfScoped?: boolean;
+} = {}) {
   const [metric, setMetric] = useState<Metric>("tokens");
   const { columnFilters, filtersButton, filterChips, resetButton } =
-    useAccessLogFilters();
+    useAccessLogFilters(selfScoped ? SELF_SCOPED_FILTERS : undefined);
   const { groups } = useGroups();
   const { users } = useUsers();
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
@@ -93,11 +108,13 @@ export default function AgentOverviewPanel() {
     [columnFilters, groupIdByName, userIdByEmail],
   );
 
+  // Self-scoped callers can't always resolve the feature flag (it needs
+  // accounts read); reaching this panel configured is proof enough.
   const { data: buckets } = useFetchApi<APIAgentNetworkUsageBucket[]>(
     `/agent-network/usage/overview?${query}`,
     false,
     true,
-    agentNetworkEnabled,
+    agentNetworkEnabled || selfScoped,
   );
 
   const daily = useMemo(() => toDailyBuckets(buckets ?? []), [buckets]);
@@ -365,7 +382,10 @@ function DailyBreakdownTable({ daily }: { daily: DayBucket[] }) {
           learnMore={
             <>
               Learn more about
-              <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
+              <InlineLink
+                href={"https://docs.netbird.io/agent-network"}
+                target={"_blank"}
+              >
                 Agent Network
                 <ExternalLinkIcon size={12} />
               </InlineLink>

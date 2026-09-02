@@ -40,6 +40,7 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import {
   ReverseProxyDomain,
   ReverseProxyDomainType,
@@ -114,6 +115,8 @@ function upstreamUrlPlaceholder(providerId: AIProviderId): string {
       return "https://openrouter.ai/api/v1";
     case "litellm_proxy":
       return "https://your-litellm-host";
+    case "agentgateway":
+      return "https://your-agentgateway-proxy";
     case "portkey":
       return "https://api.portkey.ai";
     case "vllm":
@@ -141,6 +144,8 @@ function upstreamUrlHelpText(providerId: AIProviderId): string {
       return "Vercel AI Gateway uses a fixed endpoint; only the API key varies by operator. Apps choose the upstream provider with the model prefix, e.g. openai/gpt-5.4 or anthropic/claude-opus-4.6.";
     case "openrouter":
       return "OpenRouter uses a fixed endpoint, openrouter.ai/api/v1; apps choose the upstream provider via the model prefix, e.g. anthropic/claude-* or openai/gpt-*.";
+    case "agentgateway":
+      return "The agentgateway proxy listener URL reachable from the NetBird proxy. Keep this listener private so requests cannot bypass NetBird's identity enforcement.";
     case "vllm":
       return "Your local vLLM server's OpenAI-compatible base URL.";
     default:
@@ -188,12 +193,10 @@ export default function AIProviderModal({
     addProvider,
     updateProvider,
     settings,
+    settingsLoading,
     bootstrapAgentNetworkSettings,
   } = useAIProviders();
-  const { data: domains, isLoading: domainsLoading } = useFetchApi<
-    ReverseProxyDomain[]
-  >("/reverse-proxies/domains");
-  const { catalog: catalogList, getById } = useProviderCatalog();
+  const { permission } = usePermissions();
   const { confirm } = useDialog();
 
   const isEdit = !!provider;
@@ -202,6 +205,21 @@ export default function AIProviderModal({
   // response and, when the account isn't bootstrapped yet, POST it as the
   // settings proxy_address right before the first provider create.
   const settingsBootstrapped = !!settings;
+
+  // /reverse-proxies/domains is guarded by the Services module, which the
+  // delegated Agent Network roles don't hold — calling it for them only yields
+  // a 403. The list is needed for the one-time bootstrap cluster pick, so skip
+  // the request once the account is bootstrapped or the role can't read it.
+  const canReadDomains = !!permission.services?.read;
+  const { data: domains, isLoading: domainsLoading } = useFetchApi<
+    ReverseProxyDomain[]
+  >(
+    "/reverse-proxies/domains",
+    true,
+    true,
+    canReadDomains && !settingsBootstrapped && !settingsLoading,
+  );
+  const { catalog: catalogList, getById } = useProviderCatalog();
 
   const [tab, setTab] = useState<string>("provider");
   // A save reaches the vendor to check the url and credential before storing
@@ -279,6 +297,10 @@ export default function AIProviderModal({
   // entry, so this never double-counts.
   const customizableIdentity =
     customizableHeaderPair || customizableJsonMetadata;
+  const fixedHeaderPair =
+    catalog?.identity_injection?.header_pair?.customizable === false
+      ? catalog.identity_injection.header_pair
+      : undefined;
   // Defaults shown as input placeholders. The first non-empty source
   // wins; HeaderPair vs JSONMetadata are exclusive so either branch
   // is empty when the other is set.
@@ -297,20 +319,20 @@ export default function AIProviderModal({
   const jsonMetadataHeader =
     catalog?.identity_injection?.json_metadata?.header ?? "";
 
-  // showMappings reveals the Mappings tab for provider types whose
-  // downstream gateway keys identity off NetBird-stamped headers.
-  // For non-customizable shapes (LiteLLM, Portkey) the mapping is
-  // fixed in v1 — the tab is read-only. For customizable shapes
-  // (Bifrost) the operator picks the wire header names, so the tab
-  // renders editable inputs.
+  // The management catalog owns the general identity-injection contract.
+  // Bedrock retains its separate request-metadata mapping, and fixed HeaderPair
+  // providers without tailored guidance get the generic read-only view.
   const showMappings =
-    providerId === "litellm_proxy" ||
-    providerId === "portkey" ||
-    providerId === "bifrost" ||
-    providerId === "cloudflare_ai_gateway" ||
-    providerId === "vercel_ai_gateway" ||
-    providerId === "openrouter" ||
-    providerId === "bedrock_api";
+    !!catalog?.identity_injection || providerId === "bedrock_api";
+  const hasSpecializedFixedHeaderPairView = [
+    "litellm_proxy",
+    "vercel_ai_gateway",
+    "openrouter",
+    "portkey",
+    "bedrock_api",
+  ].includes(providerId);
+  const showGenericFixedHeaderPair =
+    !!fixedHeaderPair && !hasSpecializedFixedHeaderPairView;
 
   // If the user flips provider type while viewing the Mappings tab and
   // the new type doesn't show mappings, snap back to the Provider tab
@@ -328,8 +350,13 @@ export default function AIProviderModal({
       ),
     [domains],
   );
+  // Wait for both requests before claiming there is nothing to pick, otherwise
+  // the warning flashes while the settings row is still loading.
   const noClustersAvailable =
-    !settingsBootstrapped && !domainsLoading && validatedClusters.length === 0;
+    !settingsBootstrapped &&
+    !settingsLoading &&
+    !domainsLoading &&
+    validatedClusters.length === 0;
 
   // Auto-pick the first validated cluster on first render once the
   // /domains response lands. Only matters for the first-create flow —
@@ -562,6 +589,11 @@ export default function AIProviderModal({
       label: p.name,
       searchValue: `${p.name} ${p.id}`,
       group: groupLabel[p.kind] ?? "Other",
+      renderItem: () => (
+        <span data-testid={`agent-network-provider-option-${p.id}`}>
+          {p.name}
+        </span>
+      ),
       icon: ({ size }: { size?: number }) => (
         <AIProviderLogo providerId={p.id as AIProviderId} size={size ?? 16} />
       ),
@@ -746,7 +778,10 @@ export default function AIProviderModal({
 
   return (
     <Modal open={open} onOpenChange={(o) => (o ? null : handleClose())}>
-      <ModalContent maxWidthClass={"max-w-2xl"}>
+      <ModalContent
+        maxWidthClass={"max-w-2xl"}
+        data-testid={"agent-network-provider-modal"}
+      >
         <ModalHeader
           icon={<AgentNetworkIcon className={"fill-netbird"} size={18} />}
           title={isEdit ? "Edit Provider" : "Connect Provider"}
@@ -764,7 +799,11 @@ export default function AIProviderModal({
               <Sparkles size={14} />
               Provider
             </TabsTrigger>
-            <TabsTrigger value={"models"} disabled={!canContinueFromProvider}>
+            <TabsTrigger
+              value={"models"}
+              disabled={!canContinueFromProvider}
+              data-testid={"agent-network-provider-models-tab"}
+            >
               <Boxes size={14} />
               Models
             </TabsTrigger>
@@ -772,6 +811,7 @@ export default function AIProviderModal({
               <TabsTrigger
                 value={"mappings"}
                 disabled={!canContinueFromProvider}
+                data-testid={"agent-network-provider-mappings-tab"}
               >
                 <ArrowRightLeft size={14} />
                 Mappings
@@ -791,13 +831,25 @@ export default function AIProviderModal({
                     />
                   }
                 >
-                  No active proxy clusters are available. Connect at least one
-                  proxy under
-                  <InlineLink href={"/reverse-proxy/services"}>
-                    {" "}
-                    Reverse Proxy
-                  </InlineLink>{" "}
-                  before adding a provider.
+                  {canReadDomains ? (
+                    <>
+                      No active proxy clusters are available. Connect at least
+                      one proxy under
+                      <InlineLink href={"/reverse-proxy/services"}>
+                        {" "}Reverse Proxy
+                      </InlineLink>
+                      {" "}before adding a provider.
+                    </>
+                  ) : (
+                    // Roles scoped to Agent Network can't read or connect
+                    // proxies, so point at who can instead of at a page they
+                    // have no access to.
+                    <>
+                      Agent Network isn&apos;t set up for this account yet. Ask
+                      an account admin to connect a proxy before adding a
+                      provider.
+                    </>
+                  )}
                 </Callout>
               )}
 
@@ -806,6 +858,7 @@ export default function AIProviderModal({
                 helpText={"AI provider and upstream URL to expose through NetBird."}
               >
                 <SelectDropdown
+                  data-testid={"agent-network-provider-type"}
                   value={providerId}
                   onChange={(v) => {
                     const next = v as AIProviderId;
@@ -859,6 +912,7 @@ export default function AIProviderModal({
                 />
               </FormRow>
               <Input
+                data-testid={"agent-network-provider-upstream-url"}
                 value={upstreamUrl}
                 onChange={(e) => setUpstreamUrl(e.target.value)}
                 placeholder={upstreamUrlPlaceholder(providerId)}
@@ -953,7 +1007,9 @@ export default function AIProviderModal({
                 <FormRow
                   label={
                     <>
-                      Provider API key
+                      {providerId === "agentgateway"
+                        ? "Virtual API key"
+                        : "Provider API key"}
                       <HelpTooltip
                         content={
                           <>
@@ -968,10 +1024,14 @@ export default function AIProviderModal({
                       />
                     </>
                   }
-                  helpText={"The API key issued by the provider."}
+                  helpText={
+                    providerId === "agentgateway"
+                      ? "The raw virtual key configured for strict API-key authentication on agentgateway."
+                      : "The API key issued by the provider."
+                  }
                 >
                   <Input
-                    data-testid={"agent-network-provider-key-input"}
+                    data-testid={"agent-network-provider-api-key"}
                     type={"password"}
                     showPasswordToggle
                     value={apiKey}
@@ -982,6 +1042,8 @@ export default function AIProviderModal({
                         ? "sk-..."
                         : providerId === "anthropic_api"
                         ? "sk-ant-..."
+                        : providerId === "agentgateway"
+                        ? "Paste the virtual API key"
                         : "Paste your API key"
                     }
                   />
@@ -1023,7 +1085,7 @@ export default function AIProviderModal({
                 helpText={"Shown in the Agent Network table."}
               >
                 <Input
-                  data-testid={"agent-network-provider-name-input"}
+                  data-testid={"agent-network-provider-name"}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={"e.g. OpenAI"}
@@ -1226,6 +1288,84 @@ export default function AIProviderModal({
                     placeholder={identityDefaultGroups || "netbird_groups"}
                   />
                 </FormRow>
+              </div>
+            </TabsContent>
+          )}
+
+          {showMappings && showGenericFixedHeaderPair && (
+            <TabsContent
+              value={"mappings"}
+              className={"pb-8"}
+              data-testid={"agent-network-provider-identity-mappings"}
+            >
+              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+                <FancyToggleSwitch
+                  value={!metadataDisabled}
+                  onChange={(v) => setMetadataDisabled(!v)}
+                  label={
+                    <>
+                      <ArrowRightLeft size={15} />
+                      Forward Identity Metadata
+                    </>
+                  }
+                  helpText={
+                    "Stamp the trusted NetBird identity headers below onto upstream requests."
+                  }
+                />
+
+                <div>
+                  <Label>Trusted Identity Headers</Label>
+                  <HelpText className={"mb-0"}>
+                    NetBird removes caller-supplied values before adding the
+                    authenticated identity shown below. The upstream listener
+                    must remain reachable only through the NetBird proxy.
+                    {providerId === "agentgateway" && (
+                      <>
+                        {" "}
+                        The virtual key authenticates NetBird but does not make
+                        headers from another network path trustworthy.
+                      </>
+                    )}
+                  </HelpText>
+                </div>
+
+                <div
+                  className={
+                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
+                  }
+                >
+                  {fixedHeaderPair?.end_user_id_header && (
+                    <MappingRow
+                      header={fixedHeaderPair.end_user_id_header}
+                      sourceLabel={"User identity"}
+                      data-testid={"agent-network-provider-user-mapping"}
+                    />
+                  )}
+                  {fixedHeaderPair?.tags_header && (
+                    <MappingRow
+                      header={fixedHeaderPair.tags_header}
+                      sourceLabel={"Authorizing groups (CSV)"}
+                      data-testid={"agent-network-provider-groups-mapping"}
+                    />
+                  )}
+                </div>
+
+                {providerId === "agentgateway" && (
+                  <div data-testid={"agent-network-provider-groups-guidance"}>
+                    <HelpText className={"mb-0"}>
+                      <code
+                        className={
+                          "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        }
+                      >
+                        x-netbird-groups
+                      </code>{" "}
+                      contains sorted group display names for attribution. It
+                      is not a delimiter-safe set of stable group IDs and must
+                      not be used as an agentgateway authorization claim.
+                    </HelpText>
+                  </div>
+                )}
               </div>
             </TabsContent>
           )}
@@ -1447,13 +1587,15 @@ export default function AIProviderModal({
             <div className={"px-8 pt-3 flex-col flex gap-3"}>
               <div>
                 <Label>Models</Label>
-                <HelpText>
-                  Models exposed through this endpoint, with the per-1k
-                  input/output prices used for cost tracking. Empty = all
-                  catalog models allowed at catalog prices. Cache rates left
-                  empty fall back to NetBird&apos;s defaults for the model; 0
-                  bills cached tokens at the input rate.
-                </HelpText>
+                <div data-testid={"agent-network-provider-models-help"}>
+                  <HelpText>
+                    Models exposed through this endpoint, with the per-1k
+                    input/output prices used for cost tracking. Empty = all
+                    catalog models allowed at catalog prices. Cache rates left
+                    empty fall back to NetBird&apos;s defaults for the model; 0
+                    bills cached tokens at the input rate.
+                  </HelpText>
+                </div>
               </div>
 
               <div className={"flex items-center gap-3"}>
@@ -1603,6 +1745,7 @@ export default function AIProviderModal({
                   variant={"primary"}
                   onClick={() => setTab("models")}
                   disabled={!canContinueFromProvider}
+                  data-testid={"agent-network-provider-continue"}
                 >
                   Continue
                 </Button>
@@ -1621,6 +1764,7 @@ export default function AIProviderModal({
                     variant={"primary"}
                     onClick={() => setTab("mappings")}
                     disabled={!canContinueFromProvider}
+                    data-testid={"agent-network-provider-continue"}
                   >
                     Continue
                   </Button>
@@ -2021,12 +2165,15 @@ function ModelRowEditor({
 function MappingRow({
   header,
   sourceLabel,
+  "data-testid": dataTestId,
 }: {
   header: string;
   sourceLabel: string;
+  "data-testid"?: string;
 }) {
   return (
     <div
+      data-testid={dataTestId}
       className={
         "flex items-center gap-3 px-4 py-3 border-b border-nb-gray-900 last:border-b-0"
       }

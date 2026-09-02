@@ -22,7 +22,9 @@ import {
   PolicyLimits,
   ProviderModel,
 } from "@/modules/agent-network/data/mockData";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 
 export type APIProviderModel = {
   id: string;
@@ -573,12 +575,13 @@ export function useAIProviders() {
 // three normalize to null here.
 export function useAgentNetworkSettings() {
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
+  const { permission } = usePermissions();
   const { data, error, isLoading, mutate } =
     useFetchApi<APIAgentNetworkSettings>(
       "/agent-network/settings",
       true,
       true,
-      agentNetworkEnabled,
+      agentNetworkEnabled && !!permission?.["agent_network.settings"]?.read,
     );
   const notFound = !!error && (error as { code?: number }).code === 404;
   // SWR keeps the previous data alongside the error (keepPreviousData), so a
@@ -602,8 +605,17 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   // Gate every fetch on the feature flag so this provider is inert when
   // disabled — it can safely wrap surfaces like the Control Center
   // without hitting agent-network endpoints in deployments that don't
-  // have the feature.
+  // have the feature — and on the caller's read grant per submodule, so
+  // partially-granted roles (usage_viewer reads providers but no
+  // policies) don't fire requests that can only 403.
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
+  const { permission } = usePermissions();
+  // Self-mode exception: the providers endpoint self-scopes on the server
+  // — a caller without the read grant gets the providers their own
+  // policies authorize (display surface only) — so a configured plain
+  // user fetches it too. That list feeds the provider filter on the
+  // self-scoped Usage & Logs view.
+  const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
 
   const {
     data: apiProviders,
@@ -613,7 +625,8 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     "/agent-network/providers",
     false,
     true,
-    agentNetworkEnabled,
+    (agentNetworkEnabled && !!permission?.["agent_network.providers"]?.read) ||
+      mySetupConfigured,
   );
   // Default error handling on purpose: a failed save raises the shared
   // "Request failed with status code N" toast, which carries the message the
@@ -624,12 +637,22 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
 
   const { data: apiPolicies, mutate: mutatePolicies } = useFetchApi<
     APIPolicy[]
-  >("/agent-network/policies", false, true, agentNetworkEnabled);
+  >(
+    "/agent-network/policies",
+    false,
+    true,
+    agentNetworkEnabled && !!permission?.["agent_network.policies"]?.read,
+  );
   const policiesApi = useApiCall<APIPolicy>("/agent-network/policies");
 
   const { data: apiGuardrails, mutate: mutateGuardrails } = useFetchApi<
     APIGuardrail[]
-  >("/agent-network/guardrails", false, true, agentNetworkEnabled);
+  >(
+    "/agent-network/guardrails",
+    false,
+    true,
+    agentNetworkEnabled && !!permission?.["agent_network.guardrails"]?.read,
+  );
   const guardrailsApi = useApiCall<APIGuardrail>("/agent-network/guardrails");
 
   const {
@@ -640,7 +663,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     "/agent-network/budget-rules",
     false,
     true,
-    agentNetworkEnabled,
+    agentNetworkEnabled && !!permission?.["agent_network.budgets"]?.read,
   );
   const budgetRulesApi = useApiCall<APIAgentBudgetRule>(
     "/agent-network/budget-rules",
@@ -745,7 +768,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           updates.metadataDisabled ?? existing.metadata_disabled,
         models: updates.models
           ? toAPIModels(updates.models)
-          : (existing.models ?? []),
+          : existing.models ?? [],
         enabled: updates.enabled ?? existing.enabled,
       };
       try {
@@ -831,7 +854,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         guardrail_ids: updates.guardrailIds ?? existing.guardrail_ids ?? [],
         limits: updates.limits
           ? policyLimitsToAPI(updates.limits)
-          : (existing.limits ?? policyLimitsToAPI(EMPTY_POLICY_LIMITS)),
+          : existing.limits ?? policyLimitsToAPI(EMPTY_POLICY_LIMITS),
       };
       try {
         await policiesApi.put(merged, `/${id}`);

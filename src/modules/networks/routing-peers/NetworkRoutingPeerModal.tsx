@@ -38,6 +38,7 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { Group } from "@/interfaces/Group";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
@@ -76,18 +77,31 @@ export default function NetworkRoutingPeerModal({
   );
 }
 
+export type RoutingPeerModalResult = {
+  peer?: Peer;
+  peerGroups: Group[];
+  metric: number;
+  masquerade: boolean;
+  enabled: boolean;
+};
+
 type ContentProps = {
   network: Network;
   router?: NetworkRouter;
   onCreated?: (r: NetworkRouter) => void;
   onUpdated?: (r: NetworkRouter) => void;
+  // false → no API calls; the data comes back via onSaved (draft mode).
+  useSave?: boolean;
+  onSaved?: (r: RoutingPeerModalResult) => void;
 };
 
-function RoutingPeerModalContent({
+export function RoutingPeerModalContent({
   network,
   router,
   onCreated,
   onUpdated,
+  useSave = true,
+  onSaved,
 }: ContentProps) {
   const isRoutingPeer = router ? router.peer != "" : true;
 
@@ -101,14 +115,17 @@ function RoutingPeerModalContent({
     `/networks/${network.id}/routers/${router?.id}`,
   ).put;
 
-  const { data: peer } = useFetchApi<Peer>(
+  const { data: peer, isLoading: peerLoading } = useFetchApi<Peer>(
     "/peers/" + router?.peer,
     true,
     false,
     router ? router.peer != "" : false,
   );
 
-  const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(peer);
+  const [selectedPeer, setSelectedPeer] = useState<Peer | undefined | null>(
+    null,
+  );
+  const routingPeer = selectedPeer === null ? peer : selectedPeer;
 
   const [
     routingPeerGroups,
@@ -139,14 +156,12 @@ function RoutingPeerModalContent({
   }, [isNonLinuxRoutingPeer]);
 
   const addRouter = async () => {
-    // Create groups that do not exist
     const g1 = getAllRoutingGroupsToUpdate();
     const createOrUpdateGroups = uniqBy([...g1], "name").map((g) => g.promise);
     const createdGroups = await Promise.all(
       createOrUpdateGroups.map((call) => call()),
     );
 
-    // Check if routing peer is selected
     const isRoutingPeer = type === "peer";
 
     notify({
@@ -168,14 +183,12 @@ function RoutingPeerModalContent({
   };
 
   const updateRouter = async () => {
-    // Create groups that do not exist
     const g1 = getAllRoutingGroupsToUpdate();
     const createOrUpdateGroups = uniqBy([...g1], "name").map((g) => g.promise);
     const createdGroups = await Promise.all(
       createOrUpdateGroups.map((call) => call()),
     );
 
-    // Check if routing peer is selected
     const isRoutingPeer = type === "peer";
 
     notify({
@@ -197,6 +210,17 @@ function RoutingPeerModalContent({
   };
 
   const canContinue = routingPeer !== undefined || routingPeerGroups.length > 0;
+
+  // Group creation and the API call happen later, on deploy.
+  const saveDraft = () => {
+    onSaved?.({
+      peer: type === "peer" ? routingPeer : undefined,
+      peerGroups: type === "peer" ? [] : routingPeerGroups,
+      metric: parseInt(metric),
+      masquerade: type === "peer" && isNonLinuxRoutingPeer ? true : masquerade,
+      enabled,
+    });
+  };
 
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
@@ -236,7 +260,7 @@ function RoutingPeerModalContent({
                 value={type}
                 onChange={(state) => {
                   setType(state);
-                  setRoutingPeer(undefined);
+                  setSelectedPeer(undefined);
                   setRoutingPeerGroups([]);
                 }}
               >
@@ -264,8 +288,9 @@ function RoutingPeerModalContent({
                       network.
                     </HelpText>
                     <PeerSelector
-                      onChange={setRoutingPeer}
+                      onChange={setSelectedPeer}
                       value={routingPeer}
+                      disabled={peerLoading}
                     />
                   </div>
                 </SegmentedTabs.Content>
@@ -393,7 +418,9 @@ function RoutingPeerModalContent({
                 disabled={
                   routingPeer == undefined && routingPeerGroups.length <= 0
                 }
-                onClick={router ? updateRouter : addRouter}
+                onClick={
+                  !useSave ? saveDraft : router ? updateRouter : addRouter
+                }
                 data-testid="submit-routing-peer"
               >
                 {router ? (
@@ -445,7 +472,7 @@ const InstallNetBirdWithSetupKeyButton = ({
       .post({
         name,
         type: "one-off",
-        expires_in: 24 * 60 * 60, // 1 day expiration
+        expires_in: 24 * 60 * 60, // 1 day expiration in seconds
         revoked: false,
         auto_groups: [],
         usage_limit: 1,

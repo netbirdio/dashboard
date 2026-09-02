@@ -116,10 +116,10 @@ test.describe
 
       const providerName = generateRandomName(PROVIDER_PREFIX);
       await page
-        .getByTestId("agent-network-provider-name-input")
+        .getByTestId("agent-network-provider-name")
         .fill(providerName);
       await page
-        .getByTestId("agent-network-provider-key-input")
+        .getByTestId("agent-network-provider-api-key")
         .fill("sk-e2e-refused-key");
 
       // The submit lives on the Models tab — the Provider tab's primary button
@@ -181,12 +181,12 @@ test.describe
       await expect(submit).toContainText("Connect Provider");
       await page.getByRole("tab", { name: "Provider" }).click({ force: true });
       await expect(
-        page.getByTestId("agent-network-provider-name-input"),
+        page.getByTestId("agent-network-provider-name"),
       ).toHaveValue(providerName);
       // The key matters most: the API never returns one, so a form that lost
       // it leaves the operator with nothing to correct.
       await expect(
-        page.getByTestId("agent-network-provider-key-input"),
+        page.getByTestId("agent-network-provider-api-key"),
       ).toHaveValue("sk-e2e-refused-key");
     } finally {
       await close();
