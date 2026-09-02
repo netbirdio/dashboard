@@ -33,6 +33,10 @@ import {
   CloudSettingsTabContent,
   CloudSettingsTabTrigger,
 } from "@/cloud/settings/CloudSettings";
+import {
+  SignInDomainsTab,
+  SignInDomainsTabTrigger,
+} from "@/cloud/sign-in-domains/SignInDomainsTab";
 
 export default function NetBirdSettings() {
   const queryParams = useSearchParams();
@@ -61,10 +65,14 @@ export default function NetBirdSettings() {
         <VerticalTabs.List>
           {permission.settings.read && (
             <>
-              <VerticalTabs.Trigger value="authentication" data-testid="settings-tab-authentication">
+              <VerticalTabs.Trigger
+                value="authentication"
+                data-testid="settings-tab-authentication"
+              >
                 <ShieldIcon size={14} />
                 Authentication
               </VerticalTabs.Trigger>
+              <SignInDomainsTabTrigger />
               {permission.setup_keys.read && (
                 <VerticalTabs.Trigger value="setup-keys">
                   <KeyRound size={14} />
@@ -78,19 +86,31 @@ export default function NetBirdSettings() {
                     Identity Providers
                   </VerticalTabs.Trigger>
                 )}
-              <VerticalTabs.Trigger value="groups" data-testid="settings-tab-groups">
+              <VerticalTabs.Trigger
+                value="groups"
+                data-testid="settings-tab-groups"
+              >
                 <FolderGit2Icon size={14} />
                 Groups
               </VerticalTabs.Trigger>
-              <VerticalTabs.Trigger value="permissions" data-testid="settings-tab-permissions">
+              <VerticalTabs.Trigger
+                value="permissions"
+                data-testid="settings-tab-permissions"
+              >
                 <LockIcon size={14} />
                 Permissions
               </VerticalTabs.Trigger>
-              <VerticalTabs.Trigger value="networks" data-testid="settings-tab-networks">
+              <VerticalTabs.Trigger
+                value="networks"
+                data-testid="settings-tab-networks"
+              >
                 <NetworkIcon size={14} />
                 Networks
               </VerticalTabs.Trigger>
-              <VerticalTabs.Trigger value="clients" data-testid="settings-tab-clients">
+              <VerticalTabs.Trigger
+                value="clients"
+                data-testid="settings-tab-clients"
+              >
                 <MonitorSmartphoneIcon size={14} />
                 Clients
               </VerticalTabs.Trigger>
@@ -109,6 +129,7 @@ export default function NetBirdSettings() {
         >
           <div className={"border-l border-nb-gray-930 w-full"}>
             {account && <AuthenticationTab account={account} />}
+            <SignInDomainsTab />
             {permission.setup_keys.read && <SetupKeysTab />}
             {account?.settings?.embedded_idp_enabled &&
               permission?.identity_providers?.read && <IdentityProvidersTab />}
