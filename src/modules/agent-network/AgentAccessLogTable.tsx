@@ -45,7 +45,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
@@ -68,7 +68,18 @@ import {
   APIAgentNetworkAccessLogSession,
 } from "@/modules/agent-network/agentAccessLogApi";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+
+// Self-scoped callers keep the non-identity filters: the server pins
+// user/group to the caller regardless, while the provider and model
+// options come from the self-scoped providers list.
+const SELF_SCOPED_LOG_FILTER_IDS = new Set([
+  "timestamp",
+  "path",
+  "provider",
+  "model",
+]);
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
+import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
 import AgentAccessLogExpandedRow from "@/modules/agent-network/AgentAccessLogExpandedRow";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
@@ -80,6 +91,11 @@ type Props = {
   // per-request rows. The owning page swaps the data endpoint to match.
   grouped?: boolean;
   onGroupedChange?: (value: boolean) => void;
+  // The server answers with the caller's own requests only (no
+  // agent_network.logs grant), so the identity and provider filters —
+  // which need permissions the caller doesn't hold and would be
+  // overridden anyway — are dropped; Date and Path stay.
+  selfScoped?: boolean;
 };
 
 // csvToArray splits a comma-separated filter value (the form the
@@ -92,8 +108,10 @@ export default function AgentAccessLogTable({
   headingTarget,
   grouped = false,
   onGroupedChange,
+  selfScoped = false,
 }: Readonly<Props>) {
   const { providers } = useAIProviders();
+  const { catalog } = useProviderCatalog();
   const { users } = useUsers();
   const { peers } = usePeers();
   const { groups } = useGroups();
@@ -178,10 +196,19 @@ export default function AgentAccessLogTable({
     return map;
   }, [providers]);
 
-  const resolveProvider = (entry: AIAccessLogEntry) =>
-    entry.resolvedProviderId
-      ? providerByConfigId.get(entry.resolvedProviderId)
-      : undefined;
+  // Catalog display names, for requests that carry a vendor but no resolved
+  // provider — so the column can say "OpenAI API" instead of "openai_api".
+  const catalogNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    catalog.forEach((p) => map.set(p.id, p.name));
+    return map;
+  }, [catalog]);
+
+  const providerDisplay = useCallback(
+    (entry: AIAccessLogEntry): ProviderDisplay =>
+      resolveProviderDisplay(entry, providerByConfigId, catalogNameById),
+    [providerByConfigId, catalogNameById],
+  );
 
   const columns = useMemo<ColumnDef<AIAccessLogEntry>[]>(
     () => [
@@ -222,14 +249,13 @@ export default function AgentAccessLogTable({
       },
       {
         id: "provider",
-        accessorFn: (row) => {
-          const resolved = resolveProvider(row);
-          // Include the resolved name, the raw vendor id, and the model so the
-          // search matches whether the operator types "OpenAI API" or "openai".
-          return `${resolved?.name ?? ""} ${row.providerId} ${
+        accessorFn: (row) =>
+          // Include the displayed name, the raw vendor label, and the model so
+          // the search matches whether the operator types "OpenAI API" or
+          // "openai".
+          `${providerDisplay(row).name} ${row.providerVendor ?? ""} ${
             row.model
-          }`.trim();
-        },
+          }`.trim(),
         header: ({ column }) => (
           <DataTableHeader column={column} name="provider" sorting={false}>
             Provider
@@ -238,7 +264,7 @@ export default function AgentAccessLogTable({
         cell: ({ row }) => (
           <ProviderCell
             entry={row.original}
-            resolved={resolveProvider(row.original)}
+            display={providerDisplay(row.original)}
           />
         ),
       },
@@ -283,9 +309,7 @@ export default function AgentAccessLogTable({
           <div className={"flex items-center gap-3"}>
             <StatusCell entry={row.original} />
             <span
-              className={
-                "text-nb-gray-300 text-[0.82rem] px-3 py-2 font-mono"
-              }
+              className={"text-nb-gray-300 text-[0.82rem] px-3 py-2 font-mono"}
             >
               {formatDuration(row.original.durationMs)}
             </span>
@@ -316,7 +340,7 @@ export default function AgentAccessLogTable({
         enableGlobalFilter: false,
       },
     ],
-    [providerByConfigId, principalSearchById],
+    [providerDisplay, principalSearchById],
   );
 
   // Session-grouped columns. Filter ids (timestamp / user / group / provider /
@@ -371,7 +395,11 @@ export default function AgentAccessLogTable({
       },
       {
         id: "provider",
-        accessorFn: (row) => row.models.join(" "),
+        accessorFn: (row) =>
+          [
+            ...row.models,
+            ...row.entries.map((e) => providerDisplay(e).name),
+          ].join(" "),
         header: ({ column }) => (
           <DataTableHeader column={column} sorting={false}>
             Provider
@@ -380,7 +408,7 @@ export default function AgentAccessLogTable({
         cell: ({ row }) => (
           <SessionProviderCell
             session={row.original}
-            resolveProvider={resolveProvider}
+            providerDisplay={providerDisplay}
           />
         ),
       },
@@ -472,7 +500,7 @@ export default function AgentAccessLogTable({
         enableGlobalFilter: false,
       },
     ],
-    [providerByConfigId, principalSearchById],
+    [providerDisplay, principalSearchById],
   );
 
   const [sorting, setSorting] = useState<SortingState>([
@@ -509,7 +537,7 @@ export default function AgentAccessLogTable({
       .map((m) => ({ value: m, label: m }));
   }, [providers]);
 
-  const filterDefs = useMemo<TableFilterDef[]>(
+  const allFilterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         // Backed by the real "timestamp" column so the shared filter adapter can
@@ -647,6 +675,14 @@ export default function AgentAccessLogTable({
     ],
   );
 
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () =>
+      selfScoped
+        ? allFilterDefs.filter((d) => SELF_SCOPED_LOG_FILTER_IDS.has(d.id))
+        : allFilterDefs,
+    [allFilterDefs, selfScoped],
+  );
+
   // Seed the DataTable's column-filter chips from the active server query so a
   // shared/deep link or a remount shows the chips that match what's fetched.
   const initialColumnFilters = useMemo<{ id: string; value: unknown }[]>(() => {
@@ -735,12 +771,15 @@ export default function AgentAccessLogTable({
           }
           title={"No Access Log Entries Yet"}
           description={
-            "No agent-network requests detected yet. This may be because no AI providers are connected, policies don’t allow traffic to them, log collection is disabled, or no traffic has occurred."
+            "No agent network requests yet. Check that providers are connected, policies allow traffic, and log collection is on."
           }
           learnMore={
             <>
               Learn more about
-              <InlineLink href={"https://docs.netbird.io/"} target={"_blank"}>
+              <InlineLink
+                href={"https://docs.netbird.io/agent-network"}
+                target={"_blank"}
+              >
                 Agent Network
                 <ExternalLinkIcon size={12} />
               </InlineLink>
@@ -970,27 +1009,105 @@ function UserCell({ entry }: { entry: AIAccessLogEntry }) {
   );
 }
 
+// ProviderDisplay is what the Provider column shows for one request: the badge
+// id, the label, and whether the label names the provider that actually served
+// the request (resolved) or is only the API shape the client called.
+type ProviderDisplay = {
+  // Stable identity for deduping a session's providers: the config-row id when
+  // resolved, so two records of the same vendor stay distinct.
+  key: string;
+  logoId?: AIProviderId;
+  name: string;
+  resolved: boolean;
+  // Why the label isn't a configured provider — shown on hover. Unset when
+  // resolved.
+  hint?: string;
+};
+
+// resolveProviderDisplay maps a request to its Provider column content.
+//
+// A request the router matched carries resolved_provider_id — the config-row id
+// of the provider that served it, and the only unambiguous attribution (one
+// synth service fronts every provider, so serviceId can't disambiguate).
+//
+// A request rejected before routing carries no resolved id: a 403
+// (model_not_routable / no_authorised_provider) still has the parser's vendor,
+// so it's labelled with that vendor's catalog name; a 404 on an unrecognised
+// path has no vendor at all and reads as "Unknown". Neither may render the raw
+// catalog id, which used to surface in the column as "custom" or "openai_api".
+function resolveProviderDisplay(
+  entry: AIAccessLogEntry,
+  providerByConfigId: Map<string, AIProvider>,
+  catalogNameById: Map<string, string>,
+): ProviderDisplay {
+  const resolved = entry.resolvedProviderId
+    ? providerByConfigId.get(entry.resolvedProviderId)
+    : undefined;
+  if (resolved) {
+    return {
+      key: resolved.id,
+      logoId: resolved.providerId,
+      name: resolved.name,
+      resolved: true,
+    };
+  }
+
+  if (!entry.providerVendor) {
+    return {
+      key: "unknown",
+      name: "Unknown",
+      resolved: false,
+      hint: "Not attributed to a provider. The request was rejected before NetBird recognised it as an LLM call.",
+    };
+  }
+
+  // A vendor the dashboard has no catalog id for normalises to "custom" — itself
+  // a real catalog entry (the OpenAI-compatible catch-all). Resolving its name
+  // would label every unrecognised vendor with that one generic name, and keying
+  // on the id would collapse distinct vendors into a single item in the session
+  // column. Key and label those by the raw vendor label instead.
+  const unmappedVendor = entry.providerId === "custom";
+  return {
+    key: unmappedVendor
+      ? `vendor:${entry.providerVendor}`
+      : `vendor:${entry.providerId}`,
+    logoId: entry.providerId,
+    name: unmappedVendor
+      ? entry.providerVendor
+      : (catalogNameById.get(entry.providerId) ?? entry.providerVendor),
+    resolved: false,
+    hint: "Not attributed to a configured provider. This is the API shape the client called. Requests denied before routing never reach a provider.",
+  };
+}
+
 function ProviderCell({
   entry,
-  resolved,
+  display,
 }: {
   entry: AIAccessLogEntry;
-  resolved?: AIProvider;
+  display: ProviderDisplay;
 }) {
-  // Logo uses the catalog id of the resolved provider when available,
-  // falling back to the parser-level vendor (entry.providerId) for
-  // legacy entries the router didn't stamp.
-  const logoId = resolved?.providerId ?? entry.providerId;
-  const displayName = resolved?.name ?? entry.providerId;
+  const name = (
+    <span
+      className={cn(
+        "text-sm truncate",
+        display.resolved ? "text-nb-gray-200" : "text-nb-gray-400",
+      )}
+    >
+      {display.name}
+    </span>
+  );
   return (
     <div className={"flex items-center gap-2 py-2 px-3 whitespace-nowrap"}>
-      <AIProviderLogo providerId={logoId} size={20} />
+      <AIProviderLogo providerId={display.logoId} size={20} />
       <div className={"flex flex-col min-w-0"}>
-        <span className={"text-sm text-nb-gray-200 truncate"}>
-          {displayName}
-        </span>
+        {display.hint ? (
+          <FullTooltip content={display.hint}>{name}</FullTooltip>
+        ) : (
+          name
+        )}
         <code className={"text-[11px] text-nb-gray-400 font-mono truncate"}>
-          {entry.model}
+          {entry.model || "—"}
         </code>
       </div>
     </div>
@@ -1100,7 +1217,8 @@ type CostFields = {
 // Cost cell and the session rows attach the tooltip on the same condition.
 function hasCostBreakdown(f: CostFields): boolean {
   const cache = f.cacheCostUsd ?? 0;
-  const perBucket = f.inputCostUsd !== undefined || f.outputCostUsd !== undefined;
+  const perBucket =
+    f.inputCostUsd !== undefined || f.outputCostUsd !== undefined;
   return cache > 0 || perBucket;
 }
 
@@ -1201,10 +1319,9 @@ function CostCell(fields: CostFields) {
   );
 }
 
-// resolveProviderFn resolves a request's configured provider (by the router's
-// stamped resolved_provider_id) — shared by the session cells so they reuse the
-// flat row's provider resolution.
-type ResolveProviderFn = (entry: AIAccessLogEntry) => AIProvider | undefined;
+// ProviderDisplayFn maps a request to its Provider column content — shared by
+// the session cells so they label providers exactly like the flat rows.
+type ProviderDisplayFn = (entry: AIAccessLogEntry) => ProviderDisplay;
 
 // SessionActivityCell shows the session's last-activity date and its first→last
 // time-of-day span. The elapsed duration moves to the Requests column.
@@ -1229,33 +1346,55 @@ function SessionActivityCell({ session }: { session: AIAccessLogSession }) {
 // session's entries, resolved the same way as the flat Provider column.
 function SessionProviderCell({
   session,
-  resolveProvider,
+  providerDisplay,
 }: {
   session: AIAccessLogSession;
-  resolveProvider: ResolveProviderFn;
+  providerDisplay: ProviderDisplayFn;
 }) {
   const items = useMemo(() => {
-    const seen = new Map<string, { logoId: AIProviderId; name: string }>();
-    session.entries.forEach((e) => {
-      const resolved = resolveProvider(e);
-      const logoId = resolved?.providerId ?? e.providerId;
-      const name = resolved?.name ?? e.providerId;
-      if (!seen.has(logoId)) seen.set(logoId, { logoId, name });
-    });
-    return Array.from(seen.values());
-  }, [session.entries, resolveProvider]);
+    const collect = (predicate: (d: ProviderDisplay) => boolean) => {
+      const seen = new Map<string, ProviderDisplay>();
+      session.entries.forEach((e) => {
+        const display = providerDisplay(e);
+        if (!predicate(display) || seen.has(display.key)) return;
+        seen.set(display.key, display);
+      });
+      return Array.from(seen.values());
+    };
+    // Only count providers a request was actually routed to. Sessions commonly
+    // open with a request that never reached one (an unroutable model, or a
+    // probe on an unknown path the client then retried), and since entries run
+    // oldest-first that unattributed request would otherwise become the
+    // session's primary provider and inflate the "+N" count.
+    const resolved = collect((d) => d.resolved);
+    // Nothing was routed anywhere — a wholly denied session. Fall back to the
+    // vendor labels so the row still says what was attempted.
+    return resolved.length > 0 ? resolved : collect(() => true);
+  }, [session.entries, providerDisplay]);
 
   if (items.length === 0) return <EmptyRow />;
   const [primary] = items;
   const extra = items.length - 1;
+  const name = (
+    <span
+      className={cn(
+        "text-sm truncate",
+        primary.resolved ? "text-nb-gray-200" : "text-nb-gray-400",
+      )}
+    >
+      {primary.name}
+      {extra > 0 ? ` +${extra}` : ""}
+    </span>
+  );
   return (
     <div className={"flex items-center gap-2 py-2 px-3 whitespace-nowrap"}>
       <AIProviderLogo providerId={primary.logoId} size={20} />
       <div className={"flex flex-col min-w-0"}>
-        <span className={"text-sm text-nb-gray-200 truncate"}>
-          {primary.name}
-          {extra > 0 ? ` +${extra}` : ""}
-        </span>
+        {primary.hint ? (
+          <FullTooltip content={primary.hint}>{name}</FullTooltip>
+        ) : (
+          name
+        )}
         {session.models.length > 1 ? (
           <FullTooltip
             content={

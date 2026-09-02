@@ -16,7 +16,7 @@ export default function PageContainer({
       className={cn(
         className,
         "relative flex-auto overflow-auto bg-nb-gray z-1 focus:outline-none",
-        isNavigationCollapsed && "md:pl-[70px]",
+        isNavigationCollapsed && "md:pl-[64px]",
       )}
     >
       {children}

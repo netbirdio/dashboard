@@ -43,7 +43,7 @@ export default function AgentNetworkPoliciesPage() {
 
       <RestrictedAccess
         page={"Policies"}
-        hasAccess={permission?.services?.read}
+        hasAccess={permission?.["agent_network.policies"]?.read}
       >
         <AIProvidersProvider>
           <Suspense fallback={<SkeletonTable />}>

@@ -1,10 +1,5 @@
-/**
- * Direct API helpers for fast CRUD operations in tests.
- *
- * The app uses OIDC service-worker auth, so page.request doesn't carry
- * the Bearer token. We extract it from the browser context and pass it
- * explicitly via page.evaluate + fetch.
- */
+// The app uses OIDC service-worker auth, so page.request carries no Bearer
+// token: it is intercepted off a real API response and passed explicitly.
 import type { Page } from "@playwright/test";
 
 type Group = {
@@ -14,12 +9,6 @@ type Group = {
   resources_count: number;
 };
 
-/**
- * Capture the auth token and API origin by intercepting a real network
- * response from the management API. We listen for any /api/ response
- * and extract the request's Authorization header (injected by the OIDC
- * service worker at the network level).
- */
 const apiContextCache = new WeakMap<Page, { token: string; origin: string }>();
 
 async function getApiContext(
@@ -28,13 +17,6 @@ async function getApiContext(
   const cached = apiContextCache.get(page);
   if (cached) return cached;
 
-  // Navigate to the users page to trigger an API call we can intercept.
-  // The predicate runs for EVERY response the page receives and returns
-  // whether it's the one we want: a successful GET to the management API.
-  // Non-matching responses (4xx/5xx, non-GET, non-API) are skipped — the
-  // wait keeps going until a match or the 10s timeout. Network-level
-  // request failures never produce a response, so they can't match either;
-  // if nothing succeeds, this throws a TimeoutError.
   // Set E2E_DEBUG_API=1 to log every API response the predicate considers.
   const debugApi = !!process.env.E2E_DEBUG_API;
   const [response] = await Promise.all([
@@ -42,7 +24,11 @@ async function getApiContext(
       (resp) => {
         const req = resp.request();
         if (!resp.url().includes("/api/")) return false;
-        const isMatch = req.method() === "GET" && resp.status() === 200;
+        // A tokenless 200 can arrive before the service worker injects the token.
+        const isMatch =
+          req.method() === "GET" &&
+          resp.status() === 200 &&
+          !!req.headers()["authorization"];
         if (debugApi) {
           // eslint-disable-next-line no-console
           console.log(
@@ -53,14 +39,14 @@ async function getApiContext(
         }
         return isMatch;
       },
-      { timeout: 10_000 },
+      // `next dev` compiles the route on demand before any /api response comes.
+      { timeout: 30_000 },
     ),
-    page.goto("/team/users"),
+    page.goto("/team/users", { timeout: 30_000 }),
   ]);
 
   const request = response.request();
-  const authHeader =
-    (await request.allHeaders())["authorization"] || "";
+  const authHeader = (await request.allHeaders())["authorization"] || "";
   const token = authHeader.replace("Bearer ", "");
   const url = new URL(request.url());
   const origin = `${url.protocol}//${url.host}`;
@@ -89,9 +75,61 @@ async function apiDelete(page: Page, path: string): Promise<void> {
   });
 }
 
+async function apiPost<T>(page: Page, path: string, body: unknown): Promise<T> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.post(`${origin}/api${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: body,
+  });
+  if (!resp.ok()) {
+    throw new Error(
+      `POST ${path} returned ${resp.status()}: ${await resp.text()}`,
+    );
+  }
+  return resp.json();
+}
+
+async function apiPut<T>(page: Page, path: string, body: unknown): Promise<T> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.put(`${origin}/api${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: body,
+  });
+  if (!resp.ok()) {
+    throw new Error(
+      `PUT ${path} returned ${resp.status()}: ${await resp.text()}`,
+    );
+  }
+  return resp.json();
+}
+
 /** List all groups. */
 export async function listGroups(page: Page): Promise<Group[]> {
   return apiGet<Group[]>(page, "/groups");
+}
+
+type Peer = { id: string; name: string; hostname: string; connected: boolean };
+
+export async function listPeers(page: Page): Promise<Peer[]> {
+  return apiGet<Peer[]>(page, "/peers");
+}
+
+export async function deletePeerById(page: Page, peerId: string) {
+  await apiDelete(page, `/peers/${peerId}`);
+}
+
+export async function deletePeersByPrefix(page: Page, prefix: string) {
+  const peers = await listPeers(page);
+  for (const p of peers) {
+    if (p.name?.startsWith(prefix) || p.hostname?.startsWith(prefix)) {
+      await deletePeerById(page, p.id);
+    }
+  }
+}
+
+/** Create a group by name. */
+export async function createGroup(page: Page, name: string): Promise<Group> {
+  return apiPost<Group>(page, "/groups", { name, peers: [] });
 }
 
 /** Delete a group by ID. */
@@ -99,7 +137,6 @@ export async function deleteGroup(page: Page, groupId: string) {
   await apiDelete(page, `/groups/${groupId}`);
 }
 
-/** Delete all groups matching a prefix. */
 export async function deleteGroupsByPrefix(page: Page, prefix: string) {
   const groups = await listGroups(page);
   const toDelete = groups.filter((g) => g.name.startsWith(prefix));
@@ -115,17 +152,40 @@ type Network = {
   name: string;
 };
 
-/** List all networks. */
 export async function listNetworks(page: Page): Promise<Network[]> {
   return apiGet<Network[]>(page, "/networks");
 }
 
-/** Delete a network by ID. */
+export async function createNetwork(
+  page: Page,
+  name: string,
+  description = "",
+): Promise<Network> {
+  return apiPost<Network>(page, "/networks", { name, description });
+}
+
 export async function deleteNetworkById(page: Page, networkId: string) {
   await apiDelete(page, `/networks/${networkId}`);
 }
 
-/** Delete all networks matching a prefix. */
+type NetworkResource = { id: string; name: string; address: string };
+
+export async function createResource(
+  page: Page,
+  networkId: string,
+  name: string,
+  address: string,
+  groupIds: string[],
+): Promise<NetworkResource> {
+  return apiPost<NetworkResource>(page, `/networks/${networkId}/resources`, {
+    name,
+    description: name,
+    address,
+    groups: groupIds,
+    enabled: true,
+  });
+}
+
 export async function deleteNetworksByPrefix(page: Page, prefix: string) {
   const networks = await listNetworks(page);
   const toDelete = networks.filter((n) => n.name.startsWith(prefix));
@@ -143,17 +203,40 @@ type Policy = {
   rules: { sources: string[]; destinations: string[] }[];
 };
 
-/** List all policies. */
 export async function listPolicies(page: Page): Promise<Policy[]> {
   return apiGet<Policy[]>(page, "/policies");
 }
 
-/** Delete a policy by ID. */
+// Groups need no peers, so this renders policy/group nodes without any peer.
+export async function createPolicy(
+  page: Page,
+  name: string,
+  sourceGroupId: string,
+  destinationGroupId: string,
+  enabled = true,
+): Promise<Policy> {
+  return apiPost<Policy>(page, "/policies", {
+    name,
+    description: name,
+    enabled,
+    rules: [
+      {
+        name,
+        enabled,
+        bidirectional: true,
+        protocol: "all",
+        action: "accept",
+        sources: [sourceGroupId],
+        destinations: [destinationGroupId],
+      },
+    ],
+  });
+}
+
 export async function deletePolicyById(page: Page, policyId: string) {
   await apiDelete(page, `/policies/${policyId}`);
 }
 
-/** Delete all policies whose name or description contains a substring. */
 export async function deletePoliciesBySubstring(page: Page, substring: string) {
   const policies = await listPolicies(page);
   const toDelete = policies.filter(
@@ -164,7 +247,6 @@ export async function deletePoliciesBySubstring(page: Page, substring: string) {
   }
 }
 
-/** Delete all policies that reference a group name in sources or destinations. */
 export async function deletePoliciesByGroupName(page: Page, groupName: string) {
   const [policies, groups] = await Promise.all([
     listPolicies(page),
@@ -190,18 +272,18 @@ type Route = {
   network_id: string;
 };
 
-/** List all routes. */
 export async function listRoutes(page: Page): Promise<Route[]> {
   return apiGet<Route[]>(page, "/routes");
 }
 
-/** Delete a route by ID. */
 export async function deleteRouteById(page: Page, routeId: string) {
   await apiDelete(page, `/routes/${routeId}`);
 }
 
-/** Delete all routes matching a network_id prefix. */
-export async function deleteRoutesByNetworkIdPrefix(page: Page, prefix: string) {
+export async function deleteRoutesByNetworkIdPrefix(
+  page: Page,
+  prefix: string,
+) {
   const routes = await listRoutes(page);
   const toDelete = routes.filter((r) => r.network_id.startsWith(prefix));
   for (const r of toDelete) {
@@ -216,17 +298,31 @@ type SetupKey = {
   name: string;
 };
 
-/** List all setup keys. */
 export async function listSetupKeys(page: Page): Promise<SetupKey[]> {
   return apiGet<SetupKey[]>(page, "/setup-keys");
 }
 
-/** Delete a setup key by ID. */
+/** The plaintext `key` is only present on the creation response. */
+export async function createSetupKey(
+  page: Page,
+  name: string,
+  autoGroupIds: string[] = [],
+): Promise<SetupKey & { key: string }> {
+  return apiPost<SetupKey & { key: string }>(page, "/setup-keys", {
+    name,
+    type: "reusable",
+    expires_in: 86400,
+    revoked: false,
+    auto_groups: autoGroupIds,
+    usage_limit: 0,
+    ephemeral: false,
+  });
+}
+
 export async function deleteSetupKeyById(page: Page, keyId: string) {
   await apiDelete(page, `/setup-keys/${keyId}`);
 }
 
-/** Delete all setup keys matching a name prefix. */
 export async function deleteSetupKeysByPrefix(page: Page, prefix: string) {
   const keys = await listSetupKeys(page);
   const toDelete = keys.filter((k) => k.name.startsWith(prefix));
@@ -242,17 +338,14 @@ type DnsZone = {
   domain: string;
 };
 
-/** List all DNS zones. */
 export async function listDnsZones(page: Page): Promise<DnsZone[]> {
   return apiGet<DnsZone[]>(page, "/dns/zones");
 }
 
-/** Delete a DNS zone by ID. */
 export async function deleteDnsZoneById(page: Page, zoneId: string) {
   await apiDelete(page, `/dns/zones/${zoneId}`);
 }
 
-/** Delete all DNS zones matching a domain prefix. */
 export async function deleteDnsZonesByPrefix(page: Page, prefix: string) {
   const zones = await listDnsZones(page);
   const toDelete = zones.filter((z) => z.domain.startsWith(prefix));
@@ -269,17 +362,19 @@ type NotificationChannel = {
   enabled: boolean;
 };
 
-/** List all notification channels. */
-export async function listNotificationChannels(page: Page): Promise<NotificationChannel[]> {
-  return apiGet<NotificationChannel[]>(page, "/integrations/notifications/channels");
+export async function listNotificationChannels(
+  page: Page,
+): Promise<NotificationChannel[]> {
+  return apiGet<NotificationChannel[]>(
+    page,
+    "/integrations/notifications/channels",
+  );
 }
 
-/** Delete a notification channel by ID. */
 export async function deleteNotificationChannel(page: Page, channelId: string) {
   await apiDelete(page, `/integrations/notifications/channels/${channelId}`);
 }
 
-/** Delete all notification channels. */
 export async function deleteAllNotificationChannels(page: Page) {
   const channels = await listNotificationChannels(page);
   for (const c of channels) {
@@ -287,8 +382,10 @@ export async function deleteAllNotificationChannels(page: Page) {
   }
 }
 
-/** Delete notification channels by type (e.g., "email", "slack", "webhook"). */
-export async function deleteNotificationChannelsByType(page: Page, type: string) {
+export async function deleteNotificationChannelsByType(
+  page: Page,
+  type: string,
+) {
   const channels = await listNotificationChannels(page);
   const toDelete = channels.filter((c) => c.type === type);
   for (const c of toDelete) {
@@ -303,18 +400,20 @@ type NameserverGroup = {
   name: string;
 };
 
-/** List all nameserver groups. */
-export async function listNameserverGroups(page: Page): Promise<NameserverGroup[]> {
+export async function listNameserverGroups(
+  page: Page,
+): Promise<NameserverGroup[]> {
   return apiGet<NameserverGroup[]>(page, "/dns/nameservers");
 }
 
-/** Delete a nameserver group by ID. */
 export async function deleteNameserverGroupById(page: Page, id: string) {
   await apiDelete(page, `/dns/nameservers/${id}`);
 }
 
-/** Delete all nameserver groups matching a name prefix. */
-export async function deleteNameserverGroupsByPrefix(page: Page, prefix: string) {
+export async function deleteNameserverGroupsByPrefix(
+  page: Page,
+  prefix: string,
+) {
   const groups = await listNameserverGroups(page);
   const toDelete = groups.filter((g) => g.name.startsWith(prefix));
   for (const g of toDelete) {
@@ -329,17 +428,19 @@ type ReverseProxyService = {
   name: string;
 };
 
-/** List all reverse proxy services. */
-export async function listReverseProxyServices(page: Page): Promise<ReverseProxyService[]> {
+export async function listReverseProxyServices(
+  page: Page,
+): Promise<ReverseProxyService[]> {
   return apiGet<ReverseProxyService[]>(page, "/reverse-proxies/services");
 }
 
-/** Delete a reverse proxy service by ID. */
-export async function deleteReverseProxyServiceById(page: Page, serviceId: string) {
+export async function deleteReverseProxyServiceById(
+  page: Page,
+  serviceId: string,
+) {
   await apiDelete(page, `/reverse-proxies/services/${serviceId}`);
 }
 
-/** Delete all reverse proxy services matching a name prefix. */
 export async function deleteServicesByPrefix(page: Page, prefix: string) {
   const services = await listReverseProxyServices(page);
   const toDelete = services.filter((s) => s.name.startsWith(prefix));
@@ -357,20 +458,13 @@ type ReverseProxyCluster = {
   connected_proxies: number;
 };
 
-/** List all reverse proxy clusters. */
 export async function listReverseProxyClusters(
   page: Page,
 ): Promise<ReverseProxyCluster[]> {
   return apiGet<ReverseProxyCluster[]>(page, "/reverse-proxies/clusters");
 }
 
-/**
- * Poll the management API until every given cluster address is present and
- * online with at least one connected proxy. The test reverse-proxy
- * containers register asynchronously after `test:setup` returns, so the
- * domain picker can be briefly empty; gating here keeps the reverse-proxy
- * suite deterministic instead of flaking on a half-registered env.
- */
+// The test proxy containers register asynchronously after `test:setup` returns.
 export async function waitForProxyClustersOnline(
   page: Page,
   addresses: string[],
@@ -379,9 +473,6 @@ export async function waitForProxyClustersOnline(
   const deadline = Date.now() + timeoutMs;
   let last: ReverseProxyCluster[] = [];
   while (Date.now() < deadline) {
-    // Don't silently coerce errors to "no clusters" — a failed call (token
-    // capture timeout, 401, network) is a different problem than an empty
-    // list, and hiding it makes the gate undiagnosable.
     last = await listReverseProxyClusters(page).catch((err) => {
       // eslint-disable-next-line no-console
       console.warn(
@@ -400,7 +491,13 @@ export async function waitForProxyClustersOnline(
   throw new Error(
     `Proxy clusters not online after ${timeoutMs}ms. Expected ${addresses.join(
       ", ",
-    )}; got ${JSON.stringify(last.map((c) => ({ a: c.address, online: c.online, n: c.connected_proxies })))}`,
+    )}; got ${JSON.stringify(
+      last.map((c) => ({
+        a: c.address,
+        online: c.online,
+        n: c.connected_proxies,
+      })),
+    )}`,
   );
 }
 
@@ -412,20 +509,19 @@ type User = {
   name: string;
   role: string;
   status: string;
+  auto_groups: string[];
+  is_blocked: boolean;
   is_current: boolean;
 };
 
-/** List all users. */
 export async function listUsers(page: Page): Promise<User[]> {
   return apiGet<User[]>(page, "/users");
 }
 
-/** Delete a user by ID. */
 export async function deleteUserById(page: Page, userId: string) {
   await apiDelete(page, `/users/${userId}`);
 }
 
-/** Delete a user by email (skip current user). */
 export async function deleteUserByEmail(page: Page, email: string) {
   const users = await listUsers(page);
   const user = users.find((u) => u.email === email && !u.is_current);
@@ -434,9 +530,7 @@ export async function deleteUserByEmail(page: Page, email: string) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Agent Network
-// ---------------------------------------------------------------------------
+// ── Agent Network ──────────────────────────────────────────────────────
 
 type AgentNetworkCatalogProvider = {
   id: string;
@@ -449,7 +543,6 @@ type AgentNetworkProvider = {
   provider_id: string;
 };
 
-/** List the Agent Network provider catalog (server-defined provider types). */
 export async function listAgentNetworkCatalog(
   page: Page,
 ): Promise<AgentNetworkCatalogProvider[]> {
@@ -459,19 +552,16 @@ export async function listAgentNetworkCatalog(
   );
 }
 
-/** List connected Agent Network providers. */
 export async function listAgentNetworkProviders(
   page: Page,
 ): Promise<AgentNetworkProvider[]> {
   return apiGet<AgentNetworkProvider[]>(page, "/agent-network/providers");
 }
 
-/** Delete an Agent Network provider by ID. */
 export async function deleteAgentNetworkProviderById(page: Page, id: string) {
   await apiDelete(page, `/agent-network/providers/${id}`);
 }
 
-/** Delete all Agent Network providers whose name starts with the prefix. */
 export async function deleteAgentNetworkProvidersByPrefix(
   page: Page,
   prefix: string,
@@ -482,4 +572,101 @@ export async function deleteAgentNetworkProvidersByPrefix(
       await deleteAgentNetworkProviderById(page, p.id);
     }
   }
+}
+
+// Only builds with POST /agent-network/settings expose proxy_address.
+export async function supportsAgentNetworkSettingsBootstrap(
+  page: Page,
+): Promise<boolean> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.get(`${origin}/api/agent-network/settings`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!resp.ok()) return false;
+  const settings = await resp.json().catch(() => null);
+  return (
+    !!settings && typeof settings === "object" && "proxy_address" in settings
+  );
+}
+
+/**
+ * Whether the management build under test serves the caller-scoped
+ * GET /agent-network/agent-config answer that backs the Connect Agent page.
+ * The endpoint answers 200 for every authenticated caller (an unconfigured
+ * caller gets configured=false, never an error), so any non-OK status means
+ * the build predates it.
+ */
+export async function supportsAgentNetworkAgentConfig(
+  page: Page,
+): Promise<boolean> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.get(
+    `${origin}/api/agent-network/agent-config`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return resp.ok();
+}
+
+type AgentNetworkPolicy = {
+  id: string;
+  name: string;
+};
+
+/** List Agent Network policies. */
+export async function listAgentNetworkPolicies(
+  page: Page,
+): Promise<AgentNetworkPolicy[]> {
+  return apiGet<AgentNetworkPolicy[]>(page, "/agent-network/policies");
+}
+
+/** Create an Agent Network policy. */
+export async function createAgentNetworkPolicy(
+  page: Page,
+  body: {
+    name: string;
+    source_groups: string[];
+    destination_provider_ids: string[];
+    enabled?: boolean;
+  },
+): Promise<AgentNetworkPolicy> {
+  return apiPost<AgentNetworkPolicy>(page, "/agent-network/policies", {
+    enabled: true,
+    ...body,
+  });
+}
+
+/** Delete all Agent Network policies whose name starts with the prefix. */
+export async function deleteAgentNetworkPoliciesByPrefix(
+  page: Page,
+  prefix: string,
+) {
+  const policies = await listAgentNetworkPolicies(page);
+  for (const p of policies) {
+    if (p.name.startsWith(prefix)) {
+      await apiDelete(page, `/agent-network/policies/${p.id}`);
+    }
+  }
+}
+
+/** The user the captured token belongs to. */
+export async function getCurrentUser(page: Page): Promise<User> {
+  const users = await apiGet<User[]>(page, "/users");
+  const current = users.find((u) => u.is_current);
+  if (!current) {
+    throw new Error("no is_current user in the /users answer");
+  }
+  return current;
+}
+
+/** Replace a user's auto-groups, keeping role and blocked state. */
+export async function updateUserAutoGroups(
+  page: Page,
+  user: User,
+  autoGroups: string[],
+): Promise<void> {
+  await apiPut(page, `/users/${user.id}`, {
+    role: user.role,
+    auto_groups: autoGroups,
+    is_blocked: !!user.is_blocked,
+  });
 }

@@ -205,6 +205,7 @@ export function accessLogFromAgentAPI(
     id: entry.id,
     serviceId: entry.service_id,
     providerId: normalizeProviderId(entry.provider),
+    providerVendor: entry.provider ?? "",
     resolvedProviderId: entry.resolved_provider_id ?? "",
     sessionId: entry.session_id ?? "",
     timestamp: entry.timestamp,

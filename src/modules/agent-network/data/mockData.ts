@@ -1,4 +1,3 @@
-/* eslint-disable */
 // Mock data for the Agent Network section. No backend wired up yet.
 // All numbers, IDs, and text are static placeholders for click-through.
 
@@ -14,6 +13,7 @@ export type AIProviderId =
   | "mistral_api"
   | "kimi_api"
   | "litellm_proxy"
+  | "agentgateway"
   | "portkey"
   | "bifrost"
   | "cloudflare_ai_gateway"
@@ -169,6 +169,11 @@ export type AIAccessLogEntry = {
   id: string;
   serviceId: string;
   providerId: AIProviderId;
+  // Raw vendor label the request parser stamped ("openai", "anthropic"),
+  // before it was normalised into a catalog id. Empty when the request never
+  // got far enough to be recognised as an LLM call — providerId collapses that
+  // case into "custom", so only this field can tell the two apart.
+  providerVendor?: string;
   // Config-row id of the provider the router actually selected
   // (llm.resolved_provider_id metadata). Empty for legacy entries
   // and non-agent-network requests where the router didn't run.

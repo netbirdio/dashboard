@@ -21,6 +21,7 @@ import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { headerHeight } from "@/layouts/Header";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
 import { SmallBadge } from "@components/ui/SmallBadge";
@@ -39,9 +40,25 @@ export default function Navigation({
 }: Readonly<Props>) {
   const { bannerHeight } = useAnnouncement();
   const { isNavigationCollapsed } = useApplicationContext();
-  const { permission, isRestricted } = usePermissions();
-  const { only: agentNetworkOnly, enabled: agentNetworkEnabled } =
+  const { permission } = usePermissions();
+  // "enabled" already falls back to the caller's agent_network grants when
+  // the feature flag can't be resolved (no accounts read — usage_viewer and
+  // custom delegated roles), so it is the one surface switch here.
+  const { only: agentNetworkOnly, enabled: agentNetworkSurface } =
     useAgentNetworkMode();
+  // Caller-scoped: true whenever the caller's own policies grant access to
+  // at least one provider, independent of any agent_network permission —
+  // this is what lets plain users (limited view included) reach Connect Agent
+  // and the self-scoped Usage & Logs view.
+  const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
+  // Any agent_network grant at all — the delegated roles
+  // (agent_network_admin, usage_viewer) each hold a subset of these.
+  const hasAgentNetworkGrant =
+    !!permission?.["agent_network.providers"]?.read ||
+    !!permission?.["agent_network.policies"]?.read ||
+    !!permission?.["agent_network.usage"]?.read ||
+    !!permission?.["agent_network.logs"]?.read ||
+    !!permission?.["agent_network.settings"]?.read;
 
   return (
     <div
@@ -53,7 +70,7 @@ export default function Navigation({
           ? "w-auto max-w-[22rem]"
           : "w-[15rem] max-w-[15rem] min-w-[15rem] overflow-y-auto",
         isNavigationCollapsed &&
-          "md:w-[70px] md:min-w-[70px] md:fixed md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
+          "md:w-[64px] md:min-w-[64px] md:fixed md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
       )}
       style={{
         height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
@@ -71,7 +88,7 @@ export default function Navigation({
             className={cn(
               "flex flex-col pt-3 justify-between w-[15rem] max-w-[15rem] min-w-[15rem] transition-all",
               isNavigationCollapsed &&
-                "md:w-[70px] md:min-w-[70px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem] md:overflow-x-clip",
+                "md:w-[64px] md:min-w-[64px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem] md:overflow-x-clip",
             )}
             style={{
               height: !fullWidth
@@ -92,7 +109,9 @@ export default function Navigation({
                   icon={<PeerIcon />}
                   label="Peers"
                   href={"/peers"}
-                  visible={!isRestricted}
+                  // Restricted users get the add-your-device view there, so
+                  // the link stays even in the limited (user role) sidebar.
+                  visible={true}
                 />
 
                 <DistributorNavigation />
@@ -194,41 +213,86 @@ export default function Navigation({
                       )}
                     </div>
                   }
-                  href={"/agent-network/providers"}
+                  href={
+                    permission?.["agent_network.providers"]?.read
+                      ? "/agent-network/providers"
+                      : "/agent-network/connect"
+                  }
                   collapsible
                   exactPathMatch={false}
-                  // Parent is visible when at least one child is permitted. All
-                  // Agent Network pages guard on services.read, so the section
-                  // tracks that (plus the feature gating).
-                  visible={agentNetworkEnabled && permission?.services?.read}
+                  // Parent is visible when at least one child is permitted.
+                  // Each page tracks its agent_network submodule, so delegated
+                  // roles (agent_network_admin, usage_viewer) see exactly the
+                  // pages their grants cover. Connect Agent is caller-scoped
+                  // and needs no permission, so a configured setup alone also
+                  // surfaces the section — that is how plain users reach it.
+                  // The surface switch decides first: a deployment (or
+                  // account) with Agent Network off hides the section from
+                  // everyone, configured caller or not. Within it, one
+                  // permitted child or the caller's own setup surfaces it.
+                  visible={
+                    agentNetworkSurface &&
+                    (hasAgentNetworkGrant || mySetupConfigured)
+                  }
                 >
+                  <SidebarItem
+                    label="Connect Agent"
+                    isChild
+                    href={"/agent-network/connect"}
+                    exactPathMatch={true}
+                    // Configured callers get it because it is their own setup;
+                    // anyone administering Agent Network gets it too, even
+                    // before a policy covers them, so the page they point
+                    // their own agent at is never missing from the section
+                    // they manage.
+                    visible={
+                      agentNetworkSurface &&
+                      (mySetupConfigured || hasAgentNetworkGrant)
+                    }
+                  />
                   <SidebarItem
                     label="Providers"
                     isChild
                     href={"/agent-network/providers"}
                     exactPathMatch={true}
-                    visible={agentNetworkEnabled && permission?.services?.read}
+                    visible={
+                      agentNetworkSurface &&
+                      permission?.["agent_network.providers"]?.read
+                    }
                   />
                   <SidebarItem
                     label="Policies"
                     isChild
                     href={"/agent-network/policies"}
                     exactPathMatch={true}
-                    visible={agentNetworkEnabled && permission?.services?.read}
+                    visible={
+                      agentNetworkSurface &&
+                      permission?.["agent_network.policies"]?.read
+                    }
                   />
                   <SidebarItem
                     label="Usage & Logs"
                     isChild
                     href={"/agent-network/usage"}
                     exactPathMatch={true}
-                    visible={agentNetworkEnabled && permission?.services?.read}
+                    // A configured self-service caller gets the page too:
+                    // the server scopes usage and logs to them.
+                    visible={
+                      agentNetworkSurface &&
+                      (permission?.["agent_network.usage"]?.read ||
+                        permission?.["agent_network.logs"]?.read ||
+                        mySetupConfigured)
+                    }
                   />
                   <SidebarItem
                     label="Configuration"
                     isChild
                     href={"/agent-network/configuration"}
                     exactPathMatch={true}
-                    visible={agentNetworkEnabled && permission?.services?.read}
+                    visible={
+                      agentNetworkSurface &&
+                      permission?.["agent_network.settings"]?.read
+                    }
                   />
                 </SidebarItem>
 
