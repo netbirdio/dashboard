@@ -436,7 +436,19 @@ export default function AIProviderModal({
     }
   };
 
+  // A save already sent cannot be called off, so dismissing the modal while one
+  // is in flight would only hide it: the write still lands, and the completion
+  // calls handleClose again — closing and resetting whatever session the
+  // operator has opened by then. The dismissal is refused instead of faked.
   const handleClose = () => {
+    if (saveInFlight) return;
+    onOpenChange(false);
+    setTimeout(reset, 200);
+  };
+
+  // closeAfterSave is the completion path: it bypasses the guard above, which
+  // exists to stop the operator racing the save, not the save from finishing.
+  const closeAfterSave = () => {
     onOpenChange(false);
     setTimeout(reset, 200);
   };
@@ -531,7 +543,7 @@ export default function AIProviderModal({
         // has to fix here. Closing would throw away the key they just typed —
         // and it never comes back from the API to be typed over again.
         if (!saved) return;
-        handleClose();
+        closeAfterSave();
         return;
       }
       // First create: bootstrap the account's endpoint before the provider
@@ -557,7 +569,7 @@ export default function AIProviderModal({
         enabled: true,
       });
       if (!created) return;
-      handleClose();
+      closeAfterSave();
     } finally {
       setSaveInFlight(false);
     }
@@ -1737,7 +1749,11 @@ export default function AIProviderModal({
             {tab === "provider" && (
               <>
                 <ModalClose asChild>
-                  <Button variant={"secondary"} onClick={handleClose}>
+                  <Button
+                    variant={"secondary"}
+                    onClick={handleClose}
+                    disabled={saveInFlight}
+                  >
                     Cancel
                   </Button>
                 </ModalClose>
@@ -1756,6 +1772,7 @@ export default function AIProviderModal({
                 <Button
                   variant={"secondary"}
                   onClick={() => setTab("provider")}
+                  disabled={saveInFlight}
                 >
                   Back
                 </Button>
@@ -1782,7 +1799,11 @@ export default function AIProviderModal({
             )}
             {tab === "mappings" && (
               <>
-                <Button variant={"secondary"} onClick={() => setTab("models")}>
+                <Button
+                  variant={"secondary"}
+                  onClick={() => setTab("models")}
+                  disabled={saveInFlight}
+                >
                   Back
                 </Button>
                 <Button

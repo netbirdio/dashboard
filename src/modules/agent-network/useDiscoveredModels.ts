@@ -98,7 +98,13 @@ export function useDiscoveredModels() {
         // 422 is the API saying this provider has no listing endpoint, which
         // is a fact about the catalog entry rather than a failure — the caller
         // keeps the catalog list and says so quietly.
-        const status = (e as { status?: number })?.status;
+        //
+        // useApiCall rejects with ErrorResponse, whose field is `code`; `status`
+        // is only read as a fallback for a raw fetch rejection. Reading `status`
+        // alone left this undefined on every API failure, so a provider with no
+        // listing endpoint was reported as unreachable instead of falling back.
+        const failure = e as { code?: number; status?: number; message?: string };
+        const status = failure?.code ?? failure?.status;
         setState({
           models: [],
           isLoading: false,
@@ -106,8 +112,7 @@ export function useDiscoveredModels() {
           error:
             status === 422
               ? undefined
-              : (e as { message?: string })?.message ??
-                "Could not reach the provider",
+              : failure?.message ?? "Could not reach the provider",
         });
         return [];
       }
