@@ -115,11 +115,14 @@ test.describe
       });
       expect(body).not.toHaveProperty("identity_header_user_id");
       expect(body).not.toHaveProperty("identity_header_groups");
+      await expect(
+        page.getByTestId("agent-network-provider-modal"),
+      ).toBeHidden();
 
       await expect(page.getByTestId(providerName)).toBeVisible();
       await expect(
         page.getByTestId(`provider-models-${providerName}`),
-      ).toHaveText("All models");
+      ).toHaveText("All Models");
 
       await page.getByTestId(providerName).click({ force: true });
       await expect(
