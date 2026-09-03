@@ -18,6 +18,7 @@ import { useApiCall } from "@utils/api";
 import { cn, validator } from "@utils/helpers";
 import {
   AlertTriangle,
+  BugIcon,
   ClockFadingIcon,
   ExternalLinkIcon,
   MonitorSmartphoneIcon,
@@ -96,6 +97,10 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
     account.settings?.auto_update_always ?? false,
   );
 
+  const [debugBundleUploadUrl, setDebugBundleUploadUrl] = useState(
+    account.settings?.debug_bundle_upload_url ?? "",
+  );
+
   const [peerExposeEnabled, setPeerExposeEnabled] = useState<boolean>(
     account?.settings?.peer_expose_enabled ?? false,
   );
@@ -112,6 +117,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
     autoUpdateMethod,
     autoUpdateCustomVersion,
     autoUpdateAlways,
+    debugBundleUploadUrl,
     peerExposeEnabled,
     peerExposeGroupNames,
   ]);
@@ -132,6 +138,21 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
     return "";
   }, [autoUpdateCustomVersion]);
 
+  // Mirrors the rule the API enforces. https only: the client fetches an upload
+  // URL from this endpoint and then PUTs the bundle to whatever comes back, so a
+  // plaintext hop is a place to intercept both.
+  const debugBundleUploadUrlError = useMemo(() => {
+    if (debugBundleUploadUrl === "") return "";
+    try {
+      const parsed = new URL(debugBundleUploadUrl);
+      if (parsed.protocol !== "https:") return "The URL must use https";
+      if (!parsed.hostname) return "The URL must have a host";
+      return "";
+    } catch {
+      return "Please enter a valid URL, e.g., https://upload.example.com/upload-url";
+    }
+  }, [debugBundleUploadUrl]);
+
   const canSaveCustomVersion =
     autoUpdateCustomVersion !== "" &&
     autoUpdateMethod === "custom" &&
@@ -142,6 +163,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
       !hasChanges ||
       !permission.settings.update ||
       (autoUpdateMethod === "custom" && !canSaveCustomVersion) ||
+      debugBundleUploadUrlError !== "" ||
       (peerExposeEnabled && peerExposeGroups.length === 0)
     );
   }, [
@@ -149,6 +171,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
     permission.settings.update,
     autoUpdateMethod,
     canSaveCustomVersion,
+    debugBundleUploadUrlError,
     peerExposeEnabled,
     peerExposeGroups,
   ]);
@@ -169,6 +192,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             ...account.settings,
             auto_update_version: autoUpdateCustomVersion || autoUpdateMethod,
             auto_update_always: autoUpdateAlways,
+            debug_bundle_upload_url: debugBundleUploadUrl,
             peer_expose_enabled: peerExposeEnabled,
             peer_expose_groups: peerExposeGroupIds,
           },
@@ -179,6 +203,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             autoUpdateMethod,
             autoUpdateCustomVersion,
             autoUpdateAlways,
+            debugBundleUploadUrl,
             peerExposeEnabled,
             peerExposeGroupNames,
           ]);
@@ -395,6 +420,42 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                   data-testid="peer-expose-groups-selector"
                 />
               </div>
+            </div>
+          </div>
+
+          <div>
+            <Label>
+              <BugIcon size={15} />
+              Debug Bundle Upload
+            </Label>
+
+            <HelpText>
+              Where clients send debug bundles. A bundle carries peer logs,
+              routes, DNS and firewall state, so this decides whose
+              infrastructure that data lands on. Leave it empty to use the
+              service NetBird runs; a self-hosted deployment that leaves it
+              empty keeps the bundle on the peer instead.{" "}
+              <InlineLink
+                href={"https://docs.netbird.io/manage/peers/remote-jobs"}
+                target={"_blank"}
+              >
+                Learn more
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
+            </HelpText>
+            <div className={"mt-2"}>
+              <Input
+                value={debugBundleUploadUrl}
+                customPrefix={"URL"}
+                placeholder={"e.g., https://upload.example.com/upload-url"}
+                error={debugBundleUploadUrlError}
+                errorTooltip={true}
+                disabled={!permission.settings.update}
+                data-cy={"debug-bundle-upload-url"}
+                onChange={(v) => {
+                  setDebugBundleUploadUrl(v.target.value);
+                }}
+              />
             </div>
           </div>
 
