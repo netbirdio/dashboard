@@ -1,7 +1,7 @@
 FROM alpine:3.24
 
 RUN apk add --no-cache bash curl less ca-certificates git tzdata zip gettext \
-    nginx curl supervisor certbot-nginx && \
+    nginx curl supervisor certbot-nginx jq && \
     rm -rf /var/cache/apk/* && mkdir -p /run/nginx
 
 STOPSIGNAL SIGINT
