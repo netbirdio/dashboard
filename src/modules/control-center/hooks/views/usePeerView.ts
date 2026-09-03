@@ -2,19 +2,19 @@ import { Edge, Node } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
-  addNode,
   addEdge,
+  addNode,
   DEFAULT_LAYOUT_CONFIG,
 } from "@/modules/control-center/utils/graph-builder";
+import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
 import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
 import {
   addAgentNetworkProviderNodes,
   useAgentNetworkOverlay,
 } from "./agent-network-overlay";
 import { addDestinationResourceNodes, ViewResult } from "./types";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
 
 export function usePeerView() {
   const { policies, peers, networks, networkResources, groups, isDataReady } =
@@ -39,6 +39,7 @@ export function usePeerView() {
       (policiesOverride ?? policies!).filter((p) => {
         const rule = p.rules?.[0];
         if (!rule) return false;
+        if (rule.sourceResource?.id === peerId) return true;
         const sources = rule.sources as Group[];
         return sources?.some((d) => peerGroups?.some((pg) => pg.id === d.id));
       }),
@@ -80,7 +81,6 @@ export function usePeerView() {
           type: "smart",
           data: { enabled, policy },
         });
-
       });
 
       addDestinationResourceNodes(
