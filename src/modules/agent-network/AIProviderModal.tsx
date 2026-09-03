@@ -225,7 +225,6 @@ export default function AIProviderModal({
     provider?.upstreamUrl ?? "",
   );
   const [apiKey, setApiKey] = useState(isEdit ? MASKED_API_KEY : "");
-  const [bootstrapCluster, setBootstrapCluster] = useState<string>("");
   const [models, setModels] = useState<EditableModel[]>(() =>
     (provider?.models ?? []).map(withModelKey),
   );
@@ -368,15 +367,13 @@ export default function AIProviderModal({
   const clustersLackEmbeddedProxy =
     noClustersAvailable && validatedClusters.length > 0;
 
-  // Auto-pick the first usable cluster on first render once the
-  // /domains response lands. Only matters for the first-create flow —
-  // once settings is bootstrapped no further bootstrap happens.
-  React.useEffect(() => {
-    if (settingsBootstrapped) return;
-    if (bootstrapCluster) return;
-    if (bootstrapClusters.length === 0) return;
-    setBootstrapCluster(bootstrapClusters[0].domain);
-  }, [settingsBootstrapped, bootstrapCluster, bootstrapClusters]);
+  // The cluster the first create will bootstrap onto: the first usable one
+  // once the /domains response lands, empty until then. Derived rather than
+  // held in state — there is no picker, so state could only ever mirror this
+  // list, and an effect writing it back would just add a render pass. Only
+  // matters for the first-create flow; once settings is bootstrapped no
+  // further bootstrap happens (and /domains is not even fetched).
+  const bootstrapCluster = bootstrapClusters[0]?.domain ?? "";
 
   // Seed the upstream URL from the catalog entry once it lands — the
   // catalog is fetched async, so on first render `getById("openai_api")`
@@ -419,7 +416,6 @@ export default function AIProviderModal({
       setName(provider.name);
       setUpstreamUrl(provider.upstreamUrl);
       setApiKey(MASKED_API_KEY);
-      setBootstrapCluster("");
       setModels(provider.models.map(withModelKey));
       setExtraValues(provider.extraValues ?? {});
       setIdentityHeaderUserId(provider.identityHeaderUserId ?? "");
@@ -434,9 +430,6 @@ export default function AIProviderModal({
         fallback?.default_host ? `https://${fallback.default_host}` : "",
       );
       setApiKey("");
-      setBootstrapCluster(
-        settingsBootstrapped ? "" : bootstrapClusters[0]?.domain ?? "",
-      );
       setModels([]);
       setExtraValues({});
       setIdentityHeaderUserId("");
