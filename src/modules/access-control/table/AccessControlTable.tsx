@@ -51,7 +51,6 @@ import AccessControlDirectionCell from "@/modules/access-control/table/AccessCon
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
 import AccessControlProtoPortsCell from "@/modules/access-control/table/AccessControlProtoPortsCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
-import { FirewallGPTModal } from "@/modules/firewall-gpt/FirewallGPTModal";
 
 type Props = {
   policies?: Policy[];
@@ -237,8 +236,6 @@ export default function AccessControlTable({
   const [editModal, setEditModal] = useState(false);
   const [currentRow, setCurrentRow] = useState<Policy>();
   const [currentCellClicked, setCurrentCellClicked] = useState("");
-
-  const [firewallGPTOpen, setFirewallGPTOpen] = useState(false);
 
   const [showTemporaryPolicies, setShowTemporaryPolicies] = useState(false);
 
@@ -450,8 +447,6 @@ export default function AccessControlTable({
 
   return (
     <>
-      <FirewallGPTModal open={firewallGPTOpen} setOpen={setFirewallGPTOpen} />
-
       {editModal && currentRow && (
         <AccessControlUpdateModal
           policy={currentRow}
