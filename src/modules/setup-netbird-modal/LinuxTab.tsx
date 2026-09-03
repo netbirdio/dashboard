@@ -75,6 +75,29 @@ const DISTROS: Distro[] = [
     note: "The desktop app needs Ubuntu 24.04 or Debian 13 and newer. On earlier releases install the CLI only.",
   },
   {
+    // Legacy GTK3 / WebKit2GTK 4.1 build of the desktop app, for releases
+    // without WebKitGTK 6.0. It ships under its own netbird-ui-gtk3 name and
+    // conflicts with netbird-ui, so it lives in the regular repository.
+    label: "Ubuntu 22.04 / Debian 12 (APT)",
+    value: "apt-gtk3",
+    repository: [
+      "sudo apt-get update",
+      "sudo apt-get install ca-certificates curl gnupg -y",
+      "curl -sSL https://pkgs.netbird.io/debian/public.key | sudo gpg --dearmor --output /usr/share/keyrings/netbird-archive-keyring.gpg",
+      `echo 'deb [signed-by=/usr/share/keyrings/netbird-archive-keyring.gpg] https://pkgs.netbird.io/debian stable main' | sudo tee /etc/apt/sources.list.d/netbird.list`,
+      // On Ubuntu, libwebkit2gtk-4.1-0 comes from the universe component. It is
+      // enabled on stock images but can be switched off. Guarded by the ID
+      // check: `universe` is an Ubuntu-only shortcut that Debian rejects.
+      `if . /etc/os-release && [ "$ID" = ubuntu ]; then sudo apt-get install software-properties-common -y && sudo add-apt-repository -y universe; fi`,
+    ],
+    beforeInstall: ["sudo apt-get update"],
+    cli: "sudo apt-get install netbird",
+    // The package declares its libgtk-3-0, libwebkit2gtk-4.1-0 and xdg-utils
+    // dependencies, so apt pulls those in on its own.
+    desktopApp: ["sudo apt-get install netbird-ui-gtk3"],
+    note: "For releases without WebKitGTK 6.0, which get a GTK3 build of the desktop app. On Ubuntu it needs the universe component, which the repository step enables. On Ubuntu 24.04 or Debian 13 and newer use the Debian / Ubuntu (APT) option instead.",
+  },
+  {
     label: "Fedora (DNF)",
     value: "fedora",
     repository: YUM_REPOSITORY,
