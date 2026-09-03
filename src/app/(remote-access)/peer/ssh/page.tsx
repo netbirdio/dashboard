@@ -83,8 +83,8 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
   const isClientDisconnected = client.status === NetBirdStatus.DISCONNECTED;
   const isClientConnecting = client.status === NetBirdStatus.CONNECTING;
 
-  // Use the FQDN when an IP version is specified so the dialer resolves to the correct address family.
-  const sshHost = ipVersion ? peer.dns_label || peer.ip : peer.ip;
+  // Dial the IPv6 address when ip_version=6 is requested, IPv4 otherwise.
+  const sshHost = ipVersion === "6" && peer.ipv6 ? peer.ipv6 : peer.ip;
 
   useEffect(() => {
     document.title = `${username}@${sshHost} - ${peer.hostname}`;
@@ -178,7 +178,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
     <>
       {session && <Terminal session={session} onClose={disconnect} />}
       {!isSSHConnected && (
-        <LoadingMessage message={`Connecting to ${username}@${peer.ip}...`} />
+        <LoadingMessage message={`Connecting to ${username}@${sshHost}...`} />
       )}
     </>
   );
