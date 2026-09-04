@@ -126,8 +126,8 @@ async function openPlayground(
     [AGENT_NETWORK_CONFIG_KEY, "enabled"],
   );
   const page = await context.newPage();
-  await loginToApp(page, "owner");
   await mockPlaygroundDependencies(page, opts);
+  await loginToApp(page, "owner");
   await page.goto("/agent-network/playground");
   return { page, close: () => context.close() };
 }
