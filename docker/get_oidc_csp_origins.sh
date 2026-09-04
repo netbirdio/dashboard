@@ -1,5 +1,5 @@
 #!/bin/bash
-# Resolve the OIDC provider's endpoint origina for the CSP's connect-src directive.
+# Resolve the OIDC provider's endpoint origins for the CSP's connect-src directive.
 # Some providers serve the OIDC endpoints from different origins than the authority,
 # so simply using AUTH_AUTHORITY for the CSP blocks the token exchange in some setups.
 #
