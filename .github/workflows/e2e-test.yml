@@ -101,17 +101,61 @@ jobs:
           echo "Using reverse-proxy tag: $TAG"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Setup test environment
+      - name: Restore geolocation database cache
+        id: geo-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: e2e/environment/geo-cache
+          key: geolite-dbs-v1
+
+      - name: Build dashboard and set up test environment
         env:
           MANAGEMENT_IMAGE_TAG: ${{ steps.management_tag.outputs.tag }}
           REVERSE_PROXY_IMAGE_TAG: ${{ steps.reverse_proxy_tag.outputs.tag }}
-        run: cd ./e2e/environment && bash create-test-env.sh
+        # The docker environment (image pulls, Zitadel bootstrap) is
+        # network-bound and the Next build is CPU-bound, so they overlap.
+        # The build reads .test-config.json via the @/config/test alias,
+        # and create-test-env.sh renders that file only after the Zitadel
+        # bootstrap — so the build waits for it before starting.
+        run: |
+          (cd ./e2e/environment && bash create-test-env.sh) > env-setup.log 2>&1 &
+          ENV_PID=$!
+          until [ -s .test-config.json ] && jq empty .test-config.json 2>/dev/null; do
+            if ! kill -0 "$ENV_PID" 2>/dev/null; then break; fi
+            sleep 2
+          done
+          if ! [ -s .test-config.json ]; then
+            echo "::error::create-test-env.sh exited before rendering .test-config.json"
+            cat env-setup.log
+            exit 1
+          fi
+          # Lowest CPU priority: the containers must win the scheduler, or
+          # the build can starve management past the proxy-registration wait.
+          if ! nice -n 19 env APP_ENV=test npx next build; then
+            kill "$ENV_PID" 2>/dev/null || true
+            exit 1
+          fi
+          if ! wait "$ENV_PID"; then
+            echo "::error::Test environment setup failed"
+            cat env-setup.log
+            exit 1
+          fi
+          cat env-setup.log
+
+      # Saved right after env setup rather than in a post step, so a later
+      # test failure doesn't lose the cache.
+      - name: Save geolocation database cache
+        if: always() && steps.geo-cache.outputs.cache-hit != 'true' && hashFiles('e2e/environment/geo-cache/**') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: e2e/environment/geo-cache
+          key: geolite-dbs-v1
 
       - name: Run Playwright tests
         id: playwright
         run: |
           set -o pipefail
-          npm run test:ci 2>&1 | tee playwright-output.log
+          npx playwright test --config=e2e/playwright.config.ts 2>&1 | tee playwright-output.log
 
       - name: Append Playwright summary to job summary
         if: always() && hashFiles('e2e/test-results/results.json') != ''

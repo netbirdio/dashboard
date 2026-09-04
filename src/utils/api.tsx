@@ -223,6 +223,28 @@ export function useApiCall<T>(
   };
 }
 
+// A blocked or unapproved user is an app-level routing decision, not one
+// call's failure: /error explains the status, and nothing else in the app can
+// load until they are approved. It therefore runs even for callers that ignore
+// errors — ignoreError means "do not raise a toast for this call", and letting
+// it swallow this left the dashboard on its loading screen forever, since the
+// caller identity it waits for is exactly what such a user is refused.
+const redirectOnUserStatus = (err: ErrorResponse): boolean => {
+  const isUserStatus =
+    err.code == 403 &&
+    (err.message?.toLowerCase().includes("blocked") ||
+      err.message?.toLowerCase().includes("pending"));
+  if (!isUserStatus) return false;
+
+  const params = new URLSearchParams({
+    code: err.code.toString(),
+    message: encodeURIComponent(err.message),
+    type: "user-status",
+  });
+  window.location.href = `/error?${params.toString()}`;
+  return true;
+};
+
 export function useApiErrorHandling(ignoreError = false) {
   const { login } = useOidc();
   const currentPath = usePathname();
@@ -230,6 +252,7 @@ export function useApiErrorHandling(ignoreError = false) {
 
   if (ignoreError)
     return (err: ErrorResponse) => {
+      redirectOnUserStatus(err);
       console.log(err);
       return Promise.reject(err);
     };
@@ -245,18 +268,7 @@ export function useApiErrorHandling(ignoreError = false) {
       setError(err);
     }
 
-    // Handle user blocked/pending approval responses
-    if (
-      err.code == 403 &&
-      (err.message?.toLowerCase().includes("blocked") ||
-        err.message?.toLowerCase().includes("pending"))
-    ) {
-      const params = new URLSearchParams({
-        code: err.code.toString(),
-        message: encodeURIComponent(err.message),
-        type: "user-status",
-      });
-      window.location.href = `/error?${params.toString()}`;
+    if (redirectOnUserStatus(err)) {
       return Promise.reject(err);
     }
 

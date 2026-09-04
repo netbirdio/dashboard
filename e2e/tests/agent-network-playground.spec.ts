@@ -49,6 +49,7 @@ function currentUser(peerRead = true, groupRead = true) {
       is_restricted: false,
       modules: {
         services: ALLOW,
+        "agent_network.providers": ALLOW,
         peers: peerRead ? ALLOW : DENY,
         users: peerRead ? ALLOW : DENY,
         groups: groupRead ? ALLOW : DENY,

@@ -55,7 +55,7 @@ export default function AgentNetworkPlaygroundPage() {
     <PageContainer>
       <RestrictedAccess
         page="Agent Network Playground"
-        hasAccess={permission?.services?.create}
+        hasAccess={permission?.["agent_network.providers"]?.create}
       >
         <PlaygroundPageContent />
       </RestrictedAccess>

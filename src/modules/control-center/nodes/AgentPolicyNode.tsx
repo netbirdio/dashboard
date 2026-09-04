@@ -2,10 +2,7 @@ import { cn } from "@utils/helpers";
 import { Handle, type Node, Position } from "@xyflow/react";
 import * as React from "react";
 
-// AgentPolicyNodeData carries the minimum identity for an agent-network
-// policy node in the Control Center graph. We keep the payload thin so
-// the React-Flow node JSON stays cheap to clone — the graph only needs
-// the id (for edge wiring) and the name (for display).
+// Kept thin so the React Flow node JSON stays cheap to clone.
 export type AgentPolicyNodeData = {
   id: string;
   name: string;
@@ -14,11 +11,6 @@ export type AgentPolicyNodeData = {
 
 type AgentPolicyNodeProps = Node<AgentPolicyNodeData, "agentPolicyNode">;
 
-// AgentPolicyNode mirrors the visual treatment of PolicyNode (rounded
-// pill with a status dot) so the Control Center stays visually
-// consistent across the two policy types. The right-side label slot
-// shows the policy kind so an operator can tell agent-network policies
-// from access-control policies at a glance.
 export const AgentPolicyNode = ({ data }: AgentPolicyNodeProps) => {
   const isActive = data.enabled !== false;
   return (
