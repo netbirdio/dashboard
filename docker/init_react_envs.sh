@@ -97,6 +97,12 @@ if [[ -n "${AUTH_AUTHORITY}" ]]; then
     CSP_DOMAINS="$CSP_DOMAINS $AUTH_AUTHORITY_ORIGIN"
 fi
 
+# Add OIDC_ORIGINS to CSP_DOMAINS_CONNECT_SRC
+OIDC_ORIGINS="$(/usr/local/get_oidc_csp_origins.sh)" || true
+if [[ -n "$OIDC_ORIGINS" ]]; then
+    CSP_DOMAINS_CONNECT_SRC="$CSP_DOMAINS_CONNECT_SRC $OIDC_ORIGINS"
+fi
+
 # Add AUTH_AUDIENCE to CSP
 if [[ -n "${AUTH_AUDIENCE}" && ("${AUTH_AUDIENCE}" == *"http://"* || "${AUTH_AUDIENCE}" == *"https://"*) ]]; then
     CSP_DOMAINS="$CSP_DOMAINS $AUTH_AUDIENCE"

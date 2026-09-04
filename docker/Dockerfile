@@ -15,8 +15,10 @@ COPY docker/default.conf /etc/nginx/http.d/default.conf
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/init_cert.sh /usr/local/init_cert.sh
 COPY docker/init_react_envs.sh /usr/local/init_react_envs.sh
+COPY docker/get_oidc_csp_origins.sh /usr/local/get_oidc_csp_origins.sh
 RUN chmod +x /usr/local/init_cert.sh && rm /etc/crontabs/root
 RUN chmod +x /usr/local/init_react_envs.sh
+RUN chmod +x /usr/local/get_oidc_csp_origins.sh
 
 # configure supervisor
 COPY docker/supervisord.conf /etc/supervisord.conf
