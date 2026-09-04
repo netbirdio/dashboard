@@ -1,15 +1,19 @@
 "use client";
 
 import { ScrollArea } from "@components/ScrollArea";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { isNetBirdCloud } from "@utils/netbird";
+import * as React from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import ActivityIcon from "@/assets/icons/ActivityIcon";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { DistributorNavigation } from "@/cloud/distributor/DistributorNavigation";
@@ -23,10 +27,6 @@ import { headerHeight } from "@/layouts/Header";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import * as React from "react";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 
 type Props = {
   fullWidth?: boolean;
@@ -197,10 +197,12 @@ export default function Navigation({
                   href={"/agent-network/providers"}
                   collapsible
                   exactPathMatch={false}
-                  // Parent is visible when at least one child is permitted. All
-                  // Agent Network pages guard on services.read, so the section
-                  // tracks that (plus the feature gating).
-                  visible={agentNetworkEnabled && permission?.services?.read}
+                  // Playground spends provider credentials, so Create exposes
+                  // this parent even when the read-only children are hidden.
+                  visible={
+                    agentNetworkEnabled &&
+                    (permission?.services?.read || permission?.services?.create)
+                  }
                 >
                   <SidebarItem
                     label="Providers"
@@ -208,6 +210,15 @@ export default function Navigation({
                     href={"/agent-network/providers"}
                     exactPathMatch={true}
                     visible={agentNetworkEnabled && permission?.services?.read}
+                  />
+                  <SidebarItem
+                    label="Playground"
+                    isChild
+                    href={"/agent-network/playground"}
+                    exactPathMatch={true}
+                    visible={
+                      agentNetworkEnabled && permission?.services?.create
+                    }
                   />
                   <SidebarItem
                     label="Policies"

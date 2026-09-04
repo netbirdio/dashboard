@@ -12,7 +12,7 @@
  * item, which toggles purely on the focused-view flag and does not depend on
  * premium permission modules.
  */
-import { test, expect, type Browser, type Page } from "@playwright/test";
+import { type Browser, expect, type Page, test } from "@playwright/test";
 import { loginToApp, navigateTo } from "../helpers/auth";
 
 const SIGNUP_SOURCE_KEY = "netbird-signup-source";
@@ -149,6 +149,7 @@ const FOCUS_HIDDEN_NAV = ["Networks", "Reverse Proxy", "DNS", "Activity"];
 // Agent Network view routes that make up the focused surface.
 const AGENT_VIEW_PATHS = [
   "/agent-network/providers",
+  "/agent-network/playground",
   "/agent-network/policies",
   "/agent-network/usage",
   "/agent-network/configuration",
