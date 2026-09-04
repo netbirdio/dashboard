@@ -35,11 +35,10 @@ export default defineConfig({
   },
   testDir: "./tests",
   webServer: {
-    command: "npx serve@latest out -p 1337 --no-request-logging",
+    command: "npx serve out -p 1337 --no-request-logging",
     port: 1337,
     reuseExistingServer: true,
     cwd: path.resolve(__dirname, ".."),
-    timeout: 120_000,
   },
   projects: [
     {
