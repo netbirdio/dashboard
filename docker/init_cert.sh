@@ -2,7 +2,7 @@
 set -ex
 LETSENCRYPT_DOMAIN=${LETSENCRYPT_DOMAIN:-"none"}
 LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL:-"example@local"}
-NGINX_SSL_PORT=${NGINX_SSL_PORT:-443}
+NGINX_SSL_PORT=${NGINX_SSL_PORT:-8443}
 
 # If no domain is provided, skip certbot execution and configuration
 if [ "${LETSENCRYPT_DOMAIN}-x" == "none-x" ]; then
