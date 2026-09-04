@@ -39,6 +39,7 @@ export default defineConfig({
     port: 1337,
     reuseExistingServer: true,
     cwd: path.resolve(__dirname, ".."),
+    timeout: 120_000,
   },
   projects: [
     {
