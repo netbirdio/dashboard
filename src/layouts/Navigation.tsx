@@ -1,15 +1,19 @@
 "use client";
 
 import { ScrollArea } from "@components/ScrollArea";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { isNetBirdCloud } from "@utils/netbird";
+import * as React from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import ActivityIcon from "@/assets/icons/ActivityIcon";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { DistributorNavigation } from "@/cloud/distributor/DistributorNavigation";
@@ -24,10 +28,6 @@ import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode
 import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import * as React from "react";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 
 type Props = {
   fullWidth?: boolean;
@@ -258,6 +258,16 @@ export default function Navigation({
                     visible={
                       agentNetworkSurface &&
                       permission?.["agent_network.providers"]?.read
+                    }
+                  />
+                  <SidebarItem
+                    label="Playground"
+                    isChild
+                    href={"/agent-network/playground"}
+                    exactPathMatch={true}
+                    visible={
+                      agentNetworkSurface &&
+                      permission?.["agent_network.providers"]?.create
                     }
                   />
                   <SidebarItem
