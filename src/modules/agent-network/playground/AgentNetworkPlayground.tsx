@@ -29,6 +29,7 @@ export default function AgentNetworkPlayground() {
     permission?.peers?.read && permission?.users?.read,
   );
   const canUseGroup = Boolean(permission?.groups?.read);
+  const canReadSettings = Boolean(permission?.["agent_network.settings"]?.read);
   const [principal, setPrincipal] = useState<PlaygroundPrincipalSelection>({
     mode: canUsePeer ? "peer" : "group",
   });
@@ -54,14 +55,9 @@ export default function AgentNetworkPlayground() {
   );
   const principalID =
     principal.mode === "peer" ? principal.peer?.id : principal.group?.id;
-  const loading =
-    usersLoading || peersLoading || groupsLoading || settingsLoading;
+  const loading = usersLoading || peersLoading || groupsLoading;
   const canRun =
-    !running &&
-    !loading &&
-    Boolean(settings) &&
-    Boolean(principalID) &&
-    !validationError;
+    !running && !loading && Boolean(principalID) && !validationError;
 
   const run = async () => {
     if (!canRun || !principalID) return;
@@ -103,7 +99,7 @@ export default function AgentNetworkPlayground() {
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      {!settings && !settingsLoading && (
+      {canReadSettings && !settings && !settingsLoading && (
         <div role="alert">
           <Callout variant="warning">
             Configure the Agent Network endpoint and connect a
