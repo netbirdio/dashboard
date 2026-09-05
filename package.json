@@ -101,7 +101,7 @@
     "minimatch": ">=10.2.1"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.5.1",
+    "@faker-js/faker": "^10.5.0",
     "@playwright/test": "^1.52.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
