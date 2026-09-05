@@ -8,7 +8,6 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
-import { SmallBadge } from "@components/ui/SmallBadge";
 import {
   Select,
   SelectContent,
@@ -17,12 +16,14 @@ import {
   SelectValue,
 } from "@components/Select";
 import Separator from "@components/Separator";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { useExpirationState } from "@hooks/useExpirationState";
 import { convertToSeconds } from "@hooks/useTimeFormatter";
 import * as Tabs from "@radix-ui/react-tabs";
 import { IconDevicesCheck } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
+import { isNetBirdCloud } from "@utils/netbird";
 import {
   CalendarClock,
   ExternalLinkIcon,
@@ -40,7 +41,6 @@ import { useHasChanges } from "@/hooks/useHasChanges";
 import { Account } from "@/interfaces/Account";
 import { LockedFeatureBadge } from "@/modules/billing/locked-feature/LockedFeatureBadge";
 import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
-import { isNetBirdCloud } from "@utils/netbird";
 
 type Props = {
   account: Account;
@@ -190,28 +190,18 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             active
           />
         </Breadcrumbs>
-        <div className={"flex items-start justify-between"}>
+        <div className={"flex items-start justify-between -mt-1"}>
           <div>
             <h1>Authentication</h1>
-            <Paragraph>
-              Learn more about
+            <Paragraph className={"block"}>
+              Control how peers and users authenticate.{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/enforce-periodic-user-authentication"
                 }
                 target={"_blank"}
               >
-                Authentication
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-              or{" "}
-              <InlineLink
-                href={
-                  "https://docs.netbird.io/how-to/multi-factor-authentication"
-                }
-                target={"_blank"}
-              >
-                MFA
+                Learn more
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>

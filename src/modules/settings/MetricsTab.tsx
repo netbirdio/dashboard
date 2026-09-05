@@ -5,10 +5,7 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
-import {
-  ChartNoAxesCombined,
-  ExternalLinkIcon,
-} from "lucide-react";
+import { ChartNoAxesCombined, ExternalLinkIcon } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
@@ -68,22 +65,15 @@ export default function MetricsTab({ account }: Readonly<Props>) {
         </Breadcrumbs>
         <div>
           <h1>Metrics</h1>
-          <Paragraph>
-            Help us improve NetBird by sharing performance metrics
-            such as connection timing, sync duration, and login latency.
-          </Paragraph>
-          <Paragraph>
-            Learn more about{" "}
+          <Paragraph className={"block"}>
+            Share client performance metrics to help us improve NetBird.{" "}
             <InlineLink
-              href={
-                "https://docs.netbird.io/manage/client-metrics"
-              }
+              href={"https://docs.netbird.io/manage/client-metrics"}
               target={"_blank"}
             >
-              Client Metrics
+              Learn more
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
           </Paragraph>
         </div>
 
