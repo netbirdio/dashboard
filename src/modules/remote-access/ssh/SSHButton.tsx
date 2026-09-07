@@ -7,8 +7,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
 import { SSHCredentialsModal } from "@/modules/remote-access/ssh/SSHCredentialsModal";
 import { SSHTooltip } from "@/modules/remote-access/ssh/SSHTooltip";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
+import { isSSHSupportedOnOS } from "@/modules/remote-access/osSupport";
 
 type Props = {
   peer: Peer;
@@ -25,52 +24,45 @@ export const SSHButton = ({ peer, isDropdown = false }: Props) => {
 
   const hasPermission = permission.peers.update;
 
-  const os = getOperatingSystem(peer?.os);
-  const isSSHSupported = os !== OperatingSystem.IOS;
+  if (!isSSHSupportedOnOS(peer?.os)) return null;
 
   return (
-    isSSHSupported && (
-      <>
-        {modal && (
-          <SSHCredentialsModal
-            open={modal}
-            onOpenChange={setModal}
-            peer={peer}
-          />
-        )}
-        <div>
-          <SSHTooltip
-            isOnline={peer.connected}
-            isSSHEnabled={isSSHEnabled}
-            hasPermission={hasPermission}
-            side={isDropdown ? "left" : "top"}
-          >
-            {isDropdown ? (
-              <DropdownMenuItem
-                onClick={() => setModal(true)}
-                disabled={disabled}
-                className={"w-full"}
-              >
-                <div className={"flex gap-3 items-center w-full"}>
-                  <TerminalIcon size={14} className={"shrink-0"} />
-                  SSH
-                </div>
-              </DropdownMenuItem>
-            ) : (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setModal(true)}
-                disabled={disabled}
-              >
-                <TerminalIcon size={16} />
+    <>
+      {modal && (
+        <SSHCredentialsModal open={modal} onOpenChange={setModal} peer={peer} />
+      )}
+      <div>
+        <SSHTooltip
+          isOnline={peer.connected}
+          isSSHEnabled={isSSHEnabled}
+          hasPermission={hasPermission}
+          side={isDropdown ? "left" : "top"}
+        >
+          {isDropdown ? (
+            <DropdownMenuItem
+              onClick={() => setModal(true)}
+              disabled={disabled}
+              className={"w-full"}
+            >
+              <div className={"flex gap-3 items-center w-full"}>
+                <TerminalIcon size={14} className={"shrink-0"} />
                 SSH
-                {disabled && <CircleHelpIcon size={12} />}
-              </Button>
-            )}
-          </SSHTooltip>
-        </div>
-      </>
-    )
+              </div>
+            </DropdownMenuItem>
+          ) : (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setModal(true)}
+              disabled={disabled}
+            >
+              <TerminalIcon size={16} />
+              SSH
+              {disabled && <CircleHelpIcon size={12} />}
+            </Button>
+          )}
+        </SSHTooltip>
+      </div>
+    </>
   );
 };
