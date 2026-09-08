@@ -46,12 +46,8 @@ export const ResourceSingleAddressInput = ({
 
     // Case 1: If it has characters (potential domain) but is not a CIDR block
     if (hasChars && !isCIDRBlock) {
-      if (
-        !validator.isValidDomain(value) ||
-        !value.includes(".") ||
-        value.endsWith(".")
-      ) {
-        return "Please enter a valid domain, e.g. service.internal, example.com or *.example.com";
+      if (!validator.isValidDomain(value) || value.endsWith(".")) {
+        return "Please enter a valid domain, e.g. service.internal, example.com, *.example.com or service";
       }
       return ""; // Valid domain
     }
