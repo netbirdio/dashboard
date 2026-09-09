@@ -160,7 +160,7 @@ export const useNetBirdClient = () => {
   }, []);
 
   const connect = useCallback(
-    async (privateKey: string): Promise<boolean> => {
+    async (privateKey: string, deviceName?: string): Promise<boolean> => {
       await initialize();
 
       if (typeof (window as any).NetBirdClient !== "function") {
@@ -178,6 +178,10 @@ export const useNetBirdClient = () => {
           privateKey,
           logLevel: "info",
           managementURL: config.apiOrigin,
+          // Report the name the peer was registered with, so its meta does not
+          // change on the first sync (a meta change pushes a network map to
+          // every peer in the account).
+          ...(deviceName ? { deviceName } : {}),
         });
 
         await netBirdClient.current.start();
@@ -293,7 +297,7 @@ export const useNetBirdClient = () => {
           },
           `/${peerId}/temporary-access`,
         );
-        return await connect(keyPairs.privateKey);
+        return await connect(keyPairs.privateKey, name);
       } catch (error) {
         netBirdStore.setState({ status: NetBirdStatus.DISCONNECTED });
         throw error;
