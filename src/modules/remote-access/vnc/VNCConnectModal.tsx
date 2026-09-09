@@ -100,7 +100,10 @@ export const VNCConnectModal = ({
     if (hasError || loading) return;
     onConnect({
       target,
-      port: Number(port),
+      // The port field is only validated while it is on screen, so whatever
+      // was typed before switching to NetBird is not necessarily a number.
+      // Committing NaN would put it back in the field on the way out again.
+      port: isExternal ? Number(port) : DEFAULT_EXTERNAL_VNC_PORT,
       mode: effectiveMode,
       username,
       ipVersion,

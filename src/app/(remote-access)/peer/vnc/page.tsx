@@ -54,12 +54,11 @@ export default function VNCPage() {
     ready,
   } = useVNCQueryParams();
 
-  const { data: peer, isLoading: isPeerLoading } = useFetchApi<Peer>(
-    `/peers/${peerId}`,
-    true,
-    false,
-    !!peerId,
-  );
+  const {
+    data: peer,
+    isLoading: isPeerLoading,
+    error: peerError,
+  } = useFetchApi<Peer>(`/peers/${peerId}`, true, false, !!peerId);
 
   return (
     <div className="w-screen h-screen overflow-hidden fixed inset-0">
@@ -76,9 +75,26 @@ export default function VNCPage() {
         />
       ) : ready && !peerId ? (
         <MissingPeerError />
+      ) : peerError ? (
+        // Without this the window spins forever: the request has settled, so
+        // there is no loading left to wait for, and no peer to render either.
+        <PeerLoadError />
       ) : (
         <FullScreenLoading />
       )}
+    </div>
+  );
+}
+
+function PeerLoadError() {
+  return (
+    <div className="w-full h-full flex items-center justify-center flex-col text-center gap-3 bg-nb-gray-950 p-6">
+      <div className="text-nb-gray-200 text-base">
+        Could not load this peer.
+      </div>
+      <div className="text-sm text-nb-gray-400">
+        Reload the window, or close it and try again from the dashboard.
+      </div>
     </div>
   );
 }

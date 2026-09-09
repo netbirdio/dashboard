@@ -124,9 +124,18 @@ export function useVNCQueryParams() {
   useEffect(() => {
     if (fromURL) return;
 
-    const storedParams = localStorage.getItem("netbird-query-params");
-    if (!storedParams) {
+    // Reading storage throws outright where the browser blocks it, rather
+    // than returning nothing, and an exception here would take the whole
+    // viewer down instead of landing on the no-peer screen.
+    let storedParams: string | null = null;
+    try {
+      storedParams = localStorage.getItem("netbird-query-params");
+    } catch {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
+      setRestored({ ...emptyParams, ready: true });
+      return;
+    }
+    if (!storedParams) {
       setRestored({ ...emptyParams, ready: true });
       return;
     }
