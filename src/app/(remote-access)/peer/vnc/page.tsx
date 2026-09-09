@@ -14,7 +14,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
 import { sendErrorNotification } from "@/modules/remote-access/errorNotification";
-import { hasReportedCursor } from "@/modules/remote-access/osSupport";
+import {
+  hasReportedCursor,
+  isNetBirdVNCSupportedOnOS,
+} from "@/modules/remote-access/osSupport";
 import {
   NetBirdStatus,
   useNetBirdClient,
@@ -132,9 +135,12 @@ function VNCSession({
   const [keySessionId, setKeySessionId] = useState<string>("");
 
   const peerOSType = getOperatingSystem(peer?.os);
-  // netbirdAvailable gates the NetBird path only. A third-party server is
-  // reachable either way, since nothing about it depends on our agent.
-  const netbirdAvailable = !!peer?.local_flags?.server_vnc_allowed;
+  // The NetBird path needs both halves: a capturer shipped for this system,
+  // and the server switched on. They are kept apart because the advice
+  // differs, "enable it" being useless where there is nothing to enable.
+  const netbirdSupported = isNetBirdVNCSupportedOnOS(peer?.os);
+  const netbirdEnabled = !!peer?.local_flags?.server_vnc_allowed;
+  const netbirdAvailable = netbirdSupported && netbirdEnabled;
   const [target, setTarget] = useState<VNCTarget>(
     netbirdAvailable ? initialTarget : "external",
   );
@@ -416,7 +422,9 @@ function VNCSession({
                 title={
                   netbirdAvailable
                     ? "Asks the person at the peer to approve, and can be granted view-only."
-                    : "Not enabled on this peer."
+                    : netbirdSupported
+                      ? "Not enabled on this peer."
+                      : "Not available on this peer's operating system."
                 }
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                   target === "netbird"
@@ -457,11 +465,20 @@ function VNCSession({
             </p>
             {!netbirdAvailable && (
               <p className="text-xs text-nb-gray-500 mt-2">
-                NetBird screen sharing is off on this peer. Enable it with{" "}
-                <span className="font-mono text-nb-gray-400">
-                  netbird up --allow-server-vnc
-                </span>{" "}
-                to use it.
+                {netbirdSupported ? (
+                  <>
+                    NetBird screen sharing is off on this peer. Enable it with{" "}
+                    <span className="font-mono text-nb-gray-400">
+                      netbird up --allow-server-vnc
+                    </span>{" "}
+                    to use it.
+                  </>
+                ) : (
+                  <>
+                    NetBird screen sharing is not available on this
+                    peer&apos;s operating system.
+                  </>
+                )}
               </p>
             )}
           </div>

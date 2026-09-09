@@ -6,7 +6,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
 import {
   isMobileOS,
-  isVNCSupportedOnOS,
+  isNetBirdVNCSupportedOnOS,
 } from "@/modules/remote-access/osSupport";
 import { VNCTooltip } from "@/modules/remote-access/vnc/VNCTooltip";
 
@@ -38,9 +38,13 @@ const viewerWindowSize = (os?: string) => {
 export const VNCButton = ({ peer, isDropdown = false }: Props) => {
   const { permission } = usePermissions();
 
-  if (!isVNCSupportedOnOS(peer?.os)) return null;
-
-  const isVNCEnabled = peer?.local_flags?.server_vnc_allowed;
+  // netbirdVNCAvailable covers both halves of the NetBird path: the client
+  // must ship a capturer for the peer's system, and the peer must have the
+  // server switched on. Either missing leaves only the external path, which
+  // still works, so neither hides the action.
+  const netbirdVNCAvailable =
+    isNetBirdVNCSupportedOnOS(peer?.os) &&
+    !!peer?.local_flags?.server_vnc_allowed;
   // Enabled without NetBird screen sharing too: the viewer can still offer a
   // third-party VNC server on the peer, and its setup screen is where that
   // choice belongs. A button disabled behind a tooltip could only describe the
@@ -61,7 +65,8 @@ export const VNCButton = ({ peer, isDropdown = false }: Props) => {
     <div>
       <VNCTooltip
         isOnline={peer.connected}
-        isVNCEnabled={!!isVNCEnabled}
+        isVNCEnabled={netbirdVNCAvailable}
+        isNetBirdVNCSupported={isNetBirdVNCSupportedOnOS(peer?.os)}
         hasPermission={hasPermission}
         side={isDropdown ? "left" : "top"}
       >

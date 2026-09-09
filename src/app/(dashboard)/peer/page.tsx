@@ -70,10 +70,7 @@ import ReverseProxiesProvider, {
 import { ReverseProxyFlatTargetsTabContent } from "@/modules/reverse-proxy/targets/flat/ReverseProxyFlatTargetsTabContent";
 import { PeerEditIPModal } from "@/modules/peer/PeerEditIPModal";
 import { PeerSSHToggle } from "@/modules/peer/PeerSSHToggle";
-import {
-  isSSHSupportedOnOS,
-  isVNCSupportedOnOS,
-} from "@/modules/remote-access/osSupport";
+import { isSSHSupportedOnOS } from "@/modules/remote-access/osSupport";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
 import { VNCButton } from "@/modules/remote-access/vnc/VNCButton";
@@ -437,12 +434,9 @@ const PeerOverviewTabContent = () => {
   const { selectedGroups, setSelectedGroups } = usePeerSettings();
   const isSSHSupported = isSSHSupportedOnOS(peer?.os);
   // Named in the order the buttons appear below, and only the ones that do.
-  // RDP is unconditional: the server is not ours, so any system may run one.
-  const remoteAccessMethods = [
-    isSSHSupported && "SSH",
-    "RDP",
-    isVNCSupportedOnOS(peer?.os) && "VNC",
-  ]
+  // RDP and VNC are unconditional: those servers need not be ours, so any
+  // system may be running one.
+  const remoteAccessMethods = [isSSHSupported && "SSH", "RDP", "VNC"]
     .filter(Boolean)
     .join(", ");
 

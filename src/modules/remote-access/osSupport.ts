@@ -5,8 +5,8 @@ import { OperatingSystem } from "@/interfaces/OperatingSystem";
  * Check if the NetBird SSH server can run on the peer's operating system.
  * The client ships it everywhere except iOS.
  *
- * There is no equivalent for RDP: the server is not ours, so any operating
- * system may be running one.
+ * There is no equivalent for RDP, nor for VNC as a whole: those servers need
+ * not be ours, so any operating system may be running one.
  */
 export const isSSHSupportedOnOS = (os?: string) =>
   getOperatingSystem(os ?? "") !== OperatingSystem.IOS;
@@ -20,12 +20,16 @@ const VNC_SUPPORTED_OS = new Set([
 ]);
 
 /**
- * Check if the NetBird VNC server can run on the peer's operating system.
+ * Check if NetBird's own VNC server can run on the peer's operating system.
  * Listed rather than excluded, unlike SSH: the server needs a way to capture
  * the screen, which is a per-system piece of work rather than something the
  * client has everywhere.
+ *
+ * This gates the NetBird server specifically, not VNC access as such. A peer
+ * on any system may be running a third-party VNC server the viewer can reach,
+ * so it must not be used to decide whether to offer VNC at all.
  */
-export const isVNCSupportedOnOS = (os?: string) =>
+export const isNetBirdVNCSupportedOnOS = (os?: string) =>
   VNC_SUPPORTED_OS.has(getOperatingSystem(os ?? ""));
 
 /** Check if the peer is a handheld, which is shaped and driven differently. */
