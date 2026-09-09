@@ -122,6 +122,10 @@ function VNCSession({
   // tight loop (state change re-runs the effect, which would re-popup the
   // notification). User must reload / change mode to clear it.
   const [connectFailed, setConnectFailed] = useState(false);
+  // connectAttempt is bumped to ask for another connect. See handleReconnect.
+  const [connectAttempt, setConnectAttempt] = useState(0);
+  // timeoutRetried keeps the one automatic retry to one, per choice.
+  const timeoutRetried = useRef(false);
   // targetPubKey is the destination daemon's identity public key,
   // captured from the temporary-access response so the wasm proxy can
   // verify the X25519 challenge.
@@ -310,6 +314,7 @@ function VNCSession({
     isExternal,
     target,
     portNumber,
+    connectAttempt,
   ]);
 
   // Track when VNC first connects, and grab keyboard focus once the
@@ -334,6 +339,15 @@ function VNCSession({
       // if we got at least one frame.
       if (!connectedOnce.current) {
         connected.current = false;
+        // A dial that timed out is worth one more go before it is shown: the
+        // access the grant opened does not reach the peer the instant it is
+        // asked for, and the first attempt can go out ahead of it. Once only,
+        // so a peer that is genuinely not answering still reports it.
+        if (vnc.errorDetail?.retryable && !timeoutRetried.current) {
+          timeoutRetried.current = true;
+          setConnectAttempt((n) => n + 1);
+          return;
+        }
         setConnectFailed(true);
         if (hasSetupChoices) {
           setShowSetup(true);
@@ -343,12 +357,21 @@ function VNCSession({
     if (client.error) {
       sendErrorNotification("NetBird Client Error", client.error);
     }
-  }, [vnc.error, client.error, hasSetupChoices, sendErrorNotification]);
+  }, [
+    vnc.error,
+    vnc.errorDetail,
+    client.error,
+    hasSetupChoices,
+    sendErrorNotification,
+  ]);
 
   const handleConnectChoice = (next: VNCConnectChoice) => {
     setChoice(next);
     setShowSetup(false);
     setConnectFailed(false);
+    // A different server or port is a fresh proposition, so it gets its own
+    // retry rather than inheriting the last one's.
+    timeoutRetried.current = false;
   };
 
   const handleReconnect = async () => {
@@ -356,6 +379,12 @@ function VNCSession({
     connectedOnce.current = false;
     setConnectFailed(false);
     vnc.disconnect();
+    // Re-arm the connect effect explicitly. Everything else this touches is
+    // either a ref or already at the value being set, so after a session the
+    // operator ended by hand there would be nothing for React to notice and
+    // the effect would not run again.
+    setConnectAttempt((n) => n + 1);
+    timeoutRetried.current = false;
     await connectNetBird();
   };
 
@@ -367,16 +396,17 @@ function VNCSession({
   // vncWaitElapsed swaps the "Connecting to VNC" label for a hint that
   // approval may be pending once the wait has run long enough that the
   // host prompt is the most likely thing we're blocked on. The peer may
-  // have approval disabled, so the phrasing stays tentative.
+  // have approval disabled, so the phrasing stays tentative. An external
+  // server has no approval step at all, so it never waits on one.
   const [vncWaitElapsed, setVncWaitElapsed] = useState(false);
   useEffect(() => {
-    if (vnc.status !== VNCStatus.CONNECTING) {
+    if (isExternal || vnc.status !== VNCStatus.CONNECTING) {
       setVncWaitElapsed(false);
       return;
     }
     const t = setTimeout(() => setVncWaitElapsed(true), 2500);
     return () => clearTimeout(t);
-  }, [vnc.status]);
+  }, [vnc.status, isExternal]);
 
   const loadingLabel = (() => {
     if (isNetBirdConnecting) return "Requesting temporary peer access…";

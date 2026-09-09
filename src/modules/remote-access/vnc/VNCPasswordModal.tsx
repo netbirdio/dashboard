@@ -76,7 +76,8 @@ export const VNCPasswordModal = ({
           <div>
             <Label>Password</Label>
             <HelpText>
-              Set on the VNC server itself, not your NetBird account.
+              The external VNC server is asking for a password. It is set on
+              the server, not your NetBird account.
             </HelpText>
             <Input
               value={password}

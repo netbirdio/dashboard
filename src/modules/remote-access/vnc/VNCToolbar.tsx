@@ -89,7 +89,10 @@ export default function VNCToolbar({
       className="fixed top-0 z-50 group px-4 pt-0 pb-4"
       style={{ left: `${xPercent}%`, transform: "translateX(-50%)" }}
     >
-      <div className="flex items-center gap-1.5 justify-center">
+      {/* items-start, not items-center: both of these hang from the top edge
+          of the window, and centering them against each other would push the
+          taller one's sibling down and leave the pair floating. */}
+      <div className="flex items-start gap-1.5 justify-center">
         <div
           onPointerDown={startDrag}
           className="h-2 w-24 bg-nb-gray-500/60 group-hover:bg-nb-gray-400/80 rounded-b-lg cursor-grab active:cursor-grabbing transition-colors touch-none"

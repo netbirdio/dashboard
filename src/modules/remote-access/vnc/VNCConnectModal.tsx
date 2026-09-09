@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -15,6 +16,7 @@ import {
   ScreenShareIcon,
   ServerIcon,
   ShieldCheckIcon,
+  TriangleAlertIcon,
   User2,
   UserIcon,
 } from "lucide-react";
@@ -124,16 +126,9 @@ export const VNCConnectModal = ({
           }}
         >
           {error && (
-            <div className={"bg-red-50 border border-red-200 rounded-md p-4"}>
-              <div
-                className={
-                  "flex items-center gap-2 text-red-800 font-medium mb-1"
-                }
-              >
-                Error
-              </div>
-              <p className={"text-sm text-red-700"}>{error}</p>
-            </div>
+            <Callout variant={"error"} icon={<TriangleAlertIcon size={14} />}>
+              {error}
+            </Callout>
           )}
 
           <div>
