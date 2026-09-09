@@ -42,15 +42,15 @@ export const VNCTooltip = ({
             <div>This peer is offline and cannot be accessed via VNC.</div>
           ) : !isNetBirdVNCSupported ? (
             <div>
-              NetBird screen sharing is not available on this peer&apos;s
-              operating system. You can still connect to a VNC server already
-              running on the peer.
+              NetBird&apos;s VNC server is not available on this operating
+              system. An external server can still be used.
             </div>
           ) : (
             <div>
-              NetBird screen sharing is not enabled on this peer. Enable it with{" "}
+              NetBird&apos;s VNC server is not enabled on this peer. Enable it
+              with{" "}
               <span className="font-mono">netbird up --allow-server-vnc</span>,
-              or connect to a VNC server already running on the peer.
+              or use an external server.
             </div>
           )}
         </div>

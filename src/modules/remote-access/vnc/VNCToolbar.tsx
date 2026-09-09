@@ -98,7 +98,7 @@ export default function VNCToolbar({
         {external && (
           <span
             className="text-[10px] leading-none text-amber-200 px-1.5 py-1 rounded-b bg-amber-900/70 border-x border-b border-amber-700/60 whitespace-nowrap"
-            title="Served by a VNC server on the peer that NetBird does not authenticate. The peer's user was not asked to approve this session and cannot limit it to view-only."
+            title="External VNC server. Not authenticated by NetBird, and the peer's user was not asked to approve this session."
           >
             External VNC
           </span>

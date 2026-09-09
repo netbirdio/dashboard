@@ -69,17 +69,14 @@ export const VNCPasswordModal = ({
         >
           {stale && (
             <Callout variant={"warning"}>
-              The server stopped waiting for a password. Reconnect to try
-              again.
+              The server stopped waiting. Reconnect to try again.
             </Callout>
           )}
 
           <div>
             <Label>Password</Label>
             <HelpText>
-              This VNC server asked for a password. It is the server&apos;s own
-              password, set where the server was installed, not your NetBird
-              account password.
+              Set on the VNC server itself, not your NetBird account.
             </HelpText>
             <Input
               value={password}

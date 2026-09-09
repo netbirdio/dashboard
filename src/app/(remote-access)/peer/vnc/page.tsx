@@ -1,15 +1,8 @@
 "use client";
 
-import Button from "@components/Button";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import useFetchApi from "@utils/api";
-import {
-  MonitorIcon,
-  ServerIcon,
-  ShieldCheckIcon,
-  UserIcon,
-} from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
@@ -23,7 +16,6 @@ import {
   useNetBirdClient,
 } from "@/modules/remote-access/useNetBirdClient";
 import {
-  DEFAULT_EXTERNAL_VNC_PORT,
   useVNC,
   type VNCMode,
   VNCStatus,
@@ -33,6 +25,10 @@ import {
   useVNCQueryParams,
   type VNCSettings,
 } from "@/modules/remote-access/vnc/useVNCQueryParams";
+import {
+  type VNCConnectChoice,
+  VNCConnectModal,
+} from "@/modules/remote-access/vnc/VNCConnectModal";
 import { VNCPasswordModal } from "@/modules/remote-access/vnc/VNCPasswordModal";
 import VNCToolbar from "@/modules/remote-access/vnc/VNCToolbar";
 
@@ -133,6 +129,10 @@ function VNCSession({
   // keySessionId is the opaque handle to the wasm-resident X25519
   // session key minted alongside the temporary-access call.
   const [keySessionId, setKeySessionId] = useState<string>("");
+  // grantedScope records what the current temporary access was opened for, so
+  // a later change of server or port is noticed rather than silently dialing
+  // a port no policy covers.
+  const grantedScope = useRef<string | null>(null);
 
   const peerOSType = getOperatingSystem(peer?.os);
   // The NetBird path needs both halves: a capturer shipped for this system,
@@ -141,35 +141,22 @@ function VNCSession({
   const netbirdSupported = isNetBirdVNCSupportedOnOS(peer?.os);
   const netbirdEnabled = !!peer?.local_flags?.server_vnc_allowed;
   const netbirdAvailable = netbirdSupported && netbirdEnabled;
-  const [target, setTarget] = useState<VNCTarget>(
-    netbirdAvailable ? initialTarget : "external",
-  );
-  const [port, setPort] = useState(String(initialPort));
-  const portNumber = Number(port);
-  const portValid =
-    Number.isInteger(portNumber) && portNumber > 0 && portNumber <= 65535;
+  const supportsSessionMode =
+    peerOSType === OperatingSystem.LINUX ||
+    peerOSType === OperatingSystem.FREEBSD;
+
+  // The committed decision. The modal keeps the draft and hands it over on
+  // Connect, so nothing here changes while the operator is still choosing.
+  const [choice, setChoice] = useState<VNCConnectChoice>({
+    target: netbirdAvailable ? initialTarget : "external",
+    port: initialPort,
+    mode: initialMode,
+    username: initialUsername,
+    ipVersion: ipVersion === "4" || ipVersion === "6" ? ipVersion : "",
+  });
+  const { target, port: portNumber, mode, username, ipVersion: ipVer } = choice;
   const isExternal = target === "external";
 
-  // Only NetBird's server can start a second desktop, so the mode choice
-  // disappears with the target.
-  const supportsSessionMode =
-    !isExternal &&
-    (peerOSType === OperatingSystem.LINUX ||
-      peerOSType === OperatingSystem.FREEBSD);
-  const [mode, setMode] = useState<VNCMode>(
-    supportsSessionMode ? initialMode : "attach",
-  );
-  // Only NetBird's server can serve a virtual session, so the remembered mode
-  // is not carried onto the external path: it would ask for a username nobody
-  // needs and request a session the proxy refuses.
-  const effectiveMode: VNCMode = isExternal ? "attach" : mode;
-  const [username, setUsername] = useState(initialUsername);
-  // ipVer forces the address family for the dial: "4", "6", or "" for
-  // automatic. Seeded from the ip_version query param, adjustable in the
-  // setup screen.
-  const [ipVer, setIpVer] = useState(
-    ipVersion === "4" || ipVersion === "6" ? ipVersion : "",
-  );
   // The setup screen is shown whenever there is something to decide: which
   // server to use when NetBird's is unavailable or the caller asked for the
   // external one, or which session to attach to on the systems that offer a
@@ -188,14 +175,38 @@ function VNCSession({
   }, [peer.ip, peer.name]);
 
   const connectNetBird = useCallback(async () => {
-    if (!peer?.id || client.status !== NetBirdStatus.DISCONNECTED) return;
+    if (!peer?.id) return;
+
+    const rules = temporaryAccessRules(target, portNumber);
+    const scope = rules.join(",");
+
+    // The grant is scoped to the port it was asked for, so a different server
+    // or port needs a fresh one. Without this the dial would be dropped by a
+    // policy that covers the previous choice and the failure would look like
+    // the peer's fault.
+    if (
+      client.status === NetBirdStatus.CONNECTED &&
+      grantedScope.current !== null &&
+      grantedScope.current !== scope
+    ) {
+      try {
+        await client.disconnect();
+        grantedScope.current = null;
+      } catch (error) {
+        sendErrorNotification(
+          "NetBird Connection Error",
+          (error as Error).message,
+        );
+        return;
+      }
+    }
+
+    if (client.status !== NetBirdStatus.DISCONNECTED) return;
 
     try {
       setIsNetBirdConnecting(true);
-      const result = await client.connectTemporary(
-        peer.id!,
-        temporaryAccessRules(target, portNumber),
-      );
+      const result = await client.connectTemporary(peer.id!, rules);
+      grantedScope.current = scope;
       // Only stash a non-null key: the early-exit path of connectTemporary
       // returns null, and overwriting an earlier good value with null would
       // break the X25519 identity check on the next VNC connect.
@@ -219,16 +230,27 @@ function VNCSession({
     }
   }, [peer?.id, client, sendErrorNotification, target, portNumber]);
 
+  // Held back until the setup screen is done with, the way RDP and SSH hold
+  // theirs until the credentials dialog is answered. Bringing the overlay up
+  // registers a peer and opens a temporary access policy, so it waits for the
+  // operator to have chosen what to open it for.
   useEffect(() => {
     if (
       client.status === NetBirdStatus.DISCONNECTED &&
+      !showSetup &&
       !isNetBirdConnecting &&
       !connected.current &&
       !connectFailed
     ) {
       connectNetBird().catch(console.error);
     }
-  }, [client.status, connectNetBird, isNetBirdConnecting, connectFailed]);
+  }, [
+    client.status,
+    connectNetBird,
+    isNetBirdConnecting,
+    connectFailed,
+    showSetup,
+  ]);
 
   // Start VNC session when NetBird is connected (auto-connect unless setup is shown).
   useEffect(() => {
@@ -250,11 +272,11 @@ function VNCSession({
           hostname: peer.dns_label || peer.ip,
           port: isExternal ? portNumber : 5900,
           target,
-          mode: effectiveMode,
+          mode,
           ipVersion: ipVer || undefined,
-          username: effectiveMode === "session" ? username : undefined,
-          width: effectiveMode === "session" ? window.innerWidth : undefined,
-          height: effectiveMode === "session" ? window.innerHeight : undefined,
+          username: mode === "session" ? username : undefined,
+          width: mode === "session" ? window.innerWidth : undefined,
+          height: mode === "session" ? window.innerHeight : undefined,
           scale: settings.scale,
           resize: settings.resize,
           quality: settings.quality,
@@ -279,7 +301,7 @@ function VNCSession({
     ipVer,
     isNetBirdConnecting,
     showSetup,
-    effectiveMode,
+    mode,
     username,
     settings,
     connectFailed,
@@ -323,9 +345,8 @@ function VNCSession({
     }
   }, [vnc.error, client.error, hasSetupChoices, sendErrorNotification]);
 
-  const handleStartSession = () => {
-    if (effectiveMode === "session" && !(username || "").trim()) return;
-    if (isExternal && !portValid) return;
+  const handleConnectChoice = (next: VNCConnectChoice) => {
+    setChoice(next);
     setShowSetup(false);
     setConnectFailed(false);
   };
@@ -335,30 +356,7 @@ function VNCSession({
     connectedOnce.current = false;
     setConnectFailed(false);
     vnc.disconnect();
-    try {
-      setIsNetBirdConnecting(true);
-      const result = await client.connectTemporary(
-        peer.id!,
-        temporaryAccessRules(target, portNumber),
-      );
-      // connectTemporary short-circuits with null fields when the
-      // NetBird overlay is already connected, in which case the keys
-      // captured on the first attempt stay valid. Only overwrite when
-      // the call actually re-issued them.
-      if (result.targetPubKey) {
-        setTargetPubKey(result.targetPubKey);
-      }
-      if (result.keySessionId) {
-        setKeySessionId(result.keySessionId);
-      }
-    } catch (error) {
-      sendErrorNotification(
-        "NetBird Connection Error",
-        (error as Error).message,
-      );
-    } finally {
-      setIsNetBirdConnecting(false);
-    }
+    await connectNetBird();
   };
 
   const isLoading =
@@ -392,197 +390,6 @@ function VNCSession({
     return undefined;
   })();
 
-  // Connection screen: which server, and on the systems that offer it, which
-  // session. Shown only when one of those is actually a choice.
-  if (showSetup && !isLoading) {
-    return (
-      <div className="flex items-center justify-center w-full h-full bg-nb-gray-950">
-        <div className="w-full max-w-sm p-6 space-y-4">
-          <h2 className="text-lg font-medium text-white">
-            VNC Session: {peer.name}
-          </h2>
-          <p className="text-sm text-nb-gray-400">
-            Choose how to connect to this peer.
-          </p>
-
-          {vnc.error && (
-            <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-md px-3 py-2">
-              {vnc.error}
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm text-nb-gray-400 mb-1">
-              Server
-            </label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setTarget("netbird")}
-                disabled={!netbirdAvailable}
-                title={
-                  netbirdAvailable
-                    ? "Asks the person at the peer to approve, and can be granted view-only."
-                    : netbirdSupported
-                      ? "Not enabled on this peer."
-                      : "Not available on this peer's operating system."
-                }
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                  target === "netbird"
-                    ? "bg-nb-gray-800 border-nb-gray-600 text-white"
-                    : "bg-nb-gray-900 border-nb-gray-800 text-nb-gray-400 hover:border-nb-gray-700"
-                }`}
-              >
-                <ShieldCheckIcon size={16} />
-                NetBird
-              </button>
-              <button
-                onClick={() => setTarget("external")}
-                title="Connects to a VNC server you already run on the peer. NetBird does not authenticate it and the peer's user is not asked to approve."
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm border transition-colors ${
-                  target === "external"
-                    ? "bg-nb-gray-800 border-nb-gray-600 text-white"
-                    : "bg-nb-gray-900 border-nb-gray-800 text-nb-gray-400 hover:border-nb-gray-700"
-                }`}
-              >
-                <ServerIcon size={16} />
-                External
-              </button>
-            </div>
-            <p className="text-xs text-nb-gray-500 mt-2">
-              {isExternal ? (
-                <>
-                  Connects to a VNC server you already run on this peer. It must
-                  be installed and listening, NetBird does not authenticate the
-                  connection, and the peer&apos;s user is not asked to approve
-                  it.
-                </>
-              ) : (
-                <>
-                  NetBird&apos;s built-in server. The connection is
-                  authenticated and the peer&apos;s user is asked to approve it.
-                </>
-              )}
-            </p>
-            {!netbirdAvailable && (
-              <p className="text-xs text-nb-gray-500 mt-2">
-                {netbirdSupported ? (
-                  <>
-                    NetBird screen sharing is off on this peer. Enable it with{" "}
-                    <span className="font-mono text-nb-gray-400">
-                      netbird up --allow-server-vnc
-                    </span>{" "}
-                    to use it.
-                  </>
-                ) : (
-                  <>
-                    NetBird screen sharing is not available on this
-                    peer&apos;s operating system.
-                  </>
-                )}
-              </p>
-            )}
-          </div>
-
-          {isExternal && (
-            <div>
-              <label className="block text-sm text-nb-gray-400 mb-1">
-                Port
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={65535}
-                value={port}
-                onChange={(e) => setPort(e.target.value)}
-                placeholder={String(DEFAULT_EXTERNAL_VNC_PORT)}
-                className="w-full px-3 py-2 bg-nb-gray-900 border border-nb-gray-700 rounded-md text-white text-sm placeholder:text-nb-gray-600 focus:outline-none focus:border-nb-gray-500"
-                onKeyDown={(e) => e.key === "Enter" && handleStartSession()}
-              />
-              {!portValid && (
-                <p className="text-xs text-red-400 mt-1">
-                  Port must be a number between 1 and 65535.
-                </p>
-              )}
-            </div>
-          )}
-
-          {supportsSessionMode && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => setMode("attach")}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm border transition-colors ${
-                mode === "attach"
-                  ? "bg-nb-gray-800 border-nb-gray-600 text-white"
-                  : "bg-nb-gray-900 border-nb-gray-800 text-nb-gray-400 hover:border-nb-gray-700"
-              }`}
-            >
-              <MonitorIcon size={16} />
-              Current Session
-            </button>
-            <button
-              onClick={() => setMode("session")}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm border transition-colors ${
-                mode === "session"
-                  ? "bg-nb-gray-800 border-nb-gray-600 text-white"
-                  : "bg-nb-gray-900 border-nb-gray-800 text-nb-gray-400 hover:border-nb-gray-700"
-              }`}
-            >
-              <UserIcon size={16} />
-              User Session
-            </button>
-          </div>
-          )}
-
-          {effectiveMode === "session" && (
-            <div>
-              <label className="block text-sm text-nb-gray-400 mb-1">
-                Login as user
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. root, alice"
-                className="w-full px-3 py-2 bg-nb-gray-900 border border-nb-gray-700 rounded-md text-white text-sm placeholder:text-nb-gray-600 focus:outline-none focus:border-nb-gray-500"
-                onKeyDown={(e) => e.key === "Enter" && handleStartSession()}
-                autoFocus
-              />
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm text-nb-gray-400 mb-1">
-              IP version
-            </label>
-            <select
-              value={ipVer}
-              onChange={(e) => setIpVer(e.target.value)}
-              className="w-full px-3 py-2 bg-nb-gray-900 border border-nb-gray-700 rounded-md text-white text-sm focus:outline-none focus:border-nb-gray-500"
-            >
-              <option value="">Automatic</option>
-              <option value="4">IPv4</option>
-              <option value="6" disabled={!peer.ipv6}>
-                IPv6
-              </option>
-            </select>
-          </div>
-
-          <Button
-            variant="primary"
-            className="w-full"
-            onClick={handleStartSession}
-            disabled={
-              (effectiveMode === "session" && !(username || "").trim()) ||
-              (isExternal && !portValid)
-            }
-          >
-            Connect
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   // Show disconnected screen with reconnect when a session ended or
   // the initial connect attempt failed (attach-mode peers; session mode
   // gets bounced back to the setup form by the failure-bouncing effect
@@ -614,7 +421,20 @@ function VNCSession({
 
   return (
     <>
-      {isLoading && !vnc.credentialsRequired && (
+      {showSetup && (
+        <VNCConnectModal
+          open={true}
+          peer={peer}
+          netbirdSupported={netbirdSupported}
+          netbirdEnabled={netbirdEnabled}
+          initial={choice}
+          error={vnc.error || undefined}
+          loading={isLoading}
+          onConnect={handleConnectChoice}
+        />
+      )}
+
+      {isLoading && !vnc.credentialsRequired && !showSetup && (
         <FullScreenLoading label={loadingLabel} />
       )}
 
