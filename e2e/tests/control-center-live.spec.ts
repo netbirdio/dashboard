@@ -18,6 +18,7 @@ import {
   clickContextMenuItem,
   dismissBlockingOverlays,
   openControlCenter,
+  openGroupView,
   resetDraftState,
   switchFlowView,
 } from "../helpers/control-center";
@@ -47,8 +48,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
   });
 
   async function seedPolicyAndOpenGroupView(page: Page, enabled = true) {
-    // The group view auto-selects a group that HAS a policy, so stale policies
-    // would make the rendered group non-deterministic.
     await deletePoliciesBySubstring(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
 
@@ -64,15 +63,10 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     );
 
     const policyNode = canvasNode(page, `policy-${policy.id}`);
-    // A stale SWR read or a build/fit race can fail to place the node.
-    for (let attempt = 0; attempt < 3; attempt++) {
-      await openControlCenter(page, "groups");
-      const shown = await policyNode
-        .waitFor({ state: "visible", timeout: 10_000 })
-        .then(() => true)
-        .catch(() => false);
-      if (shown) break;
-    }
+    // Selecting src by name rather than trusting the view's own pick: the
+    // auto-select ranks every group in the account, so a peer-bearing group
+    // another spec seeded on the other worker outranks this one.
+    await openGroupView(page, src.name);
     await expect(policyNode).toBeVisible({ timeout: 10_000 });
     return { src, dst, policy, policyNode };
   }
@@ -512,7 +506,6 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
   test("Should save group resource membership in live mode (correct payload)", async ({
     dashboardAsOwner: page,
   }) => {
-    // Clean slate so the group view deterministically lands on our group.
     await deletePoliciesBySubstring(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
 
@@ -529,7 +522,7 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
       [],
     );
 
-    await openControlCenter(page, "groups");
+    await openGroupView(page, src.name);
     const groupNode = canvasNode(page, `group-${dst.id}`);
     await expect(groupNode).toBeVisible({ timeout: 15_000 });
 
@@ -610,7 +603,7 @@ test.describe.serial("Control Center Live Mode @control-center", () => {
     );
     await createPolicy(page, generateRandomName(PREFIX), src.id, d2.id);
 
-    await openControlCenter(page, "groups");
+    await openGroupView(page, src.name);
     const policyNode = canvasNode(page, `policy-${p1.id}`);
     await expect(policyNode).toBeVisible({ timeout: 15_000 });
     await expect(

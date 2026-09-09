@@ -59,7 +59,12 @@ test.describe
         .getByTestId("agent-network-provider-option-agentgateway")
         .click({ force: true });
 
-      const upstreamURL = "https://agentgateway.e2e.example";
+      // Saving a provider makes management call the upstream, and it refuses
+      // the save with a 422 unless the upstream answers a model listing — so a
+      // made-up host cannot be used here. agentgateway is self-hosted and has
+      // no public endpoint to point at, so create-test-env.sh runs a stub that
+      // answers that probe inside the compose network.
+      const upstreamURL = "http://agentgateway-stub:8088";
       await page
         .getByTestId("agent-network-provider-upstream-url")
         .fill(upstreamURL);

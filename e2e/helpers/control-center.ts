@@ -24,6 +24,31 @@ export async function openControlCenter(page: Page, tab?: FlowView) {
   await dismissBlockingOverlays(page);
 }
 
+/**
+ * Opens the groups view already showing `groupName`.
+ *
+ * The view picks its own group on first render (getFirstGroup: the highest
+ * peers_count that is a policy source), and that ranking runs over every group
+ * in the account — including ones a spec on the other worker seeded moments
+ * ago. Deleting the spec's own fixtures first is not enough to pin it, so
+ * select the group by name and let the view rebuild around it.
+ */
+export async function openGroupView(page: Page, groupName: string) {
+  await openControlCenter(page, "groups");
+  const selector = canvasNode(page, "select-group-node");
+  await expect(selector).toBeVisible();
+  // Unforced on purpose: the opening fitView animates the canvas, and the
+  // actionability check is what waits for the node to stop moving.
+  await selector.click();
+  await page.getByTestId("select-dropdown-search").fill(groupName);
+  await page
+    .locator('[role="option"]')
+    .filter({ hasText: groupName })
+    .first()
+    .click({ force: true });
+  await expect(selector).toContainText(groupName);
+}
+
 export async function switchFlowView(page: Page, view: FlowView) {
   await dismissBlockingOverlays(page);
   await page.getByTestId(`cc-flow-${view}`).click({ force: true });

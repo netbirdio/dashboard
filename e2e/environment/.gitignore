@@ -1,6 +1,7 @@
 # Ignore zitadel environment
 .env
 Caddyfile
+agentgateway-stub.Caddyfile
 management.json
 turnserver.conf
 zitadel.env

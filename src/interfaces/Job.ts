@@ -17,7 +17,14 @@ export interface Workload {
 // Parameters for bundle job
 export interface BundleJobParameters {
   anonymize: boolean;
+  // Anonymization level applied when anonymize is enabled. "default" keeps
+  // internal IP ranges readable; "strict" also anonymizes them. Omitted or
+  // empty resolves to the default on the peer.
+  anonymize_level?: "default" | "strict";
   bundle_for: boolean;
   bundle_for_time: number;
   log_file_count: number;
+  // Upload service URL the peer requests an upload URL from. Empty selects the
+  // default upload server.
+  upload_url?: string;
 }
