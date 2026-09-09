@@ -14,6 +14,9 @@ type Props = {
   open: boolean;
   peerName: string;
   port: number;
+  // rejected is true when this prompt is reopening because the last password
+  // was refused, rather than because a server asked for the first time.
+  rejected?: boolean;
   // onSubmit hands the password to the waiting handshake. It reports false
   // when no request is outstanding any more, which happens when the server
   // gave up while the prompt was open.
@@ -36,6 +39,7 @@ export const VNCPasswordModal = ({
   open,
   peerName,
   port,
+  rejected,
   onSubmit,
   onCancel,
 }: Props) => {
@@ -67,6 +71,12 @@ export const VNCPasswordModal = ({
             submit();
           }}
         >
+          {rejected && !stale && (
+            <Callout variant={"error"}>
+              The server rejected that password.
+            </Callout>
+          )}
+
           {stale && (
             <Callout variant={"warning"}>
               The server stopped waiting. Reconnect to try again.

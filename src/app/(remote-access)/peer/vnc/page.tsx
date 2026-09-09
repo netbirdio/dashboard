@@ -126,6 +126,10 @@ function VNCSession({
   const [connectAttempt, setConnectAttempt] = useState(0);
   // timeoutRetried keeps the one automatic retry to one, per choice.
   const timeoutRetried = useRef(false);
+  // passwordRejected carries the last attempt's outcome into the prompt that
+  // reopens after it, so the operator is told the password was refused rather
+  // than being asked the same question with no explanation.
+  const [passwordRejected, setPasswordRejected] = useState(false);
   // targetPubKey is the destination daemon's identity public key,
   // captured from the temporary-access response so the wasm proxy can
   // verify the X25519 challenge.
@@ -348,6 +352,15 @@ function VNCSession({
           setConnectAttempt((n) => n + 1);
           return;
         }
+        // A rejected password is answerable where it was asked. The server has
+        // dropped the connection, so the only way back to the prompt is to
+        // connect again; sending them to the connection form instead would
+        // make them re-pick a server and port that were never the problem.
+        if (vnc.errorDetail?.badPassword) {
+          setPasswordRejected(true);
+          setConnectAttempt((n) => n + 1);
+          return;
+        }
         setConnectFailed(true);
         if (hasSetupChoices) {
           setShowSetup(true);
@@ -364,6 +377,18 @@ function VNCSession({
     hasSetupChoices,
     sendErrorNotification,
   ]);
+
+  // Backing out of the password prompt returns to the connection form, which
+  // is the last point the operator actually chose anything. Tearing the window
+  // down to its disconnected state would leave them with a Reconnect that asks
+  // the same question again.
+  const handlePasswordCancel = () => {
+    vnc.disconnect();
+    setPasswordRejected(false);
+    connected.current = false;
+    connectedOnce.current = false;
+    setShowSetup(true);
+  };
 
   const handleConnectChoice = (next: VNCConnectChoice) => {
     setChoice(next);
@@ -473,8 +498,12 @@ function VNCSession({
           open={true}
           peerName={peer.name}
           port={portNumber}
-          onSubmit={vnc.sendPassword}
-          onCancel={vnc.disconnect}
+          rejected={passwordRejected}
+          onSubmit={(password) => {
+            setPasswordRejected(false);
+            return vnc.sendPassword(password);
+          }}
+          onCancel={handlePasswordCancel}
         />
       )}
 

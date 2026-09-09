@@ -169,7 +169,6 @@ export default function VNCToolbar({
               <button
                 onClick={onDisconnect}
                 className="text-xs text-red-400 hover:text-red-300 px-3 py-1 rounded hover:bg-red-500/10 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-red-400"
-                title="End your session. The remote machine keeps running and you can reconnect afterwards."
               >
                 End session
               </button>
