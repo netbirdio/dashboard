@@ -130,11 +130,7 @@ export default function VNCToolbar({
             <button
               onClick={onPaste}
               className="text-xs text-nb-gray-300 hover:text-white px-3 py-1 rounded hover:bg-nb-gray-700 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-neutral-300"
-              title={
-                external
-                  ? "Copy the host clipboard to the remote machine's clipboard, then paste there as usual"
-                  : "Paste host clipboard into remote machine by typing the text (works on login screens too)"
-              }
+              title="Paste host clipboard into remote machine by typing the text (works on login screens too)"
             >
               Paste
             </button>

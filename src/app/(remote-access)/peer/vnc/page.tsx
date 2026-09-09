@@ -486,7 +486,16 @@ function VNCSession({
               ? vnc.sendCtrlAltDel
               : undefined
           }
-          onPaste={vnc.viewOnly ? undefined : vnc.pasteFromHostClipboard}
+          // Paste types the text with a NetBird-specific message so it lands
+          // on login screens too. An external server can only be handed the
+          // clipboard, which the focus handler already does on its own, so the
+          // button would promise something it cannot do and repeat something
+          // already happening.
+          onPaste={
+            vnc.viewOnly || isExternal
+              ? undefined
+              : vnc.pasteFromHostClipboard
+          }
           showRemoteCursor={vnc.showRemoteCursor}
           onToggleRemoteCursor={
             // The remote cursor is requested with a NetBird-specific RFB
