@@ -1,33 +1,35 @@
-import * as React from "react";
-import { useCallback, useMemo, useState } from "react";
+import Button from "@components/Button";
+import { Callout } from "@components/Callout";
+import HelpText from "@components/HelpText";
+import InlineLink from "@components/InlineLink";
+import { Input } from "@components/Input";
+import { Label } from "@components/Label";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import { Peer } from "@/interfaces/Peer";
+import Paragraph from "@components/Paragraph";
+import Separator from "@components/Separator";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
+import { IconLoader2 } from "@tabler/icons-react";
 import {
   ChevronsLeftRightEllipsis,
   ExternalLinkIcon,
   KeyRoundIcon,
   MonitorIcon,
+  TriangleAlertIcon,
   User2,
 } from "lucide-react";
-import Separator from "@components/Separator";
-import Paragraph from "@components/Paragraph";
-import InlineLink from "@components/InlineLink";
-import Button from "@components/Button";
-import { Label } from "@components/Label";
-import HelpText from "@components/HelpText";
-import { Input } from "@components/Input";
+import * as React from "react";
+import { useCallback, useMemo, useState } from "react";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
+import { Peer } from "@/interfaces/Peer";
 import {
-  IPVersionSelect,
   type IPVersion,
+  IPVersionSelect,
 } from "@/modules/remote-access/IPVersionSelect";
 import {
   RDP_DOCS_LINK,
   RDPCredentials,
 } from "@/modules/remote-access/rdp/useRemoteDesktop";
-import { IconLoader2 } from "@tabler/icons-react";
 
 type Props = {
   open: boolean;
@@ -136,16 +138,9 @@ export const RDPCredentialsModal = ({
           }}
         >
           {error && (
-            <div className={"bg-red-50 border border-red-200 rounded-md p-4"}>
-              <div
-                className={
-                  "flex items-center gap-2 text-red-800 font-medium mb-1"
-                }
-              >
-                Error
-              </div>
-              <p className={"text-sm text-red-700"}>{error}</p>
-            </div>
+            <Callout variant={"error"} icon={<TriangleAlertIcon size={14} />}>
+              {error}
+            </Callout>
           )}
           <div>
             <Label>Username & Password</Label>
