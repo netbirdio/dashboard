@@ -30,6 +30,15 @@ export default function VNCToolbar({
   viewOnly,
   external,
 }: Props) {
+  // The separator ahead of End session only earns its place if something is
+  // actually in front of it. An external session hides the controls it cannot
+  // serve, which can leave End session alone in the toolbar.
+  const hasControlsBeforeDisconnect =
+    Boolean(viewOnly) ||
+    Boolean(onCtrlAltDel && !viewOnly) ||
+    Boolean(onPaste) ||
+    Boolean(onToggleRemoteCursor);
+
   const [xPercent, setXPercent] = useState<number>(() => {
     if (typeof window === "undefined") return 50;
     try {
@@ -151,10 +160,12 @@ export default function VNCToolbar({
           )}
           {onDisconnect && (
             <>
-              <span
-                aria-hidden={true}
-                className="self-stretch w-px bg-nb-gray-700 mx-0.5"
-              />
+              {hasControlsBeforeDisconnect && (
+                <span
+                  aria-hidden={true}
+                  className="self-stretch w-px bg-nb-gray-700 mx-0.5"
+                />
+              )}
               <button
                 onClick={onDisconnect}
                 className="text-xs text-red-400 hover:text-red-300 px-3 py-1 rounded hover:bg-red-500/10 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-red-400"
