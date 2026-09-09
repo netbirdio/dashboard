@@ -1,6 +1,10 @@
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import {
+  DEFAULT_EXTERNAL_VNC_PORT,
+  type VNCTarget,
+} from "@/modules/remote-access/vnc/useVNC";
 
 export interface VNCSettings {
   scale: boolean;
@@ -14,6 +18,10 @@ interface VNCQueryParams {
   mode: "attach" | "session";
   username: string;
   ipVersion: string | null;
+  target: VNCTarget;
+  // port is only meaningful for an external target; NetBird's own server has
+  // a fixed port the viewer does not choose.
+  port: number;
   settings: VNCSettings;
   // ready is true once we've attempted to resolve query params (including
   // any localStorage restore after auth redirect). Callers can use this to
@@ -40,6 +48,21 @@ function parseMode(raw: string | null): Mode {
     : "attach";
 }
 
+// parseTarget defaults to NetBird's own server. Only an explicit "external"
+// selects the unauthenticated path, so a mangled or truncated query string
+// cannot land the operator on it by accident.
+function parseTarget(raw: string | null): VNCTarget {
+  return raw === "external" ? "external" : "netbird";
+}
+
+function parsePort(raw: string | null): number {
+  const port = parseInt(raw ?? "", 10);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    return DEFAULT_EXTERNAL_VNC_PORT;
+  }
+  return port;
+}
+
 function parseSettings(p: URLSearchParams): VNCSettings {
   const rawQuality = parseInt(p.get("quality") || "", 10);
   const quality = Number.isFinite(rawQuality)
@@ -58,6 +81,8 @@ const emptyParams: VNCQueryParams = {
   mode: "attach",
   username: "",
   ipVersion: null,
+  target: "netbird",
+  port: DEFAULT_EXTERNAL_VNC_PORT,
   settings: defaultSettings,
   ready: false,
 };
@@ -69,6 +94,8 @@ function paramsFrom(p: URLSearchParams, peerId: string): VNCQueryParams {
     mode: parseMode(p.get("mode")),
     username: p.get("user") || "",
     ipVersion: p.get("ip_version"),
+    target: parseTarget(p.get("target")),
+    port: parsePort(p.get("port")),
     settings: parseSettings(p),
     ready: true,
   };

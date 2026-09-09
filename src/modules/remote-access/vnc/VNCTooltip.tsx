@@ -15,6 +15,9 @@ export const VNCTooltip = ({
   hasPermission,
   side = "top",
 }: Props) => {
+  // Still shown when NetBird screen sharing is off: the action works in that
+  // case, so the tooltip is telling the operator which of the two servers
+  // they are about to be offered rather than why they cannot proceed.
   const hideTooltip = isOnline && isVNCEnabled && hasPermission;
 
   return (
@@ -28,13 +31,14 @@ export const VNCTooltip = ({
               You do not have permission to launch a VNC session. Please contact
               your administrator.
             </div>
-          ) : !isVNCEnabled ? (
-            <div>
-              VNC server is not enabled on this peer. Enable it with{" "}
-              <span className="font-mono">netbird up --allow-server-vnc</span>.
-            </div>
-          ) : (
+          ) : !isOnline ? (
             <div>This peer is offline and cannot be accessed via VNC.</div>
+          ) : (
+            <div>
+              NetBird screen sharing is not enabled on this peer. Enable it with{" "}
+              <span className="font-mono">netbird up --allow-server-vnc</span>,
+              or connect to a VNC server already running on the peer.
+            </div>
           )}
         </div>
       }

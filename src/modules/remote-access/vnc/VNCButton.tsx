@@ -41,7 +41,11 @@ export const VNCButton = ({ peer, isDropdown = false }: Props) => {
   if (!isVNCSupportedOnOS(peer?.os)) return null;
 
   const isVNCEnabled = peer?.local_flags?.server_vnc_allowed;
-  const disabled = !peer.connected || !permission.peers.update || !isVNCEnabled;
+  // Enabled without NetBird screen sharing too: the viewer can still offer a
+  // third-party VNC server on the peer, and its setup screen is where that
+  // choice belongs. A button disabled behind a tooltip could only describe the
+  // one option, and would hide the other entirely.
+  const disabled = !peer.connected || !permission.peers.update;
   const hasPermission = permission.peers.update;
 
   const openVNCPage = () => {

@@ -11,6 +11,12 @@ interface Props {
   onToggleRemoteCursor?: (enable: boolean) => void;
   // viewOnly hides input actions and shows a "View-only" badge.
   viewOnly?: boolean;
+  // external marks a session served by a third-party VNC server, which
+  // NetBird did not authenticate and the peer's user was not asked to
+  // approve. Shown for as long as the session lasts, outside the part of the
+  // toolbar that collapses, because an operator who cannot see it will assume
+  // the guarantees of the NetBird path.
+  external?: boolean;
 }
 
 const STORAGE_KEY = "netbird.vnc.toolbarX";
@@ -22,6 +28,7 @@ export default function VNCToolbar({
   showRemoteCursor,
   onToggleRemoteCursor,
   viewOnly,
+  external,
 }: Props) {
   const [xPercent, setXPercent] = useState<number>(() => {
     if (typeof window === "undefined") return 50;
@@ -82,11 +89,21 @@ export default function VNCToolbar({
       className="fixed top-0 z-50 group px-4 pt-0 pb-4"
       style={{ left: `${xPercent}%`, transform: "translateX(-50%)" }}
     >
-      <div
-        onPointerDown={startDrag}
-        className="h-2 w-24 bg-nb-gray-500/60 group-hover:bg-nb-gray-400/80 rounded-b-lg mx-auto cursor-grab active:cursor-grabbing transition-colors touch-none"
-        title="Drag to reposition"
-      />
+      <div className="flex items-center gap-1.5 justify-center">
+        <div
+          onPointerDown={startDrag}
+          className="h-2 w-24 bg-nb-gray-500/60 group-hover:bg-nb-gray-400/80 rounded-b-lg cursor-grab active:cursor-grabbing transition-colors touch-none"
+          title="Drag to reposition"
+        />
+        {external && (
+          <span
+            className="text-[10px] leading-none text-amber-200 px-1.5 py-1 rounded-b bg-amber-900/70 border-x border-b border-amber-700/60 whitespace-nowrap"
+            title="Served by a VNC server on the peer that NetBird does not authenticate. The peer's user was not asked to approve this session and cannot limit it to view-only."
+          >
+            External VNC
+          </span>
+        )}
+      </div>
       <div className="max-h-0 group-hover:max-h-20 group-focus-within:max-h-20 overflow-hidden transition-all duration-200 ease-out">
         <div className="flex gap-1 bg-nb-gray-900/95 backdrop-blur border border-nb-gray-700 rounded-md px-2 py-1.5 shadow-lg mt-1">
           {viewOnly && (
@@ -110,7 +127,11 @@ export default function VNCToolbar({
             <button
               onClick={onPaste}
               className="text-xs text-nb-gray-300 hover:text-white px-3 py-1 rounded hover:bg-nb-gray-700 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-neutral-300"
-              title="Paste host clipboard into remote machine by typing the text (works on login screens too)"
+              title={
+                external
+                  ? "Copy the host clipboard to the remote machine's clipboard, then paste there as usual"
+                  : "Paste host clipboard into remote machine by typing the text (works on login screens too)"
+              }
             >
               Paste
             </button>
