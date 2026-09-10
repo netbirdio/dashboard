@@ -36,6 +36,10 @@ import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { AccountMFASettings } from "@/cloud/mfa/AccountMFASettings";
+import {
+  SignInDomainsSettings,
+  useCanViewSignInDomains,
+} from "@/cloud/sign-in-domains/SignInDomainsSettings";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Account } from "@/interfaces/Account";
@@ -48,6 +52,7 @@ type Props = {
 
 export default function AuthenticationTab({ account }: Readonly<Props>) {
   const { permission } = usePermissions();
+  const canViewSignInDomains = useCanViewSignInDomains();
 
   const { mutate } = useSWRConfig();
 
@@ -417,6 +422,17 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
           <div className={"p-default py-8 max-w-2xl"}>
             <div className={"max-w-6xl"}>
               <AccountMFASettings />
+            </div>
+          </div>
+        </>
+      )}
+
+      {canViewSignInDomains && (
+        <>
+          <Separator />
+          <div className={"p-default py-8 max-w-2xl"}>
+            <div className={"max-w-6xl"}>
+              <SignInDomainsSettings />
             </div>
           </div>
         </>

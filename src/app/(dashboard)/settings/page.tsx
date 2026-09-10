@@ -33,10 +33,6 @@ import {
   CloudSettingsTabContent,
   CloudSettingsTabTrigger,
 } from "@/cloud/settings/CloudSettings";
-import {
-  SignInDomainsTab,
-  SignInDomainsTabTrigger,
-} from "@/cloud/sign-in-domains/SignInDomainsTab";
 
 export default function NetBirdSettings() {
   const queryParams = useSearchParams();
@@ -72,7 +68,6 @@ export default function NetBirdSettings() {
                 <ShieldIcon size={14} />
                 Authentication
               </VerticalTabs.Trigger>
-              <SignInDomainsTabTrigger />
               {permission.setup_keys.read && (
                 <VerticalTabs.Trigger value="setup-keys">
                   <KeyRound size={14} />
@@ -129,7 +124,6 @@ export default function NetBirdSettings() {
         >
           <div className={"border-l border-nb-gray-930 w-full"}>
             {account && <AuthenticationTab account={account} />}
-            {account && <SignInDomainsTab account={account} />}
             {permission.setup_keys.read && <SetupKeysTab />}
             {account?.settings?.embedded_idp_enabled &&
               permission?.identity_providers?.read && <IdentityProvidersTab />}
