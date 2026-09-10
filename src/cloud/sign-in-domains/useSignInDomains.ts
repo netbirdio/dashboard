@@ -1,10 +1,22 @@
 import useFetchApi, { useApiCall } from "@utils/api";
 import loadConfig from "@utils/config";
-import { SignInDomain } from "@/interfaces/Account";
+import { useCallback } from "react";
+import { DomainValidationStatus, SignInDomain } from "@/interfaces/Account";
 
 const config = loadConfig();
 
-export const useSignInDomains = (refreshInterval?: number) => {
+export const useSignInDomains = (pollWhilePendingMs?: number) => {
+  const refreshInterval = useCallback(
+    (latest?: SignInDomain[]) =>
+      pollWhilePendingMs &&
+      latest?.some(
+        (domain) => domain.validation_status === DomainValidationStatus.PENDING,
+      )
+        ? pollWhilePendingMs
+        : 0,
+    [pollWhilePendingMs],
+  );
+
   const {
     data: domains,
     isLoading,
