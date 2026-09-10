@@ -53,6 +53,11 @@ function List({ children }: { children: React.ReactNode }) {
         "px-4 py-4 whitespace-nowrap overflow-y-hidden shrink-0 no-scrollbar",
         "lg:h-full items-start bg-nb-gray border-b-0 border-nb-gray-930",
         "flex lg:flex-col lg:gap-1",
+        // PageContainer is the scroll container, so without this the tab list
+        // scrolls away with the tab content. Pinned to the top of it instead,
+        // and given its own overflow so a list taller than the viewport can
+        // still be reached rather than being clipped by overflow-y-hidden.
+        "lg:sticky lg:top-0 lg:overflow-y-auto",
       )}
       style={{
         height: isLg ? "calc(100vh - 75px)" : "auto",
