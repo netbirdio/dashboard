@@ -32,9 +32,11 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
       and cannot be removed.
     </>
   ) : connections.length > 0 ? (
-    `This domain is used by ${connections
-      .map((connection) => connection.name)
-      .join(", ")}. Detach it there before removing it.`
+    <>
+      This domain is used by an SSO integration.
+      <br />
+      Remove it there before deleting it.
+    </>
   ) : undefined;
 
   const deleteDomainHandler = async () => {
