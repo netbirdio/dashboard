@@ -11,6 +11,7 @@ export interface ReverseProxy {
   domain: string;
   mode?: ServiceMode;
   listen_port?: number;
+  port_mappings?: ReverseProxyPortMapping[];
   port_auto_assigned?: boolean;
   proxy_cluster?: string;
   targets: ReverseProxyTarget[];
@@ -23,6 +24,14 @@ export interface ReverseProxy {
   meta?: ReverseProxyMeta;
   private?: boolean;
   access_groups?: string[];
+}
+
+export interface ReverseProxyPortMapping {
+  protocol: ServiceMode.TCP | ServiceMode.UDP | ServiceMode.TLS;
+  listen_port_start: number;
+  listen_port_end: number;
+  target_port_start: number;
+  target_port_end: number;
 }
 
 export const CrowdSecMode = {

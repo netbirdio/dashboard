@@ -20,7 +20,9 @@ let udpResource = "";
 let udpSubdomain = "";
 
 test.describe.serial("Reverse Proxy - Services (UDP) @reverse-proxy", () => {
-  test("Should create a network with a resource", async ({ dashboardAsOwner: page }) => {
+  test("Should create a network with a resource", async ({
+    dashboardAsOwner: page,
+  }) => {
     await deleteServicesByPrefix(page, "udp-svc-");
     await deleteNetworksByPrefix(page, "rp-udp-net-");
     await navigateTo(page, "/networks");
@@ -60,16 +62,22 @@ test.describe.serial("Reverse Proxy - Services (UDP) @reverse-proxy", () => {
     udpSubdomain = subdomain;
 
     await page.getByTestId("add-service").first().click();
-    await expect(page.getByTestId("proxy-subdomain-input")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("proxy-subdomain-input")).toBeVisible({
+      timeout: 10_000,
+    });
     await page.getByTestId("proxy-subdomain-input").fill(subdomain);
     await selectProxyDomain(page, CUSTOM_PORTS_DOMAIN);
     await page.getByTestId("service-mode-select-button").click({ force: true });
     await page.getByTestId("service-mode-option-udp").click({ force: true });
     // Wait for mode switch to take effect
-    await expect(page.getByTestId("group-selector-dropdown")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("group-selector-dropdown")).toBeVisible({
+      timeout: 10_000,
+    });
 
     await selectL4Resource(page, udpResource);
-    await expect(page.getByTestId("listen-port-input")).toBeEnabled({ timeout: 10_000 });
+    await expect(page.getByTestId("listen-port-input")).toBeEnabled({
+      timeout: 10_000,
+    });
     await page.getByTestId("listen-port-input").fill("5060");
     await page.getByTestId("destination-port-input").fill("5060");
     await page.getByTestId("proxy-continue").click();
@@ -77,14 +85,21 @@ test.describe.serial("Reverse Proxy - Services (UDP) @reverse-proxy", () => {
     await addAccessControlRules(page);
     await page.getByTestId("proxy-continue").click();
 
-    await page.getByTestId("connection-timeout-input").fill("30s");
+    await page.getByTestId("udp-session-timeout-input").fill("30s");
     await page.getByTestId("submit-service").click();
 
     await resetServiceFilters(page);
-    await expect(page.locator("tr").filter({ hasText: subdomain }).getByText("UDP", { exact: true })).toBeVisible({ timeout: 30_000 });
+    await expect(
+      page
+        .locator("tr")
+        .filter({ hasText: subdomain })
+        .getByText("UDP", { exact: true }),
+    ).toBeVisible({ timeout: 30_000 });
   });
 
-  test("Should edit the UDP service and delete it", async ({ dashboardAsOwner: page }) => {
+  test("Should edit the UDP service and delete it", async ({
+    dashboardAsOwner: page,
+  }) => {
     await openServiceEdit(page, udpSubdomain);
 
     await page.getByTestId("listen-port-input").fill("5061");
@@ -94,7 +109,7 @@ test.describe.serial("Reverse Proxy - Services (UDP) @reverse-proxy", () => {
     await removeAllAccessControlRules(page);
 
     await page.getByTestId("proxy-tab-settings").click({ force: true });
-    await page.getByTestId("connection-timeout-input").fill("");
+    await page.getByTestId("udp-session-timeout-input").fill("");
 
     await saveServiceEdit(page);
 
