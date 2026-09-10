@@ -28,6 +28,7 @@ import {
   ExternalLinkIcon,
   KeyRound,
   ListIcon,
+  Loader2,
   MinusCircleIcon,
   PlusCircle,
   PlusIcon,
@@ -221,6 +222,10 @@ export default function AIProviderModal({
   const { catalog: catalogList, getById } = useProviderCatalog();
 
   const [tab, setTab] = useState<string>("provider");
+  // A save reaches the vendor to check the url and credential before storing
+  // anything, so it holds for as long as that round trip takes — up to a
+  // timeout. Nothing else on the footer moves while it does.
+  const [saveInFlight, setSaveInFlight] = useState(false);
   const [providerId, setProviderId] = useState<AIProviderId>(
     provider?.providerId ?? "openai_api",
   );
@@ -431,7 +436,19 @@ export default function AIProviderModal({
     }
   };
 
+  // A save already sent cannot be called off, so dismissing the modal while one
+  // is in flight would only hide it: the write still lands, and the completion
+  // calls handleClose again — closing and resetting whatever session the
+  // operator has opened by then. The dismissal is refused instead of faked.
   const handleClose = () => {
+    if (saveInFlight) return;
+    onOpenChange(false);
+    setTimeout(reset, 200);
+  };
+
+  // closeAfterSave is the completion path: it bypasses the guard above, which
+  // exists to stop the operator racing the save, not the save from finishing.
+  const closeAfterSave = () => {
     onOpenChange(false);
     setTimeout(reset, 200);
   };
@@ -506,45 +523,56 @@ export default function AIProviderModal({
           identityHeaderGroups: identityHeaderGroups.trim(),
         }
       : {};
-    if (isEdit && provider) {
-      await updateProvider(provider.id, {
+    setSaveInFlight(true);
+    try {
+      if (isEdit && provider) {
+        const saved = await updateProvider(provider.id, {
+          providerId,
+          name,
+          upstreamUrl,
+          models: submittedModels,
+          extraValues: sanitizedExtraValues,
+          ...identityOverrides,
+          skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+          metadataDisabled,
+          // Only forward the API key when the user actually rotated it
+          ...(apiKey && apiKey.trim() !== MASKED_API_KEY ? { apiKey } : {}),
+        });
+        // The url and credential are checked against the vendor before the
+        // change is stored, so a save can be refused for a reason the operator
+        // has to fix here. Closing would throw away the key they just typed —
+        // and it never comes back from the API to be typed over again.
+        if (!saved) return;
+        closeAfterSave();
+        return;
+      }
+      // First create: bootstrap the account's endpoint before the provider
+      // exists, as an explicit settings POST. A failure keeps the wizard open
+      // (the provider isn't created either) so the operator sees the error and
+      // can retry — this used to be a silent backend side effect.
+      if (!settingsBootstrapped) {
+        const bootstrapped = await bootstrapAgentNetworkSettings(
+          bootstrapCluster.trim(),
+        );
+        if (!bootstrapped) return;
+      }
+      const created = await addProvider({
         providerId,
         name,
         upstreamUrl,
-        models: submittedModels,
+        apiKey,
         extraValues: sanitizedExtraValues,
         ...identityOverrides,
         skipTlsVerification: isCustomKind ? skipTlsVerification : false,
         metadataDisabled,
-        // Only forward the API key when the user actually rotated it
-        ...(apiKey && apiKey.trim() !== MASKED_API_KEY ? { apiKey } : {}),
+        models: submittedModels,
+        enabled: true,
       });
-      handleClose();
-      return;
+      if (!created) return;
+      closeAfterSave();
+    } finally {
+      setSaveInFlight(false);
     }
-    // First create: bootstrap the account's endpoint before the provider
-    // exists, as an explicit settings POST. A failure keeps the wizard open
-    // (the provider isn't created either) so the operator sees the error and
-    // can retry — this used to be a silent backend side effect.
-    if (!settingsBootstrapped) {
-      const bootstrapped = await bootstrapAgentNetworkSettings(
-        bootstrapCluster.trim(),
-      );
-      if (!bootstrapped) return;
-    }
-    await addProvider({
-      providerId,
-      name,
-      upstreamUrl,
-      apiKey,
-      extraValues: sanitizedExtraValues,
-      ...identityOverrides,
-      skipTlsVerification: isCustomKind ? skipTlsVerification : false,
-      metadataDisabled,
-      models: submittedModels,
-      enabled: true,
-    });
-    handleClose();
   };
 
   // providerOptions are sorted into three groups, first-party AI Providers
@@ -632,27 +660,24 @@ export default function AIProviderModal({
   // provider has to supply the key the operator is typing.
   //
   // That reuse is only right while the form still describes the record the
-  // credential belongs to. The API resolves a provider_id request entirely
-  // from the stored row — vendor, upstream and key — so switching the vendor
-  // dropdown and then asking by record id answers with the OLD vendor's models
-  // and offers them for the new one. A replacement key typed over the mask is
-  // the same mistake in the other direction: the operator wants that key
-  // tested, not the one already saved.
+  // credential belongs to. The API takes the vendor from the stored row, so
+  // switching the vendor dropdown and then asking by record id answers with
+  // the OLD vendor's models and offers them for the new one. A replacement key
+  // typed over the mask is the same mistake in the other direction: the
+  // operator wants that key tested, not the one already saved.
   //
-  // Changing the upstream URL invalidates the saved path: discovery sends
-  // provider_id and the API resolves the URL from the stored row, so a changed
-  // URL would silently test the old endpoint. Require a freshly entered key
-  // when the URL differs; canDiscoverModels will block discovery until the
-  // operator provides one.
+  // A retyped URL is neither. It is sent with the record id and overrides the
+  // stored upstream, so the endpoint on the form is the one listed against —
+  // asking for the key back would be asking for something the API never
+  // returned.
   const useSavedCredential =
     isEdit &&
     !!provider?.id &&
     providerId === provider.providerId &&
-    upstreamUrl === provider.upstreamUrl &&
     apiKey.trim() === MASKED_API_KEY;
 
   const canDiscoverModels = useMemo(() => {
-    if (useSavedCredential) return true;
+    if (useSavedCredential) return upstreamUrl.trim() !== "";
     return (
       upstreamUrl.trim() !== "" &&
       apiKey.trim() !== "" &&
@@ -663,9 +688,13 @@ export default function AIProviderModal({
   }, [useSavedCredential, upstreamUrl, apiKey]);
 
   const loadModelsFromProvider = async () => {
-    const found = await discovered.discover(
+    await discovered.discover(
       useSavedCredential && provider?.id
-        ? { catalog_provider_id: providerId, provider_id: provider.id }
+        ? {
+            catalog_provider_id: providerId,
+            provider_id: provider.id,
+            upstream_url: upstreamUrl.trim(),
+          }
         : {
             catalog_provider_id: providerId,
             upstream_url: upstreamUrl.trim(),
@@ -673,6 +702,28 @@ export default function AIProviderModal({
           },
     );
   };
+
+  // Named rather than used inline: it gates the Load button, the Save button
+  // and the result line, so one definition keeps them from drifting apart.
+  const discoveryInFlight = discovered.isLoading;
+
+  // The footer renders the same submit twice — once on the models tab and once
+  // on the mappings tab — so its state is defined once here.
+  const submitDisabled =
+    !canContinueFromProvider || discoveryInFlight || saveInFlight;
+  const submitLabel = saveInFlight ? (
+    <>
+      <Loader2 size={16} className={"animate-spin"} />
+      {isEdit ? "Saving changes…" : "Connecting provider…"}
+    </>
+  ) : isEdit ? (
+    "Save Changes"
+  ) : (
+    <>
+      <PlusCircle size={16} />
+      Connect Provider
+    </>
+  );
 
   // A discovery result describes one provider, endpoint and credential. Once
   // any of those changes on screen, the previous answer is about a
@@ -1563,17 +1614,23 @@ export default function AIProviderModal({
                 <Button
                   variant={"secondary"}
                   size={"xs"}
-                  disabled={discovered.isLoading || !canDiscoverModels}
+                  disabled={discoveryInFlight || !canDiscoverModels}
                   onClick={loadModelsFromProvider}
                 >
-                  <RefreshCwIcon size={13} />
-                  {discovered.isLoading
+                  {discoveryInFlight ? (
+                    <Loader2 size={13} className={"animate-spin"} />
+                  ) : (
+                    <RefreshCwIcon size={13} />
+                  )}
+                  {discoveryInFlight
                     ? "Loading models…"
                     : "Load models from provider"}
                 </Button>
                 {!canDiscoverModels && (
                   <HelpText className={"!mb-0"}>
-                    Enter the endpoint URL and API key first.
+                    {useSavedCredential
+                      ? "Enter the endpoint URL first."
+                      : "Enter the endpoint URL and API key first."}
                   </HelpText>
                 )}
                 {discovered.notSupported && (
@@ -1591,7 +1648,7 @@ export default function AIProviderModal({
                 )}
               </div>
 
-              {!discovered.isLoading &&
+              {!discoveryInFlight &&
                 !discovered.error &&
                 discovered.models.length > 0 && (
                   <HelpText className={"!mb-0"}>
@@ -1692,7 +1749,11 @@ export default function AIProviderModal({
             {tab === "provider" && (
               <>
                 <ModalClose asChild>
-                  <Button variant={"secondary"} onClick={handleClose}>
+                  <Button
+                    variant={"secondary"}
+                    onClick={handleClose}
+                    disabled={saveInFlight}
+                  >
                     Cancel
                   </Button>
                 </ModalClose>
@@ -1711,6 +1772,7 @@ export default function AIProviderModal({
                 <Button
                   variant={"secondary"}
                   onClick={() => setTab("provider")}
+                  disabled={saveInFlight}
                 >
                   Back
                 </Button>
@@ -1726,41 +1788,31 @@ export default function AIProviderModal({
                 ) : (
                   <Button
                     variant={"primary"}
-                    onClick={handleSubmit}
-                    disabled={!canContinueFromProvider}
                     data-testid={"agent-network-provider-submit"}
+                    onClick={handleSubmit}
+                    disabled={submitDisabled}
                   >
-                    {isEdit ? (
-                      "Save Changes"
-                    ) : (
-                      <>
-                        <PlusCircle size={16} />
-                        Connect Provider
-                      </>
-                    )}
+                    {submitLabel}
                   </Button>
                 )}
               </>
             )}
             {tab === "mappings" && (
               <>
-                <Button variant={"secondary"} onClick={() => setTab("models")}>
+                <Button
+                  variant={"secondary"}
+                  onClick={() => setTab("models")}
+                  disabled={saveInFlight}
+                >
                   Back
                 </Button>
                 <Button
                   variant={"primary"}
-                  onClick={handleSubmit}
-                  disabled={!canContinueFromProvider}
                   data-testid={"agent-network-provider-submit"}
+                  onClick={handleSubmit}
+                  disabled={submitDisabled}
                 >
-                  {isEdit ? (
-                    "Save Changes"
-                  ) : (
-                    <>
-                      <PlusCircle size={16} />
-                      Connect Provider
-                    </>
-                  )}
+                  {submitLabel}
                 </Button>
               </>
             )}
