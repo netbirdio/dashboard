@@ -25,18 +25,17 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
     domain.validation_status === DomainValidationStatus.VERIFIED;
   const connections = domain.connections ?? [];
 
-  // The account's own domain can never be deleted, so the button is left out
-  // entirely rather than shown as a dead control.
-  const canRemove = !domain.is_primary;
-
-  // The service does refuse this one, so the button explains why up front
-  // instead of letting the request come back with an error.
-  const removeBlockedReason =
-    connections.length > 0
-      ? `This domain is used by ${connections
-          .map((connection) => connection.name)
-          .join(", ")}. Detach it there before removing it.`
-      : undefined;
+  const removeBlockedReason: React.ReactNode = domain.is_primary ? (
+    <>
+      This is the primary domain of your account
+      <br />
+      and cannot be removed.
+    </>
+  ) : connections.length > 0 ? (
+    `This domain is used by ${connections
+      .map((connection) => connection.name)
+      .join(", ")}. Detach it there before removing it.`
+  ) : undefined;
 
   const deleteDomainHandler = async () => {
     const choice = await confirm({
@@ -52,8 +51,6 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
     notify({
       title: "Sign-in Domains",
       description: `${domain.name} has been removed`,
-      // The refresh runs beside the toast rather than inside its promise: a
-      // failed revalidation must not report the successful delete as an error.
       promise: deleteDomain(domain.id).then((res) => {
         mutate().catch(() => {});
         return res;
@@ -63,9 +60,11 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
   };
 
   return (
-    // The min height is one xs button (16px line + 2*8px padding + 2*1px
-    // border), so rows that render no button keep the same height as the rest.
-    <div className={"flex gap-2 items-center justify-end ml-auto min-h-[34px]"}>
+    <div
+      className={
+        "relative top-[2px] flex gap-2 items-center justify-end ml-auto min-h-[34px]"
+      }
+    >
       <DomainVerificationModal
         open={modal}
         onOpenChange={setModal}
@@ -83,6 +82,7 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
         <Button
           variant={"secondary"}
           size={"xs"}
+          className={"!px-3"}
           disabled={!permission.settings.update}
           onClick={() => setModal(true)}
           data-testid={"verify-domain"}
@@ -91,31 +91,29 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
         </Button>
       )}
 
-      {canRemove && (
-        <FullTooltip
-          content={
-            <div className={"text-xs max-w-xs"}>{removeBlockedReason}</div>
-          }
-          disabled={!removeBlockedReason}
+      <FullTooltip
+        content={
+          <div className={"text-xs max-w-xs"}>
+            {removeBlockedReason ?? "Remove domain"}
+          </div>
+        }
+        interactive={false}
+      >
+        <Button
+          variant={"danger-outline"}
+          size={"xs"}
+          className={cn(
+            "!p-0 !h-[34px] !w-[34px]",
+            removeBlockedReason && "pointer-events-none",
+          )}
+          disabled={!!removeBlockedReason || !permission.settings.update}
+          onClick={deleteDomainHandler}
+          aria-label={"Remove domain"}
+          data-testid={"remove-domain"}
         >
-          <Button
-            variant={"danger-outline"}
-            size={"xs"}
-            // A disabled button swallows hover, so the tooltip would never
-            // open; letting the events through to the wrapper keeps it.
-            className={cn(
-              "!px-3",
-              removeBlockedReason && "pointer-events-none",
-            )}
-            disabled={!!removeBlockedReason || !permission.settings.update}
-            onClick={deleteDomainHandler}
-            data-testid={"remove-domain"}
-          >
-            <TrashIcon size={14} />
-            Remove
-          </Button>
-        </FullTooltip>
-      )}
+          <TrashIcon size={14} />
+        </Button>
+      </FullTooltip>
     </div>
   );
 }

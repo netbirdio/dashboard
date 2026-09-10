@@ -4,11 +4,6 @@ import { SignInDomain } from "@/interfaces/Account";
 
 const config = loadConfig();
 
-// Polling is a fixed interval rather than one derived from whether any domain
-// is still pending: the shared RequestOptions types refreshInterval as a plain
-// number, so SWR's data-dependent form is not available without widening it for
-// every consumer. SWR skips the poll while the document is hidden, and the tab
-// unmounts when the user navigates away, so it only runs while someone watches.
 export const useSignInDomains = (refreshInterval?: number) => {
   const {
     data: domains,
@@ -16,17 +11,18 @@ export const useSignInDomains = (refreshInterval?: number) => {
     error,
     mutate,
   } = useFetchApi<SignInDomain[]>(
-    "/service/account/domains",
+    "/service/sign-in-domains",
     true,
     true,
     !!config.authServiceUrl,
     {
       origin: config.authServiceUrl,
       refreshInterval,
+      shouldRetryOnError: false,
     },
   );
 
-  const request = useApiCall<SignInDomain>("/service/account/domains", true, {
+  const request = useApiCall<SignInDomain>("/service/sign-in-domains", true, {
     origin: config.authServiceUrl,
   });
 
@@ -34,8 +30,6 @@ export const useSignInDomains = (refreshInterval?: number) => {
     return request.post({ domain });
   };
 
-  // Verification only kicks off the DNS lookup; the service polls with a
-  // backoff, so the status keeps changing after this resolves.
   const verifyDomain = async (domainId: string) => {
     return request.post({}, `/${domainId}/verify`);
   };
@@ -44,9 +38,12 @@ export const useSignInDomains = (refreshInterval?: number) => {
     return request.del({}, `/${domainId}`);
   };
 
+  const isUnavailable = !!error || (!isLoading && !domains);
+
   return {
     domains,
     isLoading,
+    isUnavailable,
     error,
     mutate,
     addDomain,

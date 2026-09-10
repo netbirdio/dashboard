@@ -1,7 +1,7 @@
 import { useOidcAccessToken, useOidcIdToken } from "@axa-fr/react-oidc";
 import loadConfig from "@utils/config";
 import { useMemo } from "react";
-import { useJwt } from "react-jwt";
+import { decodeToken } from "react-jwt";
 
 const config = loadConfig();
 export const useDomainCategory = () => {
@@ -9,10 +9,12 @@ export const useDomainCategory = () => {
   const { idToken } = useOidcIdToken();
   const { accessToken } = useOidcAccessToken();
   const token = tokenSource.toLowerCase() == "idtoken" ? idToken : accessToken;
-  const { decodedToken } = useJwt<Record<any, any>>(token);
 
   const domainCategory = useMemo(() => {
     try {
+      const decodedToken = token
+        ? decodeToken<Record<any, any>>(token)
+        : undefined;
       const key = decodedToken
         ? Object.keys(decodedToken)
             .filter((key) => key.includes("wt_account_domain_category"))
@@ -22,7 +24,7 @@ export const useDomainCategory = () => {
     } catch (e) {
       return undefined;
     }
-  }, [decodedToken]);
+  }, [token]);
 
   const isPrivate = useMemo(() => {
     return domainCategory === "private";

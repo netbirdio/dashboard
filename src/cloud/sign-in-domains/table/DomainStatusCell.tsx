@@ -1,3 +1,4 @@
+import FullTooltip from "@components/FullTooltip";
 import { cn } from "@utils/helpers";
 import * as React from "react";
 import { DomainValidationStatus, SignInDomain } from "@/interfaces/Account";
@@ -6,27 +7,35 @@ type Props = {
   domain: SignInDomain;
 };
 
-// A domain the service gave up on is shown as plain "Unverified": from the
-// account's side it is the same situation as one that was never checked.
+const FAILED_HINT =
+  "This domain could not be verified. Check that the TXT record is published, then try again. If it keeps failing, contact support@netbird.io";
+
 export default function DomainStatusCell({ domain }: Readonly<Props>) {
   const status = domain.validation_status;
   const isVerified = status === DomainValidationStatus.VERIFIED;
   const isPending = status === DomainValidationStatus.PENDING;
-
-  const label = statusLabel(status);
+  const isFailed = status === DomainValidationStatus.FAILED;
 
   return (
-    <div className={"flex items-center gap-2 text-sm text-nb-gray-300 mr-auto"}>
-      <span
-        className={cn(
-          "h-2 w-2 rounded-full shrink-0",
-          isVerified && "bg-green-400",
-          isPending && "bg-yellow-400",
-          !isVerified && !isPending && "bg-red-500",
-        )}
-      />
-      {label}
-    </div>
+    <FullTooltip
+      content={<div className={"text-xs max-w-xs"}>{FAILED_HINT}</div>}
+      disabled={!isFailed}
+      interactive={false}
+    >
+      <div
+        className={"flex items-center gap-2 text-sm text-nb-gray-300 mr-auto"}
+      >
+        <span
+          className={cn(
+            "h-2 w-2 rounded-full shrink-0",
+            isVerified && "bg-green-400",
+            isPending && "bg-yellow-400",
+            !isVerified && !isPending && "bg-red-500",
+          )}
+        />
+        {statusLabel(status)}
+      </div>
+    </FullTooltip>
   );
 }
 

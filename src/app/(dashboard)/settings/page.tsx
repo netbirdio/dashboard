@@ -129,7 +129,7 @@ export default function NetBirdSettings() {
         >
           <div className={"border-l border-nb-gray-930 w-full"}>
             {account && <AuthenticationTab account={account} />}
-            <SignInDomainsTab />
+            {account && <SignInDomainsTab account={account} />}
             {permission.setup_keys.read && <SetupKeysTab />}
             {account?.settings?.embedded_idp_enabled &&
               permission?.identity_providers?.read && <IdentityProvidersTab />}
