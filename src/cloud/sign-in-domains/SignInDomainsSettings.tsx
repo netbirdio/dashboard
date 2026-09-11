@@ -16,7 +16,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 const POLL_INTERVAL_MS = 15_000;
 
 const SIGN_IN_DOMAINS_DOCS_LINK =
-  "https://docs.netbird.io/manage/settings/sign-in-domains";
+  "https://docs.netbird.io/manage/team/single-sign-on/sign-in-domains";
 
 export const useCanViewSignInDomains = () => {
   const { permission } = usePermissions();
