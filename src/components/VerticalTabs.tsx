@@ -5,6 +5,8 @@ import { TabsTrigger } from "@radix-ui/react-tabs";
 import { cn } from "@utils/helpers";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
+import { useAnnouncement } from "@/contexts/AnnouncementProvider";
+import { headerHeight } from "@/layouts/Header";
 
 type Props = {
   value: string;
@@ -46,6 +48,7 @@ function VerticalTabs({ value, onChange, children }: Props) {
 }
 
 function List({ children }: { children: React.ReactNode }) {
+  const { bannerHeight } = useAnnouncement();
   const viewport = React.useRef<HTMLDivElement>(null);
   const [overflows, setOverflows] = React.useState({
     start: false,
@@ -103,8 +106,20 @@ function List({ children }: { children: React.ReactNode }) {
         // sticky element as tall as its containing block has nowhere to stick.
         // useMediaQuery reports false during SSR and the first client render,
         // so that is exactly what the desktop sidebar got until it resolved.
-        "h-auto lg:h-[calc(100vh_-_75px)] lg:sticky lg:top-0 lg:overflow-y-auto",
+        //
+        // The offset is the header plus whatever the announcement banner is
+        // taking, the same figure DashboardLayout and Navigation use. It comes
+        // through a variable so the breakpoint stays in CSS, and it is always a
+        // length, so the height never falls back to auto.
+        "h-auto lg:h-[calc(100vh_-_var(--nb-tabs-offset))] lg:sticky lg:top-0 lg:overflow-y-auto",
       )}
+      style={
+        {
+          // bannerHeight is undefined outside the provider, and NaNpx would make
+          // the calc invalid and drop the height back to auto.
+          "--nb-tabs-offset": `${headerHeight + (bannerHeight ?? 0)}px`,
+        } as React.CSSProperties
+      }
     >
       {/* Below lg the tabs are a horizontal strip, and ScrollArea gives it the
           same styled scrollbar the rest of the app uses. On lg the Root and
