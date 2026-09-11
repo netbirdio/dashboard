@@ -419,7 +419,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
       {isNetBirdCloud() && (
         <>
           <Separator />
-          <div className={"p-default py-8 max-w-2xl"}>
+          <div className={"p-default py-8 pb-0 max-w-2xl"}>
             <div className={"max-w-6xl"}>
               <AccountMFASettings />
             </div>
