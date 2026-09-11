@@ -3,7 +3,6 @@ import { TabContext, useTabContext } from "@components/Tabs";
 import * as Tabs from "@radix-ui/react-tabs";
 import { TabsTrigger } from "@radix-ui/react-tabs";
 import { cn } from "@utils/helpers";
-import { useIsLg } from "@utils/responsive";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 
@@ -47,7 +46,6 @@ function VerticalTabs({ value, onChange, children }: Props) {
 }
 
 function List({ children }: { children: React.ReactNode }) {
-  const isLg = useIsLg();
   const viewport = React.useRef<HTMLDivElement>(null);
   const [overflows, setOverflows] = React.useState({
     start: false,
@@ -99,11 +97,14 @@ function List({ children }: { children: React.ReactNode }) {
         // scrolls away with the tab content. Pinned to the top of it instead,
         // and given its own overflow so a list taller than the viewport can
         // still be reached.
-        "lg:h-full lg:sticky lg:top-0 lg:overflow-y-auto",
+        //
+        // The height has to come from CSS, not a JS media query: as a flex item
+        // with height auto the list stretches to the full content height, and a
+        // sticky element as tall as its containing block has nowhere to stick.
+        // useMediaQuery reports false during SSR and the first client render,
+        // so that is exactly what the desktop sidebar got until it resolved.
+        "h-auto lg:h-[calc(100vh_-_75px)] lg:sticky lg:top-0 lg:overflow-y-auto",
       )}
-      style={{
-        height: isLg ? "calc(100vh - 75px)" : "auto",
-      }}
     >
       {/* Below lg the tabs are a horizontal strip, and ScrollArea gives it the
           same styled scrollbar the rest of the app uses. On lg the Root and
