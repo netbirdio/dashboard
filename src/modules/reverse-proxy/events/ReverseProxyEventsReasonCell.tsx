@@ -9,6 +9,9 @@ const VERDICT_LABELS: Record<string, string> = {
   crowdsec_ban: "Ban",
   crowdsec_captcha: "Captcha",
   crowdsec_throttle: "Throttle",
+  appsec_ban: "Ban",
+  appsec_captcha: "Captcha",
+  appsec_unavailable: "Unavailable",
 };
 
 type Props = {
@@ -17,12 +20,16 @@ type Props = {
 
 export const ReverseProxyEventsReasonCell = ({ event }: Props) => {
   const metadata = event.metadata;
-  const verdict = metadata?.crowdsec_verdict;
+  // Only one of the two can be the reason a request was flagged without being
+  // blocked, since an enforced block sets auth_method_used instead.
+  const source = metadata?.appsec_verdict ? "appsec" : "crowdsec";
+  const verdictKey = `${source}_verdict`;
+  const verdict = metadata?.[verdictKey];
 
-  if (verdict && !event.auth_method_used?.startsWith("crowdsec_")) {
+  if (verdict && !event.auth_method_used?.startsWith(`${source}_`)) {
     const verdictLabel = VERDICT_LABELS[verdict] ?? verdict;
     const metaEntries = Object.entries(metadata!).filter(
-      ([k]) => k !== "crowdsec_verdict",
+      ([k]) => k !== verdictKey,
     );
 
     return (
@@ -49,7 +56,8 @@ export const ReverseProxyEventsReasonCell = ({ event }: Props) => {
         <div className="px-3 py-2">
           <Badge variant="gray" className="gap-1.5">
             <ShieldAlert size={12} className="text-yellow-500" />
-            CrowdSec Observe: {verdictLabel}
+            {source === "appsec" ? "AppSec" : "CrowdSec"} Observe:{" "}
+            {verdictLabel}
           </Badge>
         </div>
       </FullTooltip>
