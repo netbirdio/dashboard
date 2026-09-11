@@ -433,8 +433,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               Where clients send debug bundles. A bundle carries peer logs,
               routes, DNS and firewall state, so this decides whose
               infrastructure that data lands on. Leave it empty to use the
-              service NetBird runs; a self-hosted deployment that leaves it
-              empty keeps the bundle on the peer instead.{" "}
+              service NetBird runs.{" "}
               <InlineLink
                 href={"https://docs.netbird.io/manage/peers/remote-jobs"}
                 target={"_blank"}
