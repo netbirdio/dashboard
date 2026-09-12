@@ -11,6 +11,7 @@ export interface PostureCheck {
     geo_location_check?: GeoLocationCheck;
     peer_network_range_check?: PeerNetworkRangeCheck;
     process_check?: ProcessCheck;
+    certificate_check?: CertificateCheck;
   };
   policies?: Policy[];
   active?: boolean;
@@ -63,6 +64,10 @@ export interface Process {
   linux_path?: string;
   mac_path?: string;
   windows_path?: string;
+}
+
+export interface CertificateCheck {
+  ca_certificates: string[];
 }
 
 export const windowsKernelVersions: SelectOption[] = [
