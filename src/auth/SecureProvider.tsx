@@ -2,6 +2,7 @@ import { OidcSecure, useOidc } from "@axa-fr/react-oidc";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { useEffect } from "react";
+import { LoginScreen } from "@/auth/LoginScreen";
 
 const QUERY_PARAMS_KEY = "netbird-query-params";
 
@@ -72,19 +73,9 @@ export const SecureProvider = ({ children }: Props) => {
     }
   }, [isAuthenticated, currentPath]);
 
-  useEffect(() => {
-    let timeout: NodeJS.Timeout | undefined = undefined;
-    if (!isAuthenticated) {
-      timeout = setTimeout(async () => {
-        if (!isAuthenticated) {
-          await login(currentPath);
-        }
-      }, 1500);
-    }
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [currentPath, isAuthenticated, login]);
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={() => login(currentPath)} />;
+  }
 
   return (
     <>
