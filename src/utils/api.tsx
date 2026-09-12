@@ -31,7 +31,7 @@ type RequestOptions = {
   origin?: string;
   globalParams?: Params;
   ignoreGlobalParams?: boolean;
-  refreshInterval?: number;
+  refreshInterval?: number | ((latestData: any) => number);
   blob?: boolean;
   shouldRetryOnError?: boolean;
 };
