@@ -866,8 +866,10 @@ export default function AIProviderModal({
                       is reachable only from connected peers, which needs a
                       cluster with at least one connected embedded proxy (
                       <code>netbird proxy</code>). Connect one under
-                      <InlineLink href={"/reverse-proxy/services"}>
-                        {" "}Reverse Proxy
+                      <InlineLink
+                        href={"/agent-network/configuration?tab=clusters"}
+                      >
+                        {" "}Configuration → Clusters
                       </InlineLink>
                       {" "}before adding a provider.
                     </>
@@ -875,8 +877,10 @@ export default function AIProviderModal({
                     <>
                       No active proxy clusters are available. Connect at least
                       one proxy under
-                      <InlineLink href={"/reverse-proxy/services"}>
-                        {" "}Reverse Proxy
+                      <InlineLink
+                        href={"/agent-network/configuration?tab=clusters"}
+                      >
+                        {" "}Configuration → Clusters
                       </InlineLink>
                       {" "}before adding a provider.
                     </>

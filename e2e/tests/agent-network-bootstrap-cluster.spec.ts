@@ -182,6 +182,12 @@ test.describe("Agent Network bootstrap cluster @agent-network", () => {
       const callout = page.getByTestId("agent-network-no-cluster-callout");
       await expect(callout).toBeVisible({ timeout: 10_000 });
       await expect(callout).toContainText("embedded proxy");
+      // The fix lives in the agent network's own Clusters section, not the
+      // generic Reverse Proxy page, so that is where the callout sends users.
+      await expect(callout.getByRole("link")).toHaveAttribute(
+        "href",
+        "/agent-network/configuration?tab=clusters",
+      );
 
       // With nothing to pin to there is no bootstrap to make, so the wizard
       // cannot advance — rather than sending a request management refuses.
