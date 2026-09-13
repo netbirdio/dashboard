@@ -183,7 +183,6 @@ const withModelKey = (m: ProviderModel): EditableModel => ({
 // configuration, while zero on both is the shape an unpriced model arrives in.
 const hasNoPrice = (m: ProviderModel) => !m.inputPer1k && !m.outputPer1k;
 
-
 export default function AIProviderModal({
   open,
   onOpenChange,
@@ -351,10 +350,10 @@ export default function AIProviderModal({
   );
   // Not every live cluster can host the endpoint. The agent network gateway is
   // a private service — reachable only from connected peers, authenticated by
-  // their tunnel identity — which only a proxy running embedded in a netbird
-  // client (`netbird proxy`) can serve. supports_private is the flag for that,
-  // the same one the Reverse Proxy modal gates NetBird-Only Access on, and
-  // management refuses a bootstrap onto a cluster reporting it false. Picking
+  // their tunnel identity — so it needs a cluster with private capabilities.
+  // supports_private is the flag for that, the same one the Reverse Proxy
+  // modal gates NetBird-Only Access on, and management refuses a bootstrap
+  // onto a cluster reporting it false. Picking
   // from the filtered list keeps the wizard from proposing a cluster the API
   // rejects — and the endpoint it assigns is immutable, so a wrong pick is not
   // something the operator can edit away afterwards.
@@ -374,10 +373,10 @@ export default function AIProviderModal({
     !settingsLoading &&
     !domainsLoading &&
     bootstrapClusters.length === 0;
-  // Clusters exist, but every one of them reported having no embedded proxy:
-  // a different problem from having no proxy at all, and a different fix, so
-  // it gets its own message rather than "connect a proxy".
-  const clustersLackEmbeddedProxy =
+  // Clusters exist, but none of them has private capabilities: a different
+  // problem from having no proxy at all, and a different fix, so it gets its
+  // own message rather than "connect a proxy".
+  const clustersLackPrivateCapability =
     noClustersAvailable && validatedClusters.length > 0;
 
   // The cluster the first create will bootstrap onto: the first usable one
@@ -860,18 +859,17 @@ export default function AIProviderModal({
                     />
                   }
                 >
-                  {canReadDomains && clustersLackEmbeddedProxy ? (
+                  {canReadDomains && clustersLackPrivateCapability ? (
                     <>
-                      No proxy cluster can host the agent network endpoint. It
-                      is reachable only from connected peers, which needs a
-                      cluster with at least one connected embedded proxy (
-                      <code>netbird proxy</code>). Connect one under
+                      You need a reverse proxy cluster with private capabilities
+                      in order to enable agent networks. Connect one under
                       <InlineLink
                         href={"/agent-network/configuration?tab=clusters"}
                       >
-                        {" "}Configuration → Clusters
-                      </InlineLink>
-                      {" "}before adding a provider.
+                        {" "}
+                        Configuration → Clusters
+                      </InlineLink>{" "}
+                      before adding a provider.
                     </>
                   ) : canReadDomains ? (
                     <>
@@ -880,9 +878,10 @@ export default function AIProviderModal({
                       <InlineLink
                         href={"/agent-network/configuration?tab=clusters"}
                       >
-                        {" "}Configuration → Clusters
-                      </InlineLink>
-                      {" "}before adding a provider.
+                        {" "}
+                        Configuration → Clusters
+                      </InlineLink>{" "}
+                      before adding a provider.
                     </>
                   ) : (
                     // Roles scoped to Agent Network can't read or connect
@@ -899,7 +898,9 @@ export default function AIProviderModal({
 
               <FormRow
                 label={"Provider"}
-                helpText={"AI provider and upstream URL to expose through NetBird."}
+                helpText={
+                  "AI provider and upstream URL to expose through NetBird."
+                }
               >
                 <SelectDropdown
                   data-testid={"agent-network-provider-type"}
@@ -1404,9 +1405,9 @@ export default function AIProviderModal({
                       >
                         x-netbird-groups
                       </code>{" "}
-                      contains sorted group display names for attribution. It
-                      is not a delimiter-safe set of stable group IDs and must
-                      not be used as an agentgateway authorization claim.
+                      contains sorted group display names for attribution. It is
+                      not a delimiter-safe set of stable group IDs and must not
+                      be used as an agentgateway authorization claim.
                     </HelpText>
                   </div>
                 )}

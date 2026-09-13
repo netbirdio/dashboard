@@ -5,8 +5,8 @@
  * cluster the connect-provider wizard pins it to, and it is immutable after
  * that. Not every live cluster can host it: the endpoint is a private service,
  * reachable only from connected peers and authorised by their tunnel identity,
- * which only a cluster with a connected embedded proxy (`netbird proxy`) can
- * serve. Management reports that per cluster as supports_private and refuses a
+ * which only a cluster with private capabilities can serve. Management
+ * reports that per cluster as supports_private and refuses a
  * bootstrap onto a cluster without it.
  *
  * This spec pins the wizard's half of that contract: it picks a
@@ -25,7 +25,7 @@ const AGENT_NETWORK_CONFIG_KEY = "netbird-test-agent-network";
 // bug this spec guards against.
 const CENTRAL_CLUSTER = "central.proxy.netbird.io";
 // Listed second, and the only valid pick.
-const EMBEDDED_CLUSTER = "embedded.proxy.netbird.io";
+const PRIVATE_CLUSTER = "private.proxy.netbird.io";
 
 const UNBOOTSTRAPPED_DEFAULTS = {
   endpoint: "",
@@ -39,8 +39,8 @@ const UNBOOTSTRAPPED_DEFAULTS = {
 
 const BOOTSTRAPPED_SETTINGS = {
   ...UNBOOTSTRAPPED_DEFAULTS,
-  endpoint: `violet.${EMBEDDED_CLUSTER}`,
-  proxy_address: EMBEDDED_CLUSTER,
+  endpoint: `violet.${PRIVATE_CLUSTER}`,
+  proxy_address: PRIVATE_CLUSTER,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
 };
@@ -121,7 +121,9 @@ async function openWizard(
 
 /** Fills the provider tab with the minimum a create needs. */
 async function fillProviderTab(page: Page) {
-  await page.getByPlaceholder("https://api.openai.com").fill("https://api.openai.com");
+  await page
+    .getByPlaceholder("https://api.openai.com")
+    .fill("https://api.openai.com");
   await page.getByPlaceholder("sk-...").first().fill("sk-e2e-bootstrap-key");
 }
 
@@ -131,7 +133,7 @@ test.describe("Agent Network bootstrap cluster @agent-network", () => {
   }) => {
     const { page, close } = await openWizard(browser, [
       freeDomain(CENTRAL_CLUSTER, false),
-      freeDomain(EMBEDDED_CLUSTER, true),
+      freeDomain(PRIVATE_CLUSTER, true),
     ]);
     try {
       await page
@@ -154,20 +156,22 @@ test.describe("Agent Network bootstrap cluster @agent-network", () => {
         { timeout: 30_000 },
       );
 
-      await page.getByRole("button", { name: "Continue" }).click({ force: true });
+      await page
+        .getByRole("button", { name: "Continue" })
+        .click({ force: true });
       await page
         .getByRole("button", { name: "Connect Provider" })
         .last()
         .click({ force: true });
 
       const payload = (await bootstrap).request().postDataJSON();
-      expect(payload.proxy_address).toBe(EMBEDDED_CLUSTER);
+      expect(payload.proxy_address).toBe(PRIVATE_CLUSTER);
     } finally {
       await close();
     }
   });
 
-  test("blocks setup when no listed cluster has an embedded proxy", async ({
+  test("blocks setup when no listed cluster has private capabilities", async ({
     browser,
   }) => {
     const { page, close } = await openWizard(browser, [
@@ -181,7 +185,7 @@ test.describe("Agent Network bootstrap cluster @agent-network", () => {
 
       const callout = page.getByTestId("agent-network-no-cluster-callout");
       await expect(callout).toBeVisible({ timeout: 10_000 });
-      await expect(callout).toContainText("embedded proxy");
+      await expect(callout).toContainText("private capabilities");
       // The fix lives in the agent network's own Clusters section, not the
       // generic Reverse Proxy page, so that is where the callout sends users.
       await expect(callout.getByRole("link")).toHaveAttribute(
