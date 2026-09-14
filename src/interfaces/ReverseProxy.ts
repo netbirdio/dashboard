@@ -33,12 +33,21 @@ export const CrowdSecMode = {
 
 export type CrowdSecMode = (typeof CrowdSecMode)[keyof typeof CrowdSecMode];
 
+export const AppSecMode = {
+  OFF: "off",
+  ENFORCE: "enforce",
+  OBSERVE: "observe",
+} as const;
+
+export type AppSecMode = (typeof AppSecMode)[keyof typeof AppSecMode];
+
 export interface AccessRestrictions {
   allowed_cidrs?: string[];
   blocked_cidrs?: string[];
   allowed_countries?: string[];
   blocked_countries?: string[];
   crowdsec_mode?: CrowdSecMode;
+  appsec_mode?: AppSecMode;
 }
 
 export interface ReverseProxyMeta {
@@ -122,6 +131,7 @@ export interface ReverseProxyDomain {
   supports_custom_ports?: boolean;
   require_subdomain?: boolean;
   supports_crowdsec?: boolean;
+  supports_appsec?: boolean;
   supports_private?: boolean;
 }
 
@@ -188,6 +198,7 @@ export interface ReverseProxyCluster {
   supports_custom_ports?: boolean;
   require_subdomain?: boolean;
   supports_crowdsec?: boolean;
+  supports_appsec?: boolean;
   // True when at least one connected proxy in this cluster is running embedded
   // in a netbird client (`netbird proxy`) and serving over a WireGuard tunnel.
   // Lets the dashboard distinguish per-peer / private clusters from centralised
