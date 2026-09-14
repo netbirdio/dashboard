@@ -15,8 +15,6 @@ import {
 } from "lucide-react";
 import * as React from "react";
 
-const SUPPORT_EMAIL = "support@netbird.io";
-
 const parseApproverEmail = (message?: string): string =>
   message?.match(/[^\s@]+@[a-z0-9.-]+\.[a-z]{2,}/i)?.[0] ?? "";
 
@@ -113,8 +111,18 @@ export const PendingApproval = ({ error, onRefresh, onLogout }: Props) => {
 
       <Paragraph className={"text-sm"}>
         Need help?
-        <InlineLink href={`mailto:${SUPPORT_EMAIL}`}>
-          {SUPPORT_EMAIL}
+        <InlineLink
+          href={"https://docs.netbird.io/manage/team/approve-users"}
+          target={"_blank"}
+        >
+          Read the Docs
+        </InlineLink>
+        or
+        <InlineLink
+          href={"https://docs.netbird.io/help/netbird-support"}
+          target={"_blank"}
+        >
+          Contact Support
         </InlineLink>
       </Paragraph>
     </div>
