@@ -102,7 +102,7 @@ async function loginAndSave(
   const skipButton = page.locator("button[name=skip]");
   const appNav = page.getByTestId("left-navigation-item").first();
   const modal = page.getByTestId("setup-netbird-modal");
-  const approval = page.getByText("User Approval Pending");
+  const approval = page.getByTestId("pending-approval");
 
   let after_login: "2fa" | "app" | "modal" | "approval";
   try {
