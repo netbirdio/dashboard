@@ -2,10 +2,13 @@ import { useOidc } from "@axa-fr/react-oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import useFetchApi from "@utils/api";
 import loadConfig from "@utils/config";
+import { isPendingApprovalError } from "@utils/user-status";
+import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import PermissionsProvider from "@/contexts/PermissionsProvider";
 import { Role, User } from "@/interfaces/User";
+import { PendingApproval } from "@/modules/users/PendingApproval";
 
 const config = loadConfig();
 
@@ -69,6 +72,8 @@ export default function UsersProvider({ children }: Readonly<Props>) {
 export const useUsers = () => React.useContext(UsersContext);
 
 const UserProfileProvider = ({ children }: Props) => {
+  const { logout } = useOidc();
+  const router = useRouter();
   const { users, isLoading: isAllUsersLoading } = useUsers();
   const {
     data: user,
@@ -92,6 +97,20 @@ const UserProfileProvider = ({ children }: Props) => {
       loggedInUser,
     };
   }, [loggedInUser]);
+
+  // This is the one response that names the owner who can approve a pending
+  // user, so the screen is rendered from it rather than from whichever refused
+  // call happened to land first. Without this the app waits forever: the caller
+  // identity it needs is exactly what a pending user is refused.
+  if (isPendingApprovalError(error?.message)) {
+    return (
+      <PendingApproval
+        error={error}
+        onRefresh={() => router.push("/")}
+        onLogout={() => logout("/", { client_id: config.clientId })}
+      />
+    );
+  }
 
   // Show loading only when we're still loading and don't have user data
   if (isLoading || !loggedInUser) {

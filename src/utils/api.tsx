@@ -223,17 +223,21 @@ export function useApiCall<T>(
   };
 }
 
-// A blocked or unapproved user is an app-level routing decision, not one
-// call's failure: /error explains the status, and nothing else in the app can
-// load until they are approved. It therefore runs even for callers that ignore
-// errors — ignoreError means "do not raise a toast for this call", and letting
-// it swallow this left the dashboard on its loading screen forever, since the
-// caller identity it waits for is exactly what such a user is refused.
+// A blocked user is an app-level routing decision, not one call's failure:
+// /error explains the status, and nothing else in the app can load. It
+// therefore runs even for callers that ignore errors — ignoreError means "do
+// not raise a toast for this call", and letting it swallow this left the
+// dashboard on its loading screen forever, since the caller identity it waits
+// for is exactly what such a user is refused.
+//
+// A user pending approval is deliberately NOT routed here. Every refused call
+// reports the status, but only /users/current names the owner who can approve
+// them, and redirecting on whichever 403 landed first threw that away. The
+// pending screen is rendered from that one response instead — see
+// UserProfileProvider.
 const redirectOnUserStatus = (err: ErrorResponse): boolean => {
   const isUserStatus =
-    err.code == 403 &&
-    (err.message?.toLowerCase().includes("blocked") ||
-      err.message?.toLowerCase().includes("pending"));
+    err.code == 403 && !!err.message?.toLowerCase().includes("blocked");
   if (!isUserStatus) return false;
 
   const params = new URLSearchParams({
