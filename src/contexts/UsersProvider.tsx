@@ -1,8 +1,8 @@
 import { useOidc } from "@axa-fr/react-oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
-import useFetchApi from "@utils/api";
+import useFetchApi, { type ErrorResponse } from "@utils/api";
 import loadConfig from "@utils/config";
-import { isPendingApprovalError } from "@utils/user-status";
+import { isBlockedError, isPendingApprovalError } from "@utils/user-status";
 import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
@@ -21,6 +21,9 @@ const UsersContext = React.createContext(
     users: User[] | undefined;
     refresh: () => void;
     isLoading: boolean;
+    // Older management reports a pending user as merely blocked on
+    // /users/current; this call still says pending, so it is the fallback.
+    usersError?: ErrorResponse;
   },
 );
 
@@ -40,6 +43,7 @@ export default function UsersProvider({ children }: Readonly<Props>) {
     data: users,
     mutate,
     isLoading,
+    error: usersError,
   } = useFetchApi<User[]>("/users?service_user=false", true);
   const {
     data: serviceUsers,
@@ -60,6 +64,7 @@ export default function UsersProvider({ children }: Readonly<Props>) {
     <UsersContext.Provider
       value={{
         users: allUsers,
+        usersError,
         refresh,
         isLoading: isLoading || isLoadingServiceUsers,
       }}
@@ -74,7 +79,7 @@ export const useUsers = () => React.useContext(UsersContext);
 const UserProfileProvider = ({ children }: Props) => {
   const { logout } = useOidc();
   const router = useRouter();
-  const { users, isLoading: isAllUsersLoading } = useUsers();
+  const { users, usersError, isLoading: isAllUsersLoading } = useUsers();
   const {
     data: user,
     error,
@@ -98,18 +103,43 @@ const UserProfileProvider = ({ children }: Props) => {
     };
   }, [loggedInUser]);
 
-  // This is the one response that names the owner who can approve a pending
-  // user, so the screen is rendered from it rather than from whichever refused
-  // call happened to land first. Without this the app waits forever: the caller
-  // identity it needs is exactly what a pending user is refused.
-  if (isPendingApprovalError(error?.message)) {
+  // /users/current is preferred because it is the only response that names the
+  // owner who can approve; the user list is the fallback, since management
+  // older than that still calls a pending user merely blocked here. Rendering
+  // from a response rather than redirecting on whichever 403 landed first is
+  // also what ends the wait this could never finish: the caller identity it
+  // blocks on is exactly what a pending user is refused.
+  const pendingError = isPendingApprovalError(error?.message)
+    ? error
+    : isPendingApprovalError(usersError?.message)
+    ? usersError
+    : undefined;
+
+  if (pendingError) {
     return (
       <PendingApproval
-        error={error}
+        error={pendingError}
         onRefresh={() => router.push("/")}
         onLogout={() => logout("/", { client_id: config.clientId })}
       />
     );
+  }
+
+  // Blocked is a dead end rather than a wait, so it keeps the error page. It is
+  // decided here too, after pending, so that management old enough to call a
+  // pending user blocked on /users/current does not send them to the wrong one.
+  const blockedError = [error, usersError].find((e) =>
+    isBlockedError(e?.message),
+  );
+
+  if (blockedError) {
+    const params = new URLSearchParams({
+      code: String(blockedError.code),
+      message: encodeURIComponent(blockedError.message),
+      type: "user-status",
+    });
+    router.replace(`/error?${params.toString()}`);
+    return <FullScreenLoading />;
   }
 
   // Show loading only when we're still loading and don't have user data
