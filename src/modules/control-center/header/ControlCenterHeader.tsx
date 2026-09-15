@@ -109,7 +109,7 @@ function NetworkActionsMenu({
           type={"button"}
           aria-label={"Network actions"}
           className={
-            "flex items-center justify-center h-[40px] px-4 shrink-0 rounded-r-md border border-l-0 border-gray-700/40 bg-nb-gray-920 text-gray-400 hover:text-white hover:bg-nb-gray-910 transition-colors"
+            "flex items-center justify-center h-[40px] px-4 shrink-0 rounded-r-md border border-l-0 border-gray-700/40 bg-nb-gray-920 text-gray-400 hover:text-nb-gray-50 hover:bg-nb-gray-910 transition-colors"
           }
         >
           <MoreVerticalIcon size={14} />
@@ -156,7 +156,7 @@ function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
       className={cn(
         "flex items-center gap-1.5 h-[40px] px-3.5 shrink-0 rounded-md text-xs whitespace-nowrap outline-none",
         "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
-        "hover:text-white hover:bg-nb-gray-910 transition-colors",
+        "hover:text-nb-gray-50 hover:bg-nb-gray-910 transition-colors",
       )}
     >
       <CirclePlusIcon size={14} className={"shrink-0"} />

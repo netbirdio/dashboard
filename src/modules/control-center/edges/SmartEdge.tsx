@@ -5,6 +5,7 @@ import {
   Position,
 } from "@xyflow/react";
 import { useEdgeNodeRect } from "@/modules/control-center/utils/edge-helper";
+import { useTheme } from "@/contexts/ThemeProvider";
 import React from "react";
 import type { Policy } from "@/interfaces/Policy";
 
@@ -21,10 +22,18 @@ export function SmartEdge({ id, source, target, data }: Props) {
   // Value-equality subscriptions so unrelated edges don't re-render on drag.
   const sourceRect = useEdgeNodeRect(source);
   const targetRect = useEdgeNodeRect(target);
+  const { resolvedTheme } = useTheme();
 
   if (!sourceRect || !targetRect) return null;
 
   const enabled = data?.enabled ?? true;
+  // Disabled edges use the same ramp tokens as DirectionIn / SimpleConnection
+  // so draft and live canvases agree. Inline (not a stroke-* utility) because
+  // xyflow's .react-flow__edge-path rule would override the utility.
+  const disabledStroke =
+    resolvedTheme === "light"
+      ? "rgb(var(--nb-gray-700))"
+      : "rgb(var(--nb-gray-400))";
   const bidirectional = data?.policy?.rules?.[0]?.bidirectional ?? false;
 
   const sPos = sourceRect;
@@ -90,7 +99,7 @@ export function SmartEdge({ id, source, target, data }: Props) {
           style={{
             opacity: enabled ? 1 : 0.6,
             strokeWidth: 2,
-            stroke: enabled ? "#0e9f6e" : "#787878",
+            stroke: enabled ? "#0e9f6e" : disabledStroke,
             strokeDasharray: "5, 5",
           }}
           className={enabled ? "cc-animated-edge" : undefined}
@@ -101,7 +110,7 @@ export function SmartEdge({ id, source, target, data }: Props) {
           style={{
             opacity: enabled ? 1 : 0.6,
             strokeWidth: 2,
-            stroke: enabled ? "#0e9f6e" : "#787878",
+            stroke: enabled ? "#0e9f6e" : disabledStroke,
             strokeDasharray: "5, 5",
           }}
           className={enabled ? "cc-animated-edge" : undefined}
@@ -126,7 +135,7 @@ export function SmartEdge({ id, source, target, data }: Props) {
       style={{
         opacity: enabled ? 1 : 0.6,
         strokeWidth: 2,
-        stroke: enabled ? "#0ea5e9" : "#787878",
+        stroke: enabled ? "#0ea5e9" : disabledStroke,
         strokeDasharray: "5, 5",
       }}
       className={enabled ? "cc-animated-edge" : undefined}

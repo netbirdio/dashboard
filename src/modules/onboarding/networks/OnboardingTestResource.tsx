@@ -59,7 +59,7 @@ export const OnboardingTestResource = ({
         <Steps.Step step={1}>
           <p className={"!text-nb-gray-300"}>
             Open your command line and run this command from{" "}
-            <span className={cn(device && "text-white")}>
+            <span className={cn(device && "text-nb-gray-100")}>
               {device?.name || "your device"}
             </span>{" "}
             to ping your resource.

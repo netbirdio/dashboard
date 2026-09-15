@@ -19,7 +19,7 @@ export const ClusterTypeIndicator = ({ cluster }: Props) => {
       <FullTooltip
         content={
           <div className={"text-xs max-w-xs"}>
-            <span className={"font-medium text-white"}>Account cluster.</span>{" "}
+            <span className={"font-medium text-nb-gray-100"}>Account cluster.</span>{" "}
             Self-hosted on your own infrastructure — you operate the proxy
             nodes and control where traffic terminates.
           </div>
@@ -33,7 +33,7 @@ export const ClusterTypeIndicator = ({ cluster }: Props) => {
     <FullTooltip
       content={
         <div className={"text-xs max-w-xs"}>
-          <span className={"font-medium text-white"}>Shared cluster.</span>{" "}
+          <span className={"font-medium text-nb-gray-100"}>Shared cluster.</span>{" "}
           Deployed at the server level and available to every account on this
           instance.
         </div>
