@@ -117,7 +117,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
           height: 20,
           width: "1px",
           border: "none",
-          backgroundColor: resolvedTheme === "light" ? "#dfe3e6" : "#3f444b",
+          backgroundColor: resolvedTheme === "light" ? "#e2e2e2" : "#3f444b",
           borderRadius: "0px 4px 4px 0px",
           right: -2,
         }}

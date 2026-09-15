@@ -301,9 +301,9 @@ function ControlCenterCanvas() {
         selectionMode={SelectionMode.Partial}
       >
         <Background
-          bgColor={isLight ? "#f8fafb" : "#181a1d"}
+          bgColor={isLight ? "#fafafa" : "#181a1d"}
           gap={20}
-          color={isLight ? "#9aa5ad" : "#717171"}
+          color={isLight ? "#9a9a9a" : "#717171"}
         />
         <CanvasContextMenu onOpenChange={setContextMenuOpen} />
         <NodeContextMenu

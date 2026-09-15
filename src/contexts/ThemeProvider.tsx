@@ -65,27 +65,16 @@ const withTransitionsDisabled = (apply: () => void) => {
 
 /**
  * Wraps the skeleton loader theme so its colors follow the active theme.
- * Uses `resolvedTheme` so the "system" option resolves to the real OS value.
- * The palette is correct from the first render: ThemeProvider initializes
- * `resolvedTheme` synchronously from storage / the system preference.
+ * The colours come from the `--skeleton-base` / `--skeleton-highlight`
+ * tokens in globals.css, which `:root` (light) and `.dark` each define, so
+ * they flip with the `.dark` class like the rest of the nb-gray ramp and
+ * stay in step with the desktop client's skeleton tokens.
  */
-function ThemedSkeleton({
-  resolvedTheme,
-  children,
-}: {
-  resolvedTheme: "light" | "dark";
-  children: React.ReactNode;
-}) {
-  const isLight = resolvedTheme === "light";
-
+function ThemedSkeleton({ children }: { children: React.ReactNode }) {
   return (
     <SkeletonTheme
-      baseColor={
-        isLight ? "rgb(var(--nb-gray-900))" : "rgb(var(--nb-gray-920))"
-      }
-      highlightColor={
-        isLight ? "rgb(var(--nb-gray-940))" : "rgb(var(--nb-gray-850))"
-      }
+      baseColor={"rgb(var(--skeleton-base))"}
+      highlightColor={"rgb(var(--skeleton-highlight))"}
     >
       {children}
     </SkeletonTheme>
@@ -130,9 +119,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={value}>
-      <ThemedSkeleton resolvedTheme={resolvedTheme}>
-        {children}
-      </ThemedSkeleton>
+      <ThemedSkeleton>{children}</ThemedSkeleton>
     </ThemeContext.Provider>
   );
 }

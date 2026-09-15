@@ -14,9 +14,9 @@ const DARK_TERMINAL_THEME = {
 
 const LIGHT_TERMINAL_THEME = {
   background: "#ffffff",
-  foreground: "#181a1d",
-  cursor: "#181a1d",
-  selectionBackground: "#d4d7d9",
+  foreground: "#1a1a1a",
+  cursor: "#1a1a1a",
+  selectionBackground: "#d4d4d4",
 };
 
 const TERMINAL_OPTIONS = {
