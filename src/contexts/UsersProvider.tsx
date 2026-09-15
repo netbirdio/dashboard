@@ -2,7 +2,6 @@ import { useOidc } from "@axa-fr/react-oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import useFetchApi, { type ErrorResponse } from "@utils/api";
 import loadConfig from "@utils/config";
-import { resolveRefusedUser } from "@utils/user-status";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
@@ -14,6 +13,44 @@ const config = loadConfig();
 
 type Props = {
   children: React.ReactNode;
+};
+
+export enum RefusalKind {
+  PendingApproval = "pending_approval",
+  Blocked = "blocked",
+}
+
+export const resolveRefusedUser = ({
+  currentError,
+  listError,
+  isCurrentLoading,
+  isListLoading,
+}: {
+  currentError?: ErrorResponse;
+  listError?: ErrorResponse;
+  isCurrentLoading: boolean;
+  isListLoading: boolean;
+}): { kind: RefusalKind; error: ErrorResponse } | undefined => {
+  const readError = (error?: ErrorResponse) => {
+    const message = error?.message?.toLowerCase();
+    if (!error || !message) return undefined;
+    if (message.includes("pending approval"))
+      return { kind: RefusalKind.PendingApproval, error };
+    if (message.includes("blocked"))
+      return { kind: RefusalKind.Blocked, error };
+    return undefined;
+  };
+
+  const currentUserError = readError(currentError);
+  if (currentUserError?.kind === RefusalKind.PendingApproval)
+    return currentUserError;
+  if (isCurrentLoading) return undefined;
+
+  const listUserError = readError(listError);
+  if (listUserError?.kind === RefusalKind.PendingApproval) return listUserError;
+  if (isListLoading) return undefined;
+
+  return currentUserError ?? listUserError;
 };
 
 const UsersContext = React.createContext(
@@ -111,7 +148,7 @@ const UserProfileProvider = ({ children }: Props) => {
   });
 
   const blockedUrl =
-    refusal.kind === "blocked"
+    refusal?.kind === RefusalKind.Blocked
       ? `/error?${new URLSearchParams({
           code: String(refusal.error.code),
           message: encodeURIComponent(refusal.error.message),
@@ -126,7 +163,7 @@ const UserProfileProvider = ({ children }: Props) => {
     if (blockedUrl) router.replace(blockedUrl);
   }, [blockedUrl, router]);
 
-  if (refusal.kind === "pending") {
+  if (refusal?.kind === RefusalKind.PendingApproval) {
     return (
       <PendingApproval
         error={refusal.error}

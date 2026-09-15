@@ -5,7 +5,6 @@ import {
 } from "@axa-fr/react-oidc";
 import loadConfig from "@utils/config";
 import { sleep } from "@utils/helpers";
-import { isUserStatusError } from "@utils/user-status";
 import { usePathname } from "next/navigation";
 import { isExpired } from "react-jwt";
 import useSWR from "swr";
@@ -256,9 +255,14 @@ export function useApiErrorHandling(ignoreError = false) {
       setError(err);
     }
 
-    // UserProfileProvider renders the screen for these, so they must not also
-    // raise the error boundary behind it.
-    if (err.code == 403 && isUserStatusError(err.message)) {
+    // UserProfileProvider renders the screen for a blocked or unapproved user,
+    // so these must not also raise the error boundary over the top of it. The
+    // wording is management's — resolveRefusedUser there reads the same
+    // messages to decide which of the two screens it is.
+    if (
+      err.code == 403 &&
+      /pending approval|blocked/i.test(err.message ?? "")
+    ) {
       return Promise.reject(err);
     }
 
