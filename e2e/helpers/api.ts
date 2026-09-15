@@ -46,8 +46,7 @@ async function getApiContext(
   ]);
 
   const request = response.request();
-  const authHeader =
-    (await request.allHeaders())["authorization"] || "";
+  const authHeader = (await request.allHeaders())["authorization"] || "";
   const token = authHeader.replace("Bearer ", "");
   const url = new URL(request.url());
   const origin = `${url.protocol}//${url.host}`;
@@ -76,15 +75,35 @@ async function apiDelete(page: Page, path: string): Promise<void> {
   });
 }
 
-async function apiPost<T>(page: Page, path: string, data: unknown): Promise<T> {
+async function apiPost<T>(page: Page, path: string, body: unknown): Promise<T> {
   const { token, origin } = await getApiContext(page);
   const resp = await page.request.post(`${origin}/api${path}`, {
     headers: { Authorization: `Bearer ${token}` },
-    data,
+    data: body,
   });
+  if (!resp.ok()) {
+    throw new Error(
+      `POST ${path} returned ${resp.status()}: ${await resp.text()}`,
+    );
+  }
   return resp.json();
 }
 
+async function apiPut<T>(page: Page, path: string, body: unknown): Promise<T> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.put(`${origin}/api${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: body,
+  });
+  if (!resp.ok()) {
+    throw new Error(
+      `PUT ${path} returned ${resp.status()}: ${await resp.text()}`,
+    );
+  }
+  return resp.json();
+}
+
+/** List all groups. */
 export async function listGroups(page: Page): Promise<Group[]> {
   return apiGet<Group[]>(page, "/groups");
 }
@@ -108,10 +127,12 @@ export async function deletePeersByPrefix(page: Page, prefix: string) {
   }
 }
 
+/** Create a group by name. */
 export async function createGroup(page: Page, name: string): Promise<Group> {
   return apiPost<Group>(page, "/groups", { name, peers: [] });
 }
 
+/** Delete a group by ID. */
 export async function deleteGroup(page: Page, groupId: string) {
   await apiDelete(page, `/groups/${groupId}`);
 }
@@ -259,7 +280,10 @@ export async function deleteRouteById(page: Page, routeId: string) {
   await apiDelete(page, `/routes/${routeId}`);
 }
 
-export async function deleteRoutesByNetworkIdPrefix(page: Page, prefix: string) {
+export async function deleteRoutesByNetworkIdPrefix(
+  page: Page,
+  prefix: string,
+) {
   const routes = await listRoutes(page);
   const toDelete = routes.filter((r) => r.network_id.startsWith(prefix));
   for (const r of toDelete) {
@@ -338,8 +362,13 @@ type NotificationChannel = {
   enabled: boolean;
 };
 
-export async function listNotificationChannels(page: Page): Promise<NotificationChannel[]> {
-  return apiGet<NotificationChannel[]>(page, "/integrations/notifications/channels");
+export async function listNotificationChannels(
+  page: Page,
+): Promise<NotificationChannel[]> {
+  return apiGet<NotificationChannel[]>(
+    page,
+    "/integrations/notifications/channels",
+  );
 }
 
 export async function deleteNotificationChannel(page: Page, channelId: string) {
@@ -353,7 +382,10 @@ export async function deleteAllNotificationChannels(page: Page) {
   }
 }
 
-export async function deleteNotificationChannelsByType(page: Page, type: string) {
+export async function deleteNotificationChannelsByType(
+  page: Page,
+  type: string,
+) {
   const channels = await listNotificationChannels(page);
   const toDelete = channels.filter((c) => c.type === type);
   for (const c of toDelete) {
@@ -368,7 +400,9 @@ type NameserverGroup = {
   name: string;
 };
 
-export async function listNameserverGroups(page: Page): Promise<NameserverGroup[]> {
+export async function listNameserverGroups(
+  page: Page,
+): Promise<NameserverGroup[]> {
   return apiGet<NameserverGroup[]>(page, "/dns/nameservers");
 }
 
@@ -376,7 +410,10 @@ export async function deleteNameserverGroupById(page: Page, id: string) {
   await apiDelete(page, `/dns/nameservers/${id}`);
 }
 
-export async function deleteNameserverGroupsByPrefix(page: Page, prefix: string) {
+export async function deleteNameserverGroupsByPrefix(
+  page: Page,
+  prefix: string,
+) {
   const groups = await listNameserverGroups(page);
   const toDelete = groups.filter((g) => g.name.startsWith(prefix));
   for (const g of toDelete) {
@@ -391,11 +428,16 @@ type ReverseProxyService = {
   name: string;
 };
 
-export async function listReverseProxyServices(page: Page): Promise<ReverseProxyService[]> {
+export async function listReverseProxyServices(
+  page: Page,
+): Promise<ReverseProxyService[]> {
   return apiGet<ReverseProxyService[]>(page, "/reverse-proxies/services");
 }
 
-export async function deleteReverseProxyServiceById(page: Page, serviceId: string) {
+export async function deleteReverseProxyServiceById(
+  page: Page,
+  serviceId: string,
+) {
   await apiDelete(page, `/reverse-proxies/services/${serviceId}`);
 }
 
@@ -449,7 +491,13 @@ export async function waitForProxyClustersOnline(
   throw new Error(
     `Proxy clusters not online after ${timeoutMs}ms. Expected ${addresses.join(
       ", ",
-    )}; got ${JSON.stringify(last.map((c) => ({ a: c.address, online: c.online, n: c.connected_proxies })))}`,
+    )}; got ${JSON.stringify(
+      last.map((c) => ({
+        a: c.address,
+        online: c.online,
+        n: c.connected_proxies,
+      })),
+    )}`,
   );
 }
 
@@ -461,6 +509,8 @@ type User = {
   name: string;
   role: string;
   status: string;
+  auto_groups: string[];
+  is_blocked: boolean;
   is_current: boolean;
 };
 
@@ -537,4 +587,86 @@ export async function supportsAgentNetworkSettingsBootstrap(
   return (
     !!settings && typeof settings === "object" && "proxy_address" in settings
   );
+}
+
+/**
+ * Whether the management build under test serves the caller-scoped
+ * GET /agent-network/agent-config answer that backs the Connect Agent page.
+ * The endpoint answers 200 for every authenticated caller (an unconfigured
+ * caller gets configured=false, never an error), so any non-OK status means
+ * the build predates it.
+ */
+export async function supportsAgentNetworkAgentConfig(
+  page: Page,
+): Promise<boolean> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.get(
+    `${origin}/api/agent-network/agent-config`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return resp.ok();
+}
+
+type AgentNetworkPolicy = {
+  id: string;
+  name: string;
+};
+
+/** List Agent Network policies. */
+export async function listAgentNetworkPolicies(
+  page: Page,
+): Promise<AgentNetworkPolicy[]> {
+  return apiGet<AgentNetworkPolicy[]>(page, "/agent-network/policies");
+}
+
+/** Create an Agent Network policy. */
+export async function createAgentNetworkPolicy(
+  page: Page,
+  body: {
+    name: string;
+    source_groups: string[];
+    destination_provider_ids: string[];
+    enabled?: boolean;
+  },
+): Promise<AgentNetworkPolicy> {
+  return apiPost<AgentNetworkPolicy>(page, "/agent-network/policies", {
+    enabled: true,
+    ...body,
+  });
+}
+
+/** Delete all Agent Network policies whose name starts with the prefix. */
+export async function deleteAgentNetworkPoliciesByPrefix(
+  page: Page,
+  prefix: string,
+) {
+  const policies = await listAgentNetworkPolicies(page);
+  for (const p of policies) {
+    if (p.name.startsWith(prefix)) {
+      await apiDelete(page, `/agent-network/policies/${p.id}`);
+    }
+  }
+}
+
+/** The user the captured token belongs to. */
+export async function getCurrentUser(page: Page): Promise<User> {
+  const users = await apiGet<User[]>(page, "/users");
+  const current = users.find((u) => u.is_current);
+  if (!current) {
+    throw new Error("no is_current user in the /users answer");
+  }
+  return current;
+}
+
+/** Replace a user's auto-groups, keeping role and blocked state. */
+export async function updateUserAutoGroups(
+  page: Page,
+  user: User,
+  autoGroups: string[],
+): Promise<void> {
+  await apiPut(page, `/users/${user.id}`, {
+    role: user.role,
+    auto_groups: autoGroups,
+    is_blocked: !!user.is_blocked,
+  });
 }

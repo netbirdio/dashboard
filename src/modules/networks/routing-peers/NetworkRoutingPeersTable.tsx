@@ -3,6 +3,7 @@ import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import { fadeDisabledRowCells } from "@components/table/disabledRowCells";
 import {
   formatRadioChip,
   RadioOption,
@@ -24,6 +25,7 @@ import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { NetworkRoutingPeerName } from "@/modules/networks/routing-peers/NetworkRoutingPeerName";
 import { RoutingPeersActionCell } from "@/modules/networks/routing-peers/RoutingPeersActionCell";
+import { RoutingPeersEnabledCell } from "@/modules/networks/routing-peers/RoutingPeersEnabledCell";
 import { RoutingPeersMasqueradeCell } from "@/modules/networks/routing-peers/RoutingPeersMasqueradeCell";
 import RouteMetricCell from "@/modules/routes/RouteMetricCell";
 
@@ -46,6 +48,10 @@ const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
   {
     id: "enabled",
     accessorKey: "enabled",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Active</DataTableHeader>;
+    },
+    cell: ({ row }) => <RoutingPeersEnabledCell router={row.original} />,
   },
   {
     id: "metric",
@@ -157,8 +163,8 @@ export default function NetworkRoutingPeersTable({
           icon={<PeerIcon size={18} className={"fill-nb-gray-400"} />}
         />
       }
-      columnVisibility={{ search: false, enabled: false }}
-      rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
+      columnVisibility={{ search: false }}
+      cellClassName={fadeDisabledRowCells}
       paginationPaddingClassName={"px-0 pt-8"}
       rightSide={() => (
         <Button

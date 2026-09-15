@@ -3,6 +3,7 @@ import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import { fadeDisabledRowCells } from "@components/table/disabledRowCells";
 import {
   formatGroupsChip,
   GroupsPicker,
@@ -33,8 +34,9 @@ import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { ResourceActionCell } from "@/modules/networks/resources/ResourceActionCell";
-import { ResourceExposeServiceCell } from "@/modules/networks/resources/ResourceExposeServiceCell";
 import ResourceAddressCell from "@/modules/networks/resources/ResourceAddressCell";
+import { ResourceEnabledCell } from "@/modules/networks/resources/ResourceEnabledCell";
+import { ResourceExposeServiceCell } from "@/modules/networks/resources/ResourceExposeServiceCell";
 import { ResourceGroupCell } from "@/modules/networks/resources/ResourceGroupCell";
 import ResourceNameCell from "@/modules/networks/resources/ResourceNameCell";
 import { ResourcePolicyCell } from "@/modules/networks/resources/ResourcePolicyCell";
@@ -81,6 +83,10 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
   {
     id: "enabled",
     accessorKey: "enabled",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Active</DataTableHeader>;
+    },
+    cell: ({ row }) => <ResourceEnabledCell resource={row.original} />,
   },
   {
     id: "groups",
@@ -321,11 +327,10 @@ export default function ResourcesTable({
       columnVisibility={{
         description: false,
         id: false,
-        enabled: false,
         group_names: false,
         exposed: false,
       }}
-      rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
+      cellClassName={fadeDisabledRowCells}
       paginationPaddingClassName={"px-0 pt-8"}
       rightSide={
         !isGroupPage

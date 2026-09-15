@@ -1,7 +1,7 @@
 import useFetchApi from "@utils/api";
 import { useMemo } from "react";
 import { DNSZone } from "@/interfaces/DNS";
-import { Group } from "@/interfaces/Group";
+import { GROUP_TOOLTIP_TEXT, Group, GroupIssued } from "@/interfaces/Group";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import { Policy } from "@/interfaces/Policy";
 import { Route } from "@/interfaces/Route";
@@ -18,6 +18,32 @@ export interface GroupUsage extends Group {
   users_count: number;
   resources_count: number;
 }
+
+export const isGroupInUse = (group: GroupUsage) =>
+  group.peers_count > 0 ||
+  group.nameservers_count > 0 ||
+  group.policies_count > 0 ||
+  group.routes_count > 0 ||
+  group.setup_keys_count > 0 ||
+  group.users_count > 0 ||
+  group.resources_count > 0 ||
+  group.zones_count > 0;
+
+/**
+ * Why the group cannot be deleted, or undefined when it can be. Mirrors the
+ * rules the single-group action cell applies, so the bulk-select checkboxes and
+ * the row menu can never disagree about what is deletable.
+ */
+export const groupDeleteDisabledReason = (group: GroupUsage) => {
+  if (group.name === "All") return GROUP_TOOLTIP_TEXT.DELETE.ALL;
+  if (group.issued === GroupIssued.INTEGRATION)
+    return GROUP_TOOLTIP_TEXT.DELETE.INTEGRATION;
+  if (isGroupInUse(group)) return GROUP_TOOLTIP_TEXT.IN_USE;
+  return undefined;
+};
+
+export const canDeleteGroup = (group: GroupUsage) =>
+  !!group.id && !groupDeleteDisabledReason(group);
 
 export default function useGroupsUsage() {
   const { data: groups, isLoading: isGroupsLoading } =
