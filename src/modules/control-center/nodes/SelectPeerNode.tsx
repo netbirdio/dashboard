@@ -7,7 +7,6 @@ import { cn } from "@utils/helpers";
 import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeProvider";
 import * as React from "react";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
@@ -27,7 +26,6 @@ type PeerNodeProps = Node<
 >;
 
 export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
-  const { resolvedTheme } = useTheme();
   const { data: peers, isLoading: isPeersLoading } =
     useFetchApi<Peer[]>("/peers");
 
@@ -101,7 +99,7 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
           height: 20,
           width: "1px",
           border: "none",
-          backgroundColor: resolvedTheme === "light" ? "#e2e2e2" : "#3f444b",
+          backgroundColor: "rgb(var(--nb-gray-800))",
           borderRadius: "0px 4px 4px 0px",
           right: -2,
         }}

@@ -16,6 +16,10 @@ import { useSWRConfig } from "swr";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
 import { useTheme } from "@/contexts/ThemeProvider";
+import {
+  canvasBackground,
+  canvasDotColor,
+} from "@/modules/control-center/utils/canvas-theme";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { Network } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
@@ -301,9 +305,9 @@ function ControlCenterCanvas() {
         selectionMode={SelectionMode.Partial}
       >
         <Background
-          bgColor={isLight ? "#fafafa" : "#181a1d"}
+          bgColor={canvasBackground(resolvedTheme)}
           gap={20}
-          color={isLight ? "#9a9a9a" : "#717171"}
+          color={canvasDotColor(resolvedTheme)}
         />
         <CanvasContextMenu onOpenChange={setContextMenuOpen} />
         <NodeContextMenu

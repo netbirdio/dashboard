@@ -7,7 +7,6 @@ import { cn, generateColorFromUser } from "@utils/helpers";
 import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { ChevronsUpDown, Cog } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeProvider";
 import * as React from "react";
 import { User } from "@/interfaces/User";
 import TruncatedText from "@components/ui/TruncatedText";
@@ -24,7 +23,6 @@ type UserNodeProps = Node<
 >;
 
 export const SelectUserNode = ({ data, id }: UserNodeProps) => {
-  const { resolvedTheme } = useTheme();
   const { data: users } = useFetchApi<User[]>("/users?service_user=false");
 
   const userSelectOptions: SelectOption[] = sortBy(
@@ -120,7 +118,7 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
           height: 20,
           width: "1px",
           border: "none",
-          backgroundColor: resolvedTheme === "light" ? "#e2e2e2" : "#3f444b",
+          backgroundColor: "rgb(var(--nb-gray-800))",
           borderRadius: "0px 4px 4px 0px",
           right: -2,
         }}
