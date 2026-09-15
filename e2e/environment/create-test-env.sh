@@ -532,7 +532,7 @@ initEnvironment() {
     echo "Generated files already exist, if you want to reinitialize the environment, please remove them first."
     echo "You can use the following commands:"
     echo "  $DOCKER_COMPOSE_COMMAND down --volumes # to remove all containers and volumes"
-    echo "  rm -f docker-compose.yml Caddyfile zitadel.env dashboard.env machinekey/zitadel-admin-sa.token turnserver.conf management.json proxy.env proxy-no-ports.env && rm -rf proxy-certs proxy-certs-no-ports"
+    echo "  rm -f docker-compose.yml Caddyfile agentgateway-stub.Caddyfile zitadel.env dashboard.env machinekey/zitadel-admin-sa.token turnserver.conf management.json proxy.env proxy-no-ports.env && rm -rf proxy-certs proxy-certs-no-ports"
     echo "Be aware that this will remove all data from the database, and you will have to reconfigure the dashboard."
     exit 1
   fi
@@ -540,6 +540,7 @@ initEnvironment() {
   echo Rendering initial files...
   renderDockerCompose > docker-compose.yml
   renderCaddyfile > Caddyfile
+  renderAgentGatewayStub > agentgateway-stub.Caddyfile
   renderZitadelEnv > zitadel.env
   echo "" > turnserver.conf
   echo "" > management.json
@@ -610,6 +611,30 @@ initEnvironment() {
   echo "Login with the following credentials:"
   echo "Username: $ZITADEL_ADMIN_USERNAME" | tee .env
   echo "Password: $ZITADEL_ADMIN_PASSWORD" | tee -a .env
+}
+
+# Saving an Agent Network provider makes management call the upstream and
+# refuses the save unless it answers a model listing, so a provider spec needs
+# a reachable OpenAI-compatible endpoint. agentgateway is self-hosted and has
+# no public one; this stub stands in for it, inside the compose network where
+# management can reach it and without depending on a vendor being up.
+renderAgentGatewayStub() {
+  cat <<'EOF'
+{
+	admin off
+	auto_https off
+}
+
+:8088 {
+	handle /v1/models {
+		header Content-Type application/json
+		respond `{"object":"list","data":[{"id":"agentgateway-e2e-model","object":"model","owned_by":"netbird-e2e"}]}` 200
+	}
+	handle {
+		respond 404
+	}
+}
+EOF
 }
 
 renderCaddyfile() {
@@ -818,6 +843,15 @@ services:
     volumes:
       - netbird_caddy_data:/data
       - ./Caddyfile:/etc/caddy/Caddyfile
+  # Stand-in upstream for the Agent Network provider specs: answers the model
+  # listing management probes before it accepts a provider save. Reachable
+  # only from inside the compose network, at http://agentgateway-stub:8088.
+  agentgateway-stub:
+    image: caddy
+    restart: unless-stopped
+    networks: [ netbird ]
+    volumes:
+      - ./agentgateway-stub.Caddyfile:/etc/caddy/Caddyfile
   # Management
   management:
     image: ghcr.io/netbirdio/management-cloud:${MANAGEMENT_IMAGE_TAG}
@@ -892,6 +926,16 @@ services:
       # GeoLite2 download removes a startup stall of up to 2 minutes
       # when pkgs.netbird.io is slow.
       - NB_PROXY_DISABLE_GEOLOCATION=true
+      # Declare the private capability so this cluster can host the agent
+      # network endpoint. That endpoint is a private service — reachable only
+      # from connected peers — and management refuses to bootstrap it onto a
+      # cluster without a private-capable proxy; the connect-provider wizard
+      # reads the same flag (supports_private) to pick its cluster. Without
+      # it no cluster qualifies and the wizard stops at the provider tab,
+      # which strands every spec that walks through it. The no-ports proxy
+      # below stays centralised, so the pick has to skip past a cluster that
+      # does not qualify.
+      - NB_PROXY_PRIVATE=true
     volumes:
       - ./proxy-certs:/certs:ro
     command: [

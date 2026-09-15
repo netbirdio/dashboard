@@ -16,6 +16,7 @@ import {
 import NoResults from "@components/ui/NoResults";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import {
+  Cell,
   ColumnDef,
   ColumnFiltersState,
   flexRender,
@@ -127,6 +128,21 @@ const checkboxSort: SortingFn<any> = (rowA, rowB, columnId) => {
   return 0;
 };
 
+/**
+ * Rows are not required to carry an `id`, and some carry a nullable one, so
+ * read it defensively rather than asserting it exists. Rows without a usable id
+ * fall back to `fallbackRowId` — previously they silently got `undefined` as the
+ * row key under `useRowId`, which breaks row selection.
+ */
+function readRowId(row: unknown): string | undefined {
+  if (typeof row !== "object" || row === null || !("id" in row)) return;
+  const id = (row as { id?: unknown }).id;
+  return typeof id === "string" ? id : undefined;
+}
+
+/** Namespaced so an id-less row cannot collide with a real id like "1". */
+const fallbackRowId = (index: number) => `row-${index}`;
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[] | undefined;
@@ -151,6 +167,7 @@ interface DataTableProps<TData, TValue> {
   as?: "div" | "table";
   paginationClassName?: string;
   rowClassName?: string | ((row: Row<TData>) => string);
+  cellClassName?: (cell: Cell<TData, unknown>) => string;
   wrapperClassName?: string;
   tableClassName?: string;
   searchClassName?: string;
@@ -162,6 +179,7 @@ interface DataTableProps<TData, TValue> {
   showHeader?: boolean;
   rowSelection?: RowSelectionState;
   setRowSelection?: React.Dispatch<React.SetStateAction<RowSelectionState>>;
+  enableRowSelection?: boolean | ((row: Row<TData>) => boolean);
   useRowId?: boolean;
   headingTarget?: HTMLHeadingElement | null;
   showResetFilterButton?: boolean;
@@ -177,6 +195,7 @@ interface DataTableProps<TData, TValue> {
   initialPageSize?: number;
   uniqueKey?: string;
   resetRowSelectionOnSearch?: boolean;
+  resetRowSelectionOnFilter?: boolean;
   pageCount?: number;
   pagination?: { pageIndex: number; pageSize: number };
   onPaginationChange?: (pagination: {
@@ -215,6 +234,7 @@ export function DataTable<TData, TValue>({
   isFetching = false,
   paginationClassName,
   rowClassName,
+  cellClassName,
   wrapperClassName,
   as = "table",
   aboveTable,
@@ -226,6 +246,7 @@ export function DataTable<TData, TValue>({
   showHeader = true,
   rowSelection,
   setRowSelection,
+  enableRowSelection,
   useRowId,
   headingTarget,
   showResetFilterButton = true,
@@ -241,6 +262,7 @@ export function DataTable<TData, TValue>({
   initialPageSize = 10,
   uniqueKey,
   resetRowSelectionOnSearch = true,
+  resetRowSelectionOnFilter = false,
   pageCount,
   pagination,
   onPaginationChange,
@@ -340,7 +362,10 @@ export function DataTable<TData, TValue>({
       checkbox: checkboxSort,
       datetime: datetimeSort,
     },
-    getRowId: useRowId ? (row) => row.id : undefined,
+    getRowId: useRowId
+      ? (row, index) => readRowId(row) ?? fallbackRowId(index)
+      : undefined,
+    enableRowSelection,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onPaginationChange: (updater) => {
@@ -365,6 +390,9 @@ export function DataTable<TData, TValue>({
       } else {
         setLocalColumnFilters(filters as ColumnFiltersState);
       }
+      // Rows hidden by a filter stay in the selection map, so tables whose bulk
+      // actions are destructive opt into clearing it whenever filters change.
+      if (resetRowSelectionOnFilter) setRowSelection?.({});
     },
     onGlobalFilterChange: (value) => {
       if (manualFiltering) {
@@ -536,7 +564,7 @@ export function DataTable<TData, TValue>({
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => {
                     const expandedRow = renderExpandedRow?.(row.original);
-                    const rowId = row.original.id ?? row.id;
+                    const rowId = readRowId(row.original) ?? row.id;
                     const isExpanded = accordion?.includes(rowId);
                     const rowContent = (
                       <React.Fragment key={row.id}>
@@ -570,7 +598,11 @@ export function DataTable<TData, TValue>({
                           {row.getVisibleCells().map((cell) => (
                             <TableCellComponent
                               key={cell.id}
-                              className={cn("relative", tableCellClassName)}
+                              className={cn(
+                                "relative",
+                                tableCellClassName,
+                                cellClassName?.(cell),
+                              )}
                               minimal={minimal}
                               inset={inset}
                               onClick={() => {

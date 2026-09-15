@@ -19,7 +19,7 @@ check_docker_compose() {
 DOCKER_COMPOSE_COMMAND=$(check_docker_compose)
 
 $DOCKER_COMPOSE_COMMAND down --volumes
-rm -f docker-compose.yml Caddyfile zitadel.env .env dashboard.env machinekey/zitadel-admin-sa.token turnserver.conf management.json proxy.env proxy-no-ports.env
+rm -f docker-compose.yml Caddyfile agentgateway-stub.Caddyfile zitadel.env .env dashboard.env machinekey/zitadel-admin-sa.token turnserver.conf management.json proxy.env proxy-no-ports.env
 rm -rf proxy-certs proxy-certs-no-ports
 rm -f ../../.test-config.json ../playwright.env.json
 rm -f ../fixtures/auth/owner.json ../fixtures/auth/user.json

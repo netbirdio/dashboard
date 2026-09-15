@@ -1,4 +1,3 @@
-/* eslint-disable */
 // Mock data for the Agent Network section. No backend wired up yet.
 // All numbers, IDs, and text are static placeholders for click-through.
 
@@ -14,6 +13,7 @@ export type AIProviderId =
   | "mistral_api"
   | "kimi_api"
   | "litellm_proxy"
+  | "agentgateway"
   | "portkey"
   | "bifrost"
   | "cloudflare_ai_gateway"

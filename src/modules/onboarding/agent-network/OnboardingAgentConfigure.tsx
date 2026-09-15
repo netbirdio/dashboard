@@ -1,7 +1,7 @@
 import Button from "@components/Button";
 import { ArrowRightIcon } from "lucide-react";
 import * as React from "react";
-import { AgentConnectTabs } from "@/modules/agent-network/AgentConnectModal";
+import { AgentConnectTabs } from "@/modules/agent-network/AgentConnectTabs";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
 type Props = {

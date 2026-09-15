@@ -3,9 +3,9 @@
  *
  * Walks the Kimi provider lifecycle end to end against the real backend:
  * pick kimi_api from the catalog (prefilled host, catalog models with
- * pricing), connect it, then verify the Kimi-gated config surfaces in the
- * "Configure Your Agent" modal (Kimi CLI tab, Kimi backend option in the
- * Claude Code tab) that only render when a Kimi provider is connected.
+ * pricing), connect it, then verify the Kimi-gated config surfaces on the
+ * Connect Agent page (Kimi CLI tab, Kimi backend option in the Claude Code
+ * tab) that only render when a Kimi provider is connected.
  *
  * The kimi_api catalog entry ships with newer management builds. When the
  * backend under test predates it, the whole suite skips instead of failing —
@@ -19,19 +19,56 @@
  * localStorage override (see testAgentNetworkOverride in utils/netbird.ts),
  * set via addInitScript on a dedicated context below.
  */
-import { test, expect, type Browser, type Page } from "@playwright/test";
+import { type Browser, expect, type Page,test } from "@playwright/test";
+import {
+  createAgentNetworkPolicy,
+  createGroup,
+  deleteAgentNetworkPoliciesByPrefix,
+  deleteAgentNetworkProvidersByPrefix,
+  deleteGroup,
+  getCurrentUser,
+  listAgentNetworkCatalog,
+  listGroups,
+  supportsAgentNetworkAgentConfig,
+  supportsAgentNetworkSettingsBootstrap,
+  updateUserAutoGroups,
+} from "../helpers/api";
 import { loginToApp } from "../helpers/auth";
 import { generateRandomName } from "../helpers/utils";
-import {
-  deleteAgentNetworkProvidersByPrefix,
-  listAgentNetworkCatalog,
-  supportsAgentNetworkSettingsBootstrap,
-} from "../helpers/api";
 
 const AGENT_NETWORK_CONFIG_KEY = "netbird-test-agent-network";
 const KIMI_CATALOG_ID = "kimi_api";
 const KIMI_CATALOG_NAME = "Kimi (Moonshot AI) API";
 const PROVIDER_PREFIX = "e2e-kimi-";
+
+/**
+ * Remove every fixture this spec creates: the policy granting the caller the
+ * provider, the group carrying that grant (detached from the caller first —
+ * a group referenced by a user's auto-groups refuses deletion), and the
+ * provider itself. Runs before the test too, so leftovers from an interrupted
+ * run never poison the next one.
+ */
+async function cleanupKimiFixtures(page: Page) {
+  await deleteAgentNetworkPoliciesByPrefix(page, PROVIDER_PREFIX);
+  const fixtureGroups = (await listGroups(page)).filter((g) =>
+    g.name.startsWith(PROVIDER_PREFIX),
+  );
+  if (fixtureGroups.length > 0) {
+    const fixtureGroupIds = new Set(fixtureGroups.map((g) => g.id));
+    const caller = await getCurrentUser(page);
+    if ((caller.auto_groups ?? []).some((id) => fixtureGroupIds.has(id))) {
+      await updateUserAutoGroups(
+        page,
+        caller,
+        (caller.auto_groups ?? []).filter((id) => !fixtureGroupIds.has(id)),
+      );
+    }
+    for (const g of fixtureGroups) {
+      await deleteGroup(page, g.id);
+    }
+  }
+  await deleteAgentNetworkProvidersByPrefix(page, PROVIDER_PREFIX);
+}
 
 async function newAgentNetworkPage(browser: Browser): Promise<{
   page: Page;
@@ -71,8 +108,17 @@ test.describe.serial("Agent Network Kimi provider @agent-network", () => {
         "management build has no POST /agent-network/settings, so the " +
           "wizard cannot bootstrap the account before the first create",
       );
+      // The Kimi-gated config surfaces live on the Connect Agent page, whose
+      // caller-scoped GET /agent-network/agent-config answer ships with
+      // newer management builds. The suite starts running once the backend
+      // under test carries it.
+      test.skip(
+        !(await supportsAgentNetworkAgentConfig(page)),
+        "management build has no GET /agent-network/agent-config, so the " +
+          "Connect Agent page cannot render the agent config",
+      );
 
-      await deleteAgentNetworkProvidersByPrefix(page, PROVIDER_PREFIX);
+      await cleanupKimiFixtures(page);
 
       await page.goto("/agent-network/providers");
       await page.keyboard.press("Escape");
@@ -153,17 +199,36 @@ test.describe.serial("Agent Network Kimi provider @agent-network", () => {
         .click({ force: true });
       const created = await Promise.race([createResponse, bootstrapRejected]);
       expect([200, 201]).toContain(created.status());
+      const createdProvider = (await created.json()) as { id: string };
 
       // Row lands in the providers table.
       await expect(page.getByText(providerName).first()).toBeVisible();
 
       // ---- Kimi-gated agent config surfaces ----
-      await page
-        .getByRole("button", { name: "Agent Config" })
-        .click({ force: true });
+      // The agent config lives inline on the Connect Agent page — the
+      // providers page keeps only the endpoint URL and Copy. That page's
+      // answer is caller-scoped: it offers only providers the caller's own
+      // policies authorize, so grant the caller the new provider through a
+      // dedicated group + policy (removed again by cleanupKimiFixtures).
+      const caller = await getCurrentUser(page);
+      const grantGroup = await createGroup(page, `${PROVIDER_PREFIX}grant`);
+      await updateUserAutoGroups(page, caller, [
+        ...(caller.auto_groups ?? []),
+        grantGroup.id,
+      ]);
+      await createAgentNetworkPolicy(page, {
+        name: `${PROVIDER_PREFIX}policy`,
+        source_groups: [grantGroup.id],
+        destination_provider_ids: [createdProvider.id],
+      });
 
-      // Kimi CLI tab only renders when a kimi_api provider is connected.
-      await expect(page.getByRole("tab", { name: "Kimi CLI" })).toBeVisible();
+      await page.goto("/agent-network/connect");
+
+      // Kimi CLI tab only renders when a kimi_api provider is connected. The
+      // longer timeout covers the page's caller-scoped agent-config fetch.
+      await expect(page.getByRole("tab", { name: "Kimi CLI" })).toBeVisible({
+        timeout: 15_000,
+      });
 
       // Claude Code tab's backend dropdown offers (and, with Kimi as the only
       // Anthropic-shaped provider, pre-selects) Kimi — its settings.json
@@ -192,10 +257,8 @@ test.describe.serial("Agent Network Kimi provider @agent-network", () => {
       await expect(page.getByText('wire_api = "responses"')).toBeVisible();
       await expect(page.getByText('wire_api = "chat"')).not.toBeVisible();
 
-      await page.keyboard.press("Escape");
-
       // ---- cleanup ----
-      await deleteAgentNetworkProvidersByPrefix(page, PROVIDER_PREFIX);
+      await cleanupKimiFixtures(page);
     } finally {
       await close();
     }

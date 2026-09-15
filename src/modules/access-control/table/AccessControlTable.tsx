@@ -4,6 +4,10 @@ import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
+import {
+  fadeDisabledRowCells,
+  isInteractiveCell,
+} from "@components/table/disabledRowCells";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
@@ -46,12 +50,12 @@ import AccessControlModal, {
   AccessControlUpdateModal,
 } from "@/modules/access-control/AccessControlModal";
 import AccessControlActionCell from "@/modules/access-control/table/AccessControlActionCell";
+import AccessControlActiveCell from "@/modules/access-control/table/AccessControlActiveCell";
 import AccessControlDestinationsCell from "@/modules/access-control/table/AccessControlDestinationsCell";
 import AccessControlDirectionCell from "@/modules/access-control/table/AccessControlDirectionCell";
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
 import AccessControlProtoPortsCell from "@/modules/access-control/table/AccessControlProtoPortsCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
-import { FirewallGPTModal } from "@/modules/firewall-gpt/FirewallGPTModal";
 
 type Props = {
   policies?: Policy[];
@@ -82,6 +86,10 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     accessorKey: "enabled",
     accessorFn: (row) => row.enabled,
     sortingFn: "basic",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Active</DataTableHeader>;
+    },
+    cell: ({ cell }) => <AccessControlActiveCell policy={cell.row.original} />,
   },
   {
     id: "sources",
@@ -237,8 +245,6 @@ export default function AccessControlTable({
   const [editModal, setEditModal] = useState(false);
   const [currentRow, setCurrentRow] = useState<Policy>();
   const [currentCellClicked, setCurrentCellClicked] = useState("");
-
-  const [firewallGPTOpen, setFirewallGPTOpen] = useState(false);
 
   const [showTemporaryPolicies, setShowTemporaryPolicies] = useState(false);
 
@@ -450,8 +456,6 @@ export default function AccessControlTable({
 
   return (
     <>
-      <FirewallGPTModal open={firewallGPTOpen} setOpen={setFirewallGPTOpen} />
-
       {editModal && currentRow && (
         <AccessControlUpdateModal
           policy={currentRow}
@@ -493,7 +497,6 @@ export default function AccessControlTable({
         columnVisibility={{
           description: false,
           id: false,
-          enabled: false,
           temporary: false,
           source_group_names: false,
           destination_group_names: false,
@@ -502,9 +505,10 @@ export default function AccessControlTable({
           has_posture_checks: false,
           direction_filter: false,
         }}
-        rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
+        cellClassName={fadeDisabledRowCells}
         data={showTemporaryPolicies ? tempPolicies : regularPolicies}
         onRowClick={(row, cell) => {
+          if (isInteractiveCell(cell)) return;
           setCurrentRow(row.original);
           setEditModal(true);
           setCurrentCellClicked(cell);

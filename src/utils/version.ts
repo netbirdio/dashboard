@@ -85,16 +85,36 @@ export const compareVersions = (
 };
 
 /**
+ * Whether a version string names a non-release build. Mirrors the management
+ * server's version.IsDevelopmentVersion: the literal "development" plus the
+ * "ci-" and "dev-" prefixes it stamps on snapshot builds ("ci-7470fbdd").
+ *
+ * Such a string carries no release to compare against. releaseParts() reads
+ * its leading word as 0, so without this check every snapshot install would
+ * see the current release as newer and nag about an update forever.
+ */
+export const isDevelopmentVersion = (version: string): boolean => {
+  const bare = version.trim().replace(/^v/i, "");
+  return (
+    bare.startsWith("development") ||
+    bare.startsWith("ci-") ||
+    bare.startsWith("dev-")
+  );
+};
+
+/**
  * Returns true when `latest` is a strictly newer release than `current` — i.e.
  * an update is available. Only release components decide: an enterprise build
  * ("0.77.0+enterprise.1") is up to date against the "0.77.0" it was built from,
  * matching how the management server evaluates it server-side.
  *
- * "development" builds never report an update, in either position.
+ * Development and snapshot builds never report an update, in either position.
  */
 export const isNewerVersion = (current: string, latest: string): boolean => {
   if (!current || !latest) return false;
-  if (current === "development" || latest === "development") return false;
+  if (isDevelopmentVersion(current) || isDevelopmentVersion(latest)) {
+    return false;
+  }
 
   const currentParts = releaseParts(current);
   const latestParts = releaseParts(latest);
