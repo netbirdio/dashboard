@@ -364,13 +364,17 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
   }) => {
     const group = await place(page, "group", 0.6, 0.5);
     await expectChangeCount(page, 1);
-    // React Flow ignores delete keys while an input is focused, and the panel's
-    // search takes focus on click, so blur it before pressing Backspace.
     await group.click();
     await expect(group).toHaveClass(/selected/);
-    await page.evaluate(
-      () => (document.activeElement as HTMLElement | null)?.blur(),
-    );
+    // React Flow ignores delete keys while an input is focused, and the panel
+    // the click opens takes focus into its search — from an effect, about
+    // 100ms later. Blurring before that lands leaves the input to claim focus
+    // afterwards and swallow the Backspace, so wait for the focus, then drop
+    // it.
+    const panelSearch = page.locator("#cc-group-panel input").first();
+    await expect(panelSearch).toBeFocused();
+    await panelSearch.blur();
+    await expect(panelSearch).not.toBeFocused();
     await page.keyboard.press("Backspace");
     await expect(canvasNode(page, "group-new-")).toHaveCount(0);
     await expectChangeCount(page, 0);

@@ -19,6 +19,7 @@ import { useSearch } from "@hooks/useSearch";
 import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
 import { IconArrowBack } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
 import { sortBy, trim, unionBy } from "lodash";
@@ -203,9 +204,13 @@ export function PeerGroupSelector({
   selectedCluster,
   onClusterChange,
 }: Readonly<MultiSelectProps>) {
+  // Network resources sit behind the networks permission; callers without
+  // it (e.g. agent_network_admin opening the policy modal) get a plain
+  // group selector instead of a 403.
+  const { permission } = usePermissions();
   const { data: fetchedResources, isLoading: isResourcesLoading } = useFetchApi<
     NetworkResource[]
-  >("/networks/resources");
+  >("/networks/resources", false, true, !!permission?.networks?.read);
 
   const resources = useMemo(() => {
     if (!additionalResources?.length) return fetchedResources;

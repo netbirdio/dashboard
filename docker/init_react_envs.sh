@@ -173,6 +173,12 @@ for f in $(grep -R -l AUTH_SUPPORTED_SCOPES /usr/share/nginx/html); do
     rm "$f".copy
 done
 
+# When a command is provided, initialization happens before the server starts.
+# The rootless image uses this path so nginx never needs to be reloaded.
+if (( $# > 0 )); then
+    exec "$@"
+fi
+
 # Reload nginx so the patched CSP header takes effect.
 # supervisord starts nginx (priority 100) before this script (priority 201) and
 # never reloads it, so without this nginx keeps serving the static default.conf

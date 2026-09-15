@@ -69,4 +69,6 @@ export enum Role {
   BillingAdmin = "billing_admin",
   Auditor = "auditor",
   NetworkAdmin = "network_admin",
+  AgentNetworkAdmin = "agent_network_admin",
+  UsageViewer = "usage_viewer",
 }

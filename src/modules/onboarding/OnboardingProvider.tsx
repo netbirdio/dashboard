@@ -10,14 +10,15 @@ import { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { submitHubspotForm } from "@/cloud/analytics/Hubspot";
 import { HubspotFormField, useAnalytics } from "@/contexts/AnalyticsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
-import { Account } from "@/interfaces/Account";
-import { Network } from "@/interfaces/Network";
-import type { Peer } from "@/interfaces/Peer";
 import {
   AGENT_NETWORK_SIGNUP_SOURCE,
   SIGNUP_SOURCE_LOCAL_STORAGE_KEY,
 } from "@/hooks/useSignupSource";
+import { Account } from "@/interfaces/Account";
+import { Network } from "@/interfaces/Network";
+import type { Peer } from "@/interfaces/Peer";
 import { useAccount } from "@/modules/account/useAccount";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { AgentNetworkOnboarding } from "@/modules/onboarding/agent-network/AgentNetworkOnboarding";
@@ -58,7 +59,16 @@ export const OnboardingProvider = ({
   onSurveySubmit,
   domainCategory,
 }: Props) => {
-  const { data: peers } = useFetchApi<Peer[]>("/peers");
+  const { permission } = usePermissions();
+  // Onboarding only cares whether the account has peers yet. Roles without
+  // peers read (agent_network_admin, usage_viewer) would just collect a 403
+  // toast on every page, so skip the call for them entirely.
+  const { data: peers } = useFetchApi<Peer[]>(
+    "/peers",
+    true,
+    true,
+    permission.peers.read,
+  );
   const accountRequest = useApiCall<Account>("/accounts", true);
   const account = useAccount();
   const router = useRouter();

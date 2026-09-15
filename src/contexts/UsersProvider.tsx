@@ -28,16 +28,21 @@ const UserProfileContext = React.createContext(
 );
 
 export default function UsersProvider({ children }: Readonly<Props>) {
+  // Mounted on every dashboard page, above PermissionsProvider — so the
+  // caller's grants aren't known here and the request goes out for roles
+  // that can't list users (agent_network_admin, usage_viewer). Errors are
+  // ignored so their 403 leaves the list undefined, which every consumer
+  // already handles, instead of raising the red toast on every page load.
   const {
     data: users,
     mutate,
     isLoading,
-  } = useFetchApi<User[]>("/users?service_user=false");
+  } = useFetchApi<User[]>("/users?service_user=false", true);
   const {
     data: serviceUsers,
     mutate: mutateServiceUsers,
     isLoading: isLoadingServiceUsers,
-  } = useFetchApi<User[]>("/users?service_user=true");
+  } = useFetchApi<User[]>("/users?service_user=true", true);
 
   const refresh = () => {
     mutate().then();

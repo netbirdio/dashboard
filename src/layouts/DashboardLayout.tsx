@@ -22,7 +22,6 @@ import ApplicationProvider, {
 import BillingProvider from "@/contexts/BillingProvider";
 import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
-import { usePermissions } from "@/contexts/PermissionsProvider";
 import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
@@ -63,8 +62,10 @@ function DashboardPageContent({
   const { mobileNavOpen, toggleMobileNav } = useApplicationContext();
   const isSm = useIsSm();
   const isXs = useIsXs();
-  const { isRestricted } = usePermissions();
-
+  // The sidebar renders for every role: Peers is visible to all of them, so
+  // there is always at least one item, and each remaining item decides for
+  // itself in Navigation. Gating the sidebar itself here once emptied it for
+  // the limited (user role) view, whose items were the Agent Network ones.
   const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
   const { bannerHeight } = useAnnouncement();
   return (
@@ -174,7 +175,7 @@ function DashboardPageContent({
                 height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}
             >
-              {!isRestricted && <Navigation hideOnMobile />}
+              <Navigation hideOnMobile />
               <React.Fragment key={"page"}>{children}</React.Fragment>
             </div>
           </motion.div>

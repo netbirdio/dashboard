@@ -16,6 +16,7 @@ import {
 import NoResults from "@components/ui/NoResults";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import {
+  Cell,
   ColumnDef,
   ColumnFiltersState,
   flexRender,
@@ -166,6 +167,7 @@ interface DataTableProps<TData, TValue> {
   as?: "div" | "table";
   paginationClassName?: string;
   rowClassName?: string | ((row: Row<TData>) => string);
+  cellClassName?: (cell: Cell<TData, unknown>) => string;
   wrapperClassName?: string;
   tableClassName?: string;
   searchClassName?: string;
@@ -232,6 +234,7 @@ export function DataTable<TData, TValue>({
   isFetching = false,
   paginationClassName,
   rowClassName,
+  cellClassName,
   wrapperClassName,
   as = "table",
   aboveTable,
@@ -595,7 +598,11 @@ export function DataTable<TData, TValue>({
                           {row.getVisibleCells().map((cell) => (
                             <TableCellComponent
                               key={cell.id}
-                              className={cn("relative", tableCellClassName)}
+                              className={cn(
+                                "relative",
+                                tableCellClassName,
+                                cellClassName?.(cell),
+                              )}
                               minimal={minimal}
                               inset={inset}
                               onClick={() => {

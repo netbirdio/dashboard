@@ -39,6 +39,14 @@ const MODULE_KEYS: Array<keyof Permissions["modules"]> = [
   "proxy",
   "proxy_configuration",
   "services",
+  "agent_network",
+  "agent_network.providers",
+  "agent_network.policies",
+  "agent_network.guardrails",
+  "agent_network.budgets",
+  "agent_network.usage",
+  "agent_network.logs",
+  "agent_network.settings",
 ];
 
 const DENIED: Permission = {
