@@ -98,7 +98,7 @@ export const buttonVariants = cva(
         false: "",
       },
       border: {
-        0: "border",
+        0: "border-0",
         /* No border-transparent here: it compiles after the variants' border
            colors and would override them, leaving light mode outline-less.
            Variants without a border color set border-transparent themselves. */

@@ -61,12 +61,19 @@ export const Terminal = ({
     fitAddon: any;
   } | null>(null);
   const handlersSetRef = useRef(false);
+  // Guards the async setup so a re-run (e.g. from a prop change) can't start
+  // a second terminal while the first is still awaiting its imports.
+  const initializingRef = useRef(false);
 
   const terminalTheme = useMemo(
     () =>
       resolvedTheme === "light" ? LIGHT_TERMINAL_THEME : DARK_TERMINAL_THEME,
     [resolvedTheme],
   );
+  // Read by initializeTerminal so a theme change doesn't recreate the
+  // callback chain (and with it the terminal); the effect below keeps a
+  // running terminal in sync instead.
+  const terminalThemeRef = useRef(terminalTheme);
 
   const fitTerminal = useCallback(() => {
     if (terminalInstanceRef.current?.fitAddon) {
@@ -82,7 +89,7 @@ export const Terminal = ({
 
     const terminal = new XTerminal({
       ...TERMINAL_OPTIONS,
-      theme: terminalTheme,
+      theme: terminalThemeRef.current,
     });
 
     const fitAddon = new FitAddon();
@@ -111,12 +118,18 @@ export const Terminal = ({
     setTimeout(fitTerminal, 100);
 
     return terminal as TerminalWithCore;
-  }, [fitTerminal, terminalTheme]);
+  }, [fitTerminal]);
 
   const setupSSHHandlers = useCallback(async () => {
-    if (!session || handlersSetRef.current) return;
+    if (!session || handlersSetRef.current || initializingRef.current) return;
 
-    const terminal = await initializeTerminal();
+    initializingRef.current = true;
+    let terminal: TerminalWithCore | undefined;
+    try {
+      terminal = await initializeTerminal();
+    } finally {
+      initializingRef.current = false;
+    }
     if (!terminal) return;
 
     handlersSetRef.current = true;
@@ -170,8 +183,10 @@ export const Terminal = ({
     setupSSHHandlers().then();
   }, [setupSSHHandlers]);
 
-  // Apply theme changes to an already-running terminal
+  // Apply theme changes to an already-running terminal, and remember the
+  // latest theme for one that is still initializing.
   useEffect(() => {
+    terminalThemeRef.current = terminalTheme;
     const terminal = terminalInstanceRef.current?.terminal;
     if (terminal && !terminal._core?._isDisposed) {
       terminal.options.theme = terminalTheme;

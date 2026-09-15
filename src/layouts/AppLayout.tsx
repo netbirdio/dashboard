@@ -43,15 +43,22 @@ export default function AppLayout({
   useSignupSource();
 
   return (
-    <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
+    // suppressHydrationWarning: the pre-paint script below rewrites this
+    // element's class and color-scheme before React hydrates it.
+    <html
+      lang="en"
+      className="dark"
+      style={{ colorScheme: "dark" }}
+      suppressHydrationWarning
+    >
       <head>
-        {/* Set the theme class before first paint to avoid a flash.
-            Mirrors ThemeProvider (storageKey "netbird-theme", default "dark",
-            system-aware) — required because the provider only applies the
-            class in an effect, after hydration. */}
+        {/* Set the theme class and color-scheme before first paint to avoid
+            a flash. Mirrors ThemeProvider (storageKey "netbird-theme", default
+            "dark", system-aware) — required because the provider only applies
+            them in an effect, after hydration. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('netbird-theme')||'dark';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList[d?'add':'remove']('dark');}catch(e){document.documentElement.classList.add('dark');}})();`,
+            __html: `(function(){var r=document.documentElement;try{var t=localStorage.getItem('netbird-theme')||'dark';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);r.classList[d?'add':'remove']('dark');r.style.colorScheme=d?'dark':'light';}catch(e){r.classList.add('dark');r.style.colorScheme='dark';}})();`,
           }}
         />
         <GoogleTagManagerHeadScript />
