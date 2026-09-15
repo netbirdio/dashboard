@@ -8,7 +8,7 @@ import {
 } from "@netbird/assistant-react";
 import { useVaultRestore } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
-import { AlertCircle, Check, ChevronRight, Loader2 } from "lucide-react";
+import { Check, ChevronRight, Info, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { navigateToPage } from "@/modules/assistant/openPageExecutor";
 
@@ -76,8 +76,15 @@ export function AssistantToolActivity({
   const [open, setOpen] = useState(false);
   const restore = useVaultRestore();
 
-  const running = status?.type === "running";
   const failed = isError === true || status?.type === "incomplete";
+  /*
+    A result in hand outranks the status. The status is the host's word for
+    what the runtime last said, and a call that failed used to keep the
+    spinner: the error was already here, and the row was the last thing still
+    claiming to be waiting for it.
+  */
+  const settled = failed || result !== undefined;
+  const running = !settled && status?.type === "running";
 
   // Args and results are the wire copy — tokens in, real names for the user.
   // Restore is plain text substitution, so it works on the JSON strings too.
@@ -108,13 +115,38 @@ export function AssistantToolActivity({
             : "text-nb-gray-300 hover:text-nb-gray-100",
         )}
       >
-        {/* Same 16px box as the working indicator, so both lines start text on one column. */}
+        {/* Same 16px box as the working indicator, so both lines start text on
+            one column — and while the call runs it carries the spinner, which
+            is what that column is for. Empty here and spinning on the far side
+            of the label left the row visibly headless against the working line
+            right below it, with the progress orphaned past the text it belongs
+            to. The chevron takes the box back once there is a result to open,
+            which is also the moment the spinner has nothing left to say.
+            A spinner rather than the working line's pulsing logo mark: a tool
+            row and that line are different claims — this call is running,
+            versus the assistant is thinking — and they stack, so giving both
+            the same mark would show the NetBird logo twice saying two things. */}
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-          {expandable && (
-            <ChevronRight
-              size={13}
-              className={cn("transition-transform", open && "rotate-90")}
-            />
+          {running ? (
+            <Loader2 size={13} className="animate-spin" />
+          ) : failed ? (
+            /* An expandable failed row still needs its chevron; one with
+               nothing to open says so with the icon instead. */
+            expandable ? (
+              <ChevronRight
+                size={13}
+                className={cn("transition-transform", open && "rotate-90")}
+              />
+            ) : (
+              <Info size={13} />
+            )
+          ) : (
+            expandable && (
+              <ChevronRight
+                size={13}
+                className={cn("transition-transform", open && "rotate-90")}
+              />
+            )
           )}
         </span>
 
@@ -135,9 +167,13 @@ export function AssistantToolActivity({
 
         {subject && <span className="min-w-0 truncate">{`'${subject}'`}</span>}
 
+        {/* The outcome, once there is one. Kept at width while the call runs so
+            the label does not shift sideways when the tick arrives. */}
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-          {running && <Loader2 size={14} className="animate-spin" />}
-          {!running && failed && <AlertCircle size={13} />}
+          {/* A finished call always ends with a mark here: a tick when it
+              worked, an info circle when it did not. The row is a record of
+              what happened, and "nothing" is not one of the outcomes. */}
+          {!running && failed && <Info size={13} />}
           {!running && !failed && (
             <Check size={13} className="text-green-500" />
           )}

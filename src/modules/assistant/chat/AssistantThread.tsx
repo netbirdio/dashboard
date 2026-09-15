@@ -37,6 +37,7 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import type { PageContextEntry } from "@/interfaces/Assistant";
 import { CHAT_PAD } from "@/interfaces/Assistant";
+import { AssistantApprovalGate } from "@/modules/assistant/chat/AssistantApprovalCard";
 import { AssistantContextChip } from "@/modules/assistant/chat/AssistantContextChip";
 import { AssistantInlineComponent } from "@/modules/assistant/chat/AssistantInlineComponent";
 import { AssistantMarkdownText } from "@/modules/assistant/chat/AssistantMarkdownText";
@@ -110,19 +111,28 @@ function CopyAction() {
       .join("")
       .trim(),
   );
-  // Disabled only while THIS message still streams — copying then would grab
-  // a fragment. Finished messages stay copyable through later turns.
+  // Only while THIS message still streams — copying then would grab a
+  // fragment. Finished messages stay copyable through later turns.
   const running = useAuiState(
-    (s) => s.message.role === "assistant" && s.message.status.type === "running",
+    (s) =>
+      s.message.role === "assistant" && s.message.status.type === "running",
   );
   const [, copyToClipboard, copied] = useCopyToClipboard(restore(text));
+
+  // Absent rather than disabled while the answer is still streaming: a
+  // greyed-out button offers an action that cannot mean anything yet. The
+  // placeholder holds the bar's height so the row does not jump when the
+  // stream ends — the bar itself only exists once there is text (see the gate
+  // on MessageActions), so this never pads a message that has none.
+  if (!text || running) {
+    return <div className="h-7 w-7" aria-hidden />;
+  }
 
   return (
     <button
       type="button"
       aria-label="Copy answer"
       title="Copy"
-      disabled={!text || running}
       onClick={() => copyToClipboard("The answer has been copied.")}
       className={actionClass}
     >
@@ -203,8 +213,23 @@ function StepsPanel({
 function AssistantMessage() {
   const status = useContext(StatusContext);
 
+  /*
+    The bottom margin separates answers from each other. A message that is only
+    tool calls is not an answer — it is the work leading to the one below it,
+    and the runtime splits a single turn across several such messages. Spacing
+    those like finished replies opens a gap between the last step and the
+    working line that reads as the assistant having stopped.
+  */
+  const hasText = useAuiState((s) =>
+    s.message.parts.some(
+      (part) => part.type === "text" && part.text.trim().length > 0,
+    ),
+  );
+
   return (
-    <MessagePrimitive.Root className="group/message mb-6 mt-1.5">
+    <MessagePrimitive.Root
+      className={cn("group/message mt-1.5", hasText ? "mb-6" : "mb-1")}
+    >
       <div className="max-w-full">
         {/* The `indicator` slot puts the working line under the step that's
           running. `always`, not `no-text`: reasoning renders as nothing here,
@@ -251,7 +276,18 @@ function AssistantMessage() {
           </ActionBarPrimitive.Reload>
         </MessagePrimitive.Error>
 
-        <AuiIf condition={(s) => s.message.parts.length > 0}>
+        {/* Only where there is an answer to copy. Gated on `parts.length` this
+            mounted under a message that is still all tool calls, reserving a
+            row of height for a button that could never do anything — which is
+            the gap that used to sit between the last step and the working
+            line. */}
+        <AuiIf
+          condition={(s) =>
+            s.message.parts.some(
+              (part) => part.type === "text" && part.text.trim().length > 0,
+            )
+          }
+        >
           <MessageActions />
         </AuiIf>
       </div>
@@ -263,7 +299,19 @@ function AssistantMessage() {
 // is the progress indicator. The 16px box matches AssistantToolActivity's, so
 // both lines start text on one column.
 function WorkingIndicator({ status }: Readonly<{ status: string | null }>) {
-  if (!status) return null;
+  // The status line is one string shared by the whole thread, but the
+  // indicator slot belongs to a message — so a turn that leaves an earlier
+  // assistant message unfinished (a tool that never returned, a turn resumed
+  // after an approval) renders "Thinking…" once per such message, stacked with
+  // a message-sized gap between them. There is only ever one thing the
+  // assistant is currently doing, so only the last message may say so.
+  const claimsStatus = useAuiState(
+    (s) =>
+      s.message.role === "assistant" &&
+      s.message.isLast &&
+      s.message.status.type === "running",
+  );
+  if (!status || !claimsStatus) return null;
 
   return (
     <div className="flex items-center gap-2 py-1">
@@ -550,6 +598,8 @@ export function AssistantThread({
     pendingQuestion: question,
     answerQuestion,
     dismissQuestion,
+    pendingInput,
+    respondToInput,
   } = useAssistant();
 
   const answer = (indices: number[]) => {
@@ -647,15 +697,29 @@ export function AssistantThread({
           {/* The chip is absolute against this box, so it slides out from
               behind the composer's rounded body. */}
           <div className="relative">
-            <AssistantContextChip
-              entry={context}
-              onDismiss={onDismissContext}
-            />
-            <Composer
-              question={question}
-              onAnswer={answer}
-              onAnswerText={answerQuestion}
-            />
+            {pendingInput ? (
+              /* In the composer's place, not above it: eve has stopped
+                 answering, so an input that still accepts text would be
+                 offering to queue messages behind a prompt nobody can see
+                 past. The context chip goes with it — it describes what the
+                 next message is about, and there is no next message yet. */
+              <AssistantApprovalGate
+                request={pendingInput}
+                onRespond={respondToInput}
+              />
+            ) : (
+              <>
+                <AssistantContextChip
+                  entry={context}
+                  onDismiss={onDismissContext}
+                />
+                <Composer
+                  question={question}
+                  onAnswer={answer}
+                  onAnswerText={answerQuestion}
+                />
+              </>
+            )}
           </div>
         </div>
       </div>
