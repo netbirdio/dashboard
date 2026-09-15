@@ -1,10 +1,12 @@
+import { ScrollArea, ScrollAreaViewport } from "@components/ScrollArea";
 import { TabContext, useTabContext } from "@components/Tabs";
 import * as Tabs from "@radix-ui/react-tabs";
 import { TabsTrigger } from "@radix-ui/react-tabs";
 import { cn } from "@utils/helpers";
-import { useIsLg } from "@utils/responsive";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
+import { useAnnouncement } from "@/contexts/AnnouncementProvider";
+import { headerHeight } from "@/layouts/Header";
 
 type Props = {
   value: string;
@@ -46,19 +48,115 @@ function VerticalTabs({ value, onChange, children }: Props) {
 }
 
 function List({ children }: { children: React.ReactNode }) {
-  const isLg = useIsLg();
+  const { bannerHeight } = useAnnouncement();
+  const viewport = React.useRef<HTMLDivElement>(null);
+  const [overflows, setOverflows] = React.useState({
+    start: false,
+    end: false,
+  });
+
+  // A fade at whichever end still has tabs behind it, on top of the scrollbar
+  // rather than instead of it.
+  React.useEffect(() => {
+    const el = viewport.current;
+    if (!el) return;
+
+    const measure = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      const start = el.scrollLeft > 1;
+      const end = el.scrollLeft < max - 1;
+      setOverflows((prev) =>
+        prev.start === start && prev.end === end ? prev : { start, end },
+      );
+    };
+
+    // ResizeObserver fires once on observe, which covers the initial state
+    // without calling setState straight from the effect body.
+    const resize = new ResizeObserver(measure);
+    resize.observe(el);
+
+    // A permission-gated trigger appearing later changes scrollWidth without
+    // resizing the element, which a ResizeObserver alone would miss.
+    const mutation = new MutationObserver(measure);
+    mutation.observe(el, { childList: true, subtree: true });
+
+    el.addEventListener("scroll", measure, { passive: true });
+
+    return () => {
+      resize.disconnect();
+      mutation.disconnect();
+      el.removeEventListener("scroll", measure);
+    };
+  }, []);
+
+  const fade =
+    "absolute top-0 bottom-2.5 w-16 pointer-events-none transition-opacity lg:hidden";
+
   return (
     <Tabs.List
       className={cn(
-        "px-4 py-4 whitespace-nowrap overflow-y-hidden shrink-0 no-scrollbar",
-        "lg:h-full items-start bg-nb-gray border-b-0 border-nb-gray-930",
-        "flex lg:flex-col lg:gap-1",
+        "shrink-0 bg-nb-gray border-b-0 border-nb-gray-930",
+        // PageContainer is the scroll container, so without this the tab list
+        // scrolls away with the tab content. Pinned to the top of it instead,
+        // and given its own overflow so a list taller than the viewport can
+        // still be reached.
+        //
+        // The height has to come from CSS, not a JS media query: as a flex item
+        // with height auto the list stretches to the full content height, and a
+        // sticky element as tall as its containing block has nowhere to stick.
+        // useMediaQuery reports false during SSR and the first client render,
+        // so that is exactly what the desktop sidebar got until it resolved.
+        //
+        // The offset is the header plus whatever the announcement banner is
+        // taking, the same figure DashboardLayout and Navigation use. It comes
+        // through a variable so the breakpoint stays in CSS, and it is always a
+        // length, so the height never falls back to auto.
+        "h-auto lg:h-[calc(100vh_-_var(--nb-tabs-offset))] lg:sticky lg:top-0 lg:overflow-y-auto",
       )}
-      style={{
-        height: isLg ? "calc(100vh - 75px)" : "auto",
-      }}
+      style={
+        {
+          // bannerHeight is undefined outside the provider, and NaNpx would make
+          // the calc invalid and drop the height back to auto.
+          "--nb-tabs-offset": `${headerHeight + (bannerHeight ?? 0)}px`,
+        } as React.CSSProperties
+      }
     >
-      {children}
+      {/* Below lg the tabs are a horizontal strip, and ScrollArea gives it the
+          same styled scrollbar the rest of the app uses. On lg the Root and
+          Viewport are display:contents, so they leave the layout and the tab
+          column sits directly in the list as before. */}
+      <ScrollArea className={"w-full lg:contents"} withoutViewport>
+        <ScrollAreaViewport ref={viewport} className={"lg:contents"}>
+          {/* The padding belongs inside the scroll area: outside it, the
+              scrollbar sits over the items, and the leading gap does not
+              travel with the content. */}
+          <div
+            className={cn(
+              "flex flex-nowrap gap-[1px] whitespace-nowrap items-start",
+              "px-4 pt-4 pb-3 lg:p-4 lg:flex-col lg:gap-1",
+            )}
+          >
+            {children}
+          </div>
+        </ScrollAreaViewport>
+
+        <div
+          aria-hidden
+          className={cn(
+            fade,
+            "left-0 bg-gradient-to-r from-nb-gray to-transparent",
+            overflows.start ? "opacity-100" : "opacity-0",
+          )}
+        />
+        <div
+          aria-hidden
+          className={cn(
+            fade,
+            "right-0 bg-gradient-to-l from-nb-gray to-transparent",
+            overflows.end ? "opacity-100" : "opacity-0",
+          )}
+        />
+      </ScrollArea>
     </Tabs.List>
   );
 }

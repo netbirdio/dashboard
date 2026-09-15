@@ -7,10 +7,8 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import integrationImage from "@/assets/integrations/okta.png";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import {
-  DomainValidationStatus,
-  EnterpriseConnection,
-} from "@/interfaces/IdentityProvider";
+import { DomainValidationStatus } from "@/interfaces/Account";
+import { EnterpriseConnection } from "@/interfaces/IdentityProvider";
 import { IntegrationCard } from "@/modules/integrations/IntegrationCard";
 import { OktaSsoSettings } from "@/modules/integrations/sso/okta/OktaSSOSettings";
 import OktaSSOSetup from "@/modules/integrations/sso/okta/OktaSSOSetup";

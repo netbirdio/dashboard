@@ -16,29 +16,26 @@ import { Mark } from "@components/ui/Mark";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, GlobeIcon } from "lucide-react";
 import * as React from "react";
-import { useEnterpriseConnections } from "@/modules/integrations/sso/useEnterpriseConnections";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   domain: string;
   token: string;
-  connectionId: string;
+  onVerify: () => Promise<unknown>;
 };
 export const DomainVerificationModal = ({
   open,
   onOpenChange,
   domain,
   token,
-  connectionId,
+  onVerify,
 }: Props) => {
-  const { verifyDomain } = useEnterpriseConnections();
-
   const startVerification = async () => {
     notify({
       title: "Domain Verification",
       description: `Verification for ${domain} has started`,
-      promise: verifyDomain(connectionId, domain).then(() => {
+      promise: onVerify().then(() => {
         onOpenChange(false);
       }),
       loadingMessage: "Starting domain verification...",
