@@ -2,9 +2,9 @@ import { useOidc } from "@axa-fr/react-oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import useFetchApi, { type ErrorResponse } from "@utils/api";
 import loadConfig from "@utils/config";
-import { isBlockedError, isPendingApprovalError } from "@utils/user-status";
+import { resolveRefusedUser } from "@utils/user-status";
 import { useRouter } from "next/navigation";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import PermissionsProvider from "@/contexts/PermissionsProvider";
 import { Role, User } from "@/interfaces/User";
@@ -103,44 +103,40 @@ const UserProfileProvider = ({ children }: Props) => {
     };
   }, [loggedInUser]);
 
-  // /users/current is preferred because it is the only response that names the
-  // owner who can approve; the user list is the fallback, since management
-  // older than that still calls a pending user merely blocked here. Rendering
-  // from a response rather than redirecting on whichever 403 landed first is
-  // also what ends the wait this could never finish: the caller identity it
-  // blocks on is exactly what a pending user is refused.
-  const pendingError = isPendingApprovalError(error?.message)
-    ? error
-    : isPendingApprovalError(usersError?.message)
-    ? usersError
-    : undefined;
+  const refusal = resolveRefusedUser({
+    currentError: error,
+    listError: usersError,
+    isCurrentLoading: isLoading,
+    isListLoading: isAllUsersLoading,
+  });
 
-  if (pendingError) {
+  const blockedUrl =
+    refusal.kind === "blocked"
+      ? `/error?${new URLSearchParams({
+          code: String(refusal.error.code),
+          message: encodeURIComponent(refusal.error.message),
+          type: "user-status",
+        }).toString()}`
+      : undefined;
+
+  // Blocked is a dead end rather than a wait, so it keeps the error page. The
+  // navigation is an effect: calling it while rendering updates the router
+  // mid-render, which React warns about and can run twice.
+  useEffect(() => {
+    if (blockedUrl) router.replace(blockedUrl);
+  }, [blockedUrl, router]);
+
+  if (refusal.kind === "pending") {
     return (
       <PendingApproval
-        error={pendingError}
+        error={refusal.error}
         onRefresh={() => router.push("/")}
         onLogout={() => logout("/", { client_id: config.clientId })}
       />
     );
   }
 
-  // Blocked is a dead end rather than a wait, so it keeps the error page. It is
-  // decided here too, after pending, so that management old enough to call a
-  // pending user blocked on /users/current does not send them to the wrong one.
-  const blockedError = [error, usersError].find((e) =>
-    isBlockedError(e?.message),
-  );
-
-  if (blockedError) {
-    const params = new URLSearchParams({
-      code: String(blockedError.code),
-      message: encodeURIComponent(blockedError.message),
-      type: "user-status",
-    });
-    router.replace(`/error?${params.toString()}`);
-    return <FullScreenLoading />;
-  }
+  if (blockedUrl) return <FullScreenLoading />;
 
   // Show loading only when we're still loading and don't have user data
   if (isLoading || !loggedInUser) {
