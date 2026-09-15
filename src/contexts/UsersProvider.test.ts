@@ -30,7 +30,7 @@ describe("resolveRefusedUser", () => {
         ...settled,
       }),
     ).toEqual({
-      reason: RefusalKind.PendingApproval,
+      kind: RefusalKind.PendingApproval,
       error: currentPendingNamed,
     });
   });
@@ -42,7 +42,7 @@ describe("resolveRefusedUser", () => {
         listError: listPending,
         ...settled,
       }),
-    ).toEqual({ reason: RefusalKind.PendingApproval, error: listPending });
+    ).toEqual({ kind: RefusalKind.PendingApproval, error: listPending });
   });
 
   // The blocked branch used to conclude here, sending a user awaiting approval
@@ -74,7 +74,7 @@ describe("resolveRefusedUser", () => {
         listError: blocked,
         ...settled,
       }),
-    ).toEqual({ reason: RefusalKind.Blocked, error: blocked });
+    ).toEqual({ kind: RefusalKind.Blocked, error: blocked });
   });
 
   it("leaves an unrefused user alone", () => {
