@@ -74,7 +74,7 @@ export const buttonVariants = cva(
           "enabled:dark:focus:ring-red-800/20 enabled:dark:focus:bg-red-950/40 enabled:hover:dark:bg-red-950/50 enabled:dark:hover:border-red-800/50 dark:bg-transparent dark:text-red-500 dark:border-transparent",
         ],
         "danger-text": [
-          "bg-transparent text-red-500 hover:text-red-600 border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 ring-offset-nb-gray-950/50 rounded-sm",
+          "bg-transparent text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-600 border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 ring-offset-nb-gray-950/50 rounded-sm",
         ],
         "default-outline": [
           "ring-offset-nb-gray-950/50 focus:ring-nb-gray-500/20",
