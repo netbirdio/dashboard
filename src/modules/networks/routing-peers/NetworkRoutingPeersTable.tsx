@@ -4,6 +4,7 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import { fadeDisabledRowCells } from "@components/table/disabledRowCells";
+import { useEnabledColumnVisibility } from "@components/table/enabledColumnVisibility";
 import {
   formatRadioChip,
   RadioOption,
@@ -48,8 +49,13 @@ const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
   {
     id: "enabled",
     accessorKey: "enabled",
+    enableSorting: false,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} sorting={false}>
+          Active
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => <RoutingPeersEnabledCell router={row.original} />,
   },
@@ -94,6 +100,7 @@ export default function NetworkRoutingPeersTable({
 }: Readonly<Props>) {
   const { permission } = usePermissions();
   const { openAddRoutingPeerModal, network } = useNetworksContext();
+  const enabledColumn = useEnabledColumnVisibility();
 
   const [sorting, setSorting] = useState<SortingState>([
     {
@@ -163,7 +170,7 @@ export default function NetworkRoutingPeersTable({
           icon={<PeerIcon size={18} className={"fill-nb-gray-400"} />}
         />
       }
-      columnVisibility={{ search: false }}
+      columnVisibility={{ search: false, ...enabledColumn }}
       cellClassName={fadeDisabledRowCells}
       paginationPaddingClassName={"px-0 pt-8"}
       rightSide={() => (

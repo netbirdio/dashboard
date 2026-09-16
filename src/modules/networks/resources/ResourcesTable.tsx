@@ -4,6 +4,7 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import { fadeDisabledRowCells } from "@components/table/disabledRowCells";
+import { useEnabledColumnVisibility } from "@components/table/enabledColumnVisibility";
 import {
   formatGroupsChip,
   GroupsPicker,
@@ -83,8 +84,13 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
   {
     id: "enabled",
     accessorKey: "enabled",
+    enableSorting: false,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} sorting={false}>
+          Active
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => <ResourceEnabledCell resource={row.original} />,
   },
@@ -154,6 +160,7 @@ export default function ResourcesTable({
     },
   ]);
   const { openResourceModal, network } = useNetworksContext();
+  const enabledColumn = useEnabledColumnVisibility();
   const router = useRouter();
   const { reverseProxies } = useReverseProxies();
 
@@ -329,6 +336,7 @@ export default function ResourcesTable({
         id: false,
         group_names: false,
         exposed: false,
+        ...enabledColumn,
       }}
       cellClassName={fadeDisabledRowCells}
       paginationPaddingClassName={"px-0 pt-8"}

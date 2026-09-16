@@ -1,6 +1,7 @@
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import { fadeDisabledRowCells } from "@components/table/disabledRowCells";
+import { useEnabledColumnVisibility } from "@components/table/enabledColumnVisibility";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import React, { useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
@@ -53,9 +54,11 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
   {
     id: "enabled",
     accessorKey: "enabled",
-    sortingFn: "basic",
+    enableSorting: false,
     header: ({ column }) => (
-      <DataTableHeader column={column}>Active</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>
+        Active
+      </DataTableHeader>
     ),
     cell: ({ row }) => <RouteActiveCell route={row.original} />,
   },
@@ -104,6 +107,9 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
 
 export default function RouteTable({ row }: Props) {
   const { groups } = useGroups();
+  // The grouped route rows are the widest table in the dashboard, so the
+  // toggle column waits for a larger viewport and cells use tighter padding.
+  const enabledColumn = useEnabledColumnVisibility("2xl");
 
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
@@ -146,7 +152,7 @@ export default function RouteTable({ row }: Props) {
   return (
     <>
       <DataTable
-        tableClassName={"mt-0"}
+        tableClassName={"mt-0 [&_th]:px-4 [&_td]:px-4"}
         minimal={true}
         showSearchAndFilters={false}
         className={"bg-nb-gray-960 py-2"}
@@ -161,6 +167,7 @@ export default function RouteTable({ row }: Props) {
           domain_search: false,
           network: false,
           skipAutoApply: !!hasAtLeastOneExitNode,
+          ...enabledColumn,
         }}
         cellClassName={fadeDisabledRowCells}
         setSorting={setSorting}
