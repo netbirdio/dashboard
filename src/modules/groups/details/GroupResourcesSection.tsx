@@ -3,6 +3,7 @@ import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
@@ -10,11 +11,11 @@ import { ArrowUpRightIcon, Layers3Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
-import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResourceWithNetwork } from "@/interfaces/Network";
 import { GroupDetailsTableContainer } from "@/modules/groups/details/GroupDetailsTableContainer";
+import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
 import { NetworkProvider } from "@/modules/networks/NetworkProvider";
 import { ResourceActionCell } from "@/modules/networks/resources/ResourceActionCell";
 import ResourceAddressCell from "@/modules/networks/resources/ResourceAddressCell";
@@ -58,8 +59,14 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
   {
     id: "enabled",
     accessorKey: "enabled",
+    enableSorting: false,
+    meta: { className: ENABLED_COLUMN_CLASS.xl },
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} sorting={false}>
+          Active
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => (
       <ResourceEnabledCell
