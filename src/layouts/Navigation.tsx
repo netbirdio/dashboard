@@ -106,9 +106,15 @@ export default function Navigation({
         >
           <div
             className={cn(
-              "flex flex-col pt-3 justify-between w-[15rem] max-w-[15rem] min-w-[15rem] transition-all",
+              // Clipped in both states, not just while collapsed: this column's
+              // width is fixed, but an item's own min-content isn't — a long
+              // label with a badge ("Agent Network" + Beta) can exceed 15rem and
+              // `whitespace-nowrap` forbids wrapping it. Unclipped, that overflow
+              // reaches the `ScrollArea` viewport, which scrolls rather than
+              // clips, and the rail grows a horizontal scrollbar.
+              "flex flex-col pt-3 justify-between w-[15rem] max-w-[15rem] min-w-[15rem] overflow-x-clip transition-all",
               isNavigationCollapsed &&
-                "md:w-[64px] md:min-w-[64px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem] md:overflow-x-clip",
+                "md:w-[64px] md:min-w-[64px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem]",
             )}
             style={{
               height: !fullWidth

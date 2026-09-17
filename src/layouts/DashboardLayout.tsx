@@ -22,6 +22,7 @@ import ApplicationProvider, {
 import BillingProvider from "@/contexts/BillingProvider";
 import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import UsersProvider from "@/contexts/UsersProvider";
 import { PANEL_ON_LEFT, PANEL_WIDTH } from "@/interfaces/Assistant";
 import Navigation from "@/layouts/Navigation";
@@ -31,7 +32,6 @@ import { AssistantSidebarProvider } from "@/modules/assistant/AssistantSidebarPr
 import AssistantChatPanel from "@/modules/assistant/chat/AssistantChatPanel";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
 import Header, { headerHeight } from "./Header";
-import { usePermissions } from "@/contexts/PermissionsProvider";
 
 export default function DashboardLayout({
   children,
@@ -102,10 +102,7 @@ function DashboardPageContent({
   const isSm = useIsSm();
   const isXs = useIsXs();
   const { isRestricted } = usePermissions();
-  // The sidebar renders for every role: Peers is visible to all of them, so
-  // there is always at least one item, and each remaining item decides for
-  // itself in Navigation. Gating the sidebar itself here once emptied it for
-  // the limited (user role) view, whose items were the Agent Network ones.
+
   const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
   const { bannerHeight } = useAnnouncement();
   const { reveal, inset } = useAssistantSidebar();
@@ -113,164 +110,171 @@ function DashboardPageContent({
 
   return (
     <>
-    {!isRestricted && <AssistantChatPanel />}
+      {!isRestricted && <AssistantChatPanel />}
 
-  {/*
+      {/*
         The dashboard card. Sits above the panel and shrinks to reveal it —
         the panel itself never moves. Rendered as a sibling of the panel (not a
         parent) because the animated subtree below applies transforms, which
         would capture the panel's `position: fixed`.
       */}
-  <div
-    className={cn(
-      // z-10 keeps the card above the panel for the whole transition, not
-      // just at rest.
-      "relative z-10",
-      // Transition the geometry only. `transition-all` also animated
-      // border-color and border-width from their initial values, which read
-      // as the border flashing/changing colour as the panel opened.
-      "transition-[margin,height] duration-300 ease-out",
-      // ...except while the window is being resized. The height is derived
-      // from `100vh`, so every resize tick would otherwise animate for
-      // 300ms and the card would lag behind the window edge.
-      resizing && "transition-none",
-      // Applied only while revealed, so the closed state is exactly the
-      // layout that existed before the panel: no clipping that could cut off
-      // a non-portaled dropdown, no background change.
-      //
-      // This single border/rounding is now the whole outline — the header is
-      // an in-flow child, so `overflow-hidden` clips its top corners and it
-      // no longer draws any part of the edge itself.
-      reveal &&
-      "overflow-hidden rounded-2xl border border-nb-gray-900 bg-nb-gray-950 shadow-2xl",
-    )}
-    style={{
-      marginTop: inset,
-      marginBottom: inset,
-      // The panel's edge takes the panel's width; the other keeps the inset.
-      marginLeft: PANEL_ON_LEFT && reveal ? PANEL_WIDTH : inset,
-      marginRight: !PANEL_ON_LEFT && reveal ? PANEL_WIDTH : inset,
-      height: `calc(100vh - ${inset * 2}px)`,
-    }}
-  >
-    <div className={cn("flex flex-col h-full", mobileNavOpen && "flex")}>
-      {mobileNavOpen && (
-        <motion.div
-          className={"h-screen bg-nb-gray-950 w-11/12 max-w-[22rem]"}
-          layout={true}
-          transition={{
-            type: "spring",
-            stiffness: 100,
-            bounce: 0.8,
-            damping: 10,
-            mass: 0.4,
-          }}
-          animate={{
-            x: 0,
-          }}
-          initial={{
-            x: -200,
-          }}
-        >
-          <div
-            className={
-              "flex items-center justify-between gap-3 pl-4 pr-8 pt-8 pb-3 w-11/12"
-            }
-          >
-            <div className={"flex items-center gap-3 max-w-[22rem]"}>
-              <UserAvatar size={"small"} />
-              <div className="flex flex-col space-y-1">
-                <p className="font-medium leading-none dark:text-gray-300">
-                  {user?.name}
-                </p>
-                <p className="text-xs leading-none dark:text-gray-400">
-                  {user?.email}
-                </p>
-              </div>
-            </div>
-            <Button
-              className={"!px-3"}
-              variant={"default-outline"}
-              size={"xs"}
-              onClick={toggleMobileNav}
-            >
-              <div>
-                <XIcon size={16} className={"relative"} />
-              </div>
-            </Button>
-          </div>
-          <Navigation fullWidth />
-        </motion.div>
-      )}
-      <AnimatePresence mode={"wait"}>
-        <motion.div
-          layout={"position"}
-          className={cn(
-            mobileNavOpen
-              ? "border border-nb-gray-900 shadow-inner overflow-hidden rounded-xl fixed scale-75"
-              : "",
-          )}
-          transition={{
-            type: "spring",
-            stiffness: 500,
-            damping: 25,
-            duration: 0.45,
-            mass: 0.1,
-          }}
-          animate={{
-            x: mobileNavOpen ? navOpenPageWidth : 0,
-            width: "100%",
-            height: mobileNavOpen ? "90vh" : "auto",
-            y: mobileNavOpen ? "6.5%" : 0,
-          }}
-        >
+      <div
+        className={cn(
+          // z-10 keeps the card above the panel for the whole transition, not
+          // just at rest.
+          "relative z-10",
+          // Transition the geometry only. `transition-all` also animated
+          // border-color and border-width from their initial values, which read
+          // as the border flashing/changing colour as the panel opened.
+          "transition-[margin,height] duration-300 ease-out",
+          // ...except while the window is being resized. The height is derived
+          // from `100vh`, so every resize tick would otherwise animate for
+          // 300ms and the card would lag behind the window edge.
+          resizing && "transition-none",
+          // Applied only while revealed, so the closed state is exactly the
+          // layout that existed before the panel: no clipping that could cut off
+          // a non-portaled dropdown, no background change.
+          //
+          // This single border/rounding is now the whole outline — the header is
+          // an in-flow child, so `overflow-hidden` clips its top corners and it
+          // no longer draws any part of the edge itself.
+          reveal &&
+            "overflow-hidden rounded-2xl border border-nb-gray-900 bg-nb-gray-950 shadow-2xl",
+        )}
+        style={{
+          marginTop: inset,
+          marginBottom: inset,
+          // The panel's edge takes the panel's width; the other keeps the inset.
+          marginLeft: PANEL_ON_LEFT && reveal ? PANEL_WIDTH : inset,
+          marginRight: !PANEL_ON_LEFT && reveal ? PANEL_WIDTH : inset,
+          height: `calc(100vh - ${inset * 2}px)`,
+        }}
+      >
+        <div className={cn("flex flex-col h-full", mobileNavOpen && "flex")}>
           {mobileNavOpen && (
             <motion.div
-              onClick={toggleMobileNav}
-              className={
-                "absolute w-full h-full bg-black z-[999] transition-all opacity-0"
-              }
-              animate={{
-                opacity: 0.2,
+              className={"h-screen bg-nb-gray-950 w-11/12 max-w-[22rem]"}
+              layout={true}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                bounce: 0.8,
+                damping: 10,
+                mass: 0.4,
               }}
-            ></motion.div>
-          )}
-          <motion.div
-            layout={"position"}
-            className={"relative"}
-            animate={{
-              scale: mobileNavOpen ? 0.75 : 1,
-              height: mobileNavOpen ? "90vh" : "auto",
-              originX: 0,
-              originY: 0,
-            }}
-            transition={{
-              type: "spring",
-              duration: 0.45,
-              stiffness: 500,
-              damping: 25,
-              mass: 0.1,
-            }}
-          >
-            <Header />
-            <div
-              className={"flex flex-row flex-grow"}
-              style={{
-                // The card's vertical margins come out of the viewport too, or
-                // the content would overflow by that much once the panel opens.
-                height: `calc(100vh - ${
-                  headerHeight + bannerHeight + inset * 2
-                }px)`,
+              animate={{
+                x: 0,
+              }}
+              initial={{
+                x: -200,
               }}
             >
-              <Navigation hideOnMobile />
-              <React.Fragment key={"page"}>{children}</React.Fragment>
-            </div>
-          </motion.div>
-        </motion.div>
-      </AnimatePresence>
-    </div>
-  </div>
-  </>
+              <div
+                className={
+                  "flex items-center justify-between gap-3 pl-4 pr-8 pt-8 pb-3 w-11/12"
+                }
+              >
+                <div className={"flex items-center gap-3 max-w-[22rem]"}>
+                  <UserAvatar size={"small"} />
+                  <div className="flex flex-col space-y-1">
+                    <p className="font-medium leading-none dark:text-gray-300">
+                      {user?.name}
+                    </p>
+                    <p className="text-xs leading-none dark:text-gray-400">
+                      {user?.email}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  className={"!px-3"}
+                  variant={"default-outline"}
+                  size={"xs"}
+                  onClick={toggleMobileNav}
+                >
+                  <div>
+                    <XIcon size={16} className={"relative"} />
+                  </div>
+                </Button>
+              </div>
+              <Navigation fullWidth />
+            </motion.div>
+          )}
+          <AnimatePresence mode={"wait"}>
+            <motion.div
+              layout={"position"}
+              className={cn(
+                mobileNavOpen
+                  ? "border border-nb-gray-900 shadow-inner overflow-hidden rounded-xl fixed scale-75"
+                  : "",
+              )}
+              transition={{
+                type: "spring",
+                stiffness: 500,
+                damping: 25,
+                duration: 0.45,
+                mass: 0.1,
+              }}
+              animate={{
+                x: mobileNavOpen ? navOpenPageWidth : 0,
+                width: "100%",
+                height: mobileNavOpen ? "90vh" : "auto",
+                y: mobileNavOpen ? "6.5%" : 0,
+              }}
+            >
+              {mobileNavOpen && (
+                <motion.div
+                  onClick={toggleMobileNav}
+                  className={
+                    "absolute w-full h-full bg-black z-[999] transition-all opacity-0"
+                  }
+                  animate={{
+                    opacity: 0.2,
+                  }}
+                ></motion.div>
+              )}
+              <motion.div
+                layout={"position"}
+                className={"relative"}
+                animate={{
+                  scale: mobileNavOpen ? 0.75 : 1,
+                  height: mobileNavOpen ? "90vh" : "auto",
+                  originX: 0,
+                  originY: 0,
+                }}
+                transition={{
+                  type: "spring",
+                  duration: 0.45,
+                  stiffness: 500,
+                  damping: 25,
+                  mass: 0.1,
+                }}
+              >
+                <Header />
+                <div
+                  className={"relative flex flex-row flex-grow"}
+                  style={{
+                    // The card's vertical margins come out of the viewport too, or
+                    // the content would overflow by that much once the panel opens.
+                    height: `calc(100vh - ${
+                      headerHeight + bannerHeight + inset * 2
+                    }px)`,
+                  }}
+                >
+                  {/*
+                    Renders for every role: Peers is visible to all of them, so
+                    there is always at least one item, and each remaining item
+                    decides for itself in Navigation. Gating the sidebar here on
+                    `isRestricted` once emptied it for the limited (user role)
+                    view, whose items were the Agent Network ones.
+                  */}
+                  <Navigation hideOnMobile />
+                  <React.Fragment key={"page"}>{children}</React.Fragment>
+                </div>
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </>
   );
 }
