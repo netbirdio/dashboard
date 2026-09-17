@@ -3,7 +3,10 @@ import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
-import { fadeDisabledRowCells } from "@components/table/disabledRowCells";
+import {
+  ENABLED_COLUMN_ID,
+  fadeDisabledRowCells,
+} from "@components/table/disabledRowCells";
 import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
 import {
   formatGroupsChip,
@@ -82,7 +85,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     },
   },
   {
-    id: "enabled",
+    id: ENABLED_COLUMN_ID,
     accessorKey: "enabled",
     enableSorting: false,
     meta: { className: ENABLED_COLUMN_CLASS.xl },

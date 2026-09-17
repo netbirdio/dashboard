@@ -31,7 +31,10 @@ export default function GroupedRouteNetworkRangeCell({
       </div>
     </ExitNodeHelpTooltip>
   ) : (
-    <div className={"font-mono dark:text-nb-gray-300 flex whitespace-nowrap"}>
+    <div
+      className={"font-mono dark:text-nb-gray-300 block truncate max-w-[16rem]"}
+      title={network}
+    >
       {network}
     </div>
   );

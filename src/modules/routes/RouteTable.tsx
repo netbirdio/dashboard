@@ -1,6 +1,9 @@
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
-import { fadeDisabledRowCells } from "@components/table/disabledRowCells";
+import {
+  ENABLED_COLUMN_ID,
+  fadeDisabledRowCells,
+} from "@components/table/disabledRowCells";
 import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import React, { useMemo, useState } from "react";
@@ -52,7 +55,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     sortingFn: "alphanumeric",
   },
   {
-    id: "enabled",
+    id: ENABLED_COLUMN_ID,
     accessorKey: "enabled",
     enableSorting: false,
     // The grouped route rows are the widest table in the dashboard, so the
@@ -152,7 +155,9 @@ export default function RouteTable({ row }: Props) {
   return (
     <>
       <DataTable
-        tableClassName={"mt-0 [&_th]:px-4 [&_td]:px-4"}
+        tableClassName={"mt-0"}
+        tableHeadClassName={"px-4"}
+        tableCellClassName={"px-4"}
         minimal={true}
         showSearchAndFilters={false}
         className={"bg-nb-gray-960 py-2"}

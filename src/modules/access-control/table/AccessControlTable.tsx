@@ -8,6 +8,7 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
+  ENABLED_COLUMN_ID,
   fadeDisabledRowCells,
   isInteractiveCell,
 } from "@components/table/disabledRowCells";
@@ -83,7 +84,7 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     filterFn: "fuzzy",
   },
   {
-    id: "enabled",
+    id: ENABLED_COLUMN_ID,
     accessorKey: "enabled",
     accessorFn: (row) => row.enabled,
     enableSorting: false,

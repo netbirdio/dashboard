@@ -196,6 +196,7 @@ interface DataTableProps<TData, TValue> {
   keepStateInLocalStorage?: boolean;
   paginationPaddingClassName?: string;
   tableCellClassName?: string;
+  tableHeadClassName?: string;
   initialSelectionState?: RowSelectionState;
   initialPageSize?: number;
   uniqueKey?: string;
@@ -264,6 +265,7 @@ export function DataTable<TData, TValue>({
   keepStateInLocalStorage = true,
   paginationPaddingClassName,
   tableCellClassName,
+  tableHeadClassName,
   initialPageSize = 10,
   uniqueKey,
   resetRowSelectionOnSearch = true,
@@ -544,7 +546,10 @@ export function DataTable<TData, TValue>({
                             key={header.id}
                             minimal={minimal}
                             inset={inset}
-                            className={header.column.columnDef.meta?.className}
+                            className={cn(
+                              tableHeadClassName,
+                              header.column.columnDef.meta?.className,
+                            )}
                           >
                             {header.isPlaceholder
                               ? null
