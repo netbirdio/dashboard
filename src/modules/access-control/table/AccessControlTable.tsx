@@ -11,7 +11,7 @@ import {
   fadeDisabledRowCells,
   isInteractiveCell,
 } from "@components/table/disabledRowCells";
-import { useEnabledColumnVisibility } from "@components/table/enabledColumnVisibility";
+import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
 import {
   CheckboxListPicker,
   CheckboxOption,
@@ -87,6 +87,7 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     accessorKey: "enabled",
     accessorFn: (row) => row.enabled,
     enableSorting: false,
+    meta: { className: ENABLED_COLUMN_CLASS.xl },
     header: ({ column }) => {
       return (
         <DataTableHeader column={column} sorting={false}>
@@ -232,7 +233,6 @@ export default function AccessControlTable({
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
-  const enabledColumn = useEnabledColumnVisibility();
   const params = useSearchParams();
   const idParam = !isGroupPage ? params.get("id") : undefined;
 
@@ -510,7 +510,6 @@ export default function AccessControlTable({
           ports_filter: false,
           has_posture_checks: false,
           direction_filter: false,
-          ...enabledColumn,
         }}
         cellClassName={fadeDisabledRowCells}
         data={showTemporaryPolicies ? tempPolicies : regularPolicies}
