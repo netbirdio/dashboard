@@ -37,10 +37,16 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import type { PageContextEntry } from "@/interfaces/Assistant";
 import { CHAT_PAD } from "@/interfaces/Assistant";
+import { AssistantAccessPrompt } from "@/modules/assistant/AssistantAccessPrompt";
+import {
+  type AccessRequest,
+  subscribeToAccessRequest,
+} from "@/modules/assistant/assistantAccessAuth";
 import { AssistantApprovalGate } from "@/modules/assistant/chat/AssistantApprovalCard";
 import { AssistantContextChip } from "@/modules/assistant/chat/AssistantContextChip";
 import { AssistantInlineComponent } from "@/modules/assistant/chat/AssistantInlineComponent";
 import { AssistantMarkdownText } from "@/modules/assistant/chat/AssistantMarkdownText";
+import { AssistantErrorNotice } from "@/modules/assistant/chat/AssistantErrorNotice";
 import {
   AssistantQuestionCard,
   parseOptionNumbers,
@@ -73,7 +79,7 @@ const groupSteps = (part: { type: string; toolName?: string }) => {
     return ["group-steps"] as const;
   return part.type === "tool-call" &&
     part.toolName !== "render_component" &&
-    part.toolName !== "ask_user"
+    part.toolName !== "ask_user_question"
     ? (["group-steps"] as const)
     : null;
 };
@@ -253,7 +259,7 @@ function AssistantMessage() {
               case "reasoning":
                 return null;
               case "tool-call": {
-                if (part.toolName === "ask_user") return null;
+                if (part.toolName === "ask_user_question") return null;
                 return part.toolName === "render_component" ? (
                   <AssistantInlineComponent {...part} />
                 ) : (
@@ -311,10 +317,26 @@ function WorkingIndicator({ status }: Readonly<{ status: string | null }>) {
       s.message.isLast &&
       s.message.status.type === "running",
   );
+  /*
+    A gap above the line, but only when an answer sits above it.
+
+    A markdown block ends flush — `last:mb-0` on its paragraphs — because the
+    copy bar is what normally separates an answer from whatever comes next. That
+    bar mounts once per message, after every part, so a working line that lands
+    between the text and the bar has the sentence directly on top of it and all
+    of the bar's height underneath: the space is there, just on the wrong side.
+    After a tool step the tightness is the point (see the `mb` gate on Root),
+    and a message with no text to separate from keeps it.
+  */
+  const followsText = useAuiState((s) =>
+    s.message.parts.some(
+      (part) => part.type === "text" && part.text.trim().length > 0,
+    ),
+  );
   if (!status || !claimsStatus) return null;
 
   return (
-    <div className="flex items-center gap-2 py-1">
+    <div className={cn("flex items-center gap-2 py-1", followsText && "mt-3")}>
       <span className="flex h-4 w-4 shrink-0 items-center justify-center">
         <Image
           src={NetBirdLogoMark}
@@ -443,7 +465,7 @@ function ThreadQuestion({
   if (!question) return null;
 
   // Shown even while the thread runs: the card answers a turn that is still
-  // in flight, with the server parked on the ask_user tool result.
+  // in flight, with the server parked on the ask_user_question tool result.
   return (
     <AssistantQuestionCard
       // Resets the multi-select picks when a new question arrives.
@@ -473,7 +495,7 @@ function Composer({
 }>) {
   const aui = useAui();
 
-  // "1" / "1,3" picks those options; anything else answers a pending ask_user
+  // "1" / "1,3" picks those options; anything else answers a pending ask_user_question
   // question as written (its turn is still running, so the normal send path is
   // closed). Returns false when the text wasn't consumed.
   const submitAnswer = (): boolean => {
@@ -535,7 +557,7 @@ function Composer({
       />
 
       <div className="flex items-center justify-end gap-2">
-        {/* While an ask_user card is up the thread counts as running, which
+        {/* While an ask_user_question card is up the thread counts as running, which
             would leave only Stop; this button routes the text to the answer. */}
         {question && (
           <button
@@ -600,7 +622,17 @@ export function AssistantThread({
     dismissQuestion,
     pendingInput,
     respondToInput,
+    error,
   } = useAssistant();
+
+  /*
+    Whether an access authorization is outstanding. Subscribed here rather than
+    read inside the prompt, because this decides WHICH control occupies the
+    composer's place — the prompt cannot both be the thing rendered and the
+    thing that decides it is rendered.
+  */
+  const [accessRequest, setAccessRequest] = useState<AccessRequest | null>(null);
+  useEffect(() => subscribeToAccessRequest(setAccessRequest), []);
 
   const answer = (indices: number[]) => {
     if (!question) return;
@@ -647,6 +679,11 @@ export function AssistantThread({
               <ThreadPrimitive.Messages
                 components={{ UserMessage, AssistantMessage }}
               />
+              {/* Inside the scroll area, after the messages: a failed turn is
+                  the turn's outcome and belongs where the answer would have
+                  been, not as a bar above the composer. It scrolls away with
+                  the rest of the transcript. */}
+              <AssistantErrorNotice error={error} />
             </TurnActiveContext.Provider>
           </StatusContext.Provider>
         </div>
@@ -694,10 +731,17 @@ export function AssistantThread({
           className="bg-nb-gray-925"
           style={{ paddingBottom: CHAT_PAD.bottom }}
         >
+
           {/* The chip is absolute against this box, so it slides out from
               behind the composer's rounded body. */}
           <div className="relative">
-            {pendingInput ? (
+            {accessRequest ? (
+              /* The same slot as the approval gate, for the same reason: the
+                 turn has stopped and will not move until this is answered. It
+                 sat in the panel first and landed behind this composer, where
+                 nobody could see it. */
+              <AssistantAccessPrompt />
+            ) : pendingInput ? (
               /* In the composer's place, not above it: eve has stopped
                  answering, so an input that still accepts text would be
                  offering to queue messages behind a prompt nobody can see

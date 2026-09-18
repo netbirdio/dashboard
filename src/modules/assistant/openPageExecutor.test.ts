@@ -39,6 +39,7 @@ describe("openPageExecutor", () => {
   const ctx = (pushed: string[]) => ({
     navigate: (href: string) => pushed.push(href),
     onControlCenterPage: () => false,
+    setStatus: () => {},
   });
 
   it("pushes the route and reports it", async () => {

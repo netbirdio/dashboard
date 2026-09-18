@@ -3,6 +3,7 @@
 
 import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import {
+  useOidc,
   useOidcAccessToken,
   useOidcIdToken,
 } from "@axa-fr/react-oidc";
@@ -14,8 +15,8 @@ import loadConfig from "@utils/config";
 import { cn, sleep } from "@utils/helpers";
 import { PanelLeft, PanelRight, Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { isExpired } from "react-jwt";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { decodeToken, isExpired } from "react-jwt";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import {
   CHAT_PAD,
@@ -31,8 +32,42 @@ import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvide
 import { useContextChip } from "@/modules/assistant/chat/AssistantContextChip";
 import { AssistantThread } from "@/modules/assistant/chat/AssistantThread";
 import { openPageExecutor } from "@/modules/assistant/openPageExecutor";
+import { createSSHRunCommandExecutor } from "@/modules/assistant/sshRunCommandExecutor";
+import { generateKeypair } from "@utils/wireguard";
+import { useNetBirdClient } from "@/modules/remote-access/useNetBirdClient";
+import { useApiCall } from "@utils/api";
+import { requestAccessAuthorization } from "@/modules/assistant/assistantAccessAuth";
+import type { Peer } from "@/interfaces/Peer";
 
-const EXTRA_EXECUTORS = { dashboard_page_redirect: openPageExecutor };
+/*
+  `setup_netbird` is not in here because it cannot be: it needs the agent's
+  origin, the bearer resolver and the WASM client, all of which are hooks or
+  per-render values. It is composed in the component below and merged with
+  this table.
+*/
+const STATIC_EXECUTORS = { dashboard_page_redirect: openPageExecutor };
+
+/*
+  NetBird's SSH server rejects a JWT by AGE, not by expiry: it reads `iat` and
+  refuses anything older than ten minutes. An Auth0 access token is valid for
+  hours, so the one minted at login passes every `isExpired` check and is still
+  refused by the peer as `token expired ... age=1h23m, max=10m0s`.
+
+  The dashboard's SSH window never trips over this because `window.open`
+  reloads the page and OIDC issues a fresh token right then. This panel is
+  mounted for the whole session, so it has to ask.
+
+  Renewed a few minutes before the server's limit rather than at it, since the
+  token has to survive the handshake that follows.
+*/
+const SSH_TOKEN_MAX_AGE_SECONDS = 10 * 60;
+const SSH_TOKEN_RENEW_AFTER_SECONDS = 5 * 60;
+
+function tokenAgeSeconds(token?: string): number | null {
+  const payload = token ? decodeToken<{ iat?: number }>(token) : null;
+  if (!payload?.iat) return null;
+  return Math.max(0, Date.now() / 1000 - payload.iat);
+}
 
 // The same token selection and expiry wait as useNetBirdFetch (src/utils/api),
 // shaped as the headers resolver the assistant SDK calls before every request.
@@ -146,6 +181,92 @@ export function AssistantChatPanel() {
   const navigate = useCallback((href: string) => router.push(href), [router]);
   const { loggedInUser } = useLoggedInUser();
 
+  /*
+    `setup_netbird`, composed here because it needs three things this component
+    has and a module constant cannot: the agent's origin, the same bearer
+    resolver the SDK uses, and the WASM client.
+
+    `connect` takes only the private key — the management URL stays whatever
+    useNetBirdClient reads from the dashboard's own config, rather than the one
+    the agent returns. The browser already knows which management server it
+    belongs to, and taking that from an HTTP response would let the agent point
+    this tunnel somewhere else.
+  */
+  const {
+    connect,
+    createSSHConnection,
+    detectSSHServerType,
+  } = useNetBirdClient();
+  const peersRequest = useApiCall<Peer[]>("/peers");
+  const { accessToken } = useOidcAccessToken();
+
+  // Read through a ref so an executor built once still sees the current token;
+  // a dispatch can be executed long after the render that created it.
+  const accessTokenRef = useRef(accessToken);
+  // eslint-disable-next-line react-hooks/refs -- read at tool-execution time
+  accessTokenRef.current = accessToken;
+
+  const { renewTokens } = useOidc();
+  /**
+   * An access token young enough for a peer's SSH server to accept.
+   *
+   * Renews rather than waits: the token is not expired, it is old, and waiting
+   * only makes it older. Falls back to whatever is current if renewal fails —
+   * a stale token that gets refused is a clearer failure than none at all.
+   */
+  const freshAccessToken = useCallback(async (): Promise<string | undefined> => {
+    const age = tokenAgeSeconds(accessTokenRef.current);
+    if (age !== null && age < SSH_TOKEN_RENEW_AFTER_SECONDS) {
+      return accessTokenRef.current;
+    }
+    try {
+      const renewed = (await renewTokens()) as { accessToken?: string };
+      return renewed?.accessToken ?? accessTokenRef.current;
+    } catch {
+      return accessTokenRef.current;
+    }
+  }, [renewTokens]);
+
+  const extraExecutors = useMemo(
+    () => ({
+      ...STATIC_EXECUTORS,
+      /*
+        One executor, because joining the network, taking access to the target
+        and running the command are one approved action. `connectTemporary` from
+        useNetBirdClient is deliberately not used: it returns early once
+        connected, so it would grant access for the first peer only, and it
+        hides the keypair that has to be reused for the second.
+      */
+      ssh_run_command: createSSHRunCommandExecutor({
+        // The whole list, because the executor resolves a NAME and the model
+        // cannot: peer names reach it as unlabelled tokens, and a typed FQDN
+        // tokenises differently from the peer's own dns_label.
+        listPeers: async () => (await peersRequest.get()) ?? [],
+        generateKeypair,
+        /*
+          Parks the request for the user rather than calling the API here. The
+          panel has the bearer and could grant it directly; routing it through a
+          window the user opens and signs in to is the whole point — see
+          assistantAccessAuth.
+        */
+        authorizeAccess: requestAccessAuthorization,
+        connect,
+        createSSHConnection,
+        detectSSHServerType,
+        getAccessToken: freshAccessToken,
+      }),
+    }),
+    [
+      origin,
+      headers,
+      connect,
+      createSSHConnection,
+      detectSSHServerType,
+      freshAccessToken,
+      peersRequest,
+    ],
+  );
+
   const { entry } = useActivePageContext();
   const [contextName, setContextName] = useState<string | undefined>();
   const pageContext = usePageContextString(contextName);
@@ -190,7 +311,7 @@ export function AssistantChatPanel() {
         currentPath={currentPath}
         currentUserId={loggedInUser?.id}
         pageContext={pageContext}
-        extraExecutors={EXTRA_EXECUTORS}
+        extraExecutors={extraExecutors}
         conversationId={chatId}
       >
         {entry && <ContextName entry={entry} onName={setContextName} />}

@@ -5,8 +5,8 @@ import {
   CONTROL_CENTER_TOOLS,
   describeControlCenterTool,
   toolLabel,
+  useVaultRestore,
 } from "@netbird/assistant-react";
-import { useVaultRestore } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import { Check, ChevronRight, Info, Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -107,7 +107,7 @@ export function AssistantToolActivity({
         onClick={() => expandable && setOpen((wasOpen) => !wasOpen)}
         aria-expanded={expandable ? open : undefined}
         className={cn(
-          "flex w-full items-center gap-2 py-1 text-left transition-colors",
+          "flex w-full items-center gap-2 pb-1 text-left transition-colors",
           // A failed row stays red on hover: sliding to the neutral colour
           // read as the error resolving itself under the cursor.
           failed
@@ -128,7 +128,19 @@ export function AssistantToolActivity({
             the same mark would show the NetBird logo twice saying two things. */}
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
           {running ? (
-            <Loader2 size={13} className="animate-spin" />
+            /* 12, not the 13 its neighbours use, and `block`.
+
+               Lucide draws a 24-unit viewBox at the pixel size given, so 13
+               scales by 13/24 and puts the circle's centre on a half-pixel:
+               the stroke then rasterises slightly differently on each frame
+               and the spin visibly wobbles. 12 is an exact half, so the centre
+               and the stroke land on whole pixels and the rotation is steady.
+               The constraint only applies to the icon that MOVES — the chevron
+               and info marks beside it stay at 13, where a half-pixel is
+               static and invisible, and the 16px box keeps the column aligned
+               either way. `block` drops the inline baseline gap, which would
+               otherwise put the rotation origin below the glyph's centre. */
+            <Loader2 size={12} className="block animate-spin" />
           ) : failed ? (
             /* An expandable failed row still needs its chevron; one with
                nothing to open says so with the icon instead. */
