@@ -8,7 +8,7 @@ type Props = {
 
 export const DNSRecordContentCell = ({ record }: Props) => {
   return (
-    <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 font-light truncate font-mono">
+    <div className="flex flex-col gap-0 text-nb-gray-300 font-light truncate font-mono">
       <CopyToClipboardText>
         <span className={"font-normal truncate text-[0.82rem]"}>
           {record.content}

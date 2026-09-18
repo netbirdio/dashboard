@@ -115,7 +115,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
           height: 20,
           width: "1px",
           border: "none",
-          backgroundColor: "#3f444b",
+          backgroundColor: "rgb(var(--nb-gray-800))",
           borderRadius: "0px 4px 4px 0px",
           right: -2,
         }}

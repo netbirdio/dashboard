@@ -113,7 +113,7 @@ export function UsersDropdownSelector({
               <React.Fragment>
                 <div
                   className={
-                    "w-5 h-5 rounded-full flex items-center justify-center text-white uppercase text-[9px] font-medium bg-nb-gray-900"
+                    "w-5 h-5 rounded-full flex items-center justify-center text-neutral-700 dark:text-white uppercase text-[9px] font-medium bg-nb-gray-900"
                   }
                   style={{
                     color:
@@ -153,7 +153,7 @@ export function UsersDropdownSelector({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-sm  shadow-nb-gray-950 min-w-[300px]"
+        className="w-full p-0 shadow-sm  dark:shadow-nb-gray-950 min-w-[300px]"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}

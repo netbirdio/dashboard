@@ -119,7 +119,7 @@ export default function TruncatedText({
         className={cn(className, "px-3 py-1.5")}
       >
         {tooltipContent ?? (
-          <div className="text-neutral-300 flex flex-col gap-1">
+          <div className="text-nb-gray-300 flex flex-col gap-1">
             <div className="max-w-xs break-all whitespace-normal text-xs">
               {text}
             </div>

@@ -3,6 +3,7 @@ import Image from "next/image";
 import * as React from "react";
 import NetBirdLogoMark from "@/assets/netbird.svg";
 import NetBirdLogoFull from "@/assets/netbird-full.svg";
+import NetBirdLogoFullLight from "@/assets/netbird-full-light.svg";
 
 type Props = {
   size?: "default" | "large";
@@ -23,18 +24,29 @@ const sizes = {
 export const NetBirdLogo = ({ size = "default", mobile = true }: Props) => {
   return (
     <>
-      <Image
-        src={NetBirdLogoFull}
-        height={sizes[size].desktop}
-        alt={"NetBird Logo"}
-        className={cn(mobile && "hidden md:block")}
-      />
+      {/* Full wordmark — hidden on mobile screens when `mobile` is set.
+          Inner images toggle by theme: dark-text variant in light mode,
+          light-text variant in dark mode. */}
+      <span className={cn("relative", mobile && "hidden md:block")}>
+        <Image
+          src={NetBirdLogoFullLight}
+          height={sizes[size].desktop}
+          alt={"NetBird Logo"}
+          className={"block dark:hidden"}
+        />
+        <Image
+          src={NetBirdLogoFull}
+          height={sizes[size].desktop}
+          alt={"NetBird Logo"}
+          className={"hidden dark:block"}
+        />
+      </span>
       {mobile && (
         <Image
           src={NetBirdLogoMark}
           width={sizes[size].mobile}
           alt={"NetBird Logo"}
-          className={cn(mobile && "md:hidden ml-4")}
+          className={cn("md:hidden ml-4")}
         />
       )}
     </>
