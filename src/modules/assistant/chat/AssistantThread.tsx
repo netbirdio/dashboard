@@ -631,7 +631,9 @@ export function AssistantThread({
     composer's place — the prompt cannot both be the thing rendered and the
     thing that decides it is rendered.
   */
-  const [accessRequest, setAccessRequest] = useState<AccessRequest | null>(null);
+  const [accessRequest, setAccessRequest] = useState<AccessRequest | null>(
+    null,
+  );
   useEffect(() => subscribeToAccessRequest(setAccessRequest), []);
 
   const answer = (indices: number[]) => {
@@ -731,7 +733,6 @@ export function AssistantThread({
           className="bg-nb-gray-925"
           style={{ paddingBottom: CHAT_PAD.bottom }}
         >
-
           {/* The chip is absolute against this box, so it slides out from
               behind the composer's rounded body. */}
           <div className="relative">
@@ -742,8 +743,8 @@ export function AssistantThread({
                  nobody could see it. */
               <AssistantAccessPrompt />
             ) : pendingInput ? (
-              /* In the composer's place, not above it: eve has stopped
-                 answering, so an input that still accepts text would be
+              /* In the composer's place, not above it: the framework has
+                 stopped answering, so an input that still accepts text would be
                  offering to queue messages behind a prompt nobody can see
                  past. The context chip goes with it — it describes what the
                  next message is about, and there is no next message yet. */

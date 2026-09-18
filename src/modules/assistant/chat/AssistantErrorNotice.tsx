@@ -8,12 +8,12 @@ import React from "react";
  * ## Why this exists
  *
  * The SDK has always computed an `error` — it records `step.failed` and
- * `turn.failed`, which eve's own client store drops, precisely so a mid-turn
- * framework failure is not invisible. Nothing rendered it. So a turn that died
- * on a provider outage, an exhausted quota or a billing problem looked
- * identical to the assistant deciding it had nothing to say: the status line
- * cleared, no message appeared, and the reason sat in a server log the user
- * cannot read.
+ * `turn.failed`, which the framework's own client store drops, precisely so a
+ * mid-turn framework failure is not invisible. Nothing rendered it. So a turn
+ * that died on a provider outage, an exhausted quota or a billing problem
+ * looked identical to the assistant deciding it had nothing to say: the status
+ * line cleared, no message appeared, and the reason sat in a server log the
+ * user cannot read.
  *
  * ## Why it looks like a message
  *
@@ -27,9 +27,10 @@ import React from "react";
  *
  * ## The text is the framework's own
  *
- * Verbatim. These come from eve and the provider and are written for a person —
- * "Your credit balance is too low" is what tells the user this is theirs to fix
- * rather than a bug, and any friendlier rewrite strips exactly that.
+ * Verbatim. These come from the framework and the provider and are written for
+ * a person — "Your credit balance is too low" is what tells the user this is
+ * theirs to fix rather than a bug, and any friendlier rewrite strips exactly
+ * that.
  */
 export function AssistantErrorNotice({
   error,

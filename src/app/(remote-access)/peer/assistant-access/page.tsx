@@ -8,6 +8,9 @@ import React, { useEffect, useRef, useState } from "react";
 import {
   ACCESS_GRANTED_MESSAGE,
   type AccessGrantedMessage,
+  consumeAccessNonce,
+  hasAccessNonce,
+  isAllowedAccessRule,
 } from "@/modules/assistant/assistantAccessAuth";
 
 /**
@@ -19,6 +22,19 @@ import {
  * user's bearer already. The point is that it is NOT: the grant is created by a
  * window a person opened and signed in to. A silent token refresh proves a
  * refresh token exists in storage; this proves someone is at the keyboard.
+ *
+ * ## Why a sign-in is not enough on its own
+ *
+ * Everything below arrives in the URL, and a page that turns URL parameters
+ * into SSH access is a page anyone can write a link to. The sign-in proves a
+ * person is present; it does not prove they meant to grant THIS key access to
+ * THIS machine, and a link mailed to an admin looks from here exactly like a
+ * request the assistant made — same origin, same familiar sign-in.
+ *
+ * So two things are checked before anything is granted. The nonce the opener
+ * left in `sessionStorage`, which a window opened from the panel inherits and
+ * a window opened from a link does not; and the rules, against the set this
+ * flow is allowed to ask for, since `tcp/3389` would be RDP rather than SSH.
  *
  * ## Why it forces a fresh sign-in
  *
@@ -81,6 +97,7 @@ export default function AssistantAccessPage() {
   const wgPublicKey = params.get("key");
   const assistantPeerName = params.get("name");
   const rules = (params.get("rules") ?? "").split(",").filter(Boolean);
+  const nonce = params.get("nonce");
   const reauthenticated = params.get(REAUTH_MARKER) === "1";
 
   useEffect(() => {
@@ -93,10 +110,46 @@ export default function AssistantAccessPage() {
       window.opener?.postMessage(message, window.location.origin);
     };
 
+    const refuse = (message: string) => {
+      setState("failed");
+      setError(message);
+      // The opener is told, so the tool settles now rather than waiting out
+      // its timeout. Cross-origin openers never receive this: `reply` targets
+      // this origin, so a window opened from somewhere else hears nothing.
+      if (peerId) {
+        reply({
+          type: ACCESS_GRANTED_MESSAGE,
+          ok: false,
+          peerId,
+          error: message,
+        });
+      }
+    };
+
     const run = async () => {
       if (!peerId || !wgPublicKey || !assistantPeerName || rules.length === 0) {
         setState("failed");
         setError("This link is missing what it needs to authorize anything.");
+        return;
+      }
+
+      /*
+        Checked before the sign-in, not after: a link that gets as far as an
+        identity provider has already borrowed the credibility of one, and the
+        person is answering a prompt they have no reason to distrust.
+      */
+      if (!hasAccessNonce(nonce)) {
+        refuse(
+          "This window was not opened by the assistant, so nothing was authorized. " +
+            "Start the request from the assistant panel in the dashboard.",
+        );
+        return;
+      }
+
+      if (!rules.every(isAllowedAccessRule)) {
+        refuse(
+          "This link asks for access this flow does not grant, so nothing was authorized.",
+        );
         return;
       }
 
@@ -109,6 +162,19 @@ export default function AssistantAccessPage() {
       if (!reauthenticated) {
         const back = `${window.location.pathname}${window.location.search}&${REAUTH_MARKER}=1`;
         await login(back, { prompt: "login" });
+        return;
+      }
+
+      /*
+        Spent on the way past, so a reload or a Back inside this window cannot
+        grant a second time. The opener keeps its own copy, so this settles
+        nothing there.
+      */
+      if (!consumeAccessNonce(nonce)) {
+        refuse(
+          "This window has already been used, so nothing was authorized. " +
+            "Start the request from the assistant panel in the dashboard.",
+        );
         return;
       }
 

@@ -19,6 +19,18 @@
  *
  * So the executor asks, this module parks the request, the panel renders a
  * button, and the click both opens the window and answers the request.
+ *
+ * ## Why the window carries a nonce
+ *
+ * The page it opens turns URL parameters into SSH access to a peer, and a
+ * forced sign-in proves a person is present without proving they meant to
+ * grant THIS key access to THIS machine. Without more, a link mailed to an
+ * admin is enough: they click, they see a sign-in they recognise, and a key
+ * they have never heard of lands on their network.
+ *
+ * So the opener leaves proof in `sessionStorage` before the window opens, and
+ * the page refuses to grant anything without it. A window opened from here
+ * inherits a copy of that storage; a link opened anywhere else does not.
  */
 
 /** What the prompt shows, and what the popup needs to create the grant. */
@@ -142,7 +154,91 @@ export interface AccessGrantedMessage {
   error?: string;
 }
 
-export function buildAuthorizeUrl(request: AccessRequest): string {
+/**
+ * Where the opener leaves proof that it is the one that opened the window.
+ *
+ * `sessionStorage` for two properties it happens to have exactly: a window
+ * opened from another inherits a COPY of it at creation, and it is scoped to
+ * the tab. Together those mean the page can tell a window this module opened
+ * from one reached by following a link, which is the whole check.
+ */
+const ACCESS_NONCE_KEY = "netbird-assistant-access-nonce";
+
+/**
+ * Mints the proof and stores it, returning null if storage refuses.
+ *
+ * MUST run before `window.open`: the child inherits the storage it is handed
+ * at creation, and nothing written afterwards reaches it.
+ */
+function mintAccessNonce(): string | null {
+  try {
+    const nonce = crypto.randomUUID();
+    window.sessionStorage.setItem(ACCESS_NONCE_KEY, nonce);
+    return nonce;
+  } catch {
+    // Fails closed: with no nonce to carry, the page grants nothing.
+    return null;
+  }
+}
+
+function clearAccessNonce(): void {
+  try {
+    window.sessionStorage.removeItem(ACCESS_NONCE_KEY);
+  } catch {
+    // Storage is unavailable, so there is nothing left behind to clear.
+  }
+}
+
+/** Whether this window's nonce is the one its tab was opened with. */
+export function hasAccessNonce(nonce: string | null): boolean {
+  if (!nonce) return false;
+  try {
+    const stored = window.sessionStorage.getItem(ACCESS_NONCE_KEY);
+    return Boolean(stored) && stored === nonce;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Checks the nonce and spends it, so one window grants at most once.
+ *
+ * The opener keeps its own copy — storage is copied into the child, not shared
+ * — so this does not revoke anything mid-flow. What it stops is the page
+ * granting a second time on a reload or a Back within the window it opened.
+ */
+export function consumeAccessNonce(nonce: string | null): boolean {
+  if (!hasAccessNonce(nonce)) return false;
+  clearAccessNonce();
+  return true;
+}
+
+/**
+ * The access rules this flow may grant, as an exact set.
+ *
+ * The page reads its rules from the URL, so without a check a crafted link
+ * could ask for whatever the management API happens to accept, and `tcp/3389`
+ * is RDP rather than SSH.
+ *
+ * The cross product of what `accessRule` chooses between, rather than the three
+ * combinations its version thresholds can currently reach: it picks protocol
+ * and port from two independent checks, so pinning the set to today's overlap
+ * between them would turn a threshold change into a refusal to grant anything.
+ */
+const ALLOWED_ACCESS_RULES = new Set([
+  "netbird-ssh/22022",
+  "netbird-ssh/44338",
+  "tcp/22022",
+  "tcp/44338",
+]);
+
+export const isAllowedAccessRule = (rule: string): boolean =>
+  ALLOWED_ACCESS_RULES.has(rule);
+
+export function buildAuthorizeUrl(
+  request: AccessRequest,
+  nonce: string | null,
+): string {
   const params = new URLSearchParams({
     peer: request.peerId,
     // Carried so the window can name the machine it just authorized rather
@@ -152,6 +248,9 @@ export function buildAuthorizeUrl(request: AccessRequest): string {
     name: request.assistantPeerName,
     rules: request.rules.join(","),
   });
+  // Omitted rather than sent empty when storage refused it, so the page sees
+  // the same missing-proof case either way.
+  if (nonce) params.set("nonce", nonce);
   return `/peer/assistant-access?${params.toString()}`;
 }
 
@@ -167,14 +266,19 @@ export function openAuthorizationWindow(): Window | null {
   const request = pending;
   if (!request) return null;
 
+  // Before the window, not after: the child gets a copy of this tab's storage
+  // as it is created, so a nonce written later would never reach it.
+  const nonce = mintAccessNonce();
+
   const child = window.open(
-    buildAuthorizeUrl(request),
+    buildAuthorizeUrl(request, nonce),
     "netbird-assistant-access",
     "noopener=no,width=520,height=640,left=120,top=120",
   );
   if (!child) {
     // Blocked. Settle rather than leave the tool waiting on a window that will
     // never exist.
+    clearAccessNonce();
     request.resolve(false);
     pending = null;
     notify();
@@ -188,6 +292,7 @@ export function openAuthorizationWindow(): Window | null {
     if (data.peerId !== request.peerId) return;
 
     window.removeEventListener("message", onMessage);
+    clearAccessNonce();
     request.resolve(data.ok);
     if (pending === request) {
       pending = null;
@@ -204,6 +309,7 @@ export function openAuthorizationWindow(): Window | null {
     if (!child.closed) return;
     window.clearInterval(poll);
     window.removeEventListener("message", onMessage);
+    clearAccessNonce();
     if (pending === request) {
       request.resolve(false);
       pending = null;
@@ -219,4 +325,5 @@ export function resetAccessAuthorizationForTests(): void {
   if (pending) pending.resolve(false);
   pending = null;
   listeners.clear();
+  clearAccessNonce();
 }

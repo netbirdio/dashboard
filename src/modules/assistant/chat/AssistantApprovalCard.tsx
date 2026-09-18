@@ -1,10 +1,10 @@
 // The gate for a framework pause: a tool waiting on approval, or a runtime
 // limit waiting on a decision. It takes the composer's place at the foot of
-// the panel rather than floating over the thread: eve answers nothing — not
-// this prompt, not any message sent after it — until one of these options
-// comes back, so the box you would have typed into is exactly the thing that
-// should not be there. The conversation stays readable behind it, which is
-// usually what the decision is about.
+// the panel rather than floating over the thread: the framework answers
+// nothing — not this prompt, not any message sent after it — until one of
+// these options comes back, so the box you would have typed into is exactly
+// the thing that should not be there. The conversation stays readable behind
+// it, which is usually what the decision is about.
 "use client";
 
 import Button from "@components/Button";
@@ -20,10 +20,10 @@ import { useCallback, useEffect, useState } from "react";
 /**
  * What the card asks, in the words the rest of the thread uses.
  *
- * eve's own prompt is written for a generic client — "Approve tool call:
- * peer_ssh_bash" — and the tool's wire name is not what this dashboard calls
- * it anywhere else. The manifest label is, so a tool approval gets that and
- * every other pause gets eve's prompt, which is already prose.
+ * The framework's own prompt is written for a generic client — "Approve tool
+ * call: peer_ssh_bash" — and the tool's wire name is not what this dashboard
+ * calls it anywhere else. The manifest label is, so a tool approval gets that and
+ * every other pause gets the framework's prompt, which is already prose.
  */
 function approvalTitle(request: PendingInputRequest): string {
   if (request.kind !== "tool-approval" || !request.toolName)
@@ -36,11 +36,11 @@ type Option = PendingInputRequest["options"][number];
 /**
  * Which option each key answers.
  *
- * Chosen from eve's own `style` hint first, since that is the field it sets
- * deliberately, and from the option's position only as a fallback — never from
- * the label, which is copy and changes. A pause that offers something other
- * than a yes/no pair still renders every option as a button; only the keyboard
- * shortcuts need a pair to bind to.
+ * Chosen from the framework's own `style` hint first, since that is the field
+ * it sets deliberately, and from the option's position only as a fallback —
+ * never from the label, which is copy and changes. A pause that offers
+ * something other than a yes/no pair still renders every option as a button;
+ * only the keyboard shortcuts need a pair to bind to.
  */
 function affirmativeOf(options: Option[]): Option | undefined {
   return options.find((o) => o.style === "primary") ?? options[0];
@@ -54,8 +54,9 @@ function negativeOf(options: Option[]): Option | undefined {
 }
 
 /**
- * The copy for a tool approval, which is a narrower question than eve's
- * generic one: this grants a single call, not a standing permission.
+ * The copy for a tool approval, which is a narrower question than the
+ * framework's generic one: this grants a single call, not a standing
+ * permission.
  */
 function labelFor(
   request: PendingInputRequest,
@@ -76,8 +77,8 @@ export function AssistantApprovalCard({
   onRespond,
 }: Readonly<ApprovalCardProps>) {
   // The answer is a round trip, and the session is parked until it lands. A
-  // second click would post a second response to a request eve has already
-  // resolved, so the buttons latch on the first one.
+  // second click would post a second response to a request the framework has
+  // already resolved, so the buttons latch on the first one.
   const [answering, setAnswering] = useState<string | null>(null);
   const restore = useVaultRestore();
 
@@ -96,10 +97,10 @@ export function AssistantApprovalCard({
   const negative = negativeOf(request.options);
 
   /*
-    Deny first, allow last, whatever order eve listed them in. The rightmost
-    button is the one a pointer travels to by default and the one Enter is
-    bound to, so it has to be the same choice either way — and the destructive
-    half of a yes/no pair should never be what a reflex lands on.
+    Deny first, allow last, whatever order the framework listed them in. The
+    rightmost button is the one a pointer travels to by default and the one
+    Enter is bound to, so it has to be the same choice either way — and the
+    destructive half of a yes/no pair should never be what a reflex lands on.
   */
   const ordered = [
     ...(negative ? [negative] : []),

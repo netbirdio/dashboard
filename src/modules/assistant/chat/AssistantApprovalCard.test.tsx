@@ -28,8 +28,8 @@ afterEach(cleanup);
 
 describe("AssistantApprovalCard", () => {
   it("names the tool the way the rest of the thread does", () => {
-    // eve's prompt carries the wire name; the manifest label is what the
-    // activity trail shows, so the two must not disagree.
+    // the framework's prompt carries the wire name; the manifest label is
+    // what the activity trail shows, so the two must not disagree.
     render(<AssistantApprovalCard request={request()} onRespond={vi.fn()} />);
 
     expect(screen.getByText(/Read the docs/)).toBeTruthy();
@@ -37,15 +37,15 @@ describe("AssistantApprovalCard", () => {
   });
 
   it("relabels a tool approval as a single-call grant", () => {
-    // eve's own labels are "Approve"/"Cancel"; what this actually grants is
-    // one call, and the copy has to say so.
+    // the framework's own labels are "Approve"/"Cancel"; what this actually
+    // grants is one call, and the copy has to say so.
     render(<AssistantApprovalCard request={request()} onRespond={vi.fn()} />);
 
     expect(screen.getByText("Allow Once")).toBeTruthy();
     expect(screen.getByText("Deny")).toBeTruthy();
   });
 
-  it("answers with the option id eve is waiting for", () => {
+  it("answers with the option id the framework is waiting for", () => {
     const onRespond = vi.fn();
     render(<AssistantApprovalCard request={request()} onRespond={onRespond} />);
 
@@ -53,7 +53,7 @@ describe("AssistantApprovalCard", () => {
     expect(onRespond).toHaveBeenCalledWith("approve");
   });
 
-  it("puts deny before allow, whatever order eve listed them in", () => {
+  it("puts deny before allow, whatever order the framework listed them in", () => {
     // Enter is bound to the rightmost button, so the destructive half of the
     // pair must never be the one a reflex lands on.
     render(<AssistantApprovalCard request={request()} onRespond={vi.fn()} />);
@@ -81,7 +81,7 @@ describe("AssistantApprovalCard", () => {
 
   it("latches after the first answer", () => {
     // The session is parked until the response lands, so a second answer would
-    // post to a request eve has already resolved.
+    // post to a request the framework has already resolved.
     const onRespond = vi.fn();
     render(<AssistantApprovalCard request={request()} onRespond={onRespond} />);
 
@@ -91,7 +91,7 @@ describe("AssistantApprovalCard", () => {
     expect(onRespond).toHaveBeenCalledTimes(1);
   });
 
-  it("falls back to eve's own prompt for a pause with no tool", () => {
+  it("falls back to the framework's own prompt for a pause with no tool", () => {
     render(
       <AssistantApprovalCard
         request={request({
@@ -105,7 +105,7 @@ describe("AssistantApprovalCard", () => {
     expect(
       screen.getByText("This conversation reached its token budget."),
     ).toBeTruthy();
-    // Not a tool call, so eve's own option labels stand.
+    // Not a tool call, so the framework's own option labels stand.
     expect(screen.getByText("Approve")).toBeTruthy();
   });
 });

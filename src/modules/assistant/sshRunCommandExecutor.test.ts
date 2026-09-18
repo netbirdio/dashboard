@@ -1,6 +1,7 @@
 import type { ClientToolContext } from "@netbird/assistant-react";
 import { describe, expect, it, vi } from "vitest";
 import { beforeEach } from "vitest";
+import { isAllowedAccessRule } from "@/modules/assistant/assistantAccessAuth";
 import {
   createSSHRunCommandExecutor,
   resetAssistantTunnel,
@@ -268,6 +269,27 @@ describe("ssh_run_command executor", () => {
     expect(authorizeAccess).toHaveBeenCalledWith(
       expect.objectContaining({ rules: ["tcp/44338"] }),
     );
+  });
+
+  it("only ever asks for a rule the authorizing page will grant", async () => {
+    /*
+      The two halves of one control, and they are in different files: this
+      computes the rule, and the page checks the rule it is handed against a
+      fixed set — because that rule arrives there through a URL. Drift either
+      way is silent and total. A new port here and every grant is refused; a
+      rule the page would accept and never sees is dead allowance.
+    */
+    for (const version of ["development", "0.62.0", "0.60.5", "0.50.0"]) {
+      resetAssistantTunnel();
+      const { executor, authorizeAccess } = build({
+        listPeers: async () => [{ ...PEER, version }],
+      });
+      await executor(run(), ctx);
+
+      const { rules } = authorizeAccess.mock.calls[0]![0];
+      expect(rules).toHaveLength(1);
+      expect(isAllowedAccessRule(rules[0]!)).toBe(true);
+    }
   });
 
   it("does not run the command when the user declines to authorize", async () => {
