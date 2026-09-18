@@ -54,6 +54,7 @@ import {
   ReverseProxy,
   ReverseProxyAuth,
   ReverseProxyDomain,
+  ReverseProxyPortMapping,
   ReverseProxyTarget,
   ReverseProxyTargetProtocol,
   ReverseProxyTargetType,
@@ -68,7 +69,10 @@ import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
 import AuthNetBirdOnlyModal from "@/modules/reverse-proxy/auth/AuthNetBirdOnlyModal";
 import ReverseProxyHTTPTargets from "@/modules/reverse-proxy/ReverseProxyHTTPTargets";
-import ReverseProxyLayer4Content from "@/modules/reverse-proxy/ReverseProxyLayer4Content";
+import ReverseProxyLayer4Content, {
+  emptyPortMapping,
+  getPortMappingErrors,
+} from "@/modules/reverse-proxy/ReverseProxyLayer4Content";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
 import { type Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
 import { useReverseProxyAddress } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
@@ -116,24 +120,14 @@ export default function ReverseProxyModal({
   const { confirm } = useDialog();
   const { handleCreateOrUpdateProxy } = useReverseProxies();
 
-  const {
-    subdomain,
-    setSubdomain,
-    baseDomain,
-    setBaseDomain,
-    fullDomain,
-    domainAlreadyExists,
-    isClusterConnected,
-  } = useReverseProxyDomain({ reverseProxy, domains, initialSubdomain });
+  const [serviceMode, setServiceMode] = useState<ServiceMode>(
+    reverseProxy?.mode ?? ServiceMode.HTTP,
+  );
 
   const [tab, setTab] = useState(() => {
     if (initialTab && initialTab !== "") return initialTab;
     return "targets";
   });
-
-  const [serviceMode, setServiceMode] = useState<ServiceMode>(
-    reverseProxy?.mode ?? ServiceMode.HTTP,
-  );
 
   const isL4Mode = isL4ServiceMode(serviceMode);
 
@@ -171,12 +165,70 @@ export default function ReverseProxyModal({
     return undefined;
   });
 
-  const [port, setPort] = useState<number>(
-    reverseProxy?.targets?.[0]?.port || 0,
+  const [portMappings, setPortMappings] = useState<ReverseProxyPortMapping[]>(
+    () => {
+      if (reverseProxy?.port_mappings?.length) {
+        return reverseProxy.port_mappings.map((mapping) => ({ ...mapping }));
+      }
+      if (reverseProxy && isL4ServiceMode(reverseProxy.mode)) {
+        const protocol =
+          reverseProxy.mode as ReverseProxyPortMapping["protocol"];
+        const listenPort = reverseProxy.listen_port ?? 0;
+        const targetPort = reverseProxy.targets?.[0]?.port ?? 0;
+        return [
+          {
+            protocol,
+            listen_port_start: listenPort,
+            listen_port_end: listenPort,
+            target_port_start: targetPort,
+            target_port_end: targetPort,
+          },
+        ];
+      }
+      return [];
+    },
   );
 
-  const [listenPort, setListenPort] = useState<number>(
-    reverseProxy?.listen_port || 0,
+  const effectiveL4Mode =
+    portMappings[0]?.protocol ??
+    (serviceMode as ReverseProxyPortMapping["protocol"]);
+
+  const {
+    subdomain,
+    setSubdomain,
+    baseDomain,
+    setBaseDomain,
+    fullDomain,
+    domainAlreadyExists,
+    isClusterConnected,
+  } = useReverseProxyDomain({
+    reverseProxy,
+    domains,
+    initialSubdomain,
+    serviceMode,
+    portMappings,
+  });
+
+  // The first mapping is the legacy mode/listener compatibility mirror. Keep
+  // the selector, title, and protocol-specific settings aligned when mappings
+  // are edited or reordered.
+  React.useEffect(() => {
+    if (
+      isL4ServiceMode(serviceMode) &&
+      portMappings[0]?.protocol &&
+      serviceMode !== portMappings[0].protocol
+    ) {
+      setServiceMode(portMappings[0].protocol);
+    }
+  }, [portMappings, serviceMode]);
+
+  const hasTCPMappings = portMappings.some(
+    (mapping) =>
+      mapping.protocol === ServiceMode.TCP ||
+      mapping.protocol === ServiceMode.TLS,
+  );
+  const hasUDPMappings = portMappings.some(
+    (mapping) => mapping.protocol === ServiceMode.UDP,
   );
 
   // CIDR detection for L4 subnet resources
@@ -188,18 +240,27 @@ export default function ReverseProxyModal({
     reverseProxy?.targets?.[0]?.options?.proxy_protocol ?? false,
   );
 
-  const [timeoutOption, setTimeoutOption] = useState(
-    reverseProxy?.targets?.[0]?.options?.request_timeout ??
-      reverseProxy?.targets?.[0]?.options?.session_idle_timeout ??
-      "",
+  const [connectionTimeoutOption, setConnectionTimeoutOption] = useState(
+    reverseProxy?.targets?.[0]?.options?.request_timeout ?? "",
+  );
+  const [udpSessionTimeoutOption, setUDPSessionTimeoutOption] = useState(
+    reverseProxy?.targets?.[0]?.options?.session_idle_timeout ?? "",
   );
 
-  const timeoutError = useMemo(() => {
-    if (!timeoutOption) return undefined;
-    return serviceMode === ServiceMode.UDP
-      ? validateSessionIdleTimeout(timeoutOption)
-      : validateTimeout(timeoutOption);
-  }, [timeoutOption, serviceMode]);
+  const connectionTimeoutError = useMemo(
+    () =>
+      connectionTimeoutOption
+        ? validateTimeout(connectionTimeoutOption)
+        : undefined,
+    [connectionTimeoutOption],
+  );
+  const udpSessionTimeoutError = useMemo(
+    () =>
+      udpSessionTimeoutOption
+        ? validateSessionIdleTimeout(udpSessionTimeoutOption)
+        : undefined,
+    [udpSessionTimeoutOption],
+  );
 
   const [targets, setTargets] = useState<ReverseProxyTarget[]>(
     reverseProxy?.targets || [],
@@ -248,12 +309,14 @@ export default function ReverseProxyModal({
     [domains, baseDomain],
   );
 
-  // Whether a custom listen port is supported (TLS always, TCP/UDP only when cluster supports it)
-  const isListenPortSupported = useMemo(() => {
-    if (serviceMode !== ServiceMode.TCP && serviceMode !== ServiceMode.UDP)
-      return true;
-    return selectedDomain?.supports_custom_ports ?? false;
-  }, [selectedDomain, serviceMode]);
+  const supportsCustomPorts = selectedDomain?.supports_custom_ports ?? false;
+  const portMappingErrors = useMemo(
+    () => getPortMappingErrors(portMappings, supportsCustomPorts),
+    [portMappings, supportsCustomPorts],
+  );
+  const portMappingsValid = portMappingErrors.every(
+    (mappingErrors) => mappingErrors.length === 0,
+  );
 
   const [passHostHeader, setPassHostHeader] = useState(
     reverseProxy?.pass_host_header ?? false,
@@ -284,13 +347,10 @@ export default function ReverseProxyModal({
   // Access groups for NetBird-only services. Distinct from bearerGroups
   // (which gates SSO callers); these groups gate inbound peers on
   // private services and feed the auto-generated private-access policy.
-  const [
-    accessGroups,
-    setAccessGroups,
-    { save: saveAccessGroups },
-  ] = useGroupHelper({
-    initial: reverseProxy?.access_groups ?? [],
-  });
+  const [accessGroups, setAccessGroups, { save: saveAccessGroups }] =
+    useGroupHelper({
+      initial: reverseProxy?.access_groups ?? [],
+    });
 
   // Direct upstream is service-level in the UI; on save it patches the
   // (single) cluster target's options.direct_upstream. Defaults off for
@@ -298,9 +358,8 @@ export default function ReverseProxyModal({
   // effectiveDirectUpstream below since they have no WireGuard endpoint
   // to fall back to.
   const [directUpstream, setDirectUpstream] = useState<boolean>(
-    reverseProxy?.targets?.some(
-      (t) => t.options?.direct_upstream === true,
-    ) ?? false,
+    reverseProxy?.targets?.some((t) => t.options?.direct_upstream === true) ??
+      false,
   );
 
   // Cluster targets are reached over the embedded proxy's host stack —
@@ -308,10 +367,7 @@ export default function ReverseProxyModal({
   // WireGuard tunnel they have no other endpoint for, so we force the
   // toggle on and lock it whenever any target is a cluster.
   const hasClusterTarget = useMemo(
-    () =>
-      targets.some(
-        (t) => t.target_type === ReverseProxyTargetType.CLUSTER,
-      ),
+    () => targets.some((t) => t.target_type === ReverseProxyTargetType.CLUSTER),
     [targets],
   );
   const effectiveDirectUpstream = hasClusterTarget || directUpstream;
@@ -366,21 +422,19 @@ export default function ReverseProxyModal({
   // (auth, access control, advanced) — including reaching the Auth tab
   // to enable bearer auth for a private service.
   const canContinueToSettings = useMemo(() => {
-    const subdomainRequired =
-      selectedDomain?.require_subdomain === true;
+    const subdomainRequired = selectedDomain?.require_subdomain === true;
     const isSubdomainValid =
       baseDomain.length > 0 &&
       !domainAlreadyExists &&
       (subdomain.length > 0 || !subdomainRequired);
-    const isValidPort = (port: number) => port >= 1 && port <= 65535;
     const hasHttpEndpoint = !isL4Mode && targets.length > 0;
     const hasL4Endpoint =
       !isPrivate &&
       isL4Mode &&
       !!l4Target &&
       l4IsValidCidrHost &&
-      isValidPort(port) &&
-      (!isListenPortSupported || isValidPort(listenPort));
+      portMappings.length > 0 &&
+      portMappingsValid;
     const hasAnyEndpoint = hasHttpEndpoint || hasL4Endpoint;
     return isSubdomainValid && hasAnyEndpoint;
   }, [
@@ -393,9 +447,8 @@ export default function ReverseProxyModal({
     isL4Mode,
     l4Target,
     l4IsValidCidrHost,
-    port,
-    isListenPortSupported,
-    listenPort,
+    portMappings.length,
+    portMappingsValid,
     isPrivate,
   ]);
 
@@ -486,34 +539,30 @@ export default function ReverseProxyModal({
         : [],
     };
 
-    const l4TargetPayload: ReverseProxyTarget | undefined = l4Target
-      ? {
-          target_id: l4Target?.peerId || l4Target?.resourceId || "",
-          target_type: l4Target?.type,
-          port: port,
-          protocol:
-            serviceMode === ServiceMode.TLS
-              ? ReverseProxyTargetProtocol.TCP
-              : serviceMode === ServiceMode.UDP
-              ? ReverseProxyTargetProtocol.UDP
-              : ReverseProxyTargetProtocol.TCP,
-          host: l4IsCidrRange ? l4Target?.host : undefined,
-          enabled: true,
-          options: (() => {
-            const opts: Record<string, unknown> = {};
-            if (serviceMode !== ServiceMode.UDP && proxyProtocol)
-              opts.proxy_protocol = true;
-            if (timeoutOption) {
-              opts[
-                serviceMode === ServiceMode.UDP
-                  ? "session_idle_timeout"
-                  : "request_timeout"
-              ] = timeoutOption;
-            }
-            return Object.keys(opts).length ? opts : undefined;
-          })(),
-        }
-      : undefined;
+    const primaryMapping = portMappings[0];
+    const l4TargetPayload: ReverseProxyTarget | undefined =
+      l4Target && primaryMapping
+        ? {
+            target_id: l4Target?.peerId || l4Target?.resourceId || "",
+            target_type: l4Target?.type,
+            port: primaryMapping.target_port_start,
+            protocol:
+              primaryMapping.protocol === ServiceMode.UDP
+                ? ReverseProxyTargetProtocol.UDP
+                : ReverseProxyTargetProtocol.TCP,
+            host: l4IsCidrRange ? l4Target?.host : undefined,
+            enabled: true,
+            options: (() => {
+              const opts: Record<string, unknown> = {};
+              if (hasTCPMappings && proxyProtocol) opts.proxy_protocol = true;
+              if (hasTCPMappings && connectionTimeoutOption)
+                opts.request_timeout = connectionTimeoutOption;
+              if (hasUDPMappings && udpSessionTimeoutOption)
+                opts.session_idle_timeout = udpSessionTimeoutOption;
+              return Object.keys(opts).length ? opts : undefined;
+            })(),
+          }
+        : undefined;
 
     const rawSubmittedTargets =
       isL4Mode && l4TargetPayload ? [l4TargetPayload] : targets;
@@ -533,13 +582,21 @@ export default function ReverseProxyModal({
         }))
       : rawSubmittedTargets;
 
+    const canSendPortMappings = portMappings.every(
+      (mapping) => mapping.protocol === ServiceMode.TLS || supportsCustomPorts,
+    );
+
     handleCreateOrUpdateProxy({
       data: {
         name: fullDomain,
         domain: fullDomain,
-        mode: isL4Mode ? (serviceMode as ServiceMode) : undefined,
+        mode: isL4Mode ? effectiveL4Mode : undefined,
         listen_port:
-          isL4Mode && isListenPortSupported ? listenPort : undefined,
+          isL4Mode && canSendPortMappings
+            ? primaryMapping?.listen_port_start
+            : undefined,
+        port_mappings:
+          isL4Mode && canSendPortMappings ? portMappings : undefined,
         targets: submittedTargets,
         enabled: reverseProxy?.enabled ?? true,
         pass_host_header: isL4Mode ? undefined : passHostHeader,
@@ -576,7 +633,9 @@ export default function ReverseProxyModal({
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
       <ModalContent
-        maxWidthClass={tab === "service" ? "max-w-xl" : "max-w-2xl"}
+        maxWidthClass={
+          isL4Mode ? "max-w-3xl" : tab === "service" ? "max-w-xl" : "max-w-2xl"
+        }
       >
         <ModalHeader
           icon={<ReverseProxyIcon className={"fill-netbird"} size={18} />}
@@ -637,7 +696,22 @@ export default function ReverseProxyModal({
 
               {!reverseProxy && !isPrivate && (
                 <ReverseProxyServiceModeSelector
-                  onChange={setServiceMode}
+                  onChange={(nextMode) => {
+                    const wasL4 = isL4ServiceMode(serviceMode);
+                    setServiceMode(nextMode);
+                    if (isL4ServiceMode(nextMode)) {
+                      const protocol =
+                        nextMode as ReverseProxyPortMapping["protocol"];
+                      setPortMappings((current) => {
+                        if (!wasL4 || current.length === 0) {
+                          return [emptyPortMapping(protocol)];
+                        }
+                        return current.map((mapping, index) =>
+                          index === 0 ? { ...mapping, protocol } : mapping,
+                        );
+                      });
+                    }
+                  }}
                   value={serviceMode}
                   domain={selectedDomain}
                 />
@@ -645,8 +719,8 @@ export default function ReverseProxyModal({
 
               {isPrivate && accessGroups.length === 0 && (
                 <Paragraph className={"!text-yellow-400 !text-xs !mt-0"}>
-                  NetBird-only is on but no access groups are set. Open it
-                  on the Authentication tab and pick at least one group.
+                  NetBird-only is on but no access groups are set. Open it on
+                  the Authentication tab and pick at least one group.
                 </Paragraph>
               )}
 
@@ -654,11 +728,10 @@ export default function ReverseProxyModal({
                 <ReverseProxyLayer4Content
                   l4Target={l4Target}
                   setL4Target={setL4Target}
-                  isListenPortSupported={isListenPortSupported}
-                  listenPort={listenPort}
-                  setListenPort={setListenPort}
-                  port={port}
-                  setPort={setPort}
+                  supportsCustomPorts={supportsCustomPorts}
+                  portMappings={portMappings}
+                  setPortMappings={setPortMappings}
+                  defaultProtocol={effectiveL4Mode}
                   initialResource={initialResource}
                   initialPeer={initialPeer}
                   initialNetwork={initialNetwork}
@@ -711,11 +784,11 @@ export default function ReverseProxyModal({
                       className={"w-full"}
                       content={
                         <div className={"text-xs max-w-xs"}>
-                          NetBird-Only Access requires a proxy cluster with
-                          at least one connected embedded proxy (
+                          NetBird-Only Access requires a proxy cluster with at
+                          least one connected embedded proxy (
                           <code>netbird proxy</code>). The selected cluster
-                          doesn't have one. Connect an embedded proxy to
-                          this cluster to enable this option.
+                          doesn't have one. Connect an embedded proxy to this
+                          cluster to enable this option.
                         </div>
                       }
                     >
@@ -804,9 +877,9 @@ export default function ReverseProxyModal({
                     />
                   }
                 >
-                  This service is accessible via NetBird only. An allow rule
-                  for the NetBird network range is applied by default. Any
-                  rules you add here are layered on top.
+                  This service is accessible via NetBird only. An allow rule for
+                  the NetBird network range is applied by default. Any rules you
+                  add here are layered on top.
                 </Callout>
               )}
               <ReverseProxyAccessControlRules
@@ -820,74 +893,79 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"settings"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-6"}>
-              {(serviceMode === ServiceMode.TCP ||
-                serviceMode === ServiceMode.TLS) && (
-                  <FancyToggleSwitch
-                    value={proxyProtocol}
-                    onChange={setProxyProtocol}
-                    data-testid="toggle-preserve-client-ip"
-                    label={
-                      <>
-                        <MapPinned size={15} />
-                        Preserve Client Source IP
-                      </>
-                    }
-                    helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
-                  />
+              {isL4Mode && hasTCPMappings && (
+                <FancyToggleSwitch
+                  value={proxyProtocol}
+                  onChange={setProxyProtocol}
+                  data-testid="toggle-preserve-client-ip"
+                  label={
+                    <>
+                      <MapPinned size={15} />
+                      Preserve Client Source IP
+                    </>
+                  }
+                  helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
+                />
               )}
 
-              {isL4Mode && (
-                <>
-                  <div className={"flex items-center justify-between"}>
-                    <div>
-                      <Label>
-                        {serviceMode === ServiceMode.UDP
-                          ? "Session Idle Timeout"
-                          : "Connection Timeout"}
-                      </Label>
-                      <HelpText className={"mb-0"}>
-                        {serviceMode === ServiceMode.UDP ? (
-                          <>
-                            Close the UDP session after this period of
-                            inactivity.
-                            <br /> Leave this field empty for no timeout.
-                          </>
-                        ) : (
-                          <>
-                            Timeout for establishing backend connections. <br />{" "}
-                            Leave this field empty for no timeout.
-                          </>
-                        )}
-                      </HelpText>
-                    </div>
-                    <Input
-                      customPrefix={<ClockFadingIcon size={16} />}
-                      placeholder="e.g. 10s, 30s, 1m"
-                      value={timeoutOption}
-                      onChange={(e) => setTimeoutOption(e.target.value)}
-                      maxWidthClass="w-[180px]"
-                      errorTooltip={true}
-                      error={timeoutError}
-                      data-testid="connection-timeout-input"
-                    />
+              {isL4Mode && hasTCPMappings && (
+                <div className={"flex items-center justify-between"}>
+                  <div>
+                    <Label>Connection Timeout</Label>
+                    <HelpText className={"mb-0"}>
+                      Timeout for establishing TCP/TLS backend connections.
+                      <br /> Leave this field empty for no timeout.
+                    </HelpText>
                   </div>
-                </>
+                  <Input
+                    customPrefix={<ClockFadingIcon size={16} />}
+                    placeholder="e.g. 10s, 30s, 1m"
+                    value={connectionTimeoutOption}
+                    onChange={(e) => setConnectionTimeoutOption(e.target.value)}
+                    maxWidthClass="w-[180px]"
+                    errorTooltip={true}
+                    error={connectionTimeoutError}
+                    data-testid="connection-timeout-input"
+                  />
+                </div>
+              )}
+
+              {isL4Mode && hasUDPMappings && (
+                <div className={"flex items-center justify-between"}>
+                  <div>
+                    <Label>UDP Session Idle Timeout</Label>
+                    <HelpText className={"mb-0"}>
+                      Close UDP sessions after this period of inactivity.
+                      <br /> Leave this field empty for no timeout.
+                    </HelpText>
+                  </div>
+                  <Input
+                    customPrefix={<ClockFadingIcon size={16} />}
+                    placeholder="e.g. 10s, 30s, 1m"
+                    value={udpSessionTimeoutOption}
+                    onChange={(e) => setUDPSessionTimeoutOption(e.target.value)}
+                    maxWidthClass="w-[180px]"
+                    errorTooltip={true}
+                    error={udpSessionTimeoutError}
+                    data-testid="udp-session-timeout-input"
+                  />
+                </div>
               )}
 
               {!isL4Mode && (
                 <div className={"flex flex-col gap-4"}>
                   <FancyToggleSwitch
-                      value={passHostHeader}
-                      onChange={setPassHostHeader}
-                      data-testid="toggle-pass-host-header"
-                      label={
-                        <>
-                          <GlobeIcon size={15} />
-                          Pass Host Header
-                        </>
-                      }
-                      helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
-                    />
+                    value={passHostHeader}
+                    onChange={setPassHostHeader}
+                    data-testid="toggle-pass-host-header"
+                    label={
+                      <>
+                        <GlobeIcon size={15} />
+                        Pass Host Header
+                      </>
+                    }
+                    helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
+                  />
                   <FancyToggleSwitch
                     value={rewriteRedirects}
                     onChange={setRewriteRedirects}
@@ -1043,7 +1121,8 @@ export default function ReverseProxyModal({
                       disabled={
                         !canSaveService ||
                         !permission?.services?.create ||
-                        !!timeoutError ||
+                        !!connectionTimeoutError ||
+                        !!udpSessionTimeoutError ||
                         accessControlHasErrors
                       }
                       onClick={handleSubmit}
@@ -1065,7 +1144,8 @@ export default function ReverseProxyModal({
                   disabled={
                     !canSaveService ||
                     !permission?.services?.update ||
-                    !!timeoutError ||
+                    !!connectionTimeoutError ||
+                    !!udpSessionTimeoutError ||
                     accessControlHasErrors
                   }
                   onClick={handleSubmit}
@@ -1093,7 +1173,8 @@ export default function ReverseProxyModal({
           id: reverseProxy?.id || "",
           name: fullDomain,
           domain: fullDomain,
-          proxy_cluster: selectedDomain?.target_cluster || baseDomain || undefined,
+          proxy_cluster:
+            selectedDomain?.target_cluster || baseDomain || undefined,
           targets: targets,
           enabled: reverseProxy?.enabled ?? true,
           mode: serviceMode,
