@@ -16,7 +16,7 @@ import {
 import { getNextNewGroupName } from "@/modules/control-center/hooks/useDraftGroupActions";
 import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
-import type { Policy } from "@/interfaces/Policy";
+import type { Policy, Protocol } from "@/interfaces/Policy";
 import type { Network } from "@/interfaces/Network";
 
 const getNextPlaceholderName = (
@@ -128,7 +128,13 @@ export function useDraftNodeCreation() {
       // Names it at birth (the assistant always does). Naming a policy after
       // creating it means a second write against state the first hasn't
       // committed — and a node still showing "Policy (1)" if that races.
-      preset?: { name?: string; description?: string; bidirectional?: boolean },
+      preset?: {
+        name?: string;
+        description?: string;
+        bidirectional?: boolean;
+        protocol?: Protocol;
+        ports?: string[];
+      },
     ) => {
       const name =
         preset?.name?.trim() || getNextPolicyName(policies, reactFlow.getNodes());
@@ -151,8 +157,19 @@ export function useDraftNodeCreation() {
             // the canvas would show two lines it then has to take back.
             bidirectional: preset?.bidirectional ?? true,
             action: "accept",
-            protocol: "all",
-            ports: [],
+            /*
+              Born narrow when the caller knows the service, for the same
+              reason as `bidirectional` above: narrowing afterwards is a second
+              write against state the first has not committed, and it leaves a
+              window where the canvas shows a rule open to everything that the
+              next call has to take back.
+            */
+            protocol: preset?.protocol ?? "all",
+            // Ports mean nothing outside tcp/udp and the API rejects them there.
+            ports:
+              preset?.protocol === "tcp" || preset?.protocol === "udp"
+                ? (preset?.ports ?? [])
+                : [],
           },
         ],
         source_posture_checks: [],
