@@ -600,6 +600,22 @@ function buildApi(deps: Deps): CanvasAgentApi {
     edit: AgentPolicyEdit,
     final = false,
   ): Promise<AgentStepResult> => {
+    /*
+      Settle BEFORE reading the canvas, and re-read `deps()` afterwards.
+
+      `editPolicy` is a read-modify-write on `node.data.policy`, and so is every
+      `connect` — each takes the whole policy, changes one part and writes it
+      back. A batch normally arrives as add, connect, connect, policy in one
+      message, so without a flush in between this read sees the policy as it was
+      before the connects landed. The write that lands last then wins, and the
+      symptom is a draft with its sources and destinations intact and its
+      protocol and ports quietly back at "all" — the assistant having truthfully
+      called the tool and the canvas having dropped the result.
+
+      The `add` path already polls with `settle()` for the same reason. This one
+      did not, which is the whole bug.
+    */
+    await settle();
     const d = deps();
     const blocked = requireDraft(d);
     if (blocked) return blocked;
@@ -847,6 +863,8 @@ async function addOne(
         name,
         description: item.description,
         bidirectional: item.bidirectional,
+        protocol: item.protocol,
+        ports: item.ports,
       });
       // The node lands in reactFlow only after React commits; one settle tick
       // is not guaranteed to run after that, so poll briefly for it.
@@ -856,12 +874,31 @@ async function addOne(
         created = d.reactFlow.getNodes().find((n) => !before.has(n.id));
         if (!created) await wait(25);
       }
+      /*
+        The rule's current state is stated here, not left implied.
+
+        A policy the caller did not narrow starts at all protocols and all
+        ports, and the guidance to narrow it lives in a skill the model may
+        have read many turns ago. That produced the failure worth designing
+        against: a draft left wide open while the message above it described a
+        narrow rule the model had only intended. A tool result is read in the
+        moment, so saying what the rule actually holds makes the gap between
+        the draft and the claim much harder to miss.
+      */
+      const narrowed = item.protocol && item.protocol !== "all";
+      const holds = narrowed
+        ? `${item.protocol}${
+            item.ports?.length ? ` on ${item.ports.join(", ")}` : ", all ports"
+          }`
+        : "ALL protocols on ALL ports";
       return ok(
-        `Added an empty ${
+        `Added a${narrowed ? "" : "n empty"} ${
           item.bidirectional === false ? "one-way " : ""
-        }policy${
-          name ? ` “${name}”` : ""
-        }. Connect a source and a destination to it — a policy with only one side never deploys.`,
+        }policy${name ? ` “${name}”` : ""}. It allows ${holds}${
+          narrowed
+            ? ""
+            : " — call control_center_policy to narrow it before you describe it to the user"
+        }. Connect a source and a destination to it: a policy with only one side never deploys.`,
         created?.id,
       );
     }
@@ -1617,11 +1654,34 @@ function editPolicy(edit: AgentPolicyEdit, d: BridgeDeps): AgentStepResult {
     );
   }
 
+  // TEMP DIAGNOSTIC — remove once the protocol-display bug is settled.
+  console.info(
+    "[ccdiag] editPolicy " +
+      JSON.stringify({
+        node: edit.node,
+        editProtocol: edit.protocol,
+        editPorts: edit.ports,
+        nextProtocol: next.rules?.[0]?.protocol,
+        policyId: next.id,
+      }),
+  );
+
   d.updateDraftPolicy(next);
+
+  /*
+    Report the rule as it now stands, not the edit that was asked for. The
+    model describes the draft from these results, and a bare "Updated policy X"
+    let it narrate its own intent — it said it had made the rule TCP whether or
+    not the protocol survived the write. Echoing the landed values gives it
+    something that can contradict it.
+  */
+  const landed = `${protocol}${
+    ports.length > 0 ? ` on ${ports.join(", ")}` : ", all ports"
+  }${next.rules?.[0]?.bidirectional ? ", both directions" : ""}`;
   return ok(
     `Updated policy “${next.name}”${
       edit.enabled === false ? " (disabled)" : ""
-    }.`,
+    } — it now allows ${landed}.`,
     node.id,
   );
 }

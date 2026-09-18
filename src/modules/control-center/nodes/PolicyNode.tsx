@@ -19,6 +19,16 @@ type PolicyNode = Node<
 export const PolicyNode = ({ data, id }: PolicyNode) => {
   const rule = data.policy.rules?.[0];
   const label = getPolicyProtocolAndPortText(data.policy);
+  // TEMP DIAGNOSTIC — what this node is rendering, at render time.
+  console.info(
+    "[ccdiag] PolicyNode render " +
+      JSON.stringify({
+        id,
+        label,
+        protocol: rule?.protocol,
+        ports: rule?.ports,
+      }),
+  );
   const isActive = rule?.enabled;
   const { isDraft } = useDraftMode();
   const isDropTarget = useConnection(

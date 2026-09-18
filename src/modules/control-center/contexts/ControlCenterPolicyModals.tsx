@@ -1,7 +1,7 @@
 "use client";
 
 import { Modal } from "@components/modal/Modal";
-import { useReactFlow, XYPosition } from "@xyflow/react";
+import { Edge, Node, useReactFlow, XYPosition } from "@xyflow/react";
 import { sortBy } from "lodash";
 import React, {
   createContext,
@@ -220,6 +220,11 @@ export function ControlCenterPolicyProvider({
   // The policy's edges are replaced wholesale: an edit can change either side.
   const drawPolicyOnCanvas = (policy: Policy, fallbackPosition?: XYPosition) => {
     const rule = policy?.rules?.[0];
+    // TEMP DIAGNOSTIC — remove once the protocol-display bug is settled.
+    console.info(
+      "[ccdiag] drawPolicyOnCanvas " +
+        JSON.stringify({ id: policy?.id, protocol: rule?.protocol, noRule: !rule }),
+    );
     if (!rule) return;
 
     const enabled = policy?.enabled;
@@ -538,17 +543,57 @@ export function ControlCenterPolicyProvider({
       pushEdge(`${policyNodeId}-${destId}`, policyNodeId, destId);
     }
 
+    /*
+      Write through the CONTROLLED state, not `reactFlow.setNodes`.
+
+      `<ReactFlow nodes={canvas.nodes} …>` is controlled by `useNodesState`, so
+      that array is the source of truth and React Flow syncs it into its own
+      store whenever the reference changes. A programmatic `reactFlow.setNodes`
+      reaches the store but never the array and emits no `onNodesChange`, so the
+      next sync silently reinstates the node as the array still has it.
+
+      That is why narrowing a policy looked like it did nothing: the changeset
+      recorded tcp/25565 correctly — it is React state — while the policy node
+      on the canvas snapped back to "All", because the data update lived only in
+      the store and the array it was re-synced from had never heard about it.
+    */
+    /*
+      One writer, and idempotent.
+
+      This goes through `reactFlow.setNodes`/`setEdges` ONLY. React Flow batches
+      the resulting changes and replays them onto the controlled `useNodesState`
+      array through `onNodesChange` in a layout effect, so the array follows on
+      its own — and a second, direct write to that array races the replay rather
+      than reinforcing it. That race is what made a narrowed policy flash the
+      right rule for one commit and revert: the direct write landed tcp, then
+      the queued `replace` change, holding the node as it was when the store
+      write happened, put "all" back. Writing edges from both paths duplicated
+      them too, which is where the "two children with the same key" warnings
+      and the stray lines across the canvas came from.
+
+      The updaters stay idempotent because they can run against an array that
+      already holds part of the result.
+    */
+    const byId = <T extends { id: string }>(items: T[]) => {
+      const seen = new Set<string>();
+      return items.filter((i) => !seen.has(i.id) && seen.add(i.id));
+    };
+
     reactFlow.setNodes((prev) =>
-      prev
-        .map((n) =>
-          n.id === policyNodeId ? { ...n, data: { ...n.data, policy } } : n,
-        )
-        .concat(newNodes),
+      byId(
+        prev
+          .map((n) =>
+            n.id === policyNodeId ? { ...n, data: { ...n.data, policy } } : n,
+          )
+          .concat(newNodes),
+      ),
     );
     reactFlow.setEdges((prev) =>
-      prev
-        .filter((e) => e.source !== policyNodeId && e.target !== policyNodeId)
-        .concat(policyEdges),
+      byId(
+        prev
+          .filter((e) => e.source !== policyNodeId && e.target !== policyNodeId)
+          .concat(policyEdges),
+      ),
     );
   };
 
@@ -595,6 +640,18 @@ export function ControlCenterPolicyProvider({
     isTrackablePolicy(policy, trackedResourceClientIds);
 
   const updateDraftPolicy = (policy: Policy) => {
+    // TEMP DIAGNOSTIC — remove once the protocol-display bug is settled.
+    console.info(
+      "[ccdiag] updateDraftPolicy " +
+        JSON.stringify({
+          id: policy.id,
+          protocol: policy.rules?.[0]?.protocol,
+          complete: isCompletePolicy(policy),
+          hasCreate: changes.some(
+            (c) => c.type === "create-policy" && c.clientId === policy.id,
+          ),
+        }),
+    );
     if (!policy.id) return;
     ensureDraftGroupChanges(policy);
     if (policy.id.startsWith("new-")) {
