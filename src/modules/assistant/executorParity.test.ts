@@ -5,14 +5,19 @@ import {
 } from "@netbird/assistant-react";
 import { describe, expect, it } from "vitest";
 import { openPageExecutor } from "@/modules/assistant/openPageExecutor";
+import { createSSHRunCommandExecutor } from "@/modules/assistant/sshRunCommandExecutor";
 
 // Fulfilled inside the SDK's client-tool loop (useClientToolLoop), which
 // exports no list to assert against.
-const SDK_BUILTIN = new Set(["ask_user"]);
+const SDK_BUILTIN = new Set(["ask_user_question"]);
 
 // What the dashboard registers via the provider's extraExecutors.
 const LOCAL_EXECUTORS: Record<string, unknown> = {
   dashboard_page_redirect: openPageExecutor,
+  // Composed per render in AssistantChatPanel because it needs the agent
+  // origin, the bearer resolver and the WASM client; the factory is what this
+  // file can name, and registering it there is what this asserts.
+  ssh_run_command: createSSHRunCommandExecutor,
 };
 
 describe("client tool executors", () => {

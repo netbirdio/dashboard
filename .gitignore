@@ -51,7 +51,7 @@ playwright-report*.zip
 .configs
 
 /public/ironrdp-pkg/
-/public/netbird.wasm
+/public/netbird.wasm*
 .idea
 src/.local-config*
 .deepsec/

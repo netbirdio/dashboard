@@ -13,7 +13,7 @@ export function AssistantButton() {
   return (
     <Button
       size={"xs"}
-      variant={"default-outline"}
+      variant={"default"}
       onClick={toggle}
       aria-expanded={open}
       aria-label={open ? "Close the assistant" : "Open the NetBird assistant"}
@@ -24,7 +24,7 @@ export function AssistantButton() {
       )}
     >
       <AssistantIcon size={16} />
-      <span className="hidden sm:inline">Ask</span>
+      <span className="hidden sm:inline">Assistant</span>
     </Button>
   );
 }

@@ -1,4 +1,4 @@
-// The card for a pending ask_user question: answer, dismiss, or just type.
+// The card for a pending ask_user_question: answer, dismiss, or just type.
 "use client";
 
 import {
