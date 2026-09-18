@@ -33,10 +33,10 @@ import {
  * ## One prompt, both questions
  *
  * It shows the command every time and asks for a sign-in only the first time
- * for a given peer. That ordering is the point: eve's own `approval` parks a
- * tool call BEFORE it runs, so it could only ever ask about the command first
- * and leave the sign-in as a surprise afterwards. Asking here — once the peer
- * is resolved and it is known whether access already exists — puts both in
+ * for a given peer. That ordering is the point: the framework's own `approval`
+ * parks a tool call BEFORE it runs, so it could only ever ask about the command
+ * first and leave the sign-in as a surprise afterwards. Asking here — once the
+ * peer is resolved and it is known whether access already exists — puts both in
  * front of the user at the same moment.
  */
 export function AssistantAccessPrompt() {
