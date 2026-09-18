@@ -98,6 +98,9 @@ export default function Navigation({
       */}
       <div className={cn(fullWidth ? "w-10/12" : "relative z-0")}>
         <ScrollArea
+          // Vertical only: the rail's width is fixed, so any horizontal
+          // overflow is something to clip, never something to scroll.
+          scrollbars={"vertical"}
           style={{
             height: !fullWidth
               ? `calc(100vh - ${headerHeight + bannerHeight + inset * 2}px)`
@@ -109,9 +112,9 @@ export default function Navigation({
               // Clipped in both states, not just while collapsed: this column's
               // width is fixed, but an item's own min-content isn't — a long
               // label with a badge ("Agent Network" + Beta) can exceed 15rem and
-              // `whitespace-nowrap` forbids wrapping it. Unclipped, that overflow
-              // reaches the `ScrollArea` viewport, which scrolls rather than
-              // clips, and the rail grows a horizontal scrollbar.
+              // `whitespace-nowrap` forbids wrapping it. Clipping here keeps
+              // that overflow from widening the `ScrollArea`'s content box,
+              // which Radix sizes with `display: table` around this column.
               "flex flex-col pt-3 justify-between w-[15rem] max-w-[15rem] min-w-[15rem] overflow-x-clip transition-all",
               isNavigationCollapsed &&
                 "md:w-[64px] md:min-w-[64px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem]",

@@ -4,28 +4,47 @@ import * as React from "react";
 
 type AdditionalScrollAreaProps = {
   withoutViewport?: boolean;
+  /**
+   * Which axes may scroll. Radix derives the viewport's `overflow-x` /
+   * `overflow-y` from the scrollbars that are mounted, so dropping an axis
+   * here also stops the viewport from scrolling on it — the content is
+   * clipped instead. Use "vertical" for fixed-width columns, where a stray
+   * sub-pixel of horizontal overflow would otherwise grow a scrollbar.
+   */
+  scrollbars?: "both" | "vertical" | "horizontal";
 };
 
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> &
     AdditionalScrollAreaProps
->(({ className, children, withoutViewport = false, ...props }, ref) => (
-  <ScrollAreaPrimitive.Root
-    ref={ref}
-    className={cn("relative overflow-hidden", className)}
-    {...props}
-  >
-    {withoutViewport ? (
-      children
-    ) : (
-      <ScrollAreaViewport>{children}</ScrollAreaViewport>
-    )}
-    <ScrollBar orientation="horizontal" />
-    <ScrollBar orientation="vertical" />
-    <ScrollAreaPrimitive.Corner />
-  </ScrollAreaPrimitive.Root>
-));
+>(
+  (
+    {
+      className,
+      children,
+      withoutViewport = false,
+      scrollbars = "both",
+      ...props
+    },
+    ref,
+  ) => (
+    <ScrollAreaPrimitive.Root
+      ref={ref}
+      className={cn("relative overflow-hidden", className)}
+      {...props}
+    >
+      {withoutViewport ? (
+        children
+      ) : (
+        <ScrollAreaViewport>{children}</ScrollAreaViewport>
+      )}
+      {scrollbars !== "vertical" && <ScrollBar orientation="horizontal" />}
+      {scrollbars !== "horizontal" && <ScrollBar orientation="vertical" />}
+      <ScrollAreaPrimitive.Corner />
+    </ScrollAreaPrimitive.Root>
+  ),
+);
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 
 const ScrollAreaViewport = React.forwardRef<
