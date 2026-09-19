@@ -223,27 +223,15 @@ export function useApiCall<T>(
   };
 }
 
-// A blocked or unapproved user is an app-level routing decision, not one
-// call's failure: /error explains the status, and nothing else in the app can
-// load until they are approved. It therefore runs even for callers that ignore
-// errors — ignoreError means "do not raise a toast for this call", and letting
-// it swallow this left the dashboard on its loading screen forever, since the
-// caller identity it waits for is exactly what such a user is refused.
-const redirectOnUserStatus = (err: ErrorResponse): boolean => {
-  const isUserStatus =
-    err.code == 403 &&
-    (err.message?.toLowerCase().includes("blocked") ||
-      err.message?.toLowerCase().includes("pending"));
-  if (!isUserStatus) return false;
-
-  const params = new URLSearchParams({
-    code: err.code.toString(),
-    message: encodeURIComponent(err.message),
-    type: "user-status",
-  });
-  window.location.href = `/error?${params.toString()}`;
-  return true;
-};
+// Which screen a blocked or unapproved user belongs on is an app-level routing
+// decision, and it is made in UserProfileProvider from the responses rather
+// than here. Acting on whichever refused call landed first got it wrong: only
+// /users/current can tell a pending user from a blocked one on current
+// management, and only it names the owner who can approve them.
+//
+// Nothing else in the app can load for such a user either way, so the calls
+// that ignore errors still surface theirs — ignoreError means "do not raise a
+// toast for this call", not "swallow the reason the dashboard is empty".
 
 export function useApiErrorHandling(ignoreError = false) {
   const { login } = useOidc();
@@ -252,7 +240,6 @@ export function useApiErrorHandling(ignoreError = false) {
 
   if (ignoreError)
     return (err: ErrorResponse) => {
-      redirectOnUserStatus(err);
       console.log(err);
       return Promise.reject(err);
     };
@@ -268,7 +255,14 @@ export function useApiErrorHandling(ignoreError = false) {
       setError(err);
     }
 
-    if (redirectOnUserStatus(err)) {
+    // UserProfileProvider renders the screen for a blocked or unapproved user,
+    // so these must not also raise the error boundary over the top of it. The
+    // wording is management's — resolveRefusedUser there reads the same
+    // messages to decide which of the two screens it is.
+    if (
+      err.code == 403 &&
+      /pending approval|blocked/i.test(err.message ?? "")
+    ) {
       return Promise.reject(err);
     }
 
