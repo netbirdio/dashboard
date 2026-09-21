@@ -5,7 +5,7 @@ import {
 } from "@netbird/assistant-react";
 import { describe, expect, it } from "vitest";
 import { openPageExecutor } from "@/modules/assistant/openPageExecutor";
-import { createSSHRunCommandExecutor } from "@/modules/assistant/sshRunCommandExecutor";
+import { createSSHExecExecutor } from "@/modules/assistant/sshExecExecutor";
 
 // Fulfilled inside the SDK's client-tool loop (useClientToolLoop), which
 // exports no list to assert against.
@@ -17,7 +17,7 @@ const LOCAL_EXECUTORS: Record<string, unknown> = {
   // Composed per render in AssistantChatPanel because it needs the agent
   // origin, the bearer resolver and the WASM client; the factory is what this
   // file can name, and registering it there is what this asserts.
-  ssh_run_command: createSSHRunCommandExecutor,
+  ssh_exec: createSSHExecExecutor,
 };
 
 describe("client tool executors", () => {

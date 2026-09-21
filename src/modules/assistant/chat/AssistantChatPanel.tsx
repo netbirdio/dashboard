@@ -32,11 +32,14 @@ import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvide
 import { useContextChip } from "@/modules/assistant/chat/AssistantContextChip";
 import { AssistantThread } from "@/modules/assistant/chat/AssistantThread";
 import { openPageExecutor } from "@/modules/assistant/openPageExecutor";
-import { createSSHRunCommandExecutor } from "@/modules/assistant/sshRunCommandExecutor";
+import { createSSHExecExecutor } from "@/modules/assistant/sshExecExecutor";
 import { generateKeypair } from "@utils/wireguard";
 import { useNetBirdClient } from "@/modules/remote-access/useNetBirdClient";
 import { useApiCall } from "@utils/api";
-import { requestAccessAuthorization } from "@/modules/assistant/assistantAccessAuth";
+import {
+  requestCommandConfirmation,
+  requestPeerAuthorization,
+} from "@/modules/assistant/assistantAccessAuth";
 import type { Peer } from "@/interfaces/Peer";
 
 /*
@@ -232,12 +235,14 @@ export function AssistantChatPanel() {
       ...STATIC_EXECUTORS,
       /*
         One executor, because joining the network, taking access to the target
-        and running the command are one approved action. `connectTemporary` from
+        and running the command are one call — the user is asked about the
+        access and the command separately, but there is nothing between those
+        two answers for a second executor to do. `connectTemporary` from
         useNetBirdClient is deliberately not used: it returns early once
         connected, so it would grant access for the first peer only, and it
         hides the keypair that has to be reused for the second.
       */
-      ssh_run_command: createSSHRunCommandExecutor({
+      ssh_exec: createSSHExecExecutor({
         // The whole list, because the executor resolves a NAME and the model
         // cannot: peer names reach it as unlabelled tokens, and a typed FQDN
         // tokenises differently from the peer's own dns_label.
@@ -249,7 +254,9 @@ export function AssistantChatPanel() {
           window the user opens and signs in to is the whole point — see
           assistantAccessAuth.
         */
-        authorizeAccess: requestAccessAuthorization,
+        authorizePeer: requestPeerAuthorization,
+        // The second question, asked after that one and only about the command.
+        confirmCommand: requestCommandConfirmation,
         connect,
         createSSHConnection,
         detectSSHServerType,

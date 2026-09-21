@@ -224,40 +224,48 @@ export default function AssistantAccessPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-nb-gray-950 px-8">
+      {/* The gap here spaces the BLOCKS — icon, wording, button. A title and
+          the sentence explaining it are one block, so they are wrapped and
+          spaced tighter inside; at the outer gap they read as two unrelated
+          lines that happen to be stacked. */}
       <div className="flex max-w-md flex-col items-center gap-4 text-center">
         {state === "working" && (
           <>
             <Loader2Icon className="animate-spin text-netbird" size={32} />
-            <h1 className="text-lg font-medium text-nb-gray-100">
-              {reauthenticated ? "Granting access" : "Confirming it's you"}
-            </h1>
-            <p className="text-sm text-nb-gray-300">
-              {reauthenticated
-                ? `Giving the assistant temporary SSH access to ${peerLabel}.`
-                : "Signing you in again before anything is granted."}
-            </p>
+            <div className="flex flex-col gap-1.5">
+              <h1 className="text-lg font-medium text-nb-gray-100">
+                {reauthenticated ? "Granting access" : "Confirming it's you"}
+              </h1>
+              <p className="text-sm text-nb-gray-300">
+                {reauthenticated
+                  ? `Giving the assistant temporary SSH access to ${peerLabel}.`
+                  : "Signing you in again before anything is granted."}
+              </p>
+            </div>
           </>
         )}
 
         {state === "granted" && (
           <>
             <CheckCircle2Icon className="text-green-500" size={32} />
-            <h1 className="text-lg font-medium text-nb-gray-100">
-              Successfully Authorized
-            </h1>
-            {/* Names the machine: this is the one moment the person is shown
-                what they just granted access to. */}
-            <p className="text-sm text-nb-gray-300">
-              The access covers {peerLabel} only, and ends when the assistant
-              disconnects.
-            </p>
+            <div className="flex flex-col gap-1.5">
+              <h1 className="text-lg font-medium text-nb-gray-100">
+                Successfully Authorized
+              </h1>
+              {/* Names the machine: this is the one moment the person is shown
+                  what they just granted access to. */}
+              <p className="text-sm text-nb-gray-300">
+                The access covers {peerLabel} only, and ends when the assistant
+                disconnects.
+              </p>
+            </div>
             {/* Only once the window has tried and failed to close itself —
                 otherwise this is a button that disappears as it is read. */}
             {closeRefused && (
               <button
                 type="button"
                 onClick={() => window.close()}
-                className="mt-2 rounded-md bg-netbird px-4 py-2 text-sm font-medium text-white"
+                className="rounded-md bg-netbird px-4 py-2 text-sm font-medium text-white"
               >
                 Close
               </button>
@@ -268,13 +276,15 @@ export default function AssistantAccessPage() {
         {state === "failed" && (
           <>
             <CircleXIcon className="text-red-500" size={32} />
-            <h1 className="text-lg font-medium text-nb-gray-100">
-              Authorization Failed
-            </h1>
-            <p className="text-sm text-nb-gray-300">
-              {error} You can close this window; the assistant has been told it
-              was refused.
-            </p>
+            <div className="flex flex-col gap-1.5">
+              <h1 className="text-lg font-medium text-nb-gray-100">
+                Authorization Failed
+              </h1>
+              <p className="text-sm text-nb-gray-300">
+                {error} You can close this window; the assistant has been told
+                it was refused.
+              </p>
+            </div>
           </>
         )}
       </div>

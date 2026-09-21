@@ -3,8 +3,7 @@
 
 import {
   CONTROL_CENTER_TOOLS,
-  describeControlCenterTool,
-  toolLabel,
+  describeToolCall,
   useVaultRestore,
 } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
@@ -30,6 +29,17 @@ function subjectOf(toolName: string, args: unknown): string | null {
   if (toolName === "dashboard_page_redirect") {
     const target = navigateToPage({ ...args });
     return "href" in target ? target.href : null;
+  }
+
+  /*
+    Named, not found. A peer command's subject is the machine, and the
+    first-string rule only happened to return it while `peer` was the first
+    field the model wrote — `summary` is a string too, and a call that emitted
+    it first would have put the row's own label in its subject slot.
+  */
+  if (toolName === "ssh_exec") {
+    const peer = (args as { peer?: unknown }).peer;
+    return typeof peer === "string" && peer.trim() ? peer.trim() : null;
   }
 
   for (const value of Object.values(args as Record<string, unknown>)) {
@@ -91,14 +101,40 @@ export function AssistantToolActivity({
   const request = restoreOr(asJson(args), restore);
   const outcome = restoreOr(formatResult(result), restore);
   const expandable = Boolean(request || outcome);
-  // The canvas tools name their own move and subject — the generic first-string
-  // rule surfaced raw enums ('new_empty') and half a connection.
-  const activity = CONTROL_CENTER_TOOLS[toolName]
-    ? describeControlCenterTool(toolName, args)
-    : null;
-  const subject = activity
+  /*
+    How the row reads. The canvas tools name their own move, a peer command may
+    carry the agent's own summary of what it does, and everything else takes
+    the manifest's fixed label.
+  */
+  const described = describeToolCall(toolName, args, running);
+  /*
+    The canvas tools also name their own SUBJECT, so the generic first-string
+    rule is skipped for them — it surfaced raw enums ('new_empty') and half a
+    connection. Every other tool still shows it, a summary or not: on a peer
+    command that subject is the peer, which is the one thing a row about a
+    remote machine cannot leave out.
+  */
+  const subject = CONTROL_CENTER_TOOLS[toolName]
     ? null
-    : restoreOr(subjectOf(toolName, args), restore);
+    : subjectOf(toolName, args);
+  /*
+    One string, not three spans.
+
+    The label, the preposition and the quoted subject are one sentence about
+    one call — "List user accounts on 'MacBook-Pro-von-Eduard.local'" — and
+    splitting them across flex children put the row's `gap-2` inside it, so it
+    read as three separate labels with 8px gutters rather than as a phrase.
+    Joined here, the gap is left to do its real job of spacing the icons.
+
+    Restored once, at the end: restore is plain text substitution, so running
+    it over the finished line is the same as running it over each part, and
+    the summary is model text that can carry a token too.
+  */
+  const line = restore(
+    [described.label, described.detail, subject && `'${subject}'`]
+      .filter(Boolean)
+      .join(" "),
+  );
 
   return (
     <div className="text-chat">
@@ -162,22 +198,21 @@ export function AssistantToolActivity({
           )}
         </span>
 
+        {/* `min-w-0 truncate` rather than `shrink-0`: the line now carries the
+            subject, so a long peer name has to ellipse at the end of the
+            phrase instead of pushing the outcome mark off the row. */}
         <span
           className={cn(
-            "shrink-0",
+            "min-w-0 truncate",
             running &&
               "animate-shimmer bg-gradient-to-r from-nb-gray-500 via-nb-gray-100 to-nb-gray-500 bg-[length:200%_100%] bg-clip-text text-transparent",
           )}
         >
-          {activity ? activity.label : toolLabel(toolName, running)}
+          {line}
+          {/* At the end of the phrase, not after the label: "Reading the docs…
+              'dns'" put the trailing-off in the middle of the sentence. */}
           {running ? "…" : ""}
         </span>
-
-        {activity?.detail && (
-          <span className="min-w-0 truncate">{restore(activity.detail)}</span>
-        )}
-
-        {subject && <span className="min-w-0 truncate">{`'${subject}'`}</span>}
 
         {/* The outcome, once there is one. Kept at width while the call runs so
             the label does not shift sideways when the tick arrives. */}

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ACCESS_GRANTED_MESSAGE,
-  confirmWithoutAuthorization,
+  confirmPendingCommand,
   buildAuthorizeUrl,
   cancelAccessAuthorization,
   consumeAccessNonce,
@@ -9,7 +9,8 @@ import {
   hasAccessNonce,
   isAllowedAccessRule,
   openAuthorizationWindow,
-  requestAccessAuthorization,
+  requestCommandConfirmation,
+  requestPeerAuthorization,
   resetAccessAuthorizationForTests,
   subscribeToAccessRequest,
 } from "@/modules/assistant/assistantAccessAuth";
@@ -25,14 +26,20 @@ import {
   whole timeout for a decision the person already made by closing it.
 */
 
+/*
+  The access question, which is the one with a window behind it. It carries no
+  command: authorizing is about reaching the machine, and the command is a
+  separate request answered by a separate click.
+*/
 const REQUEST = {
+  // The step the URL builder narrows on; `requestPeerAuthorization` stamps its
+  // own, so this fixture serves both.
+  step: "authorize" as const,
   peerId: "peer-1",
   peerLabel: "MacBook-Pro-von-Eduard",
-  command: "/usr/local/bin/netbird status",
   wgPublicKey: "pub-1",
   rules: ["netbird-ssh/22022"],
   assistantPeerName: "assistant-chrome-ab12cd",
-  needsAuthorization: true,
 };
 
 /**
@@ -93,7 +100,7 @@ afterEach(() => {
 describe("assistant access authorization", () => {
   it("parks a request until the popup answers", async () => {
     const { deliver } = stubWindow({ closed: false });
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
 
     expect(currentAccessRequest()?.peerId).toBe("peer-1");
     openAuthorizationWindow();
@@ -111,7 +118,7 @@ describe("assistant access authorization", () => {
       human-presence check into an invitation.
     */
     const { deliver } = stubWindow({ closed: false });
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
     openAuthorizationWindow();
 
     deliver(
@@ -127,7 +134,7 @@ describe("assistant access authorization", () => {
 
   it("ignores a reply about a different peer", async () => {
     const { deliver } = stubWindow({ closed: false });
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
     openAuthorizationWindow();
 
     deliver({ type: ACCESS_GRANTED_MESSAGE, ok: true, peerId: "someone-else" });
@@ -140,7 +147,7 @@ describe("assistant access authorization", () => {
   it("settles as refused when the popup is blocked", async () => {
     // Otherwise the tool waits on a window that will never exist.
     stubWindow(null);
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
 
     expect(openAuthorizationWindow()).toBeNull();
     expect(await pending).toBe(false);
@@ -149,7 +156,7 @@ describe("assistant access authorization", () => {
 
   it("settles as refused when the user dismisses the prompt", async () => {
     stubWindow({ closed: false });
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
 
     cancelAccessAuthorization();
 
@@ -159,8 +166,8 @@ describe("assistant access authorization", () => {
 
   it("supersedes an earlier request rather than queueing behind it", async () => {
     stubWindow({ closed: false });
-    const first = requestAccessAuthorization(REQUEST);
-    const second = requestAccessAuthorization({ ...REQUEST, peerId: "peer-2" });
+    const first = requestPeerAuthorization(REQUEST);
+    const second = requestPeerAuthorization({ ...REQUEST, peerId: "peer-2" });
 
     // The first is answered rather than left hanging; one window cannot serve
     // two peers unambiguously.
@@ -175,7 +182,7 @@ describe("assistant access authorization", () => {
     const seen: Array<string | null> = [];
     const stop = subscribeToAccessRequest((r) => seen.push(r?.peerId ?? null));
 
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
     cancelAccessAuthorization();
     await pending;
     stop();
@@ -183,22 +190,53 @@ describe("assistant access authorization", () => {
     expect(seen).toEqual([null, "peer-1", null]);
   });
 
-  it("confirms without a window when the peer is already authorized", async () => {
+  it("confirms a command without a window", async () => {
     /*
-      The second command on a peer. The command still has to be confirmed — it
-      is a different command — but re-opening a sign-in window for access
-      already granted is asking again for a decision already made.
+      The second question, and the only one a plain click can answer: access is
+      already granted by the time it is asked, so there is nothing to open.
     */
     stubWindow({ closed: false });
-    const pending = requestAccessAuthorization({
-      ...REQUEST,
-      needsAuthorization: false,
+    const pending = requestCommandConfirmation({
+      peerId: "peer-1",
+      peerLabel: "MacBook-Pro-von-Eduard",
+      command: "netbird status",
     });
 
-    confirmWithoutAuthorization();
+    confirmPendingCommand();
 
     expect(await pending).toBe(true);
     expect(currentAccessRequest()).toBeNull();
+  });
+
+  /*
+    The two answers are not interchangeable. A grant is created by the window,
+    so a confirmation click must not be able to settle an authorization as
+    though somebody had signed in — and the window has nothing to open for a
+    confirmation, which carries neither key nor rules.
+  */
+  it("will not answer an authorization with a confirmation click", async () => {
+    stubWindow({ closed: false });
+    const pending = requestPeerAuthorization(REQUEST);
+
+    confirmPendingCommand();
+
+    expect(currentAccessRequest()?.step).toBe("authorize");
+    cancelAccessAuthorization();
+    expect(await pending).toBe(false);
+  });
+
+  it("opens no window for a command confirmation", async () => {
+    stubWindow({ closed: false });
+    const pending = requestCommandConfirmation({
+      peerId: "peer-1",
+      peerLabel: "MacBook-Pro-von-Eduard",
+      command: "netbird status",
+    });
+
+    expect(openAuthorizationWindow()).toBeNull();
+    expect(currentAccessRequest()?.step).toBe("confirm");
+    cancelAccessAuthorization();
+    expect(await pending).toBe(false);
   });
 
   it("carries only the public key in the popup URL", () => {
@@ -234,7 +272,7 @@ describe("proof that the panel opened the window", () => {
   */
   it("stores the nonce it puts in the popup URL", () => {
     const { open } = stubWindow({ closed: false });
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
     openAuthorizationWindow();
 
     const nonce = nonceFromOpen(open);
@@ -247,7 +285,7 @@ describe("proof that the panel opened the window", () => {
     // A tab reached by following a link: same origin, same page, storage that
     // never held a nonce. This is the phishing case, and it has to fail shut.
     const { open } = stubWindow({ closed: false });
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
     openAuthorizationWindow();
     const nonce = nonceFromOpen(open);
 
@@ -264,7 +302,7 @@ describe("proof that the panel opened the window", () => {
 
   it("spends the nonce, so one window grants at most once", () => {
     const { open } = stubWindow({ closed: false });
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
     openAuthorizationWindow();
     const nonce = nonceFromOpen(open);
 
@@ -276,7 +314,7 @@ describe("proof that the panel opened the window", () => {
 
   it("drops the nonce once the request settles", async () => {
     const { open, deliver } = stubWindow({ closed: false });
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
     openAuthorizationWindow();
     const nonce = nonceFromOpen(open);
 
@@ -290,7 +328,7 @@ describe("proof that the panel opened the window", () => {
 
   it("leaves no nonce behind when the popup is blocked", async () => {
     const { sessionStorage } = stubWindow(null);
-    const pending = requestAccessAuthorization(REQUEST);
+    const pending = requestPeerAuthorization(REQUEST);
 
     openAuthorizationWindow();
     await pending;

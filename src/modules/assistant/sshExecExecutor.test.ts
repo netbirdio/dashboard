@@ -3,10 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { beforeEach } from "vitest";
 import { isAllowedAccessRule } from "@/modules/assistant/assistantAccessAuth";
 import {
-  createSSHRunCommandExecutor,
+  createSSHExecExecutor,
   resetAssistantTunnel,
-  type SSHRunCommandDeps,
-} from "@/modules/assistant/sshRunCommandExecutor";
+  type SSHExecDeps,
+} from "@/modules/assistant/sshExecExecutor";
 
 /*
   One approved call does three things — join the network, take temporary access
@@ -41,7 +41,7 @@ const PEER = {
   ssh_enabled: true,
 };
 
-function build(overrides: Partial<SSHRunCommandDeps> = {}) {
+function build(overrides: Partial<SSHExecDeps> = {}) {
   const execCalls: string[] = [];
   const closed = { count: 0 };
   const session = {
@@ -54,27 +54,30 @@ function build(overrides: Partial<SSHRunCommandDeps> = {}) {
     },
   };
   const createSSHConnection = vi.fn(async () => session);
-  const authorizeAccess = vi.fn(
+  const authorizePeer = vi.fn(
     async (_input: {
       peerId: string;
       peerLabel: string;
-      command: string;
       wgPublicKey: string;
       rules: string[];
       assistantPeerName: string;
-      needsAuthorization: boolean;
     }) => true,
+  );
+  const confirmCommand = vi.fn(
+    async (_input: { peerId: string; peerLabel: string; command: string }) =>
+      true,
   );
   const connect = vi.fn(async () => true);
   const detectSSHServerType = vi.fn(async () => true);
   let keypairs = 0;
-  const deps: SSHRunCommandDeps = {
+  const deps: SSHExecDeps = {
     listPeers: async () => [PEER],
     generateKeypair: () => {
       keypairs += 1;
       return { publicKey: `pub-${keypairs}`, privateKey: `priv-${keypairs}` };
     },
-    authorizeAccess: authorizeAccess as never,
+    authorizePeer: authorizePeer as never,
+    confirmCommand: confirmCommand as never,
     connect,
     createSSHConnection: createSSHConnection as never,
     detectSSHServerType,
@@ -85,10 +88,11 @@ function build(overrides: Partial<SSHRunCommandDeps> = {}) {
     ...overrides,
   };
   return {
-    executor: createSSHRunCommandExecutor(deps),
+    executor: createSSHExecExecutor(deps),
     createSSHConnection,
     detectSSHServerType,
-    authorizeAccess,
+    authorizePeer,
+    confirmCommand,
     connect,
     session,
     execCalls,
@@ -109,7 +113,7 @@ const run = (extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
-describe("ssh_run_command executor", () => {
+describe("ssh_exec executor", () => {
   it("runs the approved command verbatim over exec", async () => {
     const { executor, execCalls, session } = build();
     const command = `bash -lc 'echo "a  b" && exit 0'`;
@@ -137,10 +141,16 @@ describe("ssh_run_command executor", () => {
       setStatus: (text) => reported.push(text),
     };
     const { executor } = build({
-      authorizeAccess: (async () => {
-        // Whatever has been reported by the time the prompt is on screen is
-        // what the user reads while deciding.
-        expect(reported.at(-1)).toBe("Waiting for you to authorize and confirm");
+      authorizePeer: (async () => {
+        // Whatever has been reported by the time a prompt is on screen is what
+        // the user reads while deciding it.
+        expect(reported.at(-1)).toBe(
+          "Waiting for you to authorize MacBook-Pro-von-Eduard",
+        );
+        return true;
+      }) as never,
+      confirmCommand: (async () => {
+        expect(reported.at(-1)).toBe("Waiting for you to confirm");
         return true;
       }) as never,
     });
@@ -162,21 +172,27 @@ describe("ssh_run_command executor", () => {
     await executor(run(), statusCtx);
     await executor(run(), statusCtx);
 
-    // The sign-in is per peer per tab; the second command only needs a click.
-    expect(reported[0]).toBe("Waiting for you to authorize and confirm");
-    expect(reported.find((line, i) => i > 0 && line.startsWith("Waiting"))).toBe(
+    /*
+      The first command reports both waits in order — the sign-in, then the
+      command — and the second reports only the command, because the sign-in is
+      per peer per tab.
+    */
+    const waits = reported.filter((line) => line.startsWith("Waiting"));
+    expect(waits).toEqual([
+      "Waiting for you to authorize MacBook-Pro-von-Eduard",
       "Waiting for you to confirm",
-    );
+      "Waiting for you to confirm",
+    ]);
   });
 
   it("takes access scoped to the one peer, then connects, then runs", async () => {
-    const { executor, authorizeAccess, connect, createSSHConnection } = build();
+    const { executor, authorizePeer, connect, createSSHConnection } = build();
 
     const outcome = await executor(run(), ctx);
 
     expect(outcome.ok).toBe(true);
     // Scoped to this peer's id, with an SSH rule and nothing wider.
-    expect(authorizeAccess).toHaveBeenCalledWith(
+    expect(authorizePeer).toHaveBeenCalledWith(
       expect.objectContaining({
         peerId: PEER.id,
         wgPublicKey: "pub-1",
@@ -196,17 +212,17 @@ describe("ssh_run_command executor", () => {
       existing peer instead of creating a second one.
     */
     const second = { ...PEER, id: "peer-2", ip: "100.84.232.71", name: "nas", hostname: "nas.local", dns_label: "nas" };
-    const { executor, authorizeAccess, connect, keypairCount } = build({
+    const { executor, authorizePeer, connect, keypairCount } = build({
       listPeers: async () => [PEER, second],
     });
 
     await executor(run(), ctx);
     await executor(run({ peer: "nas" }), ctx);
 
-    expect(authorizeAccess).toHaveBeenCalledTimes(2);
-    expect(authorizeAccess.mock.calls[1]?.[0]?.peerId).toBe("peer-2");
+    expect(authorizePeer).toHaveBeenCalledTimes(2);
+    expect(authorizePeer.mock.calls[1]?.[0]?.peerId).toBe("peer-2");
     // Same key both times, and the tunnel is opened once.
-    expect(authorizeAccess.mock.calls[1]?.[0]?.wgPublicKey).toBe("pub-1");
+    expect(authorizePeer.mock.calls[1]?.[0]?.wgPublicKey).toBe("pub-1");
     expect(keypairCount()).toBe(1);
     expect(connect).toHaveBeenCalledTimes(1);
   });
@@ -222,15 +238,15 @@ describe("ssh_run_command executor", () => {
       already exists and a changed name would be ignored anyway.
     */
     const second = { ...PEER, id: "peer-2", ip: "100.84.232.71", name: "nas", hostname: "nas.local", dns_label: "nas" };
-    const { executor, authorizeAccess } = build({
+    const { executor, authorizePeer } = build({
       listPeers: async () => [PEER, second],
     });
 
     await executor(run(), ctx);
     await executor(run({ peer: "nas" }), ctx);
 
-    const first = authorizeAccess.mock.calls[0]?.[0]?.assistantPeerName;
-    const later = authorizeAccess.mock.calls[1]?.[0]?.assistantPeerName;
+    const first = authorizePeer.mock.calls[0]?.[0]?.assistantPeerName;
+    const later = authorizePeer.mock.calls[1]?.[0]?.assistantPeerName;
     expect(first).toMatch(/^assistant-/);
     expect(later).toBe(first);
     // A DNS label is what NetBird derives from this.
@@ -240,12 +256,12 @@ describe("ssh_run_command executor", () => {
   it("gives a different tunnel a different name", async () => {
     const a = build();
     await a.executor(run(), ctx);
-    const firstName = a.authorizeAccess.mock.calls[0]?.[0]?.assistantPeerName;
+    const firstName = a.authorizePeer.mock.calls[0]?.[0]?.assistantPeerName;
 
     resetAssistantTunnel();
     const b = build();
     await b.executor(run(), ctx);
-    const secondName = b.authorizeAccess.mock.calls[0]?.[0]?.assistantPeerName;
+    const secondName = b.authorizePeer.mock.calls[0]?.[0]?.assistantPeerName;
 
     expect(secondName).not.toBe(firstName);
   });
@@ -262,11 +278,11 @@ describe("ssh_run_command executor", () => {
   });
 
   it("uses a plain tcp rule for a peer too old for netbird-ssh", async () => {
-    const { executor, authorizeAccess } = build({
+    const { executor, authorizePeer } = build({
       listPeers: async () => [{ ...PEER, version: "0.50.0" }],
     });
     await executor(run(), ctx);
-    expect(authorizeAccess).toHaveBeenCalledWith(
+    expect(authorizePeer).toHaveBeenCalledWith(
       expect.objectContaining({ rules: ["tcp/44338"] }),
     );
   });
@@ -281,12 +297,12 @@ describe("ssh_run_command executor", () => {
     */
     for (const version of ["development", "0.62.0", "0.60.5", "0.50.0"]) {
       resetAssistantTunnel();
-      const { executor, authorizeAccess } = build({
+      const { executor, authorizePeer } = build({
         listPeers: async () => [{ ...PEER, version }],
       });
       await executor(run(), ctx);
 
-      const { rules } = authorizeAccess.mock.calls[0]![0];
+      const { rules } = authorizePeer.mock.calls[0]![0];
       expect(rules).toHaveLength(1);
       expect(isAllowedAccessRule(rules[0]!)).toBe(true);
     }
@@ -299,7 +315,7 @@ describe("ssh_run_command executor", () => {
       that a session left open on an unattended machine cannot answer.
     */
     const { executor, createSSHConnection, connect } = build({
-      authorizeAccess: (async () => false) as never,
+      authorizePeer: (async () => false) as never,
     });
     const outcome = await executor(run(), ctx);
 
@@ -311,23 +327,136 @@ describe("ssh_run_command executor", () => {
 
   it("confirms every command, but only asks to sign in once per peer", async () => {
     /*
-      The two questions have different frequencies and the prompt carries both.
-      "May it run THIS" is asked every time — a second command is a different
-      command. "May it reach this machine" is asked once; re-opening a sign-in
-      window for access already granted is asking again for a decision already
-      made, which is how people learn to click through prompts.
+      The two questions have different frequencies, which is why they are two
+      prompts. "May it run THIS" is asked every time — a second command is a
+      different command. "May it reach this machine" is asked once; re-opening
+      a sign-in window for access already granted is asking again for a
+      decision already made, which is how people learn to click through
+      prompts.
     */
-    const { executor, authorizeAccess } = build();
+    const { executor, authorizePeer, confirmCommand } = build();
 
     await executor(run(), ctx);
     await executor(run({ command: "uname -a" }), ctx);
 
-    expect(authorizeAccess).toHaveBeenCalledTimes(2);
-    expect(authorizeAccess.mock.calls[0]?.[0]?.needsAuthorization).toBe(true);
-    expect(authorizeAccess.mock.calls[0]?.[0]?.command).toBe("uptime");
-    // Second time: the command is confirmed, the sign-in is not repeated.
-    expect(authorizeAccess.mock.calls[1]?.[0]?.needsAuthorization).toBe(false);
-    expect(authorizeAccess.mock.calls[1]?.[0]?.command).toBe("uname -a");
+    expect(authorizePeer).toHaveBeenCalledTimes(1);
+    expect(confirmCommand).toHaveBeenCalledTimes(2);
+    expect(confirmCommand.mock.calls[0]?.[0]?.command).toBe("uptime");
+    expect(confirmCommand.mock.calls[1]?.[0]?.command).toBe("uname -a");
+  });
+
+  /*
+    The authorization card is about the machine, so nothing about the command
+    reaches it. A card that showed one would invite the grant — SSH to that
+    peer for as long as the tab is connected — to be weighed by how harmless a
+    single string looks.
+  */
+  it("tells the authorization step nothing about the command", async () => {
+    const { executor, authorizePeer } = build();
+
+    await executor(run({ command: "rm -rf /tmp/x" }), ctx);
+
+    const asked = authorizePeer.mock.calls[0]![0] as Record<string, unknown>;
+    expect(asked.peerLabel).toBe("MacBook-Pro-von-Eduard");
+    expect(Object.keys(asked)).not.toContain("command");
+  });
+
+  /*
+    Order matters as much as separation: access is settled before the command
+    is put to the user, so the second card is never the one holding up a
+    sign-in the user has not been asked for yet.
+  */
+  it("asks about access first, and only then about the command", async () => {
+    const asked: string[] = [];
+    const { executor } = build({
+      authorizePeer: (async () => {
+        asked.push("authorize");
+        return true;
+      }) as never,
+      confirmCommand: (async () => {
+        asked.push("confirm");
+        return true;
+      }) as never,
+    });
+
+    await executor(run(), ctx);
+
+    expect(asked).toEqual(["authorize", "confirm"]);
+  });
+
+  /*
+    The window created the grant before the command was declined, so the access
+    exists whatever the user said next. Asking for a sign-in again would be
+    asking for something they already gave.
+  */
+  it("does not re-open the sign-in after a declined command", async () => {
+    const confirmCommand = vi
+      .fn(async () => true)
+      .mockImplementationOnce(async () => false);
+    const { executor, authorizePeer } = build({
+      confirmCommand: confirmCommand as never,
+    });
+
+    const declined = await executor(run(), ctx);
+    const accepted = await executor(run({ command: "uname -a" }), ctx);
+
+    expect(declined.ok).toBe(false);
+    expect(accepted.ok).toBe(true);
+    expect(authorizePeer).toHaveBeenCalledTimes(1);
+  });
+
+  /*
+    The agent's `autoApproved` clearance, and the one thing it is not allowed
+    to reach. It removes the confirmation for a command judged to be pure
+    inspection; it never removes the sign-in that grants this tab a route to
+    the peer. So the first command on a peer prompts however clear it is, and
+    only a peer already granted in this tab can run one unattended.
+  */
+  const cleared: ClientToolContext = { ...ctx, autoApproved: true };
+
+  it("still asks to authorize the first command on a peer, cleared or not", async () => {
+    const { executor, authorizePeer, confirmCommand } = build();
+
+    const outcome = await executor(run(), cleared);
+
+    expect(outcome.ok).toBe(true);
+    // The sign-in still happens; only the command question is skipped.
+    expect(authorizePeer).toHaveBeenCalledTimes(1);
+    expect(confirmCommand).not.toHaveBeenCalled();
+  });
+
+  it("skips the confirmation for a cleared command", async () => {
+    const { executor, authorizePeer, confirmCommand, execCalls } = build();
+
+    await executor(run(), ctx);
+    const outcome = await executor(run({ command: "netbird status" }), cleared);
+
+    expect(outcome.ok).toBe(true);
+    expect(authorizePeer).toHaveBeenCalledTimes(1);
+    // Only the first command was put to the user; both ran.
+    expect(confirmCommand).toHaveBeenCalledTimes(1);
+    expect(execCalls).toEqual(["uptime", "netbird status"]);
+  });
+
+  it("confirms a command the agent did not clear", async () => {
+    const { executor, confirmCommand } = build();
+
+    await executor(run(), ctx);
+    await executor(run({ command: "rm -rf /tmp/x" }), ctx);
+
+    expect(confirmCommand).toHaveBeenCalledTimes(2);
+  });
+
+  it("confirms when the clearance is anything other than true", async () => {
+    // It crosses a repo boundary as JSON. A truthy string is not a permission,
+    // and an agent that predates the field sends nothing at all.
+    const { executor, confirmCommand } = build();
+    const bogus = { ...ctx, autoApproved: "true" } as unknown as ClientToolContext;
+
+    await executor(run(), ctx);
+    await executor(run({ command: "uname -a" }), bogus);
+
+    expect(confirmCommand).toHaveBeenCalledTimes(2);
   });
 
   it("retries through the user's login shell when the command is not on PATH", async () => {
@@ -575,7 +704,7 @@ describe("ssh_run_command executor", () => {
   });
 
   it("refuses an offline peer before taking any access", async () => {
-    const { executor, authorizeAccess, createSSHConnection } = build({
+    const { executor, authorizePeer, createSSHConnection } = build({
       listPeers: async () => [{ ...PEER, connected: false }],
     });
     const outcome = await executor(run(), ctx);
@@ -583,7 +712,7 @@ describe("ssh_run_command executor", () => {
     expect(outcome.ok).toBe(false);
     expect(outcome.content).toMatch(/is offline/i);
     // No grant taken for a peer nothing could have reached.
-    expect(authorizeAccess).not.toHaveBeenCalled();
+    expect(authorizePeer).not.toHaveBeenCalled();
     expect(createSSHConnection).not.toHaveBeenCalled();
   });
 
@@ -593,7 +722,7 @@ describe("ssh_run_command executor", () => {
       old order granted access first and then reported "may be offline, or may
       not have SSH enabled" — a guess, when the peer record says exactly which.
     */
-    const { executor, authorizeAccess } = build({
+    const { executor, authorizePeer } = build({
       listPeers: async () => [{ ...PEER, ssh_enabled: false }],
     });
     const outcome = await executor(run(), ctx);
@@ -601,7 +730,7 @@ describe("ssh_run_command executor", () => {
     expect(outcome.ok).toBe(false);
     expect(outcome.content).toMatch(/SSH is not enabled/i);
     expect(outcome.content).toMatch(/turn on SSH for that peer/i);
-    expect(authorizeAccess).not.toHaveBeenCalled();
+    expect(authorizePeer).not.toHaveBeenCalled();
   });
 
   it("accepts a peer whose SSH is allowed by its local flags", async () => {
