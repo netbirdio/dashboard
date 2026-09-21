@@ -5,6 +5,29 @@ import { SelectDropdown } from "@components/select/SelectDropdown";
 import SmallParagraph from "@components/SmallParagraph";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import * as React from "react";
+import ClaudeIcon from "@/assets/icons/ClaudeIcon";
+import KimiIcon from "@/assets/icons/KimiIcon";
+import OpenAIIcon from "@/assets/icons/OpenAIIcon";
+import ShellIcon from "@/assets/icons/ShellIcon";
+import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
+import { AIProviderId } from "@/modules/agent-network/data/mockData";
+
+// Same gray-to-netbird treatment the install-peer modal gives its OS tabs.
+const TAB_ICON =
+  "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all";
+
+// providerIcon badges a backend option with the same mark the providers
+// tables show for that catalog entry.
+const providerIcon = (id: AIProviderId) =>
+  function ProviderOptionIcon({ size }: { size?: number }) {
+    return <AIProviderLogo providerId={id} size={size ?? 16} />;
+  };
+
+// ConfigPath sets a file path in the same mono face as the block below it, so
+// the part of the caption the reader has to act on stands out from the prose.
+function ConfigPath({ path }: { path: string }) {
+  return <code className={"font-mono text-nb-gray-100"}>{path}</code>;
+}
 
 // Snippet renders a copyable Code block from a list of lines, with an optional
 // caption above it. Wrapped in min-w-0 so its scroll area handles long lines
@@ -16,13 +39,17 @@ function Snippet({
   lines,
   copyText,
 }: {
-  caption?: string;
+  caption?: React.ReactNode;
   lines: string[];
   copyText?: string;
 }) {
   return (
     <div className={"min-w-0"}>
-      {caption && <SmallParagraph className={"mb-2"}>{caption}</SmallParagraph>}
+      {caption && (
+        <SmallParagraph className={"mb-2 !text-nb-gray-200"}>
+          {caption}
+        </SmallParagraph>
+      )}
       <Code
         codeToCopy={copyText ?? lines.join("\n")}
         message={"Copied to clipboard"}
@@ -88,11 +115,28 @@ export function AgentConnectTabs({
   return (
     <Tabs key={defaultTab} defaultValue={defaultTab} className={className}>
       <TabsList justify={"start"} className={listClassName}>
-        <TabsTrigger value={"claude-code"}>Claude Code</TabsTrigger>
-        <TabsTrigger value={"codex"}>Codex</TabsTrigger>
-        {hasKimi && <TabsTrigger value={"kimi-cli"}>Kimi CLI</TabsTrigger>}
-        <TabsTrigger value={"openai-sdk"}>OpenAI SDK</TabsTrigger>
-        <TabsTrigger value={"curl"}>cURL</TabsTrigger>
+        <TabsTrigger value={"claude-code"}>
+          <ClaudeIcon className={TAB_ICON} size={14} />
+          Claude Code
+        </TabsTrigger>
+        <TabsTrigger value={"codex"}>
+          <OpenAIIcon className={TAB_ICON} size={14} />
+          Codex
+        </TabsTrigger>
+        {hasKimi && (
+          <TabsTrigger value={"kimi-cli"}>
+            <KimiIcon className={TAB_ICON} size={14} />
+            Kimi CLI
+          </TabsTrigger>
+        )}
+        <TabsTrigger value={"openai-sdk"}>
+          <OpenAIIcon className={TAB_ICON} size={14} />
+          OpenAI SDK
+        </TabsTrigger>
+        <TabsTrigger value={"curl"}>
+          <ShellIcon className={TAB_ICON} size={14} />
+          cURL
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value={"claude-code"}>
@@ -106,11 +150,29 @@ export function AgentConnectTabs({
                 )
               }
               options={[
-                { label: "Anthropic API", value: "anthropic" },
-                { label: "Vertex AI", value: "vertex" },
-                { label: "Bedrock", value: "bedrock" },
+                {
+                  label: "Anthropic API",
+                  value: "anthropic",
+                  icon: providerIcon("anthropic_api"),
+                },
+                {
+                  label: "Vertex AI",
+                  value: "vertex",
+                  icon: providerIcon("vertex_ai_api"),
+                },
+                {
+                  label: "Bedrock",
+                  value: "bedrock",
+                  icon: providerIcon("bedrock_api"),
+                },
                 ...(hasKimi
-                  ? [{ label: "Kimi (Moonshot AI)", value: "kimi" }]
+                  ? [
+                      {
+                        label: "Kimi (Moonshot AI)",
+                        value: "kimi",
+                        icon: providerIcon("kimi_api"),
+                      },
+                    ]
                   : []),
               ]}
               showValues={false}
@@ -121,10 +183,14 @@ export function AgentConnectTabs({
           {claudeProvider === "anthropic" && (
             <>
               <div className={"flex items-center justify-between gap-3 mb-2"}>
-                <SmallParagraph className={"!mb-0"}>
-                  {claudeMode === "config"
-                    ? "Add to ~/.claude/settings.json:"
-                    : "Run in your shell:"}
+                <SmallParagraph className={"!mb-0 !text-nb-gray-200"}>
+                  {claudeMode === "config" ? (
+                    <>
+                      Add to <ConfigPath path={"~/.claude/settings.json"} />
+                    </>
+                  ) : (
+                    "Run in your shell"
+                  )}
                 </SmallParagraph>
                 <button
                   type={"button"}
@@ -161,7 +227,11 @@ export function AgentConnectTabs({
 
           {claudeProvider === "vertex" && (
             <Snippet
-              caption={"Add to ~/.claude/settings.json:"}
+              caption={
+                <>
+                  Add to <ConfigPath path={"~/.claude/settings.json"} />
+                </>
+              }
               lines={[
                 `{`,
                 `  "env": {`,
@@ -178,7 +248,11 @@ export function AgentConnectTabs({
 
           {claudeProvider === "bedrock" && (
             <Snippet
-              caption={"Add to ~/.claude/settings.json:"}
+              caption={
+                <>
+                  Add to <ConfigPath path={"~/.claude/settings.json"} />
+                </>
+              }
               lines={[
                 `{`,
                 `  "env": {`,
@@ -194,10 +268,14 @@ export function AgentConnectTabs({
           {claudeProvider === "kimi" && (
             <>
               <div className={"flex items-center justify-between gap-3 mb-2"}>
-                <SmallParagraph className={"!mb-0"}>
-                  {claudeMode === "config"
-                    ? "Add to ~/.claude/settings.json:"
-                    : "Run in your shell:"}
+                <SmallParagraph className={"!mb-0 !text-nb-gray-200"}>
+                  {claudeMode === "config" ? (
+                    <>
+                      Add to <ConfigPath path={"~/.claude/settings.json"} />
+                    </>
+                  ) : (
+                    "Run in your shell"
+                  )}
                 </SmallParagraph>
                 <button
                   type={"button"}
@@ -266,7 +344,11 @@ export function AgentConnectTabs({
       <TabsContent value={"codex"}>
         <div className={contentClassName}>
           <Snippet
-            caption={"Add to ~/.codex/config.toml:"}
+            caption={
+              <>
+                Add to <ConfigPath path={"~/.codex/config.toml"} />
+              </>
+            }
             lines={[
               `model_provider = "netbird"`,
               ``,
@@ -286,7 +368,11 @@ export function AgentConnectTabs({
             // Claude Code, its "anthropic" provider type needs the bare
             // endpoint — no /anthropic prefix in base_url; api_key is a
             // placeholder since NetBird injects the real key server-side.
-            caption={"Add to ~/.kimi/config.toml:"}
+            caption={
+              <>
+                Add to <ConfigPath path={"~/.kimi/config.toml"} />
+              </>
+            }
             lines={[
               `default_model = "kimi-k3"`,
               ``,
