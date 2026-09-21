@@ -847,7 +847,7 @@ export default function AIProviderModal({
           </TabsList>
 
           <TabsContent value={"provider"} className={"pb-8"}>
-            <div className={"px-8 pt-3 flex-col flex gap-6"}>
+            <div className={"px-8 flex-col flex gap-6"}>
               {noClustersAvailable && (
                 <Callout
                   data-testid="agent-network-no-cluster-callout"
@@ -896,72 +896,78 @@ export default function AIProviderModal({
                 </Callout>
               )}
 
-              <FormRow
-                label={"Provider"}
-                helpText={
-                  "AI provider and upstream URL to expose through NetBird."
-                }
-              >
-                <SelectDropdown
-                  data-testid={"agent-network-provider-type"}
-                  value={providerId}
-                  onChange={(v) => {
-                    const next = v as AIProviderId;
-                    setProviderId(next);
-                    // The credential differs per provider (API key vs Vertex
-                    // JSON upload), so clear it when switching.
-                    setApiKey("");
-                    setKeyFileName(null);
-                    const c = getById(next);
-                    if (c) {
-                      setName(c.name);
-                      // Gateways like Bifrost / LiteLLM ship with an
-                      // empty default_host (operator brings their own
-                      // endpoint). Don't pre-fill "https://" — let the
-                      // placeholder hint them what to type instead.
-                      setUpstreamUrl(
-                        next === "vertex_ai_api"
-                          ? "https://aiplatform.googleapis.com"
-                          : c.default_host
-                          ? `https://${c.default_host}`
-                          : "",
-                      );
-                      setModels([]);
-                      // Auto-seed the identity inputs from the
-                      // catalog defaults when picking a customizable
-                      // shape (HeaderPair for Bifrost, JSONMetadata
-                      // for Cloudflare) so the operator sees sensible
-                      // starting values. They can edit, clear, or
-                      // paste their own. Switching away from any
-                      // customizable shape wipes the values so they
-                      // don't leak onto a non-customizable provider's
-                      // wire.
-                      const hp = c.identity_injection?.header_pair;
-                      const jm = c.identity_injection?.json_metadata;
-                      if (hp?.customizable) {
-                        setIdentityHeaderUserId(hp.end_user_id_header);
-                        setIdentityHeaderGroups(hp.tags_header);
-                      } else if (jm?.customizable) {
-                        setIdentityHeaderUserId(jm.user_key);
-                        setIdentityHeaderGroups(jm.groups_key);
-                      } else {
-                        setIdentityHeaderUserId("");
-                        setIdentityHeaderGroups("");
+              <div className={"flex-col flex gap-2"}>
+                <FormRow
+                  label={"Provider"}
+                  helpText={
+                    <>
+                      AI provider and upstream URL to expose
+                      <br />
+                      through NetBird.
+                    </>
+                  }
+                >
+                  <SelectDropdown
+                    data-testid={"agent-network-provider-type"}
+                    value={providerId}
+                    onChange={(v) => {
+                      const next = v as AIProviderId;
+                      setProviderId(next);
+                      // The credential differs per provider (API key vs Vertex
+                      // JSON upload), so clear it when switching.
+                      setApiKey("");
+                      setKeyFileName(null);
+                      const c = getById(next);
+                      if (c) {
+                        setName(c.name);
+                        // Gateways like Bifrost / LiteLLM ship with an
+                        // empty default_host (operator brings their own
+                        // endpoint). Don't pre-fill "https://" — let the
+                        // placeholder hint them what to type instead.
+                        setUpstreamUrl(
+                          next === "vertex_ai_api"
+                            ? "https://aiplatform.googleapis.com"
+                            : c.default_host
+                            ? `https://${c.default_host}`
+                            : "",
+                        );
+                        setModels([]);
+                        // Auto-seed the identity inputs from the
+                        // catalog defaults when picking a customizable
+                        // shape (HeaderPair for Bifrost, JSONMetadata
+                        // for Cloudflare) so the operator sees sensible
+                        // starting values. They can edit, clear, or
+                        // paste their own. Switching away from any
+                        // customizable shape wipes the values so they
+                        // don't leak onto a non-customizable provider's
+                        // wire.
+                        const hp = c.identity_injection?.header_pair;
+                        const jm = c.identity_injection?.json_metadata;
+                        if (hp?.customizable) {
+                          setIdentityHeaderUserId(hp.end_user_id_header);
+                          setIdentityHeaderGroups(hp.tags_header);
+                        } else if (jm?.customizable) {
+                          setIdentityHeaderUserId(jm.user_key);
+                          setIdentityHeaderGroups(jm.groups_key);
+                        } else {
+                          setIdentityHeaderUserId("");
+                          setIdentityHeaderGroups("");
+                        }
                       }
-                    }
-                  }}
-                  options={providerOptions}
-                  showSearch
-                  searchPlaceholder={"Search providers..."}
-                  placeholder={"Select provider..."}
+                    }}
+                    options={providerOptions}
+                    showSearch
+                    searchPlaceholder={"Search providers..."}
+                    placeholder={"Select provider..."}
+                  />
+                </FormRow>
+                <Input
+                  data-testid={"agent-network-provider-upstream-url"}
+                  value={upstreamUrl}
+                  onChange={(e) => setUpstreamUrl(e.target.value)}
+                  placeholder={upstreamUrlPlaceholder(providerId)}
                 />
-              </FormRow>
-              <Input
-                data-testid={"agent-network-provider-upstream-url"}
-                value={upstreamUrl}
-                onChange={(e) => setUpstreamUrl(e.target.value)}
-                placeholder={upstreamUrlPlaceholder(providerId)}
-              />
+              </div>
 
               {isCustomKind && (
                 <FancyToggleSwitch
@@ -1141,7 +1147,7 @@ export default function AIProviderModal({
 
           {showMappings && providerId === "litellm_proxy" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 {/* The forwarding toggle sits first: it gates the identity
                     mappings described below, so turning it off makes the fixed
                     mapping that follows moot. */}
@@ -1213,7 +1219,7 @@ export default function AIProviderModal({
 
           {showMappings && customizableHeaderPair && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <div>
                   <Label>Identity Headers</Label>
                   <HelpText className={"mb-0"}>
@@ -1286,7 +1292,7 @@ export default function AIProviderModal({
 
           {showMappings && customizableJsonMetadata && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <div>
                   <Label>Identity Metadata</Label>
                   <HelpText className={"mb-0"}>
@@ -1343,7 +1349,7 @@ export default function AIProviderModal({
               className={"pb-8"}
               data-testid={"agent-network-provider-identity-mappings"}
             >
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <FancyToggleSwitch
                   value={!metadataDisabled}
                   onChange={(v) => setMetadataDisabled(!v)}
@@ -1417,7 +1423,7 @@ export default function AIProviderModal({
 
           {showMappings && providerId === "portkey" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <div>
                   <Label>Identity Metadata</Label>
                   <HelpText className={"mb-0"}>
@@ -1451,7 +1457,7 @@ export default function AIProviderModal({
 
           {showMappings && providerId === "bedrock_api" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 {/* The forwarding toggle sits first: it gates the identity
                     metadata described below, so turning it off makes the fixed
                     mapping that follows moot. */}
@@ -1506,7 +1512,7 @@ export default function AIProviderModal({
 
           {showMappings && providerId === "vercel_ai_gateway" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <div>
                   <Label>Identity Headers</Label>
                   <HelpText className={"mb-0"}>
@@ -1578,7 +1584,7 @@ export default function AIProviderModal({
 
           {showMappings && providerId === "openrouter" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <div>
                   <Label>Identity Attribution</Label>
                   <HelpText className={"mb-0"}>
@@ -1629,7 +1635,7 @@ export default function AIProviderModal({
           )}
 
           <TabsContent value={"models"} className={"pb-8"}>
-            <div className={"px-8 pt-3 flex-col flex gap-3"}>
+            <div className={"px-8 flex-col flex gap-3"}>
               <div>
                 <Label>Models</Label>
                 <div data-testid={"agent-network-provider-models-help"}>
@@ -1871,7 +1877,7 @@ function FormRow({
         <Label>{label}</Label>
         <HelpText margin={false}>{helpText}</HelpText>
       </div>
-      <div className={"w-[260px] shrink-0"}>{children}</div>
+      <div className={"w-[290px] shrink-0"}>{children}</div>
     </div>
   );
 }
