@@ -240,7 +240,7 @@ export const ReverseProxyFlatTargetsTable = ({
           className="py-4"
           title={emptyTableTitle}
           description={emptyTableDescription}
-          icon={<ReverseProxyIcon size={20} className="fill-nb-gray-300" />}
+          icon={<ReverseProxyIcon size={20} className="text-nb-gray-300" />}
         />
       }
       rightSide={() => (
