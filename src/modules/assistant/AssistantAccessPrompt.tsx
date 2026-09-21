@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import {
   type AccessRequest,
   cancelAccessAuthorization,
-  confirmWithoutAuthorization,
+  confirmPendingCommand,
   openAuthorizationWindow,
   subscribeToAccessRequest,
 } from "@/modules/assistant/assistantAccessAuth";
@@ -30,14 +30,20 @@ import {
  * to be exactly the signal the feature is after: a person, present, deciding
  * that the assistant may reach this machine.
  *
- * ## One prompt, both questions
+ * ## Two questions, one at a time
  *
- * It shows the command every time and asks for a sign-in only the first time
- * for a given peer. That ordering is the point: the framework's own `approval`
- * parks a tool call BEFORE it runs, so it could only ever ask about the command
- * first and leave the sign-in as a surprise afterwards. Asking here — once the
- * peer is resolved and it is known whether access already exists — puts both in
- * front of the user at the same moment.
+ * The first command on a peer asks about ACCESS and shows no command at all:
+ * the answer grants the assistant SSH to that machine for as long as the tab
+ * is connected, which is true whatever runs next, so a command on that card
+ * would only invite the grant to be weighed by how harmless one string looks.
+ * The command is confirmed afterwards, on its own card, once that question is
+ * settled and cannot be confused with it.
+ *
+ * Asking here rather than through the framework's own `approval` is still what
+ * makes that order possible: `approval` parks a tool call before it runs, so it
+ * could only ever ask about the command first and leave the sign-in as a
+ * surprise afterwards. By this point the peer is resolved and it is known
+ * whether access already exists.
  */
 export function AssistantAccessPrompt() {
   const [request, setRequest] = useState<AccessRequest | null>(null);
@@ -60,11 +66,17 @@ export function AssistantAccessPrompt() {
 
   if (!request) return null;
 
+  const authorizing = request.step === "authorize";
+
   return (
     <div
       role="alertdialog"
       aria-modal="true"
-      aria-label={`Run ${request.command} on ${request.peerLabel}?`}
+      aria-label={
+        authorizing
+          ? `Authorize the assistant to reach ${request.peerLabel}?`
+          : `Run ${request.command} on ${request.peerLabel}?`
+      }
       className="w-full rounded-2xl border border-nb-gray-700 bg-nb-gray-900 px-4 pb-3.5 pt-4"
     >
       <div className="flex items-start gap-2.5">
@@ -76,17 +88,30 @@ export function AssistantAccessPrompt() {
         />
         <div className="min-w-0 flex-1">
           <p className="text-chat font-normal text-nb-gray-100">
-            Run this on {request.peerLabel}?
+            {authorizing
+              ? `Authorize access to ${request.peerLabel}?`
+              : `Run this on ${request.peerLabel}?`}
           </p>
-          {/* The command verbatim, and monospaced, because this is the thing
-              being agreed to — not a summary of it. */}
-          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words rounded-lg bg-nb-gray-950 px-2.5 py-2 font-mono text-xs text-nb-gray-100">
-            {request.command}
-          </pre>
+          {/* Only on the confirmation, and verbatim and monospaced there,
+              because on that card the command IS the thing being agreed to.
+              The authorization card deliberately shows none: it is about
+              reaching the machine at all. */}
+          {!authorizing && (
+            <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-words rounded-lg bg-nb-gray-950 px-2.5 py-2 font-mono text-xs text-nb-gray-100">
+              {request.command}
+            </pre>
+          )}
+          {/* Neither line forecasts the next prompt, and the confirmation's
+              used to: it said the user would be asked again for the next
+              command, which the agent's clearance makes untrue — a command it
+              judged to be pure inspection runs without appearing here at all.
+              What the authorization line promises instead is the floor that
+              holds in every configuration, cleared or not, evaluator or none:
+              nothing that CHANGES the machine runs unasked. */}
           <p className="mt-2 text-xs text-nb-gray-400">
-            {request.needsAuthorization
-              ? "Opens a sign-in window first. The assistant gets SSH access to this peer only, until it disconnects."
-              : "This peer is already authorized for this tab."}
+            {authorizing
+              ? "Opens a sign-in window. The assistant gets SSH access to this peer only, until it disconnects, and asks you to confirm anything that changes it."
+              : "The assistant already has SSH access to this peer in this tab."}
           </p>
 
           {blocked && (
@@ -108,10 +133,10 @@ export function AssistantAccessPrompt() {
               type="button"
               onClick={() => {
                 setBlocked(false);
-                if (!request.needsAuthorization) {
-                  // Nothing to open: the peer is authorized already and this
-                  // click is only confirming the command.
-                  confirmWithoutAuthorization();
+                if (!authorizing) {
+                  // Nothing to open: access is already granted and this click
+                  // only confirms the command.
+                  confirmPendingCommand();
                   return;
                 }
                 // Straight from the click — anything awaited first loses the
@@ -120,7 +145,11 @@ export function AssistantAccessPrompt() {
               }}
               className="rounded-lg bg-netbird px-3 py-1.5 text-xs font-medium text-white transition-colors hover:brightness-110"
             >
-              {request.needsAuthorization ? "Authorize Once" : "Allow Once"}
+              {/* "Allow Once" rather than "Run": what the click grants is this
+                  one command, and the label is the last thing read before it
+                  is granted. "Run" describes the machine's next move; this
+                  describes the permission being given, and its scope. */}
+              {authorizing ? "Authorize" : "Allow Once"}
             </button>
           </div>
         </div>

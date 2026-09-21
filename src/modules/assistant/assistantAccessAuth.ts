@@ -33,51 +33,76 @@
  * inherits a copy of that storage; a link opened anywhere else does not.
  */
 
-/** What the prompt shows, and what the popup needs to create the grant. */
-export interface AccessRequest {
+/*
+  Two questions, asked one at a time.
+
+  They were one prompt until it was actually used: the card opened with a
+  command and a sign-in in the same breath, which is two unrelated decisions —
+  "may this machine be reached at all" and "may this string run" — wearing one
+  button. Now the first command on a peer asks only about ACCESS, without the
+  command in sight, and the command is confirmed afterwards, on its own, once
+  the access question is settled and cannot be confused with it.
+
+  Both park in the same single slot below, because only one of them is ever
+  outstanding: the confirmation is asked after the authorization resolves, not
+  beside it.
+*/
+
+/** Shared by both steps: which machine this is about. */
+interface PeerScope {
   peerId: string;
-  /** Shown to the user so they authorize a machine, not an opaque id. */
+  /** Shown to the user so they answer about a machine, not an opaque id. */
   peerLabel: string;
-  /**
-   * The command this confirms, verbatim.
-   *
-   * Every call carries one, because every command is confirmed — the access is
-   * granted once per peer, but "may it run THIS" is asked every time. A prompt
-   * that showed only the peer would, on the second command, be asking the user
-   * to agree to something it had not told them.
-   */
-  command: string;
+}
+
+/**
+ * Step one, asked once per peer per tab: may the assistant reach this machine.
+ *
+ * It carries no command on purpose. The answer grants SSH access to one peer
+ * for as long as the tab is connected, and that is true whatever runs next —
+ * so putting a command on this card would invite the user to weigh the grant
+ * by how harmless one command looks.
+ */
+export interface PeerAuthorizationRequest extends PeerScope {
+  step: "authorize";
   wgPublicKey: string;
   rules: string[];
   assistantPeerName: string;
-  /**
-   * Whether this peer still needs a sign-in, or is already authorized in this
-   * tab and only the command remains to be confirmed.
-   */
-  needsAuthorization: boolean;
 }
 
-interface Pending extends AccessRequest {
-  resolve: (granted: boolean) => void;
+/**
+ * Step two, asked for every command the agent did not have cleared: may THIS
+ * string run.
+ *
+ * Reached only once the peer is authorized, so by the time it appears the
+ * access question is behind the user and this card is about one thing.
+ */
+export interface CommandConfirmationRequest extends PeerScope {
+  step: "confirm";
+  /** Verbatim. It is the thing being agreed to, not a summary of it. */
+  command: string;
 }
+
+export type AccessRequest = PeerAuthorizationRequest | CommandConfirmationRequest;
+
+type Pending = AccessRequest & {
+  resolve: (granted: boolean) => void;
+};
 
 type Listener = (pending: AccessRequest | null) => void;
 
 let pending: Pending | null = null;
 const listeners = new Set<Listener>();
 
+// Everything but `resolve`, which is this module's and not a subscriber's.
+const snapshotOf = (request: Pending | null): AccessRequest | null => {
+  if (!request) return null;
+  const { resolve: _resolve, ...rest } = request;
+  return rest;
+};
+
 const notify = (): void => {
-  const snapshot: AccessRequest | null = pending
-    ? {
-        peerId: pending.peerId,
-        peerLabel: pending.peerLabel,
-        command: pending.command,
-        wgPublicKey: pending.wgPublicKey,
-        rules: pending.rules,
-        assistantPeerName: pending.assistantPeerName,
-        needsAuthorization: pending.needsAuthorization,
-      }
-    : null;
+  const snapshot = snapshotOf(pending);
   listeners.forEach((listener) => listener(snapshot));
 };
 
@@ -89,17 +114,7 @@ export function subscribeToAccessRequest(listener: Listener): () => void {
 }
 
 export function currentAccessRequest(): AccessRequest | null {
-  return pending
-    ? {
-        peerId: pending.peerId,
-        peerLabel: pending.peerLabel,
-        command: pending.command,
-        wgPublicKey: pending.wgPublicKey,
-        rules: pending.rules,
-        assistantPeerName: pending.assistantPeerName,
-        needsAuthorization: pending.needsAuthorization,
-      }
-    : null;
+  return snapshotOf(pending);
 }
 
 /**
@@ -110,9 +125,7 @@ export function currentAccessRequest(): AccessRequest | null {
  * which one the window that opens belongs to. The superseded caller is told it
  * was not granted rather than being left hanging.
  */
-export function requestAccessAuthorization(
-  request: AccessRequest,
-): Promise<boolean> {
+function park(request: AccessRequest): Promise<boolean> {
   if (pending) pending.resolve(false);
   return new Promise<boolean>((resolve) => {
     pending = { ...request, resolve };
@@ -120,16 +133,31 @@ export function requestAccessAuthorization(
   });
 }
 
+/** Asks whether the assistant may reach this peer. Resolves once granted. */
+export function requestPeerAuthorization(
+  request: Omit<PeerAuthorizationRequest, "step">,
+): Promise<boolean> {
+  return park({ ...request, step: "authorize" });
+}
+
+/** Asks whether this exact command may run. Resolves true when confirmed. */
+export function requestCommandConfirmation(
+  request: Omit<CommandConfirmationRequest, "step">,
+): Promise<boolean> {
+  return park({ ...request, step: "confirm" });
+}
+
 /**
- * Answers a request that needs no sign-in — the peer is already authorized in
- * this tab and only the command was being confirmed.
+ * Answers the command confirmation: yes, run it.
  *
- * Separate from `openAuthorizationWindow` so the no-window case does not go
- * near popup handling at all: there is nothing to open, nothing to block, and
- * nothing to wait for.
+ * Separate from `openAuthorizationWindow` so this step does not go near popup
+ * handling at all — there is nothing to open, nothing to block, and nothing to
+ * wait for. Guarded on the step, because the authorization question cannot be
+ * answered by a plain click: its answer is a grant that only the window can
+ * create.
  */
-export function confirmWithoutAuthorization(): void {
-  if (!pending) return;
+export function confirmPendingCommand(): void {
+  if (pending?.step !== "confirm") return;
   const request = pending;
   pending = null;
   notify();
@@ -236,7 +264,7 @@ export const isAllowedAccessRule = (rule: string): boolean =>
   ALLOWED_ACCESS_RULES.has(rule);
 
 export function buildAuthorizeUrl(
-  request: AccessRequest,
+  request: PeerAuthorizationRequest,
   nonce: string | null,
 ): string {
   const params = new URLSearchParams({
@@ -264,7 +292,9 @@ export function buildAuthorizeUrl(
  */
 export function openAuthorizationWindow(): Window | null {
   const request = pending;
-  if (!request) return null;
+  // Only the authorization step has a window: the confirmation is answered by
+  // `confirmPendingCommand`, and it carries none of what the URL below needs.
+  if (request?.step !== "authorize") return null;
 
   // Before the window, not after: the child gets a copy of this tab's storage
   // as it is created, so a nonce written later would never reach it.

@@ -12,13 +12,25 @@ import {
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
 /**
- * `ssh_run_command`: runs one approved command on one peer.
+ * `ssh_exec`: runs one approved command on one peer.
  *
  * One call does the whole thing — join the network, take temporary access to
- * the target, run the command — because the user approves it once. There is no
- * separate connect step: a connection approved on its own is a capability
- * sitting around waiting to be used, and a harder thing to reason about than
+ * the target, run the command — and there is no separate connect TOOL: a
+ * connection the agent could open on its own is a capability sitting around
+ * waiting to be used, and a harder thing for a person to reason about than
  * "may it run this command on this machine".
+ *
+ * ## The user is asked twice, in this order
+ *
+ * First, once per peer per tab: may the assistant reach this machine. That
+ * card shows no command — the grant it creates outlives any one of them.
+ * Then, for each command: may this exact string run.
+ *
+ * They were one card until it was used in anger, and merging them made the
+ * grant look like a detail of the command rather than the larger of the two
+ * decisions. Separating them also makes the clearance below safe to state
+ * plainly: a dispatch marked `autoApproved` skips the SECOND question only.
+ * Access is never taken without a person signing in for it.
  *
  * ## Access is scoped to the peer the user approved
  *
@@ -128,7 +140,7 @@ function sshReadiness(peer: PeerAddress): "offline" | "ssh-disabled" | null {
   return null;
 }
 
-export interface SSHRunCommandDeps {
+export interface SSHExecDeps {
   /** Every peer in the account, for `matchesPeer` to resolve a reference against. */
   listPeers: () => Promise<PeerAddress[]>;
   /** Generates the browser's WireGuard keypair. The private half never leaves. */
@@ -141,15 +153,27 @@ export interface SSHRunCommandDeps {
    * could make the API call itself — the point is that it does not: a session
    * left open on an unattended machine should not be able to hand the assistant
    * a route into the network, and only a live person can answer this.
+   *
+   * It carries no command. Access is granted for the machine, for as long as
+   * the tab is connected, and one command is not what it is worth weighing.
    */
-  authorizeAccess: (input: {
+  authorizePeer: (input: {
     peerId: string;
     peerLabel: string;
-    command: string;
     wgPublicKey: string;
     rules: string[];
     assistantPeerName: string;
-    needsAuthorization: boolean;
+  }) => Promise<boolean>;
+  /**
+   * Asks the user to confirm one exact command, resolving true when they do.
+   *
+   * Asked after the authorization, never beside it, and skipped only when the
+   * agent cleared this call (`ctx.autoApproved`).
+   */
+  confirmCommand: (input: {
+    peerId: string;
+    peerLabel: string;
+    command: string;
   }) => Promise<boolean>;
   /** Starts the WASM client on a private key. */
   connect: (privateKey: string) => Promise<boolean>;
@@ -452,8 +476,8 @@ function stripShellNoise(stderr: string): string {
 const describeError = (error: unknown): string =>
   error instanceof Error ? error.message : String(error ?? "unknown error");
 
-export function createSSHRunCommandExecutor(
-  deps: SSHRunCommandDeps,
+export function createSSHExecExecutor(
+  deps: SSHExecDeps,
 ): ClientToolExecutor {
   return async (input: unknown, ctx: ClientToolContext): Promise<ToolOutcome> => {
     const { peer, command, username } = (input ?? {}) as {
@@ -518,37 +542,63 @@ export function createSSHRunCommandExecutor(
       asking again for a decision already made, and that is how people learn to
       click through prompts without reading them.
     */
-    const needsAuthorization = !tunnel.granted.has(peerId);
     /*
-      Say what is really happening, because the trail cannot.
+      Two questions, in this order, and never merged back together.
 
-      The row's label comes from the tool name and reads "Running a command"
-      from the moment the call is dispatched — through the whole stretch in
-      which nothing is running and the assistant is waiting on a person. That
-      is not a cosmetic problem: a user who is being asked for something is
-      being told the thing they are deciding about has already happened.
+      "May the assistant reach this machine" is asked once per peer per tab, by
+      a window the user signs in to, and it is asked FIRST — with no command in
+      sight, because the grant it creates outlives any one command and should
+      not be weighed by how harmless one looks. "May this string run" is asked
+      after, on its own card, and asked for every command.
+
+      `ctx.setStatus` says which one is up, because the trail cannot: the row's
+      label comes from the tool call and reads as though the command were
+      already running, through the whole stretch in which nothing is and the
+      assistant is waiting on a person.
     */
-    ctx.setStatus(
-      needsAuthorization
-        ? "Waiting for you to authorize and confirm"
-        : "Waiting for you to confirm",
-    );
-    const confirmed = await deps
-      .authorizeAccess({
-        peerId,
-        peerLabel: label,
-        command,
-        wgPublicKey: keypair.publicKey,
-        rules: [accessRule(address)],
-        assistantPeerName: peerName,
-        needsAuthorization,
-      })
-      .catch(() => false);
-    if (!confirmed) return { ok: false, content: TEXT.notAuthorized(label) };
+    const needsAuthorization = !tunnel.granted.has(peerId);
+    if (needsAuthorization) {
+      ctx.setStatus(`Waiting for you to authorize ${label}`);
+      const granted = await deps
+        .authorizePeer({
+          peerId,
+          peerLabel: label,
+          wgPublicKey: keypair.publicKey,
+          rules: [accessRule(address)],
+          assistantPeerName: peerName,
+        })
+        .catch(() => false);
+      if (!granted) return { ok: false, content: TEXT.notAuthorized(label) };
+      /*
+        Recorded the moment the grant exists, not after the command is
+        confirmed. The window has already created it, so a user who authorizes
+        and then declines the command — or asks for a different one — must not
+        be sent back through a sign-in for access they already gave.
+      */
+      tunnel.granted.add(peerId);
+    }
+
+    /*
+      The clearance, and the one thing it cannot reach.
+
+      The agent may mark a dispatch `autoApproved`, which it does only for a
+      command a separate evaluation model judged to be pure inspection. That
+      covers this confirmation and nothing above it: the authorization is a
+      person's decision to open a route into their network, and no model's
+      opinion about a command substitutes for it. An agent that sends nothing,
+      an older agent that has never heard of the field, and anything that is
+      not exactly `true` all land in the ask.
+    */
+    if (ctx.autoApproved !== true) {
+      ctx.setStatus("Waiting for you to confirm");
+      const confirmed = await deps
+        .confirmCommand({ peerId, peerLabel: label, command })
+        .catch(() => false);
+      if (!confirmed) return { ok: false, content: TEXT.notAuthorized(label) };
+    }
     ctx.setStatus(`Connecting to ${label}`);
 
     const freshGrant = needsAuthorization;
-    if (needsAuthorization) tunnel.granted.add(peerId);
 
     // Only the private half, and only here. It is generated in this tab and
     // handed to nothing but the WASM client.
