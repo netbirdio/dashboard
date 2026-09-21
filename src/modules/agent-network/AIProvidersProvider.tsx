@@ -509,6 +509,12 @@ type AIProvidersContextValue = {
   openWizard: () => void;
   closeWizard: () => void;
   isWizardOpen: boolean;
+  // The provider the edit modal is open on, and its controls. Held here so
+  // the row and its action menu — rendered from a module-level column def —
+  // open the same modal.
+  editingProvider: AIProvider | undefined;
+  openProviderEdit: (provider: AIProvider) => void;
+  closeProviderEdit: () => void;
   addProvider: (input: ProviderConnectInput) => Promise<AIProvider | undefined>;
   // Resolves false when the save was refused — the backend checks a provider's
   // url and credential before storing them, so a rejected edit must leave the
@@ -709,6 +715,19 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
 
   const openWizard = useCallback(() => setIsWizardOpen(true), []);
   const closeWizard = useCallback(() => setIsWizardOpen(false), []);
+
+  const [editingProvider, setEditingProvider] = useState<
+    AIProvider | undefined
+  >(undefined);
+
+  const openProviderEdit = useCallback(
+    (provider: AIProvider) => setEditingProvider(provider),
+    [],
+  );
+  const closeProviderEdit = useCallback(
+    () => setEditingProvider(undefined),
+    [],
+  );
 
   const addProvider = useCallback(
     async (input: ProviderConnectInput) => {
@@ -1122,6 +1141,9 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       openWizard,
       closeWizard,
       isWizardOpen,
+      editingProvider,
+      openProviderEdit,
+      closeProviderEdit,
       addProvider,
       updateProvider,
       toggleProvider,
@@ -1152,6 +1174,9 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       isWizardOpen,
       openWizard,
       closeWizard,
+      editingProvider,
+      openProviderEdit,
+      closeProviderEdit,
       addProvider,
       updateProvider,
       toggleProvider,
