@@ -47,7 +47,7 @@ export default function FeatureCard({
   "aria-label": ariaLabel,
 }: Readonly<Props>) {
   const shell = cn(
-    "block text-left border border-nb-gray-900/50 bg-nb-gray-900/30",
+    "block text-left border border-nb-gray-900 bg-nb-gray-900/30",
     "py-3 pl-3 pr-5 rounded-lg transition-all min-w-[310px] max-w-[440px]",
     onClick && "cursor-pointer hover:bg-nb-gray-900/50",
     className,
