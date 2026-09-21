@@ -34,7 +34,7 @@ export const ProviderNode = ({ data }: ProviderNodeProps) => {
             "h-9 w-9 rounded-md flex items-center justify-center shrink-0 overflow-hidden"
           }
         >
-          <AIProviderLogo providerId={data.providerId} size={36} />
+          <AIProviderLogo providerId={data.providerId} size={36} tile />
         </div>
         <div className={"min-w-0"}>
           <div className={"text-nb-gray-200 font-normal whitespace-nowrap"}>
