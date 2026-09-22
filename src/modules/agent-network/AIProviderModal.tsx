@@ -190,7 +190,7 @@ let modelKeySeq = 0;
 // MASKED_API_KEY is what the edit form shows in place of a stored credential.
 // The real key never reaches the browser, so anything equal to this is a
 // placeholder rather than something that can be sent to a vendor.
-const MASKED_API_KEY = "••••••••";
+export const MASKED_API_KEY = "••••••••";
 
 // A password-type field next to a text one is what password managers read as a
 // login, so connecting a provider raised a "save login?" prompt. Same opt-out

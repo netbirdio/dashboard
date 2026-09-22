@@ -68,20 +68,30 @@ vi.mock("@/modules/control-center/hooks/useControlCenterData", () => ({
 // The agent-network writes go through the providers context; the deploy test
 // cares about ordering and payloads, so it records the calls instead.
 export const agentCalls: { name: string; args: unknown[] }[] = [];
+// What each mutator reports back; a test flips one to model a refused write.
+const agentResults: Record<string, unknown> = {};
 const agentFn =
-  (name: string, result?: unknown) =>
+  (name: string, result?: unknown | (() => unknown)) =>
   (...args: unknown[]) => {
     agentCalls.push({ name, args });
-    return Promise.resolve(result);
+    return Promise.resolve(typeof result === "function" ? result() : result);
   };
 vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
   useAIProviders: () => ({
-    addProvider: agentFn("addProvider", { id: "provider-created" }),
-    updateProvider: agentFn("updateProvider", true),
-    deleteProvider: agentFn("deleteProvider"),
-    addPolicy: agentFn("addPolicy", { id: "agent-policy-created" }),
-    updatePolicy: agentFn("updatePolicy"),
-    deletePolicy: agentFn("deletePolicy"),
+    // These mutators swallow their own API errors and report success as a
+    // boolean, so the fixture answers the way the real ones do.
+    addProvider: agentFn("addProvider", () => agentResults.addProvider),
+    updateProvider: agentFn(
+      "updateProvider",
+      () => agentResults.updateProvider,
+    ),
+    deleteProvider: agentFn(
+      "deleteProvider",
+      () => agentResults.deleteProvider,
+    ),
+    addPolicy: agentFn("addPolicy", () => agentResults.addPolicy),
+    updatePolicy: agentFn("updatePolicy", () => agentResults.updatePolicy),
+    deletePolicy: agentFn("deletePolicy", () => agentResults.deletePolicy),
   }),
 }));
 vi.mock("@/modules/control-center/draft/DraftChangesetContext", async () => {
@@ -136,6 +146,12 @@ beforeEach(() => {
     "agent_network.policies": { ...allRights },
   };
   agentCalls.length = 0;
+  agentResults.addProvider = { id: "provider-created" };
+  agentResults.updateProvider = true;
+  agentResults.deleteProvider = true;
+  agentResults.addPolicy = { id: "agent-policy-created" };
+  agentResults.updatePolicy = true;
+  agentResults.deletePolicy = true;
 });
 
 describe("agent network changes", () => {
@@ -232,6 +248,57 @@ describe("agent network changes", () => {
 
     expect(ok).toBe(false);
     expect(agentCalls.some((c) => c.name === "addPolicy")).toBe(false);
+  });
+
+  it("resolves refs on an update to an existing agent policy too", async () => {
+    liveGroups = [];
+    handlers.set("POST /groups", () => ({ id: "g-real", name: "Agents" }));
+    changes = [
+      {
+        id: "cg-1",
+        type: "create-group",
+        clientId: "group-new-Agents",
+        name: "Agents",
+        peerIds: [],
+        resourceIds: [],
+      } as unknown as DraftChange,
+      {
+        id: "uap-1",
+        type: "update-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "Agents → OpenAI",
+        policy: { sourceGroups: ["Agents"] },
+      } as unknown as DraftChange,
+    ];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    const call = agentCalls.find((c) => c.name === "updatePolicy");
+    expect((call?.args[1] as { sourceGroups: string[] }).sourceGroups).toEqual([
+      "g-real",
+    ]);
+  });
+
+  it("refuses a user membership change without the users permission", async () => {
+    permission.users = { ...allRights, update: false };
+    liveGroups = [{ id: "g1", name: "Ops" } as Group];
+    liveUsers = [{ id: "u1", name: "Ada", auto_groups: [] }];
+    changes = [
+      {
+        id: "uug-1",
+        type: "update-user-groups",
+        userId: "u1",
+        name: "Ada",
+        groupRefs: ["g1"],
+        addedGroupNames: ["Ops"],
+        removedGroupNames: [],
+      } as unknown as DraftChange,
+    ];
+    const { result } = renderHook(() => useDeployChangeset());
+    const ok = await act(async () => await result.current.deploy());
+
+    expect(ok).toBe(false);
+    expect(calls.some((c) => c.path === "/users/u1")).toBe(false);
   });
 
   it("refuses a policy whose draft provider was never created", async () => {
@@ -1142,3 +1209,127 @@ describe("user group membership", () => {
     expect(calls.some((c) => c.path === "/users/u1")).toBe(false);
   });
 });
+
+// These mutators report failure instead of throwing, so without an explicit
+// check the deploy marks a refused write as deployed and moves on.
+// The modal shows a mask where a stored credential is; the changeset must
+// never carry it, or the deploy overwrites the real key with bullets.
+describe("a provider edit that did not rotate the key", () => {
+  it("does not deploy the mask as the credential", async () => {
+    changes = [
+      {
+        id: "up-mask",
+        type: "update-provider",
+        providerId: "p1",
+        name: "OpenAI",
+        // What ControlCenterPolicyModals records after stripping the mask.
+        updates: {
+          name: "OpenAI renamed",
+          upstreamUrl: "https://api.openai.com",
+        },
+      } as unknown as DraftChange,
+    ];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    const call = agentCalls.find((c) => c.name === "updateProvider");
+    expect(call?.args[1]).not.toHaveProperty("apiKey");
+    expect(JSON.stringify(call?.args[1])).not.toContain("••••");
+  });
+});
+
+describe("a refused agent-network write fails the deploy", () => {
+  const cases = [
+    {
+      name: "a provider update the API refused",
+      mutator: "updateProvider",
+      change: {
+        id: "up-1",
+        type: "update-provider",
+        providerId: "p1",
+        name: "OpenAI",
+        updates: { name: "OpenAI" },
+      },
+    },
+    {
+      name: "a provider delete that failed",
+      mutator: "deleteProvider",
+      change: {
+        id: "dp-1",
+        type: "delete-provider",
+        providerId: "p1",
+        name: "OpenAI",
+      },
+    },
+    {
+      name: "an agent policy update that failed",
+      mutator: "updatePolicy",
+      change: {
+        id: "uap-1",
+        type: "update-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "Agents",
+        policy: { enabled: false },
+      },
+    },
+    {
+      name: "an agent policy delete that failed",
+      mutator: "deletePolicy",
+      change: {
+        id: "dap-1",
+        type: "delete-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "Agents",
+      },
+    },
+  ];
+
+  cases.forEach(({ name, mutator, change }) => {
+    it(`refuses the deploy on ${name}`, async () => {
+      agentResults[mutator] = false;
+      changes = [change as unknown as DraftChange];
+      const { result } = renderHook(() => useDeployChangeset());
+      const ok = await act(async () => await result.current.deploy());
+
+      expect(ok).toBe(false);
+      expect(result.current.deployStatus[change.id]).not.toBe("done");
+    });
+  });
+
+  it("retrying a created provider reports a refused PUT too", async () => {
+    changes = [createProviderChange()];
+    const { result, rerender } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+    agentResults.updateProvider = false;
+    rerender();
+    const edited = createProviderChange() as unknown as {
+      input: Record<string, unknown>;
+    };
+    changes = [
+      {
+        ...createProviderChange(),
+        input: { ...edited.input, name: "Renamed" },
+      } as unknown as DraftChange,
+    ];
+    rerender();
+    const ok = await act(async () => await result.current.deploy());
+
+    expect(ok).toBe(false);
+  });
+});
+
+function createProviderChange() {
+  return {
+    id: "cp-retry",
+    type: "create-provider",
+    clientId: "new-retry",
+    name: "OpenAI",
+    input: {
+      providerId: "openai_api",
+      name: "OpenAI",
+      upstreamUrl: "https://api.openai.com",
+      apiKey: "sk-test",
+      models: [],
+    },
+  } as unknown as DraftChange;
+}

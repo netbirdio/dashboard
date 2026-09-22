@@ -566,13 +566,15 @@ type AIProvidersContextValue = {
     updates: ProviderUpdateInput,
   ) => Promise<boolean>;
   toggleProvider: (id: string) => Promise<void>;
-  deleteProvider: (id: string) => Promise<void>;
+  // false when the write failed: the control center's deploy reports a change
+  // as deployed unless it hears otherwise.
+  deleteProvider: (id: string) => Promise<boolean>;
   addPolicy: (
     policy: Omit<AgentPolicy, "id">,
   ) => Promise<AgentPolicy | undefined>;
-  updatePolicy: (id: string, updates: Partial<AgentPolicy>) => Promise<void>;
+  updatePolicy: (id: string, updates: Partial<AgentPolicy>) => Promise<boolean>;
   togglePolicy: (id: string) => Promise<void>;
-  deletePolicy: (id: string) => Promise<void>;
+  deletePolicy: (id: string) => Promise<boolean>;
   addGuardrail: (
     guardrail: Omit<AgentGuardrail, "id">,
   ) => Promise<AgentGuardrail | undefined>;
@@ -868,11 +870,14 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           title: "Provider removed",
           description: "Endpoint will be torn down on next mapping update.",
         });
+        return true;
       } catch (err) {
         notifyFailure({
           title: "Failed to remove provider",
           description: err instanceof Error ? err.message : String(err),
         });
+        // The deploy marks a change deployed unless it hears otherwise.
+        return false;
       }
     },
     [providersApi, mutate],
@@ -902,7 +907,9 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const updatePolicy = useCallback(
     async (id: string, updates: Partial<AgentPolicy>) => {
       const existing = (apiPolicies ?? []).find((p) => p.id === id);
-      if (!existing) return;
+      // Nothing to merge onto: the policy is gone, and a blind PUT would
+      // resurrect it from partial values.
+      if (!existing) return false;
       const merged: APIPolicyRequest = {
         name: updates.name ?? existing.name,
         description: updates.description ?? existing.description,
@@ -924,11 +931,13 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           title: "Policy updated",
           description: "Settings saved.",
         });
+        return true;
       } catch (err) {
         notifyFailure({
           title: "Failed to update policy",
           description: err instanceof Error ? err.message : String(err),
         });
+        return false;
       }
     },
     [apiPolicies, policiesApi, mutatePolicies],
@@ -952,11 +961,13 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           title: "Policy removed",
           description: "Policy deleted.",
         });
+        return true;
       } catch (err) {
         notifyFailure({
           title: "Failed to remove policy",
           description: err instanceof Error ? err.message : String(err),
         });
+        return false;
       }
     },
     [policiesApi, mutatePolicies],

@@ -444,7 +444,10 @@ export function useDeployChangeset() {
         case "create-provider": {
           if (createdId) {
             // Retry: the record exists, so this is a PUT of the same input.
-            await saveProvider(createdId, change.input);
+            const ok = await saveProvider(createdId, change.input);
+            if (!ok) {
+              throw new Error(`Provider “${change.name}” was not saved.`);
+            }
             providerClientMap.set(change.clientId, createdId);
             return;
           }
@@ -461,7 +464,10 @@ export function useDeployChangeset() {
           return;
         }
         case "delete-provider": {
-          await deleteProvider(change.providerId);
+          const ok = await deleteProvider(change.providerId);
+          if (!ok) {
+            throw new Error(`Provider “${change.name}” was not deleted.`);
+          }
           return;
         }
         case "create-agent-policy": {
@@ -487,7 +493,7 @@ export function useDeployChangeset() {
           return;
         }
         case "update-agent-policy": {
-          await saveAgentPolicy(change.agentPolicyId, {
+          const ok = await saveAgentPolicy(change.agentPolicyId, {
             ...change.policy,
             ...(change.policy.sourceGroups
               ? {
@@ -504,10 +510,18 @@ export function useDeployChangeset() {
                 }
               : {}),
           });
+          // These mutators report failure rather than throwing, so a change
+          // would otherwise be marked deployed on a refused write.
+          if (!ok) {
+            throw new Error(`Agent policy “${change.name}” was not saved.`);
+          }
           return;
         }
         case "delete-agent-policy": {
-          await removeAgentPolicy(change.agentPolicyId);
+          const ok = await removeAgentPolicy(change.agentPolicyId);
+          if (!ok) {
+            throw new Error(`Agent policy “${change.name}” was not deleted.`);
+          }
           return;
         }
         case "update-user-groups": {
@@ -631,6 +645,9 @@ export function useDeployChangeset() {
         mutate("/policies"),
         mutate("/networks"),
         mutate("/networks/resources"),
+        // A deployed update-user-groups changes who is in which group, and
+        // the canvas reads its user counts from this list.
+        mutate("/users?service_user=false"),
       ]).catch(() => {});
       setIsDeploying(false);
       deployInFlight.current = false;

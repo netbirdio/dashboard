@@ -20,7 +20,9 @@ import {
   PolicyDestinationScope,
 } from "@/modules/access-control/AccessControlModal";
 import AgentPolicyModal from "@/modules/agent-network/AgentPolicyModal";
-import AIProviderModal from "@/modules/agent-network/AIProviderModal";
+import AIProviderModal, {
+  MASKED_API_KEY,
+} from "@/modules/agent-network/AIProviderModal";
 import {
   providerFromDraftInput,
   useAIProviders,
@@ -887,12 +889,19 @@ export function ControlCenterPolicyProvider({
       });
     }
     for (const pid of destNodeIds) {
+      const providerId = pid.replace("provider-", "");
+      const provider =
+        agentProviders?.find((p) => p.id === providerId) ??
+        draftProvider(providerId);
+      // Matches the live overlay: a disabled provider dims its edge even when
+      // the policy is enabled, so draft and live draw the same graph.
+      const providerEnabled = provider ? provider.status !== "disabled" : true;
       policyEdges.push({
-        id: `agent-dst-${policy.id}-${pid.replace("provider-", "")}`,
+        id: `agent-dst-${policy.id}-${providerId}`,
         source: policyNodeId,
         target: pid,
         type: "smart",
-        data: { enabled },
+        data: { enabled: enabled && providerEnabled },
       });
     }
 
@@ -1146,6 +1155,9 @@ export function ControlCenterPolicyProvider({
       networkResources,
       networks,
       agentProviders,
+      // drawAgentPolicyOnCanvas and setAgentSourceGroup resolve refs through
+      // this list, so a stale one names the wrong group.
+      groups,
     ],
   );
 
@@ -1223,10 +1235,18 @@ export function ControlCenterPolicyProvider({
           useSave={!isDraft}
           onBeforeSave={isDraft ? undefined : confirmLiveAgentSave}
           onDraftSubmit={(input) => {
+            // The modal shows a mask where a stored credential is: an edit
+            // that did not rotate the key must not carry it into the
+            // changeset, or the deploy PUTs bullets over the real one.
+            const { apiKey, ...rest } = input;
+            const updates =
+              apiKey && apiKey.trim() !== MASKED_API_KEY
+                ? { ...rest, apiKey }
+                : rest;
             trackUpdateProvider({
               providerId: editingProvider.id,
               name: input.name,
-              updates: input,
+              updates,
             });
             patchAgentNode(`provider-${editingProvider.id}`, {
               name: input.name,
