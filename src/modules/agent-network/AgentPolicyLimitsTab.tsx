@@ -393,7 +393,7 @@ function LimitEditModal({
           color={"netbird"}
         />
         <Separator />
-        <div className={"flex flex-col px-8 gap-4 py-6"}>
+        <div className={"flex flex-col px-8 gap-7 py-6"}>
           <div className={"grid grid-cols-2 gap-4"}>
             <div>
               <Label>
@@ -447,11 +447,11 @@ function LimitEditModal({
             <HelpText>
               How often the cap counters reset. Minimum 1 minute.
             </HelpText>
-            <div className={"w-full flex gap-3"}>
+            <div className={"flex gap-3"}>
               <Input
                 type={"number"}
                 min={1}
-                className={"flex-1"}
+                maxWidthClass={"max-w-[100px]"}
                 value={windowAmountStr}
                 onChange={(e) => setWindowAmountStr(e.target.value)}
               />
@@ -459,7 +459,7 @@ function LimitEditModal({
                 value={windowUnit}
                 onValueChange={(v) => setWindowUnit(v as "m" | "h" | "d")}
               >
-                <SelectTrigger className={"w-[150px] shrink-0"}>
+                <SelectTrigger className={"w-[135px] shrink-0"}>
                   <div className={"flex items-center gap-3"}>
                     <CalendarClock size={15} className={"text-nb-gray-300"} />
                     <SelectValue placeholder={"Select interval..."} />
