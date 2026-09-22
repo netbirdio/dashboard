@@ -4,9 +4,10 @@ import {
   getSimpleBezierPath,
   Position,
 } from "@xyflow/react";
-import { useEdgeNodeRect } from "@/modules/control-center/utils/edge-helper";
 import React from "react";
 import type { Policy } from "@/interfaces/Policy";
+import { useEdgeNodeRect } from "@/modules/control-center/utils/edge-helper";
+import { isPolicyNodeId } from "@/modules/control-center/utils/helpers";
 
 type Props = {
   data?: {
@@ -34,14 +35,16 @@ export function SmartEdge({ id, source, target, data }: Props) {
   const tW = targetRect.width;
   const tH = targetRect.height;
 
-  const sourceIsPolicy = source.startsWith("policy-");
-  const targetIsPolicy = target.startsWith("policy-");
+  const sourceIsPolicy = isPolicyNodeId(source);
+  const targetIsPolicy = isPolicyNodeId(target);
 
   const sCx = sPos.x + sW / 2;
   const tCx = tPos.x + tW / 2;
   const sourceIsLeft = sCx < tCx;
 
   // Policy nodes have fixed sides: sources enter left, destinations exit right.
+  // For an agent policy that is the whole rule — a group is only ever a source
+  // and a provider only ever a destination.
   let sx: number, sy: number, tx: number, ty: number;
   let sourcePosition: Position, targetPosition: Position;
 
