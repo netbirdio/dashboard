@@ -117,9 +117,7 @@ function NetworkActionsMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align={"start"} className={"w-[180px]"}>
         {mayEdit && (
-          <DropdownMenuItem
-            onClick={() => setNetworkEditor({ networkNodeId })}
-          >
+          <DropdownMenuItem onClick={() => setNetworkEditor({ networkNodeId })}>
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
               Edit
@@ -343,7 +341,9 @@ function HeaderTopLeft() {
                     className={cn(
                       // Fixed height matching the RoutingPeersBar next to it.
                       "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
-                      selectedNetwork && showNetworkActions && "!rounded-r-none",
+                      selectedNetwork &&
+                        showNetworkActions &&
+                        "!rounded-r-none",
                     )}
                     size={"xs"}
                   />
@@ -480,27 +480,33 @@ function HeaderTopRight() {
   );
 }
 
+// Module-level, not inline literals: entering draft fires a burst of state
+// updates (canvas rebuild, layout init, history capture) while this spring is
+// still running, and fresh prop objects on those re-renders re-target the
+// animation mid-flight — which reads as a flash just after it settles.
 function HeaderBottom() {
   const { isDraft } = useDraftMode();
 
-  const showToolbar = isDraft;
-
   return (
-    <AnimatePresence>
-      {showToolbar && (
-        <motion.div
-          className={"absolute bottom-0 left-1/2 z-10"}
-          initial={{ x: "-50%", y: 80, opacity: 0 }}
-          animate={{ x: "-50%", y: 0, opacity: 1 }}
-          exit={{ x: "-50%", y: 80, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 400, damping: 32 }}
-        >
-          <div className={"py-4"}>
-            <CanvasToolbar />
-          </div>
-        </motion.div>
+    // Always mounted, and animated in CSS rather than framer: transform and
+    // opacity transitions run on the compositor, so the heavy renders that
+    // entering draft triggers on the main thread can't stutter them — which is
+    // what read as the toolbar flashing.
+    <div
+      className={cn(
+        "absolute bottom-0 left-1/2 z-10 -translate-x-1/2",
+        "transition-[opacity,transform,visibility] duration-300 ease-out will-change-transform",
+        isDraft
+          ? "visible opacity-100 translate-y-0"
+          : // Visibility flips only at the end of the transition, which keeps the
+            // hidden toolbar out of the tab order without cutting the fade short.
+            "invisible opacity-0 translate-y-20 pointer-events-none",
       )}
-    </AnimatePresence>
+    >
+      <div className={"py-4"}>
+        <CanvasToolbar />
+      </div>
+    </div>
   );
 }
 
