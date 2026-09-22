@@ -6,15 +6,16 @@ import * as React from "react";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
 import {
+  useCanvasUI,
   useDestinationGroup,
   useIsContextMenuTarget,
 } from "@/modules/control-center/contexts/ControlCenterContext";
+import { AllHandles } from "@/modules/control-center/handles/AllHandles";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import {
   getGroupCountLabel,
   useAnySourceGroupEnabled,
 } from "@/modules/control-center/utils/helpers";
-import { AllHandles } from "@/modules/control-center/handles/AllHandles";
-import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 
 type GroupNodeProps = Node<
   {
@@ -43,9 +44,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
   );
   const isEnabled = enabled ?? sourceGroupEnabled;
   // Selector form: re-renders only when the boolean flips, not per pointer move.
-  const isTarget = useConnection(
-    (c) => c.inProgress && c.fromNode.id !== id,
-  );
+  const isTarget = useConnection((c) => c.inProgress && c.fromNode.id !== id);
   const isNew = !group?.id;
   const isContextMenuActive = useIsContextMenuTarget(id);
   const { selectedDestinationGroup } = useDestinationGroup();
@@ -54,7 +53,16 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
     (selectedDestinationGroup === group?.id || selectedDestinationGroup === id);
   const showHalo = isPanelActive || isContextMenuActive;
 
-  const countLabel = useMemo(() => getGroupCountLabel(group), [group]);
+  const { groupUserCounts } = useCanvasUI();
+  // The group panel previews its checkboxes through this override; without one
+  // the count comes from the user list.
+  const userCount =
+    (data as { userCountOverride?: number }).userCountOverride ??
+    (group?.id ? groupUserCounts.get(group.id) : 0);
+  const countLabel = useMemo(
+    () => getGroupCountLabel(group, userCount),
+    [group, userCount],
+  );
 
   return (
     <div

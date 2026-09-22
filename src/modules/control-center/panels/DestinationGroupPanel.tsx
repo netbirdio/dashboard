@@ -2,23 +2,23 @@ import Button from "@components/Button";
 import { Checkbox } from "@components/Checkbox";
 import { DropdownInfoText } from "@components/DropdownInfoText";
 import { notify } from "@components/Notification";
-import {
-  MemoizedScrollArea,
-  ScrollAreaViewport,
-} from "@components/ScrollArea";
+import { MemoizedScrollArea, ScrollAreaViewport } from "@components/ScrollArea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { useApiCall } from "@utils/api";
-import { cn } from "@utils/helpers";
+import { cn, generateColorFromUser } from "@utils/helpers";
 import { type Edge, useReactFlow } from "@xyflow/react";
-import { motion } from "framer-motion";
 import {
+  Ban,
+  Clock,
+  Cog,
   DownloadIcon,
   Layers3Icon,
   Loader2,
   MonitorSmartphoneIcon,
   SearchIcon,
   TriangleAlertIcon,
+  UsersIcon,
 } from "lucide-react";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -29,6 +29,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
+import { User } from "@/interfaces/User";
 import { useAccount } from "@/modules/account/useAccount";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
@@ -68,7 +69,6 @@ export const PanelVirtuosoScroller = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement>
 >((props, ref) => <ScrollAreaViewport ref={ref} {...props} />);
 PanelVirtuosoScroller.displayName = "PanelVirtuosoScroller";
-
 
 // External close paths must consult this before clearing the selection.
 export const groupPanelCloseGuard: {
@@ -253,6 +253,45 @@ export const MemberRow = ({
   </div>
 );
 
+// The users table's avatar, scaled to the panel: the initial in the colour
+// derived from the user, not a generic icon. The IdP badge is left off — it
+// needs its own fetch, which a virtualized row must not do.
+const UserRow = ({ user }: { user: User }) => {
+  const pending = user.status === "invited" || user.status === "blocked";
+  return (
+    <div className={"flex items-center gap-3 min-w-0 pl-2"}>
+      <div
+        className={
+          "h-8 w-8 shrink-0 rounded-full relative flex items-center justify-center bg-nb-gray-900 uppercase text-sm font-medium"
+        }
+        style={{ color: generateColorFromUser(user) }}
+      >
+        {user.name?.charAt(0) || user.id?.charAt(0) || <Cog size={11} />}
+        {pending && (
+          <div
+            className={cn(
+              "w-4 h-4 absolute -right-1 -bottom-1 rounded-full flex items-center justify-center border-2 border-nb-gray-935",
+              user.status === "blocked"
+                ? "bg-red-500 text-red-100"
+                : "bg-yellow-400 text-yellow-900",
+            )}
+          >
+            {user.status === "blocked" ? <Ban size={9} /> : <Clock size={9} />}
+          </div>
+        )}
+      </div>
+      <div className={"flex flex-col leading-tight min-w-0"}>
+        <span className={"text-[0.8rem] text-nb-gray-100 truncate"}>
+          {user.name || user.email || user.id}
+        </span>
+        <span className={"text-[0.72rem] text-nb-gray-400 truncate"}>
+          {user.email}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 const DraftStatusChip = ({
   label,
   icon,
@@ -290,7 +329,9 @@ const DraftPeerRowActions = ({ draftPeer }: { draftPeer: Peer }) => {
 
   return (
     <DraftStatusChip
-      label={isUserDevice ? "Install or assign" : setupKey ? "Waiting" : "Install"}
+      label={
+        isUserDevice ? "Install or assign" : setupKey ? "Waiting" : "Install"
+      }
       icon={
         isUserDevice ? undefined : setupKey ? (
           <Loader2 size={12} className={"animate-spin text-nb-gray-300"} />
@@ -316,7 +357,7 @@ export const DestinationGroupPanel = ({
   groupId,
   onClose,
 }: DestinationGroupPanelProps) => {
-  const { peers, networkResources, groups } = useControlCenterData();
+  const { peers, networkResources, groups, users } = useControlCenterData();
   // Structural subscription: a nodes subscription re-renders the panel on every canvas update.
   const nodes = useStructuralNodes();
   const { setNodes, setEdges } = useCanvasState();
@@ -328,6 +369,9 @@ export const DestinationGroupPanel = ({
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
   const groupRequest = useApiCall<Group>("/groups", true);
+  // A user's groups live on the user, so membership is written per user.
+  const userRequest = useApiCall<User>("/users", true);
+  const { trackUpdateUserGroups } = useDraftChangeset();
   const panelWidth = usePanelWidth();
   const reactFlow = useReactFlow();
   const account = useAccount();
@@ -460,13 +504,44 @@ export const DestinationGroupPanel = ({
     draftMemberResources,
   ]);
 
+  // The ref a user's membership is recorded under: a live group's id, or a
+  // draft group's NAME, which the deploy resolves once create-group lands.
+  const userGroupRef = realGroupId || (isDraft ? group?.name : undefined);
+
+  // Users carry their groups on `auto_groups`, and a draft edit lives in the
+  // changeset until it deploys, so the pending entry wins over the live list.
+  const groupUsers = useMemo(() => {
+    if (!userGroupRef) return [];
+    return (users ?? []).filter((u) => {
+      const pending = isDraft
+        ? changes.find(
+            (c) => c.type === "update-user-groups" && c.userId === u.id,
+          )
+        : undefined;
+      const refs =
+        pending?.type === "update-user-groups"
+          ? pending.groupRefs
+          : u.auto_groups ?? [];
+      return refs.includes(userGroupRef);
+    });
+  }, [users, userGroupRef, isDraft, changes]);
+
   const canEditMembers =
     !isAllGroup(group) &&
     canEditGroupMembers(permission.groups, group) &&
     (isDraft ? !!groupNode : !!realGroupId);
+  // The write lands on the user, so it needs the user permission. A draft group
+  // is fine: the change names it, and the deploy resolves that to the id its
+  // create returns.
+  const canEditUsers =
+    !isAllGroup(group) && !!permission.users?.update && !!userGroupRef;
   const memberPeerIds = useMemo(
     () => new Set(groupPeers.map((p) => p.id ?? "")),
     [groupPeers],
+  );
+  const memberUserIds = useMemo(
+    () => new Set(groupUsers.map((u) => u.id ?? "")),
+    [groupUsers],
   );
   const memberResourceIds = useMemo(
     () => new Set(resources.map((r) => r.id)),
@@ -479,6 +554,9 @@ export const DestinationGroupPanel = ({
   const [selectedResourceIds, setSelectedResourceIds] = useState<Set<string>>(
     new Set(),
   );
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(
+    new Set(),
+  );
   // Keyed by CONTENT: node updates rebuild the sets, so identity deps wiped the selection.
   const memberPeersKey = useMemo(
     () => [...memberPeerIds].sort().join(","),
@@ -487,6 +565,10 @@ export const DestinationGroupPanel = ({
   const memberResourcesKey = useMemo(
     () => [...memberResourceIds].sort().join(","),
     [memberResourceIds],
+  );
+  const memberUsersKey = useMemo(
+    () => [...memberUserIds].sort().join(","),
+    [memberUserIds],
   );
   useEffect(() => {
     setSelectedPeerIds(
@@ -498,10 +580,16 @@ export const DestinationGroupPanel = ({
       new Set(memberResourcesKey ? memberResourcesKey.split(",") : []),
     );
   }, [groupId, memberResourcesKey]);
+  useEffect(() => {
+    setSelectedUserIds(
+      new Set(memberUsersKey ? memberUsersKey.split(",") : []),
+    );
+  }, [groupId, memberUsersKey]);
 
   const dirty =
     !setEquals(selectedPeerIds, memberPeerIds) ||
-    !setEquals(selectedResourceIds, memberResourceIds);
+    !setEquals(selectedResourceIds, memberResourceIds) ||
+    !setEquals(selectedUserIds, memberUserIds);
 
   const toggleId = (set: Set<string>, id: string) => {
     const next = new Set(set);
@@ -516,12 +604,41 @@ export const DestinationGroupPanel = ({
     setSelectedPeerIds(next);
     syncNodeCounts(next.size, selectedResourceIds.size);
   };
+  const toggleUser = (user: User) => {
+    if (!user.id) return;
+    const next = toggleId(selectedUserIds, user.id);
+    setSelectedUserIds(next);
+    syncNodeUserCount(next.size);
+  };
   const toggleResource = (resource: NetworkResource) => {
     const next = toggleId(selectedResourceIds, resource.id);
     setSelectedResourceIds(next);
     syncNodeCounts(selectedPeerIds.size, next.size);
     syncGroupEdges(next);
   };
+
+  // The user count comes from the UI context (users carry their groups), so a
+  // preview rides on the node as an override the subtitle prefers.
+  const syncNodeUserCount = useCallback(
+    (usersCount: number) => {
+      if (!group) return;
+      setNodes((prev) => {
+        let changed = false;
+        const next = prev.map((n) => {
+          const g = getNodeGroup(n);
+          if (!g) return n;
+          const sameGroup = group.id
+            ? g.id === group.id
+            : !g.id && g.name === group.name;
+          if (!sameGroup || n.data?.userCountOverride === usersCount) return n;
+          changed = true;
+          return { ...n, data: { ...n.data, userCountOverride: usersCount } };
+        });
+        return changed ? next : prev;
+      });
+    },
+    [group, setNodes],
+  );
 
   // So the group's canvas subtitle follows the checkboxes.
   const syncNodeCounts = useCallback(
@@ -607,21 +724,32 @@ export const DestinationGroupPanel = ({
   // Unsaved toggles revert on close.
   const restoreCountsRef = useRef<{
     sync: (p: number, r: number) => void;
+    syncUsers: (u: number) => void;
     peers: number;
     resources: number;
+    users: number;
   } | null>(null);
   useEffect(() => {
     restoreCountsRef.current = {
       sync: syncNodeCounts,
+      syncUsers: syncNodeUserCount,
       peers: memberPeerIds.size,
       resources: memberResourceIds.size,
+      users: memberUserIds.size,
     };
-  }, [syncNodeCounts, memberPeerIds, memberResourceIds]);
+  }, [
+    syncNodeCounts,
+    syncNodeUserCount,
+    memberPeerIds,
+    memberResourceIds,
+    memberUserIds,
+  ]);
   useEffect(() => {
     if (!groupId) return;
     return () => {
       const r = restoreCountsRef.current;
       r?.sync(r.peers, r.resources);
+      r?.syncUsers(r.users);
     };
   }, [groupId]);
 
@@ -686,11 +814,16 @@ export const DestinationGroupPanel = ({
           addMemberToGroup(groupNode, { peer, draggedNodeId: nodeId });
         }
       });
+      // Users are written per user on deploy, so their membership is its own
+      // change rather than part of the group's.
+      trackUserMembership();
       // Point the unmount snapshot at the applied selection so the cleanup doesn't revert it.
       restoreCountsRef.current = {
         sync: syncNodeCounts,
+        syncUsers: syncNodeUserCount,
         peers: selectedPeerIds.size,
         resources: selectedResourceIds.size,
+        users: selectedUserIds.size,
       };
       savedRef.current = true;
       onClose();
@@ -741,12 +874,15 @@ export const DestinationGroupPanel = ({
     });
     try {
       await request;
+      await saveUserMembership();
       // DON'T rebuild the view: the toggles already previewed it, and a rebuild refits.
       savedRef.current = true;
       restoreCountsRef.current = {
         sync: syncNodeCounts,
+        syncUsers: syncNodeUserCount,
         peers: selectedPeerIds.size,
         resources: selectedResourceIds.size,
+        users: selectedUserIds.size,
       };
       onClose();
     } catch {
@@ -760,6 +896,56 @@ export const DestinationGroupPanel = ({
     } finally {
       setSaving(false);
     }
+  };
+
+  // Draft: one changeset entry per user whose groups changed. The entry holds
+  // the whole auto_groups list, since that is what the PUT replaces.
+  const trackUserMembership = () => {
+    if (!userGroupRef) return;
+    (users ?? []).forEach((user) => {
+      if (!user.id) return;
+      const was = memberUserIds.has(user.id);
+      const now = selectedUserIds.has(user.id);
+      if (was === now) return;
+      const current = currentUserGroupRefs(user);
+      trackUpdateUserGroups({
+        userId: user.id,
+        name: user.name || user.email || user.id,
+        groupRefs: now
+          ? Array.from(new Set([...current, userGroupRef]))
+          : current.filter((g) => g !== userGroupRef),
+        addedGroupNames: now ? [group?.name ?? ""] : [],
+        removedGroupNames: now ? [] : [group?.name ?? ""],
+      });
+    });
+  };
+
+  // The draft's pending list for a user, falling back to what the account says.
+  const currentUserGroupRefs = (user: User) => {
+    const pending = changes.find(
+      (c) => c.type === "update-user-groups" && c.userId === user.id,
+    );
+    return pending?.type === "update-user-groups"
+      ? pending.groupRefs
+      : user.auto_groups ?? [];
+  };
+
+  // Live: the group is not the record that changes — each user is.
+  const saveUserMembership = async () => {
+    if (!realGroupId) return;
+    const writes = (users ?? []).flatMap((user) => {
+      if (!user.id) return [];
+      const was = memberUserIds.has(user.id);
+      const now = selectedUserIds.has(user.id);
+      if (was === now) return [];
+      const auto_groups = now
+        ? Array.from(new Set([...(user.auto_groups ?? []), realGroupId]))
+        : (user.auto_groups ?? []).filter((g) => g !== realGroupId);
+      return [userRequest.put({ ...user, auto_groups }, `/${user.id}`)];
+    });
+    if (writes.length === 0) return;
+    await Promise.all(writes);
+    await mutate("/users?service_user=false");
   };
 
   const [tab, setTab] = useState("peers");
@@ -816,18 +1002,20 @@ export const DestinationGroupPanel = ({
   const [rowOrder, setRowOrder] = useState<{
     peers: string[];
     resources: string[];
+    users: string[];
   } | null>(null);
   useEffect(() => {
     setRowOrder(null);
   }, [groupId]);
   useEffect(() => {
-    if (rowOrder || !groupId || !peers || !networkResources) return;
+    if (rowOrder || !groupId || !peers || !networkResources || !users) return;
     setRowOrder({
       peers: peerCandidates.map((p) => p.id ?? "").filter(Boolean),
       resources: resourceCandidates.map((r) => r.id),
+      users: userCandidates.map((u) => u.id ?? "").filter(Boolean),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- candidate lists are snapshotted, not tracked
-  }, [rowOrder, groupId, peers, networkResources]);
+  }, [rowOrder, groupId, peers, networkResources, users]);
 
   const peerRows = useMemo(() => {
     const pinned = rowOrder
@@ -853,6 +1041,43 @@ export const DestinationGroupPanel = ({
         r.address?.toLowerCase().includes(query),
     );
   }, [resourceCandidates, rowOrder, query]);
+
+  // The users table's default order: the current user first, then by the
+  // name-and-email the table sorts on, descending as it stores it.
+  const sortedUsers = useMemo(
+    () =>
+      [...(users ?? [])].sort((a, b) => {
+        if (!!a.is_current !== !!b.is_current) return a.is_current ? -1 : 1;
+        const key = (u: User) => `${u.name ?? ""} ${u.email ?? ""}`.trim();
+        return key(b).localeCompare(key(a));
+      }),
+    [users],
+  );
+
+  // Members first, as on the other two tabs; rowOrder then pins each row where
+  // it started so toggling a checkbox doesn't make it jump.
+  const userCandidates = useMemo(() => {
+    if (!canEditUsers) return groupUsers;
+    return [
+      ...sortedUsers.filter((u) => u.id && memberUserIds.has(u.id)),
+      ...sortedUsers.filter((u) => u.id && !memberUserIds.has(u.id)),
+    ];
+  }, [canEditUsers, groupUsers, sortedUsers, memberUserIds]);
+
+  const userRows = useMemo(() => {
+    const pinned = rowOrder
+      ? pinByOrder(userCandidates, rowOrder.users, (u) => u.id ?? "")
+      : userCandidates;
+    if (!query) return pinned;
+    return pinned.filter(
+      (u) =>
+        u.name?.toLowerCase().includes(query) ||
+        u.email?.toLowerCase().includes(query) ||
+        u.role?.toLowerCase().includes(query),
+    );
+  }, [userCandidates, rowOrder, query]);
+
+  const totalUsers = (users ?? []).length;
 
   const totalPeers =
     (peers ?? []).filter((p) => p.id).length +
@@ -913,19 +1138,39 @@ export const DestinationGroupPanel = ({
   };
   const requestClose = usePanelCloseGuard(groupId, confirmDiscard, onClose);
 
+  // The first render of the member lists is heavy enough to drop frames, and
+  // it lands in the same frame the entry spring starts — which read as a
+  // flash. Paint it hidden, then run the spring on the next clean frame.
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    if (!groupId || !placement) {
+      setEntered(false);
+      return;
+    }
+    let inner = 0;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => setEntered(true));
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
+  }, [groupId, placement]);
+
   // Always mounted so the large member lists aren't rebuilt on every open.
   if (!groupId || !placement) return null;
 
   return (
     // NO key: switching groups must not replay the entry animation.
-    <motion.div
+    <div
       id={"cc-group-panel"}
-      initial={{ opacity: 0, x: 48, y: 0 }}
-      animate={{ opacity: 1, x: 0, y: 0 }}
-      transition={{ type: "spring", stiffness: 400, damping: 32 }}
       className={cn(
         "absolute z-20 flex flex-col",
         "rounded-lg border border-nb-gray-910 bg-nb-gray-935 shadow-xl",
+        // CSS, not framer: a transform/opacity transition is composited, so
+        // the canvas re-render that a group click triggers can't stutter it.
+        "transition-[opacity,transform] duration-300 ease-out will-change-transform",
+        entered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12",
       )}
       style={{
         width: panelWidth,
@@ -1002,6 +1247,15 @@ export const DestinationGroupPanel = ({
                 }
               />
               Resources
+            </TabsTrigger>
+            <TabsTrigger value={"users"} className={"text-[.8rem] font-normal"}>
+              <UsersIcon
+                size={14}
+                className={
+                  "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+                }
+              />
+              Users
             </TabsTrigger>
           </TabsList>
         </div>
@@ -1128,6 +1382,41 @@ export const DestinationGroupPanel = ({
             </div>
           )}
         </TabsContent>
+        <TabsContent value={"users"} className={"flex-1 min-h-0 m-0 p-0"}>
+          {userRows.length > 0 ? (
+            <MemoizedScrollArea withoutViewport={true} className={"h-full"}>
+              <Virtuoso
+                key={`${groupId}-users`}
+                data={userRows}
+                overscan={300}
+                defaultItemHeight={54}
+                computeItemKey={(index) => userRows[index].id ?? String(index)}
+                itemContent={(index, user) => (
+                  <div className={cn("px-3 pb-0.5", index === 0 && "pt-3")}>
+                    <MemberRow
+                      checked={selectedUserIds.has(user.id ?? "")}
+                      onToggle={
+                        canEditUsers ? () => toggleUser(user) : undefined
+                      }
+                    >
+                      <UserRow user={user} />
+                    </MemberRow>
+                  </div>
+                )}
+                components={{ Scroller: PanelVirtuosoScroller }}
+                style={{ height: "100%" }}
+              />
+            </MemoizedScrollArea>
+          ) : (
+            <div className={"px-3 pt-3"}>
+              <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
+                {query
+                  ? "There are no users matching your search. Please try a different search term."
+                  : "There are no users in this account yet."}
+              </DropdownInfoText>
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       {canEditMembers && (
@@ -1139,6 +1428,8 @@ export const DestinationGroupPanel = ({
           <span className={"text-xs text-nb-gray-400"}>
             {tab === "peers"
               ? `${selectedPeerIds.size} of ${totalPeers} Assigned`
+              : tab === "users"
+              ? `${selectedUserIds.size} of ${totalUsers} Assigned`
               : `${selectedResourceIds.size} of ${totalResources} Assigned`}
           </span>
           <div className={"flex items-center gap-3"}>
@@ -1173,6 +1464,6 @@ export const DestinationGroupPanel = ({
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 };

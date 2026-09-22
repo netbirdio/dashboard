@@ -1,5 +1,18 @@
 "use client";
 
+import { SelectOption } from "@components/select/SelectDropdown";
+import useFetchApi from "@utils/api";
+import {
+  applyNodeChanges,
+  Edge,
+  Node,
+  OnEdgesChange,
+  OnNodesChange,
+  Rect,
+  useEdgesState,
+  useNodesState,
+} from "@xyflow/react";
+import { useSearchParams } from "next/navigation";
 import React, {
   createContext,
   useCallback,
@@ -10,41 +23,29 @@ import React, {
   useState,
   useSyncExternalStore,
 } from "react";
-import {
-  applyNodeChanges,
-  Edge,
-  Node,
-  OnEdgesChange,
-  OnNodesChange,
-  useEdgesState,
-  useNodesState,
-  Rect,
-} from "@xyflow/react";
-import { useSearchParams } from "next/navigation";
+import { mutate } from "swr";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
-import { FlowView } from "@/modules/control-center/header/FlowSelector";
-import { User } from "@/interfaces/User";
-import { SelectOption } from "@components/select/SelectDropdown";
 import { Network } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
+import { User } from "@/interfaces/User";
+import { useAccount } from "@/modules/account/useAccount";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useSelectNodeHandlers } from "@/modules/control-center/hooks/useSelectNodeHandlers";
 import { useGroupView } from "@/modules/control-center/hooks/views/useGroupView";
+import { useNetworkView } from "@/modules/control-center/hooks/views/useNetworkView";
 import { usePeerView } from "@/modules/control-center/hooks/views/usePeerView";
 import { useUserView } from "@/modules/control-center/hooks/views/useUserView";
-import { useNetworkView } from "@/modules/control-center/hooks/views/useNetworkView";
-import { useSelectNodeHandlers } from "@/modules/control-center/hooks/useSelectNodeHandlers";
 import { DestinationGroupPanel } from "@/modules/control-center/panels/DestinationGroupPanel";
 import { PeerGroupsPanel } from "@/modules/control-center/panels/PeerGroupsPanel";
-import NetworkResourceModal from "@/modules/networks/resources/NetworkResourceModal";
-import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
-import { NetworkProvider } from "@/modules/networks/NetworkProvider";
-import { mutate } from "swr";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   ensureParentsBeforeChildren,
   getIpPlaceholderFromRange,
 } from "@/modules/control-center/utils/helpers";
-import { useAccount } from "@/modules/account/useAccount";
+import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
+import { NetworkProvider } from "@/modules/networks/NetworkProvider";
+import NetworkResourceModal from "@/modules/networks/resources/NetworkResourceModal";
 
 interface CanvasState {
   nodes: Node[];
@@ -112,6 +113,9 @@ export function useIsContextMenuTarget(nodeId: string): boolean {
 // identity on every canvas update.
 interface CanvasUIState {
   placeholderIp: string;
+  // Users carry their groups on `auto_groups`, so a group's user count can only
+  // be counted from the user list — read once here rather than in every node.
+  groupUserCounts: Map<string, number>;
 }
 
 const CanvasUIContext = createContext<CanvasUIState | null>(null);
@@ -156,9 +160,7 @@ export function useCanvasUI(): CanvasUIState {
 export function useCanvasState(): CanvasState {
   const ctx = useContext(CanvasStateContext);
   if (!ctx) {
-    throw new Error(
-      "useCanvasState must be used within a CanvasStateProvider",
-    );
+    throw new Error("useCanvasState must be used within a CanvasStateProvider");
   }
   return ctx;
 }
@@ -237,6 +239,19 @@ export function CanvasStateProvider({
     [account?.settings?.network_range],
   );
 
+  // Same SWR key the data layer uses, so this shares its request.
+  const { data: users } = useFetchApi<User[]>("/users?service_user=false");
+  const groupUserCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    users?.forEach(
+      (u) =>
+        u.auto_groups?.forEach((gid) =>
+          counts.set(gid, (counts.get(gid) ?? 0) + 1),
+        ),
+    );
+    return counts;
+  }, [users]);
+
   const value = useMemo(
     () => ({
       nodes,
@@ -293,8 +308,9 @@ export function CanvasStateProvider({
   const uiValue = useMemo(
     () => ({
       placeholderIp,
+      groupUserCounts,
     }),
-    [placeholderIp],
+    [placeholderIp, groupUserCounts],
   );
 
   const destinationGroupValue = useMemo(
@@ -308,7 +324,12 @@ export function CanvasStateProvider({
       selectedPeerPanel,
       setSelectedPeerPanel,
     }),
-    [selectedDestinationGroup, focusedNodeId, highlightArmed, selectedPeerPanel],
+    [
+      selectedDestinationGroup,
+      focusedNodeId,
+      highlightArmed,
+      selectedPeerPanel,
+    ],
   );
 
   return (
@@ -335,8 +356,9 @@ interface ControlCenterUIContextType {
   onNodeClick: (event: React.MouseEvent, node: Node) => void;
 }
 
-const ControlCenterUIContext =
-  createContext<ControlCenterUIContextType | null>(null);
+const ControlCenterUIContext = createContext<ControlCenterUIContextType | null>(
+  null,
+);
 
 export function useControlCenterUI(): ControlCenterUIContextType {
   const ctx = useContext(ControlCenterUIContext);
@@ -473,22 +495,22 @@ export function ControlCenterUIProvider({
                       network={network}
                       resource={resource}
                       onUpdated={(r) => {
-                    canvas.setNodes((prev) =>
-                      prev.map((n) => {
-                        const res = n.data?.resource as
-                          | { id?: string }
-                          | undefined;
-                        if (!res || res.id !== r.id) return n;
-                        return {
-                          ...n,
-                          data: {
-                            ...n.data,
-                            resource: r,
-                            enabled: r.enabled !== false,
-                          },
-                        };
-                      }),
-                    );
+                        canvas.setNodes((prev) =>
+                          prev.map((n) => {
+                            const res = n.data?.resource as
+                              | { id?: string }
+                              | undefined;
+                            if (!res || res.id !== r.id) return n;
+                            return {
+                              ...n,
+                              data: {
+                                ...n.data,
+                                resource: r,
+                                enabled: r.enabled !== false,
+                              },
+                            };
+                          }),
+                        );
                         void mutate("/networks/resources");
                         void mutate("/groups");
                         canvas.setLiveResourceEditor(null);
