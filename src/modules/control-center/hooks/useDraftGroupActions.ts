@@ -1,9 +1,11 @@
-import { Edge, Node, useReactFlow,XYPosition } from "@xyflow/react";
+import { Edge, Node, useReactFlow, XYPosition } from "@xyflow/react";
 import { useCallback } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { Group, GroupIssued } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import type { AgentPolicy } from "@/modules/agent-network/data/mockData";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
@@ -14,6 +16,7 @@ import {
   isPendingPolicyWrite,
   pendingPolicyView,
 } from "@/modules/control-center/utils/change-cascade";
+import { isEmptiedAgentPolicy } from "@/modules/control-center/utils/change-cascade";
 import {
   draftUid,
   dropAbsorbedPlaceholder,
@@ -24,6 +27,7 @@ import {
 } from "@/modules/control-center/utils/helpers";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 import {
+  agentGroupDeletionUpdates,
   groupDeletionPolicyUpdates,
   patchGroupInPolicies,
   sameGroupMatcher,
@@ -60,6 +64,38 @@ export const getNextNewGroupName = (taken: Set<string>) => {
 
 // The edges decide which side a self-ref instance strips. Accumulating into
 // `updatesById` lets a batch strip several groups from one policy without last-write-wins.
+// Agent policies name groups on their source side only, so an edge either way
+// between a group node and an agent policy node is that membership.
+const collectAgentGroupStrip = (
+  allNodes: Node[],
+  allEdges: Edge[],
+  groupNode: Node,
+  agentPolicies: AgentPolicy[] | undefined,
+  updatesById: Map<string, AgentPolicy>,
+) => {
+  const removed = getNodeGroup(groupNode);
+  // A draft group is named rather than identified, and that name is the ref an
+  // agent policy carries for it.
+  const removedRef = removed?.id ?? removed?.name;
+  if (!removedRef) return;
+  allEdges.forEach((e) => {
+    if (e.source !== groupNode.id && e.target !== groupNode.id) return;
+    const policyNodeId = e.source === groupNode.id ? e.target : e.source;
+    const policyNode = allNodes.find((n) => n.id === policyNodeId);
+    if (policyNode?.type !== NodeType.AgentPolicyNode) return;
+    const nodeData = policyNode.data as { id?: string; policy?: AgentPolicy };
+    const policy =
+      updatesById.get(policyNodeId) ??
+      nodeData.policy ??
+      agentPolicies?.find((p) => p.id === nodeData.id);
+    if (!policy?.sourceGroups.includes(removedRef)) return;
+    updatesById.set(policyNodeId, {
+      ...policy,
+      sourceGroups: policy.sourceGroups.filter((ref) => ref !== removedRef),
+    });
+  });
+};
+
 const collectGroupStrip = (
   allNodes: Node[],
   allEdges: Edge[],
@@ -111,7 +147,9 @@ export function useDraftGroupActions() {
   const reactFlow = useReactFlow();
   const { setNodes, setEdges, setSelectedDestinationGroup } = useCanvasState();
   const { groups, policies } = useControlCenterData();
-  const { updateDraftPolicy } = useControlCenterPolicy();
+  const { policies: agentPolicies } = useAIProviders();
+  const { updateDraftPolicy, updateDraftAgentPolicy } =
+    useControlCenterPolicy();
   const { confirm } = useDialog();
   const { registerArtifacts, revokeSetupKey } = usePlaceholderArtifacts();
   const {
@@ -120,6 +158,8 @@ export function useDraftGroupActions() {
     trackRenameGroup,
     trackDeleteGroup,
     trackUpdatePolicy,
+    trackUpdateAgentPolicy,
+    trackDeleteAgentPolicy,
     trackRemoveGroupMembers,
     removeGroupFromDraftResource,
     untrackNewGroup,
@@ -135,7 +175,9 @@ export function useDraftGroupActions() {
       groups?.forEach((g) => taken.add(g.name));
       reactFlow
         .getNodes()
-        .forEach((n) => getNodeGroup(n)?.name && taken.add(getNodeGroup(n)!.name));
+        .forEach(
+          (n) => getNodeGroup(n)?.name && taken.add(getNodeGroup(n)!.name),
+        );
       changes.forEach((c) => c.type === "create-group" && taken.add(c.name));
 
       const name = getNextNewGroupName(taken);
@@ -239,10 +281,7 @@ export function useDraftGroupActions() {
 
   // Draft-added members revert their addition; existing members are removed on deploy.
   const removeGroupMember = useCallback(
-    (
-      group: Group,
-      member: { peerId?: string; resourceId?: string },
-    ) => {
+    (group: Group, member: { peerId?: string; resourceId?: string }) => {
       const itemId = member.peerId ?? member.resourceId;
       if (!itemId) return;
 
@@ -300,10 +339,7 @@ export function useDraftGroupActions() {
 
       // Draft resources also carry the group on their own create change.
       if (member.resourceId?.startsWith("new-")) {
-        removeGroupFromDraftResource(
-          member.resourceId,
-          group.id ?? group.name,
-        );
+        removeGroupFromDraftResource(member.resourceId, group.id ?? group.name);
       }
     },
     [setNodes, setEdges, trackRemoveGroupMembers, removeGroupFromDraftResource],
@@ -369,6 +405,22 @@ export function useDraftGroupActions() {
       }, 0);
     },
     [reactFlow, updateDraftPolicy],
+  );
+
+  // Same next-tick rule as deferPolicyStrips: the removal must hit the canvas
+  // before drawAgentPolicyOnCanvas rebuilds the edges.
+  const deferAgentPolicyStrips = useCallback(
+    (policyUpdates: AgentPolicy[]) => {
+      if (policyUpdates.length === 0) return;
+      setTimeout(() => {
+        const remaining = new Set(reactFlow.getNodes().map((n) => n.id));
+        policyUpdates.forEach((p) => {
+          if (!remaining.has(`agent-policy-${p.id}`)) return;
+          updateDraftAgentPolicy(p);
+        });
+      }, 0);
+    },
+    [reactFlow, updateDraftAgentPolicy],
   );
 
   const removeNodeWithEdges = useCallback(
@@ -569,9 +621,17 @@ export function useDraftGroupActions() {
       nodesToRemove.forEach((n) => sweepAbsorbedPlaceholders(n));
 
       const updatesById = new Map<string, Policy>();
+      const agentUpdatesById = new Map<string, AgentPolicy>();
       nodesToRemove.forEach((n) => {
         if (isGroupNode(n)) {
           collectGroupStrip(allNodes, allEdges, n, updatesById);
+          collectAgentGroupStrip(
+            allNodes,
+            allEdges,
+            n,
+            agentPolicies,
+            agentUpdatesById,
+          );
         }
       });
 
@@ -600,6 +660,7 @@ export function useDraftGroupActions() {
       });
 
       deferPolicyStrips([...updatesById.values()]);
+      deferAgentPolicyStrips([...agentUpdatesById.values()]);
     },
     [
       reactFlow,
@@ -609,6 +670,8 @@ export function useDraftGroupActions() {
       sweepAbsorbedPlaceholders,
       untrackNewGroup,
       deferPolicyStrips,
+      deferAgentPolicyStrips,
+      agentPolicies,
     ],
   );
 
@@ -637,6 +700,28 @@ export function useDraftGroupActions() {
     });
     return [...canvasNodes, ...offCanvas];
   }, [reactFlow, policies, changes]);
+
+  // The agent twin of policySnapshots: a policy off the canvas still blocks the
+  // group DELETE, and the canvas copy wins where both exist (pending edits).
+  const agentPolicySnapshots = useCallback((): AgentPolicy[] => {
+    const drawn = new Map<string, AgentPolicy>();
+    reactFlow.getNodes().forEach((n) => {
+      if (n.type !== NodeType.AgentPolicyNode) return;
+      const data = n.data as { id?: string; policy?: AgentPolicy };
+      const policy =
+        data.policy ?? agentPolicies?.find((p) => p.id === data.id);
+      if (policy?.id) drawn.set(policy.id, policy);
+    });
+    const pendingDeletes = new Set(
+      changes.flatMap((c) =>
+        c.type === "delete-agent-policy" ? [c.agentPolicyId] : [],
+      ),
+    );
+    const offCanvas = (agentPolicies ?? []).filter(
+      (p) => !drawn.has(p.id) && !pendingDeletes.has(p.id),
+    );
+    return [...drawn.values(), ...offCanvas];
+  }, [reactFlow, agentPolicies, changes]);
 
   // One pass for the whole batch: group by group rebuilds each policy from a stale canvas.
   const deleteGroups = useCallback(
@@ -670,6 +755,31 @@ export function useDraftGroupActions() {
         }),
       );
 
+      // An agent policy naming the group blocks the same DELETE, and stripping
+      // its only source group empties it — which the API refuses just as it
+      // refuses a rule authorizing nothing, so that policy goes too.
+      const agentUpdates = agentGroupDeletionUpdates(
+        agentPolicySnapshots(),
+        groups,
+      );
+      agentUpdates.forEach(({ policy, basePolicy, groupIds }) => {
+        const groupDeletion = { groupIds, basePolicy };
+        if (isEmptiedAgentPolicy(policy)) {
+          trackDeleteAgentPolicy({
+            agentPolicyId: policy.id,
+            name: policy.name,
+            groupDeletion,
+          });
+          return;
+        }
+        trackUpdateAgentPolicy({
+          agentPolicyId: policy.id,
+          name: policy.name,
+          policy,
+          groupDeletion,
+        });
+      });
+
       groups.forEach((group) =>
         trackDeleteGroup({ groupId: group.id, name: group.name }),
       );
@@ -681,10 +791,24 @@ export function useDraftGroupActions() {
       });
       instanceNodes.forEach((n) => sweepAbsorbedPlaceholders(n));
       const instanceIds = new Set(instanceNodes.map((n) => n.id));
+      const agentUpdateById = new Map(
+        agentUpdates.map((u) => [u.policy.id, u.policy]),
+      );
       setNodes((prev) =>
         prev
           .filter((n) => !instanceIds.has(n.id))
           .map((n) => {
+            if (n.type === NodeType.AgentPolicyNode) {
+              const data = n.data as { id?: string; policy?: AgentPolicy };
+              const updated = data.id
+                ? agentUpdateById.get(data.id)
+                : undefined;
+              // Only a draft policy's node carries the record; an existing
+              // one is read back from the domain list.
+              return updated && data.policy
+                ? { ...n, data: { ...n.data, policy: updated } }
+                : n;
+            }
             const policy = n.data?.policy as Policy | undefined;
             const updated = policy?.id
               ? policyUpdates.get(policy.id)?.policy
@@ -702,8 +826,11 @@ export function useDraftGroupActions() {
     [
       reactFlow,
       policySnapshots,
+      agentPolicySnapshots,
       trackDeleteGroup,
       trackUpdatePolicy,
+      trackUpdateAgentPolicy,
+      trackDeleteAgentPolicy,
       removeGroups,
       sweepAbsorbedPlaceholders,
       setNodes,
@@ -775,7 +902,9 @@ export function useDraftGroupActions() {
                 emptiedLive.length === 1
                   ? "the policy"
                   : `${emptiedLive.length} policies`
-              } ${nameList(emptiedLive)}, which would be left authorizing nothing.`
+              } ${nameList(
+                emptiedLive,
+              )}, which would be left authorizing nothing.`
             : ""
         }${
           emptiedDraft.length > 0

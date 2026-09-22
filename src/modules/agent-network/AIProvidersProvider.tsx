@@ -10,6 +10,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import {
   AgentBudgetRule,
   AgentGuardrail,
@@ -22,7 +23,6 @@ import {
   PolicyLimits,
   ProviderModel,
 } from "@/modules/agent-network/data/mockData";
-import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 
@@ -215,6 +215,48 @@ function fromAPI(p: APIProvider): AIProvider {
     p95LatencyMs: 0,
     denyRatePct: 0,
     enabled: p.enabled,
+  };
+}
+
+// A provider the control center's draft has recorded but not yet deployed has
+// no API record to read back, so its modal is fed from the create change's own
+// input. The non-input fields mirror fromAPI's defaults.
+export function providerFromDraftInput(
+  id: string,
+  input: ProviderConnectInput,
+): AIProvider {
+  const models = input.models ?? [];
+  const enabled = input.enabled ?? true;
+  return {
+    id,
+    providerId: input.providerId,
+    name: input.name,
+    upstreamUrl: input.upstreamUrl,
+    extraValues: input.extraValues ?? {},
+    identityHeaderUserId: input.identityHeaderUserId,
+    identityHeaderGroups: input.identityHeaderGroups,
+    skipTlsVerification: input.skipTlsVerification ?? false,
+    metadataDisabled: input.metadataDisabled ?? false,
+    status: enabled ? "active" : "disabled",
+    models,
+    allowedGroups: [],
+    allowedCountries: [],
+    blockedCountries: [],
+    authMethod: "sso",
+    hasApiKey: !!input.apiKey,
+    promptRetentionDays: 0,
+    promptRedactionLevel: "none",
+    monthlyBudgetSoftUsd: 0,
+    monthlyBudgetHardUsd: 0,
+    currentMonthSpendUsd: 0,
+    last7dSpendUsd: 0,
+    requestsLast7d: 0,
+    topModel: models[0]?.id ?? "—",
+    topUser: "—",
+    p50LatencyMs: 0,
+    p95LatencyMs: 0,
+    denyRatePct: 0,
+    enabled,
   };
 }
 

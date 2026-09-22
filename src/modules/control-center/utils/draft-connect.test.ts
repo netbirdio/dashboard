@@ -4,6 +4,10 @@ import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
+import {
+  type AgentPolicy,
+  EMPTY_POLICY_LIMITS,
+} from "@/modules/agent-network/data/mockData";
 import { DraftConnectDeps, handleDraftConnect } from "./draft-connect";
 
 const peerA: Peer = { id: "a", name: "Peer A" } as Peer;
@@ -42,7 +46,11 @@ const makePolicy = (
   ],
 });
 
-const node = (id: string, type: string, data: Record<string, unknown>): Node => ({
+const node = (
+  id: string,
+  type: string,
+  data: Record<string, unknown>,
+): Node => ({
   id,
   type,
   position: { x: 0, y: 0 },
@@ -55,6 +63,32 @@ const connect = (
   sourceHandle: string | null = "sr",
 ): Connection =>
   ({ source, target, sourceHandle, targetHandle: null }) as Connection;
+
+const makeAgentPolicy = (
+  id: string,
+  over: Partial<AgentPolicy> = {},
+): AgentPolicy => ({
+  id,
+  name: id,
+  description: "",
+  enabled: true,
+  sourceGroups: [],
+  destinationProviderIds: [],
+  guardrailIds: [],
+  limits: EMPTY_POLICY_LIMITS,
+  ...over,
+});
+
+const existingAgentPolicy = makeAgentPolicy("ap-1", {
+  sourceGroups: ["g-all"],
+  destinationProviderIds: ["prov-1"],
+});
+
+const providerNode = node("provider-prov-1", "providerNode", {
+  id: "prov-1",
+  providerId: "openai_api",
+  name: "OpenAI",
+});
 
 const makeDeps = (nodes: Node[] = []) =>
   ({
@@ -74,6 +108,13 @@ const makeDeps = (nodes: Node[] = []) =>
     setCreatePolicyModal: vi.fn<DraftConnectDeps["setCreatePolicyModal"]>(),
     setPolicyDestinationScope:
       vi.fn<NonNullable<DraftConnectDeps["setPolicyDestinationScope"]>>(),
+    agentPolicies: [existingAgentPolicy],
+    updateDraftAgentPolicy:
+      vi.fn<NonNullable<DraftConnectDeps["updateDraftAgentPolicy"]>>(),
+    setAgentSourceGroup:
+      vi.fn<NonNullable<DraftConnectDeps["setAgentSourceGroup"]>>(),
+    openAgentPolicyWizard:
+      vi.fn<NonNullable<DraftConnectDeps["openAgentPolicyWizard"]>>(),
   }) satisfies DraftConnectDeps;
 
 const placeholderAgent = node("peer-draft-x", "peerNode", {
@@ -130,9 +171,7 @@ describe("connect node ↔ node (create-policy modal)", () => {
     handleDraftConnect(connect("group-g-all", "group-g-dev"), deps);
     expect(deps.setPolicySourceGroups).toHaveBeenCalledWith([groupAll]);
     expect(deps.setPolicyDestinationGroups).toHaveBeenCalledWith([groupDev]);
-    expect(deps.setPolicyInitialName).toHaveBeenCalledWith(
-      "All to Developers",
-    );
+    expect(deps.setPolicyInitialName).toHaveBeenCalledWith("All to Developers");
   });
 
   it("peer → resource prefills the resource as destination", () => {
@@ -377,7 +416,10 @@ describe("connect node ↔ network (destination picker & membership)", () => {
     });
     // Either policy handle works — the pick always lands on the destination.
     const fromLeft = { ...deps, onNetworkConnect: vi.fn() };
-    handleDraftConnect(connect("policy-new-1", "network-new-1", "sl"), fromLeft);
+    handleDraftConnect(
+      connect("policy-new-1", "network-new-1", "sl"),
+      fromLeft,
+    );
     expect(fromLeft.onNetworkConnect).toHaveBeenCalledWith({
       networkNodeId: "network-new-1",
       policyNodeId: "policy-new-1",
@@ -427,7 +469,9 @@ describe("connect node ↔ network (destination picker & membership)", () => {
     };
     const deps = {
       ...makeDeps([existingFrame, draftChild, groupRow]),
-      networkResources: [{ ...resourceDb, groups: ["g-db"] } as NetworkResource],
+      networkResources: [
+        { ...resourceDb, groups: ["g-db"] } as NetworkResource,
+      ],
       onNetworkConnect: vi.fn(),
     };
     handleDraftConnect(connect("peer-a", "network-real-1"), deps);
@@ -585,5 +629,161 @@ describe("resources in policies (one-way)", () => {
     ]);
     handleDraftConnect(connect("policy-new-2", "resource-new-r1", "sr"), deps);
     expect(deps.updateDraftPolicy).not.toHaveBeenCalled();
+  });
+});
+
+describe("handleDraftConnect — agent network", () => {
+  const groupNode = node("group-g-dev", "groupNode", { group: groupDev });
+
+  it("group → provider opens the policy wizard with both sides prefilled", () => {
+    const deps = makeDeps([groupNode, providerNode]);
+    handleDraftConnect(connect("group-g-dev", "provider-prov-1"), deps);
+    expect(deps.openAgentPolicyWizard).toHaveBeenCalledWith({
+      sourceGroups: ["g-dev"],
+      destinationProviderIds: ["prov-1"],
+    });
+  });
+
+  it("provider → group prefills the same way: sides come from the node kind", () => {
+    const deps = makeDeps([groupNode, providerNode]);
+    handleDraftConnect(connect("provider-prov-1", "group-g-dev"), deps);
+    expect(deps.openAgentPolicyWizard).toHaveBeenCalledWith({
+      sourceGroups: ["g-dev"],
+      destinationProviderIds: ["prov-1"],
+    });
+  });
+
+  it("group → agent policy adds a source group to a draft policy", () => {
+    const draft = makeAgentPolicy("new-1");
+    const deps = makeDeps([
+      groupNode,
+      node("agent-policy-new-1", "agentPolicyNode", { policy: draft }),
+    ]);
+    handleDraftConnect(connect("group-g-dev", "agent-policy-new-1"), deps);
+    expect(deps.setAgentSourceGroup).toHaveBeenCalledWith(draft, "g-dev");
+  });
+
+  it("agent policy → group adds a source group: the drag direction is free", () => {
+    const draft = makeAgentPolicy("new-1", {
+      destinationProviderIds: ["prov-1"],
+    });
+    const deps = makeDeps([
+      groupNode,
+      node("agent-policy-new-1", "agentPolicyNode", { policy: draft }),
+    ]);
+    handleDraftConnect(connect("agent-policy-new-1", "group-g-dev"), deps);
+    expect(deps.setAgentSourceGroup).toHaveBeenCalledWith(draft, "g-dev");
+  });
+
+  it("provider → agent policy adds a destination provider", () => {
+    const draft = makeAgentPolicy("new-1", { sourceGroups: ["g-dev"] });
+    const deps = makeDeps([
+      providerNode,
+      node("agent-policy-new-1", "agentPolicyNode", { policy: draft }),
+    ]);
+    handleDraftConnect(connect("provider-prov-1", "agent-policy-new-1"), deps);
+    expect(deps.updateDraftAgentPolicy).toHaveBeenCalledWith({
+      ...draft,
+      destinationProviderIds: ["prov-1"],
+    });
+  });
+
+  it("a destination group node resolves to the group it carries", () => {
+    const draft = makeAgentPolicy("new-1", {
+      destinationProviderIds: ["prov-1"],
+    });
+    const deps = makeDeps([
+      node("dest-group-g-dev-p1", "destinationGroupNode", { group: groupDev }),
+      node("agent-policy-new-1", "agentPolicyNode", { policy: draft }),
+    ]);
+    handleDraftConnect(
+      connect("agent-policy-new-1", "dest-group-g-dev-p1"),
+      deps,
+    );
+    expect(deps.setAgentSourceGroup).toHaveBeenCalledWith(draft, "g-dev");
+  });
+
+  it("agent policy → provider adds a destination provider", () => {
+    const draft = makeAgentPolicy("new-1", { sourceGroups: ["g-dev"] });
+    const deps = makeDeps([
+      providerNode,
+      node("agent-policy-new-1", "agentPolicyNode", { policy: draft }),
+    ]);
+    handleDraftConnect(connect("agent-policy-new-1", "provider-prov-1"), deps);
+    expect(deps.updateDraftAgentPolicy).toHaveBeenCalledWith({
+      ...draft,
+      destinationProviderIds: ["prov-1"],
+    });
+  });
+
+  it("reads an existing policy from the domain list, not the node", () => {
+    const deps = makeDeps([
+      node("group-g-dev", "groupNode", { group: groupDev }),
+      node("agent-policy-ap-1", "agentPolicyNode", {
+        id: "ap-1",
+        name: "ap-1",
+      }),
+    ]);
+    handleDraftConnect(connect("group-g-dev", "agent-policy-ap-1"), deps);
+    // One source group per policy: setAgentSourceGroup decides the swap (and
+    // confirms it) rather than the connect stacking a second group on.
+    expect(deps.setAgentSourceGroup).toHaveBeenCalledWith(
+      existingAgentPolicy,
+      "g-dev",
+    );
+  });
+
+  it("takes a DRAFT group by name, the ref an access-control policy uses", () => {
+    const draft = makeAgentPolicy("new-1", {
+      destinationProviderIds: ["prov-1"],
+    });
+    const deps = makeDeps([
+      // A group the draft invented: no id, only a name.
+      node("group-new-abc", "groupNode", { group: { name: "Ops" } }),
+      node("agent-policy-new-1", "agentPolicyNode", { policy: draft }),
+    ]);
+    handleDraftConnect(connect("group-new-abc", "agent-policy-new-1"), deps);
+    expect(deps.setAgentSourceGroup).toHaveBeenCalledWith(draft, "Ops");
+  });
+
+  it("prefills the wizard with a draft group's name too", () => {
+    const deps = makeDeps([
+      node("group-new-abc", "groupNode", { group: { name: "Ops" } }),
+      providerNode,
+    ]);
+    handleDraftConnect(connect("group-new-abc", "provider-prov-1"), deps);
+    expect(deps.openAgentPolicyWizard).toHaveBeenCalledWith({
+      sourceGroups: ["Ops"],
+      destinationProviderIds: ["prov-1"],
+    });
+  });
+
+  it("ignores a group already on the policy", () => {
+    const deps = makeDeps([
+      node("group-g-all", "groupNode", { group: groupAll }),
+      node("agent-policy-ap-1", "agentPolicyNode", { id: "ap-1" }),
+    ]);
+    handleDraftConnect(connect("group-g-all", "agent-policy-ap-1"), deps);
+    expect(deps.setAgentSourceGroup).not.toHaveBeenCalled();
+  });
+
+  it("ignores a peer dragged onto a provider: only groups are authorized", () => {
+    const deps = makeDeps([
+      node("peer-a", "peerNode", { peer: peerA }),
+      providerNode,
+    ]);
+    handleDraftConnect(connect("peer-a", "provider-prov-1"), deps);
+    expect(deps.openAgentPolicyWizard).not.toHaveBeenCalled();
+    expect(deps.setAgentSourceGroup).not.toHaveBeenCalled();
+  });
+
+  it("ignores provider → provider", () => {
+    const deps = makeDeps([
+      providerNode,
+      node("provider-prov-2", "providerNode", { id: "prov-2" }),
+    ]);
+    handleDraftConnect(connect("provider-prov-1", "provider-prov-2"), deps);
+    expect(deps.openAgentPolicyWizard).not.toHaveBeenCalled();
+    expect(deps.updateDraftAgentPolicy).not.toHaveBeenCalled();
   });
 });

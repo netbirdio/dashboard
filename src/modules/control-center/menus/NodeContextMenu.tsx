@@ -31,6 +31,7 @@ import { Group, GroupIssued } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   useCanvasState,
   useControlCenterUI,
@@ -123,7 +124,18 @@ export const NodeContextMenu = ({
     setDrillDownNetworkNodeId,
   } = useDraftMode();
   const { onNetworkSelect } = useControlCenterUI();
-  const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
+  const {
+    setSelectedPolicy,
+    setPolicyModalOpen,
+    openProvider,
+    openAgentPolicy,
+  } = useControlCenterPolicy();
+  const {
+    toggleProvider,
+    deleteProvider: deleteAgentProvider,
+    togglePolicy: toggleAgentPolicy,
+    deletePolicy: deleteAgentPolicy,
+  } = useAIProviders();
   const { groups, policies } = useControlCenterData();
   const { canDeleteGroup } = useCanDeleteGroup();
   const {
@@ -133,6 +145,10 @@ export const NodeContextMenu = ({
     trackUpdateResource,
     trackDeleteResource,
     trackInstallPeer,
+    trackUpdateProvider,
+    trackDeleteProvider,
+    trackUpdateAgentPolicy,
+    trackDeleteAgentPolicy,
   } = useDraftChangeset();
   const { confirm } = useDialog();
   const {
@@ -593,6 +609,155 @@ export const NodeContextMenu = ({
     [nodes, edges, focusedNodeId, setFocusedNodeId],
   );
 
+  // Agent Network nodes. Providers and agent policies have no draft twin of
+  // their own — the changeset carries them either way — so one builder serves
+  // both branches; only the confirmations differ, and those live in the
+  // modals the Edit item opens.
+  const isAgentNode = useCallback(
+    (n: Node) => n.type === "providerNode" || n.type === "agentPolicyNode",
+    [],
+  );
+
+  const agentItems = useCallback(
+    (n: Node): MenuItem[] => {
+      const isProvider = n.type === "providerNode";
+      const data = n.data as { id?: string; name?: string; enabled?: boolean };
+      const recordId = data?.id;
+      if (!recordId) return [];
+      const isNew = recordId.startsWith("new-");
+      // Not `module`: that name is the CommonJS global.
+      const permKey = isProvider
+        ? "agent_network.providers"
+        : "agent_network.policies";
+      // A draft record deploys as a create, so editing it needs `create`.
+      const mayWrite = isNew
+        ? !!permission?.[permKey]?.create
+        : !!permission?.[permKey]?.update;
+      const mayDelete = !!permission?.[permKey]?.delete;
+      const enabled = data?.enabled !== false;
+      const label = data?.name ?? (isProvider ? "Provider" : "Agent policy");
+
+      const items: MenuItem[] = [];
+      if (mayWrite) {
+        items.push({
+          label: "Edit",
+          icon: <SquarePenIcon size={14} />,
+          onClick: () =>
+            isProvider ? openProvider(recordId) : openAgentPolicy(recordId),
+        });
+        items.push({
+          label: enabled ? "Disable" : "Enable",
+          icon: enabled ? <PowerOffIcon size={14} /> : <PowerIcon size={14} />,
+          onClick: () => {
+            // A disabled policy draws dimmed lines, like an access-control one:
+            // its edges carry the flag, so they have to move with the node.
+            const syncEdges = () =>
+              setEdges((prev) =>
+                prev.map((e) =>
+                  e.source === n.id || e.target === n.id
+                    ? { ...e, data: { ...e.data, enabled: !enabled } }
+                    : e,
+                ),
+              );
+            if (isDraft) {
+              if (isProvider) {
+                trackUpdateProvider({
+                  providerId: recordId,
+                  name: label,
+                  updates: { enabled: !enabled },
+                  origin: "toggle",
+                });
+              } else {
+                trackUpdateAgentPolicy({
+                  agentPolicyId: recordId,
+                  name: label,
+                  policy: { enabled: !enabled },
+                  origin: "toggle",
+                });
+              }
+              setNodes((prev) =>
+                prev.map((x) =>
+                  x.id === n.id
+                    ? { ...x, data: { ...x.data, enabled: !enabled } }
+                    : x,
+                ),
+              );
+              syncEdges();
+              return;
+            }
+            // Live redraws from the refetch, but not before the next render:
+            // without this the line stays lit until then.
+            syncEdges();
+            void (isProvider
+              ? toggleProvider(recordId)
+              : toggleAgentPolicy(recordId));
+          },
+        });
+      }
+      // Taking one off the canvas is a deletion either way: unlike a policy,
+      // there is no "draw it again later" list entry a Remove would restore
+      // from — the panel lists it, so Remove and Delete would be the same
+      // gesture with different consequences.
+      if (mayDelete || (isNew && mayWrite)) {
+        items.push({
+          label: isNew ? "Remove" : "Delete",
+          icon: isNew ? <CircleMinusIcon size={14} /> : <TrashIcon size={14} />,
+          danger: !isNew,
+          onClick: () => {
+            void (async () => {
+              if (!isNew) {
+                const choice = await confirm({
+                  title: `Delete “${label}”?`,
+                  description: isDraft
+                    ? `“${label}” is marked for deletion and removed when you deploy.`
+                    : `You are in live mode. “${label}” is deleted from your account immediately.`,
+                  confirmText: "Delete",
+                  cancelText: "Cancel",
+                  type: "danger",
+                });
+                if (!choice) return;
+              }
+              if (isDraft) {
+                if (isProvider) {
+                  trackDeleteProvider({ providerId: recordId, name: label });
+                } else {
+                  trackDeleteAgentPolicy({
+                    agentPolicyId: recordId,
+                    name: label,
+                  });
+                }
+              } else {
+                await (isProvider
+                  ? deleteAgentProvider(recordId)
+                  : deleteAgentPolicy(recordId));
+              }
+              removeNodeWithEdges(n.id);
+            })();
+          },
+        });
+      }
+      return items;
+    },
+    [
+      permission,
+      isDraft,
+      openProvider,
+      openAgentPolicy,
+      toggleProvider,
+      toggleAgentPolicy,
+      deleteAgentProvider,
+      deleteAgentPolicy,
+      trackUpdateProvider,
+      trackUpdateAgentPolicy,
+      trackDeleteProvider,
+      trackDeleteAgentPolicy,
+      confirm,
+      setNodes,
+      setEdges,
+      removeNodeWithEdges,
+    ],
+  );
+
   const [peerRenameTarget, setPeerRenameTarget] = useState<Peer | null>(null);
 
   const handleLiveDeletePolicy = useCallback(async () => {
@@ -792,6 +957,9 @@ export const NodeContextMenu = ({
         }
         return items;
       }
+      if (isAgentNode(node)) {
+        return [...focusItems(node), ...agentItems(node)];
+      }
       if (isGroupNode(node)) {
         const group = getNodeGroup(node);
         const items: MenuItem[] = [
@@ -923,6 +1091,10 @@ export const NodeContextMenu = ({
         });
       }
       return items;
+    }
+
+    if (isAgentNode(node)) {
+      return [...focusItems(node), ...agentItems(node)];
     }
 
     if (node.type === "policyNode") {

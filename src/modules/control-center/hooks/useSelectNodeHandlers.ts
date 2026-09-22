@@ -1,29 +1,29 @@
 import { Node, Rect, useReactFlow } from "@xyflow/react";
+import React, { useCallback, useEffect } from "react";
+import { useDialog } from "@/contexts/DialogProvider";
+import { Policy } from "@/interfaces/Policy";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDestinationGroup } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { FlowView } from "@/modules/control-center/header/FlowSelector";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   drillInto,
   drillOutOf,
   getNodeRect,
   isCanvasTransitionActive,
 } from "@/modules/control-center/utils/canvas-transition";
-import React, { useCallback, useEffect } from "react";
-import { FlowView } from "@/modules/control-center/header/FlowSelector";
-import {
-  DEFAULT_MIN_ZOOM,
-  EMPTY_STATE_ZOOM,
-  nodeYNudge,
-} from "@/modules/control-center/utils/layouts";
 import {
   getFirstGroup,
   getPlaceholderPeer,
   isFocusWorthy,
 } from "@/modules/control-center/utils/helpers";
-import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { useDestinationGroup } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
-import { Policy } from "@/interfaces/Policy";
-import { useDialog } from "@/contexts/DialogProvider";
+import {
+  DEFAULT_MIN_ZOOM,
+  EMPTY_STATE_ZOOM,
+  nodeYNudge,
+} from "@/modules/control-center/utils/layouts";
 
 interface UseSelectNodeHandlersParams {
   views: {
@@ -81,14 +81,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     loggedInUser,
   } = useCanvasState();
 
-  const {
-    policies,
-    peers,
-    networks,
-    groups,
-    users,
-    isLoading,
-  } = useControlCenterData();
+  const { policies, peers, networks, groups, users, isLoading } =
+    useControlCenterData();
 
   const {
     setFocusedNodeId,
@@ -96,8 +90,12 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     setHighlightArmed,
     setSelectedPeerPanel,
   } = useDestinationGroup();
-  const { setSelectedPolicy, setPolicyModalOpen, openAgentPolicy } =
-    useControlCenterPolicy();
+  const {
+    setSelectedPolicy,
+    setPolicyModalOpen,
+    openAgentPolicy,
+    openProvider,
+  } = useControlCenterPolicy();
   const { isDraft } = useDraftMode();
   const { confirm } = useDialog();
 
@@ -278,7 +276,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     let result;
     switch (currentView) {
       case FlowView.GROUPS:
-        if (selectedGroup) result = applySingleGroupView(selectedGroup, patched);
+        if (selectedGroup)
+          result = applySingleGroupView(selectedGroup, patched);
         break;
       case FlowView.PEERS:
         if (selectedPeer) result = applyPeerView(selectedPeer, patched);
@@ -422,7 +421,8 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
         : frameChildNetworkId;
       // Draft groups have no API id yet, so the panel is keyed by node id.
       const groupId = isGroupNode
-        ? (_node.data as any)?.group?.id || (isDraft ? _node.id : _node.id.replace("group-", ""))
+        ? (_node.data as any)?.group?.id ||
+          (isDraft ? _node.id : _node.id.replace("group-", ""))
         : "";
       // Draft policy nodes are keyed by clientId.
       const policyId = isPolicyNode
@@ -471,14 +471,20 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       if (_node.type === "agentPolicyNode") {
         openAgentPolicy(_node.id.replace("agent-policy-", ""));
       }
+      // The node id carries the catalog id; the record id is on the data.
+      if (_node.type === "providerNode") {
+        const providerId = (_node.data as { id?: string })?.id;
+        if (providerId) openProvider(providerId);
+      }
       // The live resource editor's save PUTs immediately, so confirm first.
       // Framed overview rows keep drilling into their network instead.
       const isResourceNode =
         _node.type === "resourceNode" ||
         _node.type === "destinationResourceNode";
       if (!isDraft && isResourceNode && !frameChildNetworkId) {
-        const resource = (_node.data as { resource?: { id?: string; name?: string } })
-          ?.resource;
+        const resource = (
+          _node.data as { resource?: { id?: string; name?: string } }
+        )?.resource;
         const resNetworkId =
           (_node.data as { draftNetwork?: { networkId?: string } })
             ?.draftNetwork?.networkId ??
@@ -528,6 +534,7 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       setSelectedPolicy,
       setPolicyModalOpen,
       openAgentPolicy,
+      openProvider,
       setSelectedPeerPanel,
       setLiveResourceEditor,
       confirm,

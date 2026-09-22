@@ -7,6 +7,7 @@ import {
   OptionIcon,
   ServerIcon,
   ShieldIcon,
+  SparklesIcon,
   WaypointsIcon,
   WorkflowIcon,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
@@ -65,8 +67,13 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     drillDownNetworkNodeId,
   } = useDraftMode();
   const { addNewGroup } = useDraftGroupActions();
-  const { addPeerPlaceholder, addBlankNode, addBlankPolicy } =
-    useDraftNodeCreation();
+  const {
+    addPeerPlaceholder,
+    addBlankNode,
+    addBlankPolicy,
+    addBlankAgentPolicy,
+  } = useDraftNodeCreation();
+  const { openProviderWizard } = useControlCenterPolicy();
   const { permission } = usePermissions();
 
   // When drilled into a network the network/resource row swaps: no "New
@@ -155,6 +162,25 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
                 setResourceEditor({ createStandaloneAt: pos }),
             },
           ],
+      // Agent Network sits in its own group, below the network items.
+      [
+        {
+          label: "New Agent Policy",
+          icon: <ShieldIcon size={14} />,
+          permitted: !!permission?.["agent_network.policies"]?.create,
+          // A blank one straight onto the canvas, like New Policy: it is a
+          // sketch until it names a group and a provider.
+          action: (pos: XYPosition) => addBlankAgentPolicy(pos),
+        },
+        {
+          label: "New Agent Provider",
+          icon: <SparklesIcon size={14} />,
+          permitted: !!permission?.["agent_network.providers"]?.create,
+          // A provider needs a URL and a credential, so — like New Resource —
+          // the modal opens first and the card lands on save.
+          action: (pos: XYPosition) => openProviderWizard(pos),
+        },
+      ],
     ];
     let digit = 0;
     return groups
@@ -173,12 +199,12 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     addNewGroup,
     addBlankPolicy,
     addPeerPlaceholder,
+    addBlankAgentPolicy,
+    openProviderWizard,
     addBlankNode,
     setResourceEditor,
     setRoutingPeerModal,
-    permission.policies.create,
-    permission.groups.create,
-    permission.networks.create,
+    permission,
   ]);
 
   // Alt/⌥+1…6 create at the viewport center (draft-only, input-aware).

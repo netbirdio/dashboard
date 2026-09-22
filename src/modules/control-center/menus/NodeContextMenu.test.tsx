@@ -47,7 +47,10 @@ vi.mock("@utils/api", () => ({
   default: () => ({ data: undefined, isLoading: false }),
   useApiCall: () => ({}),
 }));
-vi.mock("swr", () => ({ mutate: vi.fn(), useSWRConfig: () => ({ mutate: vi.fn() }) }));
+vi.mock("swr", () => ({
+  mutate: vi.fn(),
+  useSWRConfig: () => ({ mutate: vi.fn() }),
+}));
 vi.mock("@components/Notification", () => ({ notify: vi.fn() }));
 vi.mock("@components/modal/Modal", () => ({
   Modal: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
@@ -105,6 +108,17 @@ vi.mock("@/modules/control-center/contexts/ControlCenterPolicyModals", () => ({
   useControlCenterPolicy: () => ({
     setSelectedPolicy: noop,
     setPolicyModalOpen: noop,
+    openProvider: noop,
+    openAgentPolicy: noop,
+  }),
+}));
+// The agent-network items read their live actions off this context.
+vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
+  useAIProviders: () => ({
+    toggleProvider: noop,
+    deleteProvider: noop,
+    togglePolicy: noop,
+    deletePolicy: noop,
   }),
 }));
 vi.mock("@/modules/control-center/draft/DraftModeContext", () => ({
