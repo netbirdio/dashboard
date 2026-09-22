@@ -26,12 +26,14 @@ import {
   Text,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   AgentGuardrail,
   AgentGuardrailChecks,
+  AIProviderId,
   EMPTY_GUARDRAIL_CHECKS,
 } from "@/modules/agent-network/data/mockData";
-import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 
 type Props = {
@@ -193,10 +195,7 @@ export default function AgentGuardrailModal({
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             {tab === "checks" && (
-              <Button
-                variant={"secondary"}
-                onClick={() => onOpenChange(false)}
-              >
+              <Button variant={"secondary"} onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
             )}
@@ -248,7 +247,8 @@ function ModelAllowlistCheck({
       active={Boolean(value && value.length > 0)}
       title={"Model Allowlist"}
       description={"Block requests for models not on the allowlist."}
-      icon={<Boxes size={16} />}
+      // The tile is a cream gradient, so the mark on it has to be dark.
+      icon={<Boxes size={16} className={"text-netbird-950"} />}
       iconClass={"bg-gradient-to-tr from-netbird-200 to-netbird-100"}
       modalWidthClass={"max-w-2xl"}
       onReset={() => onChange(undefined)}
@@ -288,7 +288,10 @@ function ModelAllowlistContent({
   // Same model id across providers is collapsed into one row, with all
   // referencing provider names listed underneath.
   const providerModels = useMemo(() => {
-    const byId = new Map<string, { id: string; providerNames: string[] }>();
+    const byId = new Map<
+      string,
+      { id: string; providerNames: string[]; catalogId: AIProviderId }
+    >();
     for (const p of scopedProviders) {
       for (const m of p.models) {
         if (!m.id) continue;
@@ -298,7 +301,13 @@ function ModelAllowlistContent({
             entry.providerNames.push(p.name);
           }
         } else {
-          byId.set(m.id, { id: m.id, providerNames: [p.name] });
+          // The mark is the first provider's; a model served by several is
+          // one row, and its names are listed under it either way.
+          byId.set(m.id, {
+            id: m.id,
+            providerNames: [p.name],
+            catalogId: p.providerId,
+          });
         }
       }
     }
@@ -310,9 +319,13 @@ function ModelAllowlistContent({
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
+  const allChecked =
+    providerModels.length > 0 && draft.length === providerModels.length;
+  const someChecked = draft.length > 0 && !allChecked;
+
   return (
     <>
-      <div className={"flex flex-col px-8 gap-2 pb-6"}>
+      <div className={"flex flex-col px-8 gap-2 pt-2 pb-6"}>
         {providerModels.length === 0 ? (
           <Paragraph className={"!text-xs"}>
             {providerIds && providerIds.length > 0
@@ -320,34 +333,79 @@ function ModelAllowlistContent({
               : "No models configured on any provider yet. Add models to a provider first — the allowlist is restricted to what the providers actually expose."}
           </Paragraph>
         ) : (
-          <div className={"space-y-1.5 max-h-[360px] overflow-y-auto"}>
-            {providerModels.map((m) => {
-              const checked = draft.includes(m.id);
-              return (
-                <label
-                  key={m.id}
-                  className={cn(
-                    "flex items-center gap-3 p-2 rounded border cursor-pointer transition-colors",
-                    checked
-                      ? "border-netbird/40 bg-netbird/5"
-                      : "border-nb-gray-800 bg-nb-gray-900/20 hover:border-nb-gray-700",
-                  )}
-                >
-                  <Checkbox
-                    checked={checked}
-                    onCheckedChange={() => toggle(m.id)}
-                  />
-                  <div className={"flex-1"}>
-                    <div className={"text-sm text-white"}>
-                      <code>{m.id}</code>
-                    </div>
-                    <div className={"text-[11px] text-nb-gray-400"}>
-                      {m.providerNames.join(" · ")}
-                    </div>
-                  </div>
-                </label>
-              );
-            })}
+          // Same table the network resource modal gives its policies.
+          <div
+            className={
+              "border border-nb-gray-900 bg-nb-gray-920/30 py-1 px-1 rounded-md max-h-[360px] overflow-y-auto"
+            }
+          >
+            <table className={"w-full"}>
+              <thead>
+                <tr>
+                  <th className={"py-2 pl-4 pr-2 w-[20px]"}>
+                    <Checkbox
+                      checked={
+                        allChecked
+                          ? true
+                          : someChecked
+                          ? "indeterminate"
+                          : false
+                      }
+                      aria-label={"Select all models"}
+                      onCheckedChange={() =>
+                        setDraft(
+                          allChecked ? [] : providerModels.map((m) => m.id),
+                        )
+                      }
+                    />
+                  </th>
+                  <th
+                    className={
+                      "py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium"
+                    }
+                  >
+                    Model
+                  </th>
+                  <th
+                    className={
+                      "py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium"
+                    }
+                  >
+                    Provider
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {providerModels.map((m) => (
+                  <tr
+                    key={m.id}
+                    onClick={() => toggle(m.id)}
+                    className={
+                      "rounded-md hover:bg-nb-gray-900/30 cursor-pointer transition-all"
+                    }
+                  >
+                    <td className={"py-2.5 pl-4 pr-2 align-middle w-[20px]"}>
+                      <Checkbox checked={draft.includes(m.id)} />
+                    </td>
+                    <td className={"py-2.5 px-4 align-middle"}>
+                      <code className={"text-[13px] text-nb-gray-100"}>
+                        {m.id}
+                      </code>
+                    </td>
+                    <td
+                      className={
+                        "py-2.5 px-4 align-middle whitespace-nowrap text-[13px] text-nb-gray-300"
+                      }
+                    >
+                      <div className={"flex items-center gap-2.5"}>
+                        <AIProviderLogo providerId={m.catalogId} size={14} />
+                        {m.providerNames.join(" · ")}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -382,7 +440,6 @@ function ModelAllowlistContent({
     </>
   );
 }
-
 
 function PromptCaptureCheck({
   value,
@@ -421,9 +478,8 @@ function PromptCaptureContent({ onConfirm }: { onConfirm: () => void }) {
       <div className={"flex flex-col px-8 gap-3 pb-6"}>
         <div className={"text-sm text-nb-gray-300"}>
           NetBird redacts emails, SSN-shaped, phone-shaped, and credit-card
-          patterns before storing the prompt body. Enabling this guardrail
-          adds strict redaction on top of the proxy&apos;s built-in token
-          redaction.
+          patterns before storing the prompt body. Enabling this guardrail adds
+          strict redaction on top of the proxy&apos;s built-in token redaction.
         </div>
       </div>
       <ModalFooter className={"items-center"}>
@@ -453,4 +509,3 @@ function PromptCaptureContent({ onConfirm }: { onConfirm: () => void }) {
     </>
   );
 }
-
