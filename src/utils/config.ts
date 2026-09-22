@@ -54,6 +54,12 @@ const loadConfig = (): Config => {
     configJson = require("@/config/production");
   }
 
+  // Every build matches one of the branches above; a unit-test runner sets
+  // neither flag, and reading fields off undefined crashed the whole module
+  // graph of any test that transitively imported this. The defaults below are
+  // the same ones a missing field already falls back to.
+  configJson = configJson ?? {};
+
   if (configJson.redirectURI) {
     redirectURI = configJson.redirectURI;
   }
@@ -66,7 +72,7 @@ const loadConfig = (): Config => {
     tokenSource = configJson.tokenSource;
   }
 
-  const authority = configJson.authAuthority.replace(/\/+$/, "");
+  const authority = (configJson.authAuthority ?? "").replace(/\/+$/, "");
 
   return {
     auth0Auth: configJson.auth0Auth == "true", // Due to substitution we can't use boolean in the config
