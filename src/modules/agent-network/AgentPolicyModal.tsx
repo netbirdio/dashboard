@@ -3,6 +3,7 @@
 import Badge from "@components/Badge";
 import Button from "@components/Button";
 import { Checkbox } from "@components/Checkbox";
+import { CommandItem } from "@components/Command";
 import HelpText from "@components/HelpText";
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink from "@components/InlineLink";
@@ -17,9 +18,12 @@ import {
 import ModalHeader from "@components/modal/ModalHeader";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
+import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
+import { ScrollArea } from "@components/ScrollArea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
 import { cn } from "@utils/helpers";
+import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
 import {
   ArrowRightLeft,
   ChevronsUpDown,
@@ -28,25 +32,27 @@ import {
   FolderDown,
   Gauge,
   PlusCircle,
+  SearchIcon,
   ShieldHalf,
   Sparkles,
-  X,
+  XIcon,
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useElementSize } from "@/hooks/useElementSize";
 import { Group } from "@/interfaces/Group";
+import AgentPolicyGuardrailsTab from "@/modules/agent-network/AgentPolicyGuardrailsTab";
+import AgentPolicyLimitsTab from "@/modules/agent-network/AgentPolicyLimitsTab";
+import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   AgentPolicy,
   AIProvider,
   EMPTY_POLICY_LIMITS,
   PolicyLimits,
 } from "@/modules/agent-network/data/mockData";
-import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
-import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
-import AgentPolicyGuardrailsTab from "@/modules/agent-network/AgentPolicyGuardrailsTab";
-import AgentPolicyLimitsTab from "@/modules/agent-network/AgentPolicyLimitsTab";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 
 type Props = {
@@ -145,9 +151,7 @@ function AgentPolicyModalContent({
     if (sourceGroups.length === 0 || destinationProviderIds.length === 0) {
       return "";
     }
-    const provider = providers.find(
-      (p) => p.id === destinationProviderIds[0],
-    );
+    const provider = providers.find((p) => p.id === destinationProviderIds[0]);
     return `${sourceGroups[0].name} → ${provider?.name ?? ""}`.trim();
   }, [sourceGroups, destinationProviderIds, providers]);
 
@@ -258,15 +262,11 @@ function AgentPolicyModalContent({
                   onChange={setSourceGroups}
                 />
                 {hasLegacyExtraGroups && (
-                  <div
-                    className={
-                      "mt-2 text-xs text-yellow-400 leading-snug"
-                    }
-                  >
-                    This policy was created with multiple source groups.
-                    Only the first group is kept on save —{" "}
-                    {sourceGroupsRaw[0]?.name ?? "—"} will be retained,
-                    the others removed.
+                  <div className={"mt-2 text-xs text-yellow-400 leading-snug"}>
+                    This policy was created with multiple source groups. Only
+                    the first group is kept on save —{" "}
+                    {sourceGroupsRaw[0]?.name ?? "—"} will be retained, the
+                    others removed.
                   </div>
                 )}
               </div>
@@ -276,11 +276,7 @@ function AgentPolicyModalContent({
                   <Sparkles size={15} />
                   Provider
                   <HelpTooltip
-                    content={
-                      <>
-                        AI providers the source is allowed to reach.
-                      </>
-                    }
+                    content={<>AI providers the source is allowed to reach.</>}
                   />
                 </Label>
                 <ProviderMultiSelect
@@ -355,7 +351,9 @@ function AgentPolicyModalContent({
                   <Button
                     variant={"primary"}
                     onClick={() => setTab("limits")}
-                    disabled={!canContinueFromPolicy || name.trim().length === 0}
+                    disabled={
+                      !canContinueFromPolicy || name.trim().length === 0
+                    }
                   >
                     Continue
                   </Button>
@@ -454,21 +452,20 @@ function ProviderMultiSelect({
   onChange: (next: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const containerRef = React.useRef<HTMLDivElement>(null);
+  // The popover is sized to the trigger, the way every other multi-select in
+  // the dashboard sizes its list.
+  const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
+  const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    if (!open) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return providers;
+    return providers.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        p.providerId.toLowerCase().includes(query),
+    );
+  }, [providers, search]);
 
   const toggle = (id: string) => {
     onChange(
@@ -476,105 +473,133 @@ function ProviderMultiSelect({
     );
   };
 
-  const toggleRemove = (id: string) => {
-    onChange(value.filter((v) => v !== id));
-  };
-
   return (
-    <div ref={containerRef} className={"relative"}>
-      <button
-        type={"button"}
-        onClick={() => setOpen((v) => !v)}
-        className={cn(
-          "min-h-[46px] w-full relative items-center group",
-          "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
-          "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer hover:dark:bg-nb-gray-900/50",
-          "transition-all",
-        )}
+    <Popover
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) setTimeout(() => setSearch(""), 200);
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button
+          ref={inputRef}
+          className={cn(
+            "min-h-[46px] w-full relative items-center group",
+            "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
+            "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer hover:dark:bg-nb-gray-900/50",
+            "transition-all",
+          )}
+        >
+          <div
+            className={
+              "flex items-center gap-2 border-nb-gray-700 flex-wrap h-full"
+            }
+          >
+            {value.length === 0 ? (
+              <span className={"pl-1"}>Select provider(s)...</span>
+            ) : (
+              value.map((id) => {
+                const p = providers.find((pp) => pp.id === id);
+                if (!p) return null;
+                return (
+                  <Badge
+                    key={id}
+                    variant={"gray-ghost"}
+                    className={"py-[3px] whitespace-nowrap"}
+                    useHover
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onChange(value.filter((v) => v !== id));
+                    }}
+                  >
+                    <AIProviderLogo providerId={p.providerId} size={12} />
+                    {p.name}
+                    <XIcon
+                      size={12}
+                      className={
+                        "cursor-pointer group-hover:text-nb-gray-100 transition-all shrink-0"
+                      }
+                    />
+                  </Badge>
+                );
+              })
+            )}
+          </div>
+          <div className={"pl-2"}>
+            <ChevronsUpDown
+              size={18}
+              className={"shrink-0 group-hover:text-nb-gray-300 transition-all"}
+            />
+          </div>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className={"w-full p-0 shadow-sm shadow-nb-gray-950"}
+        style={{ width }}
+        align={"start"}
+        sideOffset={10}
       >
-        <div
-          className={
-            "flex items-center gap-2 border-nb-gray-700 flex-wrap h-full"
-          }
-        >
-          {value.length === 0 ? (
-            <span className={"pl-1"}>Select provider(s)...</span>
-          ) : (
-            value.map((id) => {
-              const p = providers.find((pp) => pp.id === id);
-              if (!p) return null;
-              return (
-                <Badge
-                  key={id}
-                  variant={"gray-ghost"}
-                  className={"py-[3px] whitespace-nowrap"}
-                  useHover
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    toggleRemove(id);
-                  }}
-                >
-                  <AIProviderLogo providerId={p.providerId} size={12} />
-                  {p.name}
-                  <X
-                    size={12}
-                    className={
-                      "cursor-pointer group-hover:text-nb-gray-100 transition-all shrink-0"
-                    }
-                  />
-                </Badge>
-              );
-            })
-          )}
-        </div>
-        <div className={"pl-2"}>
-          <ChevronsUpDown
-            size={18}
-            className={"shrink-0 group-hover:text-nb-gray-300 transition-all"}
-          />
-        </div>
-      </button>
-      {open && (
-        <div
-          className={
-            "absolute z-50 mt-1 w-full bg-nb-gray-950 border border-nb-gray-800 rounded-md shadow-lg max-h-[280px] overflow-y-auto p-1"
-          }
-        >
-          {providers.length === 0 ? (
-            <div className={"text-xs text-nb-gray-400 px-3 py-3"}>
-              No providers connected yet.
+        <Command className={"w-full flex"} loop shouldFilter={false}>
+          <CommandList className={"w-full"}>
+            <div className={"relative"}>
+              <CommandInput
+                className={cn(
+                  "min-h-[42px] w-full relative",
+                  "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
+                  "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
+                  "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
+                )}
+                value={search}
+                onValueChange={setSearch}
+                placeholder={"Search providers..."}
+              />
+              <div
+                className={
+                  "absolute left-0 top-0 h-full flex items-center pl-4"
+                }
+              >
+                <SearchIcon size={14} />
+              </div>
             </div>
-          ) : (
-            providers.map((p) => {
-              const checked = value.includes(p.id);
-              return (
-                <label
-                  key={p.id}
-                  className={cn(
-                    "flex items-center gap-3 p-2 rounded cursor-pointer transition-colors",
-                    checked
-                      ? "bg-netbird/10"
-                      : "hover:bg-nb-gray-900/50",
-                  )}
-                >
-                  <Checkbox
-                    checked={checked}
-                    onCheckedChange={() => toggle(p.id)}
-                  />
-                  <AIProviderLogo providerId={p.providerId} size={18} />
-                  <div className={"flex-1 min-w-0"}>
-                    <div className={"text-sm text-white truncate"}>
-                      {p.name}
-                    </div>
+            <CommandGroup>
+              <ScrollArea
+                className={
+                  "max-h-[195px] overflow-y-auto flex flex-col gap-1 pl-2 py-2 pr-3"
+                }
+              >
+                {filtered.length === 0 && (
+                  <div className={"text-xs text-nb-gray-400 px-3 py-3"}>
+                    {providers.length === 0
+                      ? "No providers connected yet."
+                      : "No providers found."}
                   </div>
-                </label>
-              );
-            })
-          )}
-        </div>
-      )}
-    </div>
+                )}
+                {filtered.map((p) => {
+                  const isSelected = value.includes(p.id);
+                  return (
+                    <CommandItem
+                      key={p.id}
+                      value={p.id}
+                      onSelect={() => toggle(p.id)}
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <div className={"flex items-center gap-2.5 min-w-0"}>
+                        <AIProviderLogo providerId={p.providerId} size={18} />
+                        <span className={"text-sm text-nb-gray-100 truncate"}>
+                          {p.name}
+                        </span>
+                      </div>
+                      <Checkbox checked={isSelected} />
+                    </CommandItem>
+                  );
+                })}
+              </ScrollArea>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
-
