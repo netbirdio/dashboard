@@ -2,15 +2,20 @@ import { Edge, Node } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
-import { DEFAULT_LAYOUT_CONFIG } from "@/modules/control-center/utils/graph-builder";
-import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
-import { addDestinationResourceNodes, ViewResult } from "./types";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { DEFAULT_LAYOUT_CONFIG } from "@/modules/control-center/utils/graph-builder";
 import { withFreshGroupCounts } from "@/modules/control-center/utils/helpers";
+import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
+import {
+  addAgentNetworkProviderNodes,
+  useAgentNetworkOverlay,
+} from "./agent-network-overlay";
+import { addDestinationResourceNodes, ViewResult } from "./types";
 
 export function useUserView() {
   const { policies, peers, networks, networkResources, groups, isDataReady } =
     useControlCenterData();
+  const agentNetwork = useAgentNetworkOverlay();
 
   const applyUserView = (
     userId: string,
@@ -119,7 +124,6 @@ export function useUserView() {
             data: { enabled, policy },
           });
         }
-
       });
 
       addDestinationResourceNodes(
@@ -131,6 +135,18 @@ export function useUserView() {
         networks,
       );
     });
+
+    // Union over every group this user's peers belong to, the same way the
+    // peer view unions over one peer's groups.
+    allUserGroups.forEach((groupId) =>
+      addAgentNetworkProviderNodes(
+        groupId ?? "",
+        `select-user-node`,
+        allNodes,
+        allEdges,
+        agentNetwork,
+      ),
+    );
 
     return applyD3HierarchicalLayout(
       allNodes,

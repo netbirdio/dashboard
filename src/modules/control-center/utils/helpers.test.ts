@@ -4,29 +4,31 @@ import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
 import { isEmptiedPolicy } from "./change-cascade";
 import {
+  canDropGroupIntoNetwork,
   deriveResourceType,
+  dropAbsorbedPlaceholder,
+  findPlaceholderHolder,
   getDraftResource,
+  getFirstGroup,
   getGroupCountLabel,
   getIpPlaceholderFromRange,
   getPlaceholderHostname,
-  canDropGroupIntoNetwork,
-  getFirstGroup,
   getPlaceholderPeer,
   getPlaceholderSetupKey,
   getPoliciesTargetingResources,
   getPolicyRegroupUpdates,
-  isCompleteDraftResource,
-  dropAbsorbedPlaceholder,
-  findPlaceholderHolder,
   getResourceDraftGroupIds,
   getResourceLiveBaseline,
   getResourceNodeEnabled,
-  withResourceLiveBaseline,
+  isCompleteDraftResource,
   isDeployablePolicy,
+  isFocusWorthy,
+  isPolicyNodeId,
   isTrackablePolicy,
   pinByOrder,
   PLACEHOLDER_BASE_NAMES,
   withFreshGroupCounts,
+  withResourceLiveBaseline,
 } from "./helpers";
 
 const node = (id: string, data: Record<string, unknown>): Node => ({
@@ -177,7 +179,10 @@ describe("getPlaceholderSetupKey", () => {
 
 describe("getPlaceholderHostname", () => {
   const canvas = [
-    node("peer-draft-a", { placeholderKind: "agent", placeholderName: "Agent" }),
+    node("peer-draft-a", {
+      placeholderKind: "agent",
+      placeholderName: "Agent",
+    }),
     node("peer-draft-b", {
       placeholderKind: "agent",
       placeholderName: "Agent (1)",
@@ -327,23 +332,35 @@ describe("getResourceNodeEnabled — the resource's state, not the frame's dim",
   it("prefers a draft toggle over the live value, and live over nothing", () => {
     expect(
       getResourceNodeEnabled(
-        existing({ resourceEnabled: false, resource: { id: "r1", enabled: true } }),
+        existing({
+          resourceEnabled: false,
+          resource: { id: "r1", enabled: true },
+        }),
       ),
     ).toBe(false);
     expect(
-      getResourceNodeEnabled(existing({ resource: { id: "r1", enabled: false } })),
+      getResourceNodeEnabled(
+        existing({ resource: { id: "r1", enabled: false } }),
+      ),
     ).toBe(false);
-    expect(getResourceNodeEnabled(existing({ resource: { id: "r1" } }))).toBe(true);
+    expect(getResourceNodeEnabled(existing({ resource: { id: "r1" } }))).toBe(
+      true,
+    );
   });
 
   it("uses the node flag for a draft resource, which has no live twin", () => {
     expect(
-      getResourceNodeEnabled({ id: "resource-new-1", data: { enabled: false } }),
+      getResourceNodeEnabled({
+        id: "resource-new-1",
+        data: { enabled: false },
+      }),
     ).toBe(false);
     expect(
       getResourceNodeEnabled({ id: "resource-new-1", data: { enabled: true } }),
     ).toBe(true);
-    expect(getResourceNodeEnabled({ id: "resource-new-1", data: {} })).toBe(true);
+    expect(getResourceNodeEnabled({ id: "resource-new-1", data: {} })).toBe(
+      true,
+    );
   });
 
   it("defaults to enabled when there is nothing to read", () => {
@@ -358,7 +375,9 @@ describe("isDeployablePolicy — only real policies enter the changeset", () => 
 
   it("a policy with only one side is not deployable", () => {
     expect(
-      isDeployablePolicy(makePolicy("p", { sources: [{ name: "G" } as Group] })),
+      isDeployablePolicy(
+        makePolicy("p", { sources: [{ name: "G" } as Group] }),
+      ),
     ).toBe(false);
     expect(
       isDeployablePolicy(
@@ -398,9 +417,9 @@ describe("isDeployablePolicy — only real policies enter the changeset", () => 
   });
 
   it("a policy without rules is not deployable", () => {
-    expect(
-      isDeployablePolicy({ ...makePolicy("p", {}), rules: [] }),
-    ).toBe(false);
+    expect(isDeployablePolicy({ ...makePolicy("p", {}), rules: [] })).toBe(
+      false,
+    );
   });
 });
 
@@ -437,9 +456,9 @@ describe("getGroupCountLabel", () => {
     expect(getGroupCountLabel({ name: "g", peers_count: 3 } as Group)).toBe(
       "3 Peers",
     );
-    expect(
-      getGroupCountLabel({ name: "g", resources_count: 2 } as Group),
-    ).toBe("2 Resources");
+    expect(getGroupCountLabel({ name: "g", resources_count: 2 } as Group)).toBe(
+      "2 Resources",
+    );
     // Resources lead once the group holds any.
     expect(
       getGroupCountLabel({
@@ -448,6 +467,19 @@ describe("getGroupCountLabel", () => {
         resources_count: 2,
       } as Group),
     ).toBe("2 Resources, 1 Peer");
+  });
+
+  it("counts users, which live on the user record rather than the group", () => {
+    expect(getGroupCountLabel({ name: "g" } as Group, 2)).toBe("2 Users");
+    // Biggest first, as with peers and resources.
+    expect(getGroupCountLabel({ name: "g", peers_count: 1 } as Group, 3)).toBe(
+      "3 Users, 1 Peer",
+    );
+    expect(getGroupCountLabel({ name: "g", peers_count: 5 } as Group, 1)).toBe(
+      "5 Peers, 1 User",
+    );
+    // A group with users is not "No Peers".
+    expect(getGroupCountLabel({ name: "g" } as Group, 0)).toBe("No Peers");
   });
 });
 
@@ -610,9 +642,9 @@ describe("canDropGroupIntoNetwork — group → frame eligibility", () => {
       }),
       parentId: "network-n1",
     };
-    expect(
-      canDropGroupIntoNetwork(g, frame("n1"), [draftResource], []),
-    ).toBe(true);
+    expect(canDropGroupIntoNetwork(g, frame("n1"), [draftResource], [])).toBe(
+      true,
+    );
   });
 });
 
@@ -717,9 +749,7 @@ describe("withFreshGroupCounts", () => {
 
   it("does not mutate the input group", () => {
     const stale: Group = { id: "g1", name: "Ops", peers_count: 1 };
-    withFreshGroupCounts(stale, [
-      { id: "g1", name: "Ops", peers_count: 5 },
-    ]);
+    withFreshGroupCounts(stale, [{ id: "g1", name: "Ops", peers_count: 5 }]);
     expect(stale.peers_count).toBe(1);
   });
 });
@@ -736,8 +766,9 @@ describe("the live resource baseline survives an edit", () => {
   it("prefers the captured baseline once data.resource holds an edit", () => {
     const edited = { ...live, name: "db2" };
     expect(
-      getResourceLiveBaseline({ data: { resource: edited, liveResource: live } })
-        ?.name,
+      getResourceLiveBaseline({
+        data: { resource: edited, liveResource: live },
+      })?.name,
     ).toBe("db");
   });
 
@@ -846,5 +877,42 @@ describe("isEmptiedPolicy and isDeployablePolicy leave no gap between them", () 
     expect(isEmptiedPolicy(policy)).toBe(false);
     expect(isDeployablePolicy(policy)).toBe(false);
     expect(isTrackablePolicy(policy)).toBe(true);
+  });
+});
+
+describe("isPolicyNodeId", () => {
+  it("holds both pills to their fixed sides", () => {
+    expect(isPolicyNodeId("policy-abc")).toBe(true);
+    // The edge's whole side logic hangs on this: "agent-policy-" does not
+    // start with "policy-", so a plain prefix test let the line attach to
+    // whichever side happened to be nearer.
+    expect(isPolicyNodeId("agent-policy-abc")).toBe(true);
+  });
+
+  it("is not fooled by the nodes a policy connects", () => {
+    expect(isPolicyNodeId("group-g1")).toBe(false);
+    expect(isPolicyNodeId("provider-p1")).toBe(false);
+    expect(isPolicyNodeId("peer-a")).toBe(false);
+  });
+});
+
+describe("isFocusWorthy", () => {
+  const edge = { source: "group-g1", target: "policy-p1" };
+
+  it("withholds Focus when the node has nothing connected", () => {
+    expect(isFocusWorthy("group-g1", [], [])).toBe(false);
+  });
+
+  it("needs a second path to dim away", () => {
+    const one = [{ id: "policy-p1", type: "policyNode" }];
+    expect(isFocusWorthy("group-g1", one, [edge])).toBe(false);
+  });
+
+  it("counts an agent policy as the second path", () => {
+    const mixed = [
+      { id: "policy-p1", type: "policyNode" },
+      { id: "agent-policy-a1", type: "agentPolicyNode" },
+    ];
+    expect(isFocusWorthy("group-g1", mixed, [edge])).toBe(true);
   });
 });

@@ -11,10 +11,13 @@ export const EMPTY_STATE_ZOOM = 0.65;
 
 export const POLICY_COLUMN_Y_OFFSET = 18;
 
+// One value for every peer-shaped node: a peer carried from live into draft
+// swaps selectPeerNode for peerNode, and a differing nudge moved it a pixel
+// down on the switch.
 const NODE_Y_NUDGE: Record<string, number> = {
-  peerNode: 3,
-  sourcePeerNode: 3,
-  expandedGroupPeer: 3,
+  peerNode: 2,
+  sourcePeerNode: 2,
+  expandedGroupPeer: 2,
   selectPeerNode: 2,
   selectUserNode: 2,
 };

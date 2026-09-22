@@ -1,3 +1,4 @@
+import { singularize } from "@utils/helpers";
 import {
   Edge as CanvasEdge,
   Node as CanvasNode,
@@ -5,7 +6,6 @@ import {
   useStore,
 } from "@xyflow/react";
 import { orderBy } from "lodash";
-import { singularize } from "@utils/helpers";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -41,24 +41,33 @@ export const getNetworksFromPolicy = (networks: Network[], policy: Policy) => {
   });
 };
 
-export const getGroupCountLabel = (group?: Group) => {
+// Users are not on the Group record (they carry the group on `auto_groups`), so
+// the count is passed in where a caller has the list to count from.
+export const getGroupCountLabel = (group?: Group, userCount = 0) => {
   const peerCount = group?.peers_count || 0;
   const resourceCount = group?.resources_count || 0;
-  if (peerCount === 0 && resourceCount === 0) return "No Peers";
-  const peers = singularize("Peers", peerCount, true);
-  const resources = singularize("Resources", resourceCount, true);
-  if (resourceCount === 0) return peers;
-  if (peerCount === 0) return resources;
-  return peerCount > resourceCount
-    ? `${peers}, ${resources}`
-    : `${resources}, ${peers}`;
+  if (peerCount === 0 && resourceCount === 0 && userCount === 0) {
+    return "No Peers";
+  }
+  // Biggest first, and on a tie the order here decides — resources have always
+  // led peers, and users lead both: a group reaching an AI provider does it
+  // through its users.
+  return [
+    { count: userCount, label: singularize("Users", userCount, true) },
+    {
+      count: resourceCount,
+      label: singularize("Resources", resourceCount, true),
+    },
+    { count: peerCount, label: singularize("Peers", peerCount, true) },
+  ]
+    .filter((part) => part.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .map((part) => part.label)
+    .join(", ");
 };
 
 // Policy-embedded groups carry a stale count snapshot; /groups is authoritative.
-export const withFreshGroupCounts = (
-  group: Group,
-  groups?: Group[],
-): Group => {
+export const withFreshGroupCounts = (group: Group, groups?: Group[]): Group => {
   const fresh = groups?.find((g) => g.id === group.id);
   if (!fresh) return group;
   return {
@@ -541,10 +550,11 @@ export const findPlaceholderHolder = (
   nodes: CanvasNode[],
   draftId: string,
 ): CanvasNode | undefined =>
-  nodes.find((n) =>
-    (n.data?.draftPeers as { id?: string }[] | undefined)?.some(
-      (p) => p.id === draftId,
-    ),
+  nodes.find(
+    (n) =>
+      (n.data?.draftPeers as { id?: string }[] | undefined)?.some(
+        (p) => p.id === draftId,
+      ),
   );
 
 // Also out of addedMembers, so the group's membership change nets back out.
@@ -582,10 +592,7 @@ export const deriveResourceType = (
 };
 
 // Frame-ness is the explicit `data.frame` flag; the `network-new-` id is only a fallback.
-export const isFrameNode = (node?: {
-  id: string;
-  data?: unknown;
-}): boolean =>
+export const isFrameNode = (node?: { id: string; data?: unknown }): boolean =>
   !!node &&
   (node.id.startsWith("network-new-") ||
     !!(node.data as { frame?: boolean } | undefined)?.frame);
@@ -750,7 +757,9 @@ export const getLiveFrameGrid = (resourceCount: number) => {
       : NETWORK_FRAME_CHILD_WIDTH;
   const rows = Math.max(Math.ceil(cellCount / cols), 1);
   const cellPosition = (index: number) => ({
-    x: NETWORK_FRAME_PADDING_X + (index % cols) * (childWidth + NETWORK_FRAME_GAP),
+    x:
+      NETWORK_FRAME_PADDING_X +
+      (index % cols) * (childWidth + NETWORK_FRAME_GAP),
     y:
       NETWORK_FRAME_HEADER +
       NETWORK_FRAME_PADDING_Y +
@@ -783,7 +792,11 @@ export function isFocusWorthy(
   if (!edges.some((e) => e.source === nodeId || e.target === nodeId)) {
     return false;
   }
-  const policyCount = nodes.filter((n) => n.type === "policyNode").length;
+  // Agent policies are policy pills too: a canvas holding one of each has two
+  // paths, and dimming the other is exactly what Focus is for.
+  const policyCount = nodes.filter(
+    (n) => n.type === "policyNode" || n.type === "agentPolicyNode",
+  ).length;
   return policyCount >= 2;
 }
 
@@ -813,14 +826,26 @@ export function orderFrameResources(
     ((r.groups ?? []) as (Group | string)[]).some((g) =>
       destGroupIds.has(typeof g === "string" ? g : g?.id ?? ""),
     );
-  return [...resources.filter(isTargeted), ...resources.filter((r) => !isTargeted(r))];
+  return [
+    ...resources.filter(isTargeted),
+    ...resources.filter((r) => !isTargeted(r)),
+  ];
 }
 
+const NO_NODES: CanvasNode[] = [];
+
 // Ignores positions/measure/drag state so node drags don't re-render mounted consumers.
-export function useStructuralNodes(options?: { selection?: boolean }) {
+// `enabled: false` keeps an always-mounted consumer subscribed but inert: the
+// selector returns the same empty array for every store update, so a hidden
+// panel does not re-render (and rebuild its lists) on canvas changes.
+export function useStructuralNodes(options?: {
+  selection?: boolean;
+  enabled?: boolean;
+}) {
   const withSelection = options?.selection ?? false;
+  const enabled = options?.enabled ?? true;
   return useStore(
-    (s: { nodes: CanvasNode[] }) => s.nodes,
+    (s: { nodes: CanvasNode[] }) => (enabled ? s.nodes : NO_NODES),
     (a: CanvasNode[], b: CanvasNode[]) =>
       a === b ||
       (a.length === b.length &&
@@ -835,6 +860,12 @@ export function useStructuralNodes(options?: { selection?: boolean }) {
         })),
   );
 }
+
+// A policy pill, access-control or agent-network. Both hold their sides fixed —
+// sources enter on the left, destinations leave on the right — and an agent
+// policy's id does NOT start with "policy-", so a plain prefix test misses it.
+export const isPolicyNodeId = (id: string) =>
+  id.startsWith("policy-") || id.startsWith("agent-policy-");
 
 // Shared by the live overview and the draft build so the policy → network gap matches.
 export const FRAME_GRID_BASE_X = 1050;
@@ -864,9 +895,12 @@ export function packFrameGrid(
   );
   // Order by name so live and draft fill the grid identically.
   const nameOf = (n: CanvasNode) =>
-    ((n.data as { network?: { name?: string } })?.network?.name ?? "")
-      .toLowerCase();
-  const ordered = frames.slice().sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+    (
+      (n.data as { network?: { name?: string } })?.network?.name ?? ""
+    ).toLowerCase();
+  const ordered = frames
+    .slice()
+    .sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
   ordered.forEach((frame, i) => {
     const col = i % cols;
     frame.position = { x: baseX + col * cellW, y: columnY[col] };

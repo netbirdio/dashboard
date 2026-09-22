@@ -11,12 +11,18 @@ import React, {
 import { Group } from "@/interfaces/Group";
 import { Permission } from "@/interfaces/Permission";
 import { Policy } from "@/interfaces/Policy";
+import type {
+  ProviderConnectInput,
+  ProviderUpdateInput,
+} from "@/modules/agent-network/AIProvidersProvider";
+import type { AgentPolicy } from "@/modules/agent-network/data/mockData";
 import {
   deletedGroupRefs,
   detachChangesFromDraftNetwork,
   isEmptiedPolicy,
   isNoopGroupUpdate,
   isPendingPolicyWrite,
+  mergeAgentGroupDeletions,
   mergeGroupDeletions,
   pendingGroupDeletions,
   reduceRemoveChange,
@@ -214,6 +220,87 @@ export interface InstallPeerChange {
   installedPeerId?: string;
 }
 
+// Agent Network entities. A draft provider is referenced by its clientId
+// ("new-<uuid>") until deploy resolves it to the created record's id, the same
+// way a draft network's resources reference it.
+export interface CreateProviderChange {
+  id: string;
+  type: "create-provider";
+  clientId: string;
+  name: string;
+  input: ProviderConnectInput;
+}
+
+export interface UpdateProviderChange {
+  id: string;
+  type: "update-provider";
+  providerId: string;
+  name: string;
+  updates: ProviderUpdateInput;
+  // A toggle reads differently in the review list than a form save.
+  origin?: "toggle" | "edit";
+}
+
+export interface DeleteProviderChange {
+  id: string;
+  type: "delete-provider";
+  providerId: string;
+  name: string;
+}
+
+// What a pending group deletion took out of an agent policy, so discarding
+// that deletion can put it back — the access-control tag, minus the peer and
+// resource cases an agent policy has no room for.
+export interface AgentGroupDeletion {
+  groupIds: string[];
+  basePolicy: AgentPolicy;
+  // The write also carries an edit of the user's own, so discarding the last
+  // deletion must not take it with them.
+  handEdited?: boolean;
+}
+
+export interface CreateAgentPolicyChange {
+  id: string;
+  type: "create-agent-policy";
+  clientId: string;
+  name: string;
+  policy: Omit<AgentPolicy, "id">;
+  groupDeletion?: AgentGroupDeletion;
+}
+
+export interface UpdateAgentPolicyChange {
+  id: string;
+  type: "update-agent-policy";
+  agentPolicyId: string;
+  name: string;
+  policy: Partial<AgentPolicy>;
+  origin?: "toggle" | "edit";
+  groupDeletion?: AgentGroupDeletion;
+}
+
+export interface DeleteAgentPolicyChange {
+  id: string;
+  type: "delete-agent-policy";
+  agentPolicyId: string;
+  name: string;
+  groupDeletion?: AgentGroupDeletion;
+}
+
+// A user's groups live on the USER (`auto_groups`), not on the group, so group
+// membership for users deploys as a PUT per user rather than as part of the
+// group body.
+export interface UpdateUserGroupsChange {
+  id: string;
+  type: "update-user-groups";
+  userId: string;
+  name: string;
+  // Group refs, like a policy's: a live group's id or a draft group's NAME.
+  groupRefs: string[];
+  // What this change put the user into / took them out of, for the row.
+  addedGroupNames: string[];
+  removedGroupNames: string[];
+}
+
 export type DraftChange =
   | CreateGroupChange
   | UpdateGroupChange
@@ -229,7 +316,14 @@ export type DraftChange =
   | UpdateResourceChange
   | DeleteResourceChange
   | DeleteNetworkChange
-  | InstallPeerChange;
+  | InstallPeerChange
+  | CreateProviderChange
+  | UpdateProviderChange
+  | DeleteProviderChange
+  | CreateAgentPolicyChange
+  | UpdateAgentPolicyChange
+  | DeleteAgentPolicyChange
+  | UpdateUserGroupsChange;
 
 // Git-style classification for diff coloring.
 export type ChangeKind = "add" | "update" | "remove" | "install";
@@ -241,17 +335,24 @@ export const getChangeKind = (change: DraftChange): ChangeKind => {
     case "create-network":
     case "create-resource":
     case "create-router":
+    case "create-provider":
+    case "create-agent-policy":
       return "add";
     case "delete-resource":
     case "delete-network":
     case "delete-group":
     case "delete-policy":
+    case "delete-provider":
+    case "delete-agent-policy":
       return "remove";
     case "update-group":
     case "update-policy":
     case "update-network":
     case "update-router":
     case "update-resource":
+    case "update-provider":
+    case "update-agent-policy":
+    case "update-user-groups":
       return "update";
     case "install-peer":
       return "install";
@@ -291,6 +392,20 @@ export const getChangeApiCall = (change: DraftChange): string => {
     case "install-peer":
       // Not a deploy call: the setup key is created when the user installs.
       return "POST /setup-keys";
+    case "create-provider":
+      return "POST /agent-network/providers";
+    case "update-provider":
+      return `PUT /agent-network/providers/${change.providerId}`;
+    case "delete-provider":
+      return `DELETE /agent-network/providers/${change.providerId}`;
+    case "create-agent-policy":
+      return "POST /agent-network/policies";
+    case "update-agent-policy":
+      return `PUT /agent-network/policies/${change.agentPolicyId}`;
+    case "delete-agent-policy":
+      return `DELETE /agent-network/policies/${change.agentPolicyId}`;
+    case "update-user-groups":
+      return `PUT /users/${change.userId}`;
   }
 };
 
@@ -302,7 +417,9 @@ export const getChangeLabel = (
       const parts = [];
       if (change.peerIds.length > 0)
         parts.push(
-          `${change.peerIds.length} peer${change.peerIds.length !== 1 ? "s" : ""}`,
+          `${change.peerIds.length} peer${
+            change.peerIds.length !== 1 ? "s" : ""
+          }`,
         );
       if (change.resourceIds.length > 0)
         parts.push(
@@ -342,7 +459,7 @@ export const getChangeLabel = (
         };
       }
     }
-     
+
     case "create-policy": {
       const rule = change.policy.rules?.[0];
       const names = (groups?: Group[] | string[] | null) =>
@@ -389,14 +506,22 @@ export const getChangeLabel = (
     case "create-router":
       return {
         title: change.peerId
-          ? `Add routing peer “${change.peerName ?? change.peerId}” to “${change.networkName}”`
-          : `Add routing peer group “${change.groupName ?? change.groupId}” to “${change.networkName}”`,
+          ? `Add routing peer “${change.peerName ?? change.peerId}” to “${
+              change.networkName
+            }”`
+          : `Add routing peer group “${
+              change.groupName ?? change.groupId
+            }” to “${change.networkName}”`,
       };
     case "update-router":
       return {
         title: change.peerId
-          ? `Update routing peer “${change.peerName ?? change.peerId}” in “${change.networkName}”`
-          : `Update routing peer group “${change.groupName ?? change.groupId}” in “${change.networkName}”`,
+          ? `Update routing peer “${change.peerName ?? change.peerId}” in “${
+              change.networkName
+            }”`
+          : `Update routing peer group “${
+              change.groupName ?? change.groupId
+            }” in “${change.networkName}”`,
       };
     case "update-resource":
       return {
@@ -413,6 +538,55 @@ export const getChangeLabel = (
         title: `Delete network “${change.name}”`,
         detail: "its resources and routing peers are removed too",
       };
+    case "create-provider":
+      return {
+        title: `Connect provider “${change.name}”`,
+        detail: change.input.upstreamUrl || undefined,
+      };
+    case "update-provider":
+      return {
+        title:
+          change.origin === "toggle"
+            ? `${change.updates.enabled ? "Enable" : "Disable"} provider “${
+                change.name
+              }”`
+            : `Update provider “${change.name}”`,
+      };
+    case "delete-provider":
+      return { title: `Delete provider “${change.name}”` };
+    case "create-agent-policy":
+      return {
+        title: `Create agent policy “${change.name}”`,
+        detail: `${change.policy.sourceGroups.length} group${
+          change.policy.sourceGroups.length !== 1 ? "s" : ""
+        } → ${change.policy.destinationProviderIds.length} provider${
+          change.policy.destinationProviderIds.length !== 1 ? "s" : ""
+        }`,
+      };
+    case "update-agent-policy":
+      return {
+        title:
+          change.origin === "toggle"
+            ? `${change.policy.enabled ? "Enable" : "Disable"} agent policy “${
+                change.name
+              }”`
+            : `Update agent policy “${change.name}”`,
+      };
+    case "delete-agent-policy":
+      return { title: `Delete agent policy “${change.name}”` };
+    case "update-user-groups": {
+      const parts = [];
+      if (change.addedGroupNames.length > 0) {
+        parts.push(`added to ${change.addedGroupNames.join(", ")}`);
+      }
+      if (change.removedGroupNames.length > 0) {
+        parts.push(`removed from ${change.removedGroupNames.join(", ")}`);
+      }
+      return {
+        title: `Update groups for “${change.name}”`,
+        detail: parts.length > 0 ? parts.join(", ") : undefined,
+      };
+    }
     case "install-peer":
       if (change.installedPeerId) {
         return {
@@ -498,6 +672,58 @@ export const getChangeIssue = (
       } — take the group off this change, or discard the deletion.`,
     };
   }
+  // An agent policy that authorizes nothing, or points at a provider this
+  // draft is deleting, is refused by the API — and the deletion runs after it.
+  if (
+    change.type === "create-agent-policy" ||
+    change.type === "update-agent-policy"
+  ) {
+    const sources = change.policy.sourceGroups;
+    const providers = change.policy.destinationProviderIds;
+    if (
+      (sources !== undefined && sources.length === 0) ||
+      (providers !== undefined && providers.length === 0)
+    ) {
+      return {
+        label: "Incomplete",
+        message: `Agent policy “${change.name}” needs at least one source group and one provider.`,
+        resolvable: true,
+      };
+    }
+    const doomedProviders = new Map(
+      changes
+        .filter((c): c is DeleteProviderChange => c.type === "delete-provider")
+        .map((c) => [c.providerId, c.name]),
+    );
+    const named = (providers ?? []).filter((id) => doomedProviders.has(id));
+    if (named.length > 0) {
+      const list = named.map((id) => `“${doomedProviders.get(id)}”`).join(", ");
+      return {
+        label: "Provider deleted",
+        message: `Agent policy “${change.name}” references ${
+          named.length === 1 ? "provider" : "providers"
+        } ${list}, marked for deletion in this draft. Take ${
+          named.length === 1 ? "it" : "them"
+        } off the policy, or discard the deletion.`,
+      };
+    }
+    // A draft provider whose create was discarded leaves the policy pointing
+    // at a client id nothing will ever resolve.
+    const draftProviderIds = new Set(
+      changes
+        .filter((c): c is CreateProviderChange => c.type === "create-provider")
+        .map((c) => c.clientId),
+    );
+    const orphaned = (providers ?? []).filter(
+      (id) => id.startsWith("new-") && !draftProviderIds.has(id),
+    );
+    if (orphaned.length > 0) {
+      return {
+        label: "Provider missing",
+        message: `Agent policy “${change.name}” references a provider that is no longer in this draft. Pick another provider for it.`,
+      };
+    }
+  }
   if (change.type === "install-peer") {
     if (change.installedPeerId) return undefined;
     // A peer waiting to register still blocks deploy until it upgrades.
@@ -528,7 +754,16 @@ export const hasBlockingIssues = (changes: DraftChange[]): boolean =>
 // does not exempt it; install-peer is the user's own manual step, not a deploy call.
 export const CHANGE_PERMISSION: Record<
   Exclude<DraftChange["type"], "install-peer">,
-  { module: "groups" | "policies" | "networks"; action: keyof Permission }
+  {
+    module:
+      | "groups"
+      | "policies"
+      | "networks"
+      | "users"
+      | "agent_network.providers"
+      | "agent_network.policies";
+    action: keyof Permission;
+  }
 > = {
   "create-group": { module: "groups", action: "create" },
   "update-group": { module: "groups", action: "update" },
@@ -545,12 +780,31 @@ export const CHANGE_PERMISSION: Record<
   "delete-resource": { module: "networks", action: "delete" },
   "create-router": { module: "networks", action: "create" },
   "update-router": { module: "networks", action: "update" },
+  // The write lands on the user, so it is the user permission that gates it.
+  "update-user-groups": { module: "users", action: "update" },
+  "create-provider": { module: "agent_network.providers", action: "create" },
+  "update-provider": { module: "agent_network.providers", action: "update" },
+  "delete-provider": { module: "agent_network.providers", action: "delete" },
+  "create-agent-policy": {
+    module: "agent_network.policies",
+    action: "create",
+  },
+  "update-agent-policy": {
+    module: "agent_network.policies",
+    action: "update",
+  },
+  "delete-agent-policy": {
+    module: "agent_network.policies",
+    action: "delete",
+  },
 };
 
 // Canonical CRUD dependency order, shared by deploy and Review & Deploy.
 export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "create-group",
   "update-group",
+  // After create-group: a user can be put into a group the draft just made.
+  "update-user-groups",
   "create-network",
   "update-network",
   "create-resource",
@@ -560,6 +814,14 @@ export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "create-policy",
   "update-policy",
   "delete-policy",
+  // Providers before the agent policies that name them, and deleted last: the
+  // API refuses a provider DELETE while a policy still references it.
+  "create-provider",
+  "update-provider",
+  "create-agent-policy",
+  "update-agent-policy",
+  "delete-agent-policy",
+  "delete-provider",
   "delete-resource",
   // Cascades its resources/routers server-side, so it runs last.
   "delete-network",
@@ -595,7 +857,9 @@ export const getCanvasWarnings = (
       const refs = [rule.sourceResource, rule.destinationResource];
       if (refs.some((r) => r?.id?.startsWith("draft-"))) {
         warnings.push(
-          `Policy “${policy?.name ?? "Policy"}” references a peer that isn't installed yet and won't deploy until it is.`,
+          `Policy “${
+            policy?.name ?? "Policy"
+          }” references a peer that isn't installed yet and won't deploy until it is.`,
         );
       } else if (
         refs.some(
@@ -603,7 +867,9 @@ export const getCanvasWarnings = (
         )
       ) {
         warnings.push(
-          `Policy “${policy?.name ?? "Policy"}” references a resource without a network and won't deploy until it is assigned to one.`,
+          `Policy “${
+            policy?.name ?? "Policy"
+          }” references a resource without a network and won't deploy until it is assigned to one.`,
         );
       }
     }
@@ -612,7 +878,9 @@ export const getCanvasWarnings = (
       if (!trackedResourceIds.has(clientId)) {
         const resource = n.data?.resource as { name?: string } | undefined;
         warnings.push(
-          `Resource “${resource?.name ?? "Resource"}” has no network assigned and won't deploy.`,
+          `Resource “${
+            resource?.name ?? "Resource"
+          }” has no network assigned and won't deploy.`,
         );
       }
     }
@@ -656,7 +924,11 @@ interface DraftChangesetContextType {
   trackDeleteGroup: (params: GroupRef & { name: string }) => void;
   untrackNewGroup: (name: string) => void;
   // Used when a placeholder ("draft-…") upgrades to a real peer.
-  replacePeerIdInGroups: (oldId: string, newId: string, newName?: string) => void;
+  replacePeerIdInGroups: (
+    oldId: string,
+    newId: string,
+    newName?: string,
+  ) => void;
   trackCreateNetwork: (params: {
     clientId: string;
     name: string;
@@ -672,7 +944,9 @@ interface DraftChangesetContextType {
     params: Omit<UpdateNetworkChange, "id" | "type">,
   ) => void;
   // Upserts by clientId; the editor always saves the full resource.
-  trackCreateResource: (params: Omit<CreateResourceChange, "id" | "type">) => void;
+  trackCreateResource: (
+    params: Omit<CreateResourceChange, "id" | "type">,
+  ) => void;
   untrackResource: (clientId: string) => void;
   trackUpdateResource: (
     params: Omit<UpdateResourceChange, "id" | "type"> & {
@@ -698,9 +972,7 @@ interface DraftChangesetContextType {
   removeGroupFromDraftResource: (clientId: string, groupRef: string) => void;
   trackCreateRouter: (params: Omit<CreateRouterChange, "id" | "type">) => void;
   // Supersedes an earlier edit of the same router.
-  trackUpdateRouter: (
-    params: Omit<UpdateRouterChange, "id" | "type">,
-  ) => void;
+  trackUpdateRouter: (params: Omit<UpdateRouterChange, "id" | "type">) => void;
   trackCreatePolicy: (params: { clientId: string; policy: Policy }) => void;
   // `groupDeletion` marks a write forced by a group deletion. An ordinary edit
   // leaves it unset, which REBASES the tag onto the edit — see mergeGroupDeletions.
@@ -711,7 +983,10 @@ interface DraftChangesetContextType {
   }) => void;
   // Re-records a PENDING update-policy; a no-op when none exists. Unlike
   // trackUpdatePolicy it never reads an emptied policy as a deletion.
-  patchPendingPolicyUpdate: (params: { policyId: string; policy: Policy }) => void;
+  patchPendingPolicyUpdate: (params: {
+    policyId: string;
+    policy: Policy;
+  }) => void;
   // Folded into a pending create/update change when one exists.
   trackSetPolicyEnabled: (params: {
     policyId: string;
@@ -721,6 +996,41 @@ interface DraftChangesetContextType {
     policy: Policy;
   }) => void;
   trackDeletePolicy: (params: { policyId: string; name: string }) => void;
+  trackUpdateUserGroups: (params: {
+    userId: string;
+    name: string;
+    groupRefs: string[];
+    addedGroupNames: string[];
+    removedGroupNames: string[];
+  }) => void;
+  trackCreateProvider: (params: {
+    clientId: string;
+    name: string;
+    input: ProviderConnectInput;
+  }) => void;
+  trackUpdateProvider: (params: {
+    providerId: string;
+    name: string;
+    updates: ProviderUpdateInput;
+    origin?: "toggle" | "edit";
+  }) => void;
+  trackDeleteProvider: (params: { providerId: string; name: string }) => void;
+  trackCreateAgentPolicy: (params: {
+    clientId: string;
+    policy: Omit<AgentPolicy, "id">;
+  }) => void;
+  trackUpdateAgentPolicy: (params: {
+    agentPolicyId: string;
+    name: string;
+    policy: Partial<AgentPolicy>;
+    origin?: "toggle" | "edit";
+    groupDeletion?: AgentGroupDeletion;
+  }) => void;
+  trackDeleteAgentPolicy: (params: {
+    agentPolicyId: string;
+    name: string;
+    groupDeletion?: AgentGroupDeletion;
+  }) => void;
   // Upserted by clientId; renames update the entry.
   trackInstallPeer: (params: {
     clientId: string;
@@ -777,6 +1087,18 @@ const renameGroupInPolicies = (
     ) {
       return { ...c, groupId: to, groupName: to };
     }
+    // A user's membership names a draft group, so the rename has to reach it
+    // too or the deploy resolves a name nothing answers to.
+    if (c.type === "update-user-groups") {
+      if (!c.groupRefs.includes(from)) return c;
+      const renameName = (n: string) => (n === from ? to : n);
+      return {
+        ...c,
+        groupRefs: c.groupRefs.map(renameName),
+        addedGroupNames: c.addedGroupNames.map(renameName),
+        removedGroupNames: c.removedGroupNames.map(renameName),
+      };
+    }
     if (c.type !== "create-policy" && c.type !== "update-policy") return c;
     const rename = (groups?: Group[] | string[] | null) =>
       groups
@@ -827,7 +1149,14 @@ export function DraftChangesetProvider({
     }) => {
       setChanges((prev) => [
         ...prev,
-        { id: draftUid(), type: "create-group", clientId, name, peerIds, resourceIds },
+        {
+          id: draftUid(),
+          type: "create-group",
+          clientId,
+          name,
+          peerIds,
+          resourceIds,
+        },
       ]);
     },
     [],
@@ -899,9 +1228,7 @@ export function DraftChangesetProvider({
               ? {
                   ...c,
                   peerIds: [...new Set([...c.peerIds, ...peerIds])],
-                  resourceIds: [
-                    ...new Set([...c.resourceIds, ...resourceIds]),
-                  ],
+                  resourceIds: [...new Set([...c.resourceIds, ...resourceIds])],
                 }
               : c,
           );
@@ -917,8 +1244,8 @@ export function DraftChangesetProvider({
             peerIds.filter((id) => existing.removedPeerIds?.includes(id)),
           );
           const revertedResources = new Set(
-            resourceIds.filter((id) =>
-              existing.removedResourceIds?.includes(id),
+            resourceIds.filter(
+              (id) => existing.removedResourceIds?.includes(id),
             ),
           );
           const updated: UpdateGroupChange = {
@@ -1079,9 +1406,9 @@ export function DraftChangesetProvider({
         const seen = new Set<string>();
         return mapped.filter((c) => {
           if (c.type !== "create-router") return true;
-          const key = `${c.networkId ?? c.networkClientId}|${
-            c.peerId ?? ""
-          }|${c.groupId ?? ""}`;
+          const key = `${c.networkId ?? c.networkClientId}|${c.peerId ?? ""}|${
+            c.groupId ?? ""
+          }`;
           if (seen.has(key)) return false;
           seen.add(key);
           return true;
@@ -1187,7 +1514,10 @@ export function DraftChangesetProvider({
             c.id === existing.id ? { ...existing, ...params } : c,
           );
         }
-        return [...prev, { id: draftUid(), type: "create-resource", ...params }];
+        return [
+          ...prev,
+          { id: draftUid(), type: "create-resource", ...params },
+        ];
       });
     },
     [],
@@ -1229,11 +1559,11 @@ export function DraftChangesetProvider({
       setChanges((prev) => {
         const existing = prev.find(
           (c): c is UpdateResourceChange =>
-            c.type === "update-resource" &&
-            c.resourceId === change.resourceId,
+            c.type === "update-resource" && c.resourceId === change.resourceId,
         );
         const sameIds = (a: string[], b: string[]) =>
-          a.length === b.length && [...a].sort().join() === [...b].sort().join();
+          a.length === b.length &&
+          [...a].sort().join() === [...b].sort().join();
         const isRevert =
           original &&
           change.enabled === original.enabled &&
@@ -1249,7 +1579,10 @@ export function DraftChangesetProvider({
             c.id === existing.id ? { ...existing, ...change } : c,
           );
         }
-        return [...prev, { id: draftUid(), type: "update-resource", ...change }];
+        return [
+          ...prev,
+          { id: draftUid(), type: "update-resource", ...change },
+        ];
       });
     },
     [],
@@ -1261,8 +1594,7 @@ export function DraftChangesetProvider({
         ...prev.filter(
           (c) =>
             !(
-              c.type === "update-resource" &&
-              c.resourceId === params.resourceId
+              c.type === "update-resource" && c.resourceId === params.resourceId
             ),
         ),
         { id: draftUid(), type: "delete-resource", ...params },
@@ -1714,6 +2046,289 @@ export function DraftChangesetProvider({
     [],
   );
 
+  // Agent Network trackers. Same coalescing rules as the policy ones: an edit
+  // to a draft entity folds into its create, a delete of a draft entity drops
+  // the create outright, and a delete of an existing one supersedes any
+  // pending write against it.
+  // One entry per user: the PUT replaces auto_groups wholesale, so a second
+  // edit supersedes the first rather than stacking. A user put back exactly
+  // where they started drops the change entirely.
+  const trackUpdateUserGroups = useCallback(
+    ({
+      userId,
+      name,
+      groupRefs,
+      addedGroupNames,
+      removedGroupNames,
+    }: {
+      userId: string;
+      name: string;
+      groupRefs: string[];
+      addedGroupNames: string[];
+      removedGroupNames: string[];
+    }) => {
+      setChanges((prev) => {
+        const pending = prev.find(
+          (c): c is UpdateUserGroupsChange =>
+            c.type === "update-user-groups" && c.userId === userId,
+        );
+        if (addedGroupNames.length === 0 && removedGroupNames.length === 0) {
+          return pending ? prev.filter((c) => c !== pending) : prev;
+        }
+        const next: UpdateUserGroupsChange = {
+          id: pending?.id ?? draftUid(),
+          type: "update-user-groups",
+          userId,
+          name,
+          groupRefs,
+          addedGroupNames,
+          removedGroupNames,
+        };
+        return pending
+          ? prev.map((c) => (c === pending ? next : c))
+          : [...prev, next];
+      });
+    },
+    [],
+  );
+
+  const trackCreateProvider = useCallback(
+    ({
+      clientId,
+      name,
+      input,
+    }: {
+      clientId: string;
+      name: string;
+      input: ProviderConnectInput;
+    }) => {
+      setChanges((prev) => [
+        ...prev,
+        { id: draftUid(), type: "create-provider", clientId, name, input },
+      ]);
+    },
+    [],
+  );
+
+  const trackUpdateProvider = useCallback(
+    ({
+      providerId,
+      name,
+      updates,
+      origin = "edit",
+    }: {
+      providerId: string;
+      name: string;
+      updates: ProviderUpdateInput;
+      origin?: "toggle" | "edit";
+    }) => {
+      setChanges((prev) => {
+        const create = prev.find(
+          (c): c is CreateProviderChange =>
+            c.type === "create-provider" && c.clientId === providerId,
+        );
+        if (create) {
+          return prev.map((c) =>
+            c.id === create.id
+              ? {
+                  ...create,
+                  name,
+                  input: { ...create.input, ...updates },
+                }
+              : c,
+          );
+        }
+        const pending = prev.find(
+          (c): c is UpdateProviderChange =>
+            c.type === "update-provider" && c.providerId === providerId,
+        );
+        const merged: UpdateProviderChange = {
+          id: pending?.id ?? draftUid(),
+          type: "update-provider",
+          providerId,
+          name,
+          updates: { ...(pending?.updates ?? {}), ...updates },
+          // A form save outranks a toggle: the review row should say what the
+          // change actually is.
+          origin: pending && pending.origin === "edit" ? "edit" : origin,
+        };
+        return pending
+          ? prev.map((c) => (c.id === pending.id ? merged : c))
+          : [...prev, merged];
+      });
+    },
+    [],
+  );
+
+  const trackDeleteProvider = useCallback(
+    ({ providerId, name }: { providerId: string; name: string }) => {
+      setChanges((prev) => {
+        if (providerId.startsWith("new-")) {
+          return prev.filter(
+            (c) =>
+              !(c.type === "create-provider" && c.clientId === providerId) &&
+              !(
+                c.type === "create-agent-policy" &&
+                c.policy.destinationProviderIds.includes(providerId)
+              ),
+          );
+        }
+        const filtered = prev.filter(
+          (c) => !(c.type === "update-provider" && c.providerId === providerId),
+        );
+        return [
+          ...filtered,
+          { id: draftUid(), type: "delete-provider", providerId, name },
+        ];
+      });
+    },
+    [],
+  );
+
+  const trackCreateAgentPolicy = useCallback(
+    ({
+      clientId,
+      policy,
+    }: {
+      clientId: string;
+      policy: Omit<AgentPolicy, "id">;
+    }) => {
+      setChanges((prev) => [
+        ...prev,
+        {
+          id: draftUid(),
+          type: "create-agent-policy",
+          clientId,
+          name: policy.name || "Agent policy",
+          policy,
+        },
+      ]);
+    },
+    [],
+  );
+
+  const trackUpdateAgentPolicy = useCallback(
+    ({
+      agentPolicyId,
+      name,
+      policy,
+      origin = "edit",
+      groupDeletion,
+    }: {
+      agentPolicyId: string;
+      name: string;
+      policy: Partial<AgentPolicy>;
+      origin?: "toggle" | "edit";
+      groupDeletion?: AgentGroupDeletion;
+    }) => {
+      setChanges((prev) => {
+        const create = prev.find(
+          (c): c is CreateAgentPolicyChange =>
+            c.type === "create-agent-policy" && c.clientId === agentPolicyId,
+        );
+        if (create) {
+          const nextPolicy = { ...create.policy, ...policy };
+          return prev.map((c) =>
+            c.id === create.id
+              ? {
+                  ...create,
+                  name,
+                  policy: nextPolicy,
+                  groupDeletion: mergeAgentGroupDeletions(
+                    create.groupDeletion,
+                    groupDeletion,
+                    nextPolicy,
+                    // A draft policy's create is always the user's own work.
+                    !create.groupDeletion,
+                  ),
+                }
+              : c,
+          );
+        }
+        const pending = prev.find(
+          (c): c is UpdateAgentPolicyChange =>
+            c.type === "update-agent-policy" &&
+            c.agentPolicyId === agentPolicyId,
+        );
+        // update and delete for one policy are mutually exclusive: the update
+        // deploys first, so a policy carrying both would be written and then
+        // destroyed. Rebuilding it clears the pending deletion.
+        const pendingDelete = prev.find(
+          (c): c is DeleteAgentPolicyChange =>
+            c.type === "delete-agent-policy" &&
+            c.agentPolicyId === agentPolicyId,
+        );
+        const nextPolicy = { ...(pending?.policy ?? {}), ...policy };
+        const merged: UpdateAgentPolicyChange = {
+          id: pending?.id ?? draftUid(),
+          type: "update-agent-policy",
+          agentPolicyId,
+          name,
+          policy: nextPolicy,
+          origin: pending && pending.origin === "edit" ? "edit" : origin,
+          groupDeletion: mergeAgentGroupDeletions(
+            pending?.groupDeletion ?? pendingDelete?.groupDeletion,
+            groupDeletion,
+            nextPolicy,
+            // An untagged pending write is an edit of the user's own.
+            !!pending && !pending.groupDeletion,
+          ),
+        };
+        const rest = prev.filter((c) => c !== pendingDelete);
+        return pending
+          ? rest.map((c) => (c.id === pending.id ? merged : c))
+          : [...rest, merged];
+      });
+    },
+    [],
+  );
+
+  const trackDeleteAgentPolicy = useCallback(
+    ({
+      agentPolicyId,
+      name,
+      groupDeletion,
+    }: {
+      agentPolicyId: string;
+      name: string;
+      groupDeletion?: AgentGroupDeletion;
+    }) => {
+      setChanges((prev) => {
+        if (agentPolicyId.startsWith("new-")) {
+          return prev.filter(
+            (c) =>
+              !(
+                c.type === "create-agent-policy" && c.clientId === agentPolicyId
+              ),
+          );
+        }
+        const pending = prev.find(
+          (c): c is UpdateAgentPolicyChange =>
+            c.type === "update-agent-policy" &&
+            c.agentPolicyId === agentPolicyId,
+        );
+        const filtered = prev.filter((c) => c !== pending);
+        return [
+          ...filtered,
+          {
+            id: draftUid(),
+            type: "delete-agent-policy",
+            agentPolicyId,
+            name,
+            // The superseded update may itself have existed only for an
+            // earlier deletion; its tag has to travel or that group is
+            // stranded when the deletion is discarded.
+            groupDeletion: mergeAgentGroupDeletions(
+              pending?.groupDeletion,
+              groupDeletion,
+            ),
+          },
+        ];
+      });
+    },
+    [],
+  );
+
   const removeChange = useCallback((id: string) => {
     setChanges((prev) => prev.filter((c) => c.id !== id));
   }, []);
@@ -1755,6 +2370,13 @@ export function DraftChangesetProvider({
       patchPendingPolicyUpdate,
       trackSetPolicyEnabled,
       trackDeletePolicy,
+      trackUpdateUserGroups,
+      trackCreateProvider,
+      trackUpdateProvider,
+      trackDeleteProvider,
+      trackCreateAgentPolicy,
+      trackUpdateAgentPolicy,
+      trackDeleteAgentPolicy,
       trackInstallPeer,
       markInstallPeerWaiting,
       clearInstallPeerKey,
@@ -1791,6 +2413,13 @@ export function DraftChangesetProvider({
       patchPendingPolicyUpdate,
       trackSetPolicyEnabled,
       trackDeletePolicy,
+      trackUpdateUserGroups,
+      trackCreateProvider,
+      trackUpdateProvider,
+      trackDeleteProvider,
+      trackCreateAgentPolicy,
+      trackUpdateAgentPolicy,
+      trackDeleteAgentPolicy,
       trackInstallPeer,
       markInstallPeerWaiting,
       clearInstallPeerKey,

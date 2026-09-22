@@ -17,7 +17,10 @@ import {
   UpdateResourceChange,
   UpdateRouterChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
-import { diffBodies, DiffLine } from "@/modules/control-center/utils/json-line-diff";
+import {
+  diffBodies,
+  DiffLine,
+} from "@/modules/control-center/utils/json-line-diff";
 
 // The request-body shape is shared by the deploy executor and the Review &
 // Deploy code view so the two can never drift. Only the RESOLVERS differ:
@@ -68,9 +71,7 @@ export interface RequestResolvers {
 
 type WireResource = { id: string; type?: NetworkResource["type"] };
 
-export const toIds = (
-  items?: ({ id?: string } | string)[] | null,
-): string[] =>
+export const toIds = (items?: ({ id?: string } | string)[] | null): string[] =>
   (items ?? [])
     .map((i) => (typeof i === "string" ? i : i.id))
     .filter(Boolean) as string[];
@@ -125,7 +126,10 @@ export function policyRequestBody(policy: Policy, r: RequestResolvers) {
 
 // Uninstalled placeholders keep their "draft-" ids (unknown to the API) and
 // draft resources apply membership through their own groups field, so both go.
-export function groupCreateBody(change: CreateGroupChange, r: RequestResolvers) {
+export function groupCreateBody(
+  change: CreateGroupChange,
+  r: RequestResolvers,
+) {
   return {
     name: change.name,
     peers: change.peerIds.filter((id) => !id.startsWith("draft-")),
@@ -139,7 +143,10 @@ export function groupCreateBody(change: CreateGroupChange, r: RequestResolvers) 
 // draft removals. Structural rather than UpdateGroupChange: a create-group RETRY
 // is also a PUT, and it derives its removals instead of carrying them.
 export function mergeGroupMembers(
-  base: { peers?: (GroupPeer | string)[]; resources?: (GroupResource | string)[] },
+  base: {
+    peers?: (GroupPeer | string)[];
+    resources?: (GroupResource | string)[];
+  },
   change: Pick<UpdateGroupChange, "peerIds" | "resourceIds"> &
     Partial<Pick<UpdateGroupChange, "removedPeerIds" | "removedResourceIds">>,
   r: RequestResolvers,
@@ -147,7 +154,9 @@ export function mergeGroupMembers(
   const peers = new Set(toIds(base.peers));
   const resources = new Set(toIds(base.resources));
   change.peerIds.forEach((id) => !id.startsWith("draft-") && peers.add(id));
-  change.resourceIds.forEach((id) => !id.startsWith("new-") && resources.add(id));
+  change.resourceIds.forEach(
+    (id) => !id.startsWith("new-") && resources.add(id),
+  );
   change.removedPeerIds?.forEach((id) => peers.delete(id));
   change.removedResourceIds?.forEach((id) => resources.delete(id));
   const typeById = new Map<string, NetworkResource["type"] | undefined>();
@@ -159,7 +168,8 @@ export function mergeGroupMembers(
   return {
     peers: Array.from(peers),
     resources: Array.from(resources).map(
-      (id) => ({ id, type: typeById.get(id) ?? r.resourceType(id) }) as WireResource,
+      (id) =>
+        ({ id, type: typeById.get(id) ?? r.resourceType(id) }) as WireResource,
     ),
   };
 }
@@ -281,7 +291,9 @@ export function setupKeyCreateBody(
   };
 }
 
-const methodPath = (change: DraftChange): { method: HttpMethod; path: string } => {
+const methodPath = (
+  change: DraftChange,
+): { method: HttpMethod; path: string } => {
   const [method, path] = getChangeApiCall(change).split(" ");
   return { method: method as HttpMethod, path };
 };
@@ -305,7 +317,8 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
   );
   const draftResourceNames = new Map<string, string>();
   live.draftChanges?.forEach((c) => {
-    if (c.type === "create-resource") draftResourceNames.set(c.clientId, c.name);
+    if (c.type === "create-resource")
+      draftResourceNames.set(c.clientId, c.name);
   });
 
   const resolveGroupRef = (ref: string) => {
@@ -335,6 +348,26 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
       live.networkResources?.find((res) => res.id === id)?.type,
   };
 }
+
+// Agent Network bodies. The dashboard's own camelCase shapes are what the
+// providers context sends, so the preview shows the same fields the deploy
+// will — the API key is redacted, since the review view is copyable.
+const providerCreateBody = (change: { input: Record<string, unknown> }) => {
+  const { apiKey, ...rest } = change.input as { apiKey?: string };
+  return { ...rest, ...(apiKey ? { apiKey: "••••••••" } : {}) };
+};
+
+// Source groups are refs (a live group's id or a draft group's NAME), so the
+// preview resolves them exactly as the deploy does — the code view is what the
+// user approves.
+const agentPolicyBody = (
+  policy: Record<string, unknown>,
+  r: RequestResolvers,
+) => {
+  const sourceGroups = policy.sourceGroups as string[] | undefined;
+  if (!sourceGroups) return policy;
+  return { ...policy, sourceGroups: sourceGroups.map(r.groupIdForRef) };
+};
 
 // Preview must never throw during render, so a live policy with no rule yields
 // no body instead of crashing the modal. Deploy still throws.
@@ -383,10 +416,27 @@ export function buildChangeRequest(
       return { method, path, body: routerCreateBody(change, r) };
     case "update-router":
       return { method, path, body: routerUpdateBody(change, r) };
+    case "create-provider":
+      return { method, path, body: providerCreateBody(change) };
+    case "update-provider":
+      return { method, path, body: change.updates };
+    case "create-agent-policy":
+      return { method, path, body: agentPolicyBody(change.policy, r) };
+    case "update-agent-policy":
+      return { method, path, body: agentPolicyBody(change.policy, r) };
+    case "update-user-groups":
+      // The API takes the whole user; auto_groups is the field that moves.
+      return {
+        method,
+        path,
+        body: { auto_groups: change.groupRefs.map(r.groupIdForRef) },
+      };
     case "delete-policy":
     case "delete-group":
     case "delete-resource":
     case "delete-network":
+    case "delete-provider":
+    case "delete-agent-policy":
       return { method, path };
   }
 }
@@ -492,9 +542,7 @@ export function buildBeforeRequest(
           description: network.description ?? "",
           resources: (network.resources ?? []).map((rid) => {
             const res = live.networkResources?.find((r) => r.id === rid);
-            return res
-              ? { name: res.name, address: res.address }
-              : { id: rid };
+            return res ? { name: res.name, address: res.address } : { id: rid };
           }),
           ...(network.routers?.length ? { routers: network.routers } : {}),
         },

@@ -3,13 +3,17 @@ import { NetworkResource } from "@/interfaces/Network";
 import { DraftChange } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   changeNodeId,
+  mergeAgentGroupDeletions,
   pendingGroupDeletionWrite,
   pendingResourceViews,
   previewRemoveChange,
   reduceRemoveChange,
 } from "@/modules/control-center/utils/change-cascade";
 
-const createGroup = (name: string, resourceIds: string[] = []): DraftChange => ({
+const createGroup = (
+  name: string,
+  resourceIds: string[] = [],
+): DraftChange => ({
   id: `id-cg-${name}`,
   type: "create-group",
   clientId: `group-new-${name}`,
@@ -96,7 +100,9 @@ describe("reduceRemoveChange", () => {
     const out = reduceRemoveChange([grp, res, routerToGroup, policy], grp);
 
     expect(out.find((c) => c.id === grp.id)).toBeUndefined();
-    expect((out.find((c) => c.id === res.id) as any).groupIds).toEqual(["keep"]);
+    expect((out.find((c) => c.id === res.id) as any).groupIds).toEqual([
+      "keep",
+    ]);
     expect(out.find((c) => c.id === routerToGroup.id)).toBeUndefined();
     const pol = out.find((c) => c.id === policy.id) as any;
     expect(pol.policy.rules[0].sources).toEqual([{ name: "Other" }]);
@@ -105,7 +111,11 @@ describe("reduceRemoveChange", () => {
 
   it("drops a create-policy left one-sided after its only source group is removed", () => {
     const grp = createGroup("Web");
-    const policy = createPolicy("new-p1", [{ name: "Web" }], [{ id: "g-dest" }]);
+    const policy = createPolicy(
+      "new-p1",
+      [{ name: "Web" }],
+      [{ id: "g-dest" }],
+    );
     const out = reduceRemoveChange([grp, policy], grp);
     expect(out.find((c) => c.id === policy.id)).toBeUndefined();
     expect(out).toEqual([]);
@@ -114,11 +124,7 @@ describe("reduceRemoveChange", () => {
   it("create-resource is removed from group memberships and policy refs", () => {
     const grp = createGroup("Web", ["new-res1", "other"]);
     const res = createResource("new-res1");
-    const policy = createPolicy(
-      "new-p1",
-      [{ id: "g1" }],
-      [{ id: "g2" }],
-    );
+    const policy = createPolicy("new-p1", [{ id: "g1" }], [{ id: "g2" }]);
     (policy as any).policy.rules[0].destinationResource = {
       id: "new-res1",
       type: "host",
@@ -362,15 +368,21 @@ describe("reduceRemoveChange: delete-group restores the policies it emptied", ()
 
   it("re-applies the deletions that remain instead of dropping the write", () => {
     const changes = [
-      stripped("p1", [], [{ id: "g3", name: "Prod" }], ["g1", "g2"],
-        base([ops, dev], [{ id: "g3", name: "Prod" }])),
+      stripped(
+        "p1",
+        [],
+        [{ id: "g3", name: "Prod" }],
+        ["g1", "g2"],
+        base([ops, dev], [{ id: "g3", name: "Prod" }]),
+      ),
       deleteGroup("g1", "Ops"),
       deleteGroup("g2", "Dev"),
     ];
     const next = reduceRemoveChange(changes, changes[1]);
     const write = next.find((c) => c.type === "update-policy");
-    expect(write?.type === "update-policy" && write.policy.rules?.[0].sources)
-      .toEqual([ops]);
+    expect(
+      write?.type === "update-policy" && write.policy.rules?.[0].sources,
+    ).toEqual([ops]);
     expect(
       write?.type === "update-policy" && write.groupDeletion?.groupIds,
     ).toEqual(["g2"]);
@@ -414,8 +426,9 @@ describe("reduceRemoveChange: delete-group restores the policies it emptied", ()
       (c) => c.type === "update-policy" || c.type === "delete-policy",
     );
     expect(write?.type).toBe("update-policy");
-    expect(write?.type === "update-policy" && write.policy.rules?.[0].sources)
-      .toEqual([extra]);
+    expect(
+      write?.type === "update-policy" && write.policy.rules?.[0].sources,
+    ).toEqual([extra]);
     expect(
       write?.type === "update-policy" && write.policy.rules?.[0].destinations,
     ).toEqual([dev]);
@@ -462,8 +475,9 @@ describe("reduceRemoveChange: delete-group restores the policies it emptied", ()
       deleteGroup("g1", "Ops"),
     );
     const write = next.find((c) => c.type === "update-policy");
-    expect(write?.type === "update-policy" && write.policy.rules?.[0].sources)
-      .toEqual([ops, dev]);
+    expect(
+      write?.type === "update-policy" && write.policy.rules?.[0].sources,
+    ).toEqual([ops, dev]);
     expect(write?.type === "update-policy" && write.policy.name).toBe("P v2");
     // Nothing is left stripped, so the tag is spent.
     expect(write?.groupDeletion).toBeUndefined();
@@ -571,7 +585,9 @@ describe("pendingResourceViews", () => {
         networkName: "Net",
       },
     ];
-    expect(pendingResourceViews(live, changes).map((r) => r.id)).toEqual(["r1"]);
+    expect(pendingResourceViews(live, changes).map((r) => r.id)).toEqual([
+      "r1",
+    ]);
   });
 
   it("applies a pending edit rather than showing the live values", () => {
@@ -613,5 +629,146 @@ describe("pendingResourceViews", () => {
     ];
     expect(pendingResourceViews(live, changes)).toEqual(live);
     expect(pendingResourceViews(undefined, changes)).toEqual([]);
+  });
+});
+
+describe("agent policies and a pending group deletion", () => {
+  const base = {
+    id: "ap-1",
+    name: "Agents → OpenAI",
+    description: "",
+    enabled: true,
+    sourceGroups: ["g1", "g2"],
+    destinationProviderIds: ["prov-1"],
+    guardrailIds: [],
+    limits: {},
+  } as never as {
+    id: string;
+    name: string;
+    sourceGroups: string[];
+    destinationProviderIds: string[];
+  };
+
+  const deleteGroup = (groupId: string): DraftChange => ({
+    id: `id-dg-${groupId}`,
+    type: "delete-group",
+    groupId,
+    name: groupId,
+  });
+
+  const strippedUpdate = (groupIds: string[]): DraftChange =>
+    ({
+      id: "id-uap",
+      type: "update-agent-policy",
+      agentPolicyId: "ap-1",
+      name: base.name,
+      policy: {
+        ...base,
+        sourceGroups: base.sourceGroups.filter((g) => !groupIds.includes(g)),
+      },
+      origin: "edit",
+      groupDeletion: { groupIds, basePolicy: base },
+    }) as never as DraftChange;
+
+  it("discarding the deletion drops a write that existed only for it", () => {
+    const next = reduceRemoveChange(
+      [deleteGroup("g1"), strippedUpdate(["g1"])],
+      deleteGroup("g1"),
+    );
+    expect(next).toEqual([]);
+  });
+
+  it("a second pending deletion keeps the write, minus the discarded group", () => {
+    const changes = [
+      deleteGroup("g1"),
+      deleteGroup("g2"),
+      strippedUpdate(["g1", "g2"]),
+    ];
+    const next = reduceRemoveChange(changes, deleteGroup("g1"));
+    const write = next.find((c) => c.type === "update-agent-policy");
+    expect(
+      write?.type === "update-agent-policy" && write.policy.sourceGroups,
+    ).toEqual(["g1"]);
+    expect(
+      write?.type === "update-agent-policy" && write.groupDeletion?.groupIds,
+    ).toEqual(["g2"]);
+  });
+
+  it("restores a policy the deletion had emptied, as an update again", () => {
+    const emptied = {
+      id: "id-dap",
+      type: "delete-agent-policy",
+      agentPolicyId: "ap-1",
+      name: base.name,
+      groupDeletion: {
+        groupIds: ["g1", "g2"],
+        basePolicy: base,
+      },
+    } as never as DraftChange;
+    const next = reduceRemoveChange(
+      [deleteGroup("g1"), deleteGroup("g2"), emptied],
+      deleteGroup("g1"),
+    );
+    const write = next.find((c) => c.type === "update-agent-policy");
+    // g2 is still pending deletion, so only g1 comes back.
+    expect(
+      write?.type === "update-agent-policy" && write.policy.sourceGroups,
+    ).toEqual(["g1"]);
+  });
+
+  it("keeps a hand-edited write when the last deletion is discarded", () => {
+    const edited = {
+      ...(strippedUpdate(["g1"]) as never as Record<string, unknown>),
+      groupDeletion: { groupIds: ["g1"], basePolicy: base, handEdited: true },
+    } as never as DraftChange;
+    const next = reduceRemoveChange(
+      [deleteGroup("g1"), edited],
+      deleteGroup("g1"),
+    );
+    expect(next).toHaveLength(1);
+    expect(next[0].type).toBe("update-agent-policy");
+  });
+});
+
+describe("mergeAgentGroupDeletions", () => {
+  const base = {
+    id: "ap-1",
+    name: "P",
+    description: "",
+    enabled: true,
+    sourceGroups: ["g1", "g2"],
+    destinationProviderIds: ["prov-1"],
+    guardrailIds: [],
+    limits: {},
+  } as never;
+
+  it("unions the stripped ids and keeps the earliest baseline", () => {
+    const merged = mergeAgentGroupDeletions(
+      { groupIds: ["g1"], basePolicy: base },
+      { groupIds: ["g2"], basePolicy: { ...(base as object) } as never },
+    );
+    expect(merged?.groupIds).toEqual(["g1", "g2"]);
+    expect(merged?.basePolicy).toBe(base);
+  });
+
+  it("an ordinary edit rebases the tag onto itself instead of dropping it", () => {
+    const merged = mergeAgentGroupDeletions(
+      { groupIds: ["g1"], basePolicy: base },
+      undefined,
+      { sourceGroups: ["g3"], name: "Renamed" },
+    );
+    // The edit, with what the deletion took still in the baseline.
+    expect(merged?.basePolicy.sourceGroups).toEqual(["g3", "g1"]);
+    expect(merged?.basePolicy.name).toBe("Renamed");
+    expect(merged?.handEdited).toBe(true);
+  });
+
+  it("a delete drops the tag: a cancelled deletion must not resurrect it", () => {
+    expect(
+      mergeAgentGroupDeletions(
+        { groupIds: ["g1"], basePolicy: base },
+        undefined,
+      ),
+    ).toBeUndefined();
   });
 });

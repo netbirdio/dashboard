@@ -90,8 +90,12 @@ export const applyDraftBuildLayout = (
   );
   // Edge direction tells a node's side; the layout only buckets by TYPE, so a
   // destination peer would otherwise be stacked with the sources.
+  // Agent policies count as policies here: their targets are providers, which
+  // belong in the destination column with everything else a policy reaches.
   const policyNodeIds = new Set(
-    updatedNodes.filter((n) => n.type === "policyNode").map((n) => n.id),
+    updatedNodes
+      .filter((n) => n.type === "policyNode" || n.type === "agentPolicyNode")
+      .map((n) => n.id),
   );
   const destinationIds = new Set(
     updatedEdges
@@ -129,13 +133,16 @@ export const applyDraftBuildLayout = (
   if (carriesFrames) {
     // Frameless drafts already match live via DEFAULT_LAYOUT_CONFIG.
     const policyColumn = updatedNodes.filter(
-      (n) => !n.parentId && n.type === "policyNode",
+      (n) =>
+        !n.parentId &&
+        (n.type === "policyNode" || n.type === "agentPolicyNode"),
     );
     if (policyColumn.length > 0) {
-      const policyName = (n: Node) =>
-        (
-          (n.data as { policy?: { name?: string } })?.policy?.name ?? ""
-        ).toLowerCase();
+      // Agent policy nodes carry their name flat, access-control ones nest it.
+      const policyName = (n: Node) => {
+        const d = n.data as { policy?: { name?: string }; name?: string };
+        return (d?.policy?.name ?? d?.name ?? "").toLowerCase();
+      };
       policyColumn.sort((a, b) => policyName(a).localeCompare(policyName(b)));
       const colHeight = (policyColumn.length - 1) * 90;
       policyColumn.forEach((n, i) => {
@@ -156,7 +163,8 @@ export const applyDraftBuildLayout = (
       (n.type === "destinationGroupNode" ||
         n.type === "groupNode" ||
         n.type === "resourceNode" ||
-        n.type === "peerNode"),
+        n.type === "peerNode" ||
+        n.type === "providerNode"),
   );
   if (destColumn.length > 0) {
     // Ordered by the first policy that targets the node, NOT creation order.
@@ -175,10 +183,12 @@ export const applyDraftBuildLayout = (
     );
     const colHeight = (destColumn.length - 1) * 100;
     destColumn.forEach((n, i) => {
-      n.position = {
-        x: DEST_COLUMN_X,
-        y: -colHeight / 2 + i * 100 + nodeYNudge(n.type),
-      };
+      // No nudge on this side. Live draws a destination peer as a
+      // destinationResourceNode (nudge 0) and the draft as a peerNode, so
+      // applying the peer nudge here dropped it a couple of pixels the
+      // moment draft opened. The source column keeps its nudge: live draws
+      // those as sourcePeerNode, which carries the same one.
+      n.position = { x: DEST_COLUMN_X, y: -colHeight / 2 + i * 100 };
     });
   }
 

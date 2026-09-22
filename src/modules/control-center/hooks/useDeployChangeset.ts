@@ -5,12 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { mutate } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
-import {
-  Network,
-  NetworkResource,
-  NetworkRouter,
-} from "@/interfaces/Network";
+import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
+import { User } from "@/interfaces/User";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   CHANGE_DEPLOY_ORDER,
   CHANGE_PERMISSION,
@@ -63,7 +61,7 @@ const parseSignature = <T extends DraftChange>(sig?: string): T | undefined => {
 export function useDeployChangeset() {
   const { changes } = useDraftChangeset();
   const { permission } = usePermissions();
-  const { groups, networks, networkResources } = useControlCenterData();
+  const { groups, networks, networkResources, users } = useControlCenterData();
   // Draft client ids → real API ids, persisted across deploy() calls so retries resolve them.
   const networkClientToId = useRef(new Map<string, string>());
   const resourceClientToId = useRef(
@@ -74,6 +72,23 @@ export function useDeployChangeset() {
   const networkRequest = useApiCall<Network>("/networks", true);
   const resourceRequest = useApiCall<NetworkResource>("/networks", true);
   const routerRequest = useApiCall<NetworkRouter>("/networks", true);
+  // Group membership for users is a write on the USER: auto_groups is the
+  // only field that moves, but the API takes the whole record.
+  const userRequest = useApiCall<User>("/users", true);
+  // Agent Network writes go through the providers context rather than a raw
+  // useApiCall: it owns the camelCase → wire mapping and refreshes its own
+  // caches, so a deployed provider shows up on the canvas without a reload.
+  const {
+    addProvider,
+    updateProvider: saveProvider,
+    deleteProvider,
+    addPolicy: addAgentPolicy,
+    updatePolicy: saveAgentPolicy,
+    deletePolicy: removeAgentPolicy,
+  } = useAIProviders();
+  // Draft provider clientId → created id, so an agent policy deployed after it
+  // names the real provider.
+  const providerClientToId = useRef(new Map<string, string>());
   const [isDeploying, setIsDeploying] = useState(false);
   // Succeeded changes are NOT removed; they stay visible with a check.
   const [deployStatus, setDeployStatus] = useState<
@@ -118,6 +133,21 @@ export function useDeployChangeset() {
       }
       return nameToId.get(name);
     };
+
+    const providerClientMap = providerClientToId.current;
+    // A policy authored against a draft provider carries its clientId; deploy
+    // rewrites those to the ids the creates returned.
+    const resolveProviderIds = (ids: string[] | undefined) =>
+      (ids ?? []).map((id) => {
+        if (!id.startsWith("new-")) return id;
+        const mapped = providerClientMap.get(id);
+        if (!mapped) {
+          throw new Error(
+            "A provider this policy points at was not created. Discard the policy or pick another provider.",
+          );
+        }
+        return mapped;
+      });
 
     const networkClientMap = networkClientToId.current;
     const resourceClientMap = resourceClientToId.current;
@@ -203,7 +233,9 @@ export function useDeployChangeset() {
 
     // Draft resources in THIS changeset resolve to real ids before policies deploy.
     const trackedResourceClientIds = new Set(
-      changes.flatMap((c) => (c.type === "create-resource" ? [c.clientId] : [])),
+      changes.flatMap((c) =>
+        c.type === "create-resource" ? [c.clientId] : [],
+      ),
     );
 
     // The upstream gate in ReviewDeployModal is keyed on a DIFFERENT entity, so
@@ -409,6 +441,91 @@ export function useDeployChangeset() {
           await networkRequest.del("", `/${change.networkId}`);
           return;
         }
+        case "create-provider": {
+          if (createdId) {
+            // Retry: the record exists, so this is a PUT of the same input.
+            await saveProvider(createdId, change.input);
+            providerClientMap.set(change.clientId, createdId);
+            return;
+          }
+          const saved = await addProvider(change.input);
+          if (!saved?.id) throw new Error("The provider was not created.");
+          providerClientMap.set(change.clientId, saved.id);
+          createdIds.current.set(change.id, { id: saved.id });
+          return;
+        }
+        case "update-provider": {
+          const ok = await saveProvider(change.providerId, change.updates);
+          // updateProvider resolves false when the API refused the credential.
+          if (!ok) throw new Error(`Provider “${change.name}” was not saved.`);
+          return;
+        }
+        case "delete-provider": {
+          await deleteProvider(change.providerId);
+          return;
+        }
+        case "create-agent-policy": {
+          const policy = {
+            ...change.policy,
+            // A source entry is a live group's id or a draft group's NAME —
+            // the same ref an access-control policy carries, resolved the same
+            // way now that the create-group has deployed.
+            sourceGroups: change.policy.sourceGroups.map(
+              resolvers.groupIdForRef,
+            ),
+            destinationProviderIds: resolveProviderIds(
+              change.policy.destinationProviderIds,
+            ),
+          };
+          if (createdId) {
+            await saveAgentPolicy(createdId, policy);
+            return;
+          }
+          const saved = await addAgentPolicy(policy);
+          if (!saved?.id) throw new Error("The agent policy was not created.");
+          createdIds.current.set(change.id, { id: saved.id });
+          return;
+        }
+        case "update-agent-policy": {
+          await saveAgentPolicy(change.agentPolicyId, {
+            ...change.policy,
+            ...(change.policy.sourceGroups
+              ? {
+                  sourceGroups: change.policy.sourceGroups.map(
+                    resolvers.groupIdForRef,
+                  ),
+                }
+              : {}),
+            ...(change.policy.destinationProviderIds
+              ? {
+                  destinationProviderIds: resolveProviderIds(
+                    change.policy.destinationProviderIds,
+                  ),
+                }
+              : {}),
+          });
+          return;
+        }
+        case "delete-agent-policy": {
+          await removeAgentPolicy(change.agentPolicyId);
+          return;
+        }
+        case "update-user-groups": {
+          const live = users?.find((u) => u.id === change.userId);
+          if (!live) {
+            throw new Error(
+              `User “${change.name}” is missing. They may have been removed from the account.`,
+            );
+          }
+          await userRequest.put(
+            {
+              ...live,
+              auto_groups: change.groupRefs.map(resolvers.groupIdForRef),
+            },
+            `/${change.userId}`,
+          );
+          return;
+        }
       }
     };
 
@@ -426,7 +543,9 @@ export function useDeployChangeset() {
     const forbidden = ordered.filter((c) => {
       const needed =
         CHANGE_PERMISSION[c.type as keyof typeof CHANGE_PERMISSION];
-      return needed && !permission[needed.module][needed.action];
+      // Optional: a module the permissions payload didn't carry must read
+      // as "not allowed", not throw inside the deploy click.
+      return needed && !permission[needed.module]?.[needed.action];
     });
     if (forbidden.length > 0) {
       setIsDeploying(false);

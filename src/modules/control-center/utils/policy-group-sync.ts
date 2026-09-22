@@ -1,5 +1,6 @@
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
+import type { AgentPolicy } from "@/modules/agent-network/data/mockData";
 import { isEmptiedPolicy } from "@/modules/control-center/utils/change-cascade";
 
 // Policy node snapshots hold COPIES of group objects, so renames must be
@@ -130,4 +131,41 @@ export const groupDeletionPolicyUpdates = (
   });
 
   return { updates, emptied };
+};
+
+export type AgentGroupDeletionUpdate = {
+  policy: AgentPolicy;
+  basePolicy: AgentPolicy;
+  groupIds: string[];
+};
+
+/**
+ * Every agent policy that names one of `groups` on its source side, with those
+ * ids taken out. `policies` is the canvas union the live list, as the
+ * access-control sweep uses — a policy off the canvas is still a policy the
+ * group DELETE would be refused for.
+ */
+export const agentGroupDeletionUpdates = (
+  policies: AgentPolicy[],
+  groups: Group[],
+): AgentGroupDeletionUpdate[] => {
+  const ids = new Set(groups.map((g) => g.id).filter(Boolean) as string[]);
+  if (ids.size === 0) return [];
+  const seen = new Set<string>();
+  const updates: AgentGroupDeletionUpdate[] = [];
+  policies.forEach((policy) => {
+    if (!policy.id || seen.has(policy.id)) return;
+    const groupIds = policy.sourceGroups.filter((id) => ids.has(id));
+    if (groupIds.length === 0) return;
+    seen.add(policy.id);
+    updates.push({
+      policy: {
+        ...policy,
+        sourceGroups: policy.sourceGroups.filter((id) => !ids.has(id)),
+      },
+      basePolicy: policy,
+      groupIds,
+    });
+  });
+  return updates;
 };
