@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { Policy } from "@/interfaces/Policy";
+import { Group } from "@/interfaces/Group";
 import {
   CreateGroupChange,
   CreatePolicyChange,
@@ -9,6 +10,7 @@ import {
   UpdateGroupChange,
   UpdatePolicyChange,
   UpdateResourceChange,
+  DraftChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   buildBeforeRequest,
@@ -502,5 +504,95 @@ describe("id placeholders in preview", () => {
     const body = buildChangeRequest(change, live)?.body as any;
     // No bound group for user devices, but canvas memberships still ride the key.
     expect(body.auto_groups).toEqual(["grp-live"]);
+  });
+});
+
+// The code view is copyable, so a credential rendered here reaches a clipboard.
+describe("agent network and user membership bodies", () => {
+  const providerInput = {
+    providerId: "openai_api",
+    name: "OpenAI",
+    upstreamUrl: "https://api.openai.com",
+    apiKey: "sk-live-secret",
+    models: [],
+  };
+
+  it("never renders a provider's API key, on create or on update", () => {
+    const create = buildChangeRequest({
+      id: "cp",
+      type: "create-provider",
+      clientId: "new-1",
+      name: "OpenAI",
+      input: providerInput,
+    } as never as DraftChange);
+    const update = buildChangeRequest({
+      id: "up",
+      type: "update-provider",
+      providerId: "p1",
+      name: "OpenAI",
+      updates: { apiKey: "sk-live-rotated", name: "OpenAI" },
+    } as never as DraftChange);
+
+    expect(JSON.stringify(create.body)).not.toContain("sk-live-secret");
+    expect(JSON.stringify(update.body)).not.toContain("sk-live-rotated");
+    // The wire shape the deploy sends, redacted — not the dashboard's own.
+    expect((update.body as { api_key?: string }).api_key).toBe("••••••••");
+    expect((create.body as { provider_id?: string }).provider_id).toBe(
+      "openai_api",
+    );
+  });
+
+  it("renders an agent policy in the wire shape the API takes", () => {
+    const request = buildChangeRequest(
+      {
+        id: "cap",
+        type: "create-agent-policy",
+        clientId: "new-1",
+        name: "Agents → OpenAI",
+        policy: {
+          name: "Agents → OpenAI",
+          description: "",
+          enabled: true,
+          sourceGroups: ["g1"],
+          destinationProviderIds: ["new-p1"],
+          guardrailIds: [],
+          limits: {},
+        },
+      } as never as DraftChange,
+      { groups: [{ id: "g1", name: "Ops" } as Group] },
+    );
+
+    const body = request.body as Record<string, unknown>;
+    expect(body).toMatchObject({ source_groups: ["g1"] });
+    expect(body).not.toHaveProperty("sourceGroups");
+    // A provider that does not exist yet cannot be shown as a real id.
+    expect((body.destination_provider_ids as string[])[0]).not.toBe("new-p1");
+  });
+
+  it("shows a membership change as the whole-user PUT it really is", () => {
+    const request = buildChangeRequest(
+      {
+        id: "uug",
+        type: "update-user-groups",
+        userId: "u1",
+        name: "Ada",
+        groupRefs: ["g1", "Ops"],
+        addedGroupNames: ["Ops"],
+        removedGroupNames: [],
+      } as never as DraftChange,
+      {
+        groups: [{ id: "g1", name: "Everyone" } as Group],
+        users: [{ id: "u1", name: "Ada", auto_groups: ["g1"] }],
+      },
+    );
+
+    expect(request.method).toBe("PUT");
+    expect(request.path).toBe("/users/u1");
+    // The whole record, not a patch of auto_groups alone.
+    expect(request.body).toMatchObject({ id: "u1", name: "Ada" });
+    // "Ops" is a draft group, so it renders as a placeholder id, not the name.
+    const sent = (request.body as { auto_groups: string[] }).auto_groups;
+    expect(sent[0]).toBe("g1");
+    expect(sent[1]).not.toBe("Ops");
   });
 });

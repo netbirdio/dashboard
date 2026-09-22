@@ -38,6 +38,7 @@ export interface ChangeRequest {
 export interface LiveData {
   policies?: Policy[];
   groups?: Group[];
+  users?: { id?: string; name?: string; auto_groups?: string[] }[];
   networks?: Network[];
   networkResources?: NetworkResource[];
   // Lets the preview name draft entities when building id placeholders.
@@ -352,22 +353,90 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
 // Agent Network bodies. The dashboard's own camelCase shapes are what the
 // providers context sends, so the preview shows the same fields the deploy
 // will — the API key is redacted, since the review view is copyable.
-const providerCreateBody = (change: { input: Record<string, unknown> }) => {
-  const { apiKey, ...rest } = change.input as { apiKey?: string };
-  return { ...rest, ...(apiKey ? { apiKey: "••••••••" } : {}) };
+// The deploy sends snake_case, so a camelCase preview is a request the user
+// never makes. Only the keys the change actually carries are rendered: an
+// update is a delta the context merges onto its own record, and inventing the
+// missing keys would read as clearing them.
+const toWire = (
+  obj: Record<string, unknown>,
+  map: Record<string, string>,
+): Record<string, unknown> => {
+  const out: Record<string, unknown> = {};
+  Object.entries(map).forEach(([key, wire]) => {
+    if (obj[key] !== undefined) out[wire] = obj[key];
+  });
+  return out;
 };
 
-// Source groups are refs (a live group's id or a draft group's NAME), so the
-// preview resolves them exactly as the deploy does — the code view is what the
-// user approves.
+const PROVIDER_WIRE = {
+  providerId: "provider_id",
+  name: "name",
+  upstreamUrl: "upstream_url",
+  apiKey: "api_key",
+  extraValues: "extra_values",
+  identityHeaderUserId: "identity_header_user_id",
+  identityHeaderGroups: "identity_header_groups",
+  skipTlsVerification: "skip_tls_verification",
+  metadataDisabled: "metadata_disabled",
+  models: "models",
+  enabled: "enabled",
+};
+
+const AGENT_POLICY_WIRE = {
+  name: "name",
+  description: "description",
+  enabled: "enabled",
+  sourceGroups: "source_groups",
+  destinationProviderIds: "destination_provider_ids",
+  guardrailIds: "guardrail_ids",
+  limits: "limits",
+};
+
+// The code view is copyable, so a credential must never render into it.
+const providerBody = (input: Record<string, unknown>) => {
+  const wire = toWire(input, PROVIDER_WIRE);
+  if (wire.api_key) wire.api_key = "••••••••";
+  if (Array.isArray(wire.models)) {
+    wire.models = (wire.models as Record<string, unknown>[]).map((m) => ({
+      id: m.id,
+      input_per_1k: m.inputPer1k,
+      output_per_1k: m.outputPer1k,
+    }));
+  }
+  return wire;
+};
+
+const providerCreateBody = (change: { input: Record<string, unknown> }) =>
+  providerBody(change.input);
+
+// Refs resolve exactly as the deploy resolves them. A draft provider has no
+// real id yet, so it renders as a placeholder rather than as a copyable id.
 const agentPolicyBody = (
   policy: Record<string, unknown>,
   r: RequestResolvers,
-) => {
-  const sourceGroups = policy.sourceGroups as string[] | undefined;
-  if (!sourceGroups) return policy;
-  return { ...policy, sourceGroups: sourceGroups.map(r.groupIdForRef) };
-};
+) =>
+  toWire(
+    {
+      ...policy,
+      ...(policy.sourceGroups
+        ? {
+            sourceGroups: (policy.sourceGroups as string[]).map(
+              r.groupIdForRef,
+            ),
+          }
+        : {}),
+      ...(policy.destinationProviderIds
+        ? {
+            destinationProviderIds: (
+              policy.destinationProviderIds as string[]
+            ).map((id) =>
+              id.startsWith("new-") ? idPlaceholder("PROVIDER", id) : id,
+            ),
+          }
+        : {}),
+    },
+    AGENT_POLICY_WIRE,
+  );
 
 // Preview must never throw during render, so a live policy with no rule yields
 // no body instead of crashing the modal. Deploy still throws.
@@ -419,18 +488,25 @@ export function buildChangeRequest(
     case "create-provider":
       return { method, path, body: providerCreateBody(change) };
     case "update-provider":
-      return { method, path, body: change.updates };
+      return { method, path, body: providerBody(change.updates) };
     case "create-agent-policy":
       return { method, path, body: agentPolicyBody(change.policy, r) };
     case "update-agent-policy":
       return { method, path, body: agentPolicyBody(change.policy, r) };
-    case "update-user-groups":
-      // The API takes the whole user; auto_groups is the field that moves.
+    case "update-user-groups": {
+      // The PUT replaces the whole user, so the preview shows the whole user
+      // with the field that moves — a body of auto_groups alone would read as
+      // a patch and understate what the request replaces.
+      const user = live.users?.find((u) => u.id === change.userId);
       return {
         method,
         path,
-        body: { auto_groups: change.groupRefs.map(r.groupIdForRef) },
+        body: {
+          ...(user ?? { id: change.userId, name: change.name }),
+          auto_groups: change.groupRefs.map(r.groupIdForRef),
+        },
       };
+    }
     case "delete-policy":
     case "delete-group":
     case "delete-resource":

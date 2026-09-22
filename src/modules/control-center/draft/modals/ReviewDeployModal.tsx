@@ -42,11 +42,15 @@ type Props = {
   onDeployed: () => void;
 };
 
-export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => {
+export const ReviewDeployModal = ({
+  open,
+  onOpenChange,
+  onDeployed,
+}: Props) => {
   const { changes, clearChanges } = useDraftChangeset();
   const { removeWithCascade, previewRemove } = useRemoveChange();
   const { deploy, isDeploying, deployStatus } = useDeployChangeset();
-  const { policies, groups, networks, networkResources } =
+  const { policies, groups, networks, networkResources, users } =
     useControlCenterData();
   const { setResourceNetworkPicker, setInstallModal, setUserDeviceModal } =
     useDraftMode();
@@ -54,8 +58,17 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
   const reactFlow = useReactFlow();
 
   const live: LiveData = useMemo(
-    () => ({ policies, groups, networks, networkResources, draftChanges: changes }),
-    [policies, groups, networks, networkResources, changes],
+    () => ({
+      policies,
+      groups,
+      networks,
+      networkResources,
+      // A user membership change PUTs the whole user, so the code view needs
+      // the record it merges onto.
+      users,
+      draftChanges: changes,
+    }),
+    [policies, groups, networks, networkResources, users, changes],
   );
 
   // Freeze the snapshot the rows render against during a deploy: the SWR mutate
@@ -176,7 +189,9 @@ export const ReviewDeployModal = ({ open, onOpenChange, onDeployed }: Props) => 
     >
       <ModalContent maxWidthClass={"max-w-[45rem]"}>
         <ModalHeader
-          icon={<GitPullRequestArrowIcon size={18} className={"text-netbird"} />}
+          icon={
+            <GitPullRequestArrowIcon size={18} className={"text-netbird"} />
+          }
           title={"Review & Deploy"}
           description={description}
           color={"netbird"}
