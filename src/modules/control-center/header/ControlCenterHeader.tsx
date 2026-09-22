@@ -480,10 +480,9 @@ function HeaderTopRight() {
   );
 }
 
-// Module-level, not inline literals: entering draft fires a burst of state
-// updates (canvas rebuild, layout init, history capture) while this spring is
-// still running, and fresh prop objects on those re-renders re-target the
-// animation mid-flight — which reads as a flash just after it settles.
+// Entering draft fires a burst of state updates (canvas rebuild, layout init,
+// history capture). A JS-driven spring stutters under that burst, which is
+// what read as a flash — hence the CSS transition below.
 function HeaderBottom() {
   const { isDraft } = useDraftMode();
 

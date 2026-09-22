@@ -586,6 +586,8 @@ export const DestinationGroupPanel = ({
     );
   }, [groupId, memberUsersKey]);
 
+  // Either permission can produce unsaved work, so both gate the footer.
+  const canSave = canEditMembers || canEditUsers;
   const dirty =
     !setEquals(selectedPeerIds, memberPeerIds) ||
     !setEquals(selectedResourceIds, memberResourceIds) ||
@@ -911,6 +913,7 @@ export const DestinationGroupPanel = ({
       trackUpdateUserGroups({
         userId: user.id,
         name: user.name || user.email || user.id,
+        baseGroupRefs: user.auto_groups ?? [],
         groupRefs: now
           ? Array.from(new Set([...current, userGroupRef]))
           : current.filter((g) => g !== userGroupRef),
@@ -933,19 +936,35 @@ export const DestinationGroupPanel = ({
   // Live: the group is not the record that changes — each user is.
   const saveUserMembership = async () => {
     if (!realGroupId) return;
-    const writes = (users ?? []).flatMap((user) => {
-      if (!user.id) return [];
-      const was = memberUserIds.has(user.id);
-      const now = selectedUserIds.has(user.id);
-      if (was === now) return [];
-      const auto_groups = now
+    const changed = (users ?? []).filter(
+      (user) =>
+        user.id && memberUserIds.has(user.id) !== selectedUserIds.has(user.id),
+    );
+    if (changed.length === 0) return;
+    const writes = changed.map((user) => {
+      const auto_groups = selectedUserIds.has(user.id!)
         ? Array.from(new Set([...(user.auto_groups ?? []), realGroupId]))
         : (user.auto_groups ?? []).filter((g) => g !== realGroupId);
-      return [userRequest.put({ ...user, auto_groups }, `/${user.id}`)];
+      return userRequest.put({ ...user, auto_groups }, `/${user.id}`);
     });
-    if (writes.length === 0) return;
-    await Promise.all(writes);
+    // Each write is its own PUT, so a failure leaves the rest applied: report
+    // which users did not make it rather than failing the whole save silently.
+    const results = await Promise.allSettled(writes);
+    const failed = results.flatMap((r, i) =>
+      r.status === "rejected"
+        ? [changed[i].name || changed[i].email || ""]
+        : [],
+    );
     await mutate("/users?service_user=false");
+    if (failed.length > 0) {
+      notify({
+        title: "Some users were not updated",
+        description: `${failed.join(", ")} could not be moved in or out of “${
+          group?.name ?? "this group"
+        }”. Their membership is unchanged.`,
+        backgroundColor: "bg-red-500",
+      });
+    }
   };
 
   const [tab, setTab] = useState("peers");
@@ -1122,7 +1141,7 @@ export const DestinationGroupPanel = ({
 
   // Implicit closes (Esc, pane clicks) confirm first; the Cancel button just discards.
   const confirmDiscard = async () => {
-    if (!dirty || !canEditMembers) return true;
+    if (!dirty || !canSave) return true;
     return !!(await confirm({
       title: "Unsaved Changes",
       description: `The members you toggled for “${
@@ -1201,6 +1220,8 @@ export const DestinationGroupPanel = ({
             placeholder={
               tab === "peers"
                 ? "Search peer by name or ip..."
+                : tab === "users"
+                ? "Search user by name, email or role..."
                 : "Search resource..."
             }
           />
@@ -1412,14 +1433,16 @@ export const DestinationGroupPanel = ({
               <DropdownInfoText className={"mt-5 max-w-sm mx-auto text-sm"}>
                 {query
                   ? "There are no users matching your search. Please try a different search term."
-                  : "There are no users in this account yet."}
+                  : canEditUsers
+                  ? "There are no users in this account yet."
+                  : "There are no users in this group yet."}
               </DropdownInfoText>
             </div>
           )}
         </TabsContent>
       </Tabs>
 
-      {canEditMembers && (
+      {canSave && (
         <div
           className={
             "shrink-0 border-t border-nb-gray-910 px-5 py-4 flex items-center justify-between"

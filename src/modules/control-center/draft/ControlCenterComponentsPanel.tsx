@@ -1344,81 +1344,88 @@ const PanelContent = React.memo(
       });
 
     // Rows build lazily so opening the panel doesn't render every entity list.
-    const sections: { title?: string; rows: React.ReactNode[] }[] = (
-      isSearching
-        ? [
-            {
-              title: "Add New",
-              rows: [
-                ...buildPeerTemplateRows(),
-                ...buildPolicyTemplateRows(),
-                ...buildGroupTemplateRows(),
-                ...buildResourceTemplateRows(),
-              ],
-            },
-            {
-              title: "Peers",
-              rows: [...buildDraftPeerRows(), ...buildPeerRows()],
-            },
-            {
-              title: "Policies",
-              rows: [...buildDraftPolicyRows(), ...buildPolicyRows()],
-            },
-            {
-              title: "Groups",
-              rows: [...buildDraftGroupRows(), ...buildGroupRows()],
-            },
-            {
-              title: "Networks",
-              rows: [...buildDraftNetworkRows(), ...buildNetworkRows()],
-            },
-            {
-              title: "Resources",
-              rows: [...buildDraftResourceRows(), ...buildResourceRows()],
-            },
-          ]
-        : category === "peers"
-        ? [
-            { title: "Add New", rows: buildPeerTemplateRows() },
-            {
-              title: "Existing Peers",
-              rows: [...buildDraftPeerRows(), ...buildPeerRows()],
-            },
-          ]
-        : category === "policies"
-        ? [
-            { title: "Add New", rows: buildPolicyTemplateRows() },
-            {
-              title: "Existing Policies",
-              rows: [...buildDraftPolicyRows(), ...buildPolicyRows()],
-            },
-          ]
-        : category === "agent-network"
-        ? [
-            { title: "Add New", rows: buildAgentTemplateRows() },
-            { title: "Existing Providers", rows: buildProviderRows() },
-            { title: "Existing Agent Policies", rows: buildAgentPolicyRows() },
-          ]
-        : category === "groups"
-        ? [
-            { title: "Add New", rows: buildGroupTemplateRows() },
-            {
-              title: "Existing Groups",
-              rows: [...buildDraftGroupRows(), ...buildGroupRows()],
-            },
-          ]
-        : [
-            { title: "Add New", rows: buildResourceTemplateRows() },
-            {
-              title: "Existing Networks",
-              rows: [...buildDraftNetworkRows(), ...buildNetworkRows()],
-            },
-            {
-              title: "Existing Resources",
-              rows: [...buildDraftResourceRows(), ...buildResourceRows()],
-            },
-          ]
-    ).filter((sec) => sec.rows.length > 0);
+    // Mounted for the life of the page, so while it is closed it renders no
+    // rows at all: the row builders walk every peer, group, resource, policy
+    // and provider, and the panel is invisible until it opens.
+    const sections: { title?: string; rows: React.ReactNode[] }[] = !open
+      ? []
+      : (isSearching
+          ? [
+              {
+                title: "Add New",
+                rows: [
+                  ...buildPeerTemplateRows(),
+                  ...buildPolicyTemplateRows(),
+                  ...buildGroupTemplateRows(),
+                  ...buildResourceTemplateRows(),
+                ],
+              },
+              {
+                title: "Peers",
+                rows: [...buildDraftPeerRows(), ...buildPeerRows()],
+              },
+              {
+                title: "Policies",
+                rows: [...buildDraftPolicyRows(), ...buildPolicyRows()],
+              },
+              {
+                title: "Groups",
+                rows: [...buildDraftGroupRows(), ...buildGroupRows()],
+              },
+              {
+                title: "Networks",
+                rows: [...buildDraftNetworkRows(), ...buildNetworkRows()],
+              },
+              {
+                title: "Resources",
+                rows: [...buildDraftResourceRows(), ...buildResourceRows()],
+              },
+            ]
+          : category === "peers"
+          ? [
+              { title: "Add New", rows: buildPeerTemplateRows() },
+              {
+                title: "Existing Peers",
+                rows: [...buildDraftPeerRows(), ...buildPeerRows()],
+              },
+            ]
+          : category === "policies"
+          ? [
+              { title: "Add New", rows: buildPolicyTemplateRows() },
+              {
+                title: "Existing Policies",
+                rows: [...buildDraftPolicyRows(), ...buildPolicyRows()],
+              },
+            ]
+          : category === "agent-network"
+          ? [
+              { title: "Add New", rows: buildAgentTemplateRows() },
+              { title: "Existing Providers", rows: buildProviderRows() },
+              {
+                title: "Existing Agent Policies",
+                rows: buildAgentPolicyRows(),
+              },
+            ]
+          : category === "groups"
+          ? [
+              { title: "Add New", rows: buildGroupTemplateRows() },
+              {
+                title: "Existing Groups",
+                rows: [...buildDraftGroupRows(), ...buildGroupRows()],
+              },
+            ]
+          : [
+              { title: "Add New", rows: buildResourceTemplateRows() },
+              {
+                title: "Existing Networks",
+                rows: [...buildDraftNetworkRows(), ...buildNetworkRows()],
+              },
+              {
+                title: "Existing Resources",
+                rows: [...buildDraftResourceRows(), ...buildResourceRows()],
+              },
+            ]
+        ).filter((sec) => sec.rows.length > 0);
 
     const flatRows: FlatRow[] = sections.flatMap((section, si) => [
       ...(section.title
@@ -1451,6 +1458,8 @@ const PanelContent = React.memo(
               : { x: "-50%", y: 14, opacity: 0 }
           }
           transition={{ duration: 0.1, ease: "easeOut" }}
+          // framer drives opacity; visibility flips with the class above once
+          // the element is already transparent.
           // The global Escape shortcut stays quiet while focus is in the panel.
           onKeyDown={(e) => {
             if (e.key === "Escape") {
@@ -1459,7 +1468,10 @@ const PanelContent = React.memo(
             }
           }}
           className={cn(
-            !open && "pointer-events-none",
+            // `invisible` and not opacity alone: the panel is mounted for the
+            // life of the page, and an opacity-0 panel keeps its search input
+            // and every row in the tab order and the accessibility tree.
+            !open && "pointer-events-none invisible",
             // Must stay above the group panel (z-20).
             "absolute bottom-[80px] left-1/2 z-30",
             "w-[480px] max-w-[calc(100%-48px)] h-[420px] max-h-[calc(100%-170px)]",
