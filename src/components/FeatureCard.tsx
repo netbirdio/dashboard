@@ -3,8 +3,14 @@ import { cn } from "@utils/helpers";
 import * as React from "react";
 
 type Props = {
-  // Sits in the card's 40x40 tile: a logo <Image>, or a 16px icon.
-  icon: React.ReactNode;
+  // "default" leads with the icon tile and a title in the reading size, for a
+  // card summarising a capability. "plain" drops the tile and shrinks the
+  // title to a label, so the detail line under it — a URL, say — is what the
+  // eye lands on.
+  variant?: "default" | "plain";
+  // Sits in the card's 40x40 tile: a logo <Image>, or a 16px icon. Unused by
+  // the plain variant.
+  icon?: React.ReactNode;
   title: React.ReactNode;
   description: React.ReactNode;
   // Right end of the title row — a FeatureCardStatus pill, say.
@@ -37,6 +43,7 @@ export const FeatureCardStatus = ({ enabled }: { enabled: boolean }) => (
  * a status or action opposite it, and one line of detail.
  */
 export default function FeatureCard({
+  variant = "default",
   icon,
   title,
   description,
@@ -46,30 +53,49 @@ export default function FeatureCard({
   className,
   "aria-label": ariaLabel,
 }: Readonly<Props>) {
+  const plain = variant === "plain";
+
   const shell = cn(
-    "block text-left border border-nb-gray-900 bg-nb-gray-900/30",
-    "py-3 pl-3 pr-5 rounded-lg transition-all min-w-[310px] max-w-[440px]",
+    "block text-left border bg-nb-gray-900/30",
+    plain ? "border-nb-gray-800 pl-4" : "border-nb-gray-900 pl-3",
+    "py-3 pr-5 rounded-lg transition-all min-w-[310px] max-w-[440px]",
     onClick && "cursor-pointer hover:bg-nb-gray-900/50",
     className,
   );
 
   const body = (
     <div className={"flex items-center gap-4 w-full"}>
-      <div
-        className={
-          "h-10 w-10 shrink-0 flex items-center justify-center rounded-md bg-nb-gray-900/70 p-2 border border-nb-gray-900/70"
-        }
-      >
-        {icon}
-      </div>
+      {!plain && (
+        <div
+          className={
+            "h-10 w-10 shrink-0 flex items-center justify-center rounded-md bg-nb-gray-900/70 p-2 border border-nb-gray-900/70"
+          }
+        >
+          {icon}
+        </div>
+      )}
       <div className={"w-full min-w-0"}>
         <div className={"flex items-center gap-3 justify-between"}>
-          <div className={"font-medium text-sm flex gap-2 items-center"}>
+          <div
+            className={cn(
+              "flex gap-2 items-center",
+              plain
+                ? "text-[10px] uppercase tracking-wider text-nb-gray-400 font-medium"
+                : "font-medium text-sm",
+            )}
+          >
             {title}
           </div>
           {action}
         </div>
-        <p className={"text-xs font-light !text-nb-gray-300 mt-1.5"}>
+        <p
+          className={cn(
+            "text-xs",
+            plain
+              ? "!text-nb-gray-100 leading-tight mt-1"
+              : "font-light !text-nb-gray-300 mt-1.5",
+          )}
+        >
           {description}
         </p>
       </div>

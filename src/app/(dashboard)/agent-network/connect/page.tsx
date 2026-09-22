@@ -59,7 +59,7 @@ export default function ConnectAgentPage() {
             description and the card below it. */}
         {!isLoading && bareEndpoint && (
           <div className={"mt-6"}>
-            <EndpointBadge endpoint={bareEndpoint} />
+            <EndpointBadge endpoint={bareEndpoint} variant={"plain"} />
           </div>
         )}
       </div>

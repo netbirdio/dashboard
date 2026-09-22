@@ -25,14 +25,19 @@ export const ENDPOINT_HELP_TEXT = (
 // Connect Agent page, which is the only place it belongs.
 export default function EndpointBadge({
   endpoint,
+  variant = "default",
 }: {
   // Bare endpoint host, e.g. "sailcloth.eu.proxy.netbird.io".
   endpoint: string;
+  // "plain" drops the icon and shrinks the label, so the URL leads — the
+  // shape the Connect Agent page wants, where the URL is the whole point.
+  variant?: "default" | "plain";
 }) {
   const [, copy, copied] = useCopyToClipboard(`https://${endpoint}`);
 
   return (
     <FeatureCard
+      variant={variant}
       icon={<GlobeIcon size={16} />}
       title={
         <>

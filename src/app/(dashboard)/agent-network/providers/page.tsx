@@ -8,7 +8,7 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
-import { ExternalLinkIcon, Globe } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import React, { Suspense } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -33,11 +33,11 @@ function EndpointHeader() {
     if (!permission?.["agent_network.providers"]?.create) return null;
     return (
       <FeatureCard
+        variant={"plain"}
         onClick={openWizard}
         className={
-          "border-dashed border-nb-gray-800 bg-nb-gray-900/20 hover:border-nb-gray-700 hover:bg-nb-gray-900/40"
+          "border-dashed bg-nb-gray-900/20 hover:border-nb-gray-700 hover:bg-nb-gray-900/40"
         }
-        icon={<Globe size={14} className={"text-nb-gray-500"} />}
         title={
           <>
             API Base URL
@@ -52,7 +52,7 @@ function EndpointHeader() {
       />
     );
   }
-  return <EndpointBadge endpoint={settings.endpoint} />;
+  return <EndpointBadge endpoint={settings.endpoint} variant={"plain"} />;
 }
 
 function PageBody({
