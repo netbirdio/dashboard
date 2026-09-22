@@ -586,7 +586,7 @@ function ProviderMultiSelect({
                       onClick={(e) => e.preventDefault()}
                     >
                       <div className={"flex items-center gap-2.5 min-w-0"}>
-                        <AIProviderLogo providerId={p.providerId} size={18} />
+                        <AIProviderLogo providerId={p.providerId} size={14} />
                         <span className={"text-sm text-nb-gray-100 truncate"}>
                           {p.name}
                         </span>
