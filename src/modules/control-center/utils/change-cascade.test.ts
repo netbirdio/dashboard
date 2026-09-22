@@ -716,6 +716,27 @@ describe("agent policies and a pending group deletion", () => {
     ).toEqual(["g1"]);
   });
 
+  it("restores a DRAFT policy's create in place, tagged", () => {
+    const create = {
+      id: "cap-1",
+      type: "create-agent-policy",
+      clientId: "new-1",
+      name: base.name,
+      policy: { ...base, sourceGroups: [] },
+      groupDeletion: { groupIds: ["g1"], basePolicy: base },
+    } as never as DraftChange;
+    const next = reduceRemoveChange(
+      [deleteGroup("g1"), create],
+      deleteGroup("g1"),
+    );
+    const restored = next.find((c) => c.type === "create-agent-policy");
+    // A create is the user's own work: it comes back rather than being dropped.
+    expect(restored).toMatchObject({
+      clientId: "new-1",
+      policy: { sourceGroups: ["g1", "g2"] },
+    });
+  });
+
   it("keeps a hand-edited write when the last deletion is discarded", () => {
     const edited = {
       ...(strippedUpdate(["g1"]) as never as Record<string, unknown>),
@@ -770,5 +791,40 @@ describe("mergeAgentGroupDeletions", () => {
         undefined,
       ),
     ).toBeUndefined();
+  });
+});
+
+// A discarded draft group must leave no reference behind — a user entry naming
+// it would deploy a PUT with a group id that never exists.
+describe("discarding a draft group reaches user membership", () => {
+  const userEntry = (groupRefs: string[], added: string[]) =>
+    ({
+      id: "uug-1",
+      type: "update-user-groups",
+      userId: "u1",
+      name: "Ada",
+      groupRefs,
+      addedGroupNames: added,
+      removedGroupNames: [],
+    }) as never as DraftChange;
+
+  it("drops the entry that existed only to join that group", () => {
+    const next = reduceRemoveChange(
+      [createGroup("Ops"), userEntry(["Ops"], ["Ops"])],
+      createGroup("Ops"),
+    );
+    expect(next).toEqual([]);
+  });
+
+  it("keeps an entry that also moved the user elsewhere, minus the group", () => {
+    const next = reduceRemoveChange(
+      [createGroup("Ops"), userEntry(["Ops", "g-live"], ["Ops", "Agents"])],
+      createGroup("Ops"),
+    );
+    const entry = next.find((c) => c.type === "update-user-groups");
+    expect(entry).toMatchObject({
+      groupRefs: ["g-live"],
+      addedGroupNames: ["Agents"],
+    });
   });
 });

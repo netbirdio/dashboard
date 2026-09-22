@@ -113,6 +113,8 @@ const makeDeps = (nodes: Node[] = []) =>
       vi.fn<NonNullable<DraftConnectDeps["updateDraftAgentPolicy"]>>(),
     setAgentSourceGroup:
       vi.fn<NonNullable<DraftConnectDeps["setAgentSourceGroup"]>>(),
+    pendingAgentPolicy:
+      vi.fn<NonNullable<DraftConnectDeps["pendingAgentPolicy"]>>(),
     openAgentPolicyWizard:
       vi.fn<NonNullable<DraftConnectDeps["openAgentPolicyWizard"]>>(),
   }) satisfies DraftConnectDeps;
@@ -756,6 +758,36 @@ describe("handleDraftConnect — agent network", () => {
       sourceGroups: ["Ops"],
       destinationProviderIds: ["prov-1"],
     });
+  });
+
+  it("acts on the pending edit of an existing policy, not the live record", () => {
+    const deps = makeDeps([
+      node("group-g-dev", "groupNode", { group: groupDev }),
+      node("agent-policy-ap-1", "agentPolicyNode", { id: "ap-1" }),
+    ]);
+    // The draft already swapped this policy's provider; connecting a group
+    // must not hand the pre-edit record back to the changeset.
+    deps.pendingAgentPolicy.mockReturnValue({
+      destinationProviderIds: ["prov-2"],
+    });
+    handleDraftConnect(connect("group-g-dev", "agent-policy-ap-1"), deps);
+    expect(deps.setAgentSourceGroup).toHaveBeenCalledWith(
+      { ...existingAgentPolicy, destinationProviderIds: ["prov-2"] },
+      "g-dev",
+    );
+  });
+
+  it("ignores a provider already on the policy", () => {
+    const draft = makeAgentPolicy("new-1", {
+      sourceGroups: ["g-dev"],
+      destinationProviderIds: ["prov-1"],
+    });
+    const deps = makeDeps([
+      providerNode,
+      node("agent-policy-new-1", "agentPolicyNode", { policy: draft }),
+    ]);
+    handleDraftConnect(connect("agent-policy-new-1", "provider-prov-1"), deps);
+    expect(deps.updateDraftAgentPolicy).not.toHaveBeenCalled();
   });
 
   it("ignores a group already on the policy", () => {

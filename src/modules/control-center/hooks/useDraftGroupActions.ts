@@ -16,7 +16,6 @@ import {
   isPendingPolicyWrite,
   pendingPolicyView,
 } from "@/modules/control-center/utils/change-cascade";
-import { isEmptiedAgentPolicy } from "@/modules/control-center/utils/change-cascade";
 import {
   draftUid,
   dropAbsorbedPlaceholder,
@@ -704,12 +703,24 @@ export function useDraftGroupActions() {
   // The agent twin of policySnapshots: a policy off the canvas still blocks the
   // group DELETE, and the canvas copy wins where both exist (pending edits).
   const agentPolicySnapshots = useCallback((): AgentPolicy[] => {
+    // An existing policy's node mirrors live and carries no record, so its
+    // pending edit lives only in the changeset. Reading live alone would
+    // recompute the strip from the pre-edit policy and silently revert it.
+    const pendingView = (policy: AgentPolicy): AgentPolicy => {
+      const pending = changes.find(
+        (c) =>
+          c.type === "update-agent-policy" && c.agentPolicyId === policy.id,
+      );
+      return pending?.type === "update-agent-policy"
+        ? { ...policy, ...pending.policy, id: policy.id }
+        : policy;
+    };
     const drawn = new Map<string, AgentPolicy>();
     reactFlow.getNodes().forEach((n) => {
       if (n.type !== NodeType.AgentPolicyNode) return;
       const data = n.data as { id?: string; policy?: AgentPolicy };
-      const policy =
-        data.policy ?? agentPolicies?.find((p) => p.id === data.id);
+      const live = agentPolicies?.find((p) => p.id === data.id);
+      const policy = data.policy ?? (live ? pendingView(live) : undefined);
       if (policy?.id) drawn.set(policy.id, policy);
     });
     const pendingDeletes = new Set(
@@ -717,9 +728,9 @@ export function useDraftGroupActions() {
         c.type === "delete-agent-policy" ? [c.agentPolicyId] : [],
       ),
     );
-    const offCanvas = (agentPolicies ?? []).filter(
-      (p) => !drawn.has(p.id) && !pendingDeletes.has(p.id),
-    );
+    const offCanvas = (agentPolicies ?? [])
+      .filter((p) => !drawn.has(p.id) && !pendingDeletes.has(p.id))
+      .map(pendingView);
     return [...drawn.values(), ...offCanvas];
   }, [reactFlow, agentPolicies, changes]);
 
@@ -764,7 +775,12 @@ export function useDraftGroupActions() {
       );
       agentUpdates.forEach(({ policy, basePolicy, groupIds }) => {
         const groupDeletion = { groupIds, basePolicy };
-        if (isEmptiedAgentPolicy(policy)) {
+        // Only when the strip is what emptied it: a policy that already had no
+        // providers is the user's own unfinished work, not this deletion's.
+        const emptiedByStrip =
+          policy.sourceGroups.length === 0 &&
+          basePolicy.sourceGroups.length > 0;
+        if (emptiedByStrip) {
           trackDeleteAgentPolicy({
             agentPolicyId: policy.id,
             name: policy.name,
@@ -890,6 +906,22 @@ export function useDraftGroupActions() {
             }”`,
       );
 
+      // Deleting a group also empties the agent policies it is the source of,
+      // and those deploy as deletions — the user is approving that too.
+      const emptiedAgent = agentGroupDeletionUpdates(
+        agentPolicySnapshots(),
+        deletable.flatMap((n) => {
+          const g = getNodeGroup(n);
+          return g && !isNewGroup(g) ? [g] : [];
+        }),
+      )
+        .filter(
+          ({ policy, basePolicy }) =>
+            policy.sourceGroups.length === 0 &&
+            basePolicy.sourceGroups.length > 0,
+        )
+        .map(({ policy }) => `“${policy.name}”`);
+
       const choice = await confirm({
         title: `Delete ${
           deletable.length === 1 ? "group" : `${deletable.length} groups`
@@ -917,6 +949,16 @@ export function useDraftGroupActions() {
               )} would be left without a source or destination, and won't deploy until you complete ${
                 emptiedDraft.length === 1 ? "it" : "them"
               }.`
+            : ""
+        }${
+          emptiedAgent.length > 0
+            ? ` ${
+                emptiedAgent.length === 1
+                  ? "The agent policy"
+                  : `${emptiedAgent.length} agent policies`
+              } ${emptiedAgent.join(", ")} authorize nothing without ${
+                deletable.length === 1 ? "it" : "them"
+              } and are deleted too.`
             : ""
         }${
           blockerNames.length > 0

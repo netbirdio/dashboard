@@ -28,6 +28,8 @@ export type DraftConnectDeps = {
   // Owns the one-group rule: it confirms before displacing the group already
   // on the source side.
   setAgentSourceGroup?: (policy: AgentPolicy, groupRef: string) => void;
+  // The changeset's view of an existing agent policy, which supersedes live.
+  pendingAgentPolicy?: (id: string) => Partial<AgentPolicy> | undefined;
   openAgentPolicyWizard?: (
     prefill: { sourceGroups: string[]; destinationProviderIds: string[] },
     position?: XYPosition,
@@ -189,7 +191,14 @@ export function handleDraftConnect(
       const onNode = (node?.data as { policy?: AgentPolicy })?.policy;
       if (onNode) return onNode;
       const id = nodeId.replace("agent-policy-", "");
-      return agentPolicies?.find((p) => p.id === id);
+      const live = agentPolicies?.find((p) => p.id === id);
+      // An existing policy's node mirrors live, so a draft edit lives only in
+      // the changeset — dragging onto it would otherwise write the pre-edit
+      // record back and silently revert that edit.
+      const pending = deps.pendingAgentPolicy?.(id);
+      return live || pending
+        ? ({ ...(live ?? {}), ...(pending ?? {}), id } as AgentPolicy)
+        : undefined;
     };
 
     const ends = [

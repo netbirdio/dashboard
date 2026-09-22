@@ -884,6 +884,52 @@ describe("group removal and deletion reach agent policies", () => {
     );
   });
 
+  it("Delete strips from the PENDING policy, not the pre-edit live one", async () => {
+    liveAgentPolicies = [agentPolicy("ap-1", ["g1", "g4"])];
+    // The user already took g4 off in this draft; the sweep must not put it
+    // back by recomputing from live.
+    pendingChanges = [
+      {
+        id: "c1",
+        type: "update-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "ap-1",
+        policy: { ...agentPolicy("ap-1", ["g1"]) },
+      },
+    ];
+    nodes = [opsGroupNode()];
+    const { result } = renderHook(() => useDraftGroupActions());
+    await act(async () => {
+      await result.current.confirmAndDeleteGroups([nodes[0]]);
+    });
+
+    // g1 is the group being deleted; g4 must stay gone.
+    expect(trackDeleteAgentPolicy).toHaveBeenCalled();
+    const call = trackDeleteAgentPolicy.mock.calls[0][0];
+    expect(call.groupDeletion.basePolicy.sourceGroups).toEqual(["g1"]);
+  });
+
+  it("records an update, not a deletion, when a source group survives", async () => {
+    // Provider-less already — the user's own unfinished work. The strip takes
+    // g1 but leaves g4, so the deletion is not what emptied this policy.
+    liveAgentPolicies = [
+      {
+        ...agentPolicy("ap-1", ["g1", "g4"]),
+        destinationProviderIds: [],
+      },
+    ];
+    nodes = [opsGroupNode()];
+    const { result } = renderHook(() => useDraftGroupActions());
+    await act(async () => {
+      await result.current.confirmAndDeleteGroups([nodes[0]]);
+    });
+
+    expect(trackDeleteAgentPolicy).not.toHaveBeenCalled();
+    expect(trackUpdateAgentPolicy.mock.calls[0][0].policy.sourceGroups).toEqual(
+      ["g4"],
+    );
+  });
+
   it("skips a policy already marked for deletion", async () => {
     liveAgentPolicies = [agentPolicy("ap-1", ["g1"])];
     pendingChanges = [

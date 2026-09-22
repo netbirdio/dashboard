@@ -1981,17 +1981,50 @@ describe("user group membership", () => {
     expect(entries[0]).toMatchObject({ groupRefs: ["g1", "g2"] });
   });
 
-  it("drops the entry when the user ends up where they started", () => {
+  it("drops the entry when the refs land back on what the account says", () => {
     const { result } = setup();
-    act(() => result.current.trackUpdateUserGroups(membership(["g1"])));
+    act(() =>
+      result.current.trackUpdateUserGroups({
+        ...membership(["g1", "g2"]),
+        baseGroupRefs: ["g1"],
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    // Unchecking it again: the labels still describe a gesture, but the list
+    // that would deploy is the account's own, so there is nothing to send.
     act(() =>
       result.current.trackUpdateUserGroups({
         ...membership(["g1"]),
-        addedGroupNames: [],
-        removedGroupNames: [],
+        removedGroupNames: ["Ops"],
+        baseGroupRefs: ["g1"],
       }),
     );
     expect(result.current.changes).toHaveLength(0);
+  });
+
+  it("accumulates the groups gained and lost across separate edits", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateUserGroups({
+        ...membership(["g1"]),
+        addedGroupNames: ["Ops"],
+        baseGroupRefs: [],
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateUserGroups({
+        ...membership(["g1", "g2"]),
+        addedGroupNames: ["Agents"],
+        baseGroupRefs: [],
+      }),
+    );
+    const entry = result.current.changes.find(
+      (c) => c.type === "update-user-groups",
+    );
+    expect(entry).toMatchObject({
+      groupRefs: ["g1", "g2"],
+      addedGroupNames: ["Ops", "Agents"],
+    });
   });
 
   it("follows a draft group's rename, which its ref is the name of", () => {
@@ -2009,5 +2042,169 @@ describe("user group membership", () => {
       groupRefs: ["Agents"],
       addedGroupNames: ["Agents"],
     });
+  });
+});
+
+// A group deletion that empties an agent policy must leave something behind
+// for the discard to restore, and must survive an unrelated toggle.
+describe("an agent policy emptied by a group deletion", () => {
+  const basePolicy = {
+    id: "new-1",
+    name: "Agents",
+    description: "",
+    enabled: true,
+    sourceGroups: ["g1"],
+    destinationProviderIds: ["p1"],
+    guardrailIds: [],
+    limits: {},
+  } as never;
+
+  const tag = { groupIds: ["g1"], basePolicy };
+
+  it("keeps a DRAFT policy's create, tagged, instead of destroying it", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateAgentPolicy({
+        clientId: "new-1",
+        policy: basePolicy,
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteAgentPolicy({
+        agentPolicyId: "new-1",
+        name: "Agents",
+        groupDeletion: tag,
+      }),
+    );
+
+    const create = result.current.changes.find(
+      (c) => c.type === "create-agent-policy",
+    );
+    expect(create).toMatchObject({
+      policy: { sourceGroups: [] },
+      groupDeletion: { groupIds: ["g1"] },
+    });
+  });
+
+  it("still drops the create when the user empties it themselves", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateAgentPolicy({
+        clientId: "new-1",
+        policy: basePolicy,
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteAgentPolicy({
+        agentPolicyId: "new-1",
+        name: "Agents",
+      }),
+    );
+    expect(result.current.changes).toHaveLength(0);
+  });
+
+  it("ignores a toggle while the deletion stands, keeping the strip", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackDeleteAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "Agents",
+        groupDeletion: { groupIds: ["g1"], basePolicy },
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "Agents",
+        policy: { enabled: false },
+        origin: "toggle",
+      }),
+    );
+
+    const kinds = result.current.changes.map((c) => c.type);
+    expect(kinds).toEqual(["delete-agent-policy"]);
+    expect(
+      result.current.changes[0].type === "delete-agent-policy" &&
+        result.current.changes[0].groupDeletion?.groupIds,
+    ).toEqual(["g1"]);
+  });
+
+  it("queues one deletion per policy, not one per gesture", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackDeleteAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "Agents",
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "Agents",
+      }),
+    );
+    expect(
+      result.current.changes.filter((c) => c.type === "delete-agent-policy"),
+    ).toHaveLength(1);
+  });
+});
+
+// The group DELETE runs last and is refused while anything references the
+// group — a membership change or an agent policy naming it is exactly that.
+describe("a group deletion blocks what still names the group", () => {
+  const withDelete = (extra: unknown) =>
+    [
+      {
+        id: "dg-1",
+        type: "delete-group",
+        groupId: "g1",
+        name: "Ops",
+      },
+      extra,
+    ] as never;
+
+  it("blocks a user membership change that puts someone into it", () => {
+    const issue = getChangeIssue(
+      {
+        id: "uug-1",
+        type: "update-user-groups",
+        userId: "u1",
+        name: "Ada",
+        groupRefs: ["g1"],
+        addedGroupNames: ["Ops"],
+        removedGroupNames: [],
+      } as never,
+      withDelete({
+        id: "uug-1",
+        type: "update-user-groups",
+        userId: "u1",
+        name: "Ada",
+        groupRefs: ["g1"],
+        addedGroupNames: ["Ops"],
+        removedGroupNames: [],
+      }),
+    );
+    expect(issue?.label).toBe("Group deleted");
+    expect(issue?.message).toContain("Ada");
+  });
+
+  it("blocks an agent policy still sourced from it", () => {
+    const change = {
+      id: "cap-1",
+      type: "create-agent-policy",
+      clientId: "new-1",
+      name: "Agents",
+      policy: {
+        name: "Agents",
+        description: "",
+        enabled: true,
+        sourceGroups: ["g1"],
+        destinationProviderIds: ["p1"],
+        guardrailIds: [],
+        limits: {},
+      },
+    } as never;
+    const issue = getChangeIssue(change, withDelete(change));
+    expect(issue?.label).toBe("Group deleted");
   });
 });

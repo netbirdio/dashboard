@@ -21,6 +21,7 @@ import {
   detachChangesFromDraftNetwork,
   isEmptiedPolicy,
   isNoopGroupUpdate,
+  dropGroupIdsFromAgentPolicy,
   isPendingPolicyWrite,
   mergeAgentGroupDeletions,
   mergeGroupDeletions,
@@ -662,6 +663,11 @@ export const getChangeIssue = (
         ? `Resource “${change.name}”`
         : change.type === "create-router" || change.type === "update-router"
         ? `Routing peer in “${change.networkName}”`
+        : change.type === "update-user-groups"
+        ? `“${change.name}”`
+        : change.type === "create-agent-policy" ||
+          change.type === "update-agent-policy"
+        ? `Agent policy “${change.name}”`
         : "This change";
     return {
       label: "Group deleted",
@@ -1002,6 +1008,7 @@ interface DraftChangesetContextType {
     groupRefs: string[];
     addedGroupNames: string[];
     removedGroupNames: string[];
+    baseGroupRefs?: string[];
   }) => void;
   trackCreateProvider: (params: {
     clientId: string;
@@ -2060,29 +2067,55 @@ export function DraftChangesetProvider({
       groupRefs,
       addedGroupNames,
       removedGroupNames,
+      baseGroupRefs,
     }: {
       userId: string;
       name: string;
       groupRefs: string[];
       addedGroupNames: string[];
       removedGroupNames: string[];
+      // What the account says the user's groups are, so an edit that lands
+      // back there drops the entry instead of deploying a no-op PUT.
+      baseGroupRefs?: string[];
     }) => {
       setChanges((prev) => {
         const pending = prev.find(
           (c): c is UpdateUserGroupsChange =>
             c.type === "update-user-groups" && c.userId === userId,
         );
-        if (addedGroupNames.length === 0 && removedGroupNames.length === 0) {
+        // Compare what actually deploys. The labels describe one gesture; a
+        // user toggled back to where they started has an unchanged ref list
+        // and no business being a PUT.
+        const sameRefs =
+          baseGroupRefs &&
+          baseGroupRefs.length === groupRefs.length &&
+          [...baseGroupRefs].sort().join(",") ===
+            [...groupRefs].sort().join(",");
+        if (sameRefs) {
           return pending ? prev.filter((c) => c !== pending) : prev;
         }
+        // The row describes every group this user gained or lost across the
+        // draft, not just the last gesture; the PUT carries all of them.
+        const union = (a: string[] | undefined, b: string[]) =>
+          Array.from(new Set([...(a ?? []), ...b]));
         const next: UpdateUserGroupsChange = {
           id: pending?.id ?? draftUid(),
           type: "update-user-groups",
           userId,
           name,
           groupRefs,
-          addedGroupNames,
-          removedGroupNames,
+          addedGroupNames: union(
+            pending?.addedGroupNames.filter(
+              (g) => !removedGroupNames.includes(g),
+            ),
+            addedGroupNames,
+          ),
+          removedGroupNames: union(
+            pending?.removedGroupNames.filter(
+              (g) => !addedGroupNames.includes(g),
+            ),
+            removedGroupNames,
+          ),
         };
         return pending
           ? prev.map((c) => (c === pending ? next : c))
@@ -2258,6 +2291,11 @@ export function DraftChangesetProvider({
             c.type === "delete-agent-policy" &&
             c.agentPolicyId === agentPolicyId,
         );
+        // A toggle is ignored while a delete stands — the same rule access
+        // control follows. It carries no sides, so letting it supersede the
+        // deletion would deploy a PUT that leaves the stripped group in place
+        // and then have the group DELETE refused.
+        if (pendingDelete && origin === "toggle") return prev;
         const nextPolicy = { ...(pending?.policy ?? {}), ...policy };
         const merged: UpdateAgentPolicyChange = {
           id: pending?.id ?? draftUid(),
@@ -2295,19 +2333,51 @@ export function DraftChangesetProvider({
     }) => {
       setChanges((prev) => {
         if (agentPolicyId.startsWith("new-")) {
-          return prev.filter(
-            (c) =>
-              !(
-                c.type === "create-agent-policy" && c.clientId === agentPolicyId
-              ),
+          const create = prev.find(
+            (c): c is CreateAgentPolicyChange =>
+              c.type === "create-agent-policy" && c.clientId === agentPolicyId,
           );
+          // A group deletion emptied it: the create STAYS, tagged and blocked
+          // by its Incomplete issue, exactly as a draft access-control policy
+          // does. Dropping it would leave nothing for the discard to restore
+          // while its node is still on the canvas.
+          if (create && groupDeletion) {
+            const stripped = dropGroupIdsFromAgentPolicy(
+              groupDeletion.basePolicy,
+              groupDeletion.groupIds,
+            );
+            return prev.map((c) =>
+              c === create
+                ? {
+                    ...create,
+                    policy: { ...create.policy, ...stripped },
+                    groupDeletion: mergeAgentGroupDeletions(
+                      create.groupDeletion,
+                      groupDeletion,
+                    ),
+                  }
+                : c,
+            );
+          }
+          // The user emptied or removed it themselves: it goes back to being
+          // a canvas-only sketch.
+          return prev.filter((c) => c !== create);
         }
         const pending = prev.find(
           (c): c is UpdateAgentPolicyChange =>
             c.type === "update-agent-policy" &&
             c.agentPolicyId === agentPolicyId,
         );
-        const filtered = prev.filter((c) => c !== pending);
+        // Deleting twice is one deletion; without this the same policy queues
+        // two DELETEs and the second fails the deploy.
+        const existingDelete = prev.find(
+          (c): c is DeleteAgentPolicyChange =>
+            c.type === "delete-agent-policy" &&
+            c.agentPolicyId === agentPolicyId,
+        );
+        const filtered = prev.filter(
+          (c) => c !== pending && c !== existingDelete,
+        );
         return [
           ...filtered,
           {
@@ -2319,7 +2389,7 @@ export function DraftChangesetProvider({
             // earlier deletion; its tag has to travel or that group is
             // stranded when the deletion is discarded.
             groupDeletion: mergeAgentGroupDeletions(
-              pending?.groupDeletion,
+              pending?.groupDeletion ?? existingDelete?.groupDeletion,
               groupDeletion,
             ),
           },

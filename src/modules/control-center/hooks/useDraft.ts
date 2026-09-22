@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import {
@@ -89,6 +90,7 @@ export function useDraft() {
   const { policies, peers, networks, networkResources, groups } =
     useControlCenterData();
   const { policies: agentPolicies } = useAIProviders();
+  const { changes: draftChanges } = useDraftChangeset();
   const {
     isDraft,
     activeTool,
@@ -642,11 +644,11 @@ export function useDraft() {
         }
       }
 
-      // Agent Network policies and providers carry no changeset entry — they
-      // are not draft-editable — but a draft entered from a view that drew
-      // them should still show what a group reaches. Anchored on the draft's
-      // own source nodes rather than the live view's select node, which the
-      // draft has no equivalent of.
+      // A draft entered from a view that drew the agent network keeps showing
+      // what each group reaches. Anchored on the draft's own source nodes
+      // rather than the live view's select node, which the draft has no
+      // equivalent of. The nodes are editable here like any other: their
+      // changes ride in the changeset.
       allNodes
         .filter((n) => n.type === "groupNode")
         .forEach((n) => {
@@ -786,6 +788,14 @@ export function useDraft() {
       onResourceAssign: assignResourceToNetwork,
       setPolicyDestinationScope,
       agentPolicies,
+      pendingAgentPolicy: (id) => {
+        const pending = draftChanges.find(
+          (c) => c.type === "update-agent-policy" && c.agentPolicyId === id,
+        );
+        return pending?.type === "update-agent-policy"
+          ? pending.policy
+          : undefined;
+      },
       updateDraftAgentPolicy,
       setAgentSourceGroup,
       openAgentPolicyWizard,

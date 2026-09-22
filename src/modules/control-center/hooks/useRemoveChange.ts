@@ -323,10 +323,12 @@ export function useRemoveChange() {
           draftRefs.forEach(
             (c) => c.type === "create-policy" && drawPolicyOnCanvas(c.policy),
           );
-          // Neither pass drew it, so the group comes back on its own.
+          // Neither pass drew it, so the group comes back on its own — the
+          // agent redraw counts, or the group lands twice.
           if (
             refs.length === 0 &&
             draftRefs.length === 0 &&
+            restoredAgent.size === 0 &&
             !nodes.some((n) => n.id === `group-${change.groupId}`)
           ) {
             setNodes((prev) => [...prev, buildGroupNode(live)]);

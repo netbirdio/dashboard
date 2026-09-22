@@ -280,6 +280,19 @@ export function dropGroupNameReferences(
     if (c.type === "create-policy" || c.type === "update-policy") {
       return [{ ...c, policy: stripDraftGroupFromPolicy(c.policy, name) }];
     }
+    // A user's membership names a draft group the same way.
+    if (c.type === "update-user-groups") {
+      if (!c.groupRefs.includes(name)) return [c];
+      const groupRefs = c.groupRefs.filter((ref) => ref !== name);
+      const addedGroupNames = c.addedGroupNames.filter((n) => n !== name);
+      const removedGroupNames = c.removedGroupNames.filter((n) => n !== name);
+      // Nothing left to say: the entry existed only to put the user into the
+      // group that just went away.
+      if (addedGroupNames.length === 0 && removedGroupNames.length === 0) {
+        return [];
+      }
+      return [{ ...c, groupRefs, addedGroupNames, removedGroupNames }];
+    }
     // An agent policy carries a draft group as its NAME too.
     if (c.type === "create-agent-policy") {
       if (!c.policy.sourceGroups.includes(name)) return [c];
@@ -396,6 +409,19 @@ export const deletedGroupRefs = (
     return change.groupId && deleted.has(change.groupId)
       ? [change.groupId]
       : [];
+  }
+  // A user put into a group this draft deletes: the membership PUT lands, and
+  // the group DELETE that runs later is then refused.
+  if (change.type === "update-user-groups") {
+    return change.groupRefs.filter((ref) => deleted.has(ref));
+  }
+  // An agent policy is authorized BY a group, so a deletion that leaves it
+  // naming one blocks the same DELETE.
+  if (
+    change.type === "create-agent-policy" ||
+    change.type === "update-agent-policy"
+  ) {
+    return (change.policy.sourceGroups ?? []).filter((ref) => deleted.has(ref));
   }
   return [];
 };
