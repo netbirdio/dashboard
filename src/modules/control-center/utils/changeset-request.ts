@@ -39,6 +39,9 @@ export interface LiveData {
   policies?: Policy[];
   groups?: Group[];
   users?: { id?: string; name?: string; auto_groups?: string[] }[];
+  // Agent-network records, for the "before" side of an update or a delete.
+  providers?: { id: string; [key: string]: unknown }[];
+  agentPolicies?: { id: string; [key: string]: unknown }[];
   networks?: Network[];
   networkResources?: NetworkResource[];
   // Lets the preview name draft entities when building id placeholders.
@@ -622,6 +625,41 @@ export function buildBeforeRequest(
           }),
           ...(network.routers?.length ? { routers: network.routers } : {}),
         },
+      };
+    }
+    case "update-user-groups": {
+      const user = live.users?.find((u) => u.id === change.userId);
+      if (!user) return null;
+      // The whole record, as the "after" renders it — so the diff is the
+      // groups that moved rather than the entire user arriving as new.
+      return {
+        method: "PUT",
+        path: `/users/${change.userId}`,
+        body: { ...user, auto_groups: user.auto_groups ?? [] },
+      };
+    }
+    case "update-provider":
+    case "delete-provider": {
+      const provider = live.providers?.find((p) => p.id === change.providerId);
+      if (!provider) return null;
+      return {
+        method: change.type === "delete-provider" ? "DELETE" : "PUT",
+        path: `/agent-network/providers/${change.providerId}`,
+        body: providerBody(provider),
+      };
+    }
+    case "update-agent-policy":
+    case "delete-agent-policy": {
+      const policy = live.agentPolicies?.find(
+        (p) => p.id === change.agentPolicyId,
+      );
+      if (!policy) return null;
+      return {
+        method: change.type === "delete-agent-policy" ? "DELETE" : "PUT",
+        path: `/agent-network/policies/${change.agentPolicyId}`,
+        // No ref resolution here: a live record already holds real ids, and
+        // running them through the resolver would placeholder them.
+        body: toWire(policy, AGENT_POLICY_WIRE),
       };
     }
     // Creates and install-peer have no "before".

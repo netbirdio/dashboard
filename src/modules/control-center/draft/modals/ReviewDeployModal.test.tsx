@@ -31,6 +31,10 @@ vi.mock("@/modules/control-center/hooks/useRemoveChange", () => ({
     previewRemove: () => ({ summary: "", effects: [] }),
   }),
 }));
+// The code view diffs an agent-network update against its live record.
+vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
+  useAIProviders: () => ({ providers: [], policies: [] }),
+}));
 vi.mock("@/modules/control-center/hooks/useControlCenterData", () => ({
   useControlCenterData: () => ({
     policies: [],
@@ -46,12 +50,9 @@ vi.mock("@/modules/control-center/draft/DraftModeContext", () => ({
     setUserDeviceModal: vi.fn(),
   }),
 }));
-vi.mock(
-  "@/modules/control-center/contexts/ControlCenterPolicyModals",
-  () => ({
-    useControlCenterPolicy: () => ({ setSelectedPolicy, setPolicyModalOpen }),
-  }),
-);
+vi.mock("@/modules/control-center/contexts/ControlCenterPolicyModals", () => ({
+  useControlCenterPolicy: () => ({ setSelectedPolicy, setPolicyModalOpen }),
+}));
 vi.mock("@/modules/control-center/draft/DraftChangesetContext", async () => {
   const actual = await vi.importActual<
     typeof import("@/modules/control-center/draft/DraftChangesetContext")
@@ -179,7 +180,11 @@ describe("the frozen live snapshot", () => {
   ];
 
   const modal = () => (
-    <ReviewDeployModal open={true} onOpenChange={vi.fn()} onDeployed={vi.fn()} />
+    <ReviewDeployModal
+      open={true}
+      onOpenChange={vi.fn()}
+      onDeployed={vi.fn()}
+    />
   );
   // The diff renders one element per line and a peer id shows on both sides of it, so
   // the whole rendered body is the readable assertion here.

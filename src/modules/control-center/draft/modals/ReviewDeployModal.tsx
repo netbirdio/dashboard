@@ -30,6 +30,7 @@ import {
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDeployChangeset } from "@/modules/control-center/hooks/useDeployChangeset";
 import { useRemoveChange } from "@/modules/control-center/hooks/useRemoveChange";
@@ -52,6 +53,8 @@ export const ReviewDeployModal = ({
   const { deploy, isDeploying, deployStatus } = useDeployChangeset();
   const { policies, groups, networks, networkResources, users } =
     useControlCenterData();
+  const { providers: agentProviders, policies: agentPolicies } =
+    useAIProviders();
   const { setResourceNetworkPicker, setInstallModal, setUserDeviceModal } =
     useDraftMode();
   const { setSelectedPolicy, setPolicyModalOpen } = useControlCenterPolicy();
@@ -63,12 +66,24 @@ export const ReviewDeployModal = ({
       groups,
       networks,
       networkResources,
-      // A user membership change PUTs the whole user, so the code view needs
-      // the record it merges onto.
+      // A user membership change PUTs the whole user, and an agent-network
+      // update or delete diffs against its live record — the code view needs
+      // all three to show what the request replaces.
       users,
+      providers: agentProviders,
+      agentPolicies,
       draftChanges: changes,
     }),
-    [policies, groups, networks, networkResources, users, changes],
+    [
+      policies,
+      groups,
+      networks,
+      networkResources,
+      users,
+      agentProviders,
+      agentPolicies,
+      changes,
+    ],
   );
 
   // Freeze the snapshot the rows render against during a deploy: the SWR mutate

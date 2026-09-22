@@ -596,3 +596,100 @@ describe("agent network and user membership bodies", () => {
     expect(sent[1]).not.toBe("Ops");
   });
 });
+
+// Without a "before", the code view renders an update as an all-plus block:
+// the reviewer sees the whole record arriving, not what the request changes.
+describe("the before side of the new change types", () => {
+  it("diffs a membership change against the user's current groups", () => {
+    const before = buildBeforeRequest(
+      {
+        id: "uug",
+        type: "update-user-groups",
+        userId: "u1",
+        name: "Ada",
+        groupRefs: ["g1", "g2"],
+        addedGroupNames: ["Ops"],
+        removedGroupNames: [],
+      } as never as DraftChange,
+      { users: [{ id: "u1", name: "Ada", auto_groups: ["g1"] }] },
+    );
+
+    expect(before).toMatchObject({ method: "PUT", path: "/users/u1" });
+    expect((before?.body as { auto_groups: string[] }).auto_groups).toEqual([
+      "g1",
+    ]);
+  });
+
+  it("diffs an agent policy against its live record", () => {
+    const before = buildBeforeRequest(
+      {
+        id: "uap",
+        type: "update-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "Agents",
+        policy: { enabled: false },
+      } as never as DraftChange,
+      {
+        agentPolicies: [
+          {
+            id: "ap-1",
+            name: "Agents",
+            description: "",
+            enabled: true,
+            sourceGroups: ["g1"],
+            destinationProviderIds: ["p1"],
+            guardrailIds: [],
+            limits: {},
+          },
+        ],
+      },
+    );
+
+    expect(before?.path).toBe("/agent-network/policies/ap-1");
+    expect(before?.body).toMatchObject({
+      enabled: true,
+      source_groups: ["g1"],
+    });
+  });
+
+  it("shows a deleted provider as an all-minus body, redacted", () => {
+    const before = buildBeforeRequest(
+      {
+        id: "dp",
+        type: "delete-provider",
+        providerId: "p1",
+        name: "OpenAI",
+      } as never as DraftChange,
+      {
+        providers: [
+          {
+            id: "p1",
+            providerId: "openai_api",
+            name: "OpenAI",
+            upstreamUrl: "https://api.openai.com",
+            apiKey: "sk-live",
+          },
+        ],
+      },
+    );
+
+    expect(before?.method).toBe("DELETE");
+    expect(JSON.stringify(before?.body)).not.toContain("sk-live");
+    expect(before?.body).toMatchObject({ provider_id: "openai_api" });
+  });
+
+  it("has no before for a create", () => {
+    expect(
+      buildBeforeRequest(
+        {
+          id: "cp",
+          type: "create-provider",
+          clientId: "new-1",
+          name: "OpenAI",
+          input: {},
+        } as never as DraftChange,
+        {},
+      ),
+    ).toBeNull();
+  });
+});
