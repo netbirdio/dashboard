@@ -176,14 +176,17 @@ function AgentPolicyModalContent({
   ] = useGroupHelper({
     // Refs, not plain ids: a draft group is named rather than identified, and
     // useGroupHelper resolves strings by id only. The dropdown options carry
-    // the draft groups the control center added, so resolve against those and
-    // fall back to an id-less group — which is exactly what a name ref means.
-    initial: (seed?.sourceGroups ?? []).map(
-      (ref) =>
-        dropdownOptions.find((g) => g.id === ref) ??
-        dropdownOptions.find((g) => !g.id && g.name === ref) ??
-        ({ name: ref, keepClientState: true } as Group),
-    ),
+    // the draft groups the control center added, so resolve against those.
+    initial: (seed?.sourceGroups ?? []).flatMap((ref) => {
+      const byId = dropdownOptions.find((g) => g.id === ref);
+      if (byId) return [byId];
+      const byName = dropdownOptions.find((g) => !g.id && g.name === ref);
+      if (byName) return [byName];
+      // A ref that resolves to nothing is a group that is gone, NOT a group to
+      // invent: turning it into an id-less entry would have the save POST a
+      // brand-new group named after the missing group's id.
+      return [];
+    }),
   });
   const sourceGroups = sourceGroupsRaw;
   const setSourceGroups: React.Dispatch<React.SetStateAction<Group[]>> = (
