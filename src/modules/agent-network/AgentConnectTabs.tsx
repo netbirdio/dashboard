@@ -4,6 +4,9 @@ import Code from "@components/Code";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import SmallParagraph from "@components/SmallParagraph";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
+import useCopyToClipboard from "@hooks/useCopyToClipboard";
+import { cn } from "@utils/helpers";
+import { CheckIcon, CopyIcon } from "lucide-react";
 import * as React from "react";
 import ClaudeIcon from "@/assets/icons/ClaudeIcon";
 import KimiIcon from "@/assets/icons/KimiIcon";
@@ -24,40 +27,115 @@ const providerIcon = (id: AIProviderId) =>
   };
 
 // ConfigPath sets a file path in the same mono face as the block below it, so
-// the part of the caption the reader has to act on stands out from the prose.
+// the part of the header the reader has to act on stands out from the prose.
 function ConfigPath({ path }: { path: string }) {
   return <code className={"font-mono text-nb-gray-100"}>{path}</code>;
 }
 
-// Snippet renders a copyable Code block from a list of lines, with an optional
-// caption above it. Wrapped in min-w-0 so its scroll area handles long lines
-// instead of widening its container. By default the displayed lines are what gets
-// copied (joined with newlines); pass copyText to copy something different —
-// e.g. show a curl command across multiple lines but copy it as one line.
+type ClaudeMode = "config" | "shell";
+
+// ModeSwitch picks which shape of the same config to show. Underlined tabs
+// rather than a link, so both options are visible before either is chosen.
+function ModeSwitch({
+  value,
+  onChange,
+}: {
+  value: ClaudeMode;
+  onChange: (mode: ClaudeMode) => void;
+}) {
+  const options: { value: ClaudeMode; label: string }[] = [
+    { value: "config", label: "JSON" },
+    { value: "shell", label: "Shell" },
+  ];
+
+  return (
+    // Full height and pulled down over the header's 1px rule, so the active
+    // tab's underline reads as part of that line rather than floating above it.
+    <div className={"flex items-stretch gap-3 shrink-0 -mb-px"}>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type={"button"}
+          onClick={() => onChange(option.value)}
+          className={cn(
+            "flex items-center text-xs font-medium border-b-2 transition-colors cursor-pointer",
+            value === option.value
+              ? "border-white text-nb-gray-100"
+              : "border-transparent text-nb-gray-400 hover:text-nb-gray-200",
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Snippet renders a copyable Code block from a list of lines. Given a title it
+// grows a header bar carrying that title, whatever control the caller passes,
+// and the copy button — so the thing the block is for, and the switch between
+// its shapes, sit on the block instead of floating above it. Wrapped in
+// min-w-0 so its scroll area handles long lines instead of widening its
+// container. By default the displayed lines are what gets copied (joined with
+// newlines); pass copyText to copy something different — e.g. show a curl
+// command across multiple lines but copy it as one line.
 function Snippet({
-  caption,
+  title,
+  action,
   lines,
   copyText,
 }: {
-  caption?: React.ReactNode;
+  title?: React.ReactNode;
+  action?: React.ReactNode;
   lines: string[];
   copyText?: string;
 }) {
+  const [, copy, copied] = useCopyToClipboard(copyText ?? lines.join("\n"));
+
+  const code = (
+    <Code
+      codeToCopy={copyText ?? lines.join("\n")}
+      message={"Copied to clipboard"}
+      showCopyIcon={!title}
+      className={title ? "rounded-none border-0" : undefined}
+    >
+      {lines.map((line, i) => (
+        <Code.Line key={i}>{line}</Code.Line>
+      ))}
+    </Code>
+  );
+
+  if (!title) return <div className={"min-w-0"}>{code}</div>;
+
   return (
-    <div className={"min-w-0"}>
-      {caption && (
-        <SmallParagraph className={"mb-2 !text-nb-gray-200"}>
-          {caption}
-        </SmallParagraph>
-      )}
-      <Code
-        codeToCopy={copyText ?? lines.join("\n")}
-        message={"Copied to clipboard"}
+    <div
+      className={
+        "min-w-0 rounded-md border border-neutral-200 dark:border-nb-gray-700 overflow-hidden"
+      }
+    >
+      <div
+        className={
+          "flex items-stretch justify-between gap-3 px-3 border-b border-neutral-200 dark:border-nb-gray-700 bg-gray-50 dark:bg-nb-gray-850"
+        }
       >
-        {lines.map((line, i) => (
-          <Code.Line key={i}>{line}</Code.Line>
-        ))}
-      </Code>
+        <span className={"text-xs text-nb-gray-200 truncate self-center py-3"}>
+          {title}
+        </span>
+        <div className={"flex items-stretch gap-5 shrink-0"}>
+          {action}
+          <button
+            type={"button"}
+            onClick={() => copy("Copied to clipboard")}
+            aria-label={"Copy snippet"}
+            className={
+              "self-center text-nb-gray-400 hover:text-nb-gray-100 transition-colors cursor-pointer"
+            }
+          >
+            {copied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
+          </button>
+        </div>
+      </div>
+      {code}
     </div>
   );
 }
@@ -95,9 +173,7 @@ export function AgentConnectTabs({
   const baseUrl = `https://${endpoint}`;
   const openaiBase = `${baseUrl}/v1`;
   const hasKimi = providerIds.includes("kimi_api");
-  const [claudeMode, setClaudeMode] = React.useState<"config" | "shell">(
-    "config",
-  );
+  const [claudeMode, setClaudeMode] = React.useState<ClaudeMode>("config");
   // Which backend the Claude Code config targets — Anthropic API direct,
   // via Vertex AI / Bedrock, or Kimi (Moonshot AI, whose upstream speaks the
   // Anthropic Messages API too). Switched in-tab instead of separate tabs.
@@ -182,29 +258,19 @@ export function AgentConnectTabs({
 
           {claudeProvider === "anthropic" && (
             <>
-              <div className={"flex items-center justify-between gap-3 mb-2"}>
-                <SmallParagraph className={"!mb-0 !text-nb-gray-200"}>
-                  {claudeMode === "config" ? (
+              <Snippet
+                title={
+                  claudeMode === "config" ? (
                     <>
                       Add to <ConfigPath path={"~/.claude/settings.json"} />
                     </>
                   ) : (
                     "Run in your shell"
-                  )}
-                </SmallParagraph>
-                <button
-                  type={"button"}
-                  onClick={() =>
-                    setClaudeMode(claudeMode === "config" ? "shell" : "config")
-                  }
-                  className={
-                    "shrink-0 mr-2 text-[11px] text-white hover:underline underline-offset-2 cursor-pointer"
-                  }
-                >
-                  {claudeMode === "config" ? "Shell" : "JSON"}
-                </button>
-              </div>
-              <Snippet
+                  )
+                }
+                action={
+                  <ModeSwitch value={claudeMode} onChange={setClaudeMode} />
+                }
                 lines={
                   claudeMode === "config"
                     ? [
@@ -227,7 +293,7 @@ export function AgentConnectTabs({
 
           {claudeProvider === "vertex" && (
             <Snippet
-              caption={
+              title={
                 <>
                   Add to <ConfigPath path={"~/.claude/settings.json"} />
                 </>
@@ -248,7 +314,7 @@ export function AgentConnectTabs({
 
           {claudeProvider === "bedrock" && (
             <Snippet
-              caption={
+              title={
                 <>
                   Add to <ConfigPath path={"~/.claude/settings.json"} />
                 </>
@@ -267,29 +333,19 @@ export function AgentConnectTabs({
 
           {claudeProvider === "kimi" && (
             <>
-              <div className={"flex items-center justify-between gap-3 mb-2"}>
-                <SmallParagraph className={"!mb-0 !text-nb-gray-200"}>
-                  {claudeMode === "config" ? (
+              <Snippet
+                title={
+                  claudeMode === "config" ? (
                     <>
                       Add to <ConfigPath path={"~/.claude/settings.json"} />
                     </>
                   ) : (
                     "Run in your shell"
-                  )}
-                </SmallParagraph>
-                <button
-                  type={"button"}
-                  onClick={() =>
-                    setClaudeMode(claudeMode === "config" ? "shell" : "config")
-                  }
-                  className={
-                    "shrink-0 mr-2 text-[11px] text-white hover:underline underline-offset-2 cursor-pointer"
-                  }
-                >
-                  {claudeMode === "config" ? "Shell" : "JSON"}
-                </button>
-              </div>
-              <Snippet
+                  )
+                }
+                action={
+                  <ModeSwitch value={claudeMode} onChange={setClaudeMode} />
+                }
                 // Claude Code speaks the Anthropic Messages API, which
                 // Moonshot serves under the /anthropic path prefix. The
                 // prefix goes in the agent's base URL and rides through the
@@ -344,7 +400,7 @@ export function AgentConnectTabs({
       <TabsContent value={"codex"}>
         <div className={contentClassName}>
           <Snippet
-            caption={
+            title={
               <>
                 Add to <ConfigPath path={"~/.codex/config.toml"} />
               </>
@@ -368,7 +424,7 @@ export function AgentConnectTabs({
             // Claude Code, its "anthropic" provider type needs the bare
             // endpoint — no /anthropic prefix in base_url; api_key is a
             // placeholder since NetBird injects the real key server-side.
-            caption={
+            title={
               <>
                 Add to <ConfigPath path={"~/.kimi/config.toml"} />
               </>
