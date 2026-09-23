@@ -629,7 +629,6 @@ export const NodeContextMenu = ({
       const permKey = isProvider
         ? "agent_network.providers"
         : "agent_network.policies";
-      // A draft record deploys as a create, so editing it needs `create`.
       const mayWrite = isNew
         ? !!permission?.[permKey]?.create
         : !!permission?.[permKey]?.update;

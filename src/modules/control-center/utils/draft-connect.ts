@@ -21,12 +21,8 @@ export type DraftConnectDeps = {
   setPolicyDestinationGroups: (g: Group[]) => void;
   setPolicyInitialName: (name: string) => void;
   setCreatePolicyModal: (open: boolean) => void;
-  // Agent Network. A provider is only ever a destination and a group only ever
-  // a source, so these need no handle-side logic.
   agentPolicies?: AgentPolicy[];
   updateDraftAgentPolicy?: (policy: AgentPolicy) => void;
-  // Owns the one-group rule: it confirms before displacing the group already
-  // on the source side.
   setAgentSourceGroup?: (policy: AgentPolicy, groupRef: string) => void;
   // The changeset's view of an existing agent policy, which supersedes live.
   pendingAgentPolicy?: (id: string) => Partial<AgentPolicy> | undefined;
@@ -210,8 +206,6 @@ export function handleDraftConnect(
     const groupEnd = ends.find((e) => e.info.kind === "group");
 
     if (policyEnd) {
-      // Two agent policies, or a policy and a peer/resource/network: nothing
-      // an agent policy can express.
       if (!providerEnd && !groupEnd) return;
       const policy = agentPolicyOf(policyEnd.nodeId);
       if (!policy) return;
@@ -233,8 +227,6 @@ export function handleDraftConnect(
       // policy carries for one; the deploy resolves it once the group lands.
       const ref = group.id ?? group.name;
       if (!ref || policy.sourceGroups.includes(ref)) return;
-      // One source group per agent policy: setAgentSourceGroup replaces what is
-      // there, confirming first when that displaces another group.
       setAgentSourceGroup?.(policy, ref);
       return;
     }

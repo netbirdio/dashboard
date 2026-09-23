@@ -72,8 +72,6 @@ export function useDeployChangeset() {
   const networkRequest = useApiCall<Network>("/networks", true);
   const resourceRequest = useApiCall<NetworkResource>("/networks", true);
   const routerRequest = useApiCall<NetworkRouter>("/networks", true);
-  // Group membership for users is a write on the USER: auto_groups is the
-  // only field that moves, but the API takes the whole record.
   const userRequest = useApiCall<User>("/users", true);
   // Agent Network writes go through the providers context rather than a raw
   // useApiCall: it owns the camelCase → wire mapping and refreshes its own
@@ -86,8 +84,6 @@ export function useDeployChangeset() {
     updatePolicy: saveAgentPolicy,
     deletePolicy: removeAgentPolicy,
   } = useAIProviders();
-  // Draft provider clientId → created id, so an agent policy deployed after it
-  // names the real provider.
   const providerClientToId = useRef(new Map<string, string>());
   const [isDeploying, setIsDeploying] = useState(false);
   // Succeeded changes are NOT removed; they stay visible with a check.

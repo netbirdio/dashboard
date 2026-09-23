@@ -39,7 +39,6 @@ export interface LiveData {
   policies?: Policy[];
   groups?: Group[];
   users?: { id?: string; name?: string; auto_groups?: string[] }[];
-  // Agent-network records, for the "before" side of an update or a delete.
   providers?: { id: string; [key: string]: unknown }[];
   agentPolicies?: { id: string; [key: string]: unknown }[];
   networks?: Network[];
@@ -353,9 +352,6 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
   };
 }
 
-// Agent Network bodies. The dashboard's own camelCase shapes are what the
-// providers context sends, so the preview shows the same fields the deploy
-// will — the API key is redacted, since the review view is copyable.
 // The deploy sends snake_case, so a camelCase preview is a request the user
 // never makes. Only the keys the change actually carries are rendered: an
 // update is a delta the context merges onto its own record, and inventing the
@@ -395,7 +391,6 @@ const AGENT_POLICY_WIRE = {
   limits: "limits",
 };
 
-// The code view is copyable, so a credential must never render into it.
 const providerBody = (input: Record<string, unknown>) => {
   const wire = toWire(input, PROVIDER_WIRE);
   if (wire.api_key) wire.api_key = "••••••••";

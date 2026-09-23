@@ -26,8 +26,6 @@ export const ProviderNode = ({ data }: ProviderNodeProps) => {
   return (
     <div
       className={cn(
-        // The shell PeerNode's card variant uses, down to the 64px height the
-        // peers, groups and selects all line up on.
         "cc-provider-node relative rounded-lg transition-all group group/node",
         "border bg-nb-gray-940 border-nb-gray-850 h-[64px] flex items-center pr-5 pl-3",
         "hover:bg-nb-gray-930 hover:border-nb-gray-800",

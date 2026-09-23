@@ -73,8 +73,6 @@ const collectAgentGroupStrip = (
   updatesById: Map<string, AgentPolicy>,
 ) => {
   const removed = getNodeGroup(groupNode);
-  // A draft group is named rather than identified, and that name is the ref an
-  // agent policy carries for it.
   const removedRef = removed?.id ?? removed?.name;
   if (!removedRef) return;
   allEdges.forEach((e) => {
@@ -819,8 +817,6 @@ export function useDraftGroupActions() {
               const updated = data.id
                 ? agentUpdateById.get(data.id)
                 : undefined;
-              // Only a draft policy's node carries the record; an existing
-              // one is read back from the domain list.
               return updated && data.policy
                 ? { ...n, data: { ...n.data, policy: updated } }
                 : n;

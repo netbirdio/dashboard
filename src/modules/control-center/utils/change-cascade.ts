@@ -178,7 +178,6 @@ export const mergeAgentGroupDeletions = (
   };
 };
 
-/** The agent policy with the given group ids taken off its source side. */
 export const dropGroupIdsFromAgentPolicy = <
   T extends { sourceGroups: string[] },
 >(
@@ -189,7 +188,6 @@ export const dropGroupIdsFromAgentPolicy = <
   sourceGroups: policy.sourceGroups.filter((id) => !groupIds.includes(id)),
 });
 
-/** An agent policy with no source group authorizes nothing; the API rejects it. */
 export const isEmptiedAgentPolicy = (policy: {
   sourceGroups: string[];
   destinationProviderIds: string[];
@@ -286,8 +284,6 @@ export function dropGroupNameReferences(
       const groupRefs = c.groupRefs.filter((ref) => ref !== name);
       const addedGroupNames = c.addedGroupNames.filter((n) => n !== name);
       const removedGroupNames = c.removedGroupNames.filter((n) => n !== name);
-      // Nothing left to say: the entry existed only to put the user into the
-      // group that just went away.
       if (addedGroupNames.length === 0 && removedGroupNames.length === 0) {
         return [];
       }
@@ -578,7 +574,6 @@ export function restoreDeletedGroupInPolicies(
             }
           : undefined;
       if (c.type === "create-agent-policy") {
-        // A draft policy's create is the user's own work: restored in place.
         return [{ ...c, name: policy.name || c.name, policy, groupDeletion }];
       }
       // Nothing left stripped: the write existed only for the deletion being

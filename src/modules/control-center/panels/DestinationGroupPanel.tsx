@@ -369,7 +369,6 @@ export const DestinationGroupPanel = ({
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
   const groupRequest = useApiCall<Group>("/groups", true);
-  // A user's groups live on the user, so membership is written per user.
   const userRequest = useApiCall<User>("/users", true);
   const { trackUpdateUserGroups } = useDraftChangeset();
   const panelWidth = usePanelWidth();
@@ -586,7 +585,6 @@ export const DestinationGroupPanel = ({
     );
   }, [groupId, memberUsersKey]);
 
-  // Either permission can produce unsaved work, so both gate the footer.
   const canSave = canEditMembers || canEditUsers;
   const dirty =
     !setEquals(selectedPeerIds, memberPeerIds) ||
@@ -816,8 +814,6 @@ export const DestinationGroupPanel = ({
           addMemberToGroup(groupNode, { peer, draggedNodeId: nodeId });
         }
       });
-      // Users are written per user on deploy, so their membership is its own
-      // change rather than part of the group's.
       trackUserMembership();
       // Point the unmount snapshot at the applied selection so the cleanup doesn't revert it.
       restoreCountsRef.current = {
@@ -900,8 +896,6 @@ export const DestinationGroupPanel = ({
     }
   };
 
-  // Draft: one changeset entry per user whose groups changed. The entry holds
-  // the whole auto_groups list, since that is what the PUT replaces.
   const trackUserMembership = () => {
     if (!userGroupRef) return;
     (users ?? []).forEach((user) => {
@@ -923,7 +917,6 @@ export const DestinationGroupPanel = ({
     });
   };
 
-  // The draft's pending list for a user, falling back to what the account says.
   const currentUserGroupRefs = (user: User) => {
     const pending = changes.find(
       (c) => c.type === "update-user-groups" && c.userId === user.id,
@@ -933,7 +926,6 @@ export const DestinationGroupPanel = ({
       : user.auto_groups ?? [];
   };
 
-  // Live: the group is not the record that changes — each user is.
   const saveUserMembership = async () => {
     if (!realGroupId) return;
     const changed = (users ?? []).filter(
@@ -1073,8 +1065,6 @@ export const DestinationGroupPanel = ({
     [users],
   );
 
-  // Members first, as on the other two tabs; rowOrder then pins each row where
-  // it started so toggling a checkbox doesn't make it jump.
   const userCandidates = useMemo(() => {
     if (!canEditUsers) return groupUsers;
     return [

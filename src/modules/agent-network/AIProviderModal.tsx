@@ -254,8 +254,6 @@ export default function AIProviderModal({
     },
     [takenProviderNames],
   );
-  // Read through a ref where it is called from a reset/seed path: those must
-  // not re-run just because the list changed under them.
   const uniqueNameRef = useRef(uniqueName);
   uniqueNameRef.current = uniqueName;
   // The endpoint lives on the account-level Settings row, bootstrapped once

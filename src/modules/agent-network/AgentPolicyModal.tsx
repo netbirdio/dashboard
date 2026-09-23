@@ -68,8 +68,6 @@ type Props = {
   // Providers that exist only in a draft changeset: they are not in the
   // account's list yet, so nothing would render the one a policy names.
   extraProviders?: AIProvider[];
-  // Policy names the account list doesn't know about (a draft's canvas), so a
-  // suggested name doesn't collide with one.
   takenNames?: string[];
   initialTab?: string;
   // Asked before the save runs, for hosts where writing straight to the
@@ -153,7 +151,6 @@ function AgentPolicyModalContent({
   const { dropdownOptions } = useGroups();
   const { mutate } = useSWRConfig();
 
-  // An edit reads its values off the record; a prefilled create off `initial`.
   const seed = policy ?? initial;
   const [tab, setTab] = useState<string>(initialTab ?? "policy");
   const [name, setName] = useState(seed?.name ?? "");
@@ -227,8 +224,6 @@ function AgentPolicyModalContent({
     }
     const provider = providers.find((p) => p.id === destinationProviderIds[0]);
     const base = `${sourceGroups[0].name} → ${provider?.name ?? ""}`.trim();
-    // Same shape the canvas uses for every other new entity: the first
-    // collision becomes "… (1)".
     const taken = new Set([
       ...policies.filter((p) => p.id !== policy?.id).map((p) => p.name),
       ...(takenNames ?? []),
@@ -544,7 +539,6 @@ function SourceGroupsSelector({
   );
 }
 
-// A provider that exists only in a draft changeset carries a client id.
 const isDraftProvider = (p: AIProvider) => p.id.startsWith("new-");
 
 function ProviderMultiSelect({

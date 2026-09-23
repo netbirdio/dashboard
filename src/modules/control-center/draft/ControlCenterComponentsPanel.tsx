@@ -178,10 +178,6 @@ export const ControlCenterComponentsPanel = () => {
     [setComponentsPanelOpen],
   );
 
-  // Mounted for the life of the page, not on entering draft: this is a heavy
-  // synchronous render — virtual lists, three SWR subscriptions, every row
-  // builder — and doing it in the frame the bottom toolbar springs in drops
-  // that frame. It is hidden and click-through while closed.
   return (
     <PanelContent
       open={isDraft && componentsPanelOpen}
@@ -342,8 +338,6 @@ const PanelContent = React.memo(
       [onDragStart, handleExistingPolicyDrop, addBlankPolicy, onClose],
     );
 
-    // Dropping an existing provider or agent policy just draws it; dropping
-    // the "new" template starts the create the same way the canvas menu does.
     const handleAgentDragStart = useCallback(
       (
         event: React.PointerEvent<HTMLDivElement>,
@@ -433,8 +427,6 @@ const PanelContent = React.memo(
 
     const reactFlow = useReactFlow();
 
-    // Returns false when the drop can't be honored, so the caller falls back
-    // to placing an ordinary group node.
     const addGroupToAgentPolicy = useCallback(
       (policyNodeId: string, group: Group) => {
         if (!group.id) return false;
@@ -446,7 +438,6 @@ const PanelContent = React.memo(
           nodeData?.policy ?? agentPolicies?.find((p) => p.id === nodeData?.id);
         if (!policy) return false;
         if (policy.sourceGroups.includes(group.id)) return true;
-        // Same one-group rule as a connect, confirmation included.
         setAgentSourceGroup(policy, group.id);
         return true;
       },
@@ -1458,8 +1449,6 @@ const PanelContent = React.memo(
               : { x: "-50%", y: 14, opacity: 0 }
           }
           transition={{ duration: 0.1, ease: "easeOut" }}
-          // framer drives opacity; visibility flips with the class above once
-          // the element is already transparent.
           // The global Escape shortcut stays quiet while focus is in the panel.
           onKeyDown={(e) => {
             if (e.key === "Escape") {

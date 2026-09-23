@@ -221,9 +221,6 @@ export interface InstallPeerChange {
   installedPeerId?: string;
 }
 
-// Agent Network entities. A draft provider is referenced by its clientId
-// ("new-<uuid>") until deploy resolves it to the created record's id, the same
-// way a draft network's resources reference it.
 export interface CreateProviderChange {
   id: string;
   type: "create-provider";
@@ -238,7 +235,6 @@ export interface UpdateProviderChange {
   providerId: string;
   name: string;
   updates: ProviderUpdateInput;
-  // A toggle reads differently in the review list than a form save.
   origin?: "toggle" | "edit";
 }
 
@@ -297,7 +293,6 @@ export interface UpdateUserGroupsChange {
   name: string;
   // Group refs, like a policy's: a live group's id or a draft group's NAME.
   groupRefs: string[];
-  // What this change put the user into / took them out of, for the row.
   addedGroupNames: string[];
   removedGroupNames: string[];
 }
@@ -786,7 +781,6 @@ export const CHANGE_PERMISSION: Record<
   "delete-resource": { module: "networks", action: "delete" },
   "create-router": { module: "networks", action: "create" },
   "update-router": { module: "networks", action: "update" },
-  // The write lands on the user, so it is the user permission that gates it.
   "update-user-groups": { module: "users", action: "update" },
   "create-provider": { module: "agent_network.providers", action: "create" },
   "update-provider": { module: "agent_network.providers", action: "update" },
@@ -2053,10 +2047,6 @@ export function DraftChangesetProvider({
     [],
   );
 
-  // Agent Network trackers. Same coalescing rules as the policy ones: an edit
-  // to a draft entity folds into its create, a delete of a draft entity drops
-  // the create outright, and a delete of an existing one supersedes any
-  // pending write against it.
   // One entry per user: the PUT replaces auto_groups wholesale, so a second
   // edit supersedes the first rather than stacking. A user put back exactly
   // where they started drops the change entirely.
@@ -2359,8 +2349,6 @@ export function DraftChangesetProvider({
                 : c,
             );
           }
-          // The user emptied or removed it themselves: it goes back to being
-          // a canvas-only sketch.
           return prev.filter((c) => c !== create);
         }
         const pending = prev.find(

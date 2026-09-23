@@ -59,17 +59,11 @@ interface PolicyContextType {
   setPolicyDestinationScope: (scope?: PolicyDestinationScope) => void;
   openAgentPolicy: (id: string) => void;
   openProvider: (id: string) => void;
-  // Records the policy and redraws its group → policy → provider edges.
   updateDraftAgentPolicy: (policy: AgentPolicy) => void;
-  // Puts a group on the policy's source side, asking first when that means
-  // displacing the one already there.
   setAgentSourceGroup: (policy: AgentPolicy, groupRef: string) => void;
-  // Redraw only, for restoring a policy a discarded change had stripped.
   drawAgentPolicyOnCanvas: (policy: AgentPolicy) => void;
   // Create flows. A position places the node where the drop landed.
   openProviderWizard: (position?: XYPosition) => void;
-  // A connect drawn between a group and a provider: the modal opens on a
-  // policy that exists nowhere yet, and the node lands on save.
   openAgentPolicyWizard: (
     prefill: { sourceGroups: string[]; destinationProviderIds: string[] },
     position?: XYPosition,
@@ -115,7 +109,6 @@ export function ControlCenterPolicyProvider({
   const reactFlow = useReactFlow();
   const { confirm } = useDialog();
 
-  // Keeps a canvas node in step with an edit the changeset just recorded.
   const patchAgentNode = (nodeId: string, data: Record<string, unknown>) =>
     reactFlow.setNodes((prev) =>
       prev.map((n) =>
@@ -163,8 +156,6 @@ export function ControlCenterPolicyProvider({
     openProviderEdit,
     closeProviderEdit,
   } = useAIProviders();
-  // A policy the user drew by connecting two nodes: it has no node and no API
-  // record until the modal saves, so the prefill stands in for both.
   const [agentPolicyWizard, setAgentPolicyWizard] = useState<{
     policy: AgentPolicy;
     position?: XYPosition;
@@ -172,8 +163,6 @@ export function ControlCenterPolicyProvider({
 
   const currentAgentPolicy = useMemo(() => {
     if (!selectedAgentPolicy) return undefined;
-    // A draft policy has no API record; its node carries the whole thing, and
-    // its create change is the fallback when the node is gone.
     if (selectedAgentPolicy.startsWith("new-")) {
       const node = nodes.find(
         (n) => n.id === `agent-policy-${selectedAgentPolicy}`,
@@ -206,8 +195,6 @@ export function ControlCenterPolicyProvider({
     } as AgentPolicy;
   }, [agentPolicyDomain, selectedAgentPolicy, nodes, changes]);
 
-  // The rule access-control policies follow: a policy enters the changeset
-  // once it authorizes something, and leaves it again if emptied.
   const isTrackableAgentPolicy = (policy: {
     sourceGroups: string[];
     destinationProviderIds: string[];
@@ -217,8 +204,6 @@ export function ControlCenterPolicyProvider({
     setSelectedAgentPolicy(id);
     setAgentPolicyModalOpen(true);
   };
-  // Providers the draft created have no API record yet — the create changes
-  // they are going to deploy as hold everything the modals need.
   const draftProviders = useMemo(
     () =>
       changes.flatMap((c) =>
@@ -235,7 +220,6 @@ export function ControlCenterPolicyProvider({
     [draftProviders],
   );
 
-  // Agent policy names the account list can't know about: the draft's own.
   const draftAgentPolicyNames = useMemo(
     () => [
       ...nodes.flatMap((n) =>
@@ -250,8 +234,6 @@ export function ControlCenterPolicyProvider({
     [nodes, changes],
   );
 
-  // The provider modal is driven from AIProvidersProvider, so the canvas and
-  // the providers table open the same one.
   const openProvider = (id: string) => {
     const provider =
       agentProviders?.find((p) => p.id === id) ?? draftProvider(id);
@@ -715,10 +697,6 @@ export function ControlCenterPolicyProvider({
     );
   };
 
-  // The agent-network mirror of drawPolicyOnCanvas: source groups on the left,
-  // the policy pill in the middle, providers on the right. Ids match the live
-  // overlay's, so a draft drawn here and a live view of the same policy carry
-  // the same nodes and edges.
   const drawAgentPolicyOnCanvas = (
     policy: AgentPolicy,
     fallbackPosition?: XYPosition,
@@ -844,7 +822,6 @@ export function ControlCenterPolicyProvider({
       destNodeIds.push(nodeId);
     }
 
-    // An explicit drop position wins; otherwise center on what it connects.
     let policyPos = { x: base.x, y: base.y };
     const matched = [...sourceNodeIds, ...destNodeIds]
       .map((id) => findNode(id))
@@ -921,9 +898,6 @@ export function ControlCenterPolicyProvider({
     );
   };
 
-  // The agent-network twin of updateDraftPolicy: record what the policy now
-  // is, then redraw it. A policy that authorizes nothing is a canvas-only
-  // sketch, so its pending create is dropped again.
   // The agent twin of ensureDraftGroupChanges: a policy naming a group the
   // draft invented only deploys if that group is created first.
   const ensureAgentDraftGroupChanges = (policy: AgentPolicy) => {
@@ -961,7 +935,6 @@ export function ControlCenterPolicyProvider({
       if (isDraftPolicy && !hasCreateChange) {
         trackCreateAgentPolicy({ clientId: policy.id, policy });
       } else {
-        // Folds into the pending create when there is one.
         trackUpdateAgentPolicy({
           agentPolicyId: policy.id,
           name: policy.name,
@@ -977,8 +950,6 @@ export function ControlCenterPolicyProvider({
     drawAgentPolicyOnCanvas(policy, fallbackPosition);
   };
 
-  // A ref is a live group's id or a draft group's name; both resolve to
-  // something the user recognizes.
   const groupNameForRef = (ref: string) =>
     groups?.find((g) => g.id === ref)?.name ??
     ((

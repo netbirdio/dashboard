@@ -588,7 +588,6 @@ describe("agent network and user membership bodies", () => {
 
     expect(request.method).toBe("PUT");
     expect(request.path).toBe("/users/u1");
-    // The whole record, not a patch of auto_groups alone.
     expect(request.body).toMatchObject({ id: "u1", name: "Ada" });
     // "Ops" is a draft group, so it renders as a placeholder id, not the name.
     const sent = (request.body as { auto_groups: string[] }).auto_groups;

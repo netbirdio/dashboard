@@ -201,8 +201,6 @@ export function useDraftNodeCreation() {
             id: policy.id,
             name: policy.name,
             enabled: policy.enabled,
-            // Draft policies have no API record to read back, so the node
-            // carries the whole thing for the editor and the changeset.
             ...(policy.id.startsWith("new-") ? { policy } : {}),
           },
         },
@@ -212,8 +210,6 @@ export function useDraftNodeCreation() {
     [placeNode],
   );
 
-  // A blank agent policy is tracked from birth, the way a draft network is: it
-  // has a name, and the blocking issue tells the user what it still needs.
   const addBlankAgentPolicy = useCallback(
     (position?: XYPosition) => {
       const clientId = `new-${draftUid()}`;
