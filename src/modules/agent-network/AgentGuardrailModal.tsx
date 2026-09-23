@@ -319,9 +319,14 @@ function ModelAllowlistContent({
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
 
+  const visibleIds = useMemo(
+    () => providerModels.map((m) => m.id),
+    [providerModels],
+  );
+  const checkedVisible = visibleIds.filter((id) => draft.includes(id)).length;
   const allChecked =
-    providerModels.length > 0 && draft.length === providerModels.length;
-  const someChecked = draft.length > 0 && !allChecked;
+    visibleIds.length > 0 && checkedVisible === visibleIds.length;
+  const someChecked = checkedVisible > 0 && !allChecked;
 
   return (
     <>
@@ -353,8 +358,10 @@ function ModelAllowlistContent({
                       }
                       aria-label={"Select all models"}
                       onCheckedChange={() =>
-                        setDraft(
-                          allChecked ? [] : providerModels.map((m) => m.id),
+                        setDraft((prev) =>
+                          allChecked
+                            ? prev.filter((id) => !visibleIds.includes(id))
+                            : Array.from(new Set([...prev, ...visibleIds])),
                         )
                       }
                     />
