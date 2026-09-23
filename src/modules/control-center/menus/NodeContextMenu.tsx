@@ -609,10 +609,6 @@ export const NodeContextMenu = ({
     [nodes, edges, focusedNodeId, setFocusedNodeId],
   );
 
-  // Agent Network nodes. Providers and agent policies have no draft twin of
-  // their own — the changeset carries them either way — so one builder serves
-  // both branches; only the confirmations differ, and those live in the
-  // modals the Edit item opens.
   const isAgentNode = useCallback(
     (n: Node) => n.type === "providerNode" || n.type === "agentPolicyNode",
     [],
@@ -625,7 +621,6 @@ export const NodeContextMenu = ({
       const recordId = data?.id;
       if (!recordId) return [];
       const isNew = recordId.startsWith("new-");
-      // Not `module`: that name is the CommonJS global.
       const permKey = isProvider
         ? "agent_network.providers"
         : "agent_network.policies";
@@ -648,8 +643,6 @@ export const NodeContextMenu = ({
           label: enabled ? "Disable" : "Enable",
           icon: enabled ? <PowerOffIcon size={14} /> : <PowerIcon size={14} />,
           onClick: () => {
-            // A disabled policy draws dimmed lines, like an access-control one:
-            // its edges carry the flag, so they have to move with the node.
             const syncEdges = () =>
               setEdges((prev) =>
                 prev.map((e) =>
@@ -684,8 +677,6 @@ export const NodeContextMenu = ({
               syncEdges();
               return;
             }
-            // Live redraws from the refetch, but not before the next render:
-            // without this the line stays lit until then.
             syncEdges();
             void (isProvider
               ? toggleProvider(recordId)
@@ -693,10 +684,6 @@ export const NodeContextMenu = ({
           },
         });
       }
-      // Taking one off the canvas is a deletion either way: unlike a policy,
-      // there is no "draw it again later" list entry a Remove would restore
-      // from — the panel lists it, so Remove and Delete would be the same
-      // gesture with different consequences.
       if (mayDelete || (isNew && mayWrite)) {
         items.push({
           label: isNew ? "Remove" : "Delete",

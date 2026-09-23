@@ -43,8 +43,6 @@ export function SmartEdge({ id, source, target, data }: Props) {
   const sourceIsLeft = sCx < tCx;
 
   // Policy nodes have fixed sides: sources enter left, destinations exit right.
-  // For an agent policy that is the whole rule — a group is only ever a source
-  // and a provider only ever a destination.
   let sx: number, sy: number, tx: number, ty: number;
   let sourcePosition: Position, targetPosition: Position;
 

@@ -166,15 +166,9 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   provider?: AIProvider;
-  // Asked before the save runs, for hosts where writing straight to the
-  // account deserves a confirmation — the control center in live mode.
   onBeforeSave?: () => Promise<boolean> | boolean;
-  // false hands the assembled input to onDraftSubmit instead of writing it:
-  // the control center's draft records it as a change and deploys it later.
   useSave?: boolean;
   onDraftSubmit?: (input: ProviderConnectInput) => void;
-  // Names the account list can't know about — a draft's pending providers — so
-  // a catalog default doesn't collide with one.
   takenNames?: string[];
 };
 
@@ -192,9 +186,6 @@ let modelKeySeq = 0;
 // placeholder rather than something that can be sent to a vendor.
 export const MASKED_API_KEY = "••••••••";
 
-// A password-type field next to a text one is what password managers read as a
-// login, so connecting a provider raised a "save login?" prompt. Same opt-out
-// the reverse-proxy auth modals carry.
 const NO_PASSWORD_MANAGER = {
   autoComplete: "off",
   "data-1p-ignore": true,
@@ -234,9 +225,6 @@ export default function AIProviderModal({
 
   const isEdit = !!provider;
 
-  // "OpenAI API" twice over is two providers nothing tells apart, so a catalog
-  // default that is already taken gets the canvas's " (n)" suffix. Only on a
-  // create: an edit keeps the name the record carries.
   const takenProviderNames = useMemo(
     () =>
       new Set([
@@ -611,7 +599,6 @@ export default function AIProviderModal({
       enabled: true,
     };
 
-    // Draft: no request, no endpoint bootstrap — the deploy does both.
     if (!useSave) {
       onDraftSubmit?.(input);
       closeAfterSave();

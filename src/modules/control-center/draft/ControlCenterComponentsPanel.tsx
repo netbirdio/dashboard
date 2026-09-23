@@ -153,7 +153,6 @@ type PanelCategory =
 const CATEGORIES: {
   id: PanelCategory;
   label: string;
-  // Not LucideIcon: the Agent Network mark is one of the repo's own SVGs.
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }[] = [
   { id: "peers", label: "Peers", icon: MonitorSmartphoneIcon },
@@ -430,8 +429,6 @@ const PanelContent = React.memo(
     const addGroupToAgentPolicy = useCallback(
       (policyNodeId: string, group: Group) => {
         if (!group.id) return false;
-        // Read through the instance, not the panel's subscription: that is
-        // inert while the panel is closed, and a drop lands after it closes.
         const node = reactFlow.getNodes().find((n) => n.id === policyNodeId);
         const nodeData = node?.data as { id?: string; policy?: AgentPolicy };
         const policy =
@@ -520,9 +517,6 @@ const PanelContent = React.memo(
         data: Peer | Group | NetworkResource | Network,
       ): OnDropAction => {
         return ({ position, targetNodeId }) => {
-          // A group let go on an agent policy joins its source side, the way
-          // connecting the two does — an agent policy has no other side a
-          // group could land on.
           const droppedOnAgentPolicy =
             type === NodeType.GroupNode &&
             targetNodeId?.startsWith("agent-policy-") &&
@@ -1335,9 +1329,6 @@ const PanelContent = React.memo(
       });
 
     // Rows build lazily so opening the panel doesn't render every entity list.
-    // Mounted for the life of the page, so while it is closed it renders no
-    // rows at all: the row builders walk every peer, group, resource, policy
-    // and provider, and the panel is invisible until it opens.
     const sections: { title?: string; rows: React.ReactNode[] }[] = !open
       ? []
       : (isSearching
@@ -1457,9 +1448,6 @@ const PanelContent = React.memo(
             }
           }}
           className={cn(
-            // `invisible` and not opacity alone: the panel is mounted for the
-            // life of the page, and an opacity-0 panel keeps its search input
-            // and every row in the tab order and the accessibility tree.
             !open && "pointer-events-none invisible",
             // Must stay above the group panel (z-20).
             "absolute bottom-[80px] left-1/2 z-30",

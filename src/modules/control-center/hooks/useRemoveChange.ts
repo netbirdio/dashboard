@@ -282,9 +282,6 @@ export function useRemoveChange() {
             policyGroupIds(p).includes(change.groupId),
           );
           redrawPolicies(refs, next);
-          // Agent policies the deletion stripped: the restored change carries
-          // the group back, and a policy whose change was dropped entirely is
-          // redrawn from its live record.
           const restoredAgent = new Map<string, AgentPolicy>();
           next.forEach((c) => {
             if (
@@ -323,8 +320,6 @@ export function useRemoveChange() {
           draftRefs.forEach(
             (c) => c.type === "create-policy" && drawPolicyOnCanvas(c.policy),
           );
-          // Neither pass drew it, so the group comes back on its own — the
-          // agent redraw counts, or the group lands twice.
           if (
             refs.length === 0 &&
             draftRefs.length === 0 &&

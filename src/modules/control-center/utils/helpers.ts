@@ -41,17 +41,12 @@ export const getNetworksFromPolicy = (networks: Network[], policy: Policy) => {
   });
 };
 
-// Users are not on the Group record (they carry the group on `auto_groups`), so
-// the count is passed in where a caller has the list to count from.
 export const getGroupCountLabel = (group?: Group, userCount = 0) => {
   const peerCount = group?.peers_count || 0;
   const resourceCount = group?.resources_count || 0;
   if (peerCount === 0 && resourceCount === 0 && userCount === 0) {
     return "No Peers";
   }
-  // Biggest first, and on a tie the order here decides — resources have always
-  // led peers, and users lead both: a group reaching an AI provider does it
-  // through its users.
   return [
     { count: userCount, label: singularize("Users", userCount, true) },
     {
@@ -792,8 +787,6 @@ export function isFocusWorthy(
   if (!edges.some((e) => e.source === nodeId || e.target === nodeId)) {
     return false;
   }
-  // Agent policies are policy pills too: a canvas holding one of each has two
-  // paths, and dimming the other is exactly what Focus is for.
   const policyCount = nodes.filter(
     (n) => n.type === "policyNode" || n.type === "agentPolicyNode",
   ).length;
@@ -835,9 +828,6 @@ export function orderFrameResources(
 const NO_NODES: CanvasNode[] = [];
 
 // Ignores positions/measure/drag state so node drags don't re-render mounted consumers.
-// `enabled: false` keeps an always-mounted consumer subscribed but inert: the
-// selector returns the same empty array for every store update, so a hidden
-// panel does not re-render (and rebuild its lists) on canvas changes.
 export function useStructuralNodes(options?: {
   selection?: boolean;
   enabled?: boolean;
@@ -861,9 +851,6 @@ export function useStructuralNodes(options?: {
   );
 }
 
-// A policy pill, access-control or agent-network. Both hold their sides fixed —
-// sources enter on the left, destinations leave on the right — and an agent
-// policy's id does NOT start with "policy-", so a plain prefix test misses it.
 export const isPolicyNodeId = (id: string) =>
   id.startsWith("policy-") || id.startsWith("agent-policy-");
 

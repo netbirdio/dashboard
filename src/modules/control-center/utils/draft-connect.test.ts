@@ -727,8 +727,6 @@ describe("handleDraftConnect — agent network", () => {
       }),
     ]);
     handleDraftConnect(connect("group-g-dev", "agent-policy-ap-1"), deps);
-    // One source group per policy: setAgentSourceGroup decides the swap (and
-    // confirms it) rather than the connect stacking a second group on.
     expect(deps.setAgentSourceGroup).toHaveBeenCalledWith(
       existingAgentPolicy,
       "g-dev",
@@ -740,7 +738,6 @@ describe("handleDraftConnect — agent network", () => {
       destinationProviderIds: ["prov-1"],
     });
     const deps = makeDeps([
-      // A group the draft invented: no id, only a name.
       node("group-new-abc", "groupNode", { group: { name: "Ops" } }),
       node("agent-policy-new-1", "agentPolicyNode", { policy: draft }),
     ]);
@@ -765,8 +762,6 @@ describe("handleDraftConnect — agent network", () => {
       node("group-g-dev", "groupNode", { group: groupDev }),
       node("agent-policy-ap-1", "agentPolicyNode", { id: "ap-1" }),
     ]);
-    // The draft already swapped this policy's provider; connecting a group
-    // must not hand the pre-edit record back to the changeset.
     deps.pendingAgentPolicy.mockReturnValue({
       destinationProviderIds: ["prov-2"],
     });

@@ -66,9 +66,6 @@ export const ReviewDeployModal = ({
       groups,
       networks,
       networkResources,
-      // A user membership change PUTs the whole user, and an agent-network
-      // update or delete diffs against its live record — the code view needs
-      // all three to show what the request replaces.
       users,
       providers: agentProviders,
       agentPolicies,

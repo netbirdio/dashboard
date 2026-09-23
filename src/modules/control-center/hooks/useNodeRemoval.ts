@@ -18,9 +18,6 @@ export function useNodeRemoval() {
   const { trackDeletePolicy, trackDeleteProvider, trackDeleteAgentPolicy } =
     useDraftChangeset();
 
-  // A draft provider or agent policy exists only as its create change, so
-  // taking its node off the canvas has to drop that too — the trackers do it
-  // for a "new-" id.
   const removeAgentNodeFromCanvas = useCallback(
     (node: Node) => {
       const data = node.data as { id?: string; name?: string };
@@ -76,8 +73,6 @@ export function useNodeRemoval() {
       const isFramed = !!node.parentId;
       return isDraftResource || !isFramed;
     }
-    // Agent Network nodes: an existing record off the canvas is a deletion,
-    // which has to confirm, so only a draft one can be silently removed.
     if (
       node.type === NodeType.ProviderNode ||
       node.type === NodeType.AgentPolicyNode

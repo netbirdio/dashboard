@@ -35,7 +35,6 @@ vi.mock("@/modules/control-center/hooks/useDraftNodeCreation", () => ({
     addBlankPolicy: vi.fn(),
   }),
 }));
-// The menu only calls these to open the agent-network wizards.
 export const openProviderWizard = vi.fn();
 export const openAgentPolicyWizard = vi.fn();
 vi.mock("@/modules/control-center/contexts/ControlCenterPolicyModals", () => ({

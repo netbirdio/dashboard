@@ -644,11 +644,6 @@ export function useDraft() {
         }
       }
 
-      // A draft entered from a view that drew the agent network keeps showing
-      // what each group reaches. Anchored on the draft's own source nodes
-      // rather than the live view's select node, which the draft has no
-      // equivalent of. The nodes are editable here like any other: their
-      // changes ride in the changeset.
       allNodes
         .filter((n) => n.type === "groupNode")
         .forEach((n) => {

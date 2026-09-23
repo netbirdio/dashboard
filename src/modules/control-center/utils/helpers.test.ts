@@ -471,14 +471,12 @@ describe("getGroupCountLabel", () => {
 
   it("counts users, which live on the user record rather than the group", () => {
     expect(getGroupCountLabel({ name: "g" } as Group, 2)).toBe("2 Users");
-    // Biggest first, as with peers and resources.
     expect(getGroupCountLabel({ name: "g", peers_count: 1 } as Group, 3)).toBe(
       "3 Users, 1 Peer",
     );
     expect(getGroupCountLabel({ name: "g", peers_count: 5 } as Group, 1)).toBe(
       "5 Peers, 1 User",
     );
-    // A group with users is not "No Peers".
     expect(getGroupCountLabel({ name: "g" } as Group, 0)).toBe("No Peers");
   });
 });
@@ -883,9 +881,6 @@ describe("isEmptiedPolicy and isDeployablePolicy leave no gap between them", () 
 describe("isPolicyNodeId", () => {
   it("holds both pills to their fixed sides", () => {
     expect(isPolicyNodeId("policy-abc")).toBe(true);
-    // The edge's whole side logic hangs on this: "agent-policy-" does not
-    // start with "policy-", so a plain prefix test let the line attach to
-    // whichever side happened to be nearer.
     expect(isPolicyNodeId("agent-policy-abc")).toBe(true);
   });
 

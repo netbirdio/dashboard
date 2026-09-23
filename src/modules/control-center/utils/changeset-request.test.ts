@@ -507,7 +507,6 @@ describe("id placeholders in preview", () => {
   });
 });
 
-// The code view is copyable, so a credential rendered here reaches a clipboard.
 describe("agent network and user membership bodies", () => {
   const providerInput = {
     providerId: "openai_api",
@@ -535,7 +534,6 @@ describe("agent network and user membership bodies", () => {
 
     expect(JSON.stringify(create.body)).not.toContain("sk-live-secret");
     expect(JSON.stringify(update.body)).not.toContain("sk-live-rotated");
-    // The wire shape the deploy sends, redacted — not the dashboard's own.
     expect((update.body as { api_key?: string }).api_key).toBe("••••••••");
     expect((create.body as { provider_id?: string }).provider_id).toBe(
       "openai_api",
@@ -565,7 +563,6 @@ describe("agent network and user membership bodies", () => {
     const body = request.body as Record<string, unknown>;
     expect(body).toMatchObject({ source_groups: ["g1"] });
     expect(body).not.toHaveProperty("sourceGroups");
-    // A provider that does not exist yet cannot be shown as a real id.
     expect((body.destination_provider_ids as string[])[0]).not.toBe("new-p1");
   });
 
@@ -589,15 +586,12 @@ describe("agent network and user membership bodies", () => {
     expect(request.method).toBe("PUT");
     expect(request.path).toBe("/users/u1");
     expect(request.body).toMatchObject({ id: "u1", name: "Ada" });
-    // "Ops" is a draft group, so it renders as a placeholder id, not the name.
     const sent = (request.body as { auto_groups: string[] }).auto_groups;
     expect(sent[0]).toBe("g1");
     expect(sent[1]).not.toBe("Ops");
   });
 });
 
-// Without a "before", the code view renders an update as an all-plus block:
-// the reviewer sees the whole record arriving, not what the request changes.
 describe("the before side of the new change types", () => {
   it("diffs a membership change against the user's current groups", () => {
     const before = buildBeforeRequest(

@@ -50,7 +50,6 @@ export const changeIcon = (change: DraftChange, size = 14) => {
     case "create-provider":
     case "update-provider":
     case "delete-provider":
-      // The mark the provider modal heads itself with.
       return <SparklesIcon size={size} />;
     case "create-agent-policy":
     case "update-agent-policy":

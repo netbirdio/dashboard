@@ -113,8 +113,6 @@ export function useIsContextMenuTarget(nodeId: string): boolean {
 // identity on every canvas update.
 interface CanvasUIState {
   placeholderIp: string;
-  // Users carry their groups on `auto_groups`, so a group's user count can only
-  // be counted from the user list — read once here rather than in every node.
   groupUserCounts: Map<string, number>;
 }
 
@@ -239,7 +237,6 @@ export function CanvasStateProvider({
     [account?.settings?.network_range],
   );
 
-  // Same SWR key the data layer uses, so this shares its request.
   const { data: users } = useFetchApi<User[]>("/users?service_user=false");
   const groupUserCounts = useMemo(() => {
     const counts = new Map<string, number>();

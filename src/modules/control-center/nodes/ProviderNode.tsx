@@ -50,14 +50,10 @@ export const ProviderNode = ({ data }: ProviderNodeProps) => {
               "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1 mt-1 relative top-[0.05rem]"
             }
           >
-            {/* Not TruncatedText: its container is w-full, which would push
-                the badge to the far edge instead of beside the name. */}
             <span className={"truncate min-w-0"}>{data.name}</span>
             {data.id?.startsWith("new-") ? <SmallBadge /> : null}
           </span>
           {data.upstreamUrl && (
-            // Plain text, not TruncatedText: that renders a block, which
-            // breaks the half-step nudge DeviceCard's second line relies on.
             <span
               className={
                 "font-normal text-sm text-nb-gray-400 relative -top-[0.1rem] block truncate"
@@ -69,7 +65,6 @@ export const ProviderNode = ({ data }: ProviderNodeProps) => {
         </div>
       </div>
 
-      {/* Connecting a provider is a draft gesture: it records a change. */}
       <AllHandles />
       {isDraft && (
         <>

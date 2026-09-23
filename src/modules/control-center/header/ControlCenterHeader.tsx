@@ -480,26 +480,17 @@ function HeaderTopRight() {
   );
 }
 
-// Entering draft fires a burst of state updates (canvas rebuild, layout init,
-// history capture). A JS-driven spring stutters under that burst, which is
-// what read as a flash — hence the CSS transition below.
 function HeaderBottom() {
   const { isDraft } = useDraftMode();
 
   return (
-    // Always mounted, and animated in CSS rather than framer: transform and
-    // opacity transitions run on the compositor, so the heavy renders that
-    // entering draft triggers on the main thread can't stutter them — which is
-    // what read as the toolbar flashing.
     <div
       className={cn(
         "absolute bottom-0 left-1/2 z-10 -translate-x-1/2",
         "transition-[opacity,transform,visibility] duration-300 ease-out will-change-transform",
         isDraft
           ? "visible opacity-100 translate-y-0"
-          : // Visibility flips only at the end of the transition, which keeps the
-            // hidden toolbar out of the tab order without cutting the fade short.
-            "invisible opacity-0 translate-y-20 pointer-events-none",
+          : "invisible opacity-0 translate-y-20 pointer-events-none",
       )}
     >
       <div className={"py-4"}>

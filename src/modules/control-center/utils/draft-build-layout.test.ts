@@ -174,9 +174,6 @@ describe("applyDraftBuildLayout", () => {
     ]);
 
     expect(at(updatedNodes, "src").y).toBe(nodeYNudge("peerNode"));
-    // The destination column is unnudged: live draws a destination peer as a
-    // destinationResourceNode, which carries no nudge, and the draft must not
-    // move it on the switch.
     expect(at(updatedNodes, "dst").y).toBe(0);
   });
 });

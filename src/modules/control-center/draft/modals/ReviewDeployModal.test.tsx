@@ -31,7 +31,6 @@ vi.mock("@/modules/control-center/hooks/useRemoveChange", () => ({
     previewRemove: () => ({ summary: "", effects: [] }),
   }),
 }));
-// The code view diffs an agent-network update against its live record.
 vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
   useAIProviders: () => ({ providers: [], policies: [] }),
 }));

@@ -172,9 +172,6 @@ export function useDraftNodeCreation() {
     [placeNode, policies, reactFlow],
   );
 
-  // Agent Network nodes. A provider needs a URL and a credential before it can
-  // be created, so dropping one opens the modal and the node lands on save —
-  // unlike a blank policy, which is meaningful while still empty.
   const placeProviderNode = useCallback(
     (provider: AgentProviderNodeData, position?: XYPosition) => {
       placeNode(
@@ -231,9 +228,6 @@ export function useDraftNodeCreation() {
         guardrailIds: [],
         limits: EMPTY_POLICY_LIMITS,
       };
-      // No change yet: an agent policy with no source and no provider is the
-      // same canvas-only sketch an empty access-control policy is, and the
-      // changeset picks it up once the modal gives it both sides.
       placeAgentPolicyNode({ ...policy, id: clientId }, position);
     },
     [agentPolicies, placeAgentPolicyNode, reactFlow],

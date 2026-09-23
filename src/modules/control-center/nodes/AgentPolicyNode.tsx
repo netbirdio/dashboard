@@ -27,8 +27,6 @@ export const AgentPolicyNode = ({ data, id }: AgentPolicyNodeProps) => {
   return (
     <div
       className={cn(
-        // `group/node` is what the connect bubbles reveal themselves on; without
-        // it they render and stay invisible. Same shell as PolicyNode.
         "relative group/node bg-nb-gray-940 hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer border border-nb-gray-800 rounded-full flex justify-between transition-all",
         !isActive && "opacity-60",
         isDraft &&
@@ -56,7 +54,6 @@ export const AgentPolicyNode = ({ data, id }: AgentPolicyNodeProps) => {
         </div>
       </div>
 
-      {/* Anchors for the edges only; the connect gestures use the bubbles. */}
       <Handle
         type="source"
         position={Position.Right}
@@ -72,8 +69,6 @@ export const AgentPolicyNode = ({ data, id }: AgentPolicyNodeProps) => {
         isConnectable={false}
       />
 
-      {/* Either bubble reaches the same side: a group is always a source and a
-          provider always a destination. */}
       {isDraft && (
         <>
           <ConnectHandle type={"source"} position={Position.Left} />

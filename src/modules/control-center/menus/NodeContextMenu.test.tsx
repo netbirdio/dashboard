@@ -112,7 +112,6 @@ vi.mock("@/modules/control-center/contexts/ControlCenterPolicyModals", () => ({
     openAgentPolicy: noop,
   }),
 }));
-// The agent-network items read their live actions off this context.
 vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
   useAIProviders: () => ({
     toggleProvider: noop,

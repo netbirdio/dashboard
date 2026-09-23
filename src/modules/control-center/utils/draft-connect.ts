@@ -24,7 +24,6 @@ export type DraftConnectDeps = {
   agentPolicies?: AgentPolicy[];
   updateDraftAgentPolicy?: (policy: AgentPolicy) => void;
   setAgentSourceGroup?: (policy: AgentPolicy, groupRef: string) => void;
-  // The changeset's view of an existing agent policy, which supersedes live.
   pendingAgentPolicy?: (id: string) => Partial<AgentPolicy> | undefined;
   openAgentPolicyWizard?: (
     prefill: { sourceGroups: string[]; destinationProviderIds: string[] },
@@ -70,7 +69,6 @@ export const parseNodeId = (id: string): NodeInfo | undefined => {
   if (id.startsWith("network-new-")) return { kind: "network", id };
   if (id.startsWith("network-"))
     return { kind: "network", id: id.replace("network-", "") };
-  // Before the "policy-" test: an agent policy's id embeds it.
   if (id.startsWith("agent-policy-"))
     return { kind: "agentPolicy", id: id.replace("agent-policy-", "") };
   if (id.startsWith("provider-"))
@@ -167,9 +165,6 @@ export function handleDraftConnect(
     };
   };
 
-  // Agent Network. An agent policy authorizes GROUPS to reach PROVIDERS, so a
-  // group always lands on the source side and a provider on the destination
-  // side — whichever end of the drag it was.
   const isAgentNode = (info: NodeInfo) =>
     info.kind === "agentPolicy" || info.kind === "provider";
   if (isAgentNode(sourceInfo) || isAgentNode(targetInfo)) {
@@ -182,15 +177,10 @@ export function handleDraftConnect(
 
     const agentPolicyOf = (nodeId: string): AgentPolicy | undefined => {
       const node = currentNodes.find((n) => n.id === nodeId);
-      // A draft policy's node carries the whole record; an existing one is
-      // read from the domain list, which the node only mirrors.
       const onNode = (node?.data as { policy?: AgentPolicy })?.policy;
       if (onNode) return onNode;
       const id = nodeId.replace("agent-policy-", "");
       const live = agentPolicies?.find((p) => p.id === id);
-      // An existing policy's node mirrors live, so a draft edit lives only in
-      // the changeset — dragging onto it would otherwise write the pre-edit
-      // record back and silently revert that edit.
       const pending = deps.pendingAgentPolicy?.(id);
       return live || pending
         ? ({ ...(live ?? {}), ...(pending ?? {}), id } as AgentPolicy)
@@ -223,17 +213,12 @@ export function handleDraftConnect(
       }
       const group = findGroup(groupEnd!.info.id);
       if (!group) return;
-      // A draft group travels as its NAME, the same ref an access-control
-      // policy carries for one; the deploy resolves it once the group lands.
       const ref = group.id ?? group.name;
       if (!ref || policy.sourceGroups.includes(ref)) return;
       setAgentSourceGroup?.(policy, ref);
       return;
     }
 
-    // Group ↔ provider draws a policy that doesn't exist yet, so the modal
-    // opens prefilled and the node lands on save — as node↔node does for an
-    // access-control policy.
     if (providerEnd && groupEnd) {
       const group = findGroup(groupEnd.info.id);
       const ref = group?.id ?? group?.name;

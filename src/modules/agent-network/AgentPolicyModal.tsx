@@ -61,20 +61,11 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   policy?: AgentPolicy;
-  // Values to open a CREATE on — the control center's canvas prefills both
-  // sides when a group is connected to a provider. Unlike `policy` it never
-  // turns the save into an update.
   initial?: Partial<Omit<AgentPolicy, "id">>;
-  // Providers that exist only in a draft changeset: they are not in the
-  // account's list yet, so nothing would render the one a policy names.
   extraProviders?: AIProvider[];
   takenNames?: string[];
   initialTab?: string;
-  // Asked before the save runs, for hosts where writing straight to the
-  // account deserves a confirmation — the control center in live mode.
   onBeforeSave?: () => Promise<boolean> | boolean;
-  // false hands the assembled policy to onDraftSubmit instead of writing it:
-  // the control center's draft records it as a change and deploys it later.
   useSave?: boolean;
   onDraftSubmit?: (policy: Omit<AgentPolicy, "id">) => void;
 };
@@ -137,8 +128,6 @@ function AgentPolicyModalContent({
     updatePolicy,
     policies,
   } = useAIProviders();
-  // A draft provider is not in the account list, so without this the policy
-  // that names it shows an empty Provider field.
   const providers = useMemo(
     () => [
       ...accountProviders,
@@ -171,17 +160,11 @@ function AgentPolicyModalContent({
     setSourceGroupsRaw,
     { getGroupsToUpdate: getSourceGroupsToUpdate },
   ] = useGroupHelper({
-    // Refs, not plain ids: a draft group is named rather than identified, and
-    // useGroupHelper resolves strings by id only. The dropdown options carry
-    // the draft groups the control center added, so resolve against those.
     initial: (seed?.sourceGroups ?? []).flatMap((ref) => {
       const byId = dropdownOptions.find((g) => g.id === ref);
       if (byId) return [byId];
       const byName = dropdownOptions.find((g) => !g.id && g.name === ref);
       if (byName) return [byName];
-      // A ref that resolves to nothing is a group that is gone, NOT a group to
-      // invent: turning it into an id-less entry would have the save POST a
-      // brand-new group named after the missing group's id.
       return [];
     }),
   });
@@ -261,10 +244,6 @@ function AgentPolicyModalContent({
     // editing the source field.
     const sourceGroup = sourceGroups[0];
 
-    // Draft: no request at all — creating the group here would write to the
-    // account from a draft. An id-less group travels as its NAME, the same ref
-    // an access-control policy carries, and the deploy resolves it against the
-    // create-group change that lands first.
     if (!useSave) {
       onDraftSubmit?.({
         name,
@@ -279,9 +258,6 @@ function AgentPolicyModalContent({
       return;
     }
 
-    // Mirror Access Control's flow: create any newly-named groups first,
-    // refresh the /groups SWR cache so freshly-created entries are
-    // resolvable in the table, then post the policy with all ids known.
     const calls = getSourceGroupsToUpdate().map((g) => g.promise());
     const created = (await Promise.all(calls).then((groups) => {
       mutate("/groups");
@@ -605,8 +581,6 @@ function ProviderMultiSelect({
             }
           >
             {selected.length === 0 ? (
-              // Keyed on what actually renders, not on `value`: an id whose
-              // provider is gone would otherwise leave the trigger blank.
               <span className={"pl-1"}>Select provider(s)...</span>
             ) : (
               selected.map((p) => (

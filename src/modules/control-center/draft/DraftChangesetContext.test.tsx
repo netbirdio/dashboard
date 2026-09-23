@@ -1884,7 +1884,6 @@ describe("agent network changes", () => {
     expect(result.current.changes).toHaveLength(1);
     const change = result.current.changes[0];
     expect(change.type).toBe("update-agent-policy");
-    // A form save outranks the toggle it merged with.
     expect((change as { origin?: string }).origin).toBe("edit");
     expect((change as { policy: Record<string, unknown> }).policy).toEqual({
       enabled: false,
@@ -1990,8 +1989,6 @@ describe("user group membership", () => {
       }),
     );
     expect(result.current.changes).toHaveLength(1);
-    // Unchecking it again: the labels still describe a gesture, but the list
-    // that would deploy is the account's own, so there is nothing to send.
     act(() =>
       result.current.trackUpdateUserGroups({
         ...membership(["g1"]),
@@ -2045,8 +2042,6 @@ describe("user group membership", () => {
   });
 });
 
-// A group deletion that empties an agent policy must leave something behind
-// for the discard to restore, and must survive an unrelated toggle.
 describe("an agent policy emptied by a group deletion", () => {
   const basePolicy = {
     id: "new-1",
@@ -2149,8 +2144,6 @@ describe("an agent policy emptied by a group deletion", () => {
   });
 });
 
-// The group DELETE runs last and is refused while anything references the
-// group — a membership change or an agent policy naming it is exactly that.
 describe("a group deletion blocks what still names the group", () => {
   const withDelete = (extra: unknown) =>
     [

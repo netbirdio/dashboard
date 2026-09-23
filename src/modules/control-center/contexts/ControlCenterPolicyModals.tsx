@@ -62,7 +62,6 @@ interface PolicyContextType {
   updateDraftAgentPolicy: (policy: AgentPolicy) => void;
   setAgentSourceGroup: (policy: AgentPolicy, groupRef: string) => void;
   drawAgentPolicyOnCanvas: (policy: AgentPolicy) => void;
-  // Create flows. A position places the node where the drop landed.
   openProviderWizard: (position?: XYPosition) => void;
   openAgentPolicyWizard: (
     prefill: { sourceGroups: string[]; destinationProviderIds: string[] },
@@ -128,9 +127,6 @@ export function ControlCenterPolicyProvider({
       dismissOnOutsideClick: true,
     });
 
-  // Agent-network records have no draft representation: they are not in the
-  // changeset and a save writes to the account whichever mode the canvas is
-  // in, so this one confirms in draft too — saying why.
   const confirmLiveAgentSave = () =>
     confirm({
       title: "Save changes?",
@@ -180,8 +176,6 @@ export function ControlCenterPolicyProvider({
         : undefined;
     }
     const live = agentPolicyDomain?.find((p) => p.id === selectedAgentPolicy);
-    // An existing policy's draft edits live in the changeset, not on its node
-    // (which mirrors live) — without this the modal reopens on stale sides.
     const pending = changes.find(
       (c) =>
         c.type === "update-agent-policy" &&
@@ -240,9 +234,6 @@ export function ControlCenterPolicyProvider({
     if (provider) openProviderEdit(provider);
   };
 
-  // A provider can't exist until its URL and credential are typed, so the
-  // create opens the modal and the node lands on save. The drop position is
-  // held so the node appears where the user let go.
   const [providerWizard, setProviderWizard] = useState<{
     position?: XYPosition;
   } | null>(null);
@@ -725,8 +716,6 @@ export function ControlCenterPolicyProvider({
       return true;
     };
 
-    // New nodes join the column their side already occupies, so they land
-    // where Auto Arrange would put them rather than on the anchor.
     const columnOf = (ids: string[]) =>
       ids.map((id) => findNode(id)?.position).filter(Boolean) as XYPosition[];
     const nextInColumn = (
@@ -741,8 +730,6 @@ export function ControlCenterPolicyProvider({
           }
         : { x: fallbackX, y: base.y + newCount * 110 };
 
-    // A source entry is a live group's id or a draft group's NAME, and a group
-    // already on the canvas is reused whatever role its node plays.
     const isGroupish = (n: { type?: string }) =>
       n.type === "groupNode" ||
       n.type === "sourceGroupNode" ||
@@ -828,8 +815,6 @@ export function ControlCenterPolicyProvider({
       .filter(Boolean);
     if (!fallbackPosition && !findNode(policyNodeId) && matched.length > 0) {
       const bounds = reactFlow.getNodesBounds(matched as any);
-      // The pill has no fixed width; estimate it from the name, as the
-      // access-control policy node does.
       const POLICY_NODE_HEIGHT = 36;
       const width = Math.min(248, 64 + Math.min(policy.name.length, 26) * 7);
       policyPos = {
@@ -842,8 +827,6 @@ export function ControlCenterPolicyProvider({
       id: policy.id,
       name: policy.name,
       enabled,
-      // Draft policies have no API record to read back, so the node carries
-      // the whole thing for the editor and the changeset.
       ...(isDraftPolicy ? { policy } : {}),
     };
     if (!findNode(policyNodeId)) {
@@ -870,8 +853,6 @@ export function ControlCenterPolicyProvider({
       const provider =
         agentProviders?.find((p) => p.id === providerId) ??
         draftProvider(providerId);
-      // Matches the live overlay: a disabled provider dims its edge even when
-      // the policy is enabled, so draft and live draw the same graph.
       const providerEnabled = provider ? provider.status !== "disabled" : true;
       policyEdges.push({
         id: `agent-dst-${policy.id}-${providerId}`,
@@ -898,12 +879,8 @@ export function ControlCenterPolicyProvider({
     );
   };
 
-  // The agent twin of ensureDraftGroupChanges: a policy naming a group the
-  // draft invented only deploys if that group is created first.
   const ensureAgentDraftGroupChanges = (policy: AgentPolicy) => {
     policy.sourceGroups.forEach((ref) => {
-      // A ref naming an id-less canvas group is a draft group; a live group's
-      // id matches no group's name, so an id ref falls through.
       const isDraftGroup = reactFlow
         .getNodes()
         .some(
@@ -914,8 +891,6 @@ export function ControlCenterPolicyProvider({
       const exists = changes.some(
         (c) => c.type === "create-group" && c.name === ref,
       );
-      // Same clientId shape as the access-control path, so a group both name
-      // produces one create-group change, not two.
       if (!exists)
         trackCreateGroup({ clientId: `group-new-${ref}`, name: ref });
     });
@@ -942,9 +917,6 @@ export function ControlCenterPolicyProvider({
         });
       }
     } else {
-      // Authorizing nothing is not an update the API accepts: a draft policy
-      // goes back to being a canvas-only sketch (the tracker drops its pending
-      // create), an existing one deploys as a deletion.
       trackDeleteAgentPolicy({ agentPolicyId: policy.id, name: policy.name });
     }
     drawAgentPolicyOnCanvas(policy, fallbackPosition);
@@ -958,9 +930,6 @@ export function ControlCenterPolicyProvider({
     )?.group?.name as string | undefined) ??
     ref;
 
-  // An agent policy authorizes exactly one group, so a second one REPLACES the
-  // first — a quiet swap of who may reach the provider, which is worth asking
-  // about.
   const setAgentSourceGroup = (policy: AgentPolicy, groupRef: string) => {
     const current = policy.sourceGroups[0];
     const apply = () =>
@@ -1126,8 +1095,6 @@ export function ControlCenterPolicyProvider({
       networkResources,
       networks,
       agentProviders,
-      // drawAgentPolicyOnCanvas and setAgentSourceGroup resolve refs through
-      // this list, so a stale one names the wrong group.
       groups,
     ],
   );
@@ -1165,19 +1132,13 @@ export function ControlCenterPolicyProvider({
           />
         </Modal>
       )}
-      {/* Agent-network writes go straight to the account too, so live saves
-          confirm the same way a policy's do. */}
       <AgentPolicyModal
         open={agentPolicyModalOpen}
         onOpenChange={(o) => {
           setAgentPolicyModalOpen(o);
-          // A cancelled connect leaves nothing behind: the policy it would
-          // have created exists only as this prefill.
           if (!o) setAgentPolicyWizard(null);
         }}
         policy={currentAgentPolicy}
-        // A connect prefills a policy that does not exist yet, so it seeds the
-        // form without turning the save into an update.
         initial={agentPolicyWizard?.policy}
         extraProviders={isDraft ? draftProviders : undefined}
         takenNames={isDraft ? draftAgentPolicyNames : undefined}
@@ -1186,8 +1147,6 @@ export function ControlCenterPolicyProvider({
         onDraftSubmit={(policy) => {
           const id = selectedAgentPolicy;
           if (!id) return;
-          // Redraws the edges too: the modal is where a policy's groups and
-          // providers change, and the canvas has to follow.
           updateDraftAgentPolicy(
             { ...policy, id },
             agentPolicyWizard?.position,
@@ -1202,13 +1161,9 @@ export function ControlCenterPolicyProvider({
             if (!o) closeProviderEdit();
           }}
           provider={editingProvider}
-          // In draft the edit is a change, not a request; live confirms first.
           useSave={!isDraft}
           onBeforeSave={isDraft ? undefined : confirmLiveAgentSave}
           onDraftSubmit={(input) => {
-            // The modal shows a mask where a stored credential is: an edit
-            // that did not rotate the key must not carry it into the
-            // changeset, or the deploy PUTs bullets over the real one.
             const { apiKey, ...rest } = input;
             const updates =
               apiKey && apiKey.trim() !== MASKED_API_KEY
@@ -1229,8 +1184,6 @@ export function ControlCenterPolicyProvider({
       {providerWizard && (
         <AIProviderModal
           open={true}
-          // Providers pending in the changeset aren't in the account list, so
-          // the catalog default would collide with one unseen.
           takenNames={isDraft ? draftProviderNames : undefined}
           onOpenChange={(o) => {
             if (!o) setProviderWizard(null);

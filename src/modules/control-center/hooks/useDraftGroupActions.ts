@@ -63,8 +63,6 @@ export const getNextNewGroupName = (taken: Set<string>) => {
 
 // The edges decide which side a self-ref instance strips. Accumulating into
 // `updatesById` lets a batch strip several groups from one policy without last-write-wins.
-// Agent policies name groups on their source side only, so an edge either way
-// between a group node and an agent policy node is that membership.
 const collectAgentGroupStrip = (
   allNodes: Node[],
   allEdges: Edge[],
@@ -404,8 +402,6 @@ export function useDraftGroupActions() {
     [reactFlow, updateDraftPolicy],
   );
 
-  // Same next-tick rule as deferPolicyStrips: the removal must hit the canvas
-  // before drawAgentPolicyOnCanvas rebuilds the edges.
   const deferAgentPolicyStrips = useCallback(
     (policyUpdates: AgentPolicy[]) => {
       if (policyUpdates.length === 0) return;
@@ -698,12 +694,7 @@ export function useDraftGroupActions() {
     return [...canvasNodes, ...offCanvas];
   }, [reactFlow, policies, changes]);
 
-  // The agent twin of policySnapshots: a policy off the canvas still blocks the
-  // group DELETE, and the canvas copy wins where both exist (pending edits).
   const agentPolicySnapshots = useCallback((): AgentPolicy[] => {
-    // An existing policy's node mirrors live and carries no record, so its
-    // pending edit lives only in the changeset. Reading live alone would
-    // recompute the strip from the pre-edit policy and silently revert it.
     const pendingView = (policy: AgentPolicy): AgentPolicy => {
       const pending = changes.find(
         (c) =>
@@ -764,17 +755,12 @@ export function useDraftGroupActions() {
         }),
       );
 
-      // An agent policy naming the group blocks the same DELETE, and stripping
-      // its only source group empties it — which the API refuses just as it
-      // refuses a rule authorizing nothing, so that policy goes too.
       const agentUpdates = agentGroupDeletionUpdates(
         agentPolicySnapshots(),
         groups,
       );
       agentUpdates.forEach(({ policy, basePolicy, groupIds }) => {
         const groupDeletion = { groupIds, basePolicy };
-        // Only when the strip is what emptied it: a policy that already had no
-        // providers is the user's own unfinished work, not this deletion's.
         const emptiedByStrip =
           policy.sourceGroups.length === 0 &&
           basePolicy.sourceGroups.length > 0;
@@ -902,8 +888,6 @@ export function useDraftGroupActions() {
             }”`,
       );
 
-      // Deleting a group also empties the agent policies it is the source of,
-      // and those deploy as deletions — the user is approving that too.
       const emptiedAgent = agentGroupDeletionUpdates(
         agentPolicySnapshots(),
         deletable.flatMap((n) => {

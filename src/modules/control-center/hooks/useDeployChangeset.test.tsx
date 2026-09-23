@@ -65,10 +65,7 @@ vi.mock("@/modules/control-center/hooks/useControlCenterData", () => ({
     users: liveUsers,
   }),
 }));
-// The agent-network writes go through the providers context; the deploy test
-// cares about ordering and payloads, so it records the calls instead.
 export const agentCalls: { name: string; args: unknown[] }[] = [];
-// What each mutator reports back; a test flips one to model a refused write.
 const agentResults: Record<string, unknown> = {};
 const agentFn =
   (name: string, result?: unknown | (() => unknown)) =>
@@ -78,8 +75,6 @@ const agentFn =
   };
 vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
   useAIProviders: () => ({
-    // These mutators swallow their own API errors and report success as a
-    // boolean, so the fixture answers the way the real ones do.
     addProvider: agentFn("addProvider", () => agentResults.addProvider),
     updateProvider: agentFn(
       "updateProvider",
@@ -190,7 +185,6 @@ describe("agent network changes", () => {
       },
     }) as unknown as DraftChange;
 
-  // The source side is a ref, so every case here needs the group it names.
   beforeEach(() => {
     liveGroups = [{ id: "g1", name: "Agents" } as Group];
   });
@@ -234,7 +228,6 @@ describe("agent network changes", () => {
     await act(async () => void (await result.current.deploy()));
 
     const policyCall = agentCalls.find((c) => c.name === "addPolicy");
-    // The name ref is gone: what deploys is the id the group POST returned.
     expect(
       (policyCall?.args[0] as { sourceGroups: string[] }).sourceGroups,
     ).toEqual(["g-real"]);
@@ -1138,8 +1131,6 @@ describe("the deploy in-flight latch", () => {
   });
 });
 
-// Group membership for a USER is a write on the user, not on the group: the
-// API has no field for it on the group body.
 describe("user group membership", () => {
   const change = (groupRefs: string[]): DraftChange =>
     ({
@@ -1153,7 +1144,6 @@ describe("user group membership", () => {
     }) as unknown as DraftChange;
 
   it("PUTs the whole user with the new auto_groups", async () => {
-    // Every ref has to resolve, the groups the user was already in included.
     liveGroups = [
       { id: "g1", name: "Ops" } as Group,
       { id: "g-old", name: "Everyone" } as Group,
@@ -1210,10 +1200,6 @@ describe("user group membership", () => {
   });
 });
 
-// These mutators report failure instead of throwing, so without an explicit
-// check the deploy marks a refused write as deployed and moves on.
-// The modal shows a mask where a stored credential is; the changeset must
-// never carry it, or the deploy overwrites the real key with bullets.
 describe("a provider edit that did not rotate the key", () => {
   it("does not deploy the mask as the credential", async () => {
     changes = [
@@ -1222,7 +1208,6 @@ describe("a provider edit that did not rotate the key", () => {
         type: "update-provider",
         providerId: "p1",
         name: "OpenAI",
-        // What ControlCenterPolicyModals records after stripping the mask.
         updates: {
           name: "OpenAI renamed",
           upstreamUrl: "https://api.openai.com",

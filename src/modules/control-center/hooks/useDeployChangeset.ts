@@ -73,9 +73,6 @@ export function useDeployChangeset() {
   const resourceRequest = useApiCall<NetworkResource>("/networks", true);
   const routerRequest = useApiCall<NetworkRouter>("/networks", true);
   const userRequest = useApiCall<User>("/users", true);
-  // Agent Network writes go through the providers context rather than a raw
-  // useApiCall: it owns the camelCase → wire mapping and refreshes its own
-  // caches, so a deployed provider shows up on the canvas without a reload.
   const {
     addProvider,
     updateProvider: saveProvider,
@@ -131,8 +128,6 @@ export function useDeployChangeset() {
     };
 
     const providerClientMap = providerClientToId.current;
-    // A policy authored against a draft provider carries its clientId; deploy
-    // rewrites those to the ids the creates returned.
     const resolveProviderIds = (ids: string[] | undefined) =>
       (ids ?? []).map((id) => {
         if (!id.startsWith("new-")) return id;
@@ -439,7 +434,6 @@ export function useDeployChangeset() {
         }
         case "create-provider": {
           if (createdId) {
-            // Retry: the record exists, so this is a PUT of the same input.
             const ok = await saveProvider(createdId, change.input);
             if (!ok) {
               throw new Error(`Provider “${change.name}” was not saved.`);
@@ -455,7 +449,6 @@ export function useDeployChangeset() {
         }
         case "update-provider": {
           const ok = await saveProvider(change.providerId, change.updates);
-          // updateProvider resolves false when the API refused the credential.
           if (!ok) throw new Error(`Provider “${change.name}” was not saved.`);
           return;
         }
@@ -469,9 +462,6 @@ export function useDeployChangeset() {
         case "create-agent-policy": {
           const policy = {
             ...change.policy,
-            // A source entry is a live group's id or a draft group's NAME —
-            // the same ref an access-control policy carries, resolved the same
-            // way now that the create-group has deployed.
             sourceGroups: change.policy.sourceGroups.map(
               resolvers.groupIdForRef,
             ),
@@ -506,8 +496,6 @@ export function useDeployChangeset() {
                 }
               : {}),
           });
-          // These mutators report failure rather than throwing, so a change
-          // would otherwise be marked deployed on a refused write.
           if (!ok) {
             throw new Error(`Agent policy “${change.name}” was not saved.`);
           }
@@ -553,8 +541,6 @@ export function useDeployChangeset() {
     const forbidden = ordered.filter((c) => {
       const needed =
         CHANGE_PERMISSION[c.type as keyof typeof CHANGE_PERMISSION];
-      // Optional: a module the permissions payload didn't carry must read
-      // as "not allowed", not throw inside the deploy click.
       return needed && !permission[needed.module]?.[needed.action];
     });
     if (forbidden.length > 0) {
@@ -641,8 +627,6 @@ export function useDeployChangeset() {
         mutate("/policies"),
         mutate("/networks"),
         mutate("/networks/resources"),
-        // A deployed update-user-groups changes who is in which group, and
-        // the canvas reads its user counts from this list.
         mutate("/users?service_user=false"),
       ]).catch(() => {});
       setIsDeploying(false);

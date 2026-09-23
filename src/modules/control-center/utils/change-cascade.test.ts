@@ -710,7 +710,6 @@ describe("agent policies and a pending group deletion", () => {
       deleteGroup("g1"),
     );
     const write = next.find((c) => c.type === "update-agent-policy");
-    // g2 is still pending deletion, so only g1 comes back.
     expect(
       write?.type === "update-agent-policy" && write.policy.sourceGroups,
     ).toEqual(["g1"]);
@@ -730,7 +729,6 @@ describe("agent policies and a pending group deletion", () => {
       deleteGroup("g1"),
     );
     const restored = next.find((c) => c.type === "create-agent-policy");
-    // A create is the user's own work: it comes back rather than being dropped.
     expect(restored).toMatchObject({
       clientId: "new-1",
       policy: { sourceGroups: ["g1", "g2"] },
@@ -778,7 +776,6 @@ describe("mergeAgentGroupDeletions", () => {
       undefined,
       { sourceGroups: ["g3"], name: "Renamed" },
     );
-    // The edit, with what the deletion took still in the baseline.
     expect(merged?.basePolicy.sourceGroups).toEqual(["g3", "g1"]);
     expect(merged?.basePolicy.name).toBe("Renamed");
     expect(merged?.handEdited).toBe(true);
@@ -794,8 +791,6 @@ describe("mergeAgentGroupDeletions", () => {
   });
 });
 
-// A discarded draft group must leave no reference behind — a user entry naming
-// it would deploy a PUT with a group id that never exists.
 describe("discarding a draft group reaches user membership", () => {
   const userEntry = (groupRefs: string[], added: string[]) =>
     ({

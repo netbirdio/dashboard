@@ -194,8 +194,6 @@ function ControlCenterCanvas() {
         "resourceNode",
         "destinationResourceNode",
         "networkNode",
-        // Agent Network nodes carry the same live actions as a policy does:
-        // Focus, Edit, Disable/Enable, Delete, each behind its confirmation.
         "providerNode",
         "agentPolicyNode",
       ]);

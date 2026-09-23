@@ -54,10 +54,6 @@ const loadConfig = (): Config => {
     configJson = require("@/config/production");
   }
 
-  // Every build matches one of the branches above; a unit-test runner sets
-  // neither flag, and reading fields off undefined crashed the whole module
-  // graph of any test that transitively imported this. The defaults below are
-  // the same ones a missing field already falls back to.
   configJson = configJson ?? {};
 
   if (configJson.redirectURI) {

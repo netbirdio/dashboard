@@ -352,10 +352,6 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
   };
 }
 
-// The deploy sends snake_case, so a camelCase preview is a request the user
-// never makes. Only the keys the change actually carries are rendered: an
-// update is a delta the context merges onto its own record, and inventing the
-// missing keys would read as clearing them.
 const toWire = (
   obj: Record<string, unknown>,
   map: Record<string, string>,
@@ -407,8 +403,6 @@ const providerBody = (input: Record<string, unknown>) => {
 const providerCreateBody = (change: { input: Record<string, unknown> }) =>
   providerBody(change.input);
 
-// Refs resolve exactly as the deploy resolves them. A draft provider has no
-// real id yet, so it renders as a placeholder rather than as a copyable id.
 const agentPolicyBody = (
   policy: Record<string, unknown>,
   r: RequestResolvers,
@@ -492,9 +486,6 @@ export function buildChangeRequest(
     case "update-agent-policy":
       return { method, path, body: agentPolicyBody(change.policy, r) };
     case "update-user-groups": {
-      // The PUT replaces the whole user, so the preview shows the whole user
-      // with the field that moves — a body of auto_groups alone would read as
-      // a patch and understate what the request replaces.
       const user = live.users?.find((u) => u.id === change.userId);
       return {
         method,
@@ -625,8 +616,6 @@ export function buildBeforeRequest(
     case "update-user-groups": {
       const user = live.users?.find((u) => u.id === change.userId);
       if (!user) return null;
-      // The whole record, as the "after" renders it — so the diff is the
-      // groups that moved rather than the entire user arriving as new.
       return {
         method: "PUT",
         path: `/users/${change.userId}`,
@@ -652,8 +641,6 @@ export function buildBeforeRequest(
       return {
         method: change.type === "delete-agent-policy" ? "DELETE" : "PUT",
         path: `/agent-network/policies/${change.agentPolicyId}`,
-        // No ref resolution here: a live record already holds real ids, and
-        // running them through the resolver would placeholder them.
         body: toWire(policy, AGENT_POLICY_WIRE),
       };
     }

@@ -136,8 +136,6 @@ export function useUserView() {
       );
     });
 
-    // Union over every group this user's peers belong to, the same way the
-    // peer view unions over one peer's groups.
     allUserGroups.forEach((groupId) =>
       addAgentNetworkProviderNodes(
         groupId ?? "",

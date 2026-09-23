@@ -751,8 +751,6 @@ describe("renaming a draft group follows every name reference", () => {
   });
 });
 
-// An agent policy names groups on its source side, so every gesture that takes
-// a group off a regular policy has to take it off these too.
 describe("group removal and deletion reach agent policies", () => {
   const ops = { id: "g1", name: "Ops" };
   const qa = { id: "g4", name: "QA" };
@@ -886,8 +884,6 @@ describe("group removal and deletion reach agent policies", () => {
 
   it("Delete strips from the PENDING policy, not the pre-edit live one", async () => {
     liveAgentPolicies = [agentPolicy("ap-1", ["g1", "g4"])];
-    // The user already took g4 off in this draft; the sweep must not put it
-    // back by recomputing from live.
     pendingChanges = [
       {
         id: "c1",
@@ -903,15 +899,12 @@ describe("group removal and deletion reach agent policies", () => {
       await result.current.confirmAndDeleteGroups([nodes[0]]);
     });
 
-    // g1 is the group being deleted; g4 must stay gone.
     expect(trackDeleteAgentPolicy).toHaveBeenCalled();
     const call = trackDeleteAgentPolicy.mock.calls[0][0];
     expect(call.groupDeletion.basePolicy.sourceGroups).toEqual(["g1"]);
   });
 
   it("records an update, not a deletion, when a source group survives", async () => {
-    // Provider-less already — the user's own unfinished work. The strip takes
-    // g1 but leaves g4, so the deletion is not what emptied this policy.
     liveAgentPolicies = [
       {
         ...agentPolicy("ap-1", ["g1", "g4"]),

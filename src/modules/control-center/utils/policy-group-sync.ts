@@ -139,12 +139,6 @@ export type AgentGroupDeletionUpdate = {
   groupIds: string[];
 };
 
-/**
- * Every agent policy that names one of `groups` on its source side, with those
- * ids taken out. `policies` is the canvas union the live list, as the
- * access-control sweep uses — a policy off the canvas is still a policy the
- * group DELETE would be refused for.
- */
 export const agentGroupDeletionUpdates = (
   policies: AgentPolicy[],
   groups: Group[],

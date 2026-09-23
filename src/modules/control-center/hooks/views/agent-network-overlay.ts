@@ -22,8 +22,6 @@ export function useAgentNetworkOverlay(): AgentNetworkOverlay {
     providers.forEach((p) => byId.set(p.id, p));
     return byId;
   }, [providers]);
-  // Memoized: the view builders and the draft build hold on to this object,
-  // and a fresh one each render invalidates everything keyed on it.
   return useMemo(() => ({ policies, providerById }), [policies, providerById]);
 }
 

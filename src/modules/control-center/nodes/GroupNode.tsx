@@ -54,8 +54,6 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
   const showHalo = isPanelActive || isContextMenuActive;
 
   const { groupUserCounts } = useCanvasUI();
-  // The group panel previews its checkboxes through this override; without one
-  // the count comes from the user list.
   const userCount =
     (data as { userCountOverride?: number }).userCountOverride ??
     (group?.id ? groupUserCounts.get(group.id) : 0);

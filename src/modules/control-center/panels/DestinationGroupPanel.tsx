@@ -253,9 +253,6 @@ export const MemberRow = ({
   </div>
 );
 
-// The users table's avatar, scaled to the panel: the initial in the colour
-// derived from the user, not a generic icon. The IdP badge is left off — it
-// needs its own fetch, which a virtualized row must not do.
 const UserRow = ({ user }: { user: User }) => {
   const pending = user.status === "invited" || user.status === "blocked";
   return (
@@ -503,12 +500,8 @@ export const DestinationGroupPanel = ({
     draftMemberResources,
   ]);
 
-  // The ref a user's membership is recorded under: a live group's id, or a
-  // draft group's NAME, which the deploy resolves once create-group lands.
   const userGroupRef = realGroupId || (isDraft ? group?.name : undefined);
 
-  // Users carry their groups on `auto_groups`, and a draft edit lives in the
-  // changeset until it deploys, so the pending entry wins over the live list.
   const groupUsers = useMemo(() => {
     if (!userGroupRef) return [];
     return (users ?? []).filter((u) => {
@@ -529,9 +522,6 @@ export const DestinationGroupPanel = ({
     !isAllGroup(group) &&
     canEditGroupMembers(permission.groups, group) &&
     (isDraft ? !!groupNode : !!realGroupId);
-  // The write lands on the user, so it needs the user permission. A draft group
-  // is fine: the change names it, and the deploy resolves that to the id its
-  // create returns.
   const canEditUsers =
     !isAllGroup(group) && !!permission.users?.update && !!userGroupRef;
   const memberPeerIds = useMemo(
@@ -617,8 +607,6 @@ export const DestinationGroupPanel = ({
     syncGroupEdges(next);
   };
 
-  // The user count comes from the UI context (users carry their groups), so a
-  // preview rides on the node as an override the subtitle prefers.
   const syncNodeUserCount = useCallback(
     (usersCount: number) => {
       if (!group) return;
@@ -939,8 +927,6 @@ export const DestinationGroupPanel = ({
         : (user.auto_groups ?? []).filter((g) => g !== realGroupId);
       return userRequest.put({ ...user, auto_groups }, `/${user.id}`);
     });
-    // Each write is its own PUT, so a failure leaves the rest applied: report
-    // which users did not make it rather than failing the whole save silently.
     const results = await Promise.allSettled(writes);
     const failed = results.flatMap((r, i) =>
       r.status === "rejected"
@@ -1053,8 +1039,6 @@ export const DestinationGroupPanel = ({
     );
   }, [resourceCandidates, rowOrder, query]);
 
-  // The users table's default order: the current user first, then by the
-  // name-and-email the table sorts on, descending as it stores it.
   const sortedUsers = useMemo(
     () =>
       [...(users ?? [])].sort((a, b) => {
@@ -1147,9 +1131,6 @@ export const DestinationGroupPanel = ({
   };
   const requestClose = usePanelCloseGuard(groupId, confirmDiscard, onClose);
 
-  // The first render of the member lists is heavy enough to drop frames, and
-  // it lands in the same frame the entry spring starts — which read as a
-  // flash. Paint it hidden, then run the spring on the next clean frame.
   const [entered, setEntered] = useState(false);
   useEffect(() => {
     if (!groupId || !placement) {
@@ -1176,8 +1157,6 @@ export const DestinationGroupPanel = ({
       className={cn(
         "absolute z-20 flex flex-col",
         "rounded-lg border border-nb-gray-910 bg-nb-gray-935 shadow-xl",
-        // CSS, not framer: a transform/opacity transition is composited, so
-        // the canvas re-render that a group click triggers can't stutter it.
         "transition-[opacity,transform] duration-300 ease-out will-change-transform",
         entered ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12",
       )}

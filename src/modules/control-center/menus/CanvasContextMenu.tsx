@@ -162,22 +162,17 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
                 setResourceEditor({ createStandaloneAt: pos }),
             },
           ],
-      // Agent Network sits in its own group, below the network items.
       [
         {
           label: "New Agent Policy",
           icon: <ShieldIcon size={14} />,
           permitted: !!permission?.["agent_network.policies"]?.create,
-          // A blank one straight onto the canvas, like New Policy: it is a
-          // sketch until it names a group and a provider.
           action: (pos: XYPosition) => addBlankAgentPolicy(pos),
         },
         {
           label: "New Agent Provider",
           icon: <SparklesIcon size={14} />,
           permitted: !!permission?.["agent_network.providers"]?.create,
-          // A provider needs a URL and a credential, so — like New Resource —
-          // the modal opens first and the card lands on save.
           action: (pos: XYPosition) => openProviderWizard(pos),
         },
       ],

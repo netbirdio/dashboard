@@ -125,21 +125,10 @@ export const mergeGroupDeletions = (
   };
 };
 
-/**
- * The agent-network twin of mergeGroupDeletions, and it follows the same rules:
- * deletions accumulate onto the EARLIEST baseline, and an ordinary edit rebases
- * the tag onto itself rather than clearing it — the strip lives on inside that
- * edit, and dropping the tag would deploy the revocation the user cancelled.
- */
 export const mergeAgentGroupDeletions = (
   superseded: AgentGroupDeletion | undefined,
   incoming: AgentGroupDeletion | undefined,
-  // The policy being written now. Absent for a delete: that is a request to
-  // remove the policy, which a cancelled group deletion must not undo. A
-  // partial (a toggle) leaves the source side as the strip left it.
   nextPolicy?: Partial<AgentPolicy>,
-  // True when the replaced write held work of the user's own rather than
-  // existing only for an earlier deletion.
   supersedesUserWrite?: boolean,
 ): AgentGroupDeletion | undefined => {
   if (incoming) {
@@ -157,7 +146,6 @@ export const mergeAgentGroupDeletions = (
   if (!superseded || !nextPolicy) return undefined;
   return {
     groupIds: superseded.groupIds,
-    // The edit, with whatever the deletion took still in it.
     basePolicy: {
       ...superseded.basePolicy,
       ...nextPolicy,
@@ -278,7 +266,6 @@ export function dropGroupNameReferences(
     if (c.type === "create-policy" || c.type === "update-policy") {
       return [{ ...c, policy: stripDraftGroupFromPolicy(c.policy, name) }];
     }
-    // A user's membership names a draft group the same way.
     if (c.type === "update-user-groups") {
       if (!c.groupRefs.includes(name)) return [c];
       const groupRefs = c.groupRefs.filter((ref) => ref !== name);
@@ -289,7 +276,6 @@ export function dropGroupNameReferences(
       }
       return [{ ...c, groupRefs, addedGroupNames, removedGroupNames }];
     }
-    // An agent policy carries a draft group as its NAME too.
     if (c.type === "create-agent-policy") {
       if (!c.policy.sourceGroups.includes(name)) return [c];
       return [
@@ -406,13 +392,9 @@ export const deletedGroupRefs = (
       ? [change.groupId]
       : [];
   }
-  // A user put into a group this draft deletes: the membership PUT lands, and
-  // the group DELETE that runs later is then refused.
   if (change.type === "update-user-groups") {
     return change.groupRefs.filter((ref) => deleted.has(ref));
   }
-  // An agent policy is authorized BY a group, so a deletion that leaves it
-  // naming one blocks the same DELETE.
   if (
     change.type === "create-agent-policy" ||
     change.type === "update-agent-policy"
@@ -553,9 +535,6 @@ export function restoreDeletedGroupInPolicies(
         },
       ];
     }
-    // Agent policies carry the same tag on all three of their changes: a
-    // deletion that empties one records a delete-agent-policy, and discarding
-    // the deletion has to revive it.
     if (
       c.type === "create-agent-policy" ||
       c.type === "update-agent-policy" ||
@@ -576,8 +555,6 @@ export function restoreDeletedGroupInPolicies(
       if (c.type === "create-agent-policy") {
         return [{ ...c, name: policy.name || c.name, policy, groupDeletion }];
       }
-      // Nothing left stripped: the write existed only for the deletion being
-      // discarded, unless it carries an edit of the user's own.
       if (!groupDeletion && !handEdited) return [];
       return [
         isEmptiedAgentPolicy(policy)

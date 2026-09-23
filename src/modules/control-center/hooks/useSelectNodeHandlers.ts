@@ -471,7 +471,6 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
       if (_node.type === "agentPolicyNode") {
         openAgentPolicy(_node.id.replace("agent-policy-", ""));
       }
-      // The node id carries the catalog id; the record id is on the data.
       if (_node.type === "providerNode") {
         const providerId = (_node.data as { id?: string })?.id;
         if (providerId) openProvider(providerId);

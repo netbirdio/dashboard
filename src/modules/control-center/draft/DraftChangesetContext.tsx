@@ -245,14 +245,9 @@ export interface DeleteProviderChange {
   name: string;
 }
 
-// What a pending group deletion took out of an agent policy, so discarding
-// that deletion can put it back — the access-control tag, minus the peer and
-// resource cases an agent policy has no room for.
 export interface AgentGroupDeletion {
   groupIds: string[];
   basePolicy: AgentPolicy;
-  // The write also carries an edit of the user's own, so discarding the last
-  // deletion must not take it with them.
   handEdited?: boolean;
 }
 
@@ -283,15 +278,11 @@ export interface DeleteAgentPolicyChange {
   groupDeletion?: AgentGroupDeletion;
 }
 
-// A user's groups live on the USER (`auto_groups`), not on the group, so group
-// membership for users deploys as a PUT per user rather than as part of the
-// group body.
 export interface UpdateUserGroupsChange {
   id: string;
   type: "update-user-groups";
   userId: string;
   name: string;
-  // Group refs, like a policy's: a live group's id or a draft group's NAME.
   groupRefs: string[];
   addedGroupNames: string[];
   removedGroupNames: string[];
@@ -673,8 +664,6 @@ export const getChangeIssue = (
       } — take the group off this change, or discard the deletion.`,
     };
   }
-  // An agent policy that authorizes nothing, or points at a provider this
-  // draft is deleting, is refused by the API — and the deletion runs after it.
   if (
     change.type === "create-agent-policy" ||
     change.type === "update-agent-policy"
@@ -708,8 +697,6 @@ export const getChangeIssue = (
         } off the policy, or discard the deletion.`,
       };
     }
-    // A draft provider whose create was discarded leaves the policy pointing
-    // at a client id nothing will ever resolve.
     const draftProviderIds = new Set(
       changes
         .filter((c): c is CreateProviderChange => c.type === "create-provider")
@@ -803,7 +790,6 @@ export const CHANGE_PERMISSION: Record<
 export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "create-group",
   "update-group",
-  // After create-group: a user can be put into a group the draft just made.
   "update-user-groups",
   "create-network",
   "update-network",
@@ -814,8 +800,6 @@ export const CHANGE_DEPLOY_ORDER: DraftChange["type"][] = [
   "create-policy",
   "update-policy",
   "delete-policy",
-  // Providers before the agent policies that name them, and deleted last: the
-  // API refuses a provider DELETE while a policy still references it.
   "create-provider",
   "update-provider",
   "create-agent-policy",
@@ -1088,8 +1072,6 @@ const renameGroupInPolicies = (
     ) {
       return { ...c, groupId: to, groupName: to };
     }
-    // A user's membership names a draft group, so the rename has to reach it
-    // too or the deploy resolves a name nothing answers to.
     if (c.type === "update-user-groups") {
       if (!c.groupRefs.includes(from)) return c;
       const renameName = (n: string) => (n === from ? to : n);
@@ -2047,9 +2029,6 @@ export function DraftChangesetProvider({
     [],
   );
 
-  // One entry per user: the PUT replaces auto_groups wholesale, so a second
-  // edit supersedes the first rather than stacking. A user put back exactly
-  // where they started drops the change entirely.
   const trackUpdateUserGroups = useCallback(
     ({
       userId,
@@ -2064,8 +2043,6 @@ export function DraftChangesetProvider({
       groupRefs: string[];
       addedGroupNames: string[];
       removedGroupNames: string[];
-      // What the account says the user's groups are, so an edit that lands
-      // back there drops the entry instead of deploying a no-op PUT.
       baseGroupRefs?: string[];
     }) => {
       setChanges((prev) => {
@@ -2073,9 +2050,6 @@ export function DraftChangesetProvider({
           (c): c is UpdateUserGroupsChange =>
             c.type === "update-user-groups" && c.userId === userId,
         );
-        // Compare what actually deploys. The labels describe one gesture; a
-        // user toggled back to where they started has an unchanged ref list
-        // and no business being a PUT.
         const sameRefs =
           baseGroupRefs &&
           baseGroupRefs.length === groupRefs.length &&
@@ -2084,8 +2058,6 @@ export function DraftChangesetProvider({
         if (sameRefs) {
           return pending ? prev.filter((c) => c !== pending) : prev;
         }
-        // The row describes every group this user gained or lost across the
-        // draft, not just the last gesture; the PUT carries all of them.
         const union = (a: string[] | undefined, b: string[]) =>
           Array.from(new Set([...(a ?? []), ...b]));
         const next: UpdateUserGroupsChange = {
@@ -2171,8 +2143,6 @@ export function DraftChangesetProvider({
           providerId,
           name,
           updates: { ...(pending?.updates ?? {}), ...updates },
-          // A form save outranks a toggle: the review row should say what the
-          // change actually is.
           origin: pending && pending.origin === "edit" ? "edit" : origin,
         };
         return pending
@@ -2261,7 +2231,6 @@ export function DraftChangesetProvider({
                     create.groupDeletion,
                     groupDeletion,
                     nextPolicy,
-                    // A draft policy's create is always the user's own work.
                     !create.groupDeletion,
                   ),
                 }
@@ -2273,18 +2242,11 @@ export function DraftChangesetProvider({
             c.type === "update-agent-policy" &&
             c.agentPolicyId === agentPolicyId,
         );
-        // update and delete for one policy are mutually exclusive: the update
-        // deploys first, so a policy carrying both would be written and then
-        // destroyed. Rebuilding it clears the pending deletion.
         const pendingDelete = prev.find(
           (c): c is DeleteAgentPolicyChange =>
             c.type === "delete-agent-policy" &&
             c.agentPolicyId === agentPolicyId,
         );
-        // A toggle is ignored while a delete stands — the same rule access
-        // control follows. It carries no sides, so letting it supersede the
-        // deletion would deploy a PUT that leaves the stripped group in place
-        // and then have the group DELETE refused.
         if (pendingDelete && origin === "toggle") return prev;
         const nextPolicy = { ...(pending?.policy ?? {}), ...policy };
         const merged: UpdateAgentPolicyChange = {
@@ -2298,7 +2260,6 @@ export function DraftChangesetProvider({
             pending?.groupDeletion ?? pendingDelete?.groupDeletion,
             groupDeletion,
             nextPolicy,
-            // An untagged pending write is an edit of the user's own.
             !!pending && !pending.groupDeletion,
           ),
         };
@@ -2327,10 +2288,6 @@ export function DraftChangesetProvider({
             (c): c is CreateAgentPolicyChange =>
               c.type === "create-agent-policy" && c.clientId === agentPolicyId,
           );
-          // A group deletion emptied it: the create STAYS, tagged and blocked
-          // by its Incomplete issue, exactly as a draft access-control policy
-          // does. Dropping it would leave nothing for the discard to restore
-          // while its node is still on the canvas.
           if (create && groupDeletion) {
             const stripped = dropGroupIdsFromAgentPolicy(
               groupDeletion.basePolicy,
@@ -2356,8 +2313,6 @@ export function DraftChangesetProvider({
             c.type === "update-agent-policy" &&
             c.agentPolicyId === agentPolicyId,
         );
-        // Deleting twice is one deletion; without this the same policy queues
-        // two DELETEs and the second fails the deploy.
         const existingDelete = prev.find(
           (c): c is DeleteAgentPolicyChange =>
             c.type === "delete-agent-policy" &&
@@ -2373,9 +2328,6 @@ export function DraftChangesetProvider({
             type: "delete-agent-policy",
             agentPolicyId,
             name,
-            // The superseded update may itself have existed only for an
-            // earlier deletion; its tag has to travel or that group is
-            // stranded when the deletion is discarded.
             groupDeletion: mergeAgentGroupDeletions(
               pending?.groupDeletion ?? existingDelete?.groupDeletion,
               groupDeletion,

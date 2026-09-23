@@ -86,8 +86,6 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
         size={"xs"}
         maxHeight={300}
       >
-        {/* Padding on the row and none on the card, the way PeerNode does it,
-            so the peer sits at the same inset in live and in draft. */}
         <div
           className={
             "flex items-center justify-between gap-8 pr-3 pl-4 h-[64px]"

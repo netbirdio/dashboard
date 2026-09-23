@@ -218,9 +218,6 @@ function fromAPI(p: APIProvider): AIProvider {
   };
 }
 
-// A provider the control center's draft has recorded but not yet deployed has
-// no API record to read back, so its modal is fed from the create change's own
-// input. The non-input fields mirror fromAPI's defaults.
 export function providerFromDraftInput(
   id: string,
   input: ProviderConnectInput,
@@ -566,8 +563,6 @@ type AIProvidersContextValue = {
     updates: ProviderUpdateInput,
   ) => Promise<boolean>;
   toggleProvider: (id: string) => Promise<void>;
-  // false when the write failed: the control center's deploy reports a change
-  // as deployed unless it hears otherwise.
   deleteProvider: (id: string) => Promise<boolean>;
   addPolicy: (
     policy: Omit<AgentPolicy, "id">,
@@ -876,7 +871,6 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           title: "Failed to remove provider",
           description: err instanceof Error ? err.message : String(err),
         });
-        // The deploy marks a change deployed unless it hears otherwise.
         return false;
       }
     },
@@ -907,8 +901,6 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const updatePolicy = useCallback(
     async (id: string, updates: Partial<AgentPolicy>) => {
       const existing = (apiPolicies ?? []).find((p) => p.id === id);
-      // Nothing to merge onto: the policy is gone, and a blind PUT would
-      // resurrect it from partial values.
       if (!existing) return false;
       const merged: APIPolicyRequest = {
         name: updates.name ?? existing.name,
