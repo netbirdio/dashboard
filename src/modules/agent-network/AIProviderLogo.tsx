@@ -72,8 +72,16 @@ export default function AIProviderLogo({
   const mark = !logo ? (
     // Anything the catalog knows but this dashboard build has no mark for.
     <span
-      className={"font-semibold uppercase"}
-      style={{ color: LIGHT_INK, fontSize: Math.floor(markSize * 0.75) }}
+      className={cn(
+        "inline-flex items-center justify-center shrink-0 font-semibold uppercase leading-none",
+        !tile && className,
+      )}
+      style={{
+        color: LIGHT_INK,
+        fontSize: Math.floor(markSize * 0.75),
+        width: markSize,
+        height: markSize,
+      }}
     >
       {entry ? entry.name.charAt(0) : "?"}
     </span>
