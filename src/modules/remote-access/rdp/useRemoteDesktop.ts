@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { IPVersion } from "@/modules/remote-access/IPVersionSelect";
 import { useIronRDPInputHandler } from "./useIronRDPInputHandler";
 import {
   CertificatePromptInfo,
@@ -24,6 +25,8 @@ export interface RDPCredentials {
   password: string;
   domain?: string;
   port: number;
+  // ipVersion selects the IP version used to reach the peer.
+  ipVersion?: IPVersion;
 }
 
 interface RDPConnection {
