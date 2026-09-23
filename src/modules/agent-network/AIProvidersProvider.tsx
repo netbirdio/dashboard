@@ -562,13 +562,13 @@ type AIProvidersContextValue = {
     id: string,
     updates: ProviderUpdateInput,
   ) => Promise<boolean>;
-  toggleProvider: (id: string) => Promise<void>;
+  toggleProvider: (id: string) => Promise<boolean>;
   deleteProvider: (id: string) => Promise<boolean>;
   addPolicy: (
     policy: Omit<AgentPolicy, "id">,
   ) => Promise<AgentPolicy | undefined>;
   updatePolicy: (id: string, updates: Partial<AgentPolicy>) => Promise<boolean>;
-  togglePolicy: (id: string) => Promise<void>;
+  togglePolicy: (id: string) => Promise<boolean>;
   deletePolicy: (id: string) => Promise<boolean>;
   addGuardrail: (
     guardrail: Omit<AgentGuardrail, "id">,
@@ -850,8 +850,8 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const toggleProvider = useCallback(
     async (id: string) => {
       const existing = (apiProviders ?? []).find((p) => p.id === id);
-      if (!existing) return;
-      await updateProvider(id, { enabled: !existing.enabled });
+      if (!existing) return false;
+      return updateProvider(id, { enabled: !existing.enabled });
     },
     [apiProviders, updateProvider],
   );
@@ -938,8 +938,8 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const togglePolicy = useCallback(
     async (id: string) => {
       const existing = (apiPolicies ?? []).find((p) => p.id === id);
-      if (!existing) return;
-      await updatePolicy(id, { enabled: !existing.enabled });
+      if (!existing) return false;
+      return updatePolicy(id, { enabled: !existing.enabled });
     },
     [apiPolicies, updatePolicy],
   );

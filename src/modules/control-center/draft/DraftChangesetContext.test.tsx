@@ -2042,6 +2042,44 @@ describe("user group membership", () => {
   });
 });
 
+describe("a draft group rename", () => {
+  it("reaches an agent policy's source refs, which are the group's name", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateGroup({ clientId: "group-new-1", name: "Ops" }),
+    );
+    act(() =>
+      result.current.trackCreateAgentPolicy({
+        clientId: "new-1",
+        policy: {
+          name: "Agents",
+          description: "",
+          enabled: true,
+          sourceGroups: ["Ops"],
+          destinationProviderIds: ["p1"],
+          guardrailIds: [],
+          limits: {},
+        } as never,
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "Live agents",
+        policy: { sourceGroups: ["Ops", "g1"] },
+      }),
+    );
+    act(() => result.current.trackRenameGroup({ from: "Ops", to: "Agents" }));
+
+    expect(
+      result.current.changes.find((c) => c.type === "create-agent-policy"),
+    ).toMatchObject({ policy: { sourceGroups: ["Agents"] } });
+    expect(
+      result.current.changes.find((c) => c.type === "update-agent-policy"),
+    ).toMatchObject({ policy: { sourceGroups: ["Agents", "g1"] } });
+  });
+});
+
 describe("an agent policy emptied by a group deletion", () => {
   const basePolicy = {
     id: "new-1",

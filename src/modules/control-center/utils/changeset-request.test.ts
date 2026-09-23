@@ -645,6 +645,72 @@ describe("the before side of the new change types", () => {
     });
   });
 
+  // The deploy PUTs the partial update merged onto the live record, and the code
+  // view is what the user approves, so the "after" side has to show that merge.
+  it("merges a partial provider update onto the live record", () => {
+    const after = buildChangeRequest(
+      {
+        id: "up",
+        type: "update-provider",
+        providerId: "p1",
+        name: "OpenAI",
+        updates: { enabled: false },
+      } as never as DraftChange,
+      {
+        providers: [
+          {
+            id: "p1",
+            providerId: "openai_api",
+            name: "OpenAI",
+            upstreamUrl: "https://api.openai.com",
+            models: [],
+          },
+        ],
+      },
+    );
+
+    expect(after.body).toMatchObject({
+      enabled: false,
+      name: "OpenAI",
+      provider_id: "openai_api",
+      upstream_url: "https://api.openai.com",
+    });
+  });
+
+  it("merges a partial agent-policy update onto the live record", () => {
+    const after = buildChangeRequest(
+      {
+        id: "uap",
+        type: "update-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "Agents",
+        policy: { enabled: false },
+      } as never as DraftChange,
+      {
+        agentPolicies: [
+          {
+            id: "ap-1",
+            name: "Agents",
+            description: "",
+            enabled: true,
+            sourceGroups: ["g1"],
+            destinationProviderIds: ["p1"],
+            guardrailIds: [],
+            limits: {},
+          },
+        ],
+        groups: [{ id: "g1", name: "Ops" } as Group],
+      },
+    );
+
+    expect(after.body).toMatchObject({
+      enabled: false,
+      name: "Agents",
+      source_groups: ["g1"],
+      destination_provider_ids: ["p1"],
+    });
+  });
+
   it("shows a deleted provider as an all-minus body, redacted", () => {
     const before = buildBeforeRequest(
       {

@@ -576,10 +576,10 @@ export const DestinationGroupPanel = ({
   }, [groupId, memberUsersKey]);
 
   const canSave = canEditMembers || canEditUsers;
-  const dirty =
+  const membersDirty =
     !setEquals(selectedPeerIds, memberPeerIds) ||
-    !setEquals(selectedResourceIds, memberResourceIds) ||
-    !setEquals(selectedUserIds, memberUserIds);
+    !setEquals(selectedResourceIds, memberResourceIds);
+  const dirty = membersDirty || !setEquals(selectedUserIds, memberUserIds);
 
   const toggleId = (set: Set<string>, id: string) => {
     const next = new Set(set);
@@ -607,8 +607,9 @@ export const DestinationGroupPanel = ({
     syncGroupEdges(next);
   };
 
+  // `undefined` clears the override, so the node reads the live user counts again.
   const syncNodeUserCount = useCallback(
-    (usersCount: number) => {
+    (usersCount: number | undefined) => {
       if (!group) return;
       setNodes((prev) => {
         let changed = false;
@@ -712,10 +713,10 @@ export const DestinationGroupPanel = ({
   // Unsaved toggles revert on close.
   const restoreCountsRef = useRef<{
     sync: (p: number, r: number) => void;
-    syncUsers: (u: number) => void;
+    syncUsers: (u: number | undefined) => void;
     peers: number;
     resources: number;
-    users: number;
+    users: number | undefined;
   } | null>(null);
   useEffect(() => {
     restoreCountsRef.current = {
@@ -829,47 +830,63 @@ export const DestinationGroupPanel = ({
     });
     if (!choice) return;
     setSaving(true);
-    // Resources must be {id, type} objects; id strings make the API reject the body.
-    const request = groupRequest
-      .put(
-        {
-          name: group.name,
-          peers: [...selectedPeerIds],
-          resources: [...selectedResourceIds].map((id) => ({
-            id,
-            type: networkResources?.find((r) => r.id === id)?.type,
-          })),
-        },
-        `/${group.id}`,
-      )
-      .then(async (g) => {
-        // Membership shows on all four lists; skipping one leaves stale counts elsewhere.
-        await Promise.all([
-          mutate("/groups"),
-          mutate("/peers"),
-          mutate("/networks/resources"),
-          mutate("/policies"),
-        ]);
-        return g;
-      });
+    // A user-only edit needs no group PUT — and a role holding users.update
+    // without groups.update would have it refused, losing the user writes with it.
+    const request = membersDirty
+      ? groupRequest
+          // Resources must be {id, type} objects; id strings make the API reject the body.
+          .put(
+            {
+              name: group.name,
+              peers: [...selectedPeerIds],
+              resources: [...selectedResourceIds].map((id) => ({
+                id,
+                type: networkResources?.find((r) => r.id === id)?.type,
+              })),
+            },
+            `/${group.id}`,
+          )
+          .then(async (g) => {
+            // Membership shows on all four lists; skipping one leaves stale counts elsewhere.
+            await Promise.all([
+              mutate("/groups"),
+              mutate("/peers"),
+              mutate("/networks/resources"),
+              mutate("/policies"),
+            ]);
+            return g;
+          })
+      : Promise.resolve(undefined);
     // useApiCall rejects (ignoreError=true), so the toast must be promise-driven.
-    notify({
-      title: group.name,
-      description: `${group.name} was successfully saved.`,
-      promise: request,
-    });
+    if (membersDirty) {
+      notify({
+        title: group.name,
+        description: `${group.name} was successfully saved.`,
+        promise: request,
+      });
+    }
     try {
       await request;
       await saveUserMembership();
+      // The group toast covers the rest; a user-only save has none of its own.
+      if (!membersDirty) {
+        notify({
+          title: group.name,
+          description: `${group.name} was successfully saved.`,
+        });
+      }
       // DON'T rebuild the view: the toggles already previewed it, and a rebuild refits.
       savedRef.current = true;
+      // The users list is revalidated by then, so drop the preview override and
+      // let the node track the live counts — a partly refused write included.
       restoreCountsRef.current = {
         sync: syncNodeCounts,
         syncUsers: syncNodeUserCount,
         peers: selectedPeerIds.size,
         resources: selectedResourceIds.size,
-        users: selectedUserIds.size,
+        users: undefined,
       };
+      syncNodeUserCount(undefined);
       onClose();
     } catch {
       // Re-sync so the optimistic canvas counts revert to the server truth.

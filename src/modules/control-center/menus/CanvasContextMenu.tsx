@@ -20,6 +20,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
@@ -75,6 +76,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
   } = useDraftNodeCreation();
   const { openProviderWizard } = useControlCenterPolicy();
   const { permission } = usePermissions();
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
   // When drilled into a network the network/resource row swaps: no "New
   // Network", "New Resource" assigns into it, and "Add Routing Peer" appears.
@@ -166,13 +168,17 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
         {
           label: "New Agent Policy",
           icon: <ShieldIcon size={14} />,
-          permitted: !!permission?.["agent_network.policies"]?.create,
+          permitted:
+            agentNetworkEnabled &&
+            !!permission?.["agent_network.policies"]?.create,
           action: (pos: XYPosition) => addBlankAgentPolicy(pos),
         },
         {
           label: "New Agent Provider",
           icon: <SparklesIcon size={14} />,
-          permitted: !!permission?.["agent_network.providers"]?.create,
+          permitted:
+            agentNetworkEnabled &&
+            !!permission?.["agent_network.providers"]?.create,
           action: (pos: XYPosition) => openProviderWizard(pos),
         },
       ],
@@ -200,6 +206,7 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     setResourceEditor,
     setRoutingPeerModal,
     permission,
+    agentNetworkEnabled,
   ]);
 
   // Alt/⌥+1…6 create at the viewport center (draft-only, input-aware).

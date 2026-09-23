@@ -1016,6 +1016,12 @@ interface DraftChangesetContextType {
     name: string;
     groupDeletion?: AgentGroupDeletion;
   }) => void;
+  // Re-records a PENDING update-agent-policy; a no-op when none exists. Unlike
+  // trackUpdateAgentPolicy it never reads a stripped policy as a deletion.
+  patchPendingAgentPolicyUpdate: (params: {
+    agentPolicyId: string;
+    policy: AgentPolicy;
+  }) => void;
   // Upserted by clientId; renames update the entry.
   trackInstallPeer: (params: {
     clientId: string;
@@ -1080,6 +1086,28 @@ const renameGroupInPolicies = (
         groupRefs: c.groupRefs.map(renameName),
         addedGroupNames: c.addedGroupNames.map(renameName),
         removedGroupNames: c.removedGroupNames.map(renameName),
+      };
+    }
+    // Agent policies name a draft group by its NAME, so the rename has to reach
+    // `sourceGroups` or the deploy can't resolve the ref.
+    const renameSourceGroups = (refs: string[]) =>
+      refs.map((ref) => (ref === from ? to : ref));
+    if (c.type === "create-agent-policy") {
+      if (!c.policy.sourceGroups.includes(from)) return c;
+      return {
+        ...c,
+        policy: {
+          ...c.policy,
+          sourceGroups: renameSourceGroups(c.policy.sourceGroups),
+        },
+      };
+    }
+    if (c.type === "update-agent-policy") {
+      const refs = c.policy.sourceGroups;
+      if (!refs?.includes(from)) return c;
+      return {
+        ...c,
+        policy: { ...c.policy, sourceGroups: renameSourceGroups(refs) },
       };
     }
     if (c.type !== "create-policy" && c.type !== "update-policy") return c;
@@ -2339,6 +2367,25 @@ export function DraftChangesetProvider({
     [],
   );
 
+  const patchPendingAgentPolicyUpdate = useCallback(
+    ({
+      agentPolicyId,
+      policy,
+    }: {
+      agentPolicyId: string;
+      policy: AgentPolicy;
+    }) => {
+      setChanges((prev) =>
+        prev.map((c) =>
+          c.type === "update-agent-policy" && c.agentPolicyId === agentPolicyId
+            ? { ...c, name: policy.name || c.name, policy }
+            : c,
+        ),
+      );
+    },
+    [],
+  );
+
   const removeChange = useCallback((id: string) => {
     setChanges((prev) => prev.filter((c) => c.id !== id));
   }, []);
@@ -2387,6 +2434,7 @@ export function DraftChangesetProvider({
       trackCreateAgentPolicy,
       trackUpdateAgentPolicy,
       trackDeleteAgentPolicy,
+      patchPendingAgentPolicyUpdate,
       trackInstallPeer,
       markInstallPeerWaiting,
       clearInstallPeerKey,
@@ -2430,6 +2478,7 @@ export function DraftChangesetProvider({
       trackCreateAgentPolicy,
       trackUpdateAgentPolicy,
       trackDeleteAgentPolicy,
+      patchPendingAgentPolicyUpdate,
       trackInstallPeer,
       markInstallPeerWaiting,
       clearInstallPeerKey,

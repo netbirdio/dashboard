@@ -40,6 +40,7 @@ import { Policy } from "@/interfaces/Policy";
 import { useAccount } from "@/modules/account/useAccount";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import type {
   AgentPolicy,
   AIProvider,
@@ -203,6 +204,14 @@ const PanelContent = React.memo(
     const drilled = !!drillDownNetworkNodeId;
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState<PanelCategory>("peers");
+    const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
+    const categories = useMemo(
+      () =>
+        CATEGORIES.filter(
+          (c) => c.id !== "agent-network" || agentNetworkEnabled,
+        ),
+      [agentNetworkEnabled],
+    );
     // Filters compare the trimmed term so a whitespace-only search is a no-op.
     const query = search.trim();
     const isSearching = query.length > 0;
@@ -1379,7 +1388,7 @@ const PanelContent = React.memo(
                 rows: [...buildDraftPolicyRows(), ...buildPolicyRows()],
               },
             ]
-          : category === "agent-network"
+          : category === "agent-network" && agentNetworkEnabled
           ? [
               { title: "Add New", rows: buildAgentTemplateRows() },
               { title: "Existing Providers", rows: buildProviderRows() },
@@ -1493,7 +1502,7 @@ const PanelContent = React.memo(
                 "w-[52px] shrink-0 border-r border-nb-gray-910 py-2 flex flex-col items-center gap-1"
               }
             >
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <FullTooltip
                   key={cat.id}
                   content={<span className={"text-xs"}>{cat.label}</span>}

@@ -243,7 +243,9 @@ export default function AIProviderModal({
     [takenProviderNames],
   );
   const uniqueNameRef = useRef(uniqueName);
-  uniqueNameRef.current = uniqueName;
+  useEffect(() => {
+    uniqueNameRef.current = uniqueName;
+  }, [uniqueName]);
   // The endpoint lives on the account-level Settings row, bootstrapped once
   // via an explicit POST. We auto-pick a proxy cluster from the live /domains
   // response and, when the account isn't bootstrapped yet, POST it as the

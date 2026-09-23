@@ -230,6 +230,21 @@ export function useDraftGroupActions() {
             },
           };
         }
+        const agentPolicy = (next.data as { policy?: AgentPolicy })?.policy;
+        if (agentPolicy?.sourceGroups?.includes(from)) {
+          next = {
+            ...next,
+            data: {
+              ...next.data,
+              policy: {
+                ...agentPolicy,
+                sourceGroups: agentPolicy.sourceGroups.map((ref) =>
+                  ref === from ? newName : ref,
+                ),
+              },
+            },
+          };
+        }
         const held = (next.data as { draftResources?: NetworkResource[] })
           ?.draftResources;
         if (held?.some((r) => r.groups?.length)) {
@@ -963,7 +978,7 @@ export function useDraftGroupActions() {
       deleteGroups(deletable);
       return true;
     },
-    [confirm, deleteGroups, policySnapshots, changes],
+    [confirm, deleteGroups, policySnapshots, agentPolicySnapshots, changes],
   );
 
   return {

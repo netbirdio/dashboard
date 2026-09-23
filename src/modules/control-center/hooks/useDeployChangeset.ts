@@ -470,7 +470,10 @@ export function useDeployChangeset() {
             ),
           };
           if (createdId) {
-            await saveAgentPolicy(createdId, policy);
+            const ok = await saveAgentPolicy(createdId, policy);
+            if (!ok) {
+              throw new Error(`Agent policy “${change.name}” was not saved.`);
+            }
             return;
           }
           const saved = await addAgentPolicy(policy);
@@ -638,11 +641,19 @@ export function useDeployChangeset() {
     groups,
     networks,
     networkResources,
+    users,
     groupRequest,
     policyRequest,
     networkRequest,
     resourceRequest,
     routerRequest,
+    userRequest,
+    addProvider,
+    saveProvider,
+    deleteProvider,
+    addAgentPolicy,
+    saveAgentPolicy,
+    removeAgentPolicy,
   ]);
 
   // "done" holds only while the payload matches what the run sent; an edited

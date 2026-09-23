@@ -6,15 +6,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // is gated on the create permission CHANGE_PERMISSION maps its change type to.
 // Placeholder peers queue install-peer, the sink's own exclusion, and stay ungated.
 
-let permission = {
+let permission: Record<string, { create: boolean }> = {
   policies: { create: true },
   groups: { create: true },
   networks: { create: true },
 };
+let agentNetworkEnabled = false;
 let shortcutMap: Record<string, () => void> = {};
 
 vi.mock("@/contexts/PermissionsProvider", () => ({
   usePermissions: () => ({ permission }),
+}));
+vi.mock("@/modules/agent-network/useAgentNetworkMode", () => ({
+  useAgentNetworkMode: () => ({ enabled: agentNetworkEnabled }),
 }));
 vi.mock("@/modules/control-center/draft/DraftModeContext", () => ({
   useDraftMode: () => ({
@@ -79,6 +83,7 @@ const openMenu = () => {
 
 beforeEach(() => {
   permission = fullRights();
+  agentNetworkEnabled = false;
   shortcutMap = {};
 });
 
@@ -123,6 +128,31 @@ describe("CanvasContextMenu creation gates", () => {
     openMenu();
     expect(screen.queryByTestId("cc-canvas-menu-new-server")).toBeTruthy();
     expect(screen.queryByTestId("cc-canvas-menu-new-agent")).toBeTruthy();
+  });
+
+  // The grants are blanket for an account admin, so a deployment without the
+  // Agent Network surface must not get its items from permissions alone.
+  it("hides the Agent Network items while the surface is off", () => {
+    permission["agent_network.policies"] = { create: true };
+    permission["agent_network.providers"] = { create: true };
+    openMenu();
+    expect(screen.queryByTestId("cc-canvas-menu-new-agent-policy")).toBeNull();
+    expect(
+      screen.queryByTestId("cc-canvas-menu-new-agent-provider"),
+    ).toBeNull();
+  });
+
+  it("offers the Agent Network items once the surface is on", () => {
+    permission["agent_network.policies"] = { create: true };
+    permission["agent_network.providers"] = { create: true };
+    agentNetworkEnabled = true;
+    openMenu();
+    expect(
+      screen.queryByTestId("cc-canvas-menu-new-agent-policy"),
+    ).toBeTruthy();
+    expect(
+      screen.queryByTestId("cc-canvas-menu-new-agent-provider"),
+    ).toBeTruthy();
   });
 
   it("renumbers the Alt shortcuts over the remaining items", () => {

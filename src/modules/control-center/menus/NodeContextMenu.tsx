@@ -651,6 +651,14 @@ export const NodeContextMenu = ({
                     : e,
                 ),
               );
+            const syncNode = () =>
+              setNodes((prev) =>
+                prev.map((x) =>
+                  x.id === n.id
+                    ? { ...x, data: { ...x.data, enabled: !enabled } }
+                    : x,
+                ),
+              );
             if (isDraft) {
               if (isProvider) {
                 trackUpdateProvider({
@@ -667,20 +675,20 @@ export const NodeContextMenu = ({
                   origin: "toggle",
                 });
               }
-              setNodes((prev) =>
-                prev.map((x) =>
-                  x.id === n.id
-                    ? { ...x, data: { ...x.data, enabled: !enabled } }
-                    : x,
-                ),
-              );
+              syncNode();
               syncEdges();
               return;
             }
-            syncEdges();
-            void (isProvider
-              ? toggleProvider(recordId)
-              : toggleAgentPolicy(recordId));
+            // Live: the canvas follows the account, so it may only move once
+            // the PUT lands — a refused toggle must leave it as it was.
+            void (async () => {
+              const ok = await (isProvider
+                ? toggleProvider(recordId)
+                : toggleAgentPolicy(recordId));
+              if (!ok) return;
+              syncNode();
+              syncEdges();
+            })();
           },
         });
       }
@@ -713,9 +721,12 @@ export const NodeContextMenu = ({
                   });
                 }
               } else {
-                await (isProvider
+                const ok = await (isProvider
                   ? deleteAgentProvider(recordId)
                   : deleteAgentPolicy(recordId));
+                // A refused DELETE leaves the record on the account; taking the
+                // node off the canvas would claim it is gone.
+                if (!ok) return;
               }
               removeNodeWithEdges(n.id);
             })();
@@ -1354,6 +1365,7 @@ export const NodeContextMenu = ({
     setSelectedDestinationGroup,
     confirmAndDeleteGroups,
     canDeleteGroup,
+    agentItems,
     handleTogglePolicy,
     handleDeletePolicy,
     handleRemovePolicyFromCanvas,

@@ -102,6 +102,7 @@ export function ControlCenterPolicyProvider({
     trackCreateAgentPolicy,
     trackUpdateAgentPolicy,
     trackDeleteAgentPolicy,
+    patchPendingAgentPolicyUpdate,
   } = useDraftChangeset();
   const { placeProviderNode, placeAgentPolicyNode } = useDraftNodeCreation();
   const { setDropdownOptions } = useGroups();
@@ -688,6 +689,12 @@ export function ControlCenterPolicyProvider({
     );
   };
 
+  // A source ref that is not a live group id names a DRAFT group: the modal's
+  // selector mints groups the canvas has no node for yet, so a node lookup
+  // alone would read those as live ids.
+  const isDraftGroupRef = (ref: string) =>
+    !!groups && !groups.some((g) => g.id === ref);
+
   const drawAgentPolicyOnCanvas = (
     policy: AgentPolicy,
     fallbackPosition?: XYPosition,
@@ -764,14 +771,18 @@ export function ControlCenterPolicyProvider({
 
     const sourceNodeIds: string[] = [];
     for (const ref of policy.sourceGroups) {
-      const nodeId = findGroupNode(ref) ?? `group-${ref}`;
+      const isDraftRef = isDraftGroupRef(ref);
+      const nodeId =
+        findGroupNode(ref) ??
+        (isDraftRef ? `group-new-${ref}` : `group-${ref}`);
       const group = groupForRef(ref);
       if (
         ensureNode(
           nodeId,
           "groupNode",
           {
-            group: group ?? { id: ref, name: ref },
+            group:
+              group ?? (isDraftRef ? { name: ref } : { id: ref, name: ref }),
             enabled,
             showHandles: true,
           },
@@ -838,16 +849,15 @@ export function ControlCenterPolicyProvider({
       });
     }
 
-    for (const ref of policy.sourceGroups) {
-      const sourceId = findGroupNode(ref) ?? `group-${ref}`;
+    policy.sourceGroups.forEach((ref, i) => {
       policyEdges.push({
         id: `agent-src-${ref}-${policy.id}`,
-        source: sourceId,
+        source: sourceNodeIds[i],
         target: policyNodeId,
         type: "smart",
         data: { enabled },
       });
-    }
+    });
     for (const pid of destNodeIds) {
       const providerId = pid.replace("provider-", "");
       const provider =
@@ -881,13 +891,7 @@ export function ControlCenterPolicyProvider({
 
   const ensureAgentDraftGroupChanges = (policy: AgentPolicy) => {
     policy.sourceGroups.forEach((ref) => {
-      const isDraftGroup = reactFlow
-        .getNodes()
-        .some(
-          (n) =>
-            !(n.data as any)?.group?.id && (n.data as any)?.group?.name === ref,
-        );
-      if (!isDraftGroup) return;
+      if (!isDraftGroupRef(ref)) return;
       const exists = changes.some(
         (c) => c.type === "create-group" && c.name === ref,
       );
@@ -916,8 +920,13 @@ export function ControlCenterPolicyProvider({
           policy,
         });
       }
-    } else {
+    } else if (isDraftPolicy) {
+      // Dropping the pending create is safe: nothing had landed yet.
       trackDeleteAgentPolicy({ agentPolicyId: policy.id, name: policy.name });
+    } else {
+      // An EXISTING policy stripped bare is not a deletion — deleting one has to
+      // be confirmed. The pending edit survives, blocked by its Incomplete issue.
+      patchPendingAgentPolicyUpdate({ agentPolicyId: policy.id, policy });
     }
     drawAgentPolicyOnCanvas(policy, fallbackPosition);
   };
@@ -1164,7 +1173,10 @@ export function ControlCenterPolicyProvider({
           useSave={!isDraft}
           onBeforeSave={isDraft ? undefined : confirmLiveAgentSave}
           onDraftSubmit={(input) => {
-            const { apiKey, ...rest } = input;
+            // The modal always submits `enabled: true`; recording it here would
+            // re-enable a disabled provider on deploy and override a pending
+            // Disable toggle. The live edit path doesn't send it either.
+            const { apiKey, enabled: _enabled, ...rest } = input;
             const updates =
               apiKey && apiKey.trim() !== MASKED_API_KEY
                 ? { ...rest, apiKey }

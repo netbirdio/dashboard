@@ -479,12 +479,29 @@ export function buildChangeRequest(
       return { method, path, body: routerUpdateBody(change, r) };
     case "create-provider":
       return { method, path, body: providerCreateBody(change) };
-    case "update-provider":
-      return { method, path, body: providerBody(change.updates) };
+    // The deploy PUTs the partial update merged onto the live record, so the
+    // code view has to show that same merge — rendering `updates` alone would
+    // read as every other field being cleared.
+    case "update-provider": {
+      const provider = live.providers?.find((p) => p.id === change.providerId);
+      return {
+        method,
+        path,
+        body: providerBody({ ...(provider ?? {}), ...change.updates }),
+      };
+    }
     case "create-agent-policy":
       return { method, path, body: agentPolicyBody(change.policy, r) };
-    case "update-agent-policy":
-      return { method, path, body: agentPolicyBody(change.policy, r) };
+    case "update-agent-policy": {
+      const policy = live.agentPolicies?.find(
+        (p) => p.id === change.agentPolicyId,
+      );
+      return {
+        method,
+        path,
+        body: agentPolicyBody({ ...(policy ?? {}), ...change.policy }, r),
+      };
+    }
     case "update-user-groups": {
       const user = live.users?.find((u) => u.id === change.userId);
       return {
