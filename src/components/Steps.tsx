@@ -18,13 +18,34 @@ export default function Steps({
   );
 }
 
+// Steps without a status keep the neutral look of the instruction-list
+// steppers, where no step is ever "reached".
+type StepStatus = "complete" | "current" | "upcoming";
+
+// The rail has to meet the middle of the circle, so its offset is half the
+// circle and moves with the size.
+const stepSizes = {
+  default: {
+    circle: "h-[34px] w-[34px]",
+    railHorizontal: "mt-[16px]",
+    railVertical: "ml-[18px]",
+  },
+  large: {
+    circle: "h-[44px] w-[44px]",
+    railHorizontal: "mt-[21px]",
+    railVertical: "ml-[23px]",
+  },
+};
+
 type StepProps = {
   children: React.ReactNode;
-  step: number;
+  step: React.ReactNode;
   line?: boolean;
   center?: boolean;
   horizontal?: boolean;
   disabled?: boolean;
+  status?: StepStatus;
+  size?: keyof typeof stepSizes;
   className?: string;
 };
 
@@ -35,8 +56,12 @@ const Step = ({
   center = false,
   horizontal,
   disabled = false,
+  status,
+  size = "default",
   className,
 }: StepProps) => {
+  const sizing = stepSizes[size];
+
   return (
     <div
       className={cn(
@@ -52,18 +77,31 @@ const Step = ({
           className={cn(
             "bg-nb-gray-100 dark:bg-nb-gray-800  z-0 transition-all",
             horizontal
-              ? "w-full h-[2px] absolute mt-[16px] transform translate-x-1/2"
-              : "h-full w-[2px] absolute left-0 ml-[18px]",
+              ? cn(
+                  "w-full h-[2px] absolute transform translate-x-1/2",
+                  sizing.railHorizontal,
+                )
+              : cn("h-full w-[2px] absolute left-0", sizing.railVertical),
+            // The line trails its step, so a completed step also means the hop
+            // to the next one is behind us.
+            status === "complete" && "bg-netbird dark:bg-netbird",
           )}
         ></span>
       )}
 
       <div
         className={cn(
-          "h-[34px] w-[34px] shrink-0 rounded-full  flex items-center justify-center font-medium text-xs relative z-0 border-4  transition-all",
-          "dark:bg-nb-gray-900 dark:text-nb-gray-400 dark:border-nb-gray dark:group-hover:bg-nb-gray-800",
-          "bg-nb-gray-100 text-nb-gray-400 border-white group-hover:bg-nb-gray-200 step-circle",
+          "shrink-0 rounded-full flex items-center justify-center font-medium text-xs relative z-0 border-4 transition-all",
+          sizing.circle,
+          "dark:bg-nb-gray-900 dark:text-nb-gray-400 dark:border-nb-gray",
+          "bg-nb-gray-100 text-nb-gray-400 border-white step-circle",
           "[.stepper-bg-variant]:border-nb-gray-940",
+          !status &&
+            "group-hover:bg-nb-gray-200 dark:group-hover:bg-nb-gray-800",
+          status && "border-white dark:border-nb-gray-940",
+          status === "complete" &&
+            "bg-netbird text-white dark:bg-netbird dark:text-white",
+          status === "current" && "text-nb-gray-800 dark:text-white",
         )}
       >
         {step}
