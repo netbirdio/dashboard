@@ -165,9 +165,6 @@ function VNCSession({
   const netbirdSupported = isNetBirdVNCSupportedOnOS(peer?.os);
   const netbirdEnabled = !!peer?.local_flags?.server_vnc_allowed;
   const netbirdAvailable = netbirdSupported && netbirdEnabled;
-  const supportsSessionMode =
-    peerOSType === OperatingSystem.LINUX ||
-    peerOSType === OperatingSystem.FREEBSD;
 
   // The committed decision. The modal keeps the draft and hands it over on
   // Connect, so nothing here changes while the operator is still choosing.
@@ -181,18 +178,10 @@ function VNCSession({
   const { target, port: portNumber, mode, username, ipVersion: ipVer } = choice;
   const isExternal = target === "external";
 
-  // The setup screen is shown whenever there is something to decide: which
-  // server to use when NetBird's is unavailable or the caller asked for the
-  // external one, or which session to attach to on the systems that offer a
-  // choice. A peer with NetBird screen sharing on and no session choice has
-  // nothing to ask, so it connects straight away as it always did.
-  const [showSetup, setShowSetup] = useState(
-    supportsSessionMode || !netbirdAvailable || initialTarget === "external",
-  );
-  // Whether returning to the setup screen would give the operator anything to
-  // change. A failed external connection always does: the port is theirs to
-  // correct.
-  const hasSetupChoices = supportsSessionMode || isExternal || !netbirdAvailable;
+  // The setup screen is always shown first and after a failed attempt: any
+  // peer may be running a third-party VNC server, so the choice between it and
+  // NetBird's own exists on every operating system.
+  const [showSetup, setShowSetup] = useState(true);
 
   useEffect(() => {
     document.title = `${peer.name} - ${peer.ip} - VNC`;
@@ -378,21 +367,13 @@ function VNCSession({
           return;
         }
         setConnectFailed(true);
-        if (hasSetupChoices) {
-          setShowSetup(true);
-        }
+        setShowSetup(true);
       }
     }
     if (client.error) {
       sendErrorNotification("NetBird Client Error", client.error);
     }
-  }, [
-    vnc.error,
-    vnc.errorDetail,
-    client.error,
-    hasSetupChoices,
-    sendErrorNotification,
-  ]);
+  }, [vnc.error, vnc.errorDetail, client.error, sendErrorNotification]);
 
   // Backing out of the password prompt returns to the connection form, which
   // is the last point the operator actually chose anything. Tearing the window
@@ -461,13 +442,13 @@ function VNCSession({
     return undefined;
   })();
 
-  // Show disconnected screen with reconnect when a session ended or
-  // the initial connect attempt failed (attach-mode peers; session mode
-  // gets bounced back to the setup form by the failure-bouncing effect
-  // above).
+  // Show disconnected screen with reconnect when a session ended or the
+  // connect attempt failed. A failure that bounced back to the setup form
+  // shows the form instead, which carries the error itself.
   if (
     vnc.status === VNCStatus.DISCONNECTED &&
     (connectedOnce.current || connectFailed) &&
+    !showSetup &&
     !isLoading
   ) {
     return (
