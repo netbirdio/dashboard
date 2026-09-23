@@ -926,6 +926,16 @@ services:
       # GeoLite2 download removes a startup stall of up to 2 minutes
       # when pkgs.netbird.io is slow.
       - NB_PROXY_DISABLE_GEOLOCATION=true
+      # Declare the private capability so this cluster can host the agent
+      # network endpoint. That endpoint is a private service — reachable only
+      # from connected peers — and management refuses to bootstrap it onto a
+      # cluster without a private-capable proxy; the connect-provider wizard
+      # reads the same flag (supports_private) to pick its cluster. Without
+      # it no cluster qualifies and the wizard stops at the provider tab,
+      # which strands every spec that walks through it. The no-ports proxy
+      # below stays centralised, so the pick has to skip past a cluster that
+      # does not qualify.
+      - NB_PROXY_PRIVATE=true
     volumes:
       - ./proxy-certs:/certs:ro
     command: [
