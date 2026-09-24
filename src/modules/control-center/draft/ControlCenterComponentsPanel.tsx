@@ -857,6 +857,10 @@ const PanelContent = React.memo(
       [matchesSearch, resourcesCategory, networksCategory, drilled],
     );
     const showPolicyTemplate = policiesCategory || matchesSearch("Policy");
+    const showAgentProviderTemplate =
+      agentNetworkCategory || matchesSearch("Provider");
+    const showAgentPolicyTemplate =
+      agentNetworkCategory || matchesSearch("Agent Policy");
 
     const buildPeerTemplateRows = () =>
       filteredPeerTemplates.map((tpl) => (
@@ -1179,27 +1183,40 @@ const PanelContent = React.memo(
         );
       });
 
+    // Filtered like every other template row, so they can join the search results.
     const buildAgentTemplateRows = () => [
-      <TemplateItem
-        key={"agent-provider-template"}
-        icon={SparklesIcon}
-        label={"Provider"}
-        description={"Connect an AI provider or gateway"}
-        onPointerDown={(e) =>
-          handleAgentDragStart(e, (position) => openProviderWizard(position))
-        }
-        data-testid={"cc-template-agent-provider"}
-      />,
-      <TemplateItem
-        key={"agent-policy-template"}
-        icon={ShieldIcon}
-        label={"Agent Policy"}
-        description={"Authorize groups to reach providers"}
-        onPointerDown={(e) =>
-          handleAgentDragStart(e, (position) => addBlankAgentPolicy(position))
-        }
-        data-testid={"cc-template-agent-policy"}
-      />,
+      ...(showAgentProviderTemplate
+        ? [
+            <TemplateItem
+              key={"agent-provider-template"}
+              icon={SparklesIcon}
+              label={"Provider"}
+              description={"Connect an AI provider or gateway"}
+              onPointerDown={(e) =>
+                handleAgentDragStart(e, (position) =>
+                  openProviderWizard(position),
+                )
+              }
+              data-testid={"cc-template-agent-provider"}
+            />,
+          ]
+        : []),
+      ...(showAgentPolicyTemplate
+        ? [
+            <TemplateItem
+              key={"agent-policy-template"}
+              icon={ShieldIcon}
+              label={"Agent Policy"}
+              description={"Authorize groups to reach providers"}
+              onPointerDown={(e) =>
+                handleAgentDragStart(e, (position) =>
+                  addBlankAgentPolicy(position),
+                )
+              }
+              data-testid={"cc-template-agent-policy"}
+            />,
+          ]
+        : []),
     ];
 
     const buildProviderRows = () =>
@@ -1352,6 +1369,7 @@ const PanelContent = React.memo(
                   ...buildPolicyTemplateRows(),
                   ...buildGroupTemplateRows(),
                   ...buildResourceTemplateRows(),
+                  ...(agentNetworkEnabled ? buildAgentTemplateRows() : []),
                 ],
               },
               {
@@ -1374,6 +1392,14 @@ const PanelContent = React.memo(
                 title: "Resources",
                 rows: [...buildDraftResourceRows(), ...buildResourceRows()],
               },
+              // The category tab is not reachable from a search, so its rows
+              // have to be offered here or a provider can't be searched for.
+              ...(agentNetworkEnabled
+                ? [
+                    { title: "Providers", rows: buildProviderRows() },
+                    { title: "Agent Policies", rows: buildAgentPolicyRows() },
+                  ]
+                : []),
             ]
           : category === "peers"
           ? [
