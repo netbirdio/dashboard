@@ -30,6 +30,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
           fetch-depth: 0
 
