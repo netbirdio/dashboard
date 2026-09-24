@@ -38,6 +38,9 @@ export default function EndpointBadge({
   return (
     <FeatureCard
       variant={variant}
+      // The card widens with the URL instead of stopping at FeatureCard's
+      // default cap, which let a long endpoint run under the copy button.
+      className={"max-w-fit"}
       icon={<GlobeIcon size={16} />}
       title={
         <>
