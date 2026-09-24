@@ -16,7 +16,7 @@ jobs:
     name: CSP allows cloud provider APIs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install nginx
         run: |
@@ -61,7 +61,7 @@ jobs:
     name: CloudFormation template URL is live
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Extract template URL from component and check it
         run: |

@@ -21,12 +21,12 @@ jobs:
   build_n_push:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: setup-node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -35,7 +35,7 @@ jobs:
       - run: echo '{}' > .local-config.json
 
       - name: Download IronRDP release TS files
-        uses: robinraju/release-downloader@v1.7
+        uses: robinraju/release-downloader@v1.13
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: netbirdio/IronRDP
@@ -44,7 +44,7 @@ jobs:
           out-file-path: 'public/ironrdp-pkg'
 
       - name: Download IronRDP release JS files
-        uses: robinraju/release-downloader@v1.7
+        uses: robinraju/release-downloader@v1.13
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: netbirdio/IronRDP
@@ -53,7 +53,7 @@ jobs:
           out-file-path: 'public/ironrdp-pkg'
 
       - name: Download IronRDP release WASM file
-        uses: robinraju/release-downloader@v1.7
+        uses: robinraju/release-downloader@v1.13
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: netbirdio/IronRDP
@@ -76,14 +76,14 @@ jobs:
           NEXT_PUBLIC_DASHBOARD_VERSION: ${{ steps.version.outputs.version }}
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       -
         name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ env.DOCKERHUB_IMAGE }}
@@ -100,7 +100,7 @@ jobs:
 
       - name: Docker meta (rootless)
         id: meta_rootless
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ env.DOCKERHUB_IMAGE }}
@@ -118,21 +118,21 @@ jobs:
 
       - name: Log in to Docker Hub
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.NB_DOCKER_USER }}
           password: ${{ secrets.NB_DOCKER_TOKEN }}
 
       - name: Log in to the GitHub Container registry
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/Dockerfile
@@ -142,7 +142,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Build and push rootless Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: docker/Dockerfile.rootless
