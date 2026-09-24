@@ -54,9 +54,11 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
   const showHalo = isPanelActive || isContextMenuActive;
 
   const { groupUserCounts } = useCanvasUI();
+  // A draft group has no id yet, so it counts under its name — the same ref the
+  // pending `update-user-groups` entries carry.
   const userCount =
     (data as { userCountOverride?: number }).userCountOverride ??
-    (group?.id ? groupUserCounts.get(group.id) : 0);
+    (group ? groupUserCounts.get(group.id ?? group.name) : 0);
   const countLabel = useMemo(
     () => getGroupCountLabel(group, userCount),
     [group, userCount],

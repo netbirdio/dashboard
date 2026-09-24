@@ -44,7 +44,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
   const { groupUserCounts } = useCanvasUI();
   const countLabel = getGroupCountLabel(
     group,
-    group?.id ? groupUserCounts.get(group.id) : 0,
+    group ? groupUserCounts.get(group.id ?? group.name) : 0,
   );
 
   const [open, setOpen] = React.useState(false);

@@ -398,7 +398,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
                           <span className={"text-[0.72rem] text-nb-gray-400"}>
                             {getGroupCountLabel(
                               g,
-                              groupUserCounts.get(g.id ?? ""),
+                              groupUserCounts.get(g.id ?? g.name),
                             )}
                           </span>
                         </div>

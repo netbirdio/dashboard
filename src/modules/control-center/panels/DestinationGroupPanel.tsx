@@ -724,7 +724,9 @@ export const DestinationGroupPanel = ({
       syncUsers: syncNodeUserCount,
       peers: memberPeerIds.size,
       resources: memberResourceIds.size,
-      users: memberUserIds.size,
+      // Dropping the override restores the count the panel found, since
+      // `groupUserCounts` already reads the draft view of membership.
+      users: undefined,
     };
   }, [
     syncNodeCounts,
@@ -805,13 +807,17 @@ export const DestinationGroupPanel = ({
       });
       trackUserMembership();
       // Point the unmount snapshot at the applied selection so the cleanup doesn't revert it.
+      // The users count is the exception: the tracked change now feeds
+      // `groupUserCounts`, so clearing the override keeps the node following it
+      // when that change is later discarded or undone.
       restoreCountsRef.current = {
         sync: syncNodeCounts,
         syncUsers: syncNodeUserCount,
         peers: selectedPeerIds.size,
         resources: selectedResourceIds.size,
-        users: selectedUserIds.size,
+        users: undefined,
       };
+      syncNodeUserCount(undefined);
       savedRef.current = true;
       onClose();
       return;

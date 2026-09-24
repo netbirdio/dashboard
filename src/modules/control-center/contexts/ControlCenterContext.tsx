@@ -29,6 +29,7 @@ import { Network } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
 import { useAccount } from "@/modules/account/useAccount";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
@@ -39,6 +40,10 @@ import { usePeerView } from "@/modules/control-center/hooks/views/usePeerView";
 import { useUserView } from "@/modules/control-center/hooks/views/useUserView";
 import { DestinationGroupPanel } from "@/modules/control-center/panels/DestinationGroupPanel";
 import { PeerGroupsPanel } from "@/modules/control-center/panels/PeerGroupsPanel";
+import {
+  groupUserCounts as buildGroupUserCounts,
+  userGroupChangeSignature,
+} from "@/modules/control-center/utils/group-user-counts";
 import {
   ensureParentsBeforeChildren,
   getIpPlaceholderFromRange,
@@ -169,6 +174,8 @@ export function CanvasStateProvider({
   children: React.ReactNode;
 }) {
   const [nodes, setNodes] = useNodesState<Node>([]);
+  const { isDraft: isDraftMode } = useDraftMode();
+  const { changes } = useDraftChangeset();
 
   // The canvas lives only in React, so mirror a projection onto window for e2e.
   useEffect(() => {
@@ -237,17 +244,20 @@ export function CanvasStateProvider({
     [account?.settings?.network_range],
   );
 
-  const { data: users } = useFetchApi<User[]>("/users?service_user=false");
-  const groupUserCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    users?.forEach(
-      (u) =>
-        u.auto_groups?.forEach((gid) =>
-          counts.set(gid, (counts.get(gid) ?? 0) + 1),
-        ),
-    );
-    return counts;
-  }, [users]);
+  // Optional, like the same call in useControlCenterData: a role without
+  // `users.read` still gets the canvas, just with no user counts on it.
+  const { data: users } = useFetchApi<User[]>(
+    "/users?service_user=false",
+    true,
+  );
+  // Keyed by CONTENT: `changes` churns on every draft edit, and a fresh Map here
+  // would re-render every node reading CanvasUIContext.
+  const userGroupSignature = userGroupChangeSignature(changes);
+  const groupUserCounts = useMemo(
+    () => buildGroupUserCounts(users, changes, isDraftMode),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `changes` is read through its signature
+    [users, isDraftMode, userGroupSignature],
+  );
 
   const value = useMemo(
     () => ({

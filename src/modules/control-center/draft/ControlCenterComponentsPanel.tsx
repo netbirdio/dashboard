@@ -1124,7 +1124,10 @@ const PanelContent = React.memo(
                 <SmallBadge />
               </span>
               <span className={"text-[0.72rem] text-nb-gray-400"}>
-                {getGroupCountLabel(group, groupUserCounts.get(group.id ?? ""))}
+                {getGroupCountLabel(
+                  group,
+                  groupUserCounts.get(group.id ?? group.name),
+                )}
               </span>
             </div>
           </div>
@@ -1167,7 +1170,7 @@ const PanelContent = React.memo(
                 <span className={"text-[0.72rem] text-nb-gray-400"}>
                   {getGroupCountLabel(
                     group,
-                    groupUserCounts.get(group.id ?? ""),
+                    groupUserCounts.get(group.id ?? group.name),
                   )}
                 </span>
               </div>
