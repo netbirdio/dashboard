@@ -65,6 +65,12 @@ export default function UserRoleCell({ user }: Readonly<Props>) {
             Agent Network Admin
           </>
         )}
+        {role === Role.AgentNetworkViewer && (
+          <>
+            <EyeIcon size={14} />
+            Agent Network Viewer
+          </>
+        )}
         {role === Role.UsageViewer && (
           <>
             <GaugeIcon size={14} />

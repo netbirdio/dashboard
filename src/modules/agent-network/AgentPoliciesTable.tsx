@@ -48,6 +48,7 @@ import React, { useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
 import AgentPolicyModal from "@/modules/agent-network/AgentPolicyModal";
@@ -158,7 +159,9 @@ function ModelsCell({
   onClickAdd,
 }: {
   policy: AgentPolicy;
-  onClickAdd: () => void;
+  // Absent for callers who can't edit the policy: the badge then only states
+  // what applies instead of offering an edit that would be refused.
+  onClickAdd?: () => void;
 }) {
   const { guardrails } = useAIProviders();
   const models = allowlistModels(policy, guardrails);
@@ -166,6 +169,9 @@ function ModelsCell({
   // No enabled allowlist means every model the providers offer is callable;
   // the way to narrow it is a guardrail, so the badge opens that tab.
   if (models.length === 0) {
+    if (!onClickAdd) {
+      return <span className={"text-xs text-nb-gray-400"}>All Models</span>;
+    }
     return (
       <div className={"flex"}>
         <Badge
@@ -231,12 +237,15 @@ function LimitsCell({
   onClickAdd,
 }: {
   policy: AgentPolicy;
-  onClickAdd: () => void;
+  onClickAdd?: () => void;
 }) {
   const tokenOn = policy.limits.tokenLimit.enabled;
   const budgetOn = policy.limits.budgetLimit.enabled;
 
   if (!tokenOn && !budgetOn) {
+    if (!onClickAdd) {
+      return <span className={"text-xs text-nb-gray-400"}>No Limits</span>;
+    }
     return (
       <div className={"flex"}>
         <Badge
@@ -340,6 +349,9 @@ function ActionsCell({
 }) {
   const { confirm } = useDialog();
   const { togglePolicy, deletePolicy } = useAIProviders();
+  const { permission } = usePermissions();
+  const canUpdate = !!permission?.["agent_network.policies"]?.update;
+  const canDelete = !!permission?.["agent_network.policies"]?.delete;
 
   const onDelete = async () => {
     const ok = await confirm({
@@ -353,6 +365,8 @@ function ActionsCell({
     if (!ok) return;
     deletePolicy(policy.id);
   };
+
+  if (!canUpdate && !canDelete) return null;
 
   return (
     <div className={"flex justify-end pr-4"}>
@@ -369,25 +383,31 @@ function ActionsCell({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className={"w-auto"} align={"end"}>
-          <DropdownMenuItem onClick={() => onEdit(policy)}>
-            <div className={"flex gap-3 items-center"}>
-              <PencilLineIcon size={14} className={"shrink-0"} />
-              Edit Policy
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => togglePolicy(policy.id)}>
-            <div className={"flex gap-3 items-center"}>
-              <Power size={14} className={"shrink-0"} />
-              {policy.enabled ? "Disable" : "Enable"}
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onDelete} variant={"danger"}>
-            <div className={"flex gap-3 items-center"}>
-              <Trash2 size={14} className={"shrink-0"} />
-              Delete
-            </div>
-          </DropdownMenuItem>
+          {canUpdate && (
+            <>
+              <DropdownMenuItem onClick={() => onEdit(policy)}>
+                <div className={"flex gap-3 items-center"}>
+                  <PencilLineIcon size={14} className={"shrink-0"} />
+                  Edit Policy
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => togglePolicy(policy.id)}>
+                <div className={"flex gap-3 items-center"}>
+                  <Power size={14} className={"shrink-0"} />
+                  {policy.enabled ? "Disable" : "Enable"}
+                </div>
+              </DropdownMenuItem>
+            </>
+          )}
+          {canUpdate && canDelete && <DropdownMenuSeparator />}
+          {canDelete && (
+            <DropdownMenuItem onClick={onDelete} variant={"danger"}>
+              <div className={"flex gap-3 items-center"}>
+                <Trash2 size={14} className={"shrink-0"} />
+                Delete
+              </div>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -407,6 +427,11 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
   const initialSearch = searchParams.get("search") ?? undefined;
   const { policies, isLoading, providers, guardrails } = useAIProviders();
   const { groups: realGroups } = useGroups();
+  // Read-only roles (agent_network_viewer) get the table without the write
+  // flows: the policy modal is an edit form, so it only opens for update.
+  const { permission } = usePermissions();
+  const canCreate = !!permission?.["agent_network.policies"]?.create;
+  const canUpdate = !!permission?.["agent_network.policies"]?.update;
 
   const [sorting, setSorting] = useLocalStorage<SortingState>(
     "netbird-table-sort" + path,
@@ -512,7 +537,9 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       cell: ({ row }) => (
         <ModelsCell
           policy={row.original}
-          onClickAdd={() => openEdit(row.original, "guardrails")}
+          onClickAdd={
+            canUpdate ? () => openEdit(row.original, "guardrails") : undefined
+          }
         />
       ),
     },
@@ -539,7 +566,9 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
       cell: ({ row }) => (
         <LimitsCell
           policy={row.original}
-          onClickAdd={() => openEdit(row.original, "limits")}
+          onClickAdd={
+            canUpdate ? () => openEdit(row.original, "limits") : undefined
+          }
         />
       ),
     },
@@ -586,8 +615,14 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
         searchPlaceholder={"Search by name or description..."}
         // Clicking the Models cell lands on the tab that actually owns the
         // model allowlist — the guardrails attached to the policy.
-        onRowClick={(row, cell) =>
-          openEdit(row.original, cell === "models" ? "guardrails" : undefined)
+        onRowClick={
+          canUpdate
+            ? (row, cell) =>
+                openEdit(
+                  row.original,
+                  cell === "models" ? "guardrails" : undefined,
+                )
+            : undefined
         }
         getStartedCard={
           <GetStartedTest
@@ -605,16 +640,18 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
               "Policies connect user and agent groups to AI providers, with optional token and budget limits and guardrails for model access and prompt capture."
             }
             button={
-              <Button
-                variant={"primary"}
-                onClick={() => {
-                  setEditPolicy(undefined);
-                  setCreateOpen(true);
-                }}
-              >
-                <PlusCircle size={16} />
-                Add Policy
-              </Button>
+              canCreate && (
+                <Button
+                  variant={"primary"}
+                  onClick={() => {
+                    setEditPolicy(undefined);
+                    setCreateOpen(true);
+                  }}
+                >
+                  <PlusCircle size={16} />
+                  Add Policy
+                </Button>
+              )
             }
             learnMore={
               <>
@@ -631,6 +668,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
           />
         }
         rightSide={() =>
+          canCreate &&
           policies.length > 0 && (
             <div className={cn("gap-x-4 ml-auto flex")}>
               <Button

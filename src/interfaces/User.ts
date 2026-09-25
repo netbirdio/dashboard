@@ -70,5 +70,6 @@ export enum Role {
   Auditor = "auditor",
   NetworkAdmin = "network_admin",
   AgentNetworkAdmin = "agent_network_admin",
+  AgentNetworkViewer = "agent_network_viewer",
   UsageViewer = "usage_viewer",
 }

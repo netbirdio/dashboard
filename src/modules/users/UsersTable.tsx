@@ -259,6 +259,10 @@ export default function UsersTable({
               value: "agent_network_admin",
               label: "Agent Network Admin",
             },
+            {
+              value: "agent_network_viewer",
+              label: "Agent Network Viewer",
+            },
             { value: "usage_viewer", label: "Usage Viewer" },
           ]
         : []),

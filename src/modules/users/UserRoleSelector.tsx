@@ -122,11 +122,19 @@ export const UserRoles: {
     description: "Manages AI providers, agent policies and guardrails.",
   },
   {
+    name: "Agent Network Viewer",
+    shortName: "Viewer",
+    value: Role.AgentNetworkViewer,
+    icon: EyeIcon,
+    category: "agent-network",
+    description: "Read-only access to providers, policies, usage and logs.",
+  },
+  {
     name: "Usage Viewer",
     value: Role.UsageViewer,
     icon: GaugeIcon,
     category: "agent-network",
-    description: "Read-only access to usage and logs.",
+    description: "Read-only access to usage and costs, and their own logs.",
   },
 ];
 
