@@ -1,8 +1,12 @@
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import { Handle, type Node, Position } from "@xyflow/react";
+import { type Node, Position } from "@xyflow/react";
 import * as React from "react";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { AIProviderId } from "@/modules/agent-network/data/mockData";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { AllHandles } from "@/modules/control-center/handles/AllHandles";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 
 // Kept thin so the React Flow node JSON stays cheap to clone.
 export type AgentProviderNodeData = {
@@ -17,53 +21,57 @@ type ProviderNodeProps = Node<AgentProviderNodeData, "providerNode">;
 
 export const ProviderNode = ({ data }: ProviderNodeProps) => {
   const enabled = data.enabled ?? true;
+  const { isDraft } = useDraftMode();
+
   return (
     <div
       className={cn(
-        "cc-provider-node bg-nb-gray-940 border border-nb-gray-800 rounded-lg overflow-hidden transition-all",
+        "cc-provider-node relative rounded-lg transition-all group group/node",
+        "border bg-nb-gray-940 border-nb-gray-850 h-[64px] flex items-center pr-5 pl-3",
+        "hover:bg-nb-gray-930 hover:border-nb-gray-800",
         !enabled && "opacity-60",
       )}
     >
-      <div
-        className={
-          "flex w-full items-center gap-3 text-nb-gray-300 text-sm pl-3 pr-5 py-3 font-normal"
-        }
-      >
+      <div className={"flex items-center gap-2.5 text-nb-gray-300"}>
         <div
           className={
-            "h-9 w-9 rounded-md flex items-center justify-center shrink-0 overflow-hidden"
+            "h-9 w-9 bg-nb-gray-850 rounded-md flex items-center justify-center shrink-0 group-hover:bg-nb-gray-800 transition-all"
           }
         >
-          <AIProviderLogo providerId={data.providerId} size={36} tile />
+          <AIProviderLogo providerId={data.providerId} size={16} />
         </div>
-        <div className={"min-w-0"}>
-          <div className={"text-nb-gray-200 font-normal whitespace-nowrap"}>
-            {data.name}
-          </div>
+        <div
+          className={
+            "flex flex-col gap-0 justify-center leading-tight max-w-[180px]"
+          }
+        >
+          <span
+            className={
+              "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2 mb-1 mt-1 relative top-[0.05rem]"
+            }
+          >
+            <span className={"truncate min-w-0"}>{data.name}</span>
+            {data.id?.startsWith("new-") ? <SmallBadge /> : null}
+          </span>
           {data.upstreamUrl && (
-            <div
+            <span
               className={
-                "text-nb-gray-400 whitespace-nowrap text-xs truncate max-w-[220px]"
+                "font-normal text-sm text-nb-gray-400 relative -top-[0.1rem] block truncate"
               }
             >
               {data.upstreamUrl}
-            </div>
+            </span>
           )}
         </div>
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        id={"sr"}
-        className={"opacity-0"}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id={"tl"}
-        className={"opacity-0"}
-      />
+      <AllHandles />
+      {isDraft && (
+        <>
+          <ConnectHandle type={"source"} position={Position.Left} />
+          <ConnectHandle type={"source"} position={Position.Right} />
+        </>
+      )}
     </div>
   );
 };

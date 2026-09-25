@@ -22,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
 import {
@@ -40,6 +41,7 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
 import { Group } from "@/interfaces/Group";
@@ -59,21 +61,39 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   policy?: AgentPolicy;
+  initial?: Partial<Omit<AgentPolicy, "id">>;
+  extraProviders?: AIProvider[];
+  takenNames?: string[];
   initialTab?: string;
+  onBeforeSave?: () => Promise<boolean> | boolean;
+  useSave?: boolean;
+  onDraftSubmit?: (policy: Omit<AgentPolicy, "id">) => void;
 };
 
 export default function AgentPolicyModal({
   open,
   onOpenChange,
   policy,
+  initial,
+  extraProviders,
+  takenNames,
   initialTab,
+  onBeforeSave,
+  useSave = true,
+  onDraftSubmit,
 }: Readonly<Props>) {
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
       {open && (
         <AgentPolicyModalContent
           policy={policy}
+          initial={initial}
+          extraProviders={extraProviders}
+          takenNames={takenNames}
           initialTab={initialTab}
+          onBeforeSave={onBeforeSave}
+          useSave={useSave}
+          onDraftSubmit={onDraftSubmit}
           onSuccess={() => onOpenChange(false)}
         />
       )}
@@ -83,22 +103,50 @@ export default function AgentPolicyModal({
 
 function AgentPolicyModalContent({
   policy,
+  initial,
+  extraProviders,
+  takenNames,
   initialTab,
+  onBeforeSave,
+  useSave = true,
+  onDraftSubmit,
   onSuccess,
 }: {
   policy?: AgentPolicy;
+  initial?: Partial<Omit<AgentPolicy, "id">>;
+  extraProviders?: AIProvider[];
+  takenNames?: string[];
   initialTab?: string;
+  onBeforeSave?: () => Promise<boolean> | boolean;
+  useSave?: boolean;
+  onDraftSubmit?: (policy: Omit<AgentPolicy, "id">) => void;
   onSuccess: () => void;
 }) {
-  const { providers, addPolicy, updatePolicy } = useAIProviders();
+  const {
+    providers: accountProviders,
+    addPolicy,
+    updatePolicy,
+    policies,
+  } = useAIProviders();
+  const providers = useMemo(
+    () => [
+      ...accountProviders,
+      ...(extraProviders ?? []).filter(
+        (e) => !accountProviders.some((p) => p.id === e.id),
+      ),
+    ],
+    [accountProviders, extraProviders],
+  );
+  const { dropdownOptions } = useGroups();
   const { mutate } = useSWRConfig();
 
+  const seed = policy ?? initial;
   const [tab, setTab] = useState<string>(initialTab ?? "policy");
-  const [name, setName] = useState(policy?.name ?? "");
-  const [description, setDescription] = useState(policy?.description ?? "");
+  const [name, setName] = useState(seed?.name ?? "");
+  const [description, setDescription] = useState(seed?.description ?? "");
   // Enabled is no longer surfaced as a UI toggle in the modal — new
   // policies default to enabled, edits preserve the existing value.
-  const enabled = policy?.enabled ?? true;
+  const enabled = seed?.enabled ?? true;
   // Source groups go through useGroupHelper so any new (id-less) group
   // gets created against /groups before we save the policy — same flow as
   // the Access Control policy modal. Dashboard caps source-groups to 1
@@ -112,7 +160,13 @@ function AgentPolicyModalContent({
     setSourceGroupsRaw,
     { getGroupsToUpdate: getSourceGroupsToUpdate },
   ] = useGroupHelper({
-    initial: policy?.sourceGroups ?? [],
+    initial: (seed?.sourceGroups ?? []).flatMap((ref) => {
+      const byId = dropdownOptions.find((g) => g.id === ref);
+      if (byId) return [byId];
+      const byName = dropdownOptions.find((g) => !g.id && g.name === ref);
+      if (byName) return [byName];
+      return [];
+    }),
   });
   const sourceGroups = sourceGroupsRaw;
   const setSourceGroups: React.Dispatch<React.SetStateAction<Group[]>> = (
@@ -131,12 +185,12 @@ function AgentPolicyModalContent({
   const hasLegacyExtraGroups = sourceGroupsRaw.length > 1;
   const [destinationProviderIds, setDestinationProviderIds] = useState<
     string[]
-  >(policy?.destinationProviderIds ?? []);
+  >(seed?.destinationProviderIds ?? []);
   const [guardrailIds, setGuardrailIds] = useState<string[]>(
-    policy?.guardrailIds ?? [],
+    seed?.guardrailIds ?? [],
   );
   const [limits, setLimits] = useState<PolicyLimits>(
-    policy?.limits ?? EMPTY_POLICY_LIMITS,
+    seed?.limits ?? EMPTY_POLICY_LIMITS,
   );
 
   const canContinueFromPolicy = useMemo(
@@ -146,14 +200,29 @@ function AgentPolicyModalContent({
 
   // Auto-populate the policy name from the first selected source group and
   // first selected provider until the user types into the Name field.
-  const userEditedName = useRef(Boolean(policy?.name));
+  const userEditedName = useRef(Boolean(seed?.name));
   const suggestedName = useMemo(() => {
     if (sourceGroups.length === 0 || destinationProviderIds.length === 0) {
       return "";
     }
     const provider = providers.find((p) => p.id === destinationProviderIds[0]);
-    return `${sourceGroups[0].name} → ${provider?.name ?? ""}`.trim();
-  }, [sourceGroups, destinationProviderIds, providers]);
+    const base = `${sourceGroups[0].name} → ${provider?.name ?? ""}`.trim();
+    const taken = new Set([
+      ...policies.filter((p) => p.id !== policy?.id).map((p) => p.name),
+      ...(takenNames ?? []),
+    ]);
+    let name = base;
+    let i = 1;
+    while (taken.has(name)) name = `${base} (${i++})`;
+    return name;
+  }, [
+    sourceGroups,
+    destinationProviderIds,
+    providers,
+    policies,
+    policy?.id,
+    takenNames,
+  ]);
 
   useEffect(() => {
     if (policy) return;
@@ -168,47 +237,51 @@ function AgentPolicyModalContent({
   }, [name, canContinueFromPolicy]);
 
   const handleSubmit = async () => {
-    // Mirror Access Control's flow: create any newly-named groups first,
-    // refresh the /groups SWR cache so freshly-created entries are
-    // resolvable in the table, then post the policy with all ids known.
+    if (onBeforeSave && !(await onBeforeSave())) return;
+
+    // Trim to the first group on save: handles the legacy >1 case
+    // where the warning was shown but the operator hit Save without
+    // editing the source field.
+    const sourceGroup = sourceGroups[0];
+
+    if (!useSave) {
+      onDraftSubmit?.({
+        name,
+        description,
+        enabled,
+        sourceGroups: sourceGroup ? [sourceGroup.id ?? sourceGroup.name] : [],
+        destinationProviderIds,
+        guardrailIds,
+        limits,
+      });
+      onSuccess();
+      return;
+    }
+
     const calls = getSourceGroupsToUpdate().map((g) => g.promise());
     const created = (await Promise.all(calls).then((groups) => {
       mutate("/groups");
       return groups;
     })) as Group[];
 
-    // Trim to the first group on save: handles the legacy >1 case
-    // where the warning was shown but the operator hit Save without
-    // editing the source field.
-    const sourceGroupIds = sourceGroups
-      .slice(0, 1)
-      .map((g) => {
-        if (g.id) return g.id;
-        const match = created.find((c) => c.name === g.name);
-        return match?.id;
-      })
+    const sourceGroupIds = (sourceGroup ? [sourceGroup] : [])
+      .map((g) => g.id ?? created.find((c) => c.name === g.name)?.id)
       .filter((id): id is string => Boolean(id));
 
+    const next = {
+      name,
+      description,
+      enabled,
+      sourceGroups: sourceGroupIds,
+      destinationProviderIds,
+      guardrailIds,
+      limits,
+    };
+
     if (policy) {
-      await updatePolicy(policy.id, {
-        name,
-        description,
-        enabled,
-        sourceGroups: sourceGroupIds,
-        destinationProviderIds,
-        guardrailIds,
-        limits,
-      });
+      await updatePolicy(policy.id, next);
     } else {
-      await addPolicy({
-        name,
-        description,
-        enabled,
-        sourceGroups: sourceGroupIds,
-        destinationProviderIds,
-        guardrailIds,
-        limits,
-      });
+      await addPolicy(next);
     }
     onSuccess();
   };
@@ -442,6 +515,8 @@ function SourceGroupsSelector({
   );
 }
 
+const isDraftProvider = (p: AIProvider) => p.id.startsWith("new-");
+
 function ProviderMultiSelect({
   providers,
   value,
@@ -466,6 +541,15 @@ function ProviderMultiSelect({
         p.providerId.toLowerCase().includes(query),
     );
   }, [providers, search]);
+
+  const selected = useMemo(
+    () =>
+      value.flatMap((id) => {
+        const p = providers.find((pp) => pp.id === id);
+        return p ? [p] : [];
+      }),
+    [value, providers],
+  );
 
   const toggle = (id: string) => {
     onChange(
@@ -496,35 +580,32 @@ function ProviderMultiSelect({
               "flex items-center gap-2 border-nb-gray-700 flex-wrap h-full"
             }
           >
-            {value.length === 0 ? (
+            {selected.length === 0 ? (
               <span className={"pl-1"}>Select provider(s)...</span>
             ) : (
-              value.map((id) => {
-                const p = providers.find((pp) => pp.id === id);
-                if (!p) return null;
-                return (
-                  <Badge
-                    key={id}
-                    variant={"gray-ghost"}
-                    className={"py-[3px] whitespace-nowrap"}
-                    useHover
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onChange(value.filter((v) => v !== id));
-                    }}
-                  >
-                    <AIProviderLogo providerId={p.providerId} size={12} />
-                    {p.name}
-                    <XIcon
-                      size={12}
-                      className={
-                        "cursor-pointer group-hover:text-nb-gray-100 transition-all shrink-0"
-                      }
-                    />
-                  </Badge>
-                );
-              })
+              selected.map((p) => (
+                <Badge
+                  key={p.id}
+                  variant={"gray-ghost"}
+                  className={"py-[3px] whitespace-nowrap"}
+                  useHover
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onChange(value.filter((v) => v !== p.id));
+                  }}
+                >
+                  <AIProviderLogo providerId={p.providerId} size={12} />
+                  {p.name}
+                  {isDraftProvider(p) && <SmallBadge />}
+                  <XIcon
+                    size={12}
+                    className={
+                      "cursor-pointer group-hover:text-nb-gray-100 transition-all shrink-0"
+                    }
+                  />
+                </Badge>
+              ))
             )}
           </div>
           <div className={"pl-2"}>
@@ -590,6 +671,7 @@ function ProviderMultiSelect({
                         <span className={"text-sm text-nb-gray-100 truncate"}>
                           {p.name}
                         </span>
+                        {isDraftProvider(p) && <SmallBadge />}
                       </div>
                       <Checkbox checked={isSelected} />
                     </CommandItem>

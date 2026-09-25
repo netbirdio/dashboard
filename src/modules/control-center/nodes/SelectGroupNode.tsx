@@ -9,8 +9,9 @@ import { sortBy } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
 import { Group } from "@/interfaces/Group";
-import { getGroupCountLabel } from "@/modules/control-center/utils/helpers";
+import { useCanvasUI } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
+import { getGroupCountLabel } from "@/modules/control-center/utils/helpers";
 
 type NodeProps = Node<
   {
@@ -40,7 +41,11 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
   );
 
   const group = groups?.find((g) => g.id === data.currentGroup);
-  const countLabel = getGroupCountLabel(group);
+  const { groupUserCounts } = useCanvasUI();
+  const countLabel = getGroupCountLabel(
+    group,
+    group ? groupUserCounts.get(group.id ?? group.name) : 0,
+  );
 
   const [open, setOpen] = React.useState(false);
   useCloseOnCanvasClick(open, () => setOpen(false));

@@ -16,6 +16,10 @@ const revokeSetupKey = vi.fn();
 const trackRemoveGroupMembers = vi.fn();
 const trackDeleteGroup = vi.fn();
 const trackUpdatePolicy = vi.fn();
+const trackUpdateAgentPolicy = vi.fn();
+const trackDeleteAgentPolicy = vi.fn();
+const updateDraftAgentPolicy = vi.fn();
+let liveAgentPolicies: unknown[] = [];
 // The Delete confirmation is the only place the user is told what a group
 // deletion will take with it, so its wording is under test.
 let confirmAnswer = true;
@@ -49,7 +53,10 @@ vi.mock("@/modules/control-center/contexts/ControlCenterContext", () => ({
   }),
 }));
 vi.mock("@/modules/control-center/contexts/ControlCenterPolicyModals", () => ({
-  useControlCenterPolicy: () => ({ updateDraftPolicy }),
+  useControlCenterPolicy: () => ({ updateDraftPolicy, updateDraftAgentPolicy }),
+}));
+vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
+  useAIProviders: () => ({ policies: liveAgentPolicies, providers: [] }),
 }));
 vi.mock("@/modules/control-center/hooks/useControlCenterData", () => ({
   useControlCenterData: () => ({ groups: [], policies: livePolicies }),
@@ -69,6 +76,8 @@ vi.mock("@/modules/control-center/draft/DraftChangesetContext", async () => {
       trackRenameGroup: vi.fn(),
       trackDeleteGroup,
       trackUpdatePolicy,
+      trackUpdateAgentPolicy,
+      trackDeleteAgentPolicy,
       trackRemoveGroupMembers,
       removeGroupFromDraftResource: vi.fn(),
       untrackNewGroup,
@@ -91,7 +100,12 @@ const holderGroupNode = () =>
     data: {
       group: { id: "g1", name: "Servers" },
       draftPeers: [
-        { id: "draft-a", name: "Server", setupKeyId: "k-a", boundGroupId: "bg-a" },
+        {
+          id: "draft-a",
+          name: "Server",
+          setupKeyId: "k-a",
+          boundGroupId: "bg-a",
+        },
         { id: "draft-b", name: "Server 2", setupKeyId: "k-b" },
       ],
       addedMembers: new Set(["draft-a", "draft-b", "peer-real"]),
@@ -110,6 +124,10 @@ beforeEach(() => {
   trackRemoveGroupMembers.mockClear();
   trackDeleteGroup.mockClear();
   trackUpdatePolicy.mockClear();
+  trackUpdateAgentPolicy.mockClear();
+  trackDeleteAgentPolicy.mockClear();
+  updateDraftAgentPolicy.mockClear();
+  liveAgentPolicies = [];
   confirm.mockClear();
   confirmAnswer = true;
   nodes = [holderGroupNode()];
@@ -545,7 +563,12 @@ describe("a batch Remove of several groups", () => {
             name: "P",
             enabled: true,
             rules: [
-              { name: "P", enabled: true, sources: [a, b], destinations: [dev] },
+              {
+                name: "P",
+                enabled: true,
+                sources: [a, b],
+                destinations: [dev],
+              },
             ],
           },
         },
@@ -725,5 +748,198 @@ describe("renaming a draft group follows every name reference", () => {
     const resourceData = nodes.find((n) => n.id === "resource-new-r1")
       ?.data as { resourceGroupIds: string[] };
     expect(resourceData.resourceGroupIds).toEqual(["g1", "Ops"]);
+  });
+});
+
+describe("group removal and deletion reach agent policies", () => {
+  const ops = { id: "g1", name: "Ops" };
+  const qa = { id: "g4", name: "QA" };
+
+  const agentPolicy = (id: string, sourceGroups: string[]) => ({
+    id,
+    name: id,
+    description: "",
+    enabled: true,
+    sourceGroups,
+    destinationProviderIds: ["prov-1"],
+    guardrailIds: [],
+    limits: {},
+  });
+
+  const opsGroupNode = () =>
+    ({
+      id: "group-g1",
+      type: "groupNode",
+      position: { x: 0, y: 0 },
+      data: { group: ops },
+    }) as unknown as Node;
+
+  const agentPolicyNode = (id: string, draft = false) =>
+    ({
+      id: `agent-policy-${id}`,
+      type: "agentPolicyNode",
+      position: { x: 0, y: 0 },
+      data: draft
+        ? { id, name: id, policy: agentPolicy(id, ["g1", "g4"]) }
+        : { id, name: id },
+    }) as unknown as Node;
+
+  it("Remove strips the group off a draft agent policy on the canvas", async () => {
+    nodes = [opsGroupNode(), agentPolicyNode("new-1", true)];
+    edges = [{ id: "e1", source: "group-g1", target: "agent-policy-new-1" }];
+    const { result } = renderHook(() => useDraftGroupActions());
+    act(() => result.current.removeGroup(nodes[0]));
+    await flushStrips();
+
+    expect(updateDraftAgentPolicy).toHaveBeenCalledTimes(1);
+    expect(updateDraftAgentPolicy.mock.calls[0][0].sourceGroups).toEqual([
+      "g4",
+    ]);
+  });
+
+  it("Remove strips a DRAFT group, which the policy names rather than ids", async () => {
+    const draftGroupNode = {
+      id: "group-new-abc",
+      type: "groupNode",
+      position: { x: 0, y: 0 },
+      data: { group: { name: "Ops" } },
+    } as unknown as Node;
+    nodes = [
+      draftGroupNode,
+      {
+        id: "agent-policy-new-1",
+        type: "agentPolicyNode",
+        position: { x: 0, y: 0 },
+        data: {
+          id: "new-1",
+          name: "new-1",
+          policy: { ...agentPolicy("new-1", ["Ops"]) },
+        },
+      } as unknown as Node,
+    ];
+    edges = [
+      { id: "e1", source: "group-new-abc", target: "agent-policy-new-1" },
+    ];
+    const { result } = renderHook(() => useDraftGroupActions());
+    act(() => result.current.removeGroup(nodes[0]));
+    await flushStrips();
+
+    expect(updateDraftAgentPolicy.mock.calls[0][0].sourceGroups).toEqual([]);
+  });
+
+  it("Remove reads an existing policy from the domain list", async () => {
+    liveAgentPolicies = [agentPolicy("ap-1", ["g1", "g4"])];
+    nodes = [opsGroupNode(), agentPolicyNode("ap-1")];
+    edges = [{ id: "e1", source: "agent-policy-ap-1", target: "group-g1" }];
+    const { result } = renderHook(() => useDraftGroupActions());
+    act(() => result.current.removeGroup(nodes[0]));
+    await flushStrips();
+
+    expect(updateDraftAgentPolicy.mock.calls[0][0].sourceGroups).toEqual([
+      "g4",
+    ]);
+  });
+
+  it("Delete records the strip tagged with what it took", async () => {
+    liveAgentPolicies = [agentPolicy("ap-1", ["g1", "g4"])];
+    nodes = [opsGroupNode()];
+    const { result } = renderHook(() => useDraftGroupActions());
+    await act(async () => {
+      await result.current.confirmAndDeleteGroups([nodes[0]]);
+    });
+
+    expect(trackUpdateAgentPolicy).toHaveBeenCalledTimes(1);
+    const call = trackUpdateAgentPolicy.mock.calls[0][0];
+    expect(call.policy.sourceGroups).toEqual(["g4"]);
+    expect(call.groupDeletion.groupIds).toEqual(["g1"]);
+    expect(call.groupDeletion.basePolicy.sourceGroups).toEqual(["g1", "g4"]);
+  });
+
+  it("Delete that empties a policy records it as a deletion, tagged", async () => {
+    liveAgentPolicies = [agentPolicy("ap-1", ["g1"])];
+    nodes = [opsGroupNode()];
+    const { result } = renderHook(() => useDraftGroupActions());
+    await act(async () => {
+      await result.current.confirmAndDeleteGroups([nodes[0]]);
+    });
+
+    expect(trackUpdateAgentPolicy).not.toHaveBeenCalled();
+    const call = trackDeleteAgentPolicy.mock.calls[0][0];
+    expect(call.agentPolicyId).toBe("ap-1");
+    expect(call.groupDeletion.groupIds).toEqual(["g1"]);
+  });
+
+  it("sweeps a policy that is not drawn: it blocks the group DELETE all the same", async () => {
+    liveAgentPolicies = [agentPolicy("ap-off-canvas", ["g1", "g4"])];
+    nodes = [opsGroupNode()];
+    const { result } = renderHook(() => useDraftGroupActions());
+    await act(async () => {
+      await result.current.confirmAndDeleteGroups([nodes[0]]);
+    });
+
+    expect(trackUpdateAgentPolicy.mock.calls[0][0].agentPolicyId).toBe(
+      "ap-off-canvas",
+    );
+  });
+
+  it("Delete strips from the PENDING policy, not the pre-edit live one", async () => {
+    liveAgentPolicies = [agentPolicy("ap-1", ["g1", "g4"])];
+    pendingChanges = [
+      {
+        id: "c1",
+        type: "update-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "ap-1",
+        policy: { ...agentPolicy("ap-1", ["g1"]) },
+      },
+    ];
+    nodes = [opsGroupNode()];
+    const { result } = renderHook(() => useDraftGroupActions());
+    await act(async () => {
+      await result.current.confirmAndDeleteGroups([nodes[0]]);
+    });
+
+    expect(trackDeleteAgentPolicy).toHaveBeenCalled();
+    const call = trackDeleteAgentPolicy.mock.calls[0][0];
+    expect(call.groupDeletion.basePolicy.sourceGroups).toEqual(["g1"]);
+  });
+
+  it("records an update, not a deletion, when a source group survives", async () => {
+    liveAgentPolicies = [
+      {
+        ...agentPolicy("ap-1", ["g1", "g4"]),
+        destinationProviderIds: [],
+      },
+    ];
+    nodes = [opsGroupNode()];
+    const { result } = renderHook(() => useDraftGroupActions());
+    await act(async () => {
+      await result.current.confirmAndDeleteGroups([nodes[0]]);
+    });
+
+    expect(trackDeleteAgentPolicy).not.toHaveBeenCalled();
+    expect(trackUpdateAgentPolicy.mock.calls[0][0].policy.sourceGroups).toEqual(
+      ["g4"],
+    );
+  });
+
+  it("skips a policy already marked for deletion", async () => {
+    liveAgentPolicies = [agentPolicy("ap-1", ["g1"])];
+    pendingChanges = [
+      {
+        id: "c1",
+        type: "delete-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "ap-1",
+      },
+    ];
+    nodes = [opsGroupNode()];
+    const { result } = renderHook(() => useDraftGroupActions());
+    await act(async () => {
+      await result.current.confirmAndDeleteGroups([nodes[0]]);
+    });
+
+    expect(trackDeleteAgentPolicy).not.toHaveBeenCalled();
+    expect(trackUpdateAgentPolicy).not.toHaveBeenCalled();
   });
 });

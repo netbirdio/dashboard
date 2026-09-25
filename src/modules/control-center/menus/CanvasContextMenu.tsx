@@ -7,6 +7,7 @@ import {
   OptionIcon,
   ServerIcon,
   ShieldIcon,
+  SparklesIcon,
   WaypointsIcon,
   WorkflowIcon,
 } from "lucide-react";
@@ -19,6 +20,8 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterShortcuts } from "@/modules/control-center/hooks/useControlCenterShortcuts";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
@@ -65,9 +68,15 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     drillDownNetworkNodeId,
   } = useDraftMode();
   const { addNewGroup } = useDraftGroupActions();
-  const { addPeerPlaceholder, addBlankNode, addBlankPolicy } =
-    useDraftNodeCreation();
+  const {
+    addPeerPlaceholder,
+    addBlankNode,
+    addBlankPolicy,
+    addBlankAgentPolicy,
+  } = useDraftNodeCreation();
+  const { openProviderWizard } = useControlCenterPolicy();
   const { permission } = usePermissions();
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
   // When drilled into a network the network/resource row swaps: no "New
   // Network", "New Resource" assigns into it, and "Add Routing Peer" appears.
@@ -155,6 +164,24 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
                 setResourceEditor({ createStandaloneAt: pos }),
             },
           ],
+      [
+        {
+          label: "New Agent Policy",
+          icon: <ShieldIcon size={14} />,
+          permitted:
+            agentNetworkEnabled &&
+            !!permission?.["agent_network.policies"]?.create,
+          action: (pos: XYPosition) => addBlankAgentPolicy(pos),
+        },
+        {
+          label: "New Agent Provider",
+          icon: <SparklesIcon size={14} />,
+          permitted:
+            agentNetworkEnabled &&
+            !!permission?.["agent_network.providers"]?.create,
+          action: (pos: XYPosition) => openProviderWizard(pos),
+        },
+      ],
     ];
     let digit = 0;
     return groups
@@ -173,12 +200,13 @@ export const CanvasContextMenu = ({ onOpenChange }: CanvasContextMenuProps) => {
     addNewGroup,
     addBlankPolicy,
     addPeerPlaceholder,
+    addBlankAgentPolicy,
+    openProviderWizard,
     addBlankNode,
     setResourceEditor,
     setRoutingPeerModal,
-    permission.policies.create,
-    permission.groups.create,
-    permission.networks.create,
+    permission,
+    agentNetworkEnabled,
   ]);
 
   // Alt/⌥+1…6 create at the viewport center (draft-only, input-aware).

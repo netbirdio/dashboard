@@ -219,7 +219,7 @@ export function AgentConnectTabs({
 
       <TabsContent value={"claude-code"}>
         <div className={contentClassName}>
-          <div className={"mb-3"}>
+          <div className={"mb-5"}>
             <SelectDropdown
               value={claudeProvider}
               onChange={(v) =>

@@ -1,7 +1,10 @@
 import { Edge, Node } from "@xyflow/react";
 import { useMemo } from "react";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
-import type { AgentPolicy, AIProvider } from "@/modules/agent-network/data/mockData";
+import type {
+  AgentPolicy,
+  AIProvider,
+} from "@/modules/agent-network/data/mockData";
 import { addEdge, addNode } from "@/modules/control-center/utils/graph-builder";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 
@@ -19,7 +22,7 @@ export function useAgentNetworkOverlay(): AgentNetworkOverlay {
     providers.forEach((p) => byId.set(p.id, p));
     return byId;
   }, [providers]);
-  return { policies, providerById };
+  return useMemo(() => ({ policies, providerById }), [policies, providerById]);
 }
 
 // Appends `sourceNodeId → agent-policy-<id> → provider-<id>`, mirroring the

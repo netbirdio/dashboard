@@ -38,8 +38,13 @@ import {
   Sparkles,
   UploadIcon,
 } from "lucide-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import {
@@ -47,7 +52,10 @@ import {
   ReverseProxyDomainType,
 } from "@/interfaces/ReverseProxy";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
-import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import {
+  type ProviderConnectInput,
+  useAIProviders,
+} from "@/modules/agent-network/AIProvidersProvider";
 import {
   AIProvider,
   AIProviderId,
@@ -158,6 +166,10 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   provider?: AIProvider;
+  onBeforeSave?: () => Promise<boolean> | boolean;
+  useSave?: boolean;
+  onDraftSubmit?: (input: ProviderConnectInput) => void;
+  takenNames?: string[];
 };
 
 // ModelRowEditor owns row-local UI state (custom/catalog mode, expanded cache
@@ -172,7 +184,14 @@ let modelKeySeq = 0;
 // MASKED_API_KEY is what the edit form shows in place of a stored credential.
 // The real key never reaches the browser, so anything equal to this is a
 // placeholder rather than something that can be sent to a vendor.
-const MASKED_API_KEY = "••••••••";
+export const MASKED_API_KEY = "••••••••";
+
+const NO_PASSWORD_MANAGER = {
+  autoComplete: "off",
+  "data-1p-ignore": true,
+  "data-lpignore": "true",
+  "data-form-type": "other",
+} as const;
 
 const withModelKey = (m: ProviderModel): EditableModel => ({
   ...m,
@@ -188,8 +207,13 @@ export default function AIProviderModal({
   open,
   onOpenChange,
   provider,
+  onBeforeSave,
+  useSave = true,
+  onDraftSubmit,
+  takenNames,
 }: Readonly<Props>) {
   const {
+    providers,
     addProvider,
     updateProvider,
     settings,
@@ -200,6 +224,28 @@ export default function AIProviderModal({
   const { confirm } = useDialog();
 
   const isEdit = !!provider;
+
+  const takenProviderNames = useMemo(
+    () =>
+      new Set([
+        ...providers.filter((p) => p.id !== provider?.id).map((p) => p.name),
+        ...(takenNames ?? []),
+      ]),
+    [providers, provider?.id, takenNames],
+  );
+  const uniqueName = useCallback(
+    (base: string) => {
+      let name = base;
+      let i = 1;
+      while (takenProviderNames.has(name)) name = `${base} (${i++})`;
+      return name;
+    },
+    [takenProviderNames],
+  );
+  const uniqueNameRef = useRef(uniqueName);
+  useEffect(() => {
+    uniqueNameRef.current = uniqueName;
+  }, [uniqueName]);
   // The endpoint lives on the account-level Settings row, bootstrapped once
   // via an explicit POST. We auto-pick a proxy cluster from the live /domains
   // response and, when the account isn't bootstrapped yet, POST it as the
@@ -229,7 +275,9 @@ export default function AIProviderModal({
   const [providerId, setProviderId] = useState<AIProviderId>(
     provider?.providerId ?? "openai_api",
   );
-  const [name, setName] = useState(provider?.name ?? "OpenAI API");
+  const [name, setName] = useState(() =>
+    provider ? provider.name : uniqueName("OpenAI API"),
+  );
   const [upstreamUrl, setUpstreamUrl] = useState<string>(
     provider?.upstreamUrl ?? "",
   );
@@ -438,7 +486,7 @@ export default function AIProviderModal({
     } else {
       const fallback = getById("openai_api");
       setProviderId("openai_api");
-      setName(fallback ? fallback.name : "OpenAI API");
+      setName(uniqueNameRef.current(fallback ? fallback.name : "OpenAI API"));
       setUpstreamUrl(
         fallback?.default_host ? `https://${fallback.default_host}` : "",
       );
@@ -492,6 +540,7 @@ export default function AIProviderModal({
 
   const handleSubmit = async () => {
     if (!catalog) return;
+    if (onBeforeSave && !(await onBeforeSave())) return;
     // Drop rows the operator never filled in (an added-but-empty custom
     // row, or the empty fallback row when the catalog is exhausted) —
     // the API rejects models without an id, which would fail the whole
@@ -539,6 +588,25 @@ export default function AIProviderModal({
           identityHeaderGroups: identityHeaderGroups.trim(),
         }
       : {};
+    const input: ProviderConnectInput = {
+      providerId,
+      name,
+      upstreamUrl,
+      apiKey,
+      extraValues: sanitizedExtraValues,
+      ...identityOverrides,
+      skipTlsVerification: isCustomKind ? skipTlsVerification : false,
+      metadataDisabled,
+      models: submittedModels,
+      enabled: true,
+    };
+
+    if (!useSave) {
+      onDraftSubmit?.(input);
+      closeAfterSave();
+      return;
+    }
+
     setSaveInFlight(true);
     try {
       if (isEdit && provider) {
@@ -572,18 +640,7 @@ export default function AIProviderModal({
         );
         if (!bootstrapped) return;
       }
-      const created = await addProvider({
-        providerId,
-        name,
-        upstreamUrl,
-        apiKey,
-        extraValues: sanitizedExtraValues,
-        ...identityOverrides,
-        skipTlsVerification: isCustomKind ? skipTlsVerification : false,
-        metadataDisabled,
-        models: submittedModels,
-        enabled: true,
-      });
+      const created = await addProvider(input);
       if (!created) return;
       closeAfterSave();
     } finally {
@@ -832,7 +889,7 @@ export default function AIProviderModal({
         data-testid={"agent-network-provider-modal"}
       >
         <ModalHeader
-          icon={<AgentNetworkIcon className={"fill-netbird"} size={18} />}
+          icon={<Sparkles size={18} className={"text-netbird"} />}
           title={isEdit ? "Edit Provider" : "Connect Provider"}
           description={
             isEdit
@@ -941,7 +998,7 @@ export default function AIProviderModal({
                       setKeyFileName(null);
                       const c = getById(next);
                       if (c) {
-                        setName(c.name);
+                        setName(uniqueNameRef.current(c.name));
                         // Gateways like Bifrost / LiteLLM ship with an
                         // empty default_host (operator brings their own
                         // endpoint). Don't pre-fill "https://" — let the
@@ -984,6 +1041,7 @@ export default function AIProviderModal({
                   />
                 </FormRow>
                 <Input
+                  {...NO_PASSWORD_MANAGER}
                   data-testid={"agent-network-provider-upstream-url"}
                   value={upstreamUrl}
                   onChange={(e) => setUpstreamUrl(e.target.value)}
@@ -1104,6 +1162,7 @@ export default function AIProviderModal({
                   }
                 >
                   <Input
+                    {...NO_PASSWORD_MANAGER}
                     data-testid={"agent-network-provider-api-key"}
                     type={"password"}
                     showPasswordToggle
@@ -1141,6 +1200,7 @@ export default function AIProviderModal({
                     helpText={ui.helpText}
                   >
                     <Input
+                      {...NO_PASSWORD_MANAGER}
                       value={extraValues[h.name] ?? ""}
                       onChange={(e) =>
                         setExtraValues((prev) => ({
@@ -1158,6 +1218,7 @@ export default function AIProviderModal({
                 helpText={"Shown in the Agent Network table."}
               >
                 <Input
+                  {...NO_PASSWORD_MANAGER}
                   data-testid={"agent-network-provider-name"}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
