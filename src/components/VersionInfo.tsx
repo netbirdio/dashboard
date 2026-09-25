@@ -2,14 +2,15 @@
 
 import FullTooltip from "@components/FullTooltip";
 import { SmallBadge } from "@components/ui/SmallBadge";
+import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
+import { isNetBirdCloud } from "@utils/netbird";
+import { isNewerVersion } from "@utils/version";
 import { ArrowUpCircle } from "lucide-react";
 import * as React from "react";
 import Skeleton from "react-loading-skeleton";
-import useFetchApi from "@utils/api";
-import { isNetBirdCloud } from "@utils/netbird";
-import { isNewerVersion } from "@utils/version";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { VersionInfo as VersionInfoType } from "@/interfaces/Instance";
 
 function formatVersion(version: string): string {
@@ -72,9 +73,11 @@ function VersionValue({ version }: { version: string }) {
 
 export const NavigationVersionInfo = () => {
   const { isNavigationCollapsed, mobileNavOpen } = useApplicationContext();
+  const { permission } = usePermissions();
 
   // Only show for self-hosted, not cloud
   if (isNetBirdCloud()) return null;
+  if (!permission?.settings?.read) return null;
 
   return (
     <div
