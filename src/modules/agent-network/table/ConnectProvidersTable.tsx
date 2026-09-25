@@ -98,6 +98,11 @@ function ModelsCell({ provider }: { provider: APIMeProvider }) {
           <span className={"font-medium text-xs"}>
             {allModels ? "All Models" : provider.models.length}
           </span>
+          {allModels && provider.models.length > 0 && (
+            <span className={"text-xs text-nb-gray-400"}>
+              ({provider.models.length})
+            </span>
+          )}
         </Badge>
       </FullTooltip>
     </div>
