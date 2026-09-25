@@ -46,36 +46,64 @@ function NameCell({ provider }: { provider: APIMeProvider }) {
   );
 }
 
+function ModelList({ models }: { models: string[] }) {
+  return (
+    <div className={"flex flex-col gap-1 text-xs"}>
+      {models.map((model) => (
+        <div key={model}>{model}</div>
+      ))}
+    </div>
+  );
+}
+
+// An unrestricted policy still comes back with the provider's declared (or
+// catalog) models, so "All Models" can say what it covers instead of leaving
+// the caller to guess which model ids to configure.
+function AllModelsTooltip({ models }: { models: string[] }) {
+  if (models.length === 0) {
+    return (
+      <span className={"text-xs"}>
+        No model restriction. This provider doesn&apos;t publish a model list,
+        so use any model id its upstream accepts.
+      </span>
+    );
+  }
+  return (
+    <div className={"flex flex-col gap-2 text-xs"}>
+      <span className={"text-nb-gray-300"}>
+        No model restriction. Known models for this provider:
+      </span>
+      <ModelList models={models} />
+    </div>
+  );
+}
+
 // Same badge the admin providers table uses for its allow-list, with the
 // model names on hover — the caller has no other page to look them up on.
 function ModelsCell({ provider }: { provider: APIMeProvider }) {
-  const badge = (
-    <Badge
-      variant={"gray"}
-      className={"h-[34px]"}
-      useHover={!provider.all_models_allowed}
-    >
-      <Boxes size={11} />
-      <span className={"font-medium text-xs"}>
-        {provider.all_models_allowed ? "All Models" : provider.models.length}
-      </span>
-    </Badge>
-  );
-
-  if (provider.all_models_allowed) return <div className={"flex"}>{badge}</div>;
-
+  const allModels = provider.all_models_allowed;
   return (
     <div className={"flex"}>
       <FullTooltip
         content={
-          <div className={"flex flex-col gap-1 text-xs"}>
-            {provider.models.map((model) => (
-              <div key={model}>{model}</div>
-            ))}
-          </div>
+          allModels ? (
+            <AllModelsTooltip models={provider.models} />
+          ) : (
+            <ModelList models={provider.models} />
+          )
         }
       >
-        {badge}
+        <Badge variant={"gray"} className={"h-[34px]"} useHover={true}>
+          <Boxes size={11} />
+          <span className={"font-medium text-xs"}>
+            {allModels ? "All Models" : provider.models.length}
+          </span>
+          {allModels && provider.models.length > 0 && (
+            <span className={"text-xs text-nb-gray-400"}>
+              ({provider.models.length})
+            </span>
+          )}
+        </Badge>
       </FullTooltip>
     </div>
   );
