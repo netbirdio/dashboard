@@ -106,7 +106,7 @@ export default function AccessTokensTable({ user }: Readonly<Props>) {
               description={
                 "You don't have any access tokens yet. You can add a token to access the NetBird API."
               }
-              icon={<IconApi size={20} className={"fill-nb-gray-300"} />}
+              icon={<IconApi size={20} className={"text-nb-gray-300"} />}
             />
           </div>
         )}

@@ -47,7 +47,7 @@ export default function NoResultsCard({
               "mx-auto w-10 h-10 bg-nb-gray-930 flex items-center justify-center mb-3 rounded-md border border-nb-gray-800"
             }
           >
-            {icon || <FilterX size={24} />}
+            {icon || <FilterX size={24} className={"text-nb-gray-200"} />}
           </div>
           <div className={"text-center"}>
             <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title}</h1>

@@ -369,7 +369,7 @@ function DailyBreakdownTable({ daily }: { daily: DayBucket[] }) {
           icon={
             <SquareIcon
               icon={
-                <AgentNetworkIcon className={"fill-nb-gray-200"} size={20} />
+                <AgentNetworkIcon className={"text-nb-gray-200"} size={20} />
               }
               color={"gray"}
               size={"large"}
