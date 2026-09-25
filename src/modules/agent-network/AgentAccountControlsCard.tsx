@@ -18,6 +18,7 @@ import { cn } from "@utils/helpers";
 import { Clock, FileText, ScrollText } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
 // Retention options for access-log rows. "0" keeps them indefinitely. Usage
@@ -34,6 +35,8 @@ const RETENTION_OPTIONS = [
 export default function AgentAccountControlsCard() {
   const { settings, settingsLoading, updateAgentNetworkSettings } =
     useAIProviders();
+  const { permission } = usePermissions();
+  const canUpdate = !!permission?.["agent_network.settings"]?.update;
 
   const [enableLogCollection, setEnableLogCollection] = useState<boolean>(
     settings?.enableLogCollection ?? false,
@@ -103,7 +106,7 @@ export default function AgentAccountControlsCard() {
 
         <Button
           variant={"primary"}
-          disabled={!hasChanges}
+          disabled={!canUpdate || !hasChanges}
           onClick={onSave}
           data-testid={"save-account-controls"}
         >
@@ -116,6 +119,7 @@ export default function AgentAccountControlsCard() {
           <FancyToggleSwitch
             value={enableLogCollection}
             onChange={setEnableLogCollection}
+            disabled={!canUpdate}
             data-testid={"enable-log-collection"}
             label={
               <>
@@ -148,7 +152,7 @@ export default function AgentAccountControlsCard() {
                 <Select
                   value={retentionDays}
                   onValueChange={setRetentionDays}
-                  disabled={!enableLogCollection}
+                  disabled={!canUpdate || !enableLogCollection}
                 >
                   <SelectTrigger
                     className={"w-full"}
@@ -175,6 +179,7 @@ export default function AgentAccountControlsCard() {
         <FancyToggleSwitch
           value={enablePromptCollection}
           onChange={setEnablePromptCollection}
+          disabled={!canUpdate}
           data-testid={"enable-prompt-collection"}
           label={
             <>

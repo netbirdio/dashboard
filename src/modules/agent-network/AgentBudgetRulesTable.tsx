@@ -38,6 +38,7 @@ import { usePathname } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
@@ -64,11 +65,14 @@ function NameCell({ rule }: { rule: AgentBudgetRule }) {
 
 function EnabledCell({ rule }: { rule: AgentBudgetRule }) {
   const { toggleBudgetRule } = useAIProviders();
+  const { permission } = usePermissions();
+  const canUpdate = !!permission?.["agent_network.budgets"]?.update;
   return (
     <div className={"flex min-w-[0px]"}>
       <ToggleSwitch
         checked={rule.enabled}
         size={"small"}
+        disabled={!canUpdate}
         onClick={(e) => {
           e.stopPropagation();
           toggleBudgetRule(rule.id);
@@ -251,6 +255,9 @@ function ActionsCell({
 }) {
   const { confirm } = useDialog();
   const { toggleBudgetRule, deleteBudgetRule } = useAIProviders();
+  const { permission } = usePermissions();
+  const canUpdate = !!permission?.["agent_network.budgets"]?.update;
+  const canDelete = !!permission?.["agent_network.budgets"]?.delete;
 
   const onDelete = async () => {
     const ok = await confirm({
@@ -264,6 +271,8 @@ function ActionsCell({
     if (!ok) return;
     deleteBudgetRule(rule.id);
   };
+
+  if (!canUpdate && !canDelete) return null;
 
   return (
     <div className={"flex justify-end pr-4"}>
@@ -280,25 +289,31 @@ function ActionsCell({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className={"w-auto"} align={"end"}>
-          <DropdownMenuItem onClick={() => onEdit(rule)}>
-            <div className={"flex gap-3 items-center"}>
-              <PencilLineIcon size={14} className={"shrink-0"} />
-              Edit Rule
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => toggleBudgetRule(rule.id)}>
-            <div className={"flex gap-3 items-center"}>
-              <Power size={14} className={"shrink-0"} />
-              {rule.enabled ? "Disable" : "Enable"}
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onDelete} variant={"danger"}>
-            <div className={"flex gap-3 items-center"}>
-              <Trash2 size={14} className={"shrink-0"} />
-              Delete
-            </div>
-          </DropdownMenuItem>
+          {canUpdate && (
+            <>
+              <DropdownMenuItem onClick={() => onEdit(rule)}>
+                <div className={"flex gap-3 items-center"}>
+                  <PencilLineIcon size={14} className={"shrink-0"} />
+                  Edit Rule
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toggleBudgetRule(rule.id)}>
+                <div className={"flex gap-3 items-center"}>
+                  <Power size={14} className={"shrink-0"} />
+                  {rule.enabled ? "Disable" : "Enable"}
+                </div>
+              </DropdownMenuItem>
+            </>
+          )}
+          {canUpdate && canDelete && <DropdownMenuSeparator />}
+          {canDelete && (
+            <DropdownMenuItem onClick={onDelete} variant={"danger"}>
+              <div className={"flex gap-3 items-center"}>
+                <Trash2 size={14} className={"shrink-0"} />
+                Delete
+              </div>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -308,6 +323,9 @@ function ActionsCell({
 export default function AgentBudgetRulesTable() {
   const path = usePathname();
   const { budgetRules, budgetRulesLoading } = useAIProviders();
+  const { permission } = usePermissions();
+  const canCreate = !!permission?.["agent_network.budgets"]?.create;
+  const canUpdate = !!permission?.["agent_network.budgets"]?.update;
 
   const [sorting, setSorting] = useLocalStorage<SortingState>(
     "netbird-table-sort" + path + "-budget-rules",
@@ -426,7 +444,7 @@ export default function AgentBudgetRulesTable() {
         columns={columns}
         data={budgetRules}
         searchPlaceholder={"Search global limits by name..."}
-        onRowClick={(row) => openEdit(row.original)}
+        onRowClick={canUpdate ? (row) => openEdit(row.original) : undefined}
         getStartedCard={
           <GetStartedTest
             icon={
@@ -446,16 +464,18 @@ export default function AgentBudgetRulesTable() {
               "Global limits cap token usage and spend across every policy. Apply a limit account-wide, or scope it to specific groups or users."
             }
             button={
-              <Button
-                variant={"primary"}
-                onClick={() => {
-                  setEditRule(undefined);
-                  setCreateOpen(true);
-                }}
-              >
-                <PlusCircle size={16} />
-                Add Global Limit
-              </Button>
+              canCreate && (
+                <Button
+                  variant={"primary"}
+                  onClick={() => {
+                    setEditRule(undefined);
+                    setCreateOpen(true);
+                  }}
+                >
+                  <PlusCircle size={16} />
+                  Add Global Limit
+                </Button>
+              )
             }
             learnMore={
               <>
@@ -472,6 +492,7 @@ export default function AgentBudgetRulesTable() {
           />
         }
         rightSide={() =>
+          canCreate &&
           budgetRules.length > 0 && (
             <div className={cn("gap-x-4 ml-auto flex")}>
               <Button

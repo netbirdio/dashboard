@@ -154,6 +154,12 @@ function InviteRoleCell({ invite }: { invite: UserInvite }) {
             Agent Network Admin
           </>
         )}
+        {role === Role.AgentNetworkViewer && (
+          <>
+            <EyeIcon size={14} />
+            Agent Network Viewer
+          </>
+        )}
         {role === Role.UsageViewer && (
           <>
             <GaugeIcon size={14} />
@@ -524,6 +530,10 @@ export default function UserInvitesTable({
             {
               value: "agent_network_admin",
               label: "Agent Network Admin",
+            },
+            {
+              value: "agent_network_viewer",
+              label: "Agent Network Viewer",
             },
             { value: "usage_viewer", label: "Usage Viewer" },
           ]
