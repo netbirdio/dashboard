@@ -2,12 +2,13 @@
 
 import Badge from "@components/Badge";
 import Button from "@components/Button";
+import Card from "@components/Card";
 import FullTooltip from "@components/FullTooltip";
-import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
-import GetStartedTest from "@components/ui/GetStartedTest";
+import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
+import { Boxes } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
@@ -19,12 +20,13 @@ import { APIMeProvider } from "@/modules/agent-network/useMyAgentNetworkSetup";
 
 function NameCell({ provider }: { provider: APIMeProvider }) {
   return (
-    <div className={"flex items-center gap-3 py-2 pl-3"}>
+    <div className={"flex items-center gap-3 py-2"}>
       {/* catalog_id comes off the wire as a plain string; an id the catalog
           doesn't know renders the neutral badge. */}
       <AIProviderLogo
         providerId={provider.catalog_id as AIProviderId}
-        size={28}
+        size={36}
+        tile
       />
       <div className={"flex flex-col items-start min-w-0"}>
         <span
@@ -36,7 +38,7 @@ function NameCell({ provider }: { provider: APIMeProvider }) {
         </span>
         {/* The name is operator-chosen and often just the vendor, so the
             catalog id is what actually says which provider is behind it. */}
-        <span className={"text-xs text-nb-gray-400 whitespace-nowrap mt-0.5"}>
+        <span className={"text-xs text-nb-gray-400 whitespace-nowrap"}>
           {provider.catalog_id}
         </span>
       </div>
@@ -44,31 +46,24 @@ function NameCell({ provider }: { provider: APIMeProvider }) {
   );
 }
 
-// Up to this many models are spelled out; beyond it the cell just counts them,
-// the way the admin providers table reports its allow-list.
-const NAMED_MODELS = 2;
-
+// Same badge the admin providers table uses for its allow-list, with the
+// model names on hover — the caller has no other page to look them up on.
 function ModelsCell({ provider }: { provider: APIMeProvider }) {
-  if (provider.all_models_allowed) {
-    return <span className={"text-xs text-nb-gray-400"}>All Models</span>;
-  }
-  // A short allow-list is spelled out as one chip per model, the way groups
-  // and providers are chipped elsewhere; a long one collapses to a count.
-  if (provider.models.length <= NAMED_MODELS) {
-    return (
-      <div className={"flex items-center gap-2"}>
-        {provider.models.map((model) => (
-          <Badge
-            key={model}
-            variant={"gray-ghost"}
-            className={"whitespace-nowrap"}
-          >
-            {model}
-          </Badge>
-        ))}
-      </div>
-    );
-  }
+  const badge = (
+    <Badge
+      variant={"gray"}
+      className={"h-[34px]"}
+      useHover={!provider.all_models_allowed}
+    >
+      <Boxes size={11} />
+      <span className={"font-medium text-xs"}>
+        {provider.all_models_allowed ? "All Models" : provider.models.length}
+      </span>
+    </Badge>
+  );
+
+  if (provider.all_models_allowed) return <div className={"flex"}>{badge}</div>;
+
   return (
     <div className={"flex"}>
       <FullTooltip
@@ -80,13 +75,7 @@ function ModelsCell({ provider }: { provider: APIMeProvider }) {
           </div>
         }
       >
-        <Badge
-          variant={"gray-ghost"}
-          useHover={true}
-          className={"whitespace-nowrap"}
-        >
-          {provider.models.length} Models
-        </Badge>
+        {badge}
       </FullTooltip>
     </div>
   );
@@ -137,6 +126,15 @@ export default function ConnectProvidersTable({ providers }: Readonly<Props>) {
 
   return (
     <DataTable
+      // Minimal-in-a-card, the shape the group detail page gives its
+      // secondary tables: this one sits under a heading on a page that
+      // already has its own, rather than being the page.
+      wrapperComponent={Card}
+      wrapperProps={{ className: "mt-3 w-full" }}
+      minimal={true}
+      inset={false}
+      tableClassName={"mt-0"}
+      paginationPaddingClassName={"px-0 pt-8"}
       text={"Providers"}
       sorting={sorting}
       setSorting={setSorting}
@@ -147,33 +145,27 @@ export default function ConnectProvidersTable({ providers }: Readonly<Props>) {
       // Nothing to list means no policy covers this caller yet, so the card
       // says so rather than leaving an empty table behind.
       getStartedCard={
-        <GetStartedTest
-          icon={
-            <SquareIcon
-              icon={
-                <AgentNetworkIcon className={"fill-nb-gray-200"} size={20} />
-              }
-              color={"gray"}
-              size={"large"}
-            />
-          }
+        <NoResults
+          className={"py-4"}
+          icon={<AgentNetworkIcon className={"text-nb-gray-300"} size={20} />}
           title={"No providers available yet"}
           description={
             canManagePolicies
-              ? "No access policy covers your user yet. Add one of your groups to a policy to route your own agent through NetBird."
+              ? "No access policy covers your user yet. Add one of your groups to a policy to route your agent through NetBird."
               : "You don’t have access to any providers yet. Ask your administrator to add you to an Agent Network access policy."
           }
-          button={
-            canManagePolicies ? (
-              <Button
-                variant={"primary"}
-                onClick={() => router.push("/agent-network/policies")}
-              >
-                Go to Policies
-              </Button>
-            ) : undefined
-          }
-        />
+        >
+          {canManagePolicies && (
+            <Button
+              variant={"primary"}
+              size={"sm"}
+              className={"mt-4"}
+              onClick={() => router.push("/agent-network/policies")}
+            >
+              Go to Policies
+            </Button>
+          )}
+        </NoResults>
       }
     />
   );

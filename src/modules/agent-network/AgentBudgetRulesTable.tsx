@@ -433,7 +433,7 @@ export default function AgentBudgetRulesTable() {
               <SquareIcon
                 icon={
                   <SlidersHorizontal
-                    className={"fill-nb-gray-200"}
+                    className={"text-nb-gray-200"}
                     size={20}
                   />
                 }

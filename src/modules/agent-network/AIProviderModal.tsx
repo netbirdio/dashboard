@@ -17,6 +17,7 @@ import {
 import ModalHeader from "@components/modal/ModalHeader";
 import Paragraph from "@components/Paragraph";
 import { SelectDropdown } from "@components/select/SelectDropdown";
+import SettingCard from "@components/SettingCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
@@ -795,6 +796,27 @@ export default function AIProviderModal({
   // "bedrock" bill two ADDITIVE buckets (cache read + cache write).
   // Gateways/custom entries (and older backends) declare no surfaces —
   // NetBird can't know the upstream shape, so every field is offered.
+  // Every outcome of a discovery run, resolved to the one line that reports
+  // it. Kept in one slot below the button rather than beside it: a message
+  // appearing next to the button reflowed the tab — and with it the centered
+  // modal — the moment a load came back.
+  const discoveryMessage: React.ReactNode = !canDiscoverModels ? (
+    useSavedCredential ? (
+      "Enter the endpoint URL first."
+    ) : (
+      "Enter the endpoint URL and API key first."
+    )
+  ) : discovered.error ? (
+    discovered.error
+  ) : discovered.notSupported ? (
+    "This provider has no model listing endpoint — the catalog list is used instead."
+  ) : !discoveryInFlight && discovered.models.length > 0 ? (
+    <>
+      {discovered.models.length} models loaded. Use the{" "}
+      <strong>Add More</strong> button to search and pick models.
+    </>
+  ) : null;
+
   const pricingSurfaces = catalog?.pricing_surfaces ?? [];
   const showCachedInputRate =
     pricingSurfaces.length === 0 || pricingSurfaces.includes("openai");
@@ -847,7 +869,7 @@ export default function AIProviderModal({
           </TabsList>
 
           <TabsContent value={"provider"} className={"pb-8"}>
-            <div className={"px-8 pt-3 flex-col flex gap-6"}>
+            <div className={"px-8 flex-col flex gap-6"}>
               {noClustersAvailable && (
                 <Callout
                   data-testid="agent-network-no-cluster-callout"
@@ -896,72 +918,78 @@ export default function AIProviderModal({
                 </Callout>
               )}
 
-              <FormRow
-                label={"Provider"}
-                helpText={
-                  "AI provider and upstream URL to expose through NetBird."
-                }
-              >
-                <SelectDropdown
-                  data-testid={"agent-network-provider-type"}
-                  value={providerId}
-                  onChange={(v) => {
-                    const next = v as AIProviderId;
-                    setProviderId(next);
-                    // The credential differs per provider (API key vs Vertex
-                    // JSON upload), so clear it when switching.
-                    setApiKey("");
-                    setKeyFileName(null);
-                    const c = getById(next);
-                    if (c) {
-                      setName(c.name);
-                      // Gateways like Bifrost / LiteLLM ship with an
-                      // empty default_host (operator brings their own
-                      // endpoint). Don't pre-fill "https://" — let the
-                      // placeholder hint them what to type instead.
-                      setUpstreamUrl(
-                        next === "vertex_ai_api"
-                          ? "https://aiplatform.googleapis.com"
-                          : c.default_host
-                          ? `https://${c.default_host}`
-                          : "",
-                      );
-                      setModels([]);
-                      // Auto-seed the identity inputs from the
-                      // catalog defaults when picking a customizable
-                      // shape (HeaderPair for Bifrost, JSONMetadata
-                      // for Cloudflare) so the operator sees sensible
-                      // starting values. They can edit, clear, or
-                      // paste their own. Switching away from any
-                      // customizable shape wipes the values so they
-                      // don't leak onto a non-customizable provider's
-                      // wire.
-                      const hp = c.identity_injection?.header_pair;
-                      const jm = c.identity_injection?.json_metadata;
-                      if (hp?.customizable) {
-                        setIdentityHeaderUserId(hp.end_user_id_header);
-                        setIdentityHeaderGroups(hp.tags_header);
-                      } else if (jm?.customizable) {
-                        setIdentityHeaderUserId(jm.user_key);
-                        setIdentityHeaderGroups(jm.groups_key);
-                      } else {
-                        setIdentityHeaderUserId("");
-                        setIdentityHeaderGroups("");
+              <div className={"flex-col flex gap-2"}>
+                <FormRow
+                  label={"Provider"}
+                  helpText={
+                    <>
+                      AI provider and upstream URL to expose
+                      <br />
+                      through NetBird.
+                    </>
+                  }
+                >
+                  <SelectDropdown
+                    data-testid={"agent-network-provider-type"}
+                    value={providerId}
+                    onChange={(v) => {
+                      const next = v as AIProviderId;
+                      setProviderId(next);
+                      // The credential differs per provider (API key vs Vertex
+                      // JSON upload), so clear it when switching.
+                      setApiKey("");
+                      setKeyFileName(null);
+                      const c = getById(next);
+                      if (c) {
+                        setName(c.name);
+                        // Gateways like Bifrost / LiteLLM ship with an
+                        // empty default_host (operator brings their own
+                        // endpoint). Don't pre-fill "https://" — let the
+                        // placeholder hint them what to type instead.
+                        setUpstreamUrl(
+                          next === "vertex_ai_api"
+                            ? "https://aiplatform.googleapis.com"
+                            : c.default_host
+                            ? `https://${c.default_host}`
+                            : "",
+                        );
+                        setModels([]);
+                        // Auto-seed the identity inputs from the
+                        // catalog defaults when picking a customizable
+                        // shape (HeaderPair for Bifrost, JSONMetadata
+                        // for Cloudflare) so the operator sees sensible
+                        // starting values. They can edit, clear, or
+                        // paste their own. Switching away from any
+                        // customizable shape wipes the values so they
+                        // don't leak onto a non-customizable provider's
+                        // wire.
+                        const hp = c.identity_injection?.header_pair;
+                        const jm = c.identity_injection?.json_metadata;
+                        if (hp?.customizable) {
+                          setIdentityHeaderUserId(hp.end_user_id_header);
+                          setIdentityHeaderGroups(hp.tags_header);
+                        } else if (jm?.customizable) {
+                          setIdentityHeaderUserId(jm.user_key);
+                          setIdentityHeaderGroups(jm.groups_key);
+                        } else {
+                          setIdentityHeaderUserId("");
+                          setIdentityHeaderGroups("");
+                        }
                       }
-                    }
-                  }}
-                  options={providerOptions}
-                  showSearch
-                  searchPlaceholder={"Search providers..."}
-                  placeholder={"Select provider..."}
+                    }}
+                    options={providerOptions}
+                    showSearch
+                    searchPlaceholder={"Search providers..."}
+                    placeholder={"Select provider..."}
+                  />
+                </FormRow>
+                <Input
+                  data-testid={"agent-network-provider-upstream-url"}
+                  value={upstreamUrl}
+                  onChange={(e) => setUpstreamUrl(e.target.value)}
+                  placeholder={upstreamUrlPlaceholder(providerId)}
                 />
-              </FormRow>
-              <Input
-                data-testid={"agent-network-provider-upstream-url"}
-                value={upstreamUrl}
-                onChange={(e) => setUpstreamUrl(e.target.value)}
-                placeholder={upstreamUrlPlaceholder(providerId)}
-              />
+              </div>
 
               {isCustomKind && (
                 <FancyToggleSwitch
@@ -1141,7 +1169,7 @@ export default function AIProviderModal({
 
           {showMappings && providerId === "litellm_proxy" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 {/* The forwarding toggle sits first: it gates the identity
                     mappings described below, so turning it off makes the fixed
                     mapping that follows moot. */}
@@ -1193,11 +1221,7 @@ export default function AIProviderModal({
                   </HelpText>
                 </div>
 
-                <div
-                  className={
-                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
-                  }
-                >
+                <SettingCard>
                   <MappingRow
                     header={"x-litellm-end-user-id (header)"}
                     sourceLabel={"User Email"}
@@ -1206,14 +1230,14 @@ export default function AIProviderModal({
                     header={"metadata.tags (body)"}
                     sourceLabel={"Groups"}
                   />
-                </div>
+                </SettingCard>
               </div>
             </TabsContent>
           )}
 
           {showMappings && customizableHeaderPair && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <div>
                   <Label>Identity Headers</Label>
                   <HelpText className={"mb-0"}>
@@ -1286,7 +1310,7 @@ export default function AIProviderModal({
 
           {showMappings && customizableJsonMetadata && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <div>
                   <Label>Identity Metadata</Label>
                   <HelpText className={"mb-0"}>
@@ -1343,7 +1367,7 @@ export default function AIProviderModal({
               className={"pb-8"}
               data-testid={"agent-network-provider-identity-mappings"}
             >
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <FancyToggleSwitch
                   value={!metadataDisabled}
                   onChange={(v) => setMetadataDisabled(!v)}
@@ -1374,11 +1398,7 @@ export default function AIProviderModal({
                   </HelpText>
                 </div>
 
-                <div
-                  className={
-                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
-                  }
-                >
+                <SettingCard>
                   {fixedHeaderPair?.end_user_id_header && (
                     <MappingRow
                       header={fixedHeaderPair.end_user_id_header}
@@ -1393,7 +1413,7 @@ export default function AIProviderModal({
                       data-testid={"agent-network-provider-groups-mapping"}
                     />
                   )}
-                </div>
+                </SettingCard>
 
                 {providerId === "agentgateway" && (
                   <div data-testid={"agent-network-provider-groups-guidance"}>
@@ -1417,7 +1437,7 @@ export default function AIProviderModal({
 
           {showMappings && providerId === "portkey" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <div>
                   <Label>Identity Metadata</Label>
                   <HelpText className={"mb-0"}>
@@ -1437,21 +1457,17 @@ export default function AIProviderModal({
                   </HelpText>
                 </div>
 
-                <div
-                  className={
-                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
-                  }
-                >
+                <SettingCard>
                   <MappingRow header={"_user"} sourceLabel={"User Email"} />
                   <MappingRow header={"groups"} sourceLabel={"Groups"} />
-                </div>
+                </SettingCard>
               </div>
             </TabsContent>
           )}
 
           {showMappings && providerId === "bedrock_api" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 {/* The forwarding toggle sits first: it gates the identity
                     metadata described below, so turning it off makes the fixed
                     mapping that follows moot. */}
@@ -1492,21 +1508,17 @@ export default function AIProviderModal({
                   </HelpText>
                 </div>
 
-                <div
-                  className={
-                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
-                  }
-                >
+                <SettingCard>
                   <MappingRow header={"user"} sourceLabel={"User Email"} />
                   <MappingRow header={"group"} sourceLabel={"Groups"} />
-                </div>
+                </SettingCard>
               </div>
             </TabsContent>
           )}
 
           {showMappings && providerId === "vercel_ai_gateway" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <div>
                   <Label>Identity Headers</Label>
                   <HelpText className={"mb-0"}>
@@ -1549,11 +1561,7 @@ export default function AIProviderModal({
                   </HelpText>
                 </div>
 
-                <div
-                  className={
-                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
-                  }
-                >
+                <SettingCard>
                   <MappingRow
                     header={"ai-reporting-user"}
                     sourceLabel={"User Email"}
@@ -1562,7 +1570,7 @@ export default function AIProviderModal({
                     header={"ai-reporting-tags"}
                     sourceLabel={"Groups (CSV)"}
                   />
-                </div>
+                </SettingCard>
 
                 <HelpText className={"mb-0"}>
                   <strong>Caveats:</strong> Vercel caps tags at 10 per request
@@ -1578,7 +1586,7 @@ export default function AIProviderModal({
 
           {showMappings && providerId === "openrouter" && (
             <TabsContent value={"mappings"} className={"pb-8"}>
-              <div className={"px-8 pt-3 flex-col flex gap-4"}>
+              <div className={"px-8 flex-col flex gap-4"}>
                 <div>
                   <Label>Identity Attribution</Label>
                   <HelpText className={"mb-0"}>
@@ -1598,16 +1606,12 @@ export default function AIProviderModal({
                   </HelpText>
                 </div>
 
-                <div
-                  className={
-                    "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30"
-                  }
-                >
+                <SettingCard>
                   <MappingRow
                     header={"user (body)"}
                     sourceLabel={"User Email"}
                   />
-                </div>
+                </SettingCard>
 
                 <HelpText className={"mb-0"}>
                   <strong>No groups dimension.</strong> OpenRouter does not
@@ -1629,11 +1633,11 @@ export default function AIProviderModal({
           )}
 
           <TabsContent value={"models"} className={"pb-8"}>
-            <div className={"px-8 pt-3 flex-col flex gap-3"}>
+            <div className={"px-8 flex-col flex gap-3"}>
               <div>
                 <Label>Models</Label>
                 <div data-testid={"agent-network-provider-models-help"}>
-                  <HelpText>
+                  <HelpText margin={false}>
                     Models exposed through this endpoint, with the per-1k
                     input/output prices used for cost tracking. Empty = all
                     catalog models allowed at catalog prices. Cache rates left
@@ -1643,52 +1647,34 @@ export default function AIProviderModal({
                 </div>
               </div>
 
-              <div className={"flex items-center gap-3"}>
-                <Button
-                  variant={"secondary"}
-                  size={"xs"}
-                  disabled={discoveryInFlight || !canDiscoverModels}
-                  onClick={loadModelsFromProvider}
-                >
-                  {discoveryInFlight ? (
-                    <Loader2 size={13} className={"animate-spin"} />
-                  ) : (
-                    <RefreshCwIcon size={13} />
-                  )}
-                  {discoveryInFlight
-                    ? "Loading models…"
-                    : "Load models from provider"}
-                </Button>
-                {!canDiscoverModels && (
-                  <HelpText className={"!mb-0"}>
-                    {useSavedCredential
-                      ? "Enter the endpoint URL first."
-                      : "Enter the endpoint URL and API key first."}
-                  </HelpText>
-                )}
-                {discovered.notSupported && (
-                  <HelpText className={"!mb-0"}>
-                    This provider has no model listing endpoint — the catalog
-                    list is used instead.
-                  </HelpText>
-                )}
-                {discovered.error && (
-                  <HelpText
-                    className={"!mb-0 text-orange-500 dark:text-orange-400"}
+              <div className={"flex flex-col gap-1.5"}>
+                <div className={"flex items-center gap-3"}>
+                  <Button
+                    variant={"secondary"}
+                    size={"xs"}
+                    disabled={discoveryInFlight || !canDiscoverModels}
+                    onClick={loadModelsFromProvider}
                   >
-                    {discovered.error}
-                  </HelpText>
-                )}
-              </div>
+                    {discoveryInFlight ? (
+                      <Loader2 size={13} className={"animate-spin"} />
+                    ) : (
+                      <RefreshCwIcon size={13} />
+                    )}
+                    Load models from provider
+                  </Button>
+                </div>
 
-              {!discoveryInFlight &&
-                !discovered.error &&
-                discovered.models.length > 0 && (
-                  <HelpText className={"!mb-0"}>
-                    {discovered.models.length} models loaded. Use the{" "}
-                    <strong>Add More</strong> button to search and pick models.
-                  </HelpText>
-                )}
+                {/* Always rendered, space reserved, so nothing below moves
+                    when a load reports back. */}
+                <HelpText
+                  className={cn(
+                    "!mb-0",
+                    discovered.error && "text-orange-500 dark:text-orange-400",
+                  )}
+                >
+                  {discoveryMessage ?? <>&nbsp;</>}
+                </HelpText>
+              </div>
 
               {unpricedModelIds.size > 0 && (
                 // A callout rather than a line of help text: this is the one
@@ -1871,7 +1857,7 @@ function FormRow({
         <Label>{label}</Label>
         <HelpText margin={false}>{helpText}</HelpText>
       </div>
-      <div className={"w-[260px] shrink-0"}>{children}</div>
+      <div className={"w-[290px] shrink-0"}>{children}</div>
     </div>
   );
 }
@@ -2074,13 +2060,13 @@ function ModelRowEditor({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 p-3 rounded border bg-nb-gray-900/20",
+        "flex flex-col gap-3 p-4 rounded-md border bg-nb-gray-900/20",
         needsPrice
           ? "border-yellow-500/60 bg-yellow-500/5"
           : "border-nb-gray-800",
       )}
     >
-      <div className={"flex items-end gap-2"}>
+      <div className={"flex items-end gap-3"}>
         <div className={"flex-1 min-w-0"}>
           <Label>Model</Label>
           {hasCatalog && !customMode ? (
@@ -2184,7 +2170,7 @@ function ModelRowEditor({
           {cacheOpen && (
             <div
               className={
-                "flex items-end gap-2 pt-2 border-t border-nb-gray-900"
+                "flex items-end gap-3 pt-3 border-t border-nb-gray-920"
               }
             >
               {showCachedInputRate && (
@@ -2229,7 +2215,7 @@ function MappingRow({
     <div
       data-testid={dataTestId}
       className={
-        "flex items-center gap-3 px-4 py-3 border-b border-nb-gray-900 last:border-b-0"
+        "flex items-center gap-3 px-4 py-3 border-b border-nb-gray-920 last:border-b-0"
       }
     >
       <div className={"flex-1 min-w-0"}>
