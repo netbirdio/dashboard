@@ -20,7 +20,7 @@ test.describe.serial("User Approval & Billing Admin @team", () => {
     });
     const page = await context.newPage();
     await loginToApp(page, "user");
-    await expect(page.getByText("User Approval Pending")).toBeVisible();
+    await expect(page.getByTestId("pending-approval")).toBeVisible();
     await context.close();
   });
 

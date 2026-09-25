@@ -1,6 +1,7 @@
 "use client";
 
 import { notify } from "@components/Notification";
+import { IconCircleX } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
 import React, {
   createContext,
@@ -215,6 +216,18 @@ function fromAPI(p: APIProvider): AIProvider {
     denyRatePct: 0,
     enabled: p.enabled,
   };
+}
+
+// notify() renders green with a check mark unless it is told otherwise: its red
+// styling comes from the promise path, and none of these use it. A failure that
+// looks like a success is worse than saying nothing, so every failure toast in
+// this file goes through here.
+function notifyFailure(props: { title: string; description: string }) {
+  return notify({
+    ...props,
+    backgroundColor: "bg-red-500",
+    icon: <IconCircleX size={20} />,
+  });
 }
 
 function toAPIModels(models: ProviderModel[]): APIProviderModel[] {
@@ -496,8 +509,20 @@ type AIProvidersContextValue = {
   openWizard: () => void;
   closeWizard: () => void;
   isWizardOpen: boolean;
+  // The provider the edit modal is open on, and its controls. Held here so
+  // the row and its action menu — rendered from a module-level column def —
+  // open the same modal.
+  editingProvider: AIProvider | undefined;
+  openProviderEdit: (provider: AIProvider) => void;
+  closeProviderEdit: () => void;
   addProvider: (input: ProviderConnectInput) => Promise<AIProvider | undefined>;
-  updateProvider: (id: string, updates: ProviderUpdateInput) => Promise<void>;
+  // Resolves false when the save was refused — the backend checks a provider's
+  // url and credential before storing them, so a rejected edit must leave the
+  // form open with what the operator typed still in it.
+  updateProvider: (
+    id: string,
+    updates: ProviderUpdateInput,
+  ) => Promise<boolean>;
   toggleProvider: (id: string) => Promise<void>;
   deleteProvider: (id: string) => Promise<void>;
   addPolicy: (
@@ -609,6 +634,11 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     (agentNetworkEnabled && !!permission?.["agent_network.providers"]?.read) ||
       mySetupConfigured,
   );
+  // Default error handling on purpose: a failed save raises the shared
+  // "Request failed with status code N" toast, which carries the message the
+  // API sent — for a refused provider that is the sentence naming the url or
+  // the credential. The save paths below stay silent on failure rather than
+  // adding a second toast that says the same thing in different words.
   const providersApi = useApiCall<APIProvider>("/agent-network/providers");
 
   const { data: apiPolicies, mutate: mutatePolicies } = useFetchApi<
@@ -686,23 +716,39 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const openWizard = useCallback(() => setIsWizardOpen(true), []);
   const closeWizard = useCallback(() => setIsWizardOpen(false), []);
 
+  const [editingProvider, setEditingProvider] = useState<
+    AIProvider | undefined
+  >(undefined);
+
+  const openProviderEdit = useCallback(
+    (provider: AIProvider) => setEditingProvider(provider),
+    [],
+  );
+  const closeProviderEdit = useCallback(
+    () => setEditingProvider(undefined),
+    [],
+  );
+
   const addProvider = useCallback(
     async (input: ProviderConnectInput) => {
+      let created: APIProvider;
       try {
-        const created = await providersApi.post(toCreateRequest(input));
-        await mutate();
-        notify({
-          title: "AI provider connected",
-          description: `${created.name} is now available on your agent network endpoint.`,
-        });
-        return fromAPI(created);
-      } catch (err) {
-        notify({
-          title: "Failed to connect provider",
-          description: err instanceof Error ? err.message : String(err),
-        });
+        created = await providersApi.post(toCreateRequest(input));
+      } catch {
+        // Reported already by the shared request-failed toast. Returning
+        // undefined is what keeps the modal open on the fields to correct.
         return undefined;
       }
+      // Outside the catch: the provider exists from here on, and a failed
+      // revalidation is a stale list rather than a failed create. Reporting it
+      // as one would hold the modal open on a form whose next submit creates a
+      // second provider.
+      await mutate().catch(() => undefined);
+      notify({
+        title: "AI provider connected",
+        description: `${created.name} is now available on your agent network endpoint.`,
+      });
+      return fromAPI(created);
     },
     [providersApi, mutate],
   );
@@ -710,7 +756,16 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const updateProvider = useCallback(
     async (id: string, updates: ProviderUpdateInput) => {
       const existing = (apiProviders ?? []).find((p) => p.id === id);
-      if (!existing) return;
+      if (!existing) {
+        // The update merges onto the record as this browser last saw it, so a
+        // provider deleted elsewhere leaves nothing to merge onto. Silence
+        // here read as a save that did nothing.
+        notifyFailure({
+          title: "Provider not updated",
+          description: "This provider is no longer available. Reload the page.",
+        });
+        return false;
+      }
       const merged: APIProviderRequest = {
         provider_id: updates.providerId ?? existing.provider_id,
         name: updates.name ?? existing.name,
@@ -737,17 +792,18 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       };
       try {
         await providersApi.put(merged, `/${id}`);
-        await mutate();
-        notify({
-          title: "Provider updated",
-          description: "Settings saved.",
-        });
-      } catch (err) {
-        notify({
-          title: "Failed to update provider",
-          description: err instanceof Error ? err.message : String(err),
-        });
+      } catch {
+        // Reported already by the shared request-failed toast.
+        return false;
       }
+      // See addProvider: a failed revalidation is a stale list, not a failed
+      // write, and must not send the operator back to resubmit one.
+      await mutate().catch(() => undefined);
+      notify({
+        title: "Provider updated",
+        description: "Settings saved.",
+      });
+      return true;
     },
     [apiProviders, providersApi, mutate],
   );
@@ -771,7 +827,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Endpoint will be torn down on next mapping update.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to remove provider",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -791,7 +847,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         });
         return policyFromAPI(created);
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to create policy",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -827,7 +883,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Settings saved.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to update policy",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -855,7 +911,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Policy deleted.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to remove policy",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -875,7 +931,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         });
         return guardrailFromAPI(created);
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to create guardrail",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -904,7 +960,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Settings saved.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to update guardrail",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -924,7 +980,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
             "Existing policies still reference this guardrail until you detach it.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to remove guardrail",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -944,7 +1000,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         });
         return budgetRuleFromAPI(created);
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to create global limit",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -978,7 +1034,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Settings saved.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to update global limit",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -1006,7 +1062,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           description: "Global limit deleted.",
         });
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to remove global limit",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -1025,7 +1081,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       } catch (err) {
         const code = (err as { code?: number })?.code;
         if (code !== 409) {
-          notify({
+          notifyFailure({
             title: "Failed to set up the agent network endpoint",
             description: err instanceof Error ? err.message : String(err),
           });
@@ -1047,7 +1103,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       // row there is nothing to echo — and no row to update; the backend
       // would 404 the PUT anyway.
       if (!settings) {
-        notify({
+        notifyFailure({
           title: "Failed to update account controls",
           description: "Agent Network has not been set up yet.",
         });
@@ -1062,7 +1118,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
         });
         return true;
       } catch (err) {
-        notify({
+        notifyFailure({
           title: "Failed to update account controls",
           description: err instanceof Error ? err.message : String(err),
         });
@@ -1085,6 +1141,9 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       openWizard,
       closeWizard,
       isWizardOpen,
+      editingProvider,
+      openProviderEdit,
+      closeProviderEdit,
       addProvider,
       updateProvider,
       toggleProvider,
@@ -1115,6 +1174,9 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       isWizardOpen,
       openWizard,
       closeWizard,
+      editingProvider,
+      openProviderEdit,
+      closeProviderEdit,
       addProvider,
       updateProvider,
       toggleProvider,

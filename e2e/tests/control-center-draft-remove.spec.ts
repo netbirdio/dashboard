@@ -19,6 +19,7 @@ import {
   dismissBlockingOverlays,
   enterDraft,
   openControlCenter,
+  openGroupView,
   resetDraftState,
   reviewButton,
 } from "../helpers/control-center";
@@ -37,7 +38,6 @@ test.describe
     await deleteGroupsByPrefix(page, PREFIX);
   });
 
-  // Clean-slated so the draft group view's auto-select is deterministic.
   async function seedPolicyGroupView(page: Page) {
     await deletePoliciesBySubstring(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
@@ -49,7 +49,9 @@ test.describe
       src.id,
       dst.id,
     );
-    await openControlCenter(page, "groups");
+    // Selected by name: the view's own pick ranks every group in the account,
+    // so a peer-bearing group from another spec on the other worker wins it.
+    await openGroupView(page, src.name);
     await enterDraft(page);
     const policyNode = canvasNode(page, `policy-${policy.id}`);
     await expect(policyNode).toBeVisible({ timeout: 15_000 });
