@@ -48,9 +48,55 @@ function NameCell({ provider }: { provider: APIMeProvider }) {
 // the way the admin providers table reports its allow-list.
 const NAMED_MODELS = 2;
 
+function ModelListTooltip({ models }: { models: string[] }) {
+  return (
+    <div className={"flex flex-col gap-1 text-xs"}>
+      {models.map((model) => (
+        <div key={model}>{model}</div>
+      ))}
+    </div>
+  );
+}
+
+// An unrestricted policy still comes back with the provider's declared (or
+// catalog) models, so "All Models" can say what it covers instead of leaving
+// the caller to guess which model ids to configure.
+function AllModelsCell({ models }: { models: string[] }) {
+  const content =
+    models.length > 0 ? (
+      <div className={"flex flex-col gap-2 text-xs"}>
+        <span className={"text-nb-gray-300"}>
+          No model restriction. Known models for this provider:
+        </span>
+        <ModelListTooltip models={models} />
+      </div>
+    ) : (
+      <span className={"text-xs"}>
+        No model restriction. This provider doesn&apos;t publish a model list,
+        so use any model id its upstream accepts.
+      </span>
+    );
+  return (
+    <div className={"flex"}>
+      <FullTooltip content={content}>
+        <Badge
+          variant={"gray-ghost"}
+          useHover={true}
+          className={"whitespace-nowrap"}
+        >
+          All Models
+          {models.length > 0 && (
+            <span className={"text-nb-gray-400"}>({models.length})</span>
+          )}
+        </Badge>
+      </FullTooltip>
+    </div>
+  );
+}
+
 function ModelsCell({ provider }: { provider: APIMeProvider }) {
   if (provider.all_models_allowed) {
-    return <span className={"text-xs text-nb-gray-400"}>All Models</span>;
+    return <AllModelsCell models={provider.models} />;
   }
   // A short allow-list is spelled out as one chip per model, the way groups
   // and providers are chipped elsewhere; a long one collapses to a count.
@@ -71,15 +117,7 @@ function ModelsCell({ provider }: { provider: APIMeProvider }) {
   }
   return (
     <div className={"flex"}>
-      <FullTooltip
-        content={
-          <div className={"flex flex-col gap-1 text-xs"}>
-            {provider.models.map((model) => (
-              <div key={model}>{model}</div>
-            ))}
-          </div>
-        }
-      >
+      <FullTooltip content={<ModelListTooltip models={provider.models} />}>
         <Badge
           variant={"gray-ghost"}
           useHover={true}
