@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { compareVersions, isNativeSSHSupported, isNewerVersion } from "./version";
+import { compareVersions, isNewerVersion, usesStandardSSHPort } from "./version";
 
-describe("isNativeSSHSupported", () => {
+describe("usesStandardSSHPort", () => {
   it.each([
     { version: "v0.59.9", shouldSupport: false, desc: "below minimum" },
     { version: "v0.59.10", shouldSupport: false, desc: "below minimum" },
@@ -36,8 +36,14 @@ describe("isNativeSSHSupported", () => {
       shouldSupport: true,
       desc: "CI build suffix",
     },
+    {
+      version: "dev-16f7e1e14",
+      shouldSupport: true,
+      desc: "commit-stamped mobile build",
+    },
+    { version: "", shouldSupport: true, desc: "unreported version" },
   ])("$version → $shouldSupport ($desc)", ({ version, shouldSupport }) => {
-    expect(isNativeSSHSupported(version)).toBe(shouldSupport);
+    expect(usesStandardSSHPort(version)).toBe(shouldSupport);
   });
 });
 
@@ -107,6 +113,12 @@ describe("isNewerVersion (update available)", () => {
       latest: "0.77.0",
       expected: false,
       desc: "development build",
+    },
+    {
+      current: "dev-16f7e1e14",
+      latest: "0.77.0",
+      expected: false,
+      desc: "commit-stamped mobile build",
     },
     { current: "0.77.0", latest: "", expected: false, desc: "unknown latest" },
   ])("$current → $latest → $expected ($desc)", ({ current, latest, expected }) => {
