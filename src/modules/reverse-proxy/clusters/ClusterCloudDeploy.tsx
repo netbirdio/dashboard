@@ -17,8 +17,8 @@ import {
   RocketIcon,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
-import { useApiCall } from "@/utils/api";
-import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
+import { isClusterConnected } from "@/interfaces/ReverseProxy";
+import { useProxyCluster } from "@/modules/reverse-proxy/clusters/useProxyCluster";
 
 // Synced from templates/reverse-proxy/netbird-proxy-cfn.yaml by the
 // sync-deploy-templates workflow.
@@ -68,6 +68,9 @@ type Props = {
   // Fires once the deployed proxy registers and connects, so the modal can
   // gate its "Finish Setup" action on real completion.
   onRegistered?: () => void;
+  // Replaces the built-in registration check, for a host that tracks the
+  // registration itself and renders its own status.
+  registrationStatus?: React.ReactNode;
 };
 
 // buildCloudInit renders the canonical bootstrap with the same environment as
@@ -228,6 +231,7 @@ type DeploySuccessProps = {
   domain: string;
   ipPendingNote?: string;
   onRegistered?: () => void;
+  registrationStatus?: React.ReactNode;
   children?: React.ReactNode;
 };
 
@@ -240,39 +244,16 @@ const RegistrationCheck = ({
   domain: string;
   onRegistered?: () => void;
 }) => {
-  const clustersRequest = useApiCall<ReverseProxyCluster[]>(
-    "/reverse-proxies/clusters",
-    true,
-  );
-  const [registered, setRegistered] = useState(false);
+  const cluster = useProxyCluster(domain, {
+    done: isClusterConnected,
+    maxAttempts: 120,
+  });
+  const registered = isClusterConnected(cluster);
 
   useEffect(() => {
-    if (registered) {
-      onRegistered?.();
-      return;
-    }
-    let attempts = 0;
-    const timer = setInterval(() => {
-      attempts += 1;
-      if (attempts > 120) {
-        clearInterval(timer);
-        return;
-      }
-      clustersRequest
-        .get()
-        .then((clusters) => {
-          const cluster = clusters?.find((c) => c.address === domain);
-          if (cluster?.online && cluster.connected_proxies > 0) {
-            setRegistered(true);
-          }
-        })
-        .catch(() => {
-          // Polling failures are retried on the next tick.
-        });
-    }, 5000);
-    return () => clearInterval(timer);
+    if (registered) onRegistered?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registered, domain]);
+  }, [registered]);
 
   return (
     <div className={"flex items-center gap-2 text-sm"}>
@@ -306,6 +287,7 @@ const DeploySuccess = ({
   domain,
   ipPendingNote,
   onRegistered,
+  registrationStatus,
   children,
 }: DeploySuccessProps) => {
   return (
@@ -361,7 +343,9 @@ const DeploySuccess = ({
         </div>
       )}
       {children}
-      <RegistrationCheck domain={domain} onRegistered={onRegistered} />
+      {registrationStatus ?? (
+        <RegistrationCheck domain={domain} onRegistered={onRegistered} />
+      )}
     </div>
   );
 };
@@ -372,6 +356,7 @@ const HetznerDeploy = ({
   managementUrl,
   isGeneratingToken,
   onRegistered,
+  registrationStatus,
 }: ProviderProps) => {
   const [hetznerToken, setHetznerToken] = useState("");
   const [catalog, setCatalog] = useState<HetznerCatalog | null>(null);
@@ -527,6 +512,7 @@ const HetznerDeploy = ({
         isStaticIP={staticIP}
         domain={domain}
         onRegistered={onRegistered}
+        registrationStatus={registrationStatus}
       />
     );
   }
@@ -681,6 +667,7 @@ const DigitalOceanDeploy = ({
   managementUrl,
   isGeneratingToken,
   onRegistered,
+  registrationStatus,
 }: ProviderProps) => {
   const [rootPassword] = useState(generateRootPassword);
   const [doToken, setDoToken] = useState("");
@@ -769,6 +756,7 @@ const DigitalOceanDeploy = ({
         isStaticIP={!!reservedIP}
         domain={domain}
         onRegistered={onRegistered}
+        registrationStatus={registrationStatus}
         ipPendingNote={
           isDeploying
             ? "and is provisioning. Waiting for its public IP..."
@@ -877,6 +865,7 @@ const AWSDeploy = ({
   managementUrl,
   isGeneratingToken,
   onRegistered,
+  registrationStatus,
 }: ProviderProps) => {
   const [region, setRegion] = useState("eu-central-1");
   const [launched, setLaunched] = useState(false);
@@ -929,9 +918,10 @@ const AWSDeploy = ({
         The AWS Console opens with a prefilled form. Paste the token, create the
         stack, then point your DNS records to the PublicIP output.
       </HelpText>
-      {launched && (
-        <RegistrationCheck domain={domain} onRegistered={onRegistered} />
-      )}
+      {launched &&
+        (registrationStatus ?? (
+          <RegistrationCheck domain={domain} onRegistered={onRegistered} />
+        ))}
     </div>
   );
 };
