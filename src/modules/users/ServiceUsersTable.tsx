@@ -194,7 +194,7 @@ export default function ServiceUsersTable({
         <GetStartedTest
           icon={
             <SquareIcon
-              icon={<IconSettings2 size={24} />}
+              icon={<IconSettings2 size={24} className={"text-nb-gray-200"} />}
               color={"gray"}
               size={"large"}
             />

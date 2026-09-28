@@ -79,7 +79,9 @@ export default function NoResults({
         {!hideIcon && (
           <div className={"flex items-center justify-center mb-6"}>
             <SquareIcon
-              icon={icon ?? <FilterX size={24} />}
+              icon={
+                icon ? icon : <FilterX size={24} className={"text-nb-gray-200"} />
+              }
               color={"gray"}
               size={"large"}
             />

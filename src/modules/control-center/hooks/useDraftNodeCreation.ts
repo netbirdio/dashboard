@@ -1,8 +1,19 @@
+import { Node, useReactFlow, XYPosition } from "@xyflow/react";
 import { useCallback } from "react";
-import { Node, XYPosition, useReactFlow } from "@xyflow/react";
-import { NodeType } from "@/modules/control-center/utils/nodes";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import type { Network } from "@/interfaces/Network";
+import type { Policy } from "@/interfaces/Policy";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import {
+  type AgentPolicy,
+  type AIProvider,
+  EMPTY_POLICY_LIMITS,
+} from "@/modules/agent-network/data/mockData";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { getNextNewGroupName } from "@/modules/control-center/hooks/useDraftGroupActions";
+import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkActions";
+import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
+import type { AgentProviderNodeData } from "@/modules/control-center/nodes/ProviderNode";
 import {
   draftUid,
   getFrameChildPosition,
@@ -13,11 +24,7 @@ import {
   NETWORK_FRAME_WIDTH,
   PLACEHOLDER_BASE_NAMES,
 } from "@/modules/control-center/utils/helpers";
-import { getNextNewGroupName } from "@/modules/control-center/hooks/useDraftGroupActions";
-import { getNetworkRef } from "@/modules/control-center/hooks/useDraftNetworkActions";
-import type { PeerPlaceholderKind } from "@/modules/control-center/nodes/PeerNode";
-import type { Policy } from "@/interfaces/Policy";
-import type { Network } from "@/interfaces/Network";
+import { NodeType } from "@/modules/control-center/utils/nodes";
 
 const getNextPlaceholderName = (
   kind: PeerPlaceholderKind,
@@ -51,6 +58,24 @@ const getNextPolicyName = (
   return name;
 };
 
+const getNextAgentName = (
+  base: string,
+  existing: { name: string }[] | undefined,
+  nodes: Node[],
+  dataName: (n: Node) => string | undefined,
+) => {
+  const taken = new Set<string>();
+  existing?.forEach((e) => e.name && taken.add(e.name));
+  nodes.forEach((n) => {
+    const name = dataName(n);
+    if (name) taken.add(name);
+  });
+  let name = base;
+  let i = 1;
+  while (taken.has(name)) name = `${base} (${i++})`;
+  return name;
+};
+
 const getNextUniqueName = (base: string, taken: Set<string>) => {
   let name = base;
   let i = 1;
@@ -62,8 +87,14 @@ export function useDraftNodeCreation() {
   const reactFlow = useReactFlow();
   const { policies, networks, networkResources, groups } =
     useControlCenterData();
-  const { changes, trackCreateNetwork, trackInstallPeer, trackCreateGroup } =
-    useDraftChangeset();
+  const {
+    changes,
+    trackCreateNetwork,
+    trackInstallPeer,
+    trackCreateGroup,
+    trackCreateAgentPolicy,
+  } = useDraftChangeset();
+  const { policies: agentPolicies } = useAIProviders();
 
   // Frames elevate their z, so a node dropped over one must paint above it.
   const placeNode = useCallback(
@@ -141,14 +172,77 @@ export function useDraftNodeCreation() {
     [placeNode, policies, reactFlow],
   );
 
+  const placeProviderNode = useCallback(
+    (provider: AgentProviderNodeData, position?: XYPosition) => {
+      placeNode(
+        {
+          id: `provider-${provider.id}`,
+          type: NodeType.ProviderNode,
+          position: { x: 0, y: 0 },
+          data: { ...provider },
+        },
+        position,
+      );
+    },
+    [placeNode],
+  );
+
+  const placeAgentPolicyNode = useCallback(
+    (policy: AgentPolicy, position?: XYPosition) => {
+      placeNode(
+        {
+          id: `agent-policy-${policy.id}`,
+          type: NodeType.AgentPolicyNode,
+          position: { x: 0, y: 0 },
+          data: {
+            id: policy.id,
+            name: policy.name,
+            enabled: policy.enabled,
+            ...(policy.id.startsWith("new-") ? { policy } : {}),
+          },
+        },
+        position,
+      );
+    },
+    [placeNode],
+  );
+
+  const addBlankAgentPolicy = useCallback(
+    (position?: XYPosition) => {
+      const clientId = `new-${draftUid()}`;
+      const name = getNextAgentName(
+        "Agent Policy",
+        agentPolicies,
+        reactFlow.getNodes(),
+        (n) =>
+          n.type === NodeType.AgentPolicyNode
+            ? (n.data as { name?: string })?.name
+            : undefined,
+      );
+      const policy: Omit<AgentPolicy, "id"> = {
+        name,
+        description: "",
+        enabled: true,
+        sourceGroups: [],
+        destinationProviderIds: [],
+        guardrailIds: [],
+        limits: EMPTY_POLICY_LIMITS,
+      };
+      placeAgentPolicyNode({ ...policy, id: clientId }, position);
+    },
+    [agentPolicies, placeAgentPolicyNode, reactFlow],
+  );
+
   // Networks only need a name, so the change is recorded immediately.
   const addDraftNetwork = useCallback(
-    (position?: XYPosition, preset?: { name: string; description?: string }) => {
+    (
+      position?: XYPosition,
+      preset?: { name: string; description?: string },
+    ) => {
       const taken = new Set<string>();
       networks?.forEach((n) => n.name && taken.add(n.name));
       reactFlow.getNodes().forEach((n) => {
-        const name = (n.data as { network?: { name?: string } })?.network
-          ?.name;
+        const name = (n.data as { network?: { name?: string } })?.network?.name;
         if (name) taken.add(name);
       });
       const name = preset?.name || getNextUniqueName("Network", taken);
@@ -310,8 +404,8 @@ export function useDraftNodeCreation() {
     (network: Network, position?: XYPosition) => {
       if (!network.id) return;
       const frameNodeId = `network-${network.id}`;
-      const childResources = (networkResources ?? []).filter((r) =>
-        network.resources?.includes(r.id ?? ""),
+      const childResources = (networkResources ?? []).filter(
+        (r) => network.resources?.includes(r.id ?? ""),
       );
       const framePosition = position
         ? {
@@ -409,6 +503,9 @@ export function useDraftNodeCreation() {
     addDraftNetwork,
     addDraftResource,
     addBlankPolicy,
+    addBlankAgentPolicy,
+    placeProviderNode,
+    placeAgentPolicyNode,
     addResourceToFrame,
     addResourceGroupToFrame,
     dropExistingNetworkFrame,

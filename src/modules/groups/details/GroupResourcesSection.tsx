@@ -157,7 +157,7 @@ export const GroupResourcesSection = ({
               description={
                 "Assign this group to your resources inside your networks to see them listed here."
               }
-              icon={<Layers3Icon size={20} />}
+              icon={<Layers3Icon size={20} className={"text-nb-gray-300"} />}
             >
               {permission?.networks?.create && (
                 <>

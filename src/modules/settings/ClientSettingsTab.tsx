@@ -343,7 +343,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           <div>
             <div>
               <Label>
-                <ReverseProxyIcon size={15} className={"fill-nb-gray-300"} />
+                <ReverseProxyIcon size={15} className={"text-nb-gray-300"} />
                 Expose Services from CLI
               </Label>
               <HelpText>

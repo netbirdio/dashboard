@@ -233,7 +233,9 @@ export default function IdentityProvidersTab() {
           <GetStartedTest
             icon={
               <SquareIcon
-                icon={<FingerprintIcon size={20} />}
+                icon={
+                  <FingerprintIcon size={20} className={"text-nb-gray-200"} />
+                }
                 color={"gray"}
                 size={"large"}
               />
