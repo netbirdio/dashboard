@@ -22,6 +22,7 @@ import type { Peer } from "@/interfaces/Peer";
 import { useAccount } from "@/modules/account/useAccount";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { AgentNetworkOnboarding } from "@/modules/onboarding/agent-network/AgentNetworkOnboarding";
+import { storedAgentStep } from "@/modules/onboarding/agent-network/agentNetworkSteps";
 import {
   Intent,
   Onboarding,
@@ -145,6 +146,13 @@ export const OnboardingProvider = ({
   // The agent-network flow uses its own signup step on both cloud and
   // self-hosted, so netbird.ai signups fill the form before onboarding.
   const agentSignupPending = !!account?.onboarding?.signup_form_pending;
+
+  // The gateway step offers a NetBird-managed gateway, which only exists on
+  // Cloud. showOnboarding already limits the flow to the owner's own signup,
+  // so an invited admin never provisions one. This also covers a return after
+  // the signup source was cleared: the account is still onboarding.
+  const gatewayStep =
+    isNetBirdCloud() && showOnboarding && agentNetworkOnboarding;
 
   const updateAccountMeta = async (meta: Partial<Account["onboarding"]>) => {
     if (!account) return;
@@ -273,8 +281,11 @@ export const OnboardingProvider = ({
   if (showOnboarding && agentNetworkOnboarding) {
     return (
       <AgentNetworkOnboarding
-        initialStep={onboarding.step}
-        onStepChange={(step) => setOnboarding((prev) => ({ ...prev, step }))}
+        initialStep={storedAgentStep(onboarding)}
+        onStepChange={(step) =>
+          setOnboarding((prev) => ({ ...prev, agent_network_step: step }))
+        }
+        gatewayStep={gatewayStep}
         signupPending={agentSignupPending}
         onSignupSubmit={onSubmitAgentSignup}
         onSkip={onSkipAgentNetwork}

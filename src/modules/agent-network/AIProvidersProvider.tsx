@@ -157,6 +157,28 @@ export type APIAgentNetworkSettingsRequest = {
   access_log_retention_days: number;
 };
 
+// AgentNetworkManagedProxy is a NetBird-managed gateway deployment as
+// /integrations/agent-network/managed-proxy reports it. state is derived by
+// the server on every read and typed as an open string: the spec lists
+// provisioning, ready and failed, and a value outside those must render as
+// unknown rather than break the flow.
+export type AgentNetworkManagedProxy = {
+  id: string;
+  state: string;
+  // Bare hostname the gateway serves. Assigned on the first POST and never
+  // changes, so it can be shown before the deployment is ready.
+  endpoint: string;
+  region?: string;
+  // Failure detail from the rollout, only set while state is failed.
+  message?: string;
+};
+
+// AgentNetworkManagedProxyConflict is the 409 body of the managed-proxy POST:
+// the account already has an endpoint that managed provisioning does not own.
+export type AgentNetworkManagedProxyConflict = {
+  endpoint: string;
+};
+
 export type AgentNetworkSettings = {
   endpoint: string;
   proxyAddress: string;
