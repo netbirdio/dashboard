@@ -23,6 +23,8 @@ const replaceChanges = vi.fn((next: DraftChange[]) => {
   changes = next;
 });
 const drawPolicyOnCanvas = vi.fn();
+const drawAgentPolicyOnCanvas = vi.fn();
+let liveAgentPolicies: unknown[] = [];
 const setNodes = vi.fn();
 const setEdges = vi.fn();
 const removeNodeWithEdges = vi.fn();
@@ -31,7 +33,13 @@ vi.mock("@/modules/control-center/contexts/ControlCenterContext", () => ({
   useCanvasState: () => ({ nodes, edges: [], setNodes, setEdges }),
 }));
 vi.mock("@/modules/control-center/contexts/ControlCenterPolicyModals", () => ({
-  useControlCenterPolicy: () => ({ drawPolicyOnCanvas }),
+  useControlCenterPolicy: () => ({
+    drawPolicyOnCanvas,
+    drawAgentPolicyOnCanvas,
+  }),
+}));
+vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
+  useAIProviders: () => ({ policies: liveAgentPolicies, providers: [] }),
 }));
 vi.mock("@/modules/control-center/hooks/useControlCenterData", () => ({
   useControlCenterData: () => ({
@@ -347,7 +355,12 @@ describe("discarding a create scrubs policy node data", () => {
             name: "P",
             enabled: true,
             rules: [
-              { name: "P", enabled: true, sources: [draftWeb, liveWeb], destinations: [dev] },
+              {
+                name: "P",
+                enabled: true,
+                sources: [draftWeb, liveWeb],
+                destinations: [dev],
+              },
             ],
           },
         },
@@ -425,9 +438,11 @@ describe("discarding a draft network detaches children in place", () => {
     ] as unknown as CanvasNode[];
     remove(createNetwork);
 
-    const updater = setNodes.mock.calls.at(-1)?.[0] as (
-      prev: unknown[],
-    ) => { id: string; parentId?: string; position: { x: number; y: number } }[];
+    const updater = setNodes.mock.calls.at(-1)?.[0] as (prev: unknown[]) => {
+      id: string;
+      parentId?: string;
+      position: { x: number; y: number };
+    }[];
     const detached = updater(nodes).find((n) => n.id === "resource-r1");
     expect(detached?.parentId).toBeUndefined();
     // Kept frame-relative it would teleport toward the canvas origin.

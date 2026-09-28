@@ -17,12 +17,19 @@ export function useControlCenterData() {
     useFetchApi<Peer[]>("/peers");
   const { data: networks, isLoading: isNetworksLoading } =
     useFetchApi<Network[]>("/networks");
-  const { data: networkResources, isLoading: isResourcesLoading } =
-    useFetchApi<NetworkResource[]>("/networks/resources");
+  const { data: networkResources, isLoading: isResourcesLoading } = useFetchApi<
+    NetworkResource[]
+  >("/networks/resources");
   const { data: groups, isLoading: isGroupsLoading } =
     useFetchApi<Group[]>("/groups");
+  // Control Center opens on `policies.read`, which does not imply `users.read`:
+  // for those roles the users call is a plain 403 and must not raise the error
+  // boundary over a canvas that reads fine without it. Every consumer treats an
+  // absent list as "no users", and the group panel's Users tab is gated on
+  // `users.update` anyway.
   const { data: users, isLoading: isUsersLoading } = useFetchApi<User[]>(
     "/users?service_user=false",
+    true,
   );
 
   const isLoading =

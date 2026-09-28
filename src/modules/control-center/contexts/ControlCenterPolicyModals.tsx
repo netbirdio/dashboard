@@ -20,11 +20,24 @@ import {
   PolicyDestinationScope,
 } from "@/modules/access-control/AccessControlModal";
 import AgentPolicyModal from "@/modules/agent-network/AgentPolicyModal";
-import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import AIProviderModal, {
+  MASKED_API_KEY,
+} from "@/modules/agent-network/AIProviderModal";
+import {
+  providerFromDraftInput,
+  useAIProviders,
+} from "@/modules/agent-network/AIProvidersProvider";
+import {
+  type AgentPolicy,
+  type AIProvider,
+  EMPTY_POLICY_LIMITS,
+} from "@/modules/agent-network/data/mockData";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
+import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import { draftUid } from "@/modules/control-center/utils/helpers";
 import {
   getDraftResource,
   getPlaceholderPeer,
@@ -45,6 +58,15 @@ interface PolicyContextType {
   // Restricts the create-policy modal's destination to a network's contents.
   setPolicyDestinationScope: (scope?: PolicyDestinationScope) => void;
   openAgentPolicy: (id: string) => void;
+  openProvider: (id: string) => void;
+  updateDraftAgentPolicy: (policy: AgentPolicy) => void;
+  setAgentSourceGroup: (policy: AgentPolicy, groupRef: string) => void;
+  drawAgentPolicyOnCanvas: (policy: AgentPolicy) => void;
+  openProviderWizard: (position?: XYPosition) => void;
+  openAgentPolicyWizard: (
+    prefill: { sourceGroups: string[]; destinationProviderIds: string[] },
+    position?: XYPosition,
+  ) => void;
 }
 
 const PolicyContext = createContext<PolicyContextType | null>(null);
@@ -75,10 +97,24 @@ export function ControlCenterPolicyProvider({
     trackDeletePolicy,
     trackCreateGroup,
     patchPendingPolicyUpdate,
+    trackCreateProvider,
+    trackUpdateProvider,
+    trackCreateAgentPolicy,
+    trackUpdateAgentPolicy,
+    trackDeleteAgentPolicy,
+    patchPendingAgentPolicyUpdate,
   } = useDraftChangeset();
+  const { placeProviderNode, placeAgentPolicyNode } = useDraftNodeCreation();
   const { setDropdownOptions } = useGroups();
   const reactFlow = useReactFlow();
   const { confirm } = useDialog();
+
+  const patchAgentNode = (nodeId: string, data: Record<string, unknown>) =>
+    reactFlow.setNodes((prev) =>
+      prev.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, ...data } } : n,
+      ),
+    );
 
   // Live edits apply to the account immediately, so confirm before the PUT.
   const confirmLivePolicySave = () =>
@@ -92,21 +128,119 @@ export function ControlCenterPolicyProvider({
       dismissOnOutsideClick: true,
     });
 
+  const confirmLiveAgentSave = () =>
+    confirm({
+      title: "Save changes?",
+      description: isDraft
+        ? "Agent Network changes aren't part of the draft. Saving applies them to your account immediately."
+        : "You are in live mode. Saving your changes will apply them to your account immediately.",
+      confirmText: "Save",
+      cancelText: "Cancel",
+      type: "warning",
+      dismissOnOutsideClick: true,
+    });
+
   const [selectedPolicy, setSelectedPolicy] = useState("");
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
   // Agent-network policies live in their own domain, not /policies, so they
   // need their own modal.
   const [selectedAgentPolicy, setSelectedAgentPolicy] = useState("");
   const [agentPolicyModalOpen, setAgentPolicyModalOpen] = useState(false);
-  const { policies: agentPolicyDomain } = useAIProviders();
-  const currentAgentPolicy = useMemo(
-    () => agentPolicyDomain?.find((p) => p.id === selectedAgentPolicy),
-    [agentPolicyDomain, selectedAgentPolicy],
-  );
+  const {
+    policies: agentPolicyDomain,
+    providers: agentProviders,
+    editingProvider,
+    openProviderEdit,
+    closeProviderEdit,
+  } = useAIProviders();
+  const [agentPolicyWizard, setAgentPolicyWizard] = useState<{
+    policy: AgentPolicy;
+    position?: XYPosition;
+  } | null>(null);
+
+  const currentAgentPolicy = useMemo(() => {
+    if (!selectedAgentPolicy) return undefined;
+    if (selectedAgentPolicy.startsWith("new-")) {
+      const node = nodes.find(
+        (n) => n.id === `agent-policy-${selectedAgentPolicy}`,
+      );
+      const create = changes.find(
+        (c) =>
+          c.type === "create-agent-policy" &&
+          c.clientId === selectedAgentPolicy,
+      );
+      const policy =
+        (node?.data as { policy?: AgentPolicy })?.policy ??
+        (create?.type === "create-agent-policy" ? create.policy : undefined);
+      return policy
+        ? ({ ...policy, id: selectedAgentPolicy } as AgentPolicy)
+        : undefined;
+    }
+    const live = agentPolicyDomain?.find((p) => p.id === selectedAgentPolicy);
+    const pending = changes.find(
+      (c) =>
+        c.type === "update-agent-policy" &&
+        c.agentPolicyId === selectedAgentPolicy,
+    );
+    if (pending?.type !== "update-agent-policy") return live;
+    return {
+      ...(live ?? {}),
+      ...pending.policy,
+      id: selectedAgentPolicy,
+    } as AgentPolicy;
+  }, [agentPolicyDomain, selectedAgentPolicy, nodes, changes]);
+
+  const isTrackableAgentPolicy = (policy: {
+    sourceGroups: string[];
+    destinationProviderIds: string[];
+  }) =>
+    policy.sourceGroups.length > 0 && policy.destinationProviderIds.length > 0;
   const openAgentPolicy = (id: string) => {
     setSelectedAgentPolicy(id);
     setAgentPolicyModalOpen(true);
   };
+  const draftProviders = useMemo(
+    () =>
+      changes.flatMap((c) =>
+        c.type === "create-provider"
+          ? [providerFromDraftInput(c.clientId, c.input)]
+          : [],
+      ),
+    [changes],
+  );
+  const draftProvider = (id: string) => draftProviders.find((p) => p.id === id);
+
+  const draftProviderNames = useMemo(
+    () => draftProviders.map((p) => p.name),
+    [draftProviders],
+  );
+
+  const draftAgentPolicyNames = useMemo(
+    () => [
+      ...nodes.flatMap((n) =>
+        n.type === "agentPolicyNode"
+          ? [(n.data as { name?: string })?.name ?? ""]
+          : [],
+      ),
+      ...changes.flatMap((c) =>
+        c.type === "create-agent-policy" ? [c.name] : [],
+      ),
+    ],
+    [nodes, changes],
+  );
+
+  const openProvider = (id: string) => {
+    const provider =
+      agentProviders?.find((p) => p.id === id) ?? draftProvider(id);
+    if (provider) openProviderEdit(provider);
+  };
+
+  const [providerWizard, setProviderWizard] = useState<{
+    position?: XYPosition;
+  } | null>(null);
+  const openProviderWizard = (position?: XYPosition) =>
+    setProviderWizard({ position });
+
   const [createPolicyModal, setCreatePolicyModal] = useState(false);
   const [policyInitialName, setPolicyInitialName] = useState("");
   const [policyDestinationScope, setPolicyDestinationScope] = useState<
@@ -203,22 +337,25 @@ export function ControlCenterPolicyProvider({
   // Uninstalled placeholders stay selectable in the modal's peer selector.
   const placeholderPeers = useMemo(
     () =>
-      nodes
-        .map((n) => getPlaceholderPeer(n))
-        .filter(Boolean) as NonNullable<ReturnType<typeof getPlaceholderPeer>>[],
+      nodes.map((n) => getPlaceholderPeer(n)).filter(Boolean) as NonNullable<
+        ReturnType<typeof getPlaceholderPeer>
+      >[],
     [nodes],
   );
 
   const draftResources = useMemo(
     () =>
-      nodes
-        .map((n) => getDraftResource(n))
-        .filter(Boolean) as NonNullable<ReturnType<typeof getDraftResource>>[],
+      nodes.map((n) => getDraftResource(n)).filter(Boolean) as NonNullable<
+        ReturnType<typeof getDraftResource>
+      >[],
     [nodes],
   );
 
   // The policy's edges are replaced wholesale: an edit can change either side.
-  const drawPolicyOnCanvas = (policy: Policy, fallbackPosition?: XYPosition) => {
+  const drawPolicyOnCanvas = (
+    policy: Policy,
+    fallbackPosition?: XYPosition,
+  ) => {
     const rule = policy?.rules?.[0];
     if (!rule) return;
 
@@ -255,7 +392,6 @@ export function ControlCenterPolicyProvider({
       }
       return false;
     };
-
 
     const pushEdge = (id: string, source: string, target: string) => {
       if (!policyEdges.some((e) => e.id === id)) {
@@ -397,7 +533,8 @@ export function ControlCenterPolicyProvider({
         sourceGroupIds.has(gid) ||
         (group?.name &&
           sourceNodeIds.some((sid) => {
-            const n = findNode(sid) ?? newNodes.find((nn: any) => nn.id === sid);
+            const n =
+              findNode(sid) ?? newNodes.find((nn: any) => nn.id === sid);
             return (n?.data as any)?.group?.name === group.name;
           }));
 
@@ -474,8 +611,8 @@ export function ControlCenterPolicyProvider({
         if (resource) {
           const nodeId = `resource-${resource.id}`;
           // Without the owning network the standalone card reads "No Network".
-          const owningNetwork = networks?.find((n) =>
-            n.resources?.some((rid) => rid === resource.id),
+          const owningNetwork = networks?.find(
+            (n) => n.resources?.some((rid) => rid === resource.id),
           );
           if (
             ensureNode(
@@ -552,6 +689,295 @@ export function ControlCenterPolicyProvider({
     );
   };
 
+  // A source ref that is not a live group id names a DRAFT group: the modal's
+  // selector mints groups the canvas has no node for yet, so a node lookup
+  // alone would read those as live ids.
+  const isDraftGroupRef = (ref: string) =>
+    !!groups && !groups.some((g) => g.id === ref);
+
+  const drawAgentPolicyOnCanvas = (
+    policy: AgentPolicy,
+    fallbackPosition?: XYPosition,
+  ) => {
+    const policyNodeId = `agent-policy-${policy.id}`;
+    const enabled = policy.enabled !== false;
+    const isDraftPolicy = policy.id.startsWith("new-");
+    const currentNodes = reactFlow.getNodes();
+    const findNode = (id: string) => currentNodes.find((n) => n.id === id);
+
+    const newNodes: any[] = [];
+    const policyEdges: any[] = [];
+    const base = fallbackPosition ??
+      findNode(policyNodeId)?.position ?? { x: 0, y: 0 };
+    let newSourceCount = 0;
+    let newDestCount = 0;
+
+    const ensureNode = (
+      id: string,
+      type: string,
+      data: any,
+      position: XYPosition,
+    ) => {
+      if (findNode(id) || newNodes.some((n) => n.id === id)) return false;
+      newNodes.push({ id, type, data, position });
+      return true;
+    };
+
+    const columnOf = (ids: string[]) =>
+      ids.map((id) => findNode(id)?.position).filter(Boolean) as XYPosition[];
+    const nextInColumn = (
+      column: XYPosition[],
+      newCount: number,
+      fallbackX: number,
+    ): XYPosition =>
+      column.length
+        ? {
+            x: Math.min(...column.map((p) => p.x)),
+            y: Math.max(...column.map((p) => p.y)) + (newCount + 1) * 110,
+          }
+        : { x: fallbackX, y: base.y + newCount * 110 };
+
+    const isGroupish = (n: { type?: string }) =>
+      n.type === "groupNode" ||
+      n.type === "sourceGroupNode" ||
+      n.type === "destinationGroupNode";
+    const findGroupNode = (ref: string) =>
+      findNode(`group-${ref}`)?.id ??
+      currentNodes.find(
+        (n) => isGroupish(n) && (n.data as any)?.group?.id === ref,
+      )?.id ??
+      currentNodes.find(
+        (n) =>
+          isGroupish(n) &&
+          !(n.data as any)?.group?.id &&
+          (n.data as any)?.group?.name === ref,
+      )?.id;
+    const groupForRef = (ref: string): Group | undefined => {
+      const onCanvas = findGroupNode(ref);
+      const fromNode = onCanvas
+        ? ((findNode(onCanvas)?.data as any)?.group as Group | undefined)
+        : undefined;
+      return fromNode ?? groups?.find((g) => g.id === ref);
+    };
+
+    const sourceColumn = columnOf(
+      policy.sourceGroups
+        .map((gid) => findGroupNode(gid) ?? "")
+        .filter(Boolean),
+    );
+    const destColumn = columnOf(
+      policy.destinationProviderIds.map((pid) => `provider-${pid}`),
+    );
+
+    const sourceNodeIds: string[] = [];
+    for (const ref of policy.sourceGroups) {
+      const isDraftRef = isDraftGroupRef(ref);
+      const nodeId =
+        findGroupNode(ref) ??
+        (isDraftRef ? `group-new-${ref}` : `group-${ref}`);
+      const group = groupForRef(ref);
+      if (
+        ensureNode(
+          nodeId,
+          "groupNode",
+          {
+            group:
+              group ?? (isDraftRef ? { name: ref } : { id: ref, name: ref }),
+            enabled,
+            showHandles: true,
+          },
+          nextInColumn(sourceColumn, newSourceCount, base.x - 450),
+        )
+      ) {
+        newSourceCount++;
+      }
+      sourceNodeIds.push(nodeId);
+    }
+
+    const destNodeIds: string[] = [];
+    for (const pid of policy.destinationProviderIds) {
+      const nodeId = `provider-${pid}`;
+      const provider =
+        agentProviders?.find((p) => p.id === pid) ?? draftProvider(pid);
+      if (!provider && !findNode(nodeId)) continue;
+      if (
+        provider &&
+        ensureNode(
+          nodeId,
+          "providerNode",
+          {
+            id: provider.id,
+            providerId: provider.providerId,
+            name: provider.name,
+            upstreamUrl: provider.upstreamUrl,
+            enabled: provider.status !== "disabled",
+          },
+          nextInColumn(destColumn, newDestCount, base.x + 450),
+        )
+      ) {
+        newDestCount++;
+      }
+      destNodeIds.push(nodeId);
+    }
+
+    let policyPos = { x: base.x, y: base.y };
+    const matched = [...sourceNodeIds, ...destNodeIds]
+      .map((id) => findNode(id))
+      .filter(Boolean);
+    if (!fallbackPosition && !findNode(policyNodeId) && matched.length > 0) {
+      const bounds = reactFlow.getNodesBounds(matched as any);
+      const POLICY_NODE_HEIGHT = 36;
+      const width = Math.min(248, 64 + Math.min(policy.name.length, 26) * 7);
+      policyPos = {
+        x: bounds.x + bounds.width / 2 - width / 2,
+        y: bounds.y + bounds.height / 2 - POLICY_NODE_HEIGHT / 2,
+      };
+    }
+
+    const nodeData = {
+      id: policy.id,
+      name: policy.name,
+      enabled,
+      ...(isDraftPolicy ? { policy } : {}),
+    };
+    if (!findNode(policyNodeId)) {
+      newNodes.push({
+        id: policyNodeId,
+        type: "agentPolicyNode",
+        data: nodeData,
+        position: policyPos,
+      });
+    }
+
+    policy.sourceGroups.forEach((ref, i) => {
+      policyEdges.push({
+        id: `agent-src-${ref}-${policy.id}`,
+        source: sourceNodeIds[i],
+        target: policyNodeId,
+        type: "smart",
+        data: { enabled },
+      });
+    });
+    for (const pid of destNodeIds) {
+      const providerId = pid.replace("provider-", "");
+      const provider =
+        agentProviders?.find((p) => p.id === providerId) ??
+        draftProvider(providerId);
+      const providerEnabled = provider ? provider.status !== "disabled" : true;
+      policyEdges.push({
+        id: `agent-dst-${policy.id}-${providerId}`,
+        source: policyNodeId,
+        target: pid,
+        type: "smart",
+        data: { enabled: enabled && providerEnabled },
+      });
+    }
+
+    reactFlow.setNodes((prev) =>
+      prev
+        .map((n) =>
+          n.id === policyNodeId
+            ? { ...n, data: { ...n.data, ...nodeData } }
+            : n,
+        )
+        .concat(newNodes),
+    );
+    reactFlow.setEdges((prev) =>
+      prev
+        .filter((e) => e.source !== policyNodeId && e.target !== policyNodeId)
+        .concat(policyEdges),
+    );
+  };
+
+  const ensureAgentDraftGroupChanges = (policy: AgentPolicy) => {
+    policy.sourceGroups.forEach((ref) => {
+      if (!isDraftGroupRef(ref)) return;
+      const exists = changes.some(
+        (c) => c.type === "create-group" && c.name === ref,
+      );
+      if (!exists)
+        trackCreateGroup({ clientId: `group-new-${ref}`, name: ref });
+    });
+  };
+
+  const updateDraftAgentPolicy = (
+    policy: AgentPolicy,
+    fallbackPosition?: XYPosition,
+  ) => {
+    if (!policy.id) return;
+    ensureAgentDraftGroupChanges(policy);
+    const isDraftPolicy = policy.id.startsWith("new-");
+    if (isTrackableAgentPolicy(policy)) {
+      const hasCreateChange = changes.some(
+        (c) => c.type === "create-agent-policy" && c.clientId === policy.id,
+      );
+      if (isDraftPolicy && !hasCreateChange) {
+        trackCreateAgentPolicy({ clientId: policy.id, policy });
+      } else {
+        trackUpdateAgentPolicy({
+          agentPolicyId: policy.id,
+          name: policy.name,
+          policy,
+        });
+      }
+    } else if (isDraftPolicy) {
+      // Dropping the pending create is safe: nothing had landed yet.
+      trackDeleteAgentPolicy({ agentPolicyId: policy.id, name: policy.name });
+    } else {
+      // An EXISTING policy stripped bare is not a deletion — deleting one has to
+      // be confirmed. The pending edit survives, blocked by its Incomplete issue.
+      patchPendingAgentPolicyUpdate({ agentPolicyId: policy.id, policy });
+    }
+    drawAgentPolicyOnCanvas(policy, fallbackPosition);
+  };
+
+  const groupNameForRef = (ref: string) =>
+    groups?.find((g) => g.id === ref)?.name ??
+    ((
+      reactFlow.getNodes().find((n) => (n.data as any)?.group?.id === ref)
+        ?.data as any
+    )?.group?.name as string | undefined) ??
+    ref;
+
+  const setAgentSourceGroup = (policy: AgentPolicy, groupRef: string) => {
+    const current = policy.sourceGroups[0];
+    const apply = () =>
+      updateDraftAgentPolicy({ ...policy, sourceGroups: [groupRef] });
+    if (!current || current === groupRef) {
+      apply();
+      return;
+    }
+    void confirm({
+      title: "Replace current source group?",
+      description: `Are you sure you want to replace “${groupNameForRef(
+        current,
+      )}” with “${groupNameForRef(groupRef)}”? “${groupNameForRef(
+        current,
+      )}” will no longer have access to this policy's providers.`,
+      confirmText: "Replace",
+      cancelText: "Cancel",
+      type: "warning",
+    }).then((ok) => ok && apply());
+  };
+
+  const openAgentPolicyWizard = (
+    prefill: { sourceGroups: string[]; destinationProviderIds: string[] },
+    position?: XYPosition,
+  ) => {
+    const policy: AgentPolicy = {
+      id: `new-${draftUid()}`,
+      name: "",
+      description: "",
+      enabled: true,
+      guardrailIds: [],
+      limits: EMPTY_POLICY_LIMITS,
+      ...prefill,
+    };
+    setAgentPolicyWizard({ policy, position });
+    setSelectedAgentPolicy(policy.id);
+    setAgentPolicyModalOpen(true);
+  };
+
   // In draft the modal returns pure policy data; the API call happens on deploy.
   const addPolicyEdge = (policy: Policy) => {
     setCreatePolicyModal(false);
@@ -610,7 +1036,10 @@ export function ControlCenterPolicyProvider({
       }
       // A side was emptied: drop the pending create until it is complete again.
       if (!isCompletePolicy(policy)) {
-        trackDeletePolicy({ policyId: policy.id, name: policy.name ?? "Policy" });
+        trackDeletePolicy({
+          policyId: policy.id,
+          name: policy.name ?? "Policy",
+        });
         drawPolicyOnCanvas(policy);
         return;
       }
@@ -651,6 +1080,12 @@ export function ControlCenterPolicyProvider({
       setPolicyDestinationGroups,
       setPolicyDestinationScope,
       openAgentPolicy,
+      updateDraftAgentPolicy,
+      setAgentSourceGroup,
+      drawAgentPolicyOnCanvas,
+      openAgentPolicyWizard,
+      openProvider,
+      openProviderWizard,
     }),
     [
       selectedPolicy,
@@ -668,6 +1103,8 @@ export function ControlCenterPolicyProvider({
       peers,
       networkResources,
       networks,
+      agentProviders,
+      groups,
     ],
   );
 
@@ -706,9 +1143,82 @@ export function ControlCenterPolicyProvider({
       )}
       <AgentPolicyModal
         open={agentPolicyModalOpen}
-        onOpenChange={setAgentPolicyModalOpen}
+        onOpenChange={(o) => {
+          setAgentPolicyModalOpen(o);
+          if (!o) setAgentPolicyWizard(null);
+        }}
         policy={currentAgentPolicy}
+        initial={agentPolicyWizard?.policy}
+        extraProviders={isDraft ? draftProviders : undefined}
+        takenNames={isDraft ? draftAgentPolicyNames : undefined}
+        onBeforeSave={isDraft ? undefined : confirmLiveAgentSave}
+        useSave={!isDraft}
+        onDraftSubmit={(policy) => {
+          const id = selectedAgentPolicy;
+          if (!id) return;
+          updateDraftAgentPolicy(
+            { ...policy, id },
+            agentPolicyWizard?.position,
+          );
+          setAgentPolicyWizard(null);
+        }}
       />
+      {editingProvider && (
+        <AIProviderModal
+          open={true}
+          onOpenChange={(o) => {
+            if (!o) closeProviderEdit();
+          }}
+          provider={editingProvider}
+          useSave={!isDraft}
+          onBeforeSave={isDraft ? undefined : confirmLiveAgentSave}
+          onDraftSubmit={(input) => {
+            // The modal always submits `enabled: true`; recording it here would
+            // re-enable a disabled provider on deploy and override a pending
+            // Disable toggle. The live edit path doesn't send it either.
+            const { apiKey, enabled: _enabled, ...rest } = input;
+            const updates =
+              apiKey && apiKey.trim() !== MASKED_API_KEY
+                ? { ...rest, apiKey }
+                : rest;
+            trackUpdateProvider({
+              providerId: editingProvider.id,
+              name: input.name,
+              updates,
+            });
+            patchAgentNode(`provider-${editingProvider.id}`, {
+              name: input.name,
+              upstreamUrl: input.upstreamUrl,
+            });
+          }}
+        />
+      )}
+      {providerWizard && (
+        <AIProviderModal
+          open={true}
+          takenNames={isDraft ? draftProviderNames : undefined}
+          onOpenChange={(o) => {
+            if (!o) setProviderWizard(null);
+          }}
+          useSave={!isDraft}
+          onBeforeSave={isDraft ? undefined : confirmLiveAgentSave}
+          onDraftSubmit={(input) => {
+            const clientId = `new-${draftUid()}`;
+            trackCreateProvider({ clientId, name: input.name, input });
+            placeProviderNode(
+              {
+                id: clientId,
+                providerId: input.providerId,
+                name: input.name,
+                upstreamUrl: input.upstreamUrl,
+                enabled: true,
+              },
+              providerWizard.position,
+            );
+            setProviderWizard(null);
+          }}
+        />
+      )}
       {children}
     </PolicyContext.Provider>
   );

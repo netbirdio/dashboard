@@ -49,7 +49,7 @@ export const ResourceExposeServiceCell = ({ resource }: Props) => {
             );
           }}
         >
-          <ReverseProxyIcon size={14} className={"fill-green-500"} />
+          <ReverseProxyIcon size={14} className={"text-green-500"} />
           <div>
             <span className={"font-medium text-xs"}>{servicesCount}</span>
           </div>

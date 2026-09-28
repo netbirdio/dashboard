@@ -10,6 +10,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import {
   AgentBudgetRule,
   AgentGuardrail,
@@ -22,7 +23,6 @@ import {
   PolicyLimits,
   ProviderModel,
 } from "@/modules/agent-network/data/mockData";
-import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 
@@ -215,6 +215,45 @@ function fromAPI(p: APIProvider): AIProvider {
     p95LatencyMs: 0,
     denyRatePct: 0,
     enabled: p.enabled,
+  };
+}
+
+export function providerFromDraftInput(
+  id: string,
+  input: ProviderConnectInput,
+): AIProvider {
+  const models = input.models ?? [];
+  const enabled = input.enabled ?? true;
+  return {
+    id,
+    providerId: input.providerId,
+    name: input.name,
+    upstreamUrl: input.upstreamUrl,
+    extraValues: input.extraValues ?? {},
+    identityHeaderUserId: input.identityHeaderUserId,
+    identityHeaderGroups: input.identityHeaderGroups,
+    skipTlsVerification: input.skipTlsVerification ?? false,
+    metadataDisabled: input.metadataDisabled ?? false,
+    status: enabled ? "active" : "disabled",
+    models,
+    allowedGroups: [],
+    allowedCountries: [],
+    blockedCountries: [],
+    authMethod: "sso",
+    hasApiKey: !!input.apiKey,
+    promptRetentionDays: 0,
+    promptRedactionLevel: "none",
+    monthlyBudgetSoftUsd: 0,
+    monthlyBudgetHardUsd: 0,
+    currentMonthSpendUsd: 0,
+    last7dSpendUsd: 0,
+    requestsLast7d: 0,
+    topModel: models[0]?.id ?? "—",
+    topUser: "—",
+    p50LatencyMs: 0,
+    p95LatencyMs: 0,
+    denyRatePct: 0,
+    enabled,
   };
 }
 
@@ -509,6 +548,12 @@ type AIProvidersContextValue = {
   openWizard: () => void;
   closeWizard: () => void;
   isWizardOpen: boolean;
+  // The provider the edit modal is open on, and its controls. Held here so
+  // the row and its action menu — rendered from a module-level column def —
+  // open the same modal.
+  editingProvider: AIProvider | undefined;
+  openProviderEdit: (provider: AIProvider) => void;
+  closeProviderEdit: () => void;
   addProvider: (input: ProviderConnectInput) => Promise<AIProvider | undefined>;
   // Resolves false when the save was refused — the backend checks a provider's
   // url and credential before storing them, so a rejected edit must leave the
@@ -517,14 +562,14 @@ type AIProvidersContextValue = {
     id: string,
     updates: ProviderUpdateInput,
   ) => Promise<boolean>;
-  toggleProvider: (id: string) => Promise<void>;
-  deleteProvider: (id: string) => Promise<void>;
+  toggleProvider: (id: string) => Promise<boolean>;
+  deleteProvider: (id: string) => Promise<boolean>;
   addPolicy: (
     policy: Omit<AgentPolicy, "id">,
   ) => Promise<AgentPolicy | undefined>;
-  updatePolicy: (id: string, updates: Partial<AgentPolicy>) => Promise<void>;
-  togglePolicy: (id: string) => Promise<void>;
-  deletePolicy: (id: string) => Promise<void>;
+  updatePolicy: (id: string, updates: Partial<AgentPolicy>) => Promise<boolean>;
+  togglePolicy: (id: string) => Promise<boolean>;
+  deletePolicy: (id: string) => Promise<boolean>;
   addGuardrail: (
     guardrail: Omit<AgentGuardrail, "id">,
   ) => Promise<AgentGuardrail | undefined>;
@@ -710,6 +755,19 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const openWizard = useCallback(() => setIsWizardOpen(true), []);
   const closeWizard = useCallback(() => setIsWizardOpen(false), []);
 
+  const [editingProvider, setEditingProvider] = useState<
+    AIProvider | undefined
+  >(undefined);
+
+  const openProviderEdit = useCallback(
+    (provider: AIProvider) => setEditingProvider(provider),
+    [],
+  );
+  const closeProviderEdit = useCallback(
+    () => setEditingProvider(undefined),
+    [],
+  );
+
   const addProvider = useCallback(
     async (input: ProviderConnectInput) => {
       let created: APIProvider;
@@ -792,8 +850,8 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const toggleProvider = useCallback(
     async (id: string) => {
       const existing = (apiProviders ?? []).find((p) => p.id === id);
-      if (!existing) return;
-      await updateProvider(id, { enabled: !existing.enabled });
+      if (!existing) return false;
+      return updateProvider(id, { enabled: !existing.enabled });
     },
     [apiProviders, updateProvider],
   );
@@ -807,11 +865,13 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           title: "Provider removed",
           description: "Endpoint will be torn down on next mapping update.",
         });
+        return true;
       } catch (err) {
         notifyFailure({
           title: "Failed to remove provider",
           description: err instanceof Error ? err.message : String(err),
         });
+        return false;
       }
     },
     [providersApi, mutate],
@@ -841,7 +901,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const updatePolicy = useCallback(
     async (id: string, updates: Partial<AgentPolicy>) => {
       const existing = (apiPolicies ?? []).find((p) => p.id === id);
-      if (!existing) return;
+      if (!existing) return false;
       const merged: APIPolicyRequest = {
         name: updates.name ?? existing.name,
         description: updates.description ?? existing.description,
@@ -863,11 +923,13 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           title: "Policy updated",
           description: "Settings saved.",
         });
+        return true;
       } catch (err) {
         notifyFailure({
           title: "Failed to update policy",
           description: err instanceof Error ? err.message : String(err),
         });
+        return false;
       }
     },
     [apiPolicies, policiesApi, mutatePolicies],
@@ -876,8 +938,8 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   const togglePolicy = useCallback(
     async (id: string) => {
       const existing = (apiPolicies ?? []).find((p) => p.id === id);
-      if (!existing) return;
-      await updatePolicy(id, { enabled: !existing.enabled });
+      if (!existing) return false;
+      return updatePolicy(id, { enabled: !existing.enabled });
     },
     [apiPolicies, updatePolicy],
   );
@@ -891,11 +953,13 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
           title: "Policy removed",
           description: "Policy deleted.",
         });
+        return true;
       } catch (err) {
         notifyFailure({
           title: "Failed to remove policy",
           description: err instanceof Error ? err.message : String(err),
         });
+        return false;
       }
     },
     [policiesApi, mutatePolicies],
@@ -1122,6 +1186,9 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       openWizard,
       closeWizard,
       isWizardOpen,
+      editingProvider,
+      openProviderEdit,
+      closeProviderEdit,
       addProvider,
       updateProvider,
       toggleProvider,
@@ -1152,6 +1219,9 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
       isWizardOpen,
       openWizard,
       closeWizard,
+      editingProvider,
+      openProviderEdit,
+      closeProviderEdit,
       addProvider,
       updateProvider,
       toggleProvider,
