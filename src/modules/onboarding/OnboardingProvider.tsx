@@ -6,7 +6,7 @@ import {
   testOnboardingEnabled,
 } from "@utils/netbird";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { submitHubspotForm } from "@/cloud/analytics/Hubspot";
 import { HubspotFormField, useAnalytics } from "@/contexts/AnalyticsProvider";
@@ -26,8 +26,8 @@ import { AgentNetworkOnboarding } from "@/modules/onboarding/agent-network/Agent
 import { storedAgentStep } from "@/modules/onboarding/agent-network/agentNetworkSteps";
 import {
   clearAgentNetworkOnboardingRequest,
-  resolveOnboardingRequest,
   useAgentNetworkOnboardingRequest,
+  useOnboardingRequest,
 } from "@/modules/onboarding/agent-network/existingAccountOnboarding";
 import {
   Intent,
@@ -116,14 +116,15 @@ export const OnboardingProvider = ({
   // An existing account asks for the Agent Network onboarding through the
   // netbird.ai link (see NetBirdCloudProvider). It opens for an owner or admin
   // on Cloud once the Agent Network menu is saved, unless the account already
-  // has an Agent Network endpoint.
-  const requested = useAgentNetworkOnboardingRequest(account?.id);
+  // has an Agent Network endpoint; once open, it runs until finished or
+  // skipped.
+  const requestMarker = useAgentNetworkOnboardingRequest(account?.id);
   const {
     settings: agentNetworkSettings,
     isLoading: agentNetworkSettingsLoading,
-  } = useAgentNetworkSettings(requested);
-  const request = resolveOnboardingRequest({
-    requested,
+  } = useAgentNetworkSettings(requestMarker === "requested");
+  const request = useOnboardingRequest(account?.id, {
+    marker: requestMarker,
     cloud: isNetBirdCloud(),
     ownerOrAdmin: loggedInUser ? isOwnerOrAdmin : undefined,
     agentNetworkEnabled,
@@ -131,12 +132,6 @@ export const OnboardingProvider = ({
     hasEndpoint: !!agentNetworkSettings?.endpoint,
   });
   const existingAccountRequest = request === "open";
-
-  useEffect(() => {
-    if (request === "discard" && account?.id) {
-      clearAgentNetworkOnboardingRequest(account.id);
-    }
-  }, [request, account?.id]);
 
   // A netbird.ai arrival commits to the Agent Network onboarding regardless of
   // when the account setting is persisted; the signup source is known

@@ -2,11 +2,13 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clearAgentNetworkOnboardingRequest,
-  hasAgentNetworkOnboardingRequest,
   ownDeviceConnected,
+  readAgentNetworkOnboardingRequest,
   requestAgentNetworkOnboarding,
   resolveOnboardingRequest,
+  startAgentNetworkOnboarding,
   useAgentNetworkOnboardingRequest,
+  useOnboardingRequest,
 } from "@/modules/onboarding/agent-network/existingAccountOnboarding";
 
 afterEach(() => localStorage.clear());
@@ -14,53 +16,67 @@ afterEach(() => localStorage.clear());
 describe("onboarding request marker", () => {
   it("is kept per account", () => {
     requestAgentNetworkOnboarding("acc-1");
-    expect(hasAgentNetworkOnboardingRequest("acc-1")).toBe(true);
+    expect(readAgentNetworkOnboardingRequest("acc-1")).toBe("requested");
     expect(
-      hasAgentNetworkOnboardingRequest("acc-2"),
+      readAgentNetworkOnboardingRequest("acc-2"),
       "another account in the same browser has no request",
-    ).toBe(false);
+    ).toBeUndefined();
     clearAgentNetworkOnboardingRequest("acc-1");
-    expect(hasAgentNetworkOnboardingRequest("acc-1")).toBe(false);
+    expect(readAgentNetworkOnboardingRequest("acc-1")).toBeUndefined();
   });
 
   it("reads as absent without an account id", () => {
     requestAgentNetworkOnboarding("acc-1");
-    expect(hasAgentNetworkOnboardingRequest(undefined)).toBe(false);
+    expect(readAgentNetworkOnboardingRequest(undefined)).toBeUndefined();
+  });
+
+  it("is not reset by the link once the onboarding has started", () => {
+    startAgentNetworkOnboarding("acc-1");
+    requestAgentNetworkOnboarding("acc-1");
+    expect(readAgentNetworkOnboardingRequest("acc-1")).toBe("started");
+  });
+
+  it("reads a request stored before it could start as requested", () => {
+    localStorage.setItem("netbird-agent-network-onboarding:acc-1", "yes");
+    expect(readAgentNetworkOnboardingRequest("acc-1")).toBe("requested");
   });
 
   it("tells useLocalStorage readers about each change", () => {
     const listener = vi.fn();
     window.addEventListener("local-storage", listener);
     requestAgentNetworkOnboarding("acc-1");
+    startAgentNetworkOnboarding("acc-1");
     clearAgentNetworkOnboardingRequest("acc-1");
     window.removeEventListener("local-storage", listener);
-    expect(listener).toHaveBeenCalledTimes(2);
+    expect(listener).toHaveBeenCalledTimes(3);
   });
 
-  it("updates the hook as soon as it is set or cleared", () => {
+  it("updates the hook as soon as it is set, started or cleared", () => {
     const { result } = renderHook(() =>
       useAgentNetworkOnboardingRequest("acc-1"),
     );
-    expect(result.current).toBe(false);
+    expect(result.current).toBeUndefined();
     act(() => requestAgentNetworkOnboarding("acc-1"));
-    expect(result.current).toBe(true);
+    expect(result.current).toBe("requested");
+    act(() => startAgentNetworkOnboarding("acc-1"));
+    expect(result.current).toBe("started");
     act(() => clearAgentNetworkOnboardingRequest("acc-1"));
-    expect(result.current).toBe(false);
+    expect(result.current).toBeUndefined();
   });
 });
 
-describe("resolveOnboardingRequest", () => {
-  const ready = {
-    requested: true,
-    cloud: true,
-    ownerOrAdmin: true,
-    agentNetworkEnabled: true,
-    settingsLoading: false,
-    hasEndpoint: false,
-  };
+const ready = {
+  marker: "requested" as const,
+  cloud: true,
+  ownerOrAdmin: true,
+  agentNetworkEnabled: true,
+  settingsLoading: false,
+  hasEndpoint: false,
+};
 
+describe("resolveOnboardingRequest", () => {
   it("does nothing without a request", () => {
-    expect(resolveOnboardingRequest({ ...ready, requested: false })).toBe(
+    expect(resolveOnboardingRequest({ ...ready, marker: undefined })).toBe(
       "none",
     );
   });
@@ -97,6 +113,64 @@ describe("resolveOnboardingRequest", () => {
       resolveOnboardingRequest({ ...ready, hasEndpoint: true }),
       "an account already set up keeps just the menu",
     ).toBe("discard");
+  });
+
+  it("keeps a started onboarding open once it has an endpoint", () => {
+    // The Gateway step reserves the endpoint itself, and the Provider step
+    // comes after it.
+    const started = { ...ready, marker: "started" as const };
+    expect(resolveOnboardingRequest({ ...started, hasEndpoint: true })).toBe(
+      "open",
+    );
+    expect(
+      resolveOnboardingRequest({ ...started, settingsLoading: true }),
+      "a started onboarding does not wait for the settings",
+    ).toBe("open");
+  });
+
+  it("still checks the user on a started onboarding", () => {
+    const started = { ...ready, marker: "started" as const };
+    expect(
+      resolveOnboardingRequest({ ...started, ownerOrAdmin: undefined }),
+    ).toBe("wait");
+    expect(resolveOnboardingRequest({ ...started, ownerOrAdmin: false })).toBe(
+      "discard",
+    );
+    expect(resolveOnboardingRequest({ ...started, cloud: false })).toBe(
+      "discard",
+    );
+  });
+});
+
+describe("useOnboardingRequest", () => {
+  const renderRequest = (initialProps: { hasEndpoint: boolean }) =>
+    renderHook(
+      ({ hasEndpoint }) => {
+        const marker = useAgentNetworkOnboardingRequest("acc-1");
+        return useOnboardingRequest("acc-1", { ...ready, marker, hasEndpoint });
+      },
+      { initialProps },
+    );
+
+  it("stays open after the Gateway step sets up the endpoint", () => {
+    requestAgentNetworkOnboarding("acc-1");
+    const { result, rerender } = renderRequest({ hasEndpoint: false });
+    expect(result.current).toBe("open");
+    expect(readAgentNetworkOnboardingRequest("acc-1")).toBe("started");
+
+    rerender({ hasEndpoint: true });
+    expect(
+      result.current,
+      "the endpoint the flow created must not end it",
+    ).toBe("open");
+    expect(readAgentNetworkOnboardingRequest("acc-1")).toBe("started");
+  });
+
+  it("drops a request for an account that is already set up", () => {
+    requestAgentNetworkOnboarding("acc-1");
+    const { result } = renderRequest({ hasEndpoint: true });
+    expect(result.current).toBe("none");
+    expect(readAgentNetworkOnboardingRequest("acc-1")).toBeUndefined();
   });
 });
 

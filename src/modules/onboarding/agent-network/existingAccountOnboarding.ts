@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import type { Peer } from "@/interfaces/Peer";
 
 // An account that exists already reaches the Agent Network onboarding through
@@ -10,13 +10,28 @@ const REQUEST_KEY_PREFIX = "netbird-agent-network-onboarding:";
 // The event useLocalStorage listens to, so every reader refreshes at once.
 const LOCAL_STORAGE_EVENT = "local-storage";
 
+// A request is "requested" until the onboarding opens and "started" after.
+// Once started, the endpoint its own Gateway step sets up must not end it.
+export type OnboardingRequestMarker = "requested" | "started";
+
 const requestKey = (accountId: string) => REQUEST_KEY_PREFIX + accountId;
 
-export function requestAgentNetworkOnboarding(accountId: string) {
+function writeMarker(accountId: string, marker: OnboardingRequestMarker) {
   try {
-    localStorage.setItem(requestKey(accountId), "requested");
+    localStorage.setItem(requestKey(accountId), marker);
     window.dispatchEvent(new Event(LOCAL_STORAGE_EVENT));
   } catch (e) {}
+}
+
+// requestAgentNetworkOnboarding records the request, keeping one that has
+// already started, so opening the link again mid-flow doesn't reset it.
+export function requestAgentNetworkOnboarding(accountId: string) {
+  if (readAgentNetworkOnboardingRequest(accountId)) return;
+  writeMarker(accountId, "requested");
+}
+
+export function startAgentNetworkOnboarding(accountId: string) {
+  writeMarker(accountId, "started");
 }
 
 export function clearAgentNetworkOnboardingRequest(accountId: string) {
@@ -26,12 +41,16 @@ export function clearAgentNetworkOnboardingRequest(accountId: string) {
   } catch (e) {}
 }
 
-export function hasAgentNetworkOnboardingRequest(accountId?: string): boolean {
-  if (!accountId || typeof window === "undefined") return false;
+export function readAgentNetworkOnboardingRequest(
+  accountId?: string,
+): OnboardingRequestMarker | undefined {
+  if (!accountId || typeof window === "undefined") return undefined;
   try {
-    return localStorage.getItem(requestKey(accountId)) !== null;
+    const value = localStorage.getItem(requestKey(accountId));
+    if (value === null) return undefined;
+    return value === "started" ? "started" : "requested";
   } catch (e) {
-    return false;
+    return undefined;
   }
 }
 
@@ -44,14 +63,15 @@ function subscribe(onChange: () => void) {
   };
 }
 
-// useAgentNetworkOnboardingRequest reports whether this browser holds an
-// onboarding request for the account, and updates as soon as it is set or
-// cleared.
-export function useAgentNetworkOnboardingRequest(accountId?: string): boolean {
+// useAgentNetworkOnboardingRequest reports the request this browser holds for
+// the account, and updates as soon as it is set, started or cleared.
+export function useAgentNetworkOnboardingRequest(
+  accountId?: string,
+): OnboardingRequestMarker | undefined {
   return useSyncExternalStore(
     subscribe,
-    () => hasAgentNetworkOnboardingRequest(accountId),
-    () => false,
+    () => readAgentNetworkOnboardingRequest(accountId),
+    () => undefined,
   );
 }
 
@@ -64,25 +84,54 @@ export type OnboardingRequest =
   // The request does not apply; drop it.
   | "discard";
 
-// resolveOnboardingRequest decides what an existing account's request leads
-// to. It opens for an owner or admin on Cloud once the Agent Network menu is
-// saved, and only while the account has no Agent Network endpoint: an account
-// that already set Agent Network up just keeps the menu.
-export function resolveOnboardingRequest(input: {
-  requested: boolean;
+type OnboardingRequestInput = {
+  marker?: OnboardingRequestMarker;
   cloud: boolean;
   // Undefined until the logged-in user has loaded.
   ownerOrAdmin?: boolean;
   agentNetworkEnabled: boolean;
   settingsLoading: boolean;
   hasEndpoint: boolean;
-}): OnboardingRequest {
-  if (!input.requested) return "none";
+};
+
+// resolveOnboardingRequest decides what an existing account's request leads
+// to. It opens for an owner or admin on Cloud once the Agent Network menu is
+// saved, and only while the account has no Agent Network endpoint: an account
+// that already set Agent Network up just keeps the menu. The endpoint is
+// checked before the onboarding opens, never after.
+export function resolveOnboardingRequest(
+  input: OnboardingRequestInput,
+): OnboardingRequest {
+  if (!input.marker) return "none";
   if (!input.cloud) return "discard";
   if (input.ownerOrAdmin === undefined) return "wait";
   if (!input.ownerOrAdmin) return "discard";
-  if (!input.agentNetworkEnabled || input.settingsLoading) return "wait";
+  if (!input.agentNetworkEnabled) return "wait";
+  if (input.marker === "started") return "open";
+  if (input.settingsLoading) return "wait";
   return input.hasEndpoint ? "discard" : "open";
+}
+
+// useOnboardingRequest resolves an existing account's request and keeps the
+// stored request in step with it: marked started once the onboarding opens,
+// dropped when it does not apply.
+export function useOnboardingRequest(
+  accountId: string | undefined,
+  input: OnboardingRequestInput,
+): OnboardingRequest {
+  const request = resolveOnboardingRequest(input);
+  const { marker } = input;
+
+  useEffect(() => {
+    if (!accountId) return;
+    if (request === "discard") {
+      clearAgentNetworkOnboardingRequest(accountId);
+    } else if (request === "open" && marker === "requested") {
+      startAgentNetworkOnboarding(accountId);
+    }
+  }, [accountId, request, marker]);
+
+  return request;
 }
 
 // ownDeviceConnected reports whether the user has a connected device. An
