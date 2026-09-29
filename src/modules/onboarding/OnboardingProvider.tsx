@@ -6,7 +6,7 @@ import {
   testOnboardingEnabled,
 } from "@utils/netbird";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { submitHubspotForm } from "@/cloud/analytics/Hubspot";
 import { HubspotFormField, useAnalytics } from "@/contexts/AnalyticsProvider";
@@ -20,9 +20,15 @@ import { Account } from "@/interfaces/Account";
 import { Network } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { useAccount } from "@/modules/account/useAccount";
+import { useAgentNetworkSettings } from "@/modules/agent-network/AIProvidersProvider";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { AgentNetworkOnboarding } from "@/modules/onboarding/agent-network/AgentNetworkOnboarding";
 import { storedAgentStep } from "@/modules/onboarding/agent-network/agentNetworkSteps";
+import {
+  clearAgentNetworkOnboardingRequest,
+  resolveOnboardingRequest,
+  useAgentNetworkOnboardingRequest,
+} from "@/modules/onboarding/agent-network/existingAccountOnboarding";
 import {
   Intent,
   Onboarding,
@@ -73,14 +79,17 @@ export const OnboardingProvider = ({
   const accountRequest = useApiCall<Account>("/accounts", true);
   const account = useAccount();
   const router = useRouter();
-  const { isOwner, loggedInUser } = useLoggedInUser();
+  const { isOwner, isOwnerOrAdmin, loggedInUser } = useLoggedInUser();
   const { mutate } = useSWRConfig();
   const { trackEventV2 } = useAnalytics();
   const params = useSearchParams();
   const hsId = params?.get("hs_id") ?? "";
   const gaId = params?.get("ga_id") ?? "";
-  const { only: agentNetworkOnly, loading: agentNetworkModeLoading } =
-    useAgentNetworkMode();
+  const {
+    only: agentNetworkOnly,
+    enabled: agentNetworkEnabled,
+    loading: agentNetworkModeLoading,
+  } = useAgentNetworkMode();
 
   const accountId = account?.id ?? "unknown";
   const onboardingKey = `netbird-onboarding-flow:${accountId}`;
@@ -104,23 +113,53 @@ export const OnboardingProvider = ({
     },
   );
 
+  // An existing account asks for the Agent Network onboarding through the
+  // netbird.ai link (see NetBirdCloudProvider). It opens for an owner or admin
+  // on Cloud once the Agent Network menu is saved, unless the account already
+  // has an Agent Network endpoint.
+  const requested = useAgentNetworkOnboardingRequest(account?.id);
+  const {
+    settings: agentNetworkSettings,
+    isLoading: agentNetworkSettingsLoading,
+  } = useAgentNetworkSettings(requested);
+  const request = resolveOnboardingRequest({
+    requested,
+    cloud: isNetBirdCloud(),
+    ownerOrAdmin: loggedInUser ? isOwnerOrAdmin : undefined,
+    agentNetworkEnabled,
+    settingsLoading: agentNetworkSettingsLoading,
+    hasEndpoint: !!agentNetworkSettings?.endpoint,
+  });
+  const existingAccountRequest = request === "open";
+
+  useEffect(() => {
+    if (request === "discard" && account?.id) {
+      clearAgentNetworkOnboardingRequest(account.id);
+    }
+  }, [request, account?.id]);
+
   // A netbird.ai arrival commits to the Agent Network onboarding regardless of
   // when the account setting is persisted; the signup source is known
   // synchronously, so the regular form is never shown for these users.
   const agentNetworkOnboarding =
-    agentNetworkOnly || hasAgentNetworkSignupSource();
+    agentNetworkOnly || hasAgentNetworkSignupSource() || existingAccountRequest;
 
   const showOnboarding = useMemo(() => {
     if (process.env.APP_ENV === "test" && !testOnboardingEnabled()) {
       return false;
     }
     if (!account) return false;
+    // An existing account's request is still resolving; neither onboarding
+    // opens in the meantime.
+    if (request === "wait") return false;
     // The Agent Network onboarding runs a dedicated flow whose first step is
     // the signup form. Unlike the regular cloud survey (which relies on a JWT
     // domain claim), this form is shown on both cloud and self-hosted, so the
     // flow stays visible while either the signup form or the onboarding flow
     // is still pending.
     if (agentNetworkOnboarding) {
+      // The request was checked when it was resolved, admins included.
+      if (existingAccountRequest) return true;
       const signupPending = !!account?.onboarding?.signup_form_pending;
       return (
         isOwner &&
@@ -141,18 +180,34 @@ export const OnboardingProvider = ({
     const show =
       !!account?.onboarding?.onboarding_flow_pending || isSignupFormPending;
     return isOwner && show;
-  }, [account, isOwner, agentNetworkOnboarding, agentNetworkModeLoading]);
+  }, [
+    account,
+    isOwner,
+    request,
+    agentNetworkOnboarding,
+    existingAccountRequest,
+    agentNetworkModeLoading,
+  ]);
 
   // The agent-network flow uses its own signup step on both cloud and
   // self-hosted, so netbird.ai signups fill the form before onboarding.
   const agentSignupPending = !!account?.onboarding?.signup_form_pending;
 
   // The gateway step offers a NetBird-managed gateway, which only exists on
-  // Cloud. showOnboarding already limits the flow to the owner's own signup,
-  // so an invited admin never provisions one. This also covers a return after
-  // the signup source was cleared: the account is still onboarding.
+  // Cloud. showOnboarding limits the flow to the owner's own signup, or to an
+  // owner or admin whose existing account asked for it. This also covers a
+  // return after the signup source was cleared: the account is still
+  // onboarding.
   const gatewayStep =
     isNetBirdCloud() && showOnboarding && agentNetworkOnboarding;
+
+  // On Cloud a netbird.ai signup is switched to the focused view, so an
+  // Agent Network onboarding outside it, past the signup form, belongs to an
+  // account that existed before. Such an account keeps its groups and policies
+  // and its saved position, which is the regular onboarding's.
+  const existingAccount =
+    existingAccountRequest ||
+    (isNetBirdCloud() && !agentNetworkOnly && !agentSignupPending);
 
   const updateAccountMeta = async (meta: Partial<Account["onboarding"]>) => {
     if (!account) return;
@@ -201,10 +256,21 @@ export const OnboardingProvider = ({
     }
   };
 
+  // Finishing or skipping ends an existing account's request as well. It is
+  // cleared after the account write, so the regular onboarding it was also
+  // pending never flashes in between.
+  const endAgentNetworkOnboarding = async () => {
+    try {
+      await updateAccountMeta({
+        onboarding_flow_pending: false,
+      });
+    } finally {
+      if (account?.id) clearAgentNetworkOnboardingRequest(account.id);
+    }
+  };
+
   const onFinishAgentNetwork = async () => {
-    await updateAccountMeta({
-      onboarding_flow_pending: false,
-    });
+    await endAgentNetworkOnboarding();
     trackEventV2(
       "Onboarding",
       "Finished Agent Network Onboarding",
@@ -240,9 +306,7 @@ export const OnboardingProvider = ({
   };
 
   const onSkipAgentNetwork = async (step: number) => {
-    await updateAccountMeta({
-      onboarding_flow_pending: false,
-    });
+    await endAgentNetworkOnboarding();
     trackEventV2(
       "Onboarding",
       `Skipped Agent Network Onboarding (Step ${step})`,
@@ -281,11 +345,12 @@ export const OnboardingProvider = ({
   if (showOnboarding && agentNetworkOnboarding) {
     return (
       <AgentNetworkOnboarding
-        initialStep={storedAgentStep(onboarding)}
+        initialStep={storedAgentStep(onboarding, !existingAccount)}
         onStepChange={(step) =>
           setOnboarding((prev) => ({ ...prev, agent_network_step: step }))
         }
         gatewayStep={gatewayStep}
+        existingAccount={existingAccount}
         signupPending={agentSignupPending}
         onSignupSubmit={onSubmitAgentSignup}
         onSkip={onSkipAgentNetwork}

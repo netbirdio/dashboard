@@ -10,6 +10,7 @@ import * as React from "react";
 import { useEffect, useReducer } from "react";
 import { useSWRConfig } from "swr";
 import { HubspotFormField } from "@/contexts/AnalyticsProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import type { Peer } from "@/interfaces/Peer";
 import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
 import { AgentNetworkSignupForm } from "@/modules/onboarding/agent-network/AgentNetworkSignupForm";
@@ -19,6 +20,7 @@ import {
   agentSteps,
   initialAgentStep,
 } from "@/modules/onboarding/agent-network/agentNetworkSteps";
+import { ownDeviceConnected } from "@/modules/onboarding/agent-network/existingAccountOnboarding";
 import { OnboardingAgentConfigure } from "@/modules/onboarding/agent-network/OnboardingAgentConfigure";
 import { OnboardingAgentDevice } from "@/modules/onboarding/agent-network/OnboardingAgentDevice";
 import { OnboardingAgentEnd } from "@/modules/onboarding/agent-network/OnboardingAgentEnd";
@@ -45,6 +47,9 @@ type Props = {
   // gatewayStep adds the gateway step before the provider step, for the
   // NetBird Cloud signups where a managed gateway can be offered.
   gatewayStep: boolean;
+  // existingAccount marks an account that existed before its Agent Network
+  // onboarding: it already has devices, groups and policies of its own.
+  existingAccount: boolean;
   // signupPending mirrors the account's signup_form_pending flag. When true the
   // flow opens on the signup step; when false that step is skipped.
   signupPending: boolean;
@@ -59,6 +64,7 @@ export const AgentNetworkOnboarding = ({
   initialStep,
   onStepChange,
   gatewayStep,
+  existingAccount,
   signupPending,
   onSignupSubmit,
   onSkip,
@@ -72,13 +78,17 @@ export const AgentNetworkOnboarding = ({
   const position = steps.indexOf(step);
 
   const { data: peers } = useFetchApi<Peer[]>("/peers");
+  const { loggedInUser } = useLoggedInUser();
   const { mutate } = useSWRConfig();
-  const deviceConnected = (peers?.length ?? 0) > 0;
+  const deviceConnected = existingAccount
+    ? ownDeviceConnected(peers, loggedInUser?.id)
+    : (peers?.length ?? 0) > 0;
 
   // First-run prep: seed a "Users" source group (with the current user in it)
   // so the policy step has something to select, and remove the permissive
   // "Default" Access Control policy that doesn't belong in Agent Network.
-  useAgentNetworkFirstRunSetup(true);
+  // Never on an existing account, whose peers may rely on that policy.
+  useAgentNetworkFirstRunSetup(!existingAccount);
 
   // Advance/retreat and persist the new step so a refresh mid-onboarding
   // resumes in place. We persist here rather than in an effect so the

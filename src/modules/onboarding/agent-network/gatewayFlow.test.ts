@@ -4,10 +4,10 @@ import {
   ReverseProxyClusterType,
 } from "@/interfaces/ReverseProxy";
 import {
-  findPrivateAccountCluster,
   formatElapsed,
   liveChecklist,
   managedGatewayStages,
+  privateAccountClusters,
   resolveGatewayEntry,
   selfDeployPhase,
 } from "@/modules/onboarding/agent-network/gatewayFlow";
@@ -27,7 +27,6 @@ const loaded = {
   loading: false,
   managedExists: false,
   settingsEndpoint: "",
-  clusters: [] as ReverseProxyCluster[],
 };
 
 describe("resolveGatewayEntry", () => {
@@ -54,38 +53,26 @@ describe("resolveGatewayEntry", () => {
       resolveGatewayEntry({
         ...loaded,
         settingsEndpoint: "violet.eu.proxy.netbird.io",
-        clusters: [cluster()],
       }),
     ).toEqual({ kind: "configured" });
   });
 
-  it("uses a private proxy the account already runs", () => {
-    expect(resolveGatewayEntry({ ...loaded, clusters: [cluster()] })).toEqual({
-      kind: "private-cluster",
-      address: "proxy.company.com",
-    });
-  });
-
-  it("offers the choice when no cluster qualifies", () => {
+  it("offers the choice otherwise, private proxies or not", () => {
+    // Private proxies the account runs are options on the choice screen, not a
+    // path of their own, so the operator can still pick managed or a new one.
     expect(resolveGatewayEntry(loaded)).toEqual({ kind: "choice" });
-    expect(
-      resolveGatewayEntry({
-        ...loaded,
-        clusters: [cluster({ private: false })],
-      }),
-    ).toEqual({ kind: "choice" });
   });
 });
 
-describe("findPrivateAccountCluster", () => {
+describe("privateAccountClusters", () => {
   it("ignores shared clusters, even private ones", () => {
-    // Counting a NetBird-operated private cluster would skip the managed
-    // gateway for every Cloud account.
+    // A NetBird-operated private cluster is not one the account runs, and
+    // counting it would offer it to every Cloud account.
     expect(
-      findPrivateAccountCluster([
+      privateAccountClusters([
         cluster({ type: ReverseProxyClusterType.SHARED }),
       ]),
-    ).toBeUndefined();
+    ).toEqual([]);
   });
 
   it("needs the cluster online, connected and private", () => {
@@ -97,18 +84,22 @@ describe("findPrivateAccountCluster", () => {
     ];
     for (const c of disqualified) {
       expect(
-        findPrivateAccountCluster([c]),
+        privateAccountClusters([c]),
         `cluster ${JSON.stringify(c)} should not qualify`,
-      ).toBeUndefined();
+      ).toEqual([]);
     }
   });
 
-  it("takes the first qualifying cluster", () => {
+  it("lists every qualifying cluster in order", () => {
     const first = cluster({ address: "a.company.com" });
     const second = cluster({ address: "b.company.com" });
     expect(
-      findPrivateAccountCluster([cluster({ private: false }), first, second]),
-    ).toBe(first);
+      privateAccountClusters([cluster({ private: false }), first, second]),
+    ).toEqual([first, second]);
+  });
+
+  it("handles a list that has not loaded", () => {
+    expect(privateAccountClusters(undefined)).toEqual([]);
   });
 });
 

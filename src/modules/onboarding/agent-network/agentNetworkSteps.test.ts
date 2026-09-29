@@ -63,6 +63,15 @@ describe("storedAgentStep", () => {
     expect(storedAgentStep({})).toBe(AGENT_STEP.SIGNUP);
   });
 
+  it("ignores a position that belongs to the regular onboarding", () => {
+    // An existing account's saved position is the regular flow's, so reading
+    // it would open the Agent Network flow partway through.
+    expect(storedAgentStep({ step: 5 }, false)).toBe(AGENT_STEP.SIGNUP);
+    expect(
+      storedAgentStep({ agent_network_step: "gateway", step: 5 }, false),
+    ).toBe(AGENT_STEP.GATEWAY);
+  });
+
   it("falls back to the position when the saved name is not a step", () => {
     expect(storedAgentStep({ agent_network_step: "billing", step: 3 })).toBe(
       AGENT_STEP.DEVICE,

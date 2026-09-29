@@ -17,15 +17,15 @@ export const MANAGED_SLOW_HINT_AFTER_S = 120;
 // the usual causes.
 export const SELF_DEPLOY_HINT_AFTER_S = 300;
 
-// findPrivateAccountCluster returns a proxy the account runs itself that can
-// already serve Agent Network: online, connected, and private. Shared clusters
-// are NetBird-operated and never count, or a shared private cluster would
-// skip the managed gateway for every Cloud account. The first match wins, as
-// in the provider wizard, which has no picker either.
-export function findPrivateAccountCluster(
+// privateAccountClusters returns the proxies the account runs itself that can
+// already serve Agent Network: online, connected, and private. The choice
+// screen offers each of them next to the managed gateway and a new proxy.
+// Shared clusters are NetBird-operated and never count, or every Cloud
+// account would be offered a proxy it does not run.
+export function privateAccountClusters(
   clusters?: ReverseProxyCluster[],
-): ReverseProxyCluster | undefined {
-  return clusters?.find(
+): ReverseProxyCluster[] {
+  return (clusters ?? []).filter(
     (c) =>
       c.type === ReverseProxyClusterType.ACCOUNT &&
       isClusterConnected(c) &&
@@ -39,8 +39,6 @@ export type GatewayEntry =
   | { kind: "managed" }
   // The account already has an endpoint that is not managed: skip the step.
   | { kind: "configured" }
-  // The account's own private proxy can serve the endpoint.
-  | { kind: "private-cluster"; address: string }
   | { kind: "choice" };
 
 // resolveGatewayEntry decides where the gateway step opens once the settings,
@@ -51,13 +49,10 @@ export function resolveGatewayEntry(input: {
   loading: boolean;
   managedExists: boolean;
   settingsEndpoint?: string;
-  clusters?: ReverseProxyCluster[];
 }): GatewayEntry {
   if (input.loading) return { kind: "loading" };
   if (input.managedExists) return { kind: "managed" };
   if (input.settingsEndpoint) return { kind: "configured" };
-  const cluster = findPrivateAccountCluster(input.clusters);
-  if (cluster) return { kind: "private-cluster", address: cluster.address };
   return { kind: "choice" };
 }
 

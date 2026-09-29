@@ -13,12 +13,14 @@ import {
   CloudIcon,
   ExternalLinkIcon,
   Loader2Icon,
+  LockIcon,
   RefreshCwIcon,
   ServerIcon,
 } from "lucide-react";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import {
   REVERSE_PROXY_CLUSTERS_DOCS_LINK,
   ReverseProxyCluster,
@@ -36,6 +38,7 @@ import {
   formatElapsed,
   MANAGED_SLOW_HINT_AFTER_S,
   managedGatewayStages,
+  privateAccountClusters,
   resolveGatewayEntry,
   SELF_DEPLOY_HINT_AFTER_S,
   SelfDeployPhase,
@@ -71,8 +74,9 @@ type ProvisionFailure = Extract<
 >;
 
 // OnboardingAgentGateway sets up the gateway the account's endpoint is served
-// from, before any provider is connected: a NetBird-managed gateway, or a
-// proxy the operator deploys. An account that already has one skips it.
+// from, before any provider is connected: a NetBird-managed gateway, a private
+// proxy the account already runs, or a new proxy the operator deploys. An
+// account that already has one skips it.
 export const OnboardingAgentGateway = ({ onBack, onNext, onSkip }: Props) => {
   const { settings, settingsLoading } = useAIProviders();
   const managed = useManagedProxy(true);
@@ -80,12 +84,15 @@ export const OnboardingAgentGateway = ({ onBack, onNext, onSkip }: Props) => {
     ReverseProxyCluster[]
   >("/reverse-proxies/clusters", true);
   const { mutate } = useSWRConfig();
+  const { isOwner } = useLoggedInUser();
+  const privateClusters = privateAccountClusters(clusters);
 
+  // The clusters are part of the wait so the choice opens with every proxy the
+  // account can pick already listed.
   const entry = resolveGatewayEntry({
     loading: settingsLoading || managed.isLoading || clustersLoading,
     managedExists: !!managed.proxy,
     settingsEndpoint: settings?.endpoint,
-    clusters,
   });
 
   // The entry picks the first view only. What happens after, such as the
@@ -158,7 +165,12 @@ export const OnboardingAgentGateway = ({ onBack, onNext, onSkip }: Props) => {
       return (
         <GatewayChoice
           managedAvailable={!managedHidden}
+          confirmManaged={!isOwner}
+          privateClusters={privateClusters}
           onManaged={provision}
+          onPrivateCluster={(address) =>
+            setView({ kind: "private-cluster", address })
+          }
           onSelfDeploy={selfDeploy}
           onBack={onBack}
           onNext={onNext}
@@ -214,7 +226,12 @@ export const OnboardingAgentGateway = ({ onBack, onNext, onSkip }: Props) => {
 
 type ChoiceProps = {
   managedAvailable: boolean;
+  // An admin who is not the owner confirms the managed gateway first: it
+  // serves the whole account and can't be changed or removed yet.
+  confirmManaged: boolean;
+  privateClusters: ReverseProxyCluster[];
   onManaged: () => void;
+  onPrivateCluster: (address: string) => void;
   onSelfDeploy: () => void;
   onBack: () => void;
   onNext: () => void;
@@ -222,43 +239,87 @@ type ChoiceProps = {
 
 const GatewayChoice = ({
   managedAvailable,
+  confirmManaged,
+  privateClusters,
   onManaged,
+  onPrivateCluster,
   onSelfDeploy,
   onBack,
   onNext,
-}: ChoiceProps) => (
-  <StepLayout
-    title={"Set up your gateway"}
-    description={
-      "Agents reach your providers through a private gateway that only devices on your network can reach. Choose who runs it."
-    }
-    onBack={onBack}
-    onNext={onNext}
-    canContinue={false}
-  >
-    <div className={"mt-2 flex flex-col gap-3"}>
-      {managedAvailable && (
+}: ChoiceProps) => {
+  const [confirming, setConfirming] = useState(false);
+
+  return (
+    <StepLayout
+      title={"Set up your gateway"}
+      description={
+        "Agents reach your providers through a private gateway that only devices on your network can reach. Choose who runs it."
+      }
+      onBack={onBack}
+      onNext={onNext}
+      canContinue={false}
+    >
+      <div className={"mt-2 flex flex-col gap-3"}>
+        {managedAvailable && (
+          <ChoiceCard
+            icon={<CloudIcon size={16} />}
+            title={"Managed gateway"}
+            badge={"Recommended"}
+            description={
+              "NetBird runs a dedicated, private gateway for your account. Free in v1."
+            }
+            onClick={confirmManaged ? () => setConfirming(true) : onManaged}
+            data-testid={"gateway-choice-managed"}
+          />
+        )}
+        {managedAvailable && confirming && (
+          <Callout variant={"warning"} data-testid={"gateway-managed-confirm"}>
+            The managed gateway serves Agent Network for the whole account, and
+            it can&apos;t be changed or removed from the dashboard yet.
+            <div className={"flex gap-3 mt-3"}>
+              <Button variant={"primary"} size={"xs"} onClick={onManaged}>
+                Set up managed gateway
+              </Button>
+              <Button
+                variant={"secondary"}
+                size={"xs"}
+                onClick={() => setConfirming(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </Callout>
+        )}
+        {privateClusters.map((cluster) => (
+          <ChoiceCard
+            key={cluster.id ?? cluster.address}
+            icon={<LockIcon size={16} />}
+            title={cluster.address}
+            description={`Private proxy in your account, ${connectedProxies(
+              cluster.connected_proxies,
+            )}.`}
+            onClick={() => onPrivateCluster(cluster.address)}
+            data-testid={"gateway-choice-private"}
+          />
+        ))}
         <ChoiceCard
-          icon={<CloudIcon size={16} />}
-          title={"Managed gateway"}
-          badge={"Recommended"}
-          description={
-            "NetBird runs a dedicated, private gateway for your account. Free in v1."
+          icon={<ServerIcon size={16} />}
+          title={
+            privateClusters.length > 0
+              ? "Deploy a new proxy"
+              : "Deploy my own proxy"
           }
-          onClick={onManaged}
-          data-testid={"gateway-choice-managed"}
+          description={"Run the proxy on your own infrastructure."}
+          onClick={onSelfDeploy}
+          data-testid={"gateway-choice-self-deploy"}
         />
-      )}
-      <ChoiceCard
-        icon={<ServerIcon size={16} />}
-        title={"Deploy my own proxy"}
-        description={"Run the proxy on your own infrastructure."}
-        onClick={onSelfDeploy}
-        data-testid={"gateway-choice-self-deploy"}
-      />
-    </div>
-  </StepLayout>
-);
+      </div>
+    </StepLayout>
+  );
+};
+
+const connectedProxies = (count: number) =>
+  `${count} ${count === 1 ? "proxy" : "proxies"} connected`;
 
 const ChoiceCard = ({
   icon,
@@ -284,9 +345,9 @@ const ChoiceCard = ({
     }
   >
     <SquareIcon color={"netbird"} margin={""} icon={icon} />
-    <div className={"flex-1"}>
+    <div className={"flex-1 min-w-0"}>
       <div className={"text-sm flex items-center gap-2"}>
-        {title}
+        <span className={"break-all"}>{title}</span>
         {badge && (
           <Badge variant={"netbird"} size={"xs"}>
             {badge}
@@ -654,8 +715,9 @@ type PrivateClusterProps = {
   onNext: () => void;
 };
 
-// PrivateClusterGateway covers an account that already runs a private proxy:
-// the endpoint is reserved beneath it and no managed gateway is involved.
+// PrivateClusterGateway serves the endpoint from a private proxy the account
+// already runs, picked on the choice screen: the endpoint is reserved beneath
+// it and no managed gateway is involved.
 const PrivateClusterGateway = ({
   address,
   onBack,
@@ -669,9 +731,8 @@ const PrivateClusterGateway = ({
       title={ready ? "Your gateway is ready" : "Setting up your gateway"}
       description={
         <>
-          Your account already runs a private proxy at{" "}
-          <span className={"font-mono text-nb-gray-100"}>{address}</span>, so
-          Agent Network uses it and needs no managed gateway.
+          Agent Network is served from your private proxy at{" "}
+          <span className={"font-mono text-nb-gray-100"}>{address}</span>.
         </>
       }
       onBack={onBack}

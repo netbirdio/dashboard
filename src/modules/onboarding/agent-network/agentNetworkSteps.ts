@@ -40,11 +40,17 @@ export function isAgentStep(value: unknown): value is AgentStep {
 
 // storedAgentStep reads the saved step: its name when there is one, otherwise
 // the position saved by earlier versions, mapped to the step that sat there.
-export function storedAgentStep(saved: {
-  agent_network_step?: string;
-  step?: number;
-}): AgentStep {
+// withLegacyPosition is false when that position is the regular onboarding's,
+// as for an existing account, and the flow then starts from the beginning.
+export function storedAgentStep(
+  saved: {
+    agent_network_step?: string;
+    step?: number;
+  },
+  withLegacyPosition = true,
+): AgentStep {
   if (isAgentStep(saved.agent_network_step)) return saved.agent_network_step;
+  if (!withLegacyPosition) return AGENT_STEP.SIGNUP;
   const position = Number.isFinite(saved.step) ? Math.trunc(saved.step!) : 1;
   const index = Math.min(Math.max(position, 1), LEGACY_STEPS.length) - 1;
   return LEGACY_STEPS[index];

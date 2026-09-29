@@ -639,8 +639,9 @@ export function useAIProviders() {
 // ones respond 200 with the defaults and an empty endpoint/proxy_address,
 // older ones 200 + JSON null, and the oldest 404 — tolerated via ignoreError
 // so old deploys don't surface a spurious error in the empty state. All
-// three normalize to null here.
-export function useAgentNetworkSettings() {
+// three normalize to null here. enabled lets a caller that only sometimes
+// needs the settings skip the read.
+export function useAgentNetworkSettings(enabled = true) {
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { permission } = usePermissions();
   const { data, error, isLoading, mutate } =
@@ -648,7 +649,9 @@ export function useAgentNetworkSettings() {
       "/agent-network/settings",
       true,
       true,
-      agentNetworkEnabled && !!permission?.["agent_network.settings"]?.read,
+      enabled &&
+        agentNetworkEnabled &&
+        !!permission?.["agent_network.settings"]?.read,
     );
   const notFound = !!error && (error as { code?: number }).code === 404;
   // SWR keeps the previous data alongside the error (keepPreviousData), so a
