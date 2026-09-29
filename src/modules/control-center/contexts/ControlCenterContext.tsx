@@ -174,42 +174,7 @@ export function CanvasStateProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [nodes, setNodesRaw] = useNodesState<Node>([]);
-  /*
-    TEMP DIAGNOSTIC — names whoever writes a policy node's protocol, so the
-    writer that reverts a narrowed rule back to "all" can be identified rather
-    than guessed at.
-  */
-  const setNodes: typeof setNodesRaw = useCallback(
-    (arg: Parameters<typeof setNodesRaw>[0]) =>
-      setNodesRaw((prev) => {
-        const next =
-          typeof arg === "function"
-            ? (arg as (p: Node[]) => Node[])(prev)
-            : arg;
-        const proto = (list: Node[]) =>
-          list
-            .filter((n) => n.type === "policyNode")
-            .map(
-              (n) =>
-                `${n.id.slice(0, 18)}=${
-                  (n.data as { policy?: { rules?: { protocol?: string }[] } })
-                    ?.policy?.rules?.[0]?.protocol
-                }`,
-            )
-            .join(",");
-        const before = proto(prev);
-        const after = proto(next);
-        if (before !== after) {
-          console.info(
-            `[ccdiag] setNodes policy ${before} -> ${after}\n` +
-              new Error().stack?.split("\n").slice(2, 9).join("\n"),
-          );
-        }
-        return next;
-      }),
-    [setNodesRaw],
-  );
+  const [nodes, setNodes] = useNodesState<Node>([]);
   const { isDraft: isDraftMode } = useDraftMode();
   const { changes } = useDraftChangeset();
 
