@@ -12,7 +12,6 @@ import {
 } from "@components/select/SelectDropdown";
 import { cn } from "@utils/helpers";
 import { useReactFlow } from "@xyflow/react";
-import { AnimatePresence, motion } from "framer-motion";
 import { sortBy } from "lodash";
 import {
   ArrowLeftIcon,
@@ -418,6 +417,7 @@ function FocusModePill() {
           group?: { name?: string };
           policy?: { name?: string };
           network?: { name?: string };
+          name?: string;
         }
       | undefined;
     return (
@@ -426,47 +426,66 @@ function FocusModePill() {
       data?.group?.name ??
       data?.policy?.name ??
       data?.network?.name ??
+      // Agent policies and providers hold their name at the top level, which is
+      // what their nodes render; last, so it can't shadow the wrappers above.
+      data?.name ??
       ""
     );
   }, [nodes, focusedNodeId]);
 
   return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          className={"absolute top-0 left-1/2 z-10"}
-          initial={{ x: "-50%", y: -40, opacity: 0 }}
-          animate={{ x: "-50%", y: 0, opacity: 1 }}
-          exit={{ x: "-50%", y: -40, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 400, damping: 32 }}
-        >
-          <div className={"py-4"}>
-            <div
+    /*
+      Always mounted and animated in CSS, like the toolbar below: focusing
+      re-renders every node on the canvas to apply the dim, and a framer spring
+      driven from JS on that same main thread stutters under it.
+
+      Centered by layout rather than -translate-x-1/2, and with no
+      will-change: translating by half the pill's own width lands on a half
+      pixel whenever that width is odd, and a permanently promoted layer drops
+      the text to grayscale antialiasing — both of which read as blurry text.
+      The only transform left is the one that animates, identity at rest.
+    */
+    <div
+      className={
+        "absolute inset-x-0 top-0 z-10 flex justify-center pointer-events-none"
+      }
+    >
+      <div
+        className={cn(
+          "transition-[opacity,transform,visibility] duration-300 ease-out",
+          show
+            ? "visible opacity-100 translate-y-0"
+            : // Visibility flips at the end of the transition, so the hidden pill
+              // leaves the tab order without cutting the fade short.
+              "invisible opacity-0 -translate-y-10",
+        )}
+      >
+        <div className={"py-4"}>
+          <div
+            className={
+              "pointer-events-auto flex items-center gap-2 pl-3.5 pr-1.5 py-1.5 rounded-full border border-nb-gray-900 bg-nb-gray-930 text-xs font-medium text-nb-gray-200"
+            }
+          >
+            <FocusIcon size={13} className={"text-sky-400 shrink-0"} />
+            {focusedNodeId
+              ? `Focusing on “${focusedName || "node"}”`
+              : "Select a node to focus"}
+            <button
+              onClick={() => {
+                setHighlightArmed(false);
+                setFocusedNodeId("");
+              }}
               className={
-                "flex items-center gap-2 pl-3.5 pr-1.5 py-1.5 rounded-full border border-nb-gray-900 bg-nb-gray-930 text-xs font-medium text-nb-gray-200"
+                "p-1.5 rounded-full text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 transition-colors"
               }
+              aria-label={"Exit Focus"}
             >
-              <FocusIcon size={13} className={"text-sky-400 shrink-0"} />
-              {focusedNodeId
-                ? `Focusing on “${focusedName || "node"}”`
-                : "Select a node to focus"}
-              <button
-                onClick={() => {
-                  setHighlightArmed(false);
-                  setFocusedNodeId("");
-                }}
-                className={
-                  "p-1.5 rounded-full text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 transition-colors"
-                }
-                aria-label={"Exit Focus"}
-              >
-                <XIcon size={15} />
-              </button>
-            </div>
+              <XIcon size={15} />
+            </button>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+      </div>
+    </div>
   );
 }
 
