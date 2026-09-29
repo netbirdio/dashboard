@@ -266,7 +266,7 @@ const GatewayChoice = ({
             title={"Managed gateway"}
             badge={"Recommended"}
             description={
-              "NetBird runs a dedicated, private gateway for your account. Free in v1."
+              "NetBird runs a dedicated, private gateway for your account."
             }
             onClick={confirmManaged ? () => setConfirming(true) : onManaged}
             data-testid={"gateway-choice-managed"}
