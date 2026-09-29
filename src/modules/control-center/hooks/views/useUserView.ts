@@ -136,14 +136,18 @@ export function useUserView() {
       );
     });
 
-    allUserGroups.forEach((groupId) =>
-      addAgentNetworkProviderNodes(
-        groupId ?? "",
-        `select-user-node`,
-        allNodes,
-        allEdges,
-        agentNetwork,
-      ),
+    userPeers.forEach(
+      (peer) =>
+        peer.groups?.forEach((group) =>
+          addAgentNetworkProviderNodes(
+            group.id ?? "",
+            `source-peer-${peer.id}`,
+            allNodes,
+            allEdges,
+            agentNetwork,
+            "sr",
+          ),
+        ),
     );
 
     return applyD3HierarchicalLayout(

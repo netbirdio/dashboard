@@ -33,6 +33,7 @@ export function addAgentNetworkProviderNodes(
   nodes: Node[],
   edges: Edge[],
   { policies, providerById }: AgentNetworkOverlay,
+  sourceHandle?: string,
 ) {
   if (!groupId || policies.length === 0) return;
 
@@ -52,8 +53,9 @@ export function addAgentNetworkProviderNodes(
       });
 
       addEdge(edges, {
-        id: `agent-src-${groupId}-${policy.id}`,
+        id: `agent-src-${sourceNodeId}-${groupId}-${policy.id}`,
         source: sourceNodeId,
+        sourceHandle,
         target: policyNodeId,
         type: "smart",
         data: { enabled },
