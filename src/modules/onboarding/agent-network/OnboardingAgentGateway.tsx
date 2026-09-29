@@ -346,8 +346,8 @@ const ChoiceCard = ({
   >
     <SquareIcon color={"netbird"} margin={""} icon={icon} />
     <div className={"flex-1 min-w-0"}>
-      <div className={"text-sm flex items-center gap-2"}>
-        <span className={"break-all"}>{title}</span>
+      <div className={"text-sm flex flex-wrap items-center gap-x-2 gap-y-1"}>
+        <span className={"min-w-0 break-words"}>{title}</span>
         {badge && (
           <Badge variant={"netbird"} size={"xs"}>
             {badge}
