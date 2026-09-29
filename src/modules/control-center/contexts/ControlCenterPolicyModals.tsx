@@ -8,6 +8,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -44,6 +45,16 @@ import {
   isTrackablePolicy,
 } from "@/modules/control-center/utils/helpers";
 
+/**
+ * What the Connect Provider modal produces for a caller that waits on it.
+ * `providerId` is the draft client id (`new-…`) until the changeset deploys.
+ */
+export interface ProviderWizardOutcome {
+  providerId: string;
+  nodeId: string;
+  name: string;
+}
+
 interface PolicyContextType {
   setSelectedPolicy: (id: string) => void;
   setPolicyModalOpen: (open: boolean) => void;
@@ -61,8 +72,19 @@ interface PolicyContextType {
   openProvider: (id: string) => void;
   updateDraftAgentPolicy: (policy: AgentPolicy) => void;
   setAgentSourceGroup: (policy: AgentPolicy, groupRef: string) => void;
-  drawAgentPolicyOnCanvas: (policy: AgentPolicy) => void;
+  drawAgentPolicyOnCanvas: (
+    policy: AgentPolicy,
+    fallbackPosition?: XYPosition,
+  ) => void;
   openProviderWizard: (position?: XYPosition) => void;
+  /**
+   * The same modal, for a caller that has to know how it ended — the assistant,
+   * which cannot type an operator's API key and so opens this and waits.
+   * Resolves with the provider on save and with null on a dismissal.
+   */
+  requestProvider: (
+    position?: XYPosition,
+  ) => Promise<ProviderWizardOutcome | null>;
   openAgentPolicyWizard: (
     prefill: { sourceGroups: string[]; destinationProviderIds: string[] },
     position?: XYPosition,
@@ -238,8 +260,37 @@ export function ControlCenterPolicyProvider({
   const [providerWizard, setProviderWizard] = useState<{
     position?: XYPosition;
   } | null>(null);
-  const openProviderWizard = (position?: XYPosition) =>
+  /*
+    A waiting caller's resolver, in a ref rather than in state because BOTH
+    exits run through it: a draft submit settles it with the provider, and the
+    close that AIProviderModal fires straight afterwards must not settle it a
+    second time as a cancellation. Read-and-clear makes the first exit win.
+  */
+  const providerWizardResolve = useRef<
+    ((outcome: ProviderWizardOutcome | null) => void) | null
+  >(null);
+  const settleProviderWizard = (outcome: ProviderWizardOutcome | null) => {
+    const resolve = providerWizardResolve.current;
+    providerWizardResolve.current = null;
+    resolve?.(outcome);
+  };
+
+  // Opening the wizard from the UI while something waits on it abandons that
+  // wait rather than leaving a promise that can never settle.
+  const openProviderWizard = (position?: XYPosition) => {
+    settleProviderWizard(null);
     setProviderWizard({ position });
+  };
+
+  const requestProvider = (position?: XYPosition) =>
+    new Promise<ProviderWizardOutcome | null>((resolve) => {
+      settleProviderWizard(null);
+      providerWizardResolve.current = resolve;
+      setProviderWizard({ position });
+    });
+
+  // Leaving the page with the wizard open would strand whoever is awaiting it.
+  useEffect(() => () => settleProviderWizard(null), []);
 
   const [createPolicyModal, setCreatePolicyModal] = useState(false);
   const [policyInitialName, setPolicyInitialName] = useState("");
@@ -1126,6 +1177,7 @@ export function ControlCenterPolicyProvider({
       openAgentPolicyWizard,
       openProvider,
       openProviderWizard,
+      requestProvider,
     }),
     [
       selectedPolicy,
@@ -1238,7 +1290,10 @@ export function ControlCenterPolicyProvider({
           open={true}
           takenNames={isDraft ? draftProviderNames : undefined}
           onOpenChange={(o) => {
-            if (!o) setProviderWizard(null);
+            if (!o) {
+              settleProviderWizard(null);
+              setProviderWizard(null);
+            }
           }}
           useSave={!isDraft}
           onBeforeSave={isDraft ? undefined : confirmLiveAgentSave}
@@ -1255,6 +1310,11 @@ export function ControlCenterPolicyProvider({
               },
               providerWizard.position,
             );
+            settleProviderWizard({
+              providerId: clientId,
+              nodeId: `provider-${clientId}`,
+              name: input.name,
+            });
             setProviderWizard(null);
           }}
         />

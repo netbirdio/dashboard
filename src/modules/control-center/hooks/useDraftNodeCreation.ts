@@ -254,20 +254,28 @@ export function useDraftNodeCreation() {
   );
 
   const addBlankAgentPolicy = useCallback(
-    (position?: XYPosition) => {
+    (
+      position?: XYPosition,
+      // Names it at birth, for the same reason a placeholder peer is named
+      // there: the rename setter and the create setter are different stores,
+      // so a rename issued right after the create can land before the node.
+      preset?: { name?: string; description?: string },
+    ) => {
       const clientId = `new-${draftUid()}`;
-      const name = getNextAgentName(
-        "Agent Policy",
-        agentPolicies,
-        reactFlow.getNodes(),
-        (n) =>
-          n.type === NodeType.AgentPolicyNode
-            ? (n.data as { name?: string })?.name
-            : undefined,
-      );
+      const name =
+        preset?.name?.trim() ||
+        getNextAgentName(
+          "Agent Policy",
+          agentPolicies,
+          reactFlow.getNodes(),
+          (n) =>
+            n.type === NodeType.AgentPolicyNode
+              ? (n.data as { name?: string })?.name
+              : undefined,
+        );
       const policy: Omit<AgentPolicy, "id"> = {
         name,
-        description: "",
+        description: preset?.description ?? "",
         enabled: true,
         sourceGroups: [],
         destinationProviderIds: [],
@@ -275,6 +283,7 @@ export function useDraftNodeCreation() {
         limits: EMPTY_POLICY_LIMITS,
       };
       placeAgentPolicyNode({ ...policy, id: clientId }, position);
+      return `agent-policy-${clientId}`;
     },
     [agentPolicies, placeAgentPolicyNode, reactFlow],
   );
