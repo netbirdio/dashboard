@@ -357,11 +357,6 @@ export function ControlCenterPolicyProvider({
     fallbackPosition?: XYPosition,
   ) => {
     const rule = policy?.rules?.[0];
-    // TEMP DIAGNOSTIC — remove once the protocol-display bug is settled.
-    console.info(
-      "[ccdiag] drawPolicyOnCanvas " +
-        JSON.stringify({ id: policy?.id, protocol: rule?.protocol, noRule: !rule }),
-    );
     if (!rule) return;
 
     const enabled = policy?.enabled;
@@ -1066,18 +1061,6 @@ export function ControlCenterPolicyProvider({
     isTrackablePolicy(policy, trackedResourceClientIds);
 
   const updateDraftPolicy = (policy: Policy) => {
-    // TEMP DIAGNOSTIC — remove once the protocol-display bug is settled.
-    console.info(
-      "[ccdiag] updateDraftPolicy " +
-        JSON.stringify({
-          id: policy.id,
-          protocol: policy.rules?.[0]?.protocol,
-          complete: isCompletePolicy(policy),
-          hasCreate: changes.some(
-            (c) => c.type === "create-policy" && c.clientId === policy.id,
-          ),
-        }),
-    );
     if (!policy.id) return;
     ensureDraftGroupChanges(policy);
     if (policy.id.startsWith("new-")) {

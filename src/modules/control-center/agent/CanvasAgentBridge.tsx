@@ -1654,18 +1654,6 @@ function editPolicy(edit: AgentPolicyEdit, d: BridgeDeps): AgentStepResult {
     );
   }
 
-  // TEMP DIAGNOSTIC — remove once the protocol-display bug is settled.
-  console.info(
-    "[ccdiag] editPolicy " +
-      JSON.stringify({
-        node: edit.node,
-        editProtocol: edit.protocol,
-        editPorts: edit.ports,
-        nextProtocol: next.rules?.[0]?.protocol,
-        policyId: next.id,
-      }),
-  );
-
   d.updateDraftPolicy(next);
 
   /*
