@@ -51,6 +51,7 @@ export const testEditionOverride = (): Edition | undefined => {
 // cloud infrastructure (billing, MSP, trial, hosted integrations).
 // The hostname fallback keeps deployments without NETBIRD_CLOUD working.
 export const isNetBirdCloud = () => {
+  return false
   const override = testEditionOverride();
   if (override) return override === "cloud";
   if (process.env.APP_ENV === "test") return true;
