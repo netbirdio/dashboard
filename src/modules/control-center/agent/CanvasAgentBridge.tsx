@@ -23,6 +23,13 @@ import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import type {
+  AgentPolicy,
+  AIProvider,
+} from "@/modules/agent-network/data/mockData";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import { useBootstrapCluster } from "@/modules/agent-network/useBootstrapCluster";
 import {
   useCanvasState,
   useControlCenterUI,
@@ -139,7 +146,15 @@ function useBridgeDeps(onConnect: (connection: Connection) => void) {
   const nodeActions = useDraftNodeActions();
   const removal = useNodeRemoval();
   const { addMemberToGroup } = useDragToGroup();
-  const { updateDraftPolicy } = useControlCenterPolicy();
+  const { updateDraftPolicy, requestProvider, drawAgentPolicyOnCanvas } =
+    useControlCenterPolicy();
+  // Agent Network is a separate surface and not every deployment or account
+  // has it, so the kinds that touch it check this before doing anything.
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
+  const { providers: agentProviders, policies: agentPolicies } =
+    useAIProviders();
+  // Whether a first provider can be created at all — see `new_provider`.
+  const bootstrapCluster = useBootstrapCluster();
 
   return {
     reactFlow,
@@ -162,6 +177,12 @@ function useBridgeDeps(onConnect: (connection: Connection) => void) {
     ...removal,
     addMemberToGroup,
     updateDraftPolicy,
+    requestProvider,
+    drawAgentPolicyOnCanvas,
+    agentNetworkEnabled,
+    agentProviders,
+    agentPolicies,
+    bootstrapCluster,
   };
 }
 
@@ -980,10 +1001,131 @@ async function addOne(
       );
     }
 
+    /*
+      The one kind that cannot be created on the caller's behalf: a provider is
+      an upstream plus its API key, and the key is the operator's. So the canvas
+      opens the same Connect Provider modal the components panel does and this
+      step WAITS on it — `requestProvider` settles when the operator saves or
+      dismisses. Blocking the step is what keeps a build in order: the policy
+      that points at this provider is a later call, and a step that returned
+      early would have it drawn against a node that may never arrive.
+    */
+    case "new_provider": {
+      const off = agentNetworkOff(d);
+      if (off) return off;
+      const unbootstrappable = noClusterToBootstrap(d);
+      if (unbootstrappable) return unbootstrappable;
+      const outcome = await d.requestProvider(at);
+      if (!outcome) {
+        return fail(
+          "The Connect Provider dialog was dismissed, so no provider was created and nothing was added to the canvas. Don't open it again — tell the user and stop there.",
+        );
+      }
+      await settle();
+      return ok(
+        `Connected the provider “${outcome.name}”. NetBird holds its API key; agents reach it over the account's endpoint, with no key of their own.`,
+        outcome.nodeId,
+      );
+    }
+
+    case "existing_provider": {
+      const off = agentNetworkOff(d);
+      if (off) return off;
+      const provider = d.agentProviders?.find((p: AIProvider) => p.id === ref);
+      if (!provider) return fail(`No AI provider matches ${ref ?? "(no ref)"}.`);
+      const nodeId = `provider-${provider.id}`;
+      if (onCanvas(nodeId, d))
+        return fail(`Provider “${provider.name}” is already on the canvas.`);
+      d.placeProviderNode(
+        {
+          id: provider.id,
+          providerId: provider.providerId,
+          name: provider.name,
+          upstreamUrl: provider.upstreamUrl,
+          enabled: provider.status !== "disabled",
+        },
+        at,
+      );
+      return ok(`Added the provider “${provider.name}”.`, nodeId);
+    }
+
+    case "new_agent_policy": {
+      const off = agentNetworkOff(d);
+      if (off) return off;
+      const nodeId = d.addBlankAgentPolicy(at, {
+        name,
+        description: item.description,
+      });
+      await settle();
+      // No protocol, no ports and no direction to state — the whole rule is
+      // which groups reach which providers, and both sides are connects.
+      return ok(
+        `Added an agent policy${
+          name ? ` “${name}”` : ""
+        }. Connect a source group to it and it to a provider: one with a side missing never deploys.`,
+        nodeId,
+      );
+    }
+
+    case "existing_agent_policy": {
+      const off = agentNetworkOff(d);
+      if (off) return off;
+      const policy = d.agentPolicies?.find((p: AgentPolicy) => p.id === ref);
+      if (!policy) return fail(`No agent policy matches ${ref ?? "(no ref)"}.`);
+      const nodeId = `agent-policy-${policy.id}`;
+      if (onCanvas(nodeId, d))
+        return fail(`Agent policy “${policy.name}” is already on the canvas.`);
+      d.drawAgentPolicyOnCanvas(policy, at);
+      await settle();
+      return ok(
+        `Added the agent policy “${policy.name}” together with its source groups and providers.`,
+        nodeId,
+      );
+    }
+
     default:
       return fail(`Unknown kind “${kind}”.`);
   }
 }
+
+/**
+ * Agent Network is off for this deployment or account — said once, here, so
+ * every kind that needs it fails with a reason instead of a silent no-op.
+ */
+const agentNetworkOff = (d: BridgeDeps): AgentStepResult | null =>
+  d.agentNetworkEnabled
+    ? null
+    : fail(
+        "Agent Network isn't enabled on this account, so there are no AI providers or agent policies to work with.",
+      );
+
+/**
+ * The account's first provider also creates its endpoint, and the endpoint has
+ * to be bootstrapped onto a proxy cluster — so with no usable cluster there is
+ * nothing the Connect Provider wizard could save.
+ *
+ * Checked BEFORE the wizard opens rather than left to the disabled submit
+ * button inside it: this step blocks on a person, and asking someone to fill in
+ * a form whose only outcome is a greyed-out button wastes their time and ends
+ * as an indistinguishable "dismissed".
+ */
+const noClusterToBootstrap = (d: BridgeDeps): AgentStepResult | null => {
+  const { bootstrapped, canReadDomains, noClustersAvailable, clustersLackPrivateCapability } =
+    d.bootstrapCluster;
+  if (bootstrapped || !noClustersAvailable) return null;
+  // A role without Services read cannot see the cluster list at all, so this
+  // says what is missing rather than asserting there is none.
+  if (!canReadDomains) {
+    return fail(
+      "This account has no Agent Network endpoint yet, and the first provider has to create one on a proxy cluster — which this role can't read. Tell the user an account admin has to connect the first provider, and stop.",
+    );
+  }
+  return fail(
+    clustersLackPrivateCapability
+      ? "This account has no Agent Network endpoint yet, and the first provider has to create one on a proxy cluster. The account has clusters but none of them supports private services, which the agent-network gateway needs. Tell the user to set one up under Reverse Proxy first, and stop — don't open the Connect Provider dialog."
+      : "This account has no Agent Network endpoint yet, and the first provider has to create one on a proxy cluster — there isn't one. Tell the user to create a proxy cluster under Reverse Proxy first, and stop — don't open the Connect Provider dialog.",
+  );
+};
 
 /**
  * Puts a new group's initial members in it, and returns how many landed.
@@ -1350,6 +1492,11 @@ function deleteInDraft(target: Node, d: BridgeDeps): AgentStepResult {
  */
 function laneFor(kind: AgentAddItem["kind"], role?: AgentAddItem["role"]): Lane {
   if (kind === "new_policy" || kind === "existing_policy") return "center";
+  if (kind === "new_agent_policy" || kind === "existing_agent_policy")
+    return "center";
+  // A provider is what the traffic goes TO, whatever the caller says its role
+  // is — there is no direction in which one is a source.
+  if (kind === "new_provider" || kind === "existing_provider") return "right";
   // The caller knows which end of the policy this is; the canvas can't guess.
   // Without it a destination server lands on the sources side and only finds
   // its column when the arrange runs, which reads as the node jumping.
@@ -1688,6 +1835,8 @@ const KINDS: Record<string, AgentNodeKind> = {
   [NodeType.ResourceNode]: "resource",
   [NodeType.DestinationResourceNode]: "resource",
   [NodeType.ResourceGroupNode]: "resource-group",
+  [NodeType.ProviderNode]: "provider",
+  [NodeType.AgentPolicyNode]: "agent-policy",
   [NodeType.SelectPeerNode]: "selector",
   [NodeType.SelectGroupNode]: "selector",
   [NodeType.SelectUserNode]: "selector",
@@ -1701,6 +1850,8 @@ function labelOf(node: Node): string {
     network?: { name?: string };
     resource?: { name?: string };
     placeholderName?: string;
+    /** Provider and agent-policy cards carry their name flat. */
+    name?: string;
   };
   return (
     data?.placeholderName ??
@@ -1709,6 +1860,7 @@ function labelOf(node: Node): string {
     data?.policy?.name ??
     data?.network?.name ??
     data?.resource?.name ??
+    data?.name ??
     node.id
   );
 }
@@ -1728,6 +1880,22 @@ function refOf(node: Node): string {
 
 /** The account entity behind a node, if it has a real id. */
 function entityOf(node: Node): AgentNode["entity"] {
+  /*
+    Agent Network first, and by node type: both its cards hold their record id
+    flat in `data.id`, which every other card uses for something else. Told
+    apart here rather than in the pairs below so a provider is never read as a
+    policy.
+  */
+  const type = KINDS[node.type ?? ""] ?? "other";
+  if (type === "provider" || type === "agent-policy") {
+    const recordId = (node.data as { id?: string })?.id;
+    // A draft record (`new-…`) has no account entity yet, same as elsewhere.
+    if (!recordId || recordId.startsWith("new-")) return undefined;
+    return {
+      kind: type === "provider" ? "provider" : "agent_policy",
+      id: recordId,
+    };
+  }
   const data = node.data as {
     peer?: { id?: string };
     group?: { id?: string };
@@ -1793,6 +1961,23 @@ function describeNode(node: Node, d: BridgeDeps): AgentNode {
  */
 function dialogNote(from: Node, to: Node): string {
   const kinds = [from, to].map((n) => KINDS[n.type ?? ""] ?? "other");
+  /*
+    Agent Network wires itself: a group either way round becomes the policy's
+    source and a provider its destination. The two cases worth reporting are a
+    group aimed straight at a provider, which opens the agent-policy wizard,
+    and an end the rules simply ignore — that one draws nothing at all, and
+    silence there reads as a connection that worked.
+  */
+  if (kinds.includes("agent-policy")) {
+    return kinds.includes("provider") || kinds.includes("group")
+      ? ""
+      : " An agent policy only takes a group (source) or a provider (destination), so nothing was drawn.";
+  }
+  if (kinds.includes("provider")) {
+    return kinds.includes("group")
+      ? " There was no agent policy between them, so the agent-policy wizard opened for the user to finish."
+      : " Only a group or an agent policy can reach a provider, so nothing was drawn.";
+  }
   if (!kinds.includes("policy")) {
     return " Neither side is a policy, so the create-policy dialog opened for the user to finish.";
   }
