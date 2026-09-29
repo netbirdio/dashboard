@@ -9,6 +9,7 @@ import {
   AlertCircleIcon,
   ArrowRightIcon,
   CheckCircle2Icon,
+  ChevronDownIcon,
   CircleIcon,
   CloudIcon,
   ExternalLinkIcon,
@@ -248,6 +249,9 @@ const GatewayChoice = ({
   onNext,
 }: ChoiceProps) => {
   const [confirming, setConfirming] = useState(false);
+  // The managed gateway leads; a proxy of the account's own waits behind a
+  // link, unless it is the only way on.
+  const [ownProxyOpen, setOwnProxyOpen] = useState(false);
 
   return (
     <StepLayout
@@ -290,36 +294,119 @@ const GatewayChoice = ({
             </div>
           </Callout>
         )}
-        {privateClusters.map((cluster) => (
-          <ChoiceCard
-            key={cluster.id ?? cluster.address}
-            icon={<LockIcon size={16} />}
-            title={cluster.address}
-            description={`Private proxy in your account, ${connectedProxies(
-              cluster.connected_proxies,
-            )}.`}
-            onClick={() => onPrivateCluster(cluster.address)}
-            data-testid={"gateway-choice-private"}
+        {managedAvailable && (
+          <OwnProxyToggle
+            open={ownProxyOpen}
+            privateCount={privateClusters.length}
+            onToggle={() => setOwnProxyOpen((open) => !open)}
           />
-        ))}
-        <ChoiceCard
-          icon={<ServerIcon size={16} />}
-          title={
-            privateClusters.length > 0
-              ? "Deploy a new proxy"
-              : "Deploy my own proxy"
-          }
-          description={"Run the proxy on your own infrastructure."}
-          onClick={onSelfDeploy}
-          data-testid={"gateway-choice-self-deploy"}
-        />
+        )}
+        {(ownProxyOpen || !managedAvailable) && (
+          <div
+            id={OWN_PROXY_OPTIONS_ID}
+            className={
+              "flex flex-col rounded-lg border border-nb-gray-900 divide-y divide-nb-gray-900 overflow-hidden animate-in fade-in duration-200"
+            }
+          >
+            {privateClusters.map((cluster) => (
+              <OptionRow
+                key={cluster.id ?? cluster.address}
+                icon={<LockIcon size={14} />}
+                title={cluster.address}
+                detail={connectedProxies(cluster.connected_proxies)}
+                onClick={() => onPrivateCluster(cluster.address)}
+                data-testid={"gateway-choice-private"}
+              />
+            ))}
+            <OptionRow
+              icon={<ServerIcon size={14} />}
+              title={"Deploy a new proxy"}
+              detail={"On your own infrastructure"}
+              onClick={onSelfDeploy}
+              data-testid={"gateway-choice-self-deploy"}
+            />
+          </div>
+        )}
       </div>
     </StepLayout>
   );
 };
 
+const OWN_PROXY_OPTIONS_ID = "gateway-own-proxy-options";
+
 const connectedProxies = (count: number) =>
   `${count} ${count === 1 ? "proxy" : "proxies"} connected`;
+
+const privateProxies = (count: number) =>
+  `${count} private ${count === 1 ? "proxy" : "proxies"}`;
+
+const OwnProxyToggle = ({
+  open,
+  privateCount,
+  onToggle,
+}: {
+  open: boolean;
+  privateCount: number;
+  onToggle: () => void;
+}) => (
+  <button
+    type={"button"}
+    onClick={onToggle}
+    aria-expanded={open}
+    aria-controls={OWN_PROXY_OPTIONS_ID}
+    data-testid={"gateway-choice-own-proxy"}
+    className={
+      "self-center flex items-center gap-1.5 mt-1 text-sm text-nb-gray-400 hover:text-nb-gray-200 transition-colors"
+    }
+  >
+    Use your own proxy instead
+    {privateCount > 0 && !open && (
+      <span className={"text-nb-gray-500"}>
+        · {privateProxies(privateCount)}
+      </span>
+    )}
+    <ChevronDownIcon
+      size={14}
+      className={cn("transition-transform", open && "rotate-180")}
+    />
+  </button>
+);
+
+const OptionRow = ({
+  icon,
+  title,
+  detail,
+  onClick,
+  "data-testid": dataTestId,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  detail: string;
+  onClick: () => void;
+  "data-testid"?: string;
+}) => (
+  <button
+    type={"button"}
+    onClick={onClick}
+    data-testid={dataTestId}
+    className={
+      "w-full text-left flex items-center gap-3 px-4 py-2.5 bg-nb-gray-920/40 hover:bg-nb-gray-910 transition-colors"
+    }
+  >
+    <span className={"text-nb-gray-400 shrink-0"}>{icon}</span>
+    <span
+      className={
+        "flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-x-3 gap-y-0.5"
+      }
+    >
+      <span className={"min-w-0 text-sm text-nb-gray-100 break-words"}>
+        {title}
+      </span>
+      <span className={"text-xs text-nb-gray-400 shrink-0"}>{detail}</span>
+    </span>
+    <ArrowRightIcon size={14} className={"text-nb-gray-500 shrink-0"} />
+  </button>
+);
 
 const ChoiceCard = ({
   icon,
