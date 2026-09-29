@@ -1,4 +1,3 @@
-import React from "react";
 import { cn } from "@utils/helpers";
 import {
   BotIcon,
@@ -9,13 +8,16 @@ import {
   NetworkIcon,
   ServerIcon,
   ShieldIcon,
+  SparklesIcon,
   SquareDotIcon,
   SquareMinusIcon,
   SquarePlusIcon,
   TriangleAlertIcon,
+  UsersIcon,
   WaypointsIcon,
   WorkflowIcon,
 } from "lucide-react";
+import React from "react";
 import {
   ChangeKind,
   DraftChange,
@@ -45,6 +47,16 @@ export const changeIcon = (change: DraftChange, size = 14) => {
     case "create-router":
     case "update-router":
       return <WaypointsIcon size={size} />;
+    case "create-provider":
+    case "update-provider":
+    case "delete-provider":
+      return <SparklesIcon size={size} />;
+    case "create-agent-policy":
+    case "update-agent-policy":
+    case "delete-agent-policy":
+      return <ShieldIcon size={size} />;
+    case "update-user-groups":
+      return <UsersIcon size={size} />;
     case "install-peer":
       return change.kind === "agent" ? (
         <BotIcon size={size} />

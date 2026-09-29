@@ -680,16 +680,16 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "resource.group.add")
     return (
       <div className={"inline"}>
-        Group <Value>{m.resource_name}</Value> added to resource{"  "}
-        <Value>{m.name}</Value>
+        Group <Value>{m.name}</Value> added to resource{"  "}
+        <Value>{m.resource_name}</Value>
       </div>
     );
 
   if (event.activity_code == "resource.group.delete")
     return (
       <div className={"inline"}>
-        Group <Value>{m.resource_name}</Value> removed from resource{"  "}
-        <Value>{m.name}</Value>
+        Group <Value>{m.name}</Value> removed from resource{"  "}
+        <Value>{m.resource_name}</Value>
       </div>
     );
 

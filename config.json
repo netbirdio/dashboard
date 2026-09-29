@@ -25,5 +25,6 @@
   "hubspotOnboardingFormId": "$NETBIRD_HUBSPOT_ONBOARDING_FORM_ID",
   "hubspotSurveyFormId": "$NETBIRD_HUBSPOT_SURVEY_FORM_ID",
   "analyticsExcludedEmails": "$NETBIRD_ANALYTICS_EXCLUDED_EMAILS",
-  "assistantApiOrigin": "$NETBIRD_ASSISTANT_API_ENDPOINT"
+  "assistantApiOrigin": "$NETBIRD_ASSISTANT_API_ENDPOINT",
+  "announcement": "$NETBIRD_ANNOUNCEMENT"
 }

@@ -16,6 +16,7 @@ import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
+import { useCanvasUI } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
@@ -53,6 +54,7 @@ const groupRef = (g: Group) => g.id ?? g.name;
 
 export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
   const { peers, groups } = useControlCenterData();
+  const { groupUserCounts } = useCanvasUI();
   const nodes = useStructuralNodes();
   const { isDraft } = useDraftMode();
   const { permission } = usePermissions();
@@ -204,7 +206,9 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
     // useApiCall rejects but never toasts, so the promise drives the toast.
     notify({
       title: peer.name ?? "Peer",
-      description: `Groups of ${peer.name ?? "the peer"} were successfully saved.`,
+      description: `Groups of ${
+        peer.name ?? "the peer"
+      } were successfully saved.`,
       promise: request,
     });
     try {
@@ -392,7 +396,10 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
                             {!g.id && <SmallBadge />}
                           </span>
                           <span className={"text-[0.72rem] text-nb-gray-400"}>
-                            {getGroupCountLabel(g)}
+                            {getGroupCountLabel(
+                              g,
+                              groupUserCounts.get(g.id ?? g.name),
+                            )}
                           </span>
                         </div>
                       </div>

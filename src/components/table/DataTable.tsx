@@ -26,6 +26,7 @@ import {
   getSortedRowModel,
   PaginationState,
   Row,
+  RowData,
   RowSelectionState,
   SortingFn,
   SortingState,
@@ -55,6 +56,10 @@ declare module "@tanstack/table-core" {
   interface SortingFns {
     checkbox: SortingFn<unknown>;
     datetime: SortingFn<unknown>;
+  }
+  interface ColumnMeta<TData extends RowData, TValue> {
+    /** Classes applied to both the header and body cells of the column. */
+    className?: string;
   }
 }
 
@@ -191,6 +196,7 @@ interface DataTableProps<TData, TValue> {
   keepStateInLocalStorage?: boolean;
   paginationPaddingClassName?: string;
   tableCellClassName?: string;
+  tableHeadClassName?: string;
   initialSelectionState?: RowSelectionState;
   initialPageSize?: number;
   uniqueKey?: string;
@@ -259,6 +265,7 @@ export function DataTable<TData, TValue>({
   keepStateInLocalStorage = true,
   paginationPaddingClassName,
   tableCellClassName,
+  tableHeadClassName,
   initialPageSize = 10,
   uniqueKey,
   resetRowSelectionOnSearch = true,
@@ -539,6 +546,10 @@ export function DataTable<TData, TValue>({
                             key={header.id}
                             minimal={minimal}
                             inset={inset}
+                            className={cn(
+                              tableHeadClassName,
+                              header.column.columnDef.meta?.className,
+                            )}
                           >
                             {header.isPlaceholder
                               ? null
@@ -601,6 +612,7 @@ export function DataTable<TData, TValue>({
                               className={cn(
                                 "relative",
                                 tableCellClassName,
+                                cell.column.columnDef.meta?.className,
                                 cellClassName?.(cell),
                               )}
                               minimal={minimal}
