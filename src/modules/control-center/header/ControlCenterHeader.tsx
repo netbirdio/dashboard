@@ -453,6 +453,7 @@ function FocusModePill() {
       <div
         className={cn(
           "transition-[opacity,transform,visibility] duration-300 ease-out",
+          "motion-reduce:transition-none",
           show
             ? "visible opacity-100 translate-y-0"
             : // Visibility flips at the end of the transition, so the hidden pill
