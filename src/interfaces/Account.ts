@@ -51,3 +51,24 @@ export interface AccountOnboarding {
   onboarding_flow_pending: boolean;
   signup_form_pending: boolean;
 }
+
+export interface SignInDomain {
+  id: string;
+  name: string;
+  is_primary: boolean;
+  validation_token: string;
+  validation_status: DomainValidationStatus;
+  validation_last_updated: string | null;
+  connections?: DomainConnection[];
+}
+
+export interface DomainConnection {
+  id: string;
+  name: string;
+}
+
+export enum DomainValidationStatus {
+  PENDING = "pending",
+  VERIFIED = "verified",
+  FAILED = "failed",
+}

@@ -1,8 +1,9 @@
-import { Connection, Node } from "@xyflow/react";
+import { Connection, Node, XYPosition } from "@xyflow/react";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
+import type { AgentPolicy } from "@/modules/agent-network/data/mockData";
 import {
   getDraftResource,
   getPlaceholderPeer,
@@ -20,6 +21,14 @@ export type DraftConnectDeps = {
   setPolicyDestinationGroups: (g: Group[]) => void;
   setPolicyInitialName: (name: string) => void;
   setCreatePolicyModal: (open: boolean) => void;
+  agentPolicies?: AgentPolicy[];
+  updateDraftAgentPolicy?: (policy: AgentPolicy) => void;
+  setAgentSourceGroup?: (policy: AgentPolicy, groupRef: string) => void;
+  pendingAgentPolicy?: (id: string) => Partial<AgentPolicy> | undefined;
+  openAgentPolicyWizard?: (
+    prefill: { sourceGroups: string[]; destinationProviderIds: string[] },
+    position?: XYPosition,
+  ) => void;
   // Opens the destination picker; routers are never created by drag.
   onNetworkConnect?: (params: {
     networkNodeId: string;
@@ -41,22 +50,35 @@ type NodeInfo =
   | { kind: "group"; id: string }
   | { kind: "resource"; id: string }
   | { kind: "network"; id: string }
-  | { kind: "policy"; id: string };
+  | { kind: "policy"; id: string }
+  | { kind: "agentPolicy"; id: string }
+  | { kind: "provider"; id: string };
 
 export const parseNodeId = (id: string): NodeInfo | undefined => {
-  if (id.startsWith("peer-")) return { kind: "peer", id: id.replace("peer-", "") };
+  if (id.startsWith("peer-"))
+    return { kind: "peer", id: id.replace("peer-", "") };
   if (id.startsWith("dest-group-")) return { kind: "group", id };
   // Draft groups have no API id — keep the full node id for lookup.
   if (id.startsWith("group-new-")) return { kind: "group", id };
   // Resource-group rows inside a frame have group semantics.
   if (id.startsWith("resourcegroup-")) return { kind: "group", id };
-  if (id.startsWith("group-")) return { kind: "group", id: id.replace("group-", "") };
-  if (id.startsWith("resource-")) return { kind: "resource", id: id.replace("resource-", "") };
+  if (id.startsWith("group-"))
+    return { kind: "group", id: id.replace("group-", "") };
+  if (id.startsWith("resource-"))
+    return { kind: "resource", id: id.replace("resource-", "") };
   if (id.startsWith("network-new-")) return { kind: "network", id };
-  if (id.startsWith("network-")) return { kind: "network", id: id.replace("network-", "") };
-  if (id.startsWith("policy-")) return { kind: "policy", id: id.replace("policy-", "") };
-  if (id.startsWith("source-peer-")) return { kind: "peer", id: id.replace("source-peer-", "") };
-  if (id.startsWith("destination-resource-")) return { kind: "resource", id: id.replace("destination-resource-", "") };
+  if (id.startsWith("network-"))
+    return { kind: "network", id: id.replace("network-", "") };
+  if (id.startsWith("agent-policy-"))
+    return { kind: "agentPolicy", id: id.replace("agent-policy-", "") };
+  if (id.startsWith("provider-"))
+    return { kind: "provider", id: id.replace("provider-", "") };
+  if (id.startsWith("policy-"))
+    return { kind: "policy", id: id.replace("policy-", "") };
+  if (id.startsWith("source-peer-"))
+    return { kind: "peer", id: id.replace("source-peer-", "") };
+  if (id.startsWith("destination-resource-"))
+    return { kind: "resource", id: id.replace("destination-resource-", "") };
   return undefined;
 };
 
@@ -129,9 +151,9 @@ export function handleDraftConnect(
       .forEach((n) => {
         const resource = getDraftResource(n);
         if (resource?.id) resourceIdSet.add(resource.id);
-        (
-          n.data as { resourceGroupIds?: string[] }
-        )?.resourceGroupIds?.forEach((idOrName) => groupIds.add(idOrName));
+        (n.data as { resourceGroupIds?: string[] })?.resourceGroupIds?.forEach(
+          (idOrName) => groupIds.add(idOrName),
+        );
         if (n.type === "resourceGroupNode") {
           const group = (n.data as { group?: Group })?.group;
           if (group) groupIds.add(group.id ?? group.name);
@@ -142,6 +164,72 @@ export function handleDraftConnect(
       groupIds: Array.from(groupIds),
     };
   };
+
+  const isAgentNode = (info: NodeInfo) =>
+    info.kind === "agentPolicy" || info.kind === "provider";
+  if (isAgentNode(sourceInfo) || isAgentNode(targetInfo)) {
+    const {
+      agentPolicies,
+      updateDraftAgentPolicy,
+      setAgentSourceGroup,
+      openAgentPolicyWizard,
+    } = deps;
+
+    const agentPolicyOf = (nodeId: string): AgentPolicy | undefined => {
+      const node = currentNodes.find((n) => n.id === nodeId);
+      const onNode = (node?.data as { policy?: AgentPolicy })?.policy;
+      if (onNode) return onNode;
+      const id = nodeId.replace("agent-policy-", "");
+      const live = agentPolicies?.find((p) => p.id === id);
+      const pending = deps.pendingAgentPolicy?.(id);
+      return live || pending
+        ? ({ ...(live ?? {}), ...(pending ?? {}), id } as AgentPolicy)
+        : undefined;
+    };
+
+    const ends = [
+      { info: sourceInfo, nodeId: source },
+      { info: targetInfo, nodeId: target },
+    ];
+    const policyEnd = ends.find((e) => e.info.kind === "agentPolicy");
+    const providerEnd = ends.find((e) => e.info.kind === "provider");
+    const groupEnd = ends.find((e) => e.info.kind === "group");
+
+    if (policyEnd) {
+      if (!providerEnd && !groupEnd) return;
+      const policy = agentPolicyOf(policyEnd.nodeId);
+      if (!policy) return;
+      if (providerEnd) {
+        const providerId = providerEnd.info.id;
+        if (policy.destinationProviderIds.includes(providerId)) return;
+        updateDraftAgentPolicy?.({
+          ...policy,
+          destinationProviderIds: [
+            ...policy.destinationProviderIds,
+            providerId,
+          ],
+        });
+        return;
+      }
+      const group = findGroup(groupEnd!.info.id);
+      if (!group) return;
+      const ref = group.id ?? group.name;
+      if (!ref || policy.sourceGroups.includes(ref)) return;
+      setAgentSourceGroup?.(policy, ref);
+      return;
+    }
+
+    if (providerEnd && groupEnd) {
+      const group = findGroup(groupEnd.info.id);
+      const ref = group?.id ?? group?.name;
+      if (!ref) return;
+      openAgentPolicyWizard?.({
+        sourceGroups: [ref],
+        destinationProviderIds: [providerEnd.info.id],
+      });
+    }
+    return;
+  }
 
   // Networks are never policy actors, so any other network drag is a no-op.
   if (sourceInfo.kind === "network") {
@@ -287,8 +375,10 @@ export function handleDraftConnect(
     const side = connection.sourceHandle?.startsWith("sl")
       ? ("sources" as const)
       : ("destinations" as const);
-    if (targetInfo.kind === "group") addGroupToPolicy(source, targetInfo.id, side);
-    else if (targetInfo.kind === "peer") addPeerToPolicy(source, targetInfo.id, side);
+    if (targetInfo.kind === "group")
+      addGroupToPolicy(source, targetInfo.id, side);
+    else if (targetInfo.kind === "peer")
+      addPeerToPolicy(source, targetInfo.id, side);
     else if (targetInfo.kind === "resource")
       addResourceToPolicy(source, targetInfo.id, side);
     return;
@@ -299,8 +389,10 @@ export function handleDraftConnect(
     const side = connection.sourceHandle?.startsWith("sl")
       ? ("destinations" as const)
       : ("sources" as const);
-    if (sourceInfo.kind === "group") addGroupToPolicy(target, sourceInfo.id, side);
-    else if (sourceInfo.kind === "peer") addPeerToPolicy(target, sourceInfo.id, side);
+    if (sourceInfo.kind === "group")
+      addGroupToPolicy(target, sourceInfo.id, side);
+    else if (sourceInfo.kind === "peer")
+      addPeerToPolicy(target, sourceInfo.id, side);
     else if (sourceInfo.kind === "resource")
       addResourceToPolicy(target, sourceInfo.id, side);
     return;

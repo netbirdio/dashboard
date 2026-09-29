@@ -1,10 +1,8 @@
 import useFetchApi, { useApiCall } from "@utils/api";
 import loadConfig from "@utils/config";
 import { useMemo } from "react";
-import {
-  DomainValidationStatus,
-  EnterpriseConnection,
-} from "@/interfaces/IdentityProvider";
+import { DomainValidationStatus } from "@/interfaces/Account";
+import { EnterpriseConnection } from "@/interfaces/IdentityProvider";
 
 const config = loadConfig();
 

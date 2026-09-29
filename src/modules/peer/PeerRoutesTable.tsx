@@ -1,6 +1,7 @@
 import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
+import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
@@ -54,9 +55,12 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
   {
     id: "enabled",
     accessorKey: "enabled",
-    sortingFn: "basic",
+    enableSorting: false,
+    meta: { className: ENABLED_COLUMN_CLASS.xl },
     header: ({ column }) => (
-      <DataTableHeader column={column}>Active</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>
+        Active
+      </DataTableHeader>
     ),
     cell: ({ row }) => <PeerRouteActiveCell route={row.original} />,
   },

@@ -7,12 +7,12 @@ import {
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
-import { MoreVertical, Power, Trash2 } from "lucide-react";
+import { MoreVertical, Power, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { AIProvider } from "@/modules/agent-network/data/mockData";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import { AIProvider } from "@/modules/agent-network/data/mockData";
 
 type Props = {
   provider: AIProvider;
@@ -20,7 +20,8 @@ type Props = {
 
 export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
   const { confirm } = useDialog();
-  const { policies, toggleProvider, deleteProvider } = useAIProviders();
+  const { policies, toggleProvider, deleteProvider, openProviderEdit } =
+    useAIProviders();
   // Each menu item maps to its own operation grant; read-only viewers
   // (usage_viewer) get no menu at all instead of actions that can only 403.
   const { permission } = usePermissions();
@@ -62,6 +63,21 @@ export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className={"w-auto"} align={"end"}>
+          {canUpdate && (
+            <DropdownMenuItem
+              data-testid={"edit-provider"}
+              onClick={(e) => {
+                e.stopPropagation();
+                openProviderEdit(provider);
+              }}
+            >
+              <div className={"flex gap-3 items-center"}>
+                <SquarePenIcon size={14} className={"shrink-0"} />
+                Edit
+              </div>
+            </DropdownMenuItem>
+          )}
+
           {canUpdate && (
             <DropdownMenuItem onClick={() => toggleProvider(provider.id)}>
               <div className={"flex gap-3 items-center"}>

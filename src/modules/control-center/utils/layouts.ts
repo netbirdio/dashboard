@@ -12,9 +12,9 @@ export const EMPTY_STATE_ZOOM = 0.65;
 export const POLICY_COLUMN_Y_OFFSET = 18;
 
 const NODE_Y_NUDGE: Record<string, number> = {
-  peerNode: 3,
-  sourcePeerNode: 3,
-  expandedGroupPeer: 3,
+  peerNode: 2,
+  sourcePeerNode: 2,
+  expandedGroupPeer: 2,
   selectPeerNode: 2,
   selectUserNode: 2,
 };

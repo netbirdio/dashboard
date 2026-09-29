@@ -117,9 +117,7 @@ function NetworkActionsMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent align={"start"} className={"w-[180px]"}>
         {mayEdit && (
-          <DropdownMenuItem
-            onClick={() => setNetworkEditor({ networkNodeId })}
-          >
+          <DropdownMenuItem onClick={() => setNetworkEditor({ networkNodeId })}>
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
               Edit
@@ -343,7 +341,9 @@ function HeaderTopLeft() {
                     className={cn(
                       // Fixed height matching the RoutingPeersBar next to it.
                       "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
-                      selectedNetwork && showNetworkActions && "!rounded-r-none",
+                      selectedNetwork &&
+                        showNetworkActions &&
+                        "!rounded-r-none",
                     )}
                     size={"xs"}
                   />
@@ -483,24 +483,20 @@ function HeaderTopRight() {
 function HeaderBottom() {
   const { isDraft } = useDraftMode();
 
-  const showToolbar = isDraft;
-
   return (
-    <AnimatePresence>
-      {showToolbar && (
-        <motion.div
-          className={"absolute bottom-0 left-1/2 z-10"}
-          initial={{ x: "-50%", y: 80, opacity: 0 }}
-          animate={{ x: "-50%", y: 0, opacity: 1 }}
-          exit={{ x: "-50%", y: 80, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 400, damping: 32 }}
-        >
-          <div className={"py-4"}>
-            <CanvasToolbar />
-          </div>
-        </motion.div>
+    <div
+      className={cn(
+        "absolute bottom-0 left-1/2 z-10 -translate-x-1/2",
+        "transition-[opacity,transform,visibility] duration-300 ease-out will-change-transform",
+        isDraft
+          ? "visible opacity-100 translate-y-0"
+          : "invisible opacity-0 translate-y-20 pointer-events-none",
       )}
-    </AnimatePresence>
+    >
+      <div className={"py-4"}>
+        <CanvasToolbar />
+      </div>
+    </div>
   );
 }
 
