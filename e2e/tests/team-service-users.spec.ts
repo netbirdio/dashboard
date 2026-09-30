@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { test, expect } from "../helpers/fixtures";
 import { navigateTo } from "../helpers/auth";
 import { generateRandomName } from "../helpers/utils";
@@ -20,9 +21,9 @@ test.describe.serial("Team - Service Users @team", () => {
   });
 
   test("Should update role and manage access tokens", async ({ dashboardAsOwner: page }) => {
-    await page.locator("tr").getByText(regularUser).click();
+    await openServiceUser(page, regularUser);
     await changeRoleTo(page, "Admin");
-    await page.getByTestId("save-changes").click();
+    await saveUserChanges(page);
 
     // Create and delete access token
     const tokenName = generateRandomName("tkn_");
@@ -37,23 +38,18 @@ test.describe.serial("Team - Service Users @team", () => {
     await tokenRow.getByTestId("access-token-delete").click();
     await page.getByTestId("confirmation.confirm").click();
     await expect(tokenRow).not.toBeVisible();
-
-    await page.getByText("Service Users").first().click();
   });
 
   test("Should update admin user role and verify all changes persisted", async ({
     dashboardAsOwner: page,
   }) => {
-    await page.locator("tr").getByText(adminServiceUser).click();
+    await openServiceUser(page, adminServiceUser);
     await changeRoleTo(page, "User");
-    const saveResponse = page.waitForResponse(
-      (resp) => resp.url().includes("/api/users/") && resp.request().method() === "PUT",
-      { timeout: 30_000 },
-    );
-    await page.getByTestId("save-changes").click();
-    await saveResponse;
+    await saveUserChanges(page);
 
-    await page.getByText("Service Users").first().click();
+    // Go back the way a user would, so this also covers the save refreshing
+    // the cached users list rather than only what the server persisted.
+    await returnToServiceUserList(page);
     await checkServiceUserRow(page, regularUser, "Admin");
     await checkServiceUserRow(page, adminServiceUser, "User");
 
@@ -64,6 +60,7 @@ test.describe.serial("Team - Service Users @team", () => {
   });
 
   test("Should delete service users", async ({ dashboardAsOwner: page }) => {
+    await openServiceUserList(page);
     for (const name of [regularUser, adminServiceUser]) {
       const row = page.locator("tr").filter({ hasText: name });
       // Row actions are now behind a dropdown menu; open it, then delete.
@@ -75,11 +72,7 @@ test.describe.serial("Team - Service Users @team", () => {
   });
 });
 
-async function createServiceUser(
-  page: import("@playwright/test").Page,
-  name: string,
-  role: string,
-) {
+async function createServiceUser(page: Page, name: string, role: string) {
   await page.getByTestId("open-service-user-modal").click();
   await expect(page.getByTestId("service-user-name")).toBeVisible({ timeout: 5_000 });
   await page.getByTestId("service-user-name").fill(name);
@@ -93,23 +86,98 @@ async function createServiceUser(
   await expect(page.getByTestId("service-user-name")).not.toBeVisible({ timeout: 5_000 });
 }
 
-async function checkServiceUserRow(
-  page: import("@playwright/test").Page,
-  name: string,
-  role: string,
-) {
-  const row = page.locator("tr").filter({ hasText: name });
-  await expect(row).toBeVisible({ timeout: 10_000 });
-  await expect(row.getByText(role, { exact: true }).first()).toBeVisible({ timeout: 10_000 });
+// openServiceUserList lands on the service users table and waits for it to
+// settle.
+async function openServiceUserList(page: Page) {
+  await navigateTo(page, "/team/service-users");
+  await expectServiceUserList(page);
 }
 
-async function changeRoleTo(
-  page: import("@playwright/test").Page,
-  role: string,
-) {
+// returnToServiceUserList goes back to the list from a user's page the way a
+// user would, via the breadcrumb. Unlike a plain click on the nav entry, it
+// waits for the navigation to actually land: the click itself resolves while
+// the client-side navigation is still in flight, so anything that follows can
+// otherwise be computed against the page being left behind.
+async function returnToServiceUserList(page: Page) {
+  await page
+    .getByTestId("breadcrumb-item")
+    .filter({ hasText: "Service Users" })
+    .click();
+  await page.waitForURL(/\/team\/service-users/, { timeout: 15_000 });
+  await expectServiceUserList(page);
+}
+
+async function expectServiceUserList(page: Page) {
+  await expect(page.getByRole("heading", { name: /Service Users/ })).toBeVisible({
+    timeout: 10_000,
+  });
+}
+
+// openServiceUser opens one service user's page from the list and only returns
+// once that page really belongs to `name`. The row click is a client-side
+// navigation and the table re-renders as the users fetch revalidates, so
+// clicking a row without confirming where we landed can silently leave us on a
+// different user — and every later edit then targets that other user.
+async function openServiceUser(page: Page, name: string) {
+  await openServiceUserList(page);
+
+  const row = page.locator("tr").filter({ hasText: name });
+  await expect(row).toBeVisible({ timeout: 10_000 });
+  await row.click();
+
+  await page.waitForURL(/\/team\/user\?/, { timeout: 15_000 });
+  await expect(page.getByRole("heading", { name, exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
+}
+
+async function checkServiceUserRow(page: Page, name: string, role: string) {
+  const row = page.locator("tr").filter({ hasText: name });
+  const cell = row.getByText(role, { exact: true }).first();
+  await expect(row).toBeVisible({ timeout: 10_000 });
+  // The list can serve a stale SWR read right after a role change +
+  // navigation; give it a moment, then reload once if the role cell hasn't
+  // caught up. (Read-only verification — a reload only re-reads the account.)
+  const settled = await cell
+    .waitFor({ state: "visible", timeout: 7_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!settled) {
+    await page.reload();
+    await expect(row).toBeVisible({ timeout: 10_000 });
+  }
+  await expect(cell).toBeVisible({ timeout: 10_000 });
+}
+
+async function changeRoleTo(page: Page, role: string) {
   await page.getByTestId("user-role-selector").click();
   await page
     .getByTestId("user-role-selector-item")
     .getByText(role, { exact: true })
     .click();
+  // Confirm the pick landed. A missed dropdown click leaves the role
+  // unchanged, which disables "Save Changes" and turns the save below into an
+  // unexplained 30s wait for a PUT that is never sent.
+  await expect(
+    page.getByTestId("user-role-selector").getByText(role, { exact: true }),
+  ).toBeVisible({ timeout: 5_000 });
+}
+
+// saveUserChanges saves the open user page and awaits the PUT, so the change is
+// persisted before the next serial test asserts it — clicking save alone
+// returns before the request lands. The PUT is pinned to the user currently
+// open and its status checked: a PUT for some other user, or a rejected one,
+// otherwise leaves the account in a state later assertions blame on the UI.
+async function saveUserChanges(page: Page) {
+  const userId = new URL(page.url()).searchParams.get("id");
+  expect(userId, "expected a user page with an id parameter").toBeTruthy();
+
+  const saveResponse = page.waitForResponse(
+    (resp) =>
+      resp.url().includes(`/api/users/${userId}`) &&
+      resp.request().method() === "PUT",
+    { timeout: 30_000 },
+  );
+  await page.getByTestId("save-changes").click();
+  expect((await saveResponse).status()).toBe(200);
 }

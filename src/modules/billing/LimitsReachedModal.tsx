@@ -2,9 +2,10 @@ import Button from "@components/Button";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
 import { useLocalStorage } from "@hooks/useLocalStorage";
+import { useGuardedRouter } from "@utils/navigation-guard";
 import dayjs from "dayjs";
 import { MailIcon } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
@@ -46,7 +47,7 @@ const LimitReachedContent = () => {
     undefined,
   );
 
-  const router = useRouter();
+  const router = useGuardedRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const tab = params.get("tab");

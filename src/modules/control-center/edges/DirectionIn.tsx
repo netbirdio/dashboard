@@ -37,10 +37,10 @@ export function DirectionIn({
         });
       case "bezier":
         return getSimpleBezierPath({
-          sourceX,
+          sourceX: sourceX - 10,
           sourceY,
           sourcePosition,
-          targetX,
+          targetX: targetX + 10,
           targetY,
           targetPosition,
         });
@@ -77,16 +77,7 @@ export function DirectionIn({
         stroke: enabled ? "#0e9f6e" : "#787878",
         strokeDasharray: "5, 5",
       }}
-    >
-      {enabled && (
-        <animate
-          attributeName="stroke-dashoffset"
-          from="20"
-          to="0"
-          dur="0.5s"
-          repeatCount="indefinite"
-        />
-      )}
-    </BaseEdge>
+      className={enabled ? "cc-animated-edge" : undefined}
+    />
   );
 }

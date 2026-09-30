@@ -20,7 +20,7 @@ import { Textarea } from "@components/Textarea";
 import InputDomain, { domainReducer } from "@components/ui/InputDomain";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
-import cidr from "ip-cidr";
+import { isValidIP } from "@utils/ip";
 import { uniqueId } from "lodash";
 import {
   ExternalLinkIcon,
@@ -601,7 +601,7 @@ function NameserverInput({
     if (ip == "") {
       return "";
     }
-    const validCIDR = cidr.isValidAddress(ip);
+    const validCIDR = isValidIP(ip);
     if (!validCIDR) {
       onError && onError(true);
       return "Please enter a valid IP, e.g., 192.168.1.0";

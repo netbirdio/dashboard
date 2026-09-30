@@ -28,9 +28,7 @@ export interface SelectOption {
   searchValue?: string;
   className?: string;
   disabled?: boolean;
-  // Optional section label. When any option carries a `group`, the
-  // dropdown renders a header above each group and orders sections by
-  // the first option that names them.
+  // Section label for grouped rendering.
   group?: string;
 }
 
@@ -55,6 +53,15 @@ interface SelectDropdownProps {
   iconSize?: number;
   truncate?: boolean;
   compact?: boolean;
+  // Pinned below the options, outside the scroll area and the search filter.
+  footer?: (close: () => void) => React.ReactNode;
+  // For dismissals the Popover's own outside-detection can't see (a ReactFlow
+  // pane that stops pointer propagation).
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  // Defers onChange until after the close animation, for handlers heavy
+  // enough to jank mid-animation.
+  deferChange?: boolean;
   "data-testid"?: string;
 }
 
@@ -79,20 +86,35 @@ export function SelectDropdown({
   iconSize = 14,
   truncate = false,
   compact = false,
+  footer,
+  open: controlledOpen,
+  onOpenChange,
+  deferChange = false,
   "data-testid": dataTestId,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const toggle = (selectedValue: string) => {
     const isSelected = value == selectedValue;
-    if (!isSelected) onChange?.(selectedValue);
+    setOpen(false);
+    if (!isSelected) {
+      if (deferChange) setTimeout(() => onChange?.(selectedValue), 180);
+      else onChange?.(selectedValue);
+    }
     setTimeout(() => {
       setSearch("");
     }, 100);
-    setOpen(false);
   };
 
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = React.useCallback(
+    (next: boolean) => {
+      onOpenChange?.(next);
+      if (controlledOpen === undefined) setUncontrolledOpen(next);
+    },
+    [controlledOpen, onOpenChange],
+  );
 
   const selected = options.find((o) => o.value === value);
 
@@ -108,10 +130,8 @@ export function SelectDropdown({
     });
   }, [options, debouncedSearch]);
 
-  // When options carry a `group`, split them into ordered sections so a
-  // header can render above each. Section order follows the first option
-  // that names the group; empty groups (after search) drop out. Returns
-  // null when no option is grouped so the flat render path is used.
+  // Section order follows the first option naming each group; null falls back
+  // to the flat render path.
   const groupedItems = React.useMemo(() => {
     if (!filteredItems.some((item) => item.group)) return null;
     const order: string[] = [];
@@ -202,7 +222,7 @@ export function SelectDropdown({
               {!isLoading && selected && <SelectedItem />}
               {!isLoading && !selected && <PlaceholderItem />}
               <div className={"pl-2"}>
-                <ChevronsUpDown size={18} className={"shrink-0"} />
+                <ChevronsUpDown size={16} className={"shrink-0"} />
               </div>
             </div>
           </Button>
@@ -308,6 +328,11 @@ export function SelectDropdown({
                 )}
               </CommandGroup>
             </ScrollArea>
+            {footer && (
+              <div className={"border-t dark:border-nb-gray-800/70"}>
+                {footer(() => setOpen(false))}
+              </div>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

@@ -57,9 +57,9 @@ export default function DataTableHeader({
         {children}
         {sorting &&
           (column.getIsSorted() === "desc" ? (
-            <IconSortAscending size={16} />
-          ) : (
             <IconSortDescending size={16} />
+          ) : (
+            <IconSortAscending size={16} />
           ))}
       </div>
     </FullTooltip>

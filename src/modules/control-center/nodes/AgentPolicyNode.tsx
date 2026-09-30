@@ -1,11 +1,13 @@
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import { Handle, type Node, Position } from "@xyflow/react";
+import { Handle, type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
+import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
+import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
 
-// AgentPolicyNodeData carries the minimum identity for an agent-network
-// policy node in the Control Center graph. We keep the payload thin so
-// the React-Flow node JSON stays cheap to clone — the graph only needs
-// the id (for edge wiring) and the name (for display).
+// Kept thin so the React Flow node JSON stays cheap to clone.
 export type AgentPolicyNodeData = {
   id: string;
   name: string;
@@ -14,18 +16,23 @@ export type AgentPolicyNodeData = {
 
 type AgentPolicyNodeProps = Node<AgentPolicyNodeData, "agentPolicyNode">;
 
-// AgentPolicyNode mirrors the visual treatment of PolicyNode (rounded
-// pill with a status dot) so the Control Center stays visually
-// consistent across the two policy types. The right-side label slot
-// shows the policy kind so an operator can tell agent-network policies
-// from access-control policies at a glance.
-export const AgentPolicyNode = ({ data }: AgentPolicyNodeProps) => {
+export const AgentPolicyNode = ({ data, id }: AgentPolicyNodeProps) => {
   const isActive = data.enabled !== false;
+  const { isDraft } = useDraftMode();
+  const isDropTarget = useConnection(
+    (c) => c.inProgress && c.fromNode?.id !== id,
+  );
+  const showHalo = useIsContextMenuTarget(id);
+
   return (
     <div
       className={cn(
-        "relative bg-nb-gray-940 hover:bg-nb-gray-930 cursor-pointer border border-nb-gray-800 rounded-full flex justify-between overflow-hidden",
+        "relative group/node bg-nb-gray-940 hover:bg-nb-gray-930 hover:border-nb-gray-800 cursor-pointer border border-nb-gray-800 rounded-full flex justify-between transition-all",
         !isActive && "opacity-60",
+        isDraft &&
+          isDropTarget &&
+          "hover:bg-nb-gray-930 hover:ring-2 ring-white",
+        showHalo && "ring-2 ring-sky-500",
       )}
     >
       <div className={"flex items-center justify-center"}>
@@ -43,6 +50,7 @@ export const AgentPolicyNode = ({ data }: AgentPolicyNodeProps) => {
           }
         >
           <div className={"truncate max-w-[200px]"}>{data.name}</div>
+          {data.id?.startsWith("new-") && <SmallBadge className={"ml-2"} />}
         </div>
       </div>
 
@@ -51,13 +59,23 @@ export const AgentPolicyNode = ({ data }: AgentPolicyNodeProps) => {
         position={Position.Right}
         id={"sr"}
         className={"opacity-0"}
+        isConnectable={false}
       />
       <Handle
         type="target"
         position={Position.Left}
         id={"tl"}
         className={"opacity-0"}
+        isConnectable={false}
       />
+
+      {isDraft && (
+        <>
+          <ConnectHandle type={"source"} position={Position.Left} />
+          <ConnectHandle type={"source"} position={Position.Right} />
+          <FullAreaTargetHandle isConnectable={isDropTarget} />
+        </>
+      )}
     </div>
   );
 };

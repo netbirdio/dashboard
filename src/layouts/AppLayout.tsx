@@ -18,9 +18,9 @@ import AnalyticsProvider, {
 } from "@/contexts/AnalyticsProvider";
 import DialogProvider from "@/contexts/DialogProvider";
 import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
-import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
 import InstanceSetupProvider from "@/contexts/InstanceSetupProvider";
 import { NavigationEvents } from "@/contexts/NavigationEvents";
+import { ThemeProvider } from "@/contexts/ThemeProvider";
 import { useSignupSource } from "@/hooks/useSignupSource";
 
 const inter = localFont({
@@ -43,7 +43,7 @@ export default function AppLayout({
   useSignupSource();
 
   return (
-    <html lang="en">
+    <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <head>
         <GoogleTagManagerHeadScript />
       </head>
@@ -51,7 +51,7 @@ export default function AppLayout({
         <Suspense fallback={<FullScreenLoading />}>
           <AnalyticsProvider>
             <DialogProvider>
-              <GlobalThemeProvider>
+              <ThemeProvider>
                 <ErrorBoundaryProvider>
                   <InstanceSetupProvider>
                     <OIDCProvider>
@@ -61,7 +61,7 @@ export default function AppLayout({
                     </OIDCProvider>
                   </InstanceSetupProvider>
                 </ErrorBoundaryProvider>
-              </GlobalThemeProvider>
+              </ThemeProvider>
             </DialogProvider>
             <Toaster
               position="top-center"

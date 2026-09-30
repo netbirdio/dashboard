@@ -37,6 +37,32 @@ export const getLatestNetbirdRelease = async (
 };
 
 /**
+ * Split a version string into its numeric release components.
+ *
+ * Handles every shape NetBird components report: an optional "v" prefix, semver
+ * build metadata ("0.77.0+enterprise.1" on enterprise management builds), a CI
+ * build suffix ("0.76.3-31256681241"), and pre-release labels ("0.60.0-rc.1").
+ * Everything after the release itself is dropped — build metadata carries no
+ * precedence in semver, and a pre-release of X.Y.Z is treated as X.Y.Z so a
+ * feature gate keyed on a release also holds for its release candidates.
+ *
+ * Splitting on "." alone (the previous behaviour) left the suffix inside a
+ * component, so "0.77.0+enterprise.1" parsed as [0, 77, 0, 1] — smuggling the
+ * build number in as a fourth release component. That ranked today's tags
+ * correctly only by coincidence; dropping the suffix removes the guesswork.
+ */
+const releaseParts = (version: string): number[] =>
+  version
+    .trim()
+    .replace(/^v/i, "")
+    .split(/[-+]/, 1)[0]
+    .split(".")
+    .map((part) => {
+      const parsed = parseInt(part, 10);
+      return Number.isNaN(parsed) ? 0 : parsed;
+    });
+
+/**
  * Compare semantic versions.
  * Returns true if version >= minVersion.
  */
@@ -44,12 +70,8 @@ export const compareVersions = (
   version: string,
   minVersion: string,
 ): boolean => {
-  const parseVersion = (v: string): number[] => {
-    return v.replace(/^v/, "").split(".").map(Number);
-  };
-
-  const vParts = parseVersion(version);
-  const minParts = parseVersion(minVersion);
+  const vParts = releaseParts(version);
+  const minParts = releaseParts(minVersion);
 
   for (let i = 0; i < Math.max(vParts.length, minParts.length); i++) {
     const vPart = vParts[i] || 0;
@@ -60,6 +82,52 @@ export const compareVersions = (
   }
 
   return true;
+};
+
+/**
+ * Whether a version string names a non-release build. Mirrors the management
+ * server's version.IsDevelopmentVersion: the literal "development" plus the
+ * "ci-" and "dev-" prefixes it stamps on snapshot builds ("ci-7470fbdd").
+ *
+ * Such a string carries no release to compare against. releaseParts() reads
+ * its leading word as 0, so without this check every snapshot install would
+ * see the current release as newer and nag about an update forever.
+ */
+export const isDevelopmentVersion = (version: string): boolean => {
+  const bare = version.trim().replace(/^v/i, "");
+  return (
+    bare.startsWith("development") ||
+    bare.startsWith("ci-") ||
+    bare.startsWith("dev-")
+  );
+};
+
+/**
+ * Returns true when `latest` is a strictly newer release than `current` — i.e.
+ * an update is available. Only release components decide: an enterprise build
+ * ("0.77.0+enterprise.1") is up to date against the "0.77.0" it was built from,
+ * matching how the management server evaluates it server-side.
+ *
+ * Development and snapshot builds never report an update, in either position.
+ */
+export const isNewerVersion = (current: string, latest: string): boolean => {
+  if (!current || !latest) return false;
+  if (isDevelopmentVersion(current) || isDevelopmentVersion(latest)) {
+    return false;
+  }
+
+  const currentParts = releaseParts(current);
+  const latestParts = releaseParts(latest);
+
+  for (let i = 0; i < Math.max(currentParts.length, latestParts.length); i++) {
+    const currentPart = currentParts[i] || 0;
+    const latestPart = latestParts[i] || 0;
+
+    if (latestPart > currentPart) return true;
+    if (latestPart < currentPart) return false;
+  }
+
+  return false;
 };
 
 /**

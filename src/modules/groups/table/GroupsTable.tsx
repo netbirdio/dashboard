@@ -1,3 +1,5 @@
+import { Checkbox } from "@components/Checkbox";
+import FullTooltip from "@components/FullTooltip";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
@@ -11,27 +13,80 @@ import {
   TableFilterDef,
   TableFiltersButton,
 } from "@components/table/TableFilters";
-import { ColumnDef, SortingState } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  RowSelectionState,
+  SortingState,
+} from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
 import { Layers3Icon } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
+import DNSZoneIcon from "@/assets/icons/DNSZoneIcon";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { AddGroupButton } from "@/components/ui/AddGroupButton";
 import { GroupProvider } from "@/contexts/GroupProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { GroupsMultiSelect } from "@/modules/groups/GroupsMultiSelect";
 import GroupsActionCell from "@/modules/groups/table/GroupsActionCell";
 import GroupsCountCell from "@/modules/groups/table/GroupsCountCell";
 import GroupsNameCell from "@/modules/groups/table/GroupsNameCell";
-import useGroupsUsage, { GroupUsage } from "@/modules/groups/useGroupsUsage";
-import DNSZoneIcon from "@/assets/icons/DNSZoneIcon";
+import useGroupsUsage, {
+  canDeleteGroup,
+  groupDeleteDisabledReason,
+  GroupUsage,
+  isGroupInUse,
+} from "@/modules/groups/useGroupsUsage";
 
 export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <div className={"min-w-[20px] max-w-[20px]"}>
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected()
+              ? true
+              : table.getIsSomePageRowsSelected()
+              ? "indeterminate"
+              : false
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          disabled={!table.getRowModel().rows.some((row) => row.getCanSelect())}
+          aria-label="Select all groups on this page"
+        />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const canSelect = row.getCanSelect();
+      const disabledReason = groupDeleteDisabledReason(row.original);
+      return (
+        <div className={"min-w-[20px] max-w-[20px]"}>
+          <FullTooltip
+            content={<div className={"text-xs max-w-xs"}>{disabledReason}</div>}
+            interactive={false}
+            disabled={canSelect || !disabledReason}
+          >
+            <Checkbox
+              checked={row.getIsSelected() && canSelect}
+              variant={"tableCell"}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              disabled={!canSelect}
+              aria-label={`Select ${row.original.name}`}
+            />
+          </FullTooltip>
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -240,18 +295,7 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       return <DataTableHeader column={column}>In Use</DataTableHeader>;
     },
     sortingFn: "basic",
-    accessorFn: (row) => {
-      return (
-        row.peers_count > 0 ||
-        row.nameservers_count > 0 ||
-        row.policies_count > 0 ||
-        row.routes_count > 0 ||
-        row.setup_keys_count > 0 ||
-        row.users_count > 0 ||
-        row.resources_count > 0 ||
-        row.zones_count > 0
-      );
-    },
+    accessorFn: isGroupInUse,
   },
   {
     accessorKey: "id",
@@ -275,7 +319,34 @@ type Props = {
 
 export default function GroupsTable({ headingTarget }: Readonly<Props>) {
   const { data: groups, isLoading } = useGroupsUsage();
+  const { permission } = usePermissions();
   const path = usePathname();
+  const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
+
+  const selectedGroups = useMemo(
+    () =>
+      groups?.filter(
+        (group) => canDeleteGroup(group) && group.id && selectedRows[group.id],
+      ) ?? [],
+    [groups, selectedRows],
+  );
+
+  // Drop selections whose group has been deleted or has picked up a dependency
+  // since it was checked, so a group can never silently re-enter the batch when
+  // it becomes deletable again. Returning `prev` untouched matters: `groups` is
+  // recomputed from seven endpoints, so this runs on every revalidation.
+  useEffect(() => {
+    setSelectedRows((prev) => {
+      const selectedIds = Object.keys(prev);
+      if (selectedIds.length === 0) return prev;
+      const deletableIds = new Set(
+        groups?.filter(canDeleteGroup).map((group) => group.id),
+      );
+      const remaining = selectedIds.filter((id) => deletableIds.has(id));
+      if (remaining.length === selectedIds.length) return prev;
+      return Object.fromEntries(remaining.map((id) => [id, prev[id]]));
+    });
+  }, [groups]);
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -322,43 +393,58 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
   );
 
   return (
-    <DataTable
-      headingTarget={headingTarget}
-      text={"Groups"}
-      sorting={sorting}
-      isLoading={isLoading}
-      setSorting={setSorting}
-      columns={GroupsTableColumns}
-      data={groups}
-      initialPageSize={25}
-      showResetFilterButton={false}
-      searchPlaceholder={"Search group by name..."}
-      rightSide={() => <AddGroupButton />}
-      aboveTable={(table) => (
-        <TableFilterChips table={table} filters={filterDefs} />
-      )}
-      columnVisibility={{
-        in_use: false,
-        search: false,
-      }}
-    >
-      {(table) => (
-        <>
-          <TableFiltersButton
-            table={table}
-            filters={filterDefs}
-            disabled={groups?.length == 0}
-          />
-          <DataTableResetFilterButton
-            table={table}
-            onClick={() => {
-              table.setPageIndex(0);
-              table.resetColumnFilters();
-              table.resetGlobalFilter();
-            }}
-          />
-        </>
-      )}
-    </DataTable>
+    <>
+      <GroupsMultiSelect
+        selectedGroups={selectedGroups}
+        onCanceled={() => setSelectedRows({})}
+      />
+      <DataTable
+        headingTarget={headingTarget}
+        rowSelection={selectedRows}
+        setRowSelection={setSelectedRows}
+        enableRowSelection={(row) =>
+          !!permission.groups.delete && canDeleteGroup(row.original)
+        }
+        useRowId={true}
+        resetRowSelectionOnFilter={true}
+        text={"Groups"}
+        sorting={sorting}
+        isLoading={isLoading}
+        setSorting={setSorting}
+        columns={GroupsTableColumns}
+        data={groups}
+        initialPageSize={25}
+        showResetFilterButton={false}
+        searchPlaceholder={"Search group by name..."}
+        rightSide={() => <AddGroupButton />}
+        aboveTable={(table) => (
+          <TableFilterChips table={table} filters={filterDefs} />
+        )}
+        columnVisibility={{
+          select: !!permission.groups.delete,
+          in_use: false,
+          search: false,
+        }}
+      >
+        {(table) => (
+          <>
+            <TableFiltersButton
+              table={table}
+              filters={filterDefs}
+              disabled={groups?.length == 0}
+            />
+            <DataTableResetFilterButton
+              table={table}
+              onClick={() => {
+                table.setPageIndex(0);
+                table.resetColumnFilters();
+                table.resetGlobalFilter();
+                setSelectedRows({});
+              }}
+            />
+          </>
+        )}
+      </DataTable>
+    </>
   );
 }

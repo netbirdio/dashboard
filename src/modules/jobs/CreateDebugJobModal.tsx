@@ -4,6 +4,7 @@ import {
   FileText,
   PlusCircle,
   Shield,
+  UploadCloud,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -19,6 +20,13 @@ import {
 } from "@/components/modal/Modal";
 import ModalHeader from "@/components/modal/ModalHeader";
 import { notify } from "@/components/Notification";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/Select";
 import Separator from "@/components/Separator";
 import { Workload } from "@/interfaces/Job";
 import { useApiCall } from "@/utils/api";
@@ -36,10 +44,15 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
   const [bundleForTime, setBundleForTime] = useState<string>("");
   const [logFileCount, setLogFileCount] = useState<string>("10");
   const [anonymize, setAnonymize] = useState<boolean>(false);
+  const [anonymizeLevel, setAnonymizeLevel] = useState<"default" | "strict">(
+    "default",
+  );
+  const [uploadUrl, setUploadUrl] = useState<string>("");
 
   const isValid = useMemo(() => {
     let validBundleFor = true;
     let validLogFileCount = true;
+    let validUploadUrl = true;
 
     const logFileCountNumber = Number(logFileCount);
     const bundleForTimeNumber = Number(bundleForTime);
@@ -50,8 +63,18 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
 
     validLogFileCount = logFileCountNumber >= 1 && logFileCountNumber <= 1000;
 
-    return validLogFileCount && validBundleFor;
-  }, [bundleForTime, logFileCount]);
+    const trimmedUploadUrl = uploadUrl.trim();
+    if (trimmedUploadUrl) {
+      try {
+        const parsed = new URL(trimmedUploadUrl);
+        validUploadUrl = parsed.protocol === "https:" && parsed.host !== "";
+      } catch {
+        validUploadUrl = false;
+      }
+    }
+
+    return validLogFileCount && validBundleFor && validUploadUrl;
+  }, [bundleForTime, logFileCount, uploadUrl]);
 
   const createDebugJob = async () => {
     notify({
@@ -64,11 +87,13 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
             type: "bundle",
             parameters: {
               anonymize,
+              anonymize_level: anonymize ? anonymizeLevel : undefined,
               bundle_for: bundleForTimeEnabled,
               bundle_for_time: bundleForTimeEnabled
                 ? Number(bundleForTime)
                 : undefined,
               log_file_count: logFileCount ? Number(logFileCount) : 10,
+              upload_url: uploadUrl.trim() ? uploadUrl.trim() : undefined,
             },
           },
         })
@@ -172,6 +197,55 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
           }
           helpText="Remove sensitive information (IP addresses, domains etc.) before creating the debug bundle."
         />
+
+        {/* Anonymization Level */}
+        {anonymize && (
+          <div className="flex justify-between gap-6">
+            <div className={"max-w-[300px]"}>
+              <Label>Anonymization Level</Label>
+              <HelpText>
+                Default keeps internal (private) IP ranges readable; Strict also
+                anonymizes private, CGNAT and link-local addresses.
+              </HelpText>
+            </div>
+
+            <Select
+              value={anonymizeLevel}
+              onValueChange={(v) => setAnonymizeLevel(v as "default" | "strict")}
+            >
+              <SelectTrigger className="w-[220px]">
+                <div className="flex items-center gap-3">
+                  <Shield size={15} className="text-nb-gray-300 shrink-0" />
+                  <SelectValue placeholder="Select level..." />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default">Default</SelectItem>
+                <SelectItem value="strict">Strict</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Upload URL */}
+        <div className="flex justify-between gap-6">
+          <div className={"max-w-[300px]"}>
+            <Label>Upload URL (optional)</Label>
+            <HelpText>
+              Service the peer requests an upload URL from. Leave empty to use
+              the default upload server. Must be an https URL.
+            </HelpText>
+          </div>
+
+          <Input
+            type="text"
+            placeholder={"https://upload.debug.netbird.io"}
+            value={uploadUrl}
+            onChange={(e) => setUploadUrl(e.target.value)}
+            maxWidthClass="w-[220px]"
+            customPrefix={<UploadCloud size={16} className="text-nb-gray-300" />}
+          />
+        </div>
       </div>
 
       <ModalFooter className="items-center">

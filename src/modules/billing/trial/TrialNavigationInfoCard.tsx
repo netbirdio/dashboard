@@ -1,13 +1,13 @@
 import Button from "@components/Button";
 import { cn } from "@utils/helpers";
-import { useRouter } from "next/navigation";
+import { useGuardedRouter } from "@utils/navigation-guard";
 import * as React from "react";
 import { useTrial } from "@/cloud/cloud-hooks/useTrial";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { PlanIcon } from "@/modules/billing/PlanIcon";
 
 export const TrialNavigationInfoCard = () => {
-  const router = useRouter();
+  const router = useGuardedRouter();
   const { isOwnerOrAdmin } = useLoggedInUser();
   const { trialDaysRemaining } = useTrial();
 

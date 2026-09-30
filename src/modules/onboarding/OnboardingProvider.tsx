@@ -10,14 +10,15 @@ import { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { submitHubspotForm } from "@/cloud/analytics/Hubspot";
 import { HubspotFormField, useAnalytics } from "@/contexts/AnalyticsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
-import { Account } from "@/interfaces/Account";
-import { Network } from "@/interfaces/Network";
-import type { Peer } from "@/interfaces/Peer";
 import {
   AGENT_NETWORK_SIGNUP_SOURCE,
   SIGNUP_SOURCE_LOCAL_STORAGE_KEY,
 } from "@/hooks/useSignupSource";
+import { Account } from "@/interfaces/Account";
+import { Network } from "@/interfaces/Network";
+import type { Peer } from "@/interfaces/Peer";
 import { useAccount } from "@/modules/account/useAccount";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { AgentNetworkOnboarding } from "@/modules/onboarding/agent-network/AgentNetworkOnboarding";
@@ -58,7 +59,16 @@ export const OnboardingProvider = ({
   onSurveySubmit,
   domainCategory,
 }: Props) => {
-  const { data: peers } = useFetchApi<Peer[]>("/peers");
+  const { permission } = usePermissions();
+  // Onboarding only cares whether the account has peers yet. Roles without
+  // peers read (agent_network_admin, usage_viewer) would just collect a 403
+  // toast on every page, so skip the call for them entirely.
+  const { data: peers } = useFetchApi<Peer[]>(
+    "/peers",
+    true,
+    true,
+    permission.peers.read,
+  );
   const accountRequest = useApiCall<Account>("/accounts", true);
   const account = useAccount();
   const router = useRouter();
@@ -120,7 +130,10 @@ export const OnboardingProvider = ({
     // deciding, so a slow mode fetch can't briefly show the regular form to an
     // account that turns out to be Agent Network-only via config.
     if (agentNetworkModeLoading) return false;
-    if (!isNetBirdCloud()) return false;
+    // The regular flow shows on both cloud and self-hosted, but the signup
+    // survey relies on a JWT domain claim self-hosted IdPs don't emit, so it
+    // only counts toward showing (and is only rendered) on cloud — self-hosted
+    // starts directly at the intent step.
     const isSignupFormPending = isNetBirdCloud()
       ? !!account?.onboarding?.signup_form_pending
       : false;

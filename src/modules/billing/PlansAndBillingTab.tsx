@@ -159,7 +159,9 @@ const PlansAndBillingTabContent = () => {
           />
         </Breadcrumbs>
 
-        <div className={"flex items-center justify-between max-w-4xl mb-4"}>
+        <div
+          className={"flex items-start justify-between -mt-1 max-w-4xl mb-4"}
+        >
           <h1>Plans & Billing</h1>
         </div>
 

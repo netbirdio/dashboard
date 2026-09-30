@@ -180,6 +180,22 @@ export default function Notification<T>({
       >
         <div className={"flex items-center gap-4"}>
           <div
+            data-testid={"notification-icon"}
+            // Whether a toast reads as a success or a failure is carried by
+            // the tile's colour alone, which a test can only assert as a
+            // tailwind class. Naming the state says the same thing without
+            // pinning the palette. "success" is the default green tick
+            // specifically, so a caller that supplied its own colour is
+            // "custom" rather than folded in with it.
+            data-variant={
+              loading
+                ? "loading"
+                : error
+                ? "error"
+                : backgroundColor || icon
+                ? "custom"
+                : "success"
+            }
             className={classNames(
               "h-8 w-8  shadow-sm text-white flex items-center justify-center rounded-md shrink-0",
               loading

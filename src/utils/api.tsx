@@ -31,7 +31,7 @@ type RequestOptions = {
   origin?: string;
   globalParams?: Params;
   ignoreGlobalParams?: boolean;
-  refreshInterval?: number;
+  refreshInterval?: number | ((latestData: any) => number);
   blob?: boolean;
   shouldRetryOnError?: boolean;
 };
@@ -223,6 +223,16 @@ export function useApiCall<T>(
   };
 }
 
+// Which screen a blocked or unapproved user belongs on is an app-level routing
+// decision, and it is made in UserProfileProvider from the responses rather
+// than here. Acting on whichever refused call landed first got it wrong: only
+// /users/current can tell a pending user from a blocked one on current
+// management, and only it names the owner who can approve them.
+//
+// Nothing else in the app can load for such a user either way, so the calls
+// that ignore errors still surface theirs — ignoreError means "do not raise a
+// toast for this call", not "swallow the reason the dashboard is empty".
+
 export function useApiErrorHandling(ignoreError = false) {
   const { login } = useOidc();
   const currentPath = usePathname();
@@ -245,18 +255,14 @@ export function useApiErrorHandling(ignoreError = false) {
       setError(err);
     }
 
-    // Handle user blocked/pending approval responses
+    // UserProfileProvider renders the screen for a blocked or unapproved user,
+    // so these must not also raise the error boundary over the top of it. The
+    // wording is management's — resolveRefusedUser there reads the same
+    // messages to decide which of the two screens it is.
     if (
       err.code == 403 &&
-      (err.message?.toLowerCase().includes("blocked") ||
-        err.message?.toLowerCase().includes("pending"))
+      /pending approval|blocked/i.test(err.message ?? "")
     ) {
-      const params = new URLSearchParams({
-        code: err.code.toString(),
-        message: encodeURIComponent(err.message),
-        type: "user-status",
-      });
-      window.location.href = `/error?${params.toString()}`;
       return Promise.reject(err);
     }
 

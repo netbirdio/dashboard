@@ -1,3 +1,5 @@
+import { DomainValidationStatus } from "@/interfaces/Account";
+
 export interface GoogleWorkspaceIntegration {
   id: string;
   customer_id: string;
@@ -62,12 +64,6 @@ export interface EnterpriseConnectionDomain {
   validation_token: string;
   validation_status: DomainValidationStatus;
   validation_last_updated: Date;
-}
-
-export enum DomainValidationStatus {
-  PENDING = "pending",
-  VERIFIED = "verified",
-  FAILED = "failed",
 }
 
 export interface SSOConnection {

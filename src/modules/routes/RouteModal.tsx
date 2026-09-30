@@ -26,8 +26,7 @@ import InputDomain, { domainReducer } from "@components/ui/InputDomain";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { IconDirectionSign } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
-import { normalizeHostCIDR } from "@utils/ip";
-import cidr from "ip-cidr";
+import { isValidIP, normalizeHostCIDR } from "@utils/ip";
 import { uniqBy } from "lodash";
 import {
   ArrowDownWideNarrow,
@@ -334,7 +333,7 @@ export function RouteModalContent({
    */
   const cidrError = useMemo(() => {
     if (networkRange == "") return "";
-    const validCIDR = cidr.isValidAddress(networkRange);
+    const validCIDR = isValidIP(networkRange);
     if (!validCIDR) return "Please enter a valid IP or CIDR, e.g., 192.168.1.1, 192.168.1.0/24 or 2001:db8::/64";
   }, [networkRange]);
 

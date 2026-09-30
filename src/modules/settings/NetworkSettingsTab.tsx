@@ -7,22 +7,22 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
+import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
 import { useHasChanges } from "@hooks/useHasChanges";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { validator } from "@utils/helpers";
+import { isValidCIDR } from "@utils/ip";
 import { isNetBirdCloud } from "@utils/netbird";
-import cidr from "ip-cidr";
 import { ExternalLinkIcon, GlobeIcon, NetworkIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { TrafficEventSetting } from "@/cloud/traffic-events/TrafficEventSetting";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
-import { useGroups } from "@/contexts/GroupsProvider";
-import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
 
 type Props = {
   account: Account;
@@ -164,7 +164,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
     }
 
     try {
-      const validCIDR = cidr.isValidCIDR(networkRange);
+      const validCIDR = isValidCIDR(networkRange);
       if (!validCIDR) {
         return "Please enter a valid IPv4 CIDR range, e.g. 100.64.0.0/16 or 192.168.1.0/24";
       }
@@ -175,7 +175,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 
   const networkRangeV6Error = useMemo(() => {
     if (networkRangeV6 == "") return "";
-    if (!networkRangeV6.includes(":") || !cidr.isValidCIDR(networkRangeV6)) {
+    if (!networkRangeV6.includes(":") || !isValidCIDR(networkRangeV6)) {
       return "Please enter a valid IPv6 CIDR range, e.g. fd00:1234::/64";
     }
     const prefixLen = parseInt(networkRangeV6.split("/")[1], 10);
@@ -200,7 +200,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
             active
           />
         </Breadcrumbs>
-        <div className={"flex items-start justify-between"}>
+        <div className={"flex items-start justify-between -mt-1"}>
           <div>
             <h1>Networks</h1>
           </div>

@@ -8,6 +8,7 @@ import { ArrowRightIcon, RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { PendingApproval } from "@/modules/users/PendingApproval";
 
 const config = loadConfig();
 
@@ -57,18 +58,26 @@ export default function ErrorPage() {
     error?.code === 403 &&
     error?.message?.toLowerCase().includes("pending approval");
 
+  // Waiting for an approval is an expected part of signing up, so it gets a
+  // welcoming screen of its own instead of the error treatment.
+  if (isPendingApproval) {
+    return (
+      <PendingApproval
+        error={error}
+        onRefresh={handleRetry}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
   const getTitle = () => {
     if (isBlockedUser) return "User Account Blocked";
-    if (isPendingApproval) return "User Approval Pending";
     return "Access Error";
   };
 
   const getDescription = () => {
     if (isBlockedUser) {
       return "Your access has been blocked by the NetBird account administrator, possibly due to new user approval requirements or security policies. Please contact your administrator to regain access.";
-    }
-    if (isPendingApproval) {
-      return "Your account is pending approval from an administrator. Please wait for approval before accessing the dashboard.";
     }
     return "An error occurred while trying to access the dashboard. Please try again or contact your administrator.";
   };
@@ -98,7 +107,7 @@ export default function ErrorPage() {
       </Paragraph>
 
       <div className="mt-5 space-y-3">
-        {!isBlockedUser && !isPendingApproval && (
+        {!isBlockedUser && (
           <Button variant="default-outline" size="sm" onClick={handleRetry}>
             <RefreshCw size={16} className="mr-2" />
             Try Again
@@ -106,7 +115,7 @@ export default function ErrorPage() {
         )}
 
         <Button variant="primary" size="sm" onClick={handleLogout}>
-          {isBlockedUser || isPendingApproval ? "Sign Out" : "Logout"}
+          {isBlockedUser ? "Sign Out" : "Logout"}
           <ArrowRightIcon size={16} />
         </Button>
       </div>
