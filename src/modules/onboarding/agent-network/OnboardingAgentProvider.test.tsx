@@ -102,6 +102,24 @@ describe("OnboardingAgentProvider", () => {
     expect(ai.addPolicy).toHaveBeenCalledTimes(1);
   });
 
+  it("reports a failure when no group can start the policy", async () => {
+    groups = [{ id: "g-dev", name: "Developers" }];
+    await renderStep();
+    expect(
+      screen.getByTestId("agent-network-starter-policy-failed"),
+    ).toBeTruthy();
+    expect(ai.addPolicy).not.toHaveBeenCalled();
+  });
+
+  it("waits for the groups before reporting a missing one", async () => {
+    groups = undefined as unknown as typeof groups;
+    await renderStep();
+    expect(screen.getByText("Creating a policy…")).toBeTruthy();
+    expect(
+      screen.queryByTestId("agent-network-starter-policy-failed"),
+    ).toBeNull();
+  });
+
   it("waits for the policy list before creating a policy", async () => {
     ai.policiesLoaded = false;
     await renderStep();

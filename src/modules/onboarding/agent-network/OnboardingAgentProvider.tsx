@@ -156,6 +156,9 @@ function useStarterPolicy(): {
     groups?.find((g) => g.name === "All");
   const provider = providers[0];
   const needed = policiesLoaded && policies.length === 0;
+  // Once the groups are read, an account with neither group has nothing to
+  // start the policy from.
+  const noSource = !!groups && !source?.id;
 
   // The provider hands out a new callback on every render; the POST has to
   // follow what it creates, not the renders.
@@ -188,5 +191,9 @@ function useStarterPolicy(): {
       });
   }, [needed, failed, provider, source?.id, source?.name]);
 
-  return { policy: policies[0], failed, retry: () => setFailed(false) };
+  return {
+    policy: policies[0],
+    failed: failed || (needed && noSource),
+    retry: () => setFailed(false),
+  };
 }
