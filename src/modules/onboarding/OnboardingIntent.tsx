@@ -104,21 +104,28 @@ type IntentCardProps = {
     icon: React.ReactNode;
     onClick: () => void;
     recommended?: boolean;
+    // recommendedTooltip explains the recommendation; the default speaks to
+    // the choices made in the signup form.
+    recommendedTooltip?: React.ReactNode;
+    "data-testid"?: string;
 };
 
-const IntentCard = ({
+export const IntentCard = ({
                         title,
                         description,
                         icon,
                         onClick,
                         recommended,
+                        recommendedTooltip,
+                        "data-testid": dataTestId,
                     }: IntentCardProps) => {
     return (
         <button
             className={
-                "px-6 py-6 flex items-start flex-col relative hover:bg-nb-gray-920 transition-all group first:border-b border-nb-gray-900"
+                "px-6 py-6 flex items-start flex-col relative hover:bg-nb-gray-920 transition-all group border-b last:border-b-0 border-nb-gray-900"
             }
             onClick={onClick}
+            data-testid={dataTestId}
         >
             <div className={"flex gap-6"}>
                 <div
@@ -141,8 +148,12 @@ const IntentCard = ({
                                 <FullTooltip
                                     content={
                                         <div className={"text-xs max-w-xs"}>
-                                            Based on your previous choices, we recommend starting with{" "}
-                                            {title}. You can always combine both options later.
+                                            {recommendedTooltip ?? (
+                                                <>
+                                                    Based on your previous choices, we recommend starting with{" "}
+                                                    {title}. You can always combine both options later.
+                                                </>
+                                            )}
                                         </div>
                                     }
                                 >

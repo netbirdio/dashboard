@@ -4,6 +4,7 @@ import {
   ReverseProxyClusterType,
 } from "@/interfaces/ReverseProxy";
 import {
+  checklistFix,
   formatElapsed,
   liveChecklist,
   managedGatewayStages,
@@ -45,6 +46,27 @@ describe("resolveGatewayEntry", () => {
         managedExists: true,
         settingsEndpoint: "brave-otter.gateway.netbird.io",
       }),
+    ).toEqual({ kind: "managed" });
+  });
+
+  it("skips a managed gateway that is ready already", () => {
+    // Going back over a ready gateway must not land on a screen that moves
+    // the operator forward again.
+    expect(
+      resolveGatewayEntry({
+        ...loaded,
+        managedExists: true,
+        managedReady: true,
+        settingsEndpoint: "brave-otter.gateway.netbird.io",
+      }),
+    ).toEqual({ kind: "configured" });
+    expect(
+      resolveGatewayEntry({
+        ...loaded,
+        managedExists: true,
+        managedReady: true,
+      }),
+      "a ready gateway still waits for the settings to carry its endpoint",
     ).toEqual({ kind: "managed" });
   });
 
@@ -217,5 +239,34 @@ describe("liveChecklist", () => {
       liveChecklist({ ...base, peers: [{ connected: true }] }).peer,
       "a peer without groups should not count",
     ).toBe(false);
+  });
+});
+
+describe("checklistFix", () => {
+  const newAccount = { policyStep: false, deviceConnected: true };
+  const existingAccount = { policyStep: true, deviceConnected: true };
+
+  it("sends a missing provider to the provider step", () => {
+    expect(checklistFix("provider", newAccount)).toBe("provider");
+    expect(checklistFix("provider", existingAccount)).toBe("provider");
+  });
+
+  it("sends a missing policy to the step that creates it", () => {
+    expect(
+      checklistFix("policy", newAccount),
+      "without a policy step the provider step creates the policy",
+    ).toBe("provider");
+    expect(checklistFix("policy", existingAccount)).toBe("policy");
+  });
+
+  it("sends a missing peer to the device step until a device is connected", () => {
+    expect(
+      checklistFix("peer", { ...newAccount, deviceConnected: false }),
+    ).toBe("device");
+    expect(
+      checklistFix("peer", existingAccount),
+      "a connected device outside the policy needs the policy's groups",
+    ).toBe("policy");
+    expect(checklistFix("peer", newAccount)).toBe("provider");
   });
 });

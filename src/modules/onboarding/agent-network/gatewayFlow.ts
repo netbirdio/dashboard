@@ -9,12 +9,16 @@ import type {
   AIProvider,
 } from "@/modules/agent-network/data/mockData";
 import { MANAGED_PROXY_STATE } from "@/modules/agent-network/managedProxyState";
+import {
+  AGENT_STEP,
+  AgentStep,
+} from "@/modules/onboarding/agent-network/agentNetworkSteps";
 
 // Seconds still provisioning before the managed view says the rollout is slow.
 // It is only a hint: the client never decides a rollout has failed.
 export const MANAGED_SLOW_HINT_AFTER_S = 120;
-// Seconds without the proxy registering before the self-deploy view points at
-// the usual causes.
+// Seconds without a newly deployed proxy registering before the gateway step
+// points at the usual causes.
 export const SELF_DEPLOY_HINT_AFTER_S = 300;
 
 // privateAccountClusters returns the proxies the account runs itself that can
@@ -35,9 +39,10 @@ export function privateAccountClusters(
 
 export type GatewayEntry =
   | { kind: "loading" }
-  // A managed deployment exists: show its state and poll it, never POST.
+  // A managed deployment is not ready yet: show its state and poll it, never
+  // POST.
   | { kind: "managed" }
-  // The account already has an endpoint that is not managed: skip the step.
+  // The account's endpoint is served already: skip the step.
   | { kind: "configured" }
   | { kind: "choice" };
 
@@ -48,10 +53,13 @@ export type GatewayEntry =
 export function resolveGatewayEntry(input: {
   loading: boolean;
   managedExists: boolean;
+  managedReady?: boolean;
   settingsEndpoint?: string;
 }): GatewayEntry {
   if (input.loading) return { kind: "loading" };
-  if (input.managedExists) return { kind: "managed" };
+  if (input.managedExists && !(input.managedReady && input.settingsEndpoint)) {
+    return { kind: "managed" };
+  }
   if (input.settingsEndpoint) return { kind: "configured" };
   return { kind: "choice" };
 }
@@ -134,4 +142,20 @@ export function liveChecklist(input: {
         (peer.groups ?? []).some((g) => !!g.id && sourceGroups.has(g.id)),
     ),
   };
+}
+
+export type ChecklistItem = keyof LiveChecklist;
+
+// checklistFix names the onboarding step that fixes an unmet checklist item.
+// The policy step fixes the policy where the flow has one; otherwise the
+// provider step, which creates the policy. A missing peer is the device step's
+// to fix until a device is connected, and then the policy's source groups.
+export function checklistFix(
+  item: ChecklistItem,
+  flow: { policyStep: boolean; deviceConnected: boolean },
+): AgentStep {
+  const policy = flow.policyStep ? AGENT_STEP.POLICY : AGENT_STEP.PROVIDER;
+  if (item === "provider") return AGENT_STEP.PROVIDER;
+  if (item === "policy") return policy;
+  return flow.deviceConnected ? policy : AGENT_STEP.DEVICE;
 }

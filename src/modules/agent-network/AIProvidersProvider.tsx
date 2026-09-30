@@ -561,6 +561,9 @@ function policyLimitsToAPI(l: PolicyLimits): APIPolicyLimits {
 type AIProvidersContextValue = {
   providers: AIProvider[];
   policies: AgentPolicy[];
+  // policiesLoaded tells an account with no policies from a policy list that
+  // has not been read yet.
+  policiesLoaded: boolean;
   guardrails: AgentGuardrail[];
   budgetRules: AgentBudgetRule[];
   budgetRulesLoading: boolean;
@@ -1202,6 +1205,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     () => ({
       providers,
       policies,
+      policiesLoaded: apiPolicies !== undefined,
       guardrails,
       budgetRules,
       budgetRulesLoading,
@@ -1235,6 +1239,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     [
       providers,
       policies,
+      apiPolicies,
       guardrails,
       budgetRules,
       budgetRulesLoading,

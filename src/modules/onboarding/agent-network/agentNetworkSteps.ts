@@ -3,7 +3,6 @@
 // mid-onboarding onto a different one.
 export const AGENT_STEP = {
   SIGNUP: "signup",
-  WELCOME: "welcome",
   DEVICE: "device",
   GATEWAY: "gateway",
   PROVIDER: "provider",
@@ -16,10 +15,16 @@ export type AgentStep = (typeof AGENT_STEP)[keyof typeof AGENT_STEP];
 
 const ALL_STEPS = Object.values(AGENT_STEP) as AgentStep[];
 
+// Steps the flow no longer runs, by saved name, and the step that took over.
+const RETIRED_STEPS = new Map<string, AgentStep>([
+  ["welcome", AGENT_STEP.DEVICE],
+]);
+
 // The flow as it was saved before steps had names, by 1-based position.
+// Position 2 was the welcome step.
 const LEGACY_STEPS: AgentStep[] = [
   AGENT_STEP.SIGNUP,
-  AGENT_STEP.WELCOME,
+  AGENT_STEP.DEVICE,
   AGENT_STEP.DEVICE,
   AGENT_STEP.PROVIDER,
   AGENT_STEP.POLICY,
@@ -28,14 +33,27 @@ const LEGACY_STEPS: AgentStep[] = [
 ];
 
 // agentSteps lists the steps the flow runs. The gateway step only runs where
-// the account can get a NetBird-managed gateway; see OnboardingProvider.
-export function agentSteps(withGateway: boolean): AgentStep[] {
-  if (withGateway) return ALL_STEPS;
-  return ALL_STEPS.filter((s) => s !== AGENT_STEP.GATEWAY);
+// the account can get a NetBird-managed gateway, and the policy step only
+// where the provider step does not create the policy; see OnboardingProvider.
+export function agentSteps(
+  withGateway: boolean,
+  withPolicy = true,
+): AgentStep[] {
+  return ALL_STEPS.filter(
+    (s) =>
+      (withGateway || s !== AGENT_STEP.GATEWAY) &&
+      (withPolicy || s !== AGENT_STEP.POLICY),
+  );
 }
 
 export function isAgentStep(value: unknown): value is AgentStep {
   return typeof value === "string" && (ALL_STEPS as string[]).includes(value);
+}
+
+// stepAfterSignup is where the flow continues once the signup form is done,
+// and the earliest step going back can reach.
+export function stepAfterSignup(steps: AgentStep[]): AgentStep {
+  return steps[steps.indexOf(AGENT_STEP.SIGNUP) + 1] ?? AGENT_STEP.END;
 }
 
 // storedAgentStep reads the saved step: its name when there is one, otherwise
@@ -50,6 +68,8 @@ export function storedAgentStep(
   withLegacyPosition = true,
 ): AgentStep {
   if (isAgentStep(saved.agent_network_step)) return saved.agent_network_step;
+  const retired = RETIRED_STEPS.get(saved.agent_network_step ?? "");
+  if (retired) return retired;
   if (!withLegacyPosition) return AGENT_STEP.SIGNUP;
   const position = Number.isFinite(saved.step) ? Math.trunc(saved.step!) : 1;
   const index = Math.min(Math.max(position, 1), LEGACY_STEPS.length) - 1;
@@ -65,7 +85,7 @@ export function initialAgentStep(
   signupPending: boolean,
 ): AgentStep {
   if (signupPending) return AGENT_STEP.SIGNUP;
-  if (saved === AGENT_STEP.SIGNUP) return AGENT_STEP.WELCOME;
+  if (saved === AGENT_STEP.SIGNUP) return stepAfterSignup(steps);
   if (steps.includes(saved)) return saved;
   const later = ALL_STEPS.slice(ALL_STEPS.indexOf(saved) + 1);
   return later.find((s) => steps.includes(s)) ?? AGENT_STEP.END;

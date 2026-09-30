@@ -30,10 +30,6 @@ export function managedProxyPollInterval(
   }
 }
 
-export function isKnownManagedProxyState(state: string): boolean {
-  return (Object.values(MANAGED_PROXY_STATE) as string[]).includes(state);
-}
-
 export type ProvisionOutcome =
   // 200 or 202: a deployment exists, in whatever state it reports.
   | { kind: "deployment"; proxy: AgentNetworkManagedProxy }

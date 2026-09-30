@@ -19,15 +19,15 @@ import {
   AgentStep,
   agentSteps,
   initialAgentStep,
+  stepAfterSignup,
 } from "@/modules/onboarding/agent-network/agentNetworkSteps";
-import { ownDeviceConnected } from "@/modules/onboarding/agent-network/existingAccountOnboarding";
+import { ownConnectedDevice } from "@/modules/onboarding/agent-network/existingAccountOnboarding";
 import { OnboardingAgentConfigure } from "@/modules/onboarding/agent-network/OnboardingAgentConfigure";
 import { OnboardingAgentDevice } from "@/modules/onboarding/agent-network/OnboardingAgentDevice";
 import { OnboardingAgentEnd } from "@/modules/onboarding/agent-network/OnboardingAgentEnd";
 import { OnboardingAgentGateway } from "@/modules/onboarding/agent-network/OnboardingAgentGateway";
 import { OnboardingAgentPolicy } from "@/modules/onboarding/agent-network/OnboardingAgentPolicy";
 import { OnboardingAgentProvider } from "@/modules/onboarding/agent-network/OnboardingAgentProvider";
-import { OnboardingAgentWelcome } from "@/modules/onboarding/agent-network/OnboardingAgentWelcome";
 import { useAgentNetworkFirstRunSetup } from "@/modules/onboarding/agent-network/useAgentNetworkFirstRunSetup";
 
 // The flow is a flat sequence (no intent branching like the regular
@@ -48,7 +48,8 @@ type Props = {
   // NetBird Cloud signups where a managed gateway can be offered.
   gatewayStep: boolean;
   // existingAccount marks an account that existed before its Agent Network
-  // onboarding: it already has devices, groups and policies of its own.
+  // onboarding: it already has devices, groups and policies of its own, so it
+  // creates its policy on the policy step rather than getting one made for it.
   existingAccount: boolean;
   // signupPending mirrors the account's signup_form_pending flag. When true the
   // flow opens on the signup step; when false that step is skipped.
@@ -70,7 +71,9 @@ export const AgentNetworkOnboarding = ({
   onSkip,
   onFinish,
 }: Props) => {
-  const steps = agentSteps(gatewayStep);
+  const steps = agentSteps(gatewayStep, existingAccount);
+  const policyStep = steps.includes(AGENT_STEP.POLICY);
+  const firstStep = stepAfterSignup(steps);
   const [{ step, back }, dispatch] = useReducer((_: Nav, next: Nav) => next, {
     step: initialAgentStep(initialStep, steps, signupPending),
     back: false,
@@ -80,9 +83,10 @@ export const AgentNetworkOnboarding = ({
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const { loggedInUser } = useLoggedInUser();
   const { mutate } = useSWRConfig();
-  const deviceConnected = existingAccount
-    ? ownDeviceConnected(peers, loggedInUser?.id)
-    : (peers?.length ?? 0) > 0;
+  const device = existingAccount
+    ? ownConnectedDevice(peers, loggedInUser?.id)
+    : peers?.find((p) => p.connected) ?? peers?.[0];
+  const deviceConnected = !!device;
 
   // First-run prep: seed a "Users" source group (with the current user in it)
   // so the policy step has something to select, and remove the permissive
@@ -98,17 +102,15 @@ export const AgentNetworkOnboarding = ({
     onStepChange(next);
   };
   const goNext = () => goTo(steps[Math.min(position + 1, steps.length - 1)]);
+  const canGoBack = position > steps.indexOf(firstStep);
   const goBack = () =>
-    goTo(
-      steps[Math.max(position - 1, steps.indexOf(AGENT_STEP.WELCOME))],
-      true,
-    );
+    goTo(steps[Math.max(position - 1, steps.indexOf(firstStep))], true);
   const skipStep = () => (back ? goBack() : goNext());
 
   // If signup is no longer pending (already submitted), don't sit on the
   // signup step — mirrors the cloud onboarding's "skip survey if submitted".
   useEffect(() => {
-    if (!signupPending && step === AGENT_STEP.SIGNUP) goTo(AGENT_STEP.WELCOME);
+    if (!signupPending && step === AGENT_STEP.SIGNUP) goTo(firstStep);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signupPending, step]);
 
@@ -166,13 +168,10 @@ export const AgentNetworkOnboarding = ({
                         }}
                       />
                     )}
-                    {step === AGENT_STEP.WELCOME && (
-                      <OnboardingAgentWelcome onNext={goNext} />
-                    )}
                     {step === AGENT_STEP.DEVICE && (
                       <OnboardingAgentDevice
-                        deviceConnected={deviceConnected}
-                        onBack={goBack}
+                        device={device}
+                        onBack={canGoBack ? goBack : undefined}
                         onNext={goNext}
                       />
                     )}
@@ -185,6 +184,7 @@ export const AgentNetworkOnboarding = ({
                     )}
                     {step === AGENT_STEP.PROVIDER && (
                       <OnboardingAgentProvider
+                        createsPolicy={!policyStep}
                         onBack={goBack}
                         onNext={goNext}
                       />
@@ -202,6 +202,8 @@ export const AgentNetworkOnboarding = ({
                       <OnboardingAgentEnd
                         onFinish={onFinish}
                         showLiveChecklist={gatewayStep}
+                        policyStep={policyStep}
+                        onFix={(s) => goTo(s, true)}
                       />
                     )}
                   </AIProvidersProvider>

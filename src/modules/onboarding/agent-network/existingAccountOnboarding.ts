@@ -134,13 +134,12 @@ export function useOnboardingRequest(
   return request;
 }
 
-// ownDeviceConnected reports whether the user has a connected device. An
-// existing account has other people's devices too, so any peer at all would
-// not show that this user can reach the endpoint.
-export function ownDeviceConnected(
-  peers: Pick<Peer, "user_id" | "connected">[] | undefined,
-  userId: string | undefined,
-): boolean {
-  if (!userId) return false;
-  return (peers ?? []).some((p) => p.user_id === userId && p.connected);
+// ownConnectedDevice finds a connected device of the user. An existing account
+// has other people's devices too, so any peer at all would not show that this
+// user can reach the endpoint.
+export function ownConnectedDevice<
+  T extends Pick<Peer, "user_id" | "connected">,
+>(peers: T[] | undefined, userId: string | undefined): T | undefined {
+  if (!userId) return undefined;
+  return (peers ?? []).find((p) => p.user_id === userId && p.connected);
 }

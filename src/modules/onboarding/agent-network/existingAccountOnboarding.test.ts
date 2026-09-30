@@ -2,7 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clearAgentNetworkOnboardingRequest,
-  ownDeviceConnected,
+  ownConnectedDevice,
   readAgentNetworkOnboardingRequest,
   requestAgentNetworkOnboarding,
   resolveOnboardingRequest,
@@ -174,27 +174,24 @@ describe("useOnboardingRequest", () => {
   });
 });
 
-describe("ownDeviceConnected", () => {
+describe("ownConnectedDevice", () => {
   const me = "user-1";
+  const mine = { id: "p1", user_id: me, connected: true };
 
-  it("needs a connected device of this user", () => {
-    expect(ownDeviceConnected([{ user_id: me, connected: true }], me)).toBe(
-      true,
-    );
+  it("finds a connected device of this user", () => {
+    expect(ownConnectedDevice([mine], me)).toBe(mine);
     expect(
-      ownDeviceConnected([{ user_id: me, connected: false }], me),
+      ownConnectedDevice([{ ...mine, connected: false }], me),
       "an offline device can't reach the endpoint",
-    ).toBe(false);
+    ).toBeUndefined();
     expect(
-      ownDeviceConnected([{ user_id: "user-2", connected: true }], me),
+      ownConnectedDevice([{ ...mine, user_id: "user-2" }], me),
       "someone else's device doesn't count",
-    ).toBe(false);
+    ).toBeUndefined();
   });
 
-  it("is false before the user or the peers load", () => {
-    expect(
-      ownDeviceConnected([{ user_id: me, connected: true }], undefined),
-    ).toBe(false);
-    expect(ownDeviceConnected(undefined, me)).toBe(false);
+  it("finds nothing before the user or the peers load", () => {
+    expect(ownConnectedDevice([mine], undefined)).toBeUndefined();
+    expect(ownConnectedDevice(undefined, me)).toBeUndefined();
   });
 });

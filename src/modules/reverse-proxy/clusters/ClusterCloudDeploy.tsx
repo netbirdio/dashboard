@@ -68,9 +68,6 @@ type Props = {
   // Fires once the deployed proxy registers and connects, so the modal can
   // gate its "Finish Setup" action on real completion.
   onRegistered?: () => void;
-  // Replaces the built-in registration check, for a host that tracks the
-  // registration itself and renders its own status.
-  registrationStatus?: React.ReactNode;
 };
 
 // buildCloudInit renders the canonical bootstrap with the same environment as
@@ -231,7 +228,6 @@ type DeploySuccessProps = {
   domain: string;
   ipPendingNote?: string;
   onRegistered?: () => void;
-  registrationStatus?: React.ReactNode;
   children?: React.ReactNode;
 };
 
@@ -287,7 +283,6 @@ const DeploySuccess = ({
   domain,
   ipPendingNote,
   onRegistered,
-  registrationStatus,
   children,
 }: DeploySuccessProps) => {
   return (
@@ -343,9 +338,7 @@ const DeploySuccess = ({
         </div>
       )}
       {children}
-      {registrationStatus ?? (
-        <RegistrationCheck domain={domain} onRegistered={onRegistered} />
-      )}
+      <RegistrationCheck domain={domain} onRegistered={onRegistered} />
     </div>
   );
 };
@@ -356,7 +349,6 @@ const HetznerDeploy = ({
   managementUrl,
   isGeneratingToken,
   onRegistered,
-  registrationStatus,
 }: ProviderProps) => {
   const [hetznerToken, setHetznerToken] = useState("");
   const [catalog, setCatalog] = useState<HetznerCatalog | null>(null);
@@ -512,7 +504,6 @@ const HetznerDeploy = ({
         isStaticIP={staticIP}
         domain={domain}
         onRegistered={onRegistered}
-        registrationStatus={registrationStatus}
       />
     );
   }
@@ -667,7 +658,6 @@ const DigitalOceanDeploy = ({
   managementUrl,
   isGeneratingToken,
   onRegistered,
-  registrationStatus,
 }: ProviderProps) => {
   const [rootPassword] = useState(generateRootPassword);
   const [doToken, setDoToken] = useState("");
@@ -756,7 +746,6 @@ const DigitalOceanDeploy = ({
         isStaticIP={!!reservedIP}
         domain={domain}
         onRegistered={onRegistered}
-        registrationStatus={registrationStatus}
         ipPendingNote={
           isDeploying
             ? "and is provisioning. Waiting for its public IP..."
@@ -865,7 +854,6 @@ const AWSDeploy = ({
   managementUrl,
   isGeneratingToken,
   onRegistered,
-  registrationStatus,
 }: ProviderProps) => {
   const [region, setRegion] = useState("eu-central-1");
   const [launched, setLaunched] = useState(false);
@@ -918,10 +906,9 @@ const AWSDeploy = ({
         The AWS Console opens with a prefilled form. Paste the token, create the
         stack, then point your DNS records to the PublicIP output.
       </HelpText>
-      {launched &&
-        (registrationStatus ?? (
-          <RegistrationCheck domain={domain} onRegistered={onRegistered} />
-        ))}
+      {launched && (
+        <RegistrationCheck domain={domain} onRegistered={onRegistered} />
+      )}
     </div>
   );
 };

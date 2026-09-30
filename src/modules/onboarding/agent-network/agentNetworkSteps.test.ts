@@ -3,6 +3,7 @@ import {
   AGENT_STEP,
   agentSteps,
   initialAgentStep,
+  stepAfterSignup,
   storedAgentStep,
 } from "@/modules/onboarding/agent-network/agentNetworkSteps";
 
@@ -10,7 +11,6 @@ describe("agentSteps", () => {
   it("puts the gateway step right before the provider step", () => {
     expect(agentSteps(true)).toEqual([
       "signup",
-      "welcome",
       "device",
       "gateway",
       "provider",
@@ -20,16 +20,33 @@ describe("agentSteps", () => {
     ]);
   });
 
-  it("leaves the flow as it was without the gateway step", () => {
+  it("leaves the gateway step out where it doesn't run", () => {
     expect(agentSteps(false)).toEqual([
       "signup",
-      "welcome",
       "device",
       "provider",
       "policy",
       "configure",
       "end",
     ]);
+  });
+
+  it("leaves the policy step out where the provider step creates the policy", () => {
+    expect(agentSteps(true, false)).toEqual([
+      "signup",
+      "device",
+      "gateway",
+      "provider",
+      "configure",
+      "end",
+    ]);
+  });
+});
+
+describe("stepAfterSignup", () => {
+  it("continues on the device step", () => {
+    expect(stepAfterSignup(agentSteps(true))).toBe(AGENT_STEP.DEVICE);
+    expect(stepAfterSignup(agentSteps(false, false))).toBe(AGENT_STEP.DEVICE);
   });
 });
 
@@ -40,15 +57,26 @@ describe("storedAgentStep", () => {
     );
   });
 
+  it("moves a saved welcome step on to the device step", () => {
+    // The welcome step was removed; an operator who stopped on it resumes on
+    // the step that followed it.
+    expect(storedAgentStep({ agent_network_step: "welcome" })).toBe(
+      AGENT_STEP.DEVICE,
+    );
+    expect(storedAgentStep({ agent_network_step: "welcome" }, false)).toBe(
+      AGENT_STEP.DEVICE,
+    );
+  });
+
   it("maps the positions saved before steps had names", () => {
-    // Positions 1-3 are unchanged; 4 and above were provider onwards, and must
-    // not shift onto the gateway step that now sits at 4.
+    // Positions 1-3 were signup, welcome and device; 4 and above were provider
+    // onwards, and must not shift onto the gateway step.
     const mapped = [1, 2, 3, 4, 5, 6, 7].map((step) =>
       storedAgentStep({ step }),
     );
     expect(mapped).toEqual([
       "signup",
-      "welcome",
+      "device",
       "device",
       "provider",
       "policy",
@@ -76,6 +104,10 @@ describe("storedAgentStep", () => {
     expect(storedAgentStep({ agent_network_step: "billing", step: 3 })).toBe(
       AGENT_STEP.DEVICE,
     );
+    expect(
+      storedAgentStep({ agent_network_step: "constructor", step: 4 }),
+      "an inherited property name is not a retired step",
+    ).toBe(AGENT_STEP.PROVIDER);
   });
 });
 
@@ -91,7 +123,7 @@ describe("initialAgentStep", () => {
 
   it("never lands back on the signup form once it is done", () => {
     expect(initialAgentStep(AGENT_STEP.SIGNUP, withGateway, false)).toBe(
-      AGENT_STEP.WELCOME,
+      AGENT_STEP.DEVICE,
     );
   });
 
@@ -105,5 +137,8 @@ describe("initialAgentStep", () => {
     expect(initialAgentStep(AGENT_STEP.GATEWAY, withoutGateway, false)).toBe(
       AGENT_STEP.PROVIDER,
     );
+    expect(
+      initialAgentStep(AGENT_STEP.POLICY, agentSteps(true, false), false),
+    ).toBe(AGENT_STEP.CONFIGURE);
   });
 });
