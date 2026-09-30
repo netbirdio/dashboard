@@ -20,6 +20,9 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
     users: "/team/users",
     activity: "/events/audit",
     control_center: "/control-center",
+    agent_network_providers: "/agent-network/providers",
+    agent_network_policies: "/agent-network/policies",
+    agent_network_usage: "/agent-network/usage",
   };
   const detailRoutes: Record<string, string> = {
     peer: "/peer",
@@ -30,6 +33,14 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
   const tabRoutes: Record<string, string> = {
     settings: "/settings",
     integrations: "/integrations",
+    /*
+      Clusters is a tab here rather than a page of its own, and it is the one
+      the assistant sends people to most: a provider cannot be saved until a
+      cluster exists, so "where do I set that up" ends on this route. An
+      unrecognised tab is not worth refusing — the page falls back to its first
+      one, which is a better outcome than not moving at all.
+    */
+    agent_network_configuration: "/agent-network/configuration",
   };
 
   const page = typeof input.page === "string" ? input.page : "";
