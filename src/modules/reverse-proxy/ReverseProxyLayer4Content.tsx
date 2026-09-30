@@ -12,12 +12,12 @@ import {
 } from "@components/Select";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import React from "react";
+import { Network, NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
 import {
   ReverseProxyPortMapping,
   ServiceMode,
 } from "@/interfaces/ReverseProxy";
-import { Network, NetworkResource } from "@/interfaces/Network";
-import { Peer } from "@/interfaces/Peer";
 import ReverseProxyAddressInput, {
   CidrHelpText,
 } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
@@ -40,6 +40,9 @@ type Props = {
 };
 
 const mappingProtocols = [ServiceMode.TCP, ServiceMode.UDP, ServiceMode.TLS];
+
+// Keep in sync with the management API's MaxReverseProxyExpandedListenersPerService.
+const MAX_EXPANDED_LISTENERS_PER_SERVICE = 512;
 
 export function emptyPortMapping(
   protocol: ServiceMode.TCP | ServiceMode.UDP | ServiceMode.TLS,
@@ -68,6 +71,7 @@ export function getPortMappingErrors(
   if (mappings.length === 0) return [["Add at least one port mapping."]];
 
   const errors = mappings.map(() => [] as string[]);
+  let listenerCount = 0;
   mappings.forEach((mapping, index) => {
     const explicitListener = listensOnExplicitPort(
       mapping,
@@ -84,6 +88,13 @@ export function getPortMappingErrors(
         errors[index].push("Listener ports must be between 1 and 65535.");
       } else if (mapping.listen_port_start > mapping.listen_port_end) {
         errors[index].push("The listener range is reversed.");
+      } else {
+        listenerCount += mapping.listen_port_end - mapping.listen_port_start + 1;
+        if (listenerCount > MAX_EXPANDED_LISTENERS_PER_SERVICE) {
+          errors[index].push(
+            `A service supports at most ${MAX_EXPANDED_LISTENERS_PER_SERVICE} listeners across all port mappings.`,
+          );
+        }
       }
     } else if (mappings.length > 1) {
       errors[index].push(
@@ -226,7 +237,9 @@ export default function ReverseProxyLayer4Content({
           <div>
             <Label>
               Port Mappings
-              <HelpTooltip content="Each inclusive public range maps one-to-one onto an equally sized destination range. TCP and UDP may use the same numeric port." />
+              <HelpTooltip
+                content={`Each inclusive public range maps one-to-one onto an equally sized destination range. A service supports at most ${MAX_EXPANDED_LISTENERS_PER_SERVICE} listeners across all mappings. TCP and UDP may use the same numeric port and count as separate listeners.`}
+              />
             </Label>
             <HelpText className="mb-0">
               A hostname may also be used by an HTTPS service for TCP or UDP

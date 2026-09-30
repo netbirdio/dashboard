@@ -1,8 +1,8 @@
-import { test, expect } from "../helpers/fixtures";
-import { navigateTo } from "../helpers/auth";
-import { generateRandomName } from "../helpers/utils";
 import { deleteNetworksByPrefix, deleteServicesByPrefix } from "../helpers/api";
-import { gotoReverseProxyPage, selectL4Resource, selectProxyDomain, CUSTOM_PORTS_DOMAIN } from "../helpers/reverse-proxy-l4";
+import { navigateTo } from "../helpers/auth";
+import { expect,test } from "../helpers/fixtures";
+import { CUSTOM_PORTS_DOMAIN,gotoReverseProxyPage, selectL4Resource, selectProxyDomain } from "../helpers/reverse-proxy-l4";
+import { generateRandomName } from "../helpers/utils";
 
 let createdNetwork = "";
 let createdResource = "";
