@@ -323,7 +323,7 @@ spec:
   const finishSetup = () => {
     onOpenChange(false);
     mutate("/reverse-proxies/clusters");
-    onFinish?.(domain.trim());
+    onFinish?.(domain);
   };
 
   return (
