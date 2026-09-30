@@ -9,13 +9,14 @@
 
 import Button from "@components/Button";
 import {
+  acceptsFreeText,
   type PendingInputRequest,
   toolLabel,
   useVaultRestore,
 } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
-import { ShieldQuestion } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { MessageCircleQuestion, ShieldQuestion } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * What the card asks, in the words the rest of the thread uses.
@@ -69,8 +70,15 @@ function labelFor(
 
 export interface ApprovalCardProps {
   request: PendingInputRequest;
-  onRespond: (optionId: string) => void;
+  onRespond: (answer: string | { text: string }) => void;
 }
+
+/*
+  The latch below holds the option id that was clicked, so that a typed answer
+  — which has no id — still has something to latch on. Not a value any option
+  can collide with: eve mints option ids, and this is not one of them.
+*/
+const TYPED = "\u0000typed";
 
 export function AssistantApprovalCard({
   request,
@@ -82,6 +90,15 @@ export function AssistantApprovalCard({
   const [answering, setAnswering] = useState<string | null>(null);
   const restore = useVaultRestore();
 
+  /*
+    A question eve will accept typed text for. The other two pauses — an
+    approval, a runtime-limit continuation — are a choice between the options it
+    minted, so they never get a text box: there would be nothing to send it to.
+  */
+  const freeText = acceptsFreeText(request);
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
   const respond = useCallback(
     (optionId: string) => {
       setAnswering((current) => {
@@ -92,6 +109,22 @@ export function AssistantApprovalCard({
     },
     [onRespond],
   );
+
+  const submitText = useCallback(() => {
+    const text = draft.trim();
+    if (text === "") return;
+    setAnswering((current) => {
+      if (current !== null) return current;
+      onRespond({ text });
+      return TYPED;
+    });
+  }, [draft, onRespond]);
+
+  // The box is the only thing on screen worth typing into, and the composer it
+  // replaces had focus a moment ago.
+  useEffect(() => {
+    if (freeText) inputRef.current?.focus();
+  }, [freeText]);
 
   const affirmative = affirmativeOf(request.options);
   const negative = negativeOf(request.options);
@@ -112,6 +145,9 @@ export function AssistantApprovalCard({
   // because the overlay covers the composer: there is nothing else on screen
   // these keys could sensibly mean.
   useEffect(() => {
+    // Not while there is a text box: Enter belongs to the answer being typed,
+    // and Escape to whatever the browser does with a focused field.
+    if (freeText) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
       const option =
@@ -126,7 +162,7 @@ export function AssistantApprovalCard({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [affirmative, negative, respond]);
+  }, [affirmative, negative, freeText, respond]);
 
   return (
     <div
@@ -136,12 +172,22 @@ export function AssistantApprovalCard({
       className="w-full rounded-2xl border border-nb-gray-700 bg-nb-gray-900 px-4 pb-3.5 pt-4"
     >
       <div className="flex items-start gap-2.5">
-        <ShieldQuestion
-          size={16}
-          strokeWidth={1.5}
-          className="mt-0.5 shrink-0 text-nb-gray-250"
-          aria-hidden
-        />
+        {/* A question is not a security decision, and the shield read as one. */}
+        {request.kind === "question" ? (
+          <MessageCircleQuestion
+            size={16}
+            strokeWidth={1.5}
+            className="mt-0.5 shrink-0 text-nb-gray-250"
+            aria-hidden
+          />
+        ) : (
+          <ShieldQuestion
+            size={16}
+            strokeWidth={1.5}
+            className="mt-0.5 shrink-0 text-nb-gray-250"
+            aria-hidden
+          />
+        )}
         <div className="min-w-0 flex-1">
           <p className="text-chat font-normal text-nb-gray-100">
             {restore(approvalTitle(request))}
@@ -153,9 +199,35 @@ export function AssistantApprovalCard({
         </div>
       </div>
 
+      {freeText && (
+        <textarea
+          ref={inputRef}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            // Enter sends, because this is one answer and not a document.
+            // Shift+Enter still breaks a line, for the occasional pasted list.
+            if (event.key !== "Enter" || event.shiftKey) return;
+            event.preventDefault();
+            submitText();
+          }}
+          disabled={answering !== null}
+          rows={2}
+          placeholder="Type your answer…"
+          aria-label={approvalTitle(request)}
+          className={cn(
+            "mt-3 w-full resize-none rounded-lg border border-nb-gray-700 bg-nb-gray-950",
+            "px-3 py-2 text-chat text-nb-gray-100 placeholder:text-nb-gray-500",
+            "focus:border-nb-gray-500 focus:outline-none disabled:opacity-50",
+          )}
+        />
+      )}
+
       <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
         {ordered.map((option) => {
-          const isAffirmative = option === affirmative;
+          // With a text box present the send button is the primary action, so
+          // an option alongside it is one way of answering rather than the way.
+          const isAffirmative = !freeText && option === affirmative;
           const isNegative = option === negative;
           return (
             /* The dashboard's own Button, so these two read as the same kind of
@@ -181,6 +253,17 @@ export function AssistantApprovalCard({
             </Button>
           );
         })}
+        {freeText && (
+          <Button
+            size="xs"
+            variant="primary"
+            disabled={answering !== null || draft.trim() === ""}
+            onClick={submitText}
+            className="!py-1.5 gap-2"
+          >
+            Send
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -198,7 +281,7 @@ export function AssistantApprovalGate({
   onRespond,
 }: Readonly<{
   request: PendingInputRequest | null;
-  onRespond: (optionId: string) => void;
+  onRespond: (answer: string | { text: string }) => void;
 }>) {
   if (!request) return null;
   return (

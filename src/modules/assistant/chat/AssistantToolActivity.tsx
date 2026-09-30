@@ -113,10 +113,17 @@ export function AssistantToolActivity({
     connection. Every other tool still shows it, a summary or not: on a peer
     command that subject is the peer, which is the one thing a row about a
     remote machine cannot leave out.
+
+    `described.subject` is the third case: a tool the SDK names better than the
+    rule can. It distinguishes "no opinion" (undefined, rule applies) from "this
+    row has no subject" (null), which is what stops a label that already spells
+    out its skill from being followed by the slug it came from.
   */
   const subject = CONTROL_CENTER_TOOLS[toolName]
     ? null
-    : subjectOf(toolName, args);
+    : described.subject !== undefined
+      ? described.subject
+      : subjectOf(toolName, args);
   /*
     One string, not three spans.
 
