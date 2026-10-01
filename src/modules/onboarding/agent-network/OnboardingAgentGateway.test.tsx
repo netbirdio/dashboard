@@ -92,17 +92,17 @@ const step = () => {
   return { ...props, rerender };
 };
 
-const readyToast = expect.objectContaining({ title: "Your gateway is ready" });
+const readyToast = expect.objectContaining({ title: "Your proxy is ready" });
 
 describe("OnboardingAgentGateway", () => {
-  it("moves on with one toast once the managed gateway is ready", () => {
+  it("moves on with one toast once the managed proxy is ready", () => {
     managed.proxy = {
       id: "m1",
       state: "provisioning",
       endpoint: MANAGED_ENDPOINT,
     };
     const { onNext, rerender } = step();
-    expect(screen.getByText("Setting up your managed gateway…")).toBeTruthy();
+    expect(screen.getByText("Setting up your managed proxy…")).toBeTruthy();
 
     // Ready is not enough on its own: the provider step needs the settings
     // row, so the step waits until the settings carry the endpoint.
@@ -132,7 +132,7 @@ describe("OnboardingAgentGateway", () => {
     expect(notify).toHaveBeenCalledTimes(1);
   });
 
-  it("skips a gateway that was ready before the step opened, without a toast", () => {
+  it("skips a proxy that was ready before the step opened, without a toast", () => {
     managed.proxy = { id: "m1", state: "ready", endpoint: MANAGED_ENDPOINT };
     ai.settings = {
       endpoint: MANAGED_ENDPOINT,
@@ -179,7 +179,7 @@ describe("OnboardingAgentGateway", () => {
     expect(notify).toHaveBeenCalledWith(readyToast);
   });
 
-  it("offers only a proxy of the account's own where managed gateways are not configured", async () => {
+  it("offers only a proxy of the account's own where managed proxies are not configured", async () => {
     managed.provision = vi.fn(async () => ({ kind: "not-configured" }));
     const { onNext } = step();
     await act(async () => {
@@ -208,7 +208,7 @@ describe("OnboardingAgentGateway", () => {
     expect(mutate).toHaveBeenCalledWith("/agent-network/settings");
     expect(onNext).toHaveBeenCalledTimes(1);
     expect(notify).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "Your gateway is already set up" }),
+      expect.objectContaining({ title: "Your proxy is already set up" }),
     );
   });
 });

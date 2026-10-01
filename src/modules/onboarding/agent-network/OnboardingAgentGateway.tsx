@@ -69,12 +69,12 @@ type ProvisionFailure = Extract<
 >;
 
 const GATEWAY_READY = {
-  title: "Your gateway is ready",
+  title: "Your proxy is ready",
   description: "Connect a provider next.",
 };
 
 const GATEWAY_ALREADY_SET_UP = {
-  title: "Your gateway is already set up",
+  title: "Your proxy is already set up",
   description: "This account already has an Agent Network endpoint.",
 };
 
@@ -168,9 +168,9 @@ export const OnboardingAgentGateway = ({ onBack, onNext, onSkip }: Props) => {
 
   if (!view) {
     return (
-      <StepLayout title={"Set up your gateway"} onBack={onBack}>
+      <StepLayout title={"Set up your proxy"} onBack={onBack}>
         <div className={"mt-4 flex justify-center"}>
-          <StatusLine status={"active"}>Checking your gateway…</StatusLine>
+          <StatusLine status={"active"}>Checking your proxy…</StatusLine>
         </div>
       </StepLayout>
     );
@@ -257,9 +257,9 @@ const GatewayChoice = ({
 
   return (
     <StepLayout
-      title={"Set up your gateway"}
+      title={"Set up your proxy"}
       description={
-        "Agents reach your providers through a private gateway that only devices on your network can reach. Choose who runs it."
+        "Agents reach your providers through a private proxy that only devices on your network can reach. Choose who runs it."
       }
       onBack={onBack}
     >
@@ -271,14 +271,14 @@ const GatewayChoice = ({
             }
           >
             <IntentCard
-              title={"Managed gateway"}
+              title={"Managed proxy"}
               description={
-                "NetBird runs a dedicated, private gateway for your account."
+                "NetBird runs a dedicated, private proxy for your account."
               }
               icon={<CloudIcon size={18} className={"text-netbird"} />}
               recommended={true}
               recommendedTooltip={
-                "NetBird runs the gateway for you, so there is nothing to deploy."
+                "NetBird runs the proxy for you, so there is nothing to deploy."
               }
               onClick={confirmManaged ? () => setConfirming(true) : onManaged}
               data-testid={"gateway-choice-managed"}
@@ -286,17 +286,17 @@ const GatewayChoice = ({
           </div>
         ) : (
           <Callout variant={"info"} data-testid={"gateway-managed-unavailable"}>
-            Managed gateways aren&apos;t available for this account, so the
-            gateway runs on a proxy of your own.
+            Managed proxies aren&apos;t available for this account, so Agent
+            Network runs on a proxy of your own.
           </Callout>
         )}
         {managedAvailable && confirming && (
           <Callout variant={"warning"} data-testid={"gateway-managed-confirm"}>
-            The managed gateway serves Agent Network for the whole account, and
-            it can&apos;t be changed or removed from the dashboard yet.
+            The managed proxy serves Agent Network for the whole account, and it
+            can&apos;t be changed or removed from the dashboard yet.
             <div className={"flex gap-3 mt-3"}>
               <Button variant={"primary"} size={"xs"} onClick={onManaged}>
-                Set up managed gateway
+                Set up managed proxy
               </Button>
               <Button
                 variant={"secondary"}
@@ -479,10 +479,8 @@ const ManagedGateway = ({
 
       {!(failure && !proxy) && (
         <ul className={"mt-2 flex flex-col gap-2.5 self-center"}>
-          <StageRow status={stages.reserve}>
-            Reserving your gateway address
-          </StageRow>
-          <StageRow status={stages.deploy}>Deploying your gateway</StageRow>
+          <StageRow status={stages.reserve}>Reserving your endpoint</StageRow>
+          <StageRow status={stages.deploy}>Deploying your proxy</StageRow>
           <StageRow status={stages.connect}>
             Connecting to your network
           </StageRow>
@@ -498,7 +496,7 @@ const ManagedGateway = ({
 
       {failed && (
         <Callout variant={"warning"} data-testid={"gateway-failed-message"}>
-          {proxy?.message || "The gateway rollout reported a failure."}
+          {proxy?.message || "The proxy rollout reported a failure."}
         </Callout>
       )}
 
@@ -541,13 +539,13 @@ function managedHeader(
   hasFailure: boolean,
 ): { title: string; description?: string; announcement: string } {
   const preparing = {
-    title: "Setting up your managed gateway…",
+    title: "Setting up your managed proxy…",
     description: "This usually takes under a minute.",
-    announcement: "Setting up your managed gateway",
+    announcement: "Setting up your managed proxy",
   };
   const problem = {
-    title: "Gateway setup ran into a problem",
-    announcement: "Gateway setup ran into a problem",
+    title: "Proxy setup ran into a problem",
+    announcement: "Proxy setup ran into a problem",
   };
   if (!proxy) return hasFailure ? problem : preparing;
   switch (proxy.state) {
@@ -555,15 +553,15 @@ function managedHeader(
       return preparing;
     // Shown only while the settings are read again, before the step moves on.
     case MANAGED_PROXY_STATE.READY:
-      return { title: "Finishing up…", announcement: "Gateway ready" };
+      return { title: "Finishing up…", announcement: "Proxy ready" };
     case MANAGED_PROXY_STATE.FAILED:
       return problem;
     default:
       return {
-        title: "Checking gateway status…",
+        title: "Checking proxy status…",
         description:
-          "The gateway reported a status this page doesn't know yet. We'll keep checking.",
-        announcement: "Checking gateway status",
+          "The proxy reported a status this page doesn't know yet. We'll keep checking.",
+        announcement: "Checking proxy status",
       };
   }
 }
@@ -573,14 +571,14 @@ const FailureCallout = ({ failure }: { failure: ProvisionFailure }) => {
     case "unavailable":
       return (
         <Callout variant={"warning"} data-testid={"gateway-unavailable"}>
-          Managed gateways are temporarily unavailable. Try again shortly.
+          Managed proxies are temporarily unavailable. Try again shortly.
         </Callout>
       );
     case "forbidden":
       return (
         <Callout variant={"error"} data-testid={"gateway-forbidden"}>
-          Setting up a managed gateway needs the Agent Network create
-          permission. Ask an account owner to grant it.
+          Setting up a managed proxy needs the Agent Network create permission.
+          Ask an account owner to grant it.
         </Callout>
       );
     default:
@@ -723,9 +721,9 @@ function selfDeployAnnouncement(
   bootstrap: GatewayBootstrap,
 ): string {
   if (phase === "connected") {
-    if (bootstrap.status === "ready") return "Gateway ready";
-    if (bootstrap.status === "failed") return "Reserving the address failed";
-    return "Proxy connected, reserving your gateway address";
+    if (bootstrap.status === "ready") return "Proxy ready";
+    if (bootstrap.status === "failed") return "Reserving the endpoint failed";
+    return "Proxy connected, reserving your endpoint";
   }
   if (phase === "not-private") return "This proxy isn't private-capable";
   if (phase === "found") return "Proxy found, waiting for it to come online";
@@ -747,7 +745,7 @@ const PrivateClusterGateway = ({
 
   return (
     <StepLayout
-      title={"Setting up your gateway"}
+      title={"Setting up your proxy"}
       description={
         <>
           Agent Network is served from your private proxy at{" "}
@@ -760,8 +758,8 @@ const PrivateClusterGateway = ({
       <LiveStatus
         message={
           bootstrap.status === "ready"
-            ? "Gateway ready"
-            : "Reserving your gateway address"
+            ? "Proxy ready"
+            : "Reserving your endpoint"
         }
       />
       {reservedElsewhere ? (
@@ -786,7 +784,7 @@ const isReservedElsewhere = (bootstrap: GatewayBootstrap, address: string) =>
 
 const ReservedElsewhere = ({ endpoint }: { endpoint?: string }) => (
   <Callout variant={"warning"} data-testid={"gateway-reserved-elsewhere"}>
-    This account&apos;s gateway address is already reserved as{" "}
+    This account&apos;s endpoint is already reserved as{" "}
     <span className={"font-mono text-white"}>{endpoint}</span>, and this proxy
     won&apos;t serve it.
   </Callout>
@@ -806,7 +804,7 @@ const GatewayAddressStatus = ({
         className={"w-full"}
         data-testid={"gateway-bootstrap-error"}
       >
-        Reserving your gateway address failed.
+        Reserving your endpoint failed.
         <Button
           variant={"secondary"}
           size={"xs"}
@@ -820,11 +818,9 @@ const GatewayAddressStatus = ({
     );
   }
   if (bootstrap.status === "ready") {
-    return <StatusLine status={"done"}>Gateway address reserved</StatusLine>;
+    return <StatusLine status={"done"}>Endpoint reserved</StatusLine>;
   }
-  return (
-    <StatusLine status={"active"}>Reserving your gateway address…</StatusLine>
-  );
+  return <StatusLine status={"active"}>Reserving your endpoint…</StatusLine>;
 };
 
 type GatewayBootstrap = ReturnType<typeof useGatewayBootstrap>;
