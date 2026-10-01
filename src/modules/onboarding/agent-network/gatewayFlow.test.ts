@@ -4,9 +4,7 @@ import {
   ReverseProxyClusterType,
 } from "@/interfaces/ReverseProxy";
 import {
-  checklistFix,
   formatElapsed,
-  liveChecklist,
   managedGatewayStages,
   privateAccountClusters,
   resolveGatewayEntry,
@@ -195,78 +193,5 @@ describe("formatElapsed", () => {
     expect(formatElapsed(42)).toBe("0:42");
     expect(formatElapsed(125.9)).toBe("2:05");
     expect(formatElapsed(-3)).toBe("0:00");
-  });
-});
-
-describe("liveChecklist", () => {
-  const policy = { enabled: true, sourceGroups: ["users"] };
-  const peerIn = (groupId: string, connected = true) => ({
-    connected,
-    groups: [{ id: groupId, name: groupId }],
-  });
-
-  it("passes with an enabled provider, policy and a connected peer in its source group", () => {
-    expect(
-      liveChecklist({
-        providers: [{ enabled: true }],
-        policies: [policy],
-        peers: [peerIn("users")],
-      }),
-    ).toEqual({ provider: true, policy: true, peer: true });
-  });
-
-  it("does not count disabled providers or policies", () => {
-    expect(
-      liveChecklist({
-        providers: [{ enabled: false }],
-        policies: [{ ...policy, enabled: false }],
-        peers: [peerIn("users")],
-      }),
-    ).toEqual({ provider: false, policy: false, peer: false });
-  });
-
-  it("needs the peer connected and in a source group of an enabled policy", () => {
-    const base = { providers: [{ enabled: true }], policies: [policy] };
-    expect(
-      liveChecklist({ ...base, peers: [peerIn("users", false)] }).peer,
-      "a disconnected peer should not count",
-    ).toBe(false);
-    expect(
-      liveChecklist({ ...base, peers: [peerIn("admins")] }).peer,
-      "a peer outside the source groups should not count",
-    ).toBe(false);
-    expect(
-      liveChecklist({ ...base, peers: [{ connected: true }] }).peer,
-      "a peer without groups should not count",
-    ).toBe(false);
-  });
-});
-
-describe("checklistFix", () => {
-  const newAccount = { policyStep: false, deviceConnected: true };
-  const existingAccount = { policyStep: true, deviceConnected: true };
-
-  it("sends a missing provider to the provider step", () => {
-    expect(checklistFix("provider", newAccount)).toBe("provider");
-    expect(checklistFix("provider", existingAccount)).toBe("provider");
-  });
-
-  it("sends a missing policy to the step that creates it", () => {
-    expect(
-      checklistFix("policy", newAccount),
-      "without a policy step the provider step creates the policy",
-    ).toBe("provider");
-    expect(checklistFix("policy", existingAccount)).toBe("policy");
-  });
-
-  it("sends a missing peer to the device step until a device is connected", () => {
-    expect(
-      checklistFix("peer", { ...newAccount, deviceConnected: false }),
-    ).toBe("device");
-    expect(
-      checklistFix("peer", existingAccount),
-      "a connected device outside the policy needs the policy's groups",
-    ).toBe("policy");
-    expect(checklistFix("peer", newAccount)).toBe("provider");
   });
 });

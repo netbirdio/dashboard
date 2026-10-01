@@ -200,10 +200,9 @@ export const AgentNetworkOnboarding = ({
                     )}
                     {step === AGENT_STEP.END && (
                       <OnboardingAgentEnd
+                        deviceName={device?.name}
+                        onBack={goBack}
                         onFinish={onFinish}
-                        showLiveChecklist={gatewayStep}
-                        policyStep={policyStep}
-                        onFix={(s) => goTo(s, true)}
                       />
                     )}
                   </AIProvidersProvider>

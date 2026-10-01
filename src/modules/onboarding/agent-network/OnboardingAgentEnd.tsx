@@ -1,177 +1,147 @@
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import useFetchApi from "@utils/api";
-import { cn } from "@utils/helpers";
 import { ArrowRightIcon, CheckCircle2Icon, XCircleIcon } from "lucide-react";
 import * as React from "react";
-import type { Peer } from "@/interfaces/Peer";
-import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
-import type { AgentStep } from "@/modules/onboarding/agent-network/agentNetworkSteps";
+import { useEffect, useState } from "react";
+import type { APIAgentNetworkAccessLogsResponse } from "@/modules/agent-network/agentAccessLogApi";
+import { formatDenyReason } from "@/modules/agent-network/data/mockData";
 import {
-  checklistFix,
-  ChecklistItem,
-  liveChecklist,
-} from "@/modules/onboarding/agent-network/gatewayFlow";
+  TEST_REQUEST_LOOKBACK_MS,
+  TEST_REQUEST_POLL_MS,
+  testRequestLogUrl,
+  TestRequestOutcome,
+  testRequestOutcome,
+} from "@/modules/onboarding/agent-network/testRequest";
+import { WaitingForDevice } from "@/modules/onboarding/OnboardingDevices";
 
 type Props = {
+  // deviceName names the operator's device, where the test request has to
+  // come from: only a peer in the policy reaches the endpoint.
+  deviceName?: string;
+  onBack: () => void;
   onFinish: () => void;
-  // showLiveChecklist lists what has to hold, besides a ready gateway, before
-  // an agent's requests go through. Only the flow with a gateway step shows it.
-  showLiveChecklist?: boolean;
-  // policyStep is whether the flow has a policy step to fix a missing policy.
-  policyStep?: boolean;
-  // onFix goes back to the step that fixes an unmet checklist item.
-  onFix?: (step: AgentStep) => void;
 };
 
-// OnboardingAgentEnd wraps up the flow and points at Usage & Logs to confirm
-// requests are being recorded, matching the quickstart's "Verify" step.
-export const OnboardingAgentEnd = ({
-  onFinish,
-  showLiveChecklist = false,
-  policyStep = true,
-  onFix,
-}: Props) => {
+// OnboardingAgentEnd asks for a test request and watches the access log for
+// it, as the network onboarding asks for a ping. The operator can skip it.
+export const OnboardingAgentEnd = ({ deviceName, onBack, onFinish }: Props) => {
+  const outcome = useTestRequest();
+  const passed = outcome.kind === "passed";
+
   return (
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
         <h1 className={"text-xl text-center max-w-sm mx-auto"}>
-          You&apos;re all set! <br />
-          Your agent network is ready.
+          {passed ? "You're all set!" : "Send a test request"}
         </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`Run your agent or send a test request with an allowed model. Open
-          Usage & Logs to confirm caller identity, model, tokens, and cost.`}
+          {passed ? (
+            <>
+              Your first request went through NetBird. Access Logs show who sent
+              each request, the model, tokens, and cost.
+            </>
+          ) : (
+            <>
+              Run your agent, or the cURL command from the previous step, on{" "}
+              <span className={"text-nb-gray-100 whitespace-nowrap"}>
+                {deviceName || "your device"}
+              </span>
+              . The request shows up here once NetBird logs it.
+            </>
+          )}
         </div>
       </div>
 
-      {showLiveChecklist && (
-        <LiveChecklist policyStep={policyStep} onFix={onFix} />
-      )}
+      <TestRequestStatus outcome={outcome} />
 
-      <div className={"mt-4 flex items-center justify-center"}>
-        <Button variant={"secondaryLighter"} onClick={onFinish}>
-          Go to Access Logs
-          <ArrowRightIcon size={16} />
+      <div className={"flex items-center justify-center mt-4 gap-3"}>
+        <Button variant={"secondary"} onClick={onBack}>
+          Go Back
         </Button>
+        {passed ? (
+          <Button variant={"primary"} onClick={onFinish}>
+            Go to Access Logs
+            <ArrowRightIcon size={16} />
+          </Button>
+        ) : (
+          <Button variant={"secondaryLighter"} onClick={onFinish}>
+            Skip
+          </Button>
+        )}
       </div>
     </div>
   );
 };
 
-// What each unmet item offers to do about it, by whether a device is
-// connected at all.
-const FIX_LABEL: Record<ChecklistItem, (deviceConnected: boolean) => string> = {
-  provider: () => "Connect a provider",
-  policy: () => "Set up a policy",
-  peer: (deviceConnected) =>
-    deviceConnected ? "Review the policy" : "Connect your device",
-};
+const TestRequestStatus = ({ outcome }: { outcome: TestRequestOutcome }) => {
+  if (outcome.kind === "waiting") {
+    return <WaitingForDevice text={"Waiting for your first request"} />;
+  }
 
-// LiveChecklist checks each item against live data: a ready gateway alone
-// answers nobody until a provider, a policy and a peer in it exist.
-const LiveChecklist = ({
-  policyStep,
-  onFix,
-}: {
-  policyStep: boolean;
-  onFix?: (step: AgentStep) => void;
-}) => {
-  const { providers, policies } = useAIProviders();
-  const { data: peers } = useFetchApi<Peer[]>("/peers");
-  const checks = liveChecklist({ providers, policies, peers: peers ?? [] });
-  const deviceConnected = (peers ?? []).some((p) => p.connected);
+  const { entry } = outcome;
+  const forModel = entry.model ? `, for ${entry.model},` : "";
 
-  const item = (name: ChecklistItem, children: React.ReactNode) => (
-    <CheckItem
-      done={checks[name]}
-      fixLabel={FIX_LABEL[name](deviceConnected)}
-      onFix={
-        onFix &&
-        (() => onFix(checklistFix(name, { policyStep, deviceConnected })))
-      }
-      data-testid={`agent-network-check-${name}`}
-    >
-      {children}
-    </CheckItem>
-  );
+  if (outcome.kind === "passed") {
+    return (
+      <Callout
+        variant={"success"}
+        icon={<CheckCircle2Icon size={16} className={"shrink-0 mt-0.5"} />}
+        data-testid={"agent-network-test-passed"}
+      >
+        Your request{forModel} came back with status {entry.status_code}
+        {entry.total_tokens > 0 &&
+          ` and used ${entry.total_tokens.toLocaleString()} tokens`}
+        .
+      </Callout>
+    );
+  }
 
   return (
-    <div
-      className={
-        "mt-2 flex flex-col gap-3 rounded-md border border-nb-gray-900 bg-nb-gray-920 py-4 px-5"
-      }
-      data-testid={"agent-network-live-checklist"}
-    >
-      <div className={"text-sm"}>Before your first request</div>
-      <ul className={"flex flex-col gap-2"}>
-        {item("provider", "At least one enabled provider")}
-        {item("policy", "At least one enabled policy")}
-        {item(
-          "peer",
-          <>
-            The agent&apos;s machine is a connected NetBird peer in one of that
-            policy&apos;s source groups
-          </>,
-        )}
-      </ul>
-      <div className={"text-xs text-nb-gray-400 font-light"}>
-        Agent Network is mesh-only for now: a peer outside the policy gets no
-        DNS answer for the endpoint. Traffic goes through relays, so expect a
-        little extra latency.
-      </div>
+    <div className={"flex flex-col"}>
+      <Callout
+        variant={outcome.kind === "denied" ? "error" : "warning"}
+        icon={<XCircleIcon size={16} className={"shrink-0 mt-0.5"} />}
+        data-testid={`agent-network-test-${outcome.kind}`}
+      >
+        {outcome.kind === "denied"
+          ? `Your last request${forModel} was denied: ${
+              formatDenyReason(entry.deny_reason) || "no reason given"
+            }.`
+          : `Your last request${forModel} reached the provider and came back with status ${entry.status_code}.`}
+      </Callout>
+      <WaitingForDevice text={"Waiting for your next request"} />
     </div>
   );
 };
 
-const CheckItem = ({
-  done,
-  fixLabel,
-  onFix,
-  children,
-  "data-testid": dataTestId,
-}: {
-  done: boolean;
-  fixLabel: string;
-  onFix?: () => void;
-  children: React.ReactNode;
-  "data-testid"?: string;
-}) => (
-  <li
-    className={cn(
-      "flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3 text-sm font-light",
-      done ? "text-nb-gray-100" : "text-nb-gray-300",
-    )}
-    data-done={done}
-    data-testid={dataTestId}
-  >
-    <span className={"flex flex-1 items-start gap-2.5"}>
-      {done ? (
-        <CheckCircle2Icon
-          size={16}
-          className={"text-green-500 shrink-0 relative top-[2px]"}
-        />
-      ) : (
-        <XCircleIcon
-          size={16}
-          className={"text-red-500 shrink-0 relative top-[2px]"}
-        />
-      )}
-      <span>{children}</span>
-    </span>
-    {!done && onFix && (
-      <Button
-        variant={"secondary"}
-        size={"xs"}
-        // Lined up under the text on narrow screens, past the icon.
-        className={"shrink-0 ml-[26px] sm:ml-0"}
-        onClick={onFix}
-      >
-        {fixLabel}
-      </Button>
-    )}
-  </li>
-);
+// windowStart opens the window the test request is looked for in.
+const windowStart = () => new Date(Date.now() - TEST_REQUEST_LOOKBACK_MS);
+
+// useTestRequest reads the newest request logged since shortly before the step
+// opened, until one passes. A timer drives the reads, not SWR's focus
+// revalidation, so a passed request stays on screen.
+function useTestRequest(): TestRequestOutcome {
+  const [since] = useState(windowStart);
+  const { data, mutate } = useFetchApi<APIAgentNetworkAccessLogsResponse>(
+    testRequestLogUrl(since),
+    true,
+    false,
+    true,
+    { shouldRetryOnError: false },
+  );
+  const outcome = testRequestOutcome(data?.data?.[0]);
+  const waiting = outcome.kind !== "passed";
+
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = setInterval(() => mutate(), TEST_REQUEST_POLL_MS);
+    return () => clearInterval(timer);
+  }, [waiting, mutate]);
+
+  return outcome;
+}

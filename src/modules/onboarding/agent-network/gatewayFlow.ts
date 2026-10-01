@@ -1,18 +1,9 @@
-import type { Peer } from "@/interfaces/Peer";
 import {
   isClusterConnected,
   ReverseProxyCluster,
   ReverseProxyClusterType,
 } from "@/interfaces/ReverseProxy";
-import type {
-  AgentPolicy,
-  AIProvider,
-} from "@/modules/agent-network/data/mockData";
 import { MANAGED_PROXY_STATE } from "@/modules/agent-network/managedProxyState";
-import {
-  AGENT_STEP,
-  AgentStep,
-} from "@/modules/onboarding/agent-network/agentNetworkSteps";
 
 // Seconds still provisioning before the managed view says the rollout is slow.
 // It is only a hint: the client never decides a rollout has failed.
@@ -115,47 +106,4 @@ export function formatElapsed(seconds: number): string {
   const total = Math.max(0, Math.floor(seconds));
   const rest = String(total % 60).padStart(2, "0");
   return `${Math.floor(total / 60)}:${rest}`;
-}
-
-export type LiveChecklist = {
-  provider: boolean;
-  policy: boolean;
-  peer: boolean;
-};
-
-// liveChecklist checks what has to hold besides a ready gateway before an
-// agent's requests go through: an enabled provider, an enabled policy, and a
-// connected peer in a source group of an enabled policy.
-export function liveChecklist(input: {
-  providers: Pick<AIProvider, "enabled">[];
-  policies: Pick<AgentPolicy, "enabled" | "sourceGroups">[];
-  peers: Pick<Peer, "connected" | "groups">[];
-}): LiveChecklist {
-  const enabledPolicies = input.policies.filter((p) => p.enabled);
-  const sourceGroups = new Set(enabledPolicies.flatMap((p) => p.sourceGroups));
-  return {
-    provider: input.providers.some((p) => p.enabled),
-    policy: enabledPolicies.length > 0,
-    peer: input.peers.some(
-      (peer) =>
-        peer.connected &&
-        (peer.groups ?? []).some((g) => !!g.id && sourceGroups.has(g.id)),
-    ),
-  };
-}
-
-export type ChecklistItem = keyof LiveChecklist;
-
-// checklistFix names the onboarding step that fixes an unmet checklist item.
-// The policy step fixes the policy where the flow has one; otherwise the
-// provider step, which creates the policy. A missing peer is the device step's
-// to fix until a device is connected, and then the policy's source groups.
-export function checklistFix(
-  item: ChecklistItem,
-  flow: { policyStep: boolean; deviceConnected: boolean },
-): AgentStep {
-  const policy = flow.policyStep ? AGENT_STEP.POLICY : AGENT_STEP.PROVIDER;
-  if (item === "provider") return AGENT_STEP.PROVIDER;
-  if (item === "policy") return policy;
-  return flow.deviceConnected ? policy : AGENT_STEP.DEVICE;
 }
