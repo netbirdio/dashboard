@@ -145,21 +145,24 @@ describe("ReverseProxyTargetAccessControl", () => {
 });
 
 describe("ReverseProxyTargetAccessActionBadge", () => {
-  it("shows badges for bypass, block, and unsupported actions", () => {
-    const { rerender } = render(
-      <ReverseProxyTargetAccessActionBadge
-        action={TargetAccessAction.BYPASS}
-      />,
-    );
-    expect(screen.getByText("Bypass Auth")).toBeTruthy();
+  it.each([
+    [TargetAccessAction.BYPASS, "Bypass authentication"],
+    [TargetAccessAction.BLOCK, "Block access"],
+    ["future-action", "Unsupported access setting (future-action)"],
+  ])("shows an icon with an accessible hover label for %s", async (action, label) => {
+    render(<ReverseProxyTargetAccessActionBadge action={action} />);
 
-    rerender(
-      <ReverseProxyTargetAccessActionBadge action={TargetAccessAction.BLOCK} />,
-    );
-    expect(screen.getByText("Blocked")).toBeTruthy();
+    const badge = screen.getByRole("img", { name: label });
+    expect(badge.textContent).toBe("");
+    expect(badge.querySelector("svg")).not.toBeNull();
+    expect(badge.getAttribute("tabindex")).toBe("0");
+    expect(screen.queryByRole("tooltip")).toBeNull();
 
-    rerender(<ReverseProxyTargetAccessActionBadge action={"future-action"} />);
-    expect(screen.getByText("Custom Access")).toBeTruthy();
+    fireEvent.focus(badge);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(label);
+
+    fireEvent.blur(badge);
+    expect(screen.queryByRole("tooltip")).toBeNull();
   });
 
   it("does not show a badge for inherited access", () => {

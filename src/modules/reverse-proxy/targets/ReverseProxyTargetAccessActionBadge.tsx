@@ -1,5 +1,6 @@
 import Badge from "@components/Badge";
-import { LockOpen, ShieldX } from "lucide-react";
+import FullTooltip from "@components/FullTooltip";
+import { HelpCircle, LockOpen, ShieldX } from "lucide-react";
 import {
   TargetAccessAction,
   type TargetAccessAction as TargetAccessActionValue,
@@ -14,39 +15,36 @@ export default function ReverseProxyTargetAccessActionBadge({
 }: Readonly<Props>) {
   if (!action || action === TargetAccessAction.INHERIT) return null;
 
-  if (action === TargetAccessAction.BYPASS) {
-    return (
-      <Badge
-        variant={"yellow"}
-        size={"xs"}
-        data-testid={"target-access-action-badge"}
-      >
-        <LockOpen size={11} />
-        Bypass Auth
-      </Badge>
-    );
-  }
-
-  if (action === TargetAccessAction.BLOCK) {
-    return (
-      <Badge
-        variant={"red"}
-        size={"xs"}
-        data-testid={"target-access-action-badge"}
-      >
-        <ShieldX size={11} />
-        Blocked
-      </Badge>
-    );
-  }
+  const blocked = action === TargetAccessAction.BLOCK;
+  const bypass = action === TargetAccessAction.BYPASS;
+  const label = bypass
+    ? "Bypass authentication"
+    : blocked
+      ? "Block access"
+      : `Unsupported access setting (${action})`;
+  const Icon = bypass ? LockOpen : blocked ? ShieldX : HelpCircle;
 
   return (
-    <Badge
-      variant={"yellow"}
-      size={"xs"}
-      data-testid={"target-access-action-badge"}
+    <FullTooltip
+      interactive={false}
+      alignOffset={0}
+      content={<span className={"text-xs"}>{label}</span>}
     >
-      Custom Access
-    </Badge>
+      <Badge
+        variant={"gray"}
+        size={"xs"}
+        className={"h-6 w-6 shrink-0 p-0"}
+        role={"img"}
+        aria-label={label}
+        tabIndex={0}
+        data-testid={"target-access-action-badge"}
+      >
+        <Icon
+          size={12}
+          className={blocked ? "text-red-500" : "text-yellow-400"}
+          aria-hidden={true}
+        />
+      </Badge>
+    </FullTooltip>
   );
 }
