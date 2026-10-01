@@ -1,27 +1,13 @@
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-type Policy = {
-  id: string;
-  name: string;
-  description: string;
-  enabled: boolean;
-};
 
 const ai = {
   settings: { endpoint: "calm-heron.proxy.company.com" } as unknown,
   providers: [] as { id: string; name: string; enabled: boolean }[],
-  policies: [] as Policy[],
+  policies: [] as { id: string }[],
   policiesLoaded: true,
   addPolicy: vi.fn(),
-  togglePolicy: vi.fn(),
   openWizard: vi.fn(),
   closeWizard: vi.fn(),
   isWizardOpen: false,
@@ -46,7 +32,7 @@ beforeEach(() => {
   ai.providers = [{ id: "p1", name: "OpenAI", enabled: true }];
   ai.policies = [];
   ai.policiesLoaded = true;
-  ai.addPolicy = vi.fn(async () => undefined);
+  ai.addPolicy = vi.fn(async () => ({ id: "pol1" }));
   groups = [
     { id: "g-all", name: "All" },
     { id: "g-users", name: "Users" },
@@ -62,13 +48,12 @@ const renderStep = async (createsPolicy = true) => {
   const rerender = () =>
     act(async () => view.rerender(<OnboardingAgentProvider {...props} />));
   await rerender();
-  return rerender;
+  return { rerender, unmount: view.unmount };
 };
 
 describe("OnboardingAgentProvider", () => {
-  it("creates one policy from the Users group to the first provider", async () => {
-    ai.addPolicy = vi.fn(async () => ({ id: "pol1" }));
-    const rerender = await renderStep();
+  it("creates one policy from the Users group to the first provider, without a word", async () => {
+    const { rerender } = await renderStep();
     // The provider list is read again while the create is in flight.
     ai.providers = ai.providers.map((p) => ({ ...p }));
     await rerender();
@@ -81,43 +66,42 @@ describe("OnboardingAgentProvider", () => {
         sourceGroups: ["g-users"],
         destinationProviderIds: ["p1"],
       }),
+      { quiet: true },
     );
-    expect(screen.getByText("Creating a policy…")).toBeTruthy();
-  });
-
-  it("offers to try again when the policy cannot be created", async () => {
-    await renderStep();
     expect(
-      screen.getByTestId("agent-network-starter-policy-failed"),
-    ).toBeTruthy();
-    expect(
-      ai.addPolicy,
-      "a refused create waits for a retry",
-    ).toHaveBeenCalledTimes(1);
-
-    ai.addPolicy = vi.fn(async () => ({ id: "pol1" }));
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    });
-    expect(ai.addPolicy).toHaveBeenCalledTimes(1);
-  });
-
-  it("reports a failure when no group can start the policy", async () => {
-    groups = [{ id: "g-dev", name: "Developers" }];
-    await renderStep();
-    expect(
-      screen.getByTestId("agent-network-starter-policy-failed"),
-    ).toBeTruthy();
-    expect(ai.addPolicy).not.toHaveBeenCalled();
-  });
-
-  it("waits for the groups before reporting a missing one", async () => {
-    groups = undefined as unknown as typeof groups;
-    await renderStep();
-    expect(screen.getByText("Creating a policy…")).toBeTruthy();
-    expect(
-      screen.queryByTestId("agent-network-starter-policy-failed"),
+      screen.queryByText(/polic/i),
+      "the step never mentions the policy it creates",
     ).toBeNull();
+  });
+
+  it("falls back to the All group", async () => {
+    groups = [{ id: "g-all", name: "All" }];
+    await renderStep();
+    expect(ai.addPolicy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "All to OpenAI",
+        sourceGroups: ["g-all"],
+      }),
+      { quiet: true },
+    );
+  });
+
+  it("tries once per mount when the create is refused", async () => {
+    ai.addPolicy = vi.fn(async () => undefined);
+    const { rerender, unmount } = await renderStep();
+    await rerender();
+    expect(ai.addPolicy, "no retry on the same mount").toHaveBeenCalledTimes(1);
+
+    // Coming back to the step tries again.
+    unmount();
+    await renderStep();
+    expect(ai.addPolicy).toHaveBeenCalledTimes(2);
+  });
+
+  it("waits for a connected provider", async () => {
+    ai.providers = [];
+    await renderStep();
+    expect(ai.addPolicy).not.toHaveBeenCalled();
   });
 
   it("waits for the policy list before creating a policy", async () => {
@@ -129,23 +113,20 @@ describe("OnboardingAgentProvider", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("shows the account's policy instead of creating another", async () => {
-    ai.policies = [
-      {
-        id: "pol1",
-        name: "Users to OpenAI",
-        description: "Lets the Users group reach OpenAI",
-        enabled: true,
-      },
-    ];
+  it("creates nothing when the account has a policy", async () => {
+    ai.policies = [{ id: "pol1" }];
     await renderStep();
     expect(ai.addPolicy).not.toHaveBeenCalled();
-    expect(screen.getByText("Lets the Users group reach OpenAI")).toBeTruthy();
+  });
+
+  it("creates nothing without a Users or All group", async () => {
+    groups = [{ id: "g-dev", name: "Developers" }];
+    await renderStep();
+    expect(ai.addPolicy).not.toHaveBeenCalled();
   });
 
   it("leaves the policy to the policy step where the flow has one", async () => {
     await renderStep(false);
     expect(ai.addPolicy).not.toHaveBeenCalled();
-    expect(screen.queryByTestId("agent-network-starter-policy")).toBeNull();
   });
 });

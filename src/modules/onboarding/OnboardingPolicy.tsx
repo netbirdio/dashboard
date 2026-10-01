@@ -4,18 +4,12 @@ import { ShieldIcon } from "lucide-react";
 import * as React from "react";
 import { Policy } from "@/interfaces/Policy";
 
-// The card only reads these, so an Agent Network policy fits it as well.
-type PolicyCardFields = Pick<Policy, "name" | "description" | "enabled">;
-
-type Props<T extends PolicyCardFields> = {
-  policy?: T;
-  onToggle?: (policy: T) => void;
+type Props = {
+  policy?: Policy;
+  onToggle?: (policy: Policy) => void;
 };
 
-export const OnboardingPolicy = <T extends PolicyCardFields>({
-  policy,
-  onToggle,
-}: Props<T>) => {
+export const OnboardingPolicy = ({ policy, onToggle }: Props) => {
   if (!policy) return;
 
   return (

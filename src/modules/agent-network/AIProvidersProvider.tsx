@@ -589,8 +589,11 @@ type AIProvidersContextValue = {
   ) => Promise<boolean>;
   toggleProvider: (id: string) => Promise<boolean>;
   deleteProvider: (id: string) => Promise<boolean>;
+  // quiet leaves out the success toast, for a policy the operator did not ask
+  // for. A failure is still reported.
   addPolicy: (
     policy: Omit<AgentPolicy, "id">,
+    options?: { quiet?: boolean },
   ) => Promise<AgentPolicy | undefined>;
   updatePolicy: (id: string, updates: Partial<AgentPolicy>) => Promise<boolean>;
   togglePolicy: (id: string) => Promise<boolean>;
@@ -906,14 +909,16 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   );
 
   const addPolicy = useCallback(
-    async (policy: Omit<AgentPolicy, "id">) => {
+    async (policy: Omit<AgentPolicy, "id">, options?: { quiet?: boolean }) => {
       try {
         const created = await policiesApi.post(policyToRequest(policy));
         await mutatePolicies();
-        notify({
-          title: "Policy created",
-          description: `${created.name} is now active.`,
-        });
+        if (!options?.quiet) {
+          notify({
+            title: "Policy created",
+            description: `${created.name} is now active.`,
+          });
+        }
         return policyFromAPI(created);
       } catch (err) {
         notifyFailure({
