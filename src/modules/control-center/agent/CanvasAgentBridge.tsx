@@ -241,8 +241,12 @@ type Lane = keyof typeof LANE_X;
 let placement = {
   key: "",
   anchor: null as { x: number; y: number } | null,
-  /** Whether the camera has already been set to cover the build area. */
-  framed: false,
+  /**
+   * The lane span the camera has already been set to cover, in LANE_X units.
+   * Null until the first node claims a lane; widened (never narrowed) when a
+   * later step reaches past it.
+   */
+  framed: null as { min: number; max: number } | null,
   left: 0,
   center: 0,
   right: 0,
@@ -762,8 +766,8 @@ async function addOne(
   const { kind, ref, name } = item;
   // Its spot in the reading order, claimed before anything is created — and on
   // the first one, the camera is set to cover the whole area first.
-  const at = nextPlacement(kind, item.role, d);
-  frameBuildArea(d);
+  const { lane, ...at } = nextPlacement(kind, item.role, d);
+  frameBuildArea(d, lane);
 
   switch (kind) {
     case "server":
@@ -1525,10 +1529,17 @@ function nextPlacement(
   kind: AgentAddItem["kind"],
   role: AgentAddItem["role"],
   d: BridgeDeps,
-): { x: number; y: number } {
+): { x: number; y: number; lane: Lane } {
   const key = `${d.draft.isDraft}:${d.draft.draftSession}`;
   if (placement.key !== key) {
-    placement = { key, anchor: null, framed: false, left: 0, center: 0, right: 0 };
+    placement = {
+      key,
+      anchor: null,
+      framed: null,
+      left: 0,
+      center: 0,
+      right: 0,
+    };
   }
   if (!placement.anchor) {
     const top = d.reactFlow.getNodes().filter((n) => !n.parentId);
@@ -1548,28 +1559,42 @@ function nextPlacement(
   return {
     x: placement.anchor.x + LANE_X[lane],
     y: placement.anchor.y + index * LANE_PITCH,
+    lane,
   };
 }
 
 /**
- * Frames the area the build is going to occupy, once, before the first node
- * lands in it.
+ * Frames the area the build occupies, before the node lands in it.
  *
  * Placing incrementally and letting the camera chase each node is how a
  * destination group ended up off-screen: the first node looked centred, and
- * every one after it walked further right. The columns are known up front, so
- * the viewport can just cover them — after which nothing added needs the camera
- * to move at all.
+ * every one after it walked further right. So the viewport covers whole
+ * columns rather than nodes — after which nothing added inside them needs the
+ * camera to move again.
+ *
+ * It covers the columns actually in use, not all three. A build that only ever
+ * fills one — a lone provider, which is always a destination — would otherwise
+ * be framed across a left and centre column that stay empty, and the one node
+ * on screen sits a third of the way in from the right instead of in the middle.
+ * The span only ever widens, so a later step reaching into a new column
+ * re-frames to include it and the earlier nodes keep their place on screen.
  */
-function frameBuildArea(d: BridgeDeps) {
-  if (placement.framed || !placement.anchor) return;
-  placement.framed = true;
+function frameBuildArea(d: BridgeDeps, lane: Lane) {
+  if (!placement.anchor) return;
+  const at = LANE_X[lane];
+  const span = placement.framed;
+  if (span && at >= span.min && at <= span.max) return;
+  const min = Math.min(at, span?.min ?? at);
+  const max = Math.max(at, span?.max ?? at);
+  placement.framed = { min, max };
   const { x, y } = placement.anchor;
   void d.reactFlow.fitBounds(
     {
-      x: x + LANE_X.left - BUILD_AREA_MARGIN,
+      x: x + min - BUILD_AREA_MARGIN,
       y: y - BUILD_AREA_MARGIN,
-      width: LANE_X.right - LANE_X.left + BUILD_AREA_MARGIN * 2 + 300,
+      // The trailing node width is what makes this centre on the nodes rather
+      // than on their left edges.
+      width: max - min + BUILD_AREA_MARGIN * 2 + 300,
       height: BUILD_AREA_HEIGHT,
     },
     { duration: 500 },
