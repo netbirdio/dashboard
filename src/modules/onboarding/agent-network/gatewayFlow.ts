@@ -1,20 +1,15 @@
-import type { Peer } from "@/interfaces/Peer";
 import {
   isClusterConnected,
   ReverseProxyCluster,
   ReverseProxyClusterType,
 } from "@/interfaces/ReverseProxy";
-import type {
-  AgentPolicy,
-  AIProvider,
-} from "@/modules/agent-network/data/mockData";
 import { MANAGED_PROXY_STATE } from "@/modules/agent-network/managedProxyState";
 
 // Seconds still provisioning before the managed view says the rollout is slow.
 // It is only a hint: the client never decides a rollout has failed.
 export const MANAGED_SLOW_HINT_AFTER_S = 120;
-// Seconds without the proxy registering before the self-deploy view points at
-// the usual causes.
+// Seconds without a newly deployed proxy registering before the gateway step
+// points at the usual causes.
 export const SELF_DEPLOY_HINT_AFTER_S = 300;
 
 // privateAccountClusters returns the proxies the account runs itself that can
@@ -35,9 +30,10 @@ export function privateAccountClusters(
 
 export type GatewayEntry =
   | { kind: "loading" }
-  // A managed deployment exists: show its state and poll it, never POST.
+  // A managed deployment is not ready yet: show its state and poll it, never
+  // POST.
   | { kind: "managed" }
-  // The account already has an endpoint that is not managed: skip the step.
+  // The account's endpoint is served already: skip the step.
   | { kind: "configured" }
   | { kind: "choice" };
 
@@ -48,10 +44,13 @@ export type GatewayEntry =
 export function resolveGatewayEntry(input: {
   loading: boolean;
   managedExists: boolean;
+  managedReady?: boolean;
   settingsEndpoint?: string;
 }): GatewayEntry {
   if (input.loading) return { kind: "loading" };
-  if (input.managedExists) return { kind: "managed" };
+  if (input.managedExists && !(input.managedReady && input.settingsEndpoint)) {
+    return { kind: "managed" };
+  }
   if (input.settingsEndpoint) return { kind: "configured" };
   return { kind: "choice" };
 }
@@ -107,31 +106,4 @@ export function formatElapsed(seconds: number): string {
   const total = Math.max(0, Math.floor(seconds));
   const rest = String(total % 60).padStart(2, "0");
   return `${Math.floor(total / 60)}:${rest}`;
-}
-
-export type LiveChecklist = {
-  provider: boolean;
-  policy: boolean;
-  peer: boolean;
-};
-
-// liveChecklist checks what has to hold besides a ready gateway before an
-// agent's requests go through: an enabled provider, an enabled policy, and a
-// connected peer in a source group of an enabled policy.
-export function liveChecklist(input: {
-  providers: Pick<AIProvider, "enabled">[];
-  policies: Pick<AgentPolicy, "enabled" | "sourceGroups">[];
-  peers: Pick<Peer, "connected" | "groups">[];
-}): LiveChecklist {
-  const enabledPolicies = input.policies.filter((p) => p.enabled);
-  const sourceGroups = new Set(enabledPolicies.flatMap((p) => p.sourceGroups));
-  return {
-    provider: input.providers.some((p) => p.enabled),
-    policy: enabledPolicies.length > 0,
-    peer: input.peers.some(
-      (peer) =>
-        peer.connected &&
-        (peer.groups ?? []).some((g) => !!g.id && sourceGroups.has(g.id)),
-    ),
-  };
 }

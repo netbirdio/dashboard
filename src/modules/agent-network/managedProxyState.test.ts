@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  isKnownManagedProxyState,
   managedProxyPollInterval,
   provisionOutcome,
 } from "@/modules/agent-network/managedProxyState";
@@ -30,16 +29,6 @@ describe("managedProxyPollInterval", () => {
 
   it("keeps a slow poll for a state this dashboard does not know", () => {
     expect(managedProxyPollInterval({ state: "terminating" })).toBe(15_000);
-  });
-});
-
-describe("isKnownManagedProxyState", () => {
-  it("knows the three documented states and nothing else", () => {
-    expect(
-      ["provisioning", "ready", "failed"].every(isKnownManagedProxyState),
-      "documented states should be known",
-    ).toBe(true);
-    expect(isKnownManagedProxyState("disabled")).toBe(false);
   });
 });
 
