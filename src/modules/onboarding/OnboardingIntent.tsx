@@ -104,9 +104,6 @@ type IntentCardProps = {
     icon: React.ReactNode;
     onClick: () => void;
     recommended?: boolean;
-    // recommendedTooltip explains the recommendation; the default speaks to
-    // the choices made in the signup form.
-    recommendedTooltip?: React.ReactNode;
     "data-testid"?: string;
 };
 
@@ -116,7 +113,6 @@ export const IntentCard = ({
                         icon,
                         onClick,
                         recommended,
-                        recommendedTooltip,
                         "data-testid": dataTestId,
                     }: IntentCardProps) => {
     return (
@@ -148,12 +144,8 @@ export const IntentCard = ({
                                 <FullTooltip
                                     content={
                                         <div className={"text-xs max-w-xs"}>
-                                            {recommendedTooltip ?? (
-                                                <>
-                                                    Based on your previous choices, we recommend starting with{" "}
-                                                    {title}. You can always combine both options later.
-                                                </>
-                                            )}
+                                            Based on your previous choices, we recommend starting with{" "}
+                                            {title}. You can always combine both options later.
                                         </div>
                                     }
                                 >

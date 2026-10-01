@@ -276,10 +276,6 @@ const GatewayChoice = ({
                 "NetBird runs a dedicated, private proxy for your account."
               }
               icon={<CloudIcon size={18} className={"text-netbird"} />}
-              recommended={true}
-              recommendedTooltip={
-                "NetBird runs the proxy for you, so there is nothing to deploy."
-              }
               onClick={confirmManaged ? () => setConfirming(true) : onManaged}
               data-testid={"gateway-choice-managed"}
             />
