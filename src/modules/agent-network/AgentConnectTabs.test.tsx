@@ -103,14 +103,14 @@ describe("AgentConnectTabs", () => {
       `  -H "anthropic-version: 2023-06-01" \\`,
       `  -d '{`,
       `    "model": "claude-sonnet-5",`,
-      `    "max_tokens": 1024,`,
+      `    "max_tokens": 32,`,
       `    "messages": [`,
-      `      { "role": "user", "content": "What is NetBird Agent Network?" }`,
+      `      { "role": "user", "content": "Say hello in one word." }`,
       `    ]`,
       `  }'`,
     ]);
     expect(await copied(), "the same request on one line").toBe(
-      `curl https://${ENDPOINT}/v1/messages -H "Content-Type: application/json" -H "anthropic-version: 2023-06-01" -d '{"model":"claude-sonnet-5","max_tokens":1024,"messages":[{"role":"user","content":"What is NetBird Agent Network?"}]}'`,
+      `curl https://${ENDPOINT}/v1/messages -H "Content-Type: application/json" -H "anthropic-version: 2023-06-01" -d '{"model":"claude-sonnet-5","max_tokens":32,"messages":[{"role":"user","content":"Say hello in one word."}]}'`,
     );
   });
 
@@ -131,6 +131,7 @@ describe("AgentConnectTabs", () => {
         `    base_url="https://${ENDPOINT}",`,
         `client.messages.create(`,
         `    model="claude-sonnet-5",`,
+        `    max_tokens=32,`,
       ]),
     );
   });
@@ -140,7 +141,7 @@ describe("AgentConnectTabs", () => {
 
     expect(screen.getByRole("tab", { name: "OpenAI SDK" })).toBeTruthy();
     expect(await copied()).toBe(
-      `curl https://${ENDPOINT}/v1/chat/completions -H "Content-Type: application/json" -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"What is NetBird Agent Network?"}]}'`,
+      `curl https://${ENDPOINT}/v1/chat/completions -H "Content-Type: application/json" -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"Say hello in one word."}]}'`,
     );
   });
 });

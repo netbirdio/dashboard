@@ -177,7 +177,11 @@ export function connectExample(
   return { api, model: provider.models[0]?.id ?? DEFAULT_MODEL[api] };
 }
 
-const PROMPT = "What is NetBird Agent Network?";
+// A one-word answer keeps a test request quick. Only Anthropic gets a token
+// cap, which its API requires: OpenAI's reasoning models refuse max_tokens,
+// and not every OpenAI-compatible provider takes max_completion_tokens.
+const PROMPT = "Say hello in one word.";
+const MAX_TOKENS = 32;
 
 // sdkLines calls the SDK of the example's API shape. Both SDKs insist on an
 // API key, which NetBird swaps for the provider's.
@@ -194,7 +198,7 @@ function sdkLines({ api, model }: ConnectExample, baseUrl: string): string[] {
       ``,
       `client.messages.create(`,
       `    model="${model}",`,
-      `    max_tokens=1024,`,
+      `    max_tokens=${MAX_TOKENS},`,
       messages,
       `)`,
     ];
@@ -226,7 +230,7 @@ function curlSnippet({ api, model }: ConnectExample, baseUrl: string) {
   ];
   const messages = [{ role: "user", content: PROMPT }];
   const body = anthropic
-    ? { model, max_tokens: 1024, messages }
+    ? { model, max_tokens: MAX_TOKENS, messages }
     : { model, messages };
   return {
     lines: [
@@ -234,7 +238,7 @@ function curlSnippet({ api, model }: ConnectExample, baseUrl: string) {
       ...headers.map((h) => `  -H "${h}" \\`),
       `  -d '{`,
       `    "model": "${model}",`,
-      ...(anthropic ? [`    "max_tokens": 1024,`] : []),
+      ...(anthropic ? [`    "max_tokens": ${MAX_TOKENS},`] : []),
       `    "messages": [`,
       `      { "role": "user", "content": "${PROMPT}" }`,
       `    ]`,
