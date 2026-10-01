@@ -58,6 +58,15 @@ export enum ReverseProxyStatus {
 
 export type ServiceTargetOptionsPathRewrite = "preserve";
 
+export const TargetAccessAction = {
+  INHERIT: "inherit",
+  BYPASS: "bypass",
+  BLOCK: "block",
+} as const;
+
+export type TargetAccessAction =
+  (typeof TargetAccessAction)[keyof typeof TargetAccessAction];
+
 export interface ServiceTargetOptions {
   skip_tls_verify?: boolean;
   request_timeout?: string;
@@ -82,6 +91,7 @@ export interface ReverseProxyTarget {
   host?: string;
   port: number;
   enabled: boolean;
+  access_action?: TargetAccessAction;
   access_local?: boolean;
   options?: ServiceTargetOptions;
   // Frontend
@@ -123,6 +133,7 @@ export interface ReverseProxyDomain {
   require_subdomain?: boolean;
   supports_crowdsec?: boolean;
   supports_private?: boolean;
+  supports_target_access_control?: boolean;
 }
 
 export enum ReverseProxyDomainType {
@@ -188,6 +199,7 @@ export interface ReverseProxyCluster {
   supports_custom_ports?: boolean;
   require_subdomain?: boolean;
   supports_crowdsec?: boolean;
+  supports_target_access_control?: boolean;
   // True when at least one connected proxy in this cluster is running embedded
   // in a netbird client (`netbird proxy`) and serving over a WireGuard tunnel.
   // Lets the dashboard distinguish per-peer / private clusters from centralised
