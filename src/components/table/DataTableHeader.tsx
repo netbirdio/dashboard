@@ -37,8 +37,10 @@ export default function DataTableHeader({
     // starts ascending. column.toggleSorting() cannot express this: when the
     // column is the lowest-priority entry of an existing multi-sort it toggles
     // in place, which leaves the visible order unchanged.
-    const leadsSort = table?.getState().sorting[0]?.id === column.id;
-    const desc = leadsSort ? column.getIsSorted() !== "desc" : false;
+    // Outside a DataTable the sort order is unknown, so the column's own
+    // direction is all there is to flip.
+    const flips = table ? table.getState().sorting[0]?.id === column.id : true;
+    const desc = flips && column.getIsSorted() === "asc";
 
     if (onSort) {
       onSort();

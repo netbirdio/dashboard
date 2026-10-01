@@ -51,15 +51,18 @@ const filterFns = {
 const sortingFns = { checkbox: () => 0, datetime: () => 0 };
 
 // Mirrors DataTable: sorting state lives in the parent and is fed back through
-// state.sorting / onSortingChange.
+// state.sorting / onSortingChange. withContext={false} renders the header the
+// way a caller outside DataTable would, without the table instance in context.
 function Harness({
   initialSorting,
   columnId,
   name,
+  withContext = true,
 }: {
   initialSorting: SortingState;
   columnId: string;
   name?: string;
+  withContext?: boolean;
 }) {
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
   const table = useReactTable({
@@ -73,8 +76,8 @@ function Harness({
     getSortedRowModel: getSortedRowModel(),
   });
 
-  return (
-    <DataTableInstanceProvider table={table}>
+  const content = (
+    <>
       <DataTableHeader column={table.getColumn(columnId)!} name={name}>
         Header
       </DataTableHeader>
@@ -84,7 +87,15 @@ function Harness({
           <li key={row.id}>{row.original.name}</li>
         ))}
       </ul>
+    </>
+  );
+
+  return withContext ? (
+    <DataTableInstanceProvider table={table}>
+      {content}
     </DataTableInstanceProvider>
+  ) : (
+    content
   );
 }
 
@@ -152,5 +163,24 @@ describe("DataTableHeader sorting", () => {
 
     expect(sortingState()).toEqual([{ id: "name", desc: false }]);
     expect(setSort).toHaveBeenCalledWith("name", "asc");
+  });
+
+  it("toggles the direction when rendered outside a DataTable", () => {
+    render(
+      <Harness
+        initialSorting={[{ id: "name", desc: false }]}
+        columnId={"name"}
+        name={"name"}
+        withContext={false}
+      />,
+    );
+
+    clickHeader();
+    expect(sortingState()).toEqual([{ id: "name", desc: true }]);
+    expect(setSort).toHaveBeenLastCalledWith("name", "desc");
+
+    clickHeader();
+    expect(sortingState()).toEqual([{ id: "name", desc: false }]);
+    expect(setSort).toHaveBeenLastCalledWith("name", "asc");
   });
 });
