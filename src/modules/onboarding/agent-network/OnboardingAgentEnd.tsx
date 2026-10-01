@@ -1,7 +1,13 @@
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
+import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import useFetchApi from "@utils/api";
-import { ArrowRightIcon, CheckCircle2Icon, XCircleIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  CheckCircle2Icon,
+  ExternalLinkIcon,
+  XCircleIcon,
+} from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import type { APIAgentNetworkAccessLogsResponse } from "@/modules/agent-network/agentAccessLogApi";
@@ -14,6 +20,8 @@ import {
   testRequestOutcome,
 } from "@/modules/onboarding/agent-network/testRequest";
 import { WaitingForDevice } from "@/modules/onboarding/OnboardingDevices";
+
+const QUICKSTART_DOCS = "https://docs.netbird.io/agent-network/quickstart";
 
 type Props = {
   // deviceName names the operator's device, where the test request has to
@@ -57,7 +65,7 @@ export const OnboardingAgentEnd = ({ deviceName, onBack, onFinish }: Props) => {
         </div>
       </div>
 
-      <TestRequestStatus outcome={outcome} />
+      <TestRequestStatus outcome={outcome} onOpenLogs={onFinish} />
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         <Button variant={"secondary"} onClick={onBack}>
@@ -78,7 +86,16 @@ export const OnboardingAgentEnd = ({ deviceName, onBack, onFinish }: Props) => {
   );
 };
 
-const TestRequestStatus = ({ outcome }: { outcome: TestRequestOutcome }) => {
+// TestRequestStatus shows what became of the latest request. onOpenLogs leaves
+// the onboarding for the Access Logs, as the onboarding covers every page
+// while it is open.
+const TestRequestStatus = ({
+  outcome,
+  onOpenLogs,
+}: {
+  outcome: TestRequestOutcome;
+  onOpenLogs: () => void;
+}) => {
   if (outcome.kind === "waiting") {
     return <WaitingForDevice text={"Waiting for your first request"} />;
   }
@@ -108,11 +125,29 @@ const TestRequestStatus = ({ outcome }: { outcome: TestRequestOutcome }) => {
         icon={<XCircleIcon size={16} className={"shrink-0 mt-0.5"} />}
         data-testid={`agent-network-test-${outcome.kind}`}
       >
-        {outcome.kind === "denied"
-          ? `Your last request${forModel} was denied: ${
-              formatDenyReason(entry.deny_reason) || "no reason given"
-            }.`
-          : `Your last request${forModel} reached the provider and came back with status ${entry.status_code}.`}
+        <p>
+          {outcome.kind === "denied"
+            ? `Your last request${forModel} was denied: ${
+                formatDenyReason(entry.deny_reason) || "no reason given"
+              }.`
+            : `Your last request${forModel} reached the provider and came back with status ${entry.status_code}.`}
+        </p>
+        <p className={"mt-1"}>
+          Learn more in the{" "}
+          <InlineButtonLink variant={"dashed"} onClick={onOpenLogs}>
+            Access Logs
+          </InlineButtonLink>{" "}
+          or the{" "}
+          <InlineLink
+            variant={"dashed"}
+            href={QUICKSTART_DOCS}
+            target={"_blank"}
+          >
+            docs
+            <ExternalLinkIcon size={12} />
+          </InlineLink>
+          .
+        </p>
       </Callout>
       <WaitingForDevice text={"Waiting for your next request"} />
     </div>

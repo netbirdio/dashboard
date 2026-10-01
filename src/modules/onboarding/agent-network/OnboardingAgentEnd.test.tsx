@@ -4,6 +4,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -67,6 +68,19 @@ const renderEnd = () => {
 
 const buttons = () =>
   screen.getAllByRole("button").map((b) => b.textContent?.trim());
+
+// expectLearnMore checks that a failed request points at the Access Logs, which
+// ends the onboarding, and at the docs in a new tab.
+const expectLearnMore = (callout: HTMLElement, onFinish: () => void) => {
+  const docs = within(callout).getByRole("link", { name: "docs" });
+  expect(docs.getAttribute("href")).toBe(
+    "https://docs.netbird.io/agent-network/quickstart",
+  );
+  expect(docs.getAttribute("target")).toBe("_blank");
+
+  fireEvent.click(within(callout).getByRole("button", { name: "Access Logs" }));
+  expect(onFinish).toHaveBeenCalledTimes(1);
+};
 
 // waitPolls lets the step's timer run for the given time.
 const waitPolls = (ms: number) => act(() => vi.advanceTimersByTime(ms));
@@ -138,28 +152,36 @@ describe("OnboardingAgentEnd", () => {
         status_code: 403,
       }),
     ];
-    renderEnd();
+    const { onFinish } = renderEnd();
 
-    expect(screen.getByTestId("agent-network-test-denied").textContent).toBe(
-      "Your last request, for gpt-4, was denied: Model not available.",
-    );
+    const callout = screen.getByTestId("agent-network-test-denied");
+    expect(
+      within(callout).getByText(
+        "Your last request, for gpt-4, was denied: Model not available.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByText("Waiting for your next request")).toBeTruthy();
-    expect(buttons()).toEqual(["Go Back", "Skip"]);
+    expect(screen.getByRole("button", { name: "Skip" })).toBeTruthy();
 
     waitPolls(3000);
     expect(mutate).toHaveBeenCalledTimes(1);
+    expectLearnMore(callout, onFinish);
   });
 
   it("reports a request the provider answered with an error and keeps watching", () => {
     logs = [entry({ status_code: 401, total_tokens: 0 })];
-    renderEnd();
+    const { onFinish } = renderEnd();
 
-    expect(screen.getByTestId("agent-network-test-failed").textContent).toBe(
-      "Your last request, for claude-sonnet-5, reached the provider and came back with status 401.",
-    );
+    const callout = screen.getByTestId("agent-network-test-failed");
+    expect(
+      within(callout).getByText(
+        "Your last request, for claude-sonnet-5, reached the provider and came back with status 401.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByRole("heading").textContent).toBe("Send a test request");
 
     waitPolls(3000);
     expect(mutate).toHaveBeenCalledTimes(1);
+    expectLearnMore(callout, onFinish);
   });
 });
