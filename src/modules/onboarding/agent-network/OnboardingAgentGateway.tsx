@@ -343,7 +343,7 @@ const OwnProxyToggle = ({
       "self-center flex items-center gap-1.5 mt-1 text-sm text-nb-gray-400 hover:text-nb-gray-200 transition-colors"
     }
   >
-    Use your own proxy instead
+    Or use your own proxy instead
     {privateCount > 0 && !open && (
       <span className={"text-nb-gray-500"}>
         · {privateProxies(privateCount)}
