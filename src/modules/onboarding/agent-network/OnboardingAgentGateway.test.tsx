@@ -32,9 +32,6 @@ vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
 vi.mock("@/modules/agent-network/useManagedProxy", () => ({
   useManagedProxy: () => managed,
 }));
-vi.mock("@/contexts/UsersProvider", () => ({
-  useLoggedInUser: () => ({ isOwner: true }),
-}));
 vi.mock("@/modules/reverse-proxy/clusters/useProxyCluster", () => ({
   useProxyCluster: (domain?: string) => (domain ? cluster : undefined),
 }));

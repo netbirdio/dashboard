@@ -20,7 +20,6 @@ import {
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
 import {
   REVERSE_PROXY_CLUSTERS_DOCS_LINK,
   ReverseProxyCluster,
@@ -90,7 +89,6 @@ export const OnboardingAgentGateway = ({ onBack, onNext, onSkip }: Props) => {
     ReverseProxyCluster[]
   >("/reverse-proxies/clusters", true);
   const { mutate } = useSWRConfig();
-  const { isOwner } = useLoggedInUser();
   const privateClusters = privateAccountClusters(clusters);
 
   // The clusters are part of the wait so the choice opens with every proxy the
@@ -181,7 +179,6 @@ export const OnboardingAgentGateway = ({ onBack, onNext, onSkip }: Props) => {
       {view.kind === "choice" && (
         <GatewayChoice
           managedAvailable={!managedHidden}
-          confirmManaged={!isOwner}
           privateClusters={privateClusters}
           onManaged={provision}
           onPrivateCluster={(address) =>
@@ -231,9 +228,6 @@ export const OnboardingAgentGateway = ({ onBack, onNext, onSkip }: Props) => {
 
 type ChoiceProps = {
   managedAvailable: boolean;
-  // An admin who is not the owner confirms the managed gateway first: it
-  // serves the whole account and can't be changed or removed yet.
-  confirmManaged: boolean;
   privateClusters: ReverseProxyCluster[];
   onManaged: () => void;
   onPrivateCluster: (address: string) => void;
@@ -243,14 +237,12 @@ type ChoiceProps = {
 
 const GatewayChoice = ({
   managedAvailable,
-  confirmManaged,
   privateClusters,
   onManaged,
   onPrivateCluster,
   onNewProxy,
   onBack,
 }: ChoiceProps) => {
-  const [confirming, setConfirming] = useState(false);
   // The managed gateway leads; a proxy of the account's own waits behind a
   // link, unless it is the only way on.
   const [ownProxyOpen, setOwnProxyOpen] = useState(false);
@@ -276,7 +268,7 @@ const GatewayChoice = ({
                 "NetBird runs a dedicated, private proxy for your account."
               }
               icon={<CloudIcon size={18} className={"text-netbird"} />}
-              onClick={confirmManaged ? () => setConfirming(true) : onManaged}
+              onClick={onManaged}
               data-testid={"gateway-choice-managed"}
             />
           </div>
@@ -284,24 +276,6 @@ const GatewayChoice = ({
           <Callout variant={"info"} data-testid={"gateway-managed-unavailable"}>
             Managed proxies aren&apos;t available for this account, so Agent
             Network runs on a proxy of your own.
-          </Callout>
-        )}
-        {managedAvailable && confirming && (
-          <Callout variant={"warning"} data-testid={"gateway-managed-confirm"}>
-            The managed proxy serves Agent Network for the whole account, and it
-            can&apos;t be changed or removed from the dashboard yet.
-            <div className={"flex gap-3 mt-3"}>
-              <Button variant={"primary"} size={"xs"} onClick={onManaged}>
-                Set up managed proxy
-              </Button>
-              <Button
-                variant={"secondary"}
-                size={"xs"}
-                onClick={() => setConfirming(false)}
-              >
-                Cancel
-              </Button>
-            </div>
           </Callout>
         )}
         {managedAvailable && (
