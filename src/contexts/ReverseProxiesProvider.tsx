@@ -569,10 +569,6 @@ export default function ReverseProxiesProvider({
           onSave={handleSaveTarget}
           currentTarget={editingTarget}
           reverseProxy={targetModalProxy}
-          supportsTargetAccessControl={domainSupportsTargetAccessControl(
-            targetModalProxy,
-            domains,
-          )}
           initialPeer={initialPeer}
           initialNetwork={initialNetwork}
         />
@@ -663,36 +659,6 @@ export function sanitizeTargets(
     const { host: __, ...rest } = target;
     return rest as ReverseProxyTarget;
   });
-}
-
-export function domainSupportsTargetAccessControl(
-  proxy: ReverseProxy,
-  domains?: ReverseProxyDomain[],
-): boolean {
-  if (!domains?.length) return false;
-
-  const clusterDomains = proxy.proxy_cluster
-    ? domains.filter(
-        (domain) =>
-          domain.domain === proxy.proxy_cluster ||
-          domain.target_cluster === proxy.proxy_cluster,
-      )
-    : [];
-  if (clusterDomains.length > 0) {
-    return clusterDomains.some(
-      (domain) => domain.supports_target_access_control === true,
-    );
-  }
-
-  const serviceDomain = domains
-    .filter(
-      (domain) =>
-        domain.domain === proxy.domain ||
-        proxy.domain.endsWith(`.${domain.domain}`),
-    )
-    .sort((a, b) => b.domain.length - a.domain.length)[0];
-
-  return serviceDomain?.supports_target_access_control === true;
 }
 
 export function isResourceTargetType(type: ReverseProxyTargetType): boolean {

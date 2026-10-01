@@ -1099,9 +1099,6 @@ export default function ReverseProxyModal({
           mode: serviceMode,
           private: isPrivate,
         }}
-        supportsTargetAccessControl={
-          selectedDomain?.supports_target_access_control === true
-        }
         initialResource={initialResource}
         initialPeer={initialPeer}
         initialNetwork={initialNetwork}

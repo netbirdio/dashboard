@@ -57,11 +57,9 @@ afterEach(cleanup);
 
 function renderControl({
   value,
-  supported = true,
   privateService = false,
 }: {
   value?: string;
-  supported?: boolean;
   privateService?: boolean;
 } = {}) {
   const onChange = vi.fn();
@@ -69,7 +67,6 @@ function renderControl({
     <ReverseProxyTargetAccessControl
       value={value}
       onChange={onChange}
-      supportsTargetAccessControl={supported}
       privateService={privateService}
     />,
   );
@@ -90,31 +87,18 @@ async function openOptions() {
 }
 
 describe("ReverseProxyTargetAccessControl", () => {
-  it("defaults to service authentication and selects supported actions", async () => {
+  it("defaults to service authentication and selects an access action", async () => {
     const onChange = renderControl();
     expect(screen.getByTestId("target-access-action").textContent).toContain(
       "Use service authentication",
     );
 
-    const { bypass } = await openOptions();
+    const { bypass, block } = await openOptions();
+    expect(bypass.getAttribute("data-disabled")).toBe("false");
+    expect(block.getAttribute("data-disabled")).toBe("false");
     fireEvent.click(bypass);
 
     expect(onChange).toHaveBeenCalledWith(TargetAccessAction.BYPASS);
-  });
-
-  it("disables bypass and block when the cluster lacks the capability", async () => {
-    const onChange = renderControl({ supported: false });
-    const { bypass, block } = await openOptions();
-
-    expect(bypass.getAttribute("data-disabled")).toBe("true");
-    expect(block.getAttribute("data-disabled")).toBe("true");
-    fireEvent.click(bypass);
-    fireEvent.click(block);
-
-    expect(onChange).not.toHaveBeenCalled();
-    expect(
-      screen.getByTestId("target-access-control-unsupported-cluster"),
-    ).toBeTruthy();
   });
 
   it("disables bypass for private services but still allows block", async () => {

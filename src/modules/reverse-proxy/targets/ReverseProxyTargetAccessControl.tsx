@@ -13,7 +13,6 @@ import {
 type Props = {
   value?: string;
   onChange: (value: TargetAccessActionValue) => void;
-  supportsTargetAccessControl: boolean;
   privateService: boolean;
 };
 
@@ -23,7 +22,6 @@ const isKnownAction = (value: string): value is TargetAccessActionValue =>
 export default function ReverseProxyTargetAccessControl({
   value,
   onChange,
-  supportsTargetAccessControl,
   privateService,
 }: Readonly<Props>) {
   const selectedValue = value ?? TargetAccessAction.INHERIT;
@@ -39,13 +37,12 @@ export default function ReverseProxyTargetAccessControl({
       label: "Bypass authentication",
       value: TargetAccessAction.BYPASS,
       icon: LockOpen,
-      disabled: !supportsTargetAccessControl || privateService,
+      disabled: privateService,
     },
     {
       label: "Block access",
       value: TargetAccessAction.BLOCK,
       icon: ShieldX,
-      disabled: !supportsTargetAccessControl,
     },
   ];
 
@@ -68,14 +65,7 @@ export default function ReverseProxyTargetAccessControl({
           Use the service authentication settings, make this location public, or
           deny requests before they reach the target.
         </HelpText>
-        {!supportsTargetAccessControl && (
-          <div data-testid={"target-access-control-unsupported-cluster"}>
-            <HelpText className={"mb-0 mt-1 !text-yellow-400"}>
-              This proxy cluster does not support per-target access controls.
-            </HelpText>
-          </div>
-        )}
-        {supportsTargetAccessControl && privateService && (
+        {privateService && (
           <div data-testid={"target-access-control-private-service"}>
             <HelpText className={"mb-0 mt-1 !text-yellow-400"}>
               NetBird-only services cannot bypass authentication.

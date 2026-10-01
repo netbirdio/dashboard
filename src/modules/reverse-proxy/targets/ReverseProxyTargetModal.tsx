@@ -82,7 +82,6 @@ type Props = {
   initialResource?: NetworkResource;
   initialPeer?: Peer;
   initialNetwork?: Network;
-  supportsTargetAccessControl?: boolean;
   /** Called when the operator picks a cluster in the target selector
    *  and the parent service does not yet have a proxy_cluster set. The
    *  parent uses this to commit the cluster choice as the service's
@@ -99,7 +98,6 @@ export default function ReverseProxyTargetModal({
   initialResource,
   initialPeer,
   initialNetwork,
-  supportsTargetAccessControl = false,
   onClusterPick,
 }: Readonly<Props>) {
   const existingTargets = reverseProxy.targets || [];
@@ -517,9 +515,6 @@ export default function ReverseProxyTargetModal({
                       <ReverseProxyTargetAccessControl
                         value={accessAction}
                         onChange={setAccessAction}
-                        supportsTargetAccessControl={
-                          supportsTargetAccessControl
-                        }
                         privateService={reverseProxy.private === true}
                       />
                     )}

@@ -102,7 +102,6 @@ function renderTargetModal(accessAction?: string) {
       currentTarget={target}
       reverseProxy={reverseProxy}
       initialPeer={peer}
-      supportsTargetAccessControl={true}
     />,
   );
 
