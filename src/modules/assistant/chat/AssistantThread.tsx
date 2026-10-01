@@ -659,6 +659,42 @@ export function AssistantThread({
     return () => observer.disconnect();
   }, []);
 
+  /*
+    Hands the caret back the moment the user is the one being waited on: a turn
+    that has settled, or a question card that just went up (which leaves the
+    turn running, so it needs saying separately).
+
+    `autoFocus` on the input covers only the first mount, and by here focus is
+    usually on something that has just stopped being clickable — an option in
+    the card above, a starter pill, the stop button — or nowhere at all, which
+    is why a question could arrive with nothing to type into.
+
+    Never taken from another field. The panel sits beside the canvas and a turn
+    can settle while the user is typing in it; losing a half-written name to a
+    background answer is worse than reaching for the composer by hand. A button
+    or the body is fair game — nothing is being written there.
+  */
+  const questionId = question?.id ?? null;
+  useEffect(() => {
+    if (turnActive && !questionId) return;
+
+    const frame = requestAnimationFrame(() => {
+      const input =
+        composerRef.current?.querySelector<HTMLTextAreaElement>("textarea");
+      if (!input || input === document.activeElement) return;
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLElement &&
+        (active.isContentEditable ||
+          active instanceof HTMLInputElement ||
+          active instanceof HTMLTextAreaElement)
+      )
+        return;
+      input.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [turnActive, questionId]);
+
   return (
     <ThreadPrimitive.Root
       className={cn("relative flex min-h-0 flex-1 flex-col", className)}
