@@ -52,6 +52,7 @@ import {
   parseOptionNumbers,
 } from "@/modules/assistant/chat/AssistantQuestionCard";
 import { AssistantToolActivity } from "@/modules/assistant/chat/AssistantToolActivity";
+import { TurnActiveContext } from "@/modules/assistant/chat/AssistantTurnContext";
 
 // Width of the `.nb-scrollbar` track, so overlays can stop short of it.
 const SCROLLBAR_WIDTH = 10;
@@ -63,11 +64,6 @@ const CONTEXT_LIFT = 50;
 // The current status, published to the running message so the indicator can
 // sit under the step it belongs to.
 const StatusContext = createContext<string | null>(null);
-
-// Whether the whole turn is still in flight. A group's own "running" status
-// dies at every stream-step and tool-round boundary, so panel collapsing keys
-// on this instead — one collapse at the end, not one per boundary.
-const TurnActiveContext = createContext(false);
 
 // Reasoning and tool calls go in the steps panel; components and the question
 // card are output, so they stay in the answer where the model put them.
