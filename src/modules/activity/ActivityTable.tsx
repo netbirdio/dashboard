@@ -21,7 +21,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { uniqBy } from "lodash";
 import { ExternalLinkIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useSWRConfig } from "swr";
@@ -41,6 +41,11 @@ type Props = {
 };
 
 const ActivityFeedColumnsTable: ColumnDef<ActivityEvent>[] = [
+  {
+    id: "id",
+    accessorKey: "id",
+    filterFn: "exactMatch",
+  },
   {
     accessorKey: "activity_code",
     header: ({ column }) => {
@@ -92,6 +97,18 @@ export default function ActivityTable({
 }: Props) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const router = useRouter();
+  const params = useSearchParams();
+
+  // `?id=` opens the log on one event (the assistant links here), the way the
+  // network resources table takes `?resource=`.
+  const eventId = params.get("id") ?? undefined;
+  const removeEventParam = React.useCallback(() => {
+    if (!eventId) return;
+    const newParams = new URLSearchParams(params.toString());
+    newParams.delete("id");
+    router.replace(`?${newParams.toString()}`, { scroll: false });
+  }, [eventId, params, router]);
 
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
@@ -167,6 +184,9 @@ export default function ActivityTable({
       sorting={sorting}
       setSorting={setSorting}
       initialPageSize={25}
+      keepStateInLocalStorage={!eventId}
+      initialFilters={eventId ? [{ id: "id", value: eventId }] : undefined}
+      initialSearch={eventId}
       showResetFilterButton={false}
       wrapperClassName={"gap-0 flex flex-col"}
       tableClassName={"px-8 pt-4"}
@@ -178,6 +198,7 @@ export default function ActivityTable({
         <TableFilterChips table={table} filters={filterDefs} />
       )}
       columnVisibility={{
+        id: false,
         timestamp: false,
         name: false,
         activity_text: false,
@@ -213,6 +234,7 @@ export default function ActivityTable({
         />
       }
       onFilterReset={() => {
+        removeEventParam();
         const date = { from: defaultFromDate, to: defaultToDate };
         setInitialDateRange(date);
         setDateRange(date);
@@ -240,6 +262,7 @@ export default function ActivityTable({
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
+                removeEventParam();
                 table.setPageIndex(0);
                 table.resetColumnFilters();
                 table.resetGlobalFilter();

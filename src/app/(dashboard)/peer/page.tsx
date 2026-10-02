@@ -169,12 +169,26 @@ const usePeerSettings = () => {
   return context;
 };
 
+const PEER_TABS = [
+  "overview",
+  "network-routes",
+  "accessible-peers",
+  "reverse-proxies",
+  "peer-job",
+  "traffic-events",
+];
+
 const PeerSettingsProvider = ({ children }: { children: React.ReactNode }) => {
   const { mutate } = useSWRConfig();
   const { peer, peerGroups, update } = usePeer();
   const { permission } = usePermissions();
   const [name, setName] = useState(peer.name);
-  const [tab, setTab] = useState("overview");
+  // `?tab=` opens a tab directly (the assistant links to `network-routes` to
+  // set up an exit node); anything unknown falls back to the overview.
+  const requestedTab = useSearchParams().get("tab") ?? "";
+  const [tab, setTab] = useState(
+    PEER_TABS.includes(requestedTab) ? requestedTab : "overview",
+  );
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
       initial: peerGroups?.filter((g) => g?.name !== "All"),

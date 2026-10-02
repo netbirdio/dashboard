@@ -82,6 +82,36 @@ describe("navigateToPage", () => {
       href: "/reverse-proxy/services",
     });
   });
+
+  it("opens a tab of a detail page", () => {
+    expect(
+      navigateToPage({ page: "peer", id: "abc", tab: "network-routes" }),
+    ).toEqual({ href: "/peer?id=abc&tab=network-routes" });
+  });
+
+  it("opens the audit log on one event", () => {
+    expect(navigateToPage({ page: "activity", id: "97309" })).toEqual({
+      href: "/events/audit?id=97309",
+    });
+  });
+
+  it("opens the paged logs on a search, not an id they cannot look up", () => {
+    expect(
+      navigateToPage({ page: "traffic_events", search: "100.84.7.16" }),
+    ).toEqual({ href: "/events/traffic?search=100.84.7.16" });
+    expect(
+      navigateToPage({ page: "reverse_proxy_logs", search: "app.test.com", id: "x" }),
+    ).toEqual({ href: "/reverse-proxy/logs?search=app.test.com" });
+  });
+
+  it("ignores a log param the page does not take", () => {
+    expect(navigateToPage({ page: "activity", search: "policy" })).toEqual({
+      href: "/events/audit",
+    });
+    expect(navigateToPage({ page: "peers", id: "abc" })).toEqual({
+      href: "/peers",
+    });
+  });
 });
 
 describe("openPageExecutor", () => {
