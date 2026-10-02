@@ -53,9 +53,32 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
     agent_network_configuration: "/agent-network/configuration",
   };
 
+  /*
+    Log pages open on one record or one search, the way detail pages take an
+    id. The audit log is loaded whole, so it can focus on an event id; the
+    traffic and proxy logs are paged on the server, so they take the search
+    their own search box would send.
+  */
+  const logParams: Record<string, "id" | "search"> = {
+    activity: "id",
+    traffic_events: "search",
+    reverse_proxy_logs: "search",
+  };
+
   const page = typeof input.page === "string" ? input.page : "";
 
-  if (routes[page]) return { href: routes[page] };
+  if (routes[page]) {
+    const param = logParams[page];
+    const value =
+      param && typeof input[param] === "string"
+        ? (input[param] as string).trim()
+        : "";
+    return {
+      href: value
+        ? `${routes[page]}?${param}=${encodeURIComponent(value)}`
+        : routes[page],
+    };
+  }
 
   if (tabRoutes[page]) {
     const tab = typeof input.tab === "string" ? input.tab.trim() : "";
@@ -68,8 +91,14 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
 
   if (detailRoutes[page]) {
     const id = typeof input.id === "string" ? input.id.trim() : "";
+    const tab = typeof input.tab === "string" ? input.tab.trim() : "";
     if (id) {
-      return { href: `${detailRoutes[page]}?id=${encodeURIComponent(id)}` };
+      const query = `id=${encodeURIComponent(id)}`;
+      return {
+        href: `${detailRoutes[page]}?${query}${
+          tab ? `&tab=${encodeURIComponent(tab)}` : ""
+        }`,
+      };
     }
   }
 
