@@ -19,6 +19,16 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
     setup_keys: "/setup-keys",
     users: "/team/users",
     activity: "/events/audit",
+    /*
+      The three log surfaces a security question ends on. Audit answers "who
+      CHANGED this", traffic answers "who CONNECTED to this", and the proxy
+      logs answer "who reached this exposed service" — different records with
+      different readers, so they are separate pages rather than tabs of one.
+    */
+    traffic_events: "/events/traffic",
+    proxy_events: "/events/proxy",
+    reverse_proxy_logs: "/reverse-proxy/logs",
+    reverse_proxy_services: "/reverse-proxy/services",
     control_center: "/control-center",
     agent_network_providers: "/agent-network/providers",
     agent_network_policies: "/agent-network/policies",

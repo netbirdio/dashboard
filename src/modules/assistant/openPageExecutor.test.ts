@@ -62,6 +62,26 @@ describe("navigateToPage", () => {
       href: "/settings",
     });
   });
+
+  /*
+    A security question ends on one of these, and the wrong one answers a
+    different question convincingly: audit says who CHANGED a thing, traffic
+    says who CONNECTED to it, the proxy log says who reached it from outside.
+  */
+  it("reaches each record page a security question ends on", () => {
+    expect(navigateToPage({ page: "traffic_events" })).toEqual({
+      href: "/events/traffic",
+    });
+    expect(navigateToPage({ page: "proxy_events" })).toEqual({
+      href: "/events/proxy",
+    });
+    expect(navigateToPage({ page: "reverse_proxy_logs" })).toEqual({
+      href: "/reverse-proxy/logs",
+    });
+    expect(navigateToPage({ page: "reverse_proxy_services" })).toEqual({
+      href: "/reverse-proxy/services",
+    });
+  });
 });
 
 describe("openPageExecutor", () => {
