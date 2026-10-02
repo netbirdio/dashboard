@@ -130,7 +130,7 @@ function useBridgeDeps(onConnect: (connection: Connection) => void) {
   const canvas = useCanvasState();
   const ui = useControlCenterUI();
   const draft = useDraftMode();
-  const { changes } = useDraftChangeset();
+  const { changes, trackUpdateUserGroups } = useDraftChangeset();
   const data = useControlCenterData();
   const {
     setFocusedNodeId,
@@ -176,6 +176,7 @@ function useBridgeDeps(onConnect: (connection: Connection) => void) {
     ...nodeActions,
     ...removal,
     addMemberToGroup,
+    trackUpdateUserGroups,
     updateDraftPolicy,
     requestProvider,
     drawAgentPolicyOnCanvas,
@@ -1658,6 +1659,61 @@ const GROUPS_NEED_DRAFT =
  * group panel's drop zone does. `action.node` is the entity's own id here, not a
  * canvas node's.
  */
+/**
+ * Puts an account USER in a group, the way the group panel's Users tab does.
+ *
+ * Deliberately not `addMemberToGroup`. Peer and resource membership is a
+ * property of the GROUP and lands on the group's own record; a user's is a
+ * property of the USER (`auto_groups`) and deploys as a user update — which is
+ * why routing a user through the peer writer silently dropped it (it returns
+ * early unless a peer or resource was passed). There is no card to absorb
+ * either: users are not drawn as members on this canvas.
+ *
+ * A draft group has no id yet, so it is referenced by NAME, exactly as the
+ * panel's `userGroupRef` does, and the deploy resolves it once the group is
+ * real.
+ */
+function assignUserToGroup(
+  user: { id?: string; name?: string; email?: string; auto_groups?: string[] },
+  group: Node,
+  d: BridgeDeps,
+): AgentStepResult {
+  const groupData = getNodeGroup(group);
+  const label = user.name || user.email || user.id || "that user";
+  if (!user.id) return fail(`${label} has no id to assign.`);
+
+  const ref = groupData?.id || (d.draft.isDraft ? groupData?.name : undefined);
+  if (!ref)
+    return fail(
+      `Can't reference “${groupData?.name ?? "that group"}” for user membership.`,
+    );
+
+  // The changeset wins over the server list: a user added earlier in this same
+  // draft has no `auto_groups` entry for it yet.
+  const pending = d.changes.find(
+    (c) => c.type === "update-user-groups" && c.userId === user.id,
+  );
+  const current =
+    pending?.type === "update-user-groups"
+      ? pending.groupRefs
+      : (user.auto_groups ?? []);
+  if (current.includes(ref)) {
+    return ok(
+      `${label} is already in “${groupData?.name}” — nothing to change.`,
+    );
+  }
+
+  d.trackUpdateUserGroups({
+    userId: user.id,
+    name: label,
+    baseGroupRefs: user.auto_groups ?? [],
+    groupRefs: [...current, ref],
+    addedGroupNames: [groupData?.name ?? ""],
+    removedGroupNames: [],
+  });
+  return ok(`Added the user ${label} to “${groupData?.name}”.`);
+}
+
 function assignEntityToGroup(
   action: AgentNodeAction,
   d: BridgeDeps,
@@ -1672,9 +1728,16 @@ function assignEntityToGroup(
     : d.data.networkResources?.find(
         (r: NetworkResource) => r.id === action.node,
       );
+  // Users last, and down their own path: an agent-network policy authorises a
+  // user's groups, so "put the caller in this group" names a user here far more
+  // often than a peer.
+  if (!peer && !resource) {
+    const user = d.data.users?.find((u) => u.id === action.node);
+    if (user) return assignUserToGroup(user, group, d);
+  }
   if (!peer && !resource) {
     return fail(
-      `${action.node} is neither a node on the canvas nor a peer or resource in the account.`,
+      `${action.node} is neither a node on the canvas nor a peer, resource or user in the account.`,
     );
   }
 
