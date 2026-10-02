@@ -70,6 +70,12 @@ const CONTEXT_LIFT = 50;
 const StatusContext = createContext<string | null>(null);
 
 
+// Both surface as a card, not a row. `ask_question` is eve's built-in: the
+// framework parks the turn on it and never writes its result back into the
+// message, so as a row it would spin long after the user answered.
+const isQuestionTool = (name?: string) =>
+  name === "ask_user_question" || name === "ask_question";
+
 // Reasoning and tool calls go in the steps panel; components and the question
 // card are output, so they stay in the answer where the model put them.
 // Reasoning and step-start markers are grouped but never rendered — hiding
@@ -80,7 +86,7 @@ const groupSteps = (part: { type: string; toolName?: string }) => {
     return ["group-steps"] as const;
   return part.type === "tool-call" &&
     part.toolName !== "render_component" &&
-    part.toolName !== "ask_user_question"
+    !isQuestionTool(part.toolName)
     ? (["group-steps"] as const)
     : null;
 };
@@ -260,7 +266,7 @@ function AssistantMessage() {
               case "reasoning":
                 return null;
               case "tool-call": {
-                if (part.toolName === "ask_user_question") return null;
+                if (isQuestionTool(part.toolName)) return null;
                 return part.toolName === "render_component" ? (
                   <AssistantInlineComponent {...part} />
                 ) : (
