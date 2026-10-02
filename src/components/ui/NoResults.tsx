@@ -6,6 +6,7 @@ import { FilterX } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback } from "react";
 import Skeleton from "react-loading-skeleton";
+import { useTranslation } from "@/i18n/useTranslation";
 
 type Props = {
   icon?: React.ReactNode;
@@ -22,14 +23,15 @@ type Props = {
 export default function NoResults({
   icon,
   hideIcon = false,
-  title = "Could not find any results",
-  description = "We couldn't find any results. Please try a different search term or change your filters.",
+  title,
+  description,
   children,
   className,
   hasFiltersApplied = false,
   onResetFilters,
   contentClassName,
 }: Props) {
+  const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -80,7 +82,11 @@ export default function NoResults({
           <div className={"flex items-center justify-center mb-6"}>
             <SquareIcon
               icon={
-                icon ? icon : <FilterX size={24} className={"text-nb-gray-200"} />
+                icon ? (
+                  icon
+                ) : (
+                  <FilterX size={24} className={"text-nb-gray-200"} />
+                )
               }
               color={"gray"}
               size={"large"}
@@ -89,9 +95,14 @@ export default function NoResults({
         )}
 
         <div className={"text-center"}>
-          <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title}</h1>
+          <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>
+            {title ?? t("Could not find any results")}
+          </h1>
           <Paragraph className={"justify-center my-2 !text-nb-gray-400"}>
-            {description}
+            {description ??
+              t(
+                "We couldn't find any results. Please try a different search term or change your filters.",
+              )}
           </Paragraph>
           {hasFiltersApplied && onResetFilters && (
             <Button
@@ -100,7 +111,7 @@ export default function NoResults({
               className="mt-4"
             >
               <FilterX size={16} />
-              Reset Filters & Search
+              {t("Reset Filters & Search")}
             </Button>
           )}
           {children}

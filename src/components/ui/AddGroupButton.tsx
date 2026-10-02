@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { Group } from "@/interfaces/Group";
 import { useApiCall } from "@/utils/api";
 import ModalHeader from "../modal/ModalHeader";
@@ -23,6 +24,7 @@ import Paragraph from "../Paragraph";
 import Separator from "../Separator";
 
 export const AddGroupButton = () => {
+  const { t } = useTranslation();
   const create = useApiCall<Group>("/groups", true).post;
   const { mutate } = useSWRConfig();
   const [name, setName] = useState<string>("");
@@ -55,27 +57,31 @@ export const AddGroupButton = () => {
             data-testid="open-create-group"
           >
             <PlusCircle size={16} />
-            Create Group
+            <T>{"Create Group"}</T>
           </Button>
         </ModalTrigger>
         <ModalContent maxWidthClass={"max-w-xl"}>
           <ModalHeader
             icon={<FolderGit2Icon size={18} />}
-            title="Create Group"
-            description="Create a group to manage and organize access in your network"
+            title={t("Create Group")}
+            description={t(
+              "Create a group to manage and organize access in your network",
+            )}
             color="netbird"
           />
           <Separator />
           <div className={"px-8 flex-col flex gap-6 py-6"}>
             <div>
-              <Label>Name</Label>
+              <Label>
+                <T>{"Name"}</T>
+              </Label>
               <HelpText>
-                Set an easily identifiable name for your group
+                <T>{"Set an easily identifiable name for your group"}</T>
               </HelpText>
               <Input
                 tabIndex={0}
                 data-testid="group-name-input"
-                placeholder={"e.g., Developers"}
+                placeholder={t("e.g., Developers")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -84,19 +90,21 @@ export const AddGroupButton = () => {
           <ModalFooter className={"items-center"}>
             <div className={"w-full"}>
               <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
+                <T>{"Learn more about"}</T>
                 <InlineLink
                   href={"https://docs.netbird.io/how-to/manage-network-access"}
                   target={"_blank"}
                 >
-                  Groups
+                  <T>{"Groups"}</T>
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </Paragraph>
             </div>
             <div className={"flex gap-3 w-full justify-end"}>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>
+                  <T>{"Cancel"}</T>
+                </Button>
               </ModalClose>
 
               <Button
@@ -106,7 +114,7 @@ export const AddGroupButton = () => {
                 onClick={createGroup}
               >
                 <PlusCircle size={16} />
-                Create Group
+                <T>{"Create Group"}</T>
               </Button>
             </div>
           </ModalFooter>

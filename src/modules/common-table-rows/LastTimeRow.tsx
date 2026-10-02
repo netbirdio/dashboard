@@ -6,6 +6,8 @@ import {
 } from "@components/Tooltip";
 import dayjs from "dayjs";
 import { History } from "lucide-react";
+import { dateLocale } from "@/i18n/dateLocale";
+import { useTranslation } from "@/i18n/useTranslation";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
 type Props = {
@@ -13,11 +15,9 @@ type Props = {
   text?: string;
   prefix?: string;
 };
-export default function LastTimeRow({
-  date,
-  text = "Last seen on",
-  prefix,
-}: Props) {
+export default function LastTimeRow({ date, text, prefix }: Props) {
+  const { t, i18n } = useTranslation();
+  const language = dateLocale(i18n.resolvedLanguage);
   const neverUsed = dayjs(date).isBefore(dayjs().subtract(2000, "years"));
 
   return !neverUsed ? (
@@ -32,15 +32,17 @@ export default function LastTimeRow({
             <>
               <History size={14} />
               {prefix && <>{prefix} </>}
-              {dayjs().to(date)}
+              {dayjs().locale(language).to(date)}
             </>
           </div>
         </TooltipTrigger>
         <TooltipContent>
           <div className={"text-neutral-300 flex flex-col gap-1"}>
-            <span className={"text-xs"}>{text}</span>
+            <span className={"text-xs"}>{text ?? t("Last seen on")}</span>
             <span className={"text-neutral-200"}>
-              {dayjs(date).format("D MMMM, YYYY [at] h:mm A")}
+              {dayjs(date)
+                .locale(language)
+                .format(t("D MMMM, YYYY [at] h:mm A"))}
             </span>
           </div>
         </TooltipContent>

@@ -1,5 +1,4 @@
 "use client";
-
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import Card from "@components/Card";
@@ -19,6 +18,7 @@ import { useSWRConfig } from "swr";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { Group } from "@/interfaces/Group";
 import { NameserverSettings } from "@/interfaces/NameserverSettings";
 import PageContainer from "@/layouts/PageContainer";
@@ -26,6 +26,7 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { useGroupIdsToGroups } from "@/modules/groups/useGroupIdsToGroups";
 
 export default function NameServerSettings() {
+  const { t } = useTranslation();
   const { permission } = usePermissions();
 
   const { data: settings, isLoading } =
@@ -41,28 +42,33 @@ export default function NameServerSettings() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/dns"}
-            label={"DNS"}
+            label={t("DNS")}
             icon={<DNSIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/dns/settings"}
-            label={"DNS Settings"}
+            label={t("DNS Settings")}
             active
             icon={<IconSettings2 size={15} />}
           />
         </Breadcrumbs>
-        <h1>DNS Settings</h1>
+        <h1>
+          <T>{"DNS Settings"}</T>
+        </h1>
         <Paragraph>
           {"Manage your account's DNS settings."}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
             target={"_blank"}
           >
-            Learn more
+            <T>{"Learn more"}</T>
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
-        <RestrictedAccess page={"DNS Settings"} hasAccess={permission.dns.read}>
+        <RestrictedAccess
+          page={t("DNS Settings")}
+          hasAccess={permission.dns.read}
+        >
           {!isLoading && initialDNSGroups !== undefined ? (
             <SettingDisabledManagementGroups initialGroups={initialDNSGroups} />
           ) : (
@@ -118,9 +124,13 @@ const SettingDisabledManagementGroups = ({
   return (
     <Card className={"mt-8 max-w-xl"}>
       <div className={"px-8 py-8"}>
-        <Label>Disable DNS management for these groups</Label>
+        <Label>
+          <T>{"Disable DNS management for these groups"}</T>
+        </Label>
         <HelpText>
-          Peers in these groups will require manual domain name resolution
+          <T>
+            {"Peers in these groups will require manual domain name resolution"}
+          </T>
         </HelpText>
         <PeerGroupSelector
           data-testid={"dns-groups-selector"}
@@ -141,7 +151,7 @@ const SettingDisabledManagementGroups = ({
           disabled={!hasChanges || !permission.dns.update}
           data-testid={"save-changes"}
         >
-          Save Changes
+          <T>{"Save Changes"}</T>
         </Button>
       </div>
     </Card>

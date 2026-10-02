@@ -1,15 +1,18 @@
 "use client";
-
 import { ScrollArea } from "@components/ScrollArea";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { isNetBirdCloud } from "@utils/netbird";
+import * as React from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import ActivityIcon from "@/assets/icons/ActivityIcon";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { DistributorNavigation } from "@/cloud/distributor/DistributorNavigation";
@@ -19,15 +22,12 @@ import { NavigationVersionInfo } from "@/components/VersionInfo";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { headerHeight } from "@/layouts/Header";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import * as React from "react";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 
 type Props = {
   fullWidth?: boolean;
@@ -38,6 +38,7 @@ export default function Navigation({
   fullWidth = false,
   hideOnMobile = false,
 }: Readonly<Props>) {
+  const { t } = useTranslation();
   const { bannerHeight } = useAnnouncement();
   const { isNavigationCollapsed } = useApplicationContext();
   const { permission } = usePermissions();
@@ -100,14 +101,14 @@ export default function Navigation({
               <SidebarItemGroup>
                 <SidebarItem
                   icon={<ControlCenterIcon size={16} />}
-                  label="Control Center"
+                  label={t("Control Center")}
                   href={"/control-center"}
                   visible={permission.policies.read}
                 />
 
                 <SidebarItem
                   icon={<PeerIcon />}
-                  label="Peers"
+                  label={t("Peers")}
                   href={"/peers"}
                   // Restricted users get the add-your-device view there, so
                   // the link stays even in the limited (user role) sidebar.
@@ -117,26 +118,26 @@ export default function Navigation({
                 <DistributorNavigation />
                 <SidebarItem
                   icon={<AccessControlIcon />}
-                  label="Access Control"
+                  label={t("Access Control")}
                   href={"/access-control"}
                   collapsible
                   visible={permission.policies.read}
                 >
                   <SidebarItem
-                    label="Policies"
+                    label={t("Policies")}
                     href={"/access-control"}
                     isChild
                     exactPathMatch={true}
                     visible={permission.policies.read}
                   />
                   <SidebarItem
-                    label="Groups"
+                    label={t("Groups")}
                     isChild
                     href={"/groups"}
                     visible={permission.policies.read}
                   />
                   <SidebarItem
-                    label="Posture Checks"
+                    label={t("Posture Checks")}
                     isChild
                     href={"/posture-checks"}
                     exactPathMatch={true}
@@ -151,9 +152,9 @@ export default function Navigation({
                   labelClassName={"pr-0"}
                   label={
                     <div className={"flex items-center gap-2"}>
-                      Reverse Proxy
+                      <T>{"Reverse Proxy"}</T>
                       <SmallBadge
-                        text={"Beta"}
+                        text={t("Beta")}
                         variant={"sky"}
                         className={"text-[8px] leading-none py-[3px] px-[5px]"}
                         textClassName={"top-0"}
@@ -166,28 +167,28 @@ export default function Navigation({
                   visible={permission?.services?.read && !agentNetworkOnly}
                 >
                   <SidebarItem
-                    label="Services"
+                    label={t("Services")}
                     isChild
                     href={"/reverse-proxy/services"}
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
                   <SidebarItem
-                    label="Custom Domains"
+                    label={t("Custom Domains")}
                     isChild
                     href={"/reverse-proxy/custom-domains"}
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
                   <SidebarItem
-                    label="Clusters"
+                    label={t("Clusters")}
                     isChild
                     href={"/reverse-proxy/clusters"}
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
                   <SidebarItem
-                    label="Access Logs"
+                    label={t("Access Logs")}
                     isChild
                     href={"/reverse-proxy/logs"}
                     exactPathMatch={true}
@@ -200,10 +201,10 @@ export default function Navigation({
                   labelClassName={"pr-0"}
                   label={
                     <div className={"flex items-center gap-2"}>
-                      Agent Network
+                      <T>{"Agent Network"}</T>
                       {!agentNetworkOnly && (
                         <SmallBadge
-                          text={"Beta"}
+                          text={t("Beta")}
                           variant={"sky"}
                           className={
                             "text-[8px] leading-none py-[3px] px-[5px]"
@@ -236,7 +237,7 @@ export default function Navigation({
                   }
                 >
                   <SidebarItem
-                    label="Connect Agent"
+                    label={t("Connect Agent")}
                     isChild
                     href={"/agent-network/connect"}
                     exactPathMatch={true}
@@ -251,7 +252,7 @@ export default function Navigation({
                     }
                   />
                   <SidebarItem
-                    label="Providers"
+                    label={t("Providers")}
                     isChild
                     href={"/agent-network/providers"}
                     exactPathMatch={true}
@@ -261,7 +262,7 @@ export default function Navigation({
                     }
                   />
                   <SidebarItem
-                    label="Policies"
+                    label={t("Policies")}
                     isChild
                     href={"/agent-network/policies"}
                     exactPathMatch={true}
@@ -271,7 +272,7 @@ export default function Navigation({
                     }
                   />
                   <SidebarItem
-                    label="Usage & Logs"
+                    label={t("Usage & Logs")}
                     isChild
                     href={"/agent-network/usage"}
                     exactPathMatch={true}
@@ -285,7 +286,7 @@ export default function Navigation({
                     }
                   />
                   <SidebarItem
-                    label="Configuration"
+                    label={t("Configuration")}
                     isChild
                     href={"/agent-network/configuration"}
                     exactPathMatch={true}
@@ -298,7 +299,7 @@ export default function Navigation({
 
                 <SidebarItem
                   icon={<DNSIcon />}
-                  label="DNS"
+                  label={t("DNS")}
                   href={"/dns"}
                   collapsible
                   exactPathMatch={true}
@@ -308,19 +309,19 @@ export default function Navigation({
                   }
                 >
                   <SidebarItem
-                    label="Nameservers"
+                    label={t("Nameservers")}
                     isChild
                     href={"/dns/nameservers"}
                     visible={permission.nameservers.read}
                   />
                   <SidebarItem
-                    label="Zones"
+                    label={t("Zones")}
                     isChild
                     href={"/dns/zones"}
                     visible={permission?.dns?.read}
                   />
                   <SidebarItem
-                    label="DNS Settings"
+                    label={t("DNS Settings")}
                     isChild
                     href={"/dns/settings"}
                     visible={permission.dns.read}
@@ -328,19 +329,19 @@ export default function Navigation({
                 </SidebarItem>
                 <SidebarItem
                   icon={<TeamIcon />}
-                  label="Team"
+                  label={t("Team")}
                   href={"/team"}
                   collapsible
                   visible={permission.users.read}
                 >
                   <SidebarItem
-                    label="Users"
+                    label={t("Users")}
                     isChild
                     href={"/team/users"}
                     visible={permission.users.read}
                   />
                   <SidebarItem
-                    label="Service Users"
+                    label={t("Service Users")}
                     isChild
                     href={"/team/service-users"}
                     visible={permission.users.read}
@@ -352,15 +353,15 @@ export default function Navigation({
               <SidebarItemGroup>
                 <SidebarItem
                   icon={<SettingsIcon />}
-                  label="Settings"
+                  label={t("Settings")}
                   href={"/settings"}
                   exactPathMatch={true}
-                  visible={permission.settings.read}
+                  visible={true}
                 />
                 <MSPNavigationItem />
                 <SidebarItem
                   icon={<IntegrationIcon />}
-                  label="Integrations"
+                  label={t("Integrations")}
                   href={"/integrations"}
                   exactPathMatch={true}
                   visible={
@@ -374,7 +375,7 @@ export default function Navigation({
                   icon={<DocsIcon />}
                   href={"https://docs.netbird.io/"}
                   target={"_blank"}
-                  label="Documentation"
+                  label={t("Documentation")}
                   visible={true}
                 />
               </SidebarItemGroup>
@@ -405,26 +406,27 @@ export function SidebarItemGroup({ children }: SidebarItemGroupProps) {
 }
 
 const ActivityNavigationItem = () => {
+  const { t } = useTranslation();
   const { permission } = usePermissions();
   const { only: agentNetworkOnly } = useAgentNetworkMode();
 
   return (
     <SidebarItem
       icon={<ActivityIcon />}
-      label="Activity"
+      label={t("Activity")}
       href={"/events"}
       collapsible
       visible={permission.events.read && !agentNetworkOnly}
     >
       <SidebarItem
-        label="Audit Events"
+        label={t("Audit Events")}
         href={"/events/audit"}
         isChild
         exactPathMatch={true}
         visible={permission.events.read}
       />
       <SidebarItem
-        label="Traffic Events"
+        label={t("Traffic Events")}
         isChild
         href={"/events/traffic"}
         exactPathMatch={true}

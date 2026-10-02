@@ -33,6 +33,7 @@ import { AddGroupButton } from "@/components/ui/AddGroupButton";
 import { GroupProvider } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { GroupsMultiSelect } from "@/modules/groups/GroupsMultiSelect";
 import GroupsActionCell from "@/modules/groups/table/GroupsActionCell";
 import GroupsCountCell from "@/modules/groups/table/GroupsCountCell";
@@ -90,7 +91,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Name"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => {
       const in_use = !!row.getValue("in_use");
@@ -113,7 +118,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       return (
         <DataTableHeader
           column={column}
-          tooltip={<div className={"text-xs normal-case"}>Users</div>}
+          tooltip={
+            <div className={"text-xs normal-case"}>
+              <T>{"Users"}</T>
+            </div>
+          }
         >
           <TeamIcon size={12} />
         </DataTableHeader>
@@ -136,7 +145,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       return (
         <DataTableHeader
           column={column}
-          tooltip={<div className={"text-xs normal-case"}>Peers</div>}
+          tooltip={
+            <div className={"text-xs normal-case"}>
+              <T>{"Peers"}</T>
+            </div>
+          }
         >
           <PeerIcon size={12} />
         </DataTableHeader>
@@ -159,7 +172,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       return (
         <DataTableHeader
           column={column}
-          tooltip={<div className={"text-xs normal-case"}>Policies</div>}
+          tooltip={
+            <div className={"text-xs normal-case"}>
+              <T>{"Policies"}</T>
+            </div>
+          }
         >
           <AccessControlIcon size={12} />
         </DataTableHeader>
@@ -182,7 +199,9 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
         <DataTableHeader
           column={column}
           tooltip={
-            <div className={"text-xs normal-case"}>Network Resources</div>
+            <div className={"text-xs normal-case"}>
+              <T>{"Network Resources"}</T>
+            </div>
           }
         >
           <Layers3Icon size={12} />
@@ -205,7 +224,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       return (
         <DataTableHeader
           column={column}
-          tooltip={<div className={"text-xs normal-case"}>Network Routes</div>}
+          tooltip={
+            <div className={"text-xs normal-case"}>
+              <T>{"Network Routes"}</T>
+            </div>
+          }
         >
           <NetworkRoutesIcon size={12} />
         </DataTableHeader>
@@ -227,7 +250,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       return (
         <DataTableHeader
           column={column}
-          tooltip={<div className={"text-xs normal-case"}>Nameservers</div>}
+          tooltip={
+            <div className={"text-xs normal-case"}>
+              <T>{"Nameservers"}</T>
+            </div>
+          }
         >
           <DNSIcon size={12} />
         </DataTableHeader>
@@ -249,7 +276,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       return (
         <DataTableHeader
           column={column}
-          tooltip={<div className={"text-xs normal-case"}>Zones</div>}
+          tooltip={
+            <div className={"text-xs normal-case"}>
+              <T>{"Zones"}</T>
+            </div>
+          }
         >
           <DNSZoneIcon size={16} />
         </DataTableHeader>
@@ -272,7 +303,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
         <DataTableHeader
           column={column}
           center={true}
-          tooltip={<div className={"text-xs normal-case"}>Setup Keys</div>}
+          tooltip={
+            <div className={"text-xs normal-case"}>
+              <T>{"Setup Keys"}</T>
+            </div>
+          }
         >
           <SetupKeysIcon size={12} />
         </DataTableHeader>
@@ -292,7 +327,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
   {
     id: "in_use",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>In Use</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"In Use"}</T>
+        </DataTableHeader>
+      );
     },
     sortingFn: "basic",
     accessorFn: isGroupInUse,
@@ -318,6 +357,7 @@ type Props = {
 };
 
 export default function GroupsTable({ headingTarget }: Readonly<Props>) {
+  const { t } = useTranslation();
   const { data: groups, isLoading } = useGroupsUsage();
   const { permission } = usePermissions();
   const path = usePathname();
@@ -365,18 +405,18 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
 
   const usageOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All" },
-      { value: true, label: "Used" },
-      { value: false, label: "Unused" },
+      { value: undefined, label: t("All") },
+      { value: true, label: t("Used") },
+      { value: false, label: t("Unused") },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "in_use",
-        label: "Usage",
+        label: t("Usage"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -389,7 +429,7 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
           formatRadioChip(v as boolean | undefined, usageOptions),
       },
     ],
-    [usageOptions],
+    [t, usageOptions],
   );
 
   return (
@@ -407,7 +447,7 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
         }
         useRowId={true}
         resetRowSelectionOnFilter={true}
-        text={"Groups"}
+        text={t("Groups")}
         sorting={sorting}
         isLoading={isLoading}
         setSorting={setSorting}
@@ -415,7 +455,7 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
         data={groups}
         initialPageSize={25}
         showResetFilterButton={false}
-        searchPlaceholder={"Search group by name..."}
+        searchPlaceholder={t("Search group by name...")}
         rightSide={() => <AddGroupButton />}
         aboveTable={(table) => (
           <TableFilterChips table={table} filters={filterDefs} />
