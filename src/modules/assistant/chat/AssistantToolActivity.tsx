@@ -8,6 +8,7 @@ import {
 } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import { Check, ChevronRight, Info, Loader2 } from "lucide-react";
+import { useTurnActive } from "@/modules/assistant/chat/AssistantTurnContext";
 import { useState } from "react";
 import { navigateToPage } from "@/modules/assistant/openPageExecutor";
 
@@ -93,7 +94,17 @@ export function AssistantToolActivity({
     spinner: the error was already here, and the row was the last thing still
     claiming to be waiting for it.
   */
-  const settled = failed || result !== undefined;
+  /*
+    A row cannot still be running once the turn that owns it is over.
+
+    eve resolves its own framework tools — `ask_question` among them — without
+    sending back the tool result a dispatched tool returns, so `result` never
+    arrives and the status stays "running" forever: the ask sat there spinning
+    while the steps after it ticked off below. The turn ending is the honest
+    end of anything it started.
+  */
+  const turnActive = useTurnActive();
+  const settled = failed || result !== undefined || !turnActive;
   const running = !settled && status?.type === "running";
 
   // Args and results are the wire copy — tokens in, real names for the user.
