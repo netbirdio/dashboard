@@ -12,13 +12,13 @@ type Props = {
 };
 
 // OnboardingAgentProvider covers the quickstart's "Connect a Provider" step.
-// Connecting the first provider is what seeds the account-level agent network
-// settings and generates the tunnel-only endpoint, so we key "done" off
-// settings being present rather than counting providers.
+// Connecting the first provider seeds the account-level agent network settings
+// and the tunnel-only endpoint unless the gateway step already did, so "done"
+// needs both the settings and a provider.
 export const OnboardingAgentProvider = ({ onBack, onNext }: Props) => {
   const { settings, providers, openWizard, closeWizard, isWizardOpen } =
     useAIProviders();
-  const connected = !!settings;
+  const connected = !!settings && providers.length > 0;
 
   return (
     <div className={"relative flex flex-col h-full gap-4"}>

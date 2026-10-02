@@ -20,6 +20,7 @@ import type { Account } from "@/interfaces/Account";
 import type { Group } from "@/interfaces/Group";
 import { PlanTier } from "@/interfaces/Subscription";
 import { useAccount } from "@/modules/account/useAccount";
+import { requestAgentNetworkOnboarding } from "@/modules/onboarding/agent-network/existingAccountOnboarding";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
 
 export const NetBirdCloudProvider = () => {
@@ -55,7 +56,8 @@ export const NetBirdCloudProvider = () => {
   // accounts (signup form still pending) get the focused view
   // (agent_network_only); existing accounts just get the Agent Network menu
   // made available (dashboard_features.agent_network), leaving the rest of
-  // their dashboard intact.
+  // their dashboard intact, and a request for the Agent Network onboarding
+  // that OnboardingProvider resolves once the menu is saved.
   useEffect(() => {
     if (!account || signupSourceApplied.current) return;
     try {
@@ -68,6 +70,7 @@ export const NetBirdCloudProvider = () => {
         : account.settings?.dashboard_features?.agent_network === true;
 
       if (alreadyApplied) {
+        if (!isNewAccount) requestAgentNetworkOnboarding(account.id);
         localStorage.removeItem(SIGNUP_SOURCE_LOCAL_STORAGE_KEY);
         return;
       }
@@ -100,6 +103,7 @@ export const NetBirdCloudProvider = () => {
           // setting holds, briefly flipping the focused view off and closing
           // the onboarding form as the toast appears.
           await mutate("/accounts");
+          if (!isNewAccount) requestAgentNetworkOnboarding(account.id);
           localStorage.removeItem(SIGNUP_SOURCE_LOCAL_STORAGE_KEY);
         }),
         loadingMessage: isNewAccount
