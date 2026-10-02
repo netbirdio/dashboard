@@ -34,7 +34,7 @@ describe("AssistantToolActivity", () => {
   it("names a skill load in words, not as eve's internal id", () => {
     const text = rowText("eve:load-skill", { skill: "agent-network" });
 
-    expect(text).toContain("Loading the Agent Network skill");
+    expect(text).toContain("Loading the 'Agent Network' skill");
     // The id the label was built from must not follow it: the SDK says this
     // row has no subject precisely so the slug is not repeated.
     expect(text).not.toContain("agent-network");
