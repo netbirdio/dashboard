@@ -469,6 +469,32 @@ function buildApi(deps: Deps): CanvasAgentApi {
     if (view === "groups") d.canvas.setSelectedGroup(resolved.id);
     // Invalidating the layout is what makes the view rebuild around it.
     d.canvas.setLayoutInitialized(false);
+
+    /*
+      The rebuild redraws the graph around the new subject but can leave the
+      selector node showing the view's default pick, so the canvas read
+      "Production" while drawing Developers' policies. Set the selector's value
+      directly, and again once the rebuild has settled in case it wrote an
+      older copy of the node back.
+    */
+    const subjectId = resolved.id;
+    const key = SELECTOR_DATA_KEYS[view];
+    const syncSelector = () =>
+      d.reactFlow.setNodes((prev) => {
+        if (!key) return prev;
+        const stale = prev.some(
+          (n) => n.id === selectorId && n.data?.[key] !== subjectId,
+        );
+        if (!stale) return prev;
+        return prev.map((n) =>
+          n.id === selectorId
+            ? { ...n, data: { ...n.data, [key]: subjectId } }
+            : n,
+        );
+      });
+    syncSelector();
+    await wait(STEP_MS);
+    syncSelector();
     return ok(resolved.detail);
   };
 
@@ -706,6 +732,13 @@ const SELECTOR_NODES: Record<string, string | undefined> = {
   users: "select-user-node",
   groups: "select-group-node",
   networks: undefined,
+};
+
+/** The field on each selector node that holds what it currently shows. */
+const SELECTOR_DATA_KEYS: Record<string, string | undefined> = {
+  peers: "currentPeer",
+  users: "currentUser",
+  groups: "currentGroup",
 };
 
 /** Node actions after which the canvas wants re-arranging. */

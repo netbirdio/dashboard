@@ -40,8 +40,11 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
     "asc",
   );
 
-  const group = groups?.find((g) => g.id === data.currentGroup);
-  const { groupUserCounts } = useCanvasUI();
+  const { groupUserCounts, selectedGroup } = useCanvasUI();
+  // The view is built around `selectedGroup`; the node's own data can lag
+  // behind it when the selection is set from outside (the assistant).
+  const currentGroup = selectedGroup || data.currentGroup;
+  const group = groups?.find((g) => g.id === currentGroup);
   const countLabel = getGroupCountLabel(
     group,
     group ? groupUserCounts.get(group.id ?? group.name) : 0,
@@ -59,7 +62,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
       <SelectDropdown
         variant={"secondary"}
         deferChange
-        value={data.currentGroup}
+        value={currentGroup}
         onChange={data.onChange}
         options={groupOptions}
         showSearch={true}
