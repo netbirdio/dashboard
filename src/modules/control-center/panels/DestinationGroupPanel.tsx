@@ -535,6 +535,18 @@ export const DestinationGroupPanel = ({
     });
   }, [users, userGroupRef, isDraft, changes]);
 
+  /*
+    A group whose members are all people opens on Users.
+
+    The same rule the resources tab already follows: the panel opens where the
+    members actually are. Group membership for a user is stored on the USER, so
+    a group built for an agent-network policy has no peers and no resources at
+    all — it would otherwise open on an empty Peers list with its real contents
+    one click away and nothing saying so.
+  */
+  const preferUsersTab =
+    groupUsers.length > 0 && groupPeers.length === 0 && resources.length === 0;
+
   const canEditMembers =
     !isAllGroup(group) &&
     canEditGroupMembers(permission.groups, group) &&
@@ -998,13 +1010,29 @@ export const DestinationGroupPanel = ({
   const [search, setSearch] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  /*
+    Whether the reader has picked a tab for THIS group. The preferred tab is
+    applied until they do: `/users` resolves separately from the group itself,
+    so a users-only group is briefly indistinguishable from an empty one, and
+    keying the choice to `groupId` alone would settle on Peers before the list
+    that decides it has arrived. Once they have chosen, their choice stands
+    however the counts move under it.
+  */
+  const tabPicked = useRef(false);
+
   useEffect(() => {
     setSearch("");
-    setTab(preferResourcesTab ? "resources" : "peers");
+    tabPicked.current = false;
     // autoFocus only fires on mount, so refocus when switching groups too.
     searchInputRef.current?.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- must reset only on group switch
   }, [groupId]);
+
+  useEffect(() => {
+    if (tabPicked.current) return;
+    setTab(
+      preferUsersTab ? "users" : preferResourcesTab ? "resources" : "peers",
+    );
+  }, [groupId, preferUsersTab, preferResourcesTab]);
 
   const query = search.trim().toLowerCase();
 
@@ -1225,6 +1253,7 @@ export const DestinationGroupPanel = ({
       <Tabs
         value={tab}
         onValueChange={(v) => {
+          tabPicked.current = true;
           setTab(v);
           searchInputRef.current?.focus();
         }}
