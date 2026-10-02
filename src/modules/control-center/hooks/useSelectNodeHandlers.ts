@@ -211,31 +211,39 @@ export function useSelectNodeHandlers(params: UseSelectNodeHandlersParams) {
     if (result) {
       // The caller's setNodes([selectNode]) may not be committed yet, so patch
       // the select node from the updater's `prev`, not reactFlow.getNodes().
+      // Compared against the node itself, not `shouldRecalculate`: a selection
+      // set from outside (the assistant's navigate) is already in state by the
+      // time the view-init effect rebuilds around it, so the state says
+      // "unchanged" while the selector still shows the view's default pick.
       setNodes((prev) => {
         const source = prev.find((n) => n.id === selectNodeId);
         if (!source) return prev;
-        const selectNode = shouldRecalculate
-          ? { ...source, data: { ...source.data, [dataKey]: id } }
-          : source;
+        const selectNode =
+          source.data[dataKey] === id
+            ? source
+            : { ...source, data: { ...source.data, [dataKey]: id } };
         return [...result.updatedNodes, selectNode];
       });
       setEdges(result.updatedEdges);
       setLayoutInitialized(true);
       // fitView reads geometry from the store at rAF time, so a stub id works.
-      if (shouldRecalculate)
+      // A rebuild from an invalidated layout fits too: that is how a selection
+      // set from outside (the assistant's navigate) lands, and there the
+      // selection itself reads as unchanged.
+      if (shouldRecalculate || !layoutInitialized)
         fitView([...result.updatedNodes, { id: selectNodeId } as Node]);
       return;
     }
 
-    if (shouldRecalculate) {
-      setNodes((prev) =>
-        prev.map((n) =>
-          n.id === selectNodeId
-            ? { ...n, data: { ...n.data, [dataKey]: id } }
-            : n,
-        ),
-      );
-    }
+    setNodes((prev) =>
+      prev.some((n) => n.id === selectNodeId && n.data[dataKey] !== id)
+        ? prev.map((n) =>
+            n.id === selectNodeId
+              ? { ...n, data: { ...n.data, [dataKey]: id } }
+              : n,
+          )
+        : prev,
+    );
   };
 
   const handleGroupChange = (id: string) =>

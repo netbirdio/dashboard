@@ -120,6 +120,9 @@ export function useIsContextMenuTarget(nodeId: string): boolean {
 interface CanvasUIState {
   placeholderIp: string;
   groupUserCounts: Map<string, number>;
+  // The group the live group view is built around. The selector node shows
+  // this rather than its own data, so it can never disagree with the graph.
+  selectedGroup: string;
 }
 
 const CanvasUIContext = createContext<CanvasUIState | null>(null);
@@ -317,8 +320,9 @@ export function CanvasStateProvider({
     () => ({
       placeholderIp,
       groupUserCounts,
+      selectedGroup,
     }),
-    [placeholderIp, groupUserCounts],
+    [placeholderIp, groupUserCounts, selectedGroup],
   );
 
   const destinationGroupValue = useMemo(
