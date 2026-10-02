@@ -32,6 +32,46 @@ function approvalTitle(request: PendingInputRequest): string {
   return `${toolLabel(request.toolName, false)}?`;
 }
 
+/**
+ * Whether this pause is an open question — one asked with nothing to tap.
+ *
+ * It is the one pause that does NOT belong in the composer's place. An
+ * approval replaces the composer because the box you would type into is
+ * exactly the thing that should not be there; an open question is the
+ * opposite, since typing is the only way to answer it. So it renders as a
+ * card above the composer the way `ask_user_question` does, and the composer
+ * the user already has is what sends the answer.
+ */
+export const isOpenQuestion = (request: PendingInputRequest): boolean =>
+  acceptsFreeText(request) && request.options.length === 0;
+
+/**
+ * An open question, above the composer: the question and nothing else.
+ *
+ * No "waiting for you" line, because the focused composer directly beneath it
+ * already says so and the sentence only reads as filler once there is nowhere
+ * else for the turn to go. No text box and no send button either — both would
+ * be a second copy of the composer sitting on top of the real one.
+ */
+export function AssistantOpenQuestionCard({
+  request,
+}: Readonly<{ request: PendingInputRequest }>) {
+  const restore = useVaultRestore();
+  return (
+    <div className="mb-3 flex items-start gap-2.5 rounded-2xl border border-nb-gray-700 bg-nb-gray-900 px-4 py-3.5">
+      <MessageCircleQuestion
+        size={16}
+        strokeWidth={1.5}
+        className="mt-0.5 shrink-0 text-nb-gray-250"
+        aria-hidden
+      />
+      <p className="min-w-0 flex-1 text-chat font-normal text-nb-gray-100">
+        {restore(approvalTitle(request))}
+      </p>
+    </div>
+  );
+}
+
 type Option = PendingInputRequest["options"][number];
 
 /**

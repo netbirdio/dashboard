@@ -42,7 +42,11 @@ import {
   type AccessRequest,
   subscribeToAccessRequest,
 } from "@/modules/assistant/assistantAccessAuth";
-import { AssistantApprovalGate } from "@/modules/assistant/chat/AssistantApprovalCard";
+import {
+  AssistantApprovalGate,
+  AssistantOpenQuestionCard,
+  isOpenQuestion,
+} from "@/modules/assistant/chat/AssistantApprovalCard";
 import { AssistantContextChip } from "@/modules/assistant/chat/AssistantContextChip";
 import { AssistantInlineComponent } from "@/modules/assistant/chat/AssistantInlineComponent";
 import { AssistantMarkdownText } from "@/modules/assistant/chat/AssistantMarkdownText";
@@ -64,6 +68,7 @@ const CONTEXT_LIFT = 50;
 // The current status, published to the running message so the indicator can
 // sit under the step it belongs to.
 const StatusContext = createContext<string | null>(null);
+
 
 // Reasoning and tool calls go in the steps panel; components and the question
 // card are output, so they stay in the answer where the model put them.
@@ -473,7 +478,11 @@ function ThreadQuestion({
   );
 }
 
-function composerPlaceholder(question: AssistantQuestion | null): string {
+function composerPlaceholder(
+  question: AssistantQuestion | null,
+  openQuestion: boolean,
+): string {
+  if (openQuestion) return "Type your answer";
   if (!question) return "How can I help you today?";
   return question.multi
     ? "Tick what applies, or type your answer"
@@ -482,12 +491,17 @@ function composerPlaceholder(question: AssistantQuestion | null): string {
 
 function Composer({
   question,
+  openQuestion,
   onAnswer,
   onAnswerText,
+  onAnswerOpen,
 }: Readonly<{
   question: AssistantQuestion | null;
+  /** A framework pause asked with no options — answered by typing, here. */
+  openQuestion: boolean;
   onAnswer: (indices: number[]) => void;
   onAnswerText: (text: string) => void;
+  onAnswerOpen: (text: string) => void;
 }>) {
   const aui = useAui();
 
@@ -495,9 +509,18 @@ function Composer({
   // question as written (its turn is still running, so the normal send path is
   // closed). Returns false when the text wasn't consumed.
   const submitAnswer = (): boolean => {
-    if (!question) return false;
     const composer = aui.thread.composer();
     const text = composer.getState().text;
+    // An open question has no options, so there is no number to parse: whatever
+    // was typed IS the answer, and it goes back to the parked framework pause
+    // rather than down the normal send path.
+    if (openQuestion) {
+      if (!text.trim()) return false;
+      composer.setText("");
+      onAnswerOpen(text.trim());
+      return true;
+    }
+    if (!question) return false;
     const indices = parseOptionNumbers(
       text,
       question.options.length,
@@ -519,7 +542,7 @@ function Composer({
   // Captured on the way down to beat the textarea's own Enter handler, which
   // would submit the literal text.
   const answerByKeyboard = (event: React.KeyboardEvent) => {
-    if (!question) return;
+    if (!question && !openQuestion) return;
     if (
       event.key !== "Enter" ||
       event.shiftKey ||
@@ -548,14 +571,14 @@ function Composer({
       <ComposerPrimitive.Input
         rows={1}
         autoFocus
-        placeholder={composerPlaceholder(question)}
+        placeholder={composerPlaceholder(question, openQuestion)}
         className="max-h-32 min-h-[38px] w-full resize-none bg-transparent px-0.5 py-1.5 text-sm text-nb-gray-100 outline-none placeholder:text-neutral-400/70"
       />
 
       <div className="flex items-center justify-end gap-2">
         {/* While an ask_user_question card is up the thread counts as running, which
             would leave only Stop; this button routes the text to the answer. */}
-        {question && (
+        {(question || openQuestion) && (
           <button
             type="button"
             aria-label="Send answer"
@@ -569,7 +592,7 @@ function Composer({
           </button>
         )}
 
-        {!question && (
+        {!question && !openQuestion && (
           <ThreadPrimitive.If running={false}>
             <ComposerPrimitive.Send
               aria-label="Send"
@@ -670,9 +693,16 @@ export function AssistantThread({
     background answer is worse than reaching for the composer by hand. A button
     or the body is fair game — nothing is being written there.
   */
+  /*
+    An open question is answered in the composer, so it is the one pause that
+    leaves the composer standing. Everything else still takes its place.
+  */
+  const openQuestion =
+    pendingInput && isOpenQuestion(pendingInput) ? pendingInput : null;
+
   const questionId = question?.id ?? null;
   useEffect(() => {
-    if (turnActive && !questionId) return;
+    if (turnActive && !questionId && !openQuestion) return;
 
     const frame = requestAnimationFrame(() => {
       const input =
@@ -689,7 +719,7 @@ export function AssistantThread({
       input.focus();
     });
     return () => cancelAnimationFrame(frame);
-  }, [turnActive, questionId]);
+  }, [turnActive, questionId, openQuestion?.requestId]);
 
   return (
     <ThreadPrimitive.Root
@@ -751,13 +781,14 @@ export function AssistantThread({
         {/* Lifted clear of the chip, which overlaps this space without occupying it. */}
         <div
           className="transition-[margin] duration-200"
-          style={{ marginBottom: context ? CONTEXT_LIFT : 0 }}
+          style={{ marginBottom: context && !openQuestion ? CONTEXT_LIFT : 0 }}
         >
           <ThreadQuestion
             question={question}
             onAnswer={answer}
             onDismiss={dismissQuestion}
           />
+          {openQuestion && <AssistantOpenQuestionCard request={openQuestion} />}
         </div>
 
         {/* `pb` here, not on the bar: the background has to reach the card's edge. */}
@@ -774,7 +805,7 @@ export function AssistantThread({
                  sat in the panel first and landed behind this composer, where
                  nobody could see it. */
               <AssistantAccessPrompt />
-            ) : pendingInput ? (
+            ) : pendingInput && !openQuestion ? (
               /* In the composer's place, not above it: the framework has
                  stopped answering, so an input that still accepts text would be
                  offering to queue messages behind a prompt nobody can see
@@ -786,14 +817,23 @@ export function AssistantThread({
               />
             ) : (
               <>
-                <AssistantContextChip
-                  entry={context}
-                  onDismiss={onDismissContext}
-                />
+                {/* Not while an open question is up. The chip says what the
+                    next MESSAGE will carry, and an answer to a parked pause is
+                    not one — it goes straight back to the framework and picks
+                    up no page context on the way, so offering it would promise
+                    something the answer never sends. */}
+                {!openQuestion && (
+                  <AssistantContextChip
+                    entry={context}
+                    onDismiss={onDismissContext}
+                  />
+                )}
                 <Composer
                   question={question}
+                  openQuestion={!!openQuestion}
                   onAnswer={answer}
                   onAnswerText={answerQuestion}
+                  onAnswerOpen={(text) => respondToInput({ text })}
                 />
               </>
             )}
