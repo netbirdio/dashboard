@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +10,7 @@ import HelpText from "@components/HelpText";
 import { InlineButtonLink } from "@components/InlineLink";
 import { Label } from "@components/Label";
 import { ToggleSwitch } from "@components/ToggleSwitch";
+import { cn } from "@utils/helpers";
 import {
   AlertTriangle,
   ArrowRight,
@@ -18,12 +20,10 @@ import {
   MoreVertical,
   PlusIcon,
 } from "lucide-react";
-import { Callout } from "@components/Callout";
 import React from "react";
+import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { Network } from "@/interfaces/Network";
 import { ReverseProxyTarget } from "@/interfaces/ReverseProxy";
-import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { cn } from "@utils/helpers";
 
 type Props = {
   targets: ReverseProxyTarget[];
@@ -45,7 +45,7 @@ export default function ReverseProxyHTTPTargets({
   onNavigateToResources,
 }: Readonly<Props>) {
   return (
-    <div>
+    <div data-testid="https-targets">
       <Label>HTTPS Targets</Label>
       <HelpText>
         Add one or more devices running your service or resources to make it
