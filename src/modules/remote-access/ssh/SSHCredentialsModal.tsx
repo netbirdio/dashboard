@@ -13,7 +13,7 @@ import ModalHeader from "@components/modal/ModalHeader";
 import Paragraph from "@components/Paragraph";
 import Separator from "@components/Separator";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
-import { isNativeSSHSupported } from "@utils/version";
+import { usesStandardSSHPort } from "@utils/version";
 import {
   ChevronsLeftRightEllipsis,
   ExternalLinkIcon,
@@ -39,7 +39,7 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
       : "root",
   );
 
-  const initialPort = isNativeSSHSupported(peer.version) ? "22" : "44338";
+  const initialPort = usesStandardSSHPort(peer.version) ? "22" : "44338";
   const [port, setPort] = useState(initialPort);
 
   const userNameError = useMemo(() => {
