@@ -537,6 +537,7 @@ initEnvironment() {
   NETBIRD_HTTP_PROTOCOL="http"
   TURN_USER="self"
   TURN_PASSWORD=$(openssl rand -base64 32 | sed 's/=//g')
+  RELAY_SECRET=$(openssl rand -hex 32)
   TURN_MIN_PORT=49152
   TURN_MAX_PORT=65535
 
@@ -741,6 +742,11 @@ renderManagementJson() {
             }
         ],
         "TimeBasedCredentials": false
+    },
+    "Relay": {
+        "Addresses": [],
+        "CredentialsTTL": "24h",
+        "Secret": "$RELAY_SECRET"
     },
     "Signal": {
         "Proto": "$NETBIRD_HTTP_PROTOCOL",

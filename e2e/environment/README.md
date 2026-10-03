@@ -11,6 +11,11 @@ network behind Caddy so embedded proxy clients can finish connecting when
 the suite creates overlay targets. `SIGNAL_IMAGE` accepts a full image reference,
 following the same override rules as management and proxy images.
 
+Management also receives a generated relay signing secret for traffic flow
+credentials. Relay addresses stay empty because this fixture uses direct
+connections; no relay service is required. This keeps flow configuration enabled
+without management exiting when connected peers request their configuration.
+
 To run the focused target-access traffic test, check out the matching backend
 and dashboard branches, then build both backend images and the dashboard:
 
