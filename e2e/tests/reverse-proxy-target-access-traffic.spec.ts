@@ -56,13 +56,14 @@ test.describe("Reverse Proxy - Target Access Real Traffic @reverse-proxy", () =>
         testInfo,
       );
 
+      const initialUpstreamCount = upstream.snapshot().length;
       const inheritedMissing = await waitForStatus(
         serviceDomain,
         "/private",
         401,
       );
       expect(inheritedMissing.status).toBe(401);
-      expect(upstream.snapshot()).toHaveLength(0);
+      expect(upstream.snapshot()).toHaveLength(initialUpstreamCount);
 
       const inheritedWrong = await requestThroughReverseProxy(
         serviceDomain,
@@ -70,8 +71,18 @@ test.describe("Reverse Proxy - Target Access Real Traffic @reverse-proxy", () =>
         { Authorization: WRONG_AUTH },
       );
       expect(inheritedWrong.status).toBe(401);
-      expect(upstream.snapshot()).toHaveLength(0);
+      expect(upstream.snapshot()).toHaveLength(initialUpstreamCount);
 
+      const upstreamReady = await waitForStatus(
+        serviceDomain,
+        "/warm-upstream-ready",
+        200,
+        { Authorization: VALID_AUTH },
+      );
+      expect(parseEcho(upstreamReady).path).toBe("/warm-upstream-ready");
+      expect(upstream.snapshot().at(-1)?.path).toBe("/warm-upstream-ready");
+
+      const beforeInherited = upstream.snapshot().length;
       const inherited = await requestThroughReverseProxy(
         serviceDomain,
         "/private",
@@ -83,8 +94,13 @@ test.describe("Reverse Proxy - Target Access Real Traffic @reverse-proxy", () =>
           "X-NetBird-Groups": "administrators",
         },
       );
-      expect(inherited.status).toBe(200);
+      expect(
+        inherited.status,
+        `authenticated inherit response: ${inherited.body.slice(0, 500)}`,
+      ).toBe(200);
+      expect(upstream.snapshot()).toHaveLength(beforeInherited + 1);
       const inheritedEcho = parseEcho(inherited);
+      expect(inheritedEcho.path).toBe("/private");
       expect(inheritedEcho.headers.authorization).toBeUndefined();
       expect(inheritedEcho.headers["x-e2e-app"]).toBe(APPLICATION_HEADER);
       expect(inheritedEcho.headers.cookie).toContain(APPLICATION_COOKIE);
@@ -306,6 +322,7 @@ async function waitForStatus(
   serviceDomain: string,
   requestPath: string,
   status: number,
+  headers: Record<string, string> = {},
 ): Promise<ReverseProxyResponse> {
   let lastResponse: ReverseProxyResponse | undefined;
   await expect
@@ -314,6 +331,7 @@ async function waitForStatus(
         lastResponse = await requestThroughReverseProxy(
           serviceDomain,
           requestPath,
+          headers,
         );
         return lastResponse.status;
       },

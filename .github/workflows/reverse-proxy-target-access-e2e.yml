@@ -81,12 +81,12 @@ jobs:
         run: npm run build
 
       - name: Run target access traffic test
-        run: npx playwright test --config=e2e/playwright.config.ts reverse-proxy-target-access-traffic.spec.ts
+        run: npx playwright test --config=e2e/playwright.config.ts reverse-proxy-target-access-traffic.spec.ts --retries=0
 
       - name: Append Playwright summary
         if: always() && hashFiles('e2e/test-results/results.json') != ''
         run: |
-          jq -r '.stats | "Passed: \(.expected // 0), failed: \(.unexpected // 0), skipped: \(.skipped // 0)"' \
+          jq -r '.stats | "Passed: \(.expected // 0), failed: \(.unexpected // 0), flaky: \(.flaky // 0), skipped: \(.skipped // 0)"' \
             e2e/test-results/results.json >> "$GITHUB_STEP_SUMMARY"
 
       - name: Collect container logs
