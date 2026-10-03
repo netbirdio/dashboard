@@ -63,5 +63,17 @@ For a focused local run without country selectors, set
 Leave the default `false` for the full suite. This setting does not relax the
 proxy's access-control assertions.
 
+The separate **Reverse Proxy Target Access E2E** Actions workflow runs this
+traffic spec and its login prerequisites on pull requests. A line such as
+`reverse-proxy-tag: pr-7954` in the PR description selects that same published
+tag for both `ghcr.io/netbirdio/management` and
+`ghcr.io/netbirdio/reverse-proxy`; editing the description starts another run.
+Without that line, the tag defaults to `main`. Manual runs accept a
+`backend-tag` input. Both images must already be published with target access
+support. The job uses public images without registry credentials and disables
+geolocation for this focused test. The full **Playwright E2E Tests** workflow
+continues to use its cloud management image and run every spec with geolocation
+enabled.
+
 Run `bash clean-test-env.sh` from this directory to remove this Compose stack,
 its test data, and generated configuration before setting up another run.

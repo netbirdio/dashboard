@@ -1,0 +1,111 @@
+name: Reverse Proxy Target Access E2E
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  workflow_dispatch:
+    inputs:
+      backend-tag:
+        description: 'OSS management and reverse-proxy image tag'
+        required: true
+        type: string
+        default: 'main'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  target-access-traffic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Resolve backend image tag
+        id: backend
+        env:
+          INPUT_TAG: ${{ inputs.backend-tag }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          tag="$INPUT_TAG"
+          if [ -z "$tag" ]; then
+            tag=$(printf '%s\n' "$PR_BODY" | awk '
+              !found && tolower($0) ~ /^[[:space:]]*reverse-proxy-tag:/ {
+                sub(/^[^:]*:[[:space:]]*/, "");
+                sub(/[[:space:]]*$/, "");
+                print;
+                found = 1;
+              }
+              END { if (!found) print "main" }
+            ')
+          fi
+          if [[ ! "$tag" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+            echo "::error::Invalid backend image tag"
+            exit 1
+          fi
+          printf 'Using backend image tag: %s\n' "$tag"
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies and browser
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+          sudo apt-get install -y jq
+          printf '{}\n' > .local-config.json
+
+      - name: Set up test environment
+        working-directory: e2e/environment
+        env:
+          MANAGEMENT_IMAGE: ghcr.io/netbirdio/management:${{ steps.backend.outputs.tag }}
+          REVERSE_PROXY_IMAGE: ghcr.io/netbirdio/reverse-proxy:${{ steps.backend.outputs.tag }}
+          MANAGEMENT_DISABLE_GEOLOCATION: 'true'
+        run: bash create-test-env.sh
+
+      - name: Build dashboard
+        env:
+          APP_ENV: test
+        run: npm run build
+
+      - name: Run target access traffic test
+        run: npx playwright test --config=e2e/playwright.config.ts reverse-proxy-target-access-traffic.spec.ts
+
+      - name: Append Playwright summary
+        if: always() && hashFiles('e2e/test-results/results.json') != ''
+        run: |
+          jq -r '.stats | "Passed: \(.expected // 0), failed: \(.unexpected // 0), skipped: \(.skipped // 0)"' \
+            e2e/test-results/results.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Collect container logs
+        if: failure()
+        working-directory: e2e/environment
+        run: docker compose logs --tail=500 --no-color management reverse-proxy reverse-proxy-no-ports > target-access-containers.log 2>&1 || true
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: target-access-playwright-report
+          path: e2e/playwright-report/
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: target-access-diagnostics
+          path: |
+            e2e/test-results/
+            e2e/environment/target-access-containers.log
