@@ -19,9 +19,14 @@ export function DataTableInstanceProvider({ table, children }: ProviderProps) {
 }
 
 /**
- * Returns the tanstack table instance for the surrounding DataTable, or null
- * when used outside of one.
+ * Returns the tanstack table instance of the surrounding DataTable.
  */
-export function useOptionalDataTable() {
-  return useContext(DataTableInstanceContext);
+export function useDataTable() {
+  const table = useContext(DataTableInstanceContext);
+  if (!table) {
+    throw new Error(
+      "useDataTable must be used within a DataTableInstanceProvider",
+    );
+  }
+  return table;
 }
