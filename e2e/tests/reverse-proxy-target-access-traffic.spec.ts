@@ -243,6 +243,32 @@ async function createService(
   await page.getByTestId("submit-service").click();
   const response = await responsePromise;
   expect([200, 201]).toContain(response.status());
+  const createPayload = response.request().postDataJSON() as {
+    targets?: Array<{ host?: string; port?: number; path?: string }>;
+  };
+  expect(
+    createPayload.targets?.map(({ host, port, path }) => ({
+      host,
+      port,
+      path,
+    })),
+  ).toEqual([
+    {
+      host: options.upstreamHost,
+      port: options.upstreamPort,
+      path: undefined,
+    },
+    {
+      host: options.upstreamHost,
+      port: options.upstreamPort,
+      path: "/public",
+    },
+    {
+      host: options.upstreamHost,
+      port: options.upstreamPort,
+      path: "/public/admin",
+    },
+  ]);
   await expect(
     page.locator("tr").filter({ hasText: options.subdomain }),
   ).toBeVisible({ timeout: 30_000 });
@@ -264,16 +290,36 @@ async function addClusterTarget(
     .getByText(CUSTOM_PORTS_DOMAIN, { exact: true })
     .click({ force: true });
 
-  await page
-    .getByPlaceholder("e.g., 127.0.0.1 or backend.lan")
-    .fill(options.upstreamHost);
-  await page
-    .getByTestId("target-port-input")
-    .fill(String(options.upstreamPort));
+  const hostInput = page.getByPlaceholder("e.g., 127.0.0.1 or backend.lan");
+  const portInput = page.getByTestId("target-port-input");
+
+  // Cluster selection schedules an asynchronous focus on the port input. Wait
+  // for it before filling the host so that focus cannot be stolen mid-fill.
+  await expect(portInput).toBeFocused();
+  await hostInput.fill(options.upstreamHost);
+  await expect(hostInput).toHaveValue(options.upstreamHost);
+  await portInput.fill(String(options.upstreamPort));
+  await portInput.blur();
+  await expect(portInput).toHaveValue(String(options.upstreamPort));
   if (location !== "/") {
     await page.getByTestId("target-location-input").fill(location);
   }
-  await page.getByTestId("submit-target").click();
+  await expect(hostInput).toHaveValue(options.upstreamHost);
+  await expect(portInput).toHaveValue(String(options.upstreamPort));
+
+  const submitTarget = page.getByTestId("submit-target");
+  await expect(submitTarget).toBeEnabled();
+  await submitTarget.click();
+  await expect(submitTarget).not.toBeVisible();
+
+  const row = page
+    .getByText("HTTPS Targets")
+    .locator("..")
+    .locator("tr")
+    .filter({ has: page.getByText(location, { exact: true }) });
+  await expect(row).toContainText(
+    `${options.upstreamHost}:${options.upstreamPort}`,
+  );
 }
 
 async function setTargetAction(
