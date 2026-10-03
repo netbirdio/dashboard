@@ -204,6 +204,7 @@ type FilterChipProps<TData> = {
 };
 
 function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -227,7 +228,7 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
           </button>
         </PopoverTrigger>
         <button
-          aria-label={`Remove ${def.label} filter`}
+          aria-label={t("Remove {{label}} filter", { label: def.label })}
           className={cn(
             "flex items-center justify-center px-2",
             "border-l border-nb-gray-900",

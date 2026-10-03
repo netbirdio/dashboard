@@ -159,8 +159,6 @@
   "Previous page": "Előző oldal",
   "Next page": "Következő oldal",
   "Last page": "Utolsó oldal",
-  "You don't have access to": "Nincs hozzáférése ehhez:",
-  "this page": "ez az oldal",
   "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.": "Úgy tűnik, nincs hozzáférése ehhez az oldalhoz. Csak megfelelő jogosultságokkal rendelkező felhasználók tekinthetik meg. További információért forduljon a hálózat rendszergazdájához.",
   "Last seen on": "Utolsó aktivitás időpontja",
   "D MMMM, YYYY [at] h:mm A": "YYYY. MMMM D. HH:mm",
@@ -203,5 +201,11 @@
   "Search by network name or description...": "Keresés hálózatnév vagy leírás alapján...",
   "Search by name, type or group...": "Keresés név, típus vagy csoport alapján...",
   "Search by name or role...": "Keresés név vagy szerepkör alapján...",
-  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "Válassza ki a vezérlőpult nyelvét. A választás ebben a böngészőben tárolódik, és azonnal érvénybe lép."
+  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "Válassza ki a vezérlőpult nyelvét. A választás ebben a böngészőben tárolódik, és azonnal érvénybe lép.",
+  "Manage your account's DNS settings.": "Kezelje fiókja DNS-beállításait.",
+  "You don't have access to {{page}}": "Nincs hozzáférése a(z) „{{page}}” oldalhoz",
+  "You don't have access to this page": "Nincs hozzáférése ehhez az oldalhoz",
+  "Last used on": "Utolsó használat időpontja",
+  "Last login on": "Utolsó bejelentkezés időpontja",
+  "Remove {{label}} filter": "A(z) „{{label}}” szűrő eltávolítása"
 }

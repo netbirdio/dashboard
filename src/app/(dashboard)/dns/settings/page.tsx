@@ -56,7 +56,7 @@ export default function NameServerSettings() {
           <T>{"DNS Settings"}</T>
         </h1>
         <Paragraph>
-          {"Manage your account's DNS settings."}{" "}
+          {t("Manage your account's DNS settings.")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
             target={"_blank"}

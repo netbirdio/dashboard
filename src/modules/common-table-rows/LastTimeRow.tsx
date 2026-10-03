@@ -38,7 +38,7 @@ export default function LastTimeRow({ date, text, prefix }: Props) {
         </TooltipTrigger>
         <TooltipContent>
           <div className={"text-neutral-300 flex flex-col gap-1"}>
-            <span className={"text-xs"}>{text ?? t("Last seen on")}</span>
+            <span className={"text-xs"}>{t(text ?? "Last seen on")}</span>
             <span className={"text-neutral-200"}>
               {dayjs(date)
                 .locale(language)

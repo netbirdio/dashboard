@@ -159,8 +159,6 @@
   "Previous page": "前のページ",
   "Next page": "次のページ",
   "Last page": "最後のページ",
-  "You don't have access to": "アクセス権がありません：",
-  "this page": "このページ",
   "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.": "このページへのアクセス権がないようです。適切な権限を持つユーザーのみ閲覧できます。詳細はネットワーク管理者にお問い合わせください。",
   "Last seen on": "最終アクティビティ日時",
   "D MMMM, YYYY [at] h:mm A": "YYYY年M月D日 HH:mm",
@@ -203,5 +201,11 @@
   "Search by network name or description...": "ネットワーク名または説明で検索...",
   "Search by name, type or group...": "名前、種類、グループで検索...",
   "Search by name or role...": "名前またはロールで検索...",
-  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "ダッシュボードの言語を選択してください。選択内容はこのブラウザーに保存され、すぐに適用されます。"
+  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "ダッシュボードの言語を選択してください。選択内容はこのブラウザーに保存され、すぐに適用されます。",
+  "Manage your account's DNS settings.": "アカウントの DNS 設定を管理します。",
+  "You don't have access to {{page}}": "「{{page}}」へのアクセス権がありません",
+  "You don't have access to this page": "このページへのアクセス権がありません",
+  "Last used on": "最終使用日時",
+  "Last login on": "最終ログイン日時",
+  "Remove {{label}} filter": "「{{label}}」フィルターを削除"
 }

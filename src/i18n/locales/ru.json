@@ -164,8 +164,6 @@
   "Previous page": "Предыдущая страница",
   "Next page": "Следующая страница",
   "Last page": "Последняя страница",
-  "You don't have access to": "Доступ ограничен:",
-  "this page": "Эта страница",
   "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.": "Для просмотра этой страницы нужны соответствующие права. Обратитесь к администратору сети.",
   "Last seen on": "Последняя активность",
   "D MMMM, YYYY [at] h:mm A": "D MMMM YYYY [в] HH:mm",
@@ -203,5 +201,11 @@
   "Pending Approvals": "Ожидают подтверждения",
   "Invite User": "Пригласить пользователя",
   "Add User": "Добавить пользователя",
-  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "Выберите язык панели управления. Выбор сохраняется в этом браузере и применяется сразу."
+  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "Выберите язык панели управления. Выбор сохраняется в этом браузере и применяется сразу.",
+  "Manage your account's DNS settings.": "Управляйте настройками DNS своей учётной записи.",
+  "You don't have access to {{page}}": "Нет доступа к странице «{{page}}»",
+  "You don't have access to this page": "У вас нет доступа к этой странице",
+  "Last used on": "Последнее использование",
+  "Last login on": "Последний вход",
+  "Remove {{label}} filter": "Удалить фильтр «{{label}}»"
 }

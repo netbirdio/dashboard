@@ -159,8 +159,6 @@
   "Previous page": "Previous page",
   "Next page": "Next page",
   "Last page": "Last page",
-  "You don't have access to": "You don't have access to",
-  "this page": "this page",
   "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.": "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.",
   "Last seen on": "Last seen on",
   "D MMMM, YYYY [at] h:mm A": "D MMMM, YYYY [at] h:mm A",
@@ -203,5 +201,11 @@
   "Search by network name or description...": "Search by network name or description...",
   "Search by name, type or group...": "Search by name, type or group...",
   "Search by name or role...": "Search by name or role...",
-  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "Choose the dashboard language. Your selection is saved in this browser and applies immediately."
+  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "Choose the dashboard language. Your selection is saved in this browser and applies immediately.",
+  "Manage your account's DNS settings.": "Manage your account's DNS settings.",
+  "You don't have access to {{page}}": "You don't have access to {{page}}",
+  "You don't have access to this page": "You don't have access to this page",
+  "Last used on": "Last used on",
+  "Last login on": "Last login on",
+  "Remove {{label}} filter": "Remove {{label}} filter"
 }

@@ -159,8 +159,6 @@
   "Previous page": "Попередня сторінка",
   "Next page": "Наступна сторінка",
   "Last page": "Остання сторінка",
-  "You don't have access to": "У вас немає доступу до",
-  "this page": "цієї сторінки",
   "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.": "Схоже, у вас немає доступу до цієї сторінки. Лише користувачі з відповідними дозволами можуть її переглядати. За додатковою інформацією зверніться до адміністратора мережі.",
   "Last seen on": "Остання активність",
   "D MMMM, YYYY [at] h:mm A": "D MMMM YYYY [о] HH:mm",
@@ -203,5 +201,11 @@
   "Search by network name or description...": "Пошук за назвою або описом мережі...",
   "Search by name, type or group...": "Пошук за назвою, типом або групою...",
   "Search by name or role...": "Пошук за ім’ям або роллю...",
-  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "Виберіть мову панелі керування. Вибір зберігається в цьому браузері та застосовується одразу."
+  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "Виберіть мову панелі керування. Вибір зберігається в цьому браузері та застосовується одразу.",
+  "Manage your account's DNS settings.": "Керуйте налаштуваннями DNS свого облікового запису.",
+  "You don't have access to {{page}}": "Немає доступу до сторінки «{{page}}»",
+  "You don't have access to this page": "У вас немає доступу до цієї сторінки",
+  "Last used on": "Останнє використання",
+  "Last login on": "Останній вхід",
+  "Remove {{label}} filter": "Видалити фільтр «{{label}}»"
 }

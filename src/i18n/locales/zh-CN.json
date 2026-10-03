@@ -159,8 +159,6 @@
   "Previous page": "上一页",
   "Next page": "下一页",
   "Last page": "末页",
-  "You don't have access to": "您无权访问",
-  "this page": "此页面",
   "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.": "您似乎无权访问此页面。只有具备相应权限的用户才能访问。请联系网络管理员以了解更多信息。",
   "Last seen on": "最后在线时间",
   "D MMMM, YYYY [at] h:mm A": "YYYY年M月D日 HH:mm",
@@ -203,5 +201,11 @@
   "Search by network name or description...": "按网络名称或描述搜索...",
   "Search by name, type or group...": "按名称、类型或组搜索...",
   "Search by name or role...": "按姓名或角色搜索...",
-  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "选择管理面板的语言。您的选择将保存在此浏览器中并立即生效。"
+  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "选择管理面板的语言。您的选择将保存在此浏览器中并立即生效。",
+  "Manage your account's DNS settings.": "管理您的账户的 DNS 设置。",
+  "You don't have access to {{page}}": "您无权访问“{{page}}”",
+  "You don't have access to this page": "您无权访问此页面",
+  "Last used on": "上次使用时间",
+  "Last login on": "上次登录时间",
+  "Remove {{label}} filter": "移除“{{label}}”筛选条件"
 }

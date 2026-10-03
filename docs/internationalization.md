@@ -25,7 +25,7 @@ The supported language codes and native picker labels match the
 | `zh-CN` | 简体中文     |
 | `ja`    | 日本語       |
 
-All catalogs cover the same 205 messages. Relative dates and date tooltips in
+All catalogs cover the same 209 messages. Relative dates and date tooltips in
 shared last-activity cells follow the selected language. Other date widgets have
 not yet been migrated. These initial dashboard translations need native-speaker
 review; they are separate from the desktop client's Crowdin-managed catalogs.

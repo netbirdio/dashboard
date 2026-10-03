@@ -159,8 +159,6 @@
   "Previous page": "Página anterior",
   "Next page": "Página siguiente",
   "Last page": "Última página",
-  "You don't have access to": "No tiene acceso a",
-  "this page": "esta página",
   "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.": "Parece que no tiene acceso a esta página. Solo los usuarios con los permisos adecuados pueden visitarla. Póngase en contacto con su administrador de red para obtener más información.",
   "Last seen on": "Última actividad el",
   "D MMMM, YYYY [at] h:mm A": "D [de] MMMM [de] YYYY [a las] HH:mm",
@@ -203,5 +201,11 @@
   "Search by network name or description...": "Buscar por nombre o descripción de la red...",
   "Search by name, type or group...": "Buscar por nombre, tipo o grupo...",
   "Search by name or role...": "Buscar por nombre o rol...",
-  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "Seleccione el idioma del panel. Su selección se guarda en este navegador y se aplica de inmediato."
+  "Choose the dashboard language. Your selection is saved in this browser and applies immediately.": "Seleccione el idioma del panel. Su selección se guarda en este navegador y se aplica de inmediato.",
+  "Manage your account's DNS settings.": "Gestione la configuración DNS de su cuenta.",
+  "You don't have access to {{page}}": "No tiene acceso a «{{page}}»",
+  "You don't have access to this page": "No tiene acceso a esta página",
+  "Last used on": "Último uso el",
+  "Last login on": "Último inicio de sesión el",
+  "Remove {{label}} filter": "Eliminar filtro «{{label}}»"
 }
