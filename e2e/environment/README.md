@@ -3,9 +3,13 @@
 Run `bash create-test-env.sh` from this directory, then build and run the
 dashboard tests as described in [the E2E guide](../CLAUDE.md).
 
-The default images are `ghcr.io/netbirdio/management-cloud:main` and
-`ghcr.io/netbirdio/reverse-proxy:main`. `MANAGEMENT_IMAGE_TAG` and
-`REVERSE_PROXY_IMAGE_TAG` select other tags and refresh them during setup.
+The default images are `ghcr.io/netbirdio/management-cloud:main`,
+`ghcr.io/netbirdio/reverse-proxy:main`, and `ghcr.io/netbirdio/signal:main`.
+`MANAGEMENT_IMAGE_TAG`, `REVERSE_PROXY_IMAGE_TAG`, and `SIGNAL_IMAGE_TAG`
+select other tags and refresh them during setup. Signal runs inside the Compose
+network behind Caddy so embedded proxy clients can finish connecting when
+the suite creates overlay targets. `SIGNAL_IMAGE` accepts a full image reference,
+following the same override rules as management and proxy images.
 
 To run the focused target-access traffic test, check out the matching backend
 and dashboard branches, then build both backend images and the dashboard:
@@ -66,12 +70,13 @@ proxy's access-control assertions.
 The separate **Reverse Proxy Target Access E2E** Actions workflow runs this
 traffic spec and its login prerequisites on pull requests. A line such as
 `reverse-proxy-tag: pr-7954` in the PR description selects that same published
-tag for both `ghcr.io/netbirdio/management` and
-`ghcr.io/netbirdio/reverse-proxy`; editing the description starts another run.
+tag for `ghcr.io/netbirdio/management`, `ghcr.io/netbirdio/reverse-proxy`, and
+`ghcr.io/netbirdio/signal`; editing the description starts another run.
 Without that line, the tag defaults to `main`. Manual runs accept a
-`backend-tag` input. Both images must already be published with target access
-support. The job uses public images without registry credentials and disables
-geolocation for this focused test. The full **Playwright E2E Tests** workflow
+`backend-tag` input. All three images must already be published, and management
+and proxy must include target access support. The job uses public images without
+registry credentials and disables geolocation for this focused test. The full
+**Playwright E2E Tests** workflow
 continues to use its cloud management image and run every spec with geolocation
 enabled.
 

@@ -16,6 +16,11 @@ REVERSE_PROXY_IMAGE_OVERRIDE="${REVERSE_PROXY_IMAGE:-}"
 REVERSE_PROXY_IMAGE="${REVERSE_PROXY_IMAGE_OVERRIDE:-ghcr.io/netbirdio/reverse-proxy:${REVERSE_PROXY_IMAGE_TAG}}"
 echo "Using ${REVERSE_PROXY_IMAGE}"
 
+SIGNAL_IMAGE_TAG="${SIGNAL_IMAGE_TAG:-main}"
+SIGNAL_IMAGE_OVERRIDE="${SIGNAL_IMAGE:-}"
+SIGNAL_IMAGE="${SIGNAL_IMAGE_OVERRIDE:-ghcr.io/netbirdio/signal:${SIGNAL_IMAGE_TAG}}"
+echo "Using ${SIGNAL_IMAGE}"
+
 REVERSE_PROXY_PORT="${REVERSE_PROXY_PORT:-18443}"
 # Focused local tests may not need the geolocation database download. Keep it
 # enabled by default because the full suite tests country selectors.
@@ -583,9 +588,10 @@ initEnvironment() {
   echo -e "\nRendering Playwright environment file...\n"
   renderPlaywrightEnv > "../playwright.env.json"
 
-  echo -e "\nPreparing management and proxy images...\n"
+  echo -e "\nPreparing NetBird images...\n"
   prepare_test_image "$MANAGEMENT_IMAGE" "$MANAGEMENT_IMAGE_OVERRIDE"
   prepare_test_image "$REVERSE_PROXY_IMAGE" "$REVERSE_PROXY_IMAGE_OVERRIDE"
+  prepare_test_image "$SIGNAL_IMAGE" "$SIGNAL_IMAGE_OVERRIDE"
 
   # Pre-create the proxy cert directories BEFORE starting containers so that
   # docker's bind-mounts (./proxy-certs and ./proxy-certs-no-ports) reuse our
@@ -837,7 +843,7 @@ exportGeoDatabases() {
 renderDockerCompose() {
   # Docker may inject outbound proxy settings. Local test traffic must stay on
   # the Compose network, including upstream servers running on the test runner.
-  local test_no_proxy="${NO_PROXY:-localhost,127.0.0.1,::1},${NETBIRD_DOMAIN},caddy,management,zitadel,crdb,postgres,agentgateway-stub"
+  local test_no_proxy="${NO_PROXY:-localhost,127.0.0.1,::1},${NETBIRD_DOMAIN},caddy,management,signal,zitadel,crdb,postgres,agentgateway-stub"
   # Cached geolocation databases (restored by CI into ./geo-cache) are
   # mounted into management's data dir so it skips the slow first-boot
   # download from pkgs.netbird.io. With no cache the mounts are omitted
@@ -877,6 +883,12 @@ services:
     networks: [ netbird ]
     volumes:
       - ./agentgateway-stub.Caddyfile:/etc/caddy/Caddyfile
+  # Signal is reached through Caddy by embedded clients in the reverse proxies.
+  signal:
+    image: ${SIGNAL_IMAGE}
+    restart: unless-stopped
+    networks: [netbird]
+    command: ["--port", "10000", "--log-file", "console"]
   # Management
   management:
     image: ${MANAGEMENT_IMAGE}
@@ -982,6 +994,7 @@ services:
     ]
     depends_on:
       - management
+      - signal
   # Reverse proxy with custom ports disabled (auto-assigned listen ports only)
   reverse-proxy-no-ports:
     image: ${REVERSE_PROXY_IMAGE}
@@ -1013,6 +1026,7 @@ services:
     ]
     depends_on:
       - management
+      - signal
   # CockroachDB for zitadel
   crdb:
     restart: 'always'

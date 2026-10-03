@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       backend-tag:
-        description: 'OSS management and reverse-proxy image tag'
+        description: 'OSS management, reverse-proxy, and Signal image tag'
         required: true
         type: string
         default: 'main'
@@ -72,6 +72,7 @@ jobs:
         env:
           MANAGEMENT_IMAGE: ghcr.io/netbirdio/management:${{ steps.backend.outputs.tag }}
           REVERSE_PROXY_IMAGE: ghcr.io/netbirdio/reverse-proxy:${{ steps.backend.outputs.tag }}
+          SIGNAL_IMAGE: ghcr.io/netbirdio/signal:${{ steps.backend.outputs.tag }}
           MANAGEMENT_DISABLE_GEOLOCATION: 'true'
         run: bash create-test-env.sh
 
@@ -92,7 +93,7 @@ jobs:
       - name: Collect container logs
         if: failure()
         working-directory: e2e/environment
-        run: docker compose logs --tail=500 --no-color management reverse-proxy reverse-proxy-no-ports > target-access-containers.log 2>&1 || true
+        run: docker compose logs --tail=500 --no-color management signal reverse-proxy reverse-proxy-no-ports > target-access-containers.log 2>&1 || true
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}

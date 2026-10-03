@@ -181,6 +181,7 @@ jobs:
           cd e2e/environment
           docker compose logs management --tail=500 --no-color > management.log 2>&1 || true
           docker compose logs reverse-proxy --tail=500 --no-color > reverse-proxy.log 2>&1 || true
+          docker compose logs signal --tail=500 --no-color > signal.log 2>&1 || true
 
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
@@ -204,4 +205,6 @@ jobs:
         if: ${{ failure() }}
         with:
           name: reverse-proxy-logs
-          path: e2e/environment/reverse-proxy.log
+          path: |
+            e2e/environment/reverse-proxy.log
+            e2e/environment/signal.log
