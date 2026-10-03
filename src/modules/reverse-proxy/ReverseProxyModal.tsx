@@ -62,6 +62,7 @@ import {
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
 import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
+import { isValidSubdomain } from "./domain/subdomain";
 import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
 import AuthHeaderModal from "@/modules/reverse-proxy/auth/AuthHeaderModal";
 import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
@@ -371,6 +372,7 @@ export default function ReverseProxyModal({
     const isSubdomainValid =
       baseDomain.length > 0 &&
       !domainAlreadyExists &&
+      isValidSubdomain(subdomain) &&
       (subdomain.length > 0 || !subdomainRequired);
     const isValidPort = (port: number) => port >= 1 && port <= 65535;
     const hasHttpEndpoint = !isL4Mode && targets.length > 0;
