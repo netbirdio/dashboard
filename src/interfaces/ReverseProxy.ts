@@ -58,6 +58,15 @@ export enum ReverseProxyStatus {
 
 export type ServiceTargetOptionsPathRewrite = "preserve";
 
+export const TargetAccessAction = {
+  INHERIT: "inherit",
+  BYPASS: "bypass",
+  BLOCK: "block",
+} as const;
+
+export type TargetAccessAction =
+  (typeof TargetAccessAction)[keyof typeof TargetAccessAction];
+
 export interface ServiceTargetOptions {
   skip_tls_verify?: boolean;
   request_timeout?: string;
@@ -82,6 +91,7 @@ export interface ReverseProxyTarget {
   host?: string;
   port: number;
   enabled: boolean;
+  access_action?: TargetAccessAction;
   access_local?: boolean;
   options?: ServiceTargetOptions;
   // Frontend
