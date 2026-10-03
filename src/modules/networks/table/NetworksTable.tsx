@@ -25,6 +25,7 @@ import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { Network } from "@/interfaces/Network";
 import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
 import {
@@ -42,7 +43,9 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Network</DataTableHeader>
+      <DataTableHeader column={column}>
+        <T>{"Network"}</T>
+      </DataTableHeader>
     ),
     sortingFn: "text",
     cell: ({ row }) => <NetworkNameCell network={row.original} />,
@@ -54,7 +57,11 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
     accessorKey: "resources",
     accessorFn: (network) => network?.resources?.length,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Resources</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Resources"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => <NetworkResourceCell network={row.original} />,
   },
@@ -62,7 +69,11 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
     accessorKey: "policies",
     accessorFn: (network) => network?.policies?.length,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Policies</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Policies"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => <NetworkPolicyCell network={row.original} />,
   },
@@ -70,7 +81,11 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
     accessorKey: "routers",
     accessorFn: (network) => network?.routers?.length,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Routing Peers</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Routing Peers"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => <NetworkRoutingPeerCell network={row.original} />,
   },
@@ -96,6 +111,7 @@ export default function NetworksTable({
   data,
   headingTarget,
 }: Readonly<Props>) {
+  const { t } = useTranslation();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const [searchModal, setSearchModal] = useState(false);
@@ -113,18 +129,18 @@ export default function NetworksTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      { value: undefined, label: t("All"), dotClass: "bg-nb-gray-500" },
+      { value: true, label: t("Active"), dotClass: "bg-green-500" },
+      { value: false, label: t("Inactive"), dotClass: "bg-nb-gray-700" },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "active",
-        label: "Status",
+        label: t("Status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -137,7 +153,7 @@ export default function NetworksTable({
           formatRadioChip(v as boolean | undefined, statusOptions),
       },
     ],
-    [statusOptions],
+    [t, statusOptions],
   );
 
   return (
@@ -148,14 +164,14 @@ export default function NetworksTable({
           <DataTable
             headingTarget={headingTarget}
             isLoading={isLoading}
-            text={"Networks"}
+            text={t("Networks")}
             sorting={sorting}
             setSorting={setSorting}
             columns={NetworkTableColumns}
             data={data}
             initialPageSize={25}
             showResetFilterButton={false}
-            searchPlaceholder={"Search by network name or description..."}
+            searchPlaceholder={t("Search by network name or description...")}
             columnVisibility={{
               description: false,
               active: false,
@@ -178,10 +194,10 @@ export default function NetworksTable({
                     size={"large"}
                   />
                 }
-                title={"Create New Network"}
-                description={
-                  "It looks like you don't have any networks. Access internal resources in your LANs and VPC by adding a network."
-                }
+                title={t("Create New Network")}
+                description={t(
+                  "It looks like you don't have any networks. Access internal resources in your LANs and VPC by adding a network.",
+                )}
                 button={
                   <div className={"gap-x-4 flex items-center justify-center"}>
                     <AddNetworkButton />
@@ -189,12 +205,12 @@ export default function NetworksTable({
                 }
                 learnMore={
                   <>
-                    Learn more about
+                    <T>{"Learn more about"}</T>
                     <InlineLink
                       href={"https://docs.netbird.io/how-to/networks"}
                       target={"_blank"}
                     >
-                      Networks
+                      <T>{"Networks"}</T>
                       <ExternalLinkIcon size={12} />
                     </InlineLink>
                   </>
@@ -252,7 +268,7 @@ const AddNetworkButton = () => {
       data-testid={"add-network"}
     >
       <PlusCircle size={16} />
-      Add Network
+      <T>{"Add Network"}</T>
     </Button>
   );
 };

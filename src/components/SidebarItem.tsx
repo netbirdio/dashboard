@@ -141,7 +141,7 @@ export default function SidebarItem({
 
               <span
                 className={cn(
-                  "px-3 whitespace-nowrap flex-1 w-full text-left",
+                  "px-3 whitespace-normal break-words flex-1 min-w-0 text-left",
                   labelClassName,
                   isNavigationCollapsed &&
                     !mobileNavOpen &&

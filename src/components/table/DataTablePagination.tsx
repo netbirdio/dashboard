@@ -7,6 +7,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import { useTranslation } from "@/i18n/useTranslation";
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
@@ -21,6 +22,7 @@ export function DataTablePagination<TData>({
   paginationPadding = "px-8 py-8",
   totalRecords,
 }: DataTablePaginationProps<TData>) {
+  const { t } = useTranslation();
   const rowsPerPage = table.getState().pagination.pageSize;
   const currentPage = table.getState().pagination.pageIndex + 1;
   const pageCount = table.getPageCount();
@@ -39,24 +41,26 @@ export function DataTablePagination<TData>({
         className={cn("flex items-center justify-between", paginationPadding)}
       >
         <div className="text-nb-gray-400">
-          Showing{" "}
-          <span className={"font-medium text-white"}>
-            {showingFrom} to {showingTo}
-          </span>{" "}
-          of <span className={"font-medium text-white"}>{totalRows}</span>{" "}
-          {text}
+          {t("Showing {{from}} to {{to}} of {{total}} {{kind}}", {
+            from: showingFrom,
+            to: showingTo,
+            total: totalRows,
+            kind: text,
+          })}
         </div>
         {pageCount > 1 && (
           <div className={"flex items-center gap-3"}>
             <div className="flex items-center space-x-2">
               <ButtonGroup>
                 <ButtonGroup.Button
+                  aria-label={t("First page")}
                   onClick={() => table.setPageIndex(0)}
                   disabled={!table.getCanPreviousPage()}
                 >
                   <ChevronsLeft size={16} />
                 </ButtonGroup.Button>
                 <ButtonGroup.Button
+                  aria-label={t("Previous page")}
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
                 >
@@ -64,16 +68,21 @@ export function DataTablePagination<TData>({
                 </ButtonGroup.Button>
                 <ButtonGroup.Button>
                   <div>
-                    {currentPage} of {pageCount}
+                    {t("{{page}} of {{pages}}", {
+                      page: currentPage,
+                      pages: pageCount,
+                    })}
                   </div>
                 </ButtonGroup.Button>
                 <ButtonGroup.Button
+                  aria-label={t("Next page")}
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
                 >
                   <ChevronRight size={18} />
                 </ButtonGroup.Button>
                 <ButtonGroup.Button
+                  aria-label={t("Last page")}
                   onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                   disabled={!table.getCanNextPage()}
                 >
