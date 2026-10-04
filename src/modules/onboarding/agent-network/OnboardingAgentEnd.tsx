@@ -39,14 +39,22 @@ type Props = {
   // deviceName names the operator's device, where the test request has to
   // come from: only a peer in the policy reaches the endpoint.
   deviceName?: string;
+  // userId is the operator's: only their own request counts as the test, not
+  // another user's traffic on the account.
+  userId?: string;
   onBack: () => void;
   onFinish: () => void;
 };
 
 // OnboardingAgentEnd asks for a test request and watches the access log for
 // it, as the network onboarding asks for a ping. The operator can skip it.
-export const OnboardingAgentEnd = ({ deviceName, onBack, onFinish }: Props) => {
-  const outcome = useTestRequest();
+export const OnboardingAgentEnd = ({
+  deviceName,
+  userId,
+  onBack,
+  onFinish,
+}: Props) => {
+  const outcome = useTestRequest(userId);
 
   if (outcome.kind === "passed") {
     return <AllSet entry={outcome.entry} onBack={onBack} onFinish={onFinish} />;
@@ -252,26 +260,27 @@ const TestRequestStatus = ({
 // windowStart opens the window the test request is looked for in.
 const windowStart = () => new Date(Date.now() - TEST_REQUEST_LOOKBACK_MS);
 
-// useTestRequest reads the newest request logged since shortly before the step
-// opened, until one passes. A timer drives the reads, not SWR's focus
-// revalidation, so a passed request stays on screen.
-function useTestRequest(): TestRequestOutcome {
+// useTestRequest reads the operator's newest request since shortly before the
+// step opened, until one passes. It reads nothing until it knows the operator.
+// A timer drives the reads, not SWR's focus revalidation, so a passed request
+// stays on screen.
+function useTestRequest(userId?: string): TestRequestOutcome {
   const [since] = useState(windowStart);
   const { data, mutate } = useFetchApi<APIAgentNetworkAccessLogsResponse>(
-    testRequestLogUrl(since),
+    testRequestLogUrl(since, userId ?? ""),
     true,
     false,
-    true,
+    !!userId,
     { shouldRetryOnError: false },
   );
   const outcome = testRequestOutcome(data?.data?.[0]);
-  const waiting = outcome.kind !== "passed";
+  const watching = !!userId && outcome.kind !== "passed";
 
   useEffect(() => {
-    if (!waiting) return;
+    if (!watching) return;
     const timer = setInterval(() => mutate(), TEST_REQUEST_POLL_MS);
     return () => clearInterval(timer);
-  }, [waiting, mutate]);
+  }, [watching, mutate]);
 
   return outcome;
 }

@@ -53,9 +53,9 @@ describe("testRequestOutcome", () => {
 });
 
 describe("testRequestLogUrl", () => {
-  it("asks for the newest request since the given time", () => {
+  it("asks for the user's newest request since the given time", () => {
     const url = new URL(
-      testRequestLogUrl(new Date("2026-10-01T11:45:00Z")),
+      testRequestLogUrl(new Date("2026-10-01T11:45:00Z"), "user-maya"),
       "https://api.example",
     );
     expect(url.pathname).toBe("/agent-network/access-logs");
@@ -63,6 +63,7 @@ describe("testRequestLogUrl", () => {
       page: "1",
       page_size: "1",
       start_date: "2026-10-01T11:45:00.000Z",
+      user_id: "user-maya",
     });
   });
 });

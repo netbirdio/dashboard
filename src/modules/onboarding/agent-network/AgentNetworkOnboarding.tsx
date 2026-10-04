@@ -201,6 +201,7 @@ export const AgentNetworkOnboarding = ({
                     {step === AGENT_STEP.END && (
                       <OnboardingAgentEnd
                         deviceName={device?.name}
+                        userId={loggedInUser?.id}
                         onBack={goBack}
                         onFinish={onFinish}
                       />

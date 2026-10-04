@@ -12,12 +12,18 @@ import type { APIAgentNetworkAccessLog } from "@/modules/agent-network/agentAcce
 
 let logs: APIAgentNetworkAccessLog[] = [];
 const mutate = vi.fn();
-const reads: { url: string; revalidate: boolean }[] = [];
+const reads: { url: string; revalidate: boolean; allowFetch: boolean }[] = [];
 
 vi.mock("@utils/api", () => ({
-  default: (url: string, _ignoreError: boolean, revalidate: boolean) => {
-    reads.push({ url, revalidate });
-    return { data: { data: logs }, mutate };
+  default: (
+    url: string,
+    _ignoreError: boolean,
+    revalidate: boolean,
+    allowFetch: boolean,
+  ) => {
+    reads.push({ url, revalidate, allowFetch });
+    // SWR fetches nothing for a read that is not allowed.
+    return { data: allowFetch ? { data: logs } : undefined, mutate };
   },
 }));
 
@@ -26,6 +32,7 @@ const { OnboardingAgentEnd } = await import(
 );
 
 const NOW = new Date("2026-10-01T12:00:00Z");
+const USER_ID = "user-maya";
 
 const entry = (
   overrides: Partial<APIAgentNetworkAccessLog> = {},
@@ -55,15 +62,18 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-// renderEnd renders the step; the returned rerender renders it again from a
-// new element, so React does not skip it.
-const renderEnd = () => {
+// renderEnd renders the step for the given operator; the returned rerender
+// renders it again from a new element, so React does not skip it.
+const renderEnd = (userId?: string) => {
   const props = { onBack: vi.fn(), onFinish: vi.fn() };
-  const element = () => (
-    <OnboardingAgentEnd deviceName={"maya-laptop"} {...props} />
+  const element = (id?: string) => (
+    <OnboardingAgentEnd deviceName={"maya-laptop"} userId={id} {...props} />
   );
-  const view = render(element());
-  return { ...props, rerender: () => view.rerender(element()) };
+  const view = render(element(userId));
+  return {
+    ...props,
+    rerender: (id = userId) => view.rerender(element(id)),
+  };
 };
 
 const buttons = () =>
@@ -87,7 +97,7 @@ const waitPolls = (ms: number) => act(() => vi.advanceTimersByTime(ms));
 
 describe("OnboardingAgentEnd", () => {
   it("asks for a test request from the device and waits for it", () => {
-    const { onBack, onFinish } = renderEnd();
+    const { onBack, onFinish } = renderEnd(USER_ID);
 
     expect(screen.getByRole("heading").textContent).toBe("Send a test request");
     expect(screen.getByText("maya-laptop")).toBeTruthy();
@@ -107,12 +117,16 @@ describe("OnboardingAgentEnd", () => {
     expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
-  it("reads the newest request since shortly before the step opened, every few seconds", () => {
-    const { rerender } = renderEnd();
+  it("reads the operator's newest request since shortly before the step opened, every few seconds", () => {
+    const { rerender } = renderEnd(USER_ID);
 
     const url = new URL(reads[0].url, "https://api.example");
     expect(url.pathname).toBe("/agent-network/access-logs");
     expect(url.searchParams.get("page_size")).toBe("1");
+    expect(
+      url.searchParams.get("user_id"),
+      "another user's request is not the test",
+    ).toBe(USER_ID);
     expect(
       url.searchParams.get("start_date"),
       "a request sent from the previous step still counts",
@@ -130,9 +144,31 @@ describe("OnboardingAgentEnd", () => {
     ).toBe(1);
   });
 
+  it("reads nothing until it knows the operator", () => {
+    // Without a user id the read would be unfiltered, and any user's request
+    // on the account would pass the test.
+    logs = [entry()];
+    const { rerender } = renderEnd();
+
+    expect(
+      reads.filter((r) => r.allowFetch),
+      "no read before the operator is known",
+    ).toEqual([]);
+    expect(screen.getByText("Waiting for your first request")).toBeTruthy();
+    waitPolls(3000);
+    expect(mutate, "nothing to poll yet").not.toHaveBeenCalled();
+
+    rerender(USER_ID);
+    const read = reads[reads.length - 1];
+    expect(read.allowFetch, "reads once the operator is known").toBe(true);
+    expect(
+      new URL(read.url, "https://api.example").searchParams.get("user_id"),
+    ).toBe(USER_ID);
+  });
+
   it("ends on what the dashboard offers once a request passes, and stops watching", () => {
     logs = [entry()];
-    const { onFinish } = renderEnd();
+    const { onFinish } = renderEnd(USER_ID);
 
     expect(screen.getByRole("heading").textContent).toBe("You're all set!");
     expect(screen.getByTestId("agent-network-test-passed").textContent).toBe(
@@ -174,7 +210,7 @@ describe("OnboardingAgentEnd", () => {
         status_code: 403,
       }),
     ];
-    const { onFinish } = renderEnd();
+    const { onFinish } = renderEnd(USER_ID);
 
     const callout = screen.getByTestId("agent-network-test-denied");
     expect(
@@ -192,7 +228,7 @@ describe("OnboardingAgentEnd", () => {
 
   it("reports a request the provider answered with an error and keeps watching", () => {
     logs = [entry({ status_code: 401, total_tokens: 0 })];
-    const { onFinish } = renderEnd();
+    const { onFinish } = renderEnd(USER_ID);
 
     const callout = screen.getByTestId("agent-network-test-failed");
     expect(

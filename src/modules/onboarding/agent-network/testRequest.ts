@@ -26,12 +26,14 @@ export function testRequestOutcome(
   return { kind: "passed", entry };
 }
 
-// testRequestLogUrl lists the newest request logged since the given time.
-export function testRequestLogUrl(since: Date): string {
+// testRequestLogUrl lists the newest request the user sent since the given
+// time.
+export function testRequestLogUrl(since: Date, userId: string): string {
   const params = new URLSearchParams({
     page: "1",
     page_size: "1",
     start_date: since.toISOString(),
+    user_id: userId,
   });
   return `/agent-network/access-logs?${params}`;
 }
