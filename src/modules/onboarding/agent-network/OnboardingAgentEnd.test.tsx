@@ -92,6 +92,10 @@ describe("OnboardingAgentEnd", () => {
     expect(screen.getByRole("heading").textContent).toBe("Send a test request");
     expect(screen.getByText("maya-laptop")).toBeTruthy();
     expect(screen.getByText("Waiting for your first request")).toBeTruthy();
+    expect(
+      screen.queryByTestId("agent-network-sections"),
+      "the sections wait for a passed request",
+    ).toBeNull();
     expect(buttons(), "back to the config, or skip the test").toEqual([
       "Go Back",
       "Skip",
@@ -126,7 +130,7 @@ describe("OnboardingAgentEnd", () => {
     ).toBe(1);
   });
 
-  it("finishes once a request passes, and stops watching", () => {
+  it("ends on what the dashboard offers once a request passes, and stops watching", () => {
     logs = [entry()];
     const { onFinish } = renderEnd();
 
@@ -134,9 +138,27 @@ describe("OnboardingAgentEnd", () => {
     expect(screen.getByTestId("agent-network-test-passed").textContent).toBe(
       "Your request, for claude-sonnet-5, came back with status 200 and used 1,234 tokens.",
     );
-    expect(buttons()).toEqual(["Go Back", "Go to Access Logs"]);
+    const sections = within(screen.getByTestId("agent-network-sections"));
+    const titles = [
+      "Providers",
+      "Policies",
+      "Guardrails",
+      "Budgets and limits",
+      "Usage",
+      "Access Logs",
+      "Log collection",
+      "Connect Agent",
+    ];
+    expect(
+      sections.getAllByRole("listitem"),
+      "one line per Agent Network section",
+    ).toHaveLength(titles.length);
+    for (const title of titles) {
+      expect(sections.getByText(title)).toBeTruthy();
+    }
+    expect(buttons()).toEqual(["Go Back", "Finish"]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Go to Access Logs" }));
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
     expect(onFinish).toHaveBeenCalledTimes(1);
 
     waitPolls(10_000);
