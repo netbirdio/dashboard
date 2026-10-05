@@ -6,6 +6,7 @@ import React from "react";
 import { CustomDomainSelector } from "./CustomDomainSelector";
 import { isNetBirdCloud } from "@utils/netbird";
 import InlineLink from "@components/InlineLink";
+import { isValidSubdomain, sanitizeSubdomain } from "./subdomain";
 
 type Props = {
   subdomain: string;
@@ -43,13 +44,13 @@ export default function ReverseProxyDomainInput({
             data-testid="proxy-subdomain-input"
             value={subdomain}
             onChange={(e) => {
-              onSubdomainChange(
-                e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""),
-              );
+              onSubdomainChange(sanitizeSubdomain(e.target.value));
             }}
             error={
               domainAlreadyExists
                 ? "This domain is already used by another service."
+                : !isValidSubdomain(subdomain)
+                ? "Enter a valid subdomain, e.g. myapp or dev.myapp."
                 : undefined
             }
             placeholder={subdomainRequired ? "myapp" : "myapp (optional)"}
