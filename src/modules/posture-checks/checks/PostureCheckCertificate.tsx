@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Label } from "@components/Label";
@@ -121,6 +122,11 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
             </HelpText>
           </div>
         </div>
+        <Callout variant={"warning"} className={"mb-2"}>
+          This check is not supported on mobile devices. Peers running the
+          NetBird iOS or Android app will always fail this check and be denied
+          access.
+        </Callout>
         {certificates.length > 0 && (
           <div className={"mb-2 flex flex-col gap-4 w-full"}>
             {certificates.map((c, index) => {
