@@ -35,7 +35,7 @@ export default function NavbarWithDropdown() {
         <AnnouncementBanner />
         <div
           className={cn(
-            "bg-white px-2 py-3 dark:border-gray-700 dark:bg-nb-gray backdrop-blur-lg sm:px-6",
+            "bg-nb-gray px-2 py-3 dark:border-gray-700 backdrop-blur-lg sm:px-6",
             "border-b dark:border-zinc-700/40 px-3 md:px-4 w-full",
             "flex justify-between items-center transition-all",
           )}

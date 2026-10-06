@@ -11,8 +11,8 @@
        DEFAULT (the app background) sits slightly below white so white
        inputs, buttons and cards stand in front of it.
        The ramp is pure neutral (R = G = B) and matches the desktop client's
-       light ramp (netbirdio/netbird#7344) so both UIs share one palette. */
-    --nb-gray-DEFAULT: 243 243 243;
+       light ramp (netbirdio/netbird#7344), with a near-white app background. */
+    --nb-gray-DEFAULT: 250 250 250;
     --nb-gray-50: 26 26 26;
     --nb-gray-100: 33 33 33;
     --nb-gray-200: 50 50 50;
