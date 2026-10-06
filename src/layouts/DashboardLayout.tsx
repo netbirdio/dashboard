@@ -170,7 +170,7 @@ function DashboardPageContent({
           >
             <Header />
             <div
-              className={"flex flex-row flex-grow"}
+              className={"flex flex-row grow"}
               style={{
                 height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}
