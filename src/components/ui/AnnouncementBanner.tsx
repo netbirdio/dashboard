@@ -13,24 +13,24 @@ const variants = cva(
         default:
           "bg-neutral-100 border-neutral-200 text-neutral-700 dark:bg-nb-gray-900/50 dark:border-nb-gray-800/30 dark:text-nb-gray-200 border-b",
         important:
-          "bg-netbird-100 text-neutral-800 font-normal dark:bg-gradient-to-b dark:from-netbird dark:to-netbird-400 dark:text-black",
+          "bg-gradient-to-b from-netbird to-netbird-400 text-black font-normal",
       },
       tagBadge: {
         default:
           "bg-neutral-200 text-neutral-700 dark:bg-nb-gray-200/10 dark:text-nb-gray-100 font-medium",
         important:
-          "bg-neutral-700 text-neutral-50 font-medium dark:bg-nb-gray-900 dark:text-nb-gray-200",
+          "bg-zinc-800 text-gray-200 font-medium",
       },
       closeButton: {
         default:
           "bg-neutral-200 text-neutral-600 hover:bg-neutral-300 dark:bg-nb-gray-900 dark:text-nb-gray-300 dark:hover:bg-nb-gray-800 rounded-md p-1",
         important:
-          "rounded-md p-1 bg-netbird-300/60 text-netbird-900 hover:bg-netbird-300 dark:bg-netbird dark:text-black dark:hover:bg-nb-gray-900 dark:hover:text-nb-gray-200",
+          "rounded-md p-1 bg-netbird text-black hover:bg-zinc-800 hover:text-gray-200",
       },
       inlineLink: {
         default: "text-nb-blue-500 dark:text-nb-blue-400 hover:underline",
         important:
-          "!text-netbird-900 dark:!text-black underline hover:opacity-80",
+          "!text-black underline hover:opacity-80",
       },
     },
   },
