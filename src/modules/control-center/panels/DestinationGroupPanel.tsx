@@ -6,6 +6,7 @@ import { MemoizedScrollArea, ScrollAreaViewport } from "@components/ScrollArea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { useApiCall } from "@utils/api";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromUser } from "@utils/helpers";
 import { type Edge, useReactFlow } from "@xyflow/react";
 import {
@@ -259,9 +260,9 @@ const UserRow = ({ user }: { user: User }) => {
     <div className={"flex items-center gap-3 min-w-0 pl-2"}>
       <div
         className={
-          "h-8 w-8 shrink-0 rounded-full relative flex items-center justify-center bg-nb-gray-900 uppercase text-sm font-medium"
+          "initials-avatar h-8 w-8 shrink-0 rounded-full relative flex items-center justify-center bg-nb-gray-900 uppercase text-sm font-medium"
         }
-        style={{ color: generateColorFromUser(user) }}
+        style={getAvatarStyle(generateColorFromUser(user))}
       >
         {user.name?.charAt(0) || user.id?.charAt(0) || <Cog size={11} />}
         {pending && (

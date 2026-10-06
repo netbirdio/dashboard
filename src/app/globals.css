@@ -367,6 +367,16 @@
     --skeleton-highlight: 54 59 64;
 }
 
+.initials-avatar,
+.dark .initials-avatar {
+    color: var(--avatar-color);
+}
+
+:root:not(.dark) .initials-avatar {
+    background-color: var(--avatar-color);
+    color: var(--avatar-foreground);
+}
+
 /* Unlayered rules beat every utility in v4, so element defaults live in the
    base layer to stay overridable by classes, as they were in v3. */
 @layer base {

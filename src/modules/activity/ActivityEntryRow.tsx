@@ -1,6 +1,7 @@
 import Card from "@components/Card";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromUser } from "@utils/helpers";
 import dayjs from "dayjs";
 import { AlertCircle, ArrowUpRight, Cog, PlusIcon, XIcon } from "lucide-react";
@@ -87,11 +88,9 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
             <div className={"flex items-center gap-2"}>
               <div
                 className={
-                  "w-4 h-4 rounded-full flex items-center justify-center text-neutral-700 dark:text-white uppercase text-[9px] font-medium bg-nb-gray-900"
+                  "initials-avatar w-4 h-4 rounded-full flex items-center justify-center text-neutral-700 dark:text-white uppercase text-[9px] font-medium bg-nb-gray-900"
                 }
-                style={{
-                  color: generateColorFromUser(user),
-                }}
+                style={getAvatarStyle(generateColorFromUser(user))}
               >
                 {!user?.name && !user?.id && <Cog size={12} />}
                 {user?.name?.charAt(0) || user?.id?.charAt(0)}

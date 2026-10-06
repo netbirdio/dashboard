@@ -1,6 +1,7 @@
 import FullTooltip from "@components/FullTooltip";
 import { ScrollArea } from "@components/ScrollArea";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromString } from "@utils/helpers";
 import { orderBy } from "lodash";
 import * as React from "react";
@@ -124,14 +125,12 @@ const UserAvatarCircle = ({
   return (
     <div
       className={cn(
-        "w-6 h-6 bg-nb-gray-900 flex items-center shrink-0 rounded-full justify-center text-[0.6rem] font-medium relative uppercase shadow-xl",
+        "initials-avatar w-6 h-6 bg-nb-gray-900 flex items-center shrink-0 rounded-full justify-center text-[0.6rem] font-medium relative uppercase shadow-xl",
         "border-nb-gray-940 border-2 transition-all",
         hoverEffect && "group-hover/user-stack:bg-nb-gray-800",
         className,
       )}
-      style={{
-        color: generateColorFromString(name),
-      }}
+      style={getAvatarStyle(generateColorFromString(name))}
     >
       <span className={"leading-none"}>{name.charAt(0)}</span>
     </div>

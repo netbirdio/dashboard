@@ -6,6 +6,7 @@ import { SmallBadge } from "@components/ui/SmallBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
+import { getAvatarStyle } from "@utils/avatar";
 import { generateColorFromString } from "@utils/helpers";
 import { sortBy, uniqBy } from "lodash";
 import { ChevronsUpDown, Cog, UserCircle2 } from "lucide-react";
@@ -113,18 +114,15 @@ export function UsersDropdownSelector({
               <React.Fragment>
                 <div
                   className={
-                    "w-5 h-5 rounded-full flex items-center justify-center text-neutral-700 dark:text-white uppercase text-[9px] font-medium bg-nb-gray-900"
+                    "initials-avatar w-5 h-5 rounded-full flex items-center justify-center text-neutral-700 dark:text-white uppercase text-[9px] font-medium bg-nb-gray-900"
                   }
-                  style={{
-                    color:
-                      selectedUser?.email === "NetBird"
-                        ? "#808080"
-                        : generateColorFromString(
-                            selectedUser?.name ||
-                              selectedUser?.id ||
-                              "System User",
-                          ),
-                  }}
+                  style={getAvatarStyle(
+                    selectedUser?.email === "NetBird"
+                      ? "#808080"
+                      : generateColorFromString(
+                          selectedUser?.name || selectedUser?.id || "System User",
+                        ),
+                  )}
                 >
                   {selectedUser?.email === "NetBird" ? (
                     <Cog size={12} />
