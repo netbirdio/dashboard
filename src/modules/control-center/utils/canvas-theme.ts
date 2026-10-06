@@ -1,10 +1,8 @@
 /**
  * Control Center canvas colours, keyed by the resolved theme.
  *
- * Both backgrounds are nb-gray ramp tokens, so they follow globals.css, but
- * the stops differ per theme on purpose: in light the canvas sits one stop
- * above the app background so it reads as a raised surface, while in dark it
- * matches the app background. The dark dot grid is a fixed neutral that is
+ * Both backgrounds are nb-gray ramp tokens matching the app background in
+ * their respective themes. The dark dot grid is a fixed neutral that is
  * not on the (cool) dark ramp; light uses the ramp stop of the same weight.
  *
  * Anything drawn over an edge to mask it (AnimatedLine's label pill) must use
