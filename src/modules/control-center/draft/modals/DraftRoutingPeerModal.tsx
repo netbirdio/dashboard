@@ -11,8 +11,8 @@ import { Share2Icon } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { Network, NetworkRouter } from "@/interfaces/Network";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { RoutingPeerModalContent } from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
 
@@ -64,13 +64,9 @@ export const DraftRoutingPeerModal = () => {
   const isApiRouterEdit = !!routingPeerModal?.router && !editChange;
   const isLiveApiEdit = !isDraft && isApiRouterEdit;
   const isDraftApiEdit = isDraft && isApiRouterEdit;
-  // Live "Add Routing Peer": the modal's own save POSTs a new router.
+  // Live "Add Routing Peer": the modal's own save POSTs a new router
   const isLiveCreate =
-    !isDraft &&
-    !!network?.id &&
-    !routingPeerModal?.router &&
-    !editChange &&
-    !networkNodeId;
+    !isDraft && !!network?.id && !routingPeerModal?.router && !editChange;
 
   const revalidateLiveRouters = () => {
     if (!network?.id) return;
