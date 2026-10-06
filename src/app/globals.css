@@ -270,7 +270,7 @@ p {
 }
 
 .stepper-bg-variant .step-circle {
-    @apply border-nb-gray-940!;
+    @apply !border-nb-gray-940;
 }
 
 .webkit-scroll{
@@ -280,7 +280,7 @@ p {
 
 
 .timescape {
-    @apply flex items-center gap-px rounded-md py-2 px-3 select-none w-fit cursor-text bg-nb-gray-900;
+    @apply flex items-center gap-[1px] rounded-md py-2 px-3 select-none w-fit cursor-text bg-nb-gray-900;
 }
 
 .timescape input {
@@ -293,11 +293,11 @@ p {
 }
 
 .timescape input:focus {
-    @apply bg-nb-gray-700 text-white rounded-sm py-1 px-0.5 border-0 outline-0;
+    @apply bg-nb-gray-700 text-white rounded py-1 px-0.5 border-0 outline-0;
 }
 
 .timescape .separator {
-    @apply text-gray-400 m-0 text-[80%] -top-px relative;
+    @apply text-gray-400 m-0 text-[80%] -top-[1px] relative;
 }
 
 
