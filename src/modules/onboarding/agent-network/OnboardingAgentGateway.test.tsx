@@ -89,10 +89,10 @@ const step = () => {
   return { ...props, rerender };
 };
 
-const readyToast = expect.objectContaining({ title: "Your proxy is ready" });
+const continueButton = () => screen.queryByTestId("gateway-continue");
 
 describe("OnboardingAgentGateway", () => {
-  it("moves on with one toast once the managed proxy is ready", () => {
+  it("offers Continue once the managed proxy is ready, as the device step does", () => {
     managed.proxy = {
       id: "m1",
       state: "provisioning",
@@ -106,27 +106,19 @@ describe("OnboardingAgentGateway", () => {
     managed.proxy = { ...managed.proxy, state: "ready" };
     rerender();
     expect(mutate).toHaveBeenCalledWith("/agent-network/settings");
-    expect(onNext, "still waiting for the settings").not.toHaveBeenCalled();
+    expect(continueButton(), "still waiting for the settings").toBeNull();
 
     ai.settings = {
       endpoint: MANAGED_ENDPOINT,
       proxyAddress: "gateway.netbird.io",
     };
     rerender();
-    expect(onNext).toHaveBeenCalledTimes(1);
-    expect(notify).toHaveBeenCalledWith(readyToast);
+    expect(screen.getByText("Your managed proxy is ready")).toBeTruthy();
+    expect(onNext, "the operator moves on").not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
 
-    // A settings read that drops the endpoint and brings it back must not
-    // move the flow on twice.
-    ai.settings = undefined;
-    rerender();
-    ai.settings = {
-      endpoint: MANAGED_ENDPOINT,
-      proxyAddress: "gateway.netbird.io",
-    };
-    rerender();
+    fireEvent.click(continueButton()!);
     expect(onNext).toHaveBeenCalledTimes(1);
-    expect(notify).toHaveBeenCalledTimes(1);
   });
 
   it("skips a proxy that was ready before the step opened, without a toast", () => {
@@ -141,7 +133,7 @@ describe("OnboardingAgentGateway", () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
-  it("waits for the proxy set up in the clusters modal, then moves on", async () => {
+  it("waits for the proxy set up in the clusters modal, then offers Continue", async () => {
     const { onNext, rerender } = step();
     fireEvent.click(screen.getByTestId("gateway-choice-own-proxy"));
     fireEvent.click(screen.getByTestId("gateway-choice-self-deploy"));
@@ -165,15 +157,19 @@ describe("OnboardingAgentGateway", () => {
     expect(ai.bootstrapAgentNetworkSettings).toHaveBeenCalledWith(
       "proxy.company.com",
     );
-    expect(onNext, "the endpoint is not reserved yet").not.toHaveBeenCalled();
+    expect(continueButton(), "the endpoint is not reserved yet").toBeNull();
 
     ai.settings = {
       endpoint: "calm-heron.proxy.company.com",
       proxyAddress: "proxy.company.com",
     };
     rerender();
+    expect(screen.getByText("Your proxy is connected")).toBeTruthy();
+    expect(onNext, "the operator moves on").not.toHaveBeenCalled();
+    expect(notify).not.toHaveBeenCalled();
+
+    fireEvent.click(continueButton()!);
     expect(onNext).toHaveBeenCalledTimes(1);
-    expect(notify).toHaveBeenCalledWith(readyToast);
   });
 
   it("offers only a proxy of the account's own where managed proxies are not configured", async () => {
