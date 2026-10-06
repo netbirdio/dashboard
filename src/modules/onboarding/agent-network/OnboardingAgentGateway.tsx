@@ -234,7 +234,8 @@ type ChoiceProps = {
   onBack: () => void;
 };
 
-const GatewayChoice = ({
+// TEMP(proxy-preview): exported only for the preview page.
+export const GatewayChoice = ({
   managedAvailable,
   privateClusters,
   onManaged,
@@ -266,7 +267,7 @@ const GatewayChoice = ({
               description={
                 "NetBird runs a dedicated, private proxy for your account."
               }
-              icon={<CloudIcon size={18} className={"text-netbird"} />}
+              icon={<CloudIcon size={18} className={"text-nb-gray-400"} />}
               onClick={onManaged}
               data-testid={"gateway-choice-managed"}
             />
