@@ -76,7 +76,7 @@
 }
 
 :root:not(.dark) .initials-avatar {
-    background-color: var(--avatar-color);
+    background-color: var(--avatar-background);
     color: var(--avatar-foreground);
 }
 

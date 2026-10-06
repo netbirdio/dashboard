@@ -32,7 +32,10 @@ describe("avatar contrast", () => {
     for (const color of colors) {
       const style = getAvatarStyle(color);
       expect(
-        chroma.contrast(color, style["--avatar-foreground"]),
+        chroma.contrast(
+          style["--avatar-background"],
+          style["--avatar-foreground"],
+        ),
       ).toBeGreaterThanOrEqual(4.5);
     }
   });
