@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { DataTable } from "@/components/table/DataTable";
+import { useUsers } from "@/contexts/UsersProvider";
 import { Group, GroupPeer } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { EditGroupNameModal } from "@/modules/groups/EditGroupNameModal";
@@ -90,6 +91,7 @@ export const AssignGroupToPeerModalContent = ({
   selectInitialPeers = true,
 }: ContentProps) => {
   const { data: peers, isLoading } = useFetchApi<Peer[]>("/peers");
+  const { users } = useUsers();
   const { mutate } = useSWRConfig();
   const groupRequest = useApiCall<Group>("/groups");
   const [initialPeersSet, setInitialPeersSet] = useState(false);
@@ -199,11 +201,16 @@ export const AssignGroupToPeerModalContent = ({
 
   const data = useMemo(() => {
     if (!initialPeersSet) return;
-    return peers?.filter((p) => {
-      if (!excludedPeers || excludedPeers.length === 0) return true;
-      return !excludedPeers.find((ep) => ep.id === p.id);
-    });
-  }, [initialPeersSet, peers, excludedPeers]);
+    return peers
+      ?.filter((p) => {
+        if (!excludedPeers || excludedPeers.length === 0) return true;
+        return !excludedPeers.find((ep) => ep.id === p.id);
+      })
+      .map((p) => ({
+        ...p,
+        user: users?.find((u) => u.id === p.user_id),
+      }));
+  }, [initialPeersSet, peers, excludedPeers, users]);
 
   return (
     <ModalContent

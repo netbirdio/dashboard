@@ -34,6 +34,9 @@ import { OnboardingTestP2P } from "@/modules/onboarding/p2p/OnboardingTestP2P";
 export interface OnboardingState {
   intent: Intent;
   step: number;
+  // The Agent Network onboarding saves its step by name; see
+  // agentNetworkSteps.ts. step keeps the regular flow's position.
+  agent_network_step?: string;
   finished_at?: string;
   survey_submitted_at?: string;
   skipped?: boolean;

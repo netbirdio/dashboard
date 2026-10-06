@@ -4,13 +4,15 @@ import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
-import {
-  fadeDisabledRowCells,
-  isInteractiveCell,
-} from "@components/table/disabledRowCells";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  ENABLED_COLUMN_ID,
+  fadeDisabledRowCells,
+  isInteractiveCell,
+} from "@components/table/disabledRowCells";
+import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
 import {
   CheckboxListPicker,
   CheckboxOption,
@@ -82,12 +84,17 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     filterFn: "fuzzy",
   },
   {
-    id: "enabled",
+    id: ENABLED_COLUMN_ID,
     accessorKey: "enabled",
     accessorFn: (row) => row.enabled,
-    sortingFn: "basic",
+    enableSorting: false,
+    meta: { className: ENABLED_COLUMN_CLASS.xl },
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
+      return (
+        <DataTableHeader column={column} sorting={false}>
+          Active
+        </DataTableHeader>
+      );
     },
     cell: ({ cell }) => <AccessControlActiveCell policy={cell.row.original} />,
   },

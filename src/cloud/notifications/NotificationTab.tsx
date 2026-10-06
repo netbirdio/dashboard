@@ -1,28 +1,28 @@
 import Breadcrumbs from "@components/Breadcrumbs";
+import Card from "@components/Card";
+import InlineLink from "@components/InlineLink";
+import Paragraph from "@components/Paragraph";
+import { SkeletonNotificationSettings } from "@components/skeletons/SkeletonNotificationSettings";
+import { SmallBadge } from "@components/ui/SmallBadge";
+import { VerticalTabs } from "@components/VerticalTabs";
 import * as Tabs from "@radix-ui/react-tabs";
 import { ExternalLinkIcon, MessageSquareDot } from "lucide-react";
 import React from "react";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
-import { usePermissions } from "@/contexts/PermissionsProvider";
-import { useIsLicensed } from "@/hooks/useIsLicensed";
-import { VerticalTabs } from "@components/VerticalTabs";
-import InlineLink from "@components/InlineLink";
-import Card from "@components/Card";
 import { NotificationEmailChannel } from "@/cloud/notifications/channels/NotificationEmailChannel";
+import { NotificationSlackChannel } from "@/cloud/notifications/channels/NotificationSlackChannel";
 import { NotificationWebhookChannel } from "@/cloud/notifications/channels/NotificationWebhookChannel";
-import useUrlTab from "@/hooks/useUrlTab";
-import Paragraph from "@components/Paragraph";
+import { NotificationChannelListItem } from "@/cloud/notifications/NotificationChannelListItem";
 import NotificationProvider, {
   useNotifications,
 } from "@/cloud/notifications/NotificationProvider";
-import { NotificationChannelListItem } from "@/cloud/notifications/NotificationChannelListItem";
+import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useIsLicensed } from "@/hooks/useIsLicensed";
+import useUrlTab from "@/hooks/useUrlTab";
 import {
   NOTIFICATION_CHANNELS_DOCS_LINK,
   NotificationChannelType,
 } from "@/interfaces/NotificationChannel";
-import { SkeletonNotificationSettings } from "@components/skeletons/SkeletonNotificationSettings";
-import { NotificationSlackChannel } from "@/cloud/notifications/channels/NotificationSlackChannel";
-import { SmallBadge } from "@components/ui/SmallBadge";
 
 const NotificationsOverview = ({
   onSelectChannel,
@@ -52,23 +52,18 @@ const NotificationsOverview = ({
           active
         />
       </Breadcrumbs>
-      <div className={"flex items-start justify-between"}>
+      <div className={"flex items-start justify-between -mt-1"}>
         <div>
           <h1>Notifications</h1>
-          <Paragraph>
-            Choose how to be notified when important events occur in your
-            account.
-          </Paragraph>
-          <Paragraph>
-            Learn more about{" "}
+          <Paragraph className={"block"}>
+            Get notified when important events happen.{" "}
             <InlineLink
               href={NOTIFICATION_CHANNELS_DOCS_LINK}
               target={"_blank"}
             >
-              Notification Channels
+              Learn more
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
           </Paragraph>
         </div>
       </div>

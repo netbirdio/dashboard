@@ -1,6 +1,7 @@
 "use client";
 
 import FullTooltip from "@components/FullTooltip";
+import { useDataTable } from "@components/table/DataTableContext";
 import { IconSortAscending, IconSortDescending } from "@tabler/icons-react";
 import type { Column } from "@tanstack/table-core";
 import { cn } from "@utils/helpers";
@@ -28,17 +29,25 @@ export default function DataTableHeader({
   name,
 }: Props) {
   const serverPagination = useOptionalServerPagination();
+  const table = useDataTable();
 
   const handleSort = () => {
+    // A click replaces the sort with this column alone. The direction only
+    // flips while the column already leads the sort; clicking any other column
+    // starts ascending. column.toggleSorting() cannot express this: when the
+    // column is the lowest-priority entry of an existing multi-sort it toggles
+    // in place, which leaves the visible order unchanged.
+    const leads = table.getState().sorting[0]?.id === column.id;
+    const desc = leads && column.getIsSorted() === "asc";
+
     if (onSort) {
       onSort();
     } else {
-      const direction = column.getIsSorted() === "asc" ? "desc" : "asc";
-      column.toggleSorting(direction === "desc");
+      table.setSorting([{ id: column.id, desc }]);
     }
+
     if (name && serverPagination?.setSort) {
-      const direction = column.getIsSorted() === "asc" ? "desc" : "asc";
-      serverPagination.setSort(name, direction);
+      serverPagination.setSort(name, desc ? "desc" : "asc");
     }
   };
 

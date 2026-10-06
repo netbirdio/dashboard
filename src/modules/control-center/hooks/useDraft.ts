@@ -1,19 +1,31 @@
-import { useEffect, useRef } from "react";
-import { orderBy, sortBy } from "lodash";
-import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { Connection, Edge, Node, useReactFlow } from "@xyflow/react";
-import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
-import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
-import { NodeType } from "@/modules/control-center/utils/nodes";
+import { orderBy, sortBy } from "lodash";
+import { useEffect, useRef } from "react";
+import { Group } from "@/interfaces/Group";
+import { Network, NetworkResource } from "@/interfaces/Network";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
+import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import {
   CanvasTool,
   useDraftMode,
 } from "@/modules/control-center/draft/DraftModeContext";
-import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
+import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
-import { Group } from "@/interfaces/Group";
-import { Network, NetworkResource } from "@/interfaces/Network";
+import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
+import { useDraftPeerUpgrade } from "@/modules/control-center/hooks/useDraftPeerUpgrade";
+import { useFrameEdgeAttachment } from "@/modules/control-center/hooks/useFrameEdgeAttachment";
+import { useNetworkDrillDown } from "@/modules/control-center/hooks/useNetworkDrillDown";
+import { useNetworkFrameLayout } from "@/modules/control-center/hooks/useNetworkFrameLayout";
+import {
+  addAgentNetworkProviderNodes,
+  useAgentNetworkOverlay,
+} from "@/modules/control-center/hooks/views/agent-network-overlay";
+import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
+import { handleDraftConnect } from "@/modules/control-center/utils/draft-connect";
+import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
+import { addEdge, addNode } from "@/modules/control-center/utils/graph-builder";
 import {
   getFrameChildPosition,
   getLiveFrameGrid,
@@ -22,17 +34,8 @@ import {
   NETWORK_FRAME_FALLBACK_ROW,
   orderFrameResources,
 } from "@/modules/control-center/utils/helpers";
-import { handleDraftConnect } from "@/modules/control-center/utils/draft-connect";
-import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
-import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
-import { useDraftPeerUpgrade } from "@/modules/control-center/hooks/useDraftPeerUpgrade";
-import { useNetworkFrameLayout } from "@/modules/control-center/hooks/useNetworkFrameLayout";
-import { useFrameEdgeAttachment } from "@/modules/control-center/hooks/useFrameEdgeAttachment";
-import { useNetworkDrillDown } from "@/modules/control-center/hooks/useNetworkDrillDown";
-import {
-  addNode,
-  addEdge,
-} from "@/modules/control-center/utils/graph-builder";
+import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
+import { NodeType } from "@/modules/control-center/utils/nodes";
 
 // Matching the live array order stops React from moving keyed DOM subtrees on
 // the mode switch, which profiling showed was the biggest cost.
@@ -68,6 +71,7 @@ const orderNodesToMatchLive = (
 };
 
 export function useDraft() {
+  const agentNetwork = useAgentNetworkOverlay();
   useDraftPeerUpgrade();
   useNetworkFrameLayout();
   useFrameEdgeAttachment();
@@ -85,6 +89,8 @@ export function useDraft() {
   } = useCanvasState();
   const { policies, peers, networks, networkResources, groups } =
     useControlCenterData();
+  const { policies: agentPolicies } = useAIProviders();
+  const { changes: draftChanges } = useDraftChangeset();
   const {
     isDraft,
     activeTool,
@@ -104,6 +110,9 @@ export function useDraft() {
     setPolicyDestinationGroups,
     setPolicyDestinationScope,
     updateDraftPolicy,
+    updateDraftAgentPolicy,
+    setAgentSourceGroup,
+    openAgentPolicyWizard,
   } = useControlCenterPolicy();
   const reactFlow = useReactFlow();
   const liveStateRef = useRef<{ nodes: Node[]; edges: Edge[] } | null>(null);
@@ -428,7 +437,7 @@ export function useDraft() {
             ? groupById.get(data?.currentGroup)
             : data?.group?.id
             ? // Prefer fresh SWR group counts over the live node's snapshot.
-              (groupById.get(data.group.id) ?? (data.group as Group))
+              groupById.get(data.group.id) ?? (data.group as Group)
             : undefined;
         if (group?.id && !groupIdsOnCanvas.has(group.id)) {
           const members = groupMembers.get(group.id);
@@ -481,7 +490,9 @@ export function useDraft() {
         allNodes.forEach((n) => {
           const gid = (n.data as { group?: { id?: string } })?.group?.id;
           if (gid) {
-            groupMembers.get(gid)?.forEach((mid) => groupedResourceIds.add(mid));
+            groupMembers
+              .get(gid)
+              ?.forEach((mid) => groupedResourceIds.add(mid));
           }
         });
         // Map network.resources, not the global list: orderFrameResources is a
@@ -633,6 +644,20 @@ export function useDraft() {
         }
       }
 
+      allNodes
+        .filter((n) => n.type === "groupNode")
+        .forEach((n) => {
+          const groupId = (n.data as { group?: { id?: string } })?.group?.id;
+          if (!groupId) return;
+          addAgentNetworkProviderNodes(
+            groupId,
+            n.id,
+            allNodes,
+            allEdges,
+            agentNetwork,
+          );
+        });
+
       // Adopt the live twins' sizes BEFORE the layout: its overlap pass falls
       // back to an 80px guess for unmeasured nodes and shoves the column apart.
       allNodes.forEach((n) => {
@@ -757,6 +782,18 @@ export function useDraft() {
       onNetworkConnect: setNetworkDestinationPicker,
       onResourceAssign: assignResourceToNetwork,
       setPolicyDestinationScope,
+      agentPolicies,
+      pendingAgentPolicy: (id) => {
+        const pending = draftChanges.find(
+          (c) => c.type === "update-agent-policy" && c.agentPolicyId === id,
+        );
+        return pending?.type === "update-agent-policy"
+          ? pending.policy
+          : undefined;
+      },
+      updateDraftAgentPolicy,
+      setAgentSourceGroup,
+      openAgentPolicyWizard,
     });
   };
 

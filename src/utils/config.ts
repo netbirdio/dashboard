@@ -31,6 +31,10 @@ interface Config {
   hubspotOnboardingFormId?: string;
   hubspotSurveyFormId?: string;
   analyticsExcludedEmails: string[];
+  // announcement: text the operator wants every user of this deployment to
+  // see in a permanent banner (NETBIRD_ANNOUNCEMENT), e.g. which environment
+  // or backend instance a dashboard belongs to. Unset for none.
+  announcement?: string;
 }
 
 /**
@@ -50,6 +54,8 @@ const loadConfig = (): Config => {
     configJson = require("@/config/production");
   }
 
+  configJson = configJson ?? {};
+
   if (configJson.redirectURI) {
     redirectURI = configJson.redirectURI;
   }
@@ -62,7 +68,7 @@ const loadConfig = (): Config => {
     tokenSource = configJson.tokenSource;
   }
 
-  const authority = configJson.authAuthority.replace(/\/+$/, "");
+  const authority = (configJson.authAuthority ?? "").replace(/\/+$/, "");
 
   return {
     auth0Auth: configJson.auth0Auth == "true", // Due to substitution we can't use boolean in the config
@@ -95,6 +101,7 @@ const loadConfig = (): Config => {
       .split(",")
       .map((email: string) => email.trim())
       .filter(Boolean),
+    announcement: configJson?.announcement || undefined,
   } as Config;
 };
 

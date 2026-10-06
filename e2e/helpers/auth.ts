@@ -33,7 +33,7 @@ export async function loginToApp(
   // Use locators that match either outcome — Playwright auto-waits.
   const appReady = page.getByTestId("left-navigation-item").first();
   const setupModal = page.getByTestId("setup-netbird-modal");
-  const approvalPending = page.getByText("User Approval Pending");
+  const approvalPending = page.getByTestId("pending-approval");
   const onboarding = page.getByText("Add new device to your network");
   const selectAccount = page.getByText("Select account");
   const loginInput = page.locator("input[id=loginName]");

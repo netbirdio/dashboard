@@ -23,6 +23,8 @@ interface MultiSelectProps {
   value?: Peer;
   onChange: (peer: Peer | undefined) => void;
   excludedPeers?: string[];
+  disabledPeers?: string[];
+  disabledPeerReason?: string;
   disabled?: boolean;
 }
 
@@ -38,6 +40,8 @@ export function PeerSelector({
   onChange,
   value,
   excludedPeers,
+  disabledPeers,
+  disabledPeerReason,
   disabled = false,
 }: MultiSelectProps) {
   const { data: peers } = useFetchApi<Peer[]>("/peers");
@@ -173,7 +177,11 @@ export function PeerSelector({
                   item.version,
                   item.os,
                 );
-                if (!isSupported) return;
+                if (
+                  !isSupported ||
+                  (!!item.id && disabledPeers?.includes(item.id))
+                )
+                  return;
                 togglePeer(item);
               }}
               renderItem={(option) => {
@@ -181,19 +189,29 @@ export function PeerSelector({
                   option.version,
                   option.os,
                 );
+                const isDisabled =
+                  isSupported &&
+                  !!option.id &&
+                  !!disabledPeers?.includes(option.id);
                 return (
                   <FullTooltip
-                    disabled={isSupported}
+                    disabled={isSupported && !isDisabled}
                     interactive={false}
                     delayDuration={200}
                     skipDelayDuration={350}
                     className={"w-full flex items-center justify-between"}
                     content={
-                      <div className={"max-w-[240px] text-xs"}>
-                        Please update NetBird to at least{" "}
-                        <span className={"text-netbird"}>v0.36.6</span> or later
-                        to use this peer as a routing peer.
-                      </div>
+                      isDisabled ? (
+                        <div className={"max-w-[240px] text-xs"}>
+                          {disabledPeerReason}
+                        </div>
+                      ) : (
+                        <div className={"max-w-[240px] text-xs"}>
+                          Please update NetBird to at least{" "}
+                          <span className={"text-netbird"}>v0.36.6</span> or
+                          later to use this peer as a routing peer.
+                        </div>
+                      )
                     }
                   >
                     <div
@@ -202,6 +220,7 @@ export function PeerSelector({
                         value && value.id == option.id
                           ? "text-nb-gray-100"
                           : "text-nb-gray-300",
+                        isDisabled && "opacity-40",
                       )}
                     >
                       <PeerOperatingSystemIcon
@@ -233,6 +252,7 @@ export function PeerSelector({
                           ? "text-nb-gray-100"
                           : "text-nb-gray-300",
                         !isSupported && "opacity-50",
+                        isDisabled && "opacity-40",
                       )}
                     >
                       {option.ip}
