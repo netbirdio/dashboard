@@ -180,10 +180,10 @@ const ModalFooter = ({
   <div
     className={cn(
       "dark:border-nb-gray-800/70 border-nb-gray-800",
-      separator && "border-t",
-      // Tinted footer (light mode only): bleed over the modal's bottom
-      // padding so the band reaches the rounded bottom edge.
-      "bg-nb-gray-950 dark:bg-transparent -mb-6 pb-6 sm:rounded-b-lg",
+      separator && "border-t bg-nb-gray-950 dark:bg-transparent",
+      // Seamless footers keep the modal background; separated footers carry
+      // their light tint through the modal's bottom padding.
+      "-mb-6 pb-6 sm:rounded-b-lg",
     )}
   >
     <div
