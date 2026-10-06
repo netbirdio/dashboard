@@ -27,6 +27,14 @@ vi.mock("@utils/api", () => ({
   },
 }));
 
+vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
+  useAIProviders: () => ({
+    providers: [
+      { id: "prov1", providerId: "anthropic_api", name: "Anthropic" },
+    ],
+  }),
+}));
+
 const { OnboardingAgentEnd } = await import(
   "@/modules/onboarding/agent-network/OnboardingAgentEnd"
 );
@@ -47,6 +55,7 @@ const entry = (
   total_tokens: 1234,
   cost_usd: 0.01,
   model: "claude-sonnet-5",
+  resolved_provider_id: "prov1",
   decision: "allow",
   ...overrides,
 });
@@ -172,7 +181,7 @@ describe("OnboardingAgentEnd", () => {
 
     expect(screen.getByRole("heading").textContent).toBe("You're all set!");
     expect(screen.getByTestId("agent-network-test-passed").textContent).toBe(
-      "Your request, for claude-sonnet-5, came back with status 200 and used 1,234 tokens.",
+      "Your request reached Anthropic and used 1,234 tokens.",
     );
     const sections = within(screen.getByTestId("agent-network-sections"));
     const titles = [
@@ -182,16 +191,15 @@ describe("OnboardingAgentEnd", () => {
       "Budgets and limits",
       "Usage",
       "Access Logs",
-      "Log collection",
-      "Connect Agent",
+      "Log retention",
+      "Agent setup",
     ];
     expect(
-      sections.getAllByRole("listitem"),
+      sections
+        .getAllByRole("listitem")
+        .map((item) => item.querySelector("div > div")?.textContent),
       "one line per Agent Network section",
-    ).toHaveLength(titles.length);
-    for (const title of titles) {
-      expect(sections.getByText(title)).toBeTruthy();
-    }
+    ).toEqual(titles);
     expect(buttons()).toEqual(["Go Back", "Finish"]);
 
     fireEvent.click(screen.getByRole("button", { name: "Finish" }));

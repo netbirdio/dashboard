@@ -4,7 +4,6 @@ import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import useFetchApi from "@utils/api";
 import {
   ChartColumnIcon,
-  CheckCircle2Icon,
   CheckIcon,
   DatabaseIcon,
   ExternalLinkIcon,
@@ -23,6 +22,7 @@ import type {
   APIAgentNetworkAccessLog,
   APIAgentNetworkAccessLogsResponse,
 } from "@/modules/agent-network/agentAccessLogApi";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { formatDenyReason } from "@/modules/agent-network/data/mockData";
 import {
   TEST_REQUEST_LOOKBACK_MS,
@@ -127,13 +127,13 @@ const SECTIONS: { icon: LucideIcon; title: string; description: string }[] = [
   },
   {
     icon: DatabaseIcon,
-    title: "Log collection",
+    title: "Log retention",
     description: "Choose how long logs are kept.",
   },
   {
     icon: SquareTerminalIcon,
-    title: "Connect Agent",
-    description: "Set up Claude Code and Codex.",
+    title: "Agent setup",
+    description: "Configure Claude Code and Codex.",
   },
 ];
 
@@ -153,38 +153,19 @@ const AllSet = ({
       <h1 className={"text-xl text-center max-w-sm mx-auto"}>
         You&apos;re all set!
       </h1>
-      <div
-        className={
-          "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
-        }
-      >
-        Your first request went through NetBird. Shape the rest from the
-        dashboard.
-      </div>
+      <PassedRequest entry={entry} />
     </div>
 
-    <Callout
-      variant={"success"}
-      icon={<CheckCircle2Icon size={16} className={"shrink-0 mt-0.5"} />}
-      data-testid={"agent-network-test-passed"}
-    >
-      Your request{entry.model ? `, for ${entry.model},` : ""} came back with
-      status {entry.status_code}
-      {entry.total_tokens > 0 &&
-        ` and used ${entry.total_tokens.toLocaleString()} tokens`}
-      .
-    </Callout>
-
     <ul
-      className={"grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 mt-2"}
+      className={"mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 text-sm"}
       data-testid={"agent-network-sections"}
     >
       {SECTIONS.map(({ icon: Icon, title, description }) => (
         <li key={title} className={"flex items-start gap-3"}>
-          <Icon size={16} className={"text-netbird shrink-0 mt-0.5"} />
+          <Icon size={16} className={"text-nb-gray-400 shrink-0 mt-0.5"} />
           <div>
-            <div className={"text-sm text-nb-gray-100"}>{title}</div>
-            <div className={"text-sm text-nb-gray-400 font-light mt-0.5"}>
+            <div className={"text-nb-gray-100"}>{title}</div>
+            <div className={"text-nb-gray-400 font-light mt-0.5"}>
               {description}
             </div>
           </div>
@@ -203,6 +184,39 @@ const AllSet = ({
     </div>
   </div>
 );
+
+// PassedRequest is the step's subtitle: it names the provider the test
+// request was routed to when it is one of the account's.
+const PassedRequest = ({ entry }: { entry: APIAgentNetworkAccessLog }) => {
+  const { providers } = useAIProviders();
+  const provider = providers.find((p) => p.id === entry.resolved_provider_id);
+
+  return (
+    <div
+      className={
+        "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
+      }
+      data-testid={"agent-network-test-passed"}
+    >
+      {passedSentence(entry, provider?.name)}
+    </div>
+  );
+};
+
+// passedSentence reads e.g. "Your request reached Anthropic and used 1,234
+// tokens.", naming the model when the provider is unknown.
+const passedSentence = (
+  entry: APIAgentNetworkAccessLog,
+  providerName?: string,
+) => {
+  const target = providerName || entry.model;
+  const tokens =
+    entry.total_tokens > 0
+      ? ` and used ${entry.total_tokens.toLocaleString()} tokens`
+      : "";
+  if (!target) return `Your request went through${tokens}.`;
+  return `Your request reached ${target}${tokens}.`;
+};
 
 // TestRequestStatus shows what became of the latest request. onOpenLogs leaves
 // the onboarding for the Access Logs, as the onboarding covers every page
