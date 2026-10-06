@@ -12,8 +12,8 @@ function ButtonGroup({ children, disabled, className }: Props) {
   return (
     <div
       className={cn(
-        "rounded-lg border-[1px] dark:border-nb-gray-900 border-neutral-200 overflow-hidden flex items-center justify-center shrink-0 border-separate",
-        disabled ? "opacity-100 !border-nb-gray-900/20" : "",
+        "rounded-lg border border-nb-gray-700 divide-x divide-nb-gray-700 dark:border-nb-gray-800 dark:divide-nb-gray-800 overflow-hidden flex items-center justify-center shrink-0",
+        disabled ? "opacity-100 !border-nb-gray-900/20 !divide-nb-gray-900/20" : "",
         className,
       )}
     >
@@ -24,18 +24,24 @@ function ButtonGroup({ children, disabled, className }: Props) {
 
 const ButtonGroupButton = forwardRef(
   (
-    { className, ...props }: ButtonProps,
+    { className, variant, ...props }: ButtonProps,
     ref: React.ForwardedRef<HTMLButtonElement>,
   ) => {
     return (
       <Button
         ref={ref}
+        aria-pressed={
+          variant === "tertiary" ? true : variant === "secondary" ? false : undefined
+        }
         {...props}
-        border={2}
+        variant={variant}
+        border={0}
         rounded={false}
         className={cn(
-          "first:border-l-0 last:border-r-0 border-t-0 border-b-0 h-[40px]",
+          "h-[40px]",
           "!py-2.5 !px-4",
+          "aria-pressed:bg-neutral-800 aria-pressed:text-white aria-pressed:hover:bg-neutral-700 aria-pressed:hover:text-white",
+          "dark:aria-pressed:bg-white dark:aria-pressed:text-gray-800 dark:aria-pressed:hover:bg-neutral-200 dark:aria-pressed:hover:text-black",
           className,
         )}
       />
