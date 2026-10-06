@@ -32,7 +32,6 @@ import {
 } from "@/modules/agent-network/managedProxyState";
 import { useManagedProxy } from "@/modules/agent-network/useManagedProxy";
 import {
-  formatElapsed,
   MANAGED_SLOW_HINT_AFTER_S,
   managedGatewayStages,
   privateAccountClusters,
@@ -437,7 +436,6 @@ const ManagedGateway = ({
   return (
     <StepLayout
       title={header.title}
-      aside={provisioning ? `Elapsed ${formatElapsed(elapsed)}` : undefined}
       description={header.description}
       onBack={onBack}
     >
@@ -610,7 +608,6 @@ const NewProxyGateway = ({
         phase={phase}
         bootstrap={bootstrap}
         reservedElsewhere={reservedElsewhere}
-        elapsed={elapsed}
         showHint={registering && elapsed >= SELF_DEPLOY_HINT_AFTER_S}
       />
     </StepLayout>
@@ -621,7 +618,6 @@ type SelfDeployStatusProps = {
   phase: SelfDeployPhase;
   bootstrap: GatewayBootstrap;
   reservedElsewhere: boolean;
-  elapsed: number;
   showHint: boolean;
 };
 
@@ -629,7 +625,6 @@ const SelfDeployStatus = ({
   phase,
   bootstrap,
   reservedElsewhere,
-  elapsed,
   showHint,
 }: SelfDeployStatusProps) => (
   <div
@@ -639,12 +634,12 @@ const SelfDeployStatus = ({
   >
     <LiveStatus message={selfDeployAnnouncement(phase, bootstrap)} />
     {phase === "waiting" && (
-      <StatusLine status={"active"} aside={`Elapsed ${formatElapsed(elapsed)}`}>
+      <StatusLine status={"active"}>
         Waiting for your proxy to connect to NetBird…
       </StatusLine>
     )}
     {phase === "found" && (
-      <StatusLine status={"active"} aside={`Elapsed ${formatElapsed(elapsed)}`}>
+      <StatusLine status={"active"}>
         Proxy found, waiting for it to come online…
       </StatusLine>
     )}
@@ -904,8 +899,6 @@ function useStopwatch(running: boolean, resetKey: string | number): number {
 
 type StepLayoutProps = {
   title: string;
-  // Muted text beside the title, e.g. the elapsed time.
-  aside?: string;
   description?: React.ReactNode;
   children: React.ReactNode;
   onBack: () => void;
@@ -916,7 +909,6 @@ type StepLayoutProps = {
 
 const StepLayout = ({
   title,
-  aside,
   description,
   children,
   onBack,
@@ -927,16 +919,7 @@ const StepLayout = ({
     data-testid={"agent-network-gateway-step"}
   >
     <div>
-      <h1 className={"text-xl text-center"}>
-        {title}
-        {aside && (
-          <span
-            className={"ml-2 text-sm font-light text-nb-gray-400 tabular-nums"}
-          >
-            {aside}
-          </span>
-        )}
-      </h1>
+      <h1 className={"text-xl text-center"}>{title}</h1>
       {description && (
         <div
           className={
@@ -1002,11 +985,9 @@ const StageRow = ({
 
 const StatusLine = ({
   status,
-  aside,
   children,
 }: {
   status: "active" | "done";
-  aside?: string;
   children: React.ReactNode;
 }) => (
   <div
@@ -1027,9 +1008,6 @@ const StatusLine = ({
     >
       {children}
     </span>
-    {aside && (
-      <span className={"text-xs text-nb-gray-400 tabular-nums"}>{aside}</span>
-    )}
   </div>
 );
 

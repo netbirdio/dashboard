@@ -100,10 +100,3 @@ export function selfDeployPhase(
   if (!isClusterConnected(cluster)) return "found";
   return cluster.private === true ? "connected" : "not-private";
 }
-
-// formatElapsed renders seconds as m:ss.
-export function formatElapsed(seconds: number): string {
-  const total = Math.max(0, Math.floor(seconds));
-  const rest = String(total % 60).padStart(2, "0");
-  return `${Math.floor(total / 60)}:${rest}`;
-}

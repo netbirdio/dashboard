@@ -4,7 +4,6 @@ import {
   ReverseProxyClusterType,
 } from "@/interfaces/ReverseProxy";
 import {
-  formatElapsed,
   managedGatewayStages,
   privateAccountClusters,
   resolveGatewayEntry,
@@ -184,14 +183,5 @@ describe("selfDeployPhase", () => {
 
   it("reports a registered private proxy as connected", () => {
     expect(selfDeployPhase(cluster())).toBe("connected");
-  });
-});
-
-describe("formatElapsed", () => {
-  it("renders minutes and zero-padded seconds", () => {
-    expect(formatElapsed(0)).toBe("0:00");
-    expect(formatElapsed(42)).toBe("0:42");
-    expect(formatElapsed(125.9)).toBe("2:05");
-    expect(formatElapsed(-3)).toBe("0:00");
   });
 });
