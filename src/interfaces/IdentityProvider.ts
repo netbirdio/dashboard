@@ -123,6 +123,8 @@ export interface SSOIdentityProvider {
   issuer: string;
   client_id: string;
   redirect_url?: string;
+  pkce: boolean;
+  jwks_url: string;
 }
 
 export interface SSOIdentityProviderRequest {
@@ -131,4 +133,6 @@ export interface SSOIdentityProviderRequest {
   issuer: string;
   client_id: string;
   client_secret: string;
+  pkce: boolean;
+  jwks_url: string;
 }
