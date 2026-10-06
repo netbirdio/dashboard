@@ -251,7 +251,7 @@ const GatewayChoice = ({
     <StepLayout
       title={"Set up your proxy"}
       description={
-        "Agents reach your providers through a private proxy that only devices on your network can reach. Choose who runs it."
+        "Your agents talk to providers through a private proxy that only your network can access. Use a managed proxy or your own."
       }
       onBack={onBack}
     >
