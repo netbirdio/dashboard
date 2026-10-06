@@ -183,7 +183,7 @@ const ModalFooter = ({
       separator && "border-t",
       // Tinted footer (light mode only): bleed over the modal's bottom
       // padding so the band reaches the rounded bottom edge.
-      "bg-nb-gray dark:bg-transparent -mb-6 pb-6 sm:rounded-b-lg",
+      "bg-nb-gray-950 dark:bg-transparent -mb-6 pb-6 sm:rounded-b-lg",
     )}
   >
     <div
