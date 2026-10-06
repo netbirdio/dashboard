@@ -18,7 +18,7 @@ export const buttonVariants = cva(
     "relative",
     "text-sm focus:z-10 focus:ring-2 font-medium  focus:outline-none whitespace-nowrap shadow-sm",
     "inline-flex gap-2 items-center justify-center transition-colors focus:ring-offset-1",
-    "disabled:opacity-40 disabled:cursor-not-allowed disabled:dark:text-nb-gray-300 dark:ring-offset-neutral-950/50",
+    "disabled:opacity-60 disabled:dark:opacity-40 disabled:cursor-not-allowed disabled:dark:text-nb-gray-300 dark:ring-offset-neutral-950/50",
   ],
   {
     variants: {
@@ -31,6 +31,7 @@ export const buttonVariants = cva(
           "border-transparent",
           "dark:focus:ring-netbird-600/50 dark:ring-offset-neutral-950/50 enabled:dark:bg-netbird disabled:dark:bg-nb-gray-910 dark:text-gray-100 enabled:dark:hover:text-white enabled:dark:hover:bg-netbird-500/80",
           "enabled:bg-netbird enabled:text-white enabled:focus:ring-netbird-400/50 enabled:hover:bg-netbird-500",
+          "disabled:bg-neutral-200 disabled:text-neutral-600 disabled:border-neutral-300 disabled:!opacity-100 dark:disabled:!opacity-40 dark:disabled:border-transparent",
         ],
         secondary: [
           "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-200 border-nb-gray-700 text-neutral-900",
