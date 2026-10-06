@@ -100,7 +100,7 @@ const CardTextItem = ({
   return (
     <div
       className={cn(
-        "text-right text-nb-gray-400 text-[0.84rem] flex items-center gap-2",
+        "text-right text-nb-gray-400 text-[0.84rem] flex items-center justify-end gap-2",
         copy && "cursor-pointer hover:text-nb-gray-300 transition-all",
       )}
       onClick={() =>
