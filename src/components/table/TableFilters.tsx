@@ -66,7 +66,6 @@ export function TableFiltersButton<TData>({
         <Button
           variant={"secondary"}
           disabled={disabled}
-          border={0}
           data-testid={"table-filters-button"}
         >
           <FilterIcon size={16} className={"shrink-0"} />
