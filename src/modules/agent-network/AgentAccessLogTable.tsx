@@ -33,6 +33,7 @@ import {
 import GetStartedTest from "@components/ui/GetStartedTest";
 import MultipleGroups from "@components/ui/MultipleGroups";
 import ButtonGroup from "@components/ButtonGroup";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, formatDuration } from "@utils/helpers";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
@@ -984,11 +985,9 @@ function UserCell({ entry }: { entry: AIAccessLogEntry }) {
     <div className={"flex items-center gap-2 py-2 px-3"}>
       <div
         className={
-          "w-8 h-8 rounded-full flex items-center justify-center text-white uppercase text-xs font-medium bg-nb-gray-900 shrink-0"
+          "initials-avatar w-8 h-8 rounded-full flex items-center justify-center text-white uppercase text-xs font-medium bg-nb-gray-900 shrink-0"
         }
-        style={{
-          color: generateColorFromUser(identityForColor),
-        }}
+        style={getAvatarStyle(generateColorFromUser(identityForColor))}
       >
         {displayName?.charAt(0) || "?"}
       </div>

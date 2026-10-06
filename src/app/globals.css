@@ -70,6 +70,16 @@
     --skeleton-highlight: 54 59 64;
 }
 
+.initials-avatar,
+.dark .initials-avatar {
+    color: var(--avatar-color);
+}
+
+:root:not(.dark) .initials-avatar {
+    background-color: var(--avatar-color);
+    color: var(--avatar-foreground);
+}
+
 html{
     @apply bg-nb-gray;
 }

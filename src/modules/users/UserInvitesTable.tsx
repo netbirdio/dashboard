@@ -40,6 +40,7 @@ import GetStartedTest from "@components/ui/GetStartedTest";
 import MultipleGroups from "@components/ui/MultipleGroups";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import useFetchApi, { useApiCall } from "@utils/api";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromString } from "@utils/helpers";
 import { isNetBirdCloud } from "@utils/netbird";
 import dayjs from "dayjs";
@@ -87,11 +88,11 @@ function InviteNameCell({ invite }: { invite: UserInvite }) {
     >
       <div
         className={
-          "w-10 h-10 rounded-full relative flex items-center justify-center text-neutral-700 dark:text-white uppercase text-md font-medium bg-nb-gray-900"
+          "initials-avatar w-10 h-10 rounded-full relative flex items-center justify-center text-neutral-700 dark:text-white uppercase text-md font-medium bg-nb-gray-900"
         }
-        style={{
-          color: generateColorFromString(invite.name || invite.email),
-        }}
+        style={getAvatarStyle(
+          generateColorFromString(invite.name || invite.email),
+        )}
       >
         {invite?.name?.charAt(0) || invite?.email?.charAt(0)}
       </div>
