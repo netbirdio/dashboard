@@ -2,7 +2,7 @@ import { test, expect } from "../helpers/fixtures";
 import { navigateTo } from "../helpers/auth";
 
 test.describe.serial("Settings - Authentication @settings", () => {
-  test("Should toggle peer approval", async ({ dashboardAsOwner: page }) => {
+  test("Should toggle peer approval @enterprise", async ({ dashboardAsOwner: page }) => {
     await navigateTo(page, "/settings");
     await toggleAndSave(page, "peer-approval");
   });

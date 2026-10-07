@@ -127,7 +127,7 @@ async function fillProviderTab(page: Page) {
   await page.getByPlaceholder("sk-...").first().fill("sk-e2e-bootstrap-key");
 }
 
-test.describe("Agent Network bootstrap cluster @agent-network", () => {
+test.describe("Agent Network bootstrap cluster @agent-network @test-build", () => {
   test("bootstraps onto a private-capable cluster, skipping a centralised one listed first", async ({
     browser,
   }) => {
