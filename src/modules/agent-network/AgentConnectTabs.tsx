@@ -13,7 +13,10 @@ import KimiIcon from "@/assets/icons/KimiIcon";
 import OpenAIIcon from "@/assets/icons/OpenAIIcon";
 import ShellIcon from "@/assets/icons/ShellIcon";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
-import { AIProviderId } from "@/modules/agent-network/data/mockData";
+import {
+  AIProvider,
+  AIProviderId,
+} from "@/modules/agent-network/data/mockData";
 
 // Same gray-to-netbird treatment the install-peer modal gives its OS tabs.
 const TAB_ICON =
@@ -142,8 +145,115 @@ function Snippet({
   );
 }
 
+// ConnectExample is the request the SDK and cURL snippets send: the API shape
+// and a model to ask for.
+export type ConnectExample = { api: "openai" | "anthropic"; model: string };
+
+const DEFAULT_MODEL: Record<ConnectExample["api"], string> = {
+  openai: "gpt-5.5",
+  anthropic: "claude-opus-5",
+};
+
+const DEFAULT_EXAMPLE: ConnectExample = {
+  api: "openai",
+  model: DEFAULT_MODEL.openai,
+};
+
+// Bedrock and Vertex carry the model in the URL path, under ids the account
+// owns (an AWS inference profile, a GCP project), so no fixed request routes
+// to them.
+const PATH_ROUTED: AIProviderId[] = ["bedrock_api", "vertex_ai_api"];
+
+// connectExample picks the request for the first connected provider that
+// takes one at a fixed path: the Anthropic Messages API for Anthropic, Chat
+// Completions for everything else, with the provider's first model. Undefined
+// leaves the default.
+export function connectExample(
+  providers: Pick<AIProvider, "providerId" | "models">[],
+): ConnectExample | undefined {
+  const provider = providers.find((p) => !PATH_ROUTED.includes(p.providerId));
+  if (!provider) return undefined;
+  const api = provider.providerId === "anthropic_api" ? "anthropic" : "openai";
+  return { api, model: provider.models[0]?.id ?? DEFAULT_MODEL[api] };
+}
+
+// A one-word answer keeps a test request quick. Only Anthropic gets a token
+// cap, which its API requires: OpenAI's reasoning models refuse max_tokens,
+// and not every OpenAI-compatible provider takes max_completion_tokens.
+const PROMPT = "Say hello in one word.";
+const MAX_TOKENS = 32;
+
+// sdkLines calls the SDK of the example's API shape. Both SDKs insist on an
+// API key, which NetBird swaps for the provider's.
+function sdkLines({ api, model }: ConnectExample, baseUrl: string): string[] {
+  const messages = `    messages=[{"role": "user", "content": "${PROMPT}"}],`;
+  if (api === "anthropic") {
+    return [
+      `from anthropic import Anthropic`,
+      ``,
+      `client = Anthropic(`,
+      `    base_url="${baseUrl}",`,
+      `    api_key="not-needed",`,
+      `)`,
+      ``,
+      `client.messages.create(`,
+      `    model="${model}",`,
+      `    max_tokens=${MAX_TOKENS},`,
+      messages,
+      `)`,
+    ];
+  }
+  return [
+    `from openai import OpenAI`,
+    ``,
+    `client = OpenAI(`,
+    `    base_url="${baseUrl}/v1",`,
+    `    api_key="not-needed",`,
+    `)`,
+    ``,
+    `client.chat.completions.create(`,
+    `    model="${model}",`,
+    messages,
+    `)`,
+  ];
+}
+
+// curlSnippet shows the request with its JSON body pretty-printed (curl takes
+// a multi-line single-quoted body) and copies it as one line. Anthropic's API
+// refuses a request without a version header, which the proxy passes through.
+function curlSnippet({ api, model }: ConnectExample, baseUrl: string) {
+  const anthropic = api === "anthropic";
+  const url = `${baseUrl}/v1/${anthropic ? "messages" : "chat/completions"}`;
+  const headers = [
+    "Content-Type: application/json",
+    ...(anthropic ? ["anthropic-version: 2023-06-01"] : []),
+  ];
+  const messages = [{ role: "user", content: PROMPT }];
+  const body = anthropic
+    ? { model, max_tokens: MAX_TOKENS, messages }
+    : { model, messages };
+  return {
+    lines: [
+      `curl ${url} \\`,
+      ...headers.map((h) => `  -H "${h}" \\`),
+      `  -d '{`,
+      `    "model": "${model}",`,
+      ...(anthropic ? [`    "max_tokens": ${MAX_TOKENS},`] : []),
+      `    "messages": [`,
+      `      { "role": "user", "content": "${PROMPT}" }`,
+      `    ]`,
+      `  }'`,
+    ],
+    copyText: [
+      `curl ${url}`,
+      ...headers.map((h) => `-H "${h}"`),
+      `-d '${JSON.stringify(body)}'`,
+    ].join(" "),
+  };
+}
+
 // AgentConnectTabs renders the per-tool connect snippets (Claude Code, Codex,
-// OpenAI SDK, cURL) for a given endpoint. Rendered inline wherever the config
+// an SDK, cURL) for a given endpoint. Rendered inline wherever the config
 // belongs — the Connect Agent page and the onboarding "Configure your agent"
 // step. listClassName / contentClassName let the caller tune horizontal
 // padding, since each host sits in a different gutter.
@@ -154,6 +264,7 @@ export function AgentConnectTabs({
   contentClassName = "px-6 py-2",
   defaultTab = "claude-code",
   providerIds = [],
+  example = DEFAULT_EXAMPLE,
 }: {
   endpoint: string;
   // Spacing above the tab strip, so each host can set the gap its own layout
@@ -171,6 +282,8 @@ export function AgentConnectTabs({
   // showing Moonshot setup against an endpoint that can't route to Kimi
   // would just be a trap.
   providerIds?: string[];
+  // The request the SDK and cURL tabs send; see connectExample.
+  example?: ConnectExample;
 }) {
   const baseUrl = `https://${endpoint}`;
   const openaiBase = `${baseUrl}/v1`;
@@ -207,9 +320,18 @@ export function AgentConnectTabs({
             Kimi CLI
           </TabsTrigger>
         )}
-        <TabsTrigger value={"openai-sdk"}>
-          <OpenAIIcon className={TAB_ICON} size={14} />
-          OpenAI SDK
+        <TabsTrigger value={"sdk"}>
+          {example.api === "anthropic" ? (
+            <>
+              <ClaudeIcon className={TAB_ICON} size={14} />
+              Anthropic SDK
+            </>
+          ) : (
+            <>
+              <OpenAIIcon className={TAB_ICON} size={14} />
+              OpenAI SDK
+            </>
+          )}
         </TabsTrigger>
         <TabsTrigger value={"curl"}>
           <ShellIcon className={TAB_ICON} size={14} />
@@ -461,43 +583,15 @@ export function AgentConnectTabs({
         </div>
       </TabsContent>
 
-      <TabsContent value={"openai-sdk"}>
+      <TabsContent value={"sdk"}>
         <div className={contentClassName}>
-          <Snippet
-            lines={[
-              `from openai import OpenAI`,
-              ``,
-              `client = OpenAI(`,
-              `    base_url="${openaiBase}",`,
-              `    api_key="not-needed",`,
-              `)`,
-              ``,
-              `client.chat.completions.create(`,
-              `    model="gpt-5.5",`,
-              `    messages=[{"role": "user", "content": "What is NetBird Agent Network?"}],`,
-              `)`,
-            ]}
-          />
+          <Snippet lines={sdkLines(example, baseUrl)} />
         </div>
       </TabsContent>
 
       <TabsContent value={"curl"}>
         <div className={contentClassName}>
-          <Snippet
-            // Displayed with the JSON pretty-printed (curl accepts multi-line
-            // single-quoted bodies); copyText is the compact one-line command.
-            lines={[
-              `curl ${openaiBase}/chat/completions \\`,
-              `  -H "Content-Type: application/json" \\`,
-              `  -d '{`,
-              `    "model": "gpt-5.5",`,
-              `    "messages": [`,
-              `      { "role": "user", "content": "What is NetBird Agent Network?" }`,
-              `    ]`,
-              `  }'`,
-            ]}
-            copyText={`curl ${openaiBase}/chat/completions -H "Content-Type: application/json" -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"What is NetBird Agent Network?"}]}'`}
-          />
+          <Snippet {...curlSnippet(example, baseUrl)} />
         </div>
       </TabsContent>
     </Tabs>

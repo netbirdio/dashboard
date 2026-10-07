@@ -428,18 +428,15 @@ p {
     animation: cc-node-pulse 1.1s ease-out 2;
 }
 
-/* Nodes/edges off the focused node's path fade out while its panel is open. */
 .react-flow__node.cc-dimmed {
     opacity: 0.25;
-    filter: grayscale(1);
-    transition: opacity 150ms ease, filter 150ms ease;
+    transition: opacity 150ms ease;
     /* Clicks fall through to the pane, which exits the focus view. */
     pointer-events: none !important;
 }
 .react-flow__edge.cc-dimmed {
     opacity: 0.12;
-    filter: grayscale(1);
-    transition: opacity 150ms ease, filter 150ms ease;
+    transition: opacity 150ms ease;
 }
 
 /* Edges have no click action, and their wide interaction path swallowed pans. */

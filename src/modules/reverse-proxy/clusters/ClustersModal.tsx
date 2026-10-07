@@ -50,6 +50,8 @@ import { IconProps } from "@/assets/icons/IconProperties";
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // onFinish receives the domain of the cluster the setup was finished for.
+  onFinish?: (domain: string) => void;
 };
 
 type DeployMethod =
@@ -94,7 +96,7 @@ const renderHighlightedCommand = (command: string, highlights: string[]) => {
   ));
 };
 
-export const ClustersModal = ({ open, onOpenChange }: Props) => {
+export const ClustersModal = ({ open, onOpenChange, onFinish }: Props) => {
   const { mutate } = useSWRConfig();
   const [tab, setTab] = useState("domain");
   const [domain, setDomain] = useState("");
@@ -321,6 +323,7 @@ spec:
   const finishSetup = () => {
     onOpenChange(false);
     mutate("/reverse-proxies/clusters");
+    onFinish?.(domain);
   };
 
   return (

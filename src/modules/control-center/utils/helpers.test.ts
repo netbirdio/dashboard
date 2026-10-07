@@ -22,6 +22,7 @@ import {
   getResourceNodeEnabled,
   isCompleteDraftResource,
   isDeployablePolicy,
+  focusWorthyIds,
   isFocusWorthy,
   isPolicyNodeId,
   isTrackablePolicy,
@@ -909,5 +910,15 @@ describe("isFocusWorthy", () => {
       { id: "agent-policy-a1", type: "agentPolicyNode" },
     ];
     expect(isFocusWorthy("group-g1", mixed, [edge])).toBe(true);
+  });
+
+  it("answers for every node at once, both endpoints included", () => {
+    const nodes = [
+      { id: "policy-p1", type: "policyNode" },
+      { id: "policy-p2", type: "policyNode" },
+    ];
+    const ids = focusWorthyIds(nodes, [edge]);
+    expect([...ids].sort()).toEqual(["group-g1", "policy-p1"]);
+    expect(focusWorthyIds(nodes.slice(0, 1), [edge]).size).toBe(0);
   });
 });
