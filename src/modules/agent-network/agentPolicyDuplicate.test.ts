@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { copyOfAgentPolicy } from "@/modules/agent-network/agentPolicyCopy";
+import { duplicateAgentPolicy } from "@/modules/agent-network/agentPolicyDuplicate";
 import { AgentPolicy } from "@/modules/agent-network/data/mockData";
 
 const policy: AgentPolicy = {
@@ -26,32 +26,35 @@ const policy: AgentPolicy = {
   },
 };
 
-describe("copyOfAgentPolicy", () => {
+describe("duplicateAgentPolicy", () => {
   it("drops the id so saving creates a new policy", () => {
-    expect(copyOfAgentPolicy(policy, [])).not.toHaveProperty("id");
+    expect(duplicateAgentPolicy(policy, [])).not.toHaveProperty("id");
   });
 
-  it("renames the copy against the names already taken", () => {
-    expect(copyOfAgentPolicy(policy, []).name).toBe(
+  it("renames the duplicate against the names already taken", () => {
+    expect(duplicateAgentPolicy(policy, []).name).toBe(
       "Engineering → OpenAI (copy)",
     );
     expect(
-      copyOfAgentPolicy(policy, ["Engineering → OpenAI (copy)"]).name,
-      "the first copy name is taken",
+      duplicateAgentPolicy(policy, ["Engineering → OpenAI (copy)"]).name,
+      "the first (copy) name is taken",
     ).toBe("Engineering → OpenAI (copy 2)");
   });
 
   it("keeps groups, providers, guardrails, limits and state", () => {
     const { id: _id, name: _name, ...source } = policy;
-    const { name: _copyName, ...copy } = copyOfAgentPolicy(policy, []);
+    const { name: _duplicateName, ...duplicate } = duplicateAgentPolicy(
+      policy,
+      [],
+    );
 
-    expect(copy).toEqual(source);
+    expect(duplicate).toEqual(source);
   });
 
   it("does not share lists or limits with the source policy", () => {
-    const copy = copyOfAgentPolicy(policy, []);
-    copy.sourceGroups.push("g-other");
-    copy.limits.tokenLimit.userCap = 1;
+    const duplicate = duplicateAgentPolicy(policy, []);
+    duplicate.sourceGroups.push("g-other");
+    duplicate.limits.tokenLimit.userCap = 1;
 
     expect(policy.sourceGroups).toEqual(["g-eng"]);
     expect(policy.limits.tokenLimit.userCap).toBe(50_000);

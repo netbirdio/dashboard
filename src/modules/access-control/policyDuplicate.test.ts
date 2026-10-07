@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
-import { copyOfPolicy } from "@/modules/access-control/policyCopy";
+import { duplicatePolicy } from "@/modules/access-control/policyDuplicate";
 
 const devs = { id: "g-devs", name: "Devs" } as Group;
 const servers = { id: "g-servers", name: "Servers" } as Group;
@@ -30,26 +30,26 @@ const policy: Policy = {
   ],
 };
 
-describe("copyOfPolicy", () => {
+describe("duplicatePolicy", () => {
   it("drops the policy and rule ids so saving creates a new policy", () => {
-    const copy = copyOfPolicy(policy, []);
+    const duplicate = duplicatePolicy(policy, []);
 
-    expect(copy.id).toBeUndefined();
-    expect(copy.rules[0].id).toBeUndefined();
+    expect(duplicate.id).toBeUndefined();
+    expect(duplicate.rules[0].id).toBeUndefined();
   });
 
-  it("renames the copy against the names already taken", () => {
-    expect(copyOfPolicy(policy, []).name).toBe("Devs to Servers (copy)");
+  it("renames the duplicate against the names already taken", () => {
+    expect(duplicatePolicy(policy, []).name).toBe("Devs to Servers (copy)");
     expect(
-      copyOfPolicy(policy, ["Devs to Servers (copy)"]).name,
-      "the first copy name is taken",
+      duplicatePolicy(policy, ["Devs to Servers (copy)"]).name,
+      "the first (copy) name is taken",
     ).toBe("Devs to Servers (copy 2)");
   });
 
   it("keeps every other setting of the policy and its rules", () => {
-    const copy = copyOfPolicy(policy, []);
+    const duplicate = duplicatePolicy(policy, []);
 
-    const { id: _id, name: _name, rules, ...rest } = copy;
+    const { id: _id, name: _name, rules, ...rest } = duplicate;
     const { id: _srcId, name: _srcName, rules: srcRules, ...srcRest } = policy;
     expect(rest).toEqual(srcRest);
 
@@ -59,7 +59,7 @@ describe("copyOfPolicy", () => {
   });
 
   it("leaves the source policy untouched", () => {
-    copyOfPolicy(policy, []);
+    duplicatePolicy(policy, []);
 
     expect(policy.id).toBe("pol-1");
     expect(policy.name).toBe("Devs to Servers");

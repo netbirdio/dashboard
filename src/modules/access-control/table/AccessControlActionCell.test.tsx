@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const openCopyPolicyModal = vi.fn();
+const openDuplicatePolicyModal = vi.fn();
 let canCreate = true;
 
 vi.mock("@/contexts/PermissionsProvider", () => ({
@@ -14,7 +14,7 @@ vi.mock("@/contexts/PermissionsProvider", () => ({
 }));
 vi.mock("@/contexts/PoliciesProvider", () => ({
   usePolicies: () => ({
-    openCopyPolicyModal,
+    openDuplicatePolicyModal,
     deletePolicy: vi.fn(),
     updatePolicy: vi.fn(),
     serializeRules: vi.fn(),
@@ -46,28 +46,28 @@ const openMenu = () =>
   });
 
 beforeEach(() => {
-  openCopyPolicyModal.mockReset();
+  openDuplicatePolicyModal.mockReset();
   canCreate = true;
 });
 afterEach(cleanup);
 
 describe("AccessControlActionCell", () => {
-  it("opens the copy modal for the row's policy", () => {
+  it("opens the duplicate modal for the row's policy", () => {
     render(<AccessControlActionCell policy={policy} />);
     openMenu();
-    fireEvent.click(screen.getByTestId("copy-policy"));
+    fireEvent.click(screen.getByTestId("duplicate-policy"));
 
-    expect(openCopyPolicyModal).toHaveBeenCalledWith(policy);
+    expect(openDuplicatePolicyModal).toHaveBeenCalledWith(policy);
   });
 
-  it("disables Copy without permission to create policies", () => {
+  it("disables Duplicate without permission to create policies", () => {
     canCreate = false;
     render(<AccessControlActionCell policy={policy} />);
     openMenu();
 
     // A disabled item takes no pointer events in the browser (jsdom does not
     // apply the CSS), so the disabled state is what keeps it from opening.
-    const copy = screen.getByTestId("copy-policy");
-    expect(copy.hasAttribute("data-disabled")).toBe(true);
+    const item = screen.getByTestId("duplicate-policy");
+    expect(item.hasAttribute("data-disabled")).toBe(true);
   });
 });

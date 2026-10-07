@@ -10,7 +10,7 @@ import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
-import { copyOfPolicy } from "@/modules/access-control/policyCopy";
+import { duplicatePolicy } from "@/modules/access-control/policyDuplicate";
 
 type Props = {
   children: React.ReactNode;
@@ -31,8 +31,8 @@ const PoliciesContext = React.createContext(
       knownGroups?: Group[],
     ) => Promise<void>;
     openEditPolicyModal: (policy: Policy, tab?: string) => void;
-    // Opens the create modal seeded with a copy of the policy.
-    openCopyPolicyModal: (policy: Policy) => void;
+    // Opens the create modal seeded with a duplicate of the policy.
+    openDuplicatePolicyModal: (policy: Policy) => void;
     deletePolicy: (policy: Policy, onSuccess?: () => void) => Promise<void>;
     serializeRules: (
       rules: Policy["rules"],
@@ -48,9 +48,9 @@ export default function PoliciesProvider({ children }: Props) {
   const [policyModal, setPolicyModal] = useState(false);
   const [currentPolicy, setCurrentPolicy] = useState<Policy>();
   const [initialPolicyTab, setInitialPolicyTab] = useState("");
-  const [isCopy, setIsCopy] = useState(false);
+  const [isDuplicate, setIsDuplicate] = useState(false);
 
-  // Every policy name in the account, so a copy gets a name not already in
+  // Every policy name in the account, so a duplicate gets a name not already in
   // use, even where the table only lists some policies (group details).
   const { permission } = usePermissions();
   const { data: allPolicies } = useFetchApi<Policy[]>(
@@ -197,15 +197,15 @@ export default function PoliciesProvider({ children }: Props) {
 
   const openEditPolicyModal = (policy: Policy, tab?: string) => {
     setCurrentPolicy(policy);
-    setIsCopy(false);
+    setIsDuplicate(false);
     tab && setInitialPolicyTab(tab);
     setPolicyModal(true);
   };
 
-  const openCopyPolicyModal = (policy: Policy) => {
+  const openDuplicatePolicyModal = (policy: Policy) => {
     const takenNames = (allPolicies ?? []).map((p) => p.name);
-    setCurrentPolicy(copyOfPolicy(policy, takenNames));
-    setIsCopy(true);
+    setCurrentPolicy(duplicatePolicy(policy, takenNames));
+    setIsDuplicate(true);
     setInitialPolicyTab("");
     setPolicyModal(true);
   };
@@ -217,7 +217,7 @@ export default function PoliciesProvider({ children }: Props) {
         createPolicy,
         createPoliciesForResource,
         openEditPolicyModal,
-        openCopyPolicyModal,
+        openDuplicatePolicyModal,
         deletePolicy,
         serializeRules,
       }}
@@ -228,18 +228,18 @@ export default function PoliciesProvider({ children }: Props) {
         onOpenChange={(state) => {
           setPolicyModal(state);
           setCurrentPolicy(undefined);
-          setIsCopy(false);
+          setIsDuplicate(false);
         }}
       >
         <AccessControlModalContent
           key={policyModal ? "1" : "0"}
           policy={currentPolicy}
           initialTab={initialPolicyTab}
-          isCopy={isCopy}
+          isDuplicate={isDuplicate}
           onSuccess={async (p) => {
             setPolicyModal(false);
             setCurrentPolicy(undefined);
-            setIsCopy(false);
+            setIsDuplicate(false);
           }}
         />
       </Modal>

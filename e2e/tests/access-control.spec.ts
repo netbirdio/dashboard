@@ -31,9 +31,9 @@ test.describe.serial("Access Controls @access-control", () => {
     policies.push(name);
   });
 
-  test("Should copy a policy", async ({ dashboardAsOwner: page }) => {
+  test("Should duplicate a policy", async ({ dashboardAsOwner: page }) => {
     const source = policies[0];
-    const copy = `${source} (copy)`;
+    const duplicate = `${source} (copy)`;
 
     await navigateTo(page, "/access-control");
     await page
@@ -41,13 +41,13 @@ test.describe.serial("Access Controls @access-control", () => {
       .filter({ has: page.getByTestId(source) })
       .getByTestId("policy-actions")
       .click({ force: true });
-    await page.getByTestId("copy-policy").click({ force: true });
+    await page.getByTestId("duplicate-policy").click({ force: true });
 
-    // The copy opens the create wizard, seeded from the source policy.
+    // Duplicate opens the create wizard, seeded from the source policy.
     await expect(page.getByTestId("create-policy-title")).toBeVisible();
     await page.getByTestId("policy-continue").click();
     await page.getByTestId("policy-continue").click();
-    await expect(page.getByTestId("policy-name")).toHaveValue(copy);
+    await expect(page.getByTestId("policy-name")).toHaveValue(duplicate);
     await expect(page.getByTestId("policy-description")).toHaveValue(
       "This is a test policy",
     );
@@ -61,12 +61,12 @@ test.describe.serial("Access Controls @access-control", () => {
     await page.getByTestId("submit-policy").click();
     expect([200, 201]).toContain((await created).status());
 
-    await expect(page.getByTestId(copy)).toBeVisible();
+    await expect(page.getByTestId(duplicate)).toBeVisible();
     await expect(
       page.getByTestId(source),
       "the source policy is kept",
     ).toBeVisible();
-    policies.push(copy);
+    policies.push(duplicate);
   });
 
   test("Should delete created policies", async ({ dashboardAsOwner: page }) => {
@@ -178,7 +178,7 @@ async function deletePolicy(
   name: string,
 ) {
   // Row actions are now behind a dropdown menu. Match the row by its exact
-  // name: a copy's name contains the source policy's name.
+  // name: a duplicate's name contains the source policy's name.
   await page
     .locator("tr")
     .filter({ has: page.getByTestId(name) })

@@ -2,12 +2,12 @@ import { copyName } from "@utils/copyName";
 import { AgentPolicy } from "@/modules/agent-network/data/mockData";
 
 /**
- * Builds an unsaved copy of an agent policy to seed the create modal: every
+ * Builds an unsaved duplicate of an agent policy to seed the create modal: every
  * setting is kept, the id is dropped so the save creates a new policy, and
- * the name gets a copy suffix that is free among `takenNames`. Source groups,
+ * the name gets a "(copy)" suffix that is free among `takenNames`. Source groups,
  * providers and guardrails stay referenced, not duplicated.
  */
-export function copyOfAgentPolicy(
+export function duplicateAgentPolicy(
   policy: AgentPolicy,
   takenNames: string[],
 ): Omit<AgentPolicy, "id"> {

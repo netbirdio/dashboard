@@ -22,7 +22,7 @@ type Props = {
 export default function AccessControlActionCell({ policy }: Readonly<Props>) {
   const { confirm } = useDialog();
   const { permission } = usePermissions();
-  const { deletePolicy, updatePolicy, serializeRules, openCopyPolicyModal } =
+  const { deletePolicy, updatePolicy, serializeRules, openDuplicatePolicyModal } =
     usePolicies();
   const [open, setOpen] = useState(false);
 
@@ -80,14 +80,14 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
           <DropdownMenuItem
             onClick={() => {
               setOpen(false);
-              openCopyPolicyModal(policy);
+              openDuplicatePolicyModal(policy);
             }}
             disabled={!canCreate}
-            data-testid={"copy-policy"}
+            data-testid={"duplicate-policy"}
           >
             <div className={"flex gap-3 items-center"}>
               <Copy size={14} className={"shrink-0"} />
-              Copy
+              Duplicate
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem

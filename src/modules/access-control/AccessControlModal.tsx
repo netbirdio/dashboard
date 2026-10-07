@@ -147,8 +147,8 @@ type ModalProps = {
   // Set when the policy is drawn onto a network in the draft canvas: the
   // destination is that network's resources only, and the policy is one-way.
   destinationScope?: PolicyDestinationScope;
-  // The policy is an unsaved copy: show the create wizard, seeded from it.
-  isCopy?: boolean;
+  // The policy is an unsaved duplicate: show the create wizard, seeded from it.
+  isDuplicate?: boolean;
 };
 
 export type PolicyDestinationScope = {
@@ -177,7 +177,7 @@ export function AccessControlModalContent({
   additionalResources,
   additionalPeers,
   destinationScope,
-  isCopy = false,
+  isDuplicate = false,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
   const { users } = useUsers();
@@ -232,8 +232,8 @@ export function AccessControlModalContent({
     initialDestinationResource,
   });
 
-  // A copy carries a policy to seed the form but is saved as a new one.
-  const isCreate = !policy || isCopy;
+  // A duplicate carries a policy to seed the form but is saved as a new one.
+  const isCreate = !policy || isDuplicate;
 
   const [tab, setTab] = useState(() => {
     if (initialTab && initialTab !== "") return initialTab;

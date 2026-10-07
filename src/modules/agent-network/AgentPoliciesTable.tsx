@@ -52,7 +52,7 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
-import { copyOfAgentPolicy } from "@/modules/agent-network/agentPolicyCopy";
+import { duplicateAgentPolicy } from "@/modules/agent-network/agentPolicyDuplicate";
 import AgentPolicyModal from "@/modules/agent-network/AgentPolicyModal";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
@@ -337,11 +337,11 @@ function formatLimitWindow(seconds: number): string {
 function ActionsCell({
   policy,
   onEdit,
-  onCopy,
+  onDuplicate,
 }: {
   policy: AgentPolicy;
   onEdit: (p: AgentPolicy) => void;
-  onCopy: (p: AgentPolicy) => void;
+  onDuplicate: (p: AgentPolicy) => void;
 }) {
   const { confirm } = useDialog();
   const { togglePolicy, deletePolicy } = useAIProviders();
@@ -388,13 +388,13 @@ function ActionsCell({
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => onCopy(policy)}
+            onClick={() => onDuplicate(policy)}
             disabled={!canCreate}
-            data-testid={"copy-agent-policy"}
+            data-testid={"duplicate-agent-policy"}
           >
             <div className={"flex gap-3 items-center"}>
               <Copy size={14} className={"shrink-0"} />
-              Copy
+              Duplicate
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => togglePolicy(policy.id)}>
@@ -489,8 +489,8 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
     undefined,
   );
   const [initialTab, setInitialTab] = useState<string | undefined>(undefined);
-  // Seeds the create modal when copying a policy.
-  const [copyInitial, setCopyInitial] = useState<
+  // Seeds the create modal when duplicating a policy.
+  const [duplicateInitial, setDuplicateInitial] = useState<
     Omit<AgentPolicy, "id"> | undefined
   >(undefined);
 
@@ -500,11 +500,11 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
     setCreateOpen(true);
   };
 
-  const openCopy = (p: AgentPolicy) => {
+  const openDuplicate = (p: AgentPolicy) => {
     setEditPolicy(undefined);
     setInitialTab(undefined);
     const takenNames = policies.map((existing) => existing.name);
-    setCopyInitial(copyOfAgentPolicy(p, takenNames));
+    setDuplicateInitial(duplicateAgentPolicy(p, takenNames));
     setCreateOpen(true);
   };
 
@@ -585,7 +585,7 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
         <ActionsCell
           policy={row.original}
           onEdit={(p) => openEdit(p)}
-          onCopy={openCopy}
+          onDuplicate={openDuplicate}
         />
       ),
     },
@@ -601,11 +601,11 @@ export default function AgentPoliciesTable({ headingTarget }: Readonly<Props>) {
             if (!o) {
               setEditPolicy(undefined);
               setInitialTab(undefined);
-              setCopyInitial(undefined);
+              setDuplicateInitial(undefined);
             }
           }}
           policy={editPolicy}
-          initial={copyInitial}
+          initial={duplicateInitial}
           initialTab={initialTab}
         />
       )}
