@@ -5,8 +5,8 @@ import {
   isNetBirdCloud,
   testOnboardingEnabled,
 } from "@utils/netbird";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import { submitHubspotForm } from "@/cloud/analytics/Hubspot";
 import { HubspotFormField, useAnalytics } from "@/contexts/AnalyticsProvider";
@@ -52,6 +52,8 @@ const hasAgentNetworkSignupSource = () => {
     return false;
   }
 };
+
+const AGENT_NETWORK_FINISH_PATH = "/agent-network/usage";
 
 type Props = {
   onSurveySubmit?: (data: {
@@ -308,16 +310,32 @@ export const OnboardingProvider = ({
     }
   };
 
-  const onFinishAgentNetwork = async () => {
-    await endAgentNetworkOnboarding();
-    trackEventV2(
-      "Onboarding",
-      "Finished Agent Network Onboarding",
-      account?.id,
-      loggedInUser?.id,
-    );
-    router.push("/agent-network/usage?tab=access-logs");
+  // Finishing opens the access logs first and ends the onboarding only once
+  // they show. Ending it first would close the flow over the page it opened
+  // on, which shows for a moment before the access logs replace it.
+  const pathname = usePathname();
+  const [finishing, setFinishing] = useState(false);
+  const finished = useRef(false);
+
+  const onFinishAgentNetwork = () => {
+    setFinishing(true);
+    router.push(`${AGENT_NETWORK_FINISH_PATH}?tab=access-logs`);
   };
+
+  useEffect(() => {
+    if (!finishing || finished.current) return;
+    if (pathname !== AGENT_NETWORK_FINISH_PATH) return;
+    finished.current = true;
+    endAgentNetworkOnboarding().then(() =>
+      trackEventV2(
+        "Onboarding",
+        "Finished Agent Network Onboarding",
+        account?.id,
+        loggedInUser?.id,
+      ),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finishing, pathname]);
 
   const onSubmitAgentSignup = async (fields: HubspotFormField[]) => {
     await updateAccountMeta({
