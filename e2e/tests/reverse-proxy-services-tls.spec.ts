@@ -19,7 +19,7 @@ let tlsNetwork = "";
 let tlsResource = "";
 let tlsSubdomain = "";
 
-test.describe.serial("Reverse Proxy - Services (TLS Passthrough) @reverse-proxy", () => {
+test.describe.serial("Reverse Proxy - Services (TLS Passthrough) @reverse-proxy @test-env", () => {
   test("Should create a network with a resource", async ({ dashboardAsOwner: page }) => {
     // Clean up leftover networks
     await deleteServicesByPrefix(page, "tls-svc-");

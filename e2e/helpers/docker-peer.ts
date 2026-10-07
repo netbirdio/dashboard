@@ -1,6 +1,7 @@
-// Spins up a real NetBird peer in docker, registering via a setup key. The test
-// env has no signal/TURN, so the peer registers but stays offline. The client
-// MUST reach management directly (http://management:80); caddy breaks h2c.
+// Spins up a real NetBird peer in docker, registering via a setup key. In the
+// local test env the client MUST reach management directly over its compose
+// network (http://management:80), since caddy breaks h2c, and it stays offline
+// for lack of signal/TURN. A deployed target is reached at its public URL.
 import { execFileSync } from "child_process";
 import { expect, type Page } from "@playwright/test";
 import {
@@ -9,10 +10,11 @@ import {
   deleteSetupKeysByPrefix,
   listPeers,
 } from "./api";
+import { deployedBaseURL, isDeployedTarget } from "./target";
 
-const NETWORK = "environment_netbird";
-const IMAGE = "netbirdio/netbird:latest";
-const MGMT_URL = "http://management:80";
+const NETWORK = isDeployedTarget ? undefined : "environment_netbird";
+const IMAGE = process.env.NETBIRD_E2E_PEER_IMAGE || "netbirdio/netbird:latest";
+const MGMT_URL = deployedBaseURL ?? "http://management:80";
 
 type RegisteredPeer = {
   id: string;
@@ -51,8 +53,7 @@ export async function runDockerPeerWithKey(
     "-d",
     "--name",
     hostname,
-    "--network",
-    NETWORK,
+    ...(NETWORK ? ["--network", NETWORK] : []),
     "--cap-add=NET_ADMIN",
     "--cap-add=SYS_ADMIN",
     "-e",

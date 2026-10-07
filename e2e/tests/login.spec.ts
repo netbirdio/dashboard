@@ -2,16 +2,9 @@ import { test } from "@playwright/test";
 import * as fs from "fs";
 import * as path from "path";
 import { waitForProxyClustersOnline } from "../helpers/api";
-import { loginToApp } from "../helpers/auth";
-
-type TestUser = "owner" | "user";
+import { credentialsFor, loginToApp, type TestUser } from "../helpers/auth";
 
 const AUTH_DIR = path.resolve(__dirname, "../fixtures/auth");
-
-const credentials: Record<TestUser, { username: string; password: string }> = {
-  owner: { username: "owner@localhost.test", password: "testMe123@" },
-  user: { username: "user@localhost.test", password: "testMe123@" },
-};
 
 // Temporary: the CI failures for the user fixture report only which locator
 // timed out, which cannot distinguish a blank page from a rendered app with an
@@ -50,7 +43,7 @@ async function loginAndSave(
   page: import("@playwright/test").Page,
   user: TestUser,
 ) {
-  const { username, password } = credentials[user];
+  const { username, password } = credentialsFor(user);
 
   const pageErrors: string[] = [];
   const failedRequests: string[] = [];
@@ -186,7 +179,6 @@ test.describe("Global Setup", () => {
         25_000,
       );
     } catch (err) {
-       
       console.warn(
         `[setup] proxy clusters not confirmed online; reverse-proxy specs may be affected: ${
           (err as Error).message

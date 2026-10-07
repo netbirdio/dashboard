@@ -154,7 +154,7 @@ const AGENT_VIEW_PATHS = [
   "/agent-network/configuration",
 ];
 
-test.describe.serial("Agent Network focused view @agent-network", () => {
+test.describe.serial("Agent Network focused view @agent-network @test-build", () => {
   test("focused menu shows only Agent Network views and hides the regular sections", async ({
     browser,
   }) => {
