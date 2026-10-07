@@ -2,12 +2,22 @@ import useFetchApi, { useApiCall } from "@utils/api";
 import { useEffect, useRef } from "react";
 import { useSWRConfig } from "swr";
 import { useGroups } from "@/contexts/GroupsProvider";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
+import {
+  LOGGED_IN_USER_KEY,
+  useLoggedInUser,
+} from "@/contexts/UsersProvider";
 import { Policy } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
 
 const USERS_GROUP_NAME = "Users";
 const DEFAULT_POLICY_NAME = "Default";
+
+// How many times the user is put in the Users group before giving up, and how
+// long to wait before checking that it held.
+const MEMBERSHIP_ATTEMPTS = 3;
+const MEMBERSHIP_CHECK_DELAY_MS = 1000;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 // useAgentNetworkFirstRunSetup prepares the account for the Agent Network
 // onboarding, before the operator reaches the policy step. It runs once,
@@ -35,6 +45,31 @@ export function useAgentNetworkFirstRunSetup(enabled: boolean) {
     if (!groups || !loggedInUser || !policies) return;
     ranRef.current = true;
 
+    // joinGroup adds the group to the current user's auto groups and checks
+    // that it held. Management can write back a user it read before the update
+    // (its last-login save rewrites the whole row), which drops the group, so
+    // the user is read fresh each time and the update is sent again until the
+    // group sticks.
+    const joinGroup = async (groupId: string) => {
+      for (let attempt = 1; ; attempt++) {
+        const user = await userRequest.get("/current");
+        const current = user.auto_groups ?? [];
+        if (current.includes(groupId)) return;
+        if (attempt > MEMBERSHIP_ATTEMPTS) {
+          throw new Error("could not add the user to the Users group");
+        }
+        await userRequest.put(
+          {
+            role: user.role,
+            auto_groups: [...current, groupId],
+            is_blocked: user.is_blocked ?? false,
+          },
+          `/${user.id}`,
+        );
+        await sleep(MEMBERSHIP_CHECK_DELAY_MS);
+      }
+    };
+
     (async () => {
       try {
         // 1. Ensure a "Users" source group with the current user in it.
@@ -50,19 +85,9 @@ export function useAgentNetworkFirstRunSetup(enabled: boolean) {
 
         const groupId = group?.id;
         if (groupId) {
-          const current = loggedInUser.auto_groups ?? [];
-          if (!current.includes(groupId)) {
-            await userRequest.put(
-              {
-                role: loggedInUser.role,
-                auto_groups: [...current, groupId],
-                is_blocked: loggedInUser.is_blocked ?? false,
-              },
-              `/${loggedInUser.id}`,
-            );
-            mutate("/users?service_user=false");
-            mutate("/users/current");
-          }
+          await joinGroup(groupId);
+          mutate("/users?service_user=false");
+          mutate(LOGGED_IN_USER_KEY);
         }
 
         // 2. Remove the permissive "Default" Access Control policy.

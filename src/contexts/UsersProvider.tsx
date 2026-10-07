@@ -113,6 +113,11 @@ export default function UsersProvider({ children }: Readonly<Props>) {
 
 export const useUsers = () => React.useContext(UsersContext);
 
+// The logged-in user is cached under this SWR key, so refreshing it takes
+// mutate(LOGGED_IN_USER_KEY) rather than mutate("/users/current").
+const USER_PROFILE_KEY = "user-profile";
+export const LOGGED_IN_USER_KEY = ["/users/current", USER_PROFILE_KEY];
+
 const UserProfileProvider = ({ children }: Props) => {
   const { logout } = useOidc();
   const router = useRouter();
@@ -122,7 +127,7 @@ const UserProfileProvider = ({ children }: Props) => {
     error,
     isLoading,
   } = useFetchApi<User>("/users/current", true, true, true, {
-    key: "user-profile",
+    key: USER_PROFILE_KEY,
   });
 
   const loggedInUser = useMemo(() => {
