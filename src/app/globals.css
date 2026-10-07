@@ -1,6 +1,204 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  --color-red-50: #fdf2f2;
+  --color-red-100: #fde8e8;
+  --color-red-200: #fbd5d5;
+  --color-red-300: #f8b4b4;
+  --color-red-400: #f98080;
+  --color-red-500: #f05252;
+  --color-red-600: #e02424;
+  --color-red-700: #c81e1e;
+  --color-red-800: #9b1c1c;
+  --color-red-900: #771d1d;
+
+  --color-yellow-50: #fdfdea;
+  --color-yellow-100: #fdf6b2;
+  --color-yellow-200: #fce96a;
+  --color-yellow-300: #faca15;
+  --color-yellow-400: #e3a008;
+  --color-yellow-500: #c27803;
+  --color-yellow-600: #9f580a;
+  --color-yellow-700: #8e4b10;
+  --color-yellow-800: #723b13;
+  --color-yellow-900: #633112;
+
+  --color-green-50: #f3faf7;
+  --color-green-100: #def7ec;
+  --color-green-200: #bcf0da;
+  --color-green-300: #84e1bc;
+  --color-green-400: #31c48d;
+  --color-green-500: #0e9f6e;
+  --color-green-600: #057a55;
+  --color-green-700: #046c4e;
+  --color-green-800: #03543f;
+  --color-green-900: #014737;
+
+  --color-blue-50: #ebf5ff;
+  --color-blue-100: #e1effe;
+  --color-blue-200: #c3ddfd;
+  --color-blue-300: #a4cafe;
+  --color-blue-400: #76a9fa;
+  --color-blue-500: #3f83f8;
+  --color-blue-600: #1c64f2;
+  --color-blue-700: #1a56db;
+  --color-blue-800: #1e429f;
+  --color-blue-900: #233876;
+
+  --color-indigo-50: #f0f5ff;
+  --color-indigo-100: #e5edff;
+  --color-indigo-200: #cddbfe;
+  --color-indigo-300: #b4c6fc;
+  --color-indigo-400: #8da2fb;
+  --color-indigo-500: #6875f5;
+  --color-indigo-600: #5850ec;
+  --color-indigo-700: #5145cd;
+  --color-indigo-800: #42389d;
+  --color-indigo-900: #362f78;
+
+  --color-purple-50: #f6f5ff;
+  --color-purple-100: #edebfe;
+  --color-purple-200: #dcd7fe;
+  --color-purple-300: #cabffd;
+  --color-purple-400: #ac94fa;
+  --color-purple-500: #9061f9;
+  --color-purple-600: #7e3af2;
+  --color-purple-700: #6c2bd9;
+  --color-purple-800: #5521b5;
+  --color-purple-900: #4a1d96;
+
+  --color-pink-50: #fdf2f8;
+  --color-pink-100: #fce8f3;
+  --color-pink-200: #fad1e8;
+  --color-pink-300: #f8b4d9;
+  --color-pink-400: #f17eb8;
+  --color-pink-500: #e74694;
+  --color-pink-600: #d61f69;
+  --color-pink-700: #bf125d;
+  --color-pink-800: #99154b;
+  --color-pink-900: #751a3d;
+
+  --color-nb-gray-50: #f4f6f7;
+  --color-nb-gray-100: #e4e7e9;
+  --color-nb-gray-200: #cbd2d6;
+  --color-nb-gray-250: #b7c0c6;
+  --color-nb-gray-300: #a3adb5;
+  --color-nb-gray-350: #8f9ca8;
+  --color-nb-gray-400: #7c8994;
+  --color-nb-gray-500: #616e79;
+  --color-nb-gray-600: #535d67;
+  --color-nb-gray-700: #474e57;
+  --color-nb-gray-800: #3f444b;
+  --color-nb-gray-850: #363b40;
+  --color-nb-gray-900: #2e3238;
+  --color-nb-gray-910: #2b2f33;
+  --color-nb-gray-920: #25282d;
+  --color-nb-gray-925: #1e2123;
+  --color-nb-gray-930: #25282c;
+  --color-nb-gray-935: #1f2124;
+  --color-nb-gray-940: #1c1e21;
+  --color-nb-gray-950: #181a1d;
+  --color-nb-gray-960: #16181b;
+  --color-nb-gray: #181a1d;
+
+  --color-netbird-50: #fff6ed;
+  --color-netbird-100: #feecd6;
+  --color-netbird-150: #ffdfb8;
+  --color-netbird-200: #ffd4a6;
+  --color-netbird-300: #fab677;
+  --color-netbird-400: #f68330;
+  --color-netbird-500: #f46d1b;
+  --color-netbird-600: #e55311;
+  --color-netbird-700: #be3e10;
+  --color-netbird-800: #973215;
+  --color-netbird-900: #7a2b14;
+  --color-netbird-950: #421308;
+  --color-netbird: #f68330;
+
+  --color-nb-blue-50: #ebffff;
+  --color-nb-blue-100: #cefdff;
+  --color-nb-blue-200: #a2f9ff;
+  --color-nb-blue-300: #63f2fd;
+  --color-nb-blue-400: #31e4f5;
+  --color-nb-blue-500: #00c4da;
+  --color-nb-blue-600: #039cb7;
+  --color-nb-blue-700: #0a7c94;
+  --color-nb-blue-800: #126478;
+  --color-nb-blue-900: #145365;
+  --color-nb-blue-950: #063746;
+  --color-nb-blue: #31e4f5;
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  --transition-duration-3000: 3000ms;
+
+  /* Tailwind v4 shifted these scales down a step; pin the v3 values so existing class names render unchanged. */
+  --radius-sm: 0.125rem;
+  --blur-sm: 4px;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* Tailwind v4 dropped these v3 preflight defaults. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
 
 :root {
     --toasts-before: 0;

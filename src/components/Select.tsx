@@ -99,7 +99,7 @@ const SelectItem = React.forwardRef<
           </SelectPrimitive.ItemIndicator>
         </span>
         <div className="flex items-center gap-2">
-          <span className="flex-shrink-0">{icon}</span>
+          <span className="shrink-0">{icon}</span>
           <div className="flex flex-col">
             <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
             {description && (
