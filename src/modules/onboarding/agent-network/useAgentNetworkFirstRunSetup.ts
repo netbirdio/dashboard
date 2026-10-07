@@ -15,7 +15,7 @@ const DEFAULT_POLICY_NAME = "Default";
 // How many times the user is put in the Users group before giving up, and how
 // long to wait before checking that it held.
 const MEMBERSHIP_ATTEMPTS = 3;
-const MEMBERSHIP_CHECK_DELAY_MS = 1000;
+const MEMBERSHIP_CHECK_DELAY_MS = 500;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
