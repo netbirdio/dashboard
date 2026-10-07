@@ -31,6 +31,44 @@ test.describe.serial("Access Controls @access-control", () => {
     policies.push(name);
   });
 
+  test("Should copy a policy", async ({ dashboardAsOwner: page }) => {
+    const source = policies[0];
+    const copy = `${source} (copy)`;
+
+    await navigateTo(page, "/access-control");
+    await page
+      .locator("tr")
+      .filter({ has: page.getByTestId(source) })
+      .getByTestId("policy-actions")
+      .click({ force: true });
+    await page.getByTestId("copy-policy").click({ force: true });
+
+    // The copy opens the create wizard, seeded from the source policy.
+    await expect(page.getByTestId("create-policy-title")).toBeVisible();
+    await page.getByTestId("policy-continue").click();
+    await page.getByTestId("policy-continue").click();
+    await expect(page.getByTestId("policy-name")).toHaveValue(copy);
+    await expect(page.getByTestId("policy-description")).toHaveValue(
+      "This is a test policy",
+    );
+
+    const created = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/policies") &&
+        resp.request().method() === "POST",
+      { timeout: 30_000 },
+    );
+    await page.getByTestId("submit-policy").click();
+    expect([200, 201]).toContain((await created).status());
+
+    await expect(page.getByTestId(copy)).toBeVisible();
+    await expect(
+      page.getByTestId(source),
+      "the source policy is kept",
+    ).toBeVisible();
+    policies.push(copy);
+  });
+
   test("Should delete created policies", async ({ dashboardAsOwner: page }) => {
     for (const policy of policies) {
       await deletePolicy(page, policy);
@@ -139,10 +177,11 @@ async function deletePolicy(
   page: import("@playwright/test").Page,
   name: string,
 ) {
-  // Row actions are now behind a dropdown menu.
+  // Row actions are now behind a dropdown menu. Match the row by its exact
+  // name: a copy's name contains the source policy's name.
   await page
     .locator("tr")
-    .filter({ hasText: name })
+    .filter({ has: page.getByTestId(name) })
     .getByTestId("policy-actions")
     .click({ force: true });
   await page.getByTestId("delete-policy").click({ force: true });
