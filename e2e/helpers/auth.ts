@@ -94,11 +94,16 @@ export async function loginToApp(
     return;
   }
 
-  // Dex renders both fields at once, so the password locator can win the race.
+  // Dex renders both fields on one form, so the password locator can win the
+  // race, possibly a moment before the login field is visible.
   const onDex =
     which === "dex-picker" ||
     which === "dex" ||
-    (await dexLoginInput.isVisible().catch(() => false));
+    (which === "password" &&
+      (await dexLoginInput
+        .waitFor({ state: "visible", timeout: 2_000 })
+        .then(() => true)
+        .catch(() => false)));
 
   if (onDex) {
     if (which === "dex-picker") {

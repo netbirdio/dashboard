@@ -94,9 +94,12 @@ async function completeOnboarding(page: Page, api: Api) {
 // Management creates this policy with every new account, and specs assert it.
 async function restoreDefaultPolicy(page: Page, api: Api) {
   const headers = { Authorization: `Bearer ${api.token}` };
-  const groups = (await (
-    await page.request.get(`${api.origin}/api/groups`, { headers })
-  ).json()) as { id: string; name: string }[];
+  const resp = await page.request.get(`${api.origin}/api/groups`, { headers });
+  if (!resp.ok()) {
+    console.warn(`[setup] could not list groups: ${resp.status()}`);
+    return;
+  }
+  const groups = (await resp.json()) as { id: string; name: string }[];
   const all = groups.find((g) => g.name === "All");
   if (!all) return;
   const rule = {
@@ -160,12 +163,10 @@ test.describe("Deployed Setup", () => {
     await restoreDefaultPolicy(page, api);
 
     fs.mkdirSync(AUTH_DIR, { recursive: true });
-    // Every spec that logs in as `user` is tagged @test-env, so the owner
-    // session stands in for it.
-    for (const user of ["owner", "user"]) {
-      await page
-        .context()
-        .storageState({ path: path.join(AUTH_DIR, `${user}.json`) });
-    }
+    // No user.json: every spec that logs in as `user` is tagged @test-env, and
+    // one that is not fails on the missing file instead of running as owner.
+    await page
+      .context()
+      .storageState({ path: path.join(AUTH_DIR, "owner.json") });
   });
 });
