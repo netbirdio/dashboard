@@ -127,7 +127,7 @@ const PlansAndBillingTabContent = () => {
       team: name === PlanTier.TEAM,
       business: name === PlanTier.BUSINESS,
     });
-    if (subscription?.active == true && !isTrial) {
+    if (subscription?.active == true) {
       await changeSubscription(plan, isAWS);
     } else {
       await subscribe(plan, isAWS);
