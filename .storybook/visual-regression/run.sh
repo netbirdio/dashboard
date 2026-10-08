@@ -53,18 +53,19 @@ build() {
 # the branch). The build error names the story, which is then left out and
 # the build retried.
 build_baseline() {
-  local attempt story
-  for attempt in 1 2 3 4 5; do
-    build "$WORKTREE" baseline >/dev/null && return 0
-    story=$(grep -oE 'src/[^" ]+\.stories\.tsx' "$CACHE/storybook-baseline.log" | head -1)
-    if [[ -z "$story" || ! -f "$WORKTREE/$story" ]]; then
+  local excluded=0 story
+  until build "$WORKTREE" baseline >/dev/null; do
+    story=$(grep -oE 'src/[^" ]+\.stories\.tsx' "$CACHE/storybook-baseline.log" | head -1 || true)
+    # Stop when the error doesn't point at a story, or after five exclusions
+    # (each costs a build); the last exclusion still gets its build attempt.
+    if [[ -z "$story" || ! -f "$WORKTREE/$story" || $excluded -ge 5 ]]; then
       echo "✗ baseline storybook build failed, see $CACHE/storybook-baseline.log"
       return 1
     fi
     echo "  not in baseline: $story (doesn't build against it)"
     rm "$WORKTREE/$story"
+    excluded=$((excluded + 1))
   done
-  return 1
 }
 
 # Stories the baseline build left out have no baseline shot by design. They
