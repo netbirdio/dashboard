@@ -40,7 +40,9 @@ Everything lands in `.storybook/visual-regression/output/`:
 - `summary.md` / `summary.json`: the changed stories, largest first, with their
   story file, the changed region and the changed source files in their imports.
 - `crops/`: each change cut to its region, baseline above current.
-- `current/`, `baseline/`, `diff/`: the full screenshots.
+- `current/`, `baseline/`, `diff/`: the full screenshots of the changed stories.
+  Unchanged screenshots are dropped, so the output (and the CI artifact) only
+  grows with the number of changes; a clean run leaves just the summary files.
 
 A full run of all ~680 stories takes about 6 minutes on a laptop the first time
 and about 3 minutes with a cached baseline. `--filter` brings it down to seconds.

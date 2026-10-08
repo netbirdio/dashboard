@@ -145,9 +145,11 @@ node "$HERE/scripts/capture.mjs" "$CACHE/storybook/current" "$OUT/current" \
 
 # -M absorbs sub-pixel anti-aliasing noise; -T lets a story differ by 0.1 % of its pixels.
 diff_shots() {
-  rm -rf "$OUT/diff"
+  # reg-cli doesn't truncate an existing reg.json, so a shorter second result
+  # would leave the tail of the first one behind.
+  rm -rf "$OUT/diff" "$OUT/reg.json"
   npx reg-cli "$OUT/current" "$OUT/baseline" "$OUT/diff" \
-    -R "$OUT/report.html" -J "$OUT/reg.json" -M 0.1 -T 0.001 --diffFormat png >"$OUT/reg.log" 2>&1
+    -R "$OUT/report.html" -J "$OUT/reg.json" -M 0.1 -T 0.001 >"$OUT/reg.log" 2>&1
 }
 
 step "diffing"
@@ -180,9 +182,26 @@ fi
 
 if $CLEAN; then
   echo "✓ no visual differences ($((SECONDS - started))s)"
-else
-  tail -3 "$OUT/reg.log"
-  node "$HERE/scripts/summarize.mjs" "$OUT" "$CACHE/storybook/current" "$OUT/causes.json"
-  echo "✗ differences found ($((SECONDS - started))s): $OUT/report.html"
+  rm -rf "$OUT/current" "$OUT/baseline" "$OUT/diff" "$OUT/recheck-baseline" "$OUT/report.html"
+  exit 0
 fi
+
+grep -E "changed|passed|new|deleted" "$OUT/reg.log" | tail -3
+node "$HERE/scripts/summarize.mjs" "$OUT" "$CACHE/storybook/current" "$OUT/causes.json"
+
+# Unchanged screenshots are most of the output but nothing to look at, so they
+# are dropped and the report is rendered again with only the changed stories.
+node -e '
+  const fs = require("fs");
+  const out = process.argv[1];
+  const reg = JSON.parse(fs.readFileSync(`${out}/reg.json`, "utf-8"));
+  const keep = new Set([...reg.failedItems, ...reg.newItems, ...reg.deletedItems]);
+  for (const dir of ["current", "baseline", "diff"])
+    for (const file of fs.existsSync(`${out}/${dir}`) ? fs.readdirSync(`${out}/${dir}`) : [])
+      if (!keep.has(file.replace(/\.webp$/, ".png"))) fs.rmSync(`${out}/${dir}/${file}`);
+  fs.writeFileSync(`${out}/reg.json`, JSON.stringify({ ...reg, passedItems: [] }));
+' "$OUT"
+rm -rf "$OUT/recheck-baseline"
+npx reg-cli -F "$OUT/reg.json" -R "$OUT/report.html" >>"$OUT/reg.log" 2>&1
+echo "✗ differences found ($((SECONDS - started))s): $OUT/report.html"
 [[ -t 1 && "$(uname)" == Darwin ]] && open "$OUT/report.html" || true
