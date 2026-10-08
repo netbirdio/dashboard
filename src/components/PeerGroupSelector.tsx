@@ -476,7 +476,7 @@ export function PeerGroupSelector({
             className={cn(
               "min-h-[46px] w-full relative items-center group",
               "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
-              "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer hover:dark:bg-nb-gray-900/50",
+              "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer enabled:hover:bg-nb-gray-900 enabled:hover:border-nb-gray-600 dark:enabled:hover:bg-nb-gray-800/60",
               "disabled:pointer-events-none disabled:opacity-60 transition-all",
             )}
             disabled={disabled}
@@ -598,7 +598,7 @@ export function PeerGroupSelector({
         )}
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-sm shadow-nb-gray-950"
+        className="w-full p-0 shadow-sm dark:shadow-nb-gray-950"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}

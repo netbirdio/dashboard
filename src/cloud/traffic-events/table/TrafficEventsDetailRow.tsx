@@ -143,7 +143,7 @@ const PolicyListItem = ({
         <Link href={`/access-control?id=${policy?.id}`}>
           <span
             className={
-              "flex gap-1 underline underline-offset-4 decoration-dotted text-nb-gray-100 hover:text-white"
+              "flex gap-1 underline underline-offset-4 decoration-dotted text-nb-gray-100 hover:text-nb-gray-50"
             }
           >
             {policy?.name}

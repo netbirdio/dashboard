@@ -95,7 +95,8 @@ function List({ children }: { children: React.ReactNode }) {
   return (
     <Tabs.List
       className={cn(
-        "shrink-0 bg-nb-gray border-b-0 border-nb-gray-930",
+        "shrink-0 bg-nb-gray",
+        "border-b lg:border-b-0 lg:border-r border-nb-gray-800",
         // PageContainer is the scroll container, so without this the tab list
         // scrolls away with the tab content. Pinned to the top of it instead,
         // and given its own overflow so a list taller than the viewport can

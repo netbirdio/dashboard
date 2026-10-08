@@ -9,6 +9,7 @@ import { SmallBadge } from "@components/ui/SmallBadge";
 import TruncatedText from "@components/ui/TruncatedText";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromString } from "@utils/helpers";
 import { ArrowUpRightIcon, ChevronsUpDown, CircleHelp } from "lucide-react";
 import * as React from "react";
@@ -260,11 +261,9 @@ const TenantItem = ({
     >
       <div
         className={cn(
-          "w-8 h-8 bg-nb-gray-900 border-nb-gray-800 flex items-center shrink-0 rounded-[4px] justify-center text-sm font-medium text-white uppercase",
+          "initials-avatar w-8 h-8 bg-nb-gray-900 border-nb-gray-800 flex items-center shrink-0 rounded-[4px] justify-center text-sm font-medium text-white uppercase",
         )}
-        style={{
-          color: color,
-        }}
+        style={getAvatarStyle(color)}
       >
         <span>{firstChar}</span>
       </div>

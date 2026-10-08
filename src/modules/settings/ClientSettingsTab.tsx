@@ -275,7 +275,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               Configure how NetBird clients receive update notifications. When
               enabled, users will be prompted to install the selected version.
               This requires at least NetBird{" "}
-              <span className={"text-white font-medium"}>v0.61.0</span>.{" "}
+              <span className={"text-nb-gray-100 font-medium"}>v0.61.0</span>.{" "}
               <InlineLink
                 href={"https://docs.netbird.io/manage/peers/auto-update"}
                 target={"_blank"}
@@ -349,7 +349,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               <HelpText>
                 Allow peers to expose local services through the NetBird reverse
                 proxy using the CLI. <br /> This requires at least NetBird{" "}
-                <span className={"text-white font-medium"}>v0.66.0</span>.{" "}
+                <span className={"text-nb-gray-100 font-medium"}>v0.66.0</span>.{" "}
                 <InlineLink
                   href={
                     "https://docs.netbird.io/manage/reverse-proxy/expose-from-cli"

@@ -3,6 +3,7 @@ import {
   SelectOption,
 } from "@components/select/SelectDropdown";
 import useFetchApi from "@utils/api";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromUser } from "@utils/helpers";
 import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
@@ -125,7 +126,7 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
           height: 20,
           width: "1px",
           border: "none",
-          backgroundColor: "#3f444b",
+          backgroundColor: "rgb(var(--nb-gray-800))",
           borderRadius: "0px 4px 4px 0px",
           right: -2,
         }}
@@ -151,11 +152,9 @@ export const SelectedUser = ({
     <div className={cn("flex items-center justify-center gap-2.5", className)}>
       <div
         className={
-          "w-8 h-8 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-850"
+          "initials-avatar w-8 h-8 rounded-full relative flex items-center justify-center text-neutral-700 dark:text-white uppercase text-md font-medium bg-nb-gray-850"
         }
-        style={{
-          color: generateColorFromUser(user),
-        }}
+        style={getAvatarStyle(generateColorFromUser(user))}
       >
         {!user?.name && !user?.id && <Cog size={12} />}
         {user?.name?.charAt(0) || user?.id?.charAt(0)}

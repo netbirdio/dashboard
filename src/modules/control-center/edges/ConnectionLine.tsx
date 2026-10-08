@@ -27,10 +27,10 @@ export const ConnectionLine = ({
       <g style={{ pointerEvents: "none" }}>
         <path
           fill="none"
-          stroke="#fff"
           strokeWidth={2}
           strokeDasharray="5, 5"
           style={{ opacity: 0.6 }}
+          className="cc-animated-edge stroke-nb-gray-50"
           d={edgePath}
         />
       </g>

@@ -6,6 +6,7 @@ import { MemoizedScrollArea, ScrollAreaViewport } from "@components/ScrollArea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { useApiCall } from "@utils/api";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromUser } from "@utils/helpers";
 import { type Edge, useReactFlow } from "@xyflow/react";
 import {
@@ -259,9 +260,9 @@ const UserRow = ({ user }: { user: User }) => {
     <div className={"flex items-center gap-3 min-w-0 pl-2"}>
       <div
         className={
-          "h-8 w-8 shrink-0 rounded-full relative flex items-center justify-center bg-nb-gray-900 uppercase text-sm font-medium"
+          "initials-avatar h-8 w-8 shrink-0 rounded-full relative flex items-center justify-center bg-nb-gray-900 uppercase text-sm font-medium"
         }
-        style={{ color: generateColorFromUser(user) }}
+        style={getAvatarStyle(generateColorFromUser(user))}
       >
         {user.name?.charAt(0) || user.id?.charAt(0) || <Cog size={11} />}
         {pending && (
@@ -1229,7 +1230,8 @@ export const DestinationGroupPanel = ({
             className={cn(
               "shrink-0 px-1.5 py-0.5 rounded border border-nb-gray-900 bg-nb-gray-920",
               // Keycap: 2px "side" below + faint highlight on top.
-              "shadow-[0_2px_0_0_#1e2123,inset_0_1px_0_0_rgba(255,255,255,0.05)]",
+              "shadow-[0_2px_0_0_rgb(var(--nb-gray-700)),inset_0_1px_0_0_rgba(255,255,255,0.6)]",
+              "dark:shadow-[0_2px_0_0_rgb(var(--nb-gray-925)),inset_0_1px_0_0_rgba(255,255,255,0.05)]",
               "text-[8px] font-medium tracking-wide text-nb-gray-350",
               "hover:bg-nb-gray-910 hover:text-nb-gray-200 transition-colors",
             )}

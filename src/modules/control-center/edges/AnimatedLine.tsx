@@ -1,6 +1,8 @@
 import { Edge, getSimpleBezierPath, Position } from "@xyflow/react";
 import React from "react";
+import { useTheme } from "@/contexts/ThemeProvider";
 import { useEdgeNodeRect } from "@/modules/control-center/utils/edge-helper";
+import { canvasBackground } from "@/modules/control-center/utils/canvas-theme";
 
 type AnimatedLineProps = Edge<
   {
@@ -13,6 +15,7 @@ type AnimatedLineProps = Edge<
 function AnimatedLine({ source, target, data }: AnimatedLineProps) {
   const sourceRect = useEdgeNodeRect(source);
   const targetRect = useEdgeNodeRect(target);
+  const { resolvedTheme } = useTheme();
   if (!sourceRect || !targetRect) return null;
 
   const color = data?.color || "#0e9f6e";
@@ -66,11 +69,12 @@ function AnimatedLine({ source, target, data }: AnimatedLineProps) {
               alignItems: "center",
               justifyContent: "center",
               boxSizing: "border-box",
-              background: "#181a1d",
+              // Hides the dashed edge under the label, so it must match the canvas.
+              background: canvasBackground(resolvedTheme),
               borderRadius: 4,
             }}
             className={
-              "flex items-center justify-center gap-1 select-none pointer-events-none z-10 text-green-50"
+              "flex items-center justify-center gap-1 select-none pointer-events-none z-10 text-green-700 dark:text-green-50"
             }
           >
             <div className={"whitespace-nowrap"}>{label}</div>

@@ -35,7 +35,7 @@ export default function NavbarWithDropdown() {
         <AnnouncementBanner />
         <div
           className={cn(
-            "bg-white px-2 py-3 dark:border-gray-700 dark:bg-nb-gray backdrop-blur-lg sm:px-6",
+            "bg-nb-gray px-2 py-3 dark:border-gray-700 backdrop-blur-lg sm:px-6",
             "border-b dark:border-zinc-700/40 px-3 md:px-4 w-full",
             "flex justify-between items-center transition-all",
           )}
@@ -94,7 +94,7 @@ const ToggleCollapsableNavigationButton = () => {
         onClick={toggleNavigation}
         data-navbar-colappse-toggle
         className={cn(
-          "h-10 w-10 hover:text-white flex items-center justify-center text-nb-gray-300 transition-all ml-2",
+          "h-10 w-10 hover:text-nb-gray-50 flex items-center justify-center text-nb-gray-300 transition-all ml-2",
           "hidden md:block",
         )}
       >

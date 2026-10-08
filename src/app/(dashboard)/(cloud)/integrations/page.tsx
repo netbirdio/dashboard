@@ -60,7 +60,7 @@ export default function Integrations() {
             (!isNetBirdCloud() && (permission?.settings?.read ?? false))
           }
         >
-          <div className={"border-l border-nb-gray-930 w-full"}>
+          <div className={"w-full"}>
             <IdentityProviderTab />
             <SSOTab />
             <EventStreamingTab />

@@ -25,6 +25,7 @@ import { useMemo, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useTheme } from "@/contexts/ThemeProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import {
   AccessLogFilterId,
@@ -465,6 +466,13 @@ function ConsumptionByDayChart({
   daily: DayBucket[];
   metric: Metric;
 }) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
+  // Chart.js paints to a canvas and parses colours itself, so CSS variables
+  // can't be used here. Light mirrors nb-gray-400 from the light ramp; dark
+  // keeps its existing values. Grid lines are a faint tint of the text colour.
+  const axisText = isLight ? "#6c6c6c" : "#9ca3af";
+  const gridLine = isLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.04)";
   const labels = daily.map((d) => dayjs(d.key).format("MMM D"));
 
   const data =
@@ -508,7 +516,7 @@ function ConsumptionByDayChart({
           legend: {
             display: metric === "tokens",
             position: "bottom",
-            labels: { color: "#9ca3af" },
+            labels: { color: axisText },
           },
           tooltip: {
             callbacks: {
@@ -543,20 +551,20 @@ function ConsumptionByDayChart({
         scales: {
           x: {
             stacked: metric === "tokens",
-            ticks: { color: "#9ca3af", maxRotation: 0, autoSkip: true },
-            grid: { color: "rgba(255,255,255,0.04)" },
+            ticks: { color: axisText, maxRotation: 0, autoSkip: true },
+            grid: { color: gridLine },
           },
           y: {
             stacked: metric === "tokens",
             beginAtZero: true,
             ticks: {
-              color: "#9ca3af",
+              color: axisText,
               callback: (value) =>
                 metric === "cost"
                   ? `$${Number(value).toFixed(2)}`
                   : Number(value).toLocaleString(),
             },
-            grid: { color: "rgba(255,255,255,0.04)" },
+            grid: { color: gridLine },
           },
         },
       }}

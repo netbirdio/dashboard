@@ -9,6 +9,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
+import DarkModeToggle from "@components/ui/DarkModeToggle";
 import { Modal } from "@components/modal/Modal";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { UserAvatar } from "@components/ui/UserAvatar";
@@ -125,6 +126,10 @@ export default function UserDropdown() {
               )}
             </DropdownMenuShortcut>
           </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DarkModeToggle />
         </DropdownMenuContent>
       </DropdownMenu>
     </>
