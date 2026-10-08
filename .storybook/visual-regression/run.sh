@@ -164,11 +164,13 @@ if ! diff_shots; then
   ' "$OUT/reg.json" >"$OUT/recheck.txt"
   step "re-checking $(wc -l <"$OUT/recheck.txt" | tr -d ' ') stories that differ"
   if ! $BASELINE_BUILT; then build "$WORKTREE" baseline; fi
-  node "$HERE/scripts/capture.mjs" "$CACHE/storybook/baseline" "$SHOTS" \
+  # The re-captured baseline only feeds this comparison; the cache keeps its
+  # shots, so one unlucky re-check can't replace a good cached screenshot.
+  node "$HERE/scripts/capture.mjs" "$CACHE/storybook/baseline" "$OUT/recheck-baseline" \
     --ids "$OUT/recheck.txt" --theme "$THEME" --concurrency 2 || true
   while read -r id; do
     for shot in "$id" "$id--hover" "$id--focus"; do
-      [[ -f "$SHOTS/$shot.png" ]] && cp "$SHOTS/$shot.png" "$OUT/baseline/"
+      [[ -f "$OUT/recheck-baseline/$shot.png" ]] && cp "$OUT/recheck-baseline/$shot.png" "$OUT/baseline/"
     done
   done <"$OUT/recheck.txt"
   node "$HERE/scripts/capture.mjs" "$CACHE/storybook/current" "$OUT/current" \

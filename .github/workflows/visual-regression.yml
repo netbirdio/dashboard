@@ -6,6 +6,9 @@ on:
     # PR description re-runs the comparison against the new baseline.
     types: [opened, synchronize, reopened, edited]
 
+permissions:
+  contents: read
+
 concurrency:
   group: visual-regression-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -47,6 +50,10 @@ jobs:
             | sed -E 's/^[^:]*:[[:space:]]*([A-Za-z0-9._/-]+)[[:space:]]*$/\1/' \
             || true)
           BRANCH="${OVERRIDE:-$BASE_BRANCH}"
+          if ! git rev-parse --verify --quiet "refs/remotes/origin/$BRANCH" >/dev/null; then
+            echo "::error::Baseline branch origin/$BRANCH does not exist; check visual-regression-base in the PR description"
+            exit 1
+          fi
           BASE_REF=$(git merge-base "origin/$BRANCH" HEAD)
           echo "Comparing against $BRANCH at $(git log --oneline -1 "$BASE_REF")"
           {

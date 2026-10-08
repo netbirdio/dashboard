@@ -293,12 +293,17 @@ function serve(root) {
     ".ttf": "font/ttf",
     ".woff2": "font/woff2",
   };
+  const rootPath = path.resolve(root);
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
-      const file = path.join(
-        root,
-        decodeURIComponent(new URL(req.url, "http://x").pathname),
+      const file = path.resolve(
+        rootPath,
+        "." + decodeURIComponent(new URL(req.url, "http://x").pathname),
       );
+      // Only files inside the build are served, even for encoded "../" paths.
+      if (file !== rootPath && !file.startsWith(rootPath + path.sep)) {
+        return res.writeHead(404).end();
+      }
       fs.readFile(
         fs.existsSync(file) && fs.statSync(file).isDirectory()
           ? path.join(file, "index.html")

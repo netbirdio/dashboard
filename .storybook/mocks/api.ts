@@ -68,20 +68,28 @@ window.fetch = async (input, init) => {
     location.href,
   );
   if (url.origin === location.origin) return originalFetch(input, init);
+  const method = (init?.method ?? "GET").toUpperCase();
+  const answer = (handler: Handler, path: string) =>
+    typeof handler === "function"
+      ? handler({
+          path,
+          query: url.searchParams,
+          body: init?.body ? JSON.parse(String(init.body)) : undefined,
+        })
+      : handler;
+
   if (url.origin !== API_ORIGIN) {
     // Stories can override these too, keyed by the full URL, e.g.
     // `"GET https://raw.githubusercontent.com/…/announcements.json": [...]`.
     const href = `${url.origin}${url.pathname}`;
-    const method = (init?.method ?? "GET").toUpperCase();
     const override = overrides.find(
       (c) => c.method === method && c.regex.test(href),
     );
-    if (override) return json(override.handler);
+    if (override) return json(answer(override.handler, href) ?? {});
     const known = external[href];
     return known === undefined ? json({}, 404) : json(known);
   }
 
-  const method = (init?.method ?? "GET").toUpperCase();
   const path = url.pathname.replace(/^\/api/, "");
   const match = [...overrides, ...defaults].find(
     (c) => c.method === method && c.regex.test(path),
@@ -91,13 +99,5 @@ window.fetch = async (input, init) => {
     console.warn(`[storybook api] unmocked ${method} ${path}`);
   }
   const handler = match?.handler ?? (method === "GET" ? [] : {});
-  const body =
-    typeof handler === "function"
-      ? handler({
-          path,
-          query: url.searchParams,
-          body: init?.body ? JSON.parse(String(init.body)) : undefined,
-        })
-      : handler;
-  return json(body ?? {});
+  return json(answer(handler, path) ?? {});
 };
