@@ -11,7 +11,9 @@ import React, {
   useState,
 } from "react";
 import { useSWRConfig } from "swr";
+import { TerminatedProxiesProvider } from "@/cloud/reverse-proxy/TerminatedProxiesProvider";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
@@ -26,8 +28,6 @@ import {
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyModal from "@/modules/reverse-proxy/ReverseProxyModal";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
-import { TerminatedProxiesProvider } from "@/cloud/reverse-proxy/TerminatedProxiesProvider";
-import { usePermissions } from "@/contexts/PermissionsProvider";
 
 type ReverseProxiesContextValue = {
   reverseProxies: ReverseProxy[] | undefined;
