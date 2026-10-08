@@ -20,7 +20,10 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:ui": "npx playwright test --config=e2e/playwright.config.ts --ui",
-    "test:ci": "cross-env APP_ENV=test next build && npx playwright test --config=e2e/playwright.config.ts"
+    "test:ci": "cross-env APP_ENV=test next build && npx playwright test --config=e2e/playwright.config.ts",
+    "storybook": "storybook dev -p 6006",
+    "storybook:build": "storybook build",
+    "test:visual": ".storybook/visual-regression/run.sh"
   },
   "dependencies": {
     "@axa-fr/react-oidc": "^7.26.3",
@@ -101,6 +104,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",
+    "@storybook/nextjs-vite": "^10.6.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/chroma-js": "^3.1.1",
@@ -110,7 +114,11 @@
     "jsdom": "^29.1.1",
     "postcss": "^8",
     "prettier": "3.0.3",
+    "puppeteer-core": "^25.12.0",
+    "reg-cli": "^0.19.0-rc3",
+    "storybook": "^10.6.1",
     "tailwindcss": "^3.4.17",
+    "vite": "^7.3.7",
     "vitest": "^4.1.10"
   },
   "allowScripts": {
