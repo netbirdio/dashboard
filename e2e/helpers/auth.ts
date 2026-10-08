@@ -3,8 +3,11 @@
  *
  * The OIDC library (@axa-fr/react-oidc) uses a service worker for token
  * management, so storageState alone can't restore a session. Each test
- * goes through the OIDC redirect flow. Zitadel session cookies from
+ * goes through the OIDC redirect flow. IdP session cookies from
  * storageState make re-auth fast (account selection, no credentials).
+ *
+ * Two IdPs are supported: Zitadel in the local test environment, and the
+ * embedded Dex IdP of a self-hosted `netbird-server` (see `e2e/helpers/target.ts`).
  */
 import type { Page } from "@playwright/test";
 import { expect } from "@playwright/test";
@@ -12,24 +15,40 @@ import { clearScrollLock } from "./utils";
 
 export type TestUser = "owner" | "user";
 
-const credentials: Record<TestUser, { username: string; password: string }> = {
+const defaultCredentials: Record<
+  TestUser,
+  { username: string; password: string }
+> = {
   owner: { username: "owner@localhost.test", password: "testMe123@" },
   user: { username: "user@localhost.test", password: "testMe123@" },
 };
 
+export function credentialsFor(user: TestUser): {
+  username: string;
+  password: string;
+} {
+  const prefix = `NETBIRD_E2E_${user.toUpperCase()}`;
+  return {
+    username:
+      process.env[`${prefix}_EMAIL`] || defaultCredentials[user].username,
+    password:
+      process.env[`${prefix}_PASSWORD`] || defaultCredentials[user].password,
+  };
+}
+
 /**
- * Navigate to the app, authenticate via Zitadel, and wait for the app to load.
+ * Navigate to the app, authenticate via the IdP, and wait for the app to load.
  */
 export async function loginToApp(
   page: Page,
   user: TestUser = "owner",
   opts: { expectOnboarding?: boolean } = {},
 ) {
-  const { username, password } = credentials[user];
+  const { username, password } = credentialsFor(user);
 
   await page.goto("/");
 
-  // The app either loads directly or redirects to Zitadel.
+  // The app either loads directly or redirects to the IdP.
   // Use locators that match either outcome — Playwright auto-waits.
   const appReady = page.getByTestId("left-navigation-item").first();
   const setupModal = page.getByTestId("setup-netbird-modal");
@@ -38,6 +57,10 @@ export async function loginToApp(
   const selectAccount = page.getByText("Select account");
   const loginInput = page.locator("input[id=loginName]");
   const passwordInput = page.locator("input[id=password]");
+  // Dex lists a connector picker when more than one connector exists, with the
+  // local (email) connector first, and asks for email and password on one form.
+  const dexConnector = page.locator("a.nb-btn-connector").first();
+  const dexLoginInput = page.locator("input[id=login]");
 
   // Wait for any of these outcomes
   const which = await Promise.race([
@@ -50,6 +73,8 @@ export async function loginToApp(
     selectAccount.waitFor({ timeout: 20_000 }).then(() => "select" as const),
     loginInput.waitFor({ timeout: 20_000 }).then(() => "login" as const),
     passwordInput.waitFor({ timeout: 20_000 }).then(() => "password" as const),
+    dexConnector.waitFor({ timeout: 20_000 }).then(() => "dex-picker" as const),
+    dexLoginInput.waitFor({ timeout: 20_000 }).then(() => "dex" as const),
   ]);
 
   if (which === "app") {
@@ -69,8 +94,26 @@ export async function loginToApp(
     return;
   }
 
-  // We're on Zitadel
-  if (which === "select") {
+  // Dex renders both fields on one form, so the password locator can win the
+  // race, possibly a moment before the login field is visible.
+  const onDex =
+    which === "dex-picker" ||
+    which === "dex" ||
+    (which === "password" &&
+      (await dexLoginInput
+        .waitFor({ state: "visible", timeout: 2_000 })
+        .then(() => true)
+        .catch(() => false)));
+
+  if (onDex) {
+    if (which === "dex-picker") {
+      await dexConnector.click();
+      await dexLoginInput.waitFor({ state: "visible" });
+    }
+    await dexLoginInput.fill(username);
+    await passwordInput.fill(password);
+    await page.locator("button[id=submit-login]").click();
+  } else if (which === "select") {
     await page.getByText(username).click();
   } else if (which === "login") {
     await loginInput.fill(username);

@@ -37,11 +37,11 @@ test.describe.serial("Settings - Networks @settings", () => {
     await toggleAndRevert(page, "dns-wildcard-routing");
   });
 
-  test("Should toggle traffic events", async ({ dashboardAsOwner: page }) => {
+  test("Should toggle traffic events @cloud", async ({ dashboardAsOwner: page }) => {
     await toggleAndRevert(page, "traffic-events");
   });
 
-  test("Should toggle traffic reporting kernel", async ({ dashboardAsOwner: page }) => {
+  test("Should toggle traffic reporting kernel @cloud", async ({ dashboardAsOwner: page }) => {
     await ensureToggleState(page, "traffic-events", "checked");
 
     const toggle = page.getByTestId("traffic-reporting-kernel");
@@ -65,7 +65,7 @@ test.describe.serial("Settings - Networks @settings", () => {
     await expect(page.getByText("successfully").first()).toBeVisible();
   });
 
-  test("Should add a group to traffic events and save", async ({ dashboardAsOwner: page }) => {
+  test("Should add a group to traffic events and save @cloud", async ({ dashboardAsOwner: page }) => {
     // Clean up stale groups from previous runs
     await deleteGroupsByPrefix(page, "traffic-group-");
     await navigateTo(page, "/settings?tab=networks");
@@ -109,7 +109,7 @@ test.describe.serial("Settings - Networks @settings", () => {
     await expect(page.getByText("successfully updated").first()).toBeVisible();
   });
 
-  test("Should delete the created traffic group", async ({ dashboardAsOwner: page }) => {
+  test("Should delete the created traffic group @cloud", async ({ dashboardAsOwner: page }) => {
     await deleteGroupsByPrefix(page, trafficGroup);
   });
 

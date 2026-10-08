@@ -96,7 +96,7 @@ async function refuseProviderCreate(page: Page) {
 }
 
 test.describe
-  .serial("Agent Network refused provider save @agent-network", () => {
+  .serial("Agent Network refused provider save @agent-network @test-build", () => {
   test("reports the refusal once and keeps the form open", async ({
     browser,
   }) => {

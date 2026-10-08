@@ -204,6 +204,12 @@ export interface ReverseProxyCluster {
   private?: boolean;
 }
 
+// isClusterConnected reports whether a cluster has registered with NetBird and
+// has at least one proxy connected to serve it.
+export function isClusterConnected(cluster?: ReverseProxyCluster): boolean {
+  return !!cluster?.online && cluster.connected_proxies > 0;
+}
+
 export interface ReverseProxyClusterToken {
   id?: string;
   name: string;

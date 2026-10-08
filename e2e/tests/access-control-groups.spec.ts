@@ -45,17 +45,23 @@ test.describe.serial("Groups @access-control", () => {
     await page.getByTestId("open-create-group").click();
     await page.getByTestId("group-name-input").fill(name);
     await page.getByTestId("create-group").click();
-    await expect(page.getByText(name).first()).toBeVisible();
+    await expect(page).toHaveURL(/\/group\?id=/);
+    await expect(
+      page.getByRole("heading", { name, exact: true }),
+    ).toBeVisible();
   });
 
   test("Should rename the group", async ({ dashboardAsOwner: page }) => {
-    // Go back to list via breadcrumb (client-side nav, faster than navigateTo)
-    await page.getByText("Groups").first().click();
+    await navigateTo(page, "/groups");
+    await expect(page).toHaveURL(/\/groups$/);
+
     const input = page.getByTestId("table-search-input");
     await expect(input).toBeVisible();
     await input.fill(createdGroupName);
-    await page
-      .locator("tr")
+
+    const rows = page.locator("tbody tr");
+    await expect(rows).toHaveCount(1);
+    await rows
       .filter({ hasText: createdGroupName })
       .getByTestId("group-actions")
       .click();

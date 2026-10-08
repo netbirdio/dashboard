@@ -19,10 +19,8 @@ let tcpNetwork = "";
 let tcpResource = "";
 let tcpSubdomain = "";
 
-test.describe.serial("Reverse Proxy - Services (TCP) @reverse-proxy", () => {
-  test("Should create a network with a resource", async ({
-    dashboardAsOwner: page,
-  }) => {
+test.describe.serial("Reverse Proxy - Services (TCP) @reverse-proxy @test-env", () => {
+  test("Should create a network with a resource", async ({ dashboardAsOwner: page }) => {
     await deleteServicesByPrefix(page, "tcp-svc-");
     await deleteNetworksByPrefix(page, "rp-tcp-net-");
     await navigateTo(page, "/networks");
