@@ -28,6 +28,12 @@ captured. Changes to global styles, providers, config or dependencies affect
 every story. Baseline screenshots are cached per story, so a second run only
 captures the working tree.
 
+Screenshots are taken with one page per CPU core. Under that load a story is
+occasionally captured a moment too early, so a story that fails is retried
+once on its own, and every difference is captured again on both sides at low
+concurrency before it is reported. Only differences that reproduce end up in
+the report.
+
 Everything lands in `.storybook/visual-regression/output/`:
 
 - `report.html`: side-by-side and slider comparison of every changed story.

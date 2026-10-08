@@ -102,8 +102,10 @@ ls -1t "$CACHE/baseline-shots" | tail -n +4 | sed "s|^|$CACHE/baseline-shots/|" 
 # later runs only build it when some needed shot is missing from the cache.
 step "building storybook"
 build "$REPO" current & current_pid=$!
+BASELINE_BUILT=false
 if [[ -z "$(ls -A "$SHOTS")" ]]; then
   build "$WORKTREE" baseline & baseline_pid=$!
+  BASELINE_BUILT=true
 fi
 wait $current_pid
 
@@ -122,6 +124,7 @@ if [[ -s "$OUT/missing.txt" ]]; then
   if [[ -n "${baseline_pid:-}" ]]; then wait $baseline_pid; else
     step "building baseline storybook"
     build "$WORKTREE" baseline
+    BASELINE_BUILT=true
   fi
   step "capturing $(wc -l <"$OUT/missing.txt" | tr -d ' ') baseline stories"
   node "$HERE/scripts/capture.mjs" "$CACHE/storybook/baseline" "$SHOTS" \
@@ -140,10 +143,40 @@ step "capturing $(wc -l <"$OUT/ids.txt" | tr -d ' ') current stories"
 node "$HERE/scripts/capture.mjs" "$CACHE/storybook/current" "$OUT/current" \
   --ids "$OUT/ids.txt" "${CAPTURE_ARGS[@]}" || true
 
-step "diffing"
 # -M absorbs sub-pixel anti-aliasing noise; -T lets a story differ by 0.1 % of its pixels.
-if npx reg-cli "$OUT/current" "$OUT/baseline" "$OUT/diff" \
-  -R "$OUT/report.html" -J "$OUT/reg.json" -M 0.1 -T 0.001 --diffFormat png >"$OUT/reg.log" 2>&1; then
+diff_shots() {
+  rm -rf "$OUT/diff"
+  npx reg-cli "$OUT/current" "$OUT/baseline" "$OUT/diff" \
+    -R "$OUT/report.html" -J "$OUT/reg.json" -M 0.1 -T 0.001 --diffFormat png >"$OUT/reg.log" 2>&1
+}
+
+step "diffing"
+CLEAN=true
+if ! diff_shots; then
+  # Under full load a story is occasionally screenshotted a moment too early,
+  # so every difference is captured again on both sides with little else
+  # running before it is reported.
+  node -e '
+    const r = require(process.argv[1]);
+    const ids = new Set([...r.failedItems, ...r.newItems, ...r.deletedItems]
+      .map((f) => f.replace(/(--hover|--focus)?\.png$/, "")));
+    console.log([...ids].join("\n"));
+  ' "$OUT/reg.json" >"$OUT/recheck.txt"
+  step "re-checking $(wc -l <"$OUT/recheck.txt" | tr -d ' ') stories that differ"
+  if ! $BASELINE_BUILT; then build "$WORKTREE" baseline; fi
+  node "$HERE/scripts/capture.mjs" "$CACHE/storybook/baseline" "$SHOTS" \
+    --ids "$OUT/recheck.txt" --theme "$THEME" --concurrency 2 || true
+  while read -r id; do
+    for shot in "$id" "$id--hover" "$id--focus"; do
+      [[ -f "$SHOTS/$shot.png" ]] && cp "$SHOTS/$shot.png" "$OUT/baseline/"
+    done
+  done <"$OUT/recheck.txt"
+  node "$HERE/scripts/capture.mjs" "$CACHE/storybook/current" "$OUT/current" \
+    --ids "$OUT/recheck.txt" --theme "$THEME" --concurrency 2 || true
+  diff_shots || CLEAN=false
+fi
+
+if $CLEAN; then
   echo "✓ no visual differences ($((SECONDS - started))s)"
 else
   tail -3 "$OUT/reg.log"

@@ -81,66 +81,33 @@ let failed = 0;
 const unmocked = new Set();
 const NOW = Date.parse("2026-10-08T12:00:00Z");
 const queue = [...stories];
+const retry = [];
 await Promise.all(
   Array.from({ length: concurrency }, async () => {
-    // A context per worker gives each page its own window, so none of them is a
-    // hidden background tab (hover and focus never complete in those).
-    const context = await browser.newContext({
-      viewport: { width: 1440, height: 960 },
-      deviceScaleFactor: 1,
-      reducedMotion: "reduce",
-      timezoneId: "UTC",
-      locale: "en-US",
-    });
-    const page = await context.newPage();
-    // The clock starts at NOW and keeps ticking: relative times stay stable,
-    // while lodash debounce (which compares Date.now() deltas) still fires.
-    await page.addInitScript((now) => {
-      const RealDate = Date;
-      const start = performance.now();
-      const current = () => now + (performance.now() - start);
-      // eslint-disable-next-line no-global-assign
-      Date = class extends RealDate {
-        constructor(...args) {
-          super(...(args.length ? args : [current()]));
-        }
-        static now() {
-          return current();
-        }
-      };
-    }, NOW);
-    // A throwing play function still ends in the "finished" phase, so
-    // failures are picked up from the preview channel instead.
-    await page.addInitScript(() => {
-      const watch = setInterval(() => {
-        const channel = window.__STORYBOOK_ADDONS_CHANNEL__;
-        if (!channel) return;
-        clearInterval(watch);
-        for (const event of [
-          "playFunctionThrewException",
-          "storyThrewException",
-          "storyErrored",
-        ]) {
-          channel.on(event, (error) => {
-            window.__captureError = error?.message ?? error?.title ?? event;
-          });
-        }
-      }, 5);
-    });
-    page.on("console", (message) => {
-      const match = message.text().match(/^\[storybook api\] unmocked (.+)$/);
-      if (match) unmocked.add(match[1]);
-    });
+    const page = await openPage();
     for (let story = queue.shift(); story; story = queue.shift()) {
       try {
         await shoot(page, story);
-      } catch (error) {
-        failed++;
-        console.error(`✗ ${story.id}: ${error.message}`);
+      } catch {
+        retry.push(story);
       }
     }
   }),
 );
+
+// Failures under full load are mostly timeouts (a popover that took too long
+// to appear), so each failed story gets one more try on its own.
+if (retry.length) {
+  const page = await openPage();
+  for (const story of retry) {
+    try {
+      await shoot(page, story);
+    } catch (error) {
+      failed++;
+      console.error(`✗ ${story.id}: ${error.message}`);
+    }
+  }
+}
 
 await browser.close();
 if (unmocked.size)
@@ -157,6 +124,58 @@ console.log(
   ).toFixed(1)}s` + (failed ? `, ${failed} failed` : ""),
 );
 process.exit(failed ? 1 : 0);
+
+async function openPage() {
+  // A context per worker gives each page its own window, so none of them is a
+  // hidden background tab (hover and focus never complete in those).
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 960 },
+    deviceScaleFactor: 1,
+    reducedMotion: "reduce",
+    timezoneId: "UTC",
+    locale: "en-US",
+  });
+  const page = await context.newPage();
+  // The clock starts at NOW and keeps ticking: relative times stay stable,
+  // while lodash debounce (which compares Date.now() deltas) still fires.
+  await page.addInitScript((now) => {
+    const RealDate = Date;
+    const start = performance.now();
+    const current = () => now + (performance.now() - start);
+    // eslint-disable-next-line no-global-assign
+    Date = class extends RealDate {
+      constructor(...args) {
+        super(...(args.length ? args : [current()]));
+      }
+      static now() {
+        return current();
+      }
+    };
+  }, NOW);
+  // A throwing play function still ends in the "finished" phase, so
+  // failures are picked up from the preview channel instead.
+  await page.addInitScript(() => {
+    const watch = setInterval(() => {
+      const channel = window.__STORYBOOK_ADDONS_CHANNEL__;
+      if (!channel) return;
+      clearInterval(watch);
+      for (const event of [
+        "playFunctionThrewException",
+        "storyThrewException",
+        "storyErrored",
+      ]) {
+        channel.on(event, (error) => {
+          window.__captureError = error?.message ?? error?.title ?? event;
+        });
+      }
+    }, 5);
+  });
+  page.on("console", (message) => {
+    const match = message.text().match(/^\[storybook api\] unmocked (.+)$/);
+    if (match) unmocked.add(match[1]);
+  });
+  return page;
+}
 
 async function shoot(page, story) {
   const flavor = story.tags?.includes("cloud") ? "cloud" : "selfhosted";
