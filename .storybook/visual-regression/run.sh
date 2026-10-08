@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Dark-mode visual regression for the dashboard, via Storybook.
+# Visual regression for the dashboard, via Storybook.
 #
 # Renders the same stories (src/**/*.stories.tsx) against the working tree and
 # against a baseline ref, screenshots them with one headless Chrome and writes
@@ -10,7 +10,7 @@
 #   BASE_REF=origin/main npm run test:visual
 #   npm run test:visual -- --all                   every story, not only the affected ones
 #   npm run test:visual -- --filter button         only stories whose id contains "button"
-#   npm run test:visual -- --theme light           light-mode gallery (no baseline to diff against)
+#   npm run test:visual -- --theme light           light theme instead of dark
 #   npm run test:visual -- --concurrency 4         parallel pages (default: CPU count)
 set -euo pipefail
 
@@ -20,9 +20,6 @@ OUT="$HERE/output"
 CACHE="${REGRESSION_CACHE:-$HOME/.cache/netbird-dashboard-regression}"
 WORKTREE="$CACHE/src/baseline"
 BASE_REF="${BASE_REF:-$(git -C "$REPO" merge-base origin/main HEAD)}"
-CHROME="${CHROME_PATH:-$([[ "$(uname)" == Darwin ]] &&
-  echo "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" ||
-  echo /usr/bin/google-chrome)}"
 
 THEME=dark FILTER="" ALL=false CAPTURE_ARGS=()
 while (($#)); do
@@ -54,16 +51,6 @@ build() {
 rm -rf "$OUT"
 mkdir -p "$OUT/current" "$OUT/baseline"
 
-if [[ "$THEME" == "light" ]]; then
-  step "building storybook"
-  build "$REPO" current
-  step "capturing light mode"
-  node "$HERE/scripts/capture.mjs" "$CACHE/storybook/current" "$OUT/current" \
-    --filter "$FILTER" "${CAPTURE_ARGS[@]}" || true
-  echo "✓ light-mode gallery in $OUT/current (the baseline has no light mode to diff against)"
-  exit 0
-fi
-
 step "baseline $(git -C "$REPO" log --oneline -1 "$BASE_REF")"
 if [[ -d "$WORKTREE" ]]; then
   git -C "$WORKTREE" checkout --quiet --detach --force "$BASE_REF"
@@ -93,8 +80,8 @@ rsync -a --delete --include='*/' --include='*.stories.tsx' --exclude='*' \
   "$REPO/src/" "$WORKTREE/src/"
 
 # Baseline shots only depend on these inputs, so they are cached per story
-# under a key of all of them. The OS and Chrome version are part of it
-# because fonts render differently across platforms and browser versions.
+# under a key of all of them. The OS is part of it because fonts render
+# differently across platforms; the lockfile pins Playwright's Chromium build.
 KEY=$(
   {
     git -C "$REPO" rev-parse "$BASE_REF^{commit}"
@@ -103,7 +90,6 @@ KEY=$(
       echo .storybook/visual-regression/scripts/capture.mjs package-lock.json) | LC_ALL=C sort |
       (cd "$REPO" && xargs shasum)
     uname -sm
-    "$CHROME" --version
     echo "$THEME"
   } | shasum | cut -c1-16
 )
@@ -124,7 +110,7 @@ wait $current_pid
 AFFECTED_ARGS=(--filter "$FILTER")
 $ALL && AFFECTED_ARGS+=(--all)
 node "$HERE/scripts/affected.mjs" "$CACHE/storybook/current" "$CACHE/stats/current/preview-stats.json" \
-  "$BASE_REF" "${AFFECTED_ARGS[@]}" >"$OUT/ids.txt"
+  "$BASE_REF" "${AFFECTED_ARGS[@]}" --causes "$OUT/causes.json" >"$OUT/ids.txt"
 if [[ ! -s "$OUT/ids.txt" ]]; then
   [[ -n "${baseline_pid:-}" ]] && wait $baseline_pid
   echo "✓ no story is affected by the changes since the baseline"
@@ -161,6 +147,7 @@ if npx reg-cli "$OUT/current" "$OUT/baseline" "$OUT/diff" \
   echo "✓ no visual differences ($((SECONDS - started))s)"
 else
   tail -3 "$OUT/reg.log"
+  node "$HERE/scripts/summarize.mjs" "$OUT" "$CACHE/storybook/current" "$OUT/causes.json"
   echo "✗ differences found ($((SECONDS - started))s): $OUT/report.html"
 fi
 [[ -t 1 && "$(uname)" == Darwin ]] && open "$OUT/report.html" || true

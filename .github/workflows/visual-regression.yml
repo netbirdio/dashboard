@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Chromium
+        run: npx playwright install --with-deps --only-shell chromium
+
       - name: Resolve baseline
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
@@ -69,31 +72,28 @@ jobs:
         if: always()
         run: |
           OUT=.storybook/visual-regression/output
-          if [ ! -f "$OUT/reg.json" ]; then
-            echo "No stories are affected by the changes since \`$BASE_BRANCH\`." >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+          {
+            echo "### Visual regression against \`$BASE_BRANCH\`"
+            echo
+            if [ -f "$OUT/summary.md" ]; then
+              echo "Download the \`visual-regression-report\` artifact for \`report.html\` and the crops."
+              echo
+              echo "<details><summary>Changed stories</summary>"
+              echo
+              # The job summary has a size limit; the artifact has the full list.
+              tail -n +3 "$OUT/summary.md" | head -n 600
+              echo
+              echo "</details>"
+            elif [ -f "$OUT/reg.json" ]; then
+              echo "No visual differences."
+            else
+              echo "No stories are affected by the changes."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$OUT/summary.json" ]; then
+            CHANGED=$(node -p "require('./$OUT/summary.json').changed")
+            echo "::warning::$CHANGED stories look different from $BASE_BRANCH"
           fi
-          node -e '
-            const r = require(process.argv[1]);
-            const changed = r.failedItems, added = r.newItems, removed = r.deletedItems;
-            const lines = [
-              `### Visual regression against \`${process.env.BASE_BRANCH}\``,
-              "",
-              `| Changed | Only in this PR | Only in baseline | Unchanged |`,
-              `| --- | --- | --- | --- |`,
-              `| ${changed.length} | ${added.length} | ${removed.length} | ${r.passedItems.length} |`,
-              "",
-              "Download the `visual-regression-report` artifact and open `report.html` to compare.",
-            ];
-            if (changed.length) {
-              lines.push("", "<details><summary>Changed stories</summary>", "");
-              changed.forEach((f) => lines.push(`- \`${f.replace(/\.png$/, "")}\``));
-              lines.push("", "</details>");
-            }
-            console.log(lines.join("\n"));
-            if (changed.length || added.length || removed.length)
-              console.error(`::warning::${changed.length} stories differ from ${process.env.BASE_BRANCH}`);
-          ' "$PWD/$OUT/reg.json" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload report
         if: always()
@@ -103,6 +103,9 @@ jobs:
           path: |
             .storybook/visual-regression/output/report.html
             .storybook/visual-regression/output/reg.json
+            .storybook/visual-regression/output/summary.md
+            .storybook/visual-regression/output/summary.json
+            .storybook/visual-regression/output/crops
             .storybook/visual-regression/output/current
             .storybook/visual-regression/output/baseline
             .storybook/visual-regression/output/diff

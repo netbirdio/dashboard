@@ -1,10 +1,12 @@
 // Lists the stories whose rendering can differ between the baseline and the
 // working tree, so unchanged stories don't have to be captured at all.
 //
-//   node affected.mjs <storybook-static dir> <preview-stats.json> <base ref> [--all] [--filter text]
+//   node affected.mjs <storybook-static dir> <preview-stats.json> <base ref> [--all] [--filter text] [--causes file]
 //
 // Prints the affected story ids, one per line (every story when a change can
 // affect all of them, or with --all), narrowed to ids containing --filter.
+// --causes writes a JSON map from each story file to the changed files in its
+// import graph, which the diff summary uses to point at the likely cause.
 // A story is affected when a file changed since <base ref> is in its import
 // graph (walked backwards through the Vite module graph from --stats-json).
 import { execFileSync } from "node:child_process";
@@ -18,22 +20,30 @@ if (!dir || !statsFile || !baseRef) {
   );
   process.exit(1);
 }
-const filterAt = rest.indexOf("--filter");
-const filter = filterAt === -1 ? "" : rest[filterAt + 1];
+const option = (name) => {
+  const at = rest.indexOf(`--${name}`);
+  return at === -1 ? "" : rest[at + 1];
+};
+const filter = option("filter");
+const causesFile = option("causes");
+const causes = {};
+const writeCauses = () => {
+  if (causesFile) fs.writeFileSync(causesFile, JSON.stringify(causes, null, 2));
+};
 
-const index = JSON.parse(fs.readFileSync(path.join(dir, "index.json"), "utf-8"));
+const index = JSON.parse(
+  fs.readFileSync(path.join(dir, "index.json"), "utf-8"),
+);
 const stories = Object.values(index.entries).filter(
   (e) => e.type === "story" && e.id.includes(filter),
 );
 const print = (entries) => {
   if (entries.length) console.log(entries.map((e) => e.id).join("\n"));
 };
-const all = (reason) => {
-  console.error(`all stories affected: ${reason}`);
-  print(stories);
-  process.exit(0);
-};
-if (rest.includes("--all")) all("--all");
+// Changes that affect every story are collected under "*"; the walk below
+// still runs so each story file also gets its own, more specific causes.
+const everything = [];
+if (rest.includes("--all")) everything.push("--all");
 
 const git = (...args) =>
   execFileSync("git", args, { encoding: "utf-8" }).split("\n").filter(Boolean);
@@ -53,12 +63,12 @@ const sharedWithBaseline = (file) =>
 // Files that shape every story without being imported by one: build and
 // styling config, dependencies, and static assets served from public/.
 const global = (file) =>
-  /^(package(-lock)?\.json|tsconfig\.json|(tailwind|postcss|next)\.config\.\w+)$/.test(file) ||
-  file.startsWith("public/");
+  /^(package(-lock)?\.json|tsconfig\.json|(tailwind|postcss|next)\.config\.\w+)$/.test(
+    file,
+  ) || file.startsWith("public/");
 
 const relevant = changed.filter((file) => !sharedWithBaseline(file));
-const globalChange = relevant.find(global);
-if (globalChange) all(`${globalChange} changed`);
+everything.push(...relevant.filter(global));
 
 const { modules } = JSON.parse(fs.readFileSync(statsFile, "utf-8"));
 const importers = new Map(
@@ -99,12 +109,23 @@ for (const file of relevant) {
   const id = `./${file}`;
   if (!importers.has(id)) continue;
   const { reached, global } = storiesReachedFrom(id);
-  if (global) all(`${file} changed`);
-  reached.forEach((story) => affectedFiles.add(story));
+  if (global) everything.push(file);
+  reached.forEach((story) => {
+    affectedFiles.add(story);
+    (causes[story.slice(2)] ??= []).push(file);
+  });
 }
 
-const affected = stories.filter((e) => affectedFiles.has(e.importPath));
-console.error(
-  `${relevant.length} changed files → ${affectedFiles.size} story files, ${affected.length} stories affected`,
-);
-print(affected);
+if (everything.length) causes["*"] = everything;
+writeCauses();
+
+if (everything.length) {
+  console.error(`all stories affected: ${everything.slice(0, 3).join(", ")}`);
+  print(stories);
+} else {
+  const affected = stories.filter((e) => affectedFiles.has(e.importPath));
+  console.error(
+    `${relevant.length} changed files → ${affectedFiles.size} story files, ${affected.length} stories affected`,
+  );
+  print(affected);
+}
