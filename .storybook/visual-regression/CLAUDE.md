@@ -27,6 +27,11 @@ fix them. See `README.md` for how the tooling works.
 7. Repeat until every remaining change is intended, then run once without
    `--filter` to confirm nothing else moved.
 
+New stories (listed under "New stories" in the summary) have no baseline. Look
+at their screenshots to check that the new UI renders as intended. "Stories
+only in the baseline" either belong to something the change removed or
+renamed, or fail to render now; the second is a regression.
+
 ## Intended or regression?
 
 A change is **intended** when the task or the diff clearly asks for it: a new

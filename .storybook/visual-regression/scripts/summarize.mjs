@@ -246,5 +246,31 @@ for (const c of changes) {
   }
   md.push("");
 }
+const describe = (shot) => {
+  const entry = index.entries[shot.replace(/(--hover|--focus)?\.png$/, "")];
+  return entry ? `${entry.title} / ${entry.name}` : shot;
+};
+if (reg.newItems.length) {
+  md.push(
+    "## New stories",
+    "",
+    "Stories without a baseline screenshot, usually for components or pages added in this change.",
+    "",
+    ...reg.newItems.map((shot) => `- ${describe(shot)}: \`current/${shot}\``),
+    "",
+  );
+}
+if (reg.deletedItems.length) {
+  md.push(
+    "## Stories only in the baseline",
+    "",
+    "Stories that rendered in the baseline but not in this change: removed, renamed, or failing to render now.",
+    "",
+    ...reg.deletedItems.map(
+      (shot) => `- ${describe(shot)}: \`baseline/${shot}\``,
+    ),
+    "",
+  );
+}
 fs.writeFileSync(path.join(out, "summary.md"), md.join("\n"));
 console.log(`summary: ${path.join(out, "summary.md")}`);

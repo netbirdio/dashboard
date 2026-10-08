@@ -48,6 +48,39 @@ build() {
     { echo "✗ $name storybook build failed, see $CACHE/storybook-$name.log"; return 1; }
 }
 
+# A story can still fail to build against the baseline when it imports
+# something that exists there but not in this form (a named export added on
+# the branch). The build error names the story, which is then left out and
+# the build retried.
+build_baseline() {
+  local attempt story
+  for attempt in 1 2 3 4 5; do
+    build "$WORKTREE" baseline >/dev/null && return 0
+    story=$(grep -oE 'src/[^" ]+\.stories\.tsx' "$CACHE/storybook-baseline.log" | head -1)
+    if [[ -z "$story" || ! -f "$WORKTREE/$story" ]]; then
+      echo "✗ baseline storybook build failed, see $CACHE/storybook-baseline.log"
+      return 1
+    fi
+    echo "  not in baseline: $story (doesn't build against it)"
+    rm "$WORKTREE/$story"
+  done
+  return 1
+}
+
+# Stories the baseline build left out have no baseline shot by design. They
+# are noted next to the cached shots, so they don't count as missing and
+# force a baseline build on every run.
+note_not_in_baseline() {
+  node -e '
+    const fs = require("fs");
+    const [current, baseline, out] = process.argv.slice(1);
+    const ids = (dir) => Object.values(JSON.parse(fs.readFileSync(`${dir}/index.json`, "utf-8")).entries)
+      .filter((e) => e.type === "story").map((e) => e.id);
+    const known = new Set(ids(baseline));
+    fs.writeFileSync(out, ids(current).filter((id) => !known.has(id)).join("\n"));
+  ' "$CACHE/storybook/current" "$CACHE/storybook/baseline" "$SHOTS/.not-in-baseline"
+}
+
 rm -rf "$OUT"
 mkdir -p "$OUT/current" "$OUT/baseline"
 
@@ -78,6 +111,9 @@ rsync -a --delete --exclude visual-regression/ "$REPO/.storybook/" "$WORKTREE/.s
 rsync -a --delete "$REPO/src/storybook/" "$WORKTREE/src/storybook/"
 rsync -a --delete --include='*/' --include='*.stories.tsx' --exclude='*' \
   "$REPO/src/" "$WORKTREE/src/"
+# Stories for components or pages the baseline doesn't have yet can't build
+# there; they are left out of the baseline and show up as new in the report.
+node "$HERE/scripts/baseline-stories.mjs" "$WORKTREE" | sed 's/^/  not in baseline: /'
 
 # Baseline shots only depend on these inputs, so they are cached per story
 # under a key of all of them. The OS is part of it because fonts render
@@ -104,33 +140,39 @@ step "building storybook"
 build "$REPO" current & current_pid=$!
 BASELINE_BUILT=false
 if [[ -z "$(ls -A "$SHOTS")" ]]; then
-  build "$WORKTREE" baseline & baseline_pid=$!
+  build_baseline & baseline_pid=$!
   BASELINE_BUILT=true
 fi
 wait $current_pid
+if [[ -n "${baseline_pid:-}" ]]; then
+  wait $baseline_pid
+  note_not_in_baseline
+  unset baseline_pid
+fi
 
 AFFECTED_ARGS=(--filter "$FILTER")
 $ALL && AFFECTED_ARGS+=(--all)
 node "$HERE/scripts/affected.mjs" "$CACHE/storybook/current" "$CACHE/stats/current/preview-stats.json" \
   "$BASE_REF" "${AFFECTED_ARGS[@]}" --causes "$OUT/causes.json" >"$OUT/ids.txt"
 if [[ ! -s "$OUT/ids.txt" ]]; then
-  [[ -n "${baseline_pid:-}" ]] && wait $baseline_pid
   echo "✓ no story is affected by the changes since the baseline"
   exit 0
 fi
 
-while read -r id; do [[ -f "$SHOTS/$id.png" ]] || echo "$id"; done <"$OUT/ids.txt" >"$OUT/missing.txt"
+while read -r id; do
+  [[ -f "$SHOTS/$id.png" ]] || grep -qxF "$id" "$SHOTS/.not-in-baseline" 2>/dev/null || echo "$id"
+done <"$OUT/ids.txt" >"$OUT/missing.txt"
 if [[ -s "$OUT/missing.txt" ]]; then
-  if [[ -n "${baseline_pid:-}" ]]; then wait $baseline_pid; else
+  if ! $BASELINE_BUILT; then
     step "building baseline storybook"
-    build "$WORKTREE" baseline
+    build_baseline
+    note_not_in_baseline
     BASELINE_BUILT=true
   fi
   step "capturing $(wc -l <"$OUT/missing.txt" | tr -d ' ') baseline stories"
   node "$HERE/scripts/capture.mjs" "$CACHE/storybook/baseline" "$SHOTS" \
     --ids "$OUT/missing.txt" "${CAPTURE_ARGS[@]}" || true
 else
-  [[ -n "${baseline_pid:-}" ]] && wait $baseline_pid
   echo "  baseline: all $(wc -l <"$OUT/ids.txt" | tr -d ' ') shots cached"
 fi
 while read -r id; do
@@ -165,7 +207,7 @@ if ! diff_shots; then
     console.log([...ids].join("\n"));
   ' "$OUT/reg.json" >"$OUT/recheck.txt"
   step "re-checking $(wc -l <"$OUT/recheck.txt" | tr -d ' ') stories that differ"
-  if ! $BASELINE_BUILT; then build "$WORKTREE" baseline; fi
+  if ! $BASELINE_BUILT; then build_baseline && note_not_in_baseline; fi
   # The re-captured baseline only feeds this comparison; the cache keeps its
   # shots, so one unlucky re-check can't replace a good cached screenshot.
   node "$HERE/scripts/capture.mjs" "$CACHE/storybook/baseline" "$OUT/recheck-baseline" \
@@ -180,13 +222,15 @@ if ! diff_shots; then
   diff_shots || CLEAN=false
 fi
 
-if $CLEAN; then
+# reg-cli passes stories that exist on one side only; they are still worth
+# a look (a new component, a removed page), so they go into the report too.
+if $CLEAN && node -e 'const r = require(process.argv[1]); process.exit(r.newItems.length + r.deletedItems.length ? 1 : 0)' "$OUT/reg.json"; then
   echo "✓ no visual differences ($((SECONDS - started))s)"
   rm -rf "$OUT/current" "$OUT/baseline" "$OUT/diff" "$OUT/recheck-baseline" "$OUT/report.html"
   exit 0
 fi
 
-grep -E "changed|passed|new|deleted" "$OUT/reg.log" | tail -3
+grep -E "changed|passed|new|deleted" "$OUT/reg.log" | tail -3 || true
 node "$HERE/scripts/summarize.mjs" "$OUT" "$CACHE/storybook/current" "$OUT/causes.json"
 
 # Unchanged screenshots are most of the output but nothing to look at, so they
@@ -202,6 +246,7 @@ node -e '
   fs.writeFileSync(`${out}/reg.json`, JSON.stringify({ ...reg, passedItems: [] }));
 ' "$OUT"
 rm -rf "$OUT/recheck-baseline"
-npx reg-cli -F "$OUT/reg.json" -R "$OUT/report.html" >>"$OUT/reg.log" 2>&1
+# Like a diff, rendering a report with changes in it exits non-zero.
+npx reg-cli -F "$OUT/reg.json" -R "$OUT/report.html" >>"$OUT/reg.log" 2>&1 || true
 echo "✗ differences found ($((SECONDS - started))s): $OUT/report.html"
 [[ -t 1 && "$(uname)" == Darwin ]] && open "$OUT/report.html" || true

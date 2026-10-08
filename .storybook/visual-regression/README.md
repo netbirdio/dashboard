@@ -82,9 +82,11 @@ runs with `actions/cache`.
 | Summary | `scripts/summarize.mjs` | Turns the diff into `summary.md`, `summary.json` and the crops. |
 | Pipeline | `run.sh` | Worktree and `node_modules` clone for the baseline, copies `.storybook`, `src/storybook` and every `*.stories.tsx` into it, builds, captures, diffs and summarises. |
 
-Stories must compile against the baseline too, so they only import modules and
-props that exist at the merge-base. A story for something new on a branch
-breaks the baseline build until it is merged.
+Every story is built against the baseline too. A story that can't build there,
+because it imports a file or export the branch adds, is left out of the
+baseline (`scripts/baseline-stories.mjs` checks imports up front, and the
+baseline build retries without any story it fails on). It then shows up as a
+new story in the report and under "New stories" in `summary.md`.
 
 ## Writing a story
 
