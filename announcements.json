@@ -1,9 +1,9 @@
 [
   {
-    "tag": "Feedback",
-    "text": "Help us build a better product - Fill out this short anonymous survey.",
-    "link": "https://forms.gle/bBabcfCuWPpySb8r5",
-    "linkText": "Form",
+    "tag": "New",
+    "text": "Roll Out NetBird Across Your Organization with MDM.",
+    "link": "https://docs.netbird.io/use-cases/deployment/mdm-rollout",
+    "linkText": "Learn more",
     "variant": "important",
     "isExternal": true,
     "closeable": true,
