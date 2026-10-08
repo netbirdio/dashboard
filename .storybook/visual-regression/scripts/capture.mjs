@@ -1,4 +1,6 @@
-// Screenshots every story of a static Storybook build with one headless Chrome.
+// Screenshots every story of a static Storybook build with one headless
+// Chromium, the build Playwright pins (`npx playwright install chromium`), so
+// screenshots don't change when a locally installed Chrome updates itself.
 //
 //   node capture.mjs <storybook-static dir> <output dir> [options]
 //
@@ -21,7 +23,7 @@ import * as fs from "node:fs";
 import * as http from "node:http";
 import * as os from "node:os";
 import * as path from "node:path";
-import puppeteer from "puppeteer-core";
+import { chromium } from "@playwright/test";
 
 const [dir, out, ...rest] = process.argv.slice(2);
 const flag = (name, fallback) => {
@@ -34,13 +36,11 @@ const idsFile = flag("ids", "");
 // Rendering is CPU bound, so one page per core; CI runners get fewer pages
 // automatically.
 const concurrency = Number(
-  flag("concurrency", process.env.CAPTURE_CONCURRENCY ?? os.availableParallelism()),
+  flag(
+    "concurrency",
+    process.env.CAPTURE_CONCURRENCY ?? os.availableParallelism(),
+  ),
 );
-const chrome =
-  process.env.CHROME_PATH ??
-  (process.platform === "darwin"
-    ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-    : "/usr/bin/google-chrome");
 
 if (!dir || !out) {
   console.error(
@@ -58,15 +58,14 @@ const only = idsFile
   ? new Set(fs.readFileSync(idsFile, "utf-8").split("\n").filter(Boolean))
   : null;
 const stories = Object.values(index.entries).filter(
-  (e) => e.type === "story" && e.id.includes(filter) && (!only || only.has(e.id)),
+  (e) =>
+    e.type === "story" && e.id.includes(filter) && (!only || only.has(e.id)),
 );
 
 fs.mkdirSync(out, { recursive: true });
 
-const browser = await puppeteer.launch({
-  executablePath: chrome,
-  headless: true,
-  // Stories render in parallel tabs; without these, Chrome throttles the
+const browser = await chromium.launch({
+  // Stories render in parallel pages; without these, Chromium throttles the
   // background ones and their rendering stalls.
   args: [
     "--font-render-hinting=none",
@@ -74,9 +73,6 @@ const browser = await puppeteer.launch({
     "--disable-background-timer-throttling",
     "--disable-renderer-backgrounding",
     "--disable-backgrounding-occluded-windows",
-    // Ubuntu 24.04 runners restrict the user namespaces Chrome's sandbox
-    // needs; CI machines are throwaway, so the sandbox is skipped there.
-    ...(process.env.CI ? ["--no-sandbox"] : []),
   ],
 });
 
@@ -89,15 +85,17 @@ await Promise.all(
   Array.from({ length: concurrency }, async () => {
     // A context per worker gives each page its own window, so none of them is a
     // hidden background tab (hover and focus never complete in those).
-    const page = await (await browser.createBrowserContext()).newPage();
-    await page.setViewport({ width: 1440, height: 960, deviceScaleFactor: 1 });
-    await page.emulateMediaFeatures([
-      { name: "prefers-reduced-motion", value: "reduce" },
-    ]);
-    await page.emulateTimezone("UTC");
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 960 },
+      deviceScaleFactor: 1,
+      reducedMotion: "reduce",
+      timezoneId: "UTC",
+      locale: "en-US",
+    });
+    const page = await context.newPage();
     // The clock starts at NOW and keeps ticking: relative times stay stable,
     // while lodash debounce (which compares Date.now() deltas) still fires.
-    await page.evaluateOnNewDocument((now) => {
+    await page.addInitScript((now) => {
       const RealDate = Date;
       const start = performance.now();
       const current = () => now + (performance.now() - start);
@@ -113,7 +111,7 @@ await Promise.all(
     }, NOW);
     // A throwing play function still ends in the "finished" phase, so
     // failures are picked up from the preview channel instead.
-    await page.evaluateOnNewDocument(() => {
+    await page.addInitScript(() => {
       const watch = setInterval(() => {
         const channel = window.__STORYBOOK_ADDONS_CHANNEL__;
         if (!channel) return;
@@ -174,7 +172,11 @@ async function shoot(page, story) {
   // buttons keep it.
   await page.evaluate(() => {
     const el = document.activeElement;
-    if (el instanceof HTMLElement && el.matches('[role="dialog"], [role="alertdialog"], [tabindex="-1"]')) el.blur();
+    if (
+      el instanceof HTMLElement &&
+      el.matches('[role="dialog"], [role="alertdialog"], [tabindex="-1"]')
+    )
+      el.blur();
   });
   await page.screenshot({
     path: path.join(out, `${story.id}.png`),
@@ -225,6 +227,7 @@ async function waitForStory(page) {
         )
       );
     },
+    undefined,
     { timeout: 15_000, polling: 100 },
   );
   const { phase, error } = await page.evaluate(() => ({
