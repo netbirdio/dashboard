@@ -69,7 +69,15 @@ window.fetch = async (input, init) => {
   );
   if (url.origin === location.origin) return originalFetch(input, init);
   if (url.origin !== API_ORIGIN) {
-    const known = external[`${url.origin}${url.pathname}`];
+    // Stories can override these too, keyed by the full URL, e.g.
+    // `"GET https://raw.githubusercontent.com/…/announcements.json": [...]`.
+    const href = `${url.origin}${url.pathname}`;
+    const method = (init?.method ?? "GET").toUpperCase();
+    const override = overrides.find(
+      (c) => c.method === method && c.regex.test(href),
+    );
+    if (override) return json(override.handler);
+    const known = external[href];
     return known === undefined ? json({}, 404) : json(known);
   }
 
