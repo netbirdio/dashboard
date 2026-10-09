@@ -647,6 +647,13 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         <Value>{m?.platform}</Value> integration disabled
+      </div>
+    );
+
+  if (event.activity_code == "integrated-validator.api.disabled-by-system")
+    return (
+      <div className={"inline"}>
+        <Value>{m?.platform}</Value> integration disabled by system
         {m?.reason && (
           <>
             {" "}
