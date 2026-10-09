@@ -636,6 +636,26 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "integrated-validator.api.enabled")
+    return (
+      <div className={"inline"}>
+        <Value>{m?.platform}</Value> integration enabled
+      </div>
+    );
+
+  if (event.activity_code == "integrated-validator.api.disabled")
+    return (
+      <div className={"inline"}>
+        <Value>{m?.platform}</Value> integration disabled
+        {m?.reason && (
+          <>
+            {" "}
+            due to <Value>{m.reason}</Value>
+          </>
+        )}
+      </div>
+    );
+
   if (event.activity_code == "integrated-validator.host-check.approved")
     return (
       <div className={"inline"}>
