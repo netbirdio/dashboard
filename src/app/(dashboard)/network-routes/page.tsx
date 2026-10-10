@@ -1,6 +1,6 @@
 "use client";
-
 import Breadcrumbs from "@components/Breadcrumbs";
+import { Callout } from "@components/Callout";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
@@ -13,16 +13,17 @@ import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { Route } from "@/interfaces/Route";
 import PageContainer from "@/layouts/PageContainer";
 import useGroupedRoutes from "@/modules/route-group/useGroupedRoutes";
-import { Callout } from "@components/Callout";
 
 const NetworkRoutesTable = lazy(
   () => import("@/modules/route-group/NetworkRoutesTable"),
 );
 
 export default function NetworkRoutes() {
+  const { t } = useTranslation();
   const { permission } = usePermissions();
   const { data: routes, isLoading } = useFetchApi<Route[]>("/routes");
   const groupedRoutes = useGroupedRoutes({ routes });
@@ -37,35 +38,43 @@ export default function NetworkRoutes() {
           <div className={"p-default py-6"}>
             <Breadcrumbs>
               <Breadcrumbs.Item
-                label={"Network Routing"}
+                label={t("Network Routing")}
                 icon={<NetworkRoutesIcon size={13} />}
               />
-              <Breadcrumbs.Item href={"/network-routes"} label={"Routes"} />
+              <Breadcrumbs.Item href={"/network-routes"} label={t("Routes")} />
             </Breadcrumbs>
-            <h1 ref={headingRef}>Routes</h1>
+            <h1 ref={headingRef}>
+              <T>{"Routes"}</T>
+            </h1>
             <Paragraph>
-              Access other networks like LANs and VPCs without installing
-              NetBird on every resource.{" "}
+              <T>
+                {
+                  "Access other networks like LANs and VPCs without installing NetBird on every resource."
+                }
+              </T>{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                 }
                 target={"_blank"}
-                aria-label={
-                  "Learn more about routing traffic to private networks"
-                }
+                aria-label={t(
+                  "Learn more about routing traffic to private networks",
+                )}
               >
-                Learn more
+                <T>{"Learn more"}</T>
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
 
             <Callout className={"max-w-xl mt-5"} variant={"warning"}>
               <span>
-                We recommend using the new Networks concept to easier visualise
-                and manage access to your resources.{" "}
+                <T>
+                  {
+                    "We recommend using the new Networks concept to easier visualise and manage access to your resources."
+                  }
+                </T>{" "}
                 <InlineLink href={"/networks"}>
-                  Go to Networks
+                  <T>{"Go to Networks"}</T>
                   <ArrowUpRightIcon size={14} />
                 </InlineLink>
               </span>

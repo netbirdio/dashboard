@@ -27,9 +27,13 @@ import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
+import DNSZoneIcon from "@/assets/icons/DNSZoneIcon";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { DNS_ZONE_DOCS_LINK, DNSZone } from "@/interfaces/DNS";
+import { Group } from "@/interfaces/Group";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
 import DNSRecordsTable from "@/modules/dns/zones/records/DNSRecordsTable";
 import { DNSZonesActionCell } from "@/modules/dns/zones/table/DNSZonesActionCell";
@@ -37,15 +41,14 @@ import { DNSZonesGroupCell } from "@/modules/dns/zones/table/DNSZonesGroupCell";
 import { DNSZonesNameCell } from "@/modules/dns/zones/table/DNSZonesNameCell";
 import { DNSZonesRecordsCell } from "@/modules/dns/zones/table/DNSZonesRecordsCell";
 import { DNSZonesSearchDomainCell } from "@/modules/dns/zones/table/DNSZonesSearchDomainCell";
-import { Group } from "@/interfaces/Group";
-import DNSZoneIcon from "@/assets/icons/DNSZoneIcon";
-import { useGroups } from "@/contexts/GroupsProvider";
 
 export const DNSZonesColumns: ColumnDef<DNSZone>[] = [
   {
     accessorKey: "domain",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Zone</DataTableHeader>
+      <DataTableHeader column={column}>
+        <T>{"Zone"}</T>
+      </DataTableHeader>
     ),
     sortingFn: "text",
     cell: ({ row }) => <DNSZonesNameCell zone={row.original} />,
@@ -56,7 +59,9 @@ export const DNSZonesColumns: ColumnDef<DNSZone>[] = [
   {
     accessorKey: "records",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Records</DataTableHeader>
+      <DataTableHeader column={column}>
+        <T>{"Records"}</T>
+      </DataTableHeader>
     ),
     sortingFn: "text",
     cell: ({ row }) => <DNSZonesRecordsCell zone={row.original} />,
@@ -64,20 +69,24 @@ export const DNSZonesColumns: ColumnDef<DNSZone>[] = [
   {
     accessorKey: "distribution_groups",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Groups</DataTableHeader>
+      <DataTableHeader column={column}>
+        <T>{"Groups"}</T>
+      </DataTableHeader>
     ),
     cell: ({ row }) => <DNSZonesGroupCell zone={row.original} />,
   },
   {
     id: "group_names_filter",
     accessorFn: (row) =>
-      ((row as DNSZone & { _group_names?: string[] })._group_names) ?? [],
+      (row as DNSZone & { _group_names?: string[] })._group_names ?? [],
     filterFn: "arrIncludesSome",
   },
   {
     accessorKey: "enable_search_domain",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Search Domain</DataTableHeader>
+      <DataTableHeader column={column}>
+        <T>{"Search Domain"}</T>
+      </DataTableHeader>
     ),
     cell: ({ row }) => <DNSZonesSearchDomainCell zone={row.original} />,
   },
@@ -116,6 +125,7 @@ export default function DNSZonesTable({
   isGroupPage = false,
   distributionGroups,
 }: Props) {
+  const { t } = useTranslation();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { groups } = useGroups();
@@ -163,18 +173,18 @@ export default function DNSZonesTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      { value: undefined, label: t("All"), dotClass: "bg-nb-gray-500" },
+      { value: true, label: t("Active"), dotClass: "bg-green-500" },
+      { value: false, label: t("Inactive"), dotClass: "bg-nb-gray-700" },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "enabled",
-        label: "Status",
+        label: t("Status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -188,7 +198,7 @@ export default function DNSZonesTable({
       },
       {
         id: "group_names_filter",
-        label: "Groups",
+        label: t("Groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -200,14 +210,14 @@ export default function DNSZonesTable({
         formatChip: (v) => formatGroupsChip(v as string[] | undefined),
       },
     ],
-    [statusOptions, tableGroups],
+    [t, statusOptions, tableGroups],
   );
 
   return (
     <DataTable
       headingTarget={headingTarget}
       isLoading={isLoading}
-      text={"DNS Zones"}
+      text={t("DNS Zones")}
       sorting={sorting}
       setSorting={setSorting}
       columns={DNSZonesColumns}
@@ -222,7 +232,7 @@ export default function DNSZonesTable({
       keepStateInLocalStorage={!isGroupPage}
       initialPageSize={25}
       showResetFilterButton={false}
-      searchPlaceholder={"Search by domain, ip, content or group..."}
+      searchPlaceholder={t("Search by domain, ip, content or group...")}
       aboveTable={(table) => (
         <TableFilterChips table={table} filters={filterDefs} />
       )}
@@ -247,10 +257,10 @@ export default function DNSZonesTable({
             icon={<DNSZoneIcon className={"fill-nb-gray-200"} size={24} />}
             className={"py-4"}
             contentClassName={"max-w-lg"}
-            title={"This group is not used within any zones yet"}
-            description={
-              "Assign this group as a distribution group in your zones to see them listed here."
-            }
+            title={t("This group is not used within any zones yet")}
+            description={t(
+              "Assign this group as a distribution group in your zones to see them listed here.",
+            )}
           >
             <div className={"gap-x-4 flex items-center justify-center mt-4"}>
               <AddZoneButton distributionGroups={distributionGroups} />
@@ -265,10 +275,10 @@ export default function DNSZonesTable({
                 size={"large"}
               />
             }
-            title={"Create New Zone"}
-            description={
-              "It looks like you don't have any zones. Control domain name resolution for your network by adding a zone."
-            }
+            title={t("Create New Zone")}
+            description={t(
+              "It looks like you don't have any zones. Control domain name resolution for your network by adding a zone.",
+            )}
             button={
               <div className={"gap-x-4 flex items-center justify-center"}>
                 <AddZoneButton distributionGroups={distributionGroups} />
@@ -276,9 +286,9 @@ export default function DNSZonesTable({
             }
             learnMore={
               <>
-                Learn more about
+                <T>{"Learn more about"}</T>
                 <InlineLink href={DNS_ZONE_DOCS_LINK} target={"_blank"}>
-                  DNS Zones
+                  <T>{"DNS Zones"}</T>
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -341,7 +351,7 @@ const AddZoneButton = ({ distributionGroups }: AddZoneButtonProps) => {
       data-testid="add-dns-zone"
     >
       <PlusCircle size={16} />
-      Add Zone
+      <T>{"Add Zone"}</T>
     </Button>
   );
 };

@@ -37,21 +37,23 @@ import {
   RowSelectionState,
   SortingState,
 } from "@tanstack/react-table";
+import { removeAllSpaces } from "@utils/helpers";
 import { trim, uniqBy } from "lodash";
 import { AlertTriangle, MonitorDotIcon, ShieldCheck } from "lucide-react";
-import { useBypassedPeers } from "@/cloud/edr/useBypass";
-import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { useBypassedPeers } from "@/cloud/edr/useBypass";
 import PeerProvider from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { Group } from "@/interfaces/Group";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer, peerMacAddresses } from "@/interfaces/Peer";
+import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 import PeerActionCell from "@/modules/peers/PeerActionCell";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerGroupCell from "@/modules/peers/PeerGroupCell";
@@ -61,7 +63,6 @@ import PeerNameCell from "@/modules/peers/PeerNameCell";
 import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 import PeerStatusCell from "@/modules/peers/PeerStatusCell";
 import PeerVersionCell from "@/modules/peers/PeerVersionCell";
-import { removeAllSpaces } from "@utils/helpers";
 
 // Stable key per OS family for the filter column. Mirrors the icon
 // selection in PeerOSCell so the chip label and the displayed OS icon
@@ -111,7 +112,11 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     id: "name",
     accessorFn: (peer) => `${peer?.name}${peer?.dns_label}`,
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Name"}</T>
+        </DataTableHeader>
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => <PeerNameCell peer={row.original} />,
@@ -149,7 +154,11 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     id: "dns_label",
     accessorKey: "dns_label",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Address</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Address"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => <PeerAddressCell peer={row.original} />,
   },
@@ -168,7 +177,11 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     accessorFn: (peer) => peer.groups?.length,
     id: "groups",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Groups"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => (
       <PeerProvider peer={row.original}>
@@ -187,7 +200,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
             table.setSorting([{ id: "last_seen", desc: !desc }]);
           }}
         >
-          Last seen
+          <T>{"Last seen"}</T>
         </DataTableHeader>
       );
     },
@@ -198,7 +211,11 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     id: "os",
     accessorFn: (peer) => removeAllSpaces(peer?.os),
     header: ({ column }) => {
-      return <DataTableHeader column={column}>OS</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"OS"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => (
       <PeerOSCell os={row.original.os} serial={row.original.serial_number} />
@@ -212,7 +229,11 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "serial",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Serial number</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Serial number"}</T>
+        </DataTableHeader>
+      );
     },
     accessorFn: (peer) => peer.serial_number,
     sortingFn: "text",
@@ -220,7 +241,11 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "version",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Version</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Version"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => (
       <PeerVersionCell
@@ -298,6 +323,7 @@ export default function PeersTable({
   kind,
   onKindChange,
 }: Readonly<Props>) {
+  const { t } = useTranslation();
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
   const path = usePathname();
@@ -420,7 +446,7 @@ export default function PeersTable({
     const defs: TableFilterDef[] = [
       {
         id: "connected",
-        label: "Status",
+        label: t("Status"),
         renderPicker: (p) => (
           <StatusPicker
             value={p.value as boolean | undefined}
@@ -432,7 +458,7 @@ export default function PeersTable({
       },
       {
         id: "os_kind",
-        label: "OS",
+        label: t("OS"),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -448,7 +474,7 @@ export default function PeersTable({
     if (!isUser) {
       defs.push({
         id: "group_names",
-        label: "Groups",
+        label: t("Groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -463,7 +489,7 @@ export default function PeersTable({
     if (kind === "users" && !isUser && tableUsers.length > 0) {
       defs.push({
         id: "user_email",
-        label: "Users",
+        label: t("Users"),
         renderPicker: (p) => (
           <UsersPicker
             value={p.value as string | undefined}
@@ -476,7 +502,7 @@ export default function PeersTable({
       });
     }
     return defs;
-  }, [isUser, kind, osOptions, tableGroups, tableUsers]);
+  }, [t, isUser, kind, osOptions, tableGroups, tableUsers]);
 
   return (
     <>
@@ -489,14 +515,14 @@ export default function PeersTable({
         rowSelection={selectedRows}
         setRowSelection={setSelectedRows}
         useRowId={true}
-        text={"Peers"}
+        text={t("Peers")}
         sorting={sorting}
         setSorting={setSorting}
         initialPageSize={25}
         showResetFilterButton={false}
         columns={PeersTableColumns}
         data={showBrowserPeers ? browserPeers : regularPeers}
-        searchPlaceholder={"Search by name, IP, MAC, owner or group..."}
+        searchPlaceholder={t("Search by name, IP, MAC, owner or group...")}
         columnVisibility={{
           select: permission.groups.read,
           connected: false,
@@ -522,13 +548,9 @@ export default function PeersTable({
         // "Get Started" card. With no peers at all (kind unselected), the card
         // still shows.
         hasServerSideFilters={kind !== undefined && (peers?.length ?? 0) > 0}
-        getStartedCard={
-          <NoPeersGettingStarted showBackground={true} />
-        }
+        getStartedCard={<NoPeersGettingStarted showBackground={true} />}
         rightSide={() => (
-          <>
-            {peers && peers.length > 0 && <AddPeerDropdown />}
-          </>
+          <>{peers && peers.length > 0 && <AddPeerDropdown />}</>
         )}
         aboveTable={(table) => (
           <TableFilterChips table={table} filters={filterDefs} />
@@ -554,7 +576,7 @@ export default function PeersTable({
                   onKindChange?.(kind === "users" ? undefined : "users");
                 }}
               >
-                User Devices
+                <T>{"User Devices"}</T>
               </ButtonGroup.Button>
               <ButtonGroup.Button
                 // Drop the left border so it doesn't stack with the first
@@ -566,7 +588,7 @@ export default function PeersTable({
                   onKindChange?.(kind === "servers" ? undefined : "servers");
                 }}
               >
-                Servers
+                <T>{"Servers"}</T>
               </ButtonGroup.Button>
             </ButtonGroup>
 
@@ -637,10 +659,10 @@ export default function PeersTable({
                   {isAnyIntegrationEnabled ? (
                     <>
                       <AlertTriangle size={16} />
-                      Non-Compliant
+                      <T>{"Non-Compliant"}</T>
                     </>
                   ) : (
-                    "Pending Approvals"
+                    t("Pending Approvals")
                   )}
                   <NotificationCountBadge count={pendingApprovalCount} />
                 </Button>
@@ -651,7 +673,11 @@ export default function PeersTable({
               <FullTooltip
                 content={
                   <div className={"text-xs max-w-xs"}>
-                    Peers with compliance checks bypassed by an administrator
+                    <T>
+                      {
+                        "Peers with compliance checks bypassed by an administrator"
+                      }
+                    </T>
                   </div>
                 }
               >
@@ -699,7 +725,7 @@ export default function PeersTable({
                   }
                 >
                   <ShieldCheck size={16} />
-                  Bypassed
+                  <T>{"Bypassed"}</T>
                   <NotificationCountBadge count={bypassedCount} />
                 </Button>
               </FullTooltip>
@@ -709,9 +735,11 @@ export default function PeersTable({
               <FullTooltip
                 content={
                   <div className={"max-w-sm text-xs"}>
-                    Show temporary peers created by the NetBird browser client.
-                    These peers are ephemeral and will be deleted automatically
-                    after a short period of time.
+                    <T>
+                      {
+                        "Show temporary peers created by the NetBird browser client. These peers are ephemeral and will be deleted automatically after a short period of time."
+                      }
+                    </T>
                   </div>
                 }
               >

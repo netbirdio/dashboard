@@ -43,6 +43,7 @@ import { usePathname } from "next/navigation";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useTranslation } from "@/i18n/useTranslation";
 
 declare module "@tanstack/table-core" {
   interface FilterFns {
@@ -223,7 +224,7 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   children,
-  searchPlaceholder = "Search...",
+  searchPlaceholder,
   columnVisibility = {},
   setColumnVisibility,
   sorting = [],
@@ -283,6 +284,7 @@ export function DataTable<TData, TValue>({
   initialSearch,
   onSearchClick,
 }: Readonly<DataTableProps<TData, TValue>>) {
+  const { t } = useTranslation();
   const path = usePathname();
   const isInitialRender = useRef(true);
 
@@ -501,7 +503,7 @@ export function DataTable<TData, TValue>({
               }
               resetRowSelectionOnSearch && setRowSelection?.({});
             }}
-            placeholder={searchPlaceholder}
+            placeholder={searchPlaceholder ?? t("Search...")}
           />
           {children?.(table)}
           {showResetFilterButton && (

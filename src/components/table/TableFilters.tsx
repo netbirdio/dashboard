@@ -1,11 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@components/Popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { Table } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
 import {
@@ -17,6 +13,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { useTranslation } from "@/i18n/useTranslation";
 
 // A TableFilterDef wires one TanStack column to the consolidated filter UI.
 // Each filter renders its own picker — the framework just provides the
@@ -44,6 +41,7 @@ export function TableFiltersButton<TData>({
   filters,
   disabled,
 }: ButtonProps<TData>) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [activeFilterId, setActiveFilterId] = useState<string | null>(null);
 
@@ -70,7 +68,7 @@ export function TableFiltersButton<TData>({
         >
           <FilterIcon size={16} className={"shrink-0"} />
           <span className={"flex items-center gap-1.5"}>
-            Filters
+            {t("Filters")}
             {activeCount > 0 && (
               <span
                 className={
@@ -97,7 +95,7 @@ export function TableFiltersButton<TData>({
               }
             >
               <button
-                aria-label={"Back"}
+                aria-label={t("Back")}
                 className={
                   "flex items-center justify-center w-7 h-7 -ml-1 shrink-0 text-nb-gray-400 hover:text-white hover:bg-nb-gray-900 rounded transition-colors"
                 }
@@ -111,7 +109,9 @@ export function TableFiltersButton<TData>({
             </div>
             <div className={"p-2"}>
               {activeFilter.renderPicker({
-                value: table.getColumn(activeFilter.id)?.getFilterValue() as never,
+                value: table
+                  .getColumn(activeFilter.id)
+                  ?.getFilterValue() as never,
                 onChange: (next) => {
                   table.setPageIndex(0);
                   table.getColumn(activeFilter.id)?.setFilterValue(next);
@@ -204,6 +204,7 @@ type FilterChipProps<TData> = {
 };
 
 function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -227,7 +228,7 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
           </button>
         </PopoverTrigger>
         <button
-          aria-label={`Remove ${def.label} filter`}
+          aria-label={t("Remove {{label}} filter", { label: def.label })}
           className={cn(
             "flex items-center justify-center px-2",
             "border-l border-nb-gray-900",
