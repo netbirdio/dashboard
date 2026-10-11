@@ -111,6 +111,21 @@ export const ReverseProxyEventsAuthMethodCell = ({
           icon: <ShieldOff size={12} />,
           label: "CrowdSec Unavailable",
         };
+      case "appsec_ban":
+        return {
+          icon: <ShieldAlert size={12} />,
+          label: "AppSec Ban",
+        };
+      case "appsec_captcha":
+        return {
+          icon: <ShieldAlert size={12} />,
+          label: "AppSec Captcha",
+        };
+      case "appsec_unavailable":
+        return {
+          icon: <ShieldOff size={12} />,
+          label: "AppSec Unavailable",
+        };
       default:
         return {
           icon: null,
