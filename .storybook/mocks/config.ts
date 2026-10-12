@@ -34,6 +34,9 @@ const config = {
   hubspotSurveyFormId: "",
   analyticsExcludedEmails: "",
   announcement: "",
+  brandName: "",
+  brandLogoUrl: "",
+  brandFaviconUrl: "",
 };
 
 export default config;
