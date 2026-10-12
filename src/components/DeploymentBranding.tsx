@@ -19,9 +19,16 @@ export const DeploymentBranding = ({ branding = config.branding }: Props) => {
   useEffect(() => {
     if (!name && !faviconUrl) return;
 
+    // The observer also sees the title this component writes. A name that
+    // contains the product name would be branded again on every pass, so the
+    // last written title is left alone.
+    let written: string | undefined;
+
     const apply = () => {
-      const title = brandedTitle(document.title, name);
-      if (title !== document.title) document.title = title;
+      if (document.title !== written) {
+        written = brandedTitle(document.title, name);
+        if (written !== document.title) document.title = written;
+      }
 
       if (!faviconUrl) return;
       document
@@ -40,6 +47,8 @@ export const DeploymentBranding = ({ branding = config.branding }: Props) => {
       childList: true,
       subtree: true,
       characterData: true,
+      attributes: true,
+      attributeFilter: ["href"],
     });
     return () => observer.disconnect();
   }, [name, faviconUrl]);

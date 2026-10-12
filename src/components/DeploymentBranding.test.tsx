@@ -29,6 +29,29 @@ describe("DeploymentBranding", () => {
     await waitFor(() => expect(document.title).toBe("Groups - Acme Access"));
   });
 
+  it("applies a name that contains the product name only once", async () => {
+    render(
+      <DeploymentBranding branding={{ name: "NetBird Dashboard Plus" }} />,
+    );
+    expect(document.title).toBe("Peers - NetBird Dashboard Plus");
+
+    // The observer sees the title it writes after a navigation, and must not
+    // brand it a second time.
+    document.title = "Groups - NetBird Dashboard";
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(document.title).toBe("Groups - NetBird Dashboard Plus");
+  });
+
+  it("restores the favicon when its address is changed in place", async () => {
+    render(
+      <DeploymentBranding branding={{ faviconUrl: "/branding/icon.png" }} />,
+    );
+    favicon()?.setAttribute("href", "/favicon.ico");
+    await waitFor(() =>
+      expect(favicon()?.getAttribute("href")).toBe("/branding/icon.png"),
+    );
+  });
+
   it("applies the favicon, also to icons added later", async () => {
     render(
       <DeploymentBranding branding={{ faviconUrl: "/branding/icon.png" }} />,
