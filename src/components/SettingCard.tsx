@@ -58,7 +58,7 @@ function SettingCardItem({
               text="Enabled"
               variant="green"
               size="md"
-              className={"-top-1"}
+              className={"-top-[0.25rem]"}
             />
           )}
         </div>

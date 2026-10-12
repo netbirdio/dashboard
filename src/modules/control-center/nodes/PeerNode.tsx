@@ -115,7 +115,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
                     nodeId: id,
                   })
             }
-            className={"px-3! text-nb-gray-300!"}
+            className={"!px-3 !text-nb-gray-300"}
           >
             {placeholderKind === "user-device" ? (
               <AlertTriangleIcon size={12} className={"text-yellow-400"} />
@@ -152,7 +152,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
             {/* The placeholder IP is derived from the account's peer network range. */}
             <span
               className={
-                "font-normal text-sm text-nb-gray-500 relative top-[-0.1rem]"
+                "font-normal text-sm text-nb-gray-500 relative -top-[0.1rem]"
               }
             >
               {placeholderIp}

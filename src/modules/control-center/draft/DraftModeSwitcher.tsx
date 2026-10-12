@@ -108,7 +108,7 @@ export const DraftModeSwitcher = ({}: Props) => {
               variant={"primary"}
               size={"xs"}
               className={
-                "h-[39px] px-4.5 disabled:opacity-90! disabled:bg-nb-gray-940! disabled:text-nb-gray-800! disabled:border! disabled:border-nb-gray-930/80!"
+                "h-[39px] px-4.5 disabled:!opacity-90 disabled:!bg-nb-gray-940 disabled:!text-nb-gray-800 disabled:!border disabled:!border-nb-gray-930/80"
               }
               disabled={changeCount === 0}
               onClick={() => setReviewOpen(true)}

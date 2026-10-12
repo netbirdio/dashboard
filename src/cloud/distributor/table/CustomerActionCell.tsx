@@ -66,7 +66,7 @@ export const CustomerActionCell = ({ customer }: Props) => {
             e.preventDefault();
           }}
         >
-          <Button variant={"secondary"} size={"sm"} className={"px-3!"}>
+          <Button variant={"secondary"} size={"sm"} className={"!px-3"}>
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>

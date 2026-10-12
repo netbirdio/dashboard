@@ -23,7 +23,7 @@ export const PlanSuccessModal = () => {
             "mx-auto text-center flex flex-col items-center justify-center "
           }
         >
-          <h2 className={"text-xl my-0 leading-normal mb-2"}>
+          <h2 className={"text-xl my-0 leading-[1.5] mb-2"}>
             Thank you for subscribing <br />
             to NetBird! 🎉
           </h2>

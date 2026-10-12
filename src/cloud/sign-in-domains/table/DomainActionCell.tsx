@@ -84,7 +84,7 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
         <Button
           variant={"secondary"}
           size={"xs"}
-          className={"px-3!"}
+          className={"!px-3"}
           disabled={!permission.settings.update}
           onClick={() => setModal(true)}
           data-testid={"verify-domain"}
@@ -105,7 +105,7 @@ export default function DomainActionCell({ domain }: Readonly<Props>) {
           variant={"danger-outline"}
           size={"xs"}
           className={cn(
-            "p-0! h-[34px]! w-[34px]!",
+            "!p-0 !h-[34px] !w-[34px]",
             removeBlockedReason && "pointer-events-none",
           )}
           disabled={!!removeBlockedReason || !permission.settings.update}

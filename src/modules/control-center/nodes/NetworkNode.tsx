@@ -222,7 +222,7 @@ export const NetworkNode = ({ data, id }: NetworkNodeProps) => {
           setControlsHovered(false);
         }}
         className={
-          "absolute bottom-full left-[-2px] mb-3 flex items-stretch gap-2 nodrag"
+          "absolute bottom-full -left-[2px] mb-3 flex items-stretch gap-2 nodrag"
         }
       >
         <RoutingPeersBar
@@ -311,7 +311,7 @@ const FrameAddResourceButton = ({
         variant={"secondary"}
         size={"xs"}
         className={cn(
-          "px-3! py-0! h-9 nodrag pointer-events-auto",
+          "!px-3 !py-0 h-9 nodrag pointer-events-auto",
           frameCellCount > 0 && "w-full",
         )}
         // The row is created only once the modal saves. Clicks must not bubble;

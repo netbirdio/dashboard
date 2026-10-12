@@ -106,7 +106,7 @@ const VideoGuide = ({
         >
           <div
             className={
-              "bg-nb-gray-900/50 group-hover:bg-nb-gray-600/50 backdrop-blur-sm h-8 w-8 flex items-center justify-center rounded-full"
+              "bg-nb-gray-900/50 group-hover:bg-nb-gray-600/50 backdrop-blur h-8 w-8 flex items-center justify-center rounded-full"
             }
           >
             <PlayIcon size={14} />

@@ -59,7 +59,7 @@ export const RDPCertificateModal = ({
             <CertificateDetailsList certificate={certificate} />
           </div>
 
-          <label className={"flex items-center gap-x-3 cursor-pointer"}>
+          <label className={"flex items-center space-x-3 cursor-pointer"}>
             <Checkbox
               id="remember-cert"
               checked={rememberCertificate}

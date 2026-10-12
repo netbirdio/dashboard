@@ -164,7 +164,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
                     <Button
                       variant={"default-outline"}
                       size={"xs"}
-                      className={"h-9! w-9!"}
+                      className={"!h-9 !w-9"}
                       onClick={() => {
                         let peers = table
                           .getSelectedRowModel()

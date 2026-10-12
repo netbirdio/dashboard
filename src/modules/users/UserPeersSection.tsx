@@ -44,7 +44,7 @@ export const UserPeersSection = ({ user }: Props) => {
         <Suspense
           fallback={
             <div>
-              <SkeletonTableHeader className={"p-0!"} />
+              <SkeletonTableHeader className={"!p-0"} />
               <div className={"mt-8 w-full"}>
                 <SkeletonTable withHeader={false} />
               </div>

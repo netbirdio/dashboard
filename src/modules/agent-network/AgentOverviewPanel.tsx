@@ -163,14 +163,14 @@ function OverviewContent({
               <ButtonGroup.Button
                 variant={metric === "tokens" ? "tertiary" : "secondary"}
                 onClick={() => setMetric("tokens")}
-                className={"h-[30px]! px-3! py-0! text-xs"}
+                className={"!h-[30px] !px-3 !py-0 text-xs"}
               >
                 Tokens
               </ButtonGroup.Button>
               <ButtonGroup.Button
                 variant={metric === "cost" ? "tertiary" : "secondary"}
                 onClick={() => setMetric("cost")}
-                className={"h-[30px]! px-3! py-0! text-xs"}
+                className={"!h-[30px] !px-3 !py-0 text-xs"}
               >
                 Cost
               </ButtonGroup.Button>

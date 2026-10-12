@@ -91,7 +91,7 @@ export default function HowDidYouHearAboutUs() {
       >
         <ModalContent
           maxWidthClass={cn("relative", "max-w-md")}
-          className={"z-9999"}
+          className={"z-[9999]"}
           showClose={true}
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
@@ -100,10 +100,10 @@ export default function HowDidYouHearAboutUs() {
           <GradientFadedBackground />
           <div
             className={
-              "mx-auto text-center flex flex-col items-center justify-center z-1 mt-2"
+              "mx-auto text-center flex flex-col items-center justify-center z-[1] mt-2"
             }
           >
-            <h2 className={"text-xl my-0 leading-normal text-center"}>
+            <h2 className={"text-xl my-0 leading-[1.5] text-center"}>
               We’d love to hear from you
             </h2>
             <Paragraph

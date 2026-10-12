@@ -53,7 +53,7 @@ export const TrafficEventsTextCell = ({ event }: Props) => {
 
         <span
           className={cn(
-            "h-2 w-2 rounded-full shrink-0 mt-[3.5px] mr-0.5 relative z-1",
+            "h-2 w-2 rounded-full shrink-0 mt-[3.5px] mr-0.5 relative z-[1]",
             trafficEvent.type === TrafficEventType.STOPPED && "bg-nb-gray-700",
             trafficEvent.type === TrafficEventType.BLOCKED && "bg-red-500",
             trafficEvent.type === TrafficEventType.CONNECTED && "bg-green-500",

@@ -217,7 +217,7 @@ export const TrafficEventsPeerTabContent = () => {
         <Suspense
           fallback={
             <div>
-              <SkeletonTableHeader className={"p-0!"} />
+              <SkeletonTableHeader className={"!p-0"} />
               <div className={"mt-8 w-full"}>
                 <SkeletonTable withHeader={false} />
               </div>
@@ -345,7 +345,7 @@ const TrafficEventsPeerDetailTable = ({
       minimal={true}
       showSearchAndFilters={true}
       inset={false}
-      rowClassName={"data-[accordion=opened]:border-b-transparent!"}
+      rowClassName={"data-[accordion=opened]:!border-b-transparent"}
       renderExpandedRow={(e) => {
         if (e.events.length < 2) return undefined;
         return <TrafficEventsDetailRow event={e} className={"ml-[11px]"} />;

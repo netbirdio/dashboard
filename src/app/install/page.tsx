@@ -27,7 +27,7 @@ function InstallContent() {
         createPortal(
           <div
             className={
-              "fixed top-0 left-0 right-0 z-60 w-full pointer-events-auto"
+              "fixed top-0 left-0 right-0 z-[60] w-full pointer-events-auto"
             }
           >
             <AnnouncementBanner />

@@ -123,7 +123,7 @@ export const IssueBadge = ({
   waiting?: boolean;
 }) => {
   const className = cn(
-    "inline-flex items-center justify-center gap-1.5 text-[0.65rem] font-medium px-2 py-1 rounded-sm shrink-0 [&>svg]:shrink-0",
+    "inline-flex items-center justify-center gap-1.5 text-[0.65rem] font-medium px-2 py-1 rounded shrink-0 [&>svg]:shrink-0",
     "bg-amber-900/30 text-amber-400 border border-amber-500/20",
     onClick &&
       "cursor-pointer hover:bg-amber-900/50 hover:text-amber-300 transition-colors",
@@ -169,7 +169,7 @@ export const KindBadge = ({ kind }: { kind: ChangeKind }) => {
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 text-[0.65rem] font-medium px-2 py-1 rounded-sm shrink-0 [&>svg]:shrink-0",
+        "inline-flex items-center justify-center gap-1.5 text-[0.65rem] font-medium px-2 py-1 rounded shrink-0 [&>svg]:shrink-0",
         badge.className,
       )}
     >

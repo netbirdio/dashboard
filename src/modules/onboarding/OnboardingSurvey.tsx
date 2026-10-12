@@ -452,7 +452,7 @@ export const OnboardingSurvey = ({ domainCategory, onSubmit }: Props) => {
 
             <div
               className={cn(
-                !other && "h-0! opacity-0",
+                !other && "!h-0 opacity-0",
                 "mt-2",
                 other && "mb-3",
               )}
@@ -512,5 +512,5 @@ const OnboardingCheckbox = ({
 };
 
 const RequiredAsterisk = () => (
-  <span className={"text-red-500 relative top-[-2.5px]"}>*</span>
+  <span className={"text-red-500 relative -top-[2.5px]"}>*</span>
 );

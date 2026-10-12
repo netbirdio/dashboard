@@ -58,7 +58,7 @@ export const ResourceExposeServiceCell = ({ resource }: Props) => {
       <Button
         variant={"secondary"}
         size={"xs"}
-        className={"px-3!"}
+        className={"!px-3"}
         onClick={(e) => {
           e.stopPropagation();
           openModal({

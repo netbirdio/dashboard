@@ -16,9 +16,9 @@ export interface ButtonProps
 export const buttonVariants = cva(
   [
     "relative",
-    "text-sm focus:z-10 focus:ring-2 font-medium  focus:outline-hidden whitespace-nowrap shadow-xs",
+    "text-sm focus:z-10 focus:ring-2 font-medium  focus:outline-none whitespace-nowrap shadow-sm",
     "inline-flex gap-2 items-center justify-center transition-colors focus:ring-offset-1",
-    "disabled:opacity-40 disabled:cursor-not-allowed dark:disabled:text-nb-gray-300 dark:ring-offset-neutral-950/50",
+    "disabled:opacity-40 disabled:cursor-not-allowed disabled:dark:text-nb-gray-300 dark:ring-offset-neutral-950/50",
   ],
   {
     variants: {
@@ -28,7 +28,7 @@ export const buttonVariants = cva(
           "dark:focus:ring-zinc-800/50 dark:bg-nb-gray dark:text-gray-400 dark:border-gray-700/30 dark:hover:text-white dark:hover:bg-zinc-800/50",
         ],
         primary: [
-          "dark:focus:ring-netbird-600/50 dark:ring-offset-neutral-950/50 dark:enabled:bg-netbird dark:disabled:bg-nb-gray-910 dark:text-gray-100 dark:enabled:hover:text-white dark:enabled:hover:bg-netbird-500/80",
+          "dark:focus:ring-netbird-600/50 dark:ring-offset-neutral-950/50 enabled:dark:bg-netbird disabled:dark:bg-nb-gray-910 dark:text-gray-100 enabled:dark:hover:text-white enabled:dark:hover:bg-netbird-500/80",
           "enabled:bg-netbird enabled:text-white enabled:focus:ring-netbird-400/50 enabled:hover:bg-netbird-500",
         ],
         secondary: [
@@ -58,11 +58,11 @@ export const buttonVariants = cva(
         ],
         tertiary: [
           "bg-white hover:text-black focus:ring-zinc-200/50  hover:bg-gray-100 border-gray-200 text-gray-900",
-          "dark:focus:ring-zinc-800/50 dark:bg-white dark:text-gray-800 dark:border-gray-700/40 dark:hover:bg-neutral-200 dark:disabled:bg-nb-gray-920 dark:disabled:text-nb-gray-300",
+          "dark:focus:ring-zinc-800/50 dark:bg-white dark:text-gray-800 dark:border-gray-700/40 dark:hover:bg-neutral-200 disabled:dark:bg-nb-gray-920 disabled:dark:text-nb-gray-300",
         ],
         white: [
-          "focus:ring-white/50 bg-white text-gray-800 border-white outline-hidden hover:bg-neutral-200 dark:disabled:bg-nb-gray-920 dark:disabled:text-nb-gray-300",
-          "dark:disabled:bg-nb-gray-900 dark:disabled:text-nb-gray-300 dark:disabled:border-nb-gray-900",
+          "focus:ring-white/50 bg-white text-gray-800 border-white outline-none hover:bg-neutral-200 disabled:dark:bg-nb-gray-920 disabled:dark:text-nb-gray-300",
+          "disabled:dark:bg-nb-gray-900 disabled:dark:text-nb-gray-300 disabled:dark:border-nb-gray-900",
         ],
         outline: [
           "bg-white hover:text-black focus:ring-zinc-200/50  hover:bg-gray-100 border-gray-200 text-gray-900",
@@ -70,20 +70,20 @@ export const buttonVariants = cva(
         ],
         "danger-outline": [
           "", // TODO - add danger button styles for light mode
-          "dark:enabled:focus:ring-red-800/20 dark:enabled:focus:bg-red-950/40 dark:enabled:hover:bg-red-950/50 dark:enabled:hover:border-red-800/50 dark:bg-transparent dark:text-red-500",
+          "enabled:dark:focus:ring-red-800/20 enabled:dark:focus:bg-red-950/40 enabled:hover:dark:bg-red-950/50 enabled:dark:hover:border-red-800/50 dark:bg-transparent dark:text-red-500",
           "",
         ],
         "danger-text": [
-          "dark:bg-transparent dark:text-red-500 dark:hover:text-red-600 dark:border-transparent px-0! shadow-none! py-0! focus:ring-red-500/30 dark:ring-offset-neutral-950/50 rounded-xs",
+          "dark:bg-transparent dark:text-red-500 dark:hover:text-red-600 dark:border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 dark:ring-offset-neutral-950/50 rounded-sm",
         ],
         "default-outline": [
           "dark:ring-offset-nb-gray-950/50 dark:focus:ring-nb-gray-500/20",
           "dark:bg-transparent dark:text-nb-gray-400 dark:border-transparent dark:hover:text-white dark:hover:bg-nb-gray-900/30 dark:hover:border-nb-gray-800/50",
-          "dark:data-[state=open]:text-white dark:data-[state=open]:bg-nb-gray-900/30 dark:data-[state=open]:border-nb-gray-800/50",
+          "data-[state=open]:dark:text-white data-[state=open]:dark:bg-nb-gray-900/30 data-[state=open]:dark:border-nb-gray-800/50",
         ],
         danger: [
           "", // TODO - add danger button styles for light mode
-          "dark:focus:ring-red-700/20 dark:focus:bg-red-700 dark:hover:bg-red-700 dark:hover:border-red-800/50 dark:bg-red-600 dark:text-red-100",
+          "dark:focus:ring-red-700/20 dark:focus:bg-red-700 hover:dark:bg-red-700 dark:hover:border-red-800/50 dark:bg-red-600 dark:text-red-100",
         ],
       },
       size: {

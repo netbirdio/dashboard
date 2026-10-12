@@ -138,7 +138,7 @@ export const ChangeAccordionItem = ({
         >
           <span
             className={
-              "shrink-0 -ml-1 p-1.5 rounded-sm text-nb-gray-400 hover:text-nb-gray-200 hover:bg-nb-gray-800 transition-colors"
+              "shrink-0 -ml-1 p-1.5 rounded text-nb-gray-400 hover:text-nb-gray-200 hover:bg-nb-gray-800 transition-colors"
             }
           >
             <ChevronDownIcon
@@ -176,7 +176,7 @@ export const ChangeAccordionItem = ({
             }}
             aria-label={"Copy URL"}
             className={
-              "group/copy relative top-px flex items-center gap-1.5 font-mono text-[0.7rem] text-nb-gray-400 min-w-0 max-w-[18rem] cursor-pointer hover:text-nb-gray-200 transition-colors"
+              "group/copy relative top-[1px] flex items-center gap-1.5 font-mono text-[0.7rem] text-nb-gray-400 min-w-0 max-w-[18rem] cursor-pointer hover:text-nb-gray-200 transition-colors"
             }
           >
             <span className={"relative truncate min-w-0"}>
@@ -241,7 +241,7 @@ export const ChangeAccordionItem = ({
                 onClick={(e) => e.stopPropagation()}
                 data-testid={"cc-change-menu"}
                 className={
-                  "self-center shrink-0 p-1.5 rounded-sm text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 data-[state=open]:bg-nb-gray-800 data-[state=open]:text-nb-gray-100 transition-colors disabled:opacity-50 outline-hidden"
+                  "self-center shrink-0 p-1.5 rounded text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-800 data-[state=open]:bg-nb-gray-800 data-[state=open]:text-nb-gray-100 transition-colors disabled:opacity-50 outline-none"
                 }
                 aria-label={"More actions"}
               >

@@ -25,13 +25,13 @@ export default function ModalHeader({
   center,
 }: Props) {
   return (
-    <div className={cn(className, "min-w-0 relative z-1")}>
+    <div className={cn(className, "min-w-0 relative z-[1]")}>
       <div className={"flex items-start gap-5 min-w-0"}>
         {icon && <SquareIcon color={color} icon={icon} />}
         <div className={cn("min-w-0", center && "text-center")}>
           <h2
             className={cn(
-              "text-lg my-0 leading-normal",
+              "text-lg my-0 leading-[1.5]",
               center && "text-center",
             )}
           >
@@ -41,7 +41,7 @@ export default function ModalHeader({
             <>{children}</>
           ) : (
             <Paragraph
-              className={cn("text-sm", margin, truncate && "block! truncate")}
+              className={cn("text-sm", margin, truncate && "!block truncate")}
             >
               {description}
             </Paragraph>

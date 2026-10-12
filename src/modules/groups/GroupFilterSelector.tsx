@@ -77,7 +77,7 @@ export function GroupFilterSelector({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-xs  shadow-nb-gray-950"
+        className="w-full p-0 shadow-sm  shadow-nb-gray-950"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}
@@ -101,7 +101,7 @@ export function GroupFilterSelector({
                 className={cn(
                   "min-h-[42px] w-full relative",
                   "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
-                  "bg-transparent text-sm outline-hidden focus-visible:outline-hidden ring-0 focus-visible:ring-0",
+                  "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
                   "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
                 )}
                 ref={searchRef}

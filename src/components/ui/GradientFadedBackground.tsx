@@ -15,7 +15,7 @@ export const GradientFadedBackground = ({ className }: Props) => {
     >
       <div
         className={
-          "bg-linear-to-b from-nb-gray-900/20 via-transparent to-transparent w-full h-full rounded-md"
+          "bg-gradient-to-b from-nb-gray-900/20 via-transparent to-transparent w-full h-full rounded-md"
         }
       ></div>
     </div>

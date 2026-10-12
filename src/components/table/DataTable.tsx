@@ -569,7 +569,7 @@ export function DataTable<TData, TValue>({
               <TableBodyComponent
                 className={cn(
                   "relative",
-                  data == undefined && "blur-xs",
+                  data == undefined && "blur-sm",
                   wrapperClassName,
                 )}
               >
@@ -627,7 +627,7 @@ export function DataTable<TData, TValue>({
                                   "absolute left-0 top-0 w-full h-full z-0"
                                 }
                               ></div>
-                              <div className={"relative z-1"}>
+                              <div className={"relative z-[1]"}>
                                 {flexRender(
                                   cell.column.columnDef.cell,
                                   cell.getContext(),
@@ -668,7 +668,7 @@ export function DataTable<TData, TValue>({
                   <TableRowUnstyledComponent>
                     <TableCellComponent
                       colSpan={columns.length}
-                      className="py-0! px-0! text-center"
+                      className="!py-0 !px-0 text-center"
                     >
                       <NoResults className={"py-4"} />
                     </TableCellComponent>

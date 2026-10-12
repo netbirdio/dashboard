@@ -121,7 +121,7 @@ export default function ReverseProxyAuthCell({
       useHover={false}
       disabled={!canConfigure}
       className={
-        "cursor-pointer rounded-r-none! border-r-0! h-[34px]! px-2! min-w-[50px] hover:bg-nb-gray-930 transition-all"
+        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] !px-2 min-w-[50px] hover:bg-nb-gray-930 transition-all"
       }
     >
       {authCount > 0 ? (
@@ -236,7 +236,7 @@ export default function ReverseProxyAuthCell({
         <Button
           size={"xs"}
           variant={"secondary"}
-          className={"rounded-l-none! px-2! h-[34px]!"}
+          className={"!rounded-l-none !px-2 !h-[34px]"}
           onClick={(e) => {
             e.stopPropagation();
             openModal({ proxy: reverseProxy, initialTab: "auth" });

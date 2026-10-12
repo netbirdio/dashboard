@@ -86,7 +86,7 @@ export const TrafficEventsPortCell = ({ event }: Props) => {
             {ICMPType}
             <CircleHelp
               size={12}
-              className={"text-nb-gray-200 relative top-0"}
+              className={"text-nb-gray-200 relative -top-[0px]"}
             />
           </Badge>
         </FullTooltip>

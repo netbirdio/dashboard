@@ -162,7 +162,7 @@ export const IntentCard = ({
                                 </FullTooltip>
                             )}
                         </h2>
-                        <p className={"text-nb-gray-300! text-[.85rem]"}>{description}</p>
+                        <p className={"!text-nb-gray-300 text-[.85rem]"}>{description}</p>
                     </div>
                     <div
                         className={"h-full items-center text-nb-gray-400 hidden sm:flex"}

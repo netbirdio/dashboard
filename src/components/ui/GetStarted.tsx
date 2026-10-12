@@ -20,7 +20,7 @@ export default function GetStarted({
   return (
     <tfoot
       className={
-        "absolute w-full h-full bg-nb-gray-950/70 z-20 left-0 top-0 flex backdrop-blur-xs"
+        "absolute w-full h-full bg-nb-gray-950/70 z-20 left-0 top-0 flex backdrop-blur-sm"
       }
     >
       <tr className={"inline-flex justify-center w-full mt-24"}>

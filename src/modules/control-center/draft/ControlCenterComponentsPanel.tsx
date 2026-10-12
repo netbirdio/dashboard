@@ -1515,7 +1515,7 @@ const PanelContent = React.memo(
             <button
               onClick={onClose}
               className={cn(
-                "shrink-0 px-1.5 py-0.5 rounded-sm border border-nb-gray-900 bg-nb-gray-920",
+                "shrink-0 px-1.5 py-0.5 rounded border border-nb-gray-900 bg-nb-gray-920",
                 "shadow-[0_2px_0_0_#1e2123,inset_0_1px_0_0_rgba(255,255,255,0.05)]",
                 "text-[8px] font-medium tracking-wide text-nb-gray-350",
                 "hover:bg-nb-gray-910 hover:text-nb-gray-200 transition-colors",
@@ -1538,7 +1538,7 @@ const PanelContent = React.memo(
                   side={"left"}
                   sideOffset={14}
                   interactive={false}
-                  contentClassName={"px-2! py-1.5!"}
+                  contentClassName={"!px-2 !py-1.5"}
                   variant={"lighter"}
                 >
                   <button
@@ -1761,7 +1761,7 @@ const DragGhost = ({ ghost }: { ghost: GhostData }) => {
   return (
     <div
       ref={ref}
-      className="fixed pointer-events-none z-99 opacity-90"
+      className="fixed pointer-events-none z-[99] opacity-90"
       style={{
         top: 0,
         left: 0,

@@ -319,7 +319,7 @@ export function GenericHTTPModalContent({
                   href={
                     "https://docs.netbird.io/how-to/stream-activity-to-generic-http#custom-body-template-optional"
                   }
-                  className={"relative top-0 ml-1"}
+                  className={"relative top-[0px] ml-1"}
                 >
                   Body Template Variables
                   <ExternalLinkIcon size={12} />

@@ -30,7 +30,7 @@ export const LockedFeatureInfoCard = ({
       <div
         className={cn(
           "text-sm",
-          "w-full bg-linear-to-r from-nb-gray-920 to-nb-gray-900 backdrop-blur-sm px-6 py-4",
+          "w-full bg-gradient-to-r from-nb-gray-920 to-nb-gray-900 backdrop-blur px-6 py-4",
           "gap-3 rounded-md border border-nb-gray-800 max-w-[745px]",
           "items-center flex justify-between",
         )}

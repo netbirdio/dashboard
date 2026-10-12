@@ -35,7 +35,7 @@ const ModalOverlay = React.forwardRef<
     className={cn(
       "fixed top-0 left-0 bottom-0 right-0 grid z-50  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ",
       "mx-auto place-items-start overflow-y-auto md:py-16",
-      "bg-black/30 dark:bg-black/40 backdrop-blur-xs",
+      "bg-black/30 dark:bg-black/40 backdrop-blur-sm",
       className,
     )}
     style={{ scrollbarGutter: "stable both-edges" }}
@@ -70,7 +70,7 @@ const ModalContent = React.forwardRef<
         <DialogPrimitive.Content
           ref={ref}
           className={cn(
-            "mx-auto relative top-0 z-52 grid w-full focus:outline-0 border border-neutral-200 bg-white py-6 dark:shadow-lg shadow-xs duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 sm:rounded-lg md:w-full dark:border-nb-gray-900 dark:bg-nb-gray",
+            "mx-auto relative top-0 z-[52] grid w-full focus:outline-0 border border-neutral-200 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 sm:rounded-lg md:w-full dark:border-nb-gray-900 dark:bg-nb-gray",
             className,
             maxWidthClass,
           )}
@@ -97,7 +97,7 @@ const ModalContent = React.forwardRef<
           {showClose && (
             <DialogPrimitive.Close
               data-testid={"modal-close"}
-              className="absolute right-4 z-10 top-4 rounded-xs opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-neutral-100 data-[state=open]:text-neutral-500 dark:ring-offset-neutral-950 dark:focus:ring-neutral-300 dark:data-[state=open]:bg-neutral-800 dark:data-[state=open]:text-neutral-400"
+              className="absolute right-4 z-10 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-neutral-100 data-[state=open]:text-neutral-500 dark:ring-offset-neutral-950 dark:focus:ring-neutral-300 dark:data-[state=open]:bg-neutral-800 dark:data-[state=open]:text-neutral-400"
             >
               <X className="h-4 w-4" />
               <span className="sr-only">Close</span>
@@ -135,7 +135,7 @@ const SidebarModalContent = React.forwardRef<
           <DialogPrimitive.Content
             ref={ref}
             className={cn(
-              "ml-auto mt-auto relative bottom-0 z-52 grid w-full border border-zinc-700/40 bg-white py-6 dark:shadow-lg shadow-xs duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0  data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 md:w-full dark:border-nb-gray-900 dark:bg-nb-gray",
+              "ml-auto mt-auto relative bottom-0 z-[52] grid w-full border border-zinc-700/40 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0  data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 md:w-full dark:border-nb-gray-900 dark:bg-nb-gray",
               "border-t-0 border-r-0 border-b-0 shadow-2xl",
               className,
               maxWidthClass,
@@ -153,7 +153,7 @@ const SidebarModalContent = React.forwardRef<
             {showClose && (
               <DialogPrimitive.Close
                 data-testid={"modal-close"}
-                className="absolute right-4 z-10 top-4 rounded-xs opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-neutral-100 data-[state=open]:text-neutral-500 dark:ring-offset-neutral-950 dark:focus:ring-neutral-300 dark:data-[state=open]:bg-neutral-800 dark:data-[state=open]:text-neutral-400"
+                className="absolute right-4 z-10 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-neutral-950 focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-neutral-100 data-[state=open]:text-neutral-500 dark:ring-offset-neutral-950 dark:focus:ring-neutral-300 dark:data-[state=open]:bg-neutral-800 dark:data-[state=open]:text-neutral-400"
               >
                 <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>
@@ -185,7 +185,7 @@ const ModalFooter = ({
   >
     <div
       className={cn(
-        "flex flex-col-reverse sm:flex-row sm:justify-between sm:gap-x-2",
+        "flex flex-col-reverse sm:flex-row sm:justify-between sm:space-x-2",
         variant === "setup" && "px-6 pb-3 pt-8",
         variant === "default" && "px-8 pb-1 pt-6",
         className,

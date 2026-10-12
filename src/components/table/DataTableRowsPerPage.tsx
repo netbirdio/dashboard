@@ -29,7 +29,7 @@ export function DataTableRowsPerPage<TData>({
             aria-expanded={open}
             disabled={disabled}
             data-testid={"rows-per-page"}
-            className="w-[200px] justify-between!"
+            className="w-[200px] !justify-between"
           >
             <RowsIcon size={15} className={"text-nb-gray-300 shrink-0"} />
             <div>
@@ -57,7 +57,7 @@ export function DataTableRowsPerPage<TData>({
                   <div
                     className={cn(
                       "cursor-pointer",
-                      "flex gap-2 px-2 py-1.5 my-1 mx-1 rounded-md items-center dark:hover:bg-nb-gray-800 text-nb-gray-400 hover:text-white",
+                      "flex gap-2 px-2 py-1.5 my-1 mx-1 rounded-md items-center hover:dark:bg-nb-gray-800 text-nb-gray-400 hover:text-white",
                       table.getState().pagination.pageSize === val
                         ? "text-white"
                         : "",

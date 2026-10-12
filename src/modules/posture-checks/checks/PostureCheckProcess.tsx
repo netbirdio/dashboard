@@ -41,7 +41,7 @@ export const PostureCheckProcess = ({ value, onChange, disabled }: Props) => {
         "Restrict access in your network based on running processes of a peer."
       }
       icon={<ServerCogIcon size={18} />}
-      iconClass={"bg-linear-to-tr from-nb-gray-500 to-nb-gray-300"}
+      iconClass={"bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300"}
       modalWidthClass={"max-w-xl"}
       onReset={() => onChange(undefined)}
     >

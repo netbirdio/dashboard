@@ -419,7 +419,7 @@ export default function ReverseProxyTargetModal({
                             label: "https://",
                           },
                         ]}
-                        className="rounded-r-none! border-r-0!"
+                        className="!rounded-r-none !border-r-0"
                         disabled={!hasTarget}
                         data-testid="target-protocol-select"
                       />
@@ -429,7 +429,7 @@ export default function ReverseProxyTargetModal({
                         value={target}
                         onChange={setTarget}
                         autoFocus={!!initialResource && isHostEditable}
-                        className="rounded-l-none!"
+                        className="!rounded-l-none"
                       />
                     </div>
                   </div>
@@ -494,7 +494,7 @@ export default function ReverseProxyTargetModal({
                   }
                   data-testid={"target-optional-settings"}
                 >
-                  <span className={"relative top-px"}>
+                  <span className={"relative top-[1px]"}>
                     Optional Settings
                   </span>
                 </AccordionTrigger>

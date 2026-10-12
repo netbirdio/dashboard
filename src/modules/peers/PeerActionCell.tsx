@@ -199,7 +199,7 @@ export default function PeerActionCell() {
             e.preventDefault();
           }}
         >
-          <Button variant={"secondary"} className={"px-3!"}>
+          <Button variant={"secondary"} className={"!px-3"}>
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>
@@ -267,7 +267,7 @@ export default function PeerActionCell() {
           <FullTooltip
             content={
               <div
-                className={"flex gap-2 items-center text-nb-gray-300! text-xs"}
+                className={"flex gap-2 items-center !text-nb-gray-300 text-xs"}
               >
                 <IconInfoCircle size={14} />
                 <span>

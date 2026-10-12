@@ -37,7 +37,7 @@ export default function ReverseProxyTargetsCell({
         e.stopPropagation();
         openTargetModal({ proxy: reverseProxy });
       }}
-      className={"px-3!"}
+      className={"!px-3"}
       disabled={isL4 || !permission?.services?.create}
     >
       <PlusCircle size={12} />

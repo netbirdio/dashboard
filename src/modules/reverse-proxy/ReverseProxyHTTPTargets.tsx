@@ -67,7 +67,7 @@ export default function ReverseProxyHTTPTargets({
                   className="rounded-md hover:bg-nb-gray-900/30 cursor-pointer transition-all"
                 >
                   <td className="py-2.5 pl-5 pr-2 align-middle">
-                    <span className="text-[11px] leading-none font-mono px-2.5 py-2 rounded-sm bg-nb-gray-900 text-nb-gray-300 inline-flex items-center">
+                    <span className="text-[11px] leading-none font-mono px-2.5 py-2 rounded bg-nb-gray-900 text-nb-gray-300 inline-flex items-center">
                       {target.path
                         ? target.path.startsWith("/")
                           ? target.path
@@ -93,7 +93,7 @@ export default function ReverseProxyHTTPTargets({
                       />
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="default-outline" className="px-3!" data-testid="target-row-actions">
+                          <Button variant="default-outline" className="!px-3" data-testid="target-row-actions">
                             <MoreVertical size={16} className="shrink-0" />
                           </Button>
                         </DropdownMenuTrigger>

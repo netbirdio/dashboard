@@ -13,7 +13,7 @@ export const DNSZonesSearchDomainCell = ({ zone }: Props) => {
   const { updateZone } = useDNSZones();
 
   return (
-    <div className={"flex min-w-0"}>
+    <div className={"flex min-w-[0px]"}>
       <ToggleSwitch
         disabled={!permission?.dns?.update}
         checked={zone?.enable_search_domain}

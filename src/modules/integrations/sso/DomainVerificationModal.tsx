@@ -99,7 +99,7 @@ export const DomainVerificationModal = ({
 
           <div
             className={
-              "bg-nb-gray-900/70 px-4 py-3 rounded-md border border-nb-gray-800/70 my-6 text-nb-gray-300! text-sm"
+              "bg-nb-gray-900/70 px-4 py-3 rounded-md border border-nb-gray-800/70 my-6 !text-nb-gray-300 text-sm"
             }
           >
             If you do not have access to your DNS configuration, you can also

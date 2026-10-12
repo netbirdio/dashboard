@@ -117,7 +117,7 @@ const TenantDropdown = ({ tenants, currentAccount, mspAccount }: Props) => {
       <div className={"relative h-10 left-2"}>
         <PopoverTrigger asChild>
           <Button
-            className={"h-12 pr-3 pl-2 relative top-[-0.22rem]"}
+            className={"h-12 pr-3 pl-2 relative -top-[0.22rem]"}
             variant={"default-outline"}
           >
             <TenantItem
@@ -132,7 +132,7 @@ const TenantDropdown = ({ tenants, currentAccount, mspAccount }: Props) => {
       <PopoverContent
         hideWhenDetached={false}
         className={cn(
-          "w-full p-0 m-0 shadow-xs shadow-nb-gray-950",
+          "w-full p-0 m-0 shadow-sm shadow-nb-gray-950",
           "w-[360px]",
         )}
         align="end"
@@ -280,10 +280,10 @@ const TenantItem = ({
         >
           <TruncatedText text={tenant.name} maxWidth={"150px"} />
           {isMSP && (
-            <div className={"relative -top-px flex items-center"}>
+            <div className={"relative -top-[1px] flex items-center"}>
               <SmallBadge
                 text={"MSP"}
-                className={"ml-2 top-[-0.22px]"}
+                className={"ml-2 -top-[.22px]"}
                 variant={"white"}
               />
             </div>
@@ -315,7 +315,7 @@ const TenantItem = ({
           >
             <Badge
               variant={"yellow"}
-              className={"h-[25px] px-2 text-[0.7rem] border-yellow-600!"}
+              className={"h-[25px] px-2 text-[0.7rem] !border-yellow-600"}
             >
               <CircleHelp size={12} />
               Trial Expired

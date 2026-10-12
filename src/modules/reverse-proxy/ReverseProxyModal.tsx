@@ -644,7 +644,7 @@ export default function ReverseProxyModal({
               )}
 
               {isPrivate && accessGroups.length === 0 && (
-                <Paragraph className={"text-yellow-400! text-xs! mt-0!"}>
+                <Paragraph className={"!text-yellow-400 !text-xs !mt-0"}>
                   NetBird-only is on but no access groups are set. Open it
                   on the Authentication tab and pick at least one group.
                 </Paragraph>

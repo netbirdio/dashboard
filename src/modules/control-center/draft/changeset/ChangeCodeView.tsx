@@ -68,7 +68,7 @@ export const ChangeCodeView = ({ change, live }: Props) => {
           max-height: sizes to content up to 24rem, then scrolls. */}
       <ScrollAreaPrimitive.Root className={"relative overflow-hidden w-full"}>
         <ScrollAreaPrimitive.Viewport
-          className={"max-h-96 w-full rounded-[inherit]"}
+          className={"max-h-[24rem] w-full rounded-[inherit]"}
         >
           <div
             className={"font-mono text-xs leading-relaxed w-max min-w-full"}

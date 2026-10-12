@@ -20,6 +20,12 @@
   --text-3xl--line-height: 2.25rem;
   --text-4xl--line-height: 2.5rem;
 
+  /* v4 shifted the -sm sizes down a step (v3's rounded-sm is v4's
+     rounded-xs); pinning them keeps the existing class names. */
+  --radius-sm: 0.125rem;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --blur-sm: 4px;
+
   /* v4 redefined the default palette in OKLCH. */
   --color-gray-950: #030712;
   --color-red-950: #450a0a;
@@ -323,6 +329,16 @@
     p:is(.dark *) {
         color: var(--color-zinc-50);
     }
+
+    /* v4's outline-none removes the outline, which also hides it in forced
+       colors mode; v3 made it transparent instead (v4's outline-hidden).
+       Same selectors as the generated utilities, later in the layer. */
+    .outline-none,
+    .focus\:outline-none:focus,
+    .focus-visible\:outline-none:focus-visible {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+    }
 }
 
 .p-default {
@@ -376,7 +392,7 @@
 }
 
 .stepper-bg-variant .step-circle {
-    @apply border-nb-gray-940!;
+    @apply !border-nb-gray-940;
 }
 
 .webkit-scroll{
@@ -386,7 +402,7 @@
 
 
 .timescape {
-    @apply flex items-center gap-px rounded-md py-2 px-3 select-none w-fit cursor-text bg-nb-gray-900;
+    @apply flex items-center gap-[1px] rounded-md py-2 px-3 select-none w-fit cursor-text bg-nb-gray-900;
 }
 
 .timescape input {
@@ -399,11 +415,11 @@
 }
 
 .timescape input:focus {
-    @apply bg-nb-gray-700 text-white rounded-sm py-1 px-0.5 border-0 outline-0;
+    @apply bg-nb-gray-700 text-white rounded py-1 px-0.5 border-0 outline-0;
 }
 
 .timescape .separator {
-    @apply text-gray-400 m-0 text-[80%] -top-px relative;
+    @apply text-gray-400 m-0 text-[80%] -top-[1px] relative;
 }
 
 

@@ -56,7 +56,7 @@ export const ProviderNode = ({ data }: ProviderNodeProps) => {
           {data.upstreamUrl && (
             <span
               className={
-                "font-normal text-sm text-nb-gray-400 relative top-[-0.1rem] block truncate"
+                "font-normal text-sm text-nb-gray-400 relative -top-[0.1rem] block truncate"
               }
             >
               {data.upstreamUrl}

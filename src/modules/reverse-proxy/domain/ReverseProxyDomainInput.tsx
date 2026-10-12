@@ -53,14 +53,14 @@ export default function ReverseProxyDomainInput({
                 : undefined
             }
             placeholder={subdomainRequired ? "myapp" : "myapp (optional)"}
-            className="rounded-r-none! border-r-0!"
+            className="!rounded-r-none !border-r-0"
           />
         </div>
         <div className="flex-1 min-w-0">
           <CustomDomainSelector
             value={baseDomain}
             onChange={onBaseDomainChange}
-            className="rounded-l-none!"
+            className="!rounded-l-none"
             data-testid="proxy-domain-selector"
           />
         </div>

@@ -110,7 +110,7 @@ export const NotificationChannelListItem = ({
         <div
           className={cn(
             "h-3 w-3 bg-nb-gray-935 rounded-tl-[8px] rounded-br absolute bottom-0 right-0 transition-all",
-            onClick && !disabled && "group-hover/channel:bg-nb-gray-930!",
+            onClick && !disabled && "group-hover/channel:!bg-nb-gray-930",
           )}
         ></div>
       </div>

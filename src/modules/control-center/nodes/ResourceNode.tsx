@@ -128,7 +128,7 @@ export const ResourceNode = ({ data, id, parentId }: ResourceNode) => {
             </span>
             <span
               className={
-                "font-normal text-sm text-nb-gray-500 relative top-[-0.1rem]"
+                "font-normal text-sm text-nb-gray-500 relative -top-[0.1rem]"
               }
             >
               {cardResource.address || "IP, CIDR or Domain"}

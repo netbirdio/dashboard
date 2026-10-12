@@ -46,7 +46,7 @@ export const PostureCheckChecksCell = ({
             >
               <div
                 className={cn(
-                  "bg-linear-to-tr from-netbird-200 to-netbird-100 h-8 w-8 rounded-full flex items-center justify-center relative z-10 hover:scale-[1.1] transition-all",
+                  "bg-gradient-to-tr from-netbird-200 to-netbird-100 h-8 w-8 rounded-full flex items-center justify-center relative z-[10] hover:scale-[1.1] transition-all",
                 )}
               >
                 <NetBirdIcon size={14} />
@@ -58,7 +58,7 @@ export const PostureCheckChecksCell = ({
             <GeoLocationTooltip check={check.checks.geo_location_check}>
               <div
                 className={cn(
-                  "bg-linear-to-tr from-indigo-500 to-indigo-400 h-8 w-8 rounded-full flex items-center justify-center relative z-9 hover:scale-[1.1] transition-all",
+                  "bg-gradient-to-tr from-indigo-500 to-indigo-400 h-8 w-8 rounded-full flex items-center justify-center relative z-[9] hover:scale-[1.1] transition-all",
                 )}
               >
                 <FlagIcon size={14} />
@@ -70,7 +70,7 @@ export const PostureCheckChecksCell = ({
             <OperatingSystemTooltip check={check.checks.os_version_check}>
               <div
                 className={cn(
-                  "bg-linear-to-tr from-nb-gray-500 to-nb-gray-300 h-8 w-8 rounded-full flex items-center justify-center relative z-8 hover:scale-[1.1] transition-all",
+                  "bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300 h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
                 )}
               >
                 <Disc3Icon size={14} />
@@ -84,7 +84,7 @@ export const PostureCheckChecksCell = ({
             >
               <div
                 className={cn(
-                  "bg-linear-to-tr from-blue-500 to-blue-400 h-8 w-8 rounded-full flex items-center justify-center relative z-8 hover:scale-[1.1] transition-all",
+                  "bg-gradient-to-tr from-blue-500 to-blue-400 h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
                 )}
               >
                 <NetworkIcon size={14} />
@@ -96,7 +96,7 @@ export const PostureCheckChecksCell = ({
             <ProcessTooltip check={check.checks.process_check}>
               <div
                 className={cn(
-                  "bg-linear-to-tr from-nb-gray-500 to-nb-gray-300 h-8 w-8 rounded-full flex items-center justify-center relative z-8 hover:scale-[1.1] transition-all",
+                  "bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300 h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
                 )}
               >
                 <ServerCogIcon size={14} />
@@ -108,7 +108,7 @@ export const PostureCheckChecksCell = ({
             <CertificateTooltip check={check.checks.certificate_check}>
               <div
                 className={cn(
-                  "bg-linear-to-tr from-purple-500 to-purple-400 h-8 w-8 rounded-full flex items-center justify-center relative z-8 hover:scale-[1.1] transition-all",
+                  "bg-gradient-to-tr from-purple-500 to-purple-400 h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
                 )}
               >
                 <FileKey2Icon size={14} />

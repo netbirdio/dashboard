@@ -44,7 +44,7 @@ function NameCell({ provider }: { provider: AIProvider }) {
           className={cn(
             "h-3 w-3 bg-nb-gray-950 rounded-tl-[8px] rounded-br absolute bottom-0 right-0 transition-all",
             "group-hover/table-row:bg-nb-gray-940",
-            "group-hover/provider:bg-nb-gray-910!",
+            "group-hover/provider:!bg-nb-gray-910",
           )}
         ></div>
       </div>

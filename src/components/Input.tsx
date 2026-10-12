@@ -107,7 +107,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           <div
             className={cn(
-              "absolute left-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pl-3 leading-0",
+              "absolute left-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pl-3 leading-[0]",
               props.disabled && "opacity-40",
             )}
           >
@@ -120,22 +120,22 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {...props}
             className={cn(
               inputVariants({ variant: error ? "error" : variant }),
-              "flex h-[42px] w-full rounded-md  bg-white px-3 py-2 text-sm file:bg-transparent file:text-sm file:font-medium  focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-40  ",
+              "flex h-[42px] w-full rounded-md  bg-white px-3 py-2 text-sm file:bg-transparent file:text-sm file:font-medium  focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40  ",
               "file:border-0",
               "focus-visible:ring-2 focus-visible:ring-offset-2",
-              customPrefix && "border-l-0! rounded-l-none!",
-              suffix && "pr-16!",
-              icon && "pl-10!",
+              customPrefix && "!border-l-0 !rounded-l-none",
+              suffix && "!pr-16",
+              icon && "!pl-10",
               "border",
               props.readOnly &&
-                "bg-nb-gray-920! text-nb-gray-400 border-nb-gray-800!",
+                "!bg-nb-gray-920 text-nb-gray-400 !border-nb-gray-800",
               className,
             )}
           />
 
           <div
             className={cn(
-              "absolute right-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pr-4 leading-0 select-none",
+              "absolute right-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pr-4 leading-[0] select-none",
               props.disabled && "opacity-30",
             )}
           >
@@ -145,9 +145,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             <div
               className={cn(
                 errorTooltipPosition == "top" &&
-                  "absolute right-0 top-2 h-0 w-full flex items-center pr-3 justify-center",
+                  "absolute right-0 top-2 h-[0px] w-full flex items-center pr-3 justify-center",
                 errorTooltipPosition == "top-right" &&
-                  "absolute -right-6 top-2 h-0 w-full flex items-center pr-3 justify-end",
+                  "absolute -right-6 top-2 h-[0px] w-full flex items-center pr-3 justify-end",
               )}
             >
               <FullTooltip
@@ -155,7 +155,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                   <div className={"text-xs text-red-500 inline-flex"}>
                     <AlertCircle
                       size={13}
-                      className={"top-px relative mr-2"}
+                      className={"top-[1px] relative mr-2"}
                     />
                     {error}
                   </div>
@@ -171,7 +171,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && !errorTooltip && (
-          <Paragraph className={"text-xs text-red-500! mt-2"}>
+          <Paragraph className={"text-xs !text-red-500 mt-2"}>
             {error}
           </Paragraph>
         )}

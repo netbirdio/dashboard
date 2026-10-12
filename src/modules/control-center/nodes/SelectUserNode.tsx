@@ -101,9 +101,9 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
         onOpenChange={setOpen}
         popoverWidth={280}
         className={cn(
-          "bg-nb-gray-920!  !hover:bg-nb-gray-925 text-nb-gray-300!",
+          "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300",
         )}
-        triggerClassName={"focus:outline-hidden focus-visible:outline-hidden"}
+        triggerClassName={"focus:outline-none focus-visible:outline-none"}
         size={"xs"}
         maxHeight={300}
       >
@@ -178,7 +178,7 @@ export const SelectedUser = ({
           text={user?.email}
           maxWidth={"180px"}
           className={
-            "text-sm font-normal text-nb-gray-400 relative top-[-0.2rem]"
+            "text-sm font-normal text-nb-gray-400 relative -top-[0.2rem]"
           }
         />
       </div>

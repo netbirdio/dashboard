@@ -43,7 +43,7 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
             return (
               <div
                 className={cn(
-                  "flex items-center justify-center grayscale brightness-100 contrast-40",
+                  "flex items-center justify-center grayscale brightness-[100%] contrast-[40%]",
                   "w-4 h-4 shrink-0",
                   os === OperatingSystem.WINDOWS && "p-[2.5px]",
                   os === OperatingSystem.APPLE && "p-[2.7px]",
@@ -82,7 +82,7 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
         open={open}
         onOpenChange={setOpen}
         popoverWidth={280}
-        className={"bg-nb-gray-920!  !hover:bg-nb-gray-925 text-nb-gray-300!"}
+        className={"!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300"}
         size={"xs"}
         maxHeight={300}
       >

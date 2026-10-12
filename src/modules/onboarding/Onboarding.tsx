@@ -307,7 +307,7 @@ export const Onboarding = ({
           onPointerDownOutside={(e) => e.preventDefault()}
           asChild={true}
           className={
-            "h-full w-screen fixed z-50 left-0 top-0 bg-nb-gray-950 flex overflow-y-auto"
+            "h-full w-screen fixed z-[50] left-0 top-0 bg-nb-gray-950 flex overflow-y-auto"
           }
         >
           <div data-testid={"regular-onboarding"}>
@@ -594,7 +594,7 @@ export const Onboarding = ({
                   Already know how NetBird works?
                   <InlineLink
                     href={"#"}
-                    className={"text-nb-gray-200! ml-1"}
+                    className={"!text-nb-gray-200 ml-1"}
                     onClick={() => {
                       dispatch({
                         type: "SKIP",

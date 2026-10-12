@@ -331,7 +331,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
       >
         {route?.domains && (
           <DomainsTooltip domains={route.domains} className={"block"}>
-            <Paragraph className={cn("text-sm", "block! truncate")}>
+            <Paragraph className={cn("text-sm", "!block truncate")}>
               {routeInfo}
             </Paragraph>
           </DomainsTooltip>

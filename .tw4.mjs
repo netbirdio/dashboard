@@ -1,0 +1,12 @@
+import fs from "node:fs";
+import { __unstable__loadDesignSystem } from "@tailwindcss/node";
+import { Scanner } from "@tailwindcss/oxide";
+const [srcDir, out] = process.argv.slice(2);
+const scanner = new Scanner({ sources: [{ base: srcDir, pattern: "**/*", negated: false }] });
+const candidates = scanner.scan();
+const css = fs.readFileSync("src/app/globals.css", "utf8");
+const ds = await __unstable__loadDesignSystem(css, { base: process.cwd() + "/src/app" });
+const res = ds.candidatesToCss(candidates);
+const map = {}; candidates.forEach((c, i) => (map[c] = res[i]));
+fs.writeFileSync(out, JSON.stringify(map));
+console.log("v4 candidates", candidates.length, "generated", res.filter(Boolean).length);

@@ -186,7 +186,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             <Shield size={16} />
             Required Permissions
           </div>
-          <p className={"mt-2 text-nb-gray-300! leading-normal!"}>
+          <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
             Ensure that you have an{" "}
             <span className={"text-nb-gray-100 font-semibold"}>
               Azure AD user account
@@ -459,7 +459,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
                 network access.
                 <IconInfoCircle
                   size={14}
-                  className={"relative inline ml-1 -top-px"}
+                  className={"relative inline ml-1 -top-[1px]"}
                 />
               </HelpText>
             </FullTooltip>

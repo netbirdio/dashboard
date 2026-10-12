@@ -78,7 +78,7 @@ export default function InvoicesActionCell({ invoice }: Readonly<Props>) {
             e.stopPropagation();
           }}
         >
-          <Button variant={"secondary"} className={"px-3!"}>
+          <Button variant={"secondary"} className={"!px-3"}>
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>

@@ -25,7 +25,7 @@ export default function NoResultsCard({
       <Card className={"w-full relative overflow-hidden"}>
         <div
           className={
-            "absolute z-20 bg-linear-to-b  dark:to-nb-gray-950 dark:from-nb-gray-950/40 w-full h-full"
+            "absolute z-20 bg-gradient-to-b  dark:to-nb-gray-950 dark:from-nb-gray-950/40 w-full h-full"
           }
         ></div>
         <div
@@ -51,7 +51,7 @@ export default function NoResultsCard({
           </div>
           <div className={"text-center"}>
             <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title}</h1>
-            <Paragraph className={"justify-center my-2 text-nb-gray-400!"}>
+            <Paragraph className={"justify-center my-2 !text-nb-gray-400"}>
               {description}
             </Paragraph>
             {children}

@@ -111,7 +111,7 @@ function List({ children }: { children: React.ReactNode }) {
         // taking, the same figure DashboardLayout and Navigation use. It comes
         // through a variable so the breakpoint stays in CSS, and it is always a
         // length, so the height never falls back to auto.
-        "h-auto lg:h-[calc(100vh-var(--nb-tabs-offset))] lg:sticky lg:top-0 lg:overflow-y-auto",
+        "h-auto lg:h-[calc(100vh_-_var(--nb-tabs-offset))] lg:sticky lg:top-0 lg:overflow-y-auto",
       )}
       style={
         {
@@ -132,7 +132,7 @@ function List({ children }: { children: React.ReactNode }) {
               travel with the content. */}
           <div
             className={cn(
-              "flex flex-nowrap gap-px whitespace-nowrap items-start",
+              "flex flex-nowrap gap-[1px] whitespace-nowrap items-start",
               "px-4 pt-4 pb-3 lg:p-4 lg:flex-col lg:gap-1",
             )}
           >
@@ -144,7 +144,7 @@ function List({ children }: { children: React.ReactNode }) {
           aria-hidden
           className={cn(
             fade,
-            "left-0 bg-linear-to-r from-nb-gray to-transparent",
+            "left-0 bg-gradient-to-r from-nb-gray to-transparent",
             overflows.start ? "opacity-100" : "opacity-0",
           )}
         />
@@ -152,7 +152,7 @@ function List({ children }: { children: React.ReactNode }) {
           aria-hidden
           className={cn(
             fade,
-            "right-0 bg-linear-to-l from-nb-gray to-transparent",
+            "right-0 bg-gradient-to-l from-nb-gray to-transparent",
             overflows.end ? "opacity-100" : "opacity-0",
           )}
         />
@@ -181,7 +181,7 @@ function Trigger({
       disabled={disabled}
       data-testid={dataTestId}
       className={cn(
-        "py-2 text-base rounded-md w-full transition-all data-disabled:opacity-10",
+        "py-2 text-base rounded-md w-full transition-all data-[disabled]:opacity-10",
         "lg:pl-6 lg:pr-8 pl-4 pr-4 text-center lg:text-left",
         value == currentValue
           ? "bg-nb-gray-920"

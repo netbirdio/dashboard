@@ -21,7 +21,7 @@ export const SmallUserAvatar = ({
       className={cn(
         "rounded-full shrink-0 flex items-center justify-center text-white uppercase font-medium bg-nb-gray-850",
         size === "default" && "w-7 h-7 text-[12px]",
-        size === "sm" && "w-5 h-5 text-[9px] leading-0",
+        size === "sm" && "w-5 h-5 text-[9px] leading-[0]",
         className,
       )}
       style={{

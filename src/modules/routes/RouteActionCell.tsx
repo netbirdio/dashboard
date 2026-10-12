@@ -93,7 +93,7 @@ export default function RouteActionCell({ route }: Props) {
         >
           <Button
             variant={"secondary"}
-            className={"px-3!"}
+            className={"!px-3"}
             disabled={!permission.routes.update && !permission.routes.delete}
             aria-label={"Route actions"}
           >

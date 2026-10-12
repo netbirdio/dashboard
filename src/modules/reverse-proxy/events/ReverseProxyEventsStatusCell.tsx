@@ -25,7 +25,7 @@ export const ReverseProxyEventsStatusCell = ({ event }: Props) => {
     <FullTooltip
       interactive={false}
       content={
-        <div className={"max-w-xs text-xs wrap-break-word whitespace-normal"}>
+        <div className={"max-w-xs text-xs break-words whitespace-normal"}>
           <span className={"text-nb-gray-400"}>Reason: </span>
           <span className={"text-nb-gray-100"}>{reason}</span>
         </div>

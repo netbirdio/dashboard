@@ -74,7 +74,7 @@ export function GroupPrefixInput({
                       placeholder={placeholder}
                       maxWidthClass={"w-full"}
                       value={g}
-                      className={" text-[13px]!"}
+                      className={" !text-[13px]"}
                       onChange={(e) => onChangeHandler(e, i)}
                     />
                   </div>

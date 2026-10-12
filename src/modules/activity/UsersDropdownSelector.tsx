@@ -153,7 +153,7 @@ export function UsersDropdownSelector({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-xs  shadow-nb-gray-950 min-w-[300px]"
+        className="w-full p-0 shadow-sm  shadow-nb-gray-950 min-w-[300px]"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}
@@ -249,7 +249,7 @@ export function UsersDropdownSelector({
                           text={"External"}
                           variant={"sky"}
                           className={
-                            "text-[8.5px] py-[0.15rem] px-[.32rem] leading-none rounded-full top-0"
+                            "text-[8.5px] py-[0.15rem] px-[.32rem] leading-none rounded-full -top-0"
                           }
                         />
                       </span>

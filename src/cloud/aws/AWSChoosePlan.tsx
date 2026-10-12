@@ -89,7 +89,7 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
       <ModalPortal>
         <DialogContent
           className={
-            "h-screen w-screen fixed z-100 left-0 top-0 bg-nb-gray-950 flex overflow-y-auto focus:outline-hidden"
+            "h-screen w-screen fixed z-[100] left-0 top-0 bg-nb-gray-950 flex overflow-y-auto focus:outline-none"
           }
         >
           <div
@@ -128,7 +128,7 @@ export const AWSChoosePlan = ({ onSuccess }: Props) => {
                 >
                   <h2
                     className={
-                      "text-xl my-0 leading-normal mb-2 text-center w-full"
+                      "text-xl my-0 leading-[1.5] mb-2 text-center w-full"
                     }
                   >
                     Thanks for registering via{" "}

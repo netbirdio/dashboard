@@ -47,12 +47,12 @@ export const NetworkInformationSquare = ({
           className={cn(
             "h-3 w-3 bg-nb-gray-950 rounded-tl-[8px] rounded-br absolute bottom-0 right-0 transition-all",
             onClick && "group-hover/table-row:bg-nb-gray-940",
-            onClick && "group-hover/network:bg-nb-gray-910!",
+            onClick && "group-hover/network:!bg-nb-gray-910",
           )}
         ></div>
       </div>
       <div
-        className={"mt-0 flex items-start flex-wrap flex-col min-w-0"}
+        className={"mt-[0px] flex items-start flex-wrap flex-col min-w-0"}
       >
         {size === "md" ? (
           <TextWithTooltip

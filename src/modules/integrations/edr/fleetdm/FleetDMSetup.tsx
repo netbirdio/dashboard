@@ -211,7 +211,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             <Shield size={16} />
             Required Permissions
           </div>
-          <p className={"mt-2 text-nb-gray-300! leading-normal!"}>
+          <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
             Ensure that you have a{" "}
             <span className={"text-nb-gray-100 font-semibold"}>
               FleetDM account
@@ -373,7 +373,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             <ShieldCheckIcon size={16} />
             Compliance Requirements
           </p>
-          <p className={"mt-2 text-nb-gray-300! leading-normal!"}>
+          <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
             Set the specific requirements that devices must meet to be
             considered compliant.
           </p>
@@ -408,7 +408,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
                 network access.
                 <IconInfoCircle
                   size={14}
-                  className={"relative inline ml-1 -top-px"}
+                  className={"relative inline ml-1 -top-[1px]"}
                 />
               </HelpText>
             </FullTooltip>

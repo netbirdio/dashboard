@@ -293,7 +293,7 @@ function InviteActionCell({ invite }: { invite: UserInvite }) {
           >
             <Button
               variant={"secondary"}
-              className={"px-3!"}
+              className={"!px-3"}
               aria-label={"Invite actions"}
             >
               <MoreVertical size={16} className={"shrink-0"} />

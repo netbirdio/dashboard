@@ -265,7 +265,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
               </label>
             </div>
 
-            <div className={cn(!other && "h-0! opacity-0", "mt-2", other && "mb-3")}>
+            <div className={cn(!other && "!h-0 opacity-0", "mt-2", other && "mb-3")}>
               <Input
                 ref={inputRef}
                 placeholder={"e.g. Internal RAG service, MCP tools"}
@@ -317,5 +317,5 @@ const SignupCheckbox = ({
 };
 
 const RequiredAsterisk = () => (
-  <span className={"text-red-500 relative top-[-2.5px]"}>*</span>
+  <span className={"text-red-500 relative -top-[2.5px]"}>*</span>
 );

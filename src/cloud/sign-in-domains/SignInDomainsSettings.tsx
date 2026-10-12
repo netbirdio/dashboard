@@ -43,7 +43,7 @@ export const SignInDomainsSettings = () => {
       <div className={"flex items-end justify-between gap-4 mb-4"}>
         <div className={"min-w-0"}>
           <Label>Sign-in Domains</Label>
-          <HelpText className={"mb-0!"}>
+          <HelpText className={"!mb-0"}>
             Users from these domains can join your account.{" "}
             <InlineLink href={SIGN_IN_DOMAINS_DOCS_LINK} target={"_blank"}>
               Learn more

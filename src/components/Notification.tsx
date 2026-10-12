@@ -171,7 +171,7 @@ export default function Notification<T>({
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 400, damping: 20 }}
       data-toast-notification
-      className="w-md pb-2"
+      className="w-[28rem] pb-2"
     >
       <div
         className={cn(
@@ -197,7 +197,7 @@ export default function Notification<T>({
                 : "success"
             }
             className={classNames(
-              "h-8 w-8  shadow-xs text-white flex items-center justify-center rounded-md shrink-0",
+              "h-8 w-8  shadow-sm text-white flex items-center justify-center rounded-md shrink-0",
               loading
                 ? "bg-nb-gray-900"
                 : error

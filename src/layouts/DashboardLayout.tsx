@@ -72,7 +72,7 @@ function DashboardPageContent({
     <div className={cn("flex flex-col h-screen", mobileNavOpen && "flex")}>
       {mobileNavOpen && (
         <motion.div
-          className={"h-screen bg-nb-gray-950 w-11/12 max-w-88"}
+          className={"h-screen bg-nb-gray-950 w-11/12 max-w-[22rem]"}
           layout={true}
           transition={{
             type: "spring",
@@ -93,9 +93,9 @@ function DashboardPageContent({
               "flex items-center justify-between gap-3 pl-4 pr-8 pt-8 pb-3 w-11/12"
             }
           >
-            <div className={"flex items-center gap-3 max-w-88"}>
+            <div className={"flex items-center gap-3 max-w-[22rem]"}>
               <UserAvatar size={"small"} />
-              <div className="flex flex-col gap-y-1">
+              <div className="flex flex-col space-y-1">
                 <p className="font-medium leading-none dark:text-gray-300">
                   {user?.name}
                 </p>
@@ -105,7 +105,7 @@ function DashboardPageContent({
               </div>
             </div>
             <Button
-              className={"px-3!"}
+              className={"!px-3"}
               variant={"default-outline"}
               size={"xs"}
               onClick={toggleMobileNav}
@@ -144,7 +144,7 @@ function DashboardPageContent({
             <motion.div
               onClick={toggleMobileNav}
               className={
-                "absolute w-full h-full bg-black z-999 transition-all opacity-0"
+                "absolute w-full h-full bg-black z-[999] transition-all opacity-0"
               }
               animate={{
                 opacity: 0.2,
@@ -170,7 +170,7 @@ function DashboardPageContent({
           >
             <Header />
             <div
-              className={"flex flex-row grow"}
+              className={"flex flex-row flex-grow"}
               style={{
                 height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}

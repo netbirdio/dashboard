@@ -328,7 +328,7 @@ export const PeersToolbar = () => {
       {showToolbar && (
         <div
           ref={toolbarRef}
-          className="absolute z-5 -translate-x-1/2 -translate-y-full"
+          className="absolute z-[5] -translate-x-1/2 -translate-y-full"
           style={{
             left: toolbarPosition.x,
             top: toolbarPosition.y,

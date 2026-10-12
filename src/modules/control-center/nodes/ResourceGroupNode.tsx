@@ -101,7 +101,7 @@ export const ResourceGroupNode = ({ data, id, parentId }: ResourceGroupNode) => 
           </span>
           <span
             className={
-              "font-normal text-sm text-nb-gray-500 relative top-[-0.1rem]"
+              "font-normal text-sm text-nb-gray-500 relative -top-[0.1rem]"
             }
           >
             {group?.resources_count

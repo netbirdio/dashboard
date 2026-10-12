@@ -92,8 +92,8 @@ export default function FeatureCard({
           className={cn(
             "text-xs",
             plain
-              ? "text-nb-gray-100! leading-tight mt-1"
-              : "font-light text-nb-gray-300! mt-1.5",
+              ? "!text-nb-gray-100 leading-tight mt-1"
+              : "font-light !text-nb-gray-300 mt-1.5",
           )}
         >
           {description}

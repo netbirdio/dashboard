@@ -88,7 +88,7 @@ export const OnboardingSecondDevice = ({ secondDevice, onFinish }: Props) => {
 
       <div
         className={cn(
-          "flex flex-wrap sm:flex-nowrap md:flex-wrap! gap-3 items-center justify-center",
+          "flex flex-wrap sm:flex-nowrap md:!flex-wrap gap-3 items-center justify-center",
         )}
       >
         <div>

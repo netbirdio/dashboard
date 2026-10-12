@@ -26,10 +26,10 @@ export const PostureCheckIcons = () => {
           <RoundedFlag country="de" />
         </div>
       </Circle>
-      <Circle className={"z-3"}>
+      <Circle className={"z-[3]"}>
         <NetBirdIcon size={18} />
       </Circle>
-      <Circle className={"top-1 z-2"}>
+      <Circle className={"top-1 z-[2]"}>
         <div
           className={
             "h-6 w-6 overflow-hidden rounded-full flex items-center justify-center"
@@ -38,7 +38,7 @@ export const PostureCheckIcons = () => {
           <RoundedFlag country="us" />
         </div>
       </Circle>
-      <Circle className={"z-1 top-2 "}>
+      <Circle className={"z-[1] top-2 "}>
         <FaWindows className={"text-white text-md"} />
       </Circle>
     </div>

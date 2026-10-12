@@ -26,7 +26,7 @@ export const ControlCenterCurrentUserBadge = ({ userId }: Props) => {
         variant={"secondary"}
         size={"xs"}
         className={
-          "bg-nb-gray-930! text-nb-gray-300! cursor-default h-[40px] pl-2.5!"
+          "!bg-nb-gray-930 !text-nb-gray-300 cursor-default h-[40px] !pl-2.5"
         }
       >
         <div className={cn("flex items-center justify-center gap-2.5")}>
@@ -59,7 +59,7 @@ export const ControlCenterCurrentUserBadge = ({ userId }: Props) => {
               text={user?.email}
               maxWidth={"380px"}
               className={
-                "text-[0.7rem] font-normal text-nb-gray-400 relative top-[-0.2rem]"
+                "text-[0.7rem] font-normal text-nb-gray-400 relative -top-[0.2rem]"
               }
             />
           </div>

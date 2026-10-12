@@ -189,8 +189,8 @@ function LimitRow({
           className={cn(
             "h-9 w-9 rounded-full flex items-center justify-center shrink-0",
             isToken
-              ? "bg-linear-to-tr from-indigo-500 to-indigo-400"
-              : "bg-linear-to-tr from-amber-500 to-amber-400",
+              ? "bg-gradient-to-tr from-indigo-500 to-indigo-400"
+              : "bg-gradient-to-tr from-amber-500 to-amber-400",
           )}
         >
           {isToken ? <Gauge size={16} /> : <Wallet size={16} />}
@@ -211,7 +211,7 @@ function LimitRow({
             e.preventDefault();
           }}
         >
-          <Button variant={"default-outline"} className={"px-3!"}>
+          <Button variant={"default-outline"} className={"!px-3"}>
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>

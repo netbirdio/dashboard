@@ -65,7 +65,7 @@ export default function ReverseProxyAccessControlCell({
       variant={"gray"}
       disabled={!canConfigure}
       className={
-        "cursor-pointer rounded-r-none! border-r-0! h-[34px]! px-2! min-w-[50px] hover:bg-nb-gray-930 transition-all"
+        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] !px-2 min-w-[50px] hover:bg-nb-gray-930 transition-all"
       }
     >
       {ruleCount > 0 ? (
@@ -223,7 +223,7 @@ export default function ReverseProxyAccessControlCell({
         <Button
           size={"xs"}
           variant={"secondary"}
-          className={"rounded-l-none! px-2! h-[34px]!"}
+          className={"!rounded-l-none !px-2 !h-[34px]"}
           onClick={(e) => {
             e.stopPropagation();
             openModal({ proxy: reverseProxy, initialTab: "access-control" });

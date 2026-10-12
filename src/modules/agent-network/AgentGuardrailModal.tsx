@@ -249,7 +249,7 @@ function ModelAllowlistCheck({
       description={"Block requests for models not on the allowlist."}
       // The tile is a cream gradient, so the mark on it has to be dark.
       icon={<Boxes size={16} className={"text-netbird-950"} />}
-      iconClass={"bg-linear-to-tr from-netbird-200 to-netbird-100"}
+      iconClass={"bg-gradient-to-tr from-netbird-200 to-netbird-100"}
       modalWidthClass={"max-w-2xl"}
       onReset={() => onChange(undefined)}
     >
@@ -332,7 +332,7 @@ function ModelAllowlistContent({
     <>
       <div className={"flex flex-col px-8 gap-2 pt-2 pb-6"}>
         {providerModels.length === 0 ? (
-          <Paragraph className={"text-xs!"}>
+          <Paragraph className={"!text-xs"}>
             {providerIds && providerIds.length > 0
               ? "The selected providers don't expose any models yet. Add models to a destination provider first — the allowlist is restricted to what those providers expose."
               : "No models configured on any provider yet. Add models to a provider first — the allowlist is restricted to what the providers actually expose."}
@@ -465,7 +465,7 @@ function PromptCaptureCheck({
       title={"Prompt Capture"}
       description={"Redact PII before storing the prompt body."}
       icon={<ShieldCheckIcon size={16} />}
-      iconClass={"bg-linear-to-tr from-blue-500 to-blue-400"}
+      iconClass={"bg-gradient-to-tr from-blue-500 to-blue-400"}
       modalWidthClass={"max-w-lg"}
       onReset={() => onChange(false)}
     >

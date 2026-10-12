@@ -95,7 +95,7 @@ export const MSPTransferAccountModal = () => {
         <ModalContent
           showClose={false}
           maxWidthClass={"max-w-md"}
-          className={"z-9999"}
+          className={"z-[9999]"}
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -135,7 +135,7 @@ export const MSPTransferAccountModal = () => {
           </div>
           <div
             className={
-              "mx-auto text-center flex flex-col items-center justify-center mt-6 z-1 px-6"
+              "mx-auto text-center flex flex-col items-center justify-center mt-6 z-[1] px-6"
             }
           >
             <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>

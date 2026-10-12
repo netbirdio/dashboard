@@ -28,7 +28,7 @@ export const AllowExtraDNSLabels = () => {
     >
       <span
         className={
-          "font-mono text-[9px] font-medium tracking-wider leading-none px-1 py-0.5 rounded-sm border border-nb-gray-700 text-nb-gray-300 cursor-help"
+          "font-mono text-[9px] font-medium tracking-wider leading-none px-1 py-0.5 rounded border border-nb-gray-700 text-nb-gray-300 cursor-help"
         }
       >
         DNS

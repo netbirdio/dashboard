@@ -180,7 +180,7 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
                       <Button
                         variant={"default-outline"}
                         size={"xs"}
-                        className={"h-9! w-9!"}
+                        className={"!h-9 !w-9"}
                         onClick={() => {
                           let usersToRemove = table
                             .getSelectedRowModel()

@@ -36,7 +36,7 @@ export const DNSZonesRecordsCell = ({ zone }: Props) => {
       <Button
         size={"xs"}
         variant={"secondary"}
-        className={"px-3!"}
+        className={"!px-3"}
         onClick={() => openRecordModal(zone)}
         disabled={!permission?.dns?.create}
         data-testid="add-dns-record"

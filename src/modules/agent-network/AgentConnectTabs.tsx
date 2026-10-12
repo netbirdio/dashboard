@@ -63,7 +63,7 @@ function ModeSwitch({
           onClick={() => onChange(option.value)}
           className={cn(
             "flex items-center text-xs font-medium border-b-2 transition-colors cursor-pointer",
-            "focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-nb-gray-500 focus-visible:rounded-xs",
+            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-nb-gray-500 focus-visible:rounded-sm",
             value === option.value
               ? "border-white text-nb-gray-100"
               : "border-transparent text-nb-gray-400 hover:text-nb-gray-200",
@@ -376,7 +376,7 @@ export function AgentConnectTabs({
                   : []),
               ]}
               showValues={false}
-              className={"w-auto! min-w-[160px]"}
+              className={"!w-auto min-w-[160px]"}
             />
           </div>
 

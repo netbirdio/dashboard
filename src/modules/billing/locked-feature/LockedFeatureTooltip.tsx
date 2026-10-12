@@ -24,7 +24,7 @@ export const LockedFeatureTooltip = ({
       interactive={true}
       className={cn("overflow-hidden")}
       contentClassName={
-        "p-0 border! border-nb-gray-800! bg-linear-to-r from-nb-gray-920 to-nb-gray-900"
+        "p-0 !border !border-nb-gray-800 bg-gradient-to-r from-nb-gray-920 to-nb-gray-900"
       }
       content={
         <div

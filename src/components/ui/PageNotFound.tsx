@@ -23,13 +23,13 @@ export const PageNotFound = ({
       <div className={"px-8"}>
         <div
           className={
-            "absolute left-0 top-0 h-full w-full p-10 flex items-center justify-center mx-auto backdrop-blur-xs"
+            "absolute left-0 top-0 h-full w-full p-10 flex items-center justify-center mx-auto backdrop-blur-sm"
           }
         >
           <Card className={"relative overflow-hidden max-w-4xl"}>
             <div
               className={
-                "absolute z-20 bg-linear-to-b dark:to-nb-gray-950 dark:from-nb-gray-950/40 w-full h-full"
+                "absolute z-20 bg-gradient-to-b dark:to-nb-gray-950 dark:from-nb-gray-950/40 w-full h-full"
               }
             ></div>
             <div

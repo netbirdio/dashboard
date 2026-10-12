@@ -27,7 +27,7 @@ export const TrafficEventsDetailRow = ({ event, className }: Props) => {
 
   return (
     <div
-      className={cn("flex gap-10 pb-4 pl-5 ml-[3px] pt-3 mt-px", className)}
+      className={cn("flex gap-10 pb-4 pl-5 ml-[3px] pt-3 mt-[1px]", className)}
     >
       <ul>
         {hasPolicy && <PolicyListItem policy={policy} isBlocked={isBlocked} />}
@@ -79,7 +79,7 @@ const ListItem = ({
           className={cn(
             "absolute left-0 top-0 w-[2px] h-[25px]",
             "-translate-y-full",
-            "ml-px mt-[2px] z-0",
+            "ml-[1px] mt-[2px] z-0",
             type === TrafficEventType.BLOCKED ? "bg-red-500" : "bg-green-500",
             topLineClassName,
           )}
@@ -90,7 +90,7 @@ const ListItem = ({
       <div
         className={cn(
           "absolute left-0 top-0 w-[2px] h-[92%] ",
-          "ml-px mt-[14px] z-0",
+          "ml-[1px] mt-[14px] z-0",
           type === TrafficEventType.BLOCKED ? "bg-red-500" : "bg-green-500",
           bottomLine && "opacity-0",
         )}
@@ -101,7 +101,7 @@ const ListItem = ({
         className={cn(
           "w-2 h-2 rounded-full flex items-center justify-center shrink-0",
           "text-green-100",
-          "absolute left-0 top-0 mt-1 ml-[-2px]",
+          "absolute left-0 top-0 mt-1 -ml-[2px]",
           type === TrafficEventType.BLOCKED ? "bg-red-500" : "bg-green-500",
         )}
       ></div>
@@ -113,7 +113,7 @@ const ListItem = ({
       {children && (
         <div
           className={cn(
-            "text-nb-gray-250 text-sm min-w-88 max-w-92 font-light",
+            "text-nb-gray-250 text-sm min-w-[22rem] max-w-[23rem] font-light",
           )}
         >
           {children}

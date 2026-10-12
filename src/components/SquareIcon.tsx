@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import React from "react";
 
 const iconVariant = cva(
-  "rounded-md flex items-center justify-center border shadow-xs shrink-0",
+  "rounded-md flex items-center justify-center border shadow-sm shrink-0",
   {
     variants: {
       color: {

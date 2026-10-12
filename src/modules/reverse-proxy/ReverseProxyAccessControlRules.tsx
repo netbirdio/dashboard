@@ -338,7 +338,7 @@ export const ReverseProxyAccessControlRules = ({
 
               <Button
                 variant="default-outline"
-                className="h-[42px] w-[42px] px-0! shrink-0 ml-2"
+                className="h-[42px] w-[42px] !px-0 shrink-0 ml-2"
                 onClick={() => dispatch({ type: "remove", id: rule.id })}
                 aria-label="Remove rule"
                 data-testid="remove-access-rule"

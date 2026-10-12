@@ -82,7 +82,7 @@ export default function SetupModal({
     <ModalContent
       showClose={showClose}
       className={cn(
-        "outline-hidden focus:outline-hidden focus-visible:outline-hidden",
+        "outline-none focus:outline-none focus-visible:outline-none",
         className,
       )}
       style={style}

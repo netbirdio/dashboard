@@ -219,7 +219,7 @@ export function SetupContent({ onSuccess, onClose }: ModalProps) {
                 <Shield size={16} />
                 Required Permissions
               </div>
-              <p className={"mt-2 text-nb-gray-300! leading-normal!"}>
+              <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
                 Ensure that you have an{" "}
                 <span className={"text-nb-gray-100 font-semibold"}>
                   Jumpcloud user account

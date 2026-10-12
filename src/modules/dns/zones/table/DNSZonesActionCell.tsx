@@ -34,7 +34,7 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
         >
           <Button
             variant={"secondary"}
-            className={"px-3!"}
+            className={"!px-3"}
             aria-label={"Zone actions"}
             data-testid="dns-zone-actions"
           >

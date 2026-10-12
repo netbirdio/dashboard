@@ -95,7 +95,7 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
         >
           <Button
             variant={"secondary"}
-            className={"px-3!"}
+            className={"!px-3"}
             aria-label={"Open actions menu"}
             data-testid={"setup-key-actions"}
           >

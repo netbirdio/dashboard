@@ -22,7 +22,7 @@ export default function DarkModeToggle() {
   return mounted ? (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Button className={"px-3!"} variant={"default"}>
+        <Button className={"!px-3"} variant={"default"}>
           <div>
             <SunIcon
               size={16}

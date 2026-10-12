@@ -45,7 +45,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, InputProps>(
             {...props}
             className={cn(
               inputVariants({ variant: error ? "error" : variant }),
-              "flex w-full min-h-[42px] rounded-md bg-white px-3 pb-3 pt-2.5 text-sm file:bg-transparent file:text-sm file:font-medium  focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50  ",
+              "flex w-full min-h-[42px] rounded-md bg-white px-3 pb-3 pt-2.5 text-sm file:bg-transparent file:text-sm file:font-medium  focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50  ",
               "file:border-0",
               "focus-visible:ring-2 focus-visible:ring-offset-2",
               "border",
@@ -60,7 +60,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, InputProps>(
           {customElement && customElement}
         </div>
         {error && (
-          <Paragraph className={"text-xs text-red-500! mt-2"}>
+          <Paragraph className={"text-xs !text-red-500 mt-2"}>
             {error}
           </Paragraph>
         )}

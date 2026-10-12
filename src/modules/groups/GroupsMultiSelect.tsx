@@ -100,7 +100,7 @@ export const GroupsMultiSelect = ({
           <Button
             variant={"danger-outline"}
             size={"xs"}
-            className={"h-9! w-9!"}
+            className={"!h-9 !w-9"}
             onClick={deleteAllGroups}
             disabled={!permission.groups.delete}
             aria-label={"Delete selected groups"}

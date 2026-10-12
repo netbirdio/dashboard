@@ -15,7 +15,7 @@ import { useCanvasTransitionActive } from "@/modules/control-center/utils/canvas
 
 // Must stay a literal: Tailwind only emits classes it finds as static text.
 const EMPTY_STATE_REVEAL_IN =
-  "animate-in fade-in zoom-in-[.97] duration-700 ease-out fill-mode-both";
+  "animate-in fade-in zoom-in-[.97] duration-[700ms] ease-out fill-mode-both";
 
 export function ControlCenterEmptyStates() {
   const { currentView, selectedNetwork, layoutInitialized, instantDrill } =

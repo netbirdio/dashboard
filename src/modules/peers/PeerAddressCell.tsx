@@ -45,7 +45,7 @@ export default function PeerAddressCell({ peer }: Props) {
       >
         <div
           className={cn(
-            "flex items-center justify-center rounded-full h-3 w-3 shrink-0 relative -top-2",
+            "flex items-center justify-center rounded-full h-3 w-3 shrink-0 relative -top-[0.5rem]",
           )}
         >
           {isEmpty(peer.country_code) ? (

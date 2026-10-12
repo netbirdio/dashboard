@@ -59,12 +59,12 @@ export const DeviceCard = ({
         )}
 
         {device?.country_code && (
-          <div className={"absolute bottom-[-4px] right-[-4px]"}>
+          <div className={"absolute -bottom-[4px] -right-[4px]"}>
             <div
               className={cn(
                 "flex items-center justify-center rounded-full shrink-0",
                 isSmall
-                  ? "border-2 border-nb-gray-940"
+                  ? "border-[2px] border-nb-gray-940"
                   : "border-[3px] border-nb-gray-940",
               )}
             >
@@ -102,7 +102,7 @@ export const DeviceCard = ({
         <span
           className={cn(
             "font-normal text-nb-gray-400 relative",
-            isSmall ? "text-[0.72rem]" : "text-sm top-[-0.1rem]",
+            isSmall ? "text-[0.72rem]" : "text-sm -top-[0.1rem]",
           )}
         >
           {device?.ip || resource?.address}
@@ -128,7 +128,7 @@ const PeerOSIcon = ({ os, size = 16 }: { os: string; size?: number }) => {
   return (
     <div
       className={cn(
-        "flex items-center justify-center grayscale brightness-100 contrast-40",
+        "flex items-center justify-center grayscale brightness-[100%] contrast-[40%]",
         "shrink-0",
         osType === OperatingSystem.WINDOWS && "p-[2.5px]",
         osType === OperatingSystem.APPLE && "p-[2.7px]",

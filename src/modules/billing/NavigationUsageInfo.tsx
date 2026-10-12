@@ -78,7 +78,7 @@ const NavigationUsageInfoContent = () => {
           <PlanIcon name={plan?.name} size={33} />
           <div className={"min-w-0"}>
             <div className={"font-medium"}>{plan.name}</div>
-            <div className="overflow-hidden whitespace-nowrap text-ellipsis text-xs text-nb-gray-300 transition-all max-w-[130px]">
+            <div className="overflow-hidden whitespace-nowrap overflow-ellipsis text-xs text-nb-gray-300 transition-all max-w-[130px]">
               {plan.description}
             </div>
           </div>
@@ -129,7 +129,7 @@ const NavigationUsageInfoContent = () => {
                     "absolute h-full",
                     isFreePlan && usagePercentage >= 100
                       ? "bg-red-500"
-                      : "from-netbird to-netbird-500 bg-linear-to-r",
+                      : "from-netbird to-netbird-500 bg-gradient-to-r",
                   )}
                   style={{
                     width: `${usagePercentage}%`,
