@@ -123,6 +123,7 @@
   "allowScripts": {
     "@axa-fr/oidc-client": false,
     "@axa-fr/react-oidc": false,
+    "esbuild": false,
     "fsevents": false,
     "unrs-resolver": false
   }
