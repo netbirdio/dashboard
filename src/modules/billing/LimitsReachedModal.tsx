@@ -96,7 +96,7 @@ const LimitReachedContent = () => {
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent showClose={canClose} maxWidthClass={"max-w-md z-[9999]"}>
+      <ModalContent showClose={canClose} maxWidthClass={"max-w-md z-9999"}>
         <GradientFadedBackground />
         <div className={"flex items-center justify-center flex-col gap-2 px-8"}>
           <div

@@ -193,7 +193,7 @@ export const TransparentEditIconButton = () => {
   return (
     <div
       className={
-        "h-[34px] w-[34px] !p-0 opacity-0 group-hover:opacity-100 flex items-center justify-center text-nb-gray-400 hover:text-nb-gray-100"
+        "h-[34px] w-[34px] p-0! opacity-0 group-hover:opacity-100 flex items-center justify-center text-nb-gray-400 hover:text-nb-gray-100"
       }
     >
       <PencilLineIcon size={16} />

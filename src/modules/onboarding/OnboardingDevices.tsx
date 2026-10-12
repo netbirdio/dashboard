@@ -174,7 +174,7 @@ const Line = ({
     <div
       className={cn(
         className,
-        "w-[1px] overflow-hidden relative -left-[0.5px]",
+        "w-px overflow-hidden relative left-[-0.5px]",
       )}
       style={{
         height: height,

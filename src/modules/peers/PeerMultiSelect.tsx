@@ -341,7 +341,7 @@ const PeerGroupMassAssignmentContent = ({
                 duration: 0.35,
               }}
               className={
-                "max-w-xl mx-auto rounded-t-lg -bottom-14 relative z-[49] flex gap-4 flex-col px-6 pt-6 pb-20 bg-nb-gray-920 border border-nb-gray-900 shadow-2xl border-b-0 overflow-hidden pointer-events-auto"
+                "max-w-xl mx-auto rounded-t-lg -bottom-14 relative z-49 flex gap-4 flex-col px-6 pt-6 pb-20 bg-nb-gray-920 border border-nb-gray-900 shadow-2xl border-b-0 overflow-hidden pointer-events-auto"
               }
             >
               <AnimatePresence>
@@ -434,7 +434,7 @@ const PeerGroupMassAssignmentContent = ({
               duration: 0.35,
             }}
             className={cn(
-              "max-w-xl mx-auto border relative z-[50] bg-nb-gray-800 border-nb-gray-900 shadow-2xl border-b-0 overflow-hidden pointer-events-auto",
+              "max-w-xl mx-auto border relative z-50 bg-nb-gray-800 border-nb-gray-900 shadow-2xl border-b-0 overflow-hidden pointer-events-auto",
               !showGroupAssignment && "rounded-t-lg",
             )}
           >
@@ -467,7 +467,7 @@ const PeerGroupMassAssignmentContent = ({
                           }
                           variant={"default-outline"}
                           size={"xs"}
-                          className={"!h-9 !w-9"}
+                          className={"h-9! w-9!"}
                           disabled={
                             !permission.peers.read || !permission.groups.update
                           }
@@ -488,7 +488,7 @@ const PeerGroupMassAssignmentContent = ({
                             <Button
                               variant={"default-outline"}
                               size={"xs"}
-                              className={"!h-9 !w-9"}
+                              className={"h-9! w-9!"}
                               onClick={batchBypassCompliance}
                               disabled={!canBypass}
                             >
@@ -509,7 +509,7 @@ const PeerGroupMassAssignmentContent = ({
                             <Button
                               variant={"default-outline"}
                               size={"xs"}
-                              className={"!h-9 !w-9"}
+                              className={"h-9! w-9!"}
                               onClick={batchRevokeBypass}
                               disabled={!canBypass}
                             >
@@ -523,7 +523,7 @@ const PeerGroupMassAssignmentContent = ({
                         <Button
                           variant={"danger-outline"}
                           size={"xs"}
-                          className={"!h-9 !w-9"}
+                          className={"h-9! w-9!"}
                           onClick={deleteAllPeers}
                           disabled={!permission.peers.delete}
                         >
@@ -537,7 +537,7 @@ const PeerGroupMassAssignmentContent = ({
                           onClick={onCanceled}
                           variant={"default-outline"}
                           size={"xs"}
-                          className={"!h-9 !w-9"}
+                          className={"h-9! w-9!"}
                         >
                           <IconX size={16} className={"shrink-0"} />
                         </Button>
@@ -548,7 +548,7 @@ const PeerGroupMassAssignmentContent = ({
                       <Button
                         size={"xs"}
                         variant={"secondary"}
-                        className={"!h-9 !px-3.5"}
+                        className={"h-9! px-3.5!"}
                         onClick={onCanceled}
                       >
                         Cancel
@@ -556,7 +556,7 @@ const PeerGroupMassAssignmentContent = ({
                       <Button
                         size={"xs"}
                         variant={"primary"}
-                        className={"!h-9 !px-3.5"}
+                        className={"h-9! px-3.5!"}
                         disabled={
                           selectedGroups.length == 0 ||
                           Object.keys(selectedPeers).length == 0 ||

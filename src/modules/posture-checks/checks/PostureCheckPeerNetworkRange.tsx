@@ -45,7 +45,7 @@ export const PostureCheckPeerNetworkRange = ({
       description={
         "Restrict access by allowing or blocking peer network ranges."
       }
-      iconClass={"bg-gradient-to-tr from-blue-500 to-blue-400"}
+      iconClass={"bg-linear-to-tr from-blue-500 to-blue-400"}
       active={value !== undefined}
       onReset={() => onChange(undefined)}
     >
@@ -157,7 +157,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
                       value={ipRange.value}
                       error={cidrErrors.find((e) => e.id === ipRange.id)?.error}
                       errorTooltip={false}
-                      className={"font-mono !text-[13px] w-full"}
+                      className={"font-mono text-[13px]! w-full"}
                       onChange={(e) =>
                         handleNetworkRangeChange(ipRange.id, e.target.value)
                       }

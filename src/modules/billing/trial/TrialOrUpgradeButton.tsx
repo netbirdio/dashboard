@@ -101,10 +101,10 @@ export const TrialOrUpgradeButton = ({
             disabled={!canUpgrade}
             className={cn(
               "w-full h-[34px]",
-              variant === "white" && !canUpgrade && "disabled:!opacity-30",
+              variant === "white" && !canUpgrade && "disabled:opacity-30!",
               variant === "primary" &&
                 !canUpgrade &&
-                "disabled:!opacity-40 disabled:!bg-nb-gray-700",
+                "disabled:opacity-40! disabled:bg-nb-gray-700!",
             )}
           >
             {isLoading ? (
@@ -113,7 +113,7 @@ export const TrialOrUpgradeButton = ({
               "Start 14-Day Free Trial"
             )}
             {!canUpgrade && (
-              <IconHelpCircle size={13} className={"relative -top-[1px]"} />
+              <IconHelpCircle size={13} className={"relative -top-px"} />
             )}
           </Button>
         </FullTooltip>

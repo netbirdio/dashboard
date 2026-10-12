@@ -497,7 +497,7 @@ export default function TrafficEventsTable({
       tableCellClassName={"py-2"}
       sorting={sorting}
       setSorting={setSorting}
-      rowClassName={"data-[accordion=opened]:!border-b-transparent"}
+      rowClassName={"data-[accordion=opened]:border-b-transparent!"}
       renderExpandedRow={(e) => {
         const { isAggregated } = getTrafficEventCounts(e);
         if (isAggregated) {

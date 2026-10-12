@@ -71,7 +71,7 @@ export default function GroupBadgeWithEditPeers({
       >
         <div
           className={
-            "flex flex-col items-start justify-start pt-[0px] pb-[2px]"
+            "flex flex-col items-start justify-start pt-0 pb-[2px]"
           }
         >
           <div
@@ -84,7 +84,7 @@ export default function GroupBadgeWithEditPeers({
             {isNew && showNewBadge && (
               <span
                 className={
-                  "text-[7px] relative -top-[0px] leading-[0] bg-green-900 border border-green-500/20 py-1.5 px-1 rounded-[3px] text-green-400"
+                  "text-[7px] relative top-0 leading-0 bg-green-900 border border-green-500/20 py-1.5 px-1 rounded-[3px] text-green-400"
                 }
               >
                 NEW
@@ -93,7 +93,7 @@ export default function GroupBadgeWithEditPeers({
           </div>
           <span
             className={
-              "text-[0.7rem] relative leading-none mt-[2px] text-nb-gray-300 mb-[1px] font-normal flex gap-1.5 items-center group-hover/badge:text-netbird transition-all"
+              "text-[0.7rem] relative leading-none mt-[2px] text-nb-gray-300 mb-px font-normal flex gap-1.5 items-center group-hover/badge:text-netbird transition-all"
             }
           >
             <span>

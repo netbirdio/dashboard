@@ -38,7 +38,7 @@ export default function HelpAndSupportButton() {
           size={"xs"}
           variant={"default-outline"}
           className={cn(
-            "!rounded-full h-[38px] w-[38px] !p-0",
+            "rounded-full! h-[38px] w-[38px] p-0!",
             dropdownOpen && "text-white",
           )}
         >
@@ -47,7 +47,7 @@ export default function HelpAndSupportButton() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1 px-1">
+          <div className="flex flex-col gap-y-1 px-1">
             <div className="text-sm font-normal leading-none text-nb-gray-200 py-1">
               Help and Support
             </div>

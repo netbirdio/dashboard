@@ -32,7 +32,7 @@ export const GroupDetailsTableContainer = ({
         <Suspense
           fallback={
             <div className={"relative"}>
-              <SkeletonTableHeader className={"!p-0"} />
+              <SkeletonTableHeader className={"p-0!"} />
               <div className={"mt-6 w-full"}>
                 <SkeletonTable withHeader={false} />
               </div>

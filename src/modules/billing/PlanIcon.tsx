@@ -19,12 +19,12 @@ export const PlanIcon = ({ name, size = 40 }: Props) => {
       className={cn(
         "border shrink-0 flex items-center justify-center rounded-md overflow-hidden",
         isFree &&
-          "bg-gradient-to-b from-nb-gray-800 to-nb-gray-600 border-nb-gray-700/70",
+          "bg-linear-to-b from-nb-gray-800 to-nb-gray-600 border-nb-gray-700/70",
         isTrial &&
-          "border-nb-gray-900 bg-gradient-to-br from-[#6697FF]/90 to-[#CE8EE3]/90",
-        isTeam && "border-nb-gray-900 bg-gradient-to-b from-sky-500 to-sky-300",
+          "border-nb-gray-900 bg-linear-to-br from-[#6697FF]/90 to-[#CE8EE3]/90",
+        isTeam && "border-nb-gray-900 bg-linear-to-b from-sky-500 to-sky-300",
         isBusiness &&
-          "border-nb-gray-900 bg-gradient-to-b from-netbird to-netbird-300",
+          "border-nb-gray-900 bg-linear-to-b from-netbird to-netbird-300",
       )}
       style={{ width: size, height: size }}
     >

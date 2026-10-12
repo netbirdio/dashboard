@@ -197,7 +197,7 @@ export function DataTableFilter<TData>({
       </PopoverTrigger>
       <PopoverContent
         hideWhenDetached={false}
-        className="w-full p-0 shadow-sm shadow-nb-gray-950"
+        className="w-full p-0 shadow-xs shadow-nb-gray-950"
         style={{
           width: "400px",
         }}
@@ -267,7 +267,7 @@ const ListItemHeading = ({
   return (
     <p
       className={
-        "!text-nb-gray-400 text-xs uppercase font-medium tracking-wider pb-1 pl-5 mb-.5 mt-4"
+        "text-nb-gray-400! text-xs uppercase font-medium tracking-wider pb-1 pl-5 mb-.5 mt-4"
       }
     >
       {children}

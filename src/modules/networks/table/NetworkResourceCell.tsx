@@ -36,7 +36,7 @@ export const NetworkResourceCell = ({ network }: Props) => {
       <Button
         size={"xs"}
         variant={"secondary"}
-        className={"!px-3"}
+        className={"px-3!"}
         onClick={() => openResourceModal(network)}
         disabled={!permission.networks.update}
         data-testid={"add-resource"}
@@ -50,7 +50,7 @@ export const NetworkResourceCell = ({ network }: Props) => {
       <Button
         size={"xs"}
         variant={"secondary"}
-        className={"!px-3"}
+        className={"px-3!"}
         onClick={() => openResourceModal(network)}
         data-testid={"add-resource"}
       >

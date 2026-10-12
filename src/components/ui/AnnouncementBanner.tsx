@@ -13,7 +13,7 @@ const variants = cva(
         default:
           "bg-nb-gray-900/50 border-nb-gray-800/30 border-b text-nb-gray-200",
         important:
-          "from-netbird to-netbird-400 bg-gradient-to-b text-black font-normal",
+          "from-netbird to-netbird-400 bg-linear-to-b text-black font-normal",
       },
       tagBadge: {
         default: "bg-nb-gray-200/10 text-nb-gray-100 font-medium",
@@ -27,7 +27,7 @@ const variants = cva(
       },
       inlineLink: {
         default: "text-nb-blue-400 hover:underline",
-        important: "!text-black underline hover:opacity-80",
+        important: "text-black! underline hover:opacity-80",
       },
     },
   },
@@ -67,7 +67,7 @@ export const AnnouncementBanner = () => {
         {announcement.tag && (
           <div
             className={cn(
-              "shrink-0 bg-nb-gray-200/10 backdrop-blur text-nb-gray-100 font-medium tracking-wide uppercase text-[10px] py-2.5 px-2 rounded-md leading-[0]",
+              "shrink-0 bg-nb-gray-200/10 backdrop-blur-sm text-nb-gray-100 font-medium tracking-wide uppercase text-[10px] py-2.5 px-2 rounded-md leading-0",
               variants({ tagBadge: announcement.variant }),
             )}
           >
@@ -81,7 +81,7 @@ export const AnnouncementBanner = () => {
               href={announcement.link || "#"}
               target={announcement.isExternal ? "_blank" : undefined}
               className={cn(
-                "!text-sm",
+                "text-sm!",
                 variants({ inlineLink: announcement.variant }),
               )}
             >

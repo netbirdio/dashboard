@@ -39,7 +39,7 @@ type MenuPosition = {
 const shortcutLabel = (n: number): React.ReactNode =>
   isMac ? (
     <span className={"flex items-center gap-0.5"}>
-      <OptionIcon size={11} className={"relative -top-[0.5px]"} />
+      <OptionIcon size={11} className={"relative top-[-0.5px]"} />
       {n}
     </span>
   ) : (

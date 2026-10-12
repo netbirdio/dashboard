@@ -9,11 +9,11 @@ export const NotificationCountBadge = ({ count = 0 }: Props) => {
     <div
       className={cn(
         count <= 9 ? "w-4 h-4" : "py-2 px-1.5",
-        "relative bg-netbird flex items-center justify-center rounded-full text-white  !leading-[0]  text-[0.6rem] font-semibold",
+        "relative bg-netbird flex items-center justify-center rounded-full text-white  leading-0!  text-[0.6rem] font-semibold",
       )}
     >
       <span className="animate-ping absolute left-0 inline-flex h-full w-full rounded-full bg-netbird opacity-20"></span>
-      <span className={"relative -left-[0.5px]"}>{count || 0}</span>
+      <span className={"relative left-[-0.5px]"}>{count || 0}</span>
     </div>
   ) : null;
 };

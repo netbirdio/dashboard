@@ -69,7 +69,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
         >
           <Button
             variant={"secondary"}
-            className={"!px-3"}
+            className={"px-3!"}
             disabled={
               !permission.networks.update && !permission.networks.delete
             }

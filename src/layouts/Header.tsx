@@ -43,7 +43,7 @@ export default function NavbarWithDropdown() {
           <div className={"flex items-center gap-4 md:hidden"}>
             <Button
               className={cn(
-                "!px-3 md:hidden",
+                "px-3! md:hidden",
                 isRestricted && "opacity-0 pointer-events-none",
               )}
               variant={"default-outline"}

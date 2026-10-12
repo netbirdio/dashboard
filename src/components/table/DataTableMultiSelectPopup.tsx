@@ -45,7 +45,7 @@ export function DataTableMultiSelectPopup<T>({
                   duration: 0.35,
                 }}
                 className={cn(
-                  "max-w-xl mx-auto border relative z-[50] bg-nb-gray-800 border-nb-gray-900 shadow-2xl border-b-0 overflow-hidden pointer-events-auto",
+                  "max-w-xl mx-auto border relative z-50 bg-nb-gray-800 border-nb-gray-900 shadow-2xl border-b-0 overflow-hidden pointer-events-auto",
                   "rounded-t-lg",
                 )}
               >
@@ -75,7 +75,7 @@ export function DataTableMultiSelectPopup<T>({
                           onClick={onCanceled}
                           variant={"default-outline"}
                           size={"xs"}
-                          className={"!h-9 !w-9"}
+                          className={"h-9! w-9!"}
                         >
                           <IconX size={16} className={"shrink-0"} />
                         </Button>

@@ -57,7 +57,7 @@ export const OnboardingTestResource = ({
 
       <Steps className={"stepper-bg-variant"}>
         <Steps.Step step={1}>
-          <p className={"!text-nb-gray-300"}>
+          <p className={"text-nb-gray-300!"}>
             Open your command line and run this command from{" "}
             <span className={cn(device && "text-white")}>
               {device?.name || "your device"}
@@ -69,7 +69,7 @@ export const OnboardingTestResource = ({
           </Code>
         </Steps.Step>
         <Steps.Step step={2} line={false} className={"pb-0"} disabled={!device}>
-          <p className={"!text-nb-gray-300"}>
+          <p className={"text-nb-gray-300!"}>
             Everything working? Great! You can now continue with the onboarding.
             If something isn’t right, please check our{" "}
             <InlineLink

@@ -155,7 +155,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
                 <Shield size={16} />
                 Required Permissions
               </div>
-              <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
+              <p className={"mt-2 text-nb-gray-300! leading-normal!"}>
                 Ensure that you have an{" "}
                 <span className={"text-nb-gray-100 font-semibold"}>
                   Okta user account

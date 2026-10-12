@@ -212,7 +212,7 @@ export function SetupContent({
             "px-8 py-3 flex z-0 flex-col gap-0 text-sm mb-3 text-center justify-center items-center"
           }
         >
-          <p className={"mt-2 !text-nb-gray-300"}>
+          <p className={"mt-2 text-nb-gray-300!"}>
             SCIM configuration varies by identity provider. Please refer to our{" "}
             <InlineLink
               className={"inline"}
@@ -227,7 +227,7 @@ export function SetupContent({
             for provider-specific setup guides.
           </p>
 
-          <p className={"mt-2 !text-nb-gray-300"}>
+          <p className={"mt-2 text-nb-gray-300!"}>
             If your identity provider is not listed in our documentation contact
             us at{" "}
             <InlineLink

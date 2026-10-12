@@ -56,7 +56,7 @@ export const MSPTrialExpiredModal = () => {
 
   return (
     <Modal open={true} onOpenChange={undefined}>
-      <ModalContent showClose={false} maxWidthClass={"max-w-[460px] z-[9999]"}>
+      <ModalContent showClose={false} maxWidthClass={"max-w-[460px] z-9999"}>
         <GradientFadedBackground />
         <div className={"flex items-center justify-center flex-col px-8 gap-3"}>
           <ClockAlertIcon size={24} className={"text-yellow-400"} />

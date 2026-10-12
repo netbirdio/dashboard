@@ -65,7 +65,7 @@ function NameCell({ rule }: { rule: AgentBudgetRule }) {
 function EnabledCell({ rule }: { rule: AgentBudgetRule }) {
   const { toggleBudgetRule } = useAIProviders();
   return (
-    <div className={"flex min-w-[0px]"}>
+    <div className={"flex min-w-0"}>
       <ToggleSwitch
         checked={rule.enabled}
         size={"small"}
@@ -275,7 +275,7 @@ function ActionsCell({
             e.preventDefault();
           }}
         >
-          <Button variant={"secondary"} className={"!px-3"}>
+          <Button variant={"secondary"} className={"px-3!"}>
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>

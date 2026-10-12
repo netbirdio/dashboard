@@ -31,7 +31,7 @@ export default function NetworkActionCell({ network }: Readonly<Props>) {
             e.preventDefault();
           }}
         >
-          <Button variant={"secondary"} className={"!px-3"} data-testid="network-actions">
+          <Button variant={"secondary"} className={"px-3!"} data-testid="network-actions">
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>

@@ -50,7 +50,7 @@ export function GroupsPicker({ value, onChange, groups }: Props) {
           <CommandInput
             className={cn(
               "min-h-[38px] w-full relative bg-transparent text-sm",
-              "border-b border-nb-gray-900 outline-none",
+              "border-b border-nb-gray-900 outline-hidden",
               "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-9",
             )}
             ref={searchRef}

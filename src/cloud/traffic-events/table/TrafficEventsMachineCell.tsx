@@ -264,13 +264,13 @@ export const MachineCard = ({
           <ResourceIcon type={machine.type} name={machine.name} />
         )}
         {machine.geo_location.country_code && (
-          <div className={"absolute -bottom-[4px] -right-[4px]"}>
+          <div className={"absolute bottom-[-4px] right-[-4px]"}>
             <div
               className={cn(
                 "flex items-center justify-center rounded-full border-[3px] shrink-0",
                 "border-nb-gray-950",
                 "group-hover/table-row:border-nb-gray-940",
-                "group-hover/machine:!border-nb-gray-920",
+                "group-hover/machine:border-nb-gray-920!",
               )}
             >
               <RoundedFlag
@@ -295,7 +295,7 @@ export const MachineCard = ({
         </span>
         <span
           className={
-            "text-sm font-normal text-nb-gray-400 -top-[0.2rem] relative"
+            "text-sm font-normal text-nb-gray-400 top-[-0.2rem] relative"
           }
         >
           {stripZeroPort(machine.address)}
@@ -310,7 +310,7 @@ const PeerOSIcon = ({ os }: { os: string }) => {
   return (
     <div
       className={cn(
-        "flex items-center justify-center grayscale brightness-[100%] contrast-[40%]",
+        "flex items-center justify-center grayscale brightness-100 contrast-40",
         "w-4 h-4 shrink-0",
         osType === OperatingSystem.WINDOWS && "p-[2.5px]",
         osType === OperatingSystem.APPLE && "p-[2.7px]",

@@ -1254,7 +1254,7 @@ export default function AIProviderModal({
                     Groups are written into{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       metadata.tags
@@ -1263,7 +1263,7 @@ export default function AIProviderModal({
                     limits. The user identity is sent in the{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       x-litellm-end-user-id
@@ -1273,7 +1273,7 @@ export default function AIProviderModal({
                     must be a LiteLLM virtual key with{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       metadata.allow_client_tags: true
@@ -1309,7 +1309,7 @@ export default function AIProviderModal({
                     defaults shown as placeholders use the{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       x-bf-dim-*
@@ -1318,7 +1318,7 @@ export default function AIProviderModal({
                     in your gateway&apos;s{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       client.prometheus_labels
@@ -1326,7 +1326,7 @@ export default function AIProviderModal({
                     config). Switch to{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       x-bf-lh-*
@@ -1378,7 +1378,7 @@ export default function AIProviderModal({
                     NetBird stamps a JSON object onto the{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       {jsonMetadataHeader || "metadata"}
@@ -1481,7 +1481,7 @@ export default function AIProviderModal({
                     <HelpText className={"mb-0"}>
                       <code
                         className={
-                          "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                          "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                         }
                       >
                         x-netbird-groups
@@ -1505,7 +1505,7 @@ export default function AIProviderModal({
                     NetBird stamps the{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       x-portkey-metadata
@@ -1558,7 +1558,7 @@ export default function AIProviderModal({
                     >
                       <code
                         className={
-                          "text-xs font-mono bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                          "text-xs font-mono bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                         }
                       >
                         X-Amzn-Bedrock-Request-Metadata
@@ -1586,7 +1586,7 @@ export default function AIProviderModal({
                     NetBird stamps the user identity and group list onto{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       ai-reporting-user
@@ -1594,7 +1594,7 @@ export default function AIProviderModal({
                     and{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       ai-reporting-tags
@@ -1603,7 +1603,7 @@ export default function AIProviderModal({
                     Reporting API by these dimensions ({" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       group_by=user
@@ -1611,7 +1611,7 @@ export default function AIProviderModal({
                     /{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       group_by=tag
@@ -1655,7 +1655,7 @@ export default function AIProviderModal({
                     request body&apos;s{" "}
                     <code
                       className={
-                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+                        "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
                       }
                     >
                       user
@@ -1729,7 +1729,7 @@ export default function AIProviderModal({
                     when a load reports back. */}
                 <HelpText
                   className={cn(
-                    "!mb-0",
+                    "mb-0!",
                     discovered.error && "text-orange-500 dark:text-orange-400",
                   )}
                 >
@@ -2156,7 +2156,7 @@ function ModelRowEditor({
               />
               <Button
                 variant={"default-outline"}
-                className={"h-[42px] !px-3 shrink-0"}
+                className={"h-[42px] px-3! shrink-0"}
                 title={"Pick from catalog instead"}
                 onClick={() => {
                   setCustomMode(false);
@@ -2200,7 +2200,7 @@ function ModelRowEditor({
         </div>
         <Button
           variant={"default-outline"}
-          className={"h-[42px] !px-3"}
+          className={"h-[42px] px-3!"}
           onClick={onRemove}
         >
           <MinusCircleIcon size={15} />
@@ -2282,7 +2282,7 @@ function MappingRow({
       <div className={"flex-1 min-w-0"}>
         <code
           className={
-            "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded px-1.5 py-0.5"
+            "text-xs font-mono text-nb-gray-100 bg-nb-gray-900/60 rounded-sm px-1.5 py-0.5"
           }
         >
           {header}

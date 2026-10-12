@@ -162,7 +162,7 @@ export default function UserActionCell({
             <Button
               variant={"danger-outline"}
               size={"xs"}
-              className={"!px-3"}
+              className={"px-3!"}
               onClick={(e) => {
                 e.stopPropagation();
                 rejectUser();
@@ -193,7 +193,7 @@ export default function UserActionCell({
         >
           <Button
             variant={"secondary"}
-            className={"!px-3"}
+            className={"px-3!"}
             aria-label={"User actions"}
             data-testid={"user-actions"}
           >

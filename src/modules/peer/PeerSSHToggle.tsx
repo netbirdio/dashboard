@@ -110,7 +110,7 @@ export const PeerSSHToggle = () => {
     <>
       <FullTooltip
         content={
-          <div className={"flex gap-2 items-center !text-nb-gray-300 text-xs"}>
+          <div className={"flex gap-2 items-center text-nb-gray-300! text-xs"}>
             <LockIcon size={14} />
             <span>
               {`You don't have the required permissions to update this setting.`}

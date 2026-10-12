@@ -43,7 +43,7 @@ export const ReverseProxyEventsAuthMethodCell = ({
           icon: (
             <span
               className={
-                "font-mono text-[9px] font-medium tracking-wider leading-none px-1 py-0.5 rounded border border-current"
+                "font-mono text-[9px] font-medium tracking-wider leading-none px-1 py-0.5 rounded-sm border border-current"
               }
             >
               PWD
@@ -56,7 +56,7 @@ export const ReverseProxyEventsAuthMethodCell = ({
           icon: (
             <span
               className={
-                "font-mono text-[9px] font-medium tracking-wider leading-none px-1 py-0.5 rounded border border-current"
+                "font-mono text-[9px] font-medium tracking-wider leading-none px-1 py-0.5 rounded-sm border border-current"
               }
             >
               PIN

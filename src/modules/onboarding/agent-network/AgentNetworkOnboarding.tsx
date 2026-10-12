@@ -131,7 +131,7 @@ export const AgentNetworkOnboarding = ({
           onPointerDownOutside={(e) => e.preventDefault()}
           asChild={true}
           className={
-            "h-full w-screen fixed z-[50] left-0 top-0 bg-nb-gray-950 flex overflow-y-auto"
+            "h-full w-screen fixed z-50 left-0 top-0 bg-nb-gray-950 flex overflow-y-auto"
           }
         >
           <div data-testid={"agent-network-onboarding"}>
@@ -218,7 +218,7 @@ export const AgentNetworkOnboarding = ({
                     Already know how Agent Network works?
                     <InlineLink
                       href={"#"}
-                      className={"!text-nb-gray-200 ml-1"}
+                      className={"text-nb-gray-200! ml-1"}
                       onClick={() => onSkip(position + 1)}
                     >
                       Skip to Dashboard

@@ -74,7 +74,7 @@ export function TableFiltersButton<TData>({
             {activeCount > 0 && (
               <span
                 className={
-                  "inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-netbird text-white text-[10px] font-semibold !leading-[0] px-1.5"
+                  "inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-netbird text-white text-[10px] font-semibold leading-0! px-1.5"
                 }
               >
                 {activeCount}
@@ -85,7 +85,7 @@ export function TableFiltersButton<TData>({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className={"w-[280px] p-0 shadow-sm shadow-nb-gray-950"}
+        className={"w-[280px] p-0 shadow-xs shadow-nb-gray-950"}
         align={"start"}
         sideOffset={7}
       >
@@ -99,7 +99,7 @@ export function TableFiltersButton<TData>({
               <button
                 aria-label={"Back"}
                 className={
-                  "flex items-center justify-center w-7 h-7 -ml-1 shrink-0 text-nb-gray-400 hover:text-white hover:bg-nb-gray-900 rounded transition-colors"
+                  "flex items-center justify-center w-7 h-7 -ml-1 shrink-0 text-nb-gray-400 hover:text-white hover:bg-nb-gray-900 rounded-sm transition-colors"
                 }
                 onClick={() => setActiveFilterId(null)}
               >
@@ -133,7 +133,7 @@ export function TableFiltersButton<TData>({
                   key={f.id}
                   data-testid={`table-filter-${f.id}`}
                   className={
-                    "w-full text-left px-2 py-1.5 rounded hover:bg-nb-gray-900 transition-colors text-sm flex items-center gap-2.5 text-nb-gray-200"
+                    "w-full text-left px-2 py-1.5 rounded-sm hover:bg-nb-gray-900 transition-colors text-sm flex items-center gap-2.5 text-nb-gray-200"
                   }
                   onClick={() => setActiveFilterId(f.id)}
                 >
@@ -243,7 +243,7 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
         </button>
       </div>
       <PopoverContent
-        className={"w-[280px] p-0 shadow-sm shadow-nb-gray-950"}
+        className={"w-[280px] p-0 shadow-xs shadow-nb-gray-950"}
         align={"start"}
         sideOffset={6}
       >

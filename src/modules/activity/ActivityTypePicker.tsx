@@ -76,7 +76,7 @@ export function ActivityTypePicker({
           <CommandInput
             className={cn(
               "min-h-[38px] w-full relative bg-transparent text-sm",
-              "border-b border-nb-gray-900 outline-none",
+              "border-b border-nb-gray-900 outline-hidden",
               "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-9",
             )}
             ref={searchRef}
@@ -101,7 +101,7 @@ export function ActivityTypePicker({
               <div className={"mb-2"}>
                 <p
                   className={
-                    "!text-nb-gray-400 text-xs uppercase font-medium tracking-wider pb-1 pl-2"
+                    "text-nb-gray-400! text-xs uppercase font-medium tracking-wider pb-1 pl-2"
                   }
                 >
                   {group}

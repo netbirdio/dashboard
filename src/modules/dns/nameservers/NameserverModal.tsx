@@ -623,7 +623,7 @@ function NameserverInput({
           placeholder={"e.g., 172.16.0.0"}
           maxWidthClass={"w-full"}
           value={ip}
-          className={"font-mono !text-[13px]"}
+          className={"font-mono text-[13px]!"}
           error={cidrError}
           onChange={handleIPChange}
           disabled={disabled}

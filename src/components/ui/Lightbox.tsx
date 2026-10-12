@@ -26,7 +26,7 @@ export const Lightbox = ({ image }: Props) => {
           >
             <div
               className={
-                "bg-black/5 backdrop-blur p-2 rounded-full group-hover/lightbox:bg-black/10 transition-all"
+                "bg-black/5 backdrop-blur-sm p-2 rounded-full group-hover/lightbox:bg-black/10 transition-all"
               }
             >
               <ZoomIn

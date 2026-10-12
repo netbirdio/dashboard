@@ -204,7 +204,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             <Shield size={16} />
             Required Permissions
           </div>
-          <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
+          <p className={"mt-2 text-nb-gray-300! leading-normal!"}>
             Ensure that you have an{" "}
             <span className={"text-nb-gray-100 font-semibold"}>
               Huntress account
@@ -319,7 +319,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             <ShieldCheckIcon size={16} />
             Compliance Requirements
           </p>
-          <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
+          <p className={"mt-2 text-nb-gray-300! leading-normal!"}>
             Set the specific requirements that devices must meet to be
             considered compliant. Learn more in the{" "}
             <InlineLink href={HUNTRESS_DOCUMENTATION_URL} target={"_blank"}>
@@ -359,7 +359,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
                 network access.
                 <IconInfoCircle
                   size={14}
-                  className={"relative inline ml-1 -top-[1px]"}
+                  className={"relative inline ml-1 -top-px"}
                 />
               </HelpText>
             </FullTooltip>

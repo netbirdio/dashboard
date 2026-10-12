@@ -231,7 +231,7 @@ const GlobalSearchModalContent = ({ open, setOpen }: Props) => {
                           >
                             <LayersIcon
                               size={12}
-                              className={"relative -top-[1px]"}
+                              className={"relative -top-px"}
                             />
                             {item.data?.resources?.length} Resource(s)
                           </div>

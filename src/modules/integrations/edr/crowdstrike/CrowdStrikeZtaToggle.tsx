@@ -30,7 +30,7 @@ export const CrowdStrikeZtaToggle = ({ value, onChange }: Props) => {
             ZTA score
             <ExternalLinkIcon
               size={12}
-              className={"shrink-0 relative -top-[1px] mr-[1px]"}
+              className={"shrink-0 relative -top-px mr-px"}
             />
           </InlineLink>{" "}
           is a parameter that allows you to set the minimum ZTA score for the

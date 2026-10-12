@@ -32,7 +32,7 @@ export const ReverseProxyTargetPath = ({ target }: Props) => {
     >
       <span
         className={
-          "text-[11px] leading-none font-mono px-2.5 py-2 rounded bg-nb-gray-920 text-nb-gray-300 transition-all group-hover:bg-nb-gray-900 group-hover:text-nb-gray-100"
+          "text-[11px] leading-none font-mono px-2.5 py-2 rounded-sm bg-nb-gray-920 text-nb-gray-300 transition-all group-hover:bg-nb-gray-900 group-hover:text-nb-gray-100"
         }
       >
         {path}

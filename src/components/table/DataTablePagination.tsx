@@ -48,7 +48,7 @@ export function DataTablePagination<TData>({
         </div>
         {pageCount > 1 && (
           <div className={"flex items-center gap-3"}>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-2">
               <ButtonGroup>
                 <ButtonGroup.Button
                   onClick={() => table.setPageIndex(0)}

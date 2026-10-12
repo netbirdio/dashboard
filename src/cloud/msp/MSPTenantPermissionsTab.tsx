@@ -154,7 +154,7 @@ const ListItem = ({
               variant={"default-outline"}
               size={"xs"}
               className={cn(
-                "!text-[0.82rem] pr-2 pl-3 !text-nb-gray-300 h-[35px]",
+                "text-[0.82rem]! pr-2 pl-3 text-nb-gray-300! h-[35px]",
                 "group-data-[state=open]/user-role-selector:bg-nb-gray-900/30 group-data-[state=open]/user-role-selector:border-nb-gray-800/50",
               )}
               stopPropagation={false}

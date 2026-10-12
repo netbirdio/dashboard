@@ -308,7 +308,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
         <div className={"relative shrink-0 flex items-center pr-4 pt-1"}>
           <input
             className={
-              "min-h-[44px] w-full relative border-none bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0 dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-11 pr-2"
+              "min-h-[44px] w-full relative border-none bg-transparent text-sm outline-hidden focus-visible:outline-hidden ring-0 focus-visible:ring-0 dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-11 pr-2"
             }
             ref={searchInputRef}
             value={search}
@@ -324,7 +324,7 @@ export const PeerGroupsPanel = ({ peerId, onClose }: PeerGroupsPanelProps) => {
           <button
             onClick={() => void requestClose()}
             className={
-              "shrink-0 px-1.5 py-0.5 rounded border border-nb-gray-900 bg-nb-gray-920 shadow-[0_2px_0_0_#1e2123,inset_0_1px_0_0_rgba(255,255,255,0.05)] text-[8px] font-medium tracking-wide text-nb-gray-350 hover:bg-nb-gray-910 hover:text-nb-gray-200 transition-colors"
+              "shrink-0 px-1.5 py-0.5 rounded-sm border border-nb-gray-900 bg-nb-gray-920 shadow-[0_2px_0_0_#1e2123,inset_0_1px_0_0_rgba(255,255,255,0.05)] text-[8px] font-medium tracking-wide text-nb-gray-350 hover:bg-nb-gray-910 hover:text-nb-gray-200 transition-colors"
             }
           >
             ESC

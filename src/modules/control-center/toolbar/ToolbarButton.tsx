@@ -58,7 +58,7 @@ export const ToolbarButton = ({
           {shortcut && (
             <kbd
               className={cn(
-                "text-[0.67rem] font-mono text-nb-gray-400 relative top-[1px]",
+                "text-[0.67rem] font-mono text-nb-gray-400 relative top-px",
                 tooltip && "ml-1",
               )}
             >
@@ -70,7 +70,7 @@ export const ToolbarButton = ({
       side="top"
       sideOffset={10}
       interactive={false}
-      contentClassName="!px-2 !py-1.5"
+      contentClassName="px-2! py-1.5!"
       variant={"lighter"}
     >
       {button}

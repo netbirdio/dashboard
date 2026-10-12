@@ -250,7 +250,7 @@ export function TrafficEventsFilter({
       </PopoverTrigger>
       <PopoverContent
         hideWhenDetached={false}
-        className="w-full p-0 shadow-sm shadow-nb-gray-950"
+        className="w-full p-0 shadow-xs shadow-nb-gray-950"
         style={{
           width: "400px",
         }}

@@ -26,13 +26,13 @@ export const DistributorAccountExistsModal = ({
       <ModalContent
         showClose={false}
         maxWidthClass={"max-w-md"}
-        className={"z-[9999]"}
+        className={"z-9999"}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <GradientFadedBackground />
-        <div className={"flex flex-col gap-2 px-8 z-[1]"}>
+        <div className={"flex flex-col gap-2 px-8 z-1"}>
           <div
             className={
               "text-sm w-full text-center text-white py-2 rounded-lg flex items-center justify-center gap-2"

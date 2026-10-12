@@ -130,7 +130,7 @@ export default function AgentAccountControlsCard() {
 
           <div
             className={cn(
-              "border border-nb-gray-900 border-t-0 rounded-b-md px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+              "border border-nb-gray-900 border-t-0 rounded-b-md px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-1",
               enableLogCollection
                 ? "bg-nb-gray-930/80"
                 : "opacity-50 pointer-events-none",

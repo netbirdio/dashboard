@@ -53,7 +53,7 @@ export const HelpTooltip = ({
         ) : (
           <span
             className={cn(
-              "p-2 -m-2 inline-flex items-center justify-center relative top-[1px] group/help",
+              "p-2 -m-2 inline-flex items-center justify-center relative top-px group/help",
               triggerClassName,
             )}
           >

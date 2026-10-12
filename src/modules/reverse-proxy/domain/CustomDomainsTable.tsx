@@ -322,7 +322,7 @@ function CustomDomainStatusCell({ domain }: Readonly<CellProps>) {
         <Button
           variant={"secondary"}
           size={"xs"}
-          className={"!px-3"}
+          className={"px-3!"}
           onClick={() => setVerificationModalOpen(true)}
           disabled={!permission?.services?.update}
         >

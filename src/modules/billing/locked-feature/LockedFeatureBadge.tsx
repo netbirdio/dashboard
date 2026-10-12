@@ -57,17 +57,17 @@ export const LockedFeatureBadge = ({
         >
           <div
             className={cn(
-              "inline-flex shrink-0 text-xs bg-nb-gray-500/50 backdrop-blur items-center gap-1.5 px-[10px] py-[6px] rounded-full leading-none",
+              "inline-flex shrink-0 text-xs bg-nb-gray-500/50 backdrop-blur-sm items-center gap-1.5 px-[10px] py-[6px] rounded-full leading-none",
               "group-hover:bg-nb-gray-500/40 transition-all duration-300",
             )}
           >
-            <LockIcon size={12} className={"relative -top-[1px]"} />
+            <LockIcon size={12} className={"relative -top-px"} />
             {isNetBirdCloud()
               ? plan == "team"
                 ? PLAN_TEXT.TEAM
                 : PLAN_TEXT.BUSINESS
               : PLAN_TEXT.ENTERPRISE}
-            <IconHelpCircle size={13} className={"relative -top-[1px]"} />
+            <IconHelpCircle size={13} className={"relative -top-px"} />
           </div>
         </LockedFeatureTooltip>
       </div>

@@ -520,7 +520,7 @@ spec:
                     codeToCopy={deployment.command}
                     className={cn(
                       "overflow-hidden",
-                      isGeneratingToken && "!border-nb-gray-930",
+                      isGeneratingToken && "border-nb-gray-930!",
                     )}
                     showCopyIcon={!isGeneratingToken}
                   >

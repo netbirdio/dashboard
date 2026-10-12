@@ -44,7 +44,7 @@ export function CheckboxListPicker<V extends string | number>({
             role={"button"}
             tabIndex={0}
             className={cn(
-              "flex items-center gap-2.5 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer",
+              "flex items-center gap-2.5 px-2 py-1.5 rounded-sm text-sm transition-colors cursor-pointer",
               "text-nb-gray-300 hover:bg-nb-gray-900 hover:text-white",
               isSelected && "text-white",
             )}

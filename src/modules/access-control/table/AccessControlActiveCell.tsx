@@ -30,7 +30,7 @@ export default function AccessControlActiveCell({ policy }: Readonly<Props>) {
   };
 
   return (
-    <div className={"flex min-w-[0px]"}>
+    <div className={"flex min-w-0"}>
       <ToggleSwitch
         disabled={!permission.policies.update}
         checked={isChecked}

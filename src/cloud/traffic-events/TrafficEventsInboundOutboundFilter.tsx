@@ -47,7 +47,7 @@ const InnerButton = ({ isActive, onClick, children }: InnerButtonProps) => {
   return (
     <button
       className={cn(
-        "px-3 py-1.5 text-sm rounded-md w-full transition-all data-[disabled]:opacity-10",
+        "px-3 py-1.5 text-sm rounded-md w-full transition-all data-disabled:opacity-10",
         isActive && "bg-nb-gray-900",
       )}
       onClick={onClick}

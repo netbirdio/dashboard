@@ -366,7 +366,7 @@ const OptionRow = ({
         "flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-x-3 gap-y-0.5"
       }
     >
-      <span className={"min-w-0 text-sm text-nb-gray-100 break-words"}>
+      <span className={"min-w-0 text-sm text-nb-gray-100 wrap-break-word"}>
         {title}
       </span>
       <span className={"text-xs text-nb-gray-400 shrink-0"}>{detail}</span>

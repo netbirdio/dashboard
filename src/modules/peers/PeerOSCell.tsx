@@ -31,14 +31,14 @@ export function PeerOSCell({ os, serial }: Readonly<Props>) {
           >
             <div
               className={
-                "h-6 w-6 flex items-center justify-center grayscale brightness-[100%] contrast-[40%]"
+                "h-6 w-6 flex items-center justify-center grayscale brightness-100 contrast-40"
               }
             >
               <OSLogo os={os} />
             </div>
           </div>
         </TooltipTrigger>
-        <TooltipContent className={"!p-0"}>
+        <TooltipContent className={"p-0!"}>
           <div>
             <ListItem icon={<CpuIcon size={14} />} label={"OS"} value={os} />
             {serial && serial !== "" && (

@@ -13,7 +13,7 @@ export const PeerOSIcon = ({ os }: Props) => {
   return (
     <div
       className={cn(
-        "flex items-center justify-center grayscale brightness-[100%] contrast-[40%]",
+        "flex items-center justify-center grayscale brightness-100 contrast-40",
         "w-4 h-4 shrink-0",
         osType === OperatingSystem.WINDOWS && "p-[2.5px]",
         osType === OperatingSystem.APPLE && "p-[2.7px]",

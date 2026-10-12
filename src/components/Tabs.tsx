@@ -63,11 +63,11 @@ const TabsList = React.forwardRef<
       >
         <span
           className={
-            "absolute left-0 dark:bg-nb-gray-900 bg-nb-gray-100 w-full h-[1px] bottom-0 z-0"
+            "absolute left-0 dark:bg-nb-gray-900 bg-nb-gray-100 w-full h-px bottom-0 z-0"
           }
         />
         <ScrollArea>
-          <div className={"relative z-[1] flex flex-nowrap w-full "}>
+          <div className={"relative z-1 flex flex-nowrap w-full "}>
             {props.children}
           </div>
           <ScrollBar orientation="horizontal" />
@@ -93,17 +93,17 @@ const TabsTrigger = React.forwardRef<
         className={cn(
           "inline-flex items-center transition-all justify-center whitespace-nowrap px-3 pt-1.5 pb-3 text-sm font-normal",
           "data-[state=active]:text-netbird cursor-pointer  dark:data-[state=active]:text-netbird group/trigger gap-2",
-          "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+          "data-disabled:pointer-events-none data-disabled:opacity-50",
           "relative data-[state=inactive]:hover:text-neutral-900 dark:data-[state=inactive]:hover:text-nb-gray-500",
           className,
         )}
       >
         <motion.div
           className={cn(
-            "absolute w-full h-[1px] left-0 right-0 bottom-[0px] transition-all",
+            "absolute w-full h-px left-0 right-0 bottom-0 transition-all",
             currentValue === props.value
               ? "bg-netbird text-netbird"
-              : "dark:bg-nb-gray-900 bg-nb-gray-100 group-hover/trigger:dark:bg-nb-gray-700 group-hover/trigger:bg-nb-gray-200",
+              : "dark:bg-nb-gray-900 bg-nb-gray-100 dark:group-hover/trigger:bg-nb-gray-700 group-hover/trigger:bg-nb-gray-200",
           )}
         ></motion.div>
 
@@ -121,7 +121,7 @@ const TabsContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <TabsPrimitive.Content
     ref={ref}
-    className={cn("mt-2 pt-4 outline-none", className)}
+    className={cn("mt-2 pt-4 outline-hidden", className)}
     {...props}
   />
 ));

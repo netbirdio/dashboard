@@ -291,7 +291,7 @@ export function ConfigurationContent({
                   network access.
                   <IconInfoCircle
                     size={14}
-                    className={"relative inline ml-1 -top-[1px]"}
+                    className={"relative inline ml-1 -top-px"}
                   />
                 </HelpText>
               </FullTooltip>

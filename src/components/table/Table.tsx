@@ -104,7 +104,7 @@ const TableRow = React.forwardRef<
       " transition-colors group/table-row data-[state=selected]:bg-neutral-100 dark:data-[state=selected]:bg-nb-gray-930/70",
       "dark:data-[state=selected]:border-nb-gray-900",
       minimal
-        ? "dark:hover:bg-nb-gray-910/[15%]"
+        ? "dark:hover:bg-nb-gray-910/15"
         : "border-b dark:border-zinc-700/40 dark:hover:bg-nb-gray-940 hover:bg-neutral-100/50",
       className,
     )}
@@ -125,7 +125,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-12 px-4 text-left align-middle uppercase font-medium  [&:has([role=checkbox])]:pr-0 w-auto",
+      "h-12 px-4 text-left align-middle uppercase font-medium  has-[[role=checkbox]]:pr-0 w-auto",
       minimal
         ? "px-6"
         : "text-neutral-500 dark:text-nb-gray-400 dark:bg-nb-gray-900",
@@ -149,7 +149,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "align-middle [&:has([role=checkbox])]:pr-0",
+      "align-middle has-[[role=checkbox]]:pr-0",
       minimal ? "px-6 pt-2 pb-3" : "p-4",
       inset && "first:pl-[52px]",
       className,

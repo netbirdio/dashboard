@@ -78,7 +78,7 @@ export const SlidingTabsTrigger = ({
   title,
   description,
   icon,
-  iconClass = "bg-gradient-to-tr from-netbird-200 to-netbird-100",
+  iconClass = "bg-linear-to-tr from-netbird-200 to-netbird-100",
 }: {
   value: string;
   children?: React.ReactNode;

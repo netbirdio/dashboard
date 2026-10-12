@@ -94,7 +94,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
         >
           <Button
             variant={"secondary"}
-            className={"!px-3"}
+            className={"px-3!"}
             aria-label={"Nameserver actions"}
             data-testid={"nameserver-actions"}
           >

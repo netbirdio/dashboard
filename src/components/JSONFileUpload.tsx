@@ -104,7 +104,7 @@ export const JSONFileUpload = ({ onChange }: Props) => {
         <p className={"text-[14px] font-medium text-nb-gray-100 "}>
           Upload your service account key (.json)
         </p>
-        <p className={"text-xs !text-nb-gray-300 mt-1"}>
+        <p className={"text-xs text-nb-gray-300! mt-1"}>
           <span
             className={
               "underline underline-offset-4 group-hover/upload:text-nb-gray-200 transition-all"

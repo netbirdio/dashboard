@@ -217,7 +217,7 @@ function NetworkActions() {
           e.preventDefault();
         }}
       >
-        <Button variant={"secondary"} className={"!px-3"} data-testid="network-detail-actions">
+        <Button variant={"secondary"} className={"px-3!"} data-testid="network-detail-actions">
           <MoreVertical size={16} className={"shrink-0"} />
         </Button>
       </DropdownMenuTrigger>

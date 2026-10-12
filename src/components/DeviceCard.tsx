@@ -52,7 +52,7 @@ export const DeviceCard = ({
         ) : null}
 
         {device?.country_code && (
-          <div className={"absolute -bottom-[4px] -right-[4px]"}>
+          <div className={"absolute bottom-[-4px] right-[-4px]"}>
             <div
               className={cn(
                 "flex items-center justify-center rounded-full border-[3px] shrink-0",

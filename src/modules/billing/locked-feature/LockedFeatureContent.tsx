@@ -39,7 +39,7 @@ export const LockedFeatureContent = ({
         >
           <LockIcon
             size={isTooltip ? 12 : 14}
-            className={cn("relative", isTooltip && "-top-[1px]")}
+            className={cn("relative", isTooltip && "-top-px")}
           />
             { isNetBirdCloud()? (plan == "team" ? PLAN_TEXT.TEAM : PLAN_TEXT.BUSINESS) : PLAN_TEXT.ENTERPRISE }
         </div>

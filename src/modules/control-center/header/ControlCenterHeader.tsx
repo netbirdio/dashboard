@@ -151,7 +151,7 @@ function AddResourceButton({ networkNodeId }: { networkNodeId: string }) {
         setResourceEditor({ createInNetworkNodeId: networkNodeId })
       }
       className={cn(
-        "flex items-center gap-1.5 h-[40px] px-3.5 shrink-0 rounded-md text-xs whitespace-nowrap outline-none",
+        "flex items-center gap-1.5 h-[40px] px-3.5 shrink-0 rounded-md text-xs whitespace-nowrap outline-hidden",
         "bg-nb-gray-920 border border-gray-700/40 text-gray-400",
         "hover:text-white hover:bg-nb-gray-910 transition-colors",
       )}
@@ -215,7 +215,7 @@ function DraftDrillDownHeader() {
           <Button
             variant={"secondary"}
             size={"xs"}
-            className={"!bg-nb-gray-930"}
+            className={"bg-nb-gray-930!"}
             data-testid={"cc-drill-back"}
             onClick={() => setDrillDownNetworkNodeId(null)}
           >
@@ -241,9 +241,9 @@ function DraftDrillDownHeader() {
               onOpenChange={setSelectOpen}
               popoverMinWidth={200}
               className={cn(
-                "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
+                "bg-nb-gray-920!  !hover:bg-nb-gray-925 text-nb-gray-300! pr-3! h-[40px]! py-0!",
                 // Square the right corners so the ✎ segment attaches flush.
-                drilled && "!rounded-r-none",
+                drilled && "rounded-r-none!",
               )}
               size={"xs"}
             />
@@ -302,7 +302,7 @@ function HeaderTopLeft() {
                 key={"network-back"}
                 variant={"secondary"}
                 size={"xs"}
-                className={"!bg-nb-gray-930"}
+                className={"bg-nb-gray-930!"}
                 data-testid={"cc-network-back"}
                 onClick={() => onNetworkSelect("")}
               >
@@ -339,10 +339,10 @@ function HeaderTopLeft() {
                     popoverMinWidth={200}
                     className={cn(
                       // Fixed height matching the RoutingPeersBar next to it.
-                      "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0",
+                      "bg-nb-gray-920!  !hover:bg-nb-gray-925 text-nb-gray-300! pr-3! h-[40px]! py-0!",
                       selectedNetwork &&
                         showNetworkActions &&
-                        "!rounded-r-none",
+                        "rounded-r-none!",
                     )}
                     size={"xs"}
                   />

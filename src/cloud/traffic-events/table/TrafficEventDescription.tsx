@@ -347,14 +347,14 @@ export const TrafficEventDescription = ({
       </div>
       <div
         className={cn(
-          "text-nb-gray-250 text-sm min-w-[22rem] max-w-[23rem] font-light",
+          "text-nb-gray-250 text-sm min-w-88 max-w-92 font-light",
         )}
       >
         {getMessage()}
         {showCaret && (
           <div
             className={cn(
-              "inline ml-2 text-xs text-nb-gray-300 -top-[1px] relative",
+              "inline ml-2 text-xs text-nb-gray-300 -top-px relative",
               "group-hover/accordion:text-nb-gray-200 transition-all",
             )}
           >

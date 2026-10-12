@@ -14,8 +14,8 @@ const smallBadgeVariants = cva("", {
     },
     size: {
       default:
-        "text-[0.4rem] relative -top-[.25px] leading-[0] py-[0.39rem] px-1 rounded-[3px]",
-      md: "text-[0.55rem] relative -top-[.25px] leading-[0] py-[0.45rem] px-1 rounded-[3px]",
+        "text-[0.4rem] relative top-[-0.25px] leading-0 py-[0.39rem] px-1 rounded-[3px]",
+      md: "text-[0.55rem] relative top-[-0.25px] leading-0 py-[0.45rem] px-1 rounded-[3px]",
     },
   },
 });

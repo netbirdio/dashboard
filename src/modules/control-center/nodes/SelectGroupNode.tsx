@@ -67,7 +67,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
         open={open}
         onOpenChange={setOpen}
         popoverWidth={280}
-        className={"!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300"}
+        className={"bg-nb-gray-920!  !hover:bg-nb-gray-925 text-nb-gray-300!"}
         size={"xs"}
         maxHeight={300}
       >

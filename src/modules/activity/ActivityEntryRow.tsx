@@ -108,7 +108,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
                     text={"External"}
                     variant={"sky"}
                     className={
-                      "text-[10px] py-[0.2rem] px-1.5 rounded-full leading-none -top-0"
+                      "text-[10px] py-[0.2rem] px-1.5 rounded-full leading-none top-0"
                     }
                   />
                 </span>
@@ -132,7 +132,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
           <div className={"flex gap-4"}>
             <div
               className={
-                "flex items-center text-nb-gray-300 text-sm leading-[2]"
+                "flex items-center text-nb-gray-300 text-sm leading-loose"
               }
             >
               <ActivityDescription event={event} />

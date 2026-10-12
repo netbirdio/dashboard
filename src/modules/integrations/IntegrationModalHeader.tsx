@@ -43,7 +43,7 @@ export const IntegrationModalHeader = ({
       </div>
       <div
         className={
-          "mx-auto text-center flex flex-col items-center justify-center mt-6 z-[1]"
+          "mx-auto text-center flex flex-col items-center justify-center mt-6 z-1"
         }
       >
         <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>{title}</h2>

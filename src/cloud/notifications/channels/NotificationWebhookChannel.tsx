@@ -151,7 +151,7 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
           {isConnected ? (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild={true}>
-                <Button variant={"secondary"} size={"xs"} className={"!px-2"} data-testid="webhook-actions">
+                <Button variant={"secondary"} size={"xs"} className={"px-2!"} data-testid="webhook-actions">
                   <MoreVertical size={14} className={"shrink-0"} />
                 </Button>
               </DropdownMenuTrigger>
@@ -182,7 +182,7 @@ export const NotificationWebhookChannel = ({ channel }: Props) => {
             <Button
               variant={"primary"}
               size={"xs"}
-              className={"!px-3"}
+              className={"px-3!"}
               onClick={() => setModalOpen(true)}
               disabled={!canUpdate}
               data-testid="webhook-connect"

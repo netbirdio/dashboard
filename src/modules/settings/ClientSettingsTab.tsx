@@ -376,7 +376,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 
             <div
               className={cn(
-                "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+                "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-1",
                 !peerExposeEnabled
                   ? "opacity-50 pointer-events-none"
                   : "bg-nb-gray-930/80",

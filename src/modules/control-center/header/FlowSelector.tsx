@@ -61,7 +61,7 @@ export const FlowSelector = ({ value, onChange }: Props) => {
           onOpenChange={setSelectOpen}
           popoverMinWidth={160}
           className={
-            "!bg-nb-gray-920 !hover:bg-nb-gray-925 !text-nb-gray-300 !pr-3 !h-[40px] !py-0"
+            "bg-nb-gray-920! !hover:bg-nb-gray-925 text-nb-gray-300! pr-3! h-[40px]! py-0!"
           }
           size={"xs"}
         />

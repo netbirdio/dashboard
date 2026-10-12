@@ -27,7 +27,7 @@ export const MSPNavigationItem = () => {
         label={<div className={"flex items-center gap-2"}>Tenants</div>}
         href={"/tenants"}
         exactPathMatch={true}
-        labelClassName={"-left-[1.5px] relative"}
+        labelClassName={"left-[-1.5px] relative"}
       />
     )
   );

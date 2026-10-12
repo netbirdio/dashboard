@@ -302,7 +302,7 @@ const DraftStatusChip = ({
     variant={"secondary"}
     size={"xs"}
     className={cn(
-      "cc-row-action shrink-0 ml-2 mr-4 !px-2.5 !text-nb-gray-300",
+      "cc-row-action shrink-0 ml-2 mr-4 px-2.5! text-nb-gray-300!",
       !onClick && "cursor-default",
     )}
     onClick={(e) => {
@@ -1202,7 +1202,7 @@ export const DestinationGroupPanel = ({
           <input
             className={cn(
               "min-h-[44px] w-full relative border-none",
-              "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
+              "bg-transparent text-sm outline-hidden focus-visible:outline-hidden ring-0 focus-visible:ring-0",
               "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-11 pr-2",
             )}
             ref={searchInputRef}
@@ -1227,7 +1227,7 @@ export const DestinationGroupPanel = ({
           <button
             onClick={() => void requestClose()}
             className={cn(
-              "shrink-0 px-1.5 py-0.5 rounded border border-nb-gray-900 bg-nb-gray-920",
+              "shrink-0 px-1.5 py-0.5 rounded-sm border border-nb-gray-900 bg-nb-gray-920",
               // Keycap: 2px "side" below + faint highlight on top.
               "shadow-[0_2px_0_0_#1e2123,inset_0_1px_0_0_rgba(255,255,255,0.05)]",
               "text-[8px] font-medium tracking-wide text-nb-gray-350",

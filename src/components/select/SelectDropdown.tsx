@@ -214,7 +214,7 @@ export function SelectDropdown({
             variant={variant}
             disabled={disabled || isLoading}
             ref={inputRef}
-            className={cn("w-full focus:outline-none", className)}
+            className={cn("w-full focus:outline-hidden", className)}
             data-testid={dataTestId}
           >
             <div className={"w-full flex justify-between items-center gap-2"}>
@@ -230,7 +230,7 @@ export function SelectDropdown({
       </PopoverTrigger>
       <PopoverContent
         className={cn(
-          "p-0 shadow-sm shadow-nb-gray-950 focus:outline-none",
+          "p-0 shadow-xs shadow-nb-gray-950 focus:outline-hidden",
           popoverWidth !== "content" && "w-full",
         )}
         style={{

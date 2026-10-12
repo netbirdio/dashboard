@@ -347,7 +347,7 @@ export function ResourceModalContent({
                   }
                   data-testid="resource-optional-settings"
                 >
-                  <span className={"relative top-[1px]"}>
+                  <span className={"relative top-px"}>
                     Optional Settings
                   </span>
                 </AccordionTrigger>

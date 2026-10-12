@@ -123,7 +123,7 @@ export const TrafficEventSetting = ({ account }: Props) => {
           Experimental
           <FlaskConicalIcon
             size={16}
-            className={"inline ml-1.5 relative -top-[2px]"}
+            className={"inline ml-1.5 relative top-[-2px]"}
           />
         </h2>
         <div className={"text-sm text-gray-400"}>
@@ -166,7 +166,7 @@ export const TrafficEventSetting = ({ account }: Props) => {
 
             <div
               className={cn(
-                "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+                "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-1",
                 !trafficEventsEnabled
                   ? "opacity-50 pointer-events-none"
                   : "bg-nb-gray-930/80",

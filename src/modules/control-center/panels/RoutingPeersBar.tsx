@@ -172,7 +172,7 @@ export const RoutingPeersBar = ({
               }
             }}
             className={cn(
-              "flex items-center gap-2 pl-3.5 pr-3 text-xs text-gray-400 whitespace-nowrap outline-none",
+              "flex items-center gap-2 pl-3.5 pr-3 text-xs text-gray-400 whitespace-nowrap outline-hidden",
               "hover:text-white hover:bg-nb-gray-910 transition-colors",
             )}
           >
@@ -190,7 +190,7 @@ export const RoutingPeersBar = ({
         <PopoverContent
           ref={contentRef}
           hideWhenDetached={false}
-          className={"w-[300px] p-0 shadow-sm shadow-nb-gray-950"}
+          className={"w-[300px] p-0 shadow-xs shadow-nb-gray-950"}
           align={"start"}
           side={"bottom"}
           sideOffset={8}
@@ -208,7 +208,7 @@ export const RoutingPeersBar = ({
                 <Skeleton
                   key={i}
                   height={30}
-                  className={"rounded-md !my-[2px]"}
+                  className={"rounded-md my-[2px]!"}
                 />
               ))}
             </div>
@@ -218,7 +218,7 @@ export const RoutingPeersBar = ({
               itemKey={(row) => row.key}
               // Read-only list: nothing should look pre-hovered.
               autoSelectFirst={false}
-              scrollAreaClassName={"!pt-2"}
+              scrollAreaClassName={"pt-2!"}
               maxHeight={MAX_LIST_HEIGHT}
               // Must equal the real row height: the Virtuoso viewport is sized
               // from this estimate and overshooting leaves a dead strip.
@@ -281,7 +281,7 @@ export const RoutingPeersBar = ({
             onAdd();
           }}
           className={cn(
-            "flex items-center gap-1.5 px-3 text-xs whitespace-nowrap outline-none",
+            "flex items-center gap-1.5 px-3 text-xs whitespace-nowrap outline-hidden",
             "border-l border-gray-700/40 text-gray-400",
             "hover:text-white hover:bg-nb-gray-910 transition-colors",
           )}

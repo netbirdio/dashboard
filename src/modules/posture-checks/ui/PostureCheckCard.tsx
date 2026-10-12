@@ -11,7 +11,7 @@ export const PostureCheckCard = ({
   title,
   description,
   icon,
-  iconClass = "bg-gradient-to-tr from-netbird-200 to-netbird-100",
+  iconClass = "bg-linear-to-tr from-netbird-200 to-netbird-100",
   modalWidthClass = "max-w-xl",
   onClose,
   open,
@@ -52,7 +52,7 @@ export const PostureCheckCard = ({
       <ScaleIcon
         size={14}
         className={
-          "text-nb-gray-400 hover:text-nb-gray-200 transition-all cursor-pointer -top-[1px] relative"
+          "text-nb-gray-400 hover:text-nb-gray-200 transition-all cursor-pointer -top-px relative"
         }
       />
     </FullTooltip>

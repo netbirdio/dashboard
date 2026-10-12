@@ -29,7 +29,7 @@ export const PostureCheckOperatingSystemInfo = ({
     >
       <div
         className={cn(
-          "w-5 h-5 flex items-center justify-center brightness-[150%]",
+          "w-5 h-5 flex items-center justify-center brightness-150",
         )}
       >
         {icon({ size: 14 })}

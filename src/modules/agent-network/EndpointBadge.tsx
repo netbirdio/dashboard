@@ -62,7 +62,7 @@ export default function EndpointBadge({
         </button>
       }
       description={
-        <code className={"font-mono !text-nb-gray-100 whitespace-nowrap"}>
+        <code className={"font-mono text-nb-gray-100! whitespace-nowrap"}>
           https://{endpoint}
         </code>
       }

@@ -373,7 +373,7 @@ function ActionsCell({
         >
           <Button
             variant={"secondary"}
-            className={"!px-3"}
+            className={"px-3!"}
             aria-label={"Policy actions"}
             data-testid={"agent-policy-actions"}
           >

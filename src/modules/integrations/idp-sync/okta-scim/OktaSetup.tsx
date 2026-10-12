@@ -189,7 +189,7 @@ export function SetupContent({
             <Shield size={16} />
             Required Permissions
           </div>
-          <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
+          <p className={"mt-2 text-nb-gray-300! leading-normal!"}>
             Ensure that you have an{" "}
             <span className={"text-nb-gray-100 font-semibold"}>
               Okta user account
@@ -493,7 +493,7 @@ export function SetupSSOContent() {
             <Shield size={16} />
             Required Permissions
           </div>
-          <p className={"mt-2 !text-nb-gray-300 !leading-[1.5]"}>
+          <p className={"mt-2 text-nb-gray-300! leading-normal!"}>
             Ensure that you have an{" "}
             <span className={"text-nb-gray-100 font-semibold"}>
               Okta user account
@@ -612,11 +612,11 @@ export function SetupSSOContent() {
                 "bg-netbird-950 px-6 py-4 rounded-md border border-netbird-500 "
               }
             >
-              <p className={"!text-netbird-200"}>
+              <p className={"text-netbird-200!"}>
                 You can use{" "}
                 <InlineLink
                   href={"mailto:support@netbird.io"}
-                  className={"inline !text-netbird-500 font-medium"}
+                  className={"inline text-netbird-500! font-medium"}
                 >
                   {" "}
                   1Password
@@ -625,7 +625,7 @@ export function SetupSSOContent() {
                 the NetBird team. If you need help, please contact us at{" "}
                 <InlineLink
                   href={"mailto:support@netbird.io"}
-                  className={"inline !text-netbird-500 font-medium"}
+                  className={"inline text-netbird-500! font-medium"}
                 >
                   {" "}
                   support@netbird.io

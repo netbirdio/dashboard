@@ -30,7 +30,7 @@ import { isMac } from "@hooks/useOperatingSystem";
 // The big-arrow icon stands in for Shift in the shortcut badges.
 const UndoShortcut = isMac ? (
   <span className="flex items-center gap-0.5">
-    <CommandIcon size={10} className="relative -top-[1px]" />Z
+    <CommandIcon size={10} className="relative -top-px" />Z
   </span>
 ) : (
   <span className="flex items-center gap-0.5">
@@ -40,13 +40,13 @@ const UndoShortcut = isMac ? (
 
 const RedoShortcut = isMac ? (
   <span className="flex items-center gap-0.5">
-    <ArrowBigUpIcon size={12} className="relative -top-[1px]" />
-    <CommandIcon size={10} className="relative -top-[1px]" />Z
+    <ArrowBigUpIcon size={12} className="relative -top-px" />
+    <CommandIcon size={10} className="relative -top-px" />Z
   </span>
 ) : (
   <span className="flex items-center gap-0.5">
     Ctrl<span>+</span>
-    <ArrowBigUpIcon size={12} className="relative -top-[1px]" />
+    <ArrowBigUpIcon size={12} className="relative -top-px" />
     <span>+</span>Z
   </span>
 );

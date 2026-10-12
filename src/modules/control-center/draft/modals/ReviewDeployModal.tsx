@@ -199,7 +199,7 @@ export const ReviewDeployModal = ({
         onOpenChange(o);
       }}
     >
-      <ModalContent maxWidthClass={"max-w-[45rem]"}>
+      <ModalContent maxWidthClass={"max-w-180"}>
         <ModalHeader
           icon={
             <GitPullRequestArrowIcon size={18} className={"text-netbird"} />

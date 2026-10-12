@@ -57,7 +57,7 @@ export const DistributorNavigation = () => {
         label={"Customers"}
         href={"/customers"}
         exactPathMatch={true}
-        labelClassName={"-left-[1.5px] relative"}
+        labelClassName={"left-[-1.5px] relative"}
       />
 
       <SidebarItem

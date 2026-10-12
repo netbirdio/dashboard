@@ -238,7 +238,7 @@ function RDPSession({ peer }: Props) {
       {rdp.isResizing && (
         <div
           className={
-            "fixed w-screen h-screen z-50 backdrop-blur bg-black/50 flex items-center justify-center"
+            "fixed w-screen h-screen z-50 backdrop-blur-sm bg-black/50 flex items-center justify-center"
           }
         >
           <Loader2Icon size={20} className={"animate-spin"} />

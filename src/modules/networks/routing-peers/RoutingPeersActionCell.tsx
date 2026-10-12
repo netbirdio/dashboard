@@ -64,7 +64,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
         >
           <Button
             variant={"secondary"}
-            className={"!px-3"}
+            className={"px-3!"}
             disabled={
               !permission.networks.update && !permission.networks.delete
             }

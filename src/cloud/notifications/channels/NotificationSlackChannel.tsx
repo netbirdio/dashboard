@@ -153,7 +153,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
                 <Button
                   variant={"secondary"}
                   size={"xs"}
-                  className={"!px-2"}
+                  className={"px-2!"}
                   data-testid="slack-actions"
                 >
                   <MoreVertical size={14} className={"shrink-0"} />
@@ -180,7 +180,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
             <Button
               variant={"primary"}
               size={"xs"}
-              className={"!px-3"}
+              className={"px-3!"}
               onClick={() => setModalOpen(true)}
               disabled={!canUpdate}
               data-testid="slack-channel-connect"

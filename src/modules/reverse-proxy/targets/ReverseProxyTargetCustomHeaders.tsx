@@ -168,7 +168,7 @@ export default function ReverseProxyTargetCustomHeaders({
               />
               <Button
                 variant="default-outline"
-                className="!px-2 shrink-0"
+                className="px-2! shrink-0"
                 onClick={() => removeHeader(entry.id)}
                 aria-label="Remove header"
               >

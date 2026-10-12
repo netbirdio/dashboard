@@ -46,7 +46,7 @@ export const PostureCheckCertificate = ({
         "Restrict access to peers holding a certificate issued by your own certificate authority."
       }
       icon={<FileKey2Icon size={18} />}
-      iconClass={"bg-gradient-to-tr from-purple-500 to-purple-400"}
+      iconClass={"bg-linear-to-tr from-purple-500 to-purple-400"}
       modalWidthClass={"max-w-2xl"}
       onReset={() => onChange(undefined)}
     >

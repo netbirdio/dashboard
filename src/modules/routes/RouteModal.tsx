@@ -508,7 +508,7 @@ export function RouteModalContent({
                   placeholder={"e.g., 172.16.0.1, 172.16.0.0/16, 2001:db8::1 or 2001:db8::/64"}
                   value={networkRange}
                   data-testid={"network-range"}
-                  className={"font-mono !text-[13px]"}
+                  className={"font-mono text-[13px]!"}
                   error={cidrError}
                   onChange={(e) => setNetworkRange(e.target.value)}
                 />
@@ -586,7 +586,7 @@ export function RouteModalContent({
                             Keep Routes
                             <CircleHelp
                               size={12}
-                              className={"top-[1px] relative text-nb-gray-300"}
+                              className={"top-px relative text-nb-gray-300"}
                             />
                           </div>
                         </>

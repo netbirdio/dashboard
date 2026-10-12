@@ -105,7 +105,7 @@ export default function PostureCheckMinimalTable({
                         e.preventDefault();
                       }}
                     >
-                      <Button variant={"default-outline"} className={"!px-3"}>
+                      <Button variant={"default-outline"} className={"px-3!"}>
                         <MoreVertical size={16} className={"shrink-0"} />
                       </Button>
                     </DropdownMenuTrigger>
