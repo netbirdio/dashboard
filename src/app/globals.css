@@ -302,13 +302,26 @@
     }
 
     h1 {
-        @apply text-2xl font-medium text-gray-700 dark:text-nb-gray-100 my-1;
+        @apply text-2xl font-medium text-gray-700 my-1;
     }
     h2 {
-        @apply text-xl font-medium text-gray-700 dark:text-nb-gray-100 my-1;
+        @apply text-xl font-medium text-gray-700 my-1;
     }
     p {
-        @apply font-light tracking-wide text-gray-700 dark:text-zinc-50 text-sm;
+        @apply font-light tracking-wide text-gray-700 text-sm;
+    }
+}
+
+/* v3 compiled the dark colours above to `p:is(.dark *)`, which beats plain
+   text colour classes but loses to `dark:text-*` ones. Kept as utilities
+   with the same selectors to resolve the same way. */
+@layer utilities {
+    h1:is(.dark *),
+    h2:is(.dark *) {
+        color: var(--color-nb-gray-100);
+    }
+    p:is(.dark *) {
+        color: var(--color-zinc-50);
     }
 }
 
