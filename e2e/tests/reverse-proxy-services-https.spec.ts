@@ -1,8 +1,8 @@
-import { test, expect } from "../helpers/fixtures";
-import { navigateTo } from "../helpers/auth";
-import { generateRandomName } from "../helpers/utils";
 import { deleteNetworksByPrefix, deleteServicesByPrefix } from "../helpers/api";
-import { gotoReverseProxyPage, selectProxyDomain, CUSTOM_PORTS_DOMAIN } from "../helpers/reverse-proxy-l4";
+import { navigateTo } from "../helpers/auth";
+import { expect,test } from "../helpers/fixtures";
+import { CUSTOM_PORTS_DOMAIN,gotoReverseProxyPage, selectProxyDomain } from "../helpers/reverse-proxy-l4";
+import { generateRandomName } from "../helpers/utils";
 
 let createdNetwork = "";
 let createdResource = "";
@@ -61,6 +61,7 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy @test-env"
       resourceName: createdResource,
       protocol: "http",
       timeout: "10s",
+      accessAction: "bypass",
       customHeader: { name: "X-Custom-Header", value: "custom-value" },
     });
     await addTarget(page, {
@@ -68,6 +69,7 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy @test-env"
       location: "/secure",
       protocol: "https",
       port: 4433,
+      accessAction: "block",
     });
 
     const targetsSection = page.getByText("HTTPS Targets").locator("..");
@@ -119,7 +121,17 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy @test-env"
     // Step 4: Advanced Settings
     await page.getByTestId("toggle-pass-host-header").click();
     await page.getByTestId("toggle-rewrite-redirects").click();
+    const createResponsePromise = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/reverse-proxies/services") &&
+        resp.request().method() === "POST",
+      { timeout: 30_000 },
+    );
     await page.getByTestId("submit-service").click();
+    const createResponse = await createResponsePromise;
+    const createPayload = createResponse.request().postDataJSON();
+    expect(createPayload.targets[0].access_action).toBe("bypass");
+    expect(createPayload.targets[1].access_action).toBe("block");
 
     await expect(page.locator("tr").filter({ hasText: subdomain })).toBeVisible({ timeout: 30_000 });
   });
@@ -135,6 +147,13 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy @test-env"
     const targetsSection = page.getByText("HTTPS Targets").locator("..");
     await targetsSection.locator("table tbody tr").first().click({ force: true });
     await page.getByTestId("target-location-input").fill("/new-location");
+    await page.getByTestId("target-optional-settings").click();
+    const accessAction = page.getByTestId("target-access-action");
+    await expect(accessAction).toContainText("Bypass authentication");
+    await accessAction.click();
+    await page
+      .getByRole("option", { name: "Use service authentication" })
+      .click();
     await page.getByTestId("submit-target").click();
 
     // Remove second target
@@ -171,7 +190,9 @@ test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy @test-env"
     if (await confirmBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await confirmBtn.click({ force: true });
     }
-    await saveResponse;
+    const updateResponse = await saveResponse;
+    const updatePayload = updateResponse.request().postDataJSON();
+    expect(updatePayload.targets[0].access_action).toBe("inherit");
 
     // Verify no auth / no access rules: both cells now show a "0" count badge.
     await resetServiceFilters(page);
@@ -208,6 +229,7 @@ type AddTargetOptions = {
   protocol?: "http" | "https";
   port?: number;
   timeout?: string;
+  accessAction?: "inherit" | "bypass" | "block";
   customHeader?: { name: string; value: string };
 };
 
@@ -240,8 +262,19 @@ async function addTarget(page: import("@playwright/test").Page, opts: AddTargetO
     await page.getByTestId("target-port-input").fill("");
   }
 
-  if (opts.timeout || opts.customHeader) {
+  if (opts.timeout || opts.customHeader || opts.accessAction) {
     await page.getByTestId("target-optional-settings").click();
+    if (opts.accessAction) {
+      const actionLabels = {
+        inherit: "Use service authentication",
+        bypass: "Bypass authentication",
+        block: "Block access",
+      } as const;
+      await page.getByTestId("target-access-action").click();
+      await page
+        .getByRole("option", { name: actionLabels[opts.accessAction] })
+        .click();
+    }
     if (opts.timeout) {
       await page.getByTestId("target-timeout-input").fill(opts.timeout);
     }
