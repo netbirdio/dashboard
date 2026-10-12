@@ -176,6 +176,9 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             auto_update_always: autoUpdateAlways,
             peer_expose_enabled: peerExposeEnabled,
             peer_expose_groups: peerExposeGroupIds,
+            lazy_connection_enabled: lazyConnection,
+            agent_network_only: agentNetworkOnly,
+            peer_hostname_collision_rejected: hostnameCollisionRejected,
           },
         })
         .then(() => {
