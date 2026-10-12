@@ -11,7 +11,7 @@ type Group = {
 
 const apiContextCache = new WeakMap<Page, { token: string; origin: string }>();
 
-async function getApiContext(
+export async function getApiContext(
   page: Page,
 ): Promise<{ token: string; origin: string }> {
   const cached = apiContextCache.get(page);

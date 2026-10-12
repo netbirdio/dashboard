@@ -157,6 +157,28 @@ export type APIAgentNetworkSettingsRequest = {
   access_log_retention_days: number;
 };
 
+// AgentNetworkManagedProxy is a NetBird-managed gateway deployment as
+// /integrations/agent-network/managed-proxy reports it. state is derived by
+// the server on every read and typed as an open string: the spec lists
+// provisioning, ready and failed, and a value outside those must render as
+// unknown rather than break the flow.
+export type AgentNetworkManagedProxy = {
+  id: string;
+  state: string;
+  // Bare hostname the gateway serves. Assigned on the first POST and never
+  // changes, so it can be shown before the deployment is ready.
+  endpoint: string;
+  region?: string;
+  // Failure detail from the rollout, only set while state is failed.
+  message?: string;
+};
+
+// AgentNetworkManagedProxyConflict is the 409 body of the managed-proxy POST:
+// the account already has an endpoint that managed provisioning does not own.
+export type AgentNetworkManagedProxyConflict = {
+  endpoint: string;
+};
+
 export type AgentNetworkSettings = {
   endpoint: string;
   proxyAddress: string;
@@ -539,6 +561,9 @@ function policyLimitsToAPI(l: PolicyLimits): APIPolicyLimits {
 type AIProvidersContextValue = {
   providers: AIProvider[];
   policies: AgentPolicy[];
+  // policiesLoaded tells an account with no policies from a policy list that
+  // has not been read yet.
+  policiesLoaded: boolean;
   guardrails: AgentGuardrail[];
   budgetRules: AgentBudgetRule[];
   budgetRulesLoading: boolean;
@@ -564,8 +589,11 @@ type AIProvidersContextValue = {
   ) => Promise<boolean>;
   toggleProvider: (id: string) => Promise<boolean>;
   deleteProvider: (id: string) => Promise<boolean>;
+  // quiet leaves out the success toast, for a policy the operator did not ask
+  // for. A failure is still reported.
   addPolicy: (
     policy: Omit<AgentPolicy, "id">,
+    options?: { quiet?: boolean },
   ) => Promise<AgentPolicy | undefined>;
   updatePolicy: (id: string, updates: Partial<AgentPolicy>) => Promise<boolean>;
   togglePolicy: (id: string) => Promise<boolean>;
@@ -617,8 +645,9 @@ export function useAIProviders() {
 // ones respond 200 with the defaults and an empty endpoint/proxy_address,
 // older ones 200 + JSON null, and the oldest 404 — tolerated via ignoreError
 // so old deploys don't surface a spurious error in the empty state. All
-// three normalize to null here.
-export function useAgentNetworkSettings() {
+// three normalize to null here. enabled lets a caller that only sometimes
+// needs the settings skip the read.
+export function useAgentNetworkSettings(enabled = true) {
   const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
   const { permission } = usePermissions();
   const { data, error, isLoading, mutate } =
@@ -626,7 +655,9 @@ export function useAgentNetworkSettings() {
       "/agent-network/settings",
       true,
       true,
-      agentNetworkEnabled && !!permission?.["agent_network.settings"]?.read,
+      enabled &&
+        agentNetworkEnabled &&
+        !!permission?.["agent_network.settings"]?.read,
     );
   const notFound = !!error && (error as { code?: number }).code === 404;
   // SWR keeps the previous data alongside the error (keepPreviousData), so a
@@ -878,14 +909,16 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
   );
 
   const addPolicy = useCallback(
-    async (policy: Omit<AgentPolicy, "id">) => {
+    async (policy: Omit<AgentPolicy, "id">, options?: { quiet?: boolean }) => {
       try {
         const created = await policiesApi.post(policyToRequest(policy));
         await mutatePolicies();
-        notify({
-          title: "Policy created",
-          description: `${created.name} is now active.`,
-        });
+        if (!options?.quiet) {
+          notify({
+            title: "Policy created",
+            description: `${created.name} is now active.`,
+          });
+        }
         return policyFromAPI(created);
       } catch (err) {
         notifyFailure({
@@ -1177,6 +1210,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     () => ({
       providers,
       policies,
+      policiesLoaded: apiPolicies !== undefined,
       guardrails,
       budgetRules,
       budgetRulesLoading,
@@ -1210,6 +1244,7 @@ export default function AIProvidersProvider({ children }: Readonly<Props>) {
     [
       providers,
       policies,
+      apiPolicies,
       guardrails,
       budgetRules,
       budgetRulesLoading,

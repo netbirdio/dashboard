@@ -14,6 +14,8 @@ type Props = {
 // same pattern as EphemeralPeerIndicator — so the source of the
 // cluster is visible at a glance without a dedicated column.
 export const ClusterTypeIndicator = ({ cluster }: Props) => {
+  // TODO(NET-1722): label a NetBird-managed gateway "Managed by NetBird"; it
+  // is an account cluster but not self-hosted.
   if (cluster.type === ReverseProxyClusterType.ACCOUNT) {
     return (
       <FullTooltip

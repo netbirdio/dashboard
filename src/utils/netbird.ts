@@ -30,6 +30,20 @@ export const testOnboardingEnabled = (): boolean => {
   }
 };
 
+// e2eHooksEnabled gates the window mirrors of React-only state (e.g. the
+// Control Center draft changeset) that e2e specs assert on. Test builds always
+// expose them; a production build only once a spec opts in via localStorage,
+// so the suite can also run against a deployed dashboard.
+export const e2eHooksEnabled = (): boolean => {
+  if (process.env.APP_ENV === "test") return true;
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem("netbird-e2e-hooks") === "true";
+  } catch (e) {
+    return false;
+  }
+};
+
 // testEditionOverride lets e2e tests drive cloud/licensed/oss behavior against
 // the test build by setting localStorage. It is inert outside test builds,
 // where the APP_ENV check is replaced at compile time and tree-shaken away.

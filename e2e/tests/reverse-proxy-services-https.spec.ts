@@ -8,7 +8,7 @@ let createdNetwork = "";
 let createdResource = "";
 let createdSubdomain = "";
 
-test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy", () => {
+test.describe.serial("Reverse Proxy - Services (HTTPS) @reverse-proxy @test-env", () => {
   test("Should create a network with a resource", async ({ dashboardAsOwner: page }) => {
     // Clean up leftovers from previous runs (unique prefix per protocol)
     await deleteServicesByPrefix(page, "https-svc-");

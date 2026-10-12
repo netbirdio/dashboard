@@ -223,6 +223,36 @@ export function useApiCall<T>(
   };
 }
 
+export type ApiStatusResponse = {
+  code: number;
+  // Parsed JSON body, or undefined when the response had none.
+  body: unknown;
+};
+
+// useApiCallWithStatus is for endpoints whose status code carries meaning the
+// shared error path drops: it resolves every HTTP response with its status and
+// parsed body (a 202 apart from a 200, a 409 whose body names a value rather
+// than an error) and raises no error toast, so the caller owns every outcome.
+// It rejects only when no response arrives.
+export function useApiCallWithStatus(url: string) {
+  const { fetch } = useNetBirdFetch(true);
+  const { globalApiParams } = useApplicationContext();
+
+  return {
+    post: async (data?: unknown, suffix = ""): Promise<ApiStatusResponse> => {
+      const res = await fetch(
+        `${config.apiOrigin}/api${mergeUrlParams(url + suffix, globalApiParams)}`,
+        {
+          method: "POST",
+          body: data === undefined ? undefined : JSON.stringify(data),
+        },
+      );
+      const body = await res.json().catch(() => undefined);
+      return { code: res.status, body };
+    },
+  };
+}
+
 // Which screen a blocked or unapproved user belongs on is an app-level routing
 // decision, and it is made in UserProfileProvider from the responses rather
 // than here. Acting on whichever refused call landed first got it wrong: only

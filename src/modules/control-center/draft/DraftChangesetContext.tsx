@@ -29,6 +29,7 @@ import {
   reduceRemoveChange,
 } from "@/modules/control-center/utils/change-cascade";
 import { draftUid } from "@/modules/control-center/utils/helpers";
+import { e2eHooksEnabled } from "@utils/netbird";
 
 export {
   isEmptiedPolicy,
@@ -1139,7 +1140,7 @@ export function DraftChangesetProvider({
   const [changes, setChanges] = useState<DraftChange[]>([]);
 
   useEffect(() => {
-    if (process.env.APP_ENV === "test") {
+    if (e2eHooksEnabled()) {
       (
         window as unknown as { __ccDraftChanges?: DraftChange[] }
       ).__ccDraftChanges = changes;
