@@ -33,7 +33,7 @@ const WRONG_AUTH = `Basic ${Buffer.from(`${AUTH_USER}:wrong`).toString(
   "base64",
 )}`;
 
-test.describe("Reverse Proxy - Target Access Real Traffic @reverse-proxy", () => {
+test.describe("Reverse Proxy - Target Access Real Traffic @reverse-proxy @test-env", () => {
   test("configures, enforces, updates, and removes target access actions", async ({
     dashboardAsOwner: page,
   }, testInfo) => {
