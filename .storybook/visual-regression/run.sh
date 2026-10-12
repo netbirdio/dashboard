@@ -96,13 +96,25 @@ fi
 # Vite refuses to follow a node_modules symlink out of the project, so the
 # baseline gets a copy-on-write clone where the filesystem supports it
 # (APFS, btrfs), refreshed whenever the working tree's dependencies change.
-if ! cmp -s "$REPO/package-lock.json" "$WORKTREE/.regression-lock"; then
-  step "cloning node_modules into the baseline worktree"
+# A change that updates dependencies gets the baseline's own instead, since
+# the baseline may not build with them (Tailwind 3 with Tailwind 4's, say).
+if git -C "$REPO" diff --quiet "$BASE_REF" -- package-lock.json; then
+  LOCK="$REPO/package-lock.json"
+else
+  LOCK="$WORKTREE/package-lock.json"
+fi
+if ! cmp -s "$LOCK" "$WORKTREE/.regression-lock"; then
   rm -rf "$WORKTREE/node_modules"
-  cp -cR "$REPO/node_modules" "$WORKTREE/node_modules" 2>/dev/null ||
-    cp -R --reflink=auto "$REPO/node_modules" "$WORKTREE/node_modules" 2>/dev/null ||
-    cp -R "$REPO/node_modules" "$WORKTREE/node_modules"
-  cp "$REPO/package-lock.json" "$WORKTREE/.regression-lock"
+  if [[ "$LOCK" == "$REPO/package-lock.json" ]]; then
+    step "cloning node_modules into the baseline worktree"
+    cp -cR "$REPO/node_modules" "$WORKTREE/node_modules" 2>/dev/null ||
+      cp -R --reflink=auto "$REPO/node_modules" "$WORKTREE/node_modules" 2>/dev/null ||
+      cp -R "$REPO/node_modules" "$WORKTREE/node_modules"
+  else
+    step "installing the baseline's dependencies"
+    (cd "$WORKTREE" && npm ci --ignore-scripts --no-audit --no-fund >/dev/null)
+  fi
+  cp "$LOCK" "$WORKTREE/.regression-lock"
 fi
 
 # The baseline predates Storybook, so it borrows the config, the story
