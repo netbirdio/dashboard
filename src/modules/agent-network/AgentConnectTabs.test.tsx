@@ -14,7 +14,7 @@ const writeText = vi.fn();
 vi.mock("@components/Notification", () => ({ notify: vi.fn() }));
 vi.mock("@utils/api", () => ({ default: () => ({ data: [] }) }));
 
-const { AgentConnectTabs, fromAccountProviders, pickable } = await import(
+const { AgentConnectTabs, fromAccountProviders } = await import(
   "@/modules/agent-network/AgentConnectTabs"
 );
 
@@ -88,20 +88,6 @@ describe("fromAccountProviders", () => {
         models: ["kimi-k3"],
       },
     ]);
-  });
-});
-
-describe("pickable", () => {
-  it("passes over Bedrock and Vertex, which route by path", () => {
-    const p = (catalogId: string) => ({
-      name: catalogId,
-      catalogId,
-      api: "openai" as const,
-      models: [],
-    });
-    expect(
-      pickable([p("bedrock_api"), p("vertex_ai_api"), p("openai_api")]),
-    ).toEqual([p("openai_api")]);
   });
 });
 
@@ -241,5 +227,60 @@ describe("AgentConnectTabs", () => {
     );
 
     expect(shownLines()).toContain(`  "defaultModel": "gpt-4o"`);
+  });
+
+  it("configures Claude Code for a picked Vertex provider, and only Claude Code", () => {
+    const vertex: ConnectProvider[] = [
+      {
+        name: "Vertex",
+        catalogId: "vertex_ai_api",
+        api: "anthropic",
+        models: ["claude-opus-5"],
+      },
+    ];
+    render(
+      <AgentConnectTabs
+        endpoint={ENDPOINT}
+        defaultTab={"claude-code"}
+        providers={vertex}
+      />,
+    );
+
+    expect(shownLines()).toEqual(
+      expect.arrayContaining([
+        `    "CLAUDE_CODE_USE_VERTEX": "1",`,
+        `    "ANTHROPIC_MODEL": "claude-opus-5",`,
+      ]),
+    );
+
+    cleanup();
+    render(
+      <AgentConnectTabs
+        endpoint={ENDPOINT}
+        defaultTab={"pi"}
+        providers={vertex}
+      />,
+    );
+    expect(shownLines()).toEqual([]);
+    expect(screen.getByText(/routes requests by URL path/)).toBeTruthy();
+  });
+
+  it("says Claude Code can't use an OpenAI-only provider", () => {
+    render(
+      <AgentConnectTabs
+        endpoint={ENDPOINT}
+        providers={[
+          {
+            name: "OpenAI",
+            catalogId: "openai_api",
+            api: "openai",
+            models: ["gpt-4o"],
+          },
+        ]}
+      />,
+    );
+
+    expect(shownLines()).toEqual([]);
+    expect(screen.getByText(/speaks the Anthropic Messages API/)).toBeTruthy();
   });
 });

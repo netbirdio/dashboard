@@ -24,10 +24,10 @@ const loaded = async () => {
 
 export const ClaudeCode: Story = { play: loaded };
 
-export const ClaudeCodeProviderOpen: Story = {
+export const ProviderPickerOpen: Story = {
   play: async () => {
     await loaded();
-    await clickRole("button", /Anthropic API/);
+    await clickRole("button", /Anthropic Claude/);
     await popover();
     await settle();
   },
@@ -36,7 +36,7 @@ export const ClaudeCodeProviderOpen: Story = {
 export const ModelPickerOpen: Story = {
   play: async () => {
     await loaded();
-    await clickRole("button", /gpt-4o/);
+    await clickRole("button", /claude-sonnet-4-5/);
     await popover();
     await settle();
   },

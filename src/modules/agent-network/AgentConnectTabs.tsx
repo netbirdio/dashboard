@@ -187,9 +187,13 @@ export const fromAccountProviders = (
     models: p.models.map((m) => m.id),
   }));
 
-// pickable leaves out the providers no fixed request routes to.
-export const pickable = (providers: ConnectProvider[]) =>
-  providers.filter((p) => !PATH_ROUTED.includes(p.catalogId as AIProviderId));
+// The Claude Code config each provider needs; providers missing here speak
+// the OpenAI shape only, which Claude Code can't use.
+const CLAUDE_BACKEND: Record<string, "vertex" | "bedrock" | "kimi"> = {
+  vertex_ai_api: "vertex",
+  bedrock_api: "bedrock",
+  kimi_api: "kimi",
+};
 
 // A one-word answer keeps a test request quick. Only Anthropic gets a token
 // cap, which its API requires: OpenAI's reasoning models refuse max_tokens,
@@ -339,37 +343,51 @@ export function AgentConnectTabs({
   // would just be a trap.
   providers?: ConnectProvider[];
 }) {
-  const providerIds = providers.map((p) => p.catalogId);
-  const options = pickable(providers);
+  const hasKimi = providers.some((p) => p.catalogId === "kimi_api");
   // The pick is derived from the list on each render rather than copied into
-  // state, so a list that resolves late still lands on its first provider.
-  // With nothing pickable the snippets keep the default request.
+  // state, so a list that resolves late still lands on a provider: the first
+  // one a fixed request reaches, Anthropic-shaped first since Claude Code is
+  // the first tab. With no providers the snippets keep
+  // the default request.
   const [pick, setPick] = React.useState<{ name?: string; model?: string }>({});
-  const provider = options.find((p) => p.name === pick.name) ?? options[0];
+  const routedByPath = (p: ConnectProvider) =>
+    PATH_ROUTED.includes(p.catalogId as AIProviderId);
+  const provider =
+    providers.find((p) => p.name === pick.name) ??
+    providers.find((p) => p.api === "anthropic" && !routedByPath(p)) ??
+    providers.find((p) => !routedByPath(p)) ??
+    providers[0];
+  const pathRouted = !!provider && routedByPath(provider);
   const api = provider?.api ?? DEFAULT_EXAMPLE.api;
-  const model = pick.model || provider?.models[0] || DEFAULT_MODEL[api];
+  // chosenModel is unset when the provider lists no models and none was
+  // typed; tools that pick their own model then keep doing so.
+  const chosenModel = pick.model || provider?.models[0];
+  const model = chosenModel || DEFAULT_MODEL[api];
   const picked: ConnectExample = { api, model };
   const baseUrl = `https://${endpoint}`;
   const openaiBase = `${baseUrl}/v1`;
-  const hasKimi = providerIds.includes("kimi_api");
   const [claudeMode, setClaudeMode] = React.useState<ClaudeMode>("config");
-  // Which backend the Claude Code config targets — Anthropic API direct,
-  // via Vertex AI / Bedrock, or Kimi (Moonshot AI, whose upstream speaks the
-  // Anthropic Messages API too). Switched in-tab instead of separate tabs.
-  // When Kimi is the only Anthropic-shaped provider connected, it's the only
-  // config that can work, so start there.
-  const kimiOnlyAnthropicShape =
-    hasKimi &&
-    !["anthropic_api", "vertex_ai_api", "bedrock_api"].some((id) =>
-      providerIds.includes(id),
-    );
-  // Claude Code and Codex each speak one API shape, so they only take the
-  // picked model when it is in theirs.
-  const claudeModel = picked.api === "anthropic" ? model : undefined;
-  const codexModel = picked.api === "openai" ? model : undefined;
-  const [claudeProvider, setClaudeProvider] = React.useState<
-    "anthropic" | "vertex" | "bedrock" | "kimi"
-  >(kimiOnlyAnthropicShape ? "kimi" : "anthropic");
+  // Which backend the Claude Code config targets follows the picked
+  // provider — Anthropic API direct, via Vertex AI / Bedrock, or Kimi
+  // (Moonshot AI, whose upstream speaks the Anthropic Messages API too).
+  // Without providers it shows the Anthropic API config.
+  const claudeProvider = !provider
+    ? "anthropic"
+    : CLAUDE_BACKEND[provider.catalogId] ??
+      (provider.api === "anthropic" ? "anthropic" : undefined);
+  // Kimi's Claude Code and CLI configs pin every model slot to one model.
+  const kimiModel =
+    (provider?.catalogId === "kimi_api" && chosenModel) || "kimi-k3";
+  // Codex speaks the OpenAI shape only, so it takes no model from another.
+  const codexModel = api === "openai" ? model : undefined;
+  // Every tab but Claude Code needs a fixed request path, which Bedrock and
+  // Vertex don't have.
+  const pathNote = (
+    <SmallParagraph>
+      {provider?.name} routes requests by URL path, which only Claude Code
+      supports. Pick another provider above to configure this tool.
+    </SmallParagraph>
+  );
 
   return (
     <div className={className}>
@@ -378,7 +396,7 @@ export function AgentConnectTabs({
           <SelectDropdown
             value={provider.name}
             onChange={(name) => setPick({ name })}
-            options={options.map((p) => ({
+            options={providers.map((p) => ({
               label: p.name,
               value: p.name,
               icon: providerIcon(p.catalogId as AIProviderId),
@@ -454,44 +472,13 @@ export function AgentConnectTabs({
 
         <TabsContent value={"claude-code"}>
           <div className={contentClassName}>
-            <div className={"mb-5"}>
-              <SelectDropdown
-                value={claudeProvider}
-                onChange={(v) =>
-                  setClaudeProvider(
-                    v as "anthropic" | "vertex" | "bedrock" | "kimi",
-                  )
-                }
-                options={[
-                  {
-                    label: "Anthropic API",
-                    value: "anthropic",
-                    icon: providerIcon("anthropic_api"),
-                  },
-                  {
-                    label: "Vertex AI",
-                    value: "vertex",
-                    icon: providerIcon("vertex_ai_api"),
-                  },
-                  {
-                    label: "Bedrock",
-                    value: "bedrock",
-                    icon: providerIcon("bedrock_api"),
-                  },
-                  ...(hasKimi
-                    ? [
-                        {
-                          label: "Kimi (Moonshot AI)",
-                          value: "kimi",
-                          icon: providerIcon("kimi_api"),
-                        },
-                      ]
-                    : []),
-                ]}
-                showValues={false}
-                className={"!w-auto min-w-[160px]"}
-              />
-            </div>
+            {!claudeProvider && (
+              <SmallParagraph>
+                Claude Code speaks the Anthropic Messages API, which{" "}
+                {provider?.name} doesn&apos;t. Pick an Anthropic, Vertex AI,
+                Bedrock or Kimi provider above.
+              </SmallParagraph>
+            )}
 
             {claudeProvider === "anthropic" && (
               <>
@@ -513,8 +500,8 @@ export function AgentConnectTabs({
                       ? [
                           `{`,
                           `  "apiKeyHelper": "echo '-'",`,
-                          ...(claudeModel
-                            ? [`  "model": "${claudeModel}",`]
+                          ...(chosenModel
+                            ? [`  "model": "${chosenModel}",`]
                             : []),
                           `  "env": {`,
                           `    "ANTHROPIC_BASE_URL": "${baseUrl}"`,
@@ -524,8 +511,8 @@ export function AgentConnectTabs({
                       : [
                           `export ANTHROPIC_BASE_URL=${baseUrl}`,
                           `export ANTHROPIC_API_KEY=none`,
-                          ...(claudeModel
-                            ? [`export ANTHROPIC_MODEL=${claudeModel}`]
+                          ...(chosenModel
+                            ? [`export ANTHROPIC_MODEL=${chosenModel}`]
                             : []),
                           `claude`,
                         ]
@@ -548,6 +535,9 @@ export function AgentConnectTabs({
                   `    "ANTHROPIC_VERTEX_PROJECT_ID": "<your-gcp-project-id>",`,
                   `    "CLAUDE_CODE_USE_VERTEX": "1",`,
                   `    "CLAUDE_CODE_SKIP_VERTEX_AUTH": "1",`,
+                  ...(chosenModel
+                    ? [`    "ANTHROPIC_MODEL": "${chosenModel}",`]
+                    : []),
                   `    "ANTHROPIC_VERTEX_BASE_URL": "${baseUrl}/v1"`,
                   `  }`,
                   `}`,
@@ -567,6 +557,9 @@ export function AgentConnectTabs({
                   `  "env": {`,
                   `    "ANTHROPIC_BEDROCK_BASE_URL": "${baseUrl}/bedrock",`,
                   `    "CLAUDE_CODE_USE_BEDROCK": "1",`,
+                  ...(chosenModel
+                    ? [`    "ANTHROPIC_MODEL": "${chosenModel}",`]
+                    : []),
                   `    "CLAUDE_CODE_SKIP_BEDROCK_AUTH": "1"`,
                   `  }`,
                   `}`,
@@ -595,7 +588,7 @@ export function AgentConnectTabs({
                   // endpoint to the bare https://api.moonshot.ai upstream, so
                   // one Kimi provider serves both API shapes. Every model slot
                   // Claude Code fills on its own (opus/sonnet/haiku tiers,
-                  // subagents) is pinned to kimi-k3 so no Claude model names
+                  // subagents) is pinned to one Kimi model so no Claude model names
                   // leak into requests the upstream can't serve, and tool
                   // search is off because Moonshot rejects its tool_reference
                   // blocks — both per Moonshot's Claude Code guide.
@@ -606,11 +599,11 @@ export function AgentConnectTabs({
                           `  "apiKeyHelper": "echo '-'",`,
                           `  "env": {`,
                           `    "ANTHROPIC_BASE_URL": "${baseUrl}/anthropic",`,
-                          `    "ANTHROPIC_MODEL": "kimi-k3",`,
-                          `    "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k3",`,
-                          `    "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k3",`,
-                          `    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k3",`,
-                          `    "CLAUDE_CODE_SUBAGENT_MODEL": "kimi-k3",`,
+                          `    "ANTHROPIC_MODEL": "${kimiModel}",`,
+                          `    "ANTHROPIC_DEFAULT_OPUS_MODEL": "${kimiModel}",`,
+                          `    "ANTHROPIC_DEFAULT_SONNET_MODEL": "${kimiModel}",`,
+                          `    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "${kimiModel}",`,
+                          `    "CLAUDE_CODE_SUBAGENT_MODEL": "${kimiModel}",`,
                           `    "ENABLE_TOOL_SEARCH": "false"`,
                           `  }`,
                           `}`,
@@ -618,11 +611,11 @@ export function AgentConnectTabs({
                       : [
                           `export ANTHROPIC_BASE_URL=${baseUrl}/anthropic`,
                           `export ANTHROPIC_API_KEY=none`,
-                          `export ANTHROPIC_MODEL=kimi-k3`,
-                          `export ANTHROPIC_DEFAULT_OPUS_MODEL=kimi-k3`,
-                          `export ANTHROPIC_DEFAULT_SONNET_MODEL=kimi-k3`,
-                          `export ANTHROPIC_DEFAULT_HAIKU_MODEL=kimi-k3`,
-                          `export CLAUDE_CODE_SUBAGENT_MODEL=kimi-k3`,
+                          `export ANTHROPIC_MODEL=${kimiModel}`,
+                          `export ANTHROPIC_DEFAULT_OPUS_MODEL=${kimiModel}`,
+                          `export ANTHROPIC_DEFAULT_SONNET_MODEL=${kimiModel}`,
+                          `export ANTHROPIC_DEFAULT_HAIKU_MODEL=${kimiModel}`,
+                          `export CLAUDE_CODE_SUBAGENT_MODEL=${kimiModel}`,
                           `export ENABLE_TOOL_SEARCH=false`,
                           `claude`,
                         ]
@@ -642,57 +635,78 @@ export function AgentConnectTabs({
 
         <TabsContent value={"codex"}>
           <div className={contentClassName}>
-            <Snippet
-              title={
-                <>
-                  Add to <ConfigPath path={"~/.codex/config.toml"} />
-                </>
-              }
-              lines={[
-                ...(codexModel ? [`model = "${codexModel}"`] : []),
-                `model_provider = "netbird"`,
-                ``,
-                `[model_providers.netbird]`,
-                `name = "NetBird"`,
-                `base_url = "${openaiBase}"`,
-                `wire_api = "responses"`,
-              ]}
-            />
+            {pathRouted ? (
+              pathNote
+            ) : (
+              <>
+                <Snippet
+                  title={
+                    <>
+                      Add to <ConfigPath path={"~/.codex/config.toml"} />
+                    </>
+                  }
+                  lines={[
+                    ...(codexModel ? [`model = "${codexModel}"`] : []),
+                    `model_provider = "netbird"`,
+                    ``,
+                    `[model_providers.netbird]`,
+                    `name = "NetBird"`,
+                    `base_url = "${openaiBase}"`,
+                    `wire_api = "responses"`,
+                  ]}
+                />
+              </>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value={"opencode"}>
           <div className={contentClassName}>
-            <Snippet
-              title={
-                <>
-                  Add to{" "}
-                  <ConfigPath path={"~/.config/opencode/opencode.json"} />
-                </>
-              }
-              lines={openCodeLines(picked, baseUrl)}
-            />
+            {pathRouted ? (
+              pathNote
+            ) : (
+              <>
+                <Snippet
+                  title={
+                    <>
+                      Add to{" "}
+                      <ConfigPath path={"~/.config/opencode/opencode.json"} />
+                    </>
+                  }
+                  lines={openCodeLines(picked, baseUrl)}
+                />
+              </>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value={"pi"}>
           <div className={cn(contentClassName, "flex flex-col gap-3")}>
-            <Snippet
-              title={
-                <>
-                  Add to <ConfigPath path={"~/.pi/agent/models.json"} />
-                </>
-              }
-              lines={piModelsLines(picked, baseUrl)}
-            />
-            <Snippet
-              title={
-                <>
-                  Add to <ConfigPath path={"~/.pi/agent/settings.json"} />
-                </>
-              }
-              lines={json({ defaultProvider: "netbird", defaultModel: model })}
-            />
+            {pathRouted ? (
+              pathNote
+            ) : (
+              <>
+                <Snippet
+                  title={
+                    <>
+                      Add to <ConfigPath path={"~/.pi/agent/models.json"} />
+                    </>
+                  }
+                  lines={piModelsLines(picked, baseUrl)}
+                />
+                <Snippet
+                  title={
+                    <>
+                      Add to <ConfigPath path={"~/.pi/agent/settings.json"} />
+                    </>
+                  }
+                  lines={json({
+                    defaultProvider: "netbird",
+                    defaultModel: model,
+                  })}
+                />
+              </>
+            )}
           </div>
         </TabsContent>
 
@@ -709,16 +723,16 @@ export function AgentConnectTabs({
                 </>
               }
               lines={[
-                `default_model = "kimi-k3"`,
+                `default_model = "${kimiModel}"`,
                 ``,
                 `[providers.netbird]`,
                 `type = "anthropic"`,
                 `base_url = "${baseUrl}"`,
                 `api_key = "-"`,
                 ``,
-                `[models.kimi-k3]`,
+                `[models."${kimiModel}"]`,
                 `provider = "netbird"`,
-                `model = "kimi-k3"`,
+                `model = "${kimiModel}"`,
                 `max_context_size = 1000000`,
               ]}
             />
@@ -740,13 +754,25 @@ export function AgentConnectTabs({
 
         <TabsContent value={"sdk"}>
           <div className={contentClassName}>
-            <Snippet lines={sdkLines(picked, baseUrl)} />
+            {pathRouted ? (
+              pathNote
+            ) : (
+              <>
+                <Snippet lines={sdkLines(picked, baseUrl)} />
+              </>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value={"curl"}>
           <div className={contentClassName}>
-            <Snippet {...curlSnippet(picked, baseUrl)} />
+            {pathRouted ? (
+              pathNote
+            ) : (
+              <>
+                <Snippet {...curlSnippet(picked, baseUrl)} />
+              </>
+            )}
           </div>
         </TabsContent>
       </Tabs>
