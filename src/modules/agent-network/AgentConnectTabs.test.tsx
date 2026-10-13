@@ -7,13 +7,14 @@ import {
 } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ConnectProvider } from "@/modules/agent-network/AgentConnectTabs";
 
 const writeText = vi.fn();
 
 vi.mock("@components/Notification", () => ({ notify: vi.fn() }));
 vi.mock("@utils/api", () => ({ default: () => ({ data: [] }) }));
 
-const { AgentConnectTabs, connectExample } = await import(
+const { AgentConnectTabs, fromAccountProviders, pickable } = await import(
   "@/modules/agent-network/AgentConnectTabs"
 );
 
@@ -39,7 +40,14 @@ afterEach(() => {
 });
 
 const ENDPOINT = "calm-heron.proxy.company.com";
-const anthropic = { api: "anthropic", model: "claude-sonnet-5" } as const;
+const anthropic: ConnectProvider[] = [
+  {
+    name: "Claude",
+    catalogId: "anthropic_api",
+    api: "anthropic",
+    models: ["claude-sonnet-5"],
+  },
+];
 
 // shownLines reads the snippet as displayed, one string per line.
 const shownLines = () =>
@@ -55,35 +63,45 @@ const copied = async () => {
 
 const model = (id: string) => ({ id, inputPer1k: 0, outputPer1k: 0 });
 
-describe("connectExample", () => {
-  it("asks Anthropic through its Messages API, with the provider's model", () => {
+describe("fromAccountProviders", () => {
+  it("asks Anthropic through its Messages API, everything else through Chat Completions", () => {
     expect(
-      connectExample([
-        { providerId: "anthropic_api", models: [model("claude-sonnet-5")] },
+      fromAccountProviders([
+        {
+          name: "Claude",
+          providerId: "anthropic_api",
+          models: [model("claude-sonnet-5")],
+        },
+        { name: "Kimi", providerId: "kimi_api", models: [model("kimi-k3")] },
       ]),
-    ).toEqual({ api: "anthropic", model: "claude-sonnet-5" });
+    ).toEqual([
+      {
+        name: "Claude",
+        catalogId: "anthropic_api",
+        api: "anthropic",
+        models: ["claude-sonnet-5"],
+      },
+      {
+        name: "Kimi",
+        catalogId: "kimi_api",
+        api: "openai",
+        models: ["kimi-k3"],
+      },
+    ]);
   });
+});
 
-  it("asks everything else through Chat Completions", () => {
-    expect(
-      connectExample([{ providerId: "kimi_api", models: [model("kimi-k3")] }]),
-    ).toEqual({ api: "openai", model: "kimi-k3" });
-    expect(
-      connectExample([{ providerId: "litellm_proxy", models: [] }]),
-      "a provider that names no model gets the shape's default",
-    ).toEqual({ api: "openai", model: "gpt-5.5" });
-  });
-
+describe("pickable", () => {
   it("passes over Bedrock and Vertex, which route by path", () => {
+    const p = (catalogId: string) => ({
+      name: catalogId,
+      catalogId,
+      api: "openai" as const,
+      models: [],
+    });
     expect(
-      connectExample([{ providerId: "bedrock_api", models: [] }]),
-    ).toBeUndefined();
-    expect(
-      connectExample([
-        { providerId: "vertex_ai_api", models: [model("claude-opus-5")] },
-        { providerId: "anthropic_api", models: [] },
-      ]),
-    ).toEqual({ api: "anthropic", model: "claude-opus-5" });
+      pickable([p("bedrock_api"), p("vertex_ai_api"), p("openai_api")]),
+    ).toEqual([p("openai_api")]);
   });
 });
 
@@ -93,7 +111,7 @@ describe("AgentConnectTabs", () => {
       <AgentConnectTabs
         endpoint={ENDPOINT}
         defaultTab={"curl"}
-        example={anthropic}
+        providers={anthropic}
       />,
     );
 
@@ -119,7 +137,7 @@ describe("AgentConnectTabs", () => {
       <AgentConnectTabs
         endpoint={ENDPOINT}
         defaultTab={"sdk"}
-        example={anthropic}
+        providers={anthropic}
       />,
     );
 
@@ -136,7 +154,7 @@ describe("AgentConnectTabs", () => {
     );
   });
 
-  it("keeps the OpenAI example where none is given", async () => {
+  it("keeps the OpenAI default where no provider is pickable", async () => {
     render(<AgentConnectTabs endpoint={ENDPOINT} defaultTab={"curl"} />);
 
     expect(screen.getByRole("tab", { name: "OpenAI SDK" })).toBeTruthy();
@@ -150,7 +168,7 @@ describe("AgentConnectTabs", () => {
       <AgentConnectTabs
         endpoint={ENDPOINT}
         defaultTab={"opencode"}
-        example={anthropic}
+        providers={anthropic}
       />,
     );
 
@@ -177,13 +195,51 @@ describe("AgentConnectTabs", () => {
     );
   });
 
-  it("carries a typed model into every snippet", async () => {
-    render(<AgentConnectTabs endpoint={ENDPOINT} defaultTab={"codex"} />);
+  it("takes a typed model for a provider that lists none", async () => {
+    render(
+      <AgentConnectTabs
+        endpoint={ENDPOINT}
+        defaultTab={"codex"}
+        providers={[
+          {
+            name: "LiteLLM",
+            catalogId: "litellm_proxy",
+            api: "openai",
+            models: [],
+          },
+        ]}
+      />,
+    );
 
-    fireEvent.change(screen.getByRole("combobox", { name: "Model" }), {
+    fireEvent.change(screen.getByRole("textbox", { name: "Model" }), {
       target: { value: "my-model" },
     });
 
     expect(shownLines()[0]).toBe(`model = "my-model"`);
+  });
+
+  it("starts on the first pickable provider's first model", async () => {
+    render(
+      <AgentConnectTabs
+        endpoint={ENDPOINT}
+        defaultTab={"pi"}
+        providers={[
+          {
+            name: "Bedrock",
+            catalogId: "bedrock_api",
+            api: "anthropic",
+            models: ["anthropic.claude"],
+          },
+          {
+            name: "OpenAI",
+            catalogId: "openai_api",
+            api: "openai",
+            models: ["gpt-4o", "gpt-4o-mini"],
+          },
+        ]}
+      />,
+    );
+
+    expect(shownLines()).toContain(`  "defaultModel": "gpt-4o"`);
   });
 });

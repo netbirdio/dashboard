@@ -33,6 +33,15 @@ export const ClaudeCodeProviderOpen: Story = {
   },
 };
 
+export const ModelPickerOpen: Story = {
+  play: async () => {
+    await loaded();
+    await clickRole("button", /gpt-4o/);
+    await popover();
+    await settle();
+  },
+};
+
 const tabStory = (name: RegExp): Story => ({
   play: async () => {
     await loaded();

@@ -155,12 +155,6 @@ const DEFAULT_MODEL: Record<ConnectExample["api"], string> = {
   anthropic: "claude-opus-5",
 };
 
-// A few models per API shape to pick from; the model field takes any id.
-const MODEL_SUGGESTIONS: Record<ConnectExample["api"], string[]> = {
-  openai: ["gpt-5.5", "gpt-5-mini"],
-  anthropic: ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"],
-};
-
 const DEFAULT_EXAMPLE: ConnectExample = {
   api: "openai",
   model: DEFAULT_MODEL.openai,
@@ -171,18 +165,31 @@ const DEFAULT_EXAMPLE: ConnectExample = {
 // to them.
 const PATH_ROUTED: AIProviderId[] = ["bedrock_api", "vertex_ai_api"];
 
-// connectExample picks the request for the first connected provider that
-// takes one at a fixed path: the Anthropic Messages API for Anthropic, Chat
-// Completions for everything else, with the provider's first model. Undefined
-// leaves the default.
-export function connectExample(
-  providers: Pick<AIProvider, "providerId" | "models">[],
-): ConnectExample | undefined {
-  const provider = providers.find((p) => !PATH_ROUTED.includes(p.providerId));
-  if (!provider) return undefined;
-  const api = provider.providerId === "anthropic_api" ? "anthropic" : "openai";
-  return { api, model: provider.models[0]?.id ?? DEFAULT_MODEL[api] };
-}
+// ConnectProvider is a provider the caller can reach, as the picker offers
+// it: its API shape and the models it serves (empty when any model goes).
+export type ConnectProvider = {
+  name: string;
+  catalogId: string;
+  api: ConnectExample["api"];
+  models: string[];
+};
+
+// fromAccountProviders reads the account's providers (the onboarding step):
+// the Anthropic Messages API for Anthropic, Chat Completions for everything
+// else.
+export const fromAccountProviders = (
+  providers: Pick<AIProvider, "name" | "providerId" | "models">[],
+): ConnectProvider[] =>
+  providers.map((p) => ({
+    name: p.name,
+    catalogId: p.providerId,
+    api: p.providerId === "anthropic_api" ? "anthropic" : "openai",
+    models: p.models.map((m) => m.id),
+  }));
+
+// pickable leaves out the providers no fixed request routes to.
+export const pickable = (providers: ConnectProvider[]) =>
+  providers.filter((p) => !PATH_ROUTED.includes(p.catalogId as AIProviderId));
 
 // A one-word answer keeps a test request quick. Only Anthropic gets a token
 // cap, which its API requires: OpenAI's reasoning models refuse max_tokens,
@@ -312,8 +319,7 @@ export function AgentConnectTabs({
   listClassName = "px-8",
   contentClassName = "px-6 py-2",
   defaultTab = "claude-code",
-  providerIds = [],
-  example = DEFAULT_EXAMPLE,
+  providers = [],
 }: {
   endpoint: string;
   // Spacing above the tab strip, so each host can set the gap its own layout
@@ -325,24 +331,24 @@ export function AgentConnectTabs({
   // matching tool (e.g. Anthropic → claude-code, OpenAI → curl). Keyed below
   // so a late-resolving defaultTab still re-initialises the tabs.
   defaultTab?: string;
-  // Catalog ids of the account's connected providers. Kimi-specific config
+  // The providers the caller can reach. The picker offers them and their
+  // models, and every snippet asks for the pick. Kimi-specific config
   // surfaces (the Kimi CLI tab and the Kimi variant inside the Claude Code
   // tab) only render when a kimi_api provider is actually connected —
   // showing Moonshot setup against an endpoint that can't route to Kimi
   // would just be a trap.
-  providerIds?: string[];
-  // The request the SDK and cURL tabs send; see connectExample.
-  example?: ConnectExample;
+  providers?: ConnectProvider[];
 }) {
-  // The provider and model every snippet asks for, starting from the caller's
-  // example and following it when that resolves late.
-  const [picked, setPicked] = React.useState(example);
-  React.useEffect(
-    () => setPicked({ api: example.api, model: example.model }),
-    [example.api, example.model],
-  );
-  const { model } = picked;
-  const modelListId = React.useId();
+  const providerIds = providers.map((p) => p.catalogId);
+  const options = pickable(providers);
+  // The pick is derived from the list on each render rather than copied into
+  // state, so a list that resolves late still lands on its first provider.
+  // With nothing pickable the snippets keep the default request.
+  const [pick, setPick] = React.useState<{ name?: string; model?: string }>({});
+  const provider = options.find((p) => p.name === pick.name) ?? options[0];
+  const api = provider?.api ?? DEFAULT_EXAMPLE.api;
+  const model = pick.model || provider?.models[0] || DEFAULT_MODEL[api];
+  const picked: ConnectExample = { api, model };
   const baseUrl = `https://${endpoint}`;
   const openaiBase = `${baseUrl}/v1`;
   const hasKimi = providerIds.includes("kimi_api");
@@ -367,44 +373,41 @@ export function AgentConnectTabs({
 
   return (
     <div className={className}>
-      <div className={cn(contentClassName, "flex flex-wrap gap-3 mb-2")}>
-        <SelectDropdown
-          value={picked.api}
-          onChange={(v) => {
-            const api = v as ConnectExample["api"];
-            setPicked({ api, model: DEFAULT_MODEL[api] });
-          }}
-          options={[
-            {
-              label: "Anthropic",
-              value: "anthropic",
-              icon: providerIcon("anthropic_api"),
-            },
-            {
-              label: "OpenAI",
-              value: "openai",
-              icon: providerIcon("openai_api"),
-            },
-          ]}
-          showValues={false}
-          className={"!w-auto min-w-[160px]"}
-        />
-        {/* A native datalist suggests the usual models and still takes any
-            id the provider serves. */}
-        <Input
-          aria-label={"Model"}
-          placeholder={"Model"}
-          value={model}
-          onChange={(e) => setPicked({ ...picked, model: e.target.value })}
-          list={modelListId}
-          maxWidthClass={"max-w-[240px]"}
-        />
-        <datalist id={modelListId}>
-          {MODEL_SUGGESTIONS[picked.api].map((id) => (
-            <option key={id} value={id} />
-          ))}
-        </datalist>
-      </div>
+      {provider && (
+        <div className={cn(contentClassName, "flex flex-wrap gap-3 mb-2")}>
+          <SelectDropdown
+            value={provider.name}
+            onChange={(name) => setPick({ name })}
+            options={options.map((p) => ({
+              label: p.name,
+              value: p.name,
+              icon: providerIcon(p.catalogId as AIProviderId),
+            }))}
+            showValues={false}
+            className={"!w-auto min-w-[160px]"}
+          />
+          {/* A provider that lets any model through lists none, so its model
+              is typed instead. */}
+          {provider.models.length > 0 ? (
+            <SelectDropdown
+              value={model}
+              onChange={(m) => setPick({ ...pick, model: m })}
+              options={provider.models.map((m) => ({ label: m, value: m }))}
+              showSearch={provider.models.length > 8}
+              showValues={false}
+              className={"!w-auto min-w-[160px]"}
+            />
+          ) : (
+            <Input
+              aria-label={"Model"}
+              placeholder={DEFAULT_MODEL[api]}
+              value={pick.model ?? ""}
+              onChange={(e) => setPick({ ...pick, model: e.target.value })}
+              maxWidthClass={"max-w-[240px]"}
+            />
+          )}
+        </div>
+      )}
 
       <Tabs key={defaultTab} defaultValue={defaultTab}>
         <TabsList justify={"start"} className={listClassName}>
