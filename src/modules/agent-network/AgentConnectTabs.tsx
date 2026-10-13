@@ -1,6 +1,7 @@
 "use client";
 
 import Code from "@components/Code";
+import { Input } from "@components/Input";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import SmallParagraph from "@components/SmallParagraph";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
@@ -154,6 +155,12 @@ const DEFAULT_MODEL: Record<ConnectExample["api"], string> = {
   anthropic: "claude-opus-5",
 };
 
+// A few models per API shape to pick from; the model field takes any id.
+const MODEL_SUGGESTIONS: Record<ConnectExample["api"], string[]> = {
+  openai: ["gpt-5.5", "gpt-5-mini"],
+  anthropic: ["claude-opus-5", "claude-sonnet-5", "claude-haiku-4-5"],
+};
+
 const DEFAULT_EXAMPLE: ConnectExample = {
   api: "openai",
   model: DEFAULT_MODEL.openai,
@@ -252,8 +259,50 @@ function curlSnippet({ api, model }: ConnectExample, baseUrl: string) {
   };
 }
 
+// json lays out a config object as snippet lines.
+const json = (value: object) => JSON.stringify(value, null, 2).split("\n");
+
+// openCodeLines registers the endpoint as an OpenCode provider: the AI SDK's
+// Anthropic package for the Messages API, its OpenAI-compatible one (Chat
+// Completions) otherwise. Both take the /v1 base and insist on an API key.
+function openCodeLines({ api, model }: ConnectExample, baseUrl: string) {
+  return json({
+    $schema: "https://opencode.ai/config.json",
+    provider: {
+      netbird: {
+        npm:
+          api === "anthropic"
+            ? "@ai-sdk/anthropic"
+            : "@ai-sdk/openai-compatible",
+        name: "NetBird",
+        options: { baseURL: `${baseUrl}/v1`, apiKey: "not-needed" },
+        models: { [model]: {} },
+      },
+    },
+    model: `netbird/${model}`,
+  });
+}
+
+// piModelsLines registers the endpoint as a pi provider. pi appends the API
+// path itself: /v1/messages to an Anthropic base, /chat/completions to an
+// OpenAI one. Its models stay unavailable without an apiKey, so it gets a
+// placeholder.
+function piModelsLines({ api, model }: ConnectExample, baseUrl: string) {
+  const anthropic = api === "anthropic";
+  return json({
+    providers: {
+      netbird: {
+        baseUrl: anthropic ? baseUrl : `${baseUrl}/v1`,
+        api: anthropic ? "anthropic-messages" : "openai-completions",
+        apiKey: "not-needed",
+        models: [{ id: model }],
+      },
+    },
+  });
+}
+
 // AgentConnectTabs renders the per-tool connect snippets (Claude Code, Codex,
-// an SDK, cURL) for a given endpoint. Rendered inline wherever the config
+// OpenCode, pi, an SDK, cURL) under a provider and model picker for a given endpoint. Rendered inline wherever the config
 // belongs — the Connect Agent page and the onboarding "Configure your agent"
 // step. listClassName / contentClassName let the caller tune horizontal
 // padding, since each host sits in a different gutter.
@@ -285,6 +334,15 @@ export function AgentConnectTabs({
   // The request the SDK and cURL tabs send; see connectExample.
   example?: ConnectExample;
 }) {
+  // The provider and model every snippet asks for, starting from the caller's
+  // example and following it when that resolves late.
+  const [picked, setPicked] = React.useState(example);
+  React.useEffect(
+    () => setPicked({ api: example.api, model: example.model }),
+    [example.api, example.model],
+  );
+  const { model } = picked;
+  const modelListId = React.useId();
   const baseUrl = `https://${endpoint}`;
   const openaiBase = `${baseUrl}/v1`;
   const hasKimi = providerIds.includes("kimi_api");
@@ -299,301 +357,396 @@ export function AgentConnectTabs({
     !["anthropic_api", "vertex_ai_api", "bedrock_api"].some((id) =>
       providerIds.includes(id),
     );
+  // Claude Code and Codex each speak one API shape, so they only take the
+  // picked model when it is in theirs.
+  const claudeModel = picked.api === "anthropic" ? model : undefined;
+  const codexModel = picked.api === "openai" ? model : undefined;
   const [claudeProvider, setClaudeProvider] = React.useState<
     "anthropic" | "vertex" | "bedrock" | "kimi"
   >(kimiOnlyAnthropicShape ? "kimi" : "anthropic");
 
   return (
-    <Tabs key={defaultTab} defaultValue={defaultTab} className={className}>
-      <TabsList justify={"start"} className={listClassName}>
-        <TabsTrigger value={"claude-code"}>
-          <ClaudeIcon className={TAB_ICON} size={14} />
-          Claude Code
-        </TabsTrigger>
-        <TabsTrigger value={"codex"}>
-          <OpenAIIcon className={TAB_ICON} size={14} />
-          Codex
-        </TabsTrigger>
-        {hasKimi && (
-          <TabsTrigger value={"kimi-cli"}>
-            <KimiIcon className={TAB_ICON} size={14} />
-            Kimi CLI
-          </TabsTrigger>
-        )}
-        <TabsTrigger value={"sdk"}>
-          {example.api === "anthropic" ? (
-            <>
-              <ClaudeIcon className={TAB_ICON} size={14} />
-              Anthropic SDK
-            </>
-          ) : (
-            <>
-              <OpenAIIcon className={TAB_ICON} size={14} />
-              OpenAI SDK
-            </>
-          )}
-        </TabsTrigger>
-        <TabsTrigger value={"curl"}>
-          <ShellIcon className={TAB_ICON} size={14} />
-          cURL
-        </TabsTrigger>
-      </TabsList>
+    <div className={className}>
+      <div className={cn(contentClassName, "flex flex-wrap gap-3 mb-2")}>
+        <SelectDropdown
+          value={picked.api}
+          onChange={(v) => {
+            const api = v as ConnectExample["api"];
+            setPicked({ api, model: DEFAULT_MODEL[api] });
+          }}
+          options={[
+            {
+              label: "Anthropic",
+              value: "anthropic",
+              icon: providerIcon("anthropic_api"),
+            },
+            {
+              label: "OpenAI",
+              value: "openai",
+              icon: providerIcon("openai_api"),
+            },
+          ]}
+          showValues={false}
+          className={"!w-auto min-w-[160px]"}
+        />
+        {/* A native datalist suggests the usual models and still takes any
+            id the provider serves. */}
+        <Input
+          aria-label={"Model"}
+          placeholder={"Model"}
+          value={model}
+          onChange={(e) => setPicked({ ...picked, model: e.target.value })}
+          list={modelListId}
+          maxWidthClass={"max-w-[240px]"}
+        />
+        <datalist id={modelListId}>
+          {MODEL_SUGGESTIONS[picked.api].map((id) => (
+            <option key={id} value={id} />
+          ))}
+        </datalist>
+      </div>
 
-      <TabsContent value={"claude-code"}>
-        <div className={contentClassName}>
-          <div className={"mb-5"}>
-            <SelectDropdown
-              value={claudeProvider}
-              onChange={(v) =>
-                setClaudeProvider(
-                  v as "anthropic" | "vertex" | "bedrock" | "kimi",
-                )
+      <Tabs key={defaultTab} defaultValue={defaultTab}>
+        <TabsList justify={"start"} className={listClassName}>
+          <TabsTrigger value={"claude-code"}>
+            <ClaudeIcon className={TAB_ICON} size={14} />
+            Claude Code
+          </TabsTrigger>
+          <TabsTrigger value={"codex"}>
+            <OpenAIIcon className={TAB_ICON} size={14} />
+            Codex
+          </TabsTrigger>
+          <TabsTrigger value={"opencode"}>
+            <ShellIcon className={TAB_ICON} size={14} />
+            OpenCode
+          </TabsTrigger>
+          <TabsTrigger value={"pi"}>
+            <ShellIcon className={TAB_ICON} size={14} />
+            Pi
+          </TabsTrigger>
+          {hasKimi && (
+            <TabsTrigger value={"kimi-cli"}>
+              <KimiIcon className={TAB_ICON} size={14} />
+              Kimi CLI
+            </TabsTrigger>
+          )}
+          <TabsTrigger value={"sdk"}>
+            {picked.api === "anthropic" ? (
+              <>
+                <ClaudeIcon className={TAB_ICON} size={14} />
+                Anthropic SDK
+              </>
+            ) : (
+              <>
+                <OpenAIIcon className={TAB_ICON} size={14} />
+                OpenAI SDK
+              </>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value={"curl"}>
+            <ShellIcon className={TAB_ICON} size={14} />
+            cURL
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={"claude-code"}>
+          <div className={contentClassName}>
+            <div className={"mb-5"}>
+              <SelectDropdown
+                value={claudeProvider}
+                onChange={(v) =>
+                  setClaudeProvider(
+                    v as "anthropic" | "vertex" | "bedrock" | "kimi",
+                  )
+                }
+                options={[
+                  {
+                    label: "Anthropic API",
+                    value: "anthropic",
+                    icon: providerIcon("anthropic_api"),
+                  },
+                  {
+                    label: "Vertex AI",
+                    value: "vertex",
+                    icon: providerIcon("vertex_ai_api"),
+                  },
+                  {
+                    label: "Bedrock",
+                    value: "bedrock",
+                    icon: providerIcon("bedrock_api"),
+                  },
+                  ...(hasKimi
+                    ? [
+                        {
+                          label: "Kimi (Moonshot AI)",
+                          value: "kimi",
+                          icon: providerIcon("kimi_api"),
+                        },
+                      ]
+                    : []),
+                ]}
+                showValues={false}
+                className={"!w-auto min-w-[160px]"}
+              />
+            </div>
+
+            {claudeProvider === "anthropic" && (
+              <>
+                <Snippet
+                  title={
+                    claudeMode === "config" ? (
+                      <>
+                        Add to <ConfigPath path={"~/.claude/settings.json"} />
+                      </>
+                    ) : (
+                      "Run in your shell"
+                    )
+                  }
+                  action={
+                    <ModeSwitch value={claudeMode} onChange={setClaudeMode} />
+                  }
+                  lines={
+                    claudeMode === "config"
+                      ? [
+                          `{`,
+                          `  "apiKeyHelper": "echo '-'",`,
+                          ...(claudeModel
+                            ? [`  "model": "${claudeModel}",`]
+                            : []),
+                          `  "env": {`,
+                          `    "ANTHROPIC_BASE_URL": "${baseUrl}"`,
+                          `  }`,
+                          `}`,
+                        ]
+                      : [
+                          `export ANTHROPIC_BASE_URL=${baseUrl}`,
+                          `export ANTHROPIC_API_KEY=none`,
+                          ...(claudeModel
+                            ? [`export ANTHROPIC_MODEL=${claudeModel}`]
+                            : []),
+                          `claude`,
+                        ]
+                  }
+                />
+              </>
+            )}
+
+            {claudeProvider === "vertex" && (
+              <Snippet
+                title={
+                  <>
+                    Add to <ConfigPath path={"~/.claude/settings.json"} />
+                  </>
+                }
+                lines={[
+                  `{`,
+                  `  "env": {`,
+                  `    "CLOUD_ML_REGION": "global",`,
+                  `    "ANTHROPIC_VERTEX_PROJECT_ID": "<your-gcp-project-id>",`,
+                  `    "CLAUDE_CODE_USE_VERTEX": "1",`,
+                  `    "CLAUDE_CODE_SKIP_VERTEX_AUTH": "1",`,
+                  `    "ANTHROPIC_VERTEX_BASE_URL": "${baseUrl}/v1"`,
+                  `  }`,
+                  `}`,
+                ]}
+              />
+            )}
+
+            {claudeProvider === "bedrock" && (
+              <Snippet
+                title={
+                  <>
+                    Add to <ConfigPath path={"~/.claude/settings.json"} />
+                  </>
+                }
+                lines={[
+                  `{`,
+                  `  "env": {`,
+                  `    "ANTHROPIC_BEDROCK_BASE_URL": "${baseUrl}/bedrock",`,
+                  `    "CLAUDE_CODE_USE_BEDROCK": "1",`,
+                  `    "CLAUDE_CODE_SKIP_BEDROCK_AUTH": "1"`,
+                  `  }`,
+                  `}`,
+                ]}
+              />
+            )}
+
+            {claudeProvider === "kimi" && (
+              <>
+                <Snippet
+                  title={
+                    claudeMode === "config" ? (
+                      <>
+                        Add to <ConfigPath path={"~/.claude/settings.json"} />
+                      </>
+                    ) : (
+                      "Run in your shell"
+                    )
+                  }
+                  action={
+                    <ModeSwitch value={claudeMode} onChange={setClaudeMode} />
+                  }
+                  // Claude Code speaks the Anthropic Messages API, which
+                  // Moonshot serves under the /anthropic path prefix. The
+                  // prefix goes in the agent's base URL and rides through the
+                  // endpoint to the bare https://api.moonshot.ai upstream, so
+                  // one Kimi provider serves both API shapes. Every model slot
+                  // Claude Code fills on its own (opus/sonnet/haiku tiers,
+                  // subagents) is pinned to kimi-k3 so no Claude model names
+                  // leak into requests the upstream can't serve, and tool
+                  // search is off because Moonshot rejects its tool_reference
+                  // blocks — both per Moonshot's Claude Code guide.
+                  lines={
+                    claudeMode === "config"
+                      ? [
+                          `{`,
+                          `  "apiKeyHelper": "echo '-'",`,
+                          `  "env": {`,
+                          `    "ANTHROPIC_BASE_URL": "${baseUrl}/anthropic",`,
+                          `    "ANTHROPIC_MODEL": "kimi-k3",`,
+                          `    "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k3",`,
+                          `    "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k3",`,
+                          `    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k3",`,
+                          `    "CLAUDE_CODE_SUBAGENT_MODEL": "kimi-k3",`,
+                          `    "ENABLE_TOOL_SEARCH": "false"`,
+                          `  }`,
+                          `}`,
+                        ]
+                      : [
+                          `export ANTHROPIC_BASE_URL=${baseUrl}/anthropic`,
+                          `export ANTHROPIC_API_KEY=none`,
+                          `export ANTHROPIC_MODEL=kimi-k3`,
+                          `export ANTHROPIC_DEFAULT_OPUS_MODEL=kimi-k3`,
+                          `export ANTHROPIC_DEFAULT_SONNET_MODEL=kimi-k3`,
+                          `export ANTHROPIC_DEFAULT_HAIKU_MODEL=kimi-k3`,
+                          `export CLAUDE_CODE_SUBAGENT_MODEL=kimi-k3`,
+                          `export ENABLE_TOOL_SEARCH=false`,
+                          `claude`,
+                        ]
+                  }
+                />
+                <SmallParagraph className={"mt-3"}>
+                  Pairs with a Kimi provider keeping the default upstream URL{" "}
+                  <code className={"font-mono"}>https://api.moonshot.ai</code>.
+                  The <code className={"font-mono"}>/anthropic</code> suffix in
+                  the base URL rides through the endpoint to Moonshot, which
+                  serves the Anthropic Messages API under that path.
+                </SmallParagraph>
+              </>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value={"codex"}>
+          <div className={contentClassName}>
+            <Snippet
+              title={
+                <>
+                  Add to <ConfigPath path={"~/.codex/config.toml"} />
+                </>
               }
-              options={[
-                {
-                  label: "Anthropic API",
-                  value: "anthropic",
-                  icon: providerIcon("anthropic_api"),
-                },
-                {
-                  label: "Vertex AI",
-                  value: "vertex",
-                  icon: providerIcon("vertex_ai_api"),
-                },
-                {
-                  label: "Bedrock",
-                  value: "bedrock",
-                  icon: providerIcon("bedrock_api"),
-                },
-                ...(hasKimi
-                  ? [
-                      {
-                        label: "Kimi (Moonshot AI)",
-                        value: "kimi",
-                        icon: providerIcon("kimi_api"),
-                      },
-                    ]
-                  : []),
+              lines={[
+                ...(codexModel ? [`model = "${codexModel}"`] : []),
+                `model_provider = "netbird"`,
+                ``,
+                `[model_providers.netbird]`,
+                `name = "NetBird"`,
+                `base_url = "${openaiBase}"`,
+                `wire_api = "responses"`,
               ]}
-              showValues={false}
-              className={"!w-auto min-w-[160px]"}
             />
           </div>
+        </TabsContent>
 
-          {claudeProvider === "anthropic" && (
-            <>
-              <Snippet
-                title={
-                  claudeMode === "config" ? (
-                    <>
-                      Add to <ConfigPath path={"~/.claude/settings.json"} />
-                    </>
-                  ) : (
-                    "Run in your shell"
-                  )
-                }
-                action={
-                  <ModeSwitch value={claudeMode} onChange={setClaudeMode} />
-                }
-                lines={
-                  claudeMode === "config"
-                    ? [
-                        `{`,
-                        `  "apiKeyHelper": "echo '-'",`,
-                        `  "env": {`,
-                        `    "ANTHROPIC_BASE_URL": "${baseUrl}"`,
-                        `  }`,
-                        `}`,
-                      ]
-                    : [
-                        `export ANTHROPIC_BASE_URL=${baseUrl}`,
-                        `export ANTHROPIC_API_KEY=none`,
-                        `claude`,
-                      ]
-                }
-              />
-            </>
-          )}
-
-          {claudeProvider === "vertex" && (
+        <TabsContent value={"opencode"}>
+          <div className={contentClassName}>
             <Snippet
               title={
                 <>
-                  Add to <ConfigPath path={"~/.claude/settings.json"} />
+                  Add to{" "}
+                  <ConfigPath path={"~/.config/opencode/opencode.json"} />
                 </>
               }
-              lines={[
-                `{`,
-                `  "env": {`,
-                `    "CLOUD_ML_REGION": "global",`,
-                `    "ANTHROPIC_VERTEX_PROJECT_ID": "<your-gcp-project-id>",`,
-                `    "CLAUDE_CODE_USE_VERTEX": "1",`,
-                `    "CLAUDE_CODE_SKIP_VERTEX_AUTH": "1",`,
-                `    "ANTHROPIC_VERTEX_BASE_URL": "${baseUrl}/v1"`,
-                `  }`,
-                `}`,
-              ]}
+              lines={openCodeLines(picked, baseUrl)}
             />
-          )}
+          </div>
+        </TabsContent>
 
-          {claudeProvider === "bedrock" && (
+        <TabsContent value={"pi"}>
+          <div className={cn(contentClassName, "flex flex-col gap-3")}>
             <Snippet
               title={
                 <>
-                  Add to <ConfigPath path={"~/.claude/settings.json"} />
+                  Add to <ConfigPath path={"~/.pi/agent/models.json"} />
+                </>
+              }
+              lines={piModelsLines(picked, baseUrl)}
+            />
+            <Snippet
+              title={
+                <>
+                  Add to <ConfigPath path={"~/.pi/agent/settings.json"} />
+                </>
+              }
+              lines={json({ defaultProvider: "netbird", defaultModel: model })}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value={"kimi-cli"}>
+          <div className={contentClassName} hidden={!hasKimi}>
+            <Snippet
+              // Kimi CLI reads providers from ~/.kimi/config.toml. Unlike
+              // Claude Code, its "anthropic" provider type needs the bare
+              // endpoint — no /anthropic prefix in base_url; api_key is a
+              // placeholder since NetBird injects the real key server-side.
+              title={
+                <>
+                  Add to <ConfigPath path={"~/.kimi/config.toml"} />
                 </>
               }
               lines={[
-                `{`,
-                `  "env": {`,
-                `    "ANTHROPIC_BEDROCK_BASE_URL": "${baseUrl}/bedrock",`,
-                `    "CLAUDE_CODE_USE_BEDROCK": "1",`,
-                `    "CLAUDE_CODE_SKIP_BEDROCK_AUTH": "1"`,
-                `  }`,
-                `}`,
+                `default_model = "kimi-k3"`,
+                ``,
+                `[providers.netbird]`,
+                `type = "anthropic"`,
+                `base_url = "${baseUrl}"`,
+                `api_key = "-"`,
+                ``,
+                `[models.kimi-k3]`,
+                `provider = "netbird"`,
+                `model = "kimi-k3"`,
+                `max_context_size = 1000000`,
               ]}
             />
-          )}
+            <SmallParagraph className={"mt-3"}>
+              Pairs with a Kimi provider keeping the default upstream URL{" "}
+              <code className={"font-mono"}>https://api.moonshot.ai</code>. For
+              the OpenAI shape instead, use{" "}
+              <code className={"font-mono"}>
+                type = &quot;openai_legacy&quot;
+              </code>{" "}
+              with{" "}
+              <code className={"font-mono"}>
+                base_url = &quot;{openaiBase}&quot;
+              </code>
+              .
+            </SmallParagraph>
+          </div>
+        </TabsContent>
 
-          {claudeProvider === "kimi" && (
-            <>
-              <Snippet
-                title={
-                  claudeMode === "config" ? (
-                    <>
-                      Add to <ConfigPath path={"~/.claude/settings.json"} />
-                    </>
-                  ) : (
-                    "Run in your shell"
-                  )
-                }
-                action={
-                  <ModeSwitch value={claudeMode} onChange={setClaudeMode} />
-                }
-                // Claude Code speaks the Anthropic Messages API, which
-                // Moonshot serves under the /anthropic path prefix. The
-                // prefix goes in the agent's base URL and rides through the
-                // endpoint to the bare https://api.moonshot.ai upstream, so
-                // one Kimi provider serves both API shapes. Every model slot
-                // Claude Code fills on its own (opus/sonnet/haiku tiers,
-                // subagents) is pinned to kimi-k3 so no Claude model names
-                // leak into requests the upstream can't serve, and tool
-                // search is off because Moonshot rejects its tool_reference
-                // blocks — both per Moonshot's Claude Code guide.
-                lines={
-                  claudeMode === "config"
-                    ? [
-                        `{`,
-                        `  "apiKeyHelper": "echo '-'",`,
-                        `  "env": {`,
-                        `    "ANTHROPIC_BASE_URL": "${baseUrl}/anthropic",`,
-                        `    "ANTHROPIC_MODEL": "kimi-k3",`,
-                        `    "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k3",`,
-                        `    "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k3",`,
-                        `    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k3",`,
-                        `    "CLAUDE_CODE_SUBAGENT_MODEL": "kimi-k3",`,
-                        `    "ENABLE_TOOL_SEARCH": "false"`,
-                        `  }`,
-                        `}`,
-                      ]
-                    : [
-                        `export ANTHROPIC_BASE_URL=${baseUrl}/anthropic`,
-                        `export ANTHROPIC_API_KEY=none`,
-                        `export ANTHROPIC_MODEL=kimi-k3`,
-                        `export ANTHROPIC_DEFAULT_OPUS_MODEL=kimi-k3`,
-                        `export ANTHROPIC_DEFAULT_SONNET_MODEL=kimi-k3`,
-                        `export ANTHROPIC_DEFAULT_HAIKU_MODEL=kimi-k3`,
-                        `export CLAUDE_CODE_SUBAGENT_MODEL=kimi-k3`,
-                        `export ENABLE_TOOL_SEARCH=false`,
-                        `claude`,
-                      ]
-                }
-              />
-              <SmallParagraph className={"mt-3"}>
-                Pairs with a Kimi provider keeping the default upstream URL{" "}
-                <code className={"font-mono"}>https://api.moonshot.ai</code>.
-                The <code className={"font-mono"}>/anthropic</code> suffix in
-                the base URL rides through the endpoint to Moonshot, which
-                serves the Anthropic Messages API under that path.
-              </SmallParagraph>
-            </>
-          )}
-        </div>
-      </TabsContent>
+        <TabsContent value={"sdk"}>
+          <div className={contentClassName}>
+            <Snippet lines={sdkLines(picked, baseUrl)} />
+          </div>
+        </TabsContent>
 
-      <TabsContent value={"codex"}>
-        <div className={contentClassName}>
-          <Snippet
-            title={
-              <>
-                Add to <ConfigPath path={"~/.codex/config.toml"} />
-              </>
-            }
-            lines={[
-              `model_provider = "netbird"`,
-              ``,
-              `[model_providers.netbird]`,
-              `name = "NetBird"`,
-              `base_url = "${openaiBase}"`,
-              `wire_api = "responses"`,
-            ]}
-          />
-        </div>
-      </TabsContent>
-
-      <TabsContent value={"kimi-cli"}>
-        <div className={contentClassName} hidden={!hasKimi}>
-          <Snippet
-            // Kimi CLI reads providers from ~/.kimi/config.toml. Unlike
-            // Claude Code, its "anthropic" provider type needs the bare
-            // endpoint — no /anthropic prefix in base_url; api_key is a
-            // placeholder since NetBird injects the real key server-side.
-            title={
-              <>
-                Add to <ConfigPath path={"~/.kimi/config.toml"} />
-              </>
-            }
-            lines={[
-              `default_model = "kimi-k3"`,
-              ``,
-              `[providers.netbird]`,
-              `type = "anthropic"`,
-              `base_url = "${baseUrl}"`,
-              `api_key = "-"`,
-              ``,
-              `[models.kimi-k3]`,
-              `provider = "netbird"`,
-              `model = "kimi-k3"`,
-              `max_context_size = 1000000`,
-            ]}
-          />
-          <SmallParagraph className={"mt-3"}>
-            Pairs with a Kimi provider keeping the default upstream URL{" "}
-            <code className={"font-mono"}>https://api.moonshot.ai</code>. For
-            the OpenAI shape instead, use{" "}
-            <code className={"font-mono"}>
-              type = &quot;openai_legacy&quot;
-            </code>{" "}
-            with{" "}
-            <code className={"font-mono"}>
-              base_url = &quot;{openaiBase}&quot;
-            </code>
-            .
-          </SmallParagraph>
-        </div>
-      </TabsContent>
-
-      <TabsContent value={"sdk"}>
-        <div className={contentClassName}>
-          <Snippet lines={sdkLines(example, baseUrl)} />
-        </div>
-      </TabsContent>
-
-      <TabsContent value={"curl"}>
-        <div className={contentClassName}>
-          <Snippet {...curlSnippet(example, baseUrl)} />
-        </div>
-      </TabsContent>
-    </Tabs>
+        <TabsContent value={"curl"}>
+          <div className={contentClassName}>
+            <Snippet {...curlSnippet(picked, baseUrl)} />
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

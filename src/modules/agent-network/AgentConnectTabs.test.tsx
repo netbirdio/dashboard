@@ -144,4 +144,46 @@ describe("AgentConnectTabs", () => {
       `curl https://${ENDPOINT}/v1/chat/completions -H "Content-Type: application/json" -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"Say hello in one word."}]}'`,
     );
   });
+
+  it("points OpenCode at the endpoint with the picked model", () => {
+    render(
+      <AgentConnectTabs
+        endpoint={ENDPOINT}
+        defaultTab={"opencode"}
+        example={anthropic}
+      />,
+    );
+
+    expect(shownLines()).toEqual(
+      expect.arrayContaining([
+        `      "npm": "@ai-sdk/anthropic",`,
+        `        "baseURL": "https://${ENDPOINT}/v1",`,
+        `  "model": "netbird/claude-sonnet-5"`,
+      ]),
+    );
+  });
+
+  it("writes pi's models and settings for the OpenAI shape", () => {
+    render(<AgentConnectTabs endpoint={ENDPOINT} defaultTab={"pi"} />);
+
+    expect(shownLines()).toEqual(
+      expect.arrayContaining([
+        `      "baseUrl": "https://${ENDPOINT}/v1",`,
+        `      "api": "openai-completions",`,
+        `          "id": "gpt-5.5"`,
+        `  "defaultProvider": "netbird",`,
+        `  "defaultModel": "gpt-5.5"`,
+      ]),
+    );
+  });
+
+  it("carries a typed model into every snippet", async () => {
+    render(<AgentConnectTabs endpoint={ENDPOINT} defaultTab={"codex"} />);
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Model" }), {
+      target: { value: "my-model" },
+    });
+
+    expect(shownLines()[0]).toBe(`model = "my-model"`);
+  });
 });

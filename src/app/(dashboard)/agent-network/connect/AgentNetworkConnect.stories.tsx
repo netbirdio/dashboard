@@ -41,6 +41,8 @@ const tabStory = (name: RegExp): Story => ({
   },
 });
 export const Codex = tabStory(/Codex/);
+export const OpenCode = tabStory(/OpenCode/);
+export const Pi = tabStory(/^Pi$/);
 export const SDK = tabStory(/SDK/);
 export const Curl = tabStory(/curl/i);
 
