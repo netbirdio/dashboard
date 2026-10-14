@@ -1,16 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-
-// The vault restore is identity here: what is under test is the gate, not
-// tokenisation, and the real hook needs the assistant provider.
-vi.mock("@netbird/assistant-react", async () => {
-  const actual = await vi.importActual<Record<string, unknown>>(
-    "@netbird/assistant-react",
-  );
-  return { ...actual, useVaultRestore: () => (text: string) => text };
-});
-
-const { AssistantApprovalCard } = await import("./AssistantApprovalCard");
+import { AssistantApprovalCard } from "./AssistantApprovalCard";
 
 const request = (overrides = {}) => ({
   requestId: "req-1",

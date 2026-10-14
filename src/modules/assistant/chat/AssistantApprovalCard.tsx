@@ -12,7 +12,6 @@ import {
   acceptsFreeText,
   type PendingInputRequest,
   toolLabel,
-  useVaultRestore,
 } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import { MessageCircleQuestion, ShieldQuestion } from "lucide-react";
@@ -39,7 +38,7 @@ function approvalTitle(request: PendingInputRequest): string {
  * approval replaces the composer because the box you would type into is
  * exactly the thing that should not be there; an open question is the
  * opposite, since typing is the only way to answer it. So it renders as a
- * card above the composer the way `ask_user_question` does, and the composer
+ * card above the composer the way a question with options does, and the composer
  * the user already has is what sends the answer.
  */
 export const isOpenQuestion = (request: PendingInputRequest): boolean =>
@@ -56,7 +55,6 @@ export const isOpenQuestion = (request: PendingInputRequest): boolean =>
 export function AssistantOpenQuestionCard({
   request,
 }: Readonly<{ request: PendingInputRequest }>) {
-  const restore = useVaultRestore();
   return (
     <div className="mb-3 flex items-start gap-2.5 rounded-2xl border border-nb-gray-700 bg-nb-gray-900 px-4 py-3.5">
       <MessageCircleQuestion
@@ -66,7 +64,7 @@ export function AssistantOpenQuestionCard({
         aria-hidden
       />
       <p className="min-w-0 flex-1 text-chat font-normal text-nb-gray-100">
-        {restore(approvalTitle(request))}
+        {approvalTitle(request)}
       </p>
     </div>
   );
@@ -128,7 +126,6 @@ export function AssistantApprovalCard({
   // second click would post a second response to a request the framework has
   // already resolved, so the buttons latch on the first one.
   const [answering, setAnswering] = useState<string | null>(null);
-  const restore = useVaultRestore();
 
   /*
     A question eve will accept typed text for. The other two pauses — an
@@ -230,7 +227,7 @@ export function AssistantApprovalCard({
         )}
         <div className="min-w-0 flex-1">
           <p className="text-chat font-normal text-nb-gray-100">
-            {restore(approvalTitle(request))}
+            {approvalTitle(request)}
           </p>
           <p className="mt-1 text-xs text-nb-gray-400">
             The assistant is waiting for you. Nothing else it has been asked
@@ -289,7 +286,7 @@ export function AssistantApprovalCard({
                 answering !== null && answering !== option.id && "opacity-50",
               )}
             >
-              {restore(labelFor(request, option, isAffirmative))}
+              {labelFor(request, option, isAffirmative)}
             </Button>
           );
         })}

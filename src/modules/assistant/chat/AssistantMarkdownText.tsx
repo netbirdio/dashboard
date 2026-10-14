@@ -7,7 +7,6 @@ import {
   type SyntaxHighlighterProps,
   useIsMarkdownCodeBlock,
 } from "@assistant-ui/react-markdown";
-import { useVaultRestore } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import bash from "highlight.js/lib/languages/bash";
 import dockerfile from "highlight.js/lib/languages/dockerfile";
@@ -152,6 +151,26 @@ function CodeHeader({ language, code }: CodeHeaderProps) {
   );
 }
 
+// A model can be steered by text it read into writing a link or image whose URL
+// carries chat content to another site, which a click or a mere render would
+// send. So images never load, and only the two sites the assistant cites and
+// in-dashboard paths are links; anything else shows as its text. The hosts are
+// named rather than matched as `*.netbird.io`, so an open redirect on any other
+// subdomain cannot become a way out.
+const TRUSTED_HOSTS = new Set(["netbird.io", "docs.netbird.io"]);
+
+const isTrustedHref = (href: unknown): href is string => {
+  if (typeof href !== "string") return false;
+  // `//host` and `/\host` are both another site to a browser.
+  if (/^\/(?![/\\])/.test(href)) return true;
+  try {
+    const url = new URL(href);
+    return url.protocol === "https:" && TRUSTED_HOSTS.has(url.hostname);
+  } catch {
+    return false;
+  }
+};
+
 // Block spacing is set element by element because Tailwind's preflight zeroes
 // the browser's default margins.
 const components = {
@@ -224,27 +243,31 @@ const components = {
   ),
   // The external-link icon marks absolute http(s) targets only; relative links
   // stay inside the dashboard.
-  a: ({ className, children, href, ...props }: any) => (
-    <a
-      {...props}
-      href={href}
-      target="_blank"
-      rel="noreferrer noopener"
-      className={cn(
-        "text-netbird underline underline-offset-4 hover:text-netbird-300",
-        className,
-      )}
-    >
-      {children}
-      {typeof href === "string" && /^https?:\/\//i.test(href) && (
-        <ExternalLink
-          size={13}
-          aria-hidden="true"
-          className="ml-0.5 inline-block -translate-y-px"
-        />
-      )}
-    </a>
-  ),
+  img: ({ alt }: any) => (alt ? <span>{alt}</span> : null),
+  a: ({ className, children, href, ...props }: any) =>
+    !isTrustedHref(href) ? (
+      <span>{children}</span>
+    ) : (
+      <a
+        {...props}
+        href={href}
+        target="_blank"
+        rel="noreferrer noopener"
+        className={cn(
+          "text-netbird underline underline-offset-4 hover:text-netbird-300",
+          className,
+        )}
+      >
+        {children}
+        {typeof href === "string" && /^https?:\/\//i.test(href) && (
+          <ExternalLink
+            size={13}
+            aria-hidden="true"
+            className="ml-0.5 inline-block -translate-y-px"
+          />
+        )}
+      </a>
+    ),
   code: Code,
   // When a header is rendered above, the sibling rule in globals.css joins the two.
   pre: ({ className, ...props }: any) => (
@@ -288,15 +311,10 @@ const components = {
 };
 
 export function AssistantMarkdownText() {
-  const restore = useVaultRestore();
-
   return (
     <div className="assistant-markdown text-sm leading-relaxed text-nb-gray-100">
       <MarkdownTextPrimitive
         remarkPlugins={[remarkGfm]}
-        // Placeholders become real names before the parser sees the text, so a
-        // token can't be split across markdown elements.
-        preprocess={restore}
         // The server already streams tokens; the primitive's reveal animation
         // on top reads as the text hesitating in bursts.
         smooth={false}

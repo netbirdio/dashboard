@@ -1,16 +1,6 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-// Identity restore: what is under test is how a row reads, not tokenisation,
-// and the real hook needs the assistant provider.
-vi.mock("@netbird/assistant-react", async () => {
-  const actual = await vi.importActual<Record<string, unknown>>(
-    "@netbird/assistant-react",
-  );
-  return { ...actual, useVaultRestore: () => (text: string) => text };
-});
-
-const { AssistantToolActivity } = await import("./AssistantToolActivity");
+import { afterEach, describe, expect, it } from "vitest";
+import { AssistantToolActivity } from "./AssistantToolActivity";
 
 /*
   The row's text, collapsed. The label, its subject and the truncation ellipsis
@@ -41,25 +31,21 @@ describe("AssistantToolActivity", () => {
     expect(text).not.toContain("eve:load-skill");
   });
 
-  it("names the connection it is searching", () => {
-    const text = rowText("connection_search", {
-      connection: "management",
-      keywords: "peers",
+  it("names an API read by its operation, not the operation's id", () => {
+    const text = rowText("netbird_api", {
+      operation: "get_api_peers_peerId",
+      id: "d1ppv2rl0ubs73c9ruhg",
     });
 
-    expect(text).toContain("Searching connection 'Management'");
-    // The keywords are what the host's first-string rule would have quoted.
-    expect(text).not.toContain("peers");
+    expect(text).toContain("Reading peer details 'd1ppv2rl0ubs73c9ruhg'");
+    expect(text).not.toContain("get_api_peers_peerId");
   });
 
   it("still lets the host name the subject for every other tool", () => {
     // The generic first-string rule, which the SDK deliberately does not
-    // override — a peer's hostname is an identifier, not a title to prettify.
-    const text = rowText("ssh_exec", {
-      peer: "MacBook-Pro-von-Eduard.local",
-      command: "ls",
-    });
+    // override — a search term is the user's own words, not a title to prettify.
+    const text = rowText("audit_events", { search: "Office-Router" });
 
-    expect(text).toContain("Running a command 'MacBook-Pro-von-Eduard.local'");
+    expect(text).toContain("Reading activity events 'Office-Router'");
   });
 });

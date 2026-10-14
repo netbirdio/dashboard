@@ -1,10 +1,9 @@
-// One row of the activity trail, for both server-run and client-run tools.
+// One row of the activity trail, for both server-run and browser-run tools.
 "use client";
 
 import {
   CONTROL_CENTER_TOOLS,
   describeToolCall,
-  useVaultRestore,
 } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import { Check, ChevronRight, Info, Loader2 } from "lucide-react";
@@ -33,14 +32,14 @@ function subjectOf(toolName: string, args: unknown): string | null {
   }
 
   /*
-    Named, not found. A peer command's subject is the machine, and the
-    first-string rule only happened to return it while `peer` was the first
-    field the model wrote — `summary` is a string too, and a call that emitted
-    it first would have put the row's own label in its subject slot.
+    Named, not found. Both tools lead with an enum — the API operation, the
+    site to list — which the label already spells out, so the first-string
+    rule would quote it back as the subject.
   */
-  if (toolName === "ssh_exec") {
-    const peer = (args as { peer?: unknown }).peer;
-    return typeof peer === "string" && peer.trim() ? peer.trim() : null;
+  if (toolName === "netbird_api" || toolName === "docs_search") {
+    const key = toolName === "netbird_api" ? "id" : "url";
+    const value = (args as Record<string, unknown>)[key];
+    return typeof value === "string" && value.trim() ? value.trim() : null;
   }
 
   for (const value of Object.values(args as Record<string, unknown>)) {
@@ -57,11 +56,6 @@ const asJson = (value: unknown): string | null => {
 
 // A server tool's result is `{ ok, content, summary, … }` — the content is the
 // readable part. A management call's result is the JSON payload as a string.
-const restoreOr = (
-  text: string | null,
-  restore: (text: string) => string,
-): string | null => (text === null ? null : restore(text));
-
 function formatResult(result: unknown): string | null {
   if (result === undefined || result === null) return null;
   const content = (result as { content?: unknown })?.content;
@@ -85,7 +79,6 @@ export function AssistantToolActivity({
   result,
 }: Readonly<ToolActivityProps>) {
   const [open, setOpen] = useState(false);
-  const restore = useVaultRestore();
 
   const failed = isError === true || status?.type === "incomplete";
   /*
@@ -107,23 +100,18 @@ export function AssistantToolActivity({
   const settled = failed || result !== undefined || !turnActive;
   const running = !settled && status?.type === "running";
 
-  // Args and results are the wire copy — tokens in, real names for the user.
-  // Restore is plain text substitution, so it works on the JSON strings too.
-  const request = restoreOr(asJson(args), restore);
-  const outcome = restoreOr(formatResult(result), restore);
+  const request = asJson(args);
+  const outcome = formatResult(result);
   const expandable = Boolean(request || outcome);
   /*
-    How the row reads. The canvas tools name their own move, a peer command may
-    carry the agent's own summary of what it does, and everything else takes
-    the manifest's fixed label.
+    How the row reads. The canvas tools name their own move, an API read names
+    its operation, and everything else takes the manifest's fixed label.
   */
   const described = describeToolCall(toolName, args, running);
   /*
     The canvas tools also name their own SUBJECT, so the generic first-string
     rule is skipped for them — it surfaced raw enums ('new_empty') and half a
-    connection. Every other tool still shows it, a summary or not: on a peer
-    command that subject is the peer, which is the one thing a row about a
-    remote machine cannot leave out.
+    connection. Every other tool still shows it.
 
     `described.subject` is the third case: a tool the SDK names better than the
     rule can. It distinguishes "no opinion" (undefined, rule applies) from "this
@@ -143,16 +131,10 @@ export function AssistantToolActivity({
     splitting them across flex children put the row's `gap-2` inside it, so it
     read as three separate labels with 8px gutters rather than as a phrase.
     Joined here, the gap is left to do its real job of spacing the icons.
-
-    Restored once, at the end: restore is plain text substitution, so running
-    it over the finished line is the same as running it over each part, and
-    the summary is model text that can carry a token too.
   */
-  const line = restore(
-    [described.label, described.detail, subject && `'${subject}'`]
-      .filter(Boolean)
-      .join(" "),
-  );
+  const line = [described.label, described.detail, subject && `'${subject}'`]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="text-chat">

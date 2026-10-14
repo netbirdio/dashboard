@@ -1,10 +1,6 @@
-// The card for a pending ask_user_question: answer, dismiss, or just type.
+// The card for a pending ask_question with options: answer, dismiss, or just type.
 "use client";
 
-import {
-  type AssistantQuestion,
-  useVaultRestore,
-} from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import { ArrowUp, Check, X } from "lucide-react";
 import { useState } from "react";
@@ -26,6 +22,13 @@ export function parseOptionNumbers(
   return [...new Set(indices)];
 }
 
+export interface AssistantQuestion {
+  id: string;
+  title: string;
+  options: { label: string; description?: string }[];
+  multi: boolean;
+}
+
 export interface QuestionCardProps {
   question: AssistantQuestion;
   onAnswer: (indices: number[]) => void;
@@ -38,9 +41,6 @@ export function AssistantQuestionCard({
   onDismiss,
 }: Readonly<QuestionCardProps>) {
   const [picked, setPicked] = useState<number[]>([]);
-  // Restored at render only: the answer sends the option's label as written,
-  // tokens included, so the model gets its own vocabulary back.
-  const restore = useVaultRestore();
 
   const { multi, options } = question;
 
@@ -60,7 +60,7 @@ export function AssistantQuestionCard({
     <div className="mb-3 rounded-2xl border border-nb-gray-700 bg-nb-gray-900 px-4 pb-2.5 pt-3.5">
       <div className="flex items-start gap-2">
         <p className="min-w-0 flex-1 text-chat font-normal text-nb-gray-100">
-          {restore(question.title)}
+          {question.title}
         </p>
         <button
           type="button"
@@ -112,11 +112,11 @@ export function AssistantQuestionCard({
 
                 <span className="min-w-0 flex-1">
                   <span className="block text-chat font-normal text-nb-gray-300 group-hover:text-nb-gray-100">
-                    {restore(option.label)}
+                    {option.label}
                   </span>
                   {option.description && (
                     <span className="block text-xs text-nb-gray-400">
-                      {restore(option.description)}
+                      {option.description}
                     </span>
                   )}
                 </span>

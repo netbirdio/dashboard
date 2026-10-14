@@ -11,11 +11,7 @@ import {
   useAuiState,
 } from "@assistant-ui/react";
 import Paragraph from "@components/Paragraph";
-import {
-  type AssistantQuestion,
-  useAssistant,
-  useVaultRestore,
-} from "@netbird/assistant-react";
+import { acceptsFreeText, useAssistant } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import {
   ArrowDown,
@@ -31,17 +27,19 @@ import {
   Square,
 } from "lucide-react";
 import Image from "next/image";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import NetBirdLogoMark from "@/assets/netbird.svg";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import type { PageContextEntry } from "@/interfaces/Assistant";
 import { CHAT_PAD } from "@/interfaces/Assistant";
-import { AssistantAccessPrompt } from "@/modules/assistant/AssistantAccessPrompt";
-import {
-  type AccessRequest,
-  subscribeToAccessRequest,
-} from "@/modules/assistant/assistantAccessAuth";
 import {
   AssistantApprovalGate,
   AssistantOpenQuestionCard,
@@ -52,6 +50,7 @@ import { AssistantInlineComponent } from "@/modules/assistant/chat/AssistantInli
 import { AssistantMarkdownText } from "@/modules/assistant/chat/AssistantMarkdownText";
 import { AssistantErrorNotice } from "@/modules/assistant/chat/AssistantErrorNotice";
 import {
+  type AssistantQuestion,
   AssistantQuestionCard,
   parseOptionNumbers,
 } from "@/modules/assistant/chat/AssistantQuestionCard";
@@ -69,12 +68,10 @@ const CONTEXT_LIFT = 50;
 // sit under the step it belongs to.
 const StatusContext = createContext<string | null>(null);
 
-
-// Both surface as a card, not a row. `ask_question` is eve's built-in: the
-// framework parks the turn on it and never writes its result back into the
-// message, so as a row it would spin long after the user answered.
-const isQuestionTool = (name?: string) =>
-  name === "ask_user_question" || name === "ask_question";
+// A card, not a row. `ask_question` is eve's built-in: the framework parks the
+// turn on it and never writes its result back into the message, so as a row it
+// would spin long after the user answered.
+const isQuestionTool = (name?: string) => name === "ask_question";
 
 // Reasoning and tool calls go in the steps panel; components and the question
 // card are output, so they stay in the answer where the model put them.
@@ -94,18 +91,15 @@ const groupSteps = (part: { type: string; toolName?: string }) => {
 // Below this a summary hides more than it saves.
 const SUMMARIZE_FROM = 3;
 
-// User bubbles get the vault pass too: text quoted back from an answer can
-// carry tokens, and restore() leaves everything else as typed.
-function RestoredText({ text }: Readonly<{ text: string }>) {
-  const restore = useVaultRestore();
-  return <span className="whitespace-pre-wrap">{restore(text)}</span>;
+function UserText({ text }: Readonly<{ text: string }>) {
+  return <span className="whitespace-pre-wrap">{text}</span>;
 }
 
 function UserMessage() {
   return (
     <MessagePrimitive.Root className="mb-5 flex justify-end">
       <div className="max-w-[85%] rounded-lg rounded-br-sm bg-nb-gray-900 px-3 py-2 text-sm text-nb-gray-100">
-        <MessagePrimitive.Parts components={{ Text: RestoredText }} />
+        <MessagePrimitive.Parts components={{ Text: UserText }} />
       </div>
     </MessagePrimitive.Root>
   );
@@ -117,7 +111,6 @@ const actionClass =
 // Not `ActionBarPrimitive.Copy`: `useCopyToClipboard` fires the dashboard's
 // standard notification.
 function CopyAction() {
-  const restore = useVaultRestore();
   const text = useAuiState((s) =>
     s.message.parts
       .map((part) => (part.type === "text" ? part.text : ""))
@@ -130,7 +123,7 @@ function CopyAction() {
     (s) =>
       s.message.role === "assistant" && s.message.status.type === "running",
   );
-  const [, copyToClipboard, copied] = useCopyToClipboard(restore(text));
+  const [, copyToClipboard, copied] = useCopyToClipboard(text);
 
   // Absent rather than disabled while the answer is still streaming: a
   // greyed-out button offers an action that cannot mean anything yet. The
@@ -471,8 +464,8 @@ function ThreadQuestion({
 }>) {
   if (!question) return null;
 
-  // Shown even while the thread runs: the card answers a turn that is still
-  // in flight, with the server parked on the ask_user_question tool result.
+  // Shown even while the thread runs: the card answers a turn that is
+  // parked on the question.
   return (
     <AssistantQuestionCard
       // Resets the multi-select picks when a new question arrives.
@@ -511,8 +504,8 @@ function Composer({
 }>) {
   const aui = useAui();
 
-  // "1" / "1,3" picks those options; anything else answers a pending ask_user_question
-  // question as written (its turn is still running, so the normal send path is
+  // "1" / "1,3" picks those options; anything else answers a pending question
+  // card as written (its turn is still running, so the normal send path is
   // closed). Returns false when the text wasn't consumed.
   const submitAnswer = (): boolean => {
     const composer = aui.thread.composer();
@@ -582,7 +575,7 @@ function Composer({
       />
 
       <div className="flex items-center justify-end gap-2">
-        {/* While an ask_user_question card is up the thread counts as running, which
+        {/* While a question card is up the thread counts as running, which
             would leave only Stop; this button routes the text to the answer. */}
         {(question || openQuestion) && (
           <button
@@ -642,44 +635,74 @@ export function AssistantThread({
   const {
     statusLine: status,
     turnActive,
-    pendingQuestion: question,
-    answerQuestion,
-    dismissQuestion,
     pendingInput,
     respondToInput,
     error,
   } = useAssistant();
 
-  /*
-    Whether an access authorization is outstanding. Subscribed here rather than
-    read inside the prompt, because this decides WHICH control occupies the
-    composer's place — the prompt cannot both be the thing rendered and the
-    thing that decides it is rendered.
-  */
-  const [accessRequest, setAccessRequest] = useState<AccessRequest | null>(
-    null,
+  // An ask_question with options is the tappable card; without, the composer answers it.
+  const choice =
+    pendingInput?.kind === "question" && pendingInput.options.length > 0
+      ? pendingInput
+      : null;
+  const question = useMemo<AssistantQuestion | null>(
+    () =>
+      choice && {
+        id: choice.requestId,
+        title: choice.prompt,
+        options: choice.options.map(({ label, description }) => ({
+          label,
+          description,
+        })),
+        multi: false,
+      },
+    [choice],
   );
-  useEffect(() => subscribeToAccessRequest(setAccessRequest), []);
 
   const answer = (indices: number[]) => {
-    if (!question) return;
-    answerQuestion(
-      indices.map((index) => question.options[index].label).join(", "),
+    const option = choice?.options[indices[0]];
+    if (option) void respondToInput(option.id);
+  };
+
+  // Typed text answers as written when the question takes it, else only when it names an option.
+  const answerQuestion = (text: string) => {
+    if (!choice) return;
+    if (acceptsFreeText(choice)) {
+      void respondToInput({ text });
+      return;
+    }
+    const option = choice.options.find(
+      (o) => o.label.trim().toLowerCase() === text.trim().toLowerCase(),
     );
+    if (option) void respondToInput(option.id);
+  };
+
+  const dismissQuestion = () => {
+    if (!choice) return;
+    void respondToInput({
+      text: "The user dismissed the question without answering. Continue without this information.",
+    });
   };
 
   // The composer floats over the messages, so they need to end above it —
   // measured, because the composer grows with the input and the question card.
   const composerRef = useRef<HTMLDivElement>(null);
   const [composerHeight, setComposerHeight] = useState(0);
+  // The empty state centres above the composer at rest: following the live
+  // height would shift the greeting and starters with every line typed.
+  const [restingHeight, setRestingHeight] = useState(0);
 
   useEffect(() => {
     const element = composerRef.current;
     if (!element) return;
 
-    const observer = new ResizeObserver(([entry]) =>
-      setComposerHeight(entry.contentRect.height),
-    );
+    const observer = new ResizeObserver(([entry]) => {
+      const height = entry.contentRect.height;
+      setComposerHeight(height);
+      setRestingHeight((resting) =>
+        resting === 0 ? height : Math.min(resting, height),
+      );
+    });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
@@ -768,7 +791,7 @@ export function AssistantThread({
 
       {/* After the scroll area: the viewport covers the same box and would
         swallow clicks on the chips. */}
-      <EmptyState bottomOffset={composerHeight} />
+      <EmptyState bottomOffset={restingHeight} />
 
       {/* Transparent bar so messages show through beside the composer. */}
       <div
@@ -805,13 +828,7 @@ export function AssistantThread({
           {/* The chip is absolute against this box, so it slides out from
               behind the composer's rounded body. */}
           <div className="relative">
-            {accessRequest ? (
-              /* The same slot as the approval gate, for the same reason: the
-                 turn has stopped and will not move until this is answered. It
-                 sat in the panel first and landed behind this composer, where
-                 nobody could see it. */
-              <AssistantAccessPrompt />
-            ) : pendingInput && !openQuestion ? (
+            {pendingInput && !openQuestion && !choice ? (
               /* In the composer's place, not above it: the framework has
                  stopped answering, so an input that still accepts text would be
                  offering to queue messages behind a prompt nobody can see

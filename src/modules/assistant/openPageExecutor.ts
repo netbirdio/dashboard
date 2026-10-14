@@ -1,5 +1,5 @@
 import type {
-  ClientToolExecutor,
+  BrowserToolExecutor,
   ToolOutcome,
 } from "@netbird/assistant-react";
 
@@ -110,7 +110,7 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
 
 // The route table stays app-side: the SDK dispatches `dashboard_page_redirect` here because
 // only the dashboard knows its own URLs.
-export const openPageExecutor: ClientToolExecutor = async (
+export const openPageExecutor: BrowserToolExecutor = async (
   input,
   ctx,
 ): Promise<ToolOutcome> => {

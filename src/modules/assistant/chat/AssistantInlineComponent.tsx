@@ -3,7 +3,6 @@
 "use client";
 
 import type { ToolCallMessagePartProps } from "@assistant-ui/react";
-import { useVaultRestore } from "@netbird/assistant-react";
 
 interface CanvasPreview {
   component: "canvas_preview";
@@ -16,7 +15,7 @@ interface ResourceTable {
   component: "resource_table";
   columns: string[];
   ids: string[];
-  // One entry per id, column → display value (may carry vault tokens).
+  // One entry per id, column → display value.
   rows?: Record<string, string>[];
 }
 
@@ -39,23 +38,14 @@ function renderValue(value: unknown): string {
 function CanvasPreviewCard({
   component,
 }: Readonly<{ component: CanvasPreview }>) {
-  const restore = useVaultRestore();
   // Streaming args arrive as partial JSON — fields exist one at a time.
   const entries = Object.entries(component.data ?? {});
   if (!component.title) return null;
 
-  // The payload is model-written, so any string in it can carry tokens.
-  const shown = (value: unknown): string => {
-    const text = renderValue(value);
-    return text === "—" ? text : restore(text);
-  };
-
   return (
     <div className="my-3 overflow-hidden rounded-lg border border-nb-gray-850 bg-nb-gray-920">
       <div className="border-b border-nb-gray-850 px-3.5 py-2">
-        <div className="text-chat text-nb-gray-100">
-          {restore(component.title)}
-        </div>
+        <div className="text-chat text-nb-gray-100">{component.title}</div>
         <div className="text-[11px] uppercase tracking-wide text-nb-gray-400">
           {prettyKey(component.resource)}
         </div>
@@ -68,7 +58,7 @@ function CanvasPreviewCard({
               {prettyKey(key)}
             </dt>
             <dd className="min-w-0 break-words text-nb-gray-200">
-              {shown(value)}
+              {renderValue(value)}
             </dd>
           </div>
         ))}
@@ -80,21 +70,17 @@ function CanvasPreviewCard({
 function ResourceTableCard({
   component,
 }: Readonly<{ component: ResourceTable }>) {
-  const restore = useVaultRestore();
   // Streaming args arrive as partial JSON — the columns land before the ids.
   const columns = component.columns ?? [];
   const ids = component.ids ?? [];
   const rows = component.rows ?? [];
 
   // Cell values ride in the args (the browser never fetched the raw rows —
-  // management reads are server tools); any string may carry vault tokens.
-  // Without a rows entry only id/name are recoverable from the vault.
-  const cell = (token: string, column: string, index: number): string => {
+  // management reads are server tools). Without a rows entry only the id is known.
+  const cell = (id: string, column: string, index: number): string => {
     const provided = rows[index]?.[column];
-    if (typeof provided === "string" && provided.length) {
-      return restore(provided);
-    }
-    if (column === "id" || column === "name") return restore(token);
+    if (typeof provided === "string" && provided.length) return provided;
+    if (column === "id") return id;
     return "—";
   };
 

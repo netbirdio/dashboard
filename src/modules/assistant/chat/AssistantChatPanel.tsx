@@ -1,22 +1,15 @@
 // Always mounted so a conversation survives closing; inert + aria-hidden while hidden.
 "use client";
 
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
-import {
-  useOidc,
-  useOidcAccessToken,
-  useOidcIdToken,
-} from "@axa-fr/react-oidc";
-import {
-  AssistantProvider,
-  useAssistant,
-} from "@netbird/assistant-react";
+import { AssistantRuntimeProvider, useAuiState } from "@assistant-ui/react";
+import { useOidcAccessToken, useOidcIdToken } from "@axa-fr/react-oidc";
+import { AssistantProvider, useAssistant } from "@netbird/assistant-react";
 import loadConfig from "@utils/config";
 import { cn, sleep } from "@utils/helpers";
 import { PanelLeft, PanelRight, Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { decodeToken, isExpired } from "react-jwt";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { isExpired } from "react-jwt";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import {
   CHAT_PAD,
@@ -32,45 +25,8 @@ import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvide
 import { useContextChip } from "@/modules/assistant/chat/AssistantContextChip";
 import { AssistantThread } from "@/modules/assistant/chat/AssistantThread";
 import { openPageExecutor } from "@/modules/assistant/openPageExecutor";
-import { createSSHExecExecutor } from "@/modules/assistant/sshExecExecutor";
-import { generateKeypair } from "@utils/wireguard";
-import { useNetBirdClient } from "@/modules/remote-access/useNetBirdClient";
-import { useApiCall } from "@utils/api";
-import {
-  requestCommandConfirmation,
-  requestPeerAuthorization,
-} from "@/modules/assistant/assistantAccessAuth";
-import type { Peer } from "@/interfaces/Peer";
 
-/*
-  `setup_netbird` is not in here because it cannot be: it needs the agent's
-  origin, the bearer resolver and the WASM client, all of which are hooks or
-  per-render values. It is composed in the component below and merged with
-  this table.
-*/
-const STATIC_EXECUTORS = { dashboard_page_redirect: openPageExecutor };
-
-/*
-  NetBird's SSH server rejects a JWT by AGE, not by expiry: it reads `iat` and
-  refuses anything older than ten minutes. An Auth0 access token is valid for
-  hours, so the one minted at login passes every `isExpired` check and is still
-  refused by the peer as `token expired ... age=1h23m, max=10m0s`.
-
-  The dashboard's SSH window never trips over this because `window.open`
-  reloads the page and OIDC issues a fresh token right then. This panel is
-  mounted for the whole session, so it has to ask.
-
-  Renewed a few minutes before the server's limit rather than at it, since the
-  token has to survive the handshake that follows.
-*/
-const SSH_TOKEN_MAX_AGE_SECONDS = 10 * 60;
-const SSH_TOKEN_RENEW_AFTER_SECONDS = 5 * 60;
-
-function tokenAgeSeconds(token?: string): number | null {
-  const payload = token ? decodeToken<{ iat?: number }>(token) : null;
-  if (!payload?.iat) return null;
-  return Math.max(0, Date.now() / 1000 - payload.iat);
-}
+const EXTRA_EXECUTORS = { dashboard_page_redirect: openPageExecutor };
 
 // The same token selection and expiry wait as useNetBirdFetch (src/utils/api),
 // shaped as the headers resolver the assistant SDK calls before every request.
@@ -78,8 +34,7 @@ function useAssistantHeaders(): () => Promise<Record<string, string>> {
   const { idToken } = useOidcIdToken();
   const { accessToken } = useOidcAccessToken();
   const tokenSource = loadConfig().tokenSource || "accessToken";
-  const token =
-    tokenSource.toLowerCase() === "idtoken" ? idToken : accessToken;
+  const token = tokenSource.toLowerCase() === "idtoken" ? idToken : accessToken;
 
   // Read at request time through a ref: the resolver is captured once per
   // conversation, and the OIDC client refreshes tokens behind it.
@@ -97,16 +52,23 @@ function useAssistantHeaders(): () => Promise<Record<string, string>> {
   }, []);
 }
 
-// One conversation. The provider's runtime feeds assistant-ui exactly as before.
-function AssistantConversation() {
+// Above the header as well as the thread, so the header can read the thread.
+function ConversationRuntime({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   const { runtime } = useAssistant();
-  const { entry, dismiss } = useActivePageContext();
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <AssistantThread context={entry} onDismissContext={dismiss} />
+      {children}
     </AssistantRuntimeProvider>
   );
+}
+
+function AssistantConversation() {
+  const { entry, dismiss } = useActivePageContext();
+
+  return <AssistantThread context={entry} onDismissContext={dismiss} />;
 }
 
 // Renders nothing: the context's display name comes from a hook (the SWR
@@ -157,6 +119,9 @@ function PanelButton({
 // Inside the provider so it can reset the SDK session alongside the remount.
 function NewChatButton({ onNewChat }: Readonly<{ onNewChat: () => void }>) {
   const { newChat } = useAssistant();
+  // An empty chat is already a new one.
+  const empty = useAuiState((s) => s.thread.isEmpty);
+  if (empty) return null;
 
   return (
     <PanelButton
@@ -183,96 +148,6 @@ export function AssistantChatPanel() {
   const currentPath = useCallback(() => pathRef.current, []);
   const navigate = useCallback((href: string) => router.push(href), [router]);
   const { loggedInUser } = useLoggedInUser();
-
-  /*
-    `setup_netbird`, composed here because it needs three things this component
-    has and a module constant cannot: the agent's origin, the same bearer
-    resolver the SDK uses, and the WASM client.
-
-    `connect` takes only the private key — the management URL stays whatever
-    useNetBirdClient reads from the dashboard's own config, rather than the one
-    the agent returns. The browser already knows which management server it
-    belongs to, and taking that from an HTTP response would let the agent point
-    this tunnel somewhere else.
-  */
-  const {
-    connect,
-    createSSHConnection,
-    detectSSHServerType,
-  } = useNetBirdClient();
-  const peersRequest = useApiCall<Peer[]>("/peers");
-  const { accessToken } = useOidcAccessToken();
-
-  // Read through a ref so an executor built once still sees the current token;
-  // a dispatch can be executed long after the render that created it.
-  const accessTokenRef = useRef(accessToken);
-  // eslint-disable-next-line react-hooks/refs -- read at tool-execution time
-  accessTokenRef.current = accessToken;
-
-  const { renewTokens } = useOidc();
-  /**
-   * An access token young enough for a peer's SSH server to accept.
-   *
-   * Renews rather than waits: the token is not expired, it is old, and waiting
-   * only makes it older. Falls back to whatever is current if renewal fails —
-   * a stale token that gets refused is a clearer failure than none at all.
-   */
-  const freshAccessToken = useCallback(async (): Promise<string | undefined> => {
-    const age = tokenAgeSeconds(accessTokenRef.current);
-    if (age !== null && age < SSH_TOKEN_RENEW_AFTER_SECONDS) {
-      return accessTokenRef.current;
-    }
-    try {
-      const renewed = (await renewTokens()) as { accessToken?: string };
-      return renewed?.accessToken ?? accessTokenRef.current;
-    } catch {
-      return accessTokenRef.current;
-    }
-  }, [renewTokens]);
-
-  const extraExecutors = useMemo(
-    () => ({
-      ...STATIC_EXECUTORS,
-      /*
-        One executor, because joining the network, taking access to the target
-        and running the command are one call — the user is asked about the
-        access and the command separately, but there is nothing between those
-        two answers for a second executor to do. `connectTemporary` from
-        useNetBirdClient is deliberately not used: it returns early once
-        connected, so it would grant access for the first peer only, and it
-        hides the keypair that has to be reused for the second.
-      */
-      ssh_exec: createSSHExecExecutor({
-        // The whole list, because the executor resolves a NAME and the model
-        // cannot: peer names reach it as unlabelled tokens, and a typed FQDN
-        // tokenises differently from the peer's own dns_label.
-        listPeers: async () => (await peersRequest.get()) ?? [],
-        generateKeypair,
-        /*
-          Parks the request for the user rather than calling the API here. The
-          panel has the bearer and could grant it directly; routing it through a
-          window the user opens and signs in to is the whole point — see
-          assistantAccessAuth.
-        */
-        authorizePeer: requestPeerAuthorization,
-        // The second question, asked after that one and only about the command.
-        confirmCommand: requestCommandConfirmation,
-        connect,
-        createSSHConnection,
-        detectSSHServerType,
-        getAccessToken: freshAccessToken,
-      }),
-    }),
-    [
-      origin,
-      headers,
-      connect,
-      createSSHConnection,
-      detectSSHServerType,
-      freshAccessToken,
-      peersRequest,
-    ],
-  );
 
   const { entry } = useActivePageContext();
   const [contextName, setContextName] = useState<string | undefined>();
@@ -318,39 +193,45 @@ export function AssistantChatPanel() {
         currentPath={currentPath}
         currentUserId={loggedInUser?.id}
         pageContext={pageContext}
-        extraExecutors={extraExecutors}
+        extraExecutors={EXTRA_EXECUTORS}
         conversationId={chatId}
       >
         {entry && <ContextName entry={entry} onName={setContextName} />}
 
-        {/* Rows pad themselves by CHAT_PAD so the scrollbar can sit on the panel's edge. */}
-        <div
-          className="flex min-h-0 flex-col"
-          style={{ width: overlay ? "100%" : PANEL_WIDTH }}
-        >
-          <header
-            className="flex shrink-0 items-center gap-2 pb-2"
-            style={{
-              paddingLeft: HEADER_PAD_X,
-              paddingRight: HEADER_PAD_X,
-              paddingTop: CHAT_PAD.top,
-            }}
+        <ConversationRuntime>
+          {/* Rows pad themselves by CHAT_PAD so the scrollbar can sit on the panel's edge. */}
+          <div
+            className="flex min-h-0 flex-col"
+            style={{ width: overlay ? "100%" : PANEL_WIDTH }}
           >
-            <PanelButton label="Close assistant" onClick={() => setOpen(false)}>
-              {PANEL_ON_LEFT ? <PanelLeft size={17} /> : <PanelRight size={17} />}
-            </PanelButton>
+            <header
+              className="flex shrink-0 items-center gap-2 pb-2"
+              style={{
+                paddingLeft: HEADER_PAD_X,
+                paddingRight: HEADER_PAD_X,
+                paddingTop: CHAT_PAD.top,
+              }}
+            >
+              <PanelButton label="Close assistant" onClick={() => setOpen(false)}>
+                {PANEL_ON_LEFT ? (
+                  <PanelLeft size={17} />
+                ) : (
+                  <PanelRight size={17} />
+                )}
+              </PanelButton>
 
-            <span className="min-w-0 truncate text-sm font-medium text-nb-gray-100">
-              Assistant
-            </span>
+              <span className="min-w-0 truncate text-sm font-medium text-nb-gray-100">
+                Assistant
+              </span>
 
-            <div className="ml-auto flex shrink-0 items-center gap-1">
-              <NewChatButton onNewChat={startNewChat} />
-            </div>
-          </header>
+              <div className="ml-auto flex shrink-0 items-center gap-1">
+                <NewChatButton onNewChat={startNewChat} />
+              </div>
+            </header>
 
-          <AssistantConversation />
-        </div>
+            <AssistantConversation />
+          </div>
+        </ConversationRuntime>
       </AssistantProvider>
     </aside>
   );
