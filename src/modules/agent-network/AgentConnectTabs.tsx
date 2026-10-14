@@ -12,6 +12,8 @@ import * as React from "react";
 import ClaudeIcon from "@/assets/icons/ClaudeIcon";
 import KimiIcon from "@/assets/icons/KimiIcon";
 import OpenAIIcon from "@/assets/icons/OpenAIIcon";
+import OpenCodeIcon from "@/assets/icons/OpenCodeIcon";
+import PiIcon from "@/assets/icons/PiIcon";
 import ShellIcon from "@/assets/icons/ShellIcon";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import {
@@ -438,11 +440,11 @@ export function AgentConnectTabs({
             Codex
           </TabsTrigger>
           <TabsTrigger value={"opencode"}>
-            <ShellIcon className={TAB_ICON} size={14} />
+            <OpenCodeIcon className={TAB_ICON} size={14} />
             OpenCode
           </TabsTrigger>
           <TabsTrigger value={"pi"}>
-            <ShellIcon className={TAB_ICON} size={14} />
+            <PiIcon className={TAB_ICON} size={14} />
             Pi
           </TabsTrigger>
           {hasKimi && (
