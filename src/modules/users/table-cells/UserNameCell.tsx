@@ -1,3 +1,4 @@
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromUser } from "@utils/helpers";
 import useFetchApi from "@utils/api";
 import { Ban, Clock, Cog } from "lucide-react";
@@ -63,11 +64,9 @@ export default function UserNameCell({ user }: Readonly<Props>) {
     >
       <div
         className={
-          "w-10 h-10 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"
+          "initials-avatar w-10 h-10 rounded-full relative flex items-center justify-center text-neutral-700 dark:text-white uppercase text-md font-medium bg-nb-gray-900"
         }
-        style={{
-          color: generateColorFromUser(user),
-        }}
+        style={getAvatarStyle(generateColorFromUser(user))}
       >
         {!user?.name && !user?.id && <Cog size={12} />}
         {user?.name?.charAt(0) || user?.id?.charAt(0)}
@@ -102,7 +101,7 @@ export default function UserNameCell({ user }: Readonly<Props>) {
           {isCurrent && (
             <span
               className={
-                "bg-sky-900 border border-sky-700 text-sky-200 rounded-full text-[9px] uppercase tracking-wider px-2 py-2 leading-[0]"
+                "bg-sky-100 border border-sky-700 text-sky-800 dark:bg-sky-900 dark:text-sky-200 rounded-full text-[9px] uppercase tracking-wider px-2 py-2 leading-[0]"
               }
             >
               You

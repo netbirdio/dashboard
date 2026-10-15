@@ -447,7 +447,7 @@ const PeerGroupMassAssignmentContent = ({
                 <div className={"flex gap-2 items-center"}>
                   <MonitorSmartphoneIcon size={16} className={""} />
                   <span>
-                    <span className={"font-medium text-white"}>
+                    <span className={"font-medium text-nb-gray-100"}>
                       {peerCount}
                     </span>{" "}
                     Peer(s) selected

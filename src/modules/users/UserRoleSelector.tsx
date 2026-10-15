@@ -338,7 +338,7 @@ export function UserRoleSelector({
         )}
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-sm shadow-nb-gray-950"
+        className="w-full p-0 shadow-sm dark:shadow-nb-gray-950"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
           // The tab row needs more room than the trigger usually offers.

@@ -60,7 +60,7 @@ export const SingleGroupSelector = ({
       </div>
       <PopoverContent
         hideWhenDetached={false}
-        className={cn("w-full p-0 m-0 shadow-sm shadow-nb-gray-950")}
+        className={cn("w-full p-0 m-0 shadow-sm dark:shadow-nb-gray-950")}
         style={{
           width: popoverWidth + "px",
         }}

@@ -2,14 +2,24 @@
 
 import "@xterm/xterm/css/xterm.css";
 import { cn } from "@utils/helpers";
-import { useCallback, useEffect, useRef } from "react";
+import { useTheme } from "@/contexts/ThemeProvider";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+
+const DARK_TERMINAL_THEME = {
+  background: "#181a1d",
+  foreground: "#e4e7e9",
+  cursor: "#e4e7e9",
+  selectionBackground: "#3a3f44",
+};
+
+const LIGHT_TERMINAL_THEME = {
+  background: "#ffffff",
+  foreground: "#1a1a1a",
+  cursor: "#1a1a1a",
+  selectionBackground: "#d4d4d4",
+};
 
 const TERMINAL_OPTIONS = {
-  theme: {
-    background: "#181a1d",
-    foreground: "#e4e7e9",
-    cursor: "#e4e7e9",
-  },
   fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
   fontSize: 13,
   cursorBlink: true,
@@ -20,6 +30,7 @@ const TERMINAL_OPTIONS = {
 
 interface TerminalWithCore {
   _core?: { _isDisposed: boolean };
+  options: { theme?: Record<string, string> };
   dispose(): void;
   write(data: string | Uint8Array): void;
   writeln(data: string): void;
@@ -43,12 +54,26 @@ export const Terminal = ({
   onClose,
   className = "",
 }: SSHTerminalWrapperProps) => {
+  const { resolvedTheme } = useTheme();
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstanceRef = useRef<{
     terminal: TerminalWithCore;
     fitAddon: any;
   } | null>(null);
   const handlersSetRef = useRef(false);
+  // Guards the async setup so a re-run (e.g. from a prop change) can't start
+  // a second terminal while the first is still awaiting its imports.
+  const initializingRef = useRef(false);
+
+  const terminalTheme = useMemo(
+    () =>
+      resolvedTheme === "light" ? LIGHT_TERMINAL_THEME : DARK_TERMINAL_THEME,
+    [resolvedTheme],
+  );
+  // Read by initializeTerminal so a theme change doesn't recreate the
+  // callback chain (and with it the terminal); the effect below keeps a
+  // running terminal in sync instead.
+  const terminalThemeRef = useRef(terminalTheme);
 
   const fitTerminal = useCallback(() => {
     if (terminalInstanceRef.current?.fitAddon) {
@@ -62,7 +87,10 @@ export const Terminal = ({
     const { Terminal: XTerminal } = await import("@xterm/xterm");
     const { FitAddon } = await import("@xterm/addon-fit");
 
-    const terminal = new XTerminal(TERMINAL_OPTIONS);
+    const terminal = new XTerminal({
+      ...TERMINAL_OPTIONS,
+      theme: terminalThemeRef.current,
+    });
 
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
@@ -93,9 +121,15 @@ export const Terminal = ({
   }, [fitTerminal]);
 
   const setupSSHHandlers = useCallback(async () => {
-    if (!session || handlersSetRef.current) return;
+    if (!session || handlersSetRef.current || initializingRef.current) return;
 
-    const terminal = await initializeTerminal();
+    initializingRef.current = true;
+    let terminal: TerminalWithCore | undefined;
+    try {
+      terminal = await initializeTerminal();
+    } finally {
+      initializingRef.current = false;
+    }
     if (!terminal) return;
 
     handlersSetRef.current = true;
@@ -148,6 +182,16 @@ export const Terminal = ({
   useEffect(() => {
     setupSSHHandlers().then();
   }, [setupSSHHandlers]);
+
+  // Apply theme changes to an already-running terminal, and remember the
+  // latest theme for one that is still initializing.
+  useEffect(() => {
+    terminalThemeRef.current = terminalTheme;
+    const terminal = terminalInstanceRef.current?.terminal;
+    if (terminal && !terminal._core?._isDisposed) {
+      terminal.options.theme = terminalTheme;
+    }
+  }, [terminalTheme]);
 
   // Cleanup on unmount
   useEffect(() => {
