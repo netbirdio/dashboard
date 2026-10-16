@@ -1,6 +1,7 @@
 "use client";
 
 import "../app/globals.css";
+import { DeploymentBranding } from "@components/DeploymentBranding";
 import { DisableDarkReader } from "@components/DisableDarkReader";
 import { TooltipProvider } from "@components/Tooltip";
 import { cn } from "@utils/helpers";
@@ -74,6 +75,7 @@ export default function AppLayout({
             />
             <NavigationEvents />
             <DisableDarkReader />
+            <DeploymentBranding />
           </AnalyticsProvider>
         </Suspense>
       </body>
