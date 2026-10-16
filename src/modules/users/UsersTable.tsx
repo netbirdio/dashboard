@@ -46,6 +46,7 @@ import TeamIcon from "@/assets/icons/TeamIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { Group } from "@/interfaces/Group";
 import { User, UserInvite } from "@/interfaces/User";
 import { useAccount } from "@/modules/account/useAccount";
@@ -64,7 +65,11 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Name"}</T>
+        </DataTableHeader>
+      );
     },
     accessorFn: (row) => row.name + " " + row.email,
     sortingFn: "text",
@@ -77,7 +82,11 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "role",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Role</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Role"}</T>
+        </DataTableHeader>
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => <UserRoleCell user={row.original} />,
@@ -94,7 +103,11 @@ export const UsersTableColumns: ColumnDef<User>[] = [
       return row.status ?? "";
     },
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Status"}</T>
+        </DataTableHeader>
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => <UserStatusCell user={row.original} />,
@@ -103,7 +116,11 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "auto_groups",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Groups"}</T>
+        </DataTableHeader>
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => <UserGroupCell user={row.original} />,
@@ -112,7 +129,11 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "last_login",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Last Login</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Last Login"}</T>
+        </DataTableHeader>
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => (
@@ -174,6 +195,7 @@ export default function UsersTable({
   onRowClick,
   keepStateInLocalStorage = true,
 }: Readonly<Props>) {
+  const { t } = useTranslation();
   useFetchApi("/groups");
   const { groups } = useGroups();
   const { mutate } = useSWRConfig();
@@ -236,43 +258,43 @@ export default function UsersTable({
 
   const statusOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: "active", label: "Active", dotClass: "bg-green-500" },
-      { value: "pending", label: "Pending", dotClass: "bg-netbird" },
-      { value: "invited", label: "Invited", dotClass: "bg-yellow-400" },
-      { value: "blocked", label: "Blocked", dotClass: "bg-red-500" },
+      { value: undefined, label: t("All"), dotClass: "bg-nb-gray-500" },
+      { value: "active", label: t("Active"), dotClass: "bg-green-500" },
+      { value: "pending", label: t("Pending"), dotClass: "bg-netbird" },
+      { value: "invited", label: t("Invited"), dotClass: "bg-yellow-400" },
+      { value: "blocked", label: t("Blocked"), dotClass: "bg-red-500" },
     ],
-    [],
+    [t],
   );
 
   const roleOptions = useMemo<CheckboxOption<string>[]>(
     () => [
-      { value: "owner", label: "Owner" },
-      { value: "admin", label: "Admin" },
-      { value: "user", label: "User" },
-      { value: "network_admin", label: "Network Admin" },
+      { value: "owner", label: t("Owner") },
+      { value: "admin", label: t("Admin") },
+      { value: "user", label: t("User") },
+      { value: "network_admin", label: t("Network Admin") },
       // Agent Network roles can only be assigned where the surface exists, so
       // don't offer them as filters elsewhere.
       ...(agentNetworkEnabled
         ? [
             {
               value: "agent_network_admin",
-              label: "Agent Network Admin",
+              label: t("Agent Network Admin"),
             },
-            { value: "usage_viewer", label: "Usage Viewer" },
+            { value: "usage_viewer", label: t("Usage Viewer") },
           ]
         : []),
-      { value: "billing_admin", label: "Billing Admin" },
-      { value: "auditor", label: "Auditor" },
+      { value: "billing_admin", label: t("Billing Admin") },
+      { value: "auditor", label: t("Auditor") },
     ],
-    [agentNetworkEnabled],
+    [t, agentNetworkEnabled],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "status",
-        label: "Status",
+        label: t("Status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -286,7 +308,7 @@ export default function UsersTable({
       },
       {
         id: "role_filter",
-        label: "Role",
+        label: t("Role"),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -300,7 +322,7 @@ export default function UsersTable({
       },
       {
         id: "group_names_filter",
-        label: "Groups",
+        label: t("Groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -312,7 +334,7 @@ export default function UsersTable({
         formatChip: (v) => formatGroupsChip(v as string[] | undefined),
       },
     ],
-    [statusOptions, roleOptions, tableGroups],
+    [t, statusOptions, roleOptions, tableGroups],
   );
 
   if (showInvites) {
@@ -342,7 +364,7 @@ export default function UsersTable({
       headingTarget={headingTarget}
       isLoading={isLoading}
       keepStateInLocalStorage={keepStateInLocalStorage}
-      text={"Users"}
+      text={t("Users")}
       sorting={sorting}
       setSorting={setSorting}
       columns={columns}
@@ -372,7 +394,7 @@ export default function UsersTable({
             }
           : onRowClick
       }
-      searchPlaceholder={"Search by name, email or role..."}
+      searchPlaceholder={t("Search by name, email or role...")}
       getStartedCard={
         !getStartedCard ? (
           <GetStartedTest
@@ -383,10 +405,10 @@ export default function UsersTable({
                 size={"large"}
               />
             }
-            title={"Add New Users"}
-            description={
-              "It looks like you don't have any users yet. Get started by inviting users to your account."
-            }
+            title={t("Add New Users")}
+            description={t(
+              "It looks like you don't have any users yet. Get started by inviting users to your account.",
+            )}
             button={
               <div className={"flex flex-col items-center justify-center"}>
                 <InviteUserButton show={true} />
@@ -394,14 +416,14 @@ export default function UsersTable({
             }
             learnMore={
               <>
-                Learn more about
+                <T>{"Learn more about"}</T>
                 <InlineLink
                   href={
                     "https://docs.netbird.io/how-to/add-users-to-your-network"
                   }
                   target={"_blank"}
                 >
-                  Users
+                  <T>{"Users"}</T>
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -458,7 +480,7 @@ export default function UsersTable({
                 onClick={() => setShowInvites(true)}
               >
                 <Link2 size={14} />
-                Show Invites
+                <T>{"Show Invites"}</T>
                 <NotificationCountBadge count={validInvitesCount} />
               </Button>
             )}
@@ -498,7 +520,7 @@ export const InviteUserButton = ({
   const button = (
     <Button variant={"primary"} className={className} disabled={isDisabled}>
       <MailPlus size={16} />
-      {isCloud ? "Invite User" : "Add User"}
+      {isCloud ? <T>{"Invite User"}</T> : <T>{"Add User"}</T>}
     </Button>
   );
 
@@ -510,7 +532,11 @@ export const InviteUserButton = ({
         content={
           <div className={"flex flex-col"}>
             <p className={"max-w-[200px] text-xs"}>
-              Local authentication is disabled. Use your IdP for authentication.
+              <T>
+                {
+                  "Local authentication is disabled. Use your IdP for authentication."
+                }
+              </T>
             </p>
             <div className={"text-xs mt-1.5"}>
               <InlineLink
@@ -520,7 +546,7 @@ export const InviteUserButton = ({
                 target={"_blank"}
                 className={"flex gap-1 items-center"}
               >
-                Learn more
+                <T>{"Learn more"}</T>
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </div>

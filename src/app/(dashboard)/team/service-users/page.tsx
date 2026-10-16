@@ -1,5 +1,4 @@
 "use client";
-
 import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
@@ -12,6 +11,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -20,6 +20,7 @@ const ServiceUsersTable = lazy(
 );
 
 export default function ServiceUsers() {
+  const { t } = useTranslation();
   const { permission } = usePermissions();
   const { data: users, isLoading } = useFetchApi<User[]>(
     "/users?service_user=true",
@@ -34,31 +35,36 @@ export default function ServiceUsers() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/team"}
-            label={"Team"}
+            label={t("Team")}
             icon={<TeamIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/team/service-users"}
-            label={"Service Users"}
+            label={t("Service Users")}
             active
             icon={<IconSettings2 size={17} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Service Users</h1>
+        <h1 ref={headingRef}>
+          <T>{"Service Users"}</T>
+        </h1>
         <Paragraph>
-          Use service users to create API tokens and avoid losing automated
-          access.{" "}
+          <T>
+            {
+              "Use service users to create API tokens and avoid losing automated access."
+            }
+          </T>{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
             target={"_blank"}
           >
-            Learn more
+            <T>{"Learn more"}</T>
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>
       <RestrictedAccess
-        page={"Service Users"}
+        page={t("Service Users")}
         hasAccess={permission.users.read}
       >
         <Suspense fallback={<SkeletonTable />}>

@@ -31,6 +31,7 @@ import NoResults from "@/components/ui/NoResults";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { Group } from "@/interfaces/Group";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import NameserverModal from "@/modules/dns/nameservers/NameserverModal";
@@ -45,7 +46,11 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Name"}</T>
+        </DataTableHeader>
+      );
     },
     sortingFn: "text",
     cell: ({ row }) => <NameserverNameCell ns={row.original} />,
@@ -70,7 +75,11 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
     accessorFn: (row) => row.domains?.length || 0,
     id: "domains",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Match Domains</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Match Domains"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => <NameserverMatchDomainsCell ns={row.original} />,
   },
@@ -78,7 +87,11 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
     accessorFn: (row) => row.nameservers?.length || 0,
     id: "nameservers",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Nameservers</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Nameservers"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => <NameserverNameserversCell ns={row.original} />,
   },
@@ -86,15 +99,18 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
     accessorFn: (row) => row.groups?.length || 0,
     id: "groups",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>
+          <T>{"Groups"}</T>
+        </DataTableHeader>
+      );
     },
     cell: ({ row }) => <NameserverDistributionGroupsCell ns={row.original} />,
   },
   {
     id: "group_names_filter",
     accessorFn: (row) =>
-      ((row as NameserverGroup & { _group_names?: string[] })._group_names) ??
-      [],
+      (row as NameserverGroup & { _group_names?: string[] })._group_names ?? [],
     filterFn: "arrIncludesSome",
   },
   {
@@ -119,6 +135,7 @@ export default function NameserverGroupTable({
   isGroupPage,
   distributionGroups,
 }: Readonly<Props>) {
+  const { t } = useTranslation();
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
@@ -162,18 +179,18 @@ export default function NameserverGroupTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      { value: undefined, label: t("All"), dotClass: "bg-nb-gray-500" },
+      { value: true, label: t("Active"), dotClass: "bg-green-500" },
+      { value: false, label: t("Inactive"), dotClass: "bg-nb-gray-700" },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "enabled",
-        label: "Status",
+        label: t("Status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -187,7 +204,7 @@ export default function NameserverGroupTable({
       },
       {
         id: "group_names_filter",
-        label: "Groups",
+        label: t("Groups"),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -199,7 +216,7 @@ export default function NameserverGroupTable({
         formatChip: (v) => formatGroupsChip(v as string[] | undefined),
       },
     ],
-    [statusOptions, tableGroups],
+    [t, statusOptions, tableGroups],
   );
 
   return (
@@ -215,7 +232,7 @@ export default function NameserverGroupTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
-        text={"Network Routes"}
+        text={t("Network Routes")}
         sorting={sorting}
         setSorting={setSorting}
         wrapperComponent={isGroupPage ? Card : undefined}
@@ -245,16 +262,16 @@ export default function NameserverGroupTable({
         }}
         columns={NameserverGroupTableColumns}
         data={nameserverGroupsWithNames}
-        searchPlaceholder={"Search by name, domains or nameservers..."}
+        searchPlaceholder={t("Search by name, domains or nameservers...")}
         getStartedCard={
           isGroupPage ? (
             <NoResults
               icon={<DNSIcon className={"fill-nb-gray-200"} size={20} />}
               className={"py-4"}
-              title={"This group is not used within any nameservers yet"}
-              description={
-                "Assign this group as a distribution group in your nameservers to see them listed here."
-              }
+              title={t("This group is not used within any nameservers yet")}
+              description={t(
+                "Assign this group as a distribution group in your nameservers to see them listed here.",
+              )}
             >
               <NameserverTemplateModal distributionGroups={distributionGroups}>
                 <Button
@@ -263,7 +280,7 @@ export default function NameserverGroupTable({
                   disabled={!permission.nameservers.create}
                 >
                   <PlusCircle size={16} />
-                  Add Nameserver
+                  <T>{"Add Nameserver"}</T>
                 </Button>
               </NameserverTemplateModal>
             </NoResults>
@@ -276,10 +293,10 @@ export default function NameserverGroupTable({
                   size={"large"}
                 />
               }
-              title={"Create Nameserver"}
-              description={
-                "It looks like you don't have any nameservers. Get started by adding one to your network. Select a predefined or add your custom nameservers."
-              }
+              title={t("Create Nameserver")}
+              description={t(
+                "It looks like you don't have any nameservers. Get started by adding one to your network. Select a predefined or add your custom nameservers.",
+              )}
               button={
                 <div className={"flex flex-col"}>
                   <div>
@@ -293,7 +310,7 @@ export default function NameserverGroupTable({
                         data-testid="open-add-nameserver"
                       >
                         <PlusCircle size={16} />
-                        Add Nameserver
+                        <T>{"Add Nameserver"}</T>
                       </Button>
                     </NameserverTemplateModal>
                   </div>
@@ -301,14 +318,14 @@ export default function NameserverGroupTable({
               }
               learnMore={
                 <>
-                  Learn more about
+                  <T>{"Learn more about"}</T>
                   <InlineLink
                     href={
                       "https://docs.netbird.io/how-to/manage-dns-in-your-network"
                     }
                     target={"_blank"}
                   >
-                    DNS
+                    <T>{"DNS"}</T>
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -327,7 +344,7 @@ export default function NameserverGroupTable({
                   data-testid="open-add-nameserver"
                 >
                   <PlusCircle size={16} />
-                  Add Nameserver
+                  <T>{"Add Nameserver"}</T>
                 </Button>
               </NameserverTemplateModal>
             )}
