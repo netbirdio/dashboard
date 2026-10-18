@@ -336,7 +336,6 @@ function BillingContextProvider({ children }: Readonly<Props>) {
     if (subscription && !subscription.active) return true;
     if (subscription && !subscription.updated_at) return true;
     if (subscription && subscription.plan_tier === PlanTier.FREE) return true;
-    if (subscription && subscription.plan_tier === PlanTier.TRIAL) return true;
     const updatedAt = dayjs(subscription?.updated_at);
     const now = dayjs();
     const diff = now.diff(updatedAt, "hour");
