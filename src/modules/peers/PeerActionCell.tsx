@@ -31,6 +31,7 @@ import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";
 import { isSSHSupportedOnOS } from "@/modules/remote-access/osSupport";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
+import { VNCButton } from "@/modules/remote-access/vnc/VNCButton";
 import InlineLink from "@components/InlineLink";
 import { useDialog } from "@/contexts/DialogProvider";
 
@@ -253,6 +254,7 @@ export default function PeerActionCell() {
               <DropdownMenuSeparator />
               <SSHButton peer={peer} isDropdown={true} />
               <RDPButton peer={peer} isDropdown={true} />
+              <VNCButton peer={peer} isDropdown={true} />
             </>
           )}
 

@@ -83,8 +83,14 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
   const isClientDisconnected = client.status === NetBirdStatus.DISCONNECTED;
   const isClientConnecting = client.status === NetBirdStatus.CONNECTING;
 
-  // Use the FQDN when an IP version is specified so the dialer resolves to the correct address family.
-  const sshHost = ipVersion ? peer.dns_label || peer.ip : peer.ip;
+  // Dial the IPv6 address when ip_version=6 is requested and the peer has one,
+  // IPv4 otherwise. peer.ip is always IPv4, so a request for "6" on a peer
+  // without an IPv6 address has to fall back on the version too, or the dialer
+  // is told to use a family the host doesn't belong to.
+  const requestedIPv6 = ipVersion === "6" ? peer.ipv6 : undefined;
+  const sshHost = requestedIPv6 ?? peer.ip;
+  const sshIpVersion =
+    ipVersion === "6" ? (requestedIPv6 ? "6" : "4") : ipVersion;
 
   useEffect(() => {
     document.title = `${username}@${sshHost} - ${peer.hostname}`;
@@ -105,7 +111,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
         hostname: sshHost,
         port: Number(port),
         username,
-        ipVersion: ipVersion || undefined,
+        ipVersion: sshIpVersion || undefined,
       });
     } catch (error) {
       console.error("Reconnection failed:", error);
@@ -132,7 +138,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
           hostname: sshHost,
           port: Number(port),
           username,
-          ipVersion: ipVersion || undefined,
+          ipVersion: sshIpVersion || undefined,
         });
         if (res === SSHStatus.CONNECTED) {
           sshConnectedOnce.current = true;
@@ -168,7 +174,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
     return (
       <DisconnectedMessage
         username={username}
-        peerIp={peer.ip}
+        peerIp={sshHost}
         onReconnect={handleReconnect}
       />
     );
@@ -178,7 +184,7 @@ function SSHTerminal({ username, port, peer, ipVersion }: Props) {
     <>
       {session && <Terminal session={session} onClose={disconnect} />}
       {!isSSHConnected && (
-        <LoadingMessage message={`Connecting to ${username}@${peer.ip}...`} />
+        <LoadingMessage message={`Connecting to ${username}@${sshHost}...`} />
       )}
     </>
   );

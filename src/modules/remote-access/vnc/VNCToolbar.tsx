@@ -1,0 +1,181 @@
+import React, { useEffect, useRef, useState } from "react";
+
+interface Props {
+  onCtrlAltDel?: () => void;
+  onPaste?: () => void;
+  // onDisconnect ends this client's own session. The host is not asked and
+  // nothing on the peer changes: the page falls through to its disconnected
+  // screen, from where Reconnect starts a new session.
+  onDisconnect?: () => void;
+  showRemoteCursor: boolean;
+  onToggleRemoteCursor?: (enable: boolean) => void;
+  // viewOnly hides input actions and shows a "View-only" badge.
+  viewOnly?: boolean;
+  // external marks a session served by a third-party VNC server, which
+  // NetBird did not authenticate and the peer's user was not asked to
+  // approve. Shown for as long as the session lasts, outside the part of the
+  // toolbar that collapses, because an operator who cannot see it will assume
+  // the guarantees of the NetBird path.
+  external?: boolean;
+}
+
+const STORAGE_KEY = "netbird.vnc.toolbarX";
+
+export default function VNCToolbar({
+  onCtrlAltDel,
+  onPaste,
+  onDisconnect,
+  showRemoteCursor,
+  onToggleRemoteCursor,
+  viewOnly,
+  external,
+}: Props) {
+  // The separator ahead of End session only earns its place if something is
+  // actually in front of it. An external session hides the controls it cannot
+  // serve, which can leave End session alone in the toolbar.
+  const hasControlsBeforeDisconnect =
+    Boolean(viewOnly) ||
+    Boolean(onCtrlAltDel && !viewOnly) ||
+    Boolean(onPaste) ||
+    Boolean(onToggleRemoteCursor);
+
+  const [xPercent, setXPercent] = useState<number>(() => {
+    if (typeof window === "undefined") return 50;
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      const parsed = stored ? parseFloat(stored) : NaN;
+      return isFinite(parsed) ? Math.max(5, Math.min(95, parsed)) : 50;
+    } catch (e) {
+      return 50;
+    }
+  });
+  const draggingRef = useRef(false);
+  // Mirrors xPercent so the pointerup handler below can persist the latest
+  // value without the listeners being torn down and re-registered on every
+  // drag frame. Synced from an effect, never during render.
+  const xPercentRef = useRef(xPercent);
+  useEffect(() => {
+    xPercentRef.current = xPercent;
+  }, [xPercent]);
+
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      if (!draggingRef.current) return;
+      const pct = (e.clientX / window.innerWidth) * 100;
+      const clamped = Math.max(5, Math.min(95, pct));
+      setXPercent(clamped);
+    };
+    const onUp = () => {
+      if (!draggingRef.current) return;
+      draggingRef.current = false;
+      document.body.style.userSelect = "";
+      try {
+        window.localStorage.setItem(STORAGE_KEY, String(xPercentRef.current));
+      } catch (e) {}
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      // If we unmount mid-drag, undo the body-wide selection lock so the
+      // rest of the app doesn't get stuck with text selection disabled.
+      if (draggingRef.current) {
+        draggingRef.current = false;
+        document.body.style.userSelect = "";
+      }
+    };
+  }, []);
+
+  const startDrag = (e: React.PointerEvent) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    document.body.style.userSelect = "none";
+  };
+
+  return (
+    <div
+      className="fixed top-0 z-50 group px-4 pt-0 pb-4"
+      style={{ left: `${xPercent}%`, transform: "translateX(-50%)" }}
+    >
+      {/* items-start, not items-center: both of these hang from the top edge
+          of the window, and centering them against each other would push the
+          taller one's sibling down and leave the pair floating. */}
+      <div className="flex items-start gap-1.5 justify-center">
+        <div
+          onPointerDown={startDrag}
+          className="h-2 w-24 bg-nb-gray-500/60 group-hover:bg-nb-gray-400/80 rounded-b-lg cursor-grab active:cursor-grabbing transition-colors touch-none"
+          title="Drag to reposition"
+        />
+        {external && (
+          <span
+            className="text-[10px] leading-none text-amber-200 px-1.5 py-1 rounded-b bg-amber-900/70 border-x border-b border-amber-700/60 whitespace-nowrap"
+            title="External VNC server. Not authenticated by NetBird, and the peer's user was not asked to approve this session."
+          >
+            External VNC
+          </span>
+        )}
+      </div>
+      <div className="max-h-0 group-hover:max-h-20 group-focus-within:max-h-20 overflow-hidden transition-all duration-200 ease-out">
+        <div className="flex gap-1 bg-nb-gray-900/95 backdrop-blur border border-nb-gray-700 rounded-md px-2 py-1.5 shadow-lg mt-1">
+          {viewOnly && (
+            <span
+              className="text-xs text-amber-300 px-3 py-1 rounded bg-amber-900/40 border border-amber-700/60 whitespace-nowrap"
+              title="The host granted view-only access. You can see the screen but cannot send input."
+            >
+              View-only
+            </span>
+          )}
+          {onCtrlAltDel && !viewOnly && (
+            <button
+              onClick={onCtrlAltDel}
+              className="text-xs text-nb-gray-300 hover:text-white px-3 py-1 rounded hover:bg-nb-gray-700 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-neutral-300"
+              title="Send Ctrl+Alt+Del to remote machine"
+            >
+              Ctrl+Alt+Del
+            </button>
+          )}
+          {onPaste && (
+            <button
+              onClick={onPaste}
+              className="text-xs text-nb-gray-300 hover:text-white px-3 py-1 rounded hover:bg-nb-gray-700 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-neutral-300"
+              title="Paste host clipboard into remote machine by typing the text (works on login screens too)"
+            >
+              Paste
+            </button>
+          )}
+          {onToggleRemoteCursor && (
+            <button
+              onClick={() => onToggleRemoteCursor(!showRemoteCursor)}
+              className={
+                "text-xs px-3 py-1 rounded transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-neutral-300 " +
+                (showRemoteCursor
+                  ? "text-white bg-nb-gray-700"
+                  : "text-nb-gray-300 hover:text-white hover:bg-nb-gray-700")
+              }
+              title="Show the remote user's cursor (useful for remote support and view-only scenarios)"
+            >
+              Remote cursor
+            </button>
+          )}
+          {onDisconnect && (
+            <>
+              {hasControlsBeforeDisconnect && (
+                <span
+                  aria-hidden={true}
+                  className="self-stretch w-px bg-nb-gray-700 mx-0.5"
+                />
+              )}
+              <button
+                onClick={onDisconnect}
+                className="text-xs text-red-400 hover:text-red-300 px-3 py-1 rounded hover:bg-red-500/10 transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-offset-nb-gray-950 focus-visible:ring-red-400"
+              >
+                End session
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

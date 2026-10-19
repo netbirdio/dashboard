@@ -35,6 +35,17 @@ type NetBirdState = {
   error: string;
 };
 
+// TemporaryConnectResult is returned by connectTemporary. targetPubKey is
+// the destination peer's identity public key reported by management;
+// null on the early-exit path. keySessionId is the opaque handle for
+// the per-session X25519 keypair the wasm helper minted (the private
+// half stays inside wasm).
+export type TemporaryConnectResult = {
+  connected: boolean;
+  targetPubKey: string | null;
+  keySessionId: string | null;
+};
+
 class NetBirdStore {
   private state: NetBirdState = {
     status: NetBirdStatus.DISCONNECTED,
@@ -265,13 +276,20 @@ export const useNetBirdClient = () => {
   );
 
   const connectTemporary = useCallback(
-    async (peerId: string, rules?: string[]) => {
+    async (
+      peerId: string,
+      rules?: string[],
+    ): Promise<TemporaryConnectResult> => {
       const currentStatus = netBirdStore.getState().status;
       if (
         currentStatus === NetBirdStatus.CONNECTING ||
         currentStatus === NetBirdStatus.CONNECTED
       ) {
-        return currentStatus === NetBirdStatus.CONNECTED;
+        return {
+          connected: currentStatus === NetBirdStatus.CONNECTED,
+          targetPubKey: null,
+          keySessionId: null,
+        };
       }
 
       netBirdStore.setState({ status: NetBirdStatus.CONNECTING });
@@ -285,15 +303,36 @@ export const useNetBirdClient = () => {
             : trim(
                 `${browser.name.toLowerCase()}-${browser.version.toLowerCase()}-browser-client`,
               );
-        await peerRequest.post(
+        // Mint a per-session X25519 keypair inside wasm; only the
+        // session-id handle and the public key cross the JS boundary.
+        // The wasm bundle must be initialized first.
+        await initialize();
+        let sessionPub: string | undefined;
+        let keySessionId: string | null = null;
+        const wasmGenerate = (window as any).netbirdGenerateVNCSessionKey;
+        if (typeof wasmGenerate === "function") {
+          const sk = wasmGenerate();
+          if (
+            sk &&
+            typeof sk === "object" &&
+            typeof sk.publicKey === "string"
+          ) {
+            sessionPub = sk.publicKey;
+            keySessionId = sk.sessionId ?? null;
+          }
+        }
+        const resp = (await peerRequest.post(
           {
             name,
             wg_pub_key: keyPairs.publicKey,
             rules: rules ?? ["tcp/22022", "tcp/3389", "tcp/44338", "netbird-ssh/22"],
+            ...(sessionPub ? { session_pub_key: sessionPub } : {}),
           },
           `/${peerId}/temporary-access`,
-        );
-        return await connect(keyPairs.privateKey);
+        )) as { target_pub_key?: string } | undefined;
+        const targetPubKey = resp?.target_pub_key ?? null;
+        const connected = await connect(keyPairs.privateKey);
+        return { connected, targetPubKey, keySessionId };
       } catch (error) {
         netBirdStore.setState({ status: NetBirdStatus.DISCONNECTED });
         throw error;
