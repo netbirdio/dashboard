@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { Group } from "@/interfaces/Group";
 import {
+  agentGroupDeletionUpdates,
   groupDeletionPolicyUpdates,
   patchGroupInPolicies,
   removeGroupFromPolicy,
   sameGroupMatcher,
 } from "./policy-group-sync";
 
-const policyItem = (sources: (Group | string)[], destinations: (Group | string)[]) => ({
+const policyItem = (
+  sources: (Group | string)[],
+  destinations: (Group | string)[],
+) => ({
   id: "policy-new-1",
   data: {
     policy: {
@@ -26,7 +30,10 @@ describe("patchGroupInPolicies", () => {
     const items = [
       policyItem(
         [{ name: "Ops", peers_count: 0 } as Group],
-        [{ name: "Ops", peers_count: 0 } as Group, { id: "g2", name: "Other" } as Group],
+        [
+          { name: "Ops", peers_count: 0 } as Group,
+          { id: "g2", name: "Other" } as Group,
+        ],
       ),
     ];
     const next = patchGroupInPolicies(
@@ -42,7 +49,10 @@ describe("patchGroupInPolicies", () => {
 
   it("matches existing groups by id, not name", () => {
     const items = [
-      policyItem([{ id: "g1", name: "Ops" } as Group], [{ name: "Ops" } as Group]),
+      policyItem(
+        [{ id: "g1", name: "Ops" } as Group],
+        [{ name: "Ops" } as Group],
+      ),
     ];
     const next = patchGroupInPolicies(
       items,
@@ -79,9 +89,7 @@ describe("patchGroupInPolicies", () => {
   });
 
   it("patches member counts without touching other fields", () => {
-    const items = [
-      policyItem([{ name: "Ops", peers_count: 1 } as Group], []),
-    ];
+    const items = [policyItem([{ name: "Ops", peers_count: 1 } as Group], [])];
     const next = patchGroupInPolicies(
       items,
       sameGroupMatcher({ name: "Ops" } as Group),
@@ -123,7 +131,12 @@ describe("patchGroupInPolicies", () => {
 // trackUpdatePolicy reads a both-sides-bare rule as a deletion, so the confirm
 // dialog needs the same answer the changeset gets.
 describe("groupDeletionPolicyUpdates", () => {
-  const named = (id: string, name: string, sources: (Group | string)[], destinations: (Group | string)[]) => ({
+  const named = (
+    id: string,
+    name: string,
+    sources: (Group | string)[],
+    destinations: (Group | string)[],
+  ) => ({
     id: `policy-${id}`,
     data: {
       policy: {
@@ -189,9 +202,72 @@ describe("groupDeletionPolicyUpdates", () => {
   });
 
   it("skips a draft policy with no id, which has nothing to update", () => {
-    const node = { id: "policy-new-1", data: { policy: { name: "Draft", rules: [{ sources: [ops], destinations: [ops] }] } } };
-    const { updates, emptied } = groupDeletionPolicyUpdates([node as never], [ops]);
+    const node = {
+      id: "policy-new-1",
+      data: {
+        policy: {
+          name: "Draft",
+          rules: [{ sources: [ops], destinations: [ops] }],
+        },
+      },
+    };
+    const { updates, emptied } = groupDeletionPolicyUpdates(
+      [node as never],
+      [ops],
+    );
     expect(updates.size).toBe(0);
     expect(emptied).toEqual([]);
+  });
+});
+
+describe("agentGroupDeletionUpdates", () => {
+  const agentPolicy = (id: string, sourceGroups: string[]) =>
+    ({
+      id,
+      name: id,
+      description: "",
+      enabled: true,
+      sourceGroups,
+      destinationProviderIds: ["prov-1"],
+      guardrailIds: [],
+      limits: {},
+    }) as never;
+
+  it("strips the deleted groups off the source side", () => {
+    const [update] = agentGroupDeletionUpdates(
+      [agentPolicy("ap-1", ["g1", "g2"])],
+      [{ id: "g1", name: "One" } as Group],
+    );
+    expect(update.policy.sourceGroups).toEqual(["g2"]);
+    expect(update.groupIds).toEqual(["g1"]);
+    expect(update.basePolicy.sourceGroups).toEqual(["g1", "g2"]);
+  });
+
+  it("skips policies the groups are not on", () => {
+    expect(
+      agentGroupDeletionUpdates(
+        [agentPolicy("ap-1", ["g2"])],
+        [{ id: "g1", name: "One" } as Group],
+      ),
+    ).toEqual([]);
+  });
+
+  it("reports one update per policy when it is listed twice", () => {
+    const policy = agentPolicy("ap-1", ["g1"]);
+    expect(
+      agentGroupDeletionUpdates(
+        [policy, policy],
+        [{ id: "g1", name: "One" } as Group],
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("ignores draft groups, which have no id to be named by", () => {
+    expect(
+      agentGroupDeletionUpdates(
+        [agentPolicy("ap-1", ["g1"])],
+        [{ name: "Draft" } as Group],
+      ),
+    ).toEqual([]);
   });
 });

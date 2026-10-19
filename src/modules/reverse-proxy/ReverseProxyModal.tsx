@@ -1,21 +1,22 @@
 "use client";
 
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import FullTooltip from "@components/FullTooltip";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
-import SettingCard from "@components/SettingCard";
 import {
   Modal,
   ModalClose,
   ModalContent,
   ModalFooter,
 } from "@components/modal/Modal";
-import Paragraph from "@components/Paragraph";
 import ModalHeader from "@components/modal/ModalHeader";
+import Paragraph from "@components/Paragraph";
+import SettingCard from "@components/SettingCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import {
   ArrowRight,
@@ -35,12 +36,13 @@ import {
   ShieldCheckIcon,
   Users,
 } from "lucide-react";
-import { Callout } from "@components/Callout";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
@@ -59,30 +61,28 @@ import {
   ReverseProxyTargetType,
   ServiceMode,
 } from "@/interfaces/ReverseProxy";
-import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
-import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
-import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
+import useGroupHelper from "@/modules/groups/useGroupHelper";
 import AuthHeaderModal from "@/modules/reverse-proxy/auth/AuthHeaderModal";
+import AuthNetBirdOnlyModal from "@/modules/reverse-proxy/auth/AuthNetBirdOnlyModal";
+import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
 import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
-import AuthNetBirdOnlyModal from "@/modules/reverse-proxy/auth/AuthNetBirdOnlyModal";
+import { ReverseProxyAccessControlRules } from "@/modules/reverse-proxy/ReverseProxyAccessControlRules";
 import ReverseProxyHTTPTargets from "@/modules/reverse-proxy/ReverseProxyHTTPTargets";
 import ReverseProxyLayer4Content from "@/modules/reverse-proxy/ReverseProxyLayer4Content";
-import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
-import { type Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
-import { useReverseProxyAddress } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
-import {
-  validateSessionIdleTimeout,
-  validateTimeout,
-} from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
-import useGroupHelper from "@/modules/groups/useGroupHelper";
-import { Group } from "@/interfaces/Group";
 import {
   ReverseProxyServiceModeSelector,
   SERVICE_MODES,
 } from "@/modules/reverse-proxy/ReverseProxyServiceModeSelector";
-import { ReverseProxyAccessControlRules } from "@/modules/reverse-proxy/ReverseProxyAccessControlRules";
+import { useReverseProxyAddress } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
+import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
+import { type Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
+import {
+  validateSessionIdleTimeout,
+  validateTimeout,
+} from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
+import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
+import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
 
 type Props = {
   open: boolean;
@@ -1097,6 +1097,7 @@ export default function ReverseProxyModal({
           targets: targets,
           enabled: reverseProxy?.enabled ?? true,
           mode: serviceMode,
+          private: isPrivate,
         }}
         initialResource={initialResource}
         initialPeer={initialPeer}

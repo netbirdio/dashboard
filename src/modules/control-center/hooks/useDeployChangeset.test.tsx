@@ -13,6 +13,7 @@ type Call = { method: string; path: string; body?: unknown };
 const calls: Call[] = [];
 const handlers = new Map<string, (body?: unknown) => unknown>();
 let liveGroups: Group[] = [];
+let liveUsers: { id: string; name: string; auto_groups?: string[] }[] = [];
 let liveNetworks: Network[] = [];
 let liveResources: NetworkResource[] = [];
 let changes: DraftChange[] = [];
@@ -40,21 +41,52 @@ vi.mock("@utils/api", () => ({
 }));
 vi.mock("swr", () => ({ mutate: vi.fn(async () => undefined) }));
 // Full rights by default; the permission-gate tests narrow this per case.
-let permission = {
-  groups: { create: true, read: true, update: true, delete: true },
-  policies: { create: true, read: true, update: true, delete: true },
-  networks: { create: true, read: true, update: true, delete: true },
+const allRights = { create: true, read: true, update: true, delete: true };
+let permission: Record<string, typeof allRights> = {
+  groups: { ...allRights },
+  policies: { ...allRights },
+  networks: { ...allRights },
+  users: { ...allRights },
+  "agent_network.providers": { ...allRights },
+  "agent_network.policies": { ...allRights },
 };
 vi.mock("@/contexts/PermissionsProvider", () => ({
   usePermissions: () => ({ permission }),
 }));
 const notify = vi.fn();
-vi.mock("@components/Notification", () => ({ notify: (a: unknown) => notify(a) }));
+vi.mock("@components/Notification", () => ({
+  notify: (a: unknown) => notify(a),
+}));
 vi.mock("@/modules/control-center/hooks/useControlCenterData", () => ({
   useControlCenterData: () => ({
     groups: liveGroups,
     networks: liveNetworks,
     networkResources: liveResources,
+    users: liveUsers,
+  }),
+}));
+export const agentCalls: { name: string; args: unknown[] }[] = [];
+const agentResults: Record<string, unknown> = {};
+const agentFn =
+  (name: string, result?: unknown | (() => unknown)) =>
+  (...args: unknown[]) => {
+    agentCalls.push({ name, args });
+    return Promise.resolve(typeof result === "function" ? result() : result);
+  };
+vi.mock("@/modules/agent-network/AIProvidersProvider", () => ({
+  useAIProviders: () => ({
+    addProvider: agentFn("addProvider", () => agentResults.addProvider),
+    updateProvider: agentFn(
+      "updateProvider",
+      () => agentResults.updateProvider,
+    ),
+    deleteProvider: agentFn(
+      "deleteProvider",
+      () => agentResults.deleteProvider,
+    ),
+    addPolicy: agentFn("addPolicy", () => agentResults.addPolicy),
+    updatePolicy: agentFn("updatePolicy", () => agentResults.updatePolicy),
+    deletePolicy: agentFn("deletePolicy", () => agentResults.deletePolicy),
   }),
 }));
 vi.mock("@/modules/control-center/draft/DraftChangesetContext", async () => {
@@ -96,14 +128,204 @@ beforeEach(() => {
   handlers.clear();
   notify.mockClear();
   liveGroups = [];
+  liveUsers = [];
   liveNetworks = [];
   liveResources = [];
   changes = [];
   permission = {
-    groups: { create: true, read: true, update: true, delete: true },
-    policies: { create: true, read: true, update: true, delete: true },
-    networks: { create: true, read: true, update: true, delete: true },
+    groups: { ...allRights },
+    policies: { ...allRights },
+    networks: { ...allRights },
+    users: { ...allRights },
+    "agent_network.providers": { ...allRights },
+    "agent_network.policies": { ...allRights },
   };
+  agentCalls.length = 0;
+  agentResults.addProvider = { id: "provider-created" };
+  agentResults.updateProvider = true;
+  agentResults.deleteProvider = true;
+  agentResults.addPolicy = { id: "agent-policy-created" };
+  agentResults.updatePolicy = true;
+  agentResults.deletePolicy = true;
+});
+
+describe("agent network changes", () => {
+  const createProvider = (clientId: string): DraftChange =>
+    ({
+      id: `cp-${clientId}`,
+      type: "create-provider",
+      clientId,
+      name: "OpenAI",
+      input: {
+        providerId: "openai_api",
+        name: "OpenAI",
+        upstreamUrl: "https://api.openai.com",
+        apiKey: "sk-test",
+        models: [],
+      },
+    }) as DraftChange;
+
+  const createAgentPolicy = (
+    providerIds: string[],
+    sourceGroups: string[] = ["g1"],
+  ): DraftChange =>
+    ({
+      id: "cap-1",
+      type: "create-agent-policy",
+      clientId: "new-policy",
+      name: "Agents → OpenAI",
+      policy: {
+        name: "Agents → OpenAI",
+        description: "",
+        enabled: true,
+        sourceGroups,
+        destinationProviderIds: providerIds,
+        guardrailIds: [],
+        limits: {},
+      },
+    }) as unknown as DraftChange;
+
+  beforeEach(() => {
+    liveGroups = [{ id: "g1", name: "Agents" } as Group];
+  });
+
+  it("creates the provider before the policy that names it", async () => {
+    changes = [createAgentPolicy(["new-p1"]), createProvider("new-p1")];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    expect(agentCalls.map((c) => c.name)).toEqual(["addProvider", "addPolicy"]);
+  });
+
+  it("resolves a draft provider's client id to the created id", async () => {
+    changes = [createProvider("new-p1"), createAgentPolicy(["new-p1"])];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    const policyCall = agentCalls.find((c) => c.name === "addPolicy");
+    expect(
+      (policyCall?.args[0] as { destinationProviderIds: string[] })
+        .destinationProviderIds,
+    ).toEqual(["provider-created"]);
+  });
+
+  it("resolves a draft group named on the source side to its created id", async () => {
+    liveGroups = [];
+    handlers.set("POST /groups", () => ({ id: "g-real", name: "Agents" }));
+    changes = [
+      {
+        id: "cg-1",
+        type: "create-group",
+        clientId: "group-new-Agents",
+        name: "Agents",
+        peerIds: [],
+        resourceIds: [],
+      } as unknown as DraftChange,
+      createProvider("new-p1"),
+      createAgentPolicy(["new-p1"], ["Agents"]),
+    ];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    const policyCall = agentCalls.find((c) => c.name === "addPolicy");
+    expect(
+      (policyCall?.args[0] as { sourceGroups: string[] }).sourceGroups,
+    ).toEqual(["g-real"]);
+  });
+
+  it("refuses a policy naming a group that is nowhere to be found", async () => {
+    liveGroups = [];
+    changes = [createProvider("new-p1"), createAgentPolicy(["new-p1"])];
+    const { result } = renderHook(() => useDeployChangeset());
+    const ok = await act(async () => await result.current.deploy());
+
+    expect(ok).toBe(false);
+    expect(agentCalls.some((c) => c.name === "addPolicy")).toBe(false);
+  });
+
+  it("resolves refs on an update to an existing agent policy too", async () => {
+    liveGroups = [];
+    handlers.set("POST /groups", () => ({ id: "g-real", name: "Agents" }));
+    changes = [
+      {
+        id: "cg-1",
+        type: "create-group",
+        clientId: "group-new-Agents",
+        name: "Agents",
+        peerIds: [],
+        resourceIds: [],
+      } as unknown as DraftChange,
+      {
+        id: "uap-1",
+        type: "update-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "Agents → OpenAI",
+        policy: { sourceGroups: ["Agents"] },
+      } as unknown as DraftChange,
+    ];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    const call = agentCalls.find((c) => c.name === "updatePolicy");
+    expect((call?.args[1] as { sourceGroups: string[] }).sourceGroups).toEqual([
+      "g-real",
+    ]);
+  });
+
+  it("refuses a user membership change without the users permission", async () => {
+    permission.users = { ...allRights, update: false };
+    liveGroups = [{ id: "g1", name: "Ops" } as Group];
+    liveUsers = [{ id: "u1", name: "Ada", auto_groups: [] }];
+    changes = [
+      {
+        id: "uug-1",
+        type: "update-user-groups",
+        userId: "u1",
+        name: "Ada",
+        groupRefs: ["g1"],
+        addedGroupNames: ["Ops"],
+        removedGroupNames: [],
+      } as unknown as DraftChange,
+    ];
+    const { result } = renderHook(() => useDeployChangeset());
+    const ok = await act(async () => await result.current.deploy());
+
+    expect(ok).toBe(false);
+    expect(calls.some((c) => c.path === "/users/u1")).toBe(false);
+  });
+
+  it("refuses a policy whose draft provider was never created", async () => {
+    changes = [createAgentPolicy(["new-missing"])];
+    const { result } = renderHook(() => useDeployChangeset());
+    const ok = await act(async () => await result.current.deploy());
+
+    expect(ok).toBe(false);
+    expect(agentCalls.some((c) => c.name === "addPolicy")).toBe(false);
+  });
+
+  it("deletes the policy before the provider it references", async () => {
+    changes = [
+      {
+        id: "dp-1",
+        type: "delete-provider",
+        providerId: "p-real",
+        name: "OpenAI",
+      } as DraftChange,
+      {
+        id: "dap-1",
+        type: "delete-agent-policy",
+        agentPolicyId: "ap-real",
+        name: "Agents → OpenAI",
+      } as DraftChange,
+    ];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    expect(agentCalls.map((c) => c.name)).toEqual([
+      "deletePolicy",
+      "deleteProvider",
+    ]);
+  });
 });
 
 describe("a retry after the create already succeeded", () => {
@@ -135,7 +357,10 @@ describe("a retry after the create already succeeded", () => {
 
     // Coalescing keeps the change id when the user renames the draft group.
     changes = [createGroup("G renamed")];
-    handlers.set("PUT /groups/g-real", () => ({ id: "g-real", name: "G renamed" }));
+    handlers.set("PUT /groups/g-real", () => ({
+      id: "g-real",
+      name: "G renamed",
+    }));
     rerender();
     const ok = await act(async () => await result.current.deploy());
 
@@ -376,9 +601,7 @@ describe("contradictory policy changes never reach the API", () => {
   });
 
   it("still deploys a delete that has no matching update", async () => {
-    changes = [
-      { id: "d1", type: "delete-policy", policyId: "p1", name: "P" },
-    ];
+    changes = [{ id: "d1", type: "delete-policy", policyId: "p1", name: "P" }];
     const { result } = renderHook(() => useDeployChangeset());
     const ok = await act(async () => await result.current.deploy());
 
@@ -534,7 +757,8 @@ describe("resolving a group reference", () => {
     const ok = await act(async () => await result.current.deploy());
 
     expect(ok).toBe(true);
-    const sent = calls.find((c) => c.path === "/networks/net-1/resources")?.body;
+    const sent = calls.find((c) => c.path === "/networks/net-1/resources")
+      ?.body;
     expect(sent).toMatchObject({ groups: ["ops-team-id"] });
     // ...and the Review & Deploy preview says the same thing.
     const preview = buildChangeRequest(change, { groups: liveGroups });
@@ -906,3 +1130,191 @@ describe("the deploy in-flight latch", () => {
     expect(deployInFlight.current).toBe(false);
   });
 });
+
+describe("user group membership", () => {
+  const change = (groupRefs: string[]): DraftChange =>
+    ({
+      id: "uug-1",
+      type: "update-user-groups",
+      userId: "u1",
+      name: "Ada",
+      groupRefs,
+      addedGroupNames: ["Ops"],
+      removedGroupNames: [],
+    }) as unknown as DraftChange;
+
+  it("PUTs the whole user with the new auto_groups", async () => {
+    liveGroups = [
+      { id: "g1", name: "Ops" } as Group,
+      { id: "g-old", name: "Everyone" } as Group,
+    ];
+    liveUsers = [{ id: "u1", name: "Ada", auto_groups: ["g-old"] }];
+    changes = [change(["g-old", "g1"])];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    const call = calls.find((c) => c.path === "/users/u1");
+    expect(call?.method).toBe("PUT");
+    expect(call?.body).toMatchObject({
+      name: "Ada",
+      auto_groups: ["g-old", "g1"],
+    });
+  });
+
+  it("resolves a draft group named on the user to the id its create returned", async () => {
+    liveGroups = [];
+    liveUsers = [{ id: "u1", name: "Ada", auto_groups: [] }];
+    handlers.set("POST /groups", () => ({ id: "g-real", name: "Ops" }));
+    changes = [
+      {
+        id: "cg-1",
+        type: "create-group",
+        clientId: "group-new-Ops",
+        name: "Ops",
+        peerIds: [],
+        resourceIds: [],
+      } as unknown as DraftChange,
+      change(["Ops"]),
+    ];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    expect(
+      (
+        calls.find((c) => c.path === "/users/u1")?.body as {
+          auto_groups: string[];
+        }
+      ).auto_groups,
+    ).toEqual(["g-real"]);
+  });
+
+  it("refuses when the user is gone rather than PUTting a partial record", async () => {
+    liveGroups = [{ id: "g1", name: "Ops" } as Group];
+    liveUsers = [];
+    changes = [change(["g1"])];
+    const { result } = renderHook(() => useDeployChangeset());
+    const ok = await act(async () => await result.current.deploy());
+
+    expect(ok).toBe(false);
+    expect(calls.some((c) => c.path === "/users/u1")).toBe(false);
+  });
+});
+
+describe("a provider edit that did not rotate the key", () => {
+  it("does not deploy the mask as the credential", async () => {
+    changes = [
+      {
+        id: "up-mask",
+        type: "update-provider",
+        providerId: "p1",
+        name: "OpenAI",
+        updates: {
+          name: "OpenAI renamed",
+          upstreamUrl: "https://api.openai.com",
+        },
+      } as unknown as DraftChange,
+    ];
+    const { result } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+
+    const call = agentCalls.find((c) => c.name === "updateProvider");
+    expect(call?.args[1]).not.toHaveProperty("apiKey");
+    expect(JSON.stringify(call?.args[1])).not.toContain("••••");
+  });
+});
+
+describe("a refused agent-network write fails the deploy", () => {
+  const cases = [
+    {
+      name: "a provider update the API refused",
+      mutator: "updateProvider",
+      change: {
+        id: "up-1",
+        type: "update-provider",
+        providerId: "p1",
+        name: "OpenAI",
+        updates: { name: "OpenAI" },
+      },
+    },
+    {
+      name: "a provider delete that failed",
+      mutator: "deleteProvider",
+      change: {
+        id: "dp-1",
+        type: "delete-provider",
+        providerId: "p1",
+        name: "OpenAI",
+      },
+    },
+    {
+      name: "an agent policy update that failed",
+      mutator: "updatePolicy",
+      change: {
+        id: "uap-1",
+        type: "update-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "Agents",
+        policy: { enabled: false },
+      },
+    },
+    {
+      name: "an agent policy delete that failed",
+      mutator: "deletePolicy",
+      change: {
+        id: "dap-1",
+        type: "delete-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "Agents",
+      },
+    },
+  ];
+
+  cases.forEach(({ name, mutator, change }) => {
+    it(`refuses the deploy on ${name}`, async () => {
+      agentResults[mutator] = false;
+      changes = [change as unknown as DraftChange];
+      const { result } = renderHook(() => useDeployChangeset());
+      const ok = await act(async () => await result.current.deploy());
+
+      expect(ok).toBe(false);
+      expect(result.current.deployStatus[change.id]).not.toBe("done");
+    });
+  });
+
+  it("retrying a created provider reports a refused PUT too", async () => {
+    changes = [createProviderChange()];
+    const { result, rerender } = renderHook(() => useDeployChangeset());
+    await act(async () => void (await result.current.deploy()));
+    agentResults.updateProvider = false;
+    rerender();
+    const edited = createProviderChange() as unknown as {
+      input: Record<string, unknown>;
+    };
+    changes = [
+      {
+        ...createProviderChange(),
+        input: { ...edited.input, name: "Renamed" },
+      } as unknown as DraftChange,
+    ];
+    rerender();
+    const ok = await act(async () => await result.current.deploy());
+
+    expect(ok).toBe(false);
+  });
+});
+
+function createProviderChange() {
+  return {
+    id: "cp-retry",
+    type: "create-provider",
+    clientId: "new-retry",
+    name: "OpenAI",
+    input: {
+      providerId: "openai_api",
+      name: "OpenAI",
+      upstreamUrl: "https://api.openai.com",
+      apiKey: "sk-test",
+      models: [],
+    },
+  } as unknown as DraftChange;
+}

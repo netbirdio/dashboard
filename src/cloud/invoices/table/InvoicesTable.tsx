@@ -92,7 +92,7 @@ export default function InvoicesTable({
           description={
             "Invoices are created at the end of each billing period. You will see them here once they are available."
           }
-          icon={<ReceiptTextIcon size={20} />}
+          icon={<ReceiptTextIcon size={20} className={"text-nb-gray-300"} />}
         />
       }
       columnVisibility={{

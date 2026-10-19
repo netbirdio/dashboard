@@ -1,9 +1,11 @@
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
+import type { AgentPolicy } from "@/modules/agent-network/data/mockData";
 // Types only: DraftChangesetContext imports the reducers below, so a value import
 // here would close the cycle.
 import type {
+  AgentGroupDeletion,
   DeletePolicyChange,
   DraftChange,
   PolicyGroupDeletion,
@@ -41,7 +43,8 @@ export const isPendingPolicyWrite = (
 ): change is UpdatePolicyChange | DeletePolicyChange =>
   change.type === "update-policy" || change.type === "delete-policy";
 
-const groupKey = (g: Group | string) => (typeof g === "string" ? g : g.id ?? "");
+const groupKey = (g: Group | string) =>
+  typeof g === "string" ? g : g.id ?? "";
 
 /**
  * Puts the group entries `source` holds back into `target`, side by side. Rebases a
@@ -121,6 +124,64 @@ export const mergeGroupDeletions = (
     handEdited: true,
   };
 };
+
+export const mergeAgentGroupDeletions = (
+  superseded: AgentGroupDeletion | undefined,
+  incoming: AgentGroupDeletion | undefined,
+  nextPolicy?: Partial<AgentPolicy>,
+  supersedesUserWrite?: boolean,
+): AgentGroupDeletion | undefined => {
+  if (incoming) {
+    if (!superseded) {
+      return supersedesUserWrite ? { ...incoming, handEdited: true } : incoming;
+    }
+    return {
+      groupIds: Array.from(
+        new Set([...superseded.groupIds, ...incoming.groupIds]),
+      ),
+      basePolicy: superseded.basePolicy,
+      ...(superseded.handEdited ? { handEdited: true } : {}),
+    };
+  }
+  if (!superseded || !nextPolicy) return undefined;
+  return {
+    groupIds: superseded.groupIds,
+    basePolicy: {
+      ...superseded.basePolicy,
+      ...nextPolicy,
+      sourceGroups: Array.from(
+        new Set([
+          ...(nextPolicy.sourceGroups ??
+            dropGroupIdsFromAgentPolicy(
+              superseded.basePolicy,
+              superseded.groupIds,
+            ).sourceGroups),
+          ...superseded.groupIds.filter((id) =>
+            superseded.basePolicy.sourceGroups.includes(id),
+          ),
+        ]),
+      ),
+    },
+    handEdited: true,
+  };
+};
+
+export const dropGroupIdsFromAgentPolicy = <
+  T extends { sourceGroups: string[] },
+>(
+  policy: T,
+  groupIds: string[],
+): T => ({
+  ...policy,
+  sourceGroups: policy.sourceGroups.filter((id) => !groupIds.includes(id)),
+});
+
+export const isEmptiedAgentPolicy = (policy: {
+  sourceGroups: string[];
+  destinationProviderIds: string[];
+}) =>
+  policy.sourceGroups.length === 0 ||
+  policy.destinationProviderIds.length === 0;
 
 /** Canvas node id a change's entity renders as; routers have none. */
 export function changeNodeId(change: DraftChange): string | undefined {
@@ -205,12 +266,49 @@ export function dropGroupNameReferences(
     if (c.type === "create-policy" || c.type === "update-policy") {
       return [{ ...c, policy: stripDraftGroupFromPolicy(c.policy, name) }];
     }
+    if (c.type === "update-user-groups") {
+      if (!c.groupRefs.includes(name)) return [c];
+      const groupRefs = c.groupRefs.filter((ref) => ref !== name);
+      const addedGroupNames = c.addedGroupNames.filter((n) => n !== name);
+      const removedGroupNames = c.removedGroupNames.filter((n) => n !== name);
+      if (addedGroupNames.length === 0 && removedGroupNames.length === 0) {
+        return [];
+      }
+      return [{ ...c, groupRefs, addedGroupNames, removedGroupNames }];
+    }
+    if (c.type === "create-agent-policy") {
+      if (!c.policy.sourceGroups.includes(name)) return [c];
+      return [
+        {
+          ...c,
+          policy: {
+            ...c.policy,
+            sourceGroups: c.policy.sourceGroups.filter((ref) => ref !== name),
+          },
+        },
+      ];
+    }
+    if (c.type === "update-agent-policy") {
+      if (!c.policy.sourceGroups?.includes(name)) return [c];
+      return [
+        {
+          ...c,
+          policy: {
+            ...c.policy,
+            sourceGroups: c.policy.sourceGroups.filter((ref) => ref !== name),
+          },
+        },
+      ];
+    }
     return [c];
   });
 }
 
 /** The policy with any source/destination resource ref to `refId` cleared. */
-export const clearPolicyResourceRef = (policy: Policy, refId: string): Policy => ({
+export const clearPolicyResourceRef = (
+  policy: Policy,
+  refId: string,
+): Policy => ({
   ...policy,
   rules: policy.rules?.map((r) => ({
     ...r,
@@ -294,6 +392,15 @@ export const deletedGroupRefs = (
       ? [change.groupId]
       : [];
   }
+  if (change.type === "update-user-groups") {
+    return change.groupRefs.filter((ref) => deleted.has(ref));
+  }
+  if (
+    change.type === "create-agent-policy" ||
+    change.type === "update-agent-policy"
+  ) {
+    return (change.policy.sourceGroups ?? []).filter((ref) => deleted.has(ref));
+  }
   return [];
 };
 
@@ -333,7 +440,13 @@ export function pendingGroupDeletionWrite(
   const name = live.name ?? "Policy";
   // Same update-versus-delete decision deleteGroups makes.
   return isEmptiedPolicy(policy)
-    ? { id: changeId, type: "delete-policy", policyId: live.id, name, groupDeletion }
+    ? {
+        id: changeId,
+        type: "delete-policy",
+        policyId: live.id,
+        name,
+        groupDeletion,
+      }
     : {
         id: changeId,
         type: "update-policy",
@@ -349,9 +462,7 @@ export function pendingGroupDeletionWrite(
  * The policy a pending write leaves on the canvas. A deletion-driven `delete-policy` is
  * rebuilt from its baseline minus the strip — LIVE would redraw the doomed groups.
  */
-export const pendingPolicyView = (
-  change?: DraftChange,
-): Policy | undefined => {
+export const pendingPolicyView = (change?: DraftChange): Policy | undefined => {
   if (!change || !isPendingPolicyWrite(change)) return undefined;
   if (change.type === "update-policy") return change.policy;
   const tag = change.groupDeletion;
@@ -367,7 +478,9 @@ export function pendingResourceViews(
   changes: DraftChange[],
 ): NetworkResource[] {
   const deleted = new Set(
-    changes.flatMap((c) => (c.type === "delete-resource" ? [c.resourceId] : [])),
+    changes.flatMap((c) =>
+      c.type === "delete-resource" ? [c.resourceId] : [],
+    ),
   );
   const edits = new Map(
     changes.flatMap((c) =>
@@ -420,6 +533,47 @@ export function restoreDeletedGroupInPolicies(
                 }
               : undefined,
         },
+      ];
+    }
+    if (
+      c.type === "create-agent-policy" ||
+      c.type === "update-agent-policy" ||
+      c.type === "delete-agent-policy"
+    ) {
+      if (!c.groupDeletion?.groupIds.includes(groupId)) return [c];
+      const { groupIds, basePolicy, handEdited } = c.groupDeletion;
+      const remaining = groupIds.filter((id) => id !== groupId);
+      const policy = dropGroupIdsFromAgentPolicy(basePolicy, remaining);
+      const groupDeletion =
+        remaining.length > 0
+          ? {
+              groupIds: remaining,
+              basePolicy,
+              ...(handEdited && { handEdited }),
+            }
+          : undefined;
+      if (c.type === "create-agent-policy") {
+        return [{ ...c, name: policy.name || c.name, policy, groupDeletion }];
+      }
+      if (!groupDeletion && !handEdited) return [];
+      return [
+        isEmptiedAgentPolicy(policy)
+          ? {
+              id: c.id,
+              type: "delete-agent-policy",
+              agentPolicyId: c.agentPolicyId,
+              name: policy.name || c.name,
+              groupDeletion,
+            }
+          : {
+              id: c.id,
+              type: "update-agent-policy",
+              agentPolicyId: c.agentPolicyId,
+              name: policy.name || c.name,
+              policy,
+              origin: "edit",
+              groupDeletion,
+            },
       ];
     }
     if (!isPendingPolicyWrite(c) || !c.groupDeletion) return [c];
@@ -627,7 +781,9 @@ export function previewRemoveChange(
           c.groupId === change.name,
       ).length;
       if (policyCount)
-        effects.push(`Removes it from ${plural(policyCount, "policy", "policies")}`);
+        effects.push(
+          `Removes it from ${plural(policyCount, "policy", "policies")}`,
+        );
       if (resourceCount)
         effects.push(`Removes it from ${plural(resourceCount, "resource")}`);
       if (routerCount)
@@ -642,7 +798,8 @@ export function previewRemoveChange(
       const frameId = `network-${change.clientId}`;
       const childCount = nodes.filter((n) => n.parentId === frameId).length;
       const routerCount = changes.filter(
-        (c) => c.type === "create-router" && c.networkClientId === change.clientId,
+        (c) =>
+          c.type === "create-router" && c.networkClientId === change.clientId,
       ).length;
       if (childCount)
         effects.push(
@@ -667,7 +824,9 @@ export function previewRemoveChange(
           ),
       ).length;
       if (policyCount)
-        effects.push(`Removes it from ${plural(policyCount, "policy", "policies")}`);
+        effects.push(
+          `Removes it from ${plural(policyCount, "policy", "policies")}`,
+        );
       return {
         summary: `Remove the new resource “${change.name}”?`,
         effects,
@@ -689,7 +848,9 @@ export function previewRemoveChange(
           c.peerId === change.clientId,
       ).length;
       if (policyCount)
-        effects.push(`Removes it from ${plural(policyCount, "policy", "policies")}`);
+        effects.push(
+          `Removes it from ${plural(policyCount, "policy", "policies")}`,
+        );
       if (routerCount)
         effects.push(`Drops ${plural(routerCount, "routing-peer change")}`);
       effects.push("Deletes its generated setup key");

@@ -10,92 +10,114 @@ import * as React from "react";
 import { useEffect, useReducer } from "react";
 import { useSWRConfig } from "swr";
 import { HubspotFormField } from "@/contexts/AnalyticsProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import type { Peer } from "@/interfaces/Peer";
 import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
 import { AgentNetworkSignupForm } from "@/modules/onboarding/agent-network/AgentNetworkSignupForm";
+import {
+  AGENT_STEP,
+  AgentStep,
+  agentSteps,
+  initialAgentStep,
+  stepAfterSignup,
+} from "@/modules/onboarding/agent-network/agentNetworkSteps";
+import { ownConnectedDevice } from "@/modules/onboarding/agent-network/existingAccountOnboarding";
 import { OnboardingAgentConfigure } from "@/modules/onboarding/agent-network/OnboardingAgentConfigure";
 import { OnboardingAgentDevice } from "@/modules/onboarding/agent-network/OnboardingAgentDevice";
 import { OnboardingAgentEnd } from "@/modules/onboarding/agent-network/OnboardingAgentEnd";
+import { OnboardingAgentGateway } from "@/modules/onboarding/agent-network/OnboardingAgentGateway";
 import { OnboardingAgentPolicy } from "@/modules/onboarding/agent-network/OnboardingAgentPolicy";
 import { OnboardingAgentProvider } from "@/modules/onboarding/agent-network/OnboardingAgentProvider";
-import { OnboardingAgentWelcome } from "@/modules/onboarding/agent-network/OnboardingAgentWelcome";
 import { useAgentNetworkFirstRunSetup } from "@/modules/onboarding/agent-network/useAgentNetworkFirstRunSetup";
 
-// Step indices for the Agent Network onboarding. Kept as a flat sequence
-// (no intent branching like the regular onboarding) since there's a single
-// path that mirrors the agent-network quickstart guide.
-const STEP = {
-  SIGNUP: 1,
-  WELCOME: 2,
-  DEVICE: 3,
-  PROVIDER: 4,
-  POLICY: 5,
-  CONFIGURE: 6,
-  END: 7,
-} as const;
-
-const MAX_STEPS = STEP.END;
+// The flow is a flat sequence (no intent branching like the regular
+// onboarding) that mirrors the agent-network quickstart guide.
+type Nav = {
+  step: AgentStep;
+  // Whether the last move went back, so a step with nothing to do can leave
+  // in the same direction.
+  back: boolean;
+};
 
 type Props = {
-  initialStep: number;
+  initialStep: AgentStep;
   // onStepChange syncs the current step back to localStorage (handled by
   // OnboardingProvider) so a refresh resumes where the operator left off.
-  onStepChange: (step: number) => void;
+  onStepChange: (step: AgentStep) => void;
+  // gatewayStep adds the gateway step before the provider step, for the
+  // NetBird Cloud signups where a managed gateway can be offered.
+  gatewayStep: boolean;
+  // existingAccount marks an account that existed before its Agent Network
+  // onboarding: it already has devices, groups and policies of its own, so it
+  // creates its policy on the policy step rather than getting one made for it.
+  existingAccount: boolean;
   // signupPending mirrors the account's signup_form_pending flag. When true the
-  // flow opens on the signup step (step 1); when false that step is skipped.
+  // flow opens on the signup step; when false that step is skipped.
   signupPending: boolean;
   onSignupSubmit: (fields: HubspotFormField[]) => void;
-  onSkip: (step: number) => void;
+  // onSkip receives the 1-based position of the step the operator skipped
+  // from.
+  onSkip: (position: number) => void;
   onFinish: () => void;
 };
 
 export const AgentNetworkOnboarding = ({
   initialStep,
   onStepChange,
+  gatewayStep,
+  existingAccount,
   signupPending,
   onSignupSubmit,
   onSkip,
   onFinish,
 }: Props) => {
-  const [step, dispatch] = useReducer(
-    (_: number, next: number) => next,
-    // Start on the signup step while it's pending; otherwise resume the stored
-    // step but never land back on signup once it's done.
-    signupPending
-      ? STEP.SIGNUP
-      : Math.min(Math.max(initialStep, STEP.WELCOME), MAX_STEPS),
-  );
+  const steps = agentSteps(gatewayStep, existingAccount);
+  const policyStep = steps.includes(AGENT_STEP.POLICY);
+  const firstStep = stepAfterSignup(steps);
+  const [{ step, back }, dispatch] = useReducer((_: Nav, next: Nav) => next, {
+    step: initialAgentStep(initialStep, steps, signupPending),
+    back: false,
+  });
+  const position = steps.indexOf(step);
 
   const { data: peers } = useFetchApi<Peer[]>("/peers");
+  const { loggedInUser } = useLoggedInUser();
   const { mutate } = useSWRConfig();
-  const deviceConnected = (peers?.length ?? 0) > 0;
+  const device = existingAccount
+    ? ownConnectedDevice(peers, loggedInUser?.id)
+    : peers?.find((p) => p.connected) ?? peers?.[0];
+  const deviceConnected = !!device;
 
   // First-run prep: seed a "Users" source group (with the current user in it)
   // so the policy step has something to select, and remove the permissive
   // "Default" Access Control policy that doesn't belong in Agent Network.
-  useAgentNetworkFirstRunSetup(true);
+  // Never on an existing account, whose peers may rely on that policy.
+  useAgentNetworkFirstRunSetup(!existingAccount);
 
   // Advance/retreat and persist the new step so a refresh mid-onboarding
   // resumes in place. We persist here rather than in an effect so the
   // (intentionally unstable) onStepChange callback never drives a render loop.
-  const goTo = (next: number) => {
-    dispatch(next);
+  const goTo = (next: AgentStep, isBack = false) => {
+    dispatch({ step: next, back: isBack });
     onStepChange(next);
   };
-  const goNext = () => goTo(Math.min(step + 1, MAX_STEPS));
-  const goBack = () => goTo(Math.max(step - 1, STEP.WELCOME));
+  const goNext = () => goTo(steps[Math.min(position + 1, steps.length - 1)]);
+  const canGoBack = position > steps.indexOf(firstStep);
+  const goBack = () =>
+    goTo(steps[Math.max(position - 1, steps.indexOf(firstStep))], true);
+  const skipStep = () => (back ? goBack() : goNext());
 
   // If signup is no longer pending (already submitted), don't sit on the
   // signup step — mirrors the cloud onboarding's "skip survey if submitted".
   useEffect(() => {
-    if (!signupPending && step === STEP.SIGNUP) goTo(STEP.WELCOME);
+    if (!signupPending && step === AGENT_STEP.SIGNUP) goTo(firstStep);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signupPending, step]);
 
   // Poll for peers while waiting on the device step, in case window focus
   // doesn't trigger a refresh when the operator connects their client.
   useEffect(() => {
-    if (step !== STEP.DEVICE || deviceConnected) return;
+    if (step !== AGENT_STEP.DEVICE || deviceConnected) return;
     const interval = setInterval(() => mutate("/peers"), 5000);
     return () => clearInterval(interval);
   }, [step, deviceConnected, mutate]);
@@ -131,14 +153,14 @@ export const AgentNetworkOnboarding = ({
                 <Card
                   className={cn(
                     "w-full",
-                    step === STEP.SIGNUP && "max-w-lg",
-                    step === STEP.END && "max-w-2xl",
+                    step === AGENT_STEP.SIGNUP && "max-w-lg",
+                    step === AGENT_STEP.END && "max-w-2xl",
                   )}
                 >
-                  <Stepper step={step} maxSteps={MAX_STEPS} />
+                  <Stepper step={position + 1} maxSteps={steps.length} />
 
                   <AIProvidersProvider>
-                    {step === STEP.SIGNUP && (
+                    {step === AGENT_STEP.SIGNUP && (
                       <AgentNetworkSignupForm
                         onSubmit={(fields) => {
                           onSignupSubmit(fields);
@@ -146,38 +168,48 @@ export const AgentNetworkOnboarding = ({
                         }}
                       />
                     )}
-                    {step === STEP.WELCOME && (
-                      <OnboardingAgentWelcome onNext={goNext} />
-                    )}
-                    {step === STEP.DEVICE && (
+                    {step === AGENT_STEP.DEVICE && (
                       <OnboardingAgentDevice
-                        deviceConnected={deviceConnected}
-                        onBack={goBack}
+                        device={device}
+                        onBack={canGoBack ? goBack : undefined}
                         onNext={goNext}
                       />
                     )}
-                    {step === STEP.PROVIDER && (
+                    {step === AGENT_STEP.GATEWAY && (
+                      <OnboardingAgentGateway
+                        onBack={goBack}
+                        onNext={goNext}
+                        onSkip={skipStep}
+                      />
+                    )}
+                    {step === AGENT_STEP.PROVIDER && (
                       <OnboardingAgentProvider
+                        createsPolicy={!policyStep}
                         onBack={goBack}
                         onNext={goNext}
                       />
                     )}
-                    {step === STEP.POLICY && (
+                    {step === AGENT_STEP.POLICY && (
                       <OnboardingAgentPolicy onBack={goBack} onNext={goNext} />
                     )}
-                    {step === STEP.CONFIGURE && (
+                    {step === AGENT_STEP.CONFIGURE && (
                       <OnboardingAgentConfigure
                         onBack={goBack}
                         onNext={goNext}
                       />
                     )}
-                    {step === STEP.END && (
-                      <OnboardingAgentEnd onFinish={onFinish} />
+                    {step === AGENT_STEP.END && (
+                      <OnboardingAgentEnd
+                        deviceName={device?.name}
+                        userId={loggedInUser?.id}
+                        onBack={goBack}
+                        onFinish={onFinish}
+                      />
                     )}
                   </AIProvidersProvider>
                 </Card>
 
-                {step !== STEP.SIGNUP && step !== STEP.END && (
+                {step !== AGENT_STEP.SIGNUP && step !== AGENT_STEP.END && (
                   <span
                     className={
                       "text-sm text-nb-gray-400 font-light pt-10 text-center px-4"
@@ -187,7 +219,7 @@ export const AgentNetworkOnboarding = ({
                     <InlineLink
                       href={"#"}
                       className={"!text-nb-gray-200 ml-1"}
-                      onClick={() => onSkip(step)}
+                      onClick={() => onSkip(position + 1)}
                     >
                       Skip to Dashboard
                     </InlineLink>

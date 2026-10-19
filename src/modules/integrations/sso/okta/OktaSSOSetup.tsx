@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import integrationImage from "@/assets/integrations/okta.png";
-import { DomainValidationStatus } from "@/interfaces/IdentityProvider";
+import { DomainValidationStatus } from "@/interfaces/Account";
 import { EstimatedSetupTime } from "@/modules/integrations/EstimatedSetupTime";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
 import { DomainVerificationModal } from "@/modules/integrations/sso/DomainVerificationModal";
@@ -32,7 +32,8 @@ type Props = {
 };
 
 export default function OktaSSOSetup({ open, onOpenChange }: Props) {
-  const { createOrUpdateConnection, mutate } = useEnterpriseConnections();
+  const { createOrUpdateConnection, verifyDomain, mutate } =
+    useEnterpriseConnections();
   const [step, setStep] = useState(0);
   const maxSteps = 2;
 
@@ -102,7 +103,7 @@ export default function OktaSSOSetup({ open, onOpenChange }: Props) {
         onOpenChange={setDomainVerificationModal}
         domain={verificationDomain}
         token={verificationToken}
-        connectionId={connectionId}
+        onVerify={() => verifyDomain(connectionId, verificationDomain)}
       />
 
       <Modal open={open} onOpenChange={onOpenChange}>

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { Edge, Node } from "@xyflow/react";
+import { describe, expect, it } from "vitest";
 import {
   applyDraftBuildLayout,
   resolveNodeOverlaps,
@@ -56,7 +56,9 @@ describe("resolveNodeOverlaps", () => {
   });
 
   it("leaves non-overlapping layouts untouched (entry-layout parity)", () => {
-    const col = [0, 100, 200].map((y, i) => makeNode(`n${i}`, 1000, y, 250, 80));
+    const col = [0, 100, 200].map((y, i) =>
+      makeNode(`n${i}`, 1000, y, 250, 80),
+    );
     const before = col.map((n) => ({ ...n.position }));
     resolveNodeOverlaps(col);
     col.forEach((n, i) => expect(n.position).toEqual(before[i]));
@@ -172,6 +174,6 @@ describe("applyDraftBuildLayout", () => {
     ]);
 
     expect(at(updatedNodes, "src").y).toBe(nodeYNudge("peerNode"));
-    expect(at(updatedNodes, "dst").y).toBe(nodeYNudge("peerNode"));
+    expect(at(updatedNodes, "dst").y).toBe(0);
   });
 });

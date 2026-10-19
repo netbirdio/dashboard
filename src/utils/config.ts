@@ -54,6 +54,8 @@ const loadConfig = (): Config => {
     configJson = require("@/config/production");
   }
 
+  configJson = configJson ?? {};
+
   if (configJson.redirectURI) {
     redirectURI = configJson.redirectURI;
   }
@@ -66,7 +68,7 @@ const loadConfig = (): Config => {
     tokenSource = configJson.tokenSource;
   }
 
-  const authority = configJson.authAuthority.replace(/\/+$/, "");
+  const authority = (configJson.authAuthority ?? "").replace(/\/+$/, "");
 
   return {
     auth0Auth: configJson.auth0Auth == "true", // Due to substitution we can't use boolean in the config
@@ -86,7 +88,7 @@ const loadConfig = (): Config => {
     googleTagManagerID: configJson?.googleTagManagerID || undefined,
     authServiceUrl: configJson?.authServiceUrl ?? undefined,
     wasmPath:
-      configJson?.wasmPath || "https://pkgs.netbird.io/wasm/client/v0.76.3",
+      configJson?.wasmPath || "https://pkgs.netbird.io/wasm/client/v0.81.1",
     licensed: configJson?.licensed === "true",
     cloud: configJson?.cloud === "true",
     agentNetworkOnly: configJson?.agentNetworkOnly === "true",

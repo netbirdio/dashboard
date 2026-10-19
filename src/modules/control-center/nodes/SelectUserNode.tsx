@@ -23,7 +23,12 @@ type UserNodeProps = Node<
 >;
 
 export const SelectUserNode = ({ data, id }: UserNodeProps) => {
-  const { data: users } = useFetchApi<User[]>("/users?service_user=false");
+  // Optional: the same key is fetched across the canvas, and a role without
+  // `users.read` must not raise the error boundary over it.
+  const { data: users } = useFetchApi<User[]>(
+    "/users?service_user=false",
+    true,
+  );
 
   const userSelectOptions: SelectOption[] = sortBy(
     users?.map(
@@ -104,7 +109,9 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
       >
         {/* Same 64px inner height as GroupNode so nodes line up. */}
         <div
-          className={"flex items-center justify-between gap-8 pr-3 pl-3 h-[64px]"}
+          className={
+            "flex items-center justify-between gap-8 pr-3 pl-3 h-[64px]"
+          }
         >
           {user && <SelectedUser user={user} />}
           <ChevronsUpDown size={18} className={"shrink-0"} />

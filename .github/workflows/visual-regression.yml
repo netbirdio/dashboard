@@ -1,0 +1,120 @@
+name: Visual Regression
+
+on:
+  pull_request:
+    # `edited` is included so that changing `visual-regression-base:` in the
+    # PR description re-runs the comparison against the new baseline.
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-regression-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  storybook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          # The baseline is checked out as a worktree, which needs history.
+          fetch-depth: 0
+
+      - name: setup-node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps --only-shell chromium
+
+      - name: Resolve baseline
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_BRANCH: ${{ github.base_ref }}
+        run: |
+          # The PR's target branch by default; a `visual-regression-base: <branch>`
+          # line in the PR description compares against another branch instead.
+          OVERRIDE=$(printf '%s' "$PR_BODY" \
+            | grep -iE '^[[:space:]]*visual-regression-base:[[:space:]]*[A-Za-z0-9._/-]+[[:space:]]*$' \
+            | head -n1 \
+            | sed -E 's/^[^:]*:[[:space:]]*([A-Za-z0-9._/-]+)[[:space:]]*$/\1/' \
+            || true)
+          BRANCH="${OVERRIDE:-$BASE_BRANCH}"
+          if ! git rev-parse --verify --quiet "refs/remotes/origin/$BRANCH" >/dev/null; then
+            echo "::error::Baseline branch origin/$BRANCH does not exist; check visual-regression-base in the PR description"
+            exit 1
+          fi
+          BASE_REF=$(git merge-base "origin/$BRANCH" HEAD)
+          echo "Comparing against $BRANCH at $(git log --oneline -1 "$BASE_REF")"
+          {
+            echo "BASE_BRANCH=$BRANCH"
+            echo "BASE_REF=$BASE_REF"
+            echo "REGRESSION_CACHE=$RUNNER_TEMP/visual-regression"
+          } >> "$GITHUB_ENV"
+
+      # Baseline screenshots only change when the baseline commit, the stories
+      # or the tooling change; run.sh keys its per-story cache on exactly that.
+      - name: Restore baseline screenshots
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/visual-regression/baseline-shots
+          key: visual-baseline-${{ runner.os }}-${{ env.BASE_REF }}-${{ hashFiles('.storybook/**', 'src/storybook/**', 'src/**/*.stories.tsx', 'package-lock.json') }}
+          restore-keys: |
+            visual-baseline-${{ runner.os }}-${{ env.BASE_REF }}-
+
+      - name: Run visual regression
+        run: npm run test:visual
+
+      - name: Summary
+        if: always()
+        run: |
+          OUT=.storybook/visual-regression/output
+          {
+            echo "### Visual regression against \`$BASE_BRANCH\`"
+            echo
+            if [ -f "$OUT/summary.md" ]; then
+              echo "Download the \`visual-regression-report\` artifact for \`report.html\` and the crops."
+              echo
+              echo "<details><summary>Changed stories</summary>"
+              echo
+              # The job summary has a size limit; the artifact has the full list.
+              tail -n +3 "$OUT/summary.md" | head -n 600
+              echo
+              echo "</details>"
+            elif [ -f "$OUT/reg.json" ]; then
+              echo "No visual differences."
+            else
+              echo "No stories are affected by the changes."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$OUT/summary.json" ]; then
+            CHANGED=$(node -p "require('./$OUT/summary.json').changed")
+            echo "::warning::$CHANGED stories look different from $BASE_BRANCH"
+          fi
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-regression-report
+          path: |
+            .storybook/visual-regression/output/report.html
+            .storybook/visual-regression/output/reg.json
+            .storybook/visual-regression/output/summary.md
+            .storybook/visual-regression/output/summary.json
+            .storybook/visual-regression/output/crops
+            .storybook/visual-regression/output/current
+            .storybook/visual-regression/output/baseline
+            .storybook/visual-regression/output/diff
+          if-no-files-found: ignore
+          retention-days: 14

@@ -223,7 +223,9 @@ export default function PostureCheckTable({
               <GetStartedTest
                 icon={
                   <SquareIcon
-                    icon={<ShieldCheck size={23} />}
+                    icon={
+                      <ShieldCheck size={23} className={"text-nb-gray-200"} />
+                    }
                     color={"gray"}
                     size={"large"}
                   />
