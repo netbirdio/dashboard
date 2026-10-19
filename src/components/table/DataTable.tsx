@@ -1,5 +1,6 @@
 "use client";
 import { TableContentSkeleton } from "@components/skeletons/SkeletonTable";
+import { DataTableInstanceProvider } from "@components/table/DataTableContext";
 import DataTableGlobalSearch from "@components/table/DataTableGlobalSearch";
 import { DataTableHeadingPortal } from "@components/table/DataTableHeadingPortal";
 import { DataTablePagination } from "@components/table/DataTablePagination";
@@ -16,6 +17,7 @@ import {
 import NoResults from "@components/ui/NoResults";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import {
+  Cell,
   ColumnDef,
   ColumnFiltersState,
   flexRender,
@@ -25,6 +27,7 @@ import {
   getSortedRowModel,
   PaginationState,
   Row,
+  RowData,
   RowSelectionState,
   SortingFn,
   SortingState,
@@ -54,6 +57,10 @@ declare module "@tanstack/table-core" {
   interface SortingFns {
     checkbox: SortingFn<unknown>;
     datetime: SortingFn<unknown>;
+  }
+  interface ColumnMeta<TData extends RowData, TValue> {
+    /** Classes applied to both the header and body cells of the column. */
+    className?: string;
   }
 }
 
@@ -166,6 +173,7 @@ interface DataTableProps<TData, TValue> {
   as?: "div" | "table";
   paginationClassName?: string;
   rowClassName?: string | ((row: Row<TData>) => string);
+  cellClassName?: (cell: Cell<TData, unknown>) => string;
   wrapperClassName?: string;
   tableClassName?: string;
   searchClassName?: string;
@@ -189,6 +197,7 @@ interface DataTableProps<TData, TValue> {
   keepStateInLocalStorage?: boolean;
   paginationPaddingClassName?: string;
   tableCellClassName?: string;
+  tableHeadClassName?: string;
   initialSelectionState?: RowSelectionState;
   initialPageSize?: number;
   uniqueKey?: string;
@@ -232,6 +241,7 @@ export function DataTable<TData, TValue>({
   isFetching = false,
   paginationClassName,
   rowClassName,
+  cellClassName,
   wrapperClassName,
   as = "table",
   aboveTable,
@@ -256,6 +266,7 @@ export function DataTable<TData, TValue>({
   keepStateInLocalStorage = true,
   paginationPaddingClassName,
   tableCellClassName,
+  tableHeadClassName,
   initialPageSize = 10,
   uniqueKey,
   resetRowSelectionOnSearch = true,
@@ -468,7 +479,7 @@ export function DataTable<TData, TValue>({
     }
   }, [manualColumnFiltering, externalColumnFilters, table]);
 
-  return (
+  const content = (
     <div className={cn("relative table-fixed-scroll", className)}>
       {showSearchAndFilters && (
         <div className={cn("flex gap-x-4 gap-y-6", !minimal && "p-default")}>
@@ -536,6 +547,10 @@ export function DataTable<TData, TValue>({
                             key={header.id}
                             minimal={minimal}
                             inset={inset}
+                            className={cn(
+                              tableHeadClassName,
+                              header.column.columnDef.meta?.className,
+                            )}
                           >
                             {header.isPlaceholder
                               ? null
@@ -595,7 +610,12 @@ export function DataTable<TData, TValue>({
                           {row.getVisibleCells().map((cell) => (
                             <TableCellComponent
                               key={cell.id}
-                              className={cn("relative", tableCellClassName)}
+                              className={cn(
+                                "relative",
+                                tableCellClassName,
+                                cell.column.columnDef.meta?.className,
+                                cellClassName?.(cell),
+                              )}
                               minimal={minimal}
                               inset={inset}
                               onClick={() => {
@@ -677,5 +697,11 @@ export function DataTable<TData, TValue>({
         hasActiveFilters={hasServerSideFilters}
       />
     </div>
+  );
+
+  return (
+    <DataTableInstanceProvider table={table}>
+      {content}
+    </DataTableInstanceProvider>
   );
 }

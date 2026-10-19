@@ -2,6 +2,8 @@ import { Node } from "@xyflow/react";
 import { useCallback } from "react";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import type { AgentPolicy } from "@/modules/agent-network/data/mockData";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import {
@@ -51,7 +53,9 @@ export function useRemoveChange() {
   const { changes, replaceChanges } = useDraftChangeset();
   const { groups, networks, networkResources, policies } =
     useControlCenterData();
-  const { drawPolicyOnCanvas } = useControlCenterPolicy();
+  const { drawPolicyOnCanvas, drawAgentPolicyOnCanvas } =
+    useControlCenterPolicy();
+  const { policies: agentPolicies } = useAIProviders();
   const { removeNodeWithEdges } = useDraftGroupActions();
 
   const previewRemove = useCallback(
@@ -63,7 +67,9 @@ export function useRemoveChange() {
   const dropNodes = useCallback(
     (ids: Set<string>) => {
       setNodes((prev) =>
-        prev.filter((n) => !ids.has(n.id) && !(n.parentId && ids.has(n.parentId))),
+        prev.filter(
+          (n) => !ids.has(n.id) && !(n.parentId && ids.has(n.parentId)),
+        ),
       );
       setEdges((prev) =>
         prev.filter((e) => !ids.has(e.source) && !ids.has(e.target)),
@@ -204,7 +210,14 @@ export function useRemoveChange() {
           setNodes((prev) =>
             prev.map((n) =>
               (n.data as any)?.group?.id === change.groupId
-                ? { ...n, data: { ...(n.data as any), group: live, addedMembers: undefined } }
+                ? {
+                    ...n,
+                    data: {
+                      ...(n.data as any),
+                      group: live,
+                      addedMembers: undefined,
+                    },
+                  }
                 : n,
             ),
           );
@@ -269,6 +282,34 @@ export function useRemoveChange() {
             policyGroupIds(p).includes(change.groupId),
           );
           redrawPolicies(refs, next);
+          const restoredAgent = new Map<string, AgentPolicy>();
+          next.forEach((c) => {
+            if (
+              (c.type === "create-agent-policy" ||
+                c.type === "update-agent-policy") &&
+              c.policy.sourceGroups?.includes(change.groupId)
+            ) {
+              const id =
+                c.type === "create-agent-policy" ? c.clientId : c.agentPolicyId;
+              const base = agentPolicies?.find((p) => p.id === id);
+              restoredAgent.set(id, {
+                ...(base ?? ({ id } as AgentPolicy)),
+                ...c.policy,
+                id,
+              });
+            }
+          });
+          (agentPolicies ?? []).forEach((p) => {
+            if (!p.sourceGroups.includes(change.groupId)) return;
+            const stillPending = next.some(
+              (c) =>
+                (c.type === "update-agent-policy" ||
+                  c.type === "delete-agent-policy") &&
+                c.agentPolicyId === p.id,
+            );
+            if (!stillPending) restoredAgent.set(p.id, p);
+          });
+          restoredAgent.forEach((p) => drawAgentPolicyOnCanvas(p));
           // Draft policies have no live twin to redraw from, so they come off the
           // restored create-policy change.
           const draftRefs = next.filter(
@@ -279,10 +320,10 @@ export function useRemoveChange() {
           draftRefs.forEach(
             (c) => c.type === "create-policy" && drawPolicyOnCanvas(c.policy),
           );
-          // Neither pass drew it, so the group comes back on its own.
           if (
             refs.length === 0 &&
             draftRefs.length === 0 &&
+            restoredAgent.size === 0 &&
             !nodes.some((n) => n.id === `group-${change.groupId}`)
           ) {
             setNodes((prev) => [...prev, buildGroupNode(live)]);
@@ -294,19 +335,30 @@ export function useRemoveChange() {
             (r) => r.id === change.resourceId,
           );
           const net = networks?.find((nw) => nw.id === change.networkId);
-          if (live && net && !nodes.some((n) => n.id === `resource-${live.id}`)) {
-            setNodes((prev) => [...prev, buildStandaloneResourceNode(live, net)]);
+          if (
+            live &&
+            net &&
+            !nodes.some((n) => n.id === `resource-${live.id}`)
+          ) {
+            setNodes((prev) => [
+              ...prev,
+              buildStandaloneResourceNode(live, net),
+            ]);
           }
-          const refs = livePoliciesReferencing((p) =>
-            p.rules?.[0]?.destinationResource?.id === change.resourceId ||
-            p.rules?.[0]?.sourceResource?.id === change.resourceId,
+          const refs = livePoliciesReferencing(
+            (p) =>
+              p.rules?.[0]?.destinationResource?.id === change.resourceId ||
+              p.rules?.[0]?.sourceResource?.id === change.resourceId,
           );
           redrawPolicies(refs, next);
           return;
         }
         case "delete-network": {
           const live = networks?.find((nw) => nw.id === change.networkId);
-          if (!live || nodes.some((n) => n.id === `network-${change.networkId}`))
+          if (
+            !live ||
+            nodes.some((n) => n.id === `network-${change.networkId}`)
+          )
             return;
           // Rows are built from what the changeset says about children, not live alone;
           // filtered before the build, or the grid stays sized for rows it never gets.
@@ -356,6 +408,8 @@ export function useRemoveChange() {
       networkResources,
       policies,
       drawPolicyOnCanvas,
+      drawAgentPolicyOnCanvas,
+      agentPolicies,
       livePoliciesReferencing,
       redrawPolicies,
       removeNodeWithEdges,

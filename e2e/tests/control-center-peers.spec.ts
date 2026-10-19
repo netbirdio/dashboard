@@ -36,7 +36,7 @@ test.describe.serial("Control Center Peers @control-center", () => {
     await deleteGroupsByPrefix(page, PREFIX);
   });
 
-  test("Should register a docker peer and render it (with its policy) in the peers view", async ({
+  test("Should register a docker peer and render it (with its policy) in the peers view @docker", async ({
     dashboardAsOwner: page,
   }) => {
     // Registration + render can take a while under emulation.

@@ -1,0 +1,47 @@
+FROM registry.access.redhat.com/ubi9/ubi-minimal@sha256:7fbeae18dc9476399f565e68255f602a3374ea8614ba3d14843565131a13ff93
+
+ARG VERSION=dev
+ARG RELEASE=0
+
+LABEL name="netbird-dashboard" \
+      maintainer="NetBird <dev@netbird.io>" \
+      vendor="NetBird GmbH" \
+      version="${VERSION}" \
+      release="${RELEASE}" \
+      summary="NetBird Dashboard" \
+      description="Web UI for managing NetBird peers, users, and access policies."
+
+# Only nginx-core: the nginx metapackage pulls in a default web root and logos
+# that would clash with out/. Our nginx config lives outside the RPM-owned
+# /etc/nginx/nginx.conf so no packaged file is modified in a later layer.
+RUN microdnf module enable -y nginx:1.26 && \
+    microdnf install -y --nodocs bash gettext nginx-core tzdata && \
+    microdnf clean all && \
+    mkdir -p /etc/nginx/http.d /tmp/nginx
+
+STOPSIGNAL SIGINT
+EXPOSE 8080
+
+WORKDIR /usr/share/nginx/html
+
+COPY LICENSE /licenses/AGPL-3.0.txt
+COPY licenses/ /licenses/
+COPY docker/default.conf /etc/nginx/http.d/default.conf
+COPY docker/nginx.conf /etc/nginx/netbird.conf
+COPY docker/rootless.conf /etc/nginx/http.d/rootless.conf
+COPY docker/init_react_envs.sh /usr/local/init_react_envs.sh
+COPY out/ /usr/share/nginx/html/
+
+RUN sed -i \
+      -e 's/listen 80 default_server;/listen 8080 default_server;/' \
+      -e 's/listen \[::\]:80 default_server;/listen [::]:8080 default_server;/' \
+      /etc/nginx/http.d/default.conf && \
+    sed -i '/^user nginx;$/d' /etc/nginx/netbird.conf && \
+    chmod +x /usr/local/init_react_envs.sh && \
+    chmod -R a+rX /licenses && \
+    chgrp -R 0 /etc/nginx/http.d /usr/share/nginx/html /tmp/nginx && \
+    chmod -R g=u /etc/nginx/http.d /usr/share/nginx/html /tmp/nginx
+
+USER 10001:0
+ENTRYPOINT ["/usr/local/init_react_envs.sh"]
+CMD ["/usr/sbin/nginx", "-c", "/etc/nginx/netbird.conf", "-e", "/dev/stderr", "-g", "pid /tmp/nginx.pid;"]

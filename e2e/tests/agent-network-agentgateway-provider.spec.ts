@@ -18,7 +18,7 @@ const AGENTGATEWAY_CATALOG_ID = "agentgateway";
 const PROVIDER_PREFIX = "e2e-agentgateway-";
 
 test.describe
-  .serial("Agent Network agentgateway provider @agent-network", () => {
+  .serial("Agent Network agentgateway provider @agent-network @test-build", () => {
   test("connect agentgateway with its trusted identity mapping", async ({
     dashboardAsOwner: page,
   }) => {

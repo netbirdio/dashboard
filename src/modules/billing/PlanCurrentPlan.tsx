@@ -106,7 +106,7 @@ export const PlanCurrentPlan = ({
                 className={"flex gap-2 items-center justify-end shrink-0 mr-3"}
               >
                 <Button
-                  variant={"secondary"}
+                  variant={"primary"}
                   size={"xs"}
                   onClick={visitCustomerPortal}
                 >

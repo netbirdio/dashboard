@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "copy": "copyfiles -f ./node_modules/@axa-fr/react-oidc/dist/OidcServiceWorker.js ./public",
@@ -20,7 +20,10 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:ui": "npx playwright test --config=e2e/playwright.config.ts --ui",
-    "test:ci": "cross-env APP_ENV=test next build && npx playwright test --config=e2e/playwright.config.ts"
+    "test:ci": "cross-env APP_ENV=test next build && npx playwright test --config=e2e/playwright.config.ts",
+    "storybook": "storybook dev -p 6006",
+    "storybook:build": "storybook build",
+    "test:visual": ".storybook/visual-regression/run.sh"
   },
   "dependencies": {
     "@axa-fr/react-oidc": "^7.26.3",
@@ -48,7 +51,7 @@
     "@types/crypto-js": "^4.2.2",
     "@types/d3": "^7.4.3",
     "@types/lodash": "4.17.24",
-    "@types/node": "20.10.6",
+    "@types/node": "20.19.43",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-window": "^1.8.8",
@@ -75,11 +78,10 @@
     "js-cookie": "^3.0.7",
     "lodash": "4.18.1",
     "lucide-react": "^0.566.0",
-    "next": "16.3.0",
+    "next": "16.3.4",
     "punycode": "^2.3.1",
     "react": "^19.2.4",
     "react-chartjs-2": "^5.3.0",
-    "react-confetti-explosion": "^3.0.3",
     "react-day-picker": "^9.13.0",
     "react-dom": "^19.2.4",
     "react-ga4": "^2.1.0",
@@ -101,8 +103,8 @@
     "minimatch": ">=10.2.1"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.5.1",
     "@playwright/test": "^1.52.0",
+    "@storybook/nextjs-vite": "^10.6.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/chroma-js": "^3.1.1",
@@ -112,7 +114,16 @@
     "jsdom": "^29.1.1",
     "postcss": "^8",
     "prettier": "3.0.3",
+    "reg-cli": "^0.19.0-rc3",
+    "storybook": "^10.6.1",
     "tailwindcss": "^3.4.17",
+    "vite": "^8.3.3",
     "vitest": "^4.1.10"
+  },
+  "allowScripts": {
+    "@axa-fr/oidc-client": false,
+    "@axa-fr/react-oidc": false,
+    "fsevents": false,
+    "unrs-resolver": false
   }
 }

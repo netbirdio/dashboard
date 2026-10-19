@@ -144,7 +144,7 @@ export default function DistributorCustomersTable({
         <GetStartedTest
           icon={
             <SquareIcon
-              icon={<MSPIcon size={20} />}
+              icon={<MSPIcon size={20} className={"fill-nb-gray-200"} />}
               color={"gray"}
               size={"large"}
             />

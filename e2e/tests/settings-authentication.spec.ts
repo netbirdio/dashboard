@@ -2,7 +2,7 @@ import { test, expect } from "../helpers/fixtures";
 import { navigateTo } from "../helpers/auth";
 
 test.describe.serial("Settings - Authentication @settings", () => {
-  test("Should toggle peer approval", async ({ dashboardAsOwner: page }) => {
+  test("Should toggle peer approval @enterprise", async ({ dashboardAsOwner: page }) => {
     await navigateTo(page, "/settings");
     await toggleAndSave(page, "peer-approval");
   });
@@ -10,6 +10,9 @@ test.describe.serial("Settings - Authentication @settings", () => {
   test("Should toggle peer login expiration off and back on", async ({
     dashboardAsOwner: page,
   }) => {
+    // The peer approval test above is skipped on community deployments,
+    // so this test cannot rely on it having opened the settings page.
+    await navigateTo(page, "/settings");
     await toggleAndSave(page, "peer-login-expiration");
     await toggleAndSave(page, "peer-login-expiration");
   });

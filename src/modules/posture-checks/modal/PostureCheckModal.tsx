@@ -14,6 +14,7 @@ import { ExternalLinkIcon, LayoutList, ShieldCheck, Text } from "lucide-react";
 import React, { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
+import { PostureCheckCertificate } from "@/modules/posture-checks/checks/PostureCheckCertificate";
 import { PostureCheckGeoLocation } from "@/modules/posture-checks/checks/PostureCheckGeoLocation";
 import { PostureCheckNetBirdVersion } from "@/modules/posture-checks/checks/PostureCheckNetBirdVersion";
 import { PostureCheckOperatingSystem } from "@/modules/posture-checks/checks/PostureCheckOperatingSystem";
@@ -56,7 +57,8 @@ export default function PostureCheckModal({
     !!check?.checks?.geo_location_check ||
     !!check?.checks?.os_version_check ||
     !!check?.checks?.peer_network_range_check ||
-    !!check?.checks.process_check;
+    !!check?.checks.process_check ||
+    !!check?.checks?.certificate_check;
   const canCreate =
     !isEmpty(check?.name) &&
     isAtLeastOneCheckEnabled &&
@@ -158,6 +160,18 @@ export default function PostureCheckModal({
                   onChange={(v) =>
                     setCheck({
                       type: "process_check",
+                      payload: v,
+                    })
+                  }
+                  disabled={
+                    !permission.policies.create || !permission.policies.update
+                  }
+                />
+                <PostureCheckCertificate
+                  value={check?.checks?.certificate_check}
+                  onChange={(v) =>
+                    setCheck({
+                      type: "certificate_check",
                       payload: v,
                     })
                   }

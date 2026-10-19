@@ -1,11 +1,17 @@
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
+import {
+  ENABLED_COLUMN_ID,
+  fadeDisabledRowCells,
+} from "@components/table/disabledRowCells";
+import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import React, { useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import RouteAccessControlGroups from "@/modules/routes/RouteAccessControlGroups";
 import RouteActionCell from "@/modules/routes/RouteActionCell";
+import RouteActiveCell from "@/modules/routes/RouteActiveCell";
 import RouteAutoApplyCell from "@/modules/routes/RouteAutoApplyCell";
 import RouteDistributionGroupsCell from "@/modules/routes/RouteDistributionGroupsCell";
 import RouteMetricCell from "@/modules/routes/RouteMetricCell";
@@ -49,9 +55,18 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     sortingFn: "alphanumeric",
   },
   {
-    id: "enabled",
+    id: ENABLED_COLUMN_ID,
     accessorKey: "enabled",
-    sortingFn: "basic",
+    enableSorting: false,
+    // The grouped route rows are the widest table in the dashboard, so the
+    // toggle column waits for a larger viewport than in the other tables.
+    meta: { className: ENABLED_COLUMN_CLASS["2xl"] },
+    header: ({ column }) => (
+      <DataTableHeader column={column} sorting={false}>
+        Active
+      </DataTableHeader>
+    ),
+    cell: ({ row }) => <RouteActiveCell route={row.original} />,
   },
   {
     id: "groups",
@@ -89,6 +104,7 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     },
   },
   {
+    id: "actions",
     accessorKey: "id",
     header: "",
     cell: ({ row }) => <RouteActionCell route={row.original} />,
@@ -140,6 +156,8 @@ export default function RouteTable({ row }: Props) {
     <>
       <DataTable
         tableClassName={"mt-0"}
+        tableHeadClassName={"px-4"}
+        tableCellClassName={"px-4"}
         minimal={true}
         showSearchAndFilters={false}
         className={"bg-nb-gray-960 py-2"}
@@ -153,10 +171,9 @@ export default function RouteTable({ row }: Props) {
           domains: false,
           domain_search: false,
           network: false,
-          enabled: false,
           skipAutoApply: !!hasAtLeastOneExitNode,
         }}
-        rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
+        cellClassName={fadeDisabledRowCells}
         setSorting={setSorting}
         columns={RouteTableColumns}
         data={data}
