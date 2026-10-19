@@ -1,7 +1,7 @@
 import useFetchApi from "@utils/api";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
-import { isNativeSSHSupported } from "@utils/version";
+import { usesStandardSSHPort } from "@utils/version";
 
 export const usePeerSSHPolicyCheck = (peer?: Peer) => {
   const { data: policies, isLoading } = useFetchApi<Policy[]>(
@@ -66,7 +66,7 @@ export const usePeerSSHPolicyCheck = (peer?: Peer) => {
     !hasSSHPolicy &&
     !isLoading &&
     !!peer?.ssh_enabled &&
-    isNativeSSHSupported(peer.version);
+    usesStandardSSHPort(peer.version);
 
   return {
     peerPolicies,
