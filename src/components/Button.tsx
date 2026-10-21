@@ -88,7 +88,7 @@ export const buttonVariants = cva(
       },
       size: {
         xs: "text-xs py-2 px-4",
-        xs2: "text-[0.78rem] py-2 px-4",
+        xs2: "py-2 px-4",
         sm: "text-sm py-2.5 px-4",
         md: "text-md py-2.5 px-4",
         lg: "text-lg py-2.5 px-4",
