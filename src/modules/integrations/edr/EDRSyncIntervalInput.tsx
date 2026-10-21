@@ -29,7 +29,7 @@ export const EDRSyncIntervalInput = ({
 }: Props) => (
   <div className={cn("flex flex-row gap-3 w-full justify-between", className)}>
     <div>
-      <Label>
+      <Label htmlFor={"sync-interval"}>
         <div className={"flex gap-2 items-center"}>
           <TimerIcon size={14} />
           Sync Interval
@@ -41,6 +41,7 @@ export const EDRSyncIntervalInput = ({
     </div>
 
     <Input
+      id={"sync-interval"}
       placeholder={DEFAULT_SYNC_INTERVAL.toString()}
       min={1}
       max={MAX_SYNC_INTERVAL}
@@ -50,7 +51,7 @@ export const EDRSyncIntervalInput = ({
       error={
         isValidSyncInterval(value)
           ? undefined
-          : `Must be between 1 and ${MAX_SYNC_INTERVAL}`
+          : `Must be a whole number between 1 and ${MAX_SYNC_INTERVAL}`
       }
       errorTooltip={true}
       onChange={(e) => onChange(e.target.value)}
