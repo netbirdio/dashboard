@@ -24,10 +24,19 @@ const loaded = async () => {
 
 export const ClaudeCode: Story = { play: loaded };
 
-export const ClaudeCodeProviderOpen: Story = {
+export const ProviderPickerOpen: Story = {
   play: async () => {
     await loaded();
-    await clickRole("button", /Anthropic API/);
+    await clickRole("button", /Anthropic Claude/);
+    await popover();
+    await settle();
+  },
+};
+
+export const ModelPickerOpen: Story = {
+  play: async () => {
+    await loaded();
+    await clickRole("button", /claude-sonnet-4-5/);
     await popover();
     await settle();
   },
@@ -41,6 +50,8 @@ const tabStory = (name: RegExp): Story => ({
   },
 });
 export const Codex = tabStory(/Codex/);
+export const OpenCode = tabStory(/OpenCode/);
+export const Pi = tabStory(/^Pi$/);
 export const SDK = tabStory(/SDK/);
 export const Curl = tabStory(/curl/i);
 

@@ -1,0 +1,15 @@
+import { iconProperties, IconProps } from "@/assets/icons/IconProperties";
+
+export default function PiIcon(props: Readonly<IconProps>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      {...iconProperties(props)}
+    >
+      <path d="M0 0v24h6v-6h6v-6H6V6h6v6h6V0Zm18 12v12h6V12Z" />
+    </svg>
+  );
+}

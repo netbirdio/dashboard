@@ -3,7 +3,7 @@ import { ArrowRightIcon } from "lucide-react";
 import * as React from "react";
 import {
   AgentConnectTabs,
-  connectExample,
+  fromAccountProviders,
 } from "@/modules/agent-network/AgentConnectTabs";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 
@@ -49,8 +49,7 @@ export const OnboardingAgentConfigure = ({ onBack, onNext }: Props) => {
           listClassName={"px-0"}
           contentClassName={"px-0 py-2"}
           defaultTab={defaultTab}
-          providerIds={providers.map((p) => p.providerId)}
-          example={connectExample(providers)}
+          providers={fromAccountProviders(providers)}
         />
       ) : (
         <div
