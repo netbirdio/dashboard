@@ -35,6 +35,11 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { CrowdStrikeRegionsData } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeRegions";
 import { CrowdStrikeZtaScoreInput } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeZtaScoreInput";
 import { CrowdStrikeZtaToggle } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeZtaToggle";
+import {
+  DEFAULT_SYNC_INTERVAL,
+  EDRSyncIntervalInput,
+  isValidSyncInterval,
+} from "@/modules/integrations/edr/EDRSyncIntervalInput";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
 
 type Props = {
@@ -93,6 +98,9 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
       : "80",
   );
   const [ztaEnabled, setZtaEnabled] = useState(config.zta_score_threshold > 0);
+  const [syncInterval, setSyncInterval] = useState(
+    (config.sync_interval ?? DEFAULT_SYNC_INTERVAL).toString(),
+  );
 
   const [groups, setGroups, { save: saveGroups }] = useGroupHelper({
     initial: config.groups.map((g) => {
@@ -138,6 +146,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
           client_id: secretPlaceholder == clientId ? undefined : clientId,
           secret: secretPlaceholder == secret ? undefined : secret,
           groups: savedGroups.map((group) => group.id) || [],
+          sync_interval: Number(syncInterval),
           enabled: config.enabled,
         })
         .then(() => {
@@ -155,13 +164,14 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     clientId,
     secret,
     ztaEnabled,
+    syncInterval,
   ]);
 
   const ztaError =
     ztaEnabled && (parseInt(ztaScore) <= 0 || parseInt(ztaScore) > 100)
       ? "Score should be between 1 and 100"
       : undefined;
-  const canSave = hasChanges && !ztaError;
+  const canSave = hasChanges && !ztaError && isValidSyncInterval(syncInterval);
 
   return (
     <ModalContent
@@ -247,6 +257,11 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
         <TabsContent value={"settings"} className={"px-8 text-sm"}>
           <div className={"flex-col gap-6 flex"}>
+            <EDRSyncIntervalInput
+              name={"CrowdStrike"}
+              value={syncInterval}
+              onChange={setSyncInterval}
+            />
             <div>
               <Label className={"mb-3"}>
                 <div className={"flex gap-2 items-center"}>
