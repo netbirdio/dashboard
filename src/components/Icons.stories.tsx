@@ -7,6 +7,14 @@ import { FolderGit2 } from "lucide-react";
 import { GroupIssued } from "@/interfaces/Group";
 import { padded, Row, Stack } from "@/storybook/components";
 
+/* Stands in for an operator's NETBIRD_BRAND_LOGO_URL: wider than the NetBird
+   logo, to show it being fitted to the same height. */
+const customLogo =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40"><rect width="40" height="40" rx="8" fill="#3b82f6"/><rect x="52" y="12" width="148" height="16" rx="4" fill="#e5e7eb"/></svg>',
+  );
+
 const colors = [
   "netbird",
   "blue",
@@ -61,6 +69,11 @@ export const LogoAndAvatar: StoryObj = {
         <NetBirdLogo mobile={false} />
         <NetBirdLogo size={"large"} mobile={false} />
         <NetBirdLogo />
+      </Row>
+      <Row label={"custom logo"}>
+        <NetBirdLogo mobile={false} logoUrl={customLogo} />
+        <NetBirdLogo size={"large"} mobile={false} logoUrl={customLogo} />
+        <NetBirdLogo logoUrl={customLogo} />
       </Row>
       <Row label={"avatar"}>
         <UserAvatar size={"small"} />

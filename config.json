@@ -25,5 +25,8 @@
   "hubspotOnboardingFormId": "$NETBIRD_HUBSPOT_ONBOARDING_FORM_ID",
   "hubspotSurveyFormId": "$NETBIRD_HUBSPOT_SURVEY_FORM_ID",
   "analyticsExcludedEmails": "$NETBIRD_ANALYTICS_EXCLUDED_EMAILS",
-  "announcement": "$NETBIRD_ANNOUNCEMENT"
+  "announcement": "$NETBIRD_ANNOUNCEMENT",
+  "brandName": "$NETBIRD_BRAND_NAME",
+  "brandLogoUrl": "$NETBIRD_BRAND_LOGO_URL",
+  "brandFaviconUrl": "$NETBIRD_BRAND_FAVICON_URL"
 }
