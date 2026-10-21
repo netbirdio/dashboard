@@ -1,7 +1,7 @@
 "use client";
 
-import { useAgentBusy } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
+import { useAgentBusy } from "@/modules/assistant";
 
 /**
  * What the control centre looks like while the assistant is writing to it: dimmed

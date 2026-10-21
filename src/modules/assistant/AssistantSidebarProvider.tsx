@@ -1,6 +1,5 @@
 "use client";
 
-import { useAssistantAvailable } from "@netbird/assistant-react";
 import loadConfig from "@utils/config";
 import { useIsMd } from "@utils/responsive";
 import {
@@ -20,6 +19,8 @@ import {
   PANEL_ON_LEFT,
   PANEL_WIDTH,
 } from "@/interfaces/Assistant";
+import { useAssistantAvailable } from "@/modules/assistant";
+import { useAssistantHeaders } from "@/modules/assistant/useAssistantHeaders";
 
 interface AssistantSidebarState {
   // Configured *and* the server answered; false leaves no trace in the UI.
@@ -43,11 +44,13 @@ export function AssistantSidebarProvider({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [open, setOpenState] = useState(false);
+  const [open, setOpen] = useState(false);
   const origin = useMemo(() => loadConfig().assistantApiOrigin, []);
-  // A configured origin isn't enough — the SDK probes the service's public
-  // health route, with focus/reconnect revalidation for long-lived tabs.
-  const reachable = useAssistantAvailable(origin);
+  // No origin, no assistant. With one, the agent is asked once per page load
+  // whether the user's account is enabled; a "no" or a silent failure simply
+  // leaves the assistant hidden.
+  const headers = useAssistantHeaders();
+  const reachable = useAssistantAvailable(origin, headers);
   const hasRoomToReveal = useIsMd();
   const overlay = !hasRoomToReveal;
 
@@ -57,9 +60,9 @@ export function AssistantSidebarProvider({
   // restoring it unconditionally on close would overwrite the user's preference.
   const collapsedByPanel = useRef(false);
 
-  const setOpen = useCallback(
+  const changeOpen = useCallback(
     (next: boolean) => {
-      setOpenState(next);
+      setOpen(next);
 
       // In overlay mode the dashboard is covered anyway, so there's no space
       // to reclaim by collapsing the sidebar.
@@ -76,7 +79,7 @@ export function AssistantSidebarProvider({
     [overlay, isNavigationCollapsed, toggleNavigation],
   );
 
-  const toggle = useCallback(() => setOpen(!open), [open, setOpen]);
+  const toggle = useCallback(() => changeOpen(!open), [open, changeOpen]);
 
   const value = useMemo(() => {
     const reveal = open && !overlay;
@@ -86,13 +89,13 @@ export function AssistantSidebarProvider({
       available: reachable || open,
       origin,
       open,
-      setOpen,
+      setOpen: changeOpen,
       toggle,
       overlay,
       reveal,
       inset: reveal ? CARD_INSET : 0,
     };
-  }, [open, setOpen, toggle, overlay, reachable, origin]);
+  }, [open, changeOpen, toggle, overlay, reachable, origin]);
 
   useEffect(() => {
     const root = document.documentElement;

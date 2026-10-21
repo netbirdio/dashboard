@@ -1,7 +1,7 @@
 import { Edge, Node } from "@xyflow/react";
-import { Peer } from "@/interfaces/Peer";
-import { NetworkResource } from "@/interfaces/Network";
 import { Group } from "@/interfaces/Group";
+import { NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
 
 export function addNode(nodes: Node[], node: Node): void {
   const existing = nodes.find((n) => n.id === node.id);

@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
+import { Node } from "@xyflow/react";
 import { act } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Node } from "@xyflow/react";
 
 // Guards the call SITE, not just the helper: a revert to reading data.enabled is
 // what deployed enabled:true over a disabled resource.

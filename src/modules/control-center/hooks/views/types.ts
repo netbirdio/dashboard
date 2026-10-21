@@ -1,7 +1,7 @@
+import { Edge, Node } from "@xyflow/react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
-import { Edge, Node } from "@xyflow/react";
 
 export interface ViewResult {
   updatedNodes: Node[];

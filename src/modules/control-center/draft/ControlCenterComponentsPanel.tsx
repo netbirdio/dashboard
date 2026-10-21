@@ -40,11 +40,11 @@ import { Policy } from "@/interfaces/Policy";
 import { useAccount } from "@/modules/account/useAccount";
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
-import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import type {
   AgentPolicy,
   AIProvider,
 } from "@/modules/agent-network/data/mockData";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useCanvasUI } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import {
@@ -428,7 +428,7 @@ const PanelContent = React.memo(
         } else if (type === NodeType.PeerNode) {
           dropExistingPeer(data as Peer, position);
         } else if (type === NodeType.GroupNode) {
-          dropExistingGroup(data as Group, position);
+          dropExistingGroup(data, position);
         } else if (type === NodeType.ResourceNode) {
           dropExistingResource(data as NetworkResource, position);
         }

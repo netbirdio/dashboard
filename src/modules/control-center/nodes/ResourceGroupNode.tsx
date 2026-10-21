@@ -1,5 +1,5 @@
-import { SmallBadge } from "@components/ui/SmallBadge";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn, singularize } from "@utils/helpers";
 import { type Node, Position, useConnection, useStore } from "@xyflow/react";
 import * as React from "react";
@@ -9,9 +9,9 @@ import {
   useIsContextMenuTarget,
 } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { GroupNode } from "@/modules/control-center/nodes/GroupNode";
 import { AllHandles } from "@/modules/control-center/handles/AllHandles";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
+import { GroupNode } from "@/modules/control-center/nodes/GroupNode";
 
 type ResourceGroupNode = Node<
   {

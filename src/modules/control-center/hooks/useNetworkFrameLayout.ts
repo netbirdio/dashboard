@@ -1,23 +1,23 @@
-import { useEffect } from "react";
 import { Node } from "@xyflow/react";
+import { useEffect } from "react";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { DRILLED_RESOURCE_SPACING } from "@/modules/control-center/utils/drilled-layout";
 import {
+  getNetworkFrameHeight,
+  getNetworkFrameWidth,
+  isFrameNode,
+  NETWORK_FRAME_ADD_ROW,
   NETWORK_FRAME_CHILD_WIDTH,
   NETWORK_FRAME_CHILD_WIDTH_MULTI,
   NETWORK_FRAME_FALLBACK_ROW,
   NETWORK_FRAME_GAP,
   NETWORK_FRAME_HEADER,
+  NETWORK_FRAME_MAX_VISIBLE,
   NETWORK_FRAME_PADDING_X,
   NETWORK_FRAME_PADDING_Y,
-  NETWORK_FRAME_MAX_VISIBLE,
-  NETWORK_FRAME_ADD_ROW,
   NETWORK_FRAME_ROW_GAP,
-  getNetworkFrameHeight,
-  getNetworkFrameWidth,
-  isFrameNode,
 } from "@/modules/control-center/utils/helpers";
-import { DRILLED_RESOURCE_SPACING } from "@/modules/control-center/utils/drilled-layout";
 
 // Children render at parentZ + 1, so no plain node (z 0) slips between a frame
 // and its resources.

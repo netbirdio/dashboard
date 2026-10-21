@@ -1,15 +1,15 @@
 import useFetchApi from "@utils/api";
 import { useMemo } from "react";
-import { Network, NetworkRouter } from "@/interfaces/Network";
-import { usePeers } from "@/contexts/PeersProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePeers } from "@/contexts/PeersProvider";
+import { Network, NetworkRouter } from "@/interfaces/Network";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   getRoutingPeerCount,
   RoutingPeerRow,
   RoutingPeersBar,
   sortRoutingPeerRows,
 } from "@/modules/control-center/panels/RoutingPeersBar";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 
 type Props = {
   network: Network;

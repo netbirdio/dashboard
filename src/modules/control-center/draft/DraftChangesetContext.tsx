@@ -19,9 +19,9 @@ import type { AgentPolicy } from "@/modules/agent-network/data/mockData";
 import {
   deletedGroupRefs,
   detachChangesFromDraftNetwork,
+  dropGroupIdsFromAgentPolicy,
   isEmptiedPolicy,
   isNoopGroupUpdate,
-  dropGroupIdsFromAgentPolicy,
   isPendingPolicyWrite,
   mergeAgentGroupDeletions,
   mergeGroupDeletions,
@@ -1170,7 +1170,7 @@ export function DraftChangesetProvider({
   useEffect(() => {
     if (process.env.APP_ENV === "test") {
       (
-        window as unknown as { __controlCenterDraftChanges?: DraftChange[] }
+        globalThis as unknown as { __controlCenterDraftChanges?: DraftChange[] }
       ).__controlCenterDraftChanges = changes;
     }
   }, [changes]);

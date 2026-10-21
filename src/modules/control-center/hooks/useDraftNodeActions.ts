@@ -1,10 +1,10 @@
-import { useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
+import { useCallback } from "react";
 import { NetworkResource } from "@/interfaces/Network";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
-import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftGroupActions } from "@/modules/control-center/hooks/useDraftGroupActions";
+import { useDraftNetworkActions } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import {
   DraftNetworkRef,
   getResourceDraftGroupIds,

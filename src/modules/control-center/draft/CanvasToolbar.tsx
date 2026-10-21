@@ -1,5 +1,4 @@
 import { isMac } from "@hooks/useOperatingSystem";
-import { useAgentBusy } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
 import {
   ArrowBigUpIcon,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useEffect } from "react";
+import { useAgentBusy } from "@/modules/assistant";
 import { useDraftHistory } from "@/modules/control-center/draft/DraftHistoryContext";
 import {
   CanvasTool,

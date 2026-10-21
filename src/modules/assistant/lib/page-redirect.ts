@@ -1,7 +1,9 @@
 import type {
   BrowserToolExecutor,
   ToolOutcome,
-} from "@netbird/assistant-react";
+} from "@/modules/assistant";
+import { getCanvasAgent } from "./canvas";
+import { CONTROL_CENTER_HREF } from "./control-center";
 
 export type NavigateToPage = { href: string } | { error: string };
 
@@ -71,7 +73,7 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
     const param = logParams[page];
     const value =
       param && typeof input[param] === "string"
-        ? (input[param] as string).trim()
+        ? input[param].trim()
         : "";
     return {
       href: value
@@ -110,12 +112,26 @@ export function navigateToPage(input: Record<string, unknown>): NavigateToPage {
 
 // The route table stays app-side: the SDK dispatches `dashboard_page_redirect` here because
 // only the dashboard knows its own URLs.
-export const openPageExecutor: BrowserToolExecutor = async (
+export const pageRedirect: BrowserToolExecutor = async (
   input,
   ctx,
 ): Promise<ToolOutcome> => {
   const target = navigateToPage((input ?? {}) as Record<string, unknown>);
   if ("error" in target) return { ok: false, content: target.error };
+  // Leaving the control center drops an open draft, and a page the agent
+  // opens is a page the user did not choose to leave for.
+  const pending = ctx.onControlCenterPage() && !target.href.startsWith(CONTROL_CENTER_HREF) ? unsavedDraftChanges() : 0;
+  if (pending > 0) {
+    return {
+      ok: false,
+      content: `Didn't navigate: the draft on the canvas has ${pending} unsaved ${pending === 1 ? "change" : "changes"} that leaving the page would discard. The user has to deploy or discard the draft first; tell them, and offer the page once that is done.`,
+    };
+  }
   ctx.navigate(target.href);
   return { ok: true, content: `Navigated to ${target.href}.` };
 };
+
+function unsavedDraftChanges(): number {
+  const snapshot = getCanvasAgent()?.getSnapshot();
+  return snapshot?.mode === "draft" ? snapshot.changes.length : 0;
+}

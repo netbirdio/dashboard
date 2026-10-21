@@ -1,7 +1,7 @@
 "use client";
 
 import { Modal } from "@components/modal/Modal";
-import { Edge, Node, useReactFlow, XYPosition } from "@xyflow/react";
+import { useReactFlow, XYPosition } from "@xyflow/react";
 import { sortBy } from "lodash";
 import React, {
   createContext,

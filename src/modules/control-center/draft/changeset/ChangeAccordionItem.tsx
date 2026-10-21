@@ -1,6 +1,12 @@
-import React, { useMemo, useState } from "react";
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { AccordionContent, AccordionItem } from "@components/Accordion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
+import { notify } from "@components/Notification";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { cn } from "@utils/helpers";
 import {
   CheckIcon,
@@ -10,28 +16,8 @@ import {
   MoreVerticalIcon,
   Trash2Icon,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@components/DropdownMenu";
-import { notify } from "@components/Notification";
+import React, { useMemo, useState } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
-import {
-  DraftChange,
-  getChangeApiCall,
-  getChangeIssue,
-  getChangeKind,
-} from "@/modules/control-center/draft/DraftChangesetContext";
-import {
-  buildChangeRequest,
-  changeDiffLines,
-  LiveData,
-  toCurl,
-} from "@/modules/control-center/utils/changeset-request";
-import { CascadePreview } from "@/modules/control-center/utils/change-cascade";
-import { diffStat } from "@/modules/control-center/utils/json-line-diff";
 import {
   changeIcon,
   DiffStat,
@@ -40,7 +26,21 @@ import {
   KindBadge,
 } from "@/modules/control-center/draft/changeset/change-presentation";
 import { ChangeCodeView } from "@/modules/control-center/draft/changeset/ChangeCodeView";
+import {
+  DraftChange,
+  getChangeApiCall,
+  getChangeIssue,
+  getChangeKind,
+} from "@/modules/control-center/draft/DraftChangesetContext";
 import { DeployStatus } from "@/modules/control-center/hooks/useDeployChangeset";
+import { CascadePreview } from "@/modules/control-center/utils/change-cascade";
+import {
+  buildChangeRequest,
+  changeDiffLines,
+  LiveData,
+  toCurl,
+} from "@/modules/control-center/utils/changeset-request";
+import { diffStat } from "@/modules/control-center/utils/json-line-diff";
 
 type Props = {
   change: DraftChange;

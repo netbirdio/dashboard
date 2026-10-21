@@ -77,7 +77,7 @@ export function useDrillDownBrowserHistory() {
         }, 150);
       }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [activeSignature]);
 
   useEffect(() => {

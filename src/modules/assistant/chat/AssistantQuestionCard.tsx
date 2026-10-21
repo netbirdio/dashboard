@@ -59,7 +59,7 @@ export function AssistantQuestionCard({
   return (
     <div className="mb-3 rounded-2xl border border-nb-gray-700 bg-nb-gray-900 px-4 pb-2.5 pt-3.5">
       <div className="flex items-start gap-2">
-        <p className="min-w-0 flex-1 text-chat font-normal text-nb-gray-100">
+        <p className="min-w-0 flex-1 text-chat font-normal text-nb-gray-50">
           {question.title}
         </p>
         <button
@@ -111,11 +111,11 @@ export function AssistantQuestionCard({
                 )}
 
                 <span className="min-w-0 flex-1">
-                  <span className="block text-chat font-normal text-nb-gray-300 group-hover:text-nb-gray-100">
+                  <span className="block text-chat font-normal text-nb-gray-200 group-hover:text-nb-gray-100">
                     {option.label}
                   </span>
                   {option.description && (
-                    <span className="block text-xs text-nb-gray-400">
+                    <span className="block text-xs text-nb-gray-300">
                       {option.description}
                     </span>
                   )}

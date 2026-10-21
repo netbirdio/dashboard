@@ -1,20 +1,20 @@
-import { useMemo } from "react";
-import { useStore } from "@xyflow/react";
 import useFetchApi from "@utils/api";
-import { NetworkRouter } from "@/interfaces/Network";
-import { usePeers } from "@/contexts/PeersProvider";
+import { useStore } from "@xyflow/react";
+import { useMemo } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePeers } from "@/contexts/PeersProvider";
+import { NetworkRouter } from "@/interfaces/Network";
 import {
   UpdateRouterChange,
   useDraftChangeset,
 } from "@/modules/control-center/draft/DraftChangesetContext";
-import { isDraftPeerId } from "@/modules/control-center/utils/helpers";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   getRoutingPeerCount,
   RoutingPeerRow,
   sortRoutingPeerRows,
 } from "@/modules/control-center/panels/RoutingPeersBar";
+import { isDraftPeerId } from "@/modules/control-center/utils/helpers";
 
 // `enabled` defers the routers fetch until a frame actually needs it.
 export function useFrameRouterRows(

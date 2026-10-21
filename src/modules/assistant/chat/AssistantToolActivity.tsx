@@ -1,15 +1,16 @@
 // One row of the activity trail, for both server-run and browser-run tools.
 "use client";
 
+import { cn } from "@utils/helpers";
+import { Check, ChevronRight, Info, Loader2 } from "lucide-react";
+import { type ReactNode, useState } from "react";
 import {
   CONTROL_CENTER_TOOLS,
   describeToolCall,
-} from "@netbird/assistant-react";
-import { cn } from "@utils/helpers";
-import { Check, ChevronRight, Info, Loader2 } from "lucide-react";
+  isOmittedOutput,
+} from "@/modules/assistant";
 import { useTurnActive } from "@/modules/assistant/chat/AssistantTurnContext";
-import { useState } from "react";
-import { navigateToPage } from "@/modules/assistant/openPageExecutor";
+import { navigateToPage } from "@/modules/assistant/lib/page-redirect";
 
 // Narrower than `ToolCallMessagePartProps` on purpose: grouped parts hand over
 // a part state, not the full props object, and this is all both have to agree on.
@@ -56,8 +57,10 @@ const asJson = (value: unknown): string | null => {
 
 // A server tool's result is `{ ok, content, summary, … }` — the content is the
 // readable part. A management call's result is the JSON payload as a string.
+// A guide or docs page the model read arrives as a stub, so the row shows
+// the request alone.
 function formatResult(result: unknown): string | null {
-  if (result === undefined || result === null) return null;
+  if (result === undefined || result === null || isOmittedOutput(result)) return null;
   const content = (result as { content?: unknown })?.content;
   if (typeof content === "string") result = content;
   const raw = typeof result === "string" ? result : JSON.stringify(result);
@@ -118,11 +121,10 @@ export function AssistantToolActivity({
     row has no subject" (null), which is what stops a label that already spells
     out its skill from being followed by the slug it came from.
   */
-  const subject = CONTROL_CENTER_TOOLS[toolName]
-    ? null
-    : described.subject !== undefined
-      ? described.subject
-      : subjectOf(toolName, args);
+  let subject: string | null | undefined;
+  if (CONTROL_CENTER_TOOLS[toolName]) subject = null;
+  else if (described.subject === undefined) subject = subjectOf(toolName, args);
+  else subject = described.subject;
   /*
     One string, not three spans.
 
@@ -135,6 +137,27 @@ export function AssistantToolActivity({
   const line = [described.label, described.detail, subject && `'${subject}'`]
     .filter(Boolean)
     .join(" ");
+
+
+  const chevron = <ChevronRight size={13} className={cn("transition-transform", open && "rotate-90")} />;
+  /* 12, not the 13 its neighbours use, and `block`.
+
+     Lucide draws a 24-unit viewBox at the pixel size given, so 13
+     scales by 13/24 and puts the circle's centre on a half-pixel:
+     the stroke then rasterises slightly differently on each frame
+     and the spin visibly wobbles. 12 is an exact half, so the centre
+     and the stroke land on whole pixels and the rotation is steady.
+     The constraint only applies to the icon that MOVES — the chevron
+     and info marks beside it stay at 13, where a half-pixel is
+     static and invisible, and the 16px box keeps the column aligned
+     either way. `block` drops the inline baseline gap, which would
+     otherwise put the rotation origin below the glyph's centre. */
+  /* An expandable failed row still needs its chevron; one with
+     nothing to open says so with the icon instead. */
+  let icon: ReactNode;
+  if (running) icon = <Loader2 size={12} className="block animate-spin" />;
+  else if (failed) icon = expandable ? chevron : <Info size={13} />;
+  else icon = expandable && chevron;
 
   return (
     <div className="text-chat">
@@ -163,39 +186,7 @@ export function AssistantToolActivity({
             versus the assistant is thinking — and they stack, so giving both
             the same mark would show the NetBird logo twice saying two things. */}
         <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-          {running ? (
-            /* 12, not the 13 its neighbours use, and `block`.
-
-               Lucide draws a 24-unit viewBox at the pixel size given, so 13
-               scales by 13/24 and puts the circle's centre on a half-pixel:
-               the stroke then rasterises slightly differently on each frame
-               and the spin visibly wobbles. 12 is an exact half, so the centre
-               and the stroke land on whole pixels and the rotation is steady.
-               The constraint only applies to the icon that MOVES — the chevron
-               and info marks beside it stay at 13, where a half-pixel is
-               static and invisible, and the 16px box keeps the column aligned
-               either way. `block` drops the inline baseline gap, which would
-               otherwise put the rotation origin below the glyph's centre. */
-            <Loader2 size={12} className="block animate-spin" />
-          ) : failed ? (
-            /* An expandable failed row still needs its chevron; one with
-               nothing to open says so with the icon instead. */
-            expandable ? (
-              <ChevronRight
-                size={13}
-                className={cn("transition-transform", open && "rotate-90")}
-              />
-            ) : (
-              <Info size={13} />
-            )
-          ) : (
-            expandable && (
-              <ChevronRight
-                size={13}
-                className={cn("transition-transform", open && "rotate-90")}
-              />
-            )
-          )}
+          {icon}
         </span>
 
         {/* `min-w-0 truncate` rather than `shrink-0`: the line now carries the

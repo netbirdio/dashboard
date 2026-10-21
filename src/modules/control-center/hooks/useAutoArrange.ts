@@ -1,5 +1,5 @@
-import { useCallback } from "react";
 import { useReactFlow } from "@xyflow/react";
+import { useCallback } from "react";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { applyDraftBuildLayout } from "@/modules/control-center/utils/draft-build-layout";
 import {
@@ -29,9 +29,10 @@ export function useAutoArrange() {
     if (nodes.length === 0) return;
 
     const refit = (arranged: typeof nodes) => {
+      const visible = arranged.filter((n) => !n.hidden);
       setTimeout(() => {
         reactFlow.fitView({
-          nodes: arranged.filter((n) => !n.hidden),
+          nodes: visible,
           padding: 0.1,
           duration: 500,
           maxZoom: 0.8,

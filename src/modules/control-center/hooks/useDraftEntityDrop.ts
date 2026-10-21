@@ -1,6 +1,6 @@
-import { useCallback } from "react";
-import { XYPosition } from "@xyflow/react";
 import useFetchApi from "@utils/api";
+import { XYPosition } from "@xyflow/react";
+import { useCallback } from "react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -116,7 +116,7 @@ export function useDraftEntityDrop() {
       // Existing resources already live in a network — stamp its ref so the
       // standalone card shows the network name (read-only in v1).
       const network = networks?.find((n) =>
-        n.resources?.some((r) => r === resource.id),
+        n.resources?.includes(resource.id),
       );
       const nodeId = `resource-${resource.id}`;
       placeNode(

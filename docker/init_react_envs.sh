@@ -125,10 +125,12 @@ if [[ -n "${NETBIRD_MGMT_API_ENDPOINT}" ]]; then
     fi
 fi
 
-# Add NETBIRD_ASSISTANT_API_ENDPOINT to CSP — the browser streams the chat
-# straight from this origin, so without it connect-src blocks every request.
+# Add NETBIRD_ASSISTANT_API_ENDPOINT to connect-src only: the browser streams
+# the chat straight from this origin, so without it connect-src blocks every
+# request, but the assistant serves no scripts and no frames, and the shared
+# list would let it into script-src and frame-src as well.
 if [[ -n "${NETBIRD_ASSISTANT_API_ENDPOINT}" ]]; then
-    CSP_DOMAINS="$CSP_DOMAINS $NETBIRD_ASSISTANT_API_ENDPOINT"
+    CSP_DOMAINS_CONNECT_SRC="$CSP_DOMAINS_CONNECT_SRC $NETBIRD_ASSISTANT_API_ENDPOINT"
 fi
 
 # Add LETSENCRYPT_DOMAIN to CSP

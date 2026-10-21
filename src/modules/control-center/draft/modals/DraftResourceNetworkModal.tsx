@@ -7,21 +7,21 @@ import {
   SelectOption,
 } from "@components/select/SelectDropdown";
 import Separator from "@components/Separator";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { useReactFlow } from "@xyflow/react";
 import { NetworkIcon, PlusCircle } from "lucide-react";
 import * as React from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { Network } from "@/interfaces/Network";
-import { isFrameNode } from "@/modules/control-center/utils/helpers";
-import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
 import {
   getNetworkRef,
   useDraftNetworkActions,
 } from "@/modules/control-center/hooks/useDraftNetworkActions";
 import { useDraftNodeCreation } from "@/modules/control-center/hooks/useDraftNodeCreation";
+import { isFrameNode } from "@/modules/control-center/utils/helpers";
 import { NetworkModalContent } from "@/modules/networks/NetworkModal";
-import { SmallBadge } from "@components/ui/SmallBadge";
 
 // "No Network" picker for a standalone draft resource: assign it to an existing
 // network (a canvas frame or a real API network) or to a new draft network.

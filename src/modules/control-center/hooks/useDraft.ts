@@ -4,9 +4,9 @@ import { useEffect, useRef } from "react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
-import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
+import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   CanvasTool,
   useDraftMode,

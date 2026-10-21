@@ -48,7 +48,7 @@ export default function Navigation({
   // Heights here derive from 100vh, so they must account for the dashboard being
   // inset by the assistant panel or the nav overflows the card and is clipped.
   const { inset } = useAssistantSidebar();
-  const { permission, isRestricted } = usePermissions();
+  const { permission } = usePermissions();
 
   // Caller-scoped: true whenever the caller's own policies grant access to
   // at least one provider, independent of any agent_network permission —

@@ -14,6 +14,7 @@ import {
   useState,
 } from "react";
 import type { PageContextEntry, PageContextType } from "@/interfaces/Assistant";
+import { buildPageContextMarker } from "./lib/contract";
 
 interface AssistantChatContextState {
   entry: PageContextEntry | null;
@@ -40,7 +41,7 @@ export function AssistantChatContextProvider({
     return () => setStack(without);
   }, []);
 
-  const top = stack[stack.length - 1] ?? null;
+  const top = stack.at(-1) ?? null;
 
   // Reset during render, not in an effect, so the chip never flashes back for
   // a frame. Keyed on "the top changed": returning to a page is a new visit.
@@ -50,7 +51,7 @@ export function AssistantChatContextProvider({
     setDismissed(null);
   }
 
-  const entry = top && top.key === dismissed ? null : top;
+  const entry = top?.key === dismissed ? null : top;
 
   const value = useMemo<AssistantChatContextState>(
     () => ({
@@ -99,20 +100,21 @@ export function useActivePageContext(): {
   };
 }
 
-// The string the assistant reads. Real values — redaction happens server-side.
+// The string the assistant reads. Real values: the assistant SDK tokenises them before they leave the browser.
 function describePageContext(
   entry: PageContextEntry | null,
   name?: string,
 ): string | null {
   if (!entry) return null;
   if (entry.id) {
-    const label = name ?? entry.label;
-    return `<page-context kind="${entry.type}" id="${entry.id}"${
-      label ? ` label="${label}"` : ""
-    } />`;
+    return buildPageContextMarker({
+      kind: entry.type,
+      ref: entry.id,
+      label: name ?? entry.label,
+    });
   }
   return entry.label
-    ? `<page-context kind="${entry.type}" label="${entry.label}" />`
+    ? buildPageContextMarker({ kind: entry.type, label: entry.label })
     : null;
 }
 
@@ -171,6 +173,14 @@ const prettyTab = (tab: string) =>
     )
     .join(" ");
 
+/*
+  The shapes a NetBird id and a tab slug take. The marker tells the assistant
+  what the user has open, so a query parameter that is neither names no page:
+  a crafted link could otherwise put its own words into the marker.
+*/
+const ID = /^[A-Za-z0-9_-]{1,64}$/;
+const TAB = /^[a-z0-9][a-z0-9-]{0,31}$/;
+
 function routeEntry(
   pathname: string,
   params: URLSearchParams,
@@ -179,10 +189,10 @@ function routeEntry(
   if (!rule) return null;
 
   const id = rule.idParam ? params.get(rule.idParam) : null;
-  if (id) return { key: `${rule.type}:${id}`, type: rule.type, id };
+  if (id) return ID.test(id) ? { key: `${rule.type}:${id}`, type: rule.type, id } : null;
 
   const tab = rule.tabParam ? params.get(rule.tabParam) : null;
-  if (tab) {
+  if (tab && TAB.test(tab)) {
     return {
       key: `${rule.type}:${tab}`,
       type: rule.type,

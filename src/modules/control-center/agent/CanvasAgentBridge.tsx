@@ -1,5 +1,18 @@
 "use client";
 
+import { Connection, Node, useReactFlow } from "@xyflow/react";
+import { useEffect, useRef } from "react";
+import { Group } from "@/interfaces/Group";
+import { Network, NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
+import { Policy } from "@/interfaces/Policy";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import type {
+  AgentPolicy,
+  AIProvider,
+} from "@/modules/agent-network/data/mockData";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import { useBootstrapCluster } from "@/modules/agent-network/useBootstrapCluster";
 import {
   AgentAddItem,
   AgentCanvasAction,
@@ -16,20 +29,7 @@ import {
   beginAgentTurn,
   CanvasAgentApi,
   registerCanvasAgent,
-} from "@netbird/assistant-react";
-import { Connection, Node, useReactFlow } from "@xyflow/react";
-import { useEffect, useRef } from "react";
-import { Group } from "@/interfaces/Group";
-import { Network, NetworkResource } from "@/interfaces/Network";
-import { Peer } from "@/interfaces/Peer";
-import { Policy } from "@/interfaces/Policy";
-import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
-import type {
-  AgentPolicy,
-  AIProvider,
-} from "@/modules/agent-network/data/mockData";
-import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
-import { useBootstrapCluster } from "@/modules/agent-network/useBootstrapCluster";
+} from "@/modules/assistant";
 import {
   useCanvasState,
   useControlCenterUI,
@@ -114,7 +114,7 @@ export const CanvasAgentBridge = ({
     // the gaps between steps.
     if (process.env.APP_ENV === "test") {
       (
-        window as unknown as {
+        globalThis as unknown as {
           __controlCenterAgent?: CanvasAgentApi & { beginTurn: () => () => void };
         }
       ).__controlCenterAgent = { ...api, beginTurn: beginAgentTurn };
@@ -253,9 +253,20 @@ let placement = {
   right: 0,
 };
 
-const wait = (ms: number) => new Promise((r) => window.setTimeout(r, ms));
+const quoted = (name?: string) => (name ? ` “${name}”` : "");
+const plural = (count: number, word: string) => (count === 1 ? word : `${word}s`);
+
+/** The selector node pointed at `subjectId`, or `prev` untouched when it already is. */
+function withSelectorSubject(prev: Node[], selectorId: string | undefined, key: string | undefined, subjectId: string): Node[] {
+  if (!key) return prev;
+  const stale = prev.some((n) => n.id === selectorId && n.data?.[key] !== subjectId);
+  if (!stale) return prev;
+  return prev.map((n) => (n.id === selectorId ? { ...n, data: { ...n.data, [key]: subjectId } } : n));
+}
+
+const wait = (ms: number) => new Promise((r) => globalThis.setTimeout(r, ms));
 const nextFrame = () =>
-  new Promise((r) => window.requestAnimationFrame(() => r(undefined)));
+  new Promise((r) => globalThis.requestAnimationFrame(() => r(undefined)));
 /**
  * Lets a just-created node reach the React Flow store before it's edited.
  * Two animation frames straddle at least one React commit; the trailing
@@ -336,7 +347,7 @@ function buildApi(deps: Deps): CanvasAgentApi {
 
     return {
       mode: d.draft.isDraft ? "draft" : "live",
-      view: d.canvas.currentView as AgentCanvasSnapshot["view"],
+      view: d.canvas.currentView,
       drilledNetwork: d.draft.drillDownNetworkNodeId ?? undefined,
       subject: subject(),
       startedBlank: d.draft.startedBlank,
@@ -480,18 +491,7 @@ function buildApi(deps: Deps): CanvasAgentApi {
     const subjectId = resolved.id;
     const key = SELECTOR_DATA_KEYS[view];
     const syncSelector = () =>
-      d.reactFlow.setNodes((prev) => {
-        if (!key) return prev;
-        const stale = prev.some(
-          (n) => n.id === selectorId && n.data?.[key] !== subjectId,
-        );
-        if (!stale) return prev;
-        return prev.map((n) =>
-          n.id === selectorId
-            ? { ...n, data: { ...n.data, [key]: subjectId } }
-            : n,
-        );
-      });
+      d.reactFlow.setNodes((prev) => withSelectorSubject(prev, selectorId, key, subjectId));
     syncSelector();
     await wait(STEP_MS);
     syncSelector();
@@ -761,7 +761,7 @@ const requireDraft = (d: BridgeDeps): AgentStepResult | null =>
  * a notice for the next report so the assistant's step trail accounts for the
  * movement it caused (see drainNotices).
  */
-let arrangeTimer: number | undefined;
+let arrangeTimer: ReturnType<typeof setTimeout> | undefined;
 const notices: string[] = [];
 
 /**
@@ -769,15 +769,15 @@ const notices: string[] = [];
  * idle arrange so the canvas doesn't settle twice.
  */
 function arrangeNow(deps: Deps): AgentStepResult {
-  window.clearTimeout(arrangeTimer);
+  globalThis.clearTimeout(arrangeTimer);
   arrangeTimer = undefined;
   deps().arrange();
   return ok("Arranged the canvas and fitted the view.");
 }
 
 function scheduleArrange(deps: Deps) {
-  window.clearTimeout(arrangeTimer);
-  arrangeTimer = window.setTimeout(() => {
+  globalThis.clearTimeout(arrangeTimer);
+  arrangeTimer = globalThis.setTimeout(() => {
     arrangeTimer = undefined;
     const done = beginAgentActivity();
     try {
@@ -880,16 +880,8 @@ async function addOne(
         ? await fillGroup(created.id, item.members, d)
         : 0;
       const network = (frame.data as { network?: Network })?.network;
-      return ok(
-        `Added the group${name ? ` “${name}”` : ""} inside “${
-          network?.name ?? "the network"
-        }”${
-          item.members?.length
-            ? ` with ${joined} of ${item.members.length} of its resources`
-            : ""
-        }.`,
-        created.id,
-      );
+      const members = item.members?.length ? ` with ${joined} of ${item.members.length} of its resources` : "";
+      return ok(`Added the group${quoted(name)} inside “${network?.name ?? "the network"}”${members}.`, created.id);
     }
 
     case "new_group": {
@@ -904,16 +896,9 @@ async function addOne(
       const added = item.members?.length
         ? await fillGroup(nodeId, item.members, d)
         : 0;
-      return ok(
-        `Added a new group${name ? ` “${name}”` : ""}${
-          item.members?.length
-            ? ` with ${added} of ${item.members.length} member${
-                item.members.length === 1 ? "" : "s"
-              }`
-            : ""
-        }.`,
-        nodeId,
-      );
+      const count = item.members?.length ?? 0;
+      const members = count ? ` with ${added} of ${count} ${plural(count, "member")}` : "";
+      return ok(`Added a new group${quoted(name)}${members}.`, nodeId);
     }
 
     case "new_policy": {
@@ -945,11 +930,8 @@ async function addOne(
         the draft and the claim much harder to miss.
       */
       const narrowed = item.protocol && item.protocol !== "all";
-      const holds = narrowed
-        ? `${item.protocol}${
-            item.ports?.length ? ` on ${item.ports.join(", ")}` : ", all ports"
-          }`
-        : "ALL protocols on ALL ports";
+      const ports = item.ports?.length ? ` on ${item.ports.join(", ")}` : ", all ports";
+      const holds = narrowed ? `${item.protocol}${ports}` : "ALL protocols on ALL ports";
       return ok(
         `Added a${narrowed ? "" : "n empty"} ${
           item.bidirectional === false ? "one-way " : ""
@@ -976,7 +958,7 @@ async function addOne(
         at,
         name ? { name, description: item.description } : undefined,
       );
-      return ok(`Added a new network${name ? ` “${name}”` : ""}.`, nodeId);
+      return ok(`Added a new network${quoted(name)}.`, nodeId);
     }
 
     case "existing_network": {
@@ -1026,11 +1008,8 @@ async function addOne(
         groupIds: [],
         network,
       });
-      // The address stays OUT of the detail: an IP or CIDR in a tool result
-      // trips the assistant server's PII backstop, which is non-reversible —
-      // the model would echo a literal "[redacted-ip]" back at the user. The
-      // node id is the honest reference, and the model already knows the
-      // address it asked for.
+      // The address stays OUT of the detail: the node id is the honest
+      // reference, and the model already knows the address it asked for.
       return ok(
         `Added the resource${
           frame ? ` to “${network.name}”` : " — it still needs a network"
@@ -1807,11 +1786,9 @@ function assignEntityToGroup(
     itemId: action.node,
     draggedNodeId: card?.id,
   });
-  return ok(
-    `Added ${peer ? card?.id ?? action.node : `“${resource?.name}”`} to “${
-      getNodeGroup(group)?.name
-    }”${card ? " — its card is now part of the group" : ""}.`,
-  );
+  const what = peer ? card?.id ?? action.node : `“${resource?.name}”`;
+  const note = card ? " — its card is now part of the group" : "";
+  return ok(`Added ${what} to “${getNodeGroup(group)?.name}”${note}.`);
 }
 
 /** Whether a group name is already in use (API, canvas, or pending creates). */
@@ -1895,7 +1872,8 @@ function editPolicy(edit: AgentPolicyEdit, d: BridgeDeps): AgentStepResult {
   // Ports only mean anything for TCP/UDP; the API rejects them otherwise, so a
   // protocol switch away from them clears the list rather than shipping a 422.
   const portsAllowed = protocol === "tcp" || protocol === "udp";
-  const ports = portsAllowed ? (portsGiven ? edit.ports! : rule.ports) : [];
+  let ports: typeof rule.ports = [];
+  if (portsAllowed) ports = portsGiven ? edit.ports! : rule.ports;
 
   const next: Policy = {
     ...current,
@@ -2049,13 +2027,9 @@ function describeNode(node: Node, d: BridgeDeps): AgentNode {
     nodeId: node.id,
     kind,
     label: labelOf(node),
-    // A peer's name is a person's machine — the assistant only ever sees a
-    // token for it. Group/policy/network/resource names are admin-chosen
-    // labels and pass through as written.
-    labelIsPersonal: kind === "peer" && !placeholder,
     entity: entityOf(node),
     placeholder,
-    enabled: ((node.data as { enabled?: boolean })?.enabled ?? true) as boolean,
+    enabled: (node.data as { enabled?: boolean })?.enabled ?? true,
     parentNodeId: node.parentId,
     frame: isFrameNode(node) || undefined,
     can: {
@@ -2081,7 +2055,7 @@ function describeNode(node: Node, d: BridgeDeps): AgentNode {
  * know that, so it says so instead of assuming the policy is done.
  */
 function dialogNote(from: Node, to: Node): string {
-  const kinds = [from, to].map((n) => KINDS[n.type ?? ""] ?? "other");
+  const kinds = new Set([from, to].map((n) => KINDS[n.type ?? ""] ?? "other"));
   /*
     Agent Network wires itself: a group either way round becomes the policy's
     source and a provider its destination. The two cases worth reporting are a
@@ -2089,20 +2063,20 @@ function dialogNote(from: Node, to: Node): string {
     and an end the rules simply ignore — that one draws nothing at all, and
     silence there reads as a connection that worked.
   */
-  if (kinds.includes("agent-policy")) {
-    return kinds.includes("provider") || kinds.includes("group")
+  if (kinds.has("agent-policy")) {
+    return kinds.has("provider") || kinds.has("group")
       ? ""
       : " An agent policy only takes a group (source) or a provider (destination), so nothing was drawn.";
   }
-  if (kinds.includes("provider")) {
-    return kinds.includes("group")
+  if (kinds.has("provider")) {
+    return kinds.has("group")
       ? " There was no agent policy between them, so the agent-policy wizard opened for the user to finish."
       : " Only a group or an agent policy can reach a provider, so nothing was drawn.";
   }
-  if (!kinds.includes("policy")) {
+  if (!kinds.has("policy")) {
     return " Neither side is a policy, so the create-policy dialog opened for the user to finish.";
   }
-  if (kinds.includes("network")) {
+  if (kinds.has("network")) {
     return " A network has several possible destinations, so the picker opened for the user to choose one.";
   }
   return "";

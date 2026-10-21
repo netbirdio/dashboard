@@ -10,8 +10,8 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
-import Steps from "@components/Steps";
 import Separator from "@components/Separator";
+import Steps from "@components/Steps";
 import useFetchApi from "@utils/api";
 import { sortBy } from "lodash";
 import { DownloadIcon, MonitorSmartphoneIcon } from "lucide-react";

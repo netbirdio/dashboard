@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { navigateToPage, openPageExecutor } from "@/modules/assistant/openPageExecutor";
+import { describe, expect, it, vi } from "vitest";
+import { navigateToPage, pageRedirect } from "@/modules/assistant/lib/page-redirect";
+
+// What the canvas reports while a test runs; null when the control center is not mounted.
+let canvas: { mode: "live" | "draft"; changes: { type: string; name: string }[] } | null = null;
+vi.mock("@/modules/assistant/lib/canvas", () => ({
+  getCanvasAgent: () => (canvas ? { getSnapshot: () => canvas } : null),
+}));
 
 describe("navigateToPage", () => {
   it("builds a detail route from an id", () => {
@@ -114,22 +120,38 @@ describe("navigateToPage", () => {
   });
 });
 
-describe("openPageExecutor", () => {
-  const ctx = (pushed: string[]) => ({
+describe("pageRedirect", () => {
+  const ctx = (pushed: string[], onControlCenterPage = false) => ({
     navigate: (href: string) => pushed.push(href),
-    onControlCenterPage: () => false,
+    onControlCenterPage: () => onControlCenterPage,
+  });
+
+  it("refuses to leave the control center while a draft holds unsaved changes", async () => {
+    canvas = { mode: "draft", changes: [{ type: "create_group", name: "Build Servers" }, { type: "create_policy", name: "Build to DB" }] };
+    const pushed: string[] = [];
+    const outcome = await pageRedirect({ page: "peers" }, ctx(pushed, true));
+    expect(outcome.ok).toBe(false);
+    expect(outcome.content).toContain("2 unsaved changes");
+    expect(pushed).toEqual([]);
+    // Staying on the control center is fine, as is a draft with nothing in it, as is the live view.
+    expect((await pageRedirect({ page: "control_center" }, ctx(pushed, true))).ok).toBe(true);
+    canvas = { mode: "draft", changes: [] };
+    expect((await pageRedirect({ page: "peers" }, ctx(pushed, true))).ok).toBe(true);
+    canvas = { mode: "live", changes: [] };
+    expect((await pageRedirect({ page: "peers" }, ctx(pushed, true))).ok).toBe(true);
+    canvas = null;
   });
 
   it("pushes the route and reports it", async () => {
     const pushed: string[] = [];
-    const outcome = await openPageExecutor({ page: "peers" }, ctx(pushed));
+    const outcome = await pageRedirect({ page: "peers" }, ctx(pushed));
     expect(outcome).toEqual({ ok: true, content: "Navigated to /peers." });
     expect(pushed).toEqual(["/peers"]);
   });
 
   it("fails without navigating on an unknown page", async () => {
     const pushed: string[] = [];
-    const outcome = await openPageExecutor({ page: "billing" }, ctx(pushed));
+    const outcome = await pageRedirect({ page: "billing" }, ctx(pushed));
     expect(outcome.ok).toBe(false);
     expect(pushed).toEqual([]);
   });

@@ -1,7 +1,7 @@
 import { Edge, Node } from "@xyflow/react";
-import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
 import { DEFAULT_LAYOUT_CONFIG } from "@/modules/control-center/utils/graph-builder";
 import { getFrameChildPosition } from "@/modules/control-center/utils/helpers";
+import { applyD3HierarchicalLayout } from "@/modules/control-center/utils/layouts";
 
 // The one single-network ("drilled") layout, shared by the live
 // single-network view and the draft drill-down so both stay identical.

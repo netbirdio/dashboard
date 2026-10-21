@@ -2,12 +2,12 @@ import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { Handle, type Node, Position, useConnection } from "@xyflow/react";
 import * as React from "react";
+import { Policy } from "@/interfaces/Policy";
 import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { FullAreaTargetHandle } from "@/modules/control-center/handles/FullAreaTargetHandle";
 import { getPolicyProtocolAndPortText } from "@/modules/control-center/utils/helpers";
-import { Policy } from "@/interfaces/Policy";
 
 type PolicyNode = Node<
   {

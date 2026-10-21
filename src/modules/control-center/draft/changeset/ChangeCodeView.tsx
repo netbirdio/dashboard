@@ -1,7 +1,7 @@
-import React, { useMemo } from "react";
-import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { ScrollBar } from "@components/ScrollArea";
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { cn } from "@utils/helpers";
+import React, { useMemo } from "react";
 import { DraftChange } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   buildChangeRequest,

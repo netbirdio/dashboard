@@ -292,7 +292,7 @@ export const humanize = (value: string): string =>
   value
     .split(/[_\s]+/)
     .filter(Boolean)
-    .map((word) => word[0]!.toUpperCase() + word.slice(1))
+    .map((word) => word[0].toUpperCase() + word.slice(1))
     .join(" ");
 
 export const quoted = (value?: string): string | undefined =>

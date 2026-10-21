@@ -11,21 +11,8 @@ import {
   useAuiState,
 } from "@assistant-ui/react";
 import Paragraph from "@components/Paragraph";
-import { acceptsFreeText, useAssistant } from "@netbird/assistant-react";
 import { cn } from "@utils/helpers";
-import {
-  ArrowDown,
-  ArrowUp,
-  BookOpen,
-  Cable,
-  Check,
-  ChevronRight,
-  Copy,
-  PenLine,
-  RotateCw,
-  ShieldCheck,
-  Square,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, Cable, Check, ChevronRight, Copy, History, PenLine, RotateCw, ShieldCheck, Square } from "lucide-react";
 import Image from "next/image";
 import {
   createContext,
@@ -40,15 +27,16 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import type { PageContextEntry } from "@/interfaces/Assistant";
 import { CHAT_PAD } from "@/interfaces/Assistant";
+import { acceptsFreeText, useAssistant } from "@/modules/assistant";
 import {
   AssistantApprovalGate,
   AssistantOpenQuestionCard,
   isOpenQuestion,
 } from "@/modules/assistant/chat/AssistantApprovalCard";
 import { AssistantContextChip } from "@/modules/assistant/chat/AssistantContextChip";
+import { AssistantErrorNotice } from "@/modules/assistant/chat/AssistantErrorNotice";
 import { AssistantInlineComponent } from "@/modules/assistant/chat/AssistantInlineComponent";
 import { AssistantMarkdownText } from "@/modules/assistant/chat/AssistantMarkdownText";
-import { AssistantErrorNotice } from "@/modules/assistant/chat/AssistantErrorNotice";
 import {
   type AssistantQuestion,
   AssistantQuestionCard,
@@ -364,8 +352,10 @@ function timeOfDayGreeting(): string {
   return "Good evening";
 }
 
-// Tasks, not questions: each one opens a piece of work rather than asking
-// something the assistant could answer in a sentence.
+// Tasks, not questions, and each one says what the assistant should ask for
+// or read first, so a click lands in a piece of work rather than a generic
+// offer. The prompts are mirrored by the agent's evals/routing/starters.eval.ts;
+// change both together.
 const STARTERS: {
   label: string;
   prompt: string;
@@ -374,25 +364,26 @@ const STARTERS: {
   {
     label: "Draft Network Changes",
     prompt:
-      "Help me draft a change to my network. Ask what I'm connecting and who needs to reach it, then propose the networks, nodes and access rules I can review and deploy together.",
+      "Help me give a team access to a server. Ask me which server, its address or name, who needs to reach it and on which ports, then draft the groups, the network and the policy on the canvas for me to review and deploy.",
     icon: <PenLine size={13} className="shrink-0 text-nb-gray-200" />,
   },
   {
-    label: "Set Up Access Control",
+    label: "Review Access Policies",
     prompt:
-      "Help me set up access control. Work out which groups should reach what, then tell me what to change.",
+      "Review my access control. Read my policies and groups, show me who can reach what, and point out anything too broad, like a policy from All to All or one that allows every port.",
     icon: <ShieldCheck size={13} className="shrink-0 text-nb-gray-200" />,
   },
   {
     label: "Troubleshoot Connectivity",
-    prompt: "A peer can't reach something it should. Help me work out why.",
+    prompt:
+      "One of my peers can't reach something it should. Ask me which peer and what it is trying to reach, then check whether both are online, which groups they are in and which policy should connect them.",
     icon: <Cable size={13} className="shrink-0 text-nb-gray-200" />,
   },
   {
-    label: "Look It Up in the Docs",
+    label: "What Changed Recently",
     prompt:
-      "Answer this from the NetBird documentation. Ask me what I'm trying to do, then explain it and link the page.",
-    icon: <BookOpen size={13} className="shrink-0 text-nb-gray-200" />,
+      "What changed in my account in the last 7 days? Read the audit log and tell me who changed what, newest first, with anything that widened access called out.",
+    icon: <History size={13} className="shrink-0 text-nb-gray-200" />,
   },
 ];
 
@@ -407,7 +398,7 @@ function EmptyState({ bottomOffset }: Readonly<{ bottomOffset: number }>) {
   const start = (prompt: string) => aui.thread.append(prompt);
 
   return (
-    <ThreadPrimitive.Empty>
+    <AuiIf condition={(s) => s.thread.isEmpty}>
       <div
         className="absolute inset-x-0 top-0 z-10 flex flex-col items-center justify-center gap-5 overflow-y-auto py-6 text-center"
         style={{
@@ -449,7 +440,7 @@ function EmptyState({ bottomOffset }: Readonly<{ bottomOffset: number }>) {
           ))}
         </div>
       </div>
-    </ThreadPrimitive.Empty>
+    </AuiIf>
   );
 }
 
@@ -592,7 +583,7 @@ function Composer({
         )}
 
         {!question && !openQuestion && (
-          <ThreadPrimitive.If running={false}>
+          <AuiIf condition={(s) => !s.thread.isRunning}>
             <ComposerPrimitive.Send
               aria-label="Send"
               className={cn(
@@ -603,19 +594,19 @@ function Composer({
             >
               <ArrowUp size={16} />
             </ComposerPrimitive.Send>
-          </ThreadPrimitive.If>
+          </AuiIf>
         )}
 
-        <ThreadPrimitive.If running>
+        <AuiIf condition={(s) => s.thread.isRunning}>
           <ComposerPrimitive.Cancel
             aria-label="Stop"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-nb-gray-700 text-nb-gray-300 hover:text-nb-gray-100"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-nb-gray-700 text-red-500 hover:text-red-400"
           >
             {/* Even size: the bordered 8x8 box has a 30px content area, and an
                 odd-sized icon centers on a half pixel — visibly off-middle. */}
             <Square size={12} className="fill-current" />
           </ComposerPrimitive.Cancel>
-        </ThreadPrimitive.If>
+        </AuiIf>
       </div>
     </ComposerPrimitive.Root>
   );
@@ -861,6 +852,10 @@ export function AssistantThread({
               </>
             )}
           </div>
+          {/* Inside the measured bar, so the messages still end above it. */}
+          <p className="pb-1 pt-3 text-center text-xs leading-none text-nb-gray-500 dark:text-gray-400">
+            Assistant can make mistakes. Always check details.
+          </p>
         </div>
       </div>
     </ThreadPrimitive.Root>

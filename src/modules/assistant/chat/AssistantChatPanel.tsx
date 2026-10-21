@@ -2,14 +2,11 @@
 "use client";
 
 import { AssistantRuntimeProvider, useAuiState } from "@assistant-ui/react";
-import { useOidcAccessToken, useOidcIdToken } from "@axa-fr/react-oidc";
-import { AssistantProvider, useAssistant } from "@netbird/assistant-react";
-import loadConfig from "@utils/config";
-import { cn, sleep } from "@utils/helpers";
+import { cn } from "@utils/helpers";
 import { PanelLeft, PanelRight, Plus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { isExpired } from "react-jwt";
+import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import {
   CHAT_PAD,
@@ -17,6 +14,7 @@ import {
   PANEL_ON_LEFT,
   PANEL_WIDTH,
 } from "@/interfaces/Assistant";
+import { AssistantProvider, useAssistant } from "@/modules/assistant";
 import {
   useActivePageContext,
   usePageContextString,
@@ -24,39 +22,24 @@ import {
 import { useAssistantSidebar } from "@/modules/assistant/AssistantSidebarProvider";
 import { useContextChip } from "@/modules/assistant/chat/AssistantContextChip";
 import { AssistantThread } from "@/modules/assistant/chat/AssistantThread";
-import { openPageExecutor } from "@/modules/assistant/openPageExecutor";
+import { pageRedirect } from "@/modules/assistant/lib/page-redirect";
+import { useAssistantHeaders } from "@/modules/assistant/useAssistantHeaders";
+import { useAssistantManagementFetch } from "@/modules/assistant/useAssistantManagementFetch";
 
-const EXTRA_EXECUTORS = { dashboard_page_redirect: openPageExecutor };
-
-// The same token selection and expiry wait as useNetBirdFetch (src/utils/api),
-// shaped as the headers resolver the assistant SDK calls before every request.
-function useAssistantHeaders(): () => Promise<Record<string, string>> {
-  const { idToken } = useOidcIdToken();
-  const { accessToken } = useOidcAccessToken();
-  const tokenSource = loadConfig().tokenSource || "accessToken";
-  const token = tokenSource.toLowerCase() === "idtoken" ? idToken : accessToken;
-
-  // Read at request time through a ref: the resolver is captured once per
-  // conversation, and the OIDC client refreshes tokens behind it.
-  const tokenRef = useRef(token);
-  // eslint-disable-next-line react-hooks/refs -- deliberate: see above
-  tokenRef.current = token;
-
-  return useCallback(async () => {
-    let attempts = 4;
-    while (isExpired(tokenRef.current) && attempts > 0) {
-      await sleep(500);
-      attempts -= 1;
-    }
-    return { Authorization: `Bearer ${tokenRef.current}` };
-  }, []);
-}
+const EXTRA_EXECUTORS = { dashboard_page_redirect: pageRedirect };
 
 // Above the header as well as the thread, so the header can read the thread.
 function ConversationRuntime({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
-  const { runtime } = useAssistant();
+  open,
+}: Readonly<{ children: React.ReactNode; open: boolean }>) {
+  const { runtime, prewarm } = useAssistant();
+
+  // The session is created when the panel opens, so the first message starts
+  // its turn at once instead of waiting for the session to start.
+  useEffect(() => {
+    if (open) prewarm();
+  }, [open, prewarm]);
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
@@ -140,6 +123,7 @@ export function AssistantChatPanel() {
   const { available, open, setOpen, overlay, origin } = useAssistantSidebar();
 
   const headers = useAssistantHeaders();
+  const fetchManagement = useAssistantManagementFetch();
   const router = useRouter();
   const pathname = usePathname();
   const pathRef = useRef(pathname ?? "/");
@@ -156,6 +140,15 @@ export function AssistantChatPanel() {
   // Keys the SDK conversation; a fresh id starts a new one.
   const [chatId, setChatId] = useState(() => crypto.randomUUID());
   const startNewChat = useCallback(() => setChatId(crypto.randomUUID()), []);
+  /*
+    The MSP tenant the reads go to is part of the conversation's key: the
+    assistant service knows the user's own account only, so a chat that
+    outlived a tenant switch would carry one tenant's reads and names into
+    questions about another. A switch starts a separate conversation instead.
+  */
+  const { globalApiParams } = useApplicationContext();
+  const tenant = globalApiParams?.account;
+  const conversationId = tenant ? `${tenant}:${chatId}` : chatId;
 
   // autoFocus only fires on mount and the panel is always mounted, so opening
   // moves focus itself — a frame later, since an inert subtree can't take focus.
@@ -168,7 +161,7 @@ export function AssistantChatPanel() {
     return () => cancelAnimationFrame(frame);
   }, [open]);
 
-  if (!available) return null;
+  if (!available || !headers) return null;
 
   return (
     <aside
@@ -194,11 +187,12 @@ export function AssistantChatPanel() {
         currentUserId={loggedInUser?.id}
         pageContext={pageContext}
         extraExecutors={EXTRA_EXECUTORS}
-        conversationId={chatId}
+        fetchManagement={fetchManagement}
+        conversationId={conversationId}
       >
         {entry && <ContextName entry={entry} onName={setContextName} />}
 
-        <ConversationRuntime>
+        <ConversationRuntime open={open}>
           {/* Rows pad themselves by CHAT_PAD so the scrollbar can sit on the panel's edge. */}
           <div
             className="flex min-h-0 flex-col"

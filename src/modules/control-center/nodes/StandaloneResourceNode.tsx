@@ -7,13 +7,13 @@ import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
 import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { AllHandles } from "@/modules/control-center/handles/AllHandles";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import {
   DraftNetworkRef,
   getDraftResource,
   getResourceNodeEnabled,
 } from "@/modules/control-center/utils/helpers";
-import { AllHandles } from "@/modules/control-center/handles/AllHandles";
-import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 
 export const RESOURCE_TYPE_ICONS = {
   domain: GlobeIcon,

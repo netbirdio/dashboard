@@ -1,24 +1,29 @@
+import { describe, expect, it } from "vitest";
 import {
   BROWSER_TOOLS,
   CONTROL_CENTER_TOOLS,
+  READ_TOOLS,
   TOOL_MANIFEST,
-} from "@netbird/assistant-react";
-import { describe, expect, it } from "vitest";
-import { openPageExecutor } from "@/modules/assistant/openPageExecutor";
+} from "@/modules/assistant";
+import { pageRedirect } from "@/modules/assistant/lib/page-redirect";
 
 // What the dashboard registers via the provider's extraExecutors.
 const LOCAL_EXECUTORS: Record<string, unknown> = {
-  dashboard_page_redirect: openPageExecutor,
+  dashboard_page_redirect: pageRedirect,
 };
 
-describe("browser tool executors", () => {
+describe("the browser tools and their executors", () => {
   it("covers every browser tool in the manifest", () => {
+    // The SDK runs the account reads itself, through the provider's fetchManagement.
     const unfulfilled = BROWSER_TOOLS.filter(
-      (name) => !(name in CONTROL_CENTER_TOOLS) && !(name in LOCAL_EXECUTORS),
+      (name) =>
+        !(name in CONTROL_CENTER_TOOLS) &&
+        !READ_TOOLS.includes(name) &&
+        !(name in LOCAL_EXECUTORS),
     );
     expect(
       unfulfilled,
-      `browser tools with no executor (SDK CONTROL_CENTER_TOOLS or extraExecutors): ${unfulfilled.join(
+      `browser tools with no executor (SDK CONTROL_CENTER_TOOLS, READ_TOOLS or extraExecutors): ${unfulfilled.join(
         ", ",
       )}`,
     ).toEqual([]);

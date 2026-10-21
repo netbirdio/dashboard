@@ -1,26 +1,26 @@
-import { useEffect, useRef } from "react";
 import { useReactFlow, Viewport, XYPosition } from "@xyflow/react";
+import { useEffect, useRef } from "react";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
-import {
-  DRILLED_RESOURCE_SPACING,
-  applyDrilledLayout,
-  getDrilledFrameAnchor,
-} from "@/modules/control-center/utils/drilled-layout";
 import {
   drillInto,
   drillOutOf,
   getNodeRect,
 } from "@/modules/control-center/utils/canvas-transition";
-import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 import {
+  applyDrilledLayout,
+  DRILLED_RESOURCE_SPACING,
+  getDrilledFrameAnchor,
+} from "@/modules/control-center/utils/drilled-layout";
+import { computeDrillDownKeepSet } from "@/modules/control-center/utils/frame-view";
+import {
+  getNetworkFrameHeight,
   NETWORK_FRAME_HEADER,
   NETWORK_FRAME_PADDING_X,
   NETWORK_FRAME_PADDING_Y,
   NETWORK_FRAME_WIDTH,
-  getNetworkFrameHeight,
 } from "@/modules/control-center/utils/helpers";
+import { DEFAULT_MIN_ZOOM } from "@/modules/control-center/utils/layouts";
 
 // Drill-down keeps only the clicked frame, its routing peers and the policies
 // targeting its resources, re-laid out like the live single-network view.

@@ -3,6 +3,7 @@
 "use client";
 
 import type { ToolCallMessagePartProps } from "@assistant-ui/react";
+import { cn } from "@utils/helpers";
 
 interface CanvasPreview {
   component: "canvas_preview";
@@ -20,6 +21,10 @@ interface ResourceTable {
 }
 
 type UIComponent = CanvasPreview | ResourceTable;
+
+// Cell values up to this length never wrap; the panel is narrow, so longer
+// ones still may rather than forcing the whole table to scroll sideways.
+const NOWRAP_UP_TO = 28;
 
 const prettyKey = (key: string) =>
   key.replaceAll("_", " ").replace(/^\w/, (c) => c.toUpperCase());
@@ -106,14 +111,22 @@ function ResourceTableCard({
         <tbody>
           {ids.map((id, index) => (
             <tr key={id}>
-              {columns.map((column) => (
-                <td
-                  key={column}
-                  className="px-3.5 py-2.5 align-top text-nb-gray-200"
-                >
-                  {cell(id, column, index)}
-                </td>
-              ))}
+              {columns.map((column) => {
+                const value = cell(id, column, index);
+                return (
+                  <td
+                    key={column}
+                    className={cn(
+                      "px-3.5 py-2.5 align-top text-nb-gray-200",
+                      // A short value (a time, a name, a status) stays on one
+                      // line; only long text wraps, so a date never breaks in two.
+                      value.length <= NOWRAP_UP_TO && "whitespace-nowrap",
+                    )}
+                  >
+                    {value}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

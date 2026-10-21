@@ -1029,9 +1029,11 @@ export const DestinationGroupPanel = ({
 
   useEffect(() => {
     if (tabPicked.current) return;
-    setTab(
-      preferUsersTab ? "users" : preferResourcesTab ? "resources" : "peers",
-    );
+    const preferred = () => {
+      if (preferUsersTab) return "users";
+      return preferResourcesTab ? "resources" : "peers";
+    };
+    setTab(preferred());
   }, [groupId, preferUsersTab, preferResourcesTab]);
 
   const query = search.trim().toLowerCase();

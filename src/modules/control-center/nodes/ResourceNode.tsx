@@ -10,21 +10,21 @@ import { GlobeIcon } from "lucide-react";
 import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
+import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { AllHandles } from "@/modules/control-center/handles/AllHandles";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import {
   RESOURCE_TYPE_ICONS,
   StandaloneResourceNode,
 } from "@/modules/control-center/nodes/StandaloneResourceNode";
-import { useIsContextMenuTarget } from "@/modules/control-center/contexts/ControlCenterContext";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
   DraftNetworkRef,
   getDraftResource,
   getResourceNodeEnabled,
   useAnySourceGroupEnabled,
 } from "@/modules/control-center/utils/helpers";
-import { AllHandles } from "@/modules/control-center/handles/AllHandles";
-import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 
 type ResourceNode = Node<
   {

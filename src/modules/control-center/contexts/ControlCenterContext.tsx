@@ -29,6 +29,7 @@ import { Network } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
 import { useAccount } from "@/modules/account/useAccount";
+import { AgentBusyOverlay } from "@/modules/control-center/agent/AgentBusyOverlay";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import { FlowView } from "@/modules/control-center/header/FlowSelector";
@@ -48,7 +49,6 @@ import {
   ensureParentsBeforeChildren,
   getIpPlaceholderFromRange,
 } from "@/modules/control-center/utils/helpers";
-import { AgentBusyOverlay } from "@/modules/control-center/agent/AgentBusyOverlay";
 import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
 import { NetworkProvider } from "@/modules/networks/NetworkProvider";
 import NetworkResourceModal from "@/modules/networks/resources/NetworkResourceModal";
@@ -184,7 +184,7 @@ export function CanvasStateProvider({
   // The canvas lives only in React, so mirror a projection onto window for e2e.
   useEffect(() => {
     if (process.env.APP_ENV !== "test") return;
-    (window as unknown as { __controlCenterDraftCanvas?: unknown }).__controlCenterDraftCanvas = {
+    (globalThis as unknown as { __controlCenterDraftCanvas?: unknown }).__controlCenterDraftCanvas = {
       nodes: nodes.map((n) => ({
         id: n.id,
         type: n.type,

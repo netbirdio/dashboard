@@ -1,5 +1,5 @@
-import { PropsWithChildren } from "react";
 import { cn } from "@utils/helpers";
+import { PropsWithChildren } from "react";
 
 interface ToolbarGroupProps {
   compact?: boolean;

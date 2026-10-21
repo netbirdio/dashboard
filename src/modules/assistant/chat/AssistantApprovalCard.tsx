@@ -8,14 +8,14 @@
 "use client";
 
 import Button from "@components/Button";
+import { cn } from "@utils/helpers";
+import { MessageCircleQuestion, ShieldQuestion } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   acceptsFreeText,
   type PendingInputRequest,
   toolLabel,
-} from "@netbird/assistant-react";
-import { cn } from "@utils/helpers";
-import { MessageCircleQuestion, ShieldQuestion } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+} from "@/modules/assistant";
 
 /**
  * What the card asks, in the words the rest of the thread uses.
@@ -88,7 +88,7 @@ function affirmativeOf(options: Option[]): Option | undefined {
 function negativeOf(options: Option[]): Option | undefined {
   const negative = options.find((o) => o.style === "danger");
   if (negative) return negative;
-  const last = options[options.length - 1];
+  const last = options.at(-1);
   return last === affirmativeOf(options) ? undefined : last;
 }
 
@@ -187,18 +187,14 @@ export function AssistantApprovalCard({
     if (freeText) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
-      const option =
-        event.key === "Enter"
-          ? affirmative
-          : event.key === "Escape"
-          ? negative
-          : undefined;
+      if (event.key !== "Enter" && event.key !== "Escape") return;
+      const option = event.key === "Enter" ? affirmative : negative;
       if (!option) return;
       event.preventDefault();
       respond(option.id);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    globalThis.addEventListener("keydown", onKey);
+    return () => globalThis.removeEventListener("keydown", onKey);
   }, [affirmative, negative, freeText, respond]);
 
   return (
@@ -265,7 +261,6 @@ export function AssistantApprovalCard({
           // With a text box present the send button is the primary action, so
           // an option alongside it is one way of answering rather than the way.
           const isAffirmative = !freeText && option === affirmative;
-          const isNegative = option === negative;
           return (
             /* The dashboard's own Button, so these two read as the same kind of
                control as every other pair of actions in the product, and pick

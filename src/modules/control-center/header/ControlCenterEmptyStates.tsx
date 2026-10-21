@@ -3,15 +3,15 @@ import InlineLink from "@components/InlineLink";
 import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
 import SquareIcon from "@components/SquareIcon";
 import GetStartedTest from "@components/ui/GetStartedTest";
+import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { FlowView } from "@/modules/control-center/header/FlowSelector";
-import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { useCanvasState } from "@/modules/control-center/contexts/ControlCenterContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { FlowView } from "@/modules/control-center/header/FlowSelector";
 import { useControlCenterData } from "@/modules/control-center/hooks/useControlCenterData";
-import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { useCanvasTransitionActive } from "@/modules/control-center/utils/canvas-transition";
+import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
 // Must stay a literal: Tailwind only emits classes it finds as static text.
 const EMPTY_STATE_REVEAL_IN =

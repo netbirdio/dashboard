@@ -104,7 +104,7 @@ function SyntaxHighlighter({
   language,
   code,
   components: { Pre, Code },
-}: SyntaxHighlighterProps) {
+}: Readonly<SyntaxHighlighterProps>) {
   // No auto-detect: guessing paints a short snippet as the wrong grammar.
   const tree = lowlight.registered(language)
     ? lowlight.highlight(language, code)
@@ -121,7 +121,7 @@ function SyntaxHighlighter({
   );
 }
 
-function CodeHeader({ language, code }: CodeHeaderProps) {
+function CodeHeader({ language, code }: Readonly<CodeHeaderProps>) {
   // Silent: a toast for every snippet in a long answer is a lot of toast.
   const [, copyToClipboard, copied] = useCopyToClipboard(code, {
     silent: true,
@@ -245,9 +245,7 @@ const components = {
   // stay inside the dashboard.
   img: ({ alt }: any) => (alt ? <span>{alt}</span> : null),
   a: ({ className, children, href, ...props }: any) =>
-    !isTrustedHref(href) ? (
-      <span>{children}</span>
-    ) : (
+    isTrustedHref(href) ? (
       <a
         {...props}
         href={href}
@@ -267,6 +265,8 @@ const components = {
           />
         )}
       </a>
+    ) : (
+      <span>{children}</span>
     ),
   code: Code,
   // When a header is rendered above, the sibling rule in globals.css joins the two.

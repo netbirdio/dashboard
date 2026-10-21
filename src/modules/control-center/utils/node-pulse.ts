@@ -39,7 +39,7 @@ export function pulseNodes(flow: Flow, ids: string[], className = "cc-node-pulse
   flow.setNodes((prev: Node[]) =>
     prev.map((n) => (targeted.has(n.id) ? withClass(n, className) : n)),
   );
-  window.setTimeout(() => {
+  globalThis.setTimeout(() => {
     flow.setNodes((prev: Node[]) =>
       prev.map((n) => (targeted.has(n.id) ? withoutClass(n, className) : n)),
     );
@@ -57,7 +57,7 @@ export function flashEdges(flow: Flow, ids: string[]) {
   flow.setEdges((prev: Edge[]) =>
     prev.map((e) => (targeted.has(e.id) ? withClass(e, "cc-edge-flash") : e)),
   );
-  window.setTimeout(() => {
+  globalThis.setTimeout(() => {
     flow.setEdges((prev: Edge[]) =>
       prev.map((e) => (targeted.has(e.id) ? withoutClass(e, "cc-edge-flash") : e)),
     );

@@ -2,7 +2,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { cn, singularize } from "@utils/helpers";
-import { getIpPlaceholderFromRange } from "@/modules/control-center/utils/helpers";
 import {
   AlertTriangleIcon,
   ChevronDown,
@@ -14,6 +13,7 @@ import Skeleton from "react-loading-skeleton";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { getIpPlaceholderFromRange } from "@/modules/control-center/utils/helpers";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
 export const RoutingPeersIndicator = ({

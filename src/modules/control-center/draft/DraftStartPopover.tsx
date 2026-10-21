@@ -1,6 +1,5 @@
-import * as React from "react";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Popover, PopoverContent } from "@components/Popover";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { cn } from "@utils/helpers";
 import {
   ChevronRightIcon,
@@ -8,6 +7,7 @@ import {
   GroupIcon,
   LucideIcon,
 } from "lucide-react";
+import * as React from "react";
 
 type Props = {
   open: boolean;

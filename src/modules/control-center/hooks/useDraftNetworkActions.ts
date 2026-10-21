@@ -1,13 +1,12 @@
 import { notify } from "@components/Notification";
 import useFetchApi from "@utils/api";
-import { useCallback } from "react";
 import { Node, useReactFlow } from "@xyflow/react";
+import { useCallback } from "react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
-import { pulseNodes } from "@/modules/control-center/utils/node-pulse";
 import { useDraftChangeset } from "@/modules/control-center/draft/DraftChangesetContext";
 import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
 import {
@@ -24,6 +23,7 @@ import {
   NETWORK_FRAME_WIDTH,
   withResourceLiveBaseline,
 } from "@/modules/control-center/utils/helpers";
+import { pulseNodes } from "@/modules/control-center/utils/node-pulse";
 
 export const getNetworkRef = (node?: Node): DraftNetworkRef | undefined => {
   const network = (node?.data as { network?: Network })?.network;
