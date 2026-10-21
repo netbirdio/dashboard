@@ -204,7 +204,13 @@ diff_shots() {
   # would leave the tail of the first one behind.
   rm -rf "$OUT/diff" "$OUT/reg.json"
   npx reg-cli "$OUT/current" "$OUT/baseline" "$OUT/diff" \
-    -R "$OUT/report.html" -J "$OUT/reg.json" -M 0.1 -T 0.001 >"$OUT/reg.log" 2>&1
+    -R "$OUT/report.html" -J "$OUT/reg.json" -M 0.1 -T 0.001 >"$OUT/reg.log" 2>&1 && return 0
+  # reg-cli also exits non-zero when it finds differences, but then it has
+  # written its result; without one it crashed, and its output says why.
+  [[ -f "$OUT/reg.json" ]] && return 1
+  echo "✗ reg-cli failed without a result:"
+  cat "$OUT/reg.log"
+  exit 1
 }
 
 step "diffing"
