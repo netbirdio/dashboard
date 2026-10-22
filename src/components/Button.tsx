@@ -24,7 +24,7 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default: [
-          "bg-white hover:text-black focus:ring-neutral-200/50  enabled:hover:bg-neutral-200 border-nb-gray-700 text-neutral-900",
+          "bg-white hover:text-black focus:ring-neutral-200/50  enabled:hover:bg-neutral-50 border-nb-gray-700 text-neutral-900",
           "dark:focus:ring-zinc-800/50 dark:bg-nb-gray dark:text-gray-400 dark:border-gray-700/30 dark:hover:text-white dark:hover:bg-zinc-800/50",
         ],
         primary: [
@@ -34,40 +34,40 @@ export const buttonVariants = cva(
           "disabled:bg-neutral-200 disabled:text-neutral-600 disabled:border-neutral-300 disabled:!opacity-100 dark:disabled:!opacity-40 dark:disabled:border-transparent",
         ],
         secondary: [
-          "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-200 border-nb-gray-700 text-neutral-900",
+          "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-50 border-nb-gray-700 text-neutral-900",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-920 dark:text-gray-400 dark:border-gray-700/40 dark:hover:text-white dark:hover:bg-nb-gray-910",
         ],
         secondaryLighter: [
-          "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-200 border-nb-gray-700 text-neutral-900",
+          "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-50 border-nb-gray-700 text-neutral-900",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-900/70 dark:text-gray-400 dark:border-gray-700/70 dark:hover:text-white dark:hover:bg-nb-gray-800/60",
         ],
         input: [
-          "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-200 border-nb-gray-700 text-neutral-900",
+          "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-50 border-nb-gray-700 text-neutral-900",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-900  dark:text-gray-400  dark:border-nb-gray-700 dark:hover:bg-nb-gray-900/80",
         ],
         dropdown: [
-          "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-200 border-nb-gray-700 text-neutral-900",
+          "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-50 border-nb-gray-700 text-neutral-900",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-900/40 dark:text-gray-400 dark:border-nb-gray-900 dark:hover:bg-nb-gray-900/50",
         ],
         dotted: [
-          "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-200 border-nb-gray-700 text-neutral-900 border-dashed",
+          "bg-white hover:text-black focus:ring-neutral-200/50 enabled:hover:bg-neutral-50 border-nb-gray-700 text-neutral-900 border-dashed",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-900/30 dark:text-gray-400 dark:border-gray-500/40 dark:hover:text-white dark:hover:bg-nb-gray-900/50",
         ],
         tertiary: [
-          "bg-white hover:text-black focus:ring-neutral-200/50  enabled:hover:bg-neutral-200 border-nb-gray-700 text-neutral-900",
+          "bg-white hover:text-black focus:ring-neutral-200/50  enabled:hover:bg-neutral-50 border-nb-gray-700 text-neutral-900",
           "dark:focus:ring-zinc-800/50 dark:bg-white dark:text-gray-800 dark:border-gray-700/40 dark:hover:bg-neutral-200 disabled:dark:bg-nb-gray-920 disabled:dark:text-nb-gray-300",
         ],
         white: [
-          "focus:ring-white/50 bg-white text-neutral-800 border-white outline-none hover:bg-neutral-200 disabled:dark:bg-nb-gray-920 disabled:dark:text-nb-gray-300",
+          "focus:ring-white/50 bg-white text-neutral-800 border-white outline-none hover:bg-neutral-50 dark:hover:bg-neutral-200 disabled:dark:bg-nb-gray-920 disabled:dark:text-nb-gray-300",
           "disabled:dark:bg-nb-gray-900 disabled:dark:text-nb-gray-300 disabled:dark:border-nb-gray-900",
         ],
         outline: [
-          "bg-white hover:text-black focus:ring-neutral-200/50  enabled:hover:bg-neutral-200 border-nb-gray-700 text-neutral-900",
+          "bg-white hover:text-black focus:ring-neutral-200/50  enabled:hover:bg-neutral-50 border-nb-gray-700 text-neutral-900",
           "dark:focus:ring-zinc-800/50 dark:bg-transparent dark:text-netbird dark:border-netbird dark:hover:bg-nb-gray-900/30",
         ],
         "danger-outline": [
@@ -78,7 +78,7 @@ export const buttonVariants = cva(
           "bg-transparent text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-600 border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 ring-offset-nb-gray-950/50 rounded-sm",
         ],
         "default-outline": [
-          "ring-offset-nb-gray-950/50 focus:ring-nb-gray-500/20",
+          "ring-offset-nb-gray-950/50 focus:ring-nb-gray-500/20 !shadow-none dark:!shadow-sm",
           "bg-transparent text-nb-gray-400 border-transparent hover:text-nb-gray-50 hover:bg-nb-gray-900/30 hover:border-nb-gray-800/50",
           "data-[state=open]:text-nb-gray-50 data-[state=open]:bg-nb-gray-900/30 data-[state=open]:border-nb-gray-800/50",
         ],
