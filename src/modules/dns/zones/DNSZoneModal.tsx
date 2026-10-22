@@ -129,7 +129,7 @@ export function DNSZoneModalContent({
   return (
     <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
-        icon={<DNSZoneIcon size={20} className={"fill-netbird"} />}
+        icon={<DNSZoneIcon size={20} className={"fill-current"} />}
         title={zone ? "Update DNS Zone" : "Add DNS Zone"}
         description={
           "Use a zone to control domain name resolution for your network."

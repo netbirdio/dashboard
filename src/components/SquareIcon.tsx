@@ -8,7 +8,7 @@ const iconVariant = cva(
     variants: {
       color: {
         netbird:
-          "bg-netbird-600 border-netbird text-white dark:bg-netbird-950 dark:text-netbird",
+          "bg-netbird border-netbird text-netbird-950 dark:bg-netbird-950 dark:text-netbird",
         blue: "bg-sky-600 border-sky-500 text-white dark:bg-sky-950 dark:text-sky-100",
         "blue-darker":
           "bg-sky-600 border-sky-500 text-white dark:bg-sky-950 dark:text-sky-500",
@@ -21,7 +21,7 @@ const iconVariant = cva(
         indigo:
           "bg-indigo-600 border-indigo-500 text-white dark:bg-indigo-950 dark:text-indigo-500",
         yellow:
-          "bg-yellow-600 border-yellow-400 text-white dark:bg-yellow-950 dark:text-yellow-400",
+          "bg-yellow-300 border-yellow-300 text-yellow-950 dark:bg-yellow-950 dark:border-yellow-400 dark:text-yellow-400",
       },
       size: {
         small: "w-8 h-8",
