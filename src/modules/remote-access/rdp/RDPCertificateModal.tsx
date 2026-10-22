@@ -35,7 +35,7 @@ export const RDPCertificateModal = ({
     <Modal open={open} onOpenChange={undefined}>
       <ModalContent maxWidthClass={"max-w-2xl"} showClose={false}>
         <ModalHeader
-          icon={<LockIcon className={"text-netbird"} size={18} />}
+          icon={<LockIcon size={18} />}
           title={"RDP Certificate"}
           description={hostname}
           color={"netbird"}
