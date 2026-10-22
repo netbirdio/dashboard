@@ -122,7 +122,7 @@ async function openOnboarding(
   return { page, close: () => context.close() };
 }
 
-test.describe.serial("Onboarding form selection @onboarding", () => {
+test.describe.serial("Onboarding form selection @onboarding @test-build", () => {
   test("netbird.ai signup shows the Agent Network form and never the regular one", async ({
     browser,
   }) => {

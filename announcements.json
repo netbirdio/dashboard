@@ -1,9 +1,19 @@
 [
   {
-    "tag": "Feedback",
-    "text": "Help us build a better product - Fill out this short anonymous survey.",
-    "link": "https://forms.gle/bBabcfCuWPpySb8r5",
-    "linkText": "Form",
+    "tag": "New",
+    "text": "Path-based Access Control for Reverse Proxy - Bypass authentication or block access for specific paths of a service.",
+    "link": "https://docs.netbird.io/manage/reverse-proxy/authentication#per-target-access-actions",
+    "linkText": "Learn more",
+    "variant": "important",
+    "isExternal": true,
+    "closeable": true,
+    "isCloudOnly": false
+  },
+  {
+    "tag": "New",
+    "text": "Certificate Posture Checks - Require peers to hold a device certificate issued by your own CA.",
+    "link": "https://docs.netbird.io/manage/access-control/posture-checks/device-certificates",
+    "linkText": "Learn more",
     "variant": "important",
     "isExternal": true,
     "closeable": true,

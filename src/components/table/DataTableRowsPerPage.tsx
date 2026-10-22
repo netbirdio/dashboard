@@ -29,7 +29,7 @@ export function DataTableRowsPerPage<TData>({
             aria-expanded={open}
             disabled={disabled}
             data-testid={"rows-per-page"}
-            className="w-[200px] justify-between"
+            className="w-[200px] !justify-between"
           >
             <RowsIcon size={15} className={"text-nb-gray-300 shrink-0"} />
             <div>

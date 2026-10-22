@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
+import type { Group } from "@/interfaces/Group";
 import type { Peer } from "@/interfaces/Peer";
 
 // An account that exists already reaches the Agent Network onboarding through
@@ -142,4 +143,20 @@ export function ownConnectedDevice<
 >(peers: T[] | undefined, userId: string | undefined): T | undefined {
   if (!userId) return undefined;
   return (peers ?? []).find((p) => p.user_id === userId && p.connected);
+}
+
+// isEmptyAccount tells an existing account that has nothing set up yet: no
+// group besides "All" and no devices but the user's own. Such an account has
+// nothing to choose on the policy step and no peers that rely on its "Default"
+// policy, so it is onboarded like a new one.
+export function isEmptyAccount(
+  groups: Pick<Group, "name">[],
+  peers: Pick<Peer, "user_id">[],
+  userId: string | undefined,
+): boolean {
+  if (!userId) return false;
+  return (
+    groups.every((g) => g.name === "All") &&
+    peers.every((p) => p.user_id === userId)
+  );
 }

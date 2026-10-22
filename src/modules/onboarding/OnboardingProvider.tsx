@@ -6,7 +6,7 @@ import {
   testOnboardingEnabled,
 } from "@utils/netbird";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { submitHubspotForm } from "@/cloud/analytics/Hubspot";
 import { HubspotFormField, useAnalytics } from "@/contexts/AnalyticsProvider";
@@ -17,6 +17,7 @@ import {
   SIGNUP_SOURCE_LOCAL_STORAGE_KEY,
 } from "@/hooks/useSignupSource";
 import { Account } from "@/interfaces/Account";
+import { Group } from "@/interfaces/Group";
 import { Network } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { useAccount } from "@/modules/account/useAccount";
@@ -26,6 +27,7 @@ import { AgentNetworkOnboarding } from "@/modules/onboarding/agent-network/Agent
 import { storedAgentStep } from "@/modules/onboarding/agent-network/agentNetworkSteps";
 import {
   clearAgentNetworkOnboardingRequest,
+  isEmptyAccount,
   useAgentNetworkOnboardingRequest,
   useOnboardingRequest,
 } from "@/modules/onboarding/agent-network/existingAccountOnboarding";
@@ -200,9 +202,46 @@ export const OnboardingProvider = ({
   // Agent Network onboarding outside it, past the signup form, belongs to an
   // account that existed before. Such an account keeps its groups and policies
   // and its saved position, which is the regular onboarding's.
-  const existingAccount =
+  const accountExisted =
     existingAccountRequest ||
     (isNetBirdCloud() && !agentNetworkOnly && !agentSignupPending);
+
+  // An existing account that is still empty (see isEmptyAccount) has no group
+  // to pick on the policy step, so it is onboarded like a new one. That is
+  // decided once, before the flow opens, and saved with its step: the flow's
+  // own setup adds a "Users" group, after which the account no longer looks
+  // empty.
+  const emptyAccount = onboarding.agent_network_empty_account;
+  const checkEmptyAccount =
+    showOnboarding &&
+    agentNetworkOnboarding &&
+    accountExisted &&
+    emptyAccount === undefined;
+  const { data: groups, isLoading: groupsLoading } = useFetchApi<Group[]>(
+    "/groups",
+    true,
+    false,
+    checkEmptyAccount,
+  );
+  const peersKnown = !!peers || !permission.peers.read;
+  useEffect(() => {
+    if (!checkEmptyAccount || !loggedInUser) return;
+    if (groupsLoading || !peersKnown) return;
+    setOnboarding((prev) => ({
+      ...prev,
+      agent_network_empty_account:
+        !!groups && !!peers && isEmptyAccount(groups, peers, loggedInUser.id),
+    }));
+  }, [
+    checkEmptyAccount,
+    loggedInUser,
+    groupsLoading,
+    groups,
+    peersKnown,
+    peers,
+    setOnboarding,
+  ]);
+  const existingAccount = accountExisted && !emptyAccount;
 
   const updateAccountMeta = async (meta: Partial<Account["onboarding"]>) => {
     if (!account) return;
@@ -261,6 +300,11 @@ export const OnboardingProvider = ({
       });
     } finally {
       if (account?.id) clearAgentNetworkOnboardingRequest(account.id);
+      // A later request checks the account afresh.
+      setOnboarding((prev) => ({
+        ...prev,
+        agent_network_empty_account: undefined,
+      }));
     }
   };
 
@@ -338,9 +382,11 @@ export const OnboardingProvider = ({
     : true;
 
   if (showOnboarding && agentNetworkOnboarding) {
+    // The flow's steps depend on the check, so it waits for it.
+    if (checkEmptyAccount) return null;
     return (
       <AgentNetworkOnboarding
-        initialStep={storedAgentStep(onboarding, !existingAccount)}
+        initialStep={storedAgentStep(onboarding, !accountExisted)}
         onStepChange={(step) =>
           setOnboarding((prev) => ({ ...prev, agent_network_step: step }))
         }

@@ -2,6 +2,7 @@ import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clearAgentNetworkOnboardingRequest,
+  isEmptyAccount,
   ownConnectedDevice,
   readAgentNetworkOnboardingRequest,
   requestAgentNetworkOnboarding,
@@ -193,5 +194,30 @@ describe("ownConnectedDevice", () => {
   it("finds nothing before the user or the peers load", () => {
     expect(ownConnectedDevice([mine], undefined)).toBeUndefined();
     expect(ownConnectedDevice(undefined, me)).toBeUndefined();
+  });
+});
+
+describe("isEmptyAccount", () => {
+  const me = "user-1";
+  const all = { name: "All" };
+
+  it("holds with only the All group and the user's own devices", () => {
+    expect(isEmptyAccount([all], [], me)).toBe(true);
+    expect(isEmptyAccount([all], [{ user_id: me }], me)).toBe(true);
+  });
+
+  it("does not hold once the account has something set up", () => {
+    expect(
+      isEmptyAccount([all, { name: "Developers" }], [], me),
+      "a group of its own can be picked on the policy step",
+    ).toBe(false);
+    expect(
+      isEmptyAccount([all], [{ user_id: "user-2" }], me),
+      "someone else's device may rely on the Default policy",
+    ).toBe(false);
+  });
+
+  it("does not hold without a user", () => {
+    expect(isEmptyAccount([all], [], undefined)).toBe(false);
   });
 });

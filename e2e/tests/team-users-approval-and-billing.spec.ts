@@ -5,7 +5,7 @@ import { setTestEdition } from "../helpers/utils";
 
 test.setTimeout(60_000);
 
-test.describe.serial("User Approval & Billing Admin @team", () => {
+test.describe.serial("User Approval & Billing Admin @team @test-env @cloud", () => {
   // ── User Approval ────────────────────────────────────────────────────
 
   test("Should show approval pending for the second user", async ({

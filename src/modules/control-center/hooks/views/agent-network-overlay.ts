@@ -33,6 +33,7 @@ export function addAgentNetworkProviderNodes(
   nodes: Node[],
   edges: Edge[],
   { policies, providerById }: AgentNetworkOverlay,
+  sourceHandle?: string,
 ) {
   if (!groupId || policies.length === 0) return;
 
@@ -51,9 +52,14 @@ export function addAgentNetworkProviderNodes(
         position: { x: 0, y: 0 },
       });
 
+      // Keyed by source and policy, deliberately not by group: a source can
+      // reach one policy through several of its groups, and that is still a
+      // single edge. The source itself has to be in the id because draft draws
+      // one edge per group NODE, which are genuinely separate edges.
       addEdge(edges, {
-        id: `agent-src-${groupId}-${policy.id}`,
+        id: `agent-src-${sourceNodeId}-${policy.id}`,
         source: sourceNodeId,
+        sourceHandle,
         target: policyNodeId,
         type: "smart",
         data: { enabled },

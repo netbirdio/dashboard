@@ -90,7 +90,7 @@ async function newAgentNetworkPage(browser: Browser): Promise<{
   return { page, close: () => context.close() };
 }
 
-test.describe.serial("Agent Network Kimi provider @agent-network", () => {
+test.describe.serial("Agent Network Kimi provider @agent-network @test-build", () => {
   test("connect a Kimi provider and see Kimi agent configs", async ({
     browser,
   }) => {

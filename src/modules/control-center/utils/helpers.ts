@@ -778,19 +778,31 @@ export const getLiveFrameGrid = (resourceCount: number) => {
   };
 };
 
+// Every focusable node at once. The armed state asks this of each node in turn,
+// and answering them one by one rescans the edges per node.
+export function focusWorthyIds(
+  nodes: { id: string; type?: string }[],
+  edges: { source: string; target: string }[],
+): Set<string> {
+  const policyCount = nodes.filter(
+    (n) => n.type === "policyNode" || n.type === "agentPolicyNode",
+  ).length;
+  if (policyCount < 2) return new Set();
+  // Focus only pays off when there is something to dim away.
+  const connected = new Set<string>();
+  edges.forEach((e) => {
+    connected.add(e.source);
+    connected.add(e.target);
+  });
+  return connected;
+}
+
 export function isFocusWorthy(
   nodeId: string,
   nodes: { id: string; type?: string }[],
   edges: { source: string; target: string }[],
 ): boolean {
-  // Focus only pays off when there is something to dim away.
-  if (!edges.some((e) => e.source === nodeId || e.target === nodeId)) {
-    return false;
-  }
-  const policyCount = nodes.filter(
-    (n) => n.type === "policyNode" || n.type === "agentPolicyNode",
-  ).length;
-  return policyCount >= 2;
+  return focusWorthyIds(nodes, edges).has(nodeId);
 }
 
 // Policy-reached resources sort to the TOP so they stay above the "+N more" cap.
