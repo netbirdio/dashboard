@@ -70,7 +70,7 @@ function Trigger({
       className={cn(
         "px-4 py-2 text-sm rounded-md w-full transition-all data-[disabled]:opacity-50",
         value == currentValue
-          ? "bg-nb-gray-900"
+          ? "bg-white text-neutral-900 shadow-sm dark:bg-nb-gray-900 dark:text-nb-gray-100 dark:shadow-none"
           : disabled
           ? "data-[disabled]:text-nb-gray-400"
           : "text-nb-gray-400 hover:bg-nb-gray-900/50",
