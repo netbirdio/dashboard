@@ -339,6 +339,15 @@
         outline: 2px solid transparent;
         outline-offset: 2px;
     }
+
+    /* v4's transition-colors also transitions outline-color. On focus the
+       outline above went from the resting colour (currentcolor, so white on a
+       hovered button) to transparent and flashed a solid outline while it
+       faded. A transparent resting colour leaves nothing to transition. */
+    .focus\:outline-none,
+    .focus-visible\:outline-none {
+        outline-color: transparent;
+    }
 }
 
 .p-default {
