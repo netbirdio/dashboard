@@ -127,7 +127,7 @@ const UserAvatarCircle = ({
       className={cn(
         "initials-avatar w-6 h-6 bg-nb-gray-900 flex items-center shrink-0 rounded-full justify-center text-[0.6rem] font-medium relative uppercase shadow-xl",
         "border-nb-gray-940 border-2 transition-all",
-        hoverEffect && "group-hover/user-stack:bg-nb-gray-800",
+        hoverEffect && "dark:group-hover/user-stack:bg-nb-gray-800",
         className,
       )}
       style={getAvatarStyle(generateColorFromString(name))}
