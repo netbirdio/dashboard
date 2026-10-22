@@ -120,7 +120,7 @@ export const TrialOrUpgradeButton = ({
         <div
           className={cn(
             "text-[0.7rem] mt-2 text-center leading-none",
-            variant === "white" ? "text-white" : "text-nb-gray-300",
+            variant === "white" ? "text-neutral-800 dark:text-white" : "text-nb-gray-300",
             !canUpgrade && "opacity-40",
             !isOwnerOrAdmin && "opacity-50",
           )}
