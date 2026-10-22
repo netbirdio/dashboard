@@ -26,6 +26,17 @@ describe("translationGuard", () => {
     expect(() => parent.removeChild(text)).not.toThrow();
   });
 
+  it("leaves a node that was moved into an unrelated tree", () => {
+    const parent = document.createElement("div");
+    const elsewhere = document.createElement("div");
+    const text = document.createTextNode("Peers");
+    parent.appendChild(text);
+    elsewhere.appendChild(text);
+
+    expect(() => parent.removeChild(text)).not.toThrow();
+    expect(text.parentNode).toBe(elsewhere);
+  });
+
   it("inserts before the wrapper holding the reference node", () => {
     const parent = document.createElement("div");
     const reference = document.createTextNode("Peers");

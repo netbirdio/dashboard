@@ -20,8 +20,12 @@ export function installTranslationGuard() {
   const originalRemoveChild = proto.removeChild;
   proto.removeChild = function <T extends Node>(this: Node, child: T): T {
     if (child.parentNode !== this) {
-      // The node was moved into a translation wrapper or already detached.
-      child.parentNode?.removeChild(child);
+      // Only nodes still inside this one, such as text moved into a
+      // translation wrapper, are removed. Detached nodes and nodes that
+      // other code moved elsewhere are left alone.
+      if (child.parentNode && this.contains(child)) {
+        child.parentNode.removeChild(child);
+      }
       return child;
     }
     return originalRemoveChild.call(this, child) as T;

@@ -26,15 +26,17 @@ function renderPortal(heading: HTMLHeadingElement, totalRecords = 12) {
   );
 }
 
-// Mimics Google Translate, which swaps text nodes for <font> wrappers.
+// Mimics browser translation, which moves text nodes into <font> wrappers.
 function translate(root: Element) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes: Text[] = [];
   while (walker.nextNode()) nodes.push(walker.currentNode as Text);
   for (const node of nodes) {
+    const parent = node.parentNode;
+    if (!parent) continue;
     const font = document.createElement("font");
-    font.textContent = node.nodeValue;
-    node.parentNode!.replaceChild(font, node);
+    parent.replaceChild(font, node);
+    font.appendChild(node);
   }
 }
 
