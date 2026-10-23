@@ -74,7 +74,7 @@ export const PendingApproval = ({ error, onRefresh, onLogout }: Props) => {
               <span
                 className={cn(
                   "text-sm text-center",
-                  status === "upcoming" ? "text-nb-gray-400" : "text-white",
+                  status === "upcoming" ? "text-nb-gray-400" : "text-neutral-900 dark:text-white",
                 )}
               >
                 {label}

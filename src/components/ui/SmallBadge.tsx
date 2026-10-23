@@ -5,12 +5,15 @@ import * as React from "react";
 const smallBadgeVariants = cva("", {
   variants: {
     variant: {
-      green: "bg-green-900 border border-green-500/20 text-green-400",
-      blue: "bg-blue-900 border border-blue-500/20 text-blue-400",
+      green:
+        "bg-green-100 border border-green-300 text-green-700 dark:bg-green-900 dark:border-green-500/20 dark:text-green-400",
+      blue: "bg-blue-100 border border-blue-300 text-blue-700 dark:bg-blue-900 dark:border-blue-500/20 dark:text-blue-400",
       white: "bg-white/20 border border-white/10 text-white",
-      sky: "bg-sky-900 border border-sky-500/20 text-white",
-      netbird: "bg-netbird-900 border border-netbird-400 text-netbird-300",
-      yellow: "bg-yellow-900 border border-yellow-500/20 text-yellow-400",
+      sky: "bg-sky-100 border border-sky-300 text-sky-700 dark:bg-sky-900 dark:border-sky-500/20 dark:text-white",
+      netbird:
+        "bg-netbird-100 border border-netbird-400 text-netbird-700 dark:bg-netbird-900 dark:text-netbird-300",
+      yellow:
+        "bg-yellow-100 border border-yellow-400 text-yellow-700 dark:bg-yellow-900 dark:border-yellow-500/20 dark:text-yellow-400",
     },
     size: {
       default:

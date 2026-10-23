@@ -111,7 +111,7 @@ function InviteAcceptContent() {
                 <Clock className="w-8 h-8 text-yellow-500" />
               </div>
             </div>
-            <h1 className="text-2xl font-semibold text-white mb-2">
+            <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
               Too Many Requests
             </h1>
             <Paragraph className="text-nb-gray-400 text-base">
@@ -135,10 +135,10 @@ function InviteAcceptContent() {
         <div className="max-w-md w-full text-center">
           <div className="mb-6 flex justify-center">
             <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center">
-              <AlertCircle className="w-8 h-8 text-red-500" />
+              <AlertCircle className="w-8 h-8 text-red-700 dark:text-red-500" />
             </div>
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
             Invalid Invite
           </h1>
           <Paragraph className="text-nb-gray-400 text-base">
@@ -163,10 +163,10 @@ function InviteAcceptContent() {
         <div className="max-w-md w-full text-center">
           <div className="mb-6 flex justify-center">
             <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center">
-              <CheckCircle2 className="w-8 h-8 text-green-500" />
+              <CheckCircle2 className="w-8 h-8 text-green-700 dark:text-green-500" />
             </div>
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
             Account Created!
           </h1>
           <Paragraph className="text-nb-gray-400">
@@ -194,7 +194,7 @@ function InviteAcceptContent() {
               <AlertCircle className="w-8 h-8 text-yellow-500" />
             </div>
           </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
             Invite Expired
           </h1>
           <Paragraph className="text-nb-gray-400">
@@ -221,11 +221,11 @@ function InviteAcceptContent() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-white mb-2">
+          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white mb-2">
             Welcome to NetBird
           </h1>
-          <p className="dark:text-nb-gray-400 text-nb-gray-500 text-base">
-            You&apos;ve been invited by <span className="dark:text-white text-nb-gray-900 font-medium">{inviteInfo.invited_by}</span> to join the network. Set your password to complete your account setup.
+          <p className="text-neutral-600 dark:text-nb-gray-400 text-base">
+            You&apos;ve been invited by <span className="text-neutral-900 dark:text-white font-medium">{inviteInfo.invited_by}</span> to join the network. Set your password to complete your account setup.
           </p>
         </div>
 
@@ -235,7 +235,7 @@ function InviteAcceptContent() {
               <User2 className="w-5 h-5 text-nb-gray-400" />
             </div>
             <div>
-              <div className="text-white font-medium">{inviteInfo.name}</div>
+              <div className="text-neutral-900 dark:text-white font-medium">{inviteInfo.name}</div>
               <div className="text-nb-gray-400 text-sm flex items-center gap-1">
                 <Mail className="w-3 h-3" />
                 {inviteInfo.email}
@@ -276,7 +276,7 @@ function InviteAcceptContent() {
                 }
               />
               {confirmPassword && !passwordsMatch && (
-                <p className="text-xs text-red-500 mt-1">
+                <p className="text-xs text-red-700 dark:text-red-500 mt-1">
                   Passwords do not match
                 </p>
               )}
@@ -284,7 +284,7 @@ function InviteAcceptContent() {
 
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3">
-                <p className="text-sm text-red-500">{error}</p>
+                <p className="text-sm text-red-700 dark:text-red-500">{error}</p>
               </div>
             )}
 
@@ -299,7 +299,7 @@ function InviteAcceptContent() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-nb-gray-500">
+        <p className="text-center text-xs text-neutral-600 dark:text-nb-gray-500">
           Invite expires on {dayjs(inviteInfo.expires_at).format("D MMMM, YYYY [at] h:mm A")}
         </p>
       </div>
@@ -311,11 +311,11 @@ function PasswordRule({ met, text }: { met: boolean; text: string }) {
   return (
     <div className="flex items-center gap-2 text-xs">
       {met ? (
-        <CheckCircle2 className="w-3 h-3 text-green-500" />
+        <CheckCircle2 className="w-3 h-3 text-green-700 dark:text-green-500" />
       ) : (
-        <AlertCircle className="w-3 h-3 text-nb-gray-500" />
+        <AlertCircle className="w-3 h-3 text-neutral-600 dark:text-nb-gray-500" />
       )}
-      <span className={met ? "text-green-500" : "text-nb-gray-500"}>{text}</span>
+      <span className={met ? "text-green-700 dark:text-green-500" : "text-neutral-600 dark:text-nb-gray-500"}>{text}</span>
     </div>
   );
 }

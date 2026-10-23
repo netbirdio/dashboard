@@ -45,14 +45,14 @@ export function DataTableMultiSelectPopup<T>({
                   duration: 0.35,
                 }}
                 className={cn(
-                  "max-w-xl mx-auto border relative z-[50] bg-nb-gray-800 border-nb-gray-900 shadow-2xl border-b-0 overflow-hidden pointer-events-auto",
+                  "max-w-xl mx-auto border relative z-[50] bg-white dark:bg-nb-gray-800 border-nb-gray-900 shadow-2xl border-b-0 overflow-hidden pointer-events-auto",
                   "rounded-t-lg",
                 )}
               >
                 <AnimatePresence mode={"popLayout"}>
                   <div
                     className={
-                      "flex gap-2 items-center text-sm px-6 pt-3.5 pb-20 bg-nb-gray-920/90 text-nb-gray-200 justify-between"
+                      "flex gap-2 items-center text-sm px-6 pt-3.5 pb-20 bg-white dark:bg-nb-gray-920/90 text-nb-gray-200 justify-between"
                     }
                   >
                     <div className={"flex gap-2 items-center"}>
@@ -60,7 +60,7 @@ export function DataTableMultiSelectPopup<T>({
                         <MonitorSmartphoneIcon size={16} className={""} />
                       )}
                       <span>
-                        <span className={"font-medium text-white"}>
+                        <span className={"font-medium text-nb-gray-100"}>
                           {count}
                         </span>{" "}
                         {label}

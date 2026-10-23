@@ -1,6 +1,7 @@
 import Button from "@components/Button";
 import TruncatedText from "@components/ui/TruncatedText";
 import useFetchApi from "@utils/api";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromUser } from "@utils/helpers";
 import { Cog } from "lucide-react";
 import * as React from "react";
@@ -32,11 +33,9 @@ export const ControlCenterCurrentUserBadge = ({ userId }: Props) => {
         <div className={cn("flex items-center justify-center gap-2.5")}>
           <div
             className={
-              "w-6 h-6 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"
+              "initials-avatar w-6 h-6 rounded-full relative flex items-center justify-center text-neutral-700 dark:text-white uppercase text-md font-medium bg-nb-gray-900"
             }
-            style={{
-              color: generateColorFromUser(user),
-            }}
+            style={getAvatarStyle(generateColorFromUser(user))}
           >
             {!user?.name && !user?.id && <Cog size={12} />}
             {user?.name?.charAt(0) || user?.id?.charAt(0)}

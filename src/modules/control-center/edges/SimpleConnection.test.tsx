@@ -1,6 +1,6 @@
 import { cleanup, render } from "@testing-library/react";
 import { Position } from "@xyflow/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // The source node lookup: select-user-node carries no data.enabled, so the
 // helper's fallback reads false.
@@ -8,9 +8,25 @@ vi.mock("@/modules/control-center/utils/helpers", () => ({
   useSourceGroupEnabled: () => false,
 }));
 
+// Mocked rather than wrapped in the real ThemeProvider: the provider reads
+// window.matchMedia, which jsdom does not implement.
+const themeState = vi.hoisted(() => ({
+  resolvedTheme: "dark" as "light" | "dark",
+}));
+vi.mock("@/contexts/ThemeProvider", () => ({
+  useTheme: () => ({
+    theme: themeState.resolvedTheme,
+    resolvedTheme: themeState.resolvedTheme,
+    setTheme: () => undefined,
+  }),
+}));
+
 const { SimpleConnection } = await import("./SimpleConnection");
 
 afterEach(cleanup);
+beforeEach(() => {
+  themeState.resolvedTheme = "dark";
+});
 
 const edgeProps = {
   id: "edge-1",
@@ -50,5 +66,18 @@ describe("SimpleConnection", () => {
   it("falls back to the source node's enabled when the edge carries none", () => {
     const path = renderEdge(undefined);
     expect(path?.style.opacity).toBe("0.6");
+  });
+
+  // The stroke must stay on the theme-flipping ramp tokens (and inline —
+  // xyflow's .react-flow__edge-path would override a stroke-* utility).
+  it("strokes with the dark ramp token in dark mode", () => {
+    const path = renderEdge({ enabled: true });
+    expect(path?.style.stroke).toBe("rgb(var(--nb-gray-400))");
+  });
+
+  it("strokes with the light ramp token in light mode", () => {
+    themeState.resolvedTheme = "light";
+    const path = renderEdge({ enabled: true });
+    expect(path?.style.stroke).toBe("rgb(var(--nb-gray-700))");
   });
 });

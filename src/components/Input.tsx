@@ -26,7 +26,7 @@ const inputVariants = cva("", {
   variants: {
     variant: {
       default: [
-        "dark:bg-nb-gray-900 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-200 dark:border-nb-gray-700",
+        "dark:bg-nb-gray-900 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-300 dark:border-nb-gray-700",
         "ring-offset-neutral-200/20 dark:ring-offset-neutral-950/50 dark:focus-visible:ring-neutral-500/20 focus-visible:ring-neutral-300/10",
       ],
       darker: [
@@ -34,13 +34,13 @@ const inputVariants = cva("", {
         "ring-offset-neutral-200/20 dark:ring-offset-neutral-950/50 dark:focus-visible:ring-neutral-500/20 focus-visible:ring-neutral-300/10",
       ],
       error: [
-        "dark:bg-nb-gray-900 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-200 dark:border-red-500 text-red-500",
+        "dark:bg-nb-gray-900 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-300 dark:border-red-500 text-red-500",
         "ring-offset-red-500/10 dark:ring-offset-red-500/10 dark:focus-visible:ring-red-500/10 focus-visible:ring-red-500/10",
       ],
     },
     prefixSuffixVariant: {
       default: [
-        "dark:bg-nb-gray-900 border-neutral-200 dark:border-nb-gray-700 text-nb-gray-300",
+        "dark:bg-nb-gray-900 border-neutral-300 dark:border-nb-gray-700 text-nb-gray-300",
       ],
       error: [
         "dark:bg-nb-gray-900 border-red-500 text-nb-gray-300 text-red-500",
@@ -77,7 +77,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className={"hover:text-white transition-all"}
+          className={"hover:text-nb-gray-100 transition-all"}
           aria-label={"Toggle password visibility"}
         >
           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -107,7 +107,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           <div
             className={cn(
-              "absolute left-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pl-3 leading-[0]",
+              "absolute left-0 top-0 h-full flex items-center text-xs text-nb-gray-300 pl-3 leading-[0]",
               props.disabled && "opacity-40",
             )}
           >
@@ -135,7 +135,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           <div
             className={cn(
-              "absolute right-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pr-4 leading-[0] select-none",
+              "absolute right-0 top-0 h-full flex items-center text-xs text-nb-gray-300 pr-4 leading-[0] select-none",
               props.disabled && "opacity-30",
             )}
           >

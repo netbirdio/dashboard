@@ -288,7 +288,7 @@ export function AccessControlModalContent({
   return (
     <ModalContent maxWidthClass={"max-w-3xl"}>
       <ModalHeader
-        icon={<AccessControlIcon className={"fill-netbird"} />}
+        icon={<AccessControlIcon className={"fill-current"} />}
         title={
           <span
             data-testid={
@@ -335,8 +335,8 @@ export function AccessControlModalContent({
                 <HelpText className={"max-w-sm"}>
                   Allow only specified network protocols. To change traffic
                   direction and ports, select{" "}
-                  <b className={"text-white"}>TCP</b> or{" "}
-                  <b className={"text-white"}>UDP</b> protocol.
+                  <b className={"text-nb-gray-100"}>TCP</b> or{" "}
+                  <b className={"text-nb-gray-100"}>UDP</b> protocol.
                 </HelpText>
               </div>
               <Select

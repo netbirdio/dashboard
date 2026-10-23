@@ -1,9 +1,10 @@
 "use client";
 
 import { cn } from "@utils/helpers";
-import React, { useId } from "react";
+import React, { type CSSProperties, useId } from "react";
 import { AIProviderId } from "@/modules/agent-network/data/mockData";
 import { PROVIDER_LOGOS } from "@/modules/agent-network/data/providerLogos";
+import { providerLogoColors } from "@/modules/agent-network/providerLogoColors";
 import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
 
 type Props = {
@@ -19,38 +20,8 @@ type Props = {
 };
 
 const FALLBACK_BRAND_COLOR = "#6B7280";
-// Light ink for marks whose brand color would disappear against the
-// dashboard's dark surfaces (Anthropic #191919, Vercel #000, OpenAI #412991).
-const LIGHT_INK = "#cbd2d6";
 // Share of the tile the mark itself takes up.
 const MARK_SCALE = 0.42;
-
-// relativeLuminance implements the WCAG sRGB formula. Returns 0 for anything
-// that isn't a #rgb / #rrggbb string, which sends the caller to the light ink.
-const relativeLuminance = (hex: string): number => {
-  const value = hex.trim().replace("#", "");
-  const full =
-    value.length === 3
-      ? value
-          .split("")
-          .map((c) => c + c)
-          .join("")
-      : value;
-  if (!/^[0-9a-fA-F]{6}$/.test(full)) return 0;
-  const channels = [0, 2, 4].map((i) => {
-    const c = parseInt(full.slice(i, i + 2), 16) / 255;
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  });
-  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
-};
-
-// The dashboard is dark-only, so a brand color is usable as ink only when it
-// clears ~3:1 against the surfaces these marks sit on (nb-gray-800 …-950).
-// Everything darker flips to a light ink rather than turning into a smudge.
-const MIN_INK_LUMINANCE = 0.14;
-
-const markColor = (brandColor: string) =>
-  relativeLuminance(brandColor) < MIN_INK_LUMINANCE ? LIGHT_INK : brandColor;
 
 export default function AIProviderLogo({
   providerId,
@@ -66,18 +37,25 @@ export default function AIProviderLogo({
   const gradientId = `provider-logo-${useId().replaceAll(":", "")}`;
 
   const markSize = tile ? Math.round(size * MARK_SCALE) : size;
-  const ink = logo?.ink ?? markColor(brandColor);
+  const ink = providerLogoColors(brandColor, logo?.ink);
+  const markClassName = cn(
+    "shrink-0 text-[var(--provider-logo-light)] dark:text-[var(--provider-logo-dark)]",
+    !tile && className,
+  );
+  const markStyle = {
+    "--provider-logo-light": ink.light,
+    "--provider-logo-dark": ink.dark,
+  } as CSSProperties;
   const Icon = logo?.icon;
 
   const mark = !logo ? (
     // Anything the catalog knows but this dashboard build has no mark for.
     <span
       className={cn(
-        "inline-flex items-center justify-center shrink-0 font-semibold uppercase leading-none",
+        "inline-flex items-center justify-center shrink-0 font-semibold uppercase leading-none text-nb-gray-200",
         !tile && className,
       )}
       style={{
-        color: LIGHT_INK,
         fontSize: Math.floor(markSize * 0.75),
         width: markSize,
         height: markSize,
@@ -88,8 +66,8 @@ export default function AIProviderLogo({
   ) : Icon ? (
     <Icon
       size={markSize}
-      className={cn("shrink-0", !tile && className)}
-      style={{ color: ink }}
+      className={markClassName}
+      style={markStyle}
     />
   ) : (
     <svg
@@ -97,8 +75,8 @@ export default function AIProviderLogo({
       viewBox={logo.viewBox ?? "0 0 24 24"}
       width={markSize}
       height={markSize}
-      className={cn("shrink-0", !tile && className)}
-      style={{ color: ink }}
+      className={markClassName}
+      style={markStyle}
       aria-hidden={true}
     >
       {logo.gradient && (

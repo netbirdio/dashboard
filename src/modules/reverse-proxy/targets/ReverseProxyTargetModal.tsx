@@ -271,7 +271,7 @@ export default function ReverseProxyTargetModal({
       <Modal open={open} onOpenChange={onOpenChange}>
         <ModalContent maxWidthClass="max-w-2xl">
           <ModalHeader
-            icon={<Server className="text-netbird" size={16} />}
+            icon={<Server size={16} />}
             title={currentTarget ? "Edit Target" : "Add Target"}
             description="Configure the target for your reverse proxy."
             color="netbird"
@@ -366,22 +366,22 @@ export default function ReverseProxyTargetModal({
                             <div className="text-xs max-w-xs flex flex-col gap-2">
                               <div>
                                 When disabled, a request to e.g.,{" "}
-                                <span className="font-mono text-white">
+                                <span className="font-mono text-nb-gray-100">
                                   {targetPath}/users
                                 </span>{" "}
                                 is forwarded as{" "}
-                                <span className="font-mono text-white">
+                                <span className="font-mono text-nb-gray-100">
                                   /users
                                 </span>
                                 .
                               </div>
                               <div>
                                 When enabled, a request to e.g.,{" "}
-                                <span className="font-mono text-white">
+                                <span className="font-mono text-nb-gray-100">
                                   {targetPath}/users
                                 </span>{" "}
                                 is forwarded as{" "}
-                                <span className="font-mono text-white">
+                                <span className="font-mono text-nb-gray-100">
                                   {targetPath}/users
                                 </span>
                                 .

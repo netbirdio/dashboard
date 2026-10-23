@@ -55,9 +55,9 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
         <>
           Lets you publish services that are only reachable from peers in your
           NetBird network. Required for{" "}
-          <span className={"font-medium text-white"}>NetBird-Only Access</span>{" "}
+          <span className={"font-medium text-nb-gray-100"}>NetBird-Only Access</span>{" "}
           and{" "}
-          <span className={"font-medium text-white"}>Proxy Cluster</span>{" "}
+          <span className={"font-medium text-nb-gray-100"}>Proxy Cluster</span>{" "}
           target types.
         </>
       ),
@@ -76,7 +76,7 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
           key={f.key}
           content={
             <div className={"text-xs max-w-xs"}>
-              <div className={"font-medium text-white"}>{f.label}</div>
+              <div className={"font-medium text-nb-gray-100"}>{f.label}</div>
               <div className={"text-nb-gray-300 mt-1"}>{f.description}</div>
             </div>
           }

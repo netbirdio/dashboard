@@ -1,4 +1,5 @@
 import { BaseEdge, type EdgeProps, getSimpleBezierPath } from "@xyflow/react";
+import { useTheme } from "@/contexts/ThemeProvider";
 import React from "react";
 import { useSourceGroupEnabled } from "@/modules/control-center/utils/helpers";
 
@@ -32,6 +33,7 @@ export function SimpleConnection({
   // their source node carries none, and the node lookup would default to false.
   const nodeEnabled = useSourceGroupEnabled(source);
   const enabled = data?.enabled ?? nodeEnabled;
+  const { resolvedTheme } = useTheme();
 
   return (
     <BaseEdge
@@ -39,7 +41,12 @@ export function SimpleConnection({
       path={edgePath}
       style={{
         strokeWidth: 1.5,
-        stroke: "#7d7d7d",
+        /* Inline (not a stroke-* utility): xyflow's .react-flow__edge-path
+           sets stroke and loads after the Tailwind utilities. */
+        stroke:
+          resolvedTheme === "light"
+            ? "rgb(var(--nb-gray-700))"
+            : "rgb(var(--nb-gray-400))",
         strokeDasharray: "0, 0",
         opacity: enabled ? 1 : 0.6,
       }}
