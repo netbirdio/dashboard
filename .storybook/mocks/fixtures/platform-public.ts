@@ -14,7 +14,7 @@ export const publicFixtures: Record<string, Handler> = {
       : {
           email: "nora.new-hire@netbird.io",
           name: "Nora New-Hire",
-          expires_at: "2026-10-15T12:00:00Z",
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           valid: true,
           invited_by: "Olivia Owner",
         },
