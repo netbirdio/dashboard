@@ -480,7 +480,11 @@ export function DataTable<TData, TValue>({
           onPaginationChange?.(updater);
         }
       } else {
-        setPaginationState(updater);
+        // Applied to the shown pagination, as the stored one may hold a page size
+        // that is no longer offered.
+        setPaginationState(
+          typeof updater === "function" ? updater(localPagination) : updater,
+        );
       }
     },
     onColumnFiltersChange: (filters) => {

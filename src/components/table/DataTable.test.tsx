@@ -1,5 +1,5 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, fireEvent, render } from "@testing-library/react";
 import {
   afterAll,
   afterEach,
@@ -158,6 +158,20 @@ describe("DataTable saved page size", () => {
 
   it("keeps a table's own initial size, as nested show-all tables use", () => {
     expect(renderSaved(7, 7)).toBe(7);
+  });
+
+  // Paging must start from the size that is shown, not the stale saved one,
+  // otherwise every page change produces the stale size again and resets to page 1.
+  it("pages from the fallback size, not the saved one", () => {
+    renderSaved(10);
+    const next = document
+      .querySelector("svg.lucide-chevron-right")!
+      .closest("button")!;
+    fireEvent.click(next);
+    const rows = document.querySelectorAll("tbody tr[data-row-id]");
+    expect(rows).toHaveLength(25);
+    expect(rows[0].getAttribute("data-row-id")).toBe("25");
+    expect(rows[24].getAttribute("data-row-id")).toBe("49");
   });
 });
 
