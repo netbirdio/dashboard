@@ -36,6 +36,11 @@ import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { FleetDMIntegration } from "@/interfaces/EDR";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import {
+  DEFAULT_SYNC_INTERVAL,
+  EDRSyncIntervalInput,
+  isValidSyncInterval,
+} from "@/modules/integrations/edr/EDRSyncIntervalInput";
 import { matchAttributesReducer } from "@/modules/integrations/edr/fleetdm/FleetDM";
 import { FleetDMMatchSettings } from "@/modules/integrations/edr/fleetdm/FleetDMMatchSettings";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
@@ -94,6 +99,9 @@ export function ConfigurationContent({
   const [lastSyncedInterval, setLastSyncedInterval] = useState(
     config.last_synced_interval?.toString() || "24",
   );
+  const [syncInterval, setSyncInterval] = useState(
+    (config.sync_interval ?? DEFAULT_SYNC_INTERVAL).toString(),
+  );
   const [matchAttributes, dispatchMatchAttributes] = useReducer(
     matchAttributesReducer,
     config.match_attributes,
@@ -140,6 +148,7 @@ export function ConfigurationContent({
           api_url: apiUrl,
           groups: savedGroups.map((group) => group.id) || [],
           last_synced_interval: Number(lastSyncedInterval || 24),
+          sync_interval: Number(syncInterval),
           match_attributes: matchAttributes,
           enabled: config.enabled,
         })
@@ -165,8 +174,13 @@ export function ConfigurationContent({
     matchAttributes,
     groups,
     lastSyncedInterval,
+    syncInterval,
   ]);
-  const canSave = hasChanges && groups.length && urlError === "";
+  const canSave =
+    hasChanges &&
+    groups.length &&
+    urlError === "" &&
+    isValidSyncInterval(syncInterval);
 
   return (
     <ModalContent
@@ -308,6 +322,13 @@ export function ConfigurationContent({
               customSuffix={"Hours"}
             />
           </div>
+
+          <EDRSyncIntervalInput
+            name={"FleetDM"}
+            value={syncInterval}
+            onChange={setSyncInterval}
+            className={"mb-3"}
+          />
 
           <div className={"flex-col gap-3 flex"}>
             <Input
