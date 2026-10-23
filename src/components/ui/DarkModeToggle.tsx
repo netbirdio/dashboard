@@ -1,5 +1,6 @@
 "use client";
 
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { type Theme, useTheme } from "@/contexts/ThemeProvider";
@@ -26,7 +27,14 @@ export default function DarkModeToggle() {
         "flex items-center justify-between gap-3 pl-3 pr-2 py-1.5 text-sm"
       }
     >
-      <span className={"text-nb-gray-300"}>Theme</span>
+      <span
+        className={
+          "flex items-center gap-1.5 whitespace-nowrap text-nb-gray-300"
+        }
+      >
+        Theme
+        <SmallBadge text={"Beta"} variant={"sky"} size={"md"} />
+      </span>
       <div className={"flex items-center gap-1"}>
         {OPTIONS.map(({ value, label, icon: Icon }) => (
           <button

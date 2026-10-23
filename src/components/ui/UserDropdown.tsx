@@ -1,5 +1,6 @@
 "use client";
 
+import Badge from "@components/Badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,7 +53,12 @@ export default function UserDropdown() {
         open={dropdownOpen}
         onOpenChange={setDropdownOpen}
       >
-        <DropdownMenuTrigger data-testid="user-dropdown">
+        <DropdownMenuTrigger
+          data-testid="user-dropdown"
+          aria-label={"New: Light Mode - profile and theme settings"}
+          className={"flex cursor-pointer items-center gap-2"}
+        >
+          <Badge variant={"blueDark"}>New: Light Mode</Badge>
           <UserAvatar size={"medium"} />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
