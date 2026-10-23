@@ -598,3 +598,93 @@
     .cc-frame-row-icon {
     box-shadow: 0 0 0 2px rgb(250 204 21);
 }
+
+/*
+ * Loading skeleton rows painted inside the spacer rows of a virtualized table,
+ * styled like TableSkeletonRow: striped rows with one bar per visible column.
+ * Fast scrolling reaches the spacers before React has rendered the real rows,
+ * and as plain CSS the skeleton is painted without waiting for JavaScript.
+ * The row paints the stripes; each cell is the bar colour with a shimmer,
+ * masked down to one bar per row. Everything repeats every --skeleton-row-height.
+ */
+.table-skeleton-row {
+    --skeleton-row: color-mix(in oklab, var(--color-neutral-100) 60%, transparent);
+    --skeleton-row-alt: color-mix(in oklab, var(--color-neutral-100) 25%, transparent);
+    --skeleton-bar: #e4e7e9;
+    --skeleton-highlight: #f4f6f7;
+    --skeleton-row-height: 65px;
+    --skeleton-y: top;
+    background-image: linear-gradient(
+        to bottom,
+        var(--skeleton-row) 50%,
+        var(--skeleton-row-alt) 50%
+    );
+    background-size: 100% calc(var(--skeleton-row-height) * 2);
+    background-position: left var(--skeleton-y);
+}
+
+.dark .table-skeleton-row {
+    --skeleton-row: var(--color-nb-gray-940);
+    --skeleton-row-alt: color-mix(in oklab, var(--color-nb-gray-940) 40%, transparent);
+    --skeleton-bar: #25282d;
+    --skeleton-highlight: #33373e;
+}
+
+/* Above the rendered rows, the skeleton lines up with the first real row below it. */
+.table-skeleton-row[data-align="bottom"] {
+    --skeleton-y: bottom;
+}
+
+/* The cell keeps the table's own horizontal padding, so each bar spans its column's content. */
+.table-skeleton-cell {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--skeleton-bar);
+    mask-image: linear-gradient(
+        to bottom,
+        transparent calc(50% - 5px),
+        black calc(50% - 5px),
+        black calc(50% + 5px),
+        transparent calc(50% + 5px)
+    );
+    mask-size: 100% var(--skeleton-row-height);
+    mask-repeat: repeat-y;
+    mask-position: left var(--skeleton-y);
+    mask-origin: content-box;
+    mask-clip: content-box;
+}
+
+.table-skeleton-cell[data-empty] {
+    background: none;
+}
+
+.table-skeleton-cell[data-empty]::after {
+    display: none;
+}
+
+/* The same sweep as react-loading-skeleton, moved by transform so it stays off the main thread. */
+.table-skeleton-cell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+        90deg,
+        var(--skeleton-bar),
+        var(--skeleton-highlight),
+        var(--skeleton-bar)
+    );
+    transform: translateX(-100%);
+    animation: table-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes table-skeleton-shimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .table-skeleton-cell::after {
+        display: none;
+    }
+}

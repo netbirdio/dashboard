@@ -1,85 +1,78 @@
-import Button from "@components/Button";
-import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
-import { Table } from "@tanstack/react-table";
+import ButtonGroup from "@components/ButtonGroup";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
+import { rowsSelection } from "@components/table/pageSizes";
 import { cn } from "@utils/helpers";
-import { Command, CommandGroup, CommandItem } from "cmdk";
 import { Check, ChevronDown, RowsIcon } from "lucide-react";
 import * as React from "react";
 
-interface DataTablePaginationProps<TData> {
-  table: Table<TData>;
+type Props = {
+  pageSize: number;
+  onPageSizeChange: (pageSize: number) => void;
   disabled?: boolean;
-}
+};
 
-const rowsSelection = [10, 25, 50, 100, 1000];
-
-export function DataTableRowsPerPage<TData>({
-  table,
+export function DataTableRowsPerPage({
+  pageSize,
+  onPageSizeChange,
   disabled,
-}: DataTablePaginationProps<TData>) {
+}: Props) {
   const [open, setOpen] = React.useState(false);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
 
   return (
-    <>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant={"secondary"}
-            role="combobox"
-            aria-expanded={open}
+    <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
+      {/* Styled as a one-button group so it matches the page buttons next to it. */}
+      <ButtonGroup>
+        <DropdownMenuTrigger asChild>
+          <ButtonGroup.Button
+            ref={triggerRef}
             disabled={disabled}
             data-testid={"rows-per-page"}
-            className="w-[200px] !justify-between"
+            className={"gap-2"}
           >
-            <RowsIcon size={15} className={"text-nb-gray-300 shrink-0"} />
-            <div>
-              <span className={"text-white"}>
-                {table.getState().pagination.pageSize}
-              </span>
-              <span className={"text-nb-gray-300"}> rows per page</span>
+            <RowsIcon size={15} className={"shrink-0"} />
+            <span>{pageSize} rows per page</span>
+            <ChevronDown size={16} className={"opacity-50"} />
+          </ButtonGroup.Button>
+        </DropdownMenuTrigger>
+      </ButtonGroup>
+      <DropdownMenuContent
+        className={"w-(--radix-dropdown-menu-trigger-width)"}
+        sideOffset={7}
+        // Focus still returns to the trigger, but without scrolling to it,
+        // so the table's jump back to the top after a page size change sticks.
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          triggerRef.current?.focus({ preventScroll: true });
+        }}
+      >
+        {rowsSelection.map((value) => (
+          <DropdownMenuItem
+            key={value}
+            data-testid={"rows-per-page-value"}
+            onClick={() => {
+              setOpen(false);
+              onPageSizeChange(value);
+            }}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <Check
+                size={14}
+                className={cn(
+                  "shrink-0",
+                  pageSize === value ? "opacity-100" : "opacity-0",
+                )}
+              />
+              {value} rows
             </div>
-            <ChevronDown className="h-4 w-4 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[200px] p-0" sideOffset={7}>
-          <Command value={`${table.getState().pagination.pageSize}`}>
-            <CommandGroup>
-              {rowsSelection.map((val) => (
-                <CommandItem
-                  key={val}
-                  value={val.toString()}
-                  data-testid={`rows-per-page-value`}
-                  onSelect={(currentValue) => {
-                    table.setPageSize(Number(currentValue));
-                    setOpen(false);
-                  }}
-                >
-                  <div
-                    className={cn(
-                      "cursor-pointer",
-                      "flex gap-2 px-2 py-1.5 my-1 mx-1 rounded-md items-center hover:dark:bg-nb-gray-800 text-nb-gray-400 hover:text-white",
-                      table.getState().pagination.pageSize === val
-                        ? "text-white"
-                        : "",
-                    )}
-                  >
-                    <Check
-                      size={15}
-                      className={cn(
-                        "text-white shrink-0",
-                        table.getState().pagination.pageSize === val
-                          ? "opacity-100"
-                          : "opacity-0",
-                      )}
-                    />
-                    {val}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

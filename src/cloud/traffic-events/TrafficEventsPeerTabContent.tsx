@@ -8,7 +8,7 @@ import SkeletonTable, {
 import { DataTable } from "@components/table/DataTable";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import { DEFAULT_PAGE_SIZE } from "@components/table/pageSizes";
 import { TabsTrigger } from "@components/Tabs";
 import NoResults from "@components/ui/NoResults";
 import type { SortingState } from "@tanstack/react-table";
@@ -47,7 +47,7 @@ export const TrafficEventsPeerTabContent = () => {
   const peerId = peer?.id || "";
 
   const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const defaultDirection = peer?.user_id
@@ -433,11 +433,6 @@ const TrafficEventsPeerDetailTable = ({
               }}
             />
           )}
-
-          <DataTableRowsPerPage
-            table={table}
-            disabled={!events || events?.length == 0}
-          />
 
           <DataTableRefreshButton
             isDisabled={!events || events?.length == 0}
