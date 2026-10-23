@@ -5,6 +5,11 @@ import DataTableGlobalSearch from "@components/table/DataTableGlobalSearch";
 import { DataTableHeadingPortal } from "@components/table/DataTableHeadingPortal";
 import { DataTablePagination } from "@components/table/DataTablePagination";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import { DataTableRow } from "@components/table/DataTableRow";
+import {
+  DEFAULT_PAGE_SIZE,
+  isAllowedPageSize,
+} from "@components/table/pageSizes";
 import {
   Table,
   TableBody,
@@ -14,10 +19,12 @@ import {
   TableRow,
   TableWrapper,
 } from "@components/table/Table";
+import { useVirtualRows } from "@components/table/useVirtualRows";
 import NoResults from "@components/ui/NoResults";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import {
   Cell,
+  Column,
   ColumnDef,
   ColumnFiltersState,
   flexRender,
@@ -41,7 +48,7 @@ import dayjs from "dayjs";
 import { isEqual, trim } from "lodash";
 import { usePathname } from "next/navigation";
 import * as React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 declare module "@tanstack/table-core" {
@@ -61,6 +68,8 @@ declare module "@tanstack/table-core" {
   interface ColumnMeta<TData extends RowData, TValue> {
     /** Classes applied to both the header and body cells of the column. */
     className?: string;
+    /** `false` leaves the column blank in the loading skeleton, e.g. for a column that is mostly empty. */
+    skeleton?: false;
   }
 }
 
@@ -144,6 +153,80 @@ function readRowId(row: unknown): string | undefined {
   if (typeof row !== "object" || row === null || !("id" in row)) return;
   const id = (row as { id?: unknown }).id;
   return typeof id === "string" ? id : undefined;
+}
+
+/**
+ * Stands in for the rows scrolled out of view, so the scrollbar keeps the full page height.
+ * It paints loading skeleton rows with one bar per visible column (see `.table-skeleton-row`),
+ * which is what fast scrolling shows until the real rows are rendered.
+ */
+function VirtualSpacerRow<TData>({
+  height,
+  rowHeight,
+  align,
+  columns,
+  minimal,
+  inset,
+  tableCellClassName,
+}: {
+  height: number;
+  rowHeight: number;
+  align: "top" | "bottom";
+  columns: Column<TData>[];
+  minimal?: boolean;
+  inset?: boolean;
+  tableCellClassName?: string;
+}) {
+  return (
+    <tr
+      aria-hidden
+      className={"table-skeleton-row"}
+      data-align={align}
+      style={
+        {
+          height,
+          "--skeleton-row-height": `${rowHeight}px`,
+        } as React.CSSProperties
+      }
+    >
+      {columns.map((column) => (
+        <TableCell
+          key={column.id}
+          minimal={minimal}
+          inset={inset}
+          data-empty={column.columnDef.meta?.skeleton === false || undefined}
+          className={cn(
+            "table-skeleton-cell",
+            tableCellClassName,
+            column.columnDef.meta?.className,
+            "py-0",
+          )}
+        />
+      ))}
+    </tr>
+  );
+}
+
+/**
+ * After a page change the new rows start at the table's top,
+ * so a reader who scrolled past it is brought back to it.
+ */
+function scrollTableIntoView(element: HTMLElement | null) {
+  if (!element) return;
+  let parent = element.parentElement;
+  while (parent && parent !== document.body) {
+    const { overflowY } = getComputedStyle(parent);
+    const scrollable = overflowY === "auto" || overflowY === "scroll";
+    if (scrollable && parent.scrollHeight > parent.clientHeight) break;
+    parent = parent.parentElement;
+  }
+  const top = element.getBoundingClientRect().top;
+  if (parent && parent !== document.body) {
+    const offset = top - parent.getBoundingClientRect().top;
+    if (offset < 0) parent.scrollTop += offset;
+  } else if (top < 0) {
+    window.scrollBy(0, top);
+  }
 }
 
 /** Namespaced so an id-less row cannot collide with a real id like "1". */
@@ -267,7 +350,7 @@ export function DataTable<TData, TValue>({
   paginationPaddingClassName,
   tableCellClassName,
   tableHeadClassName,
-  initialPageSize = 10,
+  initialPageSize = DEFAULT_PAGE_SIZE,
   uniqueKey,
   resetRowSelectionOnSearch = true,
   resetRowSelectionOnFilter = false,
@@ -325,6 +408,14 @@ export function DataTable<TData, TValue>({
       keepStateInLocalStorage && !manualPagination,
     );
 
+  // Page sizes saved before the rows-per-page options changed fall back to the default.
+  const localPagination = isAllowedPageSize(
+    paginationState.pageSize,
+    initialPageSize,
+  )
+    ? paginationState
+    : { pageIndex: 0, pageSize: initialPageSize };
+
   const hasInitialData = !!(data && data.length > 0);
 
   const table = useReactTable({
@@ -356,7 +447,7 @@ export function DataTable<TData, TValue>({
             pageIndex: pagination?.pageIndex ?? 0,
             pageSize: pagination?.pageSize ?? initialPageSize,
           }
-        : paginationState,
+        : localPagination,
     },
     initialState: {
       pagination: {
@@ -389,7 +480,11 @@ export function DataTable<TData, TValue>({
           onPaginationChange?.(updater);
         }
       } else {
-        setPaginationState(updater);
+        // Applied to the shown pagination, as the stored one may hold a page size
+        // that is no longer offered.
+        setPaginationState(
+          typeof updater === "function" ? updater(localPagination) : updater,
+        );
       }
     },
     onColumnFiltersChange: (filters) => {
@@ -418,13 +513,26 @@ export function DataTable<TData, TValue>({
   });
 
   const [accordion, setAccordion] = useState<string[]>();
+  const toggleExpanded = useCallback((rowId: string) => {
+    setAccordion((prev) =>
+      prev?.includes(rowId)
+        ? prev.filter((item) => item !== rowId)
+        : [...(prev ?? []), rowId],
+    );
+  }, []);
+
+  const pageRows = table.getRowModel().rows;
+  const visibleColumnIds = table
+    .getVisibleLeafColumns()
+    .map((column) => column.id)
+    .join();
+  const virtualRows = useVirtualRows(pageRows, as === "table");
 
   const TableComponent = as === "table" ? Table : "div";
   const TableHeaderComponent = as === "table" ? TableHeader : "div";
   const TableBodyComponent = as === "table" ? TableBody : "div";
   const TableRowComponent = as === "table" ? TableRow : "div";
   const TableCellComponent = as === "table" ? TableCell : "div";
-  const TableDataUnstyledComponent = as === "table" ? "td" : "div";
   const TableRowUnstyledComponent = as === "table" ? "tr" : "div";
 
   /**
@@ -479,8 +587,20 @@ export function DataTable<TData, TValue>({
     }
   }, [manualColumnFiltering, externalColumnFilters, table]);
 
+  const rootRef = useRef<HTMLDivElement>(null);
+  const { pageIndex, pageSize } = table.getState().pagination;
+  const previousPage = useRef({ pageIndex, pageSize });
+  useEffect(() => {
+    const previous = previousPage.current;
+    previousPage.current = { pageIndex, pageSize };
+    if (previous.pageIndex === pageIndex && previous.pageSize === pageSize) {
+      return;
+    }
+    scrollTableIntoView(rootRef.current);
+  }, [pageIndex, pageSize]);
+
   const content = (
-    <div className={cn("relative table-fixed-scroll", className)}>
+    <div ref={rootRef} className={cn("relative table-fixed-scroll", className)}>
       {showSearchAndFilters && (
         <div className={cn("flex gap-x-4 gap-y-6", !minimal && "p-default")}>
           <DataTableGlobalSearch
@@ -567,102 +687,53 @@ export function DataTable<TData, TValue>({
               )}
 
               <TableBodyComponent
+                ref={virtualRows.bodyRef}
                 className={cn(
                   "relative",
                   data == undefined && "blur-sm",
                   wrapperClassName,
                 )}
               >
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => {
-                    const expandedRow = renderExpandedRow?.(row.original);
+                {virtualRows.isVirtualized && virtualRows.paddingTop > 0 && (
+                  <VirtualSpacerRow
+                    height={virtualRows.paddingTop}
+                    rowHeight={virtualRows.rowHeight}
+                    align={"bottom"}
+                    columns={table.getVisibleLeafColumns()}
+                    minimal={minimal}
+                    inset={inset}
+                    tableCellClassName={tableCellClassName}
+                  />
+                )}
+                {pageRows.length ? (
+                  virtualRows.visibleRows.map((row, i) => {
                     const rowId = readRowId(row.original) ?? row.id;
-                    const isExpanded = accordion?.includes(rowId);
-                    const rowContent = (
-                      <React.Fragment key={row.id}>
-                        <TableRowComponent
-                          minimal={minimal}
-                          data-row-id={rowId}
-                          className={cn(
-                            (onRowClick || renderExpandedRow) &&
-                              "relative group/accordion",
-                            (onRowClick || expandedRow) && "cursor-pointer",
-                            typeof rowClassName === "function"
-                              ? rowClassName(row)
-                              : rowClassName,
-                          )}
-                          data-state={row.getIsSelected() && "selected"}
-                          data-accordion={isExpanded ? "opened" : "closed"}
-                          onClick={(e) => {
-                            if (expandedRow) {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setAccordion((prev) => {
-                                if (prev?.includes(rowId)) {
-                                  return prev.filter((item) => item !== rowId);
-                                } else {
-                                  return [...(prev ?? []), rowId];
-                                }
-                              });
-                            }
-                          }}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCellComponent
-                              key={cell.id}
-                              className={cn(
-                                "relative",
-                                tableCellClassName,
-                                cell.column.columnDef.meta?.className,
-                                cellClassName?.(cell),
-                              )}
-                              minimal={minimal}
-                              inset={inset}
-                              onClick={() => {
-                                onRowClick && onRowClick(row, cell.column.id);
-                              }}
-                            >
-                              <div
-                                className={
-                                  "absolute left-0 top-0 w-full h-full z-0"
-                                }
-                              ></div>
-                              <div className={"relative z-[1]"}>
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext(),
-                                )}
-                              </div>
-                            </TableCellComponent>
-                          ))}
-                        </TableRowComponent>
-
-                        {expandedRow && isExpanded && (
-                          <TableRowComponent
-                            data-row-id={row.id + "-expanded-row"}
-                            minimal={minimal}
-                            className={cn(
-                              onRowClick && "cursor-pointer relative",
-                              typeof rowClassName === "function"
-                                ? rowClassName(row)
-                                : rowClassName,
-                            )}
-                            data-state={row.getIsSelected() && "selected"}
-                          >
-                            <TableDataUnstyledComponent
-                              className={"w-full"}
-                              colSpan={row.getVisibleCells().length}
-                            >
-                              {expandedRow}
-                            </TableDataUnstyledComponent>
-                          </TableRowComponent>
-                        )}
-                      </React.Fragment>
+                    return (
+                      <DataTableRow
+                        key={row.id}
+                        row={row}
+                        rowId={rowId}
+                        isSelected={row.getIsSelected()}
+                        isExpanded={!!accordion?.includes(rowId)}
+                        visibleColumnIds={visibleColumnIds}
+                        columns={columns}
+                        as={as}
+                        minimal={minimal}
+                        inset={inset}
+                        rowClassName={rowClassName}
+                        cellClassName={cellClassName}
+                        tableCellClassName={tableCellClassName}
+                        onRowClick={onRowClick}
+                        onToggleExpanded={toggleExpanded}
+                        renderExpandedRow={renderExpandedRow}
+                        renderRow={renderRow}
+                        {...(virtualRows.isVirtualized && {
+                          virtualIndex: virtualRows.virtualItems[i].index,
+                          measureRef: virtualRows.measureRow,
+                          expandedRowRef: virtualRows.expandedRowRef,
+                        })}
+                      />
                     );
-
-                    return renderRow
-                      ? renderRow(row.original, rowContent)
-                      : rowContent;
                   })
                 ) : (
                   <TableRowUnstyledComponent>
@@ -673,6 +744,17 @@ export function DataTable<TData, TValue>({
                       <NoResults className={"py-4"} />
                     </TableCellComponent>
                   </TableRowUnstyledComponent>
+                )}
+                {virtualRows.isVirtualized && virtualRows.paddingBottom > 0 && (
+                  <VirtualSpacerRow
+                    height={virtualRows.paddingBottom}
+                    rowHeight={virtualRows.rowHeight}
+                    align={"top"}
+                    columns={table.getVisibleLeafColumns()}
+                    minimal={minimal}
+                    inset={inset}
+                    tableCellClassName={tableCellClassName}
+                  />
                 )}
               </TableBodyComponent>
             </TableComponent>
@@ -686,6 +768,7 @@ export function DataTable<TData, TValue>({
           text={text}
           paginationPadding={paginationPaddingClassName}
           totalRecords={totalRecords}
+          onPageChange={() => scrollTableIntoView(rootRef.current)}
         />
       </div>
 

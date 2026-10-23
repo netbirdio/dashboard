@@ -2,7 +2,6 @@ import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ReceiptTextIcon } from "lucide-react";
@@ -102,10 +101,6 @@ export default function InvoicesTable({
     >
       {(table) => (
         <>
-          <DataTableRowsPerPage
-            table={table}
-            disabled={invoices?.length == 0}
-          />
           <DataTableRefreshButton
             isDisabled={invoices?.length == 0}
             onClick={() => {

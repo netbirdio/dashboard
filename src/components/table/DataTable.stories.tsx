@@ -5,7 +5,6 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import { DataTableMultiSelectPopup } from "@components/table/DataTableMultiSelectPopup";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import {
   CheckboxListPicker,
   formatCheckboxChip,
@@ -264,7 +263,6 @@ function PeersTable({
           {withFilters && (
             <TableFiltersButton table={table} filters={filterDefs} />
           )}
-          <DataTableRowsPerPage table={table} disabled={data.length === 0} />
           <DataTableRefreshButton onClick={() => {}} isDisabled={false} />
         </>
       )}
@@ -331,6 +329,21 @@ export const RowsPerPageOpen: StoryObj = {
     await waitForMotion();
     await clickOpen("[data-testid=rows-per-page]")(ctx);
   },
+};
+
+const manyRows: PeerRow[] = Array.from({ length: 1000 }, (_, i) => ({
+  ...rows[i % rows.length],
+  id: `${i + 1}`,
+  name: `${rows[i % rows.length].name}-${i + 1}`,
+}));
+
+/** Above 50 rows per page only the rows near the viewport are rendered. */
+export const Virtualized: StoryObj = {
+  render: () => (
+    <div className={"h-screen overflow-auto"}>
+      <PeersTable data={manyRows} pageSize={1000} selected={{}} />
+    </div>
+  ),
 };
 
 export const Loading: StoryObj = {
