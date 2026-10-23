@@ -6,6 +6,15 @@ This project is the UI for NetBird's Management service.
 
 See [NetBird repo](https://github.com/netbirdio/netbird)
 
+## Interface language
+
+English is the default language. The language selector in Settings → Language offers
+the same 11 languages as the NetBird desktop client: English, Ukrainian, German,
+Hungarian, Russian, Spanish, French, Italian, Portuguese, Simplified Chinese, and
+Japanese. The selection is saved in your browser. See
+[dashboard translations](docs/internationalization.md) for current coverage and
+instructions for contributing translations.
+
 ## Reporting bugs and requesting features
 
 NetBird uses a discussion-first workflow across all its repositories. Bug reports and

@@ -1,5 +1,4 @@
 "use client";
-
 import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
@@ -13,6 +12,7 @@ import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { Policy } from "@/interfaces/Policy";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -20,6 +20,7 @@ const AccessControlTable = lazy(
   () => import("@/modules/access-control/table/AccessControlTable"),
 );
 export default function AccessControlPage() {
+  const { t } = useTranslation();
   const { permission } = usePermissions();
 
   const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
@@ -34,26 +35,31 @@ export default function AccessControlPage() {
           <Breadcrumbs>
             <Breadcrumbs.Item
               href={"/access-control"}
-              label={"Access Control"}
+              label={t("Access Control")}
               icon={<AccessControlIcon size={14} />}
             />
           </Breadcrumbs>
-          <h1 ref={headingRef}>Access Control Policies</h1>
+          <h1 ref={headingRef}>
+            <T>{"Access Control Policies"}</T>
+          </h1>
           <Paragraph>
-            Policies connect users and agents to your network resources,
-            controlling what each identity can reach.{" "}
+            <T>
+              {
+                "Policies connect users and agents to your network resources, controlling what each identity can reach."
+              }
+            </T>{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/manage-network-access"}
               target={"_blank"}
             >
-              Learn more
+              <T>{"Learn more"}</T>
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
 
         <RestrictedAccess
-          page={"Access Control"}
+          page={t("Access Control")}
           hasAccess={permission.policies.read}
         >
           <PoliciesProvider>
