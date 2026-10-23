@@ -95,9 +95,12 @@ export function restoreEveMessage(vault: Vault, message: EveMessage): EveMessage
   if (vault.size === 0) return message;
   const streaming = message.metadata?.status === "streaming";
   const text = streaming ? vault.restoreStreamingText : vault.restoreText;
+  // Text parts render as markdown; reasoning is never shown as markup.
+  const markdown = streaming ? vault.restoreStreamingMarkdown : vault.restoreMarkdown;
   const parts = message.parts.map((part) => {
     switch (part.type) {
       case "text":
+        return { ...part, text: markdown(part.text) };
       case "reasoning":
         return { ...part, text: text(part.text) };
       case "dynamic-tool": {

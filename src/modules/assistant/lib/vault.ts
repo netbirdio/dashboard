@@ -138,6 +138,48 @@ function inLinkDestination(text: string, offset: number): boolean {
   return open !== -1 && !line.includes(">", open);
 }
 
+// A fence line opens or closes a fenced code block.
+const FENCE = /^ {0,3}(?:`{3,}|~{3,})/;
+
+/**
+ * Whether the text at `offset` sits in code, where markdown is not parsed:
+ * inside a fenced block, or inside a code span on its line. A code span
+ * may in fact run over lines, but the model writes a name in one on a
+ * single line, and a span read wrongly only costs a stray backslash.
+ */
+function codeContextAt(text: string, offset: number): "fence" | "span" | null {
+  const before = text.slice(0, offset);
+  const lines = before.split("\n");
+  const fences = lines.slice(0, -1).filter((line) => FENCE.test(line)).length;
+  if (fences % 2 === 1) return "fence";
+  const runs = lines.at(-1)?.match(/`+/g)?.length ?? 0;
+  return runs % 2 === 1 ? "span" : null;
+}
+
+const LINE_BREAKS = /[\r\n\u2028\u2029]+/g;
+// ASCII punctuation, every character of which markdown reads literally after a backslash.
+const MARKDOWN_PUNCTUATION = /[!-/:-@[-`{-~]/g;
+
+/**
+ * A restored value as literal text at `offset`. Names and hostnames are
+ * written by whoever controls a device or account, so one could otherwise
+ * carry headings, emphasis, tables or links into the assistant's answer.
+ * Outside code every punctuation mark is escaped; inside code nothing is
+ * parsed, so only a backtick (which would close the span) and a line
+ * break (which could close the fence) are taken out.
+ */
+function asMarkdownLiteral(value: string, text: string, offset: number): string {
+  const flat = value.replace(LINE_BREAKS, " ");
+  switch (codeContextAt(text, offset)) {
+    case "fence":
+      return flat;
+    case "span":
+      return flat.replaceAll("`", "'");
+    default:
+      return flat.replace(MARKDOWN_PUNCTUATION, String.raw`\$&`);
+  }
+}
+
 interface Entry {
   kind: string;
   real: string;
@@ -293,6 +335,19 @@ export class Vault {
 
   /** The same for text still streaming in: a token cut off at the end is held back. */
   restoreStreamingText = (text: string): string => this.restoreText(text.replace(PARTIAL_TOKEN, ""));
+
+  /** Tokens back in markdown a person reads, each value restored as literal text rather than markup. */
+  restoreMarkdown = (text: string): string =>
+    text.replace(TOKEN_PATTERN, (m, offset: number) => {
+      const entry = this.entries.get(m);
+      if (!entry) return m;
+      if (inLinkDestination(text, offset)) return m;
+      if (ONE_WAY.has(entry.kind)) return "\\[redacted credential\\]";
+      return asMarkdownLiteral(entry.display, text, offset);
+    });
+
+  /** The same for markdown still streaming in. */
+  restoreStreamingMarkdown = (text: string): string => this.restoreMarkdown(text.replace(PARTIAL_TOKEN, ""));
 
   /** Tokens back inside a string a system reads: an id, a filter value. */
   restoreString = (text: string, as: RestoreAs): string =>
