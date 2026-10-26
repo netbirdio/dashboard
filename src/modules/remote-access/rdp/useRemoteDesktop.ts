@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useIronRDPInputHandler } from "./useIronRDPInputHandler";
 import {
   CertificatePromptInfo,
+  FINGERPRINT_CALCULATION_FAILED,
   useRDPCertificateHandler,
 } from "./useRDPCertificateHandler";
 
@@ -65,7 +66,7 @@ export const useRemoteDesktop = (client: any) => {
 
   const { handleRDCleanPathResponse, acceptCertificate } =
     useRDPCertificateHandler();
-  const certificateAccepted = useRef(false);
+  const sessionTrustedCertificates = useRef(new Map<string, string>());
 
   const { isActive, focusCanvas } = useIronRDPInputHandler({
     ironrdp: ironrdpModule,
@@ -116,6 +117,16 @@ export const useRemoteDesktop = (client: any) => {
         }
 
         if (result.needsUserConfirmation && result.promptInfo) {
+          const { hostname, certificate } = result.promptInfo;
+          if (
+            certificate.fingerprint &&
+            certificate.fingerprint !== FINGERPRINT_CALCULATION_FAILED &&
+            sessionTrustedCertificates.current.get(hostname) ===
+              certificate.fingerprint
+          ) {
+            return true;
+          }
+
           setPendingCertificate(result.promptInfo);
 
           return new Promise((resolve, reject) => {
@@ -260,7 +271,10 @@ export const useRemoteDesktop = (client: any) => {
       certificatePromiseRef.current.resolve(true);
       setPendingCertificate(null);
       certificatePromiseRef.current = null;
-      certificateAccepted.current = true;
+      sessionTrustedCertificates.current.set(
+        pendingCertificate.hostname,
+        pendingCertificate.certificate.fingerprint,
+      );
       canvasRef?.current?.focus();
     },
     [pendingCertificate, acceptCertificate],
@@ -357,15 +371,6 @@ export const useRemoteDesktop = (client: any) => {
       }
     };
   }, [status, connect, client]);
-
-  /**
-   * Auto accept certificate if previously accepted (for reconnects)
-   */
-  useEffect(() => {
-    if (pendingCertificate && certificateAccepted.current) {
-      acceptCertificatePrompt();
-    }
-  }, [acceptCertificatePrompt, pendingCertificate]);
 
   return {
     connect,

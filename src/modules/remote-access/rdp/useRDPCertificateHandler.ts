@@ -39,6 +39,7 @@ export interface CertificateValidationResult {
 }
 
 const STORAGE_KEY = "netbird-rdp-trusted-certs";
+export const FINGERPRINT_CALCULATION_FAILED = "FINGERPRINT_CALCULATION_FAILED";
 
 export const useRDPCertificateHandler = () => {
   const [isValidating, setIsValidating] = useState(false);
@@ -57,7 +58,7 @@ export const useRDPCertificateHandler = () => {
           .toUpperCase();
         return fingerprint;
       } catch (error) {
-        return "FINGERPRINT_CALCULATION_FAILED";
+        return FINGERPRINT_CALCULATION_FAILED;
       }
     },
     [],
