@@ -43,11 +43,23 @@ const { DraftLeaveGuard } = await import(
 
 const GUARD_MARK = "ccDraftGuard";
 const settle = () => act(async () => void (await Promise.resolve()));
-// jsdom dispatches popstate asynchronously, like a browser.
+// jsdom dispatches popstate asynchronously, like a browser, through a chain of
+// setTimeout(0) tasks. Waiting for the event itself, rather than a fixed delay,
+// keeps a loaded CI runner from reading history.state before Back has landed.
+const nextPopState = (count = 1) =>
+  new Promise<void>((resolve) => {
+    const onPop = () => {
+      if (--count > 0) return;
+      window.removeEventListener("popstate", onPop);
+      resolve();
+    };
+    window.addEventListener("popstate", onPop);
+  });
 const pressBack = async () => {
   await act(async () => {
+    const popped = nextPopState();
     window.history.back();
-    await new Promise((r) => setTimeout(r, 20));
+    await popped;
   });
 };
 const ownsCurrentEntry = () =>
@@ -128,11 +140,12 @@ describe("browser Back with pending changes", () => {
     discardAnswer = true;
     render(<DraftLeaveGuard />);
 
-    await pressBack();
-    await settle();
-    // go(-2) clears the sentinel and the page entry both.
+    // Back raises one popstate; the confirmed go(-2), which clears the sentinel
+    // and the page entry both, raises a second.
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 30));
+      const left = nextPopState(2);
+      await pressBack();
+      await left;
     });
 
     expect(discardAndExit).toHaveBeenCalledTimes(1);

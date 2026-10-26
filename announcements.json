@@ -1,8 +1,18 @@
 [
   {
     "tag": "New",
-    "text": "Roll Out NetBird Across Your Organization with MDM.",
-    "link": "https://docs.netbird.io/use-cases/deployment/mdm-rollout",
+    "text": "Path-based Access Control for Reverse Proxy - Bypass authentication or block access for specific paths of a service.",
+    "link": "https://docs.netbird.io/manage/reverse-proxy/authentication#per-target-access-actions",
+    "linkText": "Learn more",
+    "variant": "important",
+    "isExternal": true,
+    "closeable": true,
+    "isCloudOnly": false
+  },
+  {
+    "tag": "New",
+    "text": "Certificate Posture Checks - Require peers to hold a device certificate issued by your own CA.",
+    "link": "https://docs.netbird.io/manage/access-control/posture-checks/device-certificates",
     "linkText": "Learn more",
     "variant": "important",
     "isExternal": true,
