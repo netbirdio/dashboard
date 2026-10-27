@@ -93,6 +93,20 @@ const connectAndAccept = async (
   return certificate;
 };
 
+// Starts a connect that a test leaves at the prompt. Unmounting rejects
+// the open prompt, so the connect fails by design during cleanup.
+const startConnect = (
+  hook: ReturnType<typeof setup>["hook"],
+  hostname: string,
+) => {
+  let connecting!: Promise<unknown>;
+  act(() => {
+    connecting = hook.result.current.connect(config(hostname));
+  });
+  connecting.catch(() => {});
+  return connecting;
+};
+
 describe("useRemoteDesktop certificate trust", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -120,9 +134,7 @@ describe("useRemoteDesktop certificate trust", () => {
     const first = await connectAndAccept(hook, "peer-a");
 
     served.cert = CERT_B;
-    act(() => {
-      void hook.result.current.connect(config("peer-a"));
-    });
+    startConnect(hook, "peer-a");
 
     await waitFor(() =>
       expect(hook.result.current.pendingCertificate).not.toBeNull(),
@@ -137,9 +149,7 @@ describe("useRemoteDesktop certificate trust", () => {
     const { hook } = setup();
     await connectAndAccept(hook, "peer-a");
 
-    act(() => {
-      void hook.result.current.connect(config("peer-b"));
-    });
+    startConnect(hook, "peer-b");
 
     await waitFor(() =>
       expect(hook.result.current.pendingCertificate?.hostname).toBe("peer-b"),
@@ -156,9 +166,7 @@ describe("useRemoteDesktop certificate trust", () => {
 
     expect(localStorage.getItem("netbird-rdp-trusted-certs")).toBeNull();
 
-    act(() => {
-      void hook.result.current.connect(config("peer-a"));
-    });
+    startConnect(hook, "peer-a");
 
     await waitFor(() =>
       expect(hook.result.current.pendingCertificate?.hostname).toBe("peer-a"),
@@ -182,9 +190,7 @@ describe("useRemoteDesktop certificate trust", () => {
     );
     const { hook } = setup();
 
-    act(() => {
-      void hook.result.current.connect(config("peer-a"));
-    });
+    startConnect(hook, "peer-a");
 
     await waitFor(() =>
       expect(hook.result.current.pendingCertificate?.hostname).toBe("peer-a"),
@@ -198,9 +204,7 @@ describe("useRemoteDesktop certificate trust", () => {
 
     served.cert = CERT_B;
     served.fingerprint = accepted.fingerprint;
-    act(() => {
-      void hook.result.current.connect(config("peer-a"));
-    });
+    startConnect(hook, "peer-a");
 
     await waitFor(() =>
       expect(hook.result.current.pendingCertificate?.isChange).toBe(true),
@@ -230,9 +234,7 @@ describe("useRemoteDesktop certificate trust", () => {
     served.serverAddr = (hostname, port) => `[${hostname}]:${port}`;
     await connectAndAccept(hook, "fd00::1", true);
 
-    act(() => {
-      void hook.result.current.connect(config("fd00::2"));
-    });
+    startConnect(hook, "fd00::2");
 
     await waitFor(() =>
       expect(hook.result.current.pendingCertificate?.hostname).toBe("fd00::2"),
@@ -246,9 +248,7 @@ describe("useRemoteDesktop certificate trust", () => {
 
   it("shows the certificate metadata reported by the proxy in the prompt", async () => {
     const { hook } = setup();
-    act(() => {
-      void hook.result.current.connect(config("peer-a"));
-    });
+    startConnect(hook, "peer-a");
 
     await waitFor(() =>
       expect(hook.result.current.pendingCertificate).not.toBeNull(),
@@ -372,9 +372,7 @@ describe("useRemoteDesktop certificate prompt lifecycle", () => {
   it("rejects a request from a superseded connect without prompting", async () => {
     const { hook, handlers, responseFor } = setup();
     await connectAndAccept(hook, "peer-a");
-    act(() => {
-      void hook.result.current.connect(config("peer-b"));
-    });
+    startConnect(hook, "peer-b");
     await waitFor(() =>
       expect(hook.result.current.pendingCertificate?.hostname).toBe("peer-b"),
     );
