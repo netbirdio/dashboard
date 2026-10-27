@@ -75,6 +75,12 @@ export NETBIRD_HUBSPOT_SURVEY_FORM_ID=${NETBIRD_HUBSPOT_SURVEY_FORM_ID}
 export NETBIRD_ANALYTICS_EXCLUDED_EMAILS=${NETBIRD_ANALYTICS_EXCLUDED_EMAILS}
 # No default: an unset endpoint is what turns the assistant off.
 export NETBIRD_ASSISTANT_API_ENDPOINT=${NETBIRD_ASSISTANT_API_ENDPOINT}
+# It goes into the CSP header and config.json verbatim, so anything but a bare
+# http(s) origin is refused rather than allowed to widen the policy.
+if [[ -n "${NETBIRD_ASSISTANT_API_ENDPOINT}" && ! "${NETBIRD_ASSISTANT_API_ENDPOINT}" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?/?$ ]]; then
+    echo "NETBIRD_ASSISTANT_API_ENDPOINT is not a bare http(s) origin; the assistant stays off." >&2
+    export NETBIRD_ASSISTANT_API_ENDPOINT=""
+fi
 # A permanent banner for this deployment, shown to every user; empty for none.
 export NETBIRD_ANNOUNCEMENT=${NETBIRD_ANNOUNCEMENT}
 

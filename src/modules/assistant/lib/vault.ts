@@ -18,7 +18,7 @@
  * React-free: the agent imports the patterns from here for its own backstop.
  */
 import { buildPageContextMarker, parsePageContextMarker, SECRET_PATTERNS } from "./contract";
-import { AUDIT_RESULT, type Profile, PROFILES } from "./profiles";
+import { AUDIT_RESULT, type FieldRule, type Profile, PROFILES } from "./profiles";
 
 const IPV4 = String.raw`(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)`;
 const IPV6 = "(?:[0-9A-Fa-f]{1,4}:){3,7}[0-9A-Fa-f]{1,4}|(?:[0-9A-Fa-f]{1,4}:){1,6}:(?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4}){0,5})?";
@@ -291,8 +291,9 @@ export class Vault {
     return out;
   }
 
-  private redactField(rule: true | string | Profile, raw: unknown): unknown {
+  private redactField(rule: FieldRule, raw: unknown): unknown {
     if (rule === true) return mapStrings(raw, this.scrub);
+    if (typeof rule === "function") return mapStrings(rule(raw), this.scrub);
     if (typeof rule === "string") return mapStrings(raw, (s) => (s ? this.mint(rule, s) : s));
     return this.redact(raw, rule);
   }

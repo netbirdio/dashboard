@@ -2,8 +2,8 @@
  * Field allowlists for every management API result the model may read. They
  * are also the operation allowlist: an operation without a profile cannot be
  * called. In a profile, `true` passes a field through, a string tokenises
- * it under that kind, a nested profile recurses, and any unlisted field is
- * dropped. Ids pass through as they are: they say nothing about anyone, and
+ * it under that kind, a nested profile recurses, a function keeps only what
+ * it returns, and any unlisted field is dropped. Ids pass through as they are: they say nothing about anyone, and
  * the model needs them to read further. A `handle` marks a record, keeping its
  * `id` and `name`; a `personal` record's name (a peer's, a person's) becomes a
  * token of the handle's kind, while an admin-chosen label (a group or policy
@@ -13,10 +13,12 @@
  * the agent applies them again to what arrives, so a result the dashboard got
  * wrong still carries no more than its profile lists.
  */
+export type FieldRule = true | string | Profile | ((value: unknown) => unknown);
+
 export interface Profile {
   handle?: string;
   personal?: boolean;
-  fields: Record<string, true | string | Profile>;
+  fields: Record<string, FieldRule>;
 }
 
 const GROUP_MINIMUM: Profile = {
@@ -326,6 +328,10 @@ const FLOW_EVENTS_PAGE: Profile = {
   },
 };
 
+// A query string can carry OAuth codes, reset tokens and API keys that the
+// secret patterns don't recognise, so the model reads the pathname alone.
+const pathname = (value: unknown) => (typeof value === "string" ? value.split(/[?#]/, 1)[0] : value);
+
 const PROXY_ACCESS_LOG: Profile = {
   fields: {
     id: true,
@@ -333,7 +339,7 @@ const PROXY_ACCESS_LOG: Profile = {
     timestamp: true,
     method: true,
     host: "domain",
-    path: true,
+    path: pathname,
     protocol: true,
     status_code: true,
     reason: true,
@@ -545,6 +551,7 @@ export function allowlist(value: unknown, profile: Profile): unknown {
     const keep = profile.handle && (key === "id" || key === "name");
     const rule = Object.hasOwn(profile.fields, key) ? profile.fields[key] : undefined;
     if (keep || rule === true || typeof rule === "string") out[key] = raw;
+    else if (typeof rule === "function") out[key] = rule(raw);
     else if (rule) out[key] = allowlist(raw, rule);
   }
   return out;

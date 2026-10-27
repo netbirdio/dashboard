@@ -1,7 +1,8 @@
 /**
  * The account reads, run in the dashboard with the user's own session.
  *
- * The agent never holds the user's token: it asks, the dashboard reads the
+ * The agent never reads the management API itself, although the user's token
+ * authenticates every chat request to it: it asks, the dashboard reads the
  * management API the way its own pages do, keeps only the fields the
  * operation's profile lists, filters and cuts the result, and the browser tool
  * loop tokenises it before it leaves the tab.

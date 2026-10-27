@@ -7,8 +7,10 @@ import { mergeUrlParams, useNetBirdFetch } from "@/utils/api";
 
 /**
  * The assistant's account reads, made here with the user's own session, so the
- * assistant service never holds their token. The SDK cuts each result to its
- * field allowlist and tokenises it before anything leaves the browser.
+ * assistant service never reads the account itself. It still receives the
+ * user's token, which authenticates every chat request to it. The SDK cuts
+ * each result to its field allowlist and tokenises it before anything leaves
+ * the browser.
  */
 export function useAssistantManagementFetch(): ManagementFetch {
   // Errors go back to the assistant as a status, not as a toast or a login redirect.

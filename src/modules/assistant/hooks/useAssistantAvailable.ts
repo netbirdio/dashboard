@@ -32,7 +32,7 @@ export function useAssistantAvailable(host: string, headers: (() => Promise<Reco
       try {
         const auth = headersRef.current;
         if (!auth) return;
-        const res = await fetch(`${host}${ACCESS_PATH}`, { method: "GET", headers: await auth() });
+        const res = await fetch(`${host}${ACCESS_PATH}`, { method: "GET", headers: await auth(), redirect: "error" });
         ok = res.ok;
       } catch {
         ok = false;

@@ -180,3 +180,22 @@ describe("remote query keys", () => {
     expect(calls.map(([, q]) => q)).toEqual([{ page: "2" }, { host: "app.example" }]);
   });
 });
+
+describe("proxy access log", () => {
+  test("a request path reaches the model without its query string or fragment", async () => {
+    const fetch = fakeFetch({
+      "/api/events/proxy": {
+        page: 1,
+        page_size: 50,
+        total_records: 2,
+        total_pages: 1,
+        data: [
+          { id: "e1", path: "/reset?token=Zq8sYv&next=%2F", status_code: 302 },
+          { id: "e2", path: "/oauth/callback#code=a1b2", status_code: 200 },
+        ],
+      },
+    });
+    const page = await data(readNetbirdApi({ operation: "get_api_events_proxy" }, fetch));
+    expect(page.data.map((e: { path: string }) => e.path)).toEqual(["/reset", "/oauth/callback"]);
+  });
+});

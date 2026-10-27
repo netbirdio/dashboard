@@ -129,7 +129,7 @@ export function AssistantToolActivity({
     One string, not three spans.
 
     The label, the preposition and the quoted subject are one sentence about
-    one call — "List user accounts on 'MacBook-Pro-von-Eduard.local'" — and
+    one call — "List user accounts on 'alice-laptop.local'" — and
     splitting them across flex children put the row's `gap-2` inside it, so it
     read as three separate labels with 8px gutters rather than as a phrase.
     Joined here, the gap is left to do its real job of spacing the icons.
