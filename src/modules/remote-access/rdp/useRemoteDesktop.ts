@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useIronRDPInputHandler } from "./useIronRDPInputHandler";
 import {
   CertificatePromptInfo,
-  FINGERPRINT_CALCULATION_FAILED,
+  isUsableFingerprint,
   useRDPCertificateHandler,
 } from "./useRDPCertificateHandler";
 
@@ -105,12 +105,12 @@ export const useRemoteDesktop = (client: any) => {
   /**
    * Set up the global RDPCertificateHandler to intercept certificate prompts
    */
-  const setupCertificateHandler = useCallback(() => {
+  const setupCertificateHandler = useCallback((hostname: string) => {
     const originalHandler = (window as any).RDPCertificateHandler;
 
     (window as any).RDPCertificateHandler = function () {
       this.handleRDCleanPathResponse = async (response: any) => {
-        const result = await handleRDCleanPathResponse(response);
+        const result = await handleRDCleanPathResponse(response, hostname);
 
         if (result.isValid) {
           return true;
@@ -119,8 +119,7 @@ export const useRemoteDesktop = (client: any) => {
         if (result.needsUserConfirmation && result.promptInfo) {
           const { hostname, certificate } = result.promptInfo;
           if (
-            certificate.fingerprint &&
-            certificate.fingerprint !== FINGERPRINT_CALCULATION_FAILED &&
+            isUsableFingerprint(certificate.fingerprint) &&
             sessionTrustedCertificates.current.get(hostname) ===
               certificate.fingerprint
           ) {
@@ -136,19 +135,6 @@ export const useRemoteDesktop = (client: any) => {
 
         return false;
       };
-
-      if (originalHandler?.prototype) {
-        Object.getOwnPropertyNames(originalHandler.prototype).forEach(
-          (name) => {
-            if (
-              name !== "constructor" &&
-              name !== "handleRDCleanPathResponse"
-            ) {
-              this[name] = originalHandler.prototype[name];
-            }
-          },
-        );
-      }
     };
 
     return originalHandler;
@@ -189,7 +175,7 @@ export const useRemoteDesktop = (client: any) => {
           throw new Error("Failed to initialize IronRDP");
         }
 
-        const originalHandler = setupCertificateHandler();
+        const originalHandler = setupCertificateHandler(rdpConfig.hostname);
 
         try {
           const sessionId = await client.ironRDPBridge.connect(
