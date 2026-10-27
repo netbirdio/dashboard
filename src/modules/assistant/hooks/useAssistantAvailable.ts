@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ACCESS_PATH } from "../lib/contract";
+import { ACCESS_PATH, type AccessResponse } from "../lib/contract";
 
 /**
  * Whether the assistant is there for this user: the dashboard names a service,
@@ -33,7 +33,8 @@ export function useAssistantAvailable(host: string, headers: (() => Promise<Reco
         const auth = headersRef.current;
         if (!auth) return;
         const res = await fetch(`${host}${ACCESS_PATH}`, { method: "GET", headers: await auth(), redirect: "error" });
-        ok = res.ok;
+        // An account that is not enabled answers 200 with `ok: false`.
+        ok = res.ok && ((await res.json()) as AccessResponse).ok === true;
       } catch {
         ok = false;
       }

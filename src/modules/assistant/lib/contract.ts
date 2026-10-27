@@ -271,13 +271,20 @@ export const MODEL_REFUSALS = {
 export const SESSION_UNAVAILABLE_CODE = "session_unavailable";
 
 /**
- * Whether the caller's account may use the assistant: 200 when it may,
- * 403 with ACCOUNT_NOT_ALLOWED_CODE when it may not. Needs the user's bearer;
- * the agent alone decides, so the dashboard asks rather than knowing.
+ * Whether the caller's account may use the assistant, answered as a 200 with
+ * an AccessResponse either way, since an account that is not enabled is the
+ * common case rather than an error. Needs the user's bearer; a missing or
+ * invalid one is still a 401. The agent alone decides, so the dashboard asks
+ * rather than knowing.
  */
 export const ACCESS_PATH = `${ROUTE_PREFIX}/access`;
 
-/** The 403 code for an account the assistant is not enabled for, on this route and every other. */
+export type AccessResponse = { ok: true } | { ok: false; code: typeof ACCOUNT_NOT_ALLOWED_CODE };
+
+/**
+ * The code for an account the assistant is not enabled for: in the access
+ * answer, and as a 403 on every other route.
+ */
 export const ACCOUNT_NOT_ALLOWED_CODE = "account_not_allowed";
 
 // Every wire tool the assistant can call, and where it runs.
