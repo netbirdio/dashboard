@@ -1,5 +1,4 @@
 "use client";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +21,7 @@ import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { T } from "@/i18n/useTranslation";
 import { ChangePasswordModalContent } from "@/modules/users/ChangePasswordModal";
 
 export default function UserDropdown() {
@@ -105,7 +105,7 @@ export default function UserDropdown() {
             >
               <div className={"flex gap-3 items-center"}>
                 <KeyRound size={14} />
-                Change Password
+                <T>{"Change Password"}</T>
               </div>
             </DropdownMenuItem>
           )}
@@ -113,7 +113,7 @@ export default function UserDropdown() {
           <DropdownMenuItem onClick={logout}>
             <div className={"flex gap-3 items-center"}>
               <LogOutIcon size={14} />
-              Log out
+              <T>{"Log out"}</T>
             </div>
             <DropdownMenuShortcut className={"opacity-75"}>
               {isMac ? (
@@ -142,7 +142,7 @@ const ProfileSettingsDropdownItem = ({ onClick }: { onClick: () => void }) => {
     <DropdownMenuItem onClick={onClick}>
       <div className={"flex gap-3 items-center"}>
         <User2 size={14} />
-        Profile Settings
+        <T>{"Profile Settings"}</T>
       </div>
     </DropdownMenuItem>
   );
@@ -159,7 +159,7 @@ const PlansAndBillingDropdownItem = ({ onClick }: { onClick: () => void }) => {
       <DropdownMenuItem onClick={onClick}>
         <div className={"flex gap-3 items-center"}>
           <CreditCardIcon size={14} />
-          Plans & Billing
+          <T>{"Plans & Billing"}</T>
         </div>
       </DropdownMenuItem>
     )

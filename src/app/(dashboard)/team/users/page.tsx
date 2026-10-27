@@ -1,5 +1,4 @@
 "use client";
-
 import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
@@ -14,6 +13,7 @@ import TeamIcon from "@/assets/icons/TeamIcon";
 import { AccountMfaCard } from "@/cloud/mfa/AccountMFACard";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { T, useTranslation } from "@/i18n/useTranslation";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 import { IdentityProviderCard } from "@/modules/integrations/idp-sync/IdentityProviderCard";
@@ -21,6 +21,7 @@ import { IdentityProviderCard } from "@/modules/integrations/idp-sync/IdentityPr
 const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 
 export default function TeamUsers() {
+  const { t } = useTranslation();
   const { isLoading: isGroupsLoading } = useGroups();
   const { permission } = usePermissions();
   const { data: users, isLoading } = useFetchApi<User[]>(
@@ -36,30 +37,35 @@ export default function TeamUsers() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/team"}
-            label={"Team"}
+            label={t("Team")}
             icon={<TeamIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/team/users"}
-            label={"Users"}
+            label={t("Users")}
             active
             icon={<User2 size={16} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Users</h1>
+        <h1 ref={headingRef}>
+          <T>{"Users"}</T>
+        </h1>
         <Paragraph>
-          Manage users and their permissions. Same-domain email users are added
-          automatically on first sign-in.{" "}
+          <T>
+            {
+              "Manage users and their permissions. Same-domain email users are added automatically on first sign-in."
+            }
+          </T>{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/add-users-to-your-network"}
             target={"_blank"}
           >
-            Learn more
+            <T>{"Learn more"}</T>
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>
-      <RestrictedAccess page={"Users"} hasAccess={permission.users.read}>
+      <RestrictedAccess page={t("Users")} hasAccess={permission.users.read}>
         <Suspense fallback={<SkeletonTable />}>
           {permission.settings.read && (
             <div className={"flex flex-wrap gap-4 p-default pb-6"}>
