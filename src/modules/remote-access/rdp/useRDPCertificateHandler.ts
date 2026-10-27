@@ -22,7 +22,7 @@ interface TrustedCertificate {
 export interface RDCleanPathResponse {
   ServerAddr?: string;
   ServerCertChain?: Uint8Array[];
-  CertificateInfo?: CertificateInfo;
+  CertificateInfo?: Partial<CertificateInfo>;
 }
 
 export interface CertificatePromptInfo {

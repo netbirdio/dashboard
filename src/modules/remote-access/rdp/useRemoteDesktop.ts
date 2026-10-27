@@ -3,6 +3,7 @@ import { useIronRDPInputHandler } from "./useIronRDPInputHandler";
 import {
   CertificatePromptInfo,
   isUsableFingerprint,
+  RDCleanPathResponse,
   useRDPCertificateHandler,
 } from "./useRDPCertificateHandler";
 
@@ -57,9 +58,9 @@ export const useRemoteDesktop = (client: any) => {
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastConnectedConfigRef = useRef<RDPConfig | null>(null);
   const certificatePromiseRef = useRef<{
-    resolve: (value: boolean) => void;
-    reject: (reason?: any) => void;
+    resolve: (accepted: boolean) => void;
   } | null>(null);
+  const connectionGeneration = useRef(0);
 
   const [rdpSession, setRdpSession] = useState<any>(null);
   const [ironrdpModule, setIronrdpModule] = useState<any>(null);
@@ -74,6 +75,14 @@ export const useRemoteDesktop = (client: any) => {
     canvas: canvasRef.current,
     isConnected: status === RDPStatus.CONNECTED,
   });
+
+  // The Go proxy holds the TLS handshake until the prompt promise settles,
+  // so every path that drops a prompt has to answer it.
+  const settlePendingCertificate = useCallback((accepted: boolean) => {
+    certificatePromiseRef.current?.resolve(accepted);
+    certificatePromiseRef.current = null;
+    setPendingCertificate(null);
+  }, []);
 
   /**
    * Reset the RDP state, optionally preserving config and/or certificate state
@@ -95,50 +104,64 @@ export const useRemoteDesktop = (client: any) => {
       }
       setError("");
       if (!options.preserveCertificateState) {
-        setPendingCertificate(null);
-        certificatePromiseRef.current = null;
+        settlePendingCertificate(false);
       }
     },
-    [],
+    [settlePendingCertificate],
   );
 
   /**
    * Set up the global RDPCertificateHandler to intercept certificate prompts
    */
-  const setupCertificateHandler = useCallback((hostname: string) => {
-    const originalHandler = (window as any).RDPCertificateHandler;
+  const setupCertificateHandler = useCallback(
+    (hostname: string, generation: number) => {
+      // A socket from a superseded connect must not prompt under the current one.
+      const isCurrent = () => generation === connectionGeneration.current;
 
-    (window as any).RDPCertificateHandler = function () {
-      this.handleRDCleanPathResponse = async (response: any) => {
-        const result = await handleRDCleanPathResponse(response, hostname);
+      const Handler = class {
+        handleRDCleanPathResponse = async (
+          response: RDCleanPathResponse,
+        ): Promise<boolean> => {
+          const result = await handleRDCleanPathResponse(response, hostname);
+          if (!isCurrent()) return false;
 
-        if (result.isValid) {
-          return true;
-        }
-
-        if (result.needsUserConfirmation && result.promptInfo) {
-          const { hostname, certificate } = result.promptInfo;
-          if (
-            isUsableFingerprint(certificate.fingerprint) &&
-            sessionTrustedCertificates.current.get(hostname) ===
-              certificate.fingerprint
-          ) {
+          if (result.isValid) {
             return true;
           }
 
-          setPendingCertificate(result.promptInfo);
+          if (result.needsUserConfirmation && result.promptInfo) {
+            const { hostname, certificate } = result.promptInfo;
+            if (
+              isUsableFingerprint(certificate.fingerprint) &&
+              sessionTrustedCertificates.current.get(hostname) ===
+                certificate.fingerprint
+            ) {
+              return true;
+            }
 
-          return new Promise((resolve, reject) => {
-            certificatePromiseRef.current = { resolve, reject };
-          });
-        }
+            certificatePromiseRef.current?.resolve(false);
+            setPendingCertificate(result.promptInfo);
 
-        return false;
+            return new Promise<boolean>((resolve) => {
+              certificatePromiseRef.current = { resolve };
+            });
+          }
+
+          return false;
+        };
       };
-    };
 
-    return originalHandler;
-  }, [handleRDCleanPathResponse]);
+      window.RDPCertificateHandler = Handler;
+
+      // An overlapping connect may have installed its own handler since.
+      return () => {
+        if (window.RDPCertificateHandler === Handler) {
+          delete window.RDPCertificateHandler;
+        }
+      };
+    },
+    [handleRDCleanPathResponse],
+  );
 
   /**
    * Establish an RDP connection
@@ -147,6 +170,8 @@ export const useRemoteDesktop = (client: any) => {
     async (rdpConfig: RDPConfig): Promise<RDPStatus> => {
       if (status === RDPStatus.CONNECTING) return status;
 
+      const generation = ++connectionGeneration.current;
+      settlePendingCertificate(false);
       setStatus(RDPStatus.CONNECTING);
       setConfig(rdpConfig);
       setError("");
@@ -175,7 +200,10 @@ export const useRemoteDesktop = (client: any) => {
           throw new Error("Failed to initialize IronRDP");
         }
 
-        const originalHandler = setupCertificateHandler(rdpConfig.hostname);
+        const removeCertificateHandler = setupCertificateHandler(
+          rdpConfig.hostname,
+          generation,
+        );
 
         try {
           const sessionId = await client.ironRDPBridge.connect(
@@ -228,7 +256,7 @@ export const useRemoteDesktop = (client: any) => {
           resetState();
           throw Error(errorMessage);
         } finally {
-          (window as any).RDPCertificateHandler = originalHandler;
+          removeCertificateHandler();
         }
       } catch (err) {
         const errorMessage =
@@ -238,7 +266,13 @@ export const useRemoteDesktop = (client: any) => {
         throw Error(errorMessage);
       }
     },
-    [client, status, setupCertificateHandler, resetState],
+    [
+      client,
+      status,
+      setupCertificateHandler,
+      resetState,
+      settlePendingCertificate,
+    ],
   );
 
   /**
@@ -254,27 +288,33 @@ export const useRemoteDesktop = (client: any) => {
         remember,
       );
 
-      certificatePromiseRef.current.resolve(true);
-      setPendingCertificate(null);
-      certificatePromiseRef.current = null;
+      settlePendingCertificate(true);
       sessionTrustedCertificates.current.set(
         pendingCertificate.hostname,
         pendingCertificate.certificate.fingerprint,
       );
       canvasRef?.current?.focus();
     },
-    [pendingCertificate, acceptCertificate],
+    [pendingCertificate, acceptCertificate, settlePendingCertificate],
   );
 
   /**
    * Reject the pending certificate prompt
    */
   const rejectCertificatePrompt = useCallback(() => {
-    if (!certificatePromiseRef.current) return;
-    certificatePromiseRef.current.resolve(false);
-    setPendingCertificate(null);
-    certificatePromiseRef.current = null;
-  }, []);
+    settlePendingCertificate(false);
+  }, [settlePendingCertificate]);
+
+  // Rejecting fails the handshake, so the pending connect settles
+  // and removes its certificate handler.
+  useEffect(
+    () => () => {
+      connectionGeneration.current += 1;
+      certificatePromiseRef.current?.resolve(false);
+      certificatePromiseRef.current = null;
+    },
+    [],
+  );
 
   /**
    * Handle window resize events. Hosts that support the Display Control channel

@@ -23,24 +23,31 @@ const createClient = () => {
     fingerprint?: string;
     serverAddr?: (hostname: string, port: number) => string;
   } = { cert: CERT_A };
+  // The handler each connect installed, so tests can replay a stale socket.
+  const handlers: NonNullable<typeof window.RDPCertificateHandler>[] = [];
   let sessions = 0;
+
+  const responseFor = (hostname: string, port: number) => ({
+    ServerAddr: served.serverAddr
+      ? served.serverAddr(hostname, port)
+      : `${hostname}:${port}`,
+    ServerCertChain: [served.cert],
+    CertificateInfo: {
+      subject: "CN=peer",
+      ...(served.fingerprint && { fingerprint: served.fingerprint }),
+    },
+  });
 
   const client = {
     initializeIronRDP: async () => true,
     client: {},
     ironRDPBridge: {
       connect: async (hostname: string, port: number) => {
-        const Handler = (window as any).RDPCertificateHandler;
-        const accepted = await new Handler().handleRDCleanPathResponse({
-          ServerAddr: served.serverAddr
-            ? served.serverAddr(hostname, port)
-            : `${hostname}:${port}`,
-          ServerCertChain: [served.cert],
-          CertificateInfo: {
-            subject: "CN=peer",
-            ...(served.fingerprint && { fingerprint: served.fingerprint }),
-          },
-        });
+        const Handler = window.RDPCertificateHandler!;
+        handlers.push(Handler);
+        const accepted = await new Handler().handleRDCleanPathResponse(
+          responseFor(hostname, port),
+        );
         if (!accepted) throw new Error("Certificate rejected");
         sessions += 1;
         return `session-${sessions}`;
@@ -50,7 +57,7 @@ const createClient = () => {
     },
   };
 
-  return { client, served };
+  return { client, served, handlers, responseFor };
 };
 
 const config = (hostname: string) => ({
@@ -61,11 +68,11 @@ const config = (hostname: string) => ({
 });
 
 const setup = () => {
-  const { client, served } = createClient();
+  const { client, served, handlers, responseFor } = createClient();
   const hook = renderHook(() => useRemoteDesktop(client));
   (hook.result.current.canvasRef as { current: HTMLCanvasElement }).current =
     document.createElement("canvas");
-  return { hook, served };
+  return { hook, served, handlers, responseFor };
 };
 
 const connectAndAccept = async (
@@ -274,6 +281,110 @@ describe("useRemoteDesktop certificate trust", () => {
       expect(hook.result.current.connect(config("peer-b"))).rejects.toThrow(),
     );
     expect(window.RDPCertificateHandler).toBeUndefined();
+  });
+});
+
+describe("useRemoteDesktop certificate prompt lifecycle", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    delete window.RDPCertificateHandler;
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
+  const openPrompt = async (hook: ReturnType<typeof setup>["hook"]) => {
+    let connecting!: Promise<unknown>;
+    act(() => {
+      connecting = hook.result.current.connect(config("peer-a"));
+    });
+    await waitFor(() =>
+      expect(hook.result.current.pendingCertificate).not.toBeNull(),
+    );
+    return { connecting };
+  };
+
+  it("fails the connect when the prompt is rejected", async () => {
+    const { hook } = setup();
+    const { connecting } = await openPrompt(hook);
+
+    act(() => hook.result.current.rejectCertificatePrompt());
+
+    await act(() => expect(connecting).rejects.toThrow("Certificate rejected"));
+    expect(hook.result.current.pendingCertificate).toBeNull();
+    expect(window.RDPCertificateHandler).toBeUndefined();
+  });
+
+  it("rejects an open prompt on unmount and removes the handler", async () => {
+    const { hook } = setup();
+    const { connecting } = await openPrompt(hook);
+
+    hook.unmount();
+
+    await expect(connecting).rejects.toThrow("Certificate rejected");
+    expect(window.RDPCertificateHandler).toBeUndefined();
+  });
+
+  // Each handshake asks once, so a second request means the first
+  // was abandoned; answering it would leave the first handshake hanging.
+  it("rejects an open prompt when another certificate request replaces it", async () => {
+    const { hook, handlers, responseFor } = setup();
+    const { connecting } = await openPrompt(hook);
+
+    let second!: Promise<boolean>;
+    act(() => {
+      second = new handlers[0]().handleRDCleanPathResponse(
+        responseFor("peer-a", 3389),
+      );
+    });
+
+    await act(() => expect(connecting).rejects.toThrow("Certificate rejected"));
+    // The failed connect tears down its session, including the newer request.
+    await expect(second).resolves.toBe(false);
+    expect(hook.result.current.pendingCertificate).toBeNull();
+  });
+
+  it("rejects the open prompt when a new connect starts", async () => {
+    const { hook } = setup();
+    // A connect captured before the first one started skips the in-progress guard.
+    const staleConnect = hook.result.current.connect;
+    const { connecting } = await openPrompt(hook);
+
+    let reconnecting!: Promise<unknown>;
+    act(() => {
+      reconnecting = staleConnect(config("peer-b"));
+    });
+
+    await act(() => expect(connecting).rejects.toThrow("Certificate rejected"));
+    await waitFor(() =>
+      expect(hook.result.current.pendingCertificate?.hostname).toBe("peer-b"),
+    );
+    expect(window.RDPCertificateHandler).toBeDefined();
+
+    act(() => hook.result.current.acceptCertificatePrompt(false));
+    await act(() => reconnecting);
+    expect(window.RDPCertificateHandler).toBeUndefined();
+  });
+
+  it("rejects a request from a superseded connect without prompting", async () => {
+    const { hook, handlers, responseFor } = setup();
+    await connectAndAccept(hook, "peer-a");
+    act(() => {
+      void hook.result.current.connect(config("peer-b"));
+    });
+    await waitFor(() =>
+      expect(hook.result.current.pendingCertificate?.hostname).toBe("peer-b"),
+    );
+
+    const stale = await new handlers[0]().handleRDCleanPathResponse(
+      responseFor("peer-a", 3389),
+    );
+
+    expect(stale).toBe(false);
+    expect(hook.result.current.pendingCertificate?.hostname).toBe("peer-b");
   });
 });
 
