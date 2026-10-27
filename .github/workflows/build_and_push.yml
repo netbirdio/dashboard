@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - feat/chat
     tags:
       - "**"
   pull_request:
