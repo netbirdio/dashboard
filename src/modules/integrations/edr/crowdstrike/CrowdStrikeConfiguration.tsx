@@ -257,11 +257,6 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
         <TabsContent value={"settings"} className={"px-8 text-sm"}>
           <div className={"flex-col gap-6 flex"}>
-            <EDRSyncIntervalInput
-              name={"CrowdStrike"}
-              value={syncInterval}
-              onChange={setSyncInterval}
-            />
             <div>
               <Label className={"mb-3"}>
                 <div className={"flex gap-2 items-center"}>
@@ -314,6 +309,11 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
                 />
               </div>
             </div>
+            <EDRSyncIntervalInput
+              name={"CrowdStrike"}
+              value={syncInterval}
+              onChange={setSyncInterval}
+            />
           </div>
         </TabsContent>
 

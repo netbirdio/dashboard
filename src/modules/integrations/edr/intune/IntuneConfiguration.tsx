@@ -271,6 +271,12 @@ export function ConfigurationContent({
               onChange={(e) => setClientSecret(e.target.value)}
             />
           </div>
+          <EDRSyncIntervalInput
+            name={"Intune"}
+            value={syncInterval}
+            onChange={setSyncInterval}
+            className={"mt-6"}
+          />
         </TabsContent>
 
         <TabsContent value={"peer-approval"} className={"px-8"}>
@@ -322,12 +328,6 @@ export function ConfigurationContent({
               customSuffix={"Hours"}
             />
           </div>
-          <EDRSyncIntervalInput
-            name={"Intune"}
-            value={syncInterval}
-            onChange={setSyncInterval}
-            className={"mt-6"}
-          />
         </TabsContent>
 
         <TabsContent value={"danger"} className={"px-8"}>

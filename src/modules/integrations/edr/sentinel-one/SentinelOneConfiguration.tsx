@@ -309,13 +309,6 @@ export function ConfigurationContent({
             />
           </div>
 
-          <EDRSyncIntervalInput
-            name={"SentinelOne"}
-            value={syncInterval}
-            onChange={setSyncInterval}
-            className={"mb-3"}
-          />
-
           <div className={"flex-col gap-3 flex"}>
             <SentinelOneUrlInput
               value={apiUrl}
@@ -356,6 +349,13 @@ export function ConfigurationContent({
               onChange={(e) => setApiToken(e.target.value)}
             />
           </div>
+
+          <EDRSyncIntervalInput
+            name={"SentinelOne"}
+            value={syncInterval}
+            onChange={setSyncInterval}
+            className={"mt-6"}
+          />
         </TabsContent>
 
         <TabsContent value={"danger"} className={"px-8"}>

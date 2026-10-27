@@ -322,13 +322,6 @@ export function ConfigurationContent({
             />
           </div>
 
-          <EDRSyncIntervalInput
-            name={"Huntress"}
-            value={syncInterval}
-            onChange={setSyncInterval}
-            className={"mb-3"}
-          />
-
           <div className={"flex-col gap-3 flex"}>
             <Input
               autoCorrect={"off"}
@@ -379,6 +372,13 @@ export function ConfigurationContent({
               onChange={(e) => setApiSecret(e.target.value)}
             />
           </div>
+
+          <EDRSyncIntervalInput
+            name={"Huntress"}
+            value={syncInterval}
+            onChange={setSyncInterval}
+            className={"mt-6"}
+          />
         </TabsContent>
 
         <TabsContent value={"danger"} className={"px-8"}>
