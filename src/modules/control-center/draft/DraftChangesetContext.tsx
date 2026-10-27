@@ -33,6 +33,8 @@ import {
   isDraftPeerId,
 } from "@/modules/control-center/utils/helpers";
 import { e2eHooksEnabled } from "@utils/netbird";
+import { useAgentBusy } from "@/modules/assistant";
+import { markAssistantChanges } from "@/modules/control-center/utils/assistant-changes";
 
 export {
   isEmptiedPolicy,
@@ -911,6 +913,8 @@ type GroupRef = {
 interface DraftChangesetContextType {
   changes: DraftChange[];
   changeCount: number;
+  /** Ids of the changes the assistant made or touched; see `markAssistantChanges`. */
+  assistantChangeIds: ReadonlySet<string>;
   trackCreateGroup: (params: {
     clientId: string;
     name: string;
@@ -1167,6 +1171,20 @@ export function DraftChangesetProvider({
 }) {
   // Changes live only in React state: a reload loses the draft.
   const [changes, setChanges] = useState<DraftChange[]>([]);
+
+  // Updated during render rather than in an effect, so the marks never lag a
+  // render behind the changes and the review modal can't show one unmarked.
+  const assistantActing = useAgentBusy();
+  const [assistantChangeIds, setAssistantChangeIds] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
+  const [markedChanges, setMarkedChanges] = useState(changes);
+  if (markedChanges !== changes) {
+    setMarkedChanges(changes);
+    setAssistantChangeIds((marked) =>
+      markAssistantChanges(markedChanges, changes, marked, assistantActing),
+    );
+  }
 
   useEffect(() => {
     if (e2eHooksEnabled()) {
@@ -2437,6 +2455,7 @@ export function DraftChangesetProvider({
     () => ({
       changes,
       changeCount: changes.length,
+      assistantChangeIds,
       trackCreateGroup,
       trackRenameGroup,
       trackAddGroupMembers,
@@ -2481,6 +2500,7 @@ export function DraftChangesetProvider({
     }),
     [
       changes,
+      assistantChangeIds,
       trackCreateGroup,
       trackRenameGroup,
       trackAddGroupMembers,

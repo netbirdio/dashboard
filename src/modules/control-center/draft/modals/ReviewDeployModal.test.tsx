@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const setSelectedPolicy = vi.fn();
 const setPolicyModalOpen = vi.fn();
 let changes: unknown[] = [];
+let assistantChangeIds: Set<string> = new Set();
 let isDeploying = false;
 let liveGroups: unknown[] = [];
 
@@ -58,7 +59,11 @@ vi.mock("@/modules/control-center/draft/DraftChangesetContext", async () => {
   >("@/modules/control-center/draft/DraftChangesetContext");
   return {
     ...actual,
-    useDraftChangeset: () => ({ changes, clearChanges: vi.fn() }),
+    useDraftChangeset: () => ({
+      changes,
+      clearChanges: vi.fn(),
+      assistantChangeIds,
+    }),
   };
 });
 
@@ -87,6 +92,7 @@ beforeEach(() => {
   setSelectedPolicy.mockClear();
   setPolicyModalOpen.mockClear();
   changes = [strippedDraftPolicy];
+  assistantChangeIds = new Set();
   isDeploying = false;
   liveGroups = [];
 });
@@ -222,5 +228,38 @@ describe("the frozen live snapshot", () => {
     // computed from current live data, not the snapshot taken before the first attempt.
     expect(shownDiff()).toContain("p9");
     expect(changes).toHaveLength(1);
+  });
+});
+
+// Text the assistant reads can carry instructions, so the review has to say
+// which changes it made before the user approves them.
+describe("changes the assistant made in Review & Deploy", () => {
+  it("are badged and announced", () => {
+    assistantChangeIds = new Set([strippedDraftPolicy.id]);
+    render(
+      <ReviewDeployModal
+        open={true}
+        onOpenChange={vi.fn()}
+        onDeployed={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Assistant")).toBeTruthy();
+    expect(
+      screen.getByTestId("cc-assistant-changes-notice").textContent,
+    ).toContain("1 change was made by the assistant.");
+  });
+
+  it("are not claimed when the user made every change", () => {
+    render(
+      <ReviewDeployModal
+        open={true}
+        onOpenChange={vi.fn()}
+        onDeployed={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText("Assistant")).toBeNull();
+    expect(screen.queryByTestId("cc-assistant-changes-notice")).toBeNull();
   });
 });

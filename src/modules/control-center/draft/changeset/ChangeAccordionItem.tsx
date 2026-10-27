@@ -19,6 +19,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import {
+  AssistantBadge,
   changeIcon,
   DiffStat,
   entityName,
@@ -52,6 +53,7 @@ type Props = {
   disabled: boolean;
   // Undefined = deploy not started.
   status?: DeployStatus;
+  byAssistant?: boolean;
 };
 
 export const ChangeAccordionItem = ({
@@ -63,6 +65,7 @@ export const ChangeAccordionItem = ({
   onResolveIssue,
   disabled,
   status,
+  byAssistant = false,
 }: Props) => {
   const apiCall = getChangeApiCall(change);
   const request = useMemo(
@@ -121,6 +124,7 @@ export const ChangeAccordionItem = ({
       data-testid={`cc-change-${change.type}`}
       className={cn(
         "border border-nb-gray-910 rounded-lg bg-nb-gray-930/40 overflow-hidden min-w-0",
+        byAssistant && "border-netbird-500/40",
         status === "deploying" && "animate-pulse",
       )}
     >
@@ -201,6 +205,7 @@ export const ChangeAccordionItem = ({
 
           <span className={"flex-1"} />
 
+          {byAssistant && <AssistantBadge />}
           {issue ? (
             <IssueBadge
               label={issue.label}

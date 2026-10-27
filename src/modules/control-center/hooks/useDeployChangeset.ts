@@ -35,7 +35,10 @@ import {
   routerCreateBody,
   routerUpdateBody,
 } from "@/modules/control-center/utils/changeset-request";
-import { isDeployablePolicy } from "@/modules/control-center/utils/helpers";
+import {
+  isDeployablePolicy,
+  isDraftPeerId,
+} from "@/modules/control-center/utils/helpers";
 
 // Executes the draft changeset in CHANGE_DEPLOY_ORDER, stopping on the first failure.
 export type DeployStatus = "deploying" | "done" | "error";
@@ -215,9 +218,16 @@ export function useDeployChangeset() {
           `Group "${ref}" is missing. It may have been removed from the draft.`,
         );
       },
-      // Deploy never sees a draft peer id: install-peer blocks the deploy until
-      // the peer exists, and installing rewrites the router with the real id.
-      peerIdForRef: (ref) => ref,
+      // install-peer blocks the deploy until the peer exists, and installing
+      // rewrites the router with the real id. Checked here as well, so a
+      // placeholder that gets past that gate stops the deploy instead of
+      // reaching the API.
+      peerIdForRef: (ref) => {
+        if (!isDraftPeerId(ref)) return ref;
+        throw new Error(
+          "A routing peer is not installed yet. Install it before deploying.",
+        );
+      },
       normalizeAddress: normalizeHostCIDR,
       // The group POST/PUT sends resources as {id, type} objects.
       resourceType: (id) =>

@@ -642,6 +642,17 @@ describe("resolving a network on retry", () => {
     expect(ok).toBe(true);
     expect(pathsOf("POST")).toEqual(["/networks/n-a/routers"]);
   });
+
+  // install-peer gates this upstream; the sink must not depend on that gate.
+  it("refuses a router whose peer is still an uninstalled placeholder", async () => {
+    changes = [{ ...router, peerId: "draft-peer-1" } as DraftChange];
+    liveNetworks = [{ id: "n-a", name: "Shared" } as Network];
+    const { result } = renderHook(() => useDeployChangeset());
+    const ok = await act(async () => await result.current.deploy());
+
+    expect(ok).toBe(false);
+    expect(pathsOf("POST")).toEqual([]);
+  });
 });
 
 // groupIdForRef used to fall back to the ref itself, putting a human-typed group

@@ -20,6 +20,7 @@ import {
   Loader2,
 } from "lucide-react";
 import React, { useCallback, useMemo, useRef } from "react";
+import { AssistantIcon } from "@/assets/icons/AssistantIcon";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import { useControlCenterPolicy } from "@/modules/control-center/contexts/ControlCenterPolicyModals";
 import { ChangeAccordionItem } from "@/modules/control-center/draft/changeset/ChangeAccordionItem";
@@ -48,7 +49,7 @@ export const ReviewDeployModal = ({
   onOpenChange,
   onDeployed,
 }: Props) => {
-  const { changes, clearChanges } = useDraftChangeset();
+  const { changes, clearChanges, assistantChangeIds } = useDraftChangeset();
   const { removeWithCascade, previewRemove } = useRemoveChange();
   const { deploy, isDeploying, deployStatus } = useDeployChangeset();
   const { policies, groups, networks, networkResources, users } =
@@ -217,31 +218,48 @@ export const ReviewDeployModal = ({
               No pending changes.
             </div>
           ) : (
-            <Accordion
-              key={openKeyRef.current}
-              type={"multiple"}
-              defaultValue={sortedChanges[0] ? [sortedChanges[0].id] : []}
-              className={"flex flex-col gap-3"}
-            >
-              {sortedChanges.map((change) => (
-                <ChangeAccordionItem
-                  key={change.id}
-                  change={change}
-                  changes={changes}
-                  live={renderLive}
-                  onDiscard={() => removeWithCascade(change)}
-                  previewRemove={previewRemove}
-                  onResolveIssue={
-                    // An issue about a group deleted elsewhere has no fix on this row.
-                    getChangeIssue(change, changes)?.resolvable
-                      ? resolveIssue
-                      : undefined
+            <>
+              {assistantChangeIds.size > 0 && (
+                <div
+                  data-testid={"cc-assistant-changes-notice"}
+                  className={
+                    "mb-4 flex items-center gap-2 rounded-lg border border-netbird-500/20 bg-netbird-900/20 px-3 py-2 text-xs text-netbird-200"
                   }
-                  disabled={isDeploying}
-                  status={deployStatus[change.id]}
-                />
-              ))}
-            </Accordion>
+                >
+                  <AssistantIcon size={13} className={"shrink-0"} />
+                  {assistantChangeIds.size === 1
+                    ? "1 change was made by the assistant."
+                    : `${assistantChangeIds.size} changes were made by the assistant.`}{" "}
+                  Check them before you deploy.
+                </div>
+              )}
+              <Accordion
+                key={openKeyRef.current}
+                type={"multiple"}
+                defaultValue={sortedChanges[0] ? [sortedChanges[0].id] : []}
+                className={"flex flex-col gap-3"}
+              >
+                {sortedChanges.map((change) => (
+                  <ChangeAccordionItem
+                    key={change.id}
+                    change={change}
+                    changes={changes}
+                    live={renderLive}
+                    onDiscard={() => removeWithCascade(change)}
+                    previewRemove={previewRemove}
+                    onResolveIssue={
+                      // An issue about a group deleted elsewhere has no fix on this row.
+                      getChangeIssue(change, changes)?.resolvable
+                        ? resolveIssue
+                        : undefined
+                    }
+                    disabled={isDeploying}
+                    status={deployStatus[change.id]}
+                    byAssistant={assistantChangeIds.has(change.id)}
+                  />
+                ))}
+              </Accordion>
+            </>
           )}
         </div>
 
