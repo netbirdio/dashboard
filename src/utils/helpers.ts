@@ -5,12 +5,12 @@ import { extendTailwindMerge } from "tailwind-merge";
 
 /**
  * tailwind-merge only knows Tailwind's own scales, so a custom `text-*` size
- * from `tailwind.config.ts` is mistaken for a text *colour* and dropped the
- * moment a real colour joins it in the same `cn()`. Font sizes we add have to
- * be declared here too.
+ * from the `@theme` in `globals.css` is mistaken for a text *colour* and
+ * dropped the moment a real colour joins it in the same `cn()`. Font sizes we
+ * add have to be declared here too.
  */
 const twMerge = extendTailwindMerge({
-  classGroups: { "font-size": [{ text: ["chat"] }] },
+  extend: { theme: { text: ["chat"] } },
 });
 
 export function cn(...inputs: ClassValue[]) {

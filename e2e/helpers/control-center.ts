@@ -1,10 +1,21 @@
-import { Page, Locator, expect } from "@playwright/test";
+import { Page, Locator, expect, test } from "@playwright/test";
 import { navigateTo } from "./auth";
 import { clearScrollLock, setTestEdition } from "./utils";
 
 // The test build's billing modal backdrop swallows canvas clicks.
 async function disableCloudBilling(page: Page) {
   await setTestEdition(page, "licensed");
+}
+
+// Production builds expose the draft hooks only when asked, see e2eHooksEnabled.
+async function enableE2EHooks(page: Page) {
+  await page.evaluate(() => {
+    try {
+      window.localStorage.setItem("netbird-e2e-hooks", "true");
+    } catch (e) {
+      /* storage unavailable */
+    }
+  });
 }
 
 export async function dismissBlockingOverlays(page: Page) {
@@ -15,12 +26,16 @@ export type FlowView = "peers" | "users" | "groups" | "networks";
 
 export async function openControlCenter(page: Page, tab?: FlowView) {
   await disableCloudBilling(page);
+  await enableE2EHooks(page);
   await navigateTo(
     page,
     tab ? `/control-center?tab=${tab}` : "/control-center",
   );
-  // The pane hides behind cc-prefit until the first fitView.
-  await expect(page.locator(".react-flow__pane")).toBeVisible();
+  // The pane hides behind cc-prefit until the first fitView. A deployed account
+  // another worker is mutating loads slower than the default 5s.
+  await expect(page.locator(".react-flow__pane")).toBeVisible({
+    timeout: 15_000,
+  });
   await dismissBlockingOverlays(page);
 }
 
@@ -58,10 +73,18 @@ export async function switchFlowView(page: Page, view: FlowView) {
   );
 }
 
-export async function enterDraft(page: Page) {
+/**
+ * `blank` starts an empty draft: nothing from the live account, so specs that
+ * only touch their own nodes don't see what the other worker just created.
+ */
+export async function enterDraft(page: Page, { blank = false } = {}) {
   await dismissBlockingOverlays(page);
   await page.getByTestId("cc-mode-draft").click({ force: true });
-  await page.getByTestId("cc-draft-use-current-option").click({ force: true });
+  await page
+    .getByTestId(
+      blank ? "cc-draft-start-blank-option" : "cc-draft-use-current-option",
+    )
+    .click({ force: true });
   // Waiting for the Add button also guarantees draft mode is fully active.
   await expect(page.getByTestId("cc-toolbar-add")).toBeVisible();
 }
@@ -71,12 +94,19 @@ export async function resetDraftState(page: Page) {
   await openControlCenter(page);
 }
 
-export async function readDraftChanges(page: Page): Promise<any[]> {
-  return await page.evaluate(
-    () =>
-      (window as unknown as { __controlCenterDraftChanges?: any[] }).__controlCenterDraftChanges ??
-      [],
+// Dashboards older than e2eHooksEnabled set the draft hooks only in
+// APP_ENV=test builds, so skip there instead of asserting on nothing.
+async function readTestHook<T>(page: Page, name: string): Promise<T> {
+  const value = await page.evaluate(
+    (key) => (window as unknown as Record<string, unknown>)[key],
+    name,
   );
+  test.skip(value === undefined, `window.${name} is not exposed by this dashboard build`);
+  return value as T;
+}
+
+export async function readDraftChanges(page: Page): Promise<any[]> {
+  return readTestHook<any[]>(page, "__ccDraftChanges");
 }
 
 async function centerOf(locator: Locator) {
@@ -209,12 +239,8 @@ export async function createViaCanvasMenu(
   await menu.getByTestId(`cc-canvas-menu-${action}`).click();
 }
 
-export async function readDraftCanvas(page: Page): Promise<any | null> {
-  return await page.evaluate(
-    () =>
-      (window as unknown as { __controlCenterDraftCanvas?: unknown }).__controlCenterDraftCanvas ??
-      null,
-  );
+export async function readDraftCanvas(page: Page): Promise<any> {
+  return readTestHook<any>(page, "__ccDraftCanvas");
 }
 
 export async function dragNodeOnto(page: Page, node: Locator, target: Locator) {

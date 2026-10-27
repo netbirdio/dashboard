@@ -1,5 +1,6 @@
 "use client";
 import { TableContentSkeleton } from "@components/skeletons/SkeletonTable";
+import { DataTableInstanceProvider } from "@components/table/DataTableContext";
 import DataTableGlobalSearch from "@components/table/DataTableGlobalSearch";
 import { DataTableHeadingPortal } from "@components/table/DataTableHeadingPortal";
 import { DataTablePagination } from "@components/table/DataTablePagination";
@@ -326,6 +327,13 @@ export function DataTable<TData, TValue>({
 
   const hasInitialData = !!(data && data.length > 0);
 
+  // The pagination prop is undefined while server data is loading,
+  // so fall back to the first page instead of handing updaters undefined.
+  const manualPaginationState: PaginationState = {
+    pageIndex: pagination?.pageIndex ?? 0,
+    pageSize: pagination?.pageSize ?? initialPageSize,
+  };
+
   const table = useReactTable({
     data: hasInitialData ? data : [],
     columns,
@@ -350,12 +358,7 @@ export function DataTable<TData, TValue>({
         : localColumnFilters,
       columnVisibility: columnVisibility,
       globalFilter: manualFiltering ? globalFilter : localGlobalSearch,
-      pagination: manualPagination
-        ? {
-            pageIndex: pagination?.pageIndex ?? 0,
-            pageSize: pagination?.pageSize ?? initialPageSize,
-          }
-        : paginationState,
+      pagination: manualPagination ? manualPaginationState : paginationState,
     },
     initialState: {
       pagination: {
@@ -382,7 +385,7 @@ export function DataTable<TData, TValue>({
           return;
         }
         if (typeof updater === "function") {
-          const newState = updater(pagination!);
+          const newState = updater(manualPaginationState);
           onPaginationChange?.(newState);
         } else {
           onPaginationChange?.(updater);
@@ -478,7 +481,7 @@ export function DataTable<TData, TValue>({
     }
   }, [manualColumnFiltering, externalColumnFilters, table]);
 
-  return (
+  const content = (
     <div className={cn("relative table-fixed-scroll", className)}>
       {showSearchAndFilters && (
         <div className={cn("flex gap-x-4 gap-y-6", !minimal && "p-default")}>
@@ -696,5 +699,11 @@ export function DataTable<TData, TValue>({
         hasActiveFilters={hasServerSideFilters}
       />
     </div>
+  );
+
+  return (
+    <DataTableInstanceProvider table={table}>
+      {content}
+    </DataTableInstanceProvider>
   );
 }

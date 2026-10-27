@@ -1,0 +1,55 @@
+const allow = { create: true, read: true, update: true, delete: true };
+
+const modules = [
+  "peers",
+  "groups",
+  "setup_keys",
+  "policies",
+  "assistant",
+  "networks",
+  "routes",
+  "nameservers",
+  "dns",
+  "users",
+  "pats",
+  "events",
+  "settings",
+  "accounts",
+  "billing",
+  "identity_providers",
+  "edr",
+  "event_streaming",
+  "idp",
+  "msp",
+  "tenants",
+  "proxy",
+  "proxy_configuration",
+  "services",
+  "agent_network",
+  "agent_network.providers",
+  "agent_network.policies",
+  "agent_network.guardrails",
+  "agent_network.budgets",
+  "agent_network.usage",
+  "agent_network.logs",
+  "agent_network.settings",
+];
+
+export const ownerPermissions = {
+  is_restricted: false,
+  modules: Object.fromEntries(modules.map((m) => [m, allow])),
+};
+
+export const currentUser = {
+  id: "user-owner",
+  email: "owner@netbird.io",
+  name: "Olivia Owner",
+  role: "owner",
+  status: "active",
+  auto_groups: [],
+  is_current: true,
+  is_service_user: false,
+  is_blocked: false,
+  last_login: "2026-10-01T09:30:00Z",
+  permissions: ownerPermissions,
+};

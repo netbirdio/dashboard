@@ -77,13 +77,9 @@ export const DraftRoutingPeerModal = () => {
   const isApiRouterEdit = !!routingPeerModal?.router && !editChange;
   const isLiveApiEdit = !isDraft && isApiRouterEdit;
   const isDraftApiEdit = isDraft && isApiRouterEdit;
-  // Live "Add Routing Peer": the modal's own save POSTs a new router.
+  // Live "Add Routing Peer": the modal's own save POSTs a new router
   const isLiveCreate =
-    !isDraft &&
-    !!network?.id &&
-    !routingPeerModal?.router &&
-    !editChange &&
-    !networkNodeId;
+    !isDraft && !!network?.id && !routingPeerModal?.router && !editChange;
 
   const revalidateLiveRouters = () => {
     if (!network?.id) return;

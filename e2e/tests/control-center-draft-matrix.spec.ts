@@ -19,6 +19,10 @@ import {
 
 // Matrix-driven tests for the node-interaction matrix: every connect, drop and
 // menu case gets an explicit expectation, negatives a strict no-op.
+//
+// Every test starts from a blank draft and asserts only on nodes it placed, so
+// a spec mutating the live account on the other worker can't reach the canvas.
+// Tests share nothing, so they aren't serial: a flake retries just that test.
 
 const KIND = {
   group: { template: "cc-template-group", prefix: "group-new-" },
@@ -60,13 +64,13 @@ async function edgeCount(page: Page) {
   return page.locator(".react-flow__edge").count();
 }
 
-test.describe.serial("Control Center Draft Matrix @control-center", () => {
+test.describe("Control Center Draft Matrix @control-center", () => {
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
     // Prime the API-token cache up front: its first read navigates to
     // /team/users, taking a mid-test listGroups() off the canvas.
     await listGroups(page);
     await resetDraftState(page);
-    await enterDraft(page);
+    await enterDraft(page, { blank: true });
   });
 
   const MODAL_PAIRS: [Kind, Kind][] = [
@@ -434,7 +438,6 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
     const groups = await listGroups(page);
     const all = groups.find((g) => g.name === "All");
     expect(all).toBeTruthy();
-    const allPeerCount = all!.peers_count ?? 0;
 
     await dragTemplateToCanvas(page, `cc-panel-group-${all!.id}`, undefined, {
       search: "All",
@@ -443,6 +446,10 @@ test.describe.serial("Control Center Draft Matrix @control-center", () => {
       `.react-flow__node[data-id="group-${all!.id}"]`,
     );
     await expect(allNode).toHaveCount(1);
+    // Read off the node, not the API: the other worker may register a peer.
+    const allPeerCount = Number(
+      (await allNode.innerText()).match(/(\d+)\s*peer/i)?.[1] ?? 0,
+    );
 
     // The peer stays on canvas; the placeholder itself tracks one install step.
     const peer = await place(page, "peer", 0.75, 0.65);

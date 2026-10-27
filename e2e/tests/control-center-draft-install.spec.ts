@@ -76,7 +76,7 @@ test.describe.serial("Control Center Draft Install @control-center", () => {
     await expect(item).toHaveAttribute("data-state", "open");
   });
 
-  test("Full flow: a docker peer installs (upgrades) a Server placeholder", async ({
+  test("Full flow: a docker peer installs (upgrades) a Server placeholder @docker", async ({
     dashboardAsOwner: page,
   }) => {
     test.setTimeout(180_000);

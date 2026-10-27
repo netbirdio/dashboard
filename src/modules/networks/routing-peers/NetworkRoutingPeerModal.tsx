@@ -136,6 +136,22 @@ export function RoutingPeerModalContent({
     router ? router.peer != "" && !presetIsDraft : false,
   );
 
+  const { data: networkRouters } = useFetchApi<NetworkRouter[]>(
+    `/networks/${network.id}/routers`,
+    true,
+    false,
+    !!network.id,
+  );
+
+  // The router being edited keeps its own peer selectable.
+  const assignedPeerIds = useMemo(
+    () =>
+      (networkRouters ?? [])
+        .filter((r) => r.id !== router?.id && !!r.peer)
+        .map((r) => r.peer as string),
+    [networkRouters, router?.id],
+  );
+
   const [selectedPeer, setSelectedPeer] = useState<Peer | undefined | null>(
     null,
   );
@@ -312,6 +328,10 @@ export function RoutingPeerModalContent({
                       value={routingPeer}
                       extraPeers={extraPeers}
                       disabled={peerLoading}
+                      disabledPeers={assignedPeerIds}
+                      disabledPeerReason={
+                        "This peer is already a routing peer for this network and cannot be assigned again."
+                      }
                     />
                   </div>
                 </SegmentedTabs.Content>

@@ -31,6 +31,7 @@ export interface Account {
     auto_update_version: string;
     auto_update_always: boolean;
     metrics_push_enabled?: boolean;
+    peer_hostname_collision_rejected?: boolean;
     local_auth_disabled?: boolean;
     local_mfa_enabled?: boolean;
     ipv6_enabled_groups?: string[];

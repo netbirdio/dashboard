@@ -109,7 +109,7 @@ export const CanvasAgentBridge = ({
   useEffect(() => {
     const api = buildApi(() => latest.current);
     // Test-only handle: e2e drives these actions directly, with no model in the
-    // loop (same idea as __controlCenterDraftCanvas in CanvasStateProvider). `beginTurn` is
+    // loop (same idea as __ccDraftCanvas in CanvasStateProvider). `beginTurn` is
     // the runtime's turn latch, exposed so a test can check the overlay survives
     // the gaps between steps.
     if (process.env.APP_ENV === "test") {

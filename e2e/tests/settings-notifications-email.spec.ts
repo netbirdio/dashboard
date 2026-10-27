@@ -4,7 +4,7 @@ import { deleteNotificationChannelsByType } from "../helpers/api";
 
 const TEST_EMAIL = "notify@example.test";
 
-test.describe.serial("Settings - Notifications - Email @notifications", () => {
+test.describe.serial("Settings - Notifications - Email @notifications @cloud", () => {
   test("Should add an email recipient", async ({ dashboardAsOwner: page }) => {
     await deleteNotificationChannelsByType(page, "email");
     await navigateTo(page, "/settings?tab=notifications");

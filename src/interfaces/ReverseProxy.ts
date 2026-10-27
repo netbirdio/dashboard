@@ -58,6 +58,15 @@ export enum ReverseProxyStatus {
 
 export type ServiceTargetOptionsPathRewrite = "preserve";
 
+export const TargetAccessAction = {
+  INHERIT: "inherit",
+  BYPASS: "bypass",
+  BLOCK: "block",
+} as const;
+
+export type TargetAccessAction =
+  (typeof TargetAccessAction)[keyof typeof TargetAccessAction];
+
 export interface ServiceTargetOptions {
   skip_tls_verify?: boolean;
   request_timeout?: string;
@@ -82,6 +91,7 @@ export interface ReverseProxyTarget {
   host?: string;
   port: number;
   enabled: boolean;
+  access_action?: TargetAccessAction;
   access_local?: boolean;
   options?: ServiceTargetOptions;
   // Frontend
@@ -193,6 +203,12 @@ export interface ReverseProxyCluster {
   // Lets the dashboard distinguish per-peer / private clusters from centralised
   // ones.
   private?: boolean;
+}
+
+// isClusterConnected reports whether a cluster has registered with NetBird and
+// has at least one proxy connected to serve it.
+export function isClusterConnected(cluster?: ReverseProxyCluster): boolean {
+  return !!cluster?.online && cluster.connected_proxies > 0;
 }
 
 export interface ReverseProxyClusterToken {

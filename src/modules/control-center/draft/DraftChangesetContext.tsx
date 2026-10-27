@@ -32,6 +32,7 @@ import {
   draftUid,
   isDraftPeerId,
 } from "@/modules/control-center/utils/helpers";
+import { e2eHooksEnabled } from "@utils/netbird";
 
 export {
   isEmptiedPolicy,
@@ -1168,10 +1169,10 @@ export function DraftChangesetProvider({
   const [changes, setChanges] = useState<DraftChange[]>([]);
 
   useEffect(() => {
-    if (process.env.APP_ENV === "test") {
+    if (e2eHooksEnabled()) {
       (
-        globalThis as unknown as { __controlCenterDraftChanges?: DraftChange[] }
-      ).__controlCenterDraftChanges = changes;
+        window as unknown as { __ccDraftChanges?: DraftChange[] }
+      ).__ccDraftChanges = changes;
     }
   }, [changes]);
 

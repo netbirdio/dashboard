@@ -7,6 +7,9 @@ NetBird Dashboard is NetBird's management server UI.
 Each published image tag also has a rootless variant with the `-rootless`
 suffix. For example, `main` is also published as `main-rootless`.
 
+Each tag also has a Red Hat UBI variant with the `-ubi` suffix (for example
+`main-ubi`). Stable releases are also tagged `ubi-latest`.
+
 ## How to use this image
 
 HTTP:
@@ -47,6 +50,14 @@ docker run -d --rm \
 
 The rootless image does not include Certbot or expose HTTPS. Terminate TLS at
 the OpenShift Route, Ingress, or another reverse proxy.
+
+### Red Hat UBI
+
+The `-ubi` image behaves like the rootless image (port `8080`, UID `10001`,
+GID `0`, no HTTPS) but is built on Red Hat Universal Base Image 9 minimal with
+nginx 1.26 from the RHEL AppStream, for Red Hat container certification. It is
+published for `linux/amd64` and `linux/arm64` only. License terms are in
+`/licenses`.
 
 ## Environment variables
 
