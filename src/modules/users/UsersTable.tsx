@@ -473,12 +473,16 @@ type InviteUserButtonProps = {
   show?: boolean;
   className?: string;
   groups?: Group[];
+  // When set, the button only triggers this callback and the caller mounts
+  // UserInviteModal itself, so the modal outlives the button.
+  onClick?: () => void;
 };
 
 export const InviteUserButton = ({
   show = false,
   className,
   groups,
+  onClick,
 }: InviteUserButtonProps) => {
   const { permission } = usePermissions();
   const account = useAccount();
@@ -496,7 +500,12 @@ export const InviteUserButton = ({
   const isDisabled = !permission.users.create || localAuthDisabled;
 
   const button = (
-    <Button variant={"primary"} className={className} disabled={isDisabled}>
+    <Button
+      variant={"primary"}
+      className={className}
+      disabled={isDisabled}
+      onClick={onClick}
+    >
       <MailPlus size={16} />
       {isCloud ? "Invite User" : "Add User"}
     </Button>
@@ -531,6 +540,8 @@ export const InviteUserButton = ({
       </FullTooltip>
     );
   }
+
+  if (onClick) return button;
 
   return <UserInviteModal groups={groups}>{button}</UserInviteModal>;
 };

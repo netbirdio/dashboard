@@ -34,8 +34,10 @@ import { isNetBirdCloud } from "@utils/netbird";
 type UserCreationMode = "create" | "invite";
 
 type Props = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   groups?: Group[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const passwordCopyMessage = "Password was copied to your clipboard!";
@@ -45,8 +47,15 @@ type SuccessData =
   | { type: "password"; user: User }
   | { type: "invite"; invite: UserInvite };
 
-export default function UserInviteModal({ children, groups }: Readonly<Props>) {
-  const [open, setOpen] = useState(false);
+export default function UserInviteModal({
+  children,
+  groups,
+  open: controlledOpen,
+  onOpenChange,
+}: Readonly<Props>) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = onOpenChange ?? setUncontrolledOpen;
   const [successModal, setSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
   const { mutate } = useSWRConfig();
@@ -103,7 +112,7 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
   return (
     <>
       <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
-        <ModalTrigger asChild={true}>{children}</ModalTrigger>
+        {children && <ModalTrigger asChild={true}>{children}</ModalTrigger>}
         <UserInviteModalContent
           onUserCreated={handleUserCreated}
           onInviteCreated={handleInviteCreated}
