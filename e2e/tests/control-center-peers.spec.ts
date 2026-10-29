@@ -59,11 +59,13 @@ test.describe.serial("Control Center Peers @control-center", () => {
       await registered;
       await dismissBlockingOverlays(page);
 
-      await expect(
-        page.locator('.react-flow__node[data-id="select-peer-node"]'),
-      ).toBeVisible();
+      // The selector node shows the selected peer, so this proves the view
+      // picked the mocked one rather than finding its name elsewhere.
+      const selectPeerNode = page.locator(
+        '.react-flow__node[data-id="select-peer-node"]',
+      );
+      await expect(selectPeerNode.getByText(host)).toBeVisible();
       await expect(canvasNode(page, `policy-${policy.id}`)).toBeVisible();
-      await expect(page.getByText(host).first()).toBeVisible();
     } finally {
       await peers.dispose();
     }

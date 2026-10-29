@@ -72,14 +72,18 @@ async function apiGet<T>(page: Page, path: string): Promise<T> {
  * Whether management unlocks licensed features (peer approval, EDR, IdP sync).
  * Mirrors the dashboard's `useIsLicensed` probe: open-source management has no
  * such endpoint and answers 404, a licensed one serves it or refuses access.
+ * Any other answer is a broken server, not a license, so it fails the test
+ * rather than skipping it.
  */
 export async function isLicensedManagement(page: Page): Promise<boolean> {
   const { token, origin } = await getApiContext(page);
-  const resp = await page.request.get(
-    `${origin}/api/integrations/event-streaming`,
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
-  return resp.ok() || [401, 403, 405].includes(resp.status());
+  const path = "/api/integrations/event-streaming";
+  const resp = await page.request.get(`${origin}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (resp.status() === 404) return false;
+  if (resp.ok() || [401, 403, 405].includes(resp.status())) return true;
+  throw new Error(`License probe GET ${path} returned ${resp.status()}`);
 }
 
 async function apiDelete(page: Page, path: string): Promise<void> {
