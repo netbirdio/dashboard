@@ -364,7 +364,7 @@ function useAssistantEngine(): UseAssistantResult {
     const record = page?.ref && fetch ? await readPageRecord(page.kind, page.ref, fetch).catch(() => null) : null;
     const results = [...carriedRef.current];
     if (record) {
-      results.push({ toolName: "netbird_api", ok: true, content: redactResult(vault, "netbird_api", record.compact ?? record.content) });
+      results.push({ toolName: "netbird_api", ok: true, content: redactResult(vault, "netbird_api", record.content) });
     }
     const carriedResults = carriedWithin(results);
     return carriedResults.length > 0 ? { carriedResults } : undefined;

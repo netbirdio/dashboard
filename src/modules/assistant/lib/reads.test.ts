@@ -19,6 +19,9 @@ const PEERS = [
   peer("p3", "web-server", { groups: [{ id: "g-srv", name: "Servers" }] }),
 ];
 
+// A real account's peers sit in many groups, which makes each row wide.
+const GROUPS = Array.from({ length: 30 }, (_, i) => ({ id: `g-${i}`, name: `Department group number ${i}` }));
+
 function fakeFetch(bodies: Record<string, unknown>): ManagementFetch & { calls: [string, Record<string, string>][] } {
   const calls: [string, Record<string, string>][] = [];
   const fetch = async (path: string, query: Record<string, string>) => {
@@ -78,15 +81,14 @@ describe("netbird_api", () => {
     expect(fetch.calls).toHaveLength(0);
   });
 
-  test("a long list is cut at a thousand rows, with a compact form that fits one result", async () => {
+  test("a long list is cut at a thousand rows", async () => {
     const many = Array.from({ length: 1_200 }, (_, i) => peer(`p${i}`, `host-${i}`));
     const outcome = await readNetbirdApi({ operation: "get_api_peers" }, fakeFetch({ "/api/peers": many }));
     const full = JSON.parse(outcome.content);
     expect(full.total).toBe(1_200);
+    expect(full.shown).toBe(1_000);
     expect(full.data).toHaveLength(1_000);
-    const compact = JSON.parse(outcome.compact!);
-    expect(outcome.compact!.length).toBeLessThanOrEqual(BROWSER_RESULT_MAX_CHARS * 0.75);
-    expect(compact.shown).toBe(compact.data.length);
+    expect(full.note).toMatch(/the user cannot narrow it/);
   });
 
   test("`fields` keeps only the columns asked for, with id and name", async () => {
@@ -97,37 +99,42 @@ describe("netbird_api", () => {
     expect(JSON.parse(outcome.content).data).toEqual([{ id: "p1", name: "laptop-anna", connected: true, os: "macOS" }]);
   });
 
-  test("`fields` fits many more rows into the compact form", async () => {
+  test("`fields` fits many more rows than a list too long to send whole", async () => {
     const many = Array.from({ length: 5_000 }, (_, i) =>
-      peer(`p${i}`, `host-${i}`, { os: "Windows 11 Pro", version: "0.60.2", dns_label: `host-${i}.netbird.cloud` }),
+      peer(`p${i}`, `workstation-${i}.office.example.com`, { os: "Windows 11 Enterprise 24H2", version: "0.60.2", dns_label: `host-${i}.netbird.cloud`, groups: GROUPS }),
     );
     const shown = async (query?: Record<string, string>) => {
       const outcome = await readNetbirdApi({ operation: "get_api_peers", query }, fakeFetch({ "/api/peers": many }));
-      return JSON.parse(outcome.compact ?? outcome.content).data.length as number;
+      return JSON.parse(outcome.content).data.length as number;
     };
-    const wide = await shown();
-    expect(wide).toBeLessThan(1_000);
+    expect(await shown()).toBeLessThan(1_000);
     expect(await shown({ fields: "connected" })).toBe(1_000);
   });
 
-  test("wide rows are cut by size, so the compact form fits one result", async () => {
-    const groups = Array.from({ length: 30 }, (_, i) => ({ id: `g-${i}`, name: `Department group number ${i}` }));
+  test("wide rows go whole while they fit, every column of every row", async () => {
     const wide = Array.from({ length: 100 }, (_, i) =>
-      peer(`p${i}`, `workstation-${i}.office.example.com`, {
-        groups,
-        os: "Windows 11 Enterprise 24H2",
-        version: "0.60.2",
-        dns_label: `workstation-${i}.netbird.cloud`,
-        login_expired: false,
-      }),
+      peer(`p${i}`, `workstation-${i}.office.example.com`, { groups: GROUPS, os: "Windows 11 Enterprise 24H2", login_expired: true }),
     );
-    const outcome = await readNetbirdApi({ operation: "get_api_peers" }, fakeFetch({ "/api/peers": wide }));
-    expect(outcome.content.length).toBeGreaterThan(BROWSER_RESULT_MAX_CHARS);
-    const compact = JSON.parse(outcome.compact!);
-    expect(outcome.compact!.length).toBeLessThanOrEqual(BROWSER_RESULT_MAX_CHARS * 0.75);
-    expect(compact.total).toBe(100);
-    expect(compact.shown).toBe(compact.data.length);
-    expect(compact.data.length).toBeGreaterThan(0);
+    const outcome = await readNetbirdApi({ operation: "get_api_peers", query: { login_expired: true } }, fakeFetch({ "/api/peers": wide }));
+    // What the old 128k cap cut.
+    expect(outcome.content.length).toBeGreaterThan(128_000);
+    const read = JSON.parse(outcome.content);
+    expect(read.shown).toBeUndefined();
+    expect(read.data).toHaveLength(100);
+    expect(read.data[0].groups).toHaveLength(GROUPS.length);
+  });
+
+  test("a list that does not fit keeps as many rows as do", async () => {
+    const many = Array.from({ length: 3_000 }, (_, i) =>
+      peer(`p${i}`, `workstation-${i}-with-a-long-name.office.example.com`, { os: "Windows 11 Enterprise 24H2", groups: GROUPS }),
+    );
+    const { content } = await readNetbirdApi({ operation: "get_api_peers" }, fakeFetch({ "/api/peers": many }));
+    const shown = JSON.parse(content).shown as number;
+    expect(content.length).toBeLessThanOrEqual(BROWSER_RESULT_MAX_CHARS * 0.75);
+    expect(shown).toBeLessThan(1_000);
+    // One more row would not have fit.
+    expect(content.length + content.length / shown).toBeGreaterThan(BROWSER_RESULT_MAX_CHARS * 0.75);
+    expect(JSON.parse(content).note).toMatch(/^Cut to fit\. .* the user cannot narrow it\.$/);
   });
 
   test("`count_by` counts every matching row by one field, most common first, without the rows", async () => {
@@ -184,13 +191,12 @@ describe("netbird_api", () => {
     expect(fetch.calls.at(-1)).toEqual(["/api/users", { service_user: "true" }]);
   });
 
-  test("a filtered read that fits carries no compact form", async () => {
+  test("a filtered read reads only the rows that match", async () => {
     const outcome = await readNetbirdApi(
       { operation: "get_api_peers", query: { login_expired: true } },
       fakeFetch({ "/api/peers": [...PEERS, peer("p4", "old-laptop", { login_expired: true })] }),
     );
     expect(JSON.parse(outcome.content).data.map((p: { id: string }) => p.id)).toEqual(["p4"]);
-    expect(outcome.compact).toBeUndefined();
   });
 
   test("a failed read carries its status only", async () => {

@@ -30,10 +30,8 @@ export type ManagementFetch = (
 // A list longer than this is cut so one call cannot fill the context.
 // Rows narrowed with `fields` are small, so this many can fit one result.
 const MAX_ROWS = 1_000;
-// The audit log's cut when the full one does not fit the request.
-const COMPACT_ROWS = 40;
-// What the compact form of a list must fit, with room for tokenising, which can lengthen a row.
-const COMPACT_CHARS = Math.floor(BROWSER_RESULT_MAX_CHARS * 0.75);
+// What a list must fit, with room for tokenising, which can lengthen a row.
+const LIST_CHARS = Math.floor(BROWSER_RESULT_MAX_CHARS * 0.75);
 // The most values a count answers with; the rest are summed into `other`.
 const MAX_COUNTS = 100;
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
@@ -168,17 +166,26 @@ const listResult = (operation: string, rows: unknown[], total: number, cap: numb
     data: rows.slice(0, cap),
   });
 
-const CUT_NOTE = "Cut to fit; narrow the query with a filter to see the rest.";
+// For the model, which narrows the read itself: relayed, "narrow the query" told the user to do what only the model can.
+const CUT_NOTE = "Cut to fit. To see the rest, read again with a filter or `fields`; the user cannot narrow it.";
 
-/** The list cut, row by row in proportion, until it fits COMPACT_CHARS. */
-function compactList(operation: string, rows: unknown[]): string {
-  let cap = Math.min(rows.length, MAX_ROWS);
-  let out = listResult(operation, rows, rows.length, cap, CUT_NOTE);
-  while (out.length > COMPACT_CHARS && cap > 1) {
-    cap = Math.max(1, Math.floor((cap * COMPACT_CHARS) / out.length));
-    out = listResult(operation, rows, rows.length, cap, CUT_NOTE);
+/**
+ * The list whole when it fits LIST_CHARS, which almost every list does,
+ * else as many of its rows as fit, marked as cut so the model narrows the read
+ * rather than answering from part of it.
+ */
+function fittedList(operation: string, rows: Row[], note?: string): string {
+  const at = (cap: number) => listResult(operation, rows, rows.length, cap, cap < rows.length ? CUT_NOTE : note);
+  let low = 0;
+  let high = Math.min(rows.length, MAX_ROWS);
+  if (at(high).length <= LIST_CHARS) return at(high);
+  // The most rows that fit.
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (at(mid).length <= LIST_CHARS) low = mid;
+    else high = mid - 1;
   }
-  return out;
+  return at(low);
 }
 
 export interface NetbirdApiInput {
@@ -225,12 +232,7 @@ export async function readNetbirdApi(
   }
   rows = picked(rows, fields);
   const note = search && rows.length === 0 ? "Nothing matched the search; try fewer or different words." : undefined;
-  const content = listResult(operation, rows, rows.length, MAX_ROWS, note);
-  return {
-    ok: true,
-    content,
-    ...(content.length > COMPACT_CHARS ? { compact: compactList(operation, rows) } : {}),
-  };
+  return { ok: true, content: fittedList(operation, rows, note) };
 }
 
 const DEFAULT_DAYS = 7;
@@ -362,11 +364,7 @@ export async function readAuditEvents(input: AuditEventsInput, fetch: Management
       ...(matched.length > cap ? { note: "Newest rows only — narrow with target, activity or initiator to see the rest." } : {}),
       rows: matched.slice(0, cap),
     });
-  return {
-    ok: true,
-    content: result(MAX_AUDIT_ROWS),
-    ...(matched.length > COMPACT_ROWS / 2 ? { compact: result(COMPACT_ROWS / 2) } : {}),
-  };
+  return { ok: true, content: result(MAX_AUDIT_ROWS) };
 }
 
 // A message waits this long for the page's record before going without it.

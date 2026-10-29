@@ -71,27 +71,30 @@ const statusOf = (err: unknown): number | undefined => {
 
 type Ran = { call: BrowserCall; outcome: ToolOutcome };
 
-const sizeOf = (content: string | undefined) =>
-  content !== undefined && content.length <= BROWSER_RESULT_MAX_CHARS ? wireBytes(content) : Infinity;
-
 /**
- * The results as the request carries them: whole where they fit, else in their compact form,
- * else replaced by a short note.
- * Smallest first, so one oversized result cannot push out every other.
+ * The results split into requests the agent takes: each within the request cap and the count cap,
+ * in order. A result too large for any request goes as a short note instead.
  * Never cut: a cut JSON result could not be re-profiled, and the agent would withhold it anyway.
  */
-function fitted(entries: Ran[]): Ran[] {
-  const sent: (ToolOutcome | undefined)[] = entries.map(() => undefined);
+function requests(entries: Ran[]): Ran[][] {
+  const out: Ran[][] = [];
+  let current: Ran[] = [];
   let left = RESULTS_BUDGET_BYTES;
-  for (const form of ["content", "compact"] as const) {
-    const sizes = entries.map(({ outcome }, i) => (sent[i] ? Infinity : sizeOf(outcome[form])));
-    for (const i of sizes.map((_, i) => i).sort((a, b) => sizes[a] - sizes[b])) {
-      if (sizes[i] > left) continue;
-      sent[i] = { ok: entries[i].outcome.ok, content: entries[i].outcome[form]! };
-      left -= sizes[i];
+  for (const entry of entries) {
+    const { content } = entry.outcome;
+    const fits = content.length <= BROWSER_RESULT_MAX_CHARS && wireBytes(content) <= RESULTS_BUDGET_BYTES;
+    const sent = fits ? entry : { call: entry.call, outcome: { ok: false, content: TOO_LARGE } };
+    const size = wireBytes(sent.outcome.content);
+    if (current.length >= BROWSER_RESULTS_MAX_PER_REQUEST || size > left) {
+      out.push(current);
+      current = [];
+      left = RESULTS_BUDGET_BYTES;
     }
+    current.push(sent);
+    left -= size;
   }
-  return entries.map(({ call }, i) => ({ call, outcome: sent[i] ?? { ok: false, content: TOO_LARGE } }));
+  if (current.length > 0) out.push(current);
+  return out;
 }
 
 const RELEASED = Symbol("released");
@@ -142,10 +145,7 @@ class BrowserToolQueue {
       const outcome = await this.executed(call);
       if (outcome !== RELEASED) ran.push({ call, outcome });
     }
-    // The agent takes a bounded number of answers per request.
-    for (let i = 0; i < ran.length; i += BROWSER_RESULTS_MAX_PER_REQUEST) {
-      await this.send(ran.slice(i, i + BROWSER_RESULTS_MAX_PER_REQUEST));
-    }
+    for (const batch of requests(ran)) await this.send(batch);
   }
 
   /**
@@ -154,7 +154,7 @@ class BrowserToolQueue {
    * once more with every result withheld, which still lets the turn move on.
    */
   private async send(batch: Ran[]): Promise<void> {
-    let entries = fitted(batch);
+    let entries = batch;
     for (let attempt = 1; ; attempt++) {
       const open = entries.filter(({ call }) => !this.settled.has(call.requestId));
       if (this.disposed || open.length === 0) return;
@@ -379,10 +379,9 @@ export function useBrowserToolLoop({
       const tokenised: ToolOutcome = {
         ok: outcome.ok,
         content: redactResult(vault, call.toolName, outcome.content),
-        ...(outcome.compact === undefined ? {} : { compact: redactResult(vault, call.toolName, outcome.compact) }),
       };
       if (READ_TOOLS.includes(call.toolName)) {
-        optsRef.current.onRead?.({ toolName: call.toolName, ok: tokenised.ok, content: tokenised.compact ?? tokenised.content });
+        optsRef.current.onRead?.({ toolName: call.toolName, ok: tokenised.ok, content: tokenised.content });
       }
       return tokenised;
     },

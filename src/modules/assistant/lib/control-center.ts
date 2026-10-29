@@ -157,11 +157,6 @@ export function reportSteps(
       // The canvas after the call, so a follow-up call doesn't need control_center_state.
       canvas: snapshotReport(api.getSnapshot()),
     }),
-    // For a batch of several canvas calls, where the steps matter more than a repeat of the canvas.
-    compact: JSON.stringify({
-      ...reported,
-      canvas: "Left out so this batch fits; another result in it or control_center_state has the canvas.",
-    }),
   };
 }
 
