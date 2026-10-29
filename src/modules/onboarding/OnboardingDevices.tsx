@@ -94,7 +94,6 @@ export const OnboardingDevices = ({
                 : "bg-nb-gray-600",
             )}
             height={"30px"}
-            bg={"#1c1d21"}
             config={["4px", "4px", "8px", "7.5px"]}
           />
         )}
@@ -110,7 +109,6 @@ export const OnboardingDevices = ({
                 : "bg-nb-gray-600",
             )}
             height={firstDevice && firstRoutingPeer ? "65px" : "25px"}
-            bg={"#1c1d21"}
           />
         )}
         <DeviceCard device={firstDevice} />
@@ -159,10 +157,12 @@ export const WaitingForDevice = ({
   );
 };
 
+// `bg` paints the gaps between dashes, so it must match the surface the line
+// sits on (the bg-nb-gray-940 cards above) in both themes.
 const Line = ({
   className,
   height = "100%",
-  bg = "#1c1d21",
+  bg = "rgb(var(--nb-gray-940))",
   config = ["2px", "3px", "6px", "8.2px"],
 }: {
   className?: string;

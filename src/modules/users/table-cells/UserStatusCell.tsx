@@ -68,7 +68,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
       <div>
         This user needs admin approval before joining your organization. To
         disable approvals, turn off{" "}
-        <span className={"font-medium text-white"}>
+        <span className={"font-medium text-nb-gray-100"}>
           {"'User Approval Required'"}
         </span>{" "}
         in{" "}

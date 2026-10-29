@@ -10,6 +10,7 @@ const variants = cva([], {
   variants: {
     variant: {
       default: [
+        "data-[state=checked]:bg-netbird",
         "dark:data-[state=unchecked]:bg-nb-gray-950 dark:border-nb-gray-900 dark:ring-offset-neutral-950 dark:focus-visible:ring-neutral-300",
         "dark:data-[state=checked]:bg-netbird",
       ],

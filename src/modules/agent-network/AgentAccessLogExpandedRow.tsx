@@ -98,7 +98,7 @@ export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
         <Section heading={"Reason"}>
           <div
             className={
-              "rounded-md border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-300"
+              "rounded-md border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-700 dark:text-red-300"
             }
           >
             {denyReason

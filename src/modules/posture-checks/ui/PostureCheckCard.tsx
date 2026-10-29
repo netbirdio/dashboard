@@ -69,7 +69,7 @@ export const PostureCheckCard = ({
         <div className={"flex gap-4 items-center w-full px-4 py-3"}>
           <div
             className={cn(
-              "h-9 w-9 shrink-0  shadow-xl  rounded-md flex items-center justify-center select-none",
+              "h-9 w-9 shrink-0  shadow-xl  rounded-md flex items-center justify-center select-none text-white",
               iconClass,
             )}
           >
@@ -95,7 +95,7 @@ export const PostureCheckCard = ({
               className={cn(
                 "text-[10px] rounded-full px-1 py-1 flex items-center gap-1 w-[50px] justify-center uppercase font-medium",
                 active
-                  ? "text-green-400 bg-green-900 hover:bg-green-800 transition-all hover:text-green-200"
+                  ? "text-green-700 bg-green-100 hover:bg-green-200 hover:text-green-800 transition-all dark:text-green-400 dark:bg-green-900 dark:hover:bg-green-800 dark:hover:text-green-200"
                   : "text-nb-gray-400 bg-nb-gray-900",
               )}
               onClick={(e) => {
@@ -129,7 +129,7 @@ export const PostureCheckCard = ({
           <div className={"flex gap-4 items-center px-8 pb-5"}>
             <div
               className={cn(
-                "h-9 w-9 shrink-0  shadow-xl  rounded-md flex items-center justify-center select-none",
+                "h-9 w-9 shrink-0  shadow-xl  rounded-md flex items-center justify-center select-none text-white",
                 iconClass,
               )}
             >

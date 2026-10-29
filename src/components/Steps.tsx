@@ -75,7 +75,7 @@ const Step = ({
       {line && (
         <span
           className={cn(
-            "bg-nb-gray-100 dark:bg-nb-gray-800  z-0 transition-all",
+            "bg-neutral-200 dark:bg-nb-gray-800  z-0 transition-all",
             horizontal
               ? cn(
                   "w-full h-[2px] absolute transform translate-x-1/2",
@@ -94,14 +94,14 @@ const Step = ({
           "shrink-0 rounded-full flex items-center justify-center font-medium text-xs relative z-0 border-4 transition-all",
           sizing.circle,
           "dark:bg-nb-gray-900 dark:text-nb-gray-400 dark:border-nb-gray",
-          "bg-nb-gray-100 text-nb-gray-400 border-white step-circle",
+          "bg-neutral-200 text-nb-gray-400 border-white step-circle",
           "[.stepper-bg-variant]:border-nb-gray-940",
           !status &&
-            "group-hover:bg-nb-gray-200 dark:group-hover:bg-nb-gray-800",
+            "group-hover:bg-neutral-300 dark:group-hover:bg-nb-gray-800",
           status && "border-white dark:border-nb-gray-940",
           status === "complete" &&
             "bg-netbird text-white dark:bg-netbird dark:text-white",
-          status === "current" && "text-nb-gray-800 dark:text-white",
+          status === "current" && "text-nb-gray-100 dark:text-white",
         )}
       >
         {step}

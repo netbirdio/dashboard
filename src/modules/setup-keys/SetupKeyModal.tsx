@@ -226,7 +226,7 @@ export function SetupKeyModalContent({
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
-        icon={<SetupKeysIcon className={"fill-netbird"} />}
+        icon={<SetupKeysIcon className={"fill-current"} />}
         title={"Create New Setup Key"}
         description={"Use this key to register new machines in your network"}
         color={"netbird"}

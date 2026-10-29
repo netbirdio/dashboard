@@ -199,7 +199,7 @@ export default function PeerActionCell() {
             e.preventDefault();
           }}
         >
-          <Button variant={"secondary"} className={"!px-3"}>
+          <Button variant={"secondary"} className={"!px-3"} border={0}>
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>

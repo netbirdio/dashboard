@@ -196,3 +196,17 @@ export const CalendarRange: StoryObj = {
     />
   ),
 };
+
+export const CalendarRangeEndingToday: StoryObj = {
+  render: () => (
+    <Calendar
+      mode={"range"}
+      today={new Date("2026-10-09T12:00:00Z")}
+      defaultMonth={new Date("2026-10-01T12:00:00Z")}
+      selected={{
+        from: new Date("2026-10-02T12:00:00Z"),
+        to: new Date("2026-10-09T12:00:00Z"),
+      }}
+    />
+  ),
+};

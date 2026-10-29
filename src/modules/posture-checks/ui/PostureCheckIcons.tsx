@@ -39,7 +39,7 @@ export const PostureCheckIcons = () => {
         </div>
       </Circle>
       <Circle className={"z-[1] top-2 "}>
-        <FaWindows className={"text-white text-md"} />
+        <FaWindows className={"text-nb-gray-100 text-md"} />
       </Circle>
     </div>
   );

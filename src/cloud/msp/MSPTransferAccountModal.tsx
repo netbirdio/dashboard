@@ -4,6 +4,7 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
 import { useApiCall } from "@utils/api";
+import { getAvatarStyle } from "@utils/avatar";
 import { cn, generateColorFromString } from "@utils/helpers";
 import {
   ArrowRightLeft,
@@ -109,11 +110,9 @@ export const MSPTransferAccountModal = () => {
             >
               <div
                 className={cn(
-                  "w-8 h-8 flex items-center shrink-0 rounded-[4px] justify-center text-xl font-medium text-white uppercase",
+                  "initials-avatar w-8 h-8 flex items-center shrink-0 rounded-[4px] justify-center text-xl font-medium text-white uppercase",
                 )}
-                style={{
-                  color: color,
-                }}
+                style={getAvatarStyle(color)}
               >
                 <span>{firstChar}</span>
               </div>

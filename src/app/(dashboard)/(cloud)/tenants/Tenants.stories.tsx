@@ -85,9 +85,14 @@ export const EditTenant: Story = {
 };
 
 export const EditTenantPermissions: Story = {
+  tags: ["capture-hover"],
   play: async () => {
     await EditTenant.play!({} as never);
     await clickRole("tab", /Permissions/);
     await settle();
+    document
+      .querySelector("[role=dialog] .initials-avatar")
+      ?.closest(".group\\/user-stack")
+      ?.setAttribute("data-capture", "");
   },
 };
