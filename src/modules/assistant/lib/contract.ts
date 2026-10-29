@@ -196,7 +196,7 @@ export interface BrowserResults {
   browserResults: (ToolOutcome & { requestId: string; toolName: string })[];
 }
 
-export const BROWSER_RESULT_MAX_CHARS = 64_000;
+export const BROWSER_RESULT_MAX_CHARS = 128_000;
 
 /**
  * What the stream carries in place of an output only the model reads: a loaded
@@ -235,14 +235,14 @@ export const READ_TOOLS: readonly string[] = ["netbird_api", "audit_events", "ac
 export const CARRIED_RESULTS_MAX = 8;
 
 /** Their combined size, in characters; the oldest are dropped first. */
-export const CARRIED_RESULTS_MAX_CHARS = 48_000;
+export const CARRIED_RESULTS_MAX_CHARS = 96_000;
 
 /**
  * The agent's cap on one chat request body, in UTF-8 bytes as sent.
  * The browser sizes its results against this rather than in characters,
  * since non-ASCII names and JSON escaping both make a body longer than its text.
  */
-export const CHAT_REQUEST_MAX_BYTES = 128 * 1024;
+export const CHAT_REQUEST_MAX_BYTES = 256 * 1024;
 
 /** The most answers, and so browser results, one request may carry; the browser splits a larger batch. */
 export const BROWSER_RESULTS_MAX_PER_REQUEST = 16;
@@ -279,11 +279,11 @@ export const SESSION_UNAVAILABLE_CODE = "session_unavailable";
  */
 export const ACCESS_PATH = `${ROUTE_PREFIX}/access`;
 
-export type AccessResponse = { ok: true } | { ok: false; code: typeof ACCOUNT_NOT_ALLOWED_CODE };
+export type AccessResponse = { ok: boolean };
 
 /**
- * The code for an account the assistant is not enabled for: in the access
- * answer, and as a 403 on every other route.
+ * The 403 code for an account the assistant is not enabled for, on every
+ * route but the access check.
  */
 export const ACCOUNT_NOT_ALLOWED_CODE = "account_not_allowed";
 

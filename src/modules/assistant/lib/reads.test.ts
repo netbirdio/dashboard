@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { BROWSER_RESULT_MAX_CHARS } from "./contract";
 import { fuzzyScore } from "./fuzzy";
 import { type ManagementFetch, readAuditEvents, readNetbirdApi, readPageRecord, searchAccount } from "./reads";
 import { redactResult, Vault } from "./vault";
@@ -77,13 +78,119 @@ describe("netbird_api", () => {
     expect(fetch.calls).toHaveLength(0);
   });
 
-  test("a long list is cut, with a compact form for a full request", async () => {
-    const many = Array.from({ length: 250 }, (_, i) => peer(`p${i}`, `host-${i}`));
+  test("a long list is cut at a thousand rows, with a compact form that fits one result", async () => {
+    const many = Array.from({ length: 1_200 }, (_, i) => peer(`p${i}`, `host-${i}`));
     const outcome = await readNetbirdApi({ operation: "get_api_peers" }, fakeFetch({ "/api/peers": many }));
     const full = JSON.parse(outcome.content);
-    expect(full.total).toBe(250);
-    expect(full.data).toHaveLength(200);
-    expect(JSON.parse(outcome.compact!).data).toHaveLength(40);
+    expect(full.total).toBe(1_200);
+    expect(full.data).toHaveLength(1_000);
+    const compact = JSON.parse(outcome.compact!);
+    expect(outcome.compact!.length).toBeLessThanOrEqual(BROWSER_RESULT_MAX_CHARS * 0.75);
+    expect(compact.shown).toBe(compact.data.length);
+  });
+
+  test("`fields` keeps only the columns asked for, with id and name", async () => {
+    const outcome = await readNetbirdApi(
+      { operation: "get_api_peers", query: { fields: "connected, os", login_expired: false } },
+      fakeFetch({ "/api/peers": [peer("p1", "laptop-anna", { os: "macOS", login_expired: false, version: "0.60.2" })] }),
+    );
+    expect(JSON.parse(outcome.content).data).toEqual([{ id: "p1", name: "laptop-anna", connected: true, os: "macOS" }]);
+  });
+
+  test("`fields` fits many more rows into the compact form", async () => {
+    const many = Array.from({ length: 5_000 }, (_, i) =>
+      peer(`p${i}`, `host-${i}`, { os: "Windows 11 Pro", version: "0.60.2", dns_label: `host-${i}.netbird.cloud` }),
+    );
+    const shown = async (query?: Record<string, string>) => {
+      const outcome = await readNetbirdApi({ operation: "get_api_peers", query }, fakeFetch({ "/api/peers": many }));
+      return JSON.parse(outcome.compact ?? outcome.content).data.length as number;
+    };
+    const wide = await shown();
+    expect(wide).toBeLessThan(1_000);
+    expect(await shown({ fields: "connected" })).toBe(1_000);
+  });
+
+  test("wide rows are cut by size, so the compact form fits one result", async () => {
+    const groups = Array.from({ length: 30 }, (_, i) => ({ id: `g-${i}`, name: `Department group number ${i}` }));
+    const wide = Array.from({ length: 100 }, (_, i) =>
+      peer(`p${i}`, `workstation-${i}.office.example.com`, {
+        groups,
+        os: "Windows 11 Enterprise 24H2",
+        version: "0.60.2",
+        dns_label: `workstation-${i}.netbird.cloud`,
+        login_expired: false,
+      }),
+    );
+    const outcome = await readNetbirdApi({ operation: "get_api_peers" }, fakeFetch({ "/api/peers": wide }));
+    expect(outcome.content.length).toBeGreaterThan(BROWSER_RESULT_MAX_CHARS);
+    const compact = JSON.parse(outcome.compact!);
+    expect(outcome.compact!.length).toBeLessThanOrEqual(BROWSER_RESULT_MAX_CHARS * 0.75);
+    expect(compact.total).toBe(100);
+    expect(compact.shown).toBe(compact.data.length);
+    expect(compact.data.length).toBeGreaterThan(0);
+  });
+
+  test("`count_by` counts every matching row by one field, most common first, without the rows", async () => {
+    const peers = [
+      peer("p1", "a", { os: "macOS" }),
+      peer("p2", "b", { os: "Windows", connected: false }),
+      peer("p3", "c", { os: "Windows" }),
+      peer("p4", "d", { os: "" }),
+    ];
+    const outcome = await readNetbirdApi({ operation: "get_api_peers", query: { count_by: "os" } }, fakeFetch({ "/api/peers": peers }));
+    expect(JSON.parse(outcome.content)).toEqual({
+      operation: "get_api_peers",
+      total: 4,
+      count_by: "os",
+      distinct: 2,
+      missing: 1,
+      counts: [{ os: "Windows", count: 2 }, { os: "macOS", count: 1 }],
+    });
+    const offline = await readNetbirdApi(
+      { operation: "get_api_peers", query: { count_by: "os", connected: false } },
+      fakeFetch({ "/api/peers": peers }),
+    );
+    expect(JSON.parse(offline.content).counts).toEqual([{ os: "Windows", count: 1 }]);
+  });
+
+  test("`count_by` a list field counts each item, and an unknown field is refused", async () => {
+    const outcome = await readNetbirdApi({ operation: "get_api_peers", query: { count_by: "groups" } }, fakeFetch({ "/api/peers": PEERS }));
+    expect(JSON.parse(outcome.content).counts).toEqual([
+      { groups: [{ id: "g-srv", name: "Servers" }], count: 2 },
+      { groups: [{ id: "g-all", name: "All" }], count: 1 },
+    ]);
+    const refused = await readNetbirdApi({ operation: "get_api_peers", query: { count_by: "secret" } }, fakeFetch({ "/api/peers": PEERS }));
+    expect(refused.ok).toBe(false);
+  });
+
+  test("a counted field is tokenised as it would be in a row", async () => {
+    const outcome = await readNetbirdApi(
+      { operation: "get_api_peers", query: { count_by: "connection_ip" } },
+      fakeFetch({ "/api/peers": [peer("p1", "a", { connection_ip: "203.0.113.7" })] }),
+    );
+    const sent = redactResult(new Vault(), "netbird_api", outcome.content);
+    expect(sent).not.toContain("203.0.113.7");
+    expect(JSON.parse(sent).counts).toEqual([{ connection_ip: expect.stringMatching(/^\[IP_[a-z2-7]+\]$/), count: 1 }]);
+  });
+
+  test("users filter by role locally, and by service_user on the server", async () => {
+    const users = [
+      { id: "u1", name: "Anna", email: "anna@acme.test", role: "admin", is_service_user: false },
+      { id: "u2", name: "Bob", email: "bob@acme.test", role: "user", is_service_user: false },
+    ];
+    const fetch = fakeFetch({ "/api/users": users });
+    expect((await data(readNetbirdApi({ operation: "get_api_users", query: { role: "Admin" } }, fetch))).map((u: { id: string }) => u.id)).toEqual(["u1"]);
+    await readNetbirdApi({ operation: "get_api_users", query: { service_user: true } }, fetch);
+    expect(fetch.calls.at(-1)).toEqual(["/api/users", { service_user: "true" }]);
+  });
+
+  test("a filtered read that fits carries no compact form", async () => {
+    const outcome = await readNetbirdApi(
+      { operation: "get_api_peers", query: { login_expired: true } },
+      fakeFetch({ "/api/peers": [...PEERS, peer("p4", "old-laptop", { login_expired: true })] }),
+    );
+    expect(JSON.parse(outcome.content).data.map((p: { id: string }) => p.id)).toEqual(["p4"]);
+    expect(outcome.compact).toBeUndefined();
   });
 
   test("a failed read carries its status only", async () => {

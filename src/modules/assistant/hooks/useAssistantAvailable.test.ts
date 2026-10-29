@@ -20,7 +20,7 @@ describe("useAssistantAvailable", () => {
   });
 
   it("stays hidden for an account the service has not enabled", async () => {
-    const fetch = answer(200, { ok: false, code: "account_not_allowed" });
+    const fetch = answer(200, { ok: false });
     const { result } = renderHook(() => useAssistantAvailable("https://assistant.test", headers));
     await waitFor(() => expect(fetch).toHaveBeenCalled());
     await Promise.resolve();

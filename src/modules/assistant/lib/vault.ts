@@ -365,7 +365,9 @@ export class Vault {
 
 const WITHHELD = "[result withheld: no redaction profile for this data]";
 
-const RESULT_ENVELOPE = new Set(["operation", "total", "shown", "status", "statusText", "error", "note", "withheld"]);
+const RESULT_ENVELOPE = new Set([
+  "operation", "total", "shown", "status", "statusText", "error", "note", "withheld", "count_by", "distinct", "missing", "other",
+]);
 
 /** A read's or a tool's result as the model may see it. Account data is profiled, the rest scrubbed. */
 function redactValue(vault: Vault, toolName: string, value: unknown): unknown {
@@ -392,6 +394,15 @@ function redactApiRead(vault: Vault, v: Record<string, unknown>): unknown {
   return {
     ...(mapStrings(Object.fromEntries(Object.entries(v).filter(([k]) => RESULT_ENVELOPE.has(k))), vault.scrub) as object),
     ...(v.data === undefined ? {} : { data: vault.redact(v.data, op.profile) }),
+    // A count is shaped like a row with its `count`: the row part goes through the profile like any row.
+    ...(Array.isArray(v.counts)
+      ? {
+          counts: v.counts.flatMap((c) => {
+            const { count, ...value } = (c ?? {}) as Record<string, unknown>;
+            return typeof count === "number" ? [{ ...(vault.redact(value, op.profile) as object), count }] : [];
+          }),
+        }
+      : {}),
   };
 }
 

@@ -56,7 +56,8 @@ interface BrowserToolQueueDeps {
 // The results of one request, in UTF-8 bytes as sent; the rest of the cap is
 // the envelope and each answer's ids, generously.
 const RESULTS_BUDGET_BYTES = CHAT_REQUEST_MAX_BYTES - 16 * 1024;
-const TOO_LARGE = "[The result was too large to send.]";
+// Says what to do next, since a model told only that it failed repeats the same read.
+const TOO_LARGE = "[The result was too large to send. Narrow the read with a filter instead of repeating it.]";
 const DELIVERY_ATTEMPTS = 3;
 
 const utf8 = new TextEncoder();

@@ -7,7 +7,7 @@
  * operation's profile lists, filters and cuts the result, and the browser tool
  * loop tokenises it before it leaves the tab.
  */
-import type { ToolOutcome } from "./contract";
+import { BROWSER_RESULT_MAX_CHARS, type ToolOutcome } from "./contract";
 import { fuzzyScore, fuzzySearch } from "./fuzzy";
 import { allowlist, PROFILES } from "./profiles";
 
@@ -28,9 +28,14 @@ export type ManagementFetch = (
 ) => Promise<ManagementResponse>;
 
 // A list longer than this is cut so one call cannot fill the context.
-const MAX_ROWS = 200;
-// The cut a list is sent at when the full one does not fit the request.
+// Rows narrowed with `fields` are small, so this many can fit one result.
+const MAX_ROWS = 1_000;
+// The audit log's cut when the full one does not fit the request.
 const COMPACT_ROWS = 40;
+// What the compact form of a list must fit, with room for tokenising, which can lengthen a row.
+const COMPACT_CHARS = Math.floor(BROWSER_RESULT_MAX_CHARS * 0.75);
+// The most values a count answers with; the rest are summed into `other`.
+const MAX_COUNTS = 100;
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 type Value = string | number | boolean;
@@ -66,7 +71,7 @@ const LOCAL_FILTERS: Record<string, Record<string, (row: Row, value: Value) => b
   get_api_groups: { name: named },
   get_api_policies: { name: named },
   get_api_networks: { name: named },
-  get_api_users: { email: (row, v) => same(row.email, String(v)), name: named },
+  get_api_users: { email: (row, v) => same(row.email, String(v)), name: named, role: (row, v) => same(row.role, String(v)) },
 };
 
 // The query keys an operation may send to the management API. Anything else
@@ -76,6 +81,7 @@ const PAGED = ["page", "page_size"];
 const REMOTE_QUERY: Record<string, readonly string[]> = {
   // The peers endpoint filters by address server-side; every other peer filter is local.
   get_api_peers: [...PAGED, "ip"],
+  get_api_users: [...PAGED, "service_user"],
   get_api_events_network_traffic: [...PAGED, "start_date", "end_date", "destination_id", "source_id", "protocol"],
   get_api_events_proxy: [...PAGED, "start_date", "end_date", "host", "status", "status_code", "source_ip", "user_email", "user_name"],
 };
@@ -86,12 +92,64 @@ function splitQuery(operation: string, query: Query = {}) {
   const remote: Record<string, string> = {};
   const filters: [(row: Row, value: Value) => boolean, Value][] = [];
   let search: string | undefined;
+  let fields: string[] | undefined;
+  let countBy: string | undefined;
   for (const [key, value] of Object.entries(query)) {
     if (key === "search") search = String(value);
+    else if (key === "count_by") countBy = String(value).trim();
+    else if (key === "fields") fields = String(value).split(",").map((f) => f.trim()).filter(Boolean);
     else if (Object.hasOwn(local, key)) filters.push([local[key], value]);
     else if (allowed.includes(key)) remote[key] = String(value);
   }
-  return { remote, filters, search };
+  return { remote, filters, search, fields, countBy };
+}
+
+/**
+ * How many rows hold each value of `field`, so a question over the whole list
+ * ("how many peers run each OS") is answered exactly without sending the rows.
+ * Each count is shaped like a row, `{os: "macOS", count: 12}`, so the field is
+ * tokenised as it would be in the row; a list field such as `groups` counts
+ * each of its items.
+ */
+function countedBy(operation: string, rows: Row[], field: string): string {
+  const buckets = new Map<string, { value: unknown; count: number }>();
+  let missing = 0;
+  for (const row of rows) {
+    const raw = row[field];
+    if (raw === undefined || raw === null || raw === "") {
+      missing++;
+      continue;
+    }
+    for (const item of Array.isArray(raw) ? raw : [raw]) {
+      const key = item && typeof item === "object" ? String((item as Row).id ?? JSON.stringify(item)) : JSON.stringify(item);
+      const bucket = buckets.get(key) ?? { value: Array.isArray(raw) ? [item] : item, count: 0 };
+      bucket.count++;
+      buckets.set(key, bucket);
+    }
+  }
+  const sorted = [...buckets.values()].sort((a, b) => b.count - a.count);
+  const other = sorted.slice(MAX_COUNTS).reduce((sum, b) => sum + b.count, 0);
+  return JSON.stringify({
+    operation,
+    total: rows.length,
+    count_by: field,
+    distinct: sorted.length,
+    ...(missing > 0 ? { missing } : {}),
+    ...(other > 0 ? { other, note: `Only the ${MAX_COUNTS} most common values are listed; \`other\` sums the rest.` } : {}),
+    counts: sorted.slice(0, MAX_COUNTS).map(({ value, count }) => ({ [field]: value, count })),
+  });
+}
+
+/**
+ * The rows with only the columns asked for, so a list that is about one or two
+ * of them carries many more rows in the same room. `id` and `name` always stay,
+ * so a row can still be named and read again; a field the profile does not
+ * keep was never there to pick.
+ */
+function picked(rows: Row[], fields: string[] | undefined): Row[] {
+  if (!fields?.length) return rows;
+  const keep = new Set(["id", "name", ...fields]);
+  return rows.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => keep.has(key))));
 }
 
 const failed = (operation: string, body: Record<string, unknown>): ToolOutcome => ({
@@ -109,6 +167,19 @@ const listResult = (operation: string, rows: unknown[], total: number, cap: numb
     ...(note ? { note } : {}),
     data: rows.slice(0, cap),
   });
+
+const CUT_NOTE = "Cut to fit; narrow the query with a filter to see the rest.";
+
+/** The list cut, row by row in proportion, until it fits COMPACT_CHARS. */
+function compactList(operation: string, rows: unknown[]): string {
+  let cap = Math.min(rows.length, MAX_ROWS);
+  let out = listResult(operation, rows, rows.length, cap, CUT_NOTE);
+  while (out.length > COMPACT_CHARS && cap > 1) {
+    cap = Math.max(1, Math.floor((cap * COMPACT_CHARS) / out.length));
+    out = listResult(operation, rows, rows.length, cap, CUT_NOTE);
+  }
+  return out;
+}
 
 export interface NetbirdApiInput {
   operation?: unknown;
@@ -131,7 +202,7 @@ export async function readNetbirdApi(
   }
   const path = op.path.replace("{id}", id ?? "");
   const query = input.query && typeof input.query === "object" && !Array.isArray(input.query) ? (input.query as Query) : {};
-  const { remote, filters, search } = splitQuery(operation, query);
+  const { remote, filters, search, fields, countBy } = splitQuery(operation, query);
 
   let res: ManagementResponse;
   try {
@@ -146,13 +217,19 @@ export async function readNetbirdApi(
 
   let rows = (data as Row[]).filter((row) => filters.every(([matches, value]) => matches(row, value)));
   if (search) rows = fuzzySearch(rows, search);
+  if (countBy !== undefined) {
+    if (countBy === "id" || countBy === "name" || !Object.hasOwn(op.profile.fields, countBy)) {
+      return failed(operation, { error: `Cannot count by \`${countBy}\`: name one of this list's fields.` });
+    }
+    return { ok: true, content: countedBy(operation, rows, countBy) };
+  }
+  rows = picked(rows, fields);
   const note = search && rows.length === 0 ? "Nothing matched the search; try fewer or different words." : undefined;
+  const content = listResult(operation, rows, rows.length, MAX_ROWS, note);
   return {
     ok: true,
-    content: listResult(operation, rows, rows.length, MAX_ROWS, note),
-    ...(rows.length > COMPACT_ROWS
-      ? { compact: listResult(operation, rows, rows.length, COMPACT_ROWS, "Cut to fit; narrow the query to see the rest.") }
-      : {}),
+    content,
+    ...(content.length > COMPACT_CHARS ? { compact: compactList(operation, rows) } : {}),
   };
 }
 
