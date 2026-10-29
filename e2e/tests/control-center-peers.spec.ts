@@ -4,7 +4,6 @@ import {
   createGroup,
   createPolicy,
   deleteGroupsByPrefix,
-  deletePeersByPrefix,
   deletePoliciesBySubstring,
 } from "../helpers/api";
 import { generateRandomName } from "../helpers/utils";
@@ -14,37 +13,29 @@ import {
   openControlCenter,
   resetDraftState,
 } from "../helpers/control-center";
-import { cleanupDockerPeer, registerDockerPeer } from "../helpers/docker-peer";
+import { routeMockPeer } from "../helpers/mock-peer";
 
 /**
- * Live PEER view with a REAL docker peer registered via a setup key (the test
- * env has no peers otherwise). It stays offline but is selectable, which is
- * all the view needs. Registering takes ~10-20s.
+ * Live PEER view with a mocked registered peer (the test env has no peers
+ * otherwise). The view is built from the /peers list alone, so a listed,
+ * offline peer is all it needs.
  */
 test.describe.serial("Control Center Peers @control-center", () => {
   const PREFIX = "cc-peer-";
-  const hosts: string[] = [];
 
   test.beforeEach(async ({ dashboardAsOwner: page }) => {
     await resetDraftState(page);
   });
 
   test.afterAll(async ({ dashboardAsOwner: page }) => {
-    for (const h of hosts) await cleanupDockerPeer(page, h);
     await deletePoliciesBySubstring(page, PREFIX);
-    await deletePeersByPrefix(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
   });
 
-  test("Should register a docker peer and render it (with its policy) in the peers view @docker", async ({
+  test("Should render a registered peer (with its policy) in the peers view", async ({
     dashboardAsOwner: page,
   }) => {
-    // Registration + render can take a while under emulation.
-    test.setTimeout(120_000);
-
-    // Clean slate so the peer view auto-selects our peer (peers[0]).
     await deletePoliciesBySubstring(page, PREFIX);
-    await deletePeersByPrefix(page, PREFIX);
     await deleteGroupsByPrefix(page, PREFIX);
 
     // The peer view only graphs policies where the peer's groups are sources.
@@ -58,19 +49,23 @@ test.describe.serial("Control Center Peers @control-center", () => {
     );
 
     const host = generateRandomName(PREFIX);
-    hosts.push(host);
-    const peer = await registerDockerPeer(page, host, [srcGroup.id]);
-    expect(peer.name).toBe(host);
+    // The mock lists the peer first, so the view auto-selects it.
+    const peers = await routeMockPeer(page);
+    try {
+      const registered = peers.register(host, [
+        { id: srcGroup.id, name: srcGroup.name },
+      ]);
+      await openControlCenter(page, "peers");
+      await registered;
+      await dismissBlockingOverlays(page);
 
-    await openControlCenter(page, "peers");
-    await dismissBlockingOverlays(page);
-
-    await expect(
-      page.locator('.react-flow__node[data-id="select-peer-node"]'),
-    ).toBeVisible({ timeout: 15_000 });
-    await expect(canvasNode(page, `policy-${policy.id}`)).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByText(host).first()).toBeVisible();
+      await expect(
+        page.locator('.react-flow__node[data-id="select-peer-node"]'),
+      ).toBeVisible();
+      await expect(canvasNode(page, `policy-${policy.id}`)).toBeVisible();
+      await expect(page.getByText(host).first()).toBeVisible();
+    } finally {
+      await peers.dispose();
+    }
   });
 });

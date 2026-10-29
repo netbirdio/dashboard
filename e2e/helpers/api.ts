@@ -68,6 +68,20 @@ async function apiGet<T>(page: Page, path: string): Promise<T> {
   return resp.json();
 }
 
+/**
+ * Whether management unlocks licensed features (peer approval, EDR, IdP sync).
+ * Mirrors the dashboard's `useIsLicensed` probe: open-source management has no
+ * such endpoint and answers 404, a licensed one serves it or refuses access.
+ */
+export async function isLicensedManagement(page: Page): Promise<boolean> {
+  const { token, origin } = await getApiContext(page);
+  const resp = await page.request.get(
+    `${origin}/api/integrations/event-streaming`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return resp.ok() || [401, 403, 405].includes(resp.status());
+}
+
 async function apiDelete(page: Page, path: string): Promise<void> {
   const { token, origin } = await getApiContext(page);
   await page.request.delete(`${origin}/api${path}`, {

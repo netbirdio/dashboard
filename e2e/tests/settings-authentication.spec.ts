@@ -1,8 +1,16 @@
 import { test, expect } from "../helpers/fixtures";
 import { navigateTo } from "../helpers/auth";
+import { isLicensedManagement } from "../helpers/api";
+import { isDeployedTarget } from "../helpers/target";
 
 test.describe.serial("Settings - Authentication @settings", () => {
   test("Should toggle peer approval @enterprise", async ({ dashboardAsOwner: page }) => {
+    // An unlicensed management server locks peer approval behind a badge that
+    // takes the clicks. Test builds never lock it, so only a deployment can.
+    test.skip(
+      isDeployedTarget && !(await isLicensedManagement(page)),
+      "peer approval needs a licensed management server",
+    );
     await navigateTo(page, "/settings");
     await toggleAndSave(page, "peer-approval");
   });
