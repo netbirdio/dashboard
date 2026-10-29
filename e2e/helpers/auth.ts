@@ -161,13 +161,12 @@ export async function loginToApp(
  */
 export async function navigateTo(page: Page, path: string) {
   // A client-side route update still in flight from the previous test (the
-  // dashboard page is shared per worker) aborts the navigation, and a CI
-  // runner's network blip fails it with ERR_NETWORK_CHANGED. Retry once — by
-  // then the app-driven navigation has landed or the network has settled.
+  // dashboard page is shared per worker) aborts the navigation. Retry once —
+  // by then the app-driven navigation has landed.
   try {
     await page.goto(path, { waitUntil: "domcontentloaded" });
   } catch (e) {
-    if (!/ERR_ABORTED|ERR_NETWORK_CHANGED/.test(String(e))) throw e;
+    if (!String(e).includes("ERR_ABORTED")) throw e;
     await page.goto(path, { waitUntil: "domcontentloaded" });
   }
   const modal = page.getByTestId("setup-netbird-modal");
