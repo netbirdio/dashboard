@@ -1,4 +1,5 @@
 import { StringMap } from "@axa-fr/react-oidc";
+import { type Branding, deploymentBranding } from "@utils/branding";
 import { validator } from "@utils/helpers";
 
 interface Config {
@@ -35,6 +36,10 @@ interface Config {
   // see in a permanent banner (NETBIRD_ANNOUNCEMENT), e.g. which environment
   // or backend instance a dashboard belongs to. Unset for none.
   announcement?: string;
+  // branding: the operator's own name, logo and favicon for this deployment
+  // (NETBIRD_BRAND_NAME, NETBIRD_BRAND_LOGO_URL, NETBIRD_BRAND_FAVICON_URL).
+  // Whatever is unset keeps the NetBird default.
+  branding: Branding;
 }
 
 /**
@@ -102,6 +107,11 @@ const loadConfig = (): Config => {
       .map((email: string) => email.trim())
       .filter(Boolean),
     announcement: configJson?.announcement || undefined,
+    branding: deploymentBranding(
+      configJson?.brandName,
+      configJson?.brandLogoUrl,
+      configJson?.brandFaviconUrl,
+    ),
   } as Config;
 };
 
