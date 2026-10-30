@@ -407,6 +407,24 @@ export const OPERATION_LABELS: Record<string, Omit<ToolManifestEntry, "kind">> =
   get_api_events_proxy: {
     label: "Read reverse proxy access logs",
   },
+  get_api_networks_routers: {
+    label: "Read network routers",
+  },
+  get_api_networks_networkId_resources: {
+    label: "Read network resources",
+  },
+  get_api_dns_zones: {
+    label: "Read DNS zones",
+  },
+  get_api_reverse_proxies_services: {
+    label: "Read reverse proxy services",
+  },
+  get_api_reverse_proxies_clusters: {
+    label: "Read proxy clusters",
+  },
+  get_api_reverse_proxies_domains: {
+    label: "Read custom domains",
+  },
   get_api_agent_network_providers: {
     label: "Read AI providers",
   },
@@ -422,6 +440,34 @@ export const OPERATION_LABELS: Record<string, Omit<ToolManifestEntry, "kind">> =
   get_api_agent_network_settings: {
     label: "Read Agent Network settings",
   },
+  get_api_agent_network_access_logs: { label: "Read agent access logs" },
+  get_api_agent_network_access_log_sessions: { label: "Read agent sessions" },
+  get_api_agent_network_consumption: { label: "Read agent limit consumption" },
+  get_api_agent_network_usage_overview: { label: "Read agent usage" },
+  get_api_agent_network_catalog_providers: { label: "Read the AI provider catalog" },
+  get_api_peers_peerId_accessible_peers: { label: "Read which peers a peer can reach" },
+  get_api_users_invites: { label: "Read user invites" },
+  get_api_users_userId_tokens: { label: "Read access tokens" },
+  get_api_reverse_proxies_proxy_tokens: { label: "Read proxy tokens" },
+  get_api_identity_providers: { label: "Read identity providers" },
+  get_api_integrations_azure_idp: { label: "Read Azure AD sync" },
+  get_api_integrations_google_idp: { label: "Read Google Workspace sync" },
+  get_api_integrations_okta_scim_idp: { label: "Read Okta SCIM sync" },
+  get_api_integrations_scim_idp: { label: "Read SCIM sync" },
+  get_api_event_streaming: { label: "Read event streaming" },
+  get_api_integrations_notifications_channels: { label: "Read notification channels" },
+  get_api_integrations_edr_falcon: { label: "Read CrowdStrike Falcon integration" },
+  get_api_integrations_edr_fleetdm: { label: "Read FleetDM integration" },
+  get_api_integrations_edr_huntress: { label: "Read Huntress integration" },
+  get_api_integrations_edr_intune: { label: "Read Intune integration" },
+  get_api_integrations_edr_sentinelone: { label: "Read SentinelOne integration" },
+  get_api_peers_edr_bypassed: { label: "Read EDR-bypassed peers" },
+  get_api_integrations_billing_subscription: { label: "Read your subscription" },
+  get_api_integrations_billing_plans: { label: "Read plans" },
+  get_api_integrations_billing_usage: { label: "Read billing usage" },
+  get_api_integrations_billing_invoices: { label: "Read invoices" },
+  get_api_integrations_msp_tenants: { label: "Read tenants" },
+  get_api_instance_version: { label: "Read the NetBird version" },
 };
 
 /**

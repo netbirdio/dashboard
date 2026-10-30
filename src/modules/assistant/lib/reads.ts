@@ -34,7 +34,8 @@ const MAX_ROWS = 1_000;
 const LIST_CHARS = Math.floor(BROWSER_RESULT_MAX_CHARS * 0.75);
 // The most values a count answers with; the rest are summed into `other`.
 const MAX_COUNTS = 100;
-const ID = /^[A-Za-z0-9_-]{1,64}$/;
+// `|` for a user id from an identity provider (`google-oauth2|1133…`), encoded into the path.
+const ID = /^[A-Za-z0-9_|-]{1,128}$/;
 
 type Value = string | number | boolean;
 type Query = Record<string, Value>;
@@ -70,6 +71,14 @@ const LOCAL_FILTERS: Record<string, Record<string, (row: Row, value: Value) => b
   get_api_policies: { name: named },
   get_api_networks: { name: named },
   get_api_users: { email: (row, v) => same(row.email, String(v)), name: named, role: (row, v) => same(row.role, String(v)) },
+  get_api_reverse_proxies_services: {
+    name: named,
+    domain: (row, v) => same(row.domain, String(v)),
+    status: (row, v) => same((row.meta as Row | undefined)?.status, String(v)),
+    enabled: (row, v) => row.enabled === asBool(v),
+    cluster: (row, v) => same(row.proxy_cluster, String(v)),
+  },
+  get_api_reverse_proxies_clusters: { online: (row, v) => row.online === asBool(v) },
 };
 
 // The query keys an operation may send to the management API. Anything else
@@ -207,7 +216,7 @@ export async function readNetbirdApi(
   if (op.path.includes("{id}") && (!id || !ID.test(id))) {
     return failed(operation, { error: "This operation needs the resource's `id`, as a result gave it." });
   }
-  const path = op.path.replace("{id}", id ?? "");
+  const path = op.path.replace("{id}", encodeURIComponent(id ?? ""));
   const query = input.query && typeof input.query === "object" && !Array.isArray(input.query) ? (input.query as Query) : {};
   const { remote, filters, search, fields, countBy } = splitQuery(operation, query);
 

@@ -312,3 +312,112 @@ describe("proxy access log", () => {
     expect(page.data.map((e: { path: string }) => e.path)).toEqual(["/reset", "/oauth/callback"]);
   });
 });
+
+describe("reverse proxy services", () => {
+  const service = (id: string, status: string) => ({
+    id,
+    name: id,
+    domain: `${id}.proxy.example`,
+    enabled: true,
+    targets: [{ target_id: "p1", target_type: "peer", protocol: "http", port: 8080, enabled: true, options: { custom_headers: { "X-Api-Key": "s3cret" } } }],
+    auth: {
+      password_auth: { enabled: true, password: "hunter2" },
+      pin_auth: { enabled: false, pin: "1234" },
+      header_auths: [{ enabled: true, header: "X-Token", value: "tok_live_abc" }],
+    },
+    meta: { created_at: "2026-10-01T00:00:00Z", status },
+  });
+  const fetch = fakeFetch({
+    "/api/reverse-proxies/services": [service("wiki", "active"), service("grafana", "certificate_failed")],
+  });
+
+  test("say which authentication a service asks for, never its password, PIN, header value or custom headers", async () => {
+    const page = await readNetbirdApi({ operation: "get_api_reverse_proxies_services" }, fetch);
+    expect(page.content).toContain("certificate_failed");
+    expect(page.content).toContain("X-Token");
+    for (const secret of ["hunter2", "1234", "tok_live_abc", "s3cret", "X-Api-Key"]) {
+      expect(page.content).not.toContain(secret);
+    }
+  });
+
+  test("filter by status locally", async () => {
+    const rows = await data(readNetbirdApi({ operation: "get_api_reverse_proxies_services", query: { status: "certificate_failed" } }, fetch));
+    expect(rows.map((s: { id: string }) => s.id)).toEqual(["grafana"]);
+  });
+});
+
+describe("a network's resources", () => {
+  test("are read by the network's id, which the read requires", async () => {
+    const fetch = fakeFetch({
+      "/api/networks/n1/resources": [{ id: "r1", name: "Printer", type: "host", address: "10.10.2.23", enabled: true, groups: [{ id: "g1", name: "Office" }] }],
+    });
+    const rows = await data(readNetbirdApi({ operation: "get_api_networks_networkId_resources", id: "n1" }, fetch));
+    expect(rows).toEqual([{ id: "r1", name: "Printer", type: "host", address: "10.10.2.23", enabled: true, groups: [{ id: "g1", name: "Office" }] }]);
+    const missing = await readNetbirdApi({ operation: "get_api_networks_networkId_resources" }, fetch);
+    expect(missing.content).toContain("needs the resource's `id`");
+  });
+});
+
+describe("integration and credential reads", () => {
+  const cases: [operation: string, path: string, body: unknown, kept: string, secrets: string[]][] = [
+    [
+      "get_api_identity_providers",
+      "/api/identity-providers",
+      [{ id: "idp1", type: "oidc", name: "Okta", issuer: "https://acme.okta.test", client_id: "0oa1client", client_secret: "cs_live_9f8e" }],
+      "oidc",
+      ["0oa1client", "cs_live_9f8e"],
+    ],
+    [
+      "get_api_users_invites",
+      "/api/users/invites",
+      [{ id: "inv1", email: "new@acme.test", name: "New Hire", role: "user", expired: false, invite_token: "nbi_s3cretInvite" }],
+      "expired",
+      ["nbi_s3cretInvite"],
+    ],
+    [
+      "get_api_event_streaming",
+      "/api/event-streaming",
+      [{ id: 7, account_id: "acc1", enabled: true, platform: "datadog", config: { api_key: "dd_k3y", api_url: "https://intake.datadog.test" } }],
+      "datadog",
+      ["dd_k3y", "intake.datadog.test", "acc1"],
+    ],
+    [
+      "get_api_integrations_notifications_channels",
+      "/api/integrations/notifications/channels",
+      [{ id: "ch1", type: "webhook", enabled: true, event_types: ["user.join"], target: { url: "https://hooks.acme.test/T0/abc", headers: { Authorization: "Bearer wh_t0ken" } } }],
+      "user.join",
+      ["hooks.acme.test", "wh_t0ken"],
+    ],
+    [
+      "get_api_integrations_scim_idp",
+      "/api/integrations/scim-idp",
+      [{ id: 3, enabled: true, provider: "jumpcloud", prefix: "nb-", auth_token: "nbs_scimT0ken", connector_id: "conn1" }],
+      "jumpcloud",
+      ["nbs_scimT0ken", "conn1"],
+    ],
+    [
+      "get_api_agent_network_access_logs",
+      "/api/agent-network/access-logs",
+      { page: 1, page_size: 50, total_records: 1, total_pages: 1, data: [{ id: "l1", model: "gpt-6", decision: "allow", request_prompt: "my salary is 90k", response_completion: "noted" }] },
+      "gpt-6",
+      ["my salary is 90k", "noted"],
+    ],
+  ];
+
+  test.each(cases)("%s keeps what it is for and drops its secrets", async (operation, path, body, kept, secrets) => {
+    const outcome = await readNetbirdApi({ operation }, fakeFetch({ [path]: body }));
+    expect(outcome.content).toContain(kept);
+    for (const secret of secrets) expect(outcome.content).not.toContain(secret);
+  });
+});
+
+describe("an id in the path", () => {
+  test("may be an identity provider's user id, encoded, but never a path of its own", async () => {
+    const fetch = fakeFetch({ "/api/users/google-oauth2%7C113331070247434659044/tokens": [] });
+    expect(await data(readNetbirdApi({ operation: "get_api_users_userId_tokens", id: "google-oauth2|113331070247434659044" }, fetch))).toEqual([]);
+    for (const id of ["../accounts", "a/b", "a?x=1"]) {
+      const refused = await readNetbirdApi({ operation: "get_api_users_userId_tokens", id }, fetch);
+      expect(refused.content).toContain("needs the resource's `id`");
+    }
+  });
+});
