@@ -48,10 +48,21 @@ function ConversationRuntime({
   );
 }
 
-function AssistantConversation() {
+// Inside the provider, like the header's New Chat button, so it can reset the SDK session too.
+function AssistantConversation({ onNewChat }: Readonly<{ onNewChat: () => void }>) {
   const { entry, dismiss } = useActivePageContext();
+  const { newChat } = useAssistant();
 
-  return <AssistantThread context={entry} onDismissContext={dismiss} />;
+  return (
+    <AssistantThread
+      context={entry}
+      onDismissContext={dismiss}
+      onNewChat={() => {
+        newChat();
+        onNewChat();
+      }}
+    />
+  );
 }
 
 // Renders nothing: the context's display name comes from a hook (the SWR
@@ -223,7 +234,7 @@ export function AssistantChatPanel() {
               </div>
             </header>
 
-            <AssistantConversation />
+            <AssistantConversation onNewChat={startNewChat} />
           </div>
         </ConversationRuntime>
       </AssistantProvider>

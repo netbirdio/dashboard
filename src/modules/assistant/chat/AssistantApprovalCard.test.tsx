@@ -219,4 +219,41 @@ describe("AssistantApprovalCard", () => {
     // Not a tool call, so the framework's own option labels stand.
     expect(screen.getByText("Approve")).toBeTruthy();
   });
+
+  it("shows a lone danger option once, as the length limit's Stop is", () => {
+    render(
+      <AssistantApprovalCard
+        request={request({
+          kind: "session-limit",
+          toolName: undefined,
+          prompt: "This chat is too long. Start a new one to continue.",
+          options: [{ id: "stop", label: "Stop", style: "danger" }],
+        })}
+        onRespond={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByRole("button", { name: "Stop" })).toHaveLength(1);
+  });
+
+  it("offers New chat beside Stop at the length limit, on the right and on Enter", () => {
+    const onRespond = vi.fn();
+    const onNewChat = vi.fn();
+    render(
+      <AssistantApprovalCard
+        request={request({
+          kind: "session-limit",
+          toolName: undefined,
+          prompt: "This chat is too long. Start a new one to continue.",
+          options: [{ id: "stop", label: "Stop", style: "danger" }],
+        })}
+        onRespond={onRespond}
+        onNewChat={onNewChat}
+      />,
+    );
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["Stop", "New chat"]);
+    fireEvent.keyDown(globalThis.window, { key: "Enter" });
+    expect(onNewChat).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(globalThis.window, { key: "Escape" });
+    expect(onRespond).toHaveBeenCalledWith("stop");
+  });
 });

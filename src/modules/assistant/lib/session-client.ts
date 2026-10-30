@@ -17,7 +17,7 @@ export const ERROR_MESSAGES = {
     "Can't reach the assistant service — it looks offline or is restarting. Try again in a minute, or contact your administrator if it keeps happening.",
   unexpected:
     "The assistant ran into an unexpected problem. Try again in a moment.",
-  chatTooLong: "This chat has reached its length limit. Start a new chat to continue.",
+  chatTooLong: "This chat is too long. Start a new one to continue.",
 } as const;
 
 export class AssistantHttpError extends Error {

@@ -58,8 +58,10 @@ const StatusContext = createContext<string | null>(null);
 
 // A card, not a row. `ask_question` is eve's built-in: the framework parks the
 // turn on it and never writes its result back into the message, so as a row it
-// would spin long after the user answered.
-const isQuestionTool = (name?: string) => name === "ask_question";
+// would spin long after the user answered. The same holds for the pause eve
+// raises when a chat spends its budget, which the length-limit card shows.
+const isQuestionTool = (name?: string) =>
+  name === "ask_question" || name === "session_limit_continuation";
 
 // Reasoning and tool calls go in the steps panel; components and the question
 // card are output, so they stay in the answer where the model put them.
@@ -615,12 +617,15 @@ function Composer({
 export interface AssistantThreadProps {
   context: PageContextEntry | null;
   onDismissContext: () => void;
+  /** Starts a new conversation, offered when this one reaches its length limit. */
+  onNewChat?: () => void;
   className?: string;
 }
 
 export function AssistantThread({
   context,
   onDismissContext,
+  onNewChat,
   className,
 }: Readonly<AssistantThreadProps>) {
   const {
@@ -828,6 +833,7 @@ export function AssistantThread({
               <AssistantApprovalGate
                 request={pendingInput}
                 onRespond={respondToInput}
+                onNewChat={onNewChat}
               />
             ) : (
               <>

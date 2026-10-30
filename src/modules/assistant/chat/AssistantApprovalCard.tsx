@@ -85,11 +85,10 @@ function affirmativeOf(options: Option[]): Option | undefined {
   return options.find((o) => o.style === "primary") ?? options[0];
 }
 
+// Never the affirmative too: a lone option, such as the length limit's Stop, would render twice.
 function negativeOf(options: Option[]): Option | undefined {
-  const negative = options.find((o) => o.style === "danger");
-  if (negative) return negative;
-  const last = options.at(-1);
-  return last === affirmativeOf(options) ? undefined : last;
+  const negative = options.find((o) => o.style === "danger") ?? options.at(-1);
+  return negative === affirmativeOf(options) ? undefined : negative;
 }
 
 /**
@@ -109,6 +108,8 @@ function labelFor(
 export interface ApprovalCardProps {
   request: PendingInputRequest;
   onRespond: (answer: string | { text: string }) => void;
+  /** Offered on the length limit, the way past it: Stop only ends the answer. */
+  onNewChat?: () => void;
 }
 
 /*
@@ -121,6 +122,7 @@ const TYPED = "\u0000typed";
 export function AssistantApprovalCard({
   request,
   onRespond,
+  onNewChat,
 }: Readonly<ApprovalCardProps>) {
   // The answer is a round trip, and the session is parked until it lands. A
   // second click would post a second response to a request the framework has
@@ -163,8 +165,10 @@ export function AssistantApprovalCard({
     if (freeText) inputRef.current?.focus();
   }, [freeText]);
 
-  const affirmative = affirmativeOf(request.options);
-  const negative = negativeOf(request.options);
+  // New chat takes the affirmative's place, so Stop is the refusal: on the left, on Escape.
+  const newChat = request.kind === "session-limit" ? onNewChat : undefined;
+  const affirmative = newChat ? undefined : affirmativeOf(request.options);
+  const negative = newChat ? request.options[0] : negativeOf(request.options);
 
   /*
     Deny first, allow last, whatever order the framework listed them in. The
@@ -188,6 +192,11 @@ export function AssistantApprovalCard({
     const onKey = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
       if (event.key !== "Enter" && event.key !== "Escape") return;
+      if (event.key === "Enter" && newChat) {
+        event.preventDefault();
+        newChat();
+        return;
+      }
       const option = event.key === "Enter" ? affirmative : negative;
       if (!option) return;
       event.preventDefault();
@@ -195,7 +204,7 @@ export function AssistantApprovalCard({
     };
     globalThis.addEventListener("keydown", onKey);
     return () => globalThis.removeEventListener("keydown", onKey);
-  }, [affirmative, negative, freeText, respond]);
+  }, [affirmative, negative, freeText, respond, newChat]);
 
   return (
     <div
@@ -226,8 +235,9 @@ export function AssistantApprovalCard({
             {approvalTitle(request)}
           </p>
           <p className="mt-1 text-xs text-nb-gray-400">
-            The assistant is waiting for you. Nothing else it has been asked
-            will run until you answer.
+            {request.kind === "session-limit"
+              ? "New chat starts fresh. Stop ends this answer and keeps this chat here to read."
+              : "The assistant is waiting for you. Nothing else it has been asked will run until you answer."}
           </p>
         </div>
       </div>
@@ -285,6 +295,16 @@ export function AssistantApprovalCard({
             </Button>
           );
         })}
+        {newChat && (
+          <Button
+            size="xs"
+            variant="primary"
+            onClick={newChat}
+            className="!py-1.5 gap-2"
+          >
+            New chat
+          </Button>
+        )}
         {freeText && (
           <Button
             size="xs"
@@ -311,9 +331,11 @@ export function AssistantApprovalCard({
 export function AssistantApprovalGate({
   request,
   onRespond,
+  onNewChat,
 }: Readonly<{
   request: PendingInputRequest | null;
   onRespond: (answer: string | { text: string }) => void;
+  onNewChat?: () => void;
 }>) {
   if (!request) return null;
   return (
@@ -323,6 +345,7 @@ export function AssistantApprovalGate({
       key={request.requestId}
       request={request}
       onRespond={onRespond}
+      onNewChat={onNewChat}
     />
   );
 }
