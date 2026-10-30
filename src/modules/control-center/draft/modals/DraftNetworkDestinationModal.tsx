@@ -8,6 +8,7 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
+import { useReactFlow } from "@xyflow/react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
@@ -54,6 +55,7 @@ const PickerContent = ({
   const { nodes } = useCanvasState();
   const { groups: apiGroups, networkResources } = useControlCenterData();
   const { updateDraftPolicy } = useControlCenterPolicy();
+  const reactFlow = useReactFlow();
 
   const [pickedGroups, setPickedGroups] = useState<Group[]>([]);
   const [pickedResource, setPickedResource] = useState<
@@ -120,6 +122,14 @@ const PickerContent = ({
 
   const onConnect = () => {
     if (!policy || !rule || blockedReason) return;
+    /*
+      The policy as it stands now, not as it was when the picker rendered: the
+      assistant narrows the protocol and ports while the picker is open, and
+      writing back the copy from then put them back at "all".
+    */
+    const latest =
+      (reactFlow.getNode(policyNodeId)?.data as { policy?: Policy })?.policy ?? policy;
+    const latestRule = latest.rules?.[0] ?? rule;
     const merged = [
       ...existingDestinations,
       ...pickedGroups.filter(
@@ -127,14 +137,14 @@ const PickerContent = ({
       ),
     ] as Group[];
     updateDraftPolicy({
-      ...policy,
+      ...latest,
       rules: [
         {
-          ...rule,
+          ...latestRule,
           destinationResource: pickedResource,
           destinations: pickedResource ? [] : merged,
         },
-        ...(policy.rules?.slice(1) ?? []),
+        ...(latest.rules?.slice(1) ?? []),
       ],
     });
     onClose();

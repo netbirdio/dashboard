@@ -668,10 +668,26 @@ function buildApi(deps: Deps): CanvasAgentApi {
       did not, which is the whole bug.
     */
     await settle();
-    const d = deps();
+    let d = deps();
     const blocked = requireDraft(d);
     if (blocked) return blocked;
-    const result = editPolicy(edit, d);
+    let result = editPolicy(edit, d);
+    /*
+      Read the policy back and write it again while the edit has not stuck.
+      Settling first narrows the race above but does not close it: a write of
+      the same policy still in flight can land after this one and put the
+      protocol back at "all", and the result would still say tcp.
+    */
+    for (let attempt = 0; result.ok && attempt < 3; attempt++) {
+      await settle();
+      await wait(STEP_MS);
+      d = deps();
+      if (editLanded(edit, policyOn(edit.node, d))) break;
+      result = editPolicy(edit, d);
+    }
+    if (result.ok && !editLanded(edit, policyOn(edit.node, d))) {
+      return fail("The policy edit did not stick on the canvas. Call control_center_policy again.");
+    }
     if (result.ok && result.nodeId) {
       pulseNodes(d.reactFlow, [result.nodeId]);
       await revealNode(result.nodeId, d);
@@ -1845,6 +1861,20 @@ function destinationIsResourceOnly(
       group?.resources_count ?? (group?.resources as unknown[] | undefined)?.length ?? 0;
     return resources > 0 && peers === 0;
   });
+}
+
+const policyOn = (nodeId: string, d: BridgeDeps): Policy | undefined =>
+  (d.reactFlow.getNodes().find((n) => n.id === nodeId)?.data as { policy?: Policy })?.policy;
+
+/** Whether the policy holds what the edit asked for: the protocol, and the ports and direction it named. */
+function editLanded(edit: AgentPolicyEdit, policy: Policy | undefined): boolean {
+  const rule = policy?.rules?.[0];
+  if (!rule) return false;
+  if (edit.protocol !== undefined && rule.protocol !== edit.protocol) return false;
+  const portsAllowed = rule.protocol === "tcp" || rule.protocol === "udp";
+  if (edit.ports !== undefined && portsAllowed && (rule.ports ?? []).join(",") !== edit.ports.join(",")) return false;
+  if (edit.bidirectional !== undefined && rule.bidirectional !== edit.bidirectional) return false;
+  return true;
 }
 
 /**

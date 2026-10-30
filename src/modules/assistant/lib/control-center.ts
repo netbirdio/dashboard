@@ -228,6 +228,8 @@ const toAddItem = (input: Record<string, unknown>): AgentAddItem | null =>
         role: nonEmptyString(input.role) as AgentAddItem["role"],
         bidirectional:
           typeof input.bidirectional === "boolean" ? input.bidirectional : undefined,
+        protocol: nonEmptyString(input.protocol) as AgentAddItem["protocol"],
+        ports: Array.isArray(input.ports) ? input.ports.map(String) : undefined,
         name: nonEmptyString(input.name),
         description: nonEmptyString(input.description),
         address: nonEmptyString(input.address),
@@ -247,9 +249,15 @@ const listOf = (input: Record<string, unknown>, key: string): Record<string, unk
   return [input];
 };
 
+// Refused before anything is drawn: a policy born without a protocol allows everything,
+// and the follow-up edit meant to narrow it can be lost to a later write of the same policy.
+const POLICY_NEEDS_PROTOCOL =
+  "A new_policy needs its `protocol`, and `ports` for tcp/udp, set on this call; pass \"all\" only when every protocol is meant. Nothing was added.";
+
 export const addNode: ControlCenterToolAction = async (input, api) => {
   const items = listOf(input, "items").map(toAddItem);
   if (items.length === 0 || items.includes(null)) return { ok: false, content: ADD_NEEDS_KIND };
+  if (items.some((item) => item!.kind === "new_policy" && !item!.protocol)) return { ok: false, content: POLICY_NEEDS_PROTOCOL };
   const steps = await api.addNodes(items as AgentAddItem[], input.final === true);
   return reportSteps(steps, api);
 };
