@@ -118,14 +118,23 @@ export const pageRedirect: BrowserToolExecutor = async (
 ): Promise<ToolOutcome> => {
   const target = navigateToPage((input ?? {}) as Record<string, unknown>);
   if ("error" in target) return { ok: false, content: target.error };
-  // Leaving the control center drops an open draft, and a page the agent
-  // opens is a page the user did not choose to leave for.
+  /*
+    Leaving the control center drops an open draft, so the user decides here,
+    in the canvas's own "Discard draft changes?" dialog, and the answer is this
+    call's result. Refusing and leaving the choice to the chat took two
+    confirmations (the model asked, then the canvas asked again when it
+    discarded), and a click into the chat closed the second one as "Cancel".
+  */
   const pending = ctx.onControlCenterPage() && !target.href.startsWith(CONTROL_CENTER_HREF) ? unsavedDraftChanges() : 0;
   if (pending > 0) {
-    return {
-      ok: false,
-      content: `Didn't navigate: the draft on the canvas has ${pending} unsaved ${pending === 1 ? "change" : "changes"} that leaving the page would discard. The user has to deploy or discard the draft first; tell them, and offer the page once that is done.`,
-    };
+    const left = await getCanvasAgent()?.draftAction("exit");
+    if (!left?.ok) {
+      const changes = `${pending} unsaved ${pending === 1 ? "change" : "changes"}`;
+      return {
+        ok: false,
+        content: `Didn't navigate: the user chose to keep the draft on the canvas (${changes}). Don't ask again; they can deploy or discard it themselves, and you can offer the page once they have.`,
+      };
+    }
   }
   ctx.navigate(target.href);
   return { ok: true, content: `Navigated to ${target.href}.` };

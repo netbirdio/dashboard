@@ -3,8 +3,14 @@ import { navigateToPage, pageRedirect } from "@/modules/assistant/lib/page-redir
 
 // What the canvas reports while a test runs; null when the control center is not mounted.
 let canvas: { mode: "live" | "draft"; changes: { type: string; name: string }[] } | null = null;
+// What the user picks in the canvas's "Discard draft changes?" dialog.
+let discards = false;
+const draftAction = vi.fn(async () => {
+  if (discards && canvas) canvas = { mode: "live", changes: [] };
+  return discards ? { ok: true, detail: "Left draft mode; the draft was discarded." } : { ok: false, detail: "The user chose to keep the draft — still in draft mode." };
+});
 vi.mock("@/modules/assistant/lib/canvas", () => ({
-  getCanvasAgent: () => (canvas ? { getSnapshot: () => canvas } : null),
+  getCanvasAgent: () => (canvas ? { getSnapshot: () => canvas, draftAction } : null),
 }));
 
 describe("navigateToPage", () => {
@@ -126,19 +132,31 @@ describe("pageRedirect", () => {
     onControlCenterPage: () => onControlCenterPage,
   });
 
-  it("refuses to leave the control center while a draft holds unsaved changes", async () => {
+  it("asks the user once, in the canvas's dialog, before leaving a draft with unsaved changes", async () => {
     canvas = { mode: "draft", changes: [{ type: "create_group", name: "Build Servers" }, { type: "create_policy", name: "Build to DB" }] };
     const pushed: string[] = [];
-    const outcome = await pageRedirect({ page: "peers" }, ctx(pushed, true));
-    expect(outcome.ok).toBe(false);
-    expect(outcome.content).toContain("2 unsaved changes");
+    discards = false;
+    const kept = await pageRedirect({ page: "peers" }, ctx(pushed, true));
+    expect(draftAction).toHaveBeenCalledWith("exit");
+    expect(kept.ok).toBe(false);
+    expect(kept.content).toContain("chose to keep the draft");
+    expect(kept.content).toContain("2 unsaved changes");
     expect(pushed).toEqual([]);
+
+    discards = true;
+    expect(await pageRedirect({ page: "peers" }, ctx(pushed, true))).toEqual({ ok: true, content: "Navigated to /peers." });
+    expect(pushed).toEqual(["/peers"]);
+    pushed.length = 0;
+    draftAction.mockClear();
+    canvas = { mode: "draft", changes: [{ type: "create_group", name: "Build Servers" }] };
     // Staying on the control center is fine, as is a draft with nothing in it, as is the live view.
     expect((await pageRedirect({ page: "control_center" }, ctx(pushed, true))).ok).toBe(true);
     canvas = { mode: "draft", changes: [] };
     expect((await pageRedirect({ page: "peers" }, ctx(pushed, true))).ok).toBe(true);
     canvas = { mode: "live", changes: [] };
     expect((await pageRedirect({ page: "peers" }, ctx(pushed, true))).ok).toBe(true);
+    // None of those needed asking.
+    expect(draftAction).not.toHaveBeenCalled();
     canvas = null;
   });
 
