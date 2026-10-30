@@ -177,6 +177,8 @@ export function AssistantChatPanel() {
   return (
     <aside
       ref={panelRef}
+      // Read by the dashboard's modals, which stay out of the panel's way while it is open.
+      data-assistant-panel={open ? "open" : "closed"}
       aria-label="NetBird Assistant"
       aria-hidden={!open}
       // Without inert the hidden panel stays in the tab order behind the card.

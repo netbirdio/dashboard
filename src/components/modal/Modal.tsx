@@ -1,14 +1,82 @@
 "use client";
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { DialogTriggerProps } from "@radix-ui/react-dialog";
+import { DialogProps, DialogTriggerProps } from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@utils/helpers";
 import { X } from "lucide-react";
 import * as React from "react";
 import { headerHeight } from "@/layouts/Header";
 
-const Modal = DialogPrimitive.Root;
+/*
+  A modal dialog blocks everything outside it: pointer events on the body, a
+  focus trap, a scroll lock and aria-hidden on the rest. With the assistant
+  panel open beside the dashboard, that left the chat unusable for as long as
+  any modal was up. So a modal opened while the panel is open is non-modal to
+  Radix: its overlay still covers the dashboard, and a click there still
+  closes it, but the panel stays usable. The panel is found in the DOM rather
+  than through its provider, which some modals (DialogProvider's confirm) sit
+  outside of.
+*/
+const ASSISTANT_PANEL = "[data-assistant-panel]";
+const assistantPanelOpen = () =>
+  typeof document !== "undefined" &&
+  document.querySelector(`${ASSISTANT_PANEL}[data-assistant-panel="open"]`) !==
+    null;
+const inAssistantPanel = (target: EventTarget | null) =>
+  target instanceof Element && target.closest(ASSISTANT_PANEL) !== null;
+
+const ModalModeContext = React.createContext(true);
+
+function Modal({
+  modal,
+  open: openProp,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: DialogProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(
+    defaultOpen ?? false,
+  );
+  const open = openProp ?? uncontrolledOpen;
+  // Decided as the modal opens and kept until it closes: switching while open
+  // would remount the content and lose whatever was typed into it.
+  const [blocking, setBlocking] = React.useState(
+    () => !open || !assistantPanelOpen(),
+  );
+  const [wasOpen, setWasOpen] = React.useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setBlocking(!assistantPanelOpen());
+  }
+  const isModal = modal ?? blocking;
+  return (
+    <ModalModeContext.Provider value={isModal}>
+      <DialogPrimitive.Root
+        {...props}
+        modal={isModal}
+        open={open}
+        onOpenChange={(next) => {
+          if (openProp === undefined) setUncontrolledOpen(next);
+          onOpenChange?.(next);
+        }}
+      />
+    </ModalModeContext.Provider>
+  );
+}
+
+/** Keeps a click, focus or Escape in the assistant panel from closing the modal. */
+function keepOpenForAssistant<
+  E extends { target: EventTarget | null; preventDefault: () => void },
+>(handler?: (event: E) => void) {
+  return (event: E) => {
+    if (inAssistantPanel(event.target)) {
+      event.preventDefault();
+      return;
+    }
+    handler?.(event);
+  };
+}
 
 const ModalTrigger = (props: DialogTriggerProps) => {
   return (
@@ -29,22 +97,29 @@ const ModalClose = DialogPrimitive.Close;
 const ModalOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    className={cn(
-      // nb-overlay-inset, not `fixed inset-0`: the assistant panel takes a strip
-      // of the viewport that the dashboard card (and so its modals) must stay out
-      // of. It is the whole viewport when no panel is open.
-      "nb-overlay-inset grid z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ",
-      "mx-auto place-items-start overflow-y-auto md:py-16",
-      "bg-black/30 dark:bg-black/40 backdrop-blur-sm",
-      className,
-    )}
-    style={{ scrollbarGutter: "stable both-edges" }}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  // Radix renders no overlay for a non-modal dialog, and the content sits inside this one.
+  const isModal = React.useContext(ModalModeContext);
+  const Overlay = isModal ? DialogPrimitive.Overlay : "div";
+  return (
+    <Overlay
+      ref={ref}
+      // Radix sets its own on the modal overlay; the plain one needs it for the fade-in.
+      {...(isModal ? {} : { "data-state": "open" })}
+      className={cn(
+        // nb-overlay-inset, not `fixed inset-0`: the assistant panel takes a strip
+        // of the viewport that the dashboard card (and so its modals) must stay out
+        // of. It is the whole viewport when no panel is open.
+        "nb-overlay-inset grid z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ",
+        "mx-auto place-items-start overflow-y-auto md:py-16",
+        "bg-black/30 dark:bg-black/40 backdrop-blur-sm",
+        className,
+      )}
+      style={{ scrollbarGutter: "stable both-edges" }}
+      {...props}
+    />
+  );
+});
 ModalOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 type ModalContentProps = {
@@ -64,6 +139,8 @@ const ModalContent = React.forwardRef<
       showClose = true,
       maxWidthClass = "max-w-3xl",
       onPointerDownOutside,
+      onInteractOutside,
+      onEscapeKeyDown,
       ...props
     },
     ref,
@@ -90,6 +167,8 @@ const ModalContent = React.forwardRef<
             }
             onPointerDownOutside?.(e);
           }}
+          onInteractOutside={keepOpenForAssistant(onInteractOutside)}
+          onEscapeKeyDown={keepOpenForAssistant(onEscapeKeyDown)}
           {...props}
           onClick={(e) => e.stopPropagation()}
         >
@@ -124,6 +203,8 @@ const SidebarModalContent = React.forwardRef<
       children,
       showClose = true,
       maxWidthClass = "max-w-3xl",
+      onInteractOutside,
+      onEscapeKeyDown,
       ...props
     },
     ref,
@@ -143,6 +224,8 @@ const SidebarModalContent = React.forwardRef<
               className,
               maxWidthClass,
             )}
+            onInteractOutside={keepOpenForAssistant(onInteractOutside)}
+            onEscapeKeyDown={keepOpenForAssistant(onEscapeKeyDown)}
             {...props}
             style={{
               // The overlay inset comes out of the viewport too, or the sidebar

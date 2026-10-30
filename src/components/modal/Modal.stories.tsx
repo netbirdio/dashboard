@@ -39,6 +39,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import * as React from "react";
 import { useEffect } from "react";
 import DialogProvider, { useDialog } from "@/contexts/DialogProvider";
 import { waitForOverlay } from "@/storybook/components";
@@ -120,6 +121,59 @@ export const Default: StoryObj = {
     </Modal>
   ),
 };
+
+/*
+  A modal opened while the assistant panel is open: the overlay covers the
+  dashboard only, the chat beside it stays usable (click, type, scroll), and a
+  click on the dimmed dashboard still closes the modal.
+*/
+export const BesideAssistantPanel: StoryObj = {
+  render: () => <BesideAssistant />,
+};
+
+function BesideAssistant() {
+  // Opened by the button, as in the dashboard, where the panel is there before any modal.
+  const [open, setOpen] = React.useState(false);
+  // What AssistantSidebarProvider sets while its panel is open on the right.
+  React.useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--nb-overlay-right", "360px");
+    return () => {
+      root.style.removeProperty("--nb-overlay-right");
+    };
+  }, []);
+  return (
+    <>
+      <aside
+        data-assistant-panel="open"
+        aria-label="NetBird Assistant"
+        className="fixed right-0 top-0 flex h-screen w-[360px] flex-col gap-3 overflow-y-auto border-l border-nb-gray-800 bg-nb-gray-950 p-4 text-sm text-nb-gray-200"
+      >
+        {Array.from({ length: 30 }, (_, i) => (
+          <p key={i}>Assistant message {i + 1}</p>
+        ))}
+        <textarea
+          aria-label="Chat"
+          className="sticky bottom-0 min-h-20 rounded-lg border border-nb-gray-700 bg-nb-gray-900 p-2"
+          placeholder="How can I help you today?"
+        />
+      </aside>
+      {!open && <Button onClick={() => setOpen(true)}>Open modal</Button>}
+      <Modal open={open} onOpenChange={setOpen}>
+        <ModalContent maxWidthClass={"max-w-xl"}>
+          <ModalHeader
+            icon={<FolderGit2 size={18} />}
+            title={"Create group"}
+            description={"Groups bundle peers for access control."}
+            color={"netbird"}
+          />
+          <FormBody />
+          <Footer />
+        </ModalContent>
+      </Modal>
+    </>
+  );
+}
 
 export const SetupFooterNoSeparator: StoryObj = {
   render: () => (
