@@ -1,6 +1,8 @@
 // Mock data for the Agent Network section. No backend wired up yet.
 // All numbers, IDs, and text are static placeholders for click-through.
 
+import type { APIAgentNetworkAccessLog } from "@/modules/agent-network/agentAccessLogApi";
+
 // AIProviderId is the union of catalog provider ids. The canonical catalog
 // (with names, default hosts, brand colors, and models) lives on the
 // management server and is fetched via useProviderCatalog().
@@ -220,7 +222,21 @@ export type AIAccessLogEntry = {
   // calls like "GET /v1/models" are self-explanatory.
   method: string;
   path: string;
+  // Error attribution for failed requests (status >= 400). Optional —
+  // absent on successful rows and on older management servers.
+  errorSource?: AIAccessLogErrorSource;
+  // Id of the policy (llm_policy.* deny) or global limit (llm_account.* deny)
+  // that blocked the request.
+  blockedBy?: string;
+  // Free-text explanation for the admin, e.g. "Destination Not Allowed: dial
+  // tcp 10.255.255.1:443: direct upstream address is not allowed".
+  errorDetail?: string;
 };
+
+// AIAccessLogErrorSource says who failed a request: the upstream provider,
+// the NetBird proxy reaching it, a NetBird policy/limit, or the proxy's own
+// authentication.
+export type AIAccessLogErrorSource = "provider" | "proxy" | "policy" | "auth";
 
 // AIAccessLogSession is a session-grouped view of access-log entries: all
 // requests sharing a provider session id (or a single session-less request,
@@ -280,6 +296,172 @@ export function formatDenyReason(reason: string | undefined): string {
     bare.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
   return isAccount ? `Account ${base.toLowerCase()}` : base;
 }
+
+export const ERROR_SOURCE_INFO: Record<
+  AIAccessLogErrorSource,
+  { label: string; description: string }
+> = {
+  provider: {
+    label: "Provider error",
+    description:
+      "The LLM provider answered with this error, e.g. an invalid API key, a quota or a rejected request.",
+  },
+  proxy: {
+    label: "Proxy error",
+    description:
+      "The NetBird proxy could not reach the provider, e.g. a timeout, a refused connection, a disconnected peer or a blocked address.",
+  },
+  policy: {
+    label: "Policy",
+    description:
+      "A NetBird policy, limit, guardrail or routing rule denied the request.",
+  },
+  auth: {
+    label: "Authentication",
+    description:
+      "The NetBird proxy rejected the request's credentials before it reached the provider.",
+  },
+};
+
+// formatErrorReason is the short REASON-column text for a failed request with
+// error attribution. Undefined when the entry has none (successful rows, older
+// management servers), so callers keep their existing text.
+export function formatErrorReason(entry: AIAccessLogEntry): string | undefined {
+  if (!entry.errorSource || entry.status < 400) return undefined;
+  switch (entry.errorSource) {
+    case "policy":
+      return formatDenyReason(entry.denyReason) || "Denied by policy";
+    case "provider":
+      return `Provider error (${entry.status})`;
+    case "proxy": {
+      const title = entry.errorDetail?.split(":")[0].trim();
+      return title ? `Proxy error: ${title}` : "Proxy error";
+    }
+    case "auth":
+      return "Authentication";
+  }
+}
+
+export type BlockedByTarget = {
+  kind: "policy" | "global_limit";
+  id: string;
+  // The current name, or the id when the policy / limit has since been deleted.
+  name: string;
+  href: string;
+};
+
+// resolveBlockedBy names the policy or global limit that blocked a request.
+// The deny reason's prefix says which: llm_policy.* is an agent-network policy,
+// llm_account.* an account global limit.
+export function resolveBlockedBy(
+  entry: AIAccessLogEntry,
+  policies: AgentPolicy[] | undefined,
+  budgetRules: AgentBudgetRule[] | undefined,
+): BlockedByTarget | undefined {
+  const id = entry.blockedBy;
+  if (!id) return undefined;
+  if (entry.denyReason?.startsWith("llm_account.")) {
+    const name = budgetRules?.find((r) => r.id === id)?.name ?? id;
+    return {
+      kind: "global_limit",
+      id,
+      name,
+      href: "/agent-network/configuration?tab=budget-settings",
+    };
+  }
+  const name = policies?.find((p) => p.id === id)?.name ?? id;
+  return {
+    kind: "policy",
+    id,
+    name,
+    href: `/agent-network/policies?search=${encodeURIComponent(name)}`,
+  };
+}
+
+// Failed access-log rows, one per kind of error attribution, in the shape the
+// management API returns. Ids match the Storybook fixtures.
+export const MOCK_ERROR_ACCESS_LOGS: APIAgentNetworkAccessLog[] = [
+  {
+    id: "anlog-err-policy",
+    service_id: "svc-agent-network",
+    timestamp: "2026-10-08T12:10:00Z",
+    status_code: 403,
+    duration_ms: 4,
+    input_tokens: 0,
+    output_tokens: 0,
+    total_tokens: 0,
+    cost_usd: 0,
+    method: "POST",
+    path: "/v1/responses",
+    provider: "openai",
+    model: "gpt-5.5",
+    decision: "deny",
+    deny_reason: "llm_policy.budget_cap_exceeded",
+    error_source: "policy",
+    blocked_by: "anpol-contractors",
+    error_detail:
+      "user budget cap exhausted on policy anpol-contractors (used $0.0002 of $0.0001)",
+  },
+  {
+    id: "anlog-err-limit",
+    service_id: "svc-agent-network",
+    timestamp: "2026-10-08T12:08:00Z",
+    status_code: 403,
+    duration_ms: 3,
+    input_tokens: 0,
+    output_tokens: 0,
+    total_tokens: 0,
+    cost_usd: 0,
+    method: "POST",
+    path: "/v1/chat/completions",
+    provider: "openai",
+    model: "gpt-4o",
+    decision: "deny",
+    deny_reason: "llm_account.token_cap_exceeded",
+    error_source: "policy",
+    blocked_by: "anb-contractors",
+    error_detail:
+      "user token cap exhausted on account limit anb-contractors (used 512000 of 500000)",
+  },
+  {
+    id: "anlog-err-provider",
+    service_id: "svc-agent-network",
+    timestamp: "2026-10-08T12:06:00Z",
+    status_code: 401,
+    duration_ms: 210,
+    input_tokens: 0,
+    output_tokens: 0,
+    total_tokens: 0,
+    cost_usd: 0,
+    method: "POST",
+    path: "/v1/messages",
+    provider: "anthropic",
+    model: "claude-sonnet-5",
+    decision: "allow",
+    selected_policy_id: "anpol-eng",
+    error_source: "provider",
+  },
+  {
+    id: "anlog-err-proxy",
+    service_id: "svc-agent-network",
+    timestamp: "2026-10-08T12:04:00Z",
+    status_code: 502,
+    duration_ms: 12,
+    input_tokens: 0,
+    output_tokens: 0,
+    total_tokens: 0,
+    cost_usd: 0,
+    method: "POST",
+    path: "/v1/chat/completions",
+    provider: "mistral",
+    model: "mistral-large-latest",
+    decision: "allow",
+    selected_policy_id: "anpol-eng",
+    error_source: "proxy",
+    error_detail:
+      "Destination Not Allowed: dial tcp 10.255.255.1:443: direct upstream address is not allowed",
+  },
+];
 
 export const MOCK_GROUPS = [
   { id: "engineering", name: "Engineering" },

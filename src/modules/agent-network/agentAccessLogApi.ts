@@ -9,6 +9,7 @@ import { DateRange } from "react-day-picker";
 import {
   AIAccessLogDecision,
   AIAccessLogEntry,
+  AIAccessLogErrorSource,
   AIAccessLogSession,
   AIProviderId,
 } from "@/modules/agent-network/data/mockData";
@@ -51,6 +52,11 @@ export type APIAgentNetworkAccessLog = {
   group_ids?: string[];
   request_prompt?: string;
   response_completion?: string;
+  // Error attribution, set only on failed requests (status_code >= 400).
+  // Optional — absent on older management servers.
+  error_source?: AIAccessLogErrorSource;
+  blocked_by?: string;
+  error_detail?: string;
 };
 
 export type APIAgentNetworkAccessLogsResponse = {
@@ -237,6 +243,9 @@ export function accessLogFromAgentAPI(
     status: entry.status_code,
     method: entry.method ?? "",
     path: entry.path ?? "",
+    errorSource: entry.error_source,
+    blockedBy: entry.blocked_by,
+    errorDetail: entry.error_detail,
   };
 }
 

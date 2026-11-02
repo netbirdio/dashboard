@@ -1,11 +1,19 @@
 "use client";
 
+import Badge from "@components/Badge";
 import Code from "@components/Code";
+import FullTooltip from "@components/FullTooltip";
 import { HelpTooltip } from "@components/HelpTooltip";
+import { GaugeIcon, ShieldXIcon } from "lucide-react";
+import Link from "next/link";
 import * as React from "react";
+import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
 import {
   AIAccessLogEntry,
+  BlockedByTarget,
+  ERROR_SOURCE_INFO,
   formatDenyReason,
+  resolveBlockedBy,
 } from "@/modules/agent-network/data/mockData";
 
 type Props = {
@@ -16,15 +24,23 @@ type Props = {
  * Expanded row for the Agent Network access log. Mirrors the layout of
  * the Proxy Events expanded row: stacked sections with copyable Code
  * blocks. Surfaces the prompt and completion when captured, the deny
- * reason for blocked requests, and the per-request metadata.
+ * reason for blocked requests, who failed a failed request, and the
+ * per-request metadata.
  */
 export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
+  const { policies, budgetRules } = useAIProviders();
   const isDeny = entry.decision === "deny";
   const hasSession = Boolean(entry.sessionId);
   const hasPrompt = Boolean(entry.prompt);
   const hasCompletion = Boolean(entry.completion);
   const hasBody = hasPrompt || hasCompletion;
   const denyReason = formatDenyReason(entry.denyReason);
+  const isFailed = entry.status >= 400;
+  const errorSource = isFailed ? entry.errorSource : undefined;
+  const errorDetail = isFailed ? entry.errorDetail : undefined;
+  const blocked = isFailed
+    ? resolveBlockedBy(entry, policies, budgetRules)
+    : undefined;
 
   const cacheRead = entry.cachedInputTokens ?? 0;
   const cacheWrite = entry.cacheCreationTokens ?? 0;
@@ -108,6 +124,33 @@ export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
         </Section>
       )}
 
+      {errorSource && (
+        <Section heading={"Error source"}>
+          <div className={"flex items-center gap-2 text-xs text-nb-gray-300"}>
+            <Badge variant={"red"} size={"xs"} className={"shrink-0"}>
+              {ERROR_SOURCE_INFO[errorSource].label}
+            </Badge>
+            {ERROR_SOURCE_INFO[errorSource].description}
+          </div>
+        </Section>
+      )}
+
+      {blocked && (
+        <Section heading={"Blocked by"}>
+          <BlockedByLink target={blocked} />
+        </Section>
+      )}
+
+      {errorDetail && (
+        <Section heading={"Error detail"}>
+          <Code dark small codeToCopy={errorDetail}>
+            <pre className={"whitespace-pre-wrap break-all text-xs"}>
+              {errorDetail}
+            </pre>
+          </Code>
+        </Section>
+      )}
+
       {hasPrompt && (
         <Section heading={"Prompt"}>
           <Code dark small codeToCopy={entry.prompt}>
@@ -146,6 +189,37 @@ export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
         </Code>
       </Section>
     </div>
+  );
+}
+
+// BlockedByLink points at the policy or global limit that blocked a request,
+// styled like ReasonCell's authorising-policy link.
+export function BlockedByLink({ target }: { target: BlockedByTarget }) {
+  const Icon = target.kind === "policy" ? ShieldXIcon : GaugeIcon;
+  return (
+    <FullTooltip
+      content={
+        target.kind === "policy"
+          ? "This policy blocked the request"
+          : "This global limit blocked the request"
+      }
+    >
+      <Link
+        href={target.href}
+        onClick={(e) => e.stopPropagation()}
+        className={
+          "group/policy inline-flex items-center gap-1.5 text-[0.82rem] text-nb-gray-300 hover:text-nb-gray-100 transition-colors whitespace-nowrap"
+        }
+      >
+        <Icon
+          size={13}
+          className={
+            "shrink-0 text-nb-gray-500 group-hover/policy:text-nb-gray-300"
+          }
+        />
+        <span className={"group-hover/policy:underline"}>{target.name}</span>
+      </Link>
+    </FullTooltip>
   );
 }
 

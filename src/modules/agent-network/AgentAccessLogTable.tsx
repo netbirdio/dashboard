@@ -59,6 +59,8 @@ import {
   AIProvider,
   AIProviderId,
   formatDenyReason,
+  formatErrorReason,
+  resolveBlockedBy,
 } from "@/modules/agent-network/data/mockData";
 import { formatDateChip } from "@/modules/agent-network/AccessLogFilters";
 import {
@@ -80,7 +82,9 @@ const SELF_SCOPED_LOG_FILTER_IDS = new Set([
 ]);
 import AIProviderLogo from "@/modules/agent-network/AIProviderLogo";
 import { useProviderCatalog } from "@/modules/agent-network/useProviderCatalog";
-import AgentAccessLogExpandedRow from "@/modules/agent-network/AgentAccessLogExpandedRow";
+import AgentAccessLogExpandedRow, {
+  BlockedByLink,
+} from "@/modules/agent-network/AgentAccessLogExpandedRow";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { generateColorFromUser } from "@utils/helpers";
@@ -845,9 +849,25 @@ function TimeCell({ timestamp }: { timestamp: string }) {
 
 // ReasonCell shows the deny reason for blocked requests, and for allowed
 // requests a clickable reference to the policy that authorised it — linking
-// to the Policies view pre-filtered to that policy.
+// to the Policies view pre-filtered to that policy. Failed requests with error
+// attribution say who failed them instead, plus what blocked a cap deny.
 function ReasonCell({ entry }: { entry: AIAccessLogEntry }) {
-  const { policies } = useAIProviders();
+  const { policies, budgetRules } = useAIProviders();
+
+  const errorReason = formatErrorReason(entry);
+  if (errorReason) {
+    const blocked = resolveBlockedBy(entry, policies, budgetRules);
+    return (
+      <div className={"px-3 py-2 flex flex-col gap-1 text-[0.82rem]"}>
+        <TextWithTooltip
+          text={errorReason}
+          maxChars={36}
+          className={"text-nb-gray-300"}
+        />
+        {blocked && <BlockedByLink target={blocked} />}
+      </div>
+    );
+  }
 
   if (entry.decision === "deny") {
     return (
@@ -1562,7 +1582,9 @@ function SessionEntriesRow({ session }: { session: AIAccessLogSession }) {
                       "text-[11px] text-red-300 truncate max-w-[180px] shrink-0"
                     }
                   >
-                    {formatDenyReason(entry.denyReason) || "Failed"}
+                    {formatErrorReason(entry) ||
+                      formatDenyReason(entry.denyReason) ||
+                      "Failed"}
                   </span>
                 )}
                 <div className={"flex-1"} />
