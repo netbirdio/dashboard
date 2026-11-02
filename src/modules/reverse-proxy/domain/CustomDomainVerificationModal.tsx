@@ -73,7 +73,7 @@ export const CustomDomainVerificationModal = ({
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Add the <Mark>CNAME record</Mark> below to your DNS
+                Add <Mark>one</Mark> of the record setups below to your DNS
                 configuration for <Mark>{domain.domain}</Mark>
               </p>
             </Steps.Step>
@@ -112,22 +112,56 @@ export const CustomDomainVerificationModal = ({
               )
             ) : (
               <>
-                <Card className={"w-full"}>
-                  <Card.List>
-                    <Card.ListItem
-                      copy
-                      copyText={`*.${domain.domain}`}
-                      label={"CNAME Record"}
-                      value={`*.${domain.domain}`}
-                    />
-                    <Card.ListItem
-                      copy
-                      copyText={cnameTarget}
-                      label={"CNAME Content"}
-                      value={cnameTarget}
-                    />
-                  </Card.List>
-                </Card>
+                <div className={"flex flex-col gap-2"}>
+                  <Paragraph className={"text-sm font-medium"}>
+                    Wildcard record (covers every service)
+                  </Paragraph>
+                  <Card className={"w-full"}>
+                    <Card.List>
+                      <Card.ListItem
+                        copy
+                        copyText={`*.${domain.domain}`}
+                        label={"CNAME Record"}
+                        value={`*.${domain.domain}`}
+                      />
+                      <Card.ListItem
+                        copy
+                        copyText={cnameTarget}
+                        label={"CNAME Content"}
+                        value={cnameTarget}
+                      />
+                    </Card.List>
+                  </Card>
+                </div>
+
+                <div className={"flex flex-col gap-2"}>
+                  <Paragraph className={"text-sm font-medium"}>
+                    Explicit records (if your DNS provider does not support
+                    wildcards)
+                  </Paragraph>
+                  <Card className={"w-full"}>
+                    <Card.List>
+                      <Card.ListItem
+                        copy
+                        copyText={`validation.${domain.domain}`}
+                        label={"CNAME Record"}
+                        value={`validation.${domain.domain}`}
+                      />
+                      <Card.ListItem
+                        copy
+                        copyText={cnameTarget}
+                        label={"CNAME Content"}
+                        value={cnameTarget}
+                      />
+                    </Card.List>
+                  </Card>
+                  <Paragraph className={"text-sm"}>
+                    NetBird verifies the domain by looking up{" "}
+                    <Mark>validation.{domain.domain}</Mark> only. Before you
+                    create each service, also add a CNAME for its hostname
+                    pointing to the same CNAME Content.
+                  </Paragraph>
+                </div>
 
                 {!targetCluster && freeDomains.length > 1 && (
                   <Callout variant={"info"}>
