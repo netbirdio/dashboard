@@ -1,5 +1,6 @@
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
@@ -11,29 +12,30 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
-import { Callout } from "@components/Callout";
+import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { useHasChanges } from "@hooks/useHasChanges";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { cn, validator } from "@utils/helpers";
 import {
+  AlertTriangle,
   ClockFadingIcon,
   ExternalLinkIcon,
-  FlaskConicalIcon,
   MonitorSmartphoneIcon,
-  AlertTriangle,
   RefreshCcw,
+  TagIcon,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
-import { useGroups } from "@/contexts/GroupsProvider";
-import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
 
 type Props = {
   account: Account;
@@ -66,12 +68,21 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
 
 function ClientSettingsTabContent({ account }: Readonly<Props>) {
   const { permission } = usePermissions();
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
   const { mutate } = useSWRConfig();
   const saveRequest = useApiCall<Account>("/accounts/" + account.id, true);
 
   const [lazyConnection, setLazyConnection] = useState(
     account.settings?.lazy_connection_enabled ?? false,
+  );
+
+  const [agentNetworkOnly, setAgentNetworkOnly] = useState(
+    account.settings?.agent_network_only ?? false,
+  );
+
+  const [hostnameCollisionRejected, setHostnameCollisionRejected] = useState(
+    account.settings?.peer_hostname_collision_rejected ?? false,
   );
 
   const autoUpdateSetting = account.settings?.auto_update_version;
@@ -165,6 +176,9 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             auto_update_always: autoUpdateAlways,
             peer_expose_enabled: peerExposeEnabled,
             peer_expose_groups: peerExposeGroupIds,
+            lazy_connection_enabled: lazyConnection,
+            agent_network_only: agentNetworkOnly,
+            peer_hostname_collision_rejected: hostnameCollisionRejected,
           },
         })
         .then(() => {
@@ -203,6 +217,50 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
     });
   };
 
+  const toggleHostnameCollisionRejected = async (toggle: boolean) => {
+    notify({
+      title: "Unique Peer Hostnames",
+      description: `Unique peer hostnames successfully ${
+        toggle ? "enabled" : "disabled"
+      }.`,
+      promise: saveRequest
+        .put({
+          id: account.id,
+          settings: {
+            ...account.settings,
+            peer_hostname_collision_rejected: toggle,
+          },
+        })
+        .then(() => {
+          setHostnameCollisionRejected(toggle);
+          mutate("/accounts");
+        }),
+      loadingMessage: "Updating unique peer hostnames setting...",
+    });
+  };
+
+  const toggleAgentNetworkOnly = async (toggle: boolean) => {
+    notify({
+      title: "Agent Network Focused View",
+      description: `Agent Network focused view successfully ${
+        toggle ? "enabled" : "disabled"
+      }.`,
+      promise: saveRequest
+        .put({
+          id: account.id,
+          settings: {
+            ...account.settings,
+            agent_network_only: toggle,
+          },
+        })
+        .then(() => {
+          setAgentNetworkOnly(toggle);
+          mutate("/accounts");
+        }),
+      loadingMessage: "Updating Agent Network focused view setting...",
+    });
+  };
+
   return (
     <Tabs.Content value={"clients"}>
       <div className={"p-default py-6 max-w-2xl"}>
@@ -219,13 +277,13 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             active
           />
         </Breadcrumbs>
-        <div className={"flex items-start justify-between"}>
+        <div className={"flex items-start justify-between -mt-1"}>
           <h1>Clients</h1>
           <Button
             variant={"primary"}
             disabled={isSaveButtonDisabled}
             onClick={saveChanges}
-            data-cy={"save-clients-settings"}
+            data-testid={"save-clients-settings"}
           >
             Save Changes
           </Button>
@@ -244,9 +302,9 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               />
             </Label>
             <HelpText>
-              Configure how NetBird clients receive update notifications.
-              When enabled, users will be prompted to install the selected
-              version. This requires at least NetBird{" "}
+              Configure how NetBird clients receive update notifications. When
+              enabled, users will be prompted to install the selected version.
+              This requires at least NetBird{" "}
               <span className={"text-white font-medium"}>v0.61.0</span>.{" "}
               <InlineLink
                 href={"https://docs.netbird.io/manage/peers/auto-update"}
@@ -261,6 +319,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                 value={autoUpdateMethod}
                 onChange={handleUpdateMethodChange}
                 options={latestOrCustomVersion}
+                data-testid="auto-update-method"
               />
               <Input
                 value={autoUpdateCustomVersion}
@@ -269,6 +328,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                 error={versionError}
                 errorTooltip={true}
                 disabled={autoUpdateMethod !== "custom"}
+                data-testid="auto-update-version-input"
                 onChange={(v) => {
                   setAutoUpdateCustomVersion(v.target.value);
                 }}
@@ -278,6 +338,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               className={"mt-4"}
               value={autoUpdateAlways}
               onChange={setAutoUpdateAlways}
+              data-testid="force-auto-updates"
               label={
                 <>
                   <AlertTriangle size={15} className={"text-yellow-400"} />
@@ -312,7 +373,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           <div>
             <div>
               <Label>
-                <ReverseProxyIcon size={15} className={"fill-nb-gray-300"} />
+                <ReverseProxyIcon size={15} className={"text-nb-gray-300"} />
                 Expose Services from CLI
               </Label>
               <HelpText>
@@ -335,6 +396,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               className={"mt-2"}
               value={peerExposeEnabled}
               onChange={setPeerExposeEnabled}
+              data-testid="peer-expose"
               label={"Enable Peer Expose"}
               helpText={
                 "When enabled, peers can expose local HTTP services accessible via a public URL."
@@ -360,6 +422,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                   values={peerExposeGroups}
                   onChange={setPeerExposeGroups}
                   placeholder="Select peer groups..."
+                  data-testid="peer-expose-groups-selector"
                 />
               </div>
             </div>
@@ -367,14 +430,14 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 
           <div>
             <Label>
-              <FlaskConicalIcon size={15} />
-              Experimental
+              <ClockFadingIcon size={15} />
+              Lazy Connections
             </Label>
 
             <HelpText>
-              Lazy connections are an experimental feature. Functionality and
-              behavior may evolve. Instead of maintaining always-on connections,
-              NetBird activates them on-demand based on activity or signaling.{" "}
+              Instead of maintaining always-on connections, NetBird activates
+              them on-demand based on activity or signaling. This requires
+              NetBird client v0.50.1 or higher.{" "}
               <InlineLink
                 href={"https://docs.netbird.io/how-to/lazy-connection"}
                 target={"_blank"}
@@ -387,22 +450,66 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               className={"mt-2"}
               value={lazyConnection}
               onChange={toggleLazyConnection}
-              label={
-                <>
-                  <ClockFadingIcon size={15} />
-                  Enable Lazy Connections
-                </>
-              }
+              data-testid="lazy-connections"
+              label={<>Enable Lazy Connections</>}
               helpText={
                 <>
                   Allow to establish connections between peers only when
-                  required. This requires NetBird client v0.45 or higher.
-                  Changes will only take effect after restarting the clients.
+                  required. Changes will take effect after restarting the
+                  clients.
                 </>
               }
               disabled={!permission.settings.update}
             />
           </div>
+
+          <div>
+            <Label>
+              <TagIcon size={15} />
+              Unique Peer Hostnames
+            </Label>
+            <HelpText>
+              By default, a peer registering or being renamed with a hostname
+              that is already in use receives an IP-based suffix on its DNS
+              label.
+            </HelpText>
+            <FancyToggleSwitch
+              className={"mt-2"}
+              value={hostnameCollisionRejected}
+              onChange={toggleHostnameCollisionRejected}
+              data-testid="peer-hostname-collision-rejected"
+              label={"Reject Hostname Collisions"}
+              helpText={
+                "When enabled, registering or renaming a peer to a hostname that is already in use fails instead of receiving a suffix. This applies to ephemeral peers as well."
+              }
+              disabled={!permission.settings.update}
+            />
+          </div>
+
+          {agentNetworkEnabled && (
+            <div>
+              <Label>
+                <AgentNetworkIcon size={15} />
+                Agent Network
+              </Label>
+              <HelpText>
+                Focus the dashboard on the Agent Network surface and hide
+                sections that are not relevant for it, such as Networks, DNS and
+                Reverse Proxy.
+              </HelpText>
+              <FancyToggleSwitch
+                className={"mt-2"}
+                value={agentNetworkOnly}
+                onChange={toggleAgentNetworkOnly}
+                data-testid="agent-network-only"
+                label={"Agent Network focused view"}
+                helpText={
+                  "When enabled, the dashboard shows only the Agent Network related sections. Disable it to bring back the full dashboard."
+                }
+                disabled={!permission.settings.update}
+              />
+            </div>
+          )}
         </div>
       </div>
     </Tabs.Content>

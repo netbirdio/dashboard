@@ -11,15 +11,18 @@ type Props = {
 };
 export default function NotFound() {
   const [mounted, setMounted] = useState(false);
-  const [tempQueryParams, setTempQueryParams] = useLocalStorage(
-    "netbird-query-params",
-    "",
-  );
+  const [tempQueryParams, setTempQueryParams] = useLocalStorage<{
+    path: string;
+    params: string;
+  } | null>("netbird-query-params", null);
   const [queryParams, setQueryParams] = useState("");
 
   useEffect(() => {
-    setQueryParams(tempQueryParams);
-    setTempQueryParams("");
+    const currentPath = window.location.pathname || "/";
+    if (tempQueryParams?.path === currentPath && tempQueryParams?.params) {
+      setQueryParams(tempQueryParams.params);
+    }
+    setTempQueryParams(null);
     setMounted(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

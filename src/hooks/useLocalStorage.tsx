@@ -73,8 +73,12 @@ export function useLocalStorage<T>(
       // Allow value to be a function, so we have the same API as useState
       const newValue = value instanceof Function ? value(storedValue) : value;
 
-      // Save to local storage
-      window.localStorage.setItem(key, JSON.stringify(newValue));
+      // Remove the key when passing null or undefined
+      if (newValue === null || newValue === undefined) {
+        window.localStorage.removeItem(key);
+      } else {
+        window.localStorage.setItem(key, JSON.stringify(newValue));
+      }
 
       // Save state
       setStoredValue(newValue);

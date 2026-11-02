@@ -96,6 +96,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
             variant={"secondary"}
             className={"!px-3"}
             aria-label={"Nameserver actions"}
+            data-testid={"nameserver-actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
@@ -107,6 +108,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
               handleToggle();
             }}
             disabled={!canUpdate}
+            data-testid="nameserver-active-toggle"
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
@@ -118,6 +120,7 @@ export default function NameserverActionCell({ ns }: Readonly<Props>) {
             onClick={openConfirm}
             disabled={!canDelete}
             variant={"danger"}
+            data-testid="delete-nameserver"
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />

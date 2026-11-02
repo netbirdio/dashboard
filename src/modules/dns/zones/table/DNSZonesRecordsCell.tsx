@@ -24,6 +24,7 @@ export const DNSZonesRecordsCell = ({ zone }: Props) => {
           useHover={true}
           className={"cursor-pointer"}
           onClick={() => void 0}
+          data-testid="dns-zone-records-count"
         >
           <GlobeIcon size={12} />
           <div>
@@ -38,6 +39,7 @@ export const DNSZonesRecordsCell = ({ zone }: Props) => {
         className={"!px-3"}
         onClick={() => openRecordModal(zone)}
         disabled={!permission?.dns?.create}
+        data-testid="add-dns-record"
       >
         <PlusCircle size={12} />
         Add

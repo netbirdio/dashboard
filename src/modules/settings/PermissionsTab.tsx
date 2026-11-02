@@ -64,12 +64,13 @@ export default function PermissionsTab({ account }: Props) {
             active
           />
         </Breadcrumbs>
-        <div className={"flex items-start justify-between"}>
+        <div className={"flex items-start justify-between -mt-1"}>
           <h1>Permissions</h1>
           <Button
             variant={"primary"}
             disabled={!hasChanges || !permission.settings.update}
             onClick={saveChanges}
+            data-testid="save-permissions-settings"
           >
             Save Changes
           </Button>
@@ -79,6 +80,7 @@ export default function PermissionsTab({ account }: Props) {
           <FancyToggleSwitch
             value={userViewBlocked}
             onChange={setUserViewBlocked}
+            data-testid="restrict-regular-users"
             label={
               <>
                 <GaugeIcon size={15} />

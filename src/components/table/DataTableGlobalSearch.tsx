@@ -4,6 +4,7 @@ import { useDebounce } from "@hooks/useDebounce";
 import { Search } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { isMac } from "@hooks/useOperatingSystem";
 
 interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
   setGlobalSearch: (value: string) => void;
@@ -25,15 +26,12 @@ export default function DataTableGlobalSearch({
   const [inputValue, setInputValue] = useState(globalSearch || "");
   const debouncedValue = useDebounce(inputValue, 800);
 
-  // Call setGlobalSearch when debounced value changes
   useEffect(() => {
     setGlobalSearch(debouncedValue);
   }, [debouncedValue]);
 
   useEffect(() => {
-    // Coalesce undefined → "" so a reset (which clears the table's
-    // global filter to undefined) also clears the visible input text,
-    // not just the results.
+    // Coalesce undefined → "" so a reset also clears the visible input text.
     const next = globalSearch ?? "";
     if (next !== inputValue) {
       setInputValue(next);
@@ -59,6 +57,7 @@ export default function DataTableGlobalSearch({
   return (
     <Input
       {...props}
+      data-testid="table-search-input"
       ref={ref}
       onFocus={(e) => {
         if (onClick) {
@@ -68,10 +67,20 @@ export default function DataTableGlobalSearch({
         }
       }}
       icon={<Search size={15} />}
-      value={inputValue} // Shows immediate updates
+      value={inputValue}
       onChange={handleChange}
       maxWidthClass={className}
-      customSuffix={<Kbd>⌘ K</Kbd>}
+      customSuffix={
+        <Kbd>
+          {isMac ? (
+            "⌘ K"
+          ) : (
+            <span className="flex items-center gap-0.5">
+              Ctrl<span>+</span>K
+            </span>
+          )}
+        </Kbd>
+      }
       disabled={false}
     />
   );

@@ -36,12 +36,16 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
             variant={"secondary"}
             className={"!px-3"}
             aria-label={"Zone actions"}
+            data-testid="dns-zone-actions"
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-auto" align="end">
-          <DropdownMenuItem onClick={() => openZoneModal(zone)}>
+          <DropdownMenuItem
+            onClick={() => openZoneModal(zone)}
+            data-testid="edit-dns-zone"
+          >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
               Edit
@@ -54,6 +58,7 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
               updateZone({ ...zone, enabled: !zone.enabled });
             }}
             disabled={!permission?.dns?.update}
+            data-testid="dns-zone-active-toggle"
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
@@ -67,6 +72,7 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
             onClick={() => deleteZone(zone)}
             variant={"danger"}
             disabled={!permission?.dns?.delete}
+            data-testid="delete-dns-zone"
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />

@@ -9,19 +9,20 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
+import { Modal } from "@components/modal/Modal";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { UserAvatar } from "@components/ui/UserAvatar";
-import { KeyRound, LogOutIcon, User2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { isMac } from "@hooks/useOperatingSystem";
+import { useGuardedRouter } from "@utils/navigation-guard";
+import { isNetBirdCloud } from "@utils/netbird";
+import { CreditCardIcon, KeyRound, LogOutIcon, User2 } from "lucide-react";
 import { useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
-import useOSDetection from "@/hooks/useOperatingSystem";
 import { ChangePasswordModalContent } from "@/modules/users/ChangePasswordModal";
-import { isNetBirdHosted } from "@utils/netbird";
-import { Modal } from "@components/modal/Modal";
 
 export default function UserDropdown() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -29,8 +30,7 @@ export default function UserDropdown() {
   const { user } = useApplicationContext();
   const { loggedInUser, logout } = useLoggedInUser();
   const { isRestricted, permission } = usePermissions();
-  const isMac = useOSDetection();
-  const router = useRouter();
+  const router = useGuardedRouter();
 
   useHotkeys("shift+mod+l", () => logout(), []);
 
@@ -51,43 +51,52 @@ export default function UserDropdown() {
         open={dropdownOpen}
         onOpenChange={setDropdownOpen}
       >
-      <DropdownMenuTrigger>
-        <UserAvatar size={"medium"} />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-0.5 px-1">
-            <div className="text-sm font-medium leading-none dark:text-gray-300">
-              <TextWithTooltip
-                text={user?.name}
-                maxChars={20}
-                hideTooltip={true}
-              />
+        <DropdownMenuTrigger data-testid="user-dropdown">
+          <UserAvatar size={"medium"} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="end" forceMount>
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-0.5 px-1">
+              <div className="text-sm font-medium leading-none dark:text-gray-300">
+                <TextWithTooltip
+                  text={user?.name}
+                  maxChars={20}
+                  hideTooltip={true}
+                />
+              </div>
+              <div className="text-xs leading-none dark:text-gray-400">
+                <TextWithTooltip
+                  text={user?.email}
+                  maxChars={28}
+                  hideTooltip={true}
+                />
+              </div>
             </div>
-            <div className="text-xs leading-none dark:text-gray-400">
-              <TextWithTooltip
-                text={user?.email}
-                maxChars={28}
-                hideTooltip={true}
-              />
-            </div>
-          </div>
-        </DropdownMenuLabel>
+          </DropdownMenuLabel>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        {!isRestricted && (
-          <ProfileSettingsDropdownItem
-            onClick={() => {
-              setDropdownOpen(false);
-              if (loggedInUser) {
-                router.push(`/team/user?id=${loggedInUser.id}`);
-              }
-            }}
-          />
-        )}
+          {permission?.billing?.update && (
+            <PlansAndBillingDropdownItem
+              onClick={() => {
+                setDropdownOpen(false);
+                router.push("/settings?tab=plans-and-billing");
+              }}
+            />
+          )}
 
-        {!isNetBirdHosted() && loggedInUser?.idp_id === "local" && (
+          {!isRestricted && (
+            <ProfileSettingsDropdownItem
+              onClick={() => {
+                setDropdownOpen(false);
+                if (loggedInUser) {
+                  router.push(`/team/user?id=${loggedInUser.id}`);
+                }
+              }}
+            />
+          )}
+
+          {!isNetBirdCloud() && loggedInUser?.idp_id === "local" && (
             <DropdownMenuItem
               onClick={() => {
                 setDropdownOpen(false);
@@ -101,20 +110,34 @@ export default function UserDropdown() {
             </DropdownMenuItem>
           )}
 
-        <DropdownMenuItem onClick={logout}>
-          <div className={"flex gap-3 items-center"}>
-            <LogOutIcon size={14} />
-            Log out
-          </div>
-          <DropdownMenuShortcut>{isMac ? "⇧⌘L" : "⇧ ⊞ L"}</DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem onClick={logout}>
+            <div className={"flex gap-3 items-center"}>
+              <LogOutIcon size={14} />
+              Log out
+            </div>
+            <DropdownMenuShortcut className={"opacity-75"}>
+              {isMac ? (
+                "⇧⌘L"
+              ) : (
+                <span className="flex items-center gap-0.5">
+                  Ctrl<span>+</span>⇧<span>+</span>L
+                </span>
+              )}
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </>
   );
 }
 
 const ProfileSettingsDropdownItem = ({ onClick }: { onClick: () => void }) => {
+  const { isMSPInTenantContext } = useMSP();
+  const { permission } = usePermissions();
+
+  if (isMSPInTenantContext) return;
+  if (!permission?.users.read) return;
+
   return (
     <DropdownMenuItem onClick={onClick}>
       <div className={"flex gap-3 items-center"}>
@@ -122,5 +145,23 @@ const ProfileSettingsDropdownItem = ({ onClick }: { onClick: () => void }) => {
         Profile Settings
       </div>
     </DropdownMenuItem>
+  );
+};
+
+const PlansAndBillingDropdownItem = ({ onClick }: { onClick: () => void }) => {
+  const { permission } = usePermissions();
+
+  const { isAccountWithMSPParent } = useMSP();
+  if (isAccountWithMSPParent) return;
+
+  return (
+    permission?.billing?.update && (
+      <DropdownMenuItem onClick={onClick}>
+        <div className={"flex gap-3 items-center"}>
+          <CreditCardIcon size={14} />
+          Plans & Billing
+        </div>
+      </DropdownMenuItem>
+    )
   );
 };

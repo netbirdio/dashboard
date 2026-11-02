@@ -5,20 +5,23 @@ import { useOidcUser } from "@axa-fr/react-oidc";
 import Button from "@components/Button";
 import { UserAvatar } from "@components/ui/UserAvatar";
 import { cn } from "@utils/helpers";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import { useIsSm, useIsXs } from "@utils/responsive";
 import { AnimatePresence, motion } from "framer-motion";
 import { XIcon } from "lucide-react";
 import React from "react";
+import { NetBirdCloudProvider } from "@/cloud/contexts/NetBirdCloudProvider";
+import DistributorProvider from "@/cloud/distributor/contexts/DistributorProvider";
+import MSPProvider from "@/cloud/msp/contexts/MSPProvider";
 import AnnouncementProvider, {
   useAnnouncement,
 } from "@/contexts/AnnouncementProvider";
 import ApplicationProvider, {
   useApplicationContext,
 } from "@/contexts/ApplicationProvider";
+import BillingProvider from "@/contexts/BillingProvider";
 import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
-import { usePermissions } from "@/contexts/PermissionsProvider";
 import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
@@ -31,16 +34,23 @@ export default function DashboardLayout({
 }>) {
   return (
     <ApplicationProvider>
-      <UsersProvider>
-        <AnnouncementProvider>
-          <GroupsProvider>
-            <CountryProvider>
-              {!isNetBirdHosted() && <OnboardingProvider />}
-              <DashboardPageContent>{children}</DashboardPageContent>
-            </CountryProvider>
-          </GroupsProvider>
-        </AnnouncementProvider>
-      </UsersProvider>
+      <DistributorProvider>
+        <MSPProvider>
+          <UsersProvider>
+            <AnnouncementProvider>
+              <BillingProvider>
+                <GroupsProvider>
+                  <CountryProvider>
+                    <NetBirdCloudProvider />
+                    {!isNetBirdCloud() && <OnboardingProvider />}
+                    <DashboardPageContent>{children}</DashboardPageContent>
+                  </CountryProvider>
+                </GroupsProvider>
+              </BillingProvider>
+            </AnnouncementProvider>
+          </UsersProvider>
+        </MSPProvider>
+      </DistributorProvider>
     </ApplicationProvider>
   );
 }
@@ -52,8 +62,10 @@ function DashboardPageContent({
   const { mobileNavOpen, toggleMobileNav } = useApplicationContext();
   const isSm = useIsSm();
   const isXs = useIsXs();
-  const { isRestricted } = usePermissions();
-
+  // The sidebar renders for every role: Peers is visible to all of them, so
+  // there is always at least one item, and each remaining item decides for
+  // itself in Navigation. Gating the sidebar itself here once emptied it for
+  // the limited (user role) view, whose items were the Agent Network ones.
   const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
   const { bannerHeight } = useAnnouncement();
   return (
@@ -163,8 +175,8 @@ function DashboardPageContent({
                 height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}
             >
-              {!isRestricted && <Navigation hideOnMobile />}
-              {children}
+              <Navigation hideOnMobile />
+              <React.Fragment key={"page"}>{children}</React.Fragment>
             </div>
           </motion.div>
         </motion.div>

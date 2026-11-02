@@ -4,16 +4,8 @@ import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import Card from "@components/Card";
 import HelpText from "@components/HelpText";
-import { Input } from "@components/Input";
 import { Label } from "@components/Label";
-import {
-  Modal,
-  ModalClose,
-  ModalContent,
-  ModalFooter,
-  ModalTrigger,
-} from "@components/modal/Modal";
-import ModalHeader from "@components/modal/ModalHeader";
+import { Modal, ModalTrigger } from "@components/modal/Modal";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
@@ -27,7 +19,7 @@ import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
 import { singularize } from "@utils/helpers";
 import dayjs from "dayjs";
-import { isEmpty, trim } from "lodash";
+import { isEmpty } from "lodash";
 import {
   ArrowRightIcon,
   Barcode,
@@ -45,10 +37,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toASCII } from "punycode";
+import { EditPeerNameModal } from "@/modules/peers/EditPeerNameModal";
 import React, { useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
+import {
+  TrafficEventsPeerTabContent,
+  TrafficEventsPeerTabTrigger,
+} from "@/cloud/traffic-events/TrafficEventsPeerTabContent";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
@@ -60,7 +56,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import type { Group } from "@/interfaces/Group";
-import type { Peer } from "@/interfaces/Peer";
+import { type Peer, peerMacAddresses } from "@/interfaces/Peer";
 import type { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -119,10 +115,7 @@ export default function PeerPage() {
   );
 }
 
-// Route the user back to the list view that matches the peer's kind
-// (a real user owner → /peers/users, otherwise /peers/servers). Used
-// for the breadcrumb and the Cancel back-button so they don't bounce
-// through the legacy /peers redirect.
+// Linking to the matching list view avoids the legacy /peers redirect.
 function peerListPath(user: User | undefined): string {
   const hasRealUser = !!user && !user.is_service_user;
   return hasRealUser ? "/peers/users" : "/peers/servers";
@@ -270,7 +263,7 @@ const PeerHeader = () => {
                       <PencilIcon size={16} />
                     </div>
                   </ModalTrigger>
-                  <EditNameModal
+                  <EditPeerNameModal
                     onSuccess={(newName) => {
                       updatePeer(newName).then(() => {
                         setName(newName);
@@ -361,7 +354,7 @@ const PeerOverviewTabs = () => {
           </TabsTrigger>
         )}
 
-        {peer?.id && permission.peers.read && (
+        {peer?.id && (
           <TabsTrigger value={"accessible-peers"}>
             <MonitorSmartphoneIcon size={16} />
             Accessible Peers
@@ -384,6 +377,8 @@ const PeerOverviewTabs = () => {
             Remote Jobs
           </TabsTrigger>
         )}
+
+        {permission.events.read && <TrafficEventsPeerTabTrigger />}
       </TabsList>
 
       <TabsContent value={"overview"} className={"pb-8"}>
@@ -396,7 +391,7 @@ const PeerOverviewTabs = () => {
         </TabsContent>
       )}
 
-      {peer?.id && permission.peers.read && (
+      {peer?.id && (
         <TabsContent value={"accessible-peers"} className={"pb-8"}>
           <AccessiblePeersSection peerID={peer.id} />
         </TabsContent>
@@ -419,6 +414,12 @@ const PeerOverviewTabs = () => {
       {peer.id && permission.peers.delete && (
         <TabsContent value={"peer-job"} className={"pb-8"}>
           <PeerRemoteJobsSection peerID={peer.id} />
+        </TabsContent>
+      )}
+
+      {permission.events.read && (
+        <TabsContent value={"traffic-events"} className={"pb-8"}>
+          <TrafficEventsPeerTabContent />
         </TabsContent>
       )}
     </Tabs>
@@ -459,7 +460,6 @@ const PeerOverviewTabContent = () => {
 
           <PeerSSHToggle />
 
-          {/* Remote Access Buttons */}
           <div>
             <Label>Remote Access</Label>
             <HelpText>Connect directly to this peer via SSH or RDP.</HelpText>
@@ -666,6 +666,24 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             />
           )}
 
+          {peerMacAddresses(peer).length > 0 && (
+            <Card.ListItem
+              copy
+              copyText={"MAC Address"}
+              label={
+                <>
+                  <NetworkIcon size={16} className={"shrink-0"} />
+                  MAC Address
+                </>
+              }
+              className={
+                peerMacAddresses(peer).length > 1 ? "items-start" : ""
+              }
+              value={peerMacAddresses(peer)[0]}
+              extraText={peerMacAddresses(peer).slice(1)}
+            />
+          )}
+
           {peer.created_at && (
             <Card.ListItem
               label={
@@ -724,91 +742,6 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
         </Card.List>
       </Card>
     </>
-  );
-}
-
-interface ModalProps {
-  onSuccess: (name: string) => void;
-  peer: Peer;
-  initialName: string;
-}
-
-function EditNameModal({ onSuccess, peer, initialName }: Readonly<ModalProps>) {
-  const [name, setName] = useState(initialName);
-
-  const isDisabled = useMemo(() => {
-    if (name === peer.name) return true;
-    const trimmedName = trim(name);
-    return trimmedName.length === 0;
-  }, [name, peer]);
-
-  const domainNamePreview = useMemo(() => {
-    let punyName = toASCII(name.toLowerCase());
-    punyName = punyName.replace(/[^a-z0-9]/g, "-");
-    let domain = "";
-    if (peer.dns_label) {
-      const labelList = peer.dns_label.split(".");
-      if (labelList.length > 1) {
-        labelList.splice(0, 1);
-        domain = "." + labelList.join(".");
-      }
-    }
-    return punyName + domain;
-  }, [name, peer]);
-
-  return (
-    <ModalContent maxWidthClass={"max-w-md"}>
-      <form>
-        <ModalHeader
-          title={"Edit Peer Name"}
-          description={"Set an easily identifiable name for your peer."}
-          color={"blue"}
-        />
-
-        <div className={"p-default flex flex-col gap-4"}>
-          <div>
-            <Input
-              placeholder={"e.g., AWS Servers"}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <Card className={"w-full px-6 pt-5 pb-4"}>
-            <Label>
-              <Globe size={15} />
-              Domain Name Preview
-            </Label>
-            <HelpText className={"mt-2"}>
-              If the domain name already exists, we add an increment number
-              suffix to it.
-            </HelpText>
-            <div className={"text-netbird text-sm break-all whitespace-normal"}>
-              {domainNamePreview}
-            </div>
-          </Card>
-        </div>
-
-        <ModalFooter className={"items-center"} separator={false}>
-          <div className={"flex gap-3 w-full justify-end"}>
-            <ModalClose asChild={true}>
-              <Button variant={"secondary"} className={"w-full"}>
-                Cancel
-              </Button>
-            </ModalClose>
-
-            <Button
-              variant={"primary"}
-              className={"w-full"}
-              onClick={() => onSuccess(name)}
-              disabled={isDisabled}
-              type={"submit"}
-            >
-              Save
-            </Button>
-          </div>
-        </ModalFooter>
-      </form>
-    </ModalContent>
   );
 }
 

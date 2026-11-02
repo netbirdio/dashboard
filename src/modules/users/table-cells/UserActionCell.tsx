@@ -8,14 +8,8 @@ import {
 } from "@components/DropdownMenu";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
-import { isNetBirdHosted } from "@utils/netbird";
-import {
-  Ban,
-  MoreVertical,
-  Trash2,
-  UndoIcon,
-  XCircle,
-} from "lucide-react";
+import { isNetBirdCloud } from "@utils/netbird";
+import { Ban, MoreVertical, Trash2, UndoIcon, XCircle } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
@@ -186,7 +180,7 @@ export default function UserActionCell({
 
   return (
     <div className={"flex justify-end pr-4 items-center gap-2"}>
-      {!serviceUser && isNetBirdHosted() && (
+      {!serviceUser && isNetBirdCloud() && (
         <UserResendInviteButton user={user} />
       )}
       <DropdownMenu modal={false}>
@@ -201,6 +195,7 @@ export default function UserActionCell({
             variant={"secondary"}
             className={"!px-3"}
             aria-label={"User actions"}
+            data-testid={"user-actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
@@ -237,6 +232,7 @@ export default function UserActionCell({
             disabled={deleteDisabled}
             variant={"danger"}
             data-cy={"delete-user"}
+            data-testid={"delete-user"}
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />

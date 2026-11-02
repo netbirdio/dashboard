@@ -36,19 +36,21 @@ import {
   Table,
 } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 import dayjs from "dayjs";
 import { ExternalLinkIcon, Link2, MailPlus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
 import { User, UserInvite } from "@/interfaces/User";
+import { useAccount } from "@/modules/account/useAccount";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
-import { useGroups } from "@/contexts/GroupsProvider";
 import { PendingApprovalFilter } from "@/modules/users/PendingApprovalFilter";
 import UserActionCell from "@/modules/users/table-cells/UserActionCell";
 import UserGroupCell from "@/modules/users/table-cells/UserGroupCell";
@@ -57,7 +59,6 @@ import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 import UserInviteModal from "@/modules/users/UserInviteModal";
 import UserInvitesTable from "@/modules/users/UserInvitesTable";
-import { useAccount } from "@/modules/account/useAccount";
 
 export const UsersTableColumns: ColumnDef<User>[] = [
   {
@@ -135,7 +136,7 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   {
     id: "group_names_filter",
     accessorFn: (row) =>
-      ((row as User & { _group_names?: string[] })._group_names) ?? [],
+      (row as User & { _group_names?: string[] })._group_names ?? [],
     filterFn: "arrIncludesSome",
   },
   {
@@ -179,7 +180,7 @@ export default function UsersTable({
   const path = usePathname();
   const account = useAccount();
 
-  const isCloud = isNetBirdHosted();
+  const isCloud = isNetBirdCloud();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
   const showInvitesToggle = !isCloud && embeddedIdpEnabled;
 
@@ -211,6 +212,7 @@ export default function UsersTable({
 
   const router = useRouter();
   const { permission } = usePermissions();
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
 
   const usersWithGroupNames = useMemo(() => {
     if (!users) return undefined;
@@ -249,10 +251,21 @@ export default function UsersTable({
       { value: "admin", label: "Admin" },
       { value: "user", label: "User" },
       { value: "network_admin", label: "Network Admin" },
+      // Agent Network roles can only be assigned where the surface exists, so
+      // don't offer them as filters elsewhere.
+      ...(agentNetworkEnabled
+        ? [
+            {
+              value: "agent_network_admin",
+              label: "Agent Network Admin",
+            },
+            { value: "usage_viewer", label: "Usage Viewer" },
+          ]
+        : []),
       { value: "billing_admin", label: "Billing Admin" },
       { value: "auditor", label: "Auditor" },
     ],
-    [],
+    [agentNetworkEnabled],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
@@ -319,8 +332,7 @@ export default function UsersTable({
   const columnIds = new Set<string>();
   for (const c of columns) {
     const id =
-      (c as { id?: string }).id ??
-      (c as { accessorKey?: string }).accessorKey;
+      (c as { id?: string }).id ?? (c as { accessorKey?: string }).accessorKey;
     if (id) columnIds.add(String(id));
   }
   const activeFilterDefs = filterDefs.filter((f) => columnIds.has(f.id));
@@ -475,7 +487,7 @@ export const InviteUserButton = ({
 
   // On cloud: always show "Invite User"
   // On self-hosted: only show when embedded_idp_enabled is true
-  const isCloud = isNetBirdHosted();
+  const isCloud = isNetBirdCloud();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
   const localAuthDisabled = account?.settings.local_auth_disabled;
 
@@ -484,11 +496,7 @@ export const InviteUserButton = ({
   const isDisabled = !permission.users.create || localAuthDisabled;
 
   const button = (
-    <Button
-      variant={"primary"}
-      className={className}
-      disabled={isDisabled}
-    >
+    <Button variant={"primary"} className={className} disabled={isDisabled}>
       <MailPlus size={16} />
       {isCloud ? "Invite User" : "Add User"}
     </Button>
@@ -506,7 +514,9 @@ export const InviteUserButton = ({
             </p>
             <div className={"text-xs mt-1.5"}>
               <InlineLink
-                href={"https://docs.netbird.io/selfhosted/identity-providers/disable-local-authentication"}
+                href={
+                  "https://docs.netbird.io/selfhosted/identity-providers/disable-local-authentication"
+                }
                 target={"_blank"}
                 className={"flex gap-1 items-center"}
               >
@@ -524,4 +534,3 @@ export const InviteUserButton = ({
 
   return <UserInviteModal groups={groups}>{button}</UserInviteModal>;
 };
-

@@ -38,6 +38,7 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { Group } from "@/interfaces/Group";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
@@ -76,18 +77,31 @@ export default function NetworkRoutingPeerModal({
   );
 }
 
+export type RoutingPeerModalResult = {
+  peer?: Peer;
+  peerGroups: Group[];
+  metric: number;
+  masquerade: boolean;
+  enabled: boolean;
+};
+
 type ContentProps = {
   network: Network;
   router?: NetworkRouter;
   onCreated?: (r: NetworkRouter) => void;
   onUpdated?: (r: NetworkRouter) => void;
+  // false → no API calls; the data comes back via onSaved (draft mode).
+  useSave?: boolean;
+  onSaved?: (r: RoutingPeerModalResult) => void;
 };
 
-function RoutingPeerModalContent({
+export function RoutingPeerModalContent({
   network,
   router,
   onCreated,
   onUpdated,
+  useSave = true,
+  onSaved,
 }: ContentProps) {
   const isRoutingPeer = router ? router.peer != "" : true;
 
@@ -101,14 +115,33 @@ function RoutingPeerModalContent({
     `/networks/${network.id}/routers/${router?.id}`,
   ).put;
 
-  const { data: peer } = useFetchApi<Peer>(
+  const { data: peer, isLoading: peerLoading } = useFetchApi<Peer>(
     "/peers/" + router?.peer,
     true,
     false,
     router ? router.peer != "" : false,
   );
 
-  const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(peer);
+  const { data: networkRouters } = useFetchApi<NetworkRouter[]>(
+    `/networks/${network.id}/routers`,
+    true,
+    false,
+    !!network.id,
+  );
+
+  // The router being edited keeps its own peer selectable.
+  const assignedPeerIds = useMemo(
+    () =>
+      (networkRouters ?? [])
+        .filter((r) => r.id !== router?.id && !!r.peer)
+        .map((r) => r.peer as string),
+    [networkRouters, router?.id],
+  );
+
+  const [selectedPeer, setSelectedPeer] = useState<Peer | undefined | null>(
+    null,
+  );
+  const routingPeer = selectedPeer === null ? peer : selectedPeer;
 
   const [
     routingPeerGroups,
@@ -139,14 +172,12 @@ function RoutingPeerModalContent({
   }, [isNonLinuxRoutingPeer]);
 
   const addRouter = async () => {
-    // Create groups that do not exist
     const g1 = getAllRoutingGroupsToUpdate();
     const createOrUpdateGroups = uniqBy([...g1], "name").map((g) => g.promise);
     const createdGroups = await Promise.all(
       createOrUpdateGroups.map((call) => call()),
     );
 
-    // Check if routing peer is selected
     const isRoutingPeer = type === "peer";
 
     notify({
@@ -168,14 +199,12 @@ function RoutingPeerModalContent({
   };
 
   const updateRouter = async () => {
-    // Create groups that do not exist
     const g1 = getAllRoutingGroupsToUpdate();
     const createOrUpdateGroups = uniqBy([...g1], "name").map((g) => g.promise);
     const createdGroups = await Promise.all(
       createOrUpdateGroups.map((call) => call()),
     );
 
-    // Check if routing peer is selected
     const isRoutingPeer = type === "peer";
 
     notify({
@@ -197,6 +226,17 @@ function RoutingPeerModalContent({
   };
 
   const canContinue = routingPeer !== undefined || routingPeerGroups.length > 0;
+
+  // Group creation and the API call happen later, on deploy.
+  const saveDraft = () => {
+    onSaved?.({
+      peer: type === "peer" ? routingPeer : undefined,
+      peerGroups: type === "peer" ? [] : routingPeerGroups,
+      metric: parseInt(metric),
+      masquerade: type === "peer" && isNonLinuxRoutingPeer ? true : masquerade,
+      enabled,
+    });
+  };
 
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
@@ -236,17 +276,23 @@ function RoutingPeerModalContent({
                 value={type}
                 onChange={(state) => {
                   setType(state);
-                  setRoutingPeer(undefined);
+                  setSelectedPeer(undefined);
                   setRoutingPeerGroups([]);
                 }}
               >
                 <SegmentedTabs.List>
-                  <SegmentedTabs.Trigger value={"peer"}>
+                  <SegmentedTabs.Trigger
+                    value={"peer"}
+                    data-testid="routing-peer-tab-peer"
+                  >
                     <MonitorSmartphoneIcon size={16} />
                     Routing Peers
                   </SegmentedTabs.Trigger>
 
-                  <SegmentedTabs.Trigger value={"group"}>
+                  <SegmentedTabs.Trigger
+                    value={"group"}
+                    data-testid="routing-peer-tab-group"
+                  >
                     <FolderGit2 size={16} />
                     Peer Group
                   </SegmentedTabs.Trigger>
@@ -258,8 +304,13 @@ function RoutingPeerModalContent({
                       network.
                     </HelpText>
                     <PeerSelector
-                      onChange={setRoutingPeer}
+                      onChange={setSelectedPeer}
                       value={routingPeer}
+                      disabled={peerLoading}
+                      disabledPeers={assignedPeerIds}
+                      disabledPeerReason={
+                        "This peer is already a routing peer for this network and cannot be assigned again."
+                      }
                     />
                   </div>
                 </SegmentedTabs.Content>
@@ -315,6 +366,7 @@ function RoutingPeerModalContent({
               onChange={setMasquerade}
               disabled={isNonLinuxRoutingPeer}
               routingPeerGroupId={routingPeerGroups?.[0]?.id}
+              data-testid="toggle-masquerade"
             />
 
             <div className={cn("flex justify-between")}>
@@ -330,7 +382,7 @@ function RoutingPeerModalContent({
                 max={9999}
                 maxWidthClass={"max-w-[200px]"}
                 value={metric}
-                data-cy={"metric"}
+                data-testid={"metric"}
                 errorTooltip={true}
                 type={"number"}
                 onChange={(e) => setMetric(e.target.value)}
@@ -369,6 +421,7 @@ function RoutingPeerModalContent({
                 variant={"primary"}
                 onClick={() => setTab("settings")}
                 disabled={!canContinue}
+                data-testid="routing-peer-continue"
               >
                 Continue
               </Button>
@@ -385,7 +438,10 @@ function RoutingPeerModalContent({
                 disabled={
                   routingPeer == undefined && routingPeerGroups.length <= 0
                 }
-                onClick={router ? updateRouter : addRouter}
+                onClick={
+                  !useSave ? saveDraft : router ? updateRouter : addRouter
+                }
+                data-testid="submit-routing-peer"
               >
                 {router ? (
                   <>Save Changes</>
@@ -436,7 +492,7 @@ const InstallNetBirdWithSetupKeyButton = ({
       .post({
         name,
         type: "one-off",
-        expires_in: 24 * 60 * 60, // 1 day expiration
+        expires_in: 24 * 60 * 60, // 1 day expiration in seconds
         revoked: false,
         auto_groups: [],
         usage_limit: 1,

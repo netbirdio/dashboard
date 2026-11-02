@@ -201,7 +201,7 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
             }
             title={"No clusters available"}
             description={
-              "There are no shared clusters connected to your account and no self-hosted clusters configured. Set up a self-hosted cluster to route traffic through your own infrastructure — see the documentation linked above for setup steps."
+              "Set up a cluster to route traffic through your own infrastructure."
             }
             button={
               <Button

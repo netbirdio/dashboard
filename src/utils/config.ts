@@ -17,7 +17,24 @@ interface Config {
   hotjarTrackID?: number;
   googleAnalyticsID?: string;
   googleTagManagerID?: string;
+  authServiceUrl?: string;
   wasmPath: string;
+  licensed: boolean;
+  cloud: boolean;
+  // agentNetworkOnly: dedicated Agent Network surface — the regular UI
+  // (network routing, DNS, reverse proxy, activity) is hidden, no Beta badge.
+  // agentNetworkEnabled: the regular UI plus the Agent Network menu item (Beta).
+  agentNetworkOnly: boolean;
+  agentNetworkEnabled: boolean;
+  hubspotPortalId?: string;
+  hubspotSignupFormId?: string;
+  hubspotOnboardingFormId?: string;
+  hubspotSurveyFormId?: string;
+  analyticsExcludedEmails: string[];
+  // announcement: text the operator wants every user of this deployment to
+  // see in a permanent banner (NETBIRD_ANNOUNCEMENT), e.g. which environment
+  // or backend instance a dashboard belongs to. Unset for none.
+  announcement?: string;
 }
 
 /**
@@ -37,6 +54,8 @@ const loadConfig = (): Config => {
     configJson = require("@/config/production");
   }
 
+  configJson = configJson ?? {};
+
   if (configJson.redirectURI) {
     redirectURI = configJson.redirectURI;
   }
@@ -49,7 +68,7 @@ const loadConfig = (): Config => {
     tokenSource = configJson.tokenSource;
   }
 
-  const authority = configJson.authAuthority.replace(/\/+$/, "");
+  const authority = (configJson.authAuthority ?? "").replace(/\/+$/, "");
 
   return {
     auth0Auth: configJson.auth0Auth == "true", // Due to substitution we can't use boolean in the config
@@ -67,8 +86,22 @@ const loadConfig = (): Config => {
     hotjarTrackID: configJson?.hotjarTrackID || undefined,
     googleAnalyticsID: configJson?.googleAnalyticsID || undefined,
     googleTagManagerID: configJson?.googleTagManagerID || undefined,
+    authServiceUrl: configJson?.authServiceUrl ?? undefined,
     wasmPath:
-      configJson?.wasmPath || "https://pkgs.netbird.io/wasm/client/v0.63.0",
+      configJson?.wasmPath || "https://pkgs.netbird.io/wasm/client/v0.81.3",
+    licensed: configJson?.licensed === "true",
+    cloud: configJson?.cloud === "true",
+    agentNetworkOnly: configJson?.agentNetworkOnly === "true",
+    agentNetworkEnabled: configJson?.agentNetworkEnabled === "true",
+    hubspotPortalId: configJson?.hubspotPortalId || undefined,
+    hubspotSignupFormId: configJson?.hubspotSignupFormId || undefined,
+    hubspotOnboardingFormId: configJson?.hubspotOnboardingFormId || undefined,
+    hubspotSurveyFormId: configJson?.hubspotSurveyFormId || undefined,
+    analyticsExcludedEmails: (configJson?.analyticsExcludedEmails || "")
+      .split(",")
+      .map((email: string) => email.trim())
+      .filter(Boolean),
+    announcement: configJson?.announcement || undefined,
   } as Config;
 };
 

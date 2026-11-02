@@ -180,6 +180,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
         {group.name !== "All" && (
           <TabsTrigger
             value={"users"}
+            data-testid="group-tab-users"
             className={groupDetails === null ? "animate-pulse" : ""}
           >
             <TeamIcon
@@ -195,6 +196,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
         {group.name !== "All" && (
           <TabsTrigger
             value={"peers"}
+            data-testid="group-tab-peers"
             className={groupDetails === null ? "animate-pulse" : ""}
           >
             <PeerIcon
@@ -209,6 +211,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
 
         <TabsTrigger
           value={"policies"}
+          data-testid="group-tab-policies"
           className={groupDetails === null ? "animate-pulse" : ""}
         >
           <AccessControlIcon
@@ -222,6 +225,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
 
         <TabsTrigger
           value={"resources"}
+          data-testid="group-tab-resources"
           className={groupDetails === null ? "animate-pulse" : ""}
         >
           <Layers3Icon size={14} />
@@ -230,6 +234,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
 
         <TabsTrigger
           value={"network-routes"}
+          data-testid="group-tab-network-routes"
           className={groupDetails === null ? "animate-pulse" : ""}
         >
           <NetworkRoutesIcon
@@ -243,6 +248,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
 
         <TabsTrigger
           value={"nameservers"}
+          data-testid="group-tab-nameservers"
           className={groupDetails === null ? "animate-pulse" : ""}
         >
           <DNSIcon
@@ -256,6 +262,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
 
         <TabsTrigger
           value={"zones"}
+          data-testid="group-tab-zones"
           className={groupDetails === null ? "animate-pulse" : ""}
         >
           <DNSZoneIcon
@@ -270,6 +277,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
         {group.name !== "All" && (
           <TabsTrigger
             value={"setup-keys"}
+            data-testid="group-tab-setup-keys"
             className={groupDetails === null ? "animate-pulse" : ""}
           >
             <SetupKeysIcon

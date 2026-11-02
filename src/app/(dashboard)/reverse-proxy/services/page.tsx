@@ -14,7 +14,7 @@ import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
 import { REVERSE_PROXY_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 import { Callout } from "@components/Callout";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 
 const ReverseProxyTable = lazy(
   () => import("@/modules/reverse-proxy/table/ReverseProxyTable"),
@@ -50,7 +50,7 @@ export default function ReverseProxyServicesPage() {
           </InlineLink>
         </Paragraph>
 
-        {isNetBirdHosted() ? (
+        {isNetBirdCloud() ? (
           <Callout className={"max-w-xl mt-5"} variant={"info"}>
             NetBird&apos;s Reverse Proxy is currently in beta and available at
             no cost during this period. Features, functionality, and pricing are

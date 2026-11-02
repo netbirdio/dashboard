@@ -1,0 +1,191 @@
+import { test } from "@playwright/test";
+import * as fs from "fs";
+import * as path from "path";
+import { waitForProxyClustersOnline } from "../helpers/api";
+import { credentialsFor, loginToApp, type TestUser } from "../helpers/auth";
+
+const AUTH_DIR = path.resolve(__dirname, "../fixtures/auth");
+
+// Temporary: the CI failures for the user fixture report only which locator
+// timed out, which cannot distinguish a blank page from a rendered app with an
+// empty sidebar. Dump what the page actually holds, into the run log. Remove
+// once the user login is green again.
+async function reportPageState(
+  page: import("@playwright/test").Page,
+  user: TestUser,
+  pageErrors: string[],
+  failedRequests: string[],
+) {
+  console.log(`--- ${user}: page state after login ---`);
+  console.log(`url: ${page.url()}`);
+  try {
+    const body = (await page.locator("body").innerText()).trim();
+    console.log(`body text (${body.length} chars): ${body.slice(0, 500)}`);
+    console.log(
+      `nav items in dom: ${await page
+        .getByTestId("left-navigation-item")
+        .count()}`,
+    );
+  } catch (e) {
+    console.log(`could not read the body: ${String(e)}`);
+  }
+  if (pageErrors.length > 0) {
+    console.log(`page errors:\n${pageErrors.join("\n")}`);
+  } else {
+    console.log("page errors: none");
+  }
+  if (failedRequests.length > 0) {
+    console.log(`failed requests:\n${failedRequests.join("\n")}`);
+  }
+}
+
+async function loginAndSave(
+  page: import("@playwright/test").Page,
+  user: TestUser,
+) {
+  const { username, password } = credentialsFor(user);
+
+  const pageErrors: string[] = [];
+  const failedRequests: string[] = [];
+  page.on("pageerror", (err) => {
+    // The message alone came back empty for the crash under investigation, so
+    // record what was actually thrown along with where it came from.
+    pageErrors.push(
+      `pageerror: ${String(err)}\n${(err.stack ?? "no stack").slice(0, 800)}`,
+    );
+  });
+  page.on("console", (msg) => {
+    if (msg.type() === "error") pageErrors.push(`console: ${msg.text()}`);
+  });
+  // The body of a rejected API call carries the reason (permission denied,
+  // blocked, pending approval), which is what separates a misprovisioned test
+  // user from a dashboard that cannot render one.
+  const bodies: Promise<void>[] = [];
+  page.on("response", (resp) => {
+    if (resp.status() < 400) return;
+    const line = `${resp.status()} ${resp.url()}`;
+    if (!resp.url().includes("/api/")) {
+      failedRequests.push(line);
+      return;
+    }
+    bodies.push(
+      resp
+        .text()
+        .then((body) => {
+          failedRequests.push(`${line}\n    body: ${body.slice(0, 200)}`);
+        })
+        .catch(() => {
+          failedRequests.push(`${line} (body unavailable)`);
+        }),
+    );
+  });
+
+  await page.goto("/");
+
+  await page.locator("input[id=loginName]").waitFor({ state: "visible" });
+  await page.locator("input[id=loginName]").fill(username);
+  await page.locator("button[id=submit-button]").click();
+  await page.locator("input[id=password]").waitFor({ state: "visible" });
+  await page.locator("input[id=password]").fill(password);
+  await page.locator("button[id=submit-button]").click();
+
+  // After submitting credentials, we land on either:
+  // - 2FA skip prompt, or
+  // - the app directly (redirect to localhost:1337)
+  const skipButton = page.locator("button[name=skip]");
+  const appNav = page.getByTestId("left-navigation-item").first();
+  const modal = page.getByTestId("setup-netbird-modal");
+  const approval = page.getByTestId("pending-approval");
+
+  let after_login: "2fa" | "app" | "modal" | "approval";
+  try {
+    after_login = await Promise.race([
+      skipButton.waitFor({ timeout: 15_000 }).then(() => "2fa" as const),
+      appNav.waitFor({ timeout: 15_000 }).then(() => "app" as const),
+      modal.waitFor({ timeout: 15_000 }).then(() => "modal" as const),
+      approval.waitFor({ timeout: 15_000 }).then(() => "approval" as const),
+    ]);
+  } catch (e) {
+    await Promise.allSettled(bodies);
+    await reportPageState(page, user, pageErrors, failedRequests);
+    throw e;
+  }
+
+  if (after_login === "2fa") {
+    await skipButton.click();
+    try {
+      await Promise.race([
+        appNav.waitFor({ timeout: 15_000 }),
+        modal.waitFor({ timeout: 15_000 }),
+        approval.waitFor({ timeout: 15_000 }),
+      ]);
+    } catch (e) {
+      await Promise.allSettled(bodies);
+      await reportPageState(page, user, pageErrors, failedRequests);
+      throw e;
+    }
+  }
+
+  // Dismiss setup modal if present
+  if (await modal.isVisible().catch(() => false)) {
+    await modal.getByTestId("modal-close").click();
+  }
+
+  await page
+    .context()
+    .storageState({ path: path.join(AUTH_DIR, `${user}.json`) });
+}
+
+test.describe("Global Setup", () => {
+  for (const user of ["owner", "user"] as TestUser[]) {
+    test(`authenticate ${user}`, async ({ page }) => {
+      const authFile = path.join(AUTH_DIR, `${user}.json`);
+      test.skip(fs.existsSync(authFile), `${user} auth file already exists`);
+      await loginAndSave(page, user);
+    });
+  }
+
+  // Wait for the test reverse-proxy clusters to be registered and online
+  // before the rest of the suite runs. They come up asynchronously after
+  // test:setup, so without this the reverse-proxy specs flake when the
+  // domain picker is still empty.
+  //
+  // This deliberately does NOT fail the run if the clusters never appear:
+  // it only adds a bounded wait so slow registration is absorbed. A hard
+  // gate would skip the entire suite on any cluster hiccup, which is worse
+  // than letting the individual reverse-proxy specs report the problem.
+  test("wait for reverse-proxy clusters to be online", async ({ browser }) => {
+    // Must cover a full loginToApp (OIDC redirect) plus the bounded cluster
+    // wait. 15s was too tight on emulated arm64 (amd64 mgmt image): the hard
+    // test timeout would abort before the in-body try/catch could soft-warn a
+    // slow/absent cluster, failing the login project and every dependent spec.
+    test.setTimeout(45_000);
+    const context = await browser.newContext({
+      storageState: path.join(AUTH_DIR, "owner.json"),
+    });
+    const page = await context.newPage();
+    try {
+      // storageState only carries the Zitadel session cookies — the app
+      // still needs the OIDC redirect flow to get an access token before
+      // it makes any API call, so log in like every other consumer does.
+      await loginToApp(page, "owner");
+      // Bound the poll below the test timeout. The default (120s) exceeds the
+      // budget, so a slow/absent cluster would trip the uncatchable hard
+      // timeout instead of the try/catch below — defeating the soft-fail. ~25s
+      // leaves room for loginToApp above.
+      await waitForProxyClustersOnline(
+        page,
+        ["example.com", "noports.example.com"],
+        25_000,
+      );
+    } catch (err) {
+      console.warn(
+        `[setup] proxy clusters not confirmed online; reverse-proxy specs may be affected: ${
+          (err as Error).message
+        }`,
+      );
+    } finally {
+      await context.close();
+    }
+  });
+});

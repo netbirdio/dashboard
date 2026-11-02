@@ -194,7 +194,7 @@ export default function ServiceUsersTable({
         <GetStartedTest
           icon={
             <SquareIcon
-              icon={<IconSettings2 size={24} />}
+              icon={<IconSettings2 size={24} className={"text-nb-gray-200"} />}
               color={"gray"}
               size={"large"}
             />
@@ -210,7 +210,7 @@ export default function ServiceUsersTable({
                   <Button
                     variant={"primary"}
                     className={""}
-                    data-cy={"open-service-user-modal"}
+                    data-testid={"open-service-user-modal"}
                     disabled={!permission.users.create}
                   >
                     <PlusCircle size={16} />
@@ -243,7 +243,7 @@ export default function ServiceUsersTable({
               <Button
                 variant={"primary"}
                 className={"ml-auto"}
-                data-cy={"open-service-user-modal"}
+                data-testid={"open-service-user-modal"}
                 disabled={!permission.users.create}
               >
                 <PlusCircle size={16} />

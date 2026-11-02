@@ -28,6 +28,8 @@ export interface SelectOption {
   searchValue?: string;
   className?: string;
   disabled?: boolean;
+  // Section label for grouped rendering.
+  group?: string;
 }
 
 interface SelectDropdownProps {
@@ -51,6 +53,16 @@ interface SelectDropdownProps {
   iconSize?: number;
   truncate?: boolean;
   compact?: boolean;
+  // Pinned below the options, outside the scroll area and the search filter.
+  footer?: (close: () => void) => React.ReactNode;
+  // For dismissals the Popover's own outside-detection can't see (a ReactFlow
+  // pane that stops pointer propagation).
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  // Defers onChange until after the close animation, for handlers heavy
+  // enough to jank mid-animation.
+  deferChange?: boolean;
+  "data-testid"?: string;
 }
 
 export function SelectDropdown({
@@ -74,19 +86,35 @@ export function SelectDropdown({
   iconSize = 14,
   truncate = false,
   compact = false,
+  footer,
+  open: controlledOpen,
+  onOpenChange,
+  deferChange = false,
+  "data-testid": dataTestId,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const toggle = (selectedValue: string) => {
     const isSelected = value == selectedValue;
-    if (!isSelected) onChange?.(selectedValue);
+    setOpen(false);
+    if (!isSelected) {
+      if (deferChange) setTimeout(() => onChange?.(selectedValue), 180);
+      else onChange?.(selectedValue);
+    }
     setTimeout(() => {
       setSearch("");
     }, 100);
-    setOpen(false);
   };
 
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = React.useCallback(
+    (next: boolean) => {
+      onOpenChange?.(next);
+      if (controlledOpen === undefined) setUncontrolledOpen(next);
+    },
+    [controlledOpen, onOpenChange],
+  );
 
   const selected = options.find((o) => o.value === value);
 
@@ -101,6 +129,23 @@ export function SelectDropdown({
       return value.toLowerCase().includes(debouncedSearch.toLowerCase());
     });
   }, [options, debouncedSearch]);
+
+  // Section order follows the first option naming each group; null falls back
+  // to the flat render path.
+  const groupedItems = React.useMemo(() => {
+    if (!filteredItems.some((item) => item.group)) return null;
+    const order: string[] = [];
+    const byGroup = new Map<string, SelectOption[]>();
+    for (const item of filteredItems) {
+      const group = item.group ?? "";
+      if (!byGroup.has(group)) {
+        byGroup.set(group, []);
+        order.push(group);
+      }
+      byGroup.get(group)?.push(item);
+    }
+    return order.map((group) => ({ group, items: byGroup.get(group) ?? [] }));
+  }, [filteredItems]);
 
   const Loading = () => {
     return (
@@ -170,13 +215,14 @@ export function SelectDropdown({
             disabled={disabled || isLoading}
             ref={inputRef}
             className={cn("w-full focus:outline-none", className)}
+            data-testid={dataTestId}
           >
             <div className={"w-full flex justify-between items-center gap-2"}>
               {isLoading && <Loading />}
               {!isLoading && selected && <SelectedItem />}
               {!isLoading && !selected && <PlaceholderItem />}
               <div className={"pl-2"}>
-                <ChevronsUpDown size={18} className={"shrink-0"} />
+                <ChevronsUpDown size={16} className={"shrink-0"} />
               </div>
             </div>
           </Button>
@@ -234,20 +280,59 @@ export function SelectDropdown({
               }}
             >
               <CommandGroup>
-                <div className={cn("grid grid-cols-1 gap-1 w-full", compact ? "pb-1" : "pb-2")}>
-                  {filteredItems.map((option) => (
-                    <SelectDropdownItem
-                      option={option}
-                      toggle={toggle}
-                      key={option.value}
-                      iconSize={iconSize}
-                      showValue={showValues}
-                      size={size}
-                    />
-                  ))}
-                </div>
+                {groupedItems ? (
+                  groupedItems.map(({ group, items }) => (
+                    <div key={group || "_ungrouped"}>
+                      {group && (
+                        <div
+                          className={cn(
+                            "px-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-nb-gray-400",
+                            compact ? "pt-1" : "pt-2",
+                          )}
+                        >
+                          {group}
+                        </div>
+                      )}
+                      <div
+                        className={cn(
+                          "grid grid-cols-1 gap-1 w-full",
+                          compact ? "pb-1" : "pb-2",
+                        )}
+                      >
+                        {items.map((option) => (
+                          <SelectDropdownItem
+                            option={option}
+                            toggle={toggle}
+                            key={option.value}
+                            iconSize={iconSize}
+                            showValue={showValues}
+                            size={size}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className={cn("grid grid-cols-1 gap-1 w-full", compact ? "pb-1" : "pb-2")}>
+                    {filteredItems.map((option) => (
+                      <SelectDropdownItem
+                        option={option}
+                        toggle={toggle}
+                        key={option.value}
+                        iconSize={iconSize}
+                        showValue={showValues}
+                        size={size}
+                      />
+                    ))}
+                  </div>
+                )}
               </CommandGroup>
             </ScrollArea>
+            {footer && (
+              <div className={"border-t dark:border-nb-gray-800/70"}>
+                {footer(() => setOpen(false))}
+              </div>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

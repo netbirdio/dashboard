@@ -104,21 +104,24 @@ type IntentCardProps = {
     icon: React.ReactNode;
     onClick: () => void;
     recommended?: boolean;
+    "data-testid"?: string;
 };
 
-const IntentCard = ({
+export const IntentCard = ({
                         title,
                         description,
                         icon,
                         onClick,
                         recommended,
+                        "data-testid": dataTestId,
                     }: IntentCardProps) => {
     return (
         <button
             className={
-                "px-6 py-6 flex items-start flex-col relative hover:bg-nb-gray-920 transition-all group first:border-b border-nb-gray-900"
+                "px-6 py-6 flex items-start flex-col relative hover:bg-nb-gray-920 transition-all group border-b last:border-b-0 border-nb-gray-900"
             }
             onClick={onClick}
+            data-testid={dataTestId}
         >
             <div className={"flex gap-6"}>
                 <div

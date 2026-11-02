@@ -22,7 +22,7 @@ import { useState } from "react";
 import Button from "@components/Button";
 import { cn } from "@utils/helpers";
 import SlackIcon from "@/assets/icons/SlackIcon";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdCloud } from "@utils/netbird";
 
 export default function HelpAndSupportButton() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -83,7 +83,7 @@ export default function HelpAndSupportButton() {
           </DropdownMenuShortcut>
         </DropdownMenuItem>
 
-        {isNetBirdHosted() && (
+        {isNetBirdCloud() && (
           <DropdownMenuItem href="mailto:support@netbird.io?subject=Support Request">
             <div className={"flex gap-3 items-center"}>
               <MailIcon size={14} />

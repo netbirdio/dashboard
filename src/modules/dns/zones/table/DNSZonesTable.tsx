@@ -338,6 +338,7 @@ const AddZoneButton = ({ distributionGroups }: AddZoneButtonProps) => {
       className={""}
       disabled={!permission?.dns?.create}
       onClick={() => openZoneModal(undefined, distributionGroups)}
+      data-testid="add-dns-zone"
     >
       <PlusCircle size={16} />
       Add Zone

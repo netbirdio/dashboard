@@ -44,7 +44,7 @@ export const Item = ({
       >
         {icon && icon}
         {href ? (
-          <Link href={href} data-cy={"breadcrumb-item"}>
+          <Link href={href} data-testid={"breadcrumb-item"}>
             {label}
           </Link>
         ) : (

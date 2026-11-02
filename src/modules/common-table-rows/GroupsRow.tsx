@@ -163,7 +163,12 @@ export function EditGroupsModal({
             <Button variant={"secondary"}>Cancel</Button>
           </ModalClose>
 
-          <Button variant={"primary"} onClick={handleSave} disabled={disabled}>
+          <Button
+            variant={"primary"}
+            onClick={handleSave}
+            disabled={disabled}
+            data-testid="save-groups"
+          >
             Save Groups
           </Button>
         </div>

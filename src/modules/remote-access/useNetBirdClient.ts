@@ -5,7 +5,6 @@ import { generateKeypair } from "@utils/wireguard";
 import { trim } from "lodash";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { IronRDPWASMBridge } from "@/modules/remote-access/rdp/ironrdp-wasm-bridge";
-import { RDPCertificateHandler } from "@/modules/remote-access/rdp/rdp-certificate-handler";
 import { installWebSocketProxy } from "@/modules/remote-access/rdp/websocket-proxy";
 
 const config = loadConfig();
@@ -72,8 +71,7 @@ export const useNetBirdClient = () => {
 
   const rdpComponents = useRef<{
     bridge: IronRDPWASMBridge | null;
-    certificateHandler: typeof RDPCertificateHandler | null;
-  }>({ bridge: null, certificateHandler: null });
+  }>({ bridge: null });
 
   const loadWASMRuntime = useCallback((): Promise<void> => {
     if (document.querySelector(`script[src="${WASM_CONFIG.SCRIPT_PATH}"]`)) {
@@ -115,7 +113,6 @@ export const useNetBirdClient = () => {
     installWebSocketProxy();
     rdpComponents.current = {
       bridge: new IronRDPWASMBridge(),
-      certificateHandler: RDPCertificateHandler,
     };
   }, []);
 
@@ -176,7 +173,7 @@ export const useNetBirdClient = () => {
       try {
         netBirdClient.current = await (window as any).NetBirdClient({
           privateKey,
-          logLevel: "warn",
+          logLevel: "info",
           managementURL: config.apiOrigin,
         });
 
@@ -289,12 +286,7 @@ export const useNetBirdClient = () => {
           {
             name,
             wg_pub_key: keyPairs.publicKey,
-            rules: rules ?? [
-              "tcp/22022",
-              "tcp/3389",
-              "tcp/44338",
-              "netbird-ssh/22",
-            ],
+            rules: rules ?? ["tcp/22022", "tcp/3389", "tcp/44338", "netbird-ssh/22"],
           },
           `/${peerId}/temporary-access`,
         );
@@ -317,7 +309,6 @@ export const useNetBirdClient = () => {
     error,
     client: netBirdClient.current,
     ironRDPBridge: rdpComponents.current.bridge,
-    rdpCertificateHandler: rdpComponents.current.certificateHandler,
     initialize,
     initializeIronRDP,
     connect,

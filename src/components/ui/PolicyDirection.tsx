@@ -80,7 +80,7 @@ export default function PolicyDirection({
         className,
       )}
       onClick={toggleDirection}
-      data-cy={"policy-direction"}
+      data-testid={"policy-direction"}
     >
       <Badge variant={topBadgeClass} className={"px-4 py-1"}>
         <LongArrowLeftIcon

@@ -29,6 +29,7 @@ export default function ErrorBoundaryProvider({ children }: Props) {
         icon: <IconCircleX size={24} />,
         backgroundColor: "bg-red-500",
         duration: 10000,
+        requestId: errorDebounced.requestId,
       });
       setError(undefined);
     }

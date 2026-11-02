@@ -13,7 +13,7 @@ export default function AccessControlNameCell({ policy }: Readonly<Props>) {
       active={policy.enabled}
       inactiveDot={"gray"}
       text={policy.name}
-      dataCy={policy.name}
+      data-testid={policy.name}
     >
       <DescriptionWithTooltip className={"mt-1"} text={policy.description} />
     </ActiveInactiveRow>

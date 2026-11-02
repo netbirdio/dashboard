@@ -3,6 +3,8 @@ import { useCallback, useMemo, useState } from "react";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { Peer } from "@/interfaces/Peer";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
   ChevronsLeftRightEllipsis,
   ExternalLinkIcon,
@@ -38,7 +40,11 @@ export const RDPCredentialsModal = ({
   error,
   loading,
 }: Props) => {
-  const [username, setUsername] = useState("Administrator");
+  const defaultUsername =
+    getOperatingSystem(peer?.os) === OperatingSystem.WINDOWS
+      ? "Administrator"
+      : "root";
+  const [username, setUsername] = useState(defaultUsername);
   const [password, setPassword] = useState("");
 
   const [port, setPort] = useState("3389");
@@ -133,8 +139,7 @@ export const RDPCredentialsModal = ({
             <Label>Username & Password</Label>
             <HelpText>
               Enter the credentials required to authenticate with the remote
-              host. For domain accounts, use DOMAIN\username or username@domain
-              format.
+              host. For domain accounts, use DOMAIN\username or username@domain format.
             </HelpText>
             <div className={"flex flex-col gap-2 w-full"}>
               <Input

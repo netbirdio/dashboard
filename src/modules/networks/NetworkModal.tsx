@@ -39,7 +39,7 @@ export default function NetworkModal({
 }: Readonly<Props>) {
   return (
     <Modal open={open} onOpenChange={setOpen}>
-      <Content
+      <NetworkModalContent
         network={network}
         onCreated={(network) => {
           setOpen?.(false);
@@ -59,9 +59,18 @@ type ContentProps = {
   onCreated?: (network: Network) => void;
   onUpdated?: (network: Network) => void;
   network?: Network;
+  // Pure-data mode (draft canvas): no API calls, values return via onSaved.
+  useSave?: boolean;
+  onSaved?: (values: { name: string; description: string }) => void;
 };
 
-const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
+export const NetworkModalContent = ({
+  network,
+  onCreated,
+  onUpdated,
+  useSave = true,
+  onSaved,
+}: ContentProps) => {
   const [name, setName] = useState(network?.name || "");
   const [description, setDescription] = useState(network?.description || "");
   const create = useApiCall<Network>("/networks").post;
@@ -108,6 +117,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
           <HelpText>Provide a unique name for the network.</HelpText>
           <Input
             tabIndex={0}
+            data-testid="network-name-input"
             placeholder={"e.g., Office Network"}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -119,6 +129,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
             Write a short description to add more context to this network.
           </HelpText>
           <Textarea
+            data-testid="network-description-input"
             placeholder={"e.g., Berlin, Münzstraße 12 "}
             value={description}
             rows={3}
@@ -147,9 +158,15 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
 
           <Button
             variant={"primary"}
-            data-cy={"submit-route"}
+            data-testid={"submit-network"}
             disabled={!name}
-            onClick={network ? updateNetwork : createNetwork}
+            onClick={
+              !useSave
+                ? () => onSaved?.({ name, description })
+                : network
+                ? updateNetwork
+                : createNetwork
+            }
           >
             {network ? (
               "Save Changes"

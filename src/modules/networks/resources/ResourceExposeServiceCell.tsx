@@ -2,9 +2,11 @@ import Button from "@components/Button";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import {
+  isResourceTargetType,
+  useReverseProxies,
+} from "@/contexts/ReverseProxiesProvider";
 import { NetworkResource } from "@/interfaces/Network";
-import { isResourceTargetType } from "@/contexts/ReverseProxiesProvider";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import Badge from "@components/Badge";
@@ -42,10 +44,12 @@ export const ResourceExposeServiceCell = ({ resource }: Props) => {
             e.preventDefault();
             e.stopPropagation();
             if (!network?.id) return;
-            router.push(`/network?id=${network.id}&tab=services&target=${resource.id}`);
+            router.push(
+              `/network?id=${network.id}&tab=services&target=${resource.id}`,
+            );
           }}
         >
-          <ReverseProxyIcon size={14} className={"fill-green-500"} />
+          <ReverseProxyIcon size={14} className={"text-green-500"} />
           <div>
             <span className={"font-medium text-xs"}>{servicesCount}</span>
           </div>

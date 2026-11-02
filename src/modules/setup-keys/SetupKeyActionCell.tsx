@@ -97,6 +97,7 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
             variant={"secondary"}
             className={"!px-3"}
             aria-label={"Open actions menu"}
+            data-testid={"setup-key-actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
@@ -106,6 +107,7 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
             onClick={handleRevoke}
             disabled={!canRevoke}
             variant={"danger"}
+            data-testid={"revoke-setup-key"}
           >
             <div className={"flex gap-3 items-center"}>
               <Undo2Icon size={14} className={"shrink-0"} />
@@ -117,6 +119,7 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
             onClick={handleDelete}
             disabled={!canDelete}
             variant={"danger"}
+            data-testid={"delete-setup-key"}
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />

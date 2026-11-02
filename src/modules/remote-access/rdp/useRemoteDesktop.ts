@@ -2,13 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useIronRDPInputHandler } from "./useIronRDPInputHandler";
 import {
   CertificatePromptInfo,
+  isUsableFingerprint,
+  RDCleanPathResponse,
   useRDPCertificateHandler,
 } from "./useRDPCertificateHandler";
-
-interface IronError {
-  message: string;
-  backtrace?: () => string;
-}
 
 interface RDPConfig {
   hostname: string;
@@ -18,6 +15,10 @@ interface RDPConfig {
   domain?: string;
   width?: number;
   height?: number;
+  // dynamicResize enables the Display Control channel and in-session resize.
+  // Only reliable against Windows hosts; xrdp mishandles the reactivation, so
+  // non-Windows peers fall back to reconnect-on-resize.
+  dynamicResize?: boolean;
 }
 
 export interface RDPCredentials {
@@ -57,16 +58,16 @@ export const useRemoteDesktop = (client: any) => {
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastConnectedConfigRef = useRef<RDPConfig | null>(null);
   const certificatePromiseRef = useRef<{
-    resolve: (value: boolean) => void;
-    reject: (reason?: any) => void;
+    resolve: (accepted: boolean) => void;
   } | null>(null);
+  const connectionGeneration = useRef(0);
 
   const [rdpSession, setRdpSession] = useState<any>(null);
   const [ironrdpModule, setIronrdpModule] = useState<any>(null);
 
   const { handleRDCleanPathResponse, acceptCertificate } =
     useRDPCertificateHandler();
-  const certificateAccepted = useRef(false);
+  const sessionTrustedCertificates = useRef(new Map<string, string>());
 
   const { isActive, focusCanvas } = useIronRDPInputHandler({
     ironrdp: ironrdpModule,
@@ -74,6 +75,14 @@ export const useRemoteDesktop = (client: any) => {
     canvas: canvasRef.current,
     isConnected: status === RDPStatus.CONNECTED,
   });
+
+  // The Go proxy holds the TLS handshake until the prompt promise settles,
+  // so every path that drops a prompt has to answer it.
+  const settlePendingCertificate = useCallback((accepted: boolean) => {
+    certificatePromiseRef.current?.resolve(accepted);
+    certificatePromiseRef.current = null;
+    setPendingCertificate(null);
+  }, []);
 
   /**
    * Reset the RDP state, optionally preserving config and/or certificate state
@@ -95,54 +104,64 @@ export const useRemoteDesktop = (client: any) => {
       }
       setError("");
       if (!options.preserveCertificateState) {
-        setPendingCertificate(null);
-        certificatePromiseRef.current = null;
+        settlePendingCertificate(false);
       }
     },
-    [],
+    [settlePendingCertificate],
   );
 
   /**
    * Set up the global RDPCertificateHandler to intercept certificate prompts
    */
-  const setupCertificateHandler = useCallback(() => {
-    const originalHandler = (window as any).RDPCertificateHandler;
+  const setupCertificateHandler = useCallback(
+    (hostname: string, generation: number) => {
+      // A socket from a superseded connect must not prompt under the current one.
+      const isCurrent = () => generation === connectionGeneration.current;
 
-    (window as any).RDPCertificateHandler = function () {
-      this.handleRDCleanPathResponse = async (response: any) => {
-        const result = await handleRDCleanPathResponse(response);
+      const Handler = class {
+        handleRDCleanPathResponse = async (
+          response: RDCleanPathResponse,
+        ): Promise<boolean> => {
+          const result = await handleRDCleanPathResponse(response, hostname);
+          if (!isCurrent()) return false;
 
-        if (result.isValid) {
-          return true;
-        }
+          if (result.isValid) {
+            return true;
+          }
 
-        if (result.needsUserConfirmation && result.promptInfo) {
-          setPendingCertificate(result.promptInfo);
+          if (result.needsUserConfirmation && result.promptInfo) {
+            const { hostname, certificate } = result.promptInfo;
+            if (
+              isUsableFingerprint(certificate.fingerprint) &&
+              sessionTrustedCertificates.current.get(hostname) ===
+                certificate.fingerprint
+            ) {
+              return true;
+            }
 
-          return new Promise((resolve, reject) => {
-            certificatePromiseRef.current = { resolve, reject };
-          });
-        }
+            certificatePromiseRef.current?.resolve(false);
+            setPendingCertificate(result.promptInfo);
 
-        return false;
+            return new Promise<boolean>((resolve) => {
+              certificatePromiseRef.current = { resolve };
+            });
+          }
+
+          return false;
+        };
       };
 
-      if (originalHandler?.prototype) {
-        Object.getOwnPropertyNames(originalHandler.prototype).forEach(
-          (name) => {
-            if (
-              name !== "constructor" &&
-              name !== "handleRDCleanPathResponse"
-            ) {
-              this[name] = originalHandler.prototype[name];
-            }
-          },
-        );
-      }
-    };
+      window.RDPCertificateHandler = Handler;
 
-    return originalHandler;
-  }, [handleRDCleanPathResponse]);
+      // An overlapping connect may have installed its own handler since.
+      return () => {
+        if (window.RDPCertificateHandler === Handler) {
+          delete window.RDPCertificateHandler;
+        }
+      };
+    },
+    [handleRDCleanPathResponse],
+  );
 
   /**
    * Establish an RDP connection
@@ -151,6 +170,8 @@ export const useRemoteDesktop = (client: any) => {
     async (rdpConfig: RDPConfig): Promise<RDPStatus> => {
       if (status === RDPStatus.CONNECTING) return status;
 
+      const generation = ++connectionGeneration.current;
+      settlePendingCertificate(false);
       setStatus(RDPStatus.CONNECTING);
       setConfig(rdpConfig);
       setError("");
@@ -179,7 +200,10 @@ export const useRemoteDesktop = (client: any) => {
           throw new Error("Failed to initialize IronRDP");
         }
 
-        const originalHandler = setupCertificateHandler();
+        const removeCertificateHandler = setupCertificateHandler(
+          rdpConfig.hostname,
+          generation,
+        );
 
         try {
           const sessionId = await client.ironRDPBridge.connect(
@@ -191,6 +215,14 @@ export const useRemoteDesktop = (client: any) => {
             canvas,
             true,
             client.client,
+            (sessionError: string | null, endedSessionId: string) => {
+              // Ignore terminations from superseded sessions (e.g. a resize
+              // reconnect) so they can't tear down a newer connection.
+              if (endedSessionId !== session.current?.id) return;
+              resetState();
+              if (sessionError) setError(sessionError);
+            },
+            rdpConfig.dynamicResize ?? false,
           );
 
           // Store the ironrdp module and session for the input handler hook
@@ -216,15 +248,15 @@ export const useRemoteDesktop = (client: any) => {
           canvasRef?.current?.focus();
           return RDPStatus.CONNECTED;
         } catch (err) {
-          const ironError = err as IronError;
-          const errorMessage = ironError.backtrace
-            ? ironError.backtrace()
-            : "RDP connection failed";
+          const errorMessage =
+            err instanceof Error && err.message
+              ? err.message
+              : "RDP connection failed";
           setError(errorMessage);
           resetState();
           throw Error(errorMessage);
         } finally {
-          (window as any).RDPCertificateHandler = originalHandler;
+          removeCertificateHandler();
         }
       } catch (err) {
         const errorMessage =
@@ -234,7 +266,13 @@ export const useRemoteDesktop = (client: any) => {
         throw Error(errorMessage);
       }
     },
-    [client, status, setupCertificateHandler, resetState],
+    [
+      client,
+      status,
+      setupCertificateHandler,
+      resetState,
+      settlePendingCertificate,
+    ],
   );
 
   /**
@@ -250,27 +288,38 @@ export const useRemoteDesktop = (client: any) => {
         remember,
       );
 
-      certificatePromiseRef.current.resolve(true);
-      setPendingCertificate(null);
-      certificatePromiseRef.current = null;
-      certificateAccepted.current = true;
+      settlePendingCertificate(true);
+      sessionTrustedCertificates.current.set(
+        pendingCertificate.hostname,
+        pendingCertificate.certificate.fingerprint,
+      );
       canvasRef?.current?.focus();
     },
-    [pendingCertificate, acceptCertificate],
+    [pendingCertificate, acceptCertificate, settlePendingCertificate],
   );
 
   /**
    * Reject the pending certificate prompt
    */
   const rejectCertificatePrompt = useCallback(() => {
-    if (!certificatePromiseRef.current) return;
-    certificatePromiseRef.current.resolve(false);
-    setPendingCertificate(null);
-    certificatePromiseRef.current = null;
-  }, []);
+    settlePendingCertificate(false);
+  }, [settlePendingCertificate]);
+
+  // Rejecting fails the handshake, so the pending connect settles
+  // and removes its certificate handler.
+  useEffect(
+    () => () => {
+      connectionGeneration.current += 1;
+      certificatePromiseRef.current?.resolve(false);
+      certificatePromiseRef.current = null;
+    },
+    [],
+  );
 
   /**
-   * Handle window resize events - reconnect with new dimensions
+   * Handle window resize events. Hosts that support the Display Control channel
+   * (Windows) resize the live session in place; others reconnect with the new
+   * dimensions.
    */
   useEffect(() => {
     const handleResize = () => {
@@ -282,6 +331,31 @@ export const useRemoteDesktop = (client: any) => {
       // Clear any existing timeout
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current);
+      }
+
+      if (lastConnectedConfigRef.current.dynamicResize) {
+        // In-session resize via Display Control, no reconnect.
+        resizeTimeoutRef.current = setTimeout(() => {
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+
+          if (canvasRef.current) {
+            canvasRef.current.width = width;
+            canvasRef.current.height = height;
+          }
+
+          if (session.current && client?.ironRDPBridge) {
+            client.ironRDPBridge.resize(session.current.id, width, height);
+          }
+
+          lastConnectedConfigRef.current = {
+            ...lastConnectedConfigRef.current!,
+            width,
+            height,
+          };
+          canvasRef?.current?.focus();
+        }, 200);
+        return;
       }
 
       setIsResizing(true);
@@ -322,16 +396,7 @@ export const useRemoteDesktop = (client: any) => {
         clearTimeout(resizeTimeoutRef.current);
       }
     };
-  }, [status, connect]);
-
-  /**
-   * Auto accept certificate if previously accepted (for reconnects)
-   */
-  useEffect(() => {
-    if (pendingCertificate && certificateAccepted.current) {
-      acceptCertificatePrompt();
-    }
-  }, [acceptCertificatePrompt, pendingCertificate]);
+  }, [status, connect, client]);
 
   return {
     connect,

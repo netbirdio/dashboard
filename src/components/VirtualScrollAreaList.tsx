@@ -33,6 +33,8 @@ type Props<T extends { id?: string }> = {
   heightAdjustment?: number;
   groupKey?: (item: T) => string | undefined;
   itemKey?: (item: T) => string;
+  // Read-only lists pass false so nothing looks pre-hovered.
+  autoSelectFirst?: boolean;
 };
 
 export function VirtualScrollAreaList<T extends { id?: string }>({
@@ -51,16 +53,19 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
   heightAdjustment = 8,
   groupKey,
   itemKey,
+  autoSelectFirst = true,
 }: Readonly<Props<T>>) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [lastInputMethod, setLastInputMethod] = useState<"mouse" | "keyboard">(
     "mouse",
   );
-  const [selected, setSelected] = useState(0);
+  // -1 = nothing highlighted (read-only lists); 0 = first row (combobox nav).
+  const initialSelected = autoSelectFirst ? 0 : -1;
+  const [selected, setSelected] = useState(initialSelected);
 
   useEffect(() => {
-    setSelected(0);
-  }, [items]);
+    setSelected(initialSelected);
+  }, [items, initialSelected]);
 
   const scrollToItem = useCallback((index: number) => {
     virtuosoRef.current?.scrollIntoView({
@@ -77,7 +82,8 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
       const length = items.length - 1;
       if (e.code === "ArrowUp" || (e.key === "Tab" && e.shiftKey)) {
         e.preventDefault();
-        const newSelected = selected === 0 ? length : selected - 1;
+        // A read-only list starts at -1, which must wrap to the last row.
+        const newSelected = selected <= 0 ? length : selected - 1;
         setSelected(newSelected);
         scrollToItem(newSelected);
       } else if (e.key === "ArrowDown" || e.key === "Tab") {
@@ -87,6 +93,8 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
         scrollToItem(newSelected);
       }
       if (e.key === "Enter") {
+        // Leave Enter alone rather than handing onSelect an undefined item.
+        if (selected < 0 || selected >= items.length) return;
         e.preventDefault();
         onSelect?.(items[selected]);
       }

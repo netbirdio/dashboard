@@ -6,7 +6,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-const PeerContext = React.createContext(
+export const PeerContext = React.createContext(
   {} as {
     peers: Peer[] | undefined;
     isLoading: boolean;

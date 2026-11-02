@@ -27,7 +27,7 @@ export const SSHAccessType = ({ value, onChange }: Props) => {
       <SelectTrigger className="w-[280px]">
         <div
           className={"flex items-center gap-3"}
-          data-cy={"protocol-select-button"}
+          data-testid={"protocol-select-button"}
         >
           {value === "full" ? (
             <ShieldUserIcon size={15} className={"text-nb-gray-300 shrink-0"} />
@@ -37,7 +37,7 @@ export const SSHAccessType = ({ value, onChange }: Props) => {
           <SelectValue placeholder="Select ssh access type..." />
         </div>
       </SelectTrigger>
-      <SelectContent data-cy={"ssh-access-selection"}>
+      <SelectContent data-testid={"ssh-access-selection"}>
         <SelectItem value="full" className={"whitespace-nowrap"}>
           Full Access
         </SelectItem>

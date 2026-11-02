@@ -50,6 +50,9 @@ type ProviderProps = {
   url: string;
   defaultPageSize?: number;
   defaultFilters?: Record<string, string>;
+  // When false the underlying request is suppressed (e.g. while a feature lock
+  // resolves). Defaults to true so existing consumers are unaffected.
+  enabled?: boolean;
   children: React.ReactNode;
 };
 
@@ -57,6 +60,7 @@ export default function ServerPaginationProvider({
   url,
   defaultPageSize = 50,
   defaultFilters,
+  enabled = true,
   children,
 }: Readonly<ProviderProps>) {
   const { mutate: swrMutate } = useSWRConfig();
@@ -92,7 +96,7 @@ export default function ServerPaginationProvider({
     data: response,
     isLoading,
     isValidating,
-  } = useFetchApi<Pagination<unknown>>(apiUrl);
+  } = useFetchApi<Pagination<unknown>>(apiUrl, false, true, enabled);
 
   const hasLoadedOnce = useRef(false);
   const previousResponse = useRef<Pagination<unknown> | undefined>(undefined);
@@ -110,7 +114,7 @@ export default function ServerPaginationProvider({
     hasNextPage ? buildUrl(page + 1, pageSize, search, filters) : apiUrl,
     false,
     false,
-    hasNextPage,
+    enabled && hasNextPage,
   );
 
   const onPaginationChange = useCallback(

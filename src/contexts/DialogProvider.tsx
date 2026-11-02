@@ -29,6 +29,8 @@ type DialogOptions = {
   maxWidthClass?: string;
   hideIcon?: boolean;
   center?: boolean;
+  // Opt-in: clicking the overlay dismisses the dialog (resolves false).
+  dismissOnOutsideClick?: boolean;
 };
 
 export default function DialogProvider({ children }: Props) {
@@ -68,18 +70,30 @@ export default function DialogProvider({ children }: Props) {
           <ModalContent
             maxWidthClass={dialogOptions.maxWidthClass || "max-w-[400px]"}
             showClose={false}
-            onInteractOutside={(e) => e.preventDefault()}
-            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) =>
+              !dialogOptions.dismissOnOutsideClick && e.preventDefault()
+            }
+            onPointerDownOutside={(e) =>
+              !dialogOptions.dismissOnOutsideClick && e.preventDefault()
+            }
           >
             <ModalHeader
               center={dialogOptions.center ?? dialogOptions.type == "center"}
-              title={dialogOptions.title || "Confirmation"}
+              title={
+                <span data-testid={"confirmation.title"}>
+                  {dialogOptions.title || "Confirmation"}
+                </span>
+              }
               margin={"mt-1"}
               description={
                 dialogOptions.description ||
                 "Are you sure you want to continue? This action cannot be undone."
               }
-              icon={dialogOptions.hideIcon ? "" : dialogTypes[dialogOptions.type || "default"]}
+              icon={
+                dialogOptions.hideIcon
+                  ? ""
+                  : dialogTypes[dialogOptions.type || "default"]
+              }
               color={
                 dialogOptions.type == "default"
                   ? "blue"
@@ -104,7 +118,7 @@ export default function DialogProvider({ children }: Props) {
                   className={"w-full"}
                   size={"sm"}
                   tabIndex={-1}
-                  data-cy={"confirmation.cancel"}
+                  data-testid={"confirmation.cancel"}
                   onClick={() => fn.current && fn.current(false)}
                 >
                   {dialogOptions.cancelText || "Cancel"}
@@ -120,7 +134,7 @@ export default function DialogProvider({ children }: Props) {
                 }
                 className={"w-full"}
                 size={"sm"}
-                data-cy={"confirmation.confirm"}
+                data-testid={"confirmation.confirm"}
                 onClick={() => fn.current && fn.current(true)}
               >
                 {dialogOptions.confirmText || "Confirm"}

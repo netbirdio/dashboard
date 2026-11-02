@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +10,7 @@ import HelpText from "@components/HelpText";
 import { InlineButtonLink } from "@components/InlineLink";
 import { Label } from "@components/Label";
 import { ToggleSwitch } from "@components/ToggleSwitch";
+import { cn } from "@utils/helpers";
 import {
   AlertTriangle,
   ArrowRight,
@@ -18,12 +20,11 @@ import {
   MoreVertical,
   PlusIcon,
 } from "lucide-react";
-import { Callout } from "@components/Callout";
 import React from "react";
+import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { Network } from "@/interfaces/Network";
 import { ReverseProxyTarget } from "@/interfaces/ReverseProxy";
-import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { cn } from "@utils/helpers";
+import ReverseProxyTargetAccessActionBadge from "@/modules/reverse-proxy/targets/ReverseProxyTargetAccessActionBadge";
 
 type Props = {
   targets: ReverseProxyTarget[];
@@ -67,13 +68,18 @@ export default function ReverseProxyHTTPTargets({
                   className="rounded-md hover:bg-nb-gray-900/30 cursor-pointer transition-all"
                 >
                   <td className="py-2.5 pl-5 pr-2 align-middle">
-                    <span className="text-[11px] leading-none font-mono px-2.5 py-2 rounded bg-nb-gray-900 text-nb-gray-300 inline-flex items-center">
-                      {target.path
-                        ? target.path.startsWith("/")
-                          ? target.path
-                          : `/${target.path}`
-                        : "/"}
-                    </span>
+                    <div className={"flex items-center gap-2"}>
+                      <span className="text-[11px] leading-none font-mono px-2.5 py-2 rounded bg-nb-gray-900 text-nb-gray-300 inline-flex items-center">
+                        {target.path
+                          ? target.path.startsWith("/")
+                            ? target.path
+                            : `/${target.path}`
+                          : "/"}
+                      </span>
+                      <ReverseProxyTargetAccessActionBadge
+                        action={target.access_action}
+                      />
+                    </div>
                   </td>
                   <td className="py-2.5 px-4 align-middle">
                     <ArrowRight size={12} className="text-nb-gray-400" />
@@ -93,7 +99,7 @@ export default function ReverseProxyHTTPTargets({
                       />
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="default-outline" className="!px-3">
+                          <Button variant="default-outline" className="!px-3" data-testid="target-row-actions">
                             <MoreVertical size={16} className="shrink-0" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -101,13 +107,17 @@ export default function ReverseProxyHTTPTargets({
                           className="w-auto min-w-[200px]"
                           align="end"
                         >
-                          <DropdownMenuItem onClick={() => onEditTarget(index)}>
+                          <DropdownMenuItem
+                            data-testid="edit-target"
+                            onClick={() => onEditTarget(index)}
+                          >
                             <div className="flex gap-3 items-center">
                               <Edit size={14} className="shrink-0" />
                               Edit Target
                             </div>
                           </DropdownMenuItem>
                           <DropdownMenuItem
+                            data-testid="remove-target"
                             variant={"danger"}
                             onClick={() => onRemoveTarget(index)}
                           >
@@ -131,6 +141,7 @@ export default function ReverseProxyHTTPTargets({
         variant="dotted"
         className={cn("w-full mt-1", targets?.length > 0 && "mt-1")}
         size="sm"
+        data-testid="add-target"
         onClick={onAddTarget}
         disabled={!!(initialNetwork && !initialNetwork.resources?.length)}
       >

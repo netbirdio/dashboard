@@ -264,6 +264,7 @@ export default function NetworkResourceAccessControl({
           className={"w-full mt-1"}
           size="sm"
           onClick={openAddPolicy}
+          data-testid="add-policy"
         >
           <PlusIcon size={14} />
           Add Policy

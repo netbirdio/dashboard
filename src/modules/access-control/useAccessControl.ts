@@ -22,11 +22,13 @@ type Props = {
   policy?: Policy;
   postureCheckTemplates?: PostureCheck[];
   onSuccess?: (policy: Policy) => void;
+  initialSourceGroups?: Group[] | string[];
   initialDestinationGroups?: Group[] | string[];
   initialName?: string;
   initialDescription?: string;
   initialProtocol?: Protocol;
   initialPorts?: number[];
+  initialSourceResource?: PolicyRuleResource;
   initialDestinationResource?: PolicyRuleResource;
 };
 
@@ -35,12 +37,14 @@ type Props = {
 export const useAccessControl = ({
   policy,
   postureCheckTemplates,
+  initialSourceGroups,
   initialDestinationGroups,
   initialName,
   initialDescription,
   onSuccess,
   initialProtocol,
   initialPorts,
+  initialSourceResource,
   initialDestinationResource,
 }: Props = {}) => {
   const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
@@ -127,7 +131,9 @@ export const useAccessControl = ({
     setSourceGroups,
     { getGroupsToUpdate: getSourceGroupsToUpdate },
   ] = useGroupHelper({
-    initial: firstRule ? (firstRule.sources as Group[]) : [],
+    initial: firstRule
+      ? (firstRule.sources as Group[])
+      : initialSourceGroups ?? [],
   });
 
   const [
@@ -141,7 +147,7 @@ export const useAccessControl = ({
   });
 
   const [sourceResource, setSourceResource] = useState(
-    firstRule?.sourceResource,
+    firstRule?.sourceResource ?? initialSourceResource,
   );
 
   const [destinationResource, setDestinationResource] = useState(
@@ -224,7 +230,6 @@ export const useAccessControl = ({
       return groups;
     });
 
-    // Create posture checks if they don't have an ID
     let hasError = false;
     let allChecks = postureChecks;
     await createPostureChecksWithoutID()
@@ -260,7 +265,6 @@ export const useAccessControl = ({
 
     let authorizedGroups: AuthorizedGroups = {};
     if (protocol === "netbird-ssh") {
-      // Set port 22 for SSH protocol
       newPorts = ["22"];
       newPortRanges = [];
 

@@ -39,6 +39,7 @@ export const NetworkResourceCell = ({ network }: Props) => {
         className={"!px-3"}
         onClick={() => openResourceModal(network)}
         disabled={!permission.networks.update}
+        data-testid={"add-resource"}
       >
         <PlusCircle size={12} />
         Add
@@ -51,6 +52,7 @@ export const NetworkResourceCell = ({ network }: Props) => {
         variant={"secondary"}
         className={"!px-3"}
         onClick={() => openResourceModal(network)}
+        data-testid={"add-resource"}
       >
         <PlusCircle size={12} />
         Add

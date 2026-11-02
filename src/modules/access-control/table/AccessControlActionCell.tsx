@@ -6,7 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import { MoreVertical, PowerIcon, Trash2 } from "lucide-react";
+import { Copy, MoreVertical, PowerIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { mutate } from "swr";
@@ -22,9 +22,11 @@ type Props = {
 export default function AccessControlActionCell({ policy }: Readonly<Props>) {
   const { confirm } = useDialog();
   const { permission } = usePermissions();
-  const { deletePolicy, updatePolicy, serializeRules } = usePolicies();
+  const { deletePolicy, updatePolicy, serializeRules, openDuplicatePolicyModal } =
+    usePolicies();
   const [open, setOpen] = useState(false);
 
+  const canCreate = permission.policies.create;
   const canUpdate = permission.policies.update;
   const canDelete = permission.policies.delete;
 
@@ -69,11 +71,25 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
             variant={"secondary"}
             className={"!px-3"}
             aria-label={"Policy actions"}
+            data-testid={"policy-actions"}
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className={"w-auto"} align={"end"}>
+          <DropdownMenuItem
+            onClick={() => {
+              setOpen(false);
+              openDuplicatePolicyModal(policy);
+            }}
+            disabled={!canCreate}
+            data-testid={"duplicate-policy"}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <Copy size={14} className={"shrink-0"} />
+              Duplicate
+            </div>
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               setOpen(false);
@@ -91,6 +107,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
             onClick={handleDelete}
             disabled={!canDelete}
             variant={"danger"}
+            data-testid={"delete-policy"}
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />

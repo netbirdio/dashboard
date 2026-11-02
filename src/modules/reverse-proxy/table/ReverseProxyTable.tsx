@@ -212,7 +212,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
           icon={
             <SquareIcon
               icon={
-                <ReverseProxyIcon className={"fill-nb-gray-200"} size={20} />
+                <ReverseProxyIcon className={"text-nb-gray-200"} size={20} />
               }
               color={"gray"}
               size={"large"}
@@ -227,6 +227,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
               variant={"primary"}
               onClick={() => openModal()}
               disabled={!permission?.services?.create}
+              data-testid={"add-service"}
             >
               <PlusCircle size={16} />
               Add Service
@@ -251,6 +252,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
               className={"ml-auto"}
               onClick={() => openModal()}
               disabled={!permission?.services?.create}
+              data-testid={"add-service"}
             >
               <PlusCircle size={16} />
               Add Service

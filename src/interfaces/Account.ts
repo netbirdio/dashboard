@@ -8,6 +8,9 @@ export interface Account {
     extra: {
       peer_approval_enabled: boolean;
       user_approval_required: boolean;
+      network_traffic_logs_enabled: boolean;
+      network_traffic_packet_counter_enabled: boolean;
+      network_traffic_logs_groups: string[];
     };
     peer_login_expiration_enabled: boolean;
     peer_expose_enabled?: boolean;
@@ -27,15 +30,46 @@ export interface Account {
     embedded_idp_enabled?: boolean;
     auto_update_version: string;
     auto_update_always: boolean;
+    metrics_push_enabled?: boolean;
+    peer_hostname_collision_rejected?: boolean;
     local_auth_disabled?: boolean;
     local_mfa_enabled?: boolean;
     ipv6_enabled_groups?: string[];
     network_range_v6?: string;
+    agent_network_only?: boolean;
+    dashboard_features?: AccountDashboardFeatures;
   };
   onboarding?: AccountOnboarding;
+}
+
+// AccountDashboardFeatures holds per-account dashboard section visibility
+// overrides. Omitted keys follow the default dashboard behavior.
+export interface AccountDashboardFeatures {
+  agent_network?: boolean;
 }
 
 export interface AccountOnboarding {
   onboarding_flow_pending: boolean;
   signup_form_pending: boolean;
+}
+
+export interface SignInDomain {
+  id: string;
+  name: string;
+  is_primary: boolean;
+  validation_token: string;
+  validation_status: DomainValidationStatus;
+  validation_last_updated: string | null;
+  connections?: DomainConnection[];
+}
+
+export interface DomainConnection {
+  id: string;
+  name: string;
+}
+
+export enum DomainValidationStatus {
+  PENDING = "pending",
+  VERIFIED = "verified",
+  FAILED = "failed",
 }

@@ -13,11 +13,13 @@ import GroupBadge from "@components/ui/GroupBadge";
 import GroupBadgeWithEditPeers from "@components/ui/GroupBadgeWithEditPeers";
 import ResourceBadge from "@components/ui/ResourceBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import TruncatedText from "@components/ui/TruncatedText";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
 import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
 import { IconArrowBack } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
 import { sortBy, trim, unionBy } from "lodash";
@@ -45,15 +47,67 @@ import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
-import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
-import TruncatedText from "@components/ui/TruncatedText";
+import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 
-type PeerGroupSelectorTab = "peers" | "groups" | "resources" | "clusters";
+export type PeerGroupSelectorTab =
+  | "peers"
+  | "groups"
+  | "resources"
+  | "clusters";
+
+export const getOpeningTab = (params: {
+  currentTab: PeerGroupSelectorTab;
+  hasResource: boolean;
+  resourceType?: "peer" | string;
+  hasSelectedCluster: boolean;
+  showClusters: boolean;
+  showPeers: boolean;
+  showResources: boolean;
+  hideGroupsTab: boolean;
+  tabOrder?: PeerGroupSelectorTab[];
+  initialTab?: PeerGroupSelectorTab;
+}): PeerGroupSelectorTab => {
+  const {
+    currentTab,
+    hasResource,
+    resourceType,
+    hasSelectedCluster,
+    showClusters,
+    showPeers,
+    showResources,
+    hideGroupsTab,
+    tabOrder,
+    initialTab,
+  } = params;
+
+  const renderable = (tab: PeerGroupSelectorTab): boolean => {
+    if (tabOrder && !tabOrder.includes(tab)) return false;
+    if (tab === "groups") return !hideGroupsTab;
+    if (tab === "peers") return showPeers;
+    if (tab === "resources") return showResources;
+    return showClusters;
+  };
+
+  const defaultTab = (): PeerGroupSelectorTab => {
+    if (initialTab) return initialTab;
+    if (tabOrder?.[0]) return tabOrder[0];
+    if (hideGroupsTab) return showPeers ? "peers" : "resources";
+    return "groups";
+  };
+
+  if (hasResource) {
+    if (resourceType === "peer") return showPeers ? "peers" : defaultTab();
+    return showResources ? "resources" : defaultTab();
+  }
+  if (hasSelectedCluster && showClusters) return "clusters";
+  if (renderable(currentTab)) return currentTab;
+  if (initialTab && renderable(initialTab)) return initialTab;
+  return defaultTab();
+};
 
 export type ClusterOption = {
-  /** Cluster apex domain (e.g. "eu.proxy.netbird.io"); also the value
-   *  that downstream code stores in target_id / proxy_cluster. */
+  /** Apex domain; also what downstream stores in target_id / proxy_cluster. */
   domain: string;
   /** Human-friendly label; falls back to domain. */
   label?: string;
@@ -78,21 +132,20 @@ interface MultiSelectProps {
   saveGroupAssignments?: boolean;
   showRoutes?: boolean;
   disabledGroups?: Group[];
-  dataCy?: string;
+  "data-testid"?: string;
   showResourceCounter?: boolean;
   showResources?: boolean;
   showPeers?: boolean;
   showPeerCounter?: boolean;
   hideGroupsTab?: boolean;
   tabOrder?: PeerGroupSelectorTab[];
+  // Tab the dropdown opens on; unlike tabOrder it doesn't reorder triggers.
+  initialTab?: PeerGroupSelectorTab;
   closeOnSelect?: boolean;
-  /** Show a Clusters tab. Off by default; flip on with clusters list. */
   showClusters?: boolean;
   /** Clusters offered in the Clusters tab. When empty the tab is hidden. */
   clusters?: ClusterOption[];
-  /** Currently-selected cluster (domain string), if any. */
   selectedCluster?: string;
-  /** Called when the user picks (or clears) a cluster. */
   onClusterChange?: (cluster?: string) => void;
   resource?: PolicyRuleResource;
   onResourceChange?: (resource?: PolicyRuleResource) => void;
@@ -103,7 +156,12 @@ interface MultiSelectProps {
   users?: User[];
   placeholderForSearch?: string;
   resourceIds?: string[];
+  // Limit the Groups tab to these ids (names for draft groups). Also
+  // disables inline group creation.
+  groupIds?: string[];
   additionalResources?: NetworkResource[];
+  // Extra peers alongside the fetched ones (e.g. draft placeholder peers).
+  additionalPeers?: Peer[];
   policies?: Policy[];
 }
 export function PeerGroupSelector({
@@ -119,13 +177,14 @@ export function PeerGroupSelector({
   saveGroupAssignments = true,
   showRoutes = false,
   disabledGroups,
-  dataCy = "group-selector-dropdown",
+  "data-testid": dataTestId = "group-selector-dropdown",
   showResourceCounter = true,
   showResources = false,
   showPeers = false,
   showPeerCounter = true,
   hideGroupsTab = false,
   tabOrder,
+  initialTab,
   closeOnSelect = false,
   resource,
   onResourceChange,
@@ -136,16 +195,22 @@ export function PeerGroupSelector({
   users,
   placeholderForSearch = 'Search groups or add new group by pressing "Enter"...',
   resourceIds,
+  groupIds,
   additionalResources,
+  additionalPeers,
   policies,
   showClusters = false,
   clusters,
   selectedCluster,
   onClusterChange,
 }: Readonly<MultiSelectProps>) {
+  // Network resources sit behind the networks permission; callers without
+  // it (e.g. agent_network_admin opening the policy modal) get a plain
+  // group selector instead of a 403.
+  const { permission } = usePermissions();
   const { data: fetchedResources, isLoading: isResourcesLoading } = useFetchApi<
     NetworkResource[]
-  >("/networks/resources");
+  >("/networks/resources", false, true, !!permission?.networks?.read);
 
   const resources = useMemo(() => {
     if (!additionalResources?.length) return fetchedResources;
@@ -155,8 +220,16 @@ export function PeerGroupSelector({
     return [...(fetchedResources || []), ...additional];
   }, [fetchedResources, additionalResources]);
 
-  const { data: peers, isLoading: isPeersLoading } =
+  const { data: fetchedPeers, isLoading: isPeersLoading } =
     useFetchApi<Peer[]>("/peers");
+
+  const peers = useMemo(() => {
+    if (!additionalPeers?.length) return fetchedPeers;
+    const additional = additionalPeers.filter(
+      (ap) => !fetchedPeers?.some((p) => p.id === ap.id),
+    );
+    return [...(fetchedPeers || []), ...additional];
+  }, [fetchedPeers, additionalPeers]);
 
   const { groups, dropdownOptions, setDropdownOptions, addDropdownOptions } =
     useGroups();
@@ -169,8 +242,18 @@ export function PeerGroupSelector({
 
   const [open, setOpen] = useState(false);
 
+  const visibleDropdownOptions = useMemo(() => {
+    let options = hideAllGroup
+      ? dropdownOptions.filter((g) => g.name !== "All")
+      : dropdownOptions;
+    if (groupIds) {
+      options = options.filter((g) => groupIds.includes(g.id ?? g.name));
+    }
+    return options;
+  }, [dropdownOptions, hideAllGroup, groupIds]);
+
   const sortedDropdownOptions = useSortedDropdownOptions(
-    dropdownOptions,
+    visibleDropdownOptions,
     values,
     open,
   );
@@ -181,7 +264,6 @@ export function PeerGroupSelector({
     { filter: true, debounce: 150 },
   );
 
-  // Update dropdown options when groups change
   useEffect(() => {
     if (!groups) return;
     const sortedGroups = sortBy([...groups], "name");
@@ -191,10 +273,6 @@ export function PeerGroupSelector({
     );
     let uniqueGroups = unionBy(sortedGroups, dropdownOptions, "name");
     uniqueGroups = unionBy(clientGroups, uniqueGroups, "name");
-
-    uniqueGroups = hideAllGroup
-      ? uniqueGroups.filter((group) => group.name !== "All")
-      : uniqueGroups;
 
     setDropdownOptions(uniqueGroups);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -209,7 +287,6 @@ export function PeerGroupSelector({
     }
   };
 
-  // Add group to the groupOptions if it does not exist
   const selectGroup = (name: string) => {
     onResourceChange?.(undefined);
     const group = groups?.find((group) => group.name == name);
@@ -259,25 +336,24 @@ export function PeerGroupSelector({
     if (max == 1) setOpen(false);
   };
 
-  // Remove group from the groupOptions if it does not have an id
   const deselectGroup = (name: string) => {
     onChange((previous) => {
       return previous.filter((group) => group.name != name);
     });
   };
 
-  // Check if the searched group does not exist
   const searchedGroupNotFound = useMemo(() => {
     const isSearching = search.length > 0;
     const groupDoesNotExist =
       dropdownOptions.filter((item) => item.name == trim(search)).length == 0;
     const isAllGroup = search.toLowerCase() == "all";
-    return isSearching && groupDoesNotExist && !isAllGroup;
-  }, [search, dropdownOptions]);
+    return isSearching && groupDoesNotExist && !isAllGroup && !groupIds;
+  }, [search, dropdownOptions, groupIds]);
 
   const [slice, setSlice] = useState(10);
 
   const getDefaultTab = (): PeerGroupSelectorTab => {
+    if (initialTab) return initialTab;
     if (tabOrder?.[0]) return tabOrder[0];
     if (hideGroupsTab) return showPeers ? "peers" : "resources";
     return "groups";
@@ -301,7 +377,6 @@ export function PeerGroupSelector({
     onChange(union);
   };
 
-  // Reset the search input when switching tabs
   useEffect(() => {
     setSearch("");
     setTimeout(() => {
@@ -367,6 +442,22 @@ export function PeerGroupSelector({
     <Popover
       open={open}
       onOpenChange={(isOpen) => {
+        if (isOpen) {
+          setTab(
+            getOpeningTab({
+              currentTab: tab,
+              hasResource: !!resource,
+              resourceType: resource?.type,
+              hasSelectedCluster: !!selectedCluster,
+              showClusters,
+              showPeers,
+              showResources,
+              hideGroupsTab,
+              tabOrder,
+              initialTab,
+            }),
+          );
+        }
         setOpen(isOpen);
         if (!isOpen && search.length > 0) {
           setTimeout(() => {
@@ -389,7 +480,7 @@ export function PeerGroupSelector({
               "disabled:pointer-events-none disabled:opacity-60 transition-all",
             )}
             disabled={disabled}
-            data-cy={dataCy}
+            data-testid={dataTestId}
             ref={inputRef}
           >
             <div
@@ -422,9 +513,7 @@ export function PeerGroupSelector({
                   useHover={true}
                   data-cy={"cluster-badge"}
                   variant={"gray-ghost"}
-                  className={
-                    "py-[3px] transition-all group whitespace-nowrap"
-                  }
+                  className={"py-[3px] transition-all group whitespace-nowrap"}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -476,7 +565,7 @@ export function PeerGroupSelector({
                           e.preventDefault();
                           e.stopPropagation();
                           if (disableInlineRemoveGroup) return;
-                          if (peer != undefined && group.name == "All") return; // Prevent removing the "All" group
+                          if (peer != undefined && group.name == "All") return;
                           toggleGroupByName(group.name);
                         }}
                         showX={
@@ -497,7 +586,7 @@ export function PeerGroupSelector({
               )}
             </div>
 
-            <div className={"pl-2"} data-cy={"group-selector-open-close"}>
+            <div className={"pl-2"} data-testid={`${dataTestId}-open-close`}>
               <ChevronsUpDown
                 size={18}
                 className={
@@ -521,7 +610,7 @@ export function PeerGroupSelector({
           <CommandList className={"w-full"}>
             <div className={"relative"}>
               <CommandInput
-                data-cy={"group-search-input"}
+                data-testid={`${dataTestId}-search`}
                 className={cn(
                   "min-h-[42px] w-full relative",
                   "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
@@ -606,6 +695,16 @@ export function PeerGroupSelector({
                       </CommandItem>
                     )}
 
+                    {groupIds && filteredGroups.length === 0 && (
+                      <DropdownInfoText
+                        className={"mt-5 mb-5 max-w-sm mx-auto"}
+                      >
+                        {search !== ""
+                          ? "There are no groups matching your search. Please try a different search term."
+                          : "There are no groups that contain resources yet."}
+                      </DropdownInfoText>
+                    )}
+
                     {filteredGroups.slice(0, slice).map((option) => {
                       const isSelected =
                         values.find((group) => group.name == option.name) !=
@@ -636,7 +735,7 @@ export function PeerGroupSelector({
                             disabled={isDisabled}
                             onSelect={() => {
                               if (peer != undefined && option.name == "All")
-                                return; // Prevent removing the "All" group
+                                return;
                               if (isDisabled) return;
                               toggleGroupByName(option.name);
                               searchRef.current?.focus();
@@ -1029,14 +1128,15 @@ const ResourcesList = ({
               <div className={"flex items-center gap-2"}>
                 <Badge
                   useHover={true}
-                  data-cy={"group-badge"}
+                  data-testid={"group-badge"}
                   variant={"gray-ghost"}
                   className={cn("transition-all group whitespace-nowrap h-7")}
                   onClick={(e) => {
                     e.preventDefault();
                   }}
                 >
-                  {res.type === "host" && (
+                  {/* Draft resources without an address have no type yet. */}
+                  {(res.type === "host" || !res.type) && (
                     <WorkflowIcon size={12} className={"shrink-0"} />
                   )}
                   {res.type === "domain" && (
@@ -1091,9 +1191,7 @@ const ClustersList = ({
 
   return (
     <Radio defaultValue={value} name={"cluster"} value={value}>
-      <ScrollArea
-        className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}
-      >
+      <ScrollArea className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}>
         {clusters.map((c) => (
           <CommandItem
             key={c.domain}
@@ -1205,7 +1303,7 @@ const PeersList = ({
               <div className={"flex items-center gap-2"}>
                 <Badge
                   useHover={false}
-                  data-cy={"group-badge"}
+                  data-testid={"group-badge"}
                   variant={"gray-ghost"}
                   className={cn(
                     "transition-all group whitespace-nowrap h-7 px-2",
