@@ -1,0 +1,50 @@
+name: WASM client version
+
+# Fails a pull request that moves the default WASM client in
+# src/utils/config.ts to an older release, as a merge resolved against an
+# older main once did. A deliberate rollback, say away from a broken client
+# release, carries the allow-wasm-downgrade label. See
+# scripts/wasm-client-version.mjs.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - "src/utils/config.ts"
+      - "scripts/wasm-client-version.mjs"
+      - ".github/workflows/wasm-client-version.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  never-backwards:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # The checkout is the merge of the pull request into its base, so this
+      # compares what would land with the base branch as it stands now.
+      - name: Compare the default WASM client with the base branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          ALLOWED: ${{ contains(github.event.pull_request.labels.*.name, 'allow-wasm-downgrade') }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE_REF"
+          git show FETCH_HEAD:src/utils/config.ts > "$RUNNER_TEMP/base-config.ts"
+          result=$(node scripts/wasm-client-version.mjs compare "$RUNNER_TEMP/base-config.ts" src/utils/config.ts)
+          if [[ "$result" == "downgrade" ]]; then
+            if [[ "$ALLOWED" == "true" ]]; then
+              echo "::notice::Default WASM client moves back; allowed by the allow-wasm-downgrade label"
+            else
+              echo "::error file=src/utils/config.ts::The default WASM client moves back to an older release. If that is deliberate, add the allow-wasm-downgrade label."
+              exit 1
+            fi
+          fi
