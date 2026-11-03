@@ -68,3 +68,31 @@ published for `linux/amd64` and `linux/arm64` only. License terms are in
   `example@local`.
 
 These certificate variables apply only to the standard image.
+
+### Branding
+
+A deployment can show its own name, logo and favicon instead of NetBird's. All
+three are optional and independent; whatever is unset keeps the NetBird
+default.
+
+- `NETBIRD_BRAND_NAME` replaces "NetBird Dashboard" in the browser tab title.
+- `NETBIRD_BRAND_LOGO_URL` replaces the NetBird logo in the header and on the
+  setup, onboarding and pending approval screens. The image is scaled to the
+  height of the NetBird logo (22 to 24 pixels), so a wide SVG or PNG with a
+  transparent background works best on the dark interface.
+- `NETBIRD_BRAND_FAVICON_URL` replaces the favicon.
+
+The logo and favicon take an `http(s)` URL or a path to a file mounted into
+the container's web root:
+
+```shell
+docker run -d --rm \
+  -v ./branding:/usr/share/nginx/html/branding:ro \
+  -e NETBIRD_BRAND_NAME='Acme Access' \
+  -e NETBIRD_BRAND_LOGO_URL=/branding/logo.svg \
+  -e NETBIRD_BRAND_FAVICON_URL=/branding/favicon.png \
+  ...
+```
+
+These settings cover the dashboard only. The sign-in page belongs to the
+identity provider and is branded there.
