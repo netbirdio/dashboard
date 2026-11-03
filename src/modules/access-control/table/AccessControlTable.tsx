@@ -75,7 +75,10 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     },
     sortingFn: "text",
     filterFn: "fuzzy",
-    cell: ({ cell }) => <AccessControlNameCell policy={cell.row.original} />,
+    meta: { minWidth: 280 },
+    cell: ({ cell }) => (
+      <AccessControlNameCell policy={cell.row.original} fluid={true} />
+    ),
   },
   {
     id: "description",
@@ -88,7 +91,7 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     accessorKey: "enabled",
     accessorFn: (row) => row.enabled,
     enableSorting: false,
-    meta: { className: ENABLED_COLUMN_CLASS.xl },
+    meta: { className: ENABLED_COLUMN_CLASS.xl, fit: true },
     header: ({ column }) => {
       return (
         <DataTableHeader column={column} sorting={false}>
@@ -221,6 +224,7 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     id: "actions",
     accessorKey: "id",
     header: "",
+    meta: { fit: true },
     cell: ({ cell }) => <AccessControlActionCell policy={cell.row.original} />,
   },
 ];
@@ -623,15 +627,6 @@ export default function AccessControlTable({
                 disabled={policies?.length == 0}
               />
 
-              <DataTableResetFilterButton
-                table={table}
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.setColumnFilters([]);
-                  table.setGlobalFilter("");
-                }}
-              />
-
               {tempPolicies?.length > 0 && (
                 <FullTooltip
                   content={
@@ -659,6 +654,15 @@ export default function AccessControlTable({
                 onClick={() => {
                   mutate("/policies").then();
                   mutate("/groups").then();
+                }}
+              />
+
+              <DataTableResetFilterButton
+                table={table}
+                onClick={() => {
+                  table.setPageIndex(0);
+                  table.setColumnFilters([]);
+                  table.setGlobalFilter("");
                 }}
               />
             </>

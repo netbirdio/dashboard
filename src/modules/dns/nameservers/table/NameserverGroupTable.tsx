@@ -341,18 +341,18 @@ export default function NameserverGroupTable({
               filters={filterDefs}
               disabled={nameserverGroups?.length == 0}
             />
+            <DataTableRefreshButton
+              isDisabled={nameserverGroups?.length == 0}
+              onClick={() => {
+                mutate("/dns/nameservers").then();
+              }}
+            />
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
                 table.setPageIndex(0);
                 table.resetColumnFilters();
                 table.resetGlobalFilter();
-              }}
-            />
-            <DataTableRefreshButton
-              isDisabled={nameserverGroups?.length == 0}
-              onClick={() => {
-                mutate("/dns/nameservers").then();
               }}
             />
           </>
