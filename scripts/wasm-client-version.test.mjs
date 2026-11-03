@@ -57,25 +57,47 @@ describe("wasmVersion", () => {
   it("refuses more than one URL", () => {
     expect(() => wasmVersion(config("v0.81.5") + config("v0.82.0"))).toThrow(/expected one/);
   });
+
+  it("reads a prerelease suffix as part of the version", () => {
+    expect(wasmVersion(config("v0.82.0-rc.1"))).toBe("v0.82.0-rc.1");
+  });
+
+  it("refuses a URL that names no version", () => {
+    expect(() => wasmVersion(config("latest"))).toThrow(/not a vMAJOR/);
+  });
 });
 
 describe("change", () => {
   it("allows moving forward", () => {
-    expect(change(config("v0.81.5"), config("v0.82.0")).downgrade).toBe(false);
+    expect(change(config("v0.81.5"), config("v0.82.0")).ok).toBe(true);
   });
 
   it("allows leaving it alone", () => {
-    expect(change(config("v0.82.0"), config("v0.82.0")).downgrade).toBe(false);
+    expect(change(config("v0.82.0"), config("v0.82.0")).ok).toBe(true);
   });
 
-  it("catches moving it back, as #876 did", () => {
+  it("blocks moving it back, as #876 did", () => {
     const d = change(config("v0.81.5"), config("v0.81.3"));
-    expect(d.downgrade).toBe(true);
+    expect(d.ok).toBe(false);
     expect(d.reason).toMatch(/from v0\.81\.5 to v0\.81\.3/);
   });
 
   it("allows a first default when the base has none", () => {
-    expect(change("export default {};\n", config("v0.82.0")).downgrade).toBe(false);
+    expect(change("export default {};\n", config("v0.82.0")).ok).toBe(true);
+  });
+
+  it("blocks pointing the default at a prerelease, even of the same version", () => {
+    const d = change(config("v0.82.0"), config("v0.82.0-rc.1"));
+    expect(d.ok).toBe(false);
+    expect(d.reason).toMatch(/prerelease, v0\.82\.0-rc\.1/);
+  });
+
+  it("allows moving from a release candidate to its release", () => {
+    expect(change(config("v0.82.0-rc.1"), config("v0.82.0")).ok).toBe(true);
+  });
+
+  it("blocks moving from a release candidate to an older release", () => {
+    expect(change(config("v0.82.0-rc.1"), config("v0.81.5")).ok).toBe(false);
   });
 
   it("refuses a pull request whose config names no client", () => {
