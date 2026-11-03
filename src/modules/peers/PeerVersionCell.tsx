@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from "@components/Tooltip";
 import MemoizedNetBirdIcon from "@components/ui/MemoizedNetBirdIcon";
+import { useOverflowTooltip } from "@hooks/useOverflowTooltip";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { compareVersions } from "@utils/version";
 import { ArrowRightIcon, ArrowUpCircleIcon } from "lucide-react";
@@ -42,12 +43,20 @@ export default function PeerVersionCell({
     return !compareVersions(version, latestVersion);
   }, [os, version, latestVersion, ephemeral]);
 
+  const hasSerial = !!serial && serial !== "";
+  const {
+    ref: osRef,
+    open: osTooltipOpen,
+    isOverflowing: isOsTruncated,
+    onOpenChange: onOsTooltipOpenChange,
+  } = useOverflowTooltip<HTMLSpanElement>(hasSerial);
+
   const updateIcon = useMemo(() => {
     return <ArrowUpCircleIcon size={15} className={"text-netbird"} />;
   }, []);
 
   return (
-    <div className={"flex flex-col gap-1"}>
+    <div className={"flex flex-col gap-1 min-w-0"}>
       {updateAvailable ? (
         <TooltipProvider>
           <Tooltip delayDuration={10}>
@@ -104,22 +113,34 @@ export default function PeerVersionCell({
       {os && os !== "" && os !== " " && (
         <FullTooltip
           delayDuration={500}
-          disabled={!serial || serial === ""}
+          customOpen={osTooltipOpen}
+          customOnOpenChange={onOsTooltipOpenChange}
+          className={"flex w-full min-w-0"}
           content={
             <div className={"text-xs"}>
-              <span className={"text-nb-gray-100 font-medium"}>Serial: </span>
-              {serial}
+              {isOsTruncated && <div className={"text-nb-gray-100"}>{os}</div>}
+              {hasSerial && (
+                <div>
+                  <span className={"text-nb-gray-100 font-medium"}>
+                    Serial:{" "}
+                  </span>
+                  {serial}
+                </div>
+              )}
             </div>
           }
         >
           <div
             className={
-              "flex items-center gap-2 text-neutral-300 whitespace-nowrap"
+              "flex items-center gap-2 text-neutral-300 whitespace-nowrap min-w-0"
             }
           >
-            <PeerOperatingSystemIcon os={os} />
-
-            {os}
+            <span className={"shrink-0"}>
+              <PeerOperatingSystemIcon os={os} />
+            </span>
+            <span ref={osRef} className={"truncate"}>
+              {os}
+            </span>
           </div>
         </FullTooltip>
       )}

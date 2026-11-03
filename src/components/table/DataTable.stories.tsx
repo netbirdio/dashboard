@@ -24,6 +24,7 @@ import {
   TableFiltersButton,
 } from "@components/table/TableFilters";
 import NoResults from "@components/ui/NoResults";
+import TextWithTooltip from "@components/ui/TextWithTooltip";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
@@ -442,6 +443,63 @@ export const FilterPickers: StoryObj = {
         />
       </Picker>
     </div>
+  ),
+};
+
+const longNameRows: PeerRow[] = [
+  {
+    ...rows[0],
+    id: "long-1",
+    name: "build-runner-eu-central-1a-ephemeral-7f3c9d2b.ci.internal.example.com",
+  },
+  ...rows.slice(1, 4),
+];
+
+const sizedColumns: ColumnDef<PeerRow>[] = [
+  { ...columns[0], meta: { fit: true } },
+  {
+    accessorKey: "name",
+    meta: { minWidth: 200 },
+    header: ({ column }) => (
+      <DataTableHeader column={column}>Name</DataTableHeader>
+    ),
+    cell: ({ row }) => (
+      <TextWithTooltip
+        text={row.original.name}
+        className={"font-medium text-nb-gray-100"}
+        fluid={true}
+      />
+    ),
+  },
+  {
+    accessorKey: "ip",
+    meta: { minWidth: 120 },
+    header: ({ column }) => (
+      <DataTableHeader column={column}>Address</DataTableHeader>
+    ),
+    cell: ({ row }) => <TextWithTooltip text={row.original.ip} fluid={true} />,
+  },
+  {
+    accessorKey: "os",
+    header: ({ column }) => (
+      <DataTableHeader column={column}>OS</DataTableHeader>
+    ),
+  },
+];
+
+// Columns take their content width plus an even share of the spare width;
+// when the table runs out of room, Name and Address truncate down to their
+// minimum.
+export const ColumnSizing: StoryObj = {
+  render: () => (
+    <DataTable
+      text={"Peers"}
+      columns={sizedColumns}
+      data={longNameRows}
+      keepStateInLocalStorage={false}
+      showSearchAndFilters={false}
+      getStartedCard={null}
+    />
   ),
 };
 
