@@ -7,7 +7,8 @@ RUN apk add --no-cache bash curl less ca-certificates git tzdata zip gettext \
 STOPSIGNAL SIGINT
 EXPOSE 80
 EXPOSE 443
-ENTRYPOINT ["/usr/bin/supervisord","-c","/etc/supervisord.conf"]
+ENTRYPOINT ["/usr/local/init_react_envs.sh"]
+CMD ["/bin/sh", "-c", "nginx -t && exec /usr/bin/supervisord -c /etc/supervisord.conf"]
 
 WORKDIR /usr/share/nginx/html
 # copy configuration files
