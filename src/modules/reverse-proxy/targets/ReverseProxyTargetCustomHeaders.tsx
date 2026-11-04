@@ -4,6 +4,7 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { MinusCircleIcon, PlusIcon } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 
 const HEADER_NAME_RE = /^[A-Za-z0-9!#$%&'*+\-.^_`|~]+$/;
 const BLOCKED_HEADERS = new Set([
@@ -130,14 +131,11 @@ export default function ReverseProxyTargetCustomHeaders({
   updateHeaderEntry,
   headerErrors,
 }: CustomHeadersProps) {
+  const t = useTranslations("common");
   return (
     <div>
-      <Label>Custom Headers</Label>
-      <HelpText>
-        Add additional headers to include when forwarding requests.
-        <br />
-        Hop-by-hop headers like Host or Connection are not allowed.
-      </HelpText>
+      <Label>{t("customHeaders")}</Label>
+      <HelpText>{t("customHeadersHelp")}</HelpText>
       {headerEntries.length > 0 && (
         <div className="flex flex-col gap-2 mb-3">
           {headerEntries.map((entry, index) => (
@@ -170,7 +168,7 @@ export default function ReverseProxyTargetCustomHeaders({
                 variant="default-outline"
                 className="!px-2 shrink-0"
                 onClick={() => removeHeader(entry.id)}
-                aria-label="Remove header"
+                aria-label={t("removeHeader")}
               >
                 <MinusCircleIcon size={14} />
               </Button>

@@ -1,15 +1,20 @@
 "use client";
 
 import { ScrollArea } from "@components/ScrollArea";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { isNetBirdCloud } from "@utils/netbird";
+import { useTranslations } from "next-intl";
+import * as React from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import ActivityIcon from "@/assets/icons/ActivityIcon";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { DistributorNavigation } from "@/cloud/distributor/DistributorNavigation";
@@ -24,10 +29,6 @@ import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode
 import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import * as React from "react";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 
 type Props = {
   fullWidth?: boolean;
@@ -41,6 +42,7 @@ export default function Navigation({
   const { bannerHeight } = useAnnouncement();
   const { isNavigationCollapsed } = useApplicationContext();
   const { permission } = usePermissions();
+  const t = useTranslations("navigation");
   // "enabled" already falls back to the caller's agent_network grants when
   // the feature flag can't be resolved (no accounts read — usage_viewer and
   // custom delegated roles), so it is the one surface switch here.
@@ -100,14 +102,14 @@ export default function Navigation({
               <SidebarItemGroup>
                 <SidebarItem
                   icon={<ControlCenterIcon size={16} />}
-                  label="Control Center"
+                  label={t("controlCenter")}
                   href={"/control-center"}
                   visible={permission.policies.read}
                 />
 
                 <SidebarItem
                   icon={<PeerIcon />}
-                  label="Peers"
+                  label={t("peers")}
                   href={"/peers"}
                   // Restricted users get the add-your-device view there, so
                   // the link stays even in the limited (user role) sidebar.
@@ -117,26 +119,26 @@ export default function Navigation({
                 <DistributorNavigation />
                 <SidebarItem
                   icon={<AccessControlIcon />}
-                  label="Access Control"
+                  label={t("accessControl")}
                   href={"/access-control"}
                   collapsible
                   visible={permission.policies.read}
                 >
                   <SidebarItem
-                    label="Policies"
+                    label={t("policies")}
                     href={"/access-control"}
                     isChild
                     exactPathMatch={true}
                     visible={permission.policies.read}
                   />
                   <SidebarItem
-                    label="Groups"
+                    label={t("groups")}
                     isChild
                     href={"/groups"}
                     visible={permission.policies.read}
                   />
                   <SidebarItem
-                    label="Posture Checks"
+                    label={t("postureChecks")}
                     isChild
                     href={"/posture-checks"}
                     exactPathMatch={true}
@@ -151,7 +153,7 @@ export default function Navigation({
                   labelClassName={"pr-0"}
                   label={
                     <div className={"flex items-center gap-2"}>
-                      Reverse Proxy
+                      {t("reverseProxy")}
                       <SmallBadge
                         text={"Beta"}
                         variant={"sky"}
@@ -166,28 +168,28 @@ export default function Navigation({
                   visible={permission?.services?.read && !agentNetworkOnly}
                 >
                   <SidebarItem
-                    label="Services"
+                    label={t("services")}
                     isChild
                     href={"/reverse-proxy/services"}
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
                   <SidebarItem
-                    label="Custom Domains"
+                    label={t("customDomains")}
                     isChild
                     href={"/reverse-proxy/custom-domains"}
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
                   <SidebarItem
-                    label="Clusters"
+                    label={t("clusters")}
                     isChild
                     href={"/reverse-proxy/clusters"}
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
                   <SidebarItem
-                    label="Access Logs"
+                    label={t("accessLogs")}
                     isChild
                     href={"/reverse-proxy/logs"}
                     exactPathMatch={true}
@@ -298,7 +300,7 @@ export default function Navigation({
 
                 <SidebarItem
                   icon={<DNSIcon />}
-                  label="DNS"
+                  label={t("dns")}
                   href={"/dns"}
                   collapsible
                   exactPathMatch={true}
@@ -308,19 +310,19 @@ export default function Navigation({
                   }
                 >
                   <SidebarItem
-                    label="Nameservers"
+                    label={t("nameservers")}
                     isChild
                     href={"/dns/nameservers"}
                     visible={permission.nameservers.read}
                   />
                   <SidebarItem
-                    label="Zones"
+                    label={t("zones")}
                     isChild
                     href={"/dns/zones"}
                     visible={permission?.dns?.read}
                   />
                   <SidebarItem
-                    label="DNS Settings"
+                    label={t("dnsSettings")}
                     isChild
                     href={"/dns/settings"}
                     visible={permission.dns.read}
@@ -328,19 +330,19 @@ export default function Navigation({
                 </SidebarItem>
                 <SidebarItem
                   icon={<TeamIcon />}
-                  label="Team"
+                  label={t("team")}
                   href={"/team"}
                   collapsible
                   visible={permission.users.read}
                 >
                   <SidebarItem
-                    label="Users"
+                    label={t("users")}
                     isChild
                     href={"/team/users"}
                     visible={permission.users.read}
                   />
                   <SidebarItem
-                    label="Service Users"
+                    label={t("serviceUsers")}
                     isChild
                     href={"/team/service-users"}
                     visible={permission.users.read}
@@ -352,7 +354,7 @@ export default function Navigation({
               <SidebarItemGroup>
                 <SidebarItem
                   icon={<SettingsIcon />}
-                  label="Settings"
+                  label={t("settings")}
                   href={"/settings"}
                   exactPathMatch={true}
                   visible={permission.settings.read}
@@ -360,7 +362,7 @@ export default function Navigation({
                 <MSPNavigationItem />
                 <SidebarItem
                   icon={<IntegrationIcon />}
-                  label="Integrations"
+                  label={t("integrations")}
                   href={"/integrations"}
                   exactPathMatch={true}
                   visible={
@@ -374,7 +376,7 @@ export default function Navigation({
                   icon={<DocsIcon />}
                   href={"https://docs.netbird.io/"}
                   target={"_blank"}
-                  label="Documentation"
+                  label={t("documentation")}
                   visible={true}
                 />
               </SidebarItemGroup>
@@ -406,25 +408,26 @@ export function SidebarItemGroup({ children }: SidebarItemGroupProps) {
 
 const ActivityNavigationItem = () => {
   const { permission } = usePermissions();
+  const t = useTranslations("navigation");
   const { only: agentNetworkOnly } = useAgentNetworkMode();
 
   return (
     <SidebarItem
       icon={<ActivityIcon />}
-      label="Activity"
+      label={t("activity")}
       href={"/events"}
       collapsible
       visible={permission.events.read && !agentNetworkOnly}
     >
       <SidebarItem
-        label="Audit Events"
+        label={t("auditEvents")}
         href={"/events/audit"}
         isChild
         exactPathMatch={true}
         visible={permission.events.read}
       />
       <SidebarItem
-        label="Traffic Events"
+        label={t("trafficEvents")}
         isChild
         href={"/events/traffic"}
         exactPathMatch={true}

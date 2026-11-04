@@ -6,6 +6,7 @@ import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
 import { cn } from "@utils/helpers";
 import { ChevronsUpDown, MapPin } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { memo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -39,8 +40,9 @@ export function UserSelector({
   value,
   disabled = false,
   options = [],
-  placeholder = "Select a user...",
+  placeholder,
 }: MultiSelectProps) {
+  const t = useTranslations("users");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const [filteredItems, search, setSearch] = useSearch(
@@ -97,7 +99,7 @@ export function UserSelector({
                 variant={"selected"}
               />
             ) : (
-              <span>{placeholder}</span>
+              <span>{placeholder ?? t("selectUser")}</span>
             )}
           </div>
 
@@ -119,22 +121,20 @@ export function UserSelector({
             value={search}
             onChange={setSearch}
             hideEnterIcon={true}
-            placeholder={"Search for users by name or email..."}
+            placeholder={t("searchByNameOrEmail")}
           />
 
           {options.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {
-                  "There are no users to select. Invite some users for this tenant before unlinking."
-                }
+                {t("noUsersToSelect")}
               </DropdownInfoText>
             </div>
           )}
 
           {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText>
-              There are no users matching your search.
+              {t("noUsersMatchingSearch")}
             </DropdownInfoText>
           )}
 

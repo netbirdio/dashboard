@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
@@ -37,6 +38,7 @@ type Props = {
 };
 
 export default function GroupsSettings({ account }: Props) {
+  const t = useTranslations("settings");
   const { permission } = usePermissions();
   const router = useRouter();
   const { mutate } = useSWRConfig();
@@ -139,25 +141,25 @@ export default function GroupsSettings({ account }: Props) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"User Groups"}
+            label={t("groupsTab")}
             icon={<FolderGit2Icon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
-          <h1>User Groups</h1>
+          <h1>{t("groupsTab")}</h1>
           <Button
             variant={"primary"}
             disabled={!hasChanges}
             onClick={saveChanges}
             data-testid="save-groups-settings"
           >
-            Save Changes
+            {t("saveChanges")}
           </Button>
         </div>
 
@@ -165,17 +167,15 @@ export default function GroupsSettings({ account }: Props) {
           <FancyToggleSwitch
             value={groupsPropagation}
             onChange={setGroupsPropagation}
-            data-testid="user-group-propagation"
             label={
               <>
                 <FolderInput size={15} />
-                Enable user group propagation
+                {t("enableGroupPropagation")}
               </>
             }
-            helpText={
-              "Allow group propagation from user's auto-groups to peers, sharing membership information."
-            }
+            helpText={t("groupPropagationHelp")}
             disabled={!permission.settings.update}
+            data-testid="user-group-propagation"
           />
           {(!isNetBirdCloud() || isLocalDev()) && (
             <FancyToggleSwitch
@@ -184,12 +184,10 @@ export default function GroupsSettings({ account }: Props) {
               label={
                 <>
                   <FolderSync size={15} />
-                  Enable JWT group sync
+                  {t("enableJwtGroupSync")}
                 </>
               }
-              helpText={
-                "Extract & sync groups from JWT claims with user's auto-groups, auto-creating groups from tokens."
-              }
+              helpText={t("jwtGroupSyncHelp")}
               disabled={!permission.settings.update}
             />
           )}
@@ -212,12 +210,8 @@ export default function GroupsSettings({ account }: Props) {
                     )}
                   >
                     <div>
-                      <Label>JWT claim</Label>
-                      <HelpText>
-                        Specify the JWT claim for extracting group names, e.g.,
-                        roles or groups, to add to account groups (this claim
-                        should contain a list of group names).
-                      </HelpText>
+                      <Label>{t("jwtClaim")}</Label>
+                      <HelpText>{t("jwtClaimHelp")}</HelpText>
                       <Input
                         customPrefix={
                           <Braces size={16} className={"text-nb-gray-300"} />
@@ -225,7 +219,7 @@ export default function GroupsSettings({ account }: Props) {
                         onKeyDown={(event) => {
                           if (event.code === "Space") event.preventDefault();
                         }}
-                        placeholder={"e.g., roles"}
+                        placeholder={t("jwtClaimPlaceholder")}
                         value={jwtGroupsClaimName}
                         onChange={(e) => {
                           setJwtGroupsClaimName(
@@ -235,12 +229,8 @@ export default function GroupsSettings({ account }: Props) {
                       />
                     </div>
                     <div>
-                      <Label>JWT allow groups</Label>
-                      <HelpText>
-                        Limit access to NetBird for the specified group names,
-                        e.g., NetBird users. To use the groups, you need to
-                        configure them first in your IdP.
-                      </HelpText>
+                      <Label>{t("jwtAllowGroups")}</Label>
+                      <HelpText>{t("jwtAllowGroupsHelp")}</HelpText>
                       <div>
                         {jwtAllowGroups.length > 0 && (
                           <div className="flex flex-wrap gap-2 mb-3">
@@ -280,7 +270,7 @@ export default function GroupsSettings({ account }: Props) {
                               className={"text-nb-gray-300"}
                             />
                           }
-                          placeholder={"Add a group and press Enter"}
+                          placeholder={t("addGroupPlaceholder")}
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
                               e.preventDefault();
@@ -305,8 +295,7 @@ export default function GroupsSettings({ account }: Props) {
                         }
                       >
                         <AlertCircle size={14} />
-                        To prevent losing access, ensure you are part of this
-                        group.
+                        {t("jwtGroupAccessWarning")}
                       </div>
                     )}
                   </div>

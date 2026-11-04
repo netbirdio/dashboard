@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useState } from "react";
 import Breadcrumbs from "@components/Breadcrumbs";
@@ -41,6 +42,8 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
   const { permission } = usePermissions();
   const canUpdate = permission?.settings?.update ?? false;
   const [modalOpen, setModalOpen] = useState(false);
+  const t = useTranslations("notifications");
+  const tc = useTranslations("common");
 
   const target = channel.target as SlackTarget | undefined;
   const isConnected = !!target?.url;
@@ -48,34 +51,33 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
   const handleSave = (newTarget: SlackTarget) => {
     const isNew = !isConnected;
     notify({
-      title: "Slack Notifications",
+      title: t("slackNotifications"),
       description: isNew
-        ? "Slack has been successfully connected."
-        : "Slack configuration has been successfully updated.",
+        ? `Slack ${t("connected")}.`
+        : `Slack ${t("updated")}.`,
       promise: updateChannel({ ...channel, enabled: true, target: newTarget }),
-      loadingMessage: isNew ? "Connecting Slack..." : "Updating Slack...",
+      loadingMessage: isNew ? `${t("connecting")} Slack...` : `${t("updating")} Slack...`,
     });
   };
 
   const handleDisconnect = async () => {
     const choice = await confirm({
-      title: "Disconnect Slack",
-      description:
-        "Are you sure you want to disconnect Slack? You will no longer receive notifications in your Slack channel.",
-      confirmText: "Disconnect",
-      cancelText: "Cancel",
+      title: t("disconnectSlack"),
+      description: t("disconnectSlackConfirm"),
+      confirmText: tc("delete"),
+      cancelText: tc("cancel"),
       type: "danger",
     });
     if (!choice) return;
     notify({
-      title: "Slack Notifications",
-      description: "Slack has been successfully disconnected.",
+      title: t("slackNotifications"),
+      description: `Slack ${t("disconnected")}.`,
       promise: updateChannel({
         ...channel,
         enabled: false,
         target: undefined,
       }),
-      loadingMessage: "Disconnecting Slack...",
+      loadingMessage: `${t("disconnecting")} Slack...`,
     });
   };
 
@@ -88,24 +90,24 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
       <Breadcrumbs>
         <Breadcrumbs.Item
           href={"/settings"}
-          label={"Settings"}
+          label={tc("settings")}
           icon={<SettingsIcon size={13} />}
         />
         <Breadcrumbs.Item
           href={"/settings?tab=notifications"}
-          label={"Notifications"}
+          label={t("title")}
           icon={<MessageSquareDot size={14} />}
         />
         <Breadcrumbs.Item
           href={"/settings?tab=notifications&channel=slack"}
-          label={"Slack"}
+          label={t("slack")}
           icon={<SlackIcon size={14} />}
           active
         />
       </Breadcrumbs>
       <div className={"flex items-start justify-between"}>
         <div className={"flex gap-3 items-center"}>
-          <h1>Slack</h1>
+          <h1>{t("slack")}</h1>
         </div>
       </div>
       <div className={"flex flex-col gap-8 mt-4"}>
@@ -143,7 +145,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
               />
             ) : (
               <span className={"text-xs text-nb-gray-300 mt-0.5"}>
-                Not Connected
+                {t("notConnected")}
               </span>
             )}
           </div>
@@ -171,7 +173,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
                 >
                   <div className={"flex gap-3 items-center"}>
                     <Link2Off size={14} className={"shrink-0"} />
-                    Disconnect
+                    {tc("delete")}
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -186,7 +188,7 @@ export const NotificationSlackChannel = ({ channel }: Props) => {
               data-testid="slack-channel-connect"
             >
               <Repeat size={13} />
-              Connect
+              {t("connect")}
             </Button>
           )}
         </Card>

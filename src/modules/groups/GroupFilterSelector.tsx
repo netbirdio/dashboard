@@ -18,6 +18,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
 import { Group } from "@/interfaces/Group";
+import { useTranslations } from "next-intl";
 
 interface MultiSelectProps {
   values: string[];
@@ -48,6 +49,7 @@ export function GroupFilterSelector({
   };
 
   const [open, setOpen] = useState(false);
+  const t = useTranslations("groups");
 
   return (
     <Popover
@@ -66,9 +68,9 @@ export function GroupFilterSelector({
           <FolderGit2 size={16} className={"shrink-0"} />
           <div className={"w-full flex justify-between"}>
             {values.length > 0 ? (
-              <div>{values.length} Group(s)</div>
+              <div>{t("nGroups", { n: values.length })}</div>
             ) : (
-              "All Groups"
+              t("allGroups")
             )}
             <div className={"pl-2"}>
               <ChevronsUpDown size={18} className={"shrink-0"} />
@@ -107,7 +109,7 @@ export function GroupFilterSelector({
                 ref={searchRef}
                 value={search}
                 onValueChange={setSearch}
-                placeholder={"Search group..."}
+                placeholder={t("searchPlaceholder")}
               />
               <div
                 className={

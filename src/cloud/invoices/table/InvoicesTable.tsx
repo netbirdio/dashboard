@@ -6,6 +6,7 @@ import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ReceiptTextIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
@@ -21,37 +22,40 @@ type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
 
-const InvoicesColumns: ColumnDef<Invoice>[] = [
-  {
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Date</DataTableHeader>;
+function getInvoiceColumns(t: (key: string) => string): ColumnDef<Invoice>[] {
+  return [
+    {
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("date")}</DataTableHeader>;
+      },
+      accessorKey: "period_start",
+      cell: ({ row }) => <InvoicesPeriodCell invoice={row.original} />,
     },
-    accessorKey: "period_start",
-    cell: ({ row }) => <InvoicesPeriodCell invoice={row.original} />,
-  },
-  {
-    accessorKey: "period_end",
-  },
-  {
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Type</DataTableHeader>;
+    {
+      accessorKey: "period_end",
     },
-    accessorKey: "type",
-    cell: ({ row }) => <InvoicesTypeCell invoice={row.original} />,
-  },
-  {
-    accessorKey: "id",
-    header: () => null,
-    sortingFn: "text",
-    cell: ({ row }) => <InvoicesActionCell invoice={row.original} />,
-  },
-];
+    {
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("type")}</DataTableHeader>;
+      },
+      accessorKey: "type",
+      cell: ({ row }) => <InvoicesTypeCell invoice={row.original} />,
+    },
+    {
+      accessorKey: "id",
+      header: () => null,
+      sortingFn: "text",
+      cell: ({ row }) => <InvoicesActionCell invoice={row.original} />,
+    },
+  ];
+}
 
 export default function InvoicesTable({
   invoices,
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const t = useTranslations("invoices");
   const { isActive: isDistributor } = useDistributor();
   const apiRequestPath = isDistributor
     ? "/integrations/msp/reseller/invoices"
@@ -79,19 +83,17 @@ export default function InvoicesTable({
       tableClassName={"mt-0"}
       tableCellClassName={""}
       rowClassName={"last:mb-5"}
-      text={"Invoices"}
-      columns={InvoicesColumns}
+      text={t("title")}
+      columns={getInvoiceColumns(t)}
       keepStateInLocalStorage={false}
       data={invoices}
-      searchPlaceholder={"Search by invoice number or date..."}
+      searchPlaceholder={t("searchPlaceholder")}
       isLoading={isLoading}
       getStartedCard={
         <NoResults
           className={"py-4"}
-          title={"You don't have any invoices"}
-          description={
-            "Invoices are created at the end of each billing period. You will see them here once they are available."
-          }
+          title={t("noInvoicesTitle")}
+          description={t("noInvoicesDescription")}
           icon={<ReceiptTextIcon size={20} className={"text-nb-gray-300"} />}
         />
       }

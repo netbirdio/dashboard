@@ -4,6 +4,7 @@ import {
   DatePickerWithRange,
   dateRangePresetLabel,
 } from "@components/DatePickerWithRange";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
   CheckboxListPicker,
   formatCheckboxChip,
@@ -17,7 +18,6 @@ import {
   UserOption,
   UsersPicker,
 } from "@components/table/filters/UsersPicker";
-import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
   TableFilterChips,
   TableFilterDef,
@@ -25,6 +25,7 @@ import {
 } from "@components/table/TableFilters";
 import { ColumnFiltersState, Table } from "@tanstack/react-table";
 import dayjs from "dayjs";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
@@ -37,9 +38,12 @@ type FilterRow = Record<string, unknown>;
 // formatDateChip renders the active date-range filter as a compact chip body.
 // Quick-range presets (Last 14 Days, Last Month, …) show their label; a custom
 // range shows the compact "from – to" span.
-export function formatDateChip(value: DateRange | undefined): string | null {
+export function formatDateChip(
+  value: DateRange | undefined,
+  translate?: (key: string) => string,
+): string | null {
   if (!value?.from && !value?.to) return null;
-  const preset = dateRangePresetLabel(value);
+  const preset = dateRangePresetLabel(value, translate);
   if (preset) return preset;
   const from = value?.from ? dayjs(value.from).format("MMM D") : "…";
   const to = value?.to ? dayjs(value.to).format("MMM D") : "…";
@@ -64,6 +68,7 @@ export function useAccessLogFilters(options?: {
   include?: AccessLogFilterId[];
 }) {
   const include = options?.include;
+  const tDateRange = useTranslations("dateRange");
   const { providers } = useAIProviders();
   const { users } = useUsers();
   const { groups } = useGroups();
@@ -144,7 +149,8 @@ export function useAccessLogFilters(options?: {
             />
           </div>
         ),
-        formatChip: (v) => formatDateChip(v as DateRange | undefined),
+        formatChip: (v) =>
+          formatDateChip(v as DateRange | undefined, tDateRange),
       },
       {
         id: "user",
@@ -206,7 +212,7 @@ export function useAccessLogFilters(options?: {
           formatCheckboxChip(v as string[] | undefined, modelOptions, "models"),
       },
     ],
-    [userOptions, groups, providerOptions, modelOptions],
+    [groups, modelOptions, providerOptions, tDateRange, userOptions],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(

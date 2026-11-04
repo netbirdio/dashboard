@@ -1,6 +1,9 @@
+"use client";
+
 import SkeletonTable, {
   SkeletonTableHeader,
 } from "@components/skeletons/SkeletonTable";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { Suspense } from "react";
 import { NetworkResource } from "@/interfaces/Network";
@@ -18,19 +21,23 @@ export const ResourcesTabContent = ({
   data,
   isLoading,
 }: ResourcesSectionProps) => {
+  const t = useTranslations("networks");
   return (
     <div className={"px-8"}>
       <div className={"flex justify-between items-center mb-5"}>
         <div>
           <Paragraph>
-            Add resources to this network to control what peers can access.{" "}
-            <InlineLink
-              href={"https://docs.netbird.io/how-to/networks#resources"}
-              target={"_blank"}
-            >
-              Learn more
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            {t.rich("resourcesTabDescription", {
+              link: (chunks) => (
+                <InlineLink
+                  href={"https://docs.netbird.io/how-to/networks#resources"}
+                  target={"_blank"}
+                >
+                  {chunks}
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              ),
+            })}
           </Paragraph>
         </div>
       </div>

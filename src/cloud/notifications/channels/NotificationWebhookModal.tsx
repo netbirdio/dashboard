@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import Button from "@components/Button";
 import {
@@ -63,6 +64,8 @@ function NotificationWebhookModalContent({
   channel,
   onSave,
 }: Readonly<ModalContentProps>) {
+  const t = useTranslations("notifications");
+  const tc = useTranslations("common");
   const target = channel.target as WebhookTarget | undefined;
 
   const config = useWebhookConfig({
@@ -87,11 +90,11 @@ function NotificationWebhookModalContent({
     <ModalContent maxWidthClass={modalWidth}>
       <ModalHeader
         icon={<GlobeIcon size={16} />}
-        title={config.isEditing ? "Webhook Configuration" : "Connect Webhook"}
+        title={config.isEditing ? t("webhookConfiguration") : t("connectWebhook")}
         description={
           config.isEditing
-            ? "Update your webhook endpoint and authentication settings."
-            : "Configure a webhook endpoint to receive notification events."
+            ? t("webhookUpdateDescription")
+            : t("webhookConnectDescription")
         }
       />
 
@@ -104,7 +107,7 @@ function NotificationWebhookModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            General
+            {t("general")}
           </TabsTrigger>
           <TabsTrigger
             value={"headers"}
@@ -117,13 +120,13 @@ function NotificationWebhookModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Headers
+            {t("headers")}
           </TabsTrigger>
         </TabsList>
 
         <WebhookGeneralTabContent
           value={config}
-          urlHelpText="Full HTTP(S) URL where notification events will be sent via a POST request."
+          urlHelpText={t("webhookUrlHelp")}
           mask={config.isEditing}
         />
         <WebhookHeadersTabContent value={config} />
@@ -133,12 +136,12 @@ function NotificationWebhookModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("learnMoreAbout")}
             <InlineLink
               href={NOTIFICATION_CHANNELS_WEBHOOK_DOCS_LINK}
               target={"_blank"}
             >
-              Webhook Notifications
+              {t("webhookNotifications")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -147,23 +150,23 @@ function NotificationWebhookModalContent({
           {config.isEditing ? (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
-              </ModalClose>
-              <Button
-                variant={"primary"}
-                onClick={handleSave}
-                disabled={!config.canSave}
-                data-testid="webhook-save"
-              >
-                Save Changes
-              </Button>
+                    <Button variant={"secondary"}>{tc("cancel")}</Button>
+                  </ModalClose>
+                  <Button
+                    variant={"primary"}
+                    disabled={!config.canContinueToHeaders}
+                    onClick={() => setTab("headers")}
+                    data-testid="webhook-continue"
+                  >
+                    {tc("continue")}
+                  </Button>
             </>
           ) : (
             <>
               {tab === "general" && (
                 <>
                   <ModalClose asChild={true}>
-                    <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{tc("cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant={"primary"}
@@ -181,7 +184,7 @@ function NotificationWebhookModalContent({
                     variant={"secondary"}
                     onClick={() => setTab("general")}
                   >
-                    Back
+                    {tc("back")}
                   </Button>
                   <Button
                     variant={"primary"}
@@ -190,7 +193,7 @@ function NotificationWebhookModalContent({
                     data-testid="webhook-save"
                   >
                     <Repeat size={16} />
-                    Connect
+                    {t("connect")}
                   </Button>
                 </>
               )}

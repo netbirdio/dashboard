@@ -10,6 +10,7 @@ import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
 import { FolderGit2, PencilLineIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -48,6 +49,8 @@ export const AssignPeerToGroupModal = ({
   buttonText,
   selectInitialPeers,
 }: Props) => {
+  const t = useTranslations("common");
+
   return (
     <Modal open={open} onOpenChange={setOpen} key={open ? "1" : "0"}>
       {open && (
@@ -90,6 +93,7 @@ export const AssignGroupToPeerModalContent = ({
   buttonText = "Confirm Changes",
   selectInitialPeers = true,
 }: ContentProps) => {
+  const t = useTranslations("common");
   const { data: peers, isLoading } = useFetchApi<Peer[]>("/peers");
   const { users } = useUsers();
   const { mutate } = useSWRConfig();
@@ -270,7 +274,7 @@ export const AssignGroupToPeerModalContent = ({
           sorting={sorting}
           keepStateInLocalStorage={false}
           setSorting={setSorting}
-          columns={PeersTableColumns}
+          columns={PeersTableColumns(t)}
           data={data}
           isLoading={isLoading && !initialPeersSet}
           tableCellClassName={"!py-1 scale-[95%]"}
@@ -337,89 +341,95 @@ export const AssignGroupToPeerModalContent = ({
   );
 };
 
-export const PeersTableColumns: ColumnDef<Peer>[] = [
-  {
-    id: "select",
-    header: ({ table, column }) => (
-      <div className={"min-w-[20px] max-w-[20px]"}>
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
-    accessorFn: (peer) => peer.id,
-    sortingFn: "checkbox",
-    cell: ({ row }) => {
-      return (
+export function PeersTableColumns(
+  t: (key: string) => string,
+): ColumnDef<Peer>[] {
+  return [
+    {
+      id: "select",
+      header: ({ table, column }) => (
         <div className={"min-w-[20px] max-w-[20px]"}>
           <Checkbox
-            variant={"tableCell"}
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+            aria-label={t("selectAll")}
           />
         </div>
-      );
+      ),
+      accessorFn: (peer) => peer.id,
+      sortingFn: "checkbox",
+      cell: ({ row }) => {
+        return (
+          <div className={"min-w-[20px] max-w-[20px]"}>
+            <Checkbox
+              variant={"tableCell"}
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              aria-label={t("selectRow")}
+            />
+          </div>
+        );
+      },
     },
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>Name</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => (
+        <PeerNameCell peer={row.original} linkToPeer={false} />
+      ),
     },
-    sortingFn: "text",
-    cell: ({ row }) => <PeerNameCell peer={row.original} linkToPeer={false} />,
-  },
-  {
-    id: "approval_required",
-    accessorKey: "approval_required",
-    sortingFn: "basic",
-    accessorFn: (peer) => peer.approval_required,
-  },
-  {
-    id: "connected",
-    accessorKey: "connected",
-    accessorFn: (peer) => peer.connected,
-  },
-  {
-    accessorKey: "ip",
-    sortingFn: "text",
-  },
-  {
-    id: "user_name",
-    accessorFn: (peer) => (peer.user ? peer.user?.name : "Unknown"),
-  },
-  {
-    id: "user_email",
-    accessorFn: (peer) => (peer.user ? peer.user?.email : "Unknown"),
-  },
-  {
-    accessorKey: "dns_label",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Address</DataTableHeader>;
+    {
+      id: "approval_required",
+      accessorKey: "approval_required",
+      sortingFn: "basic",
+      accessorFn: (peer) => peer.approval_required,
     },
-    cell: ({ row }) => <PeerAddressCell peer={row.original} />,
-  },
-  {
-    accessorKey: "group_name_strings",
-    accessorFn: (peer) => peer.groups?.map((g) => g?.name || "").join(", "),
-    sortingFn: "text",
-  },
-  {
-    accessorKey: "group_names",
-    accessorFn: (peer) => peer.groups?.map((g) => g?.name || ""),
-    sortingFn: "text",
-    filterFn: "arrIncludesSome",
-  },
-  {
-    accessorKey: "os",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>OS</DataTableHeader>;
+    {
+      id: "connected",
+      accessorKey: "connected",
+      accessorFn: (peer) => peer.connected,
     },
-    cell: ({ row }) => (
-      <PeerOSCell os={row.original.os} serial={row.original.serial_number} />
-    ),
-  },
-];
+    {
+      accessorKey: "ip",
+      sortingFn: "text",
+    },
+    {
+      id: "user_name",
+      accessorFn: (peer) => (peer.user ? peer.user?.name : "Unknown"),
+    },
+    {
+      id: "user_email",
+      accessorFn: (peer) => (peer.user ? peer.user?.email : "Unknown"),
+    },
+    {
+      accessorKey: "dns_label",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>Address</DataTableHeader>;
+      },
+      cell: ({ row }) => <PeerAddressCell peer={row.original} />,
+    },
+    {
+      accessorKey: "group_name_strings",
+      accessorFn: (peer) => peer.groups?.map((g) => g?.name || "").join(", "),
+      sortingFn: "text",
+    },
+    {
+      accessorKey: "group_names",
+      accessorFn: (peer) => peer.groups?.map((g) => g?.name || ""),
+      sortingFn: "text",
+      filterFn: "arrIncludesSome",
+    },
+    {
+      accessorKey: "os",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>OS</DataTableHeader>;
+      },
+      cell: ({ row }) => (
+        <PeerOSCell os={row.original.os} serial={row.original.serial_number} />
+      ),
+    },
+  ];
+}

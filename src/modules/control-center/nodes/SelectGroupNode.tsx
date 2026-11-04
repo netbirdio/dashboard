@@ -7,6 +7,7 @@ import useFetchApi from "@utils/api";
 import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { Group } from "@/interfaces/Group";
 import { useCanvasUI } from "@/modules/control-center/contexts/ControlCenterContext";
@@ -49,6 +50,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
 
   const [open, setOpen] = React.useState(false);
   useCloseOnCanvasClick(open, () => setOpen(false));
+  const t = useTranslations("groups");
 
   return (
     <div
@@ -63,7 +65,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
         onChange={data.onChange}
         options={groupOptions}
         showSearch={true}
-        searchPlaceholder={"Search groups..."}
+        searchPlaceholder={t("searchPlaceholder")}
         open={open}
         onOpenChange={setOpen}
         popoverWidth={280}

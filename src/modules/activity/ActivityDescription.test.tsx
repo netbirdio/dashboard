@@ -1,8 +1,8 @@
-import { cleanup, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import ActivityDescription from "@/modules/activity/ActivityDescription";
+import { cleanup, render } from "@/test-utils";
 
 // The component imports @utils/netbird, which reads config.json at module load.
 vi.mock("@utils/config", () => ({

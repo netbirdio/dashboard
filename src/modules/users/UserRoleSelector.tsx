@@ -17,6 +17,7 @@ import {
   User2,
   UsersIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
@@ -130,6 +131,32 @@ export const UserRoles: {
   },
 ];
 
+function useTranslatedRoleName() {
+  const t = useTranslations("users");
+  return (roleValue: Role): string => {
+    switch (roleValue) {
+      case Role.Owner:
+        return t("owner");
+      case Role.Admin:
+        return t("admin");
+      case Role.NetworkAdmin:
+        return t("networkAdmin");
+      case Role.BillingAdmin:
+        return t("billingAdmin");
+      case Role.Auditor:
+        return t("auditor");
+      case Role.User:
+        return t("user");
+      case Role.AgentNetworkAdmin:
+        return t("agentNetworkAdmin");
+      case Role.UsageViewer:
+        return t("usageViewer");
+      default:
+        return "";
+    }
+  };
+}
+
 const RoleList = ({
   roles,
   onSelect,
@@ -145,6 +172,8 @@ const RoleList = ({
   // upwards on a long one.
   fixedHeight?: boolean;
 }) => {
+  const t = useTranslations("users");
+  const getTranslatedRoleName = useTranslatedRoleName();
   return (
     <ScrollArea
       className={cn(
@@ -169,7 +198,9 @@ const RoleList = ({
                 </div>
                 <div className={"flex flex-col text-sm font-medium"}>
                   <span className={"text-nb-gray-200 whitespace-nowrap"}>
-                    {useShortNames ? (item.shortName ?? item.name) : item.name}
+                    {useShortNames && item.shortName
+                      ? t("admin")
+                      : getTranslatedRoleName(item.value)}
                   </span>
                   <span className={"text-xs font-normal text-nb-gray-400"}>
                     {item.description}
@@ -196,33 +227,39 @@ export function UserRoleSelector({
   side = "bottom",
   align = "start",
 }: Readonly<MultiSelectProps>) {
+  const t = useTranslations("users");
   const [inputRef, { width }] = useElementSize<
     HTMLButtonElement | HTMLDivElement
   >();
   const { isOwner } = useLoggedInUser();
   const { confirm } = useDialog();
 
+  const getTranslatedRoleName = useTranslatedRoleName();
+
   const toggle = async (item: Role) => {
     if (item === Role.Owner) {
       let ok = await confirm({
-        title: "Transfer Ownership?",
+        title: t("transferOwnership"),
         type: "warning",
         description: (
           <div className={"inline-block"}>
-            This action will transfer the{" "}
-            <span className={"text-netbird inline font-medium"}>Owner</span>{" "}
-            role to{" "}
+            {t("transferOwnershipPrefix")}{" "}
+            <span className={"text-netbird inline font-medium"}>
+              {t("owner")}
+            </span>{" "}
+            {t("transferOwnershipTo")}{" "}
             {currentUser ? (
               <span className={"text-netbird inline font-medium"}>
                 {currentUser.name}
               </span>
             ) : (
-              "this user"
+              t("transferOwnershipThisUser")
             )}{" "}
-            and leave you with the{" "}
-            <span className={"text-netbird inline font-medium"}>Admin</span>{" "}
-            role. This action can only be undone if the new owner transfers the
-            role back to you.
+            {t("transferOwnershipSuffix1")}{" "}
+            <span className={"text-netbird inline font-medium"}>
+              {t("admin")}
+            </span>{" "}
+            {t("transferOwnershipSuffix2")}
           </div>
         ),
       });
@@ -274,6 +311,7 @@ export function UserRoleSelector({
     hideBillingAdmin,
     isAccountWithMSPParent,
     agentNetworkEnabled,
+    t,
   ]);
 
   // A single group is just a list — the tab row would only add noise.
@@ -285,7 +323,7 @@ export function UserRoleSelector({
   // when the role was cleared or a group got filtered out.
   const activeTab = categories.some((category) => category.value === tab)
     ? tab
-    : (categories[0]?.value ?? UserRoleCategories[0].value);
+    : categories[0]?.value ?? UserRoleCategories[0].value;
 
   return (
     <Popover
@@ -324,7 +362,7 @@ export function UserRoleSelector({
                     {/* Truncate instead of overflowing the button: role names
                         can be longer than the column they sit in. */}
                     <span className={"text-nb-gray-200 truncate"}>
-                      {selectedRole?.name}
+                      {getTranslatedRoleName(selectedRole.value)}
                     </span>
                   </div>
                 </div>

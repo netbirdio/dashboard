@@ -1,6 +1,6 @@
 import { ColumnDef } from "@tanstack/react-table";
-import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render } from "@/test-utils";
 
 // A column's `meta.className` must land on both its header cell and its body
 // cells, otherwise a responsive class such as `hidden xl:table-cell` would hide

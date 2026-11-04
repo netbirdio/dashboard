@@ -8,6 +8,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
@@ -17,15 +18,16 @@ import { Policy } from "@/interfaces/Policy";
 import PageContainer from "@/layouts/PageContainer";
 
 const AccessControlTable = lazy(
-  () => import("@/modules/access-control/table/AccessControlTable"),
+	() => import("@/modules/access-control/table/AccessControlTable"),
 );
 export default function AccessControlPage() {
-  const { permission } = usePermissions();
+	const t = useTranslations("policies");
+	const { permission } = usePermissions();
 
-  const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
+	const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
 
-  const { ref: headingRef, portalTarget } =
-    usePortalElement<HTMLHeadingElement>();
+	const { ref: headingRef, portalTarget } =
+		usePortalElement<HTMLHeadingElement>();
 
   return (
     <PageContainer>
@@ -34,39 +36,38 @@ export default function AccessControlPage() {
           <Breadcrumbs>
             <Breadcrumbs.Item
               href={"/access-control"}
-              label={"Access Control"}
+              label={t("title")}
               icon={<AccessControlIcon size={14} />}
             />
           </Breadcrumbs>
-          <h1 ref={headingRef}>Access Control Policies</h1>
+          <h1 ref={headingRef}>{t("title")}</h1>
           <Paragraph>
-            Policies connect users and agents to your network resources,
-            controlling what each identity can reach.{" "}
+            {t("accessControlDescription")}{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/manage-network-access"}
               target={"_blank"}
             >
-              Learn more
+              {t("learnMore")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
 
-        <RestrictedAccess
-          page={"Access Control"}
-          hasAccess={permission.policies.read}
-        >
-          <PoliciesProvider>
-            <Suspense fallback={<SkeletonTable />}>
-              <AccessControlTable
-                isLoading={isLoading}
-                policies={policies}
-                headingTarget={portalTarget}
-              />
-            </Suspense>
-          </PoliciesProvider>
-        </RestrictedAccess>
-      </GroupsProvider>
-    </PageContainer>
-  );
+				<RestrictedAccess
+					page={t("title")}
+					hasAccess={permission.policies.read}
+				>
+					<PoliciesProvider>
+						<Suspense fallback={<SkeletonTable />}>
+							<AccessControlTable
+								isLoading={isLoading}
+								policies={policies}
+								headingTarget={portalTarget}
+							/>
+						</Suspense>
+					</PoliciesProvider>
+				</RestrictedAccess>
+			</GroupsProvider>
+		</PageContainer>
+	);
 }

@@ -8,6 +8,7 @@ import {
   NetworkIcon,
   User2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
@@ -18,6 +19,7 @@ type Props = {
 };
 
 export default function UserRoleCell({ user }: Readonly<Props>) {
+  const t = useTranslations("users");
   const role = user.role;
 
   return (
@@ -26,49 +28,49 @@ export default function UserRoleCell({ user }: Readonly<Props>) {
         {role === Role.User && (
           <>
             <User2 size={14} />
-            User
+            {t("user")}
           </>
         )}
         {role === Role.Admin && (
           <>
             <Cog size={14} />
-            Admin
+            {t("admin")}
           </>
         )}
         {role === Role.Owner && (
           <>
             <NetBirdIcon size={14} />
-            Owner
+            {t("owner")}
           </>
         )}
         {role === Role.BillingAdmin && (
           <>
             <CreditCardIcon size={14} />
-            Billing Admin
+            {t("billingAdmin")}
           </>
         )}
         {role === Role.Auditor && (
           <>
             <EyeIcon size={14} />
-            Auditor
+            {t("auditor")}
           </>
         )}
         {role === Role.NetworkAdmin && (
           <>
             <NetworkIcon size={14} />
-            Network Admin
+            {t("networkAdmin")}
           </>
         )}
         {role === Role.AgentNetworkAdmin && (
           <>
             <AgentNetworkIcon size={14} />
-            Agent Network Admin
+            {t("agentNetworkAdmin")}
           </>
         )}
         {role === Role.UsageViewer && (
           <>
             <GaugeIcon size={14} />
-            Usage Viewer
+            {t("usageViewer")}
           </>
         )}
       </Badge>

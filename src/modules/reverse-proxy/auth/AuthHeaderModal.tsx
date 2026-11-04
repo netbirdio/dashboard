@@ -17,6 +17,7 @@ import {
   UserIcon,
 } from "lucide-react";
 import React, { useMemo, useReducer, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import type { HeaderAuthConfig } from "@/interfaces/ReverseProxy";
 
@@ -201,6 +202,7 @@ export default function AuthHeaderModal({
   onSave,
   onRemove,
 }: Readonly<Props>) {
+  const t = useTranslations("common");
   const [items, dispatch] = useReducer(
     headersReducer,
     currentHeaders,
@@ -275,12 +277,16 @@ export default function AuthHeaderModal({
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" data-testid="remove-headers" onClick={handleRemoveAll}>
+                <Button
+                  variant="danger-text"
+                  onClick={handleRemoveAll}
+                  data-testid="remove-headers"
+                >
                   Remove All
                 </Button>
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
@@ -296,7 +302,7 @@ export default function AuthHeaderModal({
                 <div />
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
@@ -383,7 +389,7 @@ function HeaderItemRow({
           </div>
         ) : (
           <>
-            <div data-testid={"header-type-select"}>
+            <div data-testid="header-type-select">
               <SelectDropdown
                 value={item.type}
                 onChange={handleHeaderTypeChange}
@@ -399,8 +405,8 @@ function HeaderItemRow({
                   maxWidthClass="w-full"
                   value={item.username}
                   onChange={(e) => onChange({ username: e.target.value })}
-                  data-testid="header-basic-username"
                   {...INPUT_PROPS}
+                  data-testid="header-basic-username"
                 />
                 <Input
                   customPrefix={<KeyRoundIcon size={16} />}
@@ -410,8 +416,8 @@ function HeaderItemRow({
                   onChange={(e) => onChange({ password: e.target.value })}
                   type="password"
                   showPasswordToggle
-                  data-testid="header-basic-password"
                   {...INPUT_PROPS}
+                  data-testid="header-basic-password"
                 />
               </div>
             )}

@@ -9,21 +9,22 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import Paragraph from "@components/Paragraph";
+import { SegmentedTabs } from "@components/SegmentedTabs";
 import Separator from "@components/Separator";
 import Steps from "@components/Steps";
 import { Lightbox } from "@components/ui/Lightbox";
 import { Mark } from "@components/ui/Mark";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle, TerminalSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useState } from "react";
-import sshImage from "@/assets/ssh/ssh-client.png";
-import { SegmentedTabs } from "@components/SegmentedTabs";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import sshImage from "@/assets/ssh/ssh-client.png";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { PeerSSHPolicyModal } from "@/modules/peer/PeerSSHPolicyModal";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
 type Props = {
   open?: boolean;
@@ -38,6 +39,7 @@ export const PeerSSHInstructions = ({
   onSuccess,
   peer,
 }: Props) => {
+  const t = useTranslations("common");
   const [client, setClient] = useState("cli");
   const [policyModal, setPolicyModal] = useState(false);
 
@@ -150,7 +152,7 @@ export const PeerSSHInstructions = ({
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("cancel")}</Button>
             </ModalClose>
 
             <Button variant={"primary"} onClick={onSuccess}>

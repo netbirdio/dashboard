@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { Label } from "@components/Label";
 import PeerIcon from "@/assets/icons/PeerIcon";
@@ -14,77 +15,79 @@ type EventTypeMeta = {
   group: "peer" | "user" | "integration";
 };
 
-const EVENT_TYPE_METADATA: EventTypeMeta[] = [
+const getEventTypeMetadata = (
+  t: ReturnType<typeof useTranslations>,
+): EventTypeMeta[] => [
   {
     key: NotificationEventType.PeerPendingApproval,
-    label: "Pending Approval",
-    helpText: "Notify when a peer is waiting for approval to join the network",
+    label: t("pendingApproval"),
+    helpText: t("peerPendingApprovalHelp"),
     group: "peer",
   },
   {
     key: NotificationEventType.PeerAdd,
-    label: "Peer Added",
-    helpText: "Notify when a new peer is added to the network",
+    label: t("peerAdded"),
+    helpText: t("peerAddedHelp"),
     group: "peer",
   },
   {
     key: NotificationEventType.RoutingPeerDisconnect,
-    label: "Routing Peer Disconnected",
-    helpText: "Notify when a routing peer loses its connection",
+    label: t("routingPeerDisconnected"),
+    helpText: t("routingPeerDisconnectedHelp"),
     group: "peer",
   },
   {
     key: NotificationEventType.RoutingPeerDelete,
-    label: "Routing Peer Deleted",
-    helpText: "Notify when a routing peer is deleted from the network",
+    label: t("routingPeerDeleted"),
+    helpText: t("routingPeerDeletedHelp"),
     group: "peer",
   },
   {
     key: NotificationEventType.UserPendingApproval,
-    label: "User Pending Approval",
-    helpText: "Notify when a user is waiting for approval to join the network",
+    label: t("userPendingApproval"),
+    helpText: t("userPendingApprovalHelp"),
     group: "user",
   },
   {
     key: NotificationEventType.UserJoin,
-    label: "User Joined",
-    helpText: "Notify when a new user joins the account",
+    label: t("userJoined"),
+    helpText: t("userJoinedHelp"),
     group: "user",
   },
   {
     key: NotificationEventType.ServiceUserCreate,
-    label: "Service User Created",
-    helpText: "Notify when a new service user is created",
+    label: t("serviceUserCreated"),
+    helpText: t("serviceUserCreatedHelp"),
     group: "user",
   },
   {
     key: NotificationEventType.IdpSyncTokenExpire,
-    label: "IdP Sync Token Expired",
-    helpText: "Notify when the IdP sync token has expired and needs renewal",
+    label: t("idpSyncTokenExpired"),
+    helpText: t("idpSyncTokenExpiredHelp"),
     group: "integration",
   },
   {
     key: NotificationEventType.EdrSyncTokenExpire,
-    label: "EDR Sync Token Expired",
-    helpText: "Notify when the EDR sync token has expired and needs renewal",
+    label: t("edrSyncTokenExpired"),
+    helpText: t("edrSyncTokenExpiredHelp"),
     group: "integration",
   },
 ];
 
-const GROUP_CONFIG = {
+const getGroupConfig = (t: ReturnType<typeof useTranslations>) => ({
   peer: {
-    label: "Peer Notifications",
+    label: t("peerNotifications"),
     icon: <PeerIcon size={12} />,
   },
   user: {
-    label: "User Notifications",
+    label: t("userNotifications"),
     icon: <TeamIcon size={12} />,
   },
   integration: {
-    label: "Integration Notifications",
+    label: t("integrationNotifications"),
     icon: <IntegrationIcon size={12} />,
   },
-} as const;
+} as const);
 
 const GROUPS: Array<"peer" | "user" | "integration"> = [
   "peer",
@@ -99,11 +102,15 @@ type Props = {
 };
 
 export const NotificationEventTypes = ({ event_types, onToggle, disabled }: Props) => {
+  const t = useTranslations("notifications");
+  const EVENT_TYPE_METADATA = getEventTypeMetadata(t);
+  const GROUP_CONFIG = getGroupConfig(t);
+
   return (
     <>
       {GROUPS.map((group) => {
         const config = GROUP_CONFIG[group];
-        const types = EVENT_TYPE_METADATA.filter((t) => t.group === group);
+        const types = EVENT_TYPE_METADATA.filter((type) => type.group === group);
         return (
           <div key={group} className={"flex flex-col gap-2 relative w-full"}>
             <Label>

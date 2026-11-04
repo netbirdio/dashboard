@@ -9,5 +9,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.mjs"],
+    // Locale detection has its own standalone runner: npm run test:i18n.
+    exclude: ["src/i18n/detection.test.ts"],
   },
 });

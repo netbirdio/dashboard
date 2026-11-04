@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import {
   DropdownMenu,
@@ -7,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import { notify } from "@components/Notification";
+import { useTranslations } from "next-intl";
 import { useApiCall } from "@utils/api";
 import {
   MoreVertical,
@@ -26,6 +29,7 @@ type Props = {
   resource: NetworkResource;
 };
 export const ResourceActionCell = ({ resource }: Props) => {
+  const t = useTranslations("networks");
   const { permission } = usePermissions();
   const { deleteResource, network, openResourceModal } = useNetworksContext();
   const { mutate } = useSWRConfig();
@@ -38,11 +42,11 @@ export const ResourceActionCell = ({ resource }: Props) => {
   const toggleEnabled = async () => {
     const nextEnabled = !resource.enabled;
     notify({
-      title: `Update Resource`,
-      description: `'${resource?.name}' is now ${
-        nextEnabled ? "enabled" : "disabled"
-      }`,
-      loadingMessage: "Updating resource...",
+      title: t("updateResource"),
+      description: nextEnabled
+        ? t("resourceNowEnabled", { name: resource?.name })
+        : t("resourceNowDisabled", { name: resource?.name }),
+      loadingMessage: t("updatingResource"),
       duration: 1200,
       promise: update({
         ...resource,
@@ -73,7 +77,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
             disabled={
               !permission.networks.update && !permission.networks.delete
             }
-            aria-label={"Resource actions"}
+            aria-label={t("resourceEdit")}
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
@@ -88,7 +92,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit
+              {t("resourceEdit")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -100,7 +104,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
-              {resource.enabled ? "Disable" : "Enable"}
+              {resource.enabled ? t("resourceDisable") : t("resourceEnable")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -114,7 +118,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("resourceDelete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -21,6 +21,7 @@ import { useCountries } from "@/contexts/CountryProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { CrowdSecMode, ReverseProxy } from "@/interfaces/ReverseProxy";
+import { useTranslations } from "next-intl";
 
 type RuleEntry = {
   key: string;
@@ -37,6 +38,8 @@ type Props = {
 export default function ReverseProxyAccessControlCell({
   reverseProxy,
 }: Readonly<Props>) {
+  const t = useTranslations("common");
+
   const { permission } = usePermissions();
   const { openModal, domains } = useReverseProxies();
   const { countries } = useCountries();
@@ -229,7 +232,7 @@ export default function ReverseProxyAccessControlCell({
             openModal({ proxy: reverseProxy, initialTab: "access-control" });
           }}
           disabled={!permission?.services?.update}
-          aria-label="Configure access control"
+          aria-label={t("configureAccessControl")}
         >
           <Settings size={12} />
         </Button>

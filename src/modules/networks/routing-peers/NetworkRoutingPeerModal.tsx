@@ -46,6 +46,7 @@ import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { RoutingPeerMasqueradeSwitch } from "@/modules/networks/routing-peers/RoutingPeerMasqueradeSwitch";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
+import { useTranslations } from "next-intl";
 
 type Props = {
   network: Network;
@@ -64,6 +65,7 @@ export default function NetworkRoutingPeerModal({
   onUpdated,
   router,
 }: Props) {
+  const t = useTranslations("common");
   return (
     <Modal open={open} onOpenChange={setOpen}>
       <RoutingPeerModalContent
@@ -103,6 +105,7 @@ export function RoutingPeerModalContent({
   useSave = true,
   onSaved,
 }: ContentProps) {
+  const t = useTranslations("common");
   const isRoutingPeer = router ? router.peer != "" : true;
 
   const [tab, setTab] = useState("router");
@@ -415,7 +418,7 @@ export function RoutingPeerModalContent({
           {tab == "router" && (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}

@@ -1,4 +1,3 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { Peer } from "@/interfaces/Peer";
 import {
@@ -10,6 +9,7 @@ import {
   TargetAccessAction,
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
+import { cleanup, fireEvent, render, screen } from "@/test-utils";
 
 vi.mock("@/contexts/ReverseProxiesProvider", () => ({
   defaultPortForProtocol: (protocol: ReverseProxyTargetProtocol) =>

@@ -1,3 +1,5 @@
+"use client";
+
 import Badge from "@components/Badge";
 import Button from "@components/Button";
 import FullTooltip from "@components/FullTooltip";
@@ -6,6 +8,7 @@ import { HelpCircle, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { GroupedRoute } from "@/interfaces/Route";
 import { useAddRoutingPeer } from "@/modules/routes/RouteAddRoutingPeerProvider";
@@ -16,6 +19,7 @@ type Props = {
 export default function GroupedRouteHighAvailabilityCell({
   groupedRoute,
 }: Props) {
+  const t = useTranslations("routes");
   const router = useRouter();
   const isActive = useMemo(() => {
     return groupedRoute.high_availability_count > 1;
@@ -24,23 +28,19 @@ export default function GroupedRouteHighAvailabilityCell({
   const disabledText = useMemo(
     () => (
       <>
-        High availability is currently{" "}
-        <span className={"text-red-500 font-medium"}>disabled</span> for this
-        route.
+        {t("haDisabled")}
       </>
     ),
-    [],
+    [t],
   );
 
   const enabledText = useMemo(
     () => (
       <>
-        High availability is{" "}
-        <span className={"text-green-500 font-medium"}>enabled</span> for this
-        route.
+        {t("haEnabled")}
       </>
     ),
-    [],
+    [t],
   );
 
   const { openAddRoutingPeerModal } = useAddRoutingPeer();
@@ -54,8 +54,7 @@ export default function GroupedRouteHighAvailabilityCell({
             <>
               {disabledText}
               <div className={"inline-flex mt-2"}>
-                Go ahead and add more routing peers to enable high availability
-                for this network route.
+                {t("haAddMorePeersTooltip")}
               </div>
             </>
           )}
@@ -63,8 +62,7 @@ export default function GroupedRouteHighAvailabilityCell({
             <>
               {enabledText}
               <div className={"inline-flex mt-2"}>
-                You can add more peers to increase the availability of this
-                network route.
+                {t("haIncreasePeersTooltip")}
               </div>
             </>
           )}
@@ -72,8 +70,7 @@ export default function GroupedRouteHighAvailabilityCell({
             <>
               {disabledText}
               <div className={"inline-flex mt-2"}>
-                To configure, you must add more peers to a group in this route.
-                You can do it in the Peers menu.
+                {t("haAddToGroupTooltip")}
               </div>
             </>
           )}
@@ -81,8 +78,7 @@ export default function GroupedRouteHighAvailabilityCell({
             <>
               {enabledText}
               <div className={"inline-flex mt-2"}>
-                You can add more peers to a group in this route by going to the
-                peers page.
+                {t("haAddFromPeersTooltip")}
               </div>
             </>
           )}
@@ -101,12 +97,12 @@ export default function GroupedRouteHighAvailabilityCell({
           {isActive ? (
             <>
               <div className={"h-2 w-2 rounded-full bg-green-500"}></div>
-              {groupedRoute.high_availability_count} Peer(s)
+              {t("haPeerCount", { count: groupedRoute.high_availability_count })}
             </>
           ) : (
             <>
               <div className={"h-2 w-2 rounded-full bg-nb-gray-700"}></div>
-              Disabled
+              {t("haDisabledBadge")}
             </>
           )}
           <HelpCircle size={12} />
@@ -120,7 +116,7 @@ export default function GroupedRouteHighAvailabilityCell({
           >
             <>
               <PeerIcon size={12} />
-              Go to Peers
+              {t("goToPeers")}
             </>
           </Button>
         )}
@@ -132,7 +128,7 @@ export default function GroupedRouteHighAvailabilityCell({
             onClick={() => openAddRoutingPeerModal(groupedRoute)}
           >
             <PlusCircle size={12} />
-            Add Peer
+            {t("addPeer")}
           </Button>
         )}{" "}
       </div>

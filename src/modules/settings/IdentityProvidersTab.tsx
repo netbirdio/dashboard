@@ -25,6 +25,7 @@ import {
   PlusCircle,
   Trash2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import { idpIcon } from "@/assets/icons/IdentityProviderIcons";
@@ -118,6 +119,7 @@ function ActionCell({ provider, onEdit }: ActionCellProps) {
 }
 
 export default function IdentityProvidersTab() {
+  const t = useTranslations("settings");
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const { data: providers, isLoading } = useFetchApi<SSOIdentityProvider[]>(
@@ -153,7 +155,7 @@ export default function IdentityProvidersTab() {
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Name</DataTableHeader>
+        <DataTableHeader column={column}>{t("name")}</DataTableHeader>
       ),
       sortingFn: "text",
       cell: ({ row }) => (
@@ -168,7 +170,7 @@ export default function IdentityProvidersTab() {
     {
       accessorKey: "type",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Type</DataTableHeader>
+        <DataTableHeader column={column}>{t("type")}</DataTableHeader>
       ),
       cell: ({ row }) => (
         <span className="text-nb-gray-400">
@@ -192,23 +194,20 @@ export default function IdentityProvidersTab() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=identity-providers"}
-            label={"Identity Providers"}
+            label={t("identityProviders")}
             icon={<FingerprintIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
           <div>
-            <h1>Identity Providers</h1>
-            <Paragraph>
-              Configure identity providers for user authentication in your
-              network.
-            </Paragraph>
+            <h1>{t("identityProviders")}</h1>
+            <Paragraph>{t("configureIdpDescription")}</Paragraph>
           </div>
         </div>
       </div>

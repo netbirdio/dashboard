@@ -1,15 +1,17 @@
 import "../src/app/globals.css";
-import { setApiOverrides } from "./mocks/api";
-import type { Preview } from "@storybook/nextjs-vite";
 import { TooltipProvider } from "@components/Tooltip";
-import { MotionConfig } from "framer-motion";
+import type { Preview } from "@storybook/nextjs-vite";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { MotionConfig } from "framer-motion";
 import localFont from "next/font/local";
+import { NextIntlClientProvider } from "next-intl";
 import React from "react";
 import { SWRConfig } from "swr";
 import DialogProvider from "@/contexts/DialogProvider";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
+import messages from "@/i18n/messages/en";
+import { setApiOverrides } from "./mocks/api";
 
 dayjs.extend(relativeTime);
 
@@ -53,7 +55,13 @@ const withTheme = (
           <ThemeProvider>
             <TooltipProvider delayDuration={0}>
               <div className={"bg-nb-gray min-h-screen text-nb-gray-100"}>
-                <Story />
+                <NextIntlClientProvider
+                  locale="en"
+                  messages={messages}
+                  timeZone="UTC"
+                >
+                  <Story />
+                </NextIntlClientProvider>
               </div>
             </TooltipProvider>
           </ThemeProvider>
