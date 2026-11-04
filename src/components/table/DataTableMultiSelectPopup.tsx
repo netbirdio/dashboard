@@ -4,7 +4,7 @@ import { IconX } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { AnimatePresence, motion } from "framer-motion";
 import { MonitorSmartphoneIcon } from "lucide-react";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import * as React from "react";
 
 type Props<T> = {
@@ -12,6 +12,7 @@ type Props<T> = {
   label?: string;
   onCanceled?: () => void;
   rightSide?: React.ReactNode;
+  icon?: React.ReactNode;
 };
 
 export function DataTableMultiSelectPopup<T>({
@@ -19,10 +20,11 @@ export function DataTableMultiSelectPopup<T>({
   label,
   selectedItems,
   rightSide,
+  icon,
 }: Props<T>) {
-  const t = useTranslations('table');
+  const t = useTranslations("table");
   const count = selectedItems?.length || 0;
-  const defaultLabel = label ? `${count} ${label}` : t('selected', { count });
+  const defaultLabel = label ? `${count} ${label}` : t("selected", { count });
 
   return (
     <AnimatePresence>
@@ -58,13 +60,35 @@ export function DataTableMultiSelectPopup<T>({
                     }
                   >
                     <div className={"flex gap-2 items-center"}>
-                      <MonitorSmartphoneIcon size={16} className={""} />
-                      <span>{defaultLabel}</span>
+                      {icon ?? (
+                        <MonitorSmartphoneIcon size={16} className={""} />
+                      )}
+                      <span>
+                        {label ? (
+                          <>
+                            <span className="font-medium text-white">
+                              {count}
+                            </span>{" "}
+                            {label}
+                          </>
+                        ) : (
+                          t.rich("selectedWithCount", {
+                            count,
+                            Count: (chunks) => (
+                              <span className="font-medium text-white">
+                                {chunks}
+                              </span>
+                            ),
+                          })
+                        )}
+                      </span>
                     </div>
                     <div className={"flex gap-2 items-center"}>
                       {rightSide}
                       <FullTooltip
-                        content={<span className={"text-xs"}>{t('cancel')}</span>}
+                        content={
+                          <span className={"text-xs"}>{t("cancel")}</span>
+                        }
                       >
                         <Button
                           onClick={onCanceled}

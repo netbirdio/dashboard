@@ -10,6 +10,12 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
+  ENABLED_COLUMN_ID,
+  fadeDisabledRowCells,
+  isInteractiveCell,
+} from "@components/table/disabledRowCells";
+import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
+import {
   CheckboxListPicker,
   CheckboxOption,
   formatCheckboxChip,
@@ -36,8 +42,8 @@ import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
 import { ClockFadingIcon, ExternalLinkIcon, PlusCircle } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
@@ -49,12 +55,12 @@ import AccessControlModal, {
   AccessControlUpdateModal,
 } from "@/modules/access-control/AccessControlModal";
 import AccessControlActionCell from "@/modules/access-control/table/AccessControlActionCell";
+import AccessControlActiveCell from "@/modules/access-control/table/AccessControlActiveCell";
 import AccessControlDestinationsCell from "@/modules/access-control/table/AccessControlDestinationsCell";
 import AccessControlDirectionCell from "@/modules/access-control/table/AccessControlDirectionCell";
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
 import AccessControlProtoPortsCell from "@/modules/access-control/table/AccessControlProtoPortsCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
-import { FirewallGPTModal } from "@/modules/firewall-gpt/FirewallGPTModal";
 
 type Props = {
   policies?: Policy[];
@@ -76,7 +82,10 @@ function createAccessControlTableColumns(
       },
       sortingFn: "text",
       filterFn: "fuzzy",
-      cell: ({ cell }) => <AccessControlNameCell policy={cell.row.original} />,
+      meta: { minWidth: 280 },
+      cell: ({ cell }) => (
+        <AccessControlNameCell policy={cell.row.original} fluid={true} />
+      ),
     },
     {
       id: "description",
@@ -85,10 +94,21 @@ function createAccessControlTableColumns(
       filterFn: "fuzzy",
     },
     {
-      id: "enabled",
+      id: ENABLED_COLUMN_ID,
       accessorKey: "enabled",
       accessorFn: (row) => row.enabled,
-      sortingFn: "basic",
+      enableSorting: false,
+      meta: { className: ENABLED_COLUMN_CLASS.xl, fit: true },
+      header: ({ column }) => {
+        return (
+          <DataTableHeader column={column} sorting={false}>
+            {tCommon("active")}
+          </DataTableHeader>
+        );
+      },
+      cell: ({ cell }) => (
+        <AccessControlActiveCell policy={cell.row.original} />
+      ),
     },
     {
       id: "sources",
@@ -102,9 +122,13 @@ function createAccessControlTableColumns(
       },
       sortingFn: "basic",
       header: ({ column }) => {
-        return <DataTableHeader column={column}>{t("sources")}</DataTableHeader>;
+        return (
+          <DataTableHeader column={column}>{t("sources")}</DataTableHeader>
+        );
       },
-      cell: ({ cell }) => <AccessControlSourcesCell policy={cell.row.original} />,
+      cell: ({ cell }) => (
+        <AccessControlSourcesCell policy={cell.row.original} />
+      ),
     },
     {
       id: "direction",
@@ -118,7 +142,9 @@ function createAccessControlTableColumns(
       },
       sortingFn: "basic",
       header: ({ column }) => {
-        return <DataTableHeader column={column}>{t("direction")}</DataTableHeader>;
+        return (
+          <DataTableHeader column={column}>{t("direction")}</DataTableHeader>
+        );
       },
       cell: ({ cell }) => (
         <AccessControlDirectionCell policy={cell.row.original} />
@@ -136,7 +162,9 @@ function createAccessControlTableColumns(
       },
       sortingFn: "basic",
       header: ({ column }) => {
-        return <DataTableHeader column={column}>{t("destinations")}</DataTableHeader>;
+        return (
+          <DataTableHeader column={column}>{t("destinations")}</DataTableHeader>
+        );
       },
       cell: ({ cell }) => (
         <AccessControlDestinationsCell policy={cell.row.original} />
@@ -148,7 +176,7 @@ function createAccessControlTableColumns(
       accessorFn: (row) => row.rules?.[0]?.protocol || "",
       sortingFn: "text",
       header: ({ column }) => {
-        return <DataTableHeader column={column}>{t("protoPorts")}</DataTableHeader>;
+        return <DataTableHeader column={column}>Proto & Ports</DataTableHeader>;
       },
       cell: ({ cell }) => (
         <AccessControlProtoPortsCell policy={cell.row.original} />
@@ -213,7 +241,10 @@ function createAccessControlTableColumns(
       id: "actions",
       accessorKey: "id",
       header: "",
-      cell: ({ cell }) => <AccessControlActionCell policy={cell.row.original} />,
+      meta: { fit: true },
+      cell: ({ cell }) => (
+        <AccessControlActionCell policy={cell.row.original} />
+      ),
     },
   ];
 }
@@ -245,8 +276,6 @@ export default function AccessControlTable({
   const [editModal, setEditModal] = useState(false);
   const [currentRow, setCurrentRow] = useState<Policy>();
   const [currentCellClicked, setCurrentCellClicked] = useState("");
-
-  const [firewallGPTOpen, setFirewallGPTOpen] = useState(false);
 
   const t = useTranslations("policies");
   const tCommon = useTranslations("common");
@@ -293,7 +322,7 @@ export default function AccessControlTable({
       { value: true, label: tCommon("enabled"), dotClass: "bg-green-500" },
       { value: false, label: tCommon("disabled"), dotClass: "bg-nb-gray-700" },
     ],
-    [],
+    [tCommon],
   );
 
   const protocolOptions = useMemo<CheckboxOption<string>[]>(
@@ -303,7 +332,7 @@ export default function AccessControlTable({
       { value: "icmp", label: t("icmp") },
       { value: "netbird-ssh", label: t("netbirdSsh") },
     ],
-    [],
+    [t],
   );
 
   const postureOptions = useMemo<RadioOption<string | undefined>[]>(
@@ -312,7 +341,7 @@ export default function AccessControlTable({
       { value: "with", label: t("filterWith") },
       { value: "without", label: t("filterWithout") },
     ],
-    [],
+    [t, tCommon],
   );
 
   const directionOptions = useMemo<RadioOption<boolean | undefined>[]>(
@@ -321,7 +350,7 @@ export default function AccessControlTable({
       { value: true, label: t("bidirectional") },
       { value: false, label: t("oneWay") },
     ],
-    [],
+    [t, tCommon],
   );
 
   // Groups derived from the current policies' sources + destinations,
@@ -462,8 +491,6 @@ export default function AccessControlTable({
 
   return (
     <>
-      <FirewallGPTModal open={firewallGPTOpen} setOpen={setFirewallGPTOpen} />
-
       {editModal && currentRow && (
         <AccessControlUpdateModal
           policy={currentRow}
@@ -505,7 +532,6 @@ export default function AccessControlTable({
         columnVisibility={{
           description: false,
           id: false,
-          enabled: false,
           temporary: false,
           source_group_names: false,
           destination_group_names: false,
@@ -514,9 +540,10 @@ export default function AccessControlTable({
           has_posture_checks: false,
           direction_filter: false,
         }}
-        rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
+        cellClassName={fadeDisabledRowCells}
         data={showTemporaryPolicies ? tempPolicies : regularPolicies}
         onRowClick={(row, cell) => {
+          if (isInteractiveCell(cell)) return;
           setCurrentRow(row.original);
           setEditModal(true);
           setCurrentCellClicked(cell);
@@ -620,15 +647,6 @@ export default function AccessControlTable({
                 disabled={policies?.length == 0}
               />
 
-              <DataTableResetFilterButton
-                table={table}
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.setColumnFilters([]);
-                  table.setGlobalFilter("");
-                }}
-              />
-
               {tempPolicies?.length > 0 && (
                 <FullTooltip
                   content={
@@ -654,6 +672,15 @@ export default function AccessControlTable({
                 onClick={() => {
                   mutate("/policies").then();
                   mutate("/groups").then();
+                }}
+              />
+
+              <DataTableResetFilterButton
+                table={table}
+                onClick={() => {
+                  table.setPageIndex(0);
+                  table.setColumnFilters([]);
+                  table.setGlobalFilter("");
                 }}
               />
             </>

@@ -381,20 +381,20 @@ export default function SetupKeysTable({
               disabled={setupKeys?.length == 0}
             />
 
+            <DataTableRefreshButton
+              isDisabled={setupKeys?.length == 0}
+              onClick={() => {
+                mutate("/setup-keys").then();
+                mutate("/groups").then();
+              }}
+            />
+
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
                 table.setPageIndex(0);
                 table.resetColumnFilters();
                 table.resetGlobalFilter();
-              }}
-            />
-
-            <DataTableRefreshButton
-              isDisabled={setupKeys?.length == 0}
-              onClick={() => {
-                mutate("/setup-keys").then();
-                mutate("/groups").then();
               }}
             />
           </>

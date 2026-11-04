@@ -229,7 +229,9 @@ export default function PostureCheckTable({
               <GetStartedTest
                 icon={
                   <SquareIcon
-                    icon={<ShieldCheck size={23} />}
+                    icon={
+                      <ShieldCheck size={23} className={"text-nb-gray-200"} />
+                    }
                     color={"gray"}
                     size={"large"}
                   />
@@ -274,18 +276,18 @@ export default function PostureCheckTable({
                     filters={filterDefs}
                     disabled={data?.length == 0}
                   />
+                  <DataTableRefreshButton
+                    isDisabled={data?.length == 0}
+                    onClick={() => {
+                      mutate("/posture-checks");
+                    }}
+                  />
                   <DataTableResetFilterButton
                     table={table}
                     onClick={() => {
                       table.setPageIndex(0);
                       table.resetColumnFilters();
                       table.resetGlobalFilter();
-                    }}
-                  />
-                  <DataTableRefreshButton
-                    isDisabled={data?.length == 0}
-                    onClick={() => {
-                      mutate("/posture-checks");
                     }}
                   />
                 </>

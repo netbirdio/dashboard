@@ -71,7 +71,14 @@ function AddPeerDropdown() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Modal open={mode !== null} onOpenChange={(open) => !open && setMode(null)}>
+      <Modal
+        open={mode !== null}
+        onOpenChange={(open) => {
+          if (open) return;
+          setMode(null);
+          setIsFirstRun(false);
+        }}
+      >
         {/* User devices use the SSO-login flow; servers and agents use the
             setup-key flow (isUserDevice=false). */}
         <SetupModal user={user} isUserDevice={mode === "user"} />

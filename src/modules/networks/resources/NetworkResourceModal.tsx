@@ -1,8 +1,15 @@
 "use client";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@components/Accordion";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
 import HelpText from "@components/HelpText";
+import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -15,32 +22,25 @@ import {
 import ModalHeader from "@components/modal/ModalHeader";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
-import { HelpTooltip } from "@components/HelpTooltip";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
-import { useTranslations } from "next-intl";
 import { useApiCall } from "@utils/api";
 import { normalizeHostCIDR } from "@utils/ip";
-import { useDialog } from "@/contexts/DialogProvider";
-import { usePolicies } from "@/contexts/PoliciesProvider";
-import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import {
   ExternalLinkIcon,
   PlusCircle,
   ShieldCheck,
   WorkflowIcon,
 } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@components/Accordion";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useRef, useState } from "react";
+import { useDialog } from "@/contexts/DialogProvider";
+import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import NetworkResourceAccessControl from "@/modules/networks/resources/NetworkResourceAccessControl";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
 
@@ -77,12 +77,25 @@ export default function NetworkResourceModal({
   );
 }
 
+export type ResourceModalResult = {
+  name: string;
+  description: string;
+  address: string;
+  groups: Group[];
+};
+
 type ModalProps = {
   onCreated?: (r: NetworkResource) => void;
   onUpdated?: (r: NetworkResource) => void;
   network: Network;
   resource?: NetworkResource;
   initialTab?: string;
+  // false → no API calls: the data comes back via onSaved and the Access
+  // Control tab is hidden.
+  useSave?: boolean;
+  onSaved?: (data: ResourceModalResult) => void;
+  // Extra uniqueness names for resources that don't exist in the API yet.
+  takenNames?: string[];
 };
 
 export function ResourceModalContent({
@@ -91,6 +104,9 @@ export function ResourceModalContent({
   network,
   resource,
   initialTab,
+  useSave = true,
+  onSaved,
+  takenNames,
 }: ModalProps) {
   const t = useTranslations("networks");
   const tCommon = useTranslations("common");
@@ -116,7 +132,6 @@ export function ResourceModalContent({
 
   const { confirm } = useDialog();
 
-  // Access control policies
   const [policies, setPolicies] = useState<Policy[]>([]);
   const { createPoliciesForResource } = usePolicies();
   const {
@@ -152,17 +167,32 @@ export function ResourceModalContent({
 
   const nameError = useMemo(() => {
     if (name === "") return "";
-    if (resourceExists(name, resource?.id))
+    // Compared case-insensitively to match resourceExists, or two drafts
+    // differing only in case both validate and clash on deploy.
+    const normalized = name.trim().toLowerCase();
+    if (
+      resourceExists(name, resource?.id) ||
+      (normalized !== resource?.name?.toLowerCase() &&
+        takenNames?.some((n) => n.toLowerCase() === normalized))
+    )
       return t("nameAlreadyExists");
     return "";
-  }, [name, resourceExists, resource?.id, t]);
+  }, [name, resourceExists, resource?.id, resource?.name, takenNames, t]);
+
+  const saveDraft = () => {
+    onSaved?.({
+      name: name.trim(),
+      description,
+      address: normalizeHostCIDR(address),
+      groups,
+    });
+  };
 
   const confirmMissingPolicies = async () => {
     if (allResourcePolicies.length > 0) return true;
     return confirm({
       title: t("noPoliciesConfirmTitle"),
-      description:
-        t("noPoliciesConfirmDesc"),
+      description: t("noPoliciesConfirmDesc"),
       type: "warning",
       confirmText: resource ? t("saveChanges") : t("addResource"),
       cancelText: tCommon("cancel"),
@@ -231,7 +261,10 @@ export function ResourceModalContent({
         description={
           resource
             ? `${resource.name}`
-            : t("resourceAddNewDesc", { networkName: network?.name })
+            : network?.name
+            ? t("resourceAddNewDesc", { networkName: network.name })
+            : // No network yet on the draft canvas, so avoid an empty string.
+              t("resourceAddNew")
         }
         color={"yellow"}
       />
@@ -242,13 +275,15 @@ export function ResourceModalContent({
             <WorkflowIcon size={16} />
             {t("resourceTab")}
           </TabsTrigger>
-          <TabsTrigger
-            value={"access-control"}
-            disabled={!resource && !canCreate}
-          >
-            <ShieldCheck size={16} />
-            {t("accessControl")}
-          </TabsTrigger>
+          {useSave && (
+            <TabsTrigger
+              value={"access-control"}
+              disabled={!resource && !canCreate}
+            >
+              <ShieldCheck size={16} />
+              {t("accessControl")}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value={"resource"} className={"pb-4"}>
@@ -260,8 +295,8 @@ export function ResourceModalContent({
                 ref={nameRef}
                 autoFocus={true}
                 tabIndex={0}
-data-testid="resource-name-input"
-				placeholder={t("resourceNamePlaceholder")}
+                data-testid="resource-name-input"
+                placeholder={t("resourceNamePlaceholder")}
                 value={name}
                 error={nameError}
                 onChange={(e) => setName(e.target.value)}
@@ -353,7 +388,7 @@ data-testid="resource-name-input"
                             ? "this policy"
                             : "these policies"}
                           .
-                          {isAddressValid || resource ? (
+                          {useSave && (isAddressValid || resource) ? (
                             <>
                               {" "}
                               Please review them in the{" "}
@@ -365,8 +400,11 @@ data-testid="resource-name-input"
                               </InlineButtonLink>{" "}
                               tab.
                             </>
-                          ) : (
+                          ) : useSave ? (
                             " Please review them in the Access Control tab."
+                          ) : (
+                            // Draft has no Access Control tab.
+                            " Review them on the canvas before you deploy."
                           )}
                         </Callout>
                       )}
@@ -378,17 +416,21 @@ data-testid="resource-name-input"
           </div>
         </TabsContent>
 
-        <TabsContent value={"access-control"} className={"pb-8"}>
-          <NetworkResourceAccessControl
-            existingPolicies={existingPolicies || []}
-            newPolicies={policies}
-            onNewPoliciesChange={setPolicies}
-            address={address}
-            resourceName={name}
-            resourceId={resource?.id}
-            hasResourceGroups={groups.length > 0}
-          />
-        </TabsContent>
+        {/* Draft never mounts this tab: its policies live in local state that
+            saveDraft discards, so they would be silently lost. */}
+        {useSave && (
+          <TabsContent value={"access-control"} className={"pb-8"}>
+            <NetworkResourceAccessControl
+              existingPolicies={existingPolicies || []}
+              newPolicies={policies}
+              onNewPoliciesChange={setPolicies}
+              address={address}
+              resourceName={name}
+              resourceId={resource?.id}
+              hasResourceGroups={groups.length > 0}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       <ModalFooter className={"items-center"}>
@@ -408,7 +450,23 @@ data-testid="resource-name-input"
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          {!resource ? (
+          {!useSave ? (
+            <>
+              <ModalClose asChild={true}>
+                <Button variant={"secondary"}>Cancel</Button>
+              </ModalClose>
+              <ModalClose asChild={true}>
+                <Button
+                  variant={"primary"}
+                  data-testid={"submit-resource"}
+                  onClick={saveDraft}
+                  disabled={!canCreate}
+                >
+                  {resource ? "Save Changes" : "Add Resource"}
+                </Button>
+              </ModalClose>
+            </>
+          ) : !resource ? (
             <>
               {tab === "resource" && (
                 <>

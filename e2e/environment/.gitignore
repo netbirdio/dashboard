@@ -1,6 +1,7 @@
 # Ignore zitadel environment
 .env
 Caddyfile
+agentgateway-stub.Caddyfile
 management.json
 turnserver.conf
 zitadel.env
@@ -10,3 +11,5 @@ proxy-certs/
 proxy-certs-no-ports/
 docker-compose.yml
 /machinekey
+geo-cache/
+geo-dump/

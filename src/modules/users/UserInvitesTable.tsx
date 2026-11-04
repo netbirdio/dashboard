@@ -1,3 +1,4 @@
+import Badge from "@components/Badge";
 import Button from "@components/Button";
 import Code from "@components/Code";
 import {
@@ -9,6 +10,7 @@ import {
 } from "@components/DropdownMenu";
 import InlineLink from "@components/InlineLink";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
+import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -36,45 +38,46 @@ import {
 } from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import MultipleGroups from "@components/ui/MultipleGroups";
-import Skeleton from "react-loading-skeleton";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { notify } from "@components/Notification";
-import { MoreVertical, RefreshCw } from "lucide-react";
+import { cn, generateColorFromString } from "@utils/helpers";
 import { isNetBirdCloud } from "@utils/netbird";
 import dayjs from "dayjs";
+import { MoreVertical, RefreshCw } from "lucide-react";
 import {
   Cog,
   CopyIcon,
   CreditCardIcon,
   ExternalLinkIcon,
   EyeIcon,
+  GaugeIcon,
   Link2,
   MailPlus,
   NetworkIcon,
   Trash2,
   User2,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import NetBirdIcon from "@/assets/icons/NetBirdIcon";
-import Badge from "@components/Badge";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
+import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
+import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { cn, generateColorFromString } from "@utils/helpers";
 import { Group } from "@/interfaces/Group";
 import {
   Role,
   UserInvite,
   UserInviteRegenerateResponse,
 } from "@/interfaces/User";
-import UserInviteModal from "@/modules/users/UserInviteModal";
 import { useAccount } from "@/modules/account/useAccount";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import UserInviteModal from "@/modules/users/UserInviteModal";
 
 // Name cell for invites - same styling as UserNameCell but for invites
 function InviteNameCell({ invite }: { invite: UserInvite }) {
@@ -145,6 +148,18 @@ function InviteRoleCell({ invite }: { invite: UserInvite }) {
           <>
             <NetworkIcon size={14} />
             {t("networkAdmin")}
+          </>
+        )}
+        {role === Role.AgentNetworkAdmin && (
+          <>
+            <AgentNetworkIcon size={14} />
+            Agent Network Admin
+          </>
+        )}
+        {role === Role.UsageViewer && (
+          <>
+            <GaugeIcon size={14} />
+            Usage Viewer
           </>
         )}
       </Badge>
@@ -402,7 +417,9 @@ function useInvitesTableColumns(
       {
         accessorKey: "expired",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("status")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>{t("status")}</DataTableHeader>
+          );
         },
         sortingFn: "basic",
         cell: ({ row }) => <InviteStatusCell invite={row.original} />,
@@ -410,7 +427,9 @@ function useInvitesTableColumns(
       {
         accessorKey: "auto_groups",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("groups")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>{t("groups")}</DataTableHeader>
+          );
         },
         sortingFn: "text",
         cell: ({ row }) => <InviteGroupCell invite={row.original} />,
@@ -418,7 +437,9 @@ function useInvitesTableColumns(
       {
         accessorKey: "expires_at",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("expires")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>{t("expires")}</DataTableHeader>
+          );
         },
         sortingFn: "datetime",
         cell: ({ row }) => (
@@ -479,6 +500,8 @@ export default function UserInvitesTable({
     ],
   );
 
+  const { enabled: agentNetworkEnabled } = useAgentNetworkMode();
+
   const invitesWithGroupNames = useMemo(() => {
     if (!invites) return undefined;
     return invites.map((invite) => ({
@@ -514,10 +537,21 @@ export default function UserInvitesTable({
       { value: "admin", label: t("admin") },
       { value: "user", label: t("user") },
       { value: "network_admin", label: t("networkAdmin") },
+      // Agent Network roles can only be assigned where the surface exists, so
+      // don't offer them as filters elsewhere.
+      ...(agentNetworkEnabled
+        ? [
+            {
+              value: "agent_network_admin",
+              label: t("agentNetworkAdmin"),
+            },
+            { value: "usage_viewer", label: t("usageViewer") },
+          ]
+        : []),
       { value: "billing_admin", label: t("billingAdmin") },
       { value: "auditor", label: t("auditor") },
     ],
-    [t],
+    [agentNetworkEnabled, t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
@@ -590,7 +624,7 @@ export default function UserInvitesTable({
         <GetStartedTest
           icon={
             <SquareIcon
-              icon={<Link2 className={"fill-nb-gray-200"} size={20} />}
+              icon={<Link2 className={"text-nb-gray-200"} size={20} />}
               color={"gray"}
               size={"large"}
             />
@@ -633,18 +667,18 @@ export default function UserInvitesTable({
               filters={filterDefs}
               disabled={invites?.length == 0}
             />
+            <DataTableRefreshButton
+              isDisabled={invites?.length == 0}
+              onClick={() => {
+                mutate("/users/invites");
+              }}
+            />
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
                 table.setPageIndex(0);
                 table.resetColumnFilters();
                 table.resetGlobalFilter();
-              }}
-            />
-            <DataTableRefreshButton
-              isDisabled={invites?.length == 0}
-              onClick={() => {
-                mutate("/users/invites");
               }}
             />
             <Button variant={"secondary"} onClick={onShowUsers}>

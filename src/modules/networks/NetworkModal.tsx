@@ -17,8 +17,8 @@ import Paragraph from "@components/Paragraph";
 import Separator from "@components/Separator";
 import { Textarea } from "@components/Textarea";
 import { useApiCall } from "@utils/api";
-import { useTranslations } from "next-intl";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { Network } from "@/interfaces/Network";
@@ -40,7 +40,7 @@ export default function NetworkModal({
 }: Readonly<Props>) {
   return (
     <Modal open={open} onOpenChange={setOpen}>
-      <Content
+      <NetworkModalContent
         network={network}
         onCreated={(network) => {
           setOpen?.(false);
@@ -60,9 +60,18 @@ type ContentProps = {
   onCreated?: (network: Network) => void;
   onUpdated?: (network: Network) => void;
   network?: Network;
+  // Pure-data mode (draft canvas): no API calls, values return via onSaved.
+  useSave?: boolean;
+  onSaved?: (values: { name: string; description: string }) => void;
 };
 
-const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
+export const NetworkModalContent = ({
+  network,
+  onCreated,
+  onUpdated,
+  useSave = true,
+  onSaved,
+}: ContentProps) => {
   const t = useTranslations("networks");
   const tCommon = useTranslations("common");
   const [name, setName] = useState(network?.name || "");
@@ -97,11 +106,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-netbird"} />}
         title={network ? t("updateNetwork") : t("addNetwork")}
-        description={
-          network
-            ? network.name
-            : t("modalAccessDescription")
-        }
+        description={network ? network.name : t("modalAccessDescription")}
         color={"netbird"}
       />
       <Separator />
@@ -111,8 +116,8 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
           <HelpText>{t("networkNameHelp")}</HelpText>
           <Input
             tabIndex={0}
-data-testid="network-name-input"
-			placeholder={t("networkNameModalPlaceholder")}
+            data-testid="network-name-input"
+            placeholder={t("networkNameModalPlaceholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -121,8 +126,8 @@ data-testid="network-name-input"
           <Label>{t("networkDescriptionLabel")}</Label>
           <HelpText>{t("networkDescriptionHelp")}</HelpText>
           <Textarea
-data-testid="network-description-input"
-			placeholder={t("networkDescriptionPlaceholder")}
+            data-testid="network-description-input"
+            placeholder={t("networkDescriptionPlaceholder")}
             value={description}
             rows={3}
             onChange={(e) => setDescription(e.target.value)}
@@ -152,7 +157,13 @@ data-testid="network-description-input"
             variant={"primary"}
             data-testid={"submit-network"}
             disabled={!name}
-            onClick={network ? updateNetwork : createNetwork}
+            onClick={
+              !useSave
+                ? () => onSaved?.({ name, description })
+                : network
+                ? updateNetwork
+                : createNetwork
+            }
           >
             {network ? (
               t("saveChanges")

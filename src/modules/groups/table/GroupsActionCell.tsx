@@ -1,10 +1,10 @@
 import Button from "@components/Button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
 import { cn } from "@utils/helpers";
@@ -18,114 +18,120 @@ import { GROUP_TOOLTIP_TEXT } from "@/interfaces/Group";
 import { GroupUsage } from "@/modules/groups/useGroupsUsage";
 
 type Props = {
-	group: GroupUsage;
-	inUse: boolean;
+  group: GroupUsage;
+  inUse: boolean;
 };
 
 export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
-	const t = useTranslations("groups");
-	const tCommon = useTranslations("common");
-	const { permission } = usePermissions();
-	const router = useRouter();
+  const t = useTranslations("groups");
+  const tCommon = useTranslations("common");
+  const { permission } = usePermissions();
+  const router = useRouter();
 
-	const {
-		deleteGroup,
-		isAllowedToRename,
-		isAllowedToDelete,
-		isIntegrationGroup,
-		isJWTGroup,
-		openGroupRenameModal,
-	} = useGroupContext();
+  const {
+    deleteGroup,
+    isAllowedToRename,
+    isAllowedToDelete,
+    isIntegrationGroup,
+    isJWTGroup,
+    openGroupRenameModal,
+  } = useGroupContext();
 
-	const canDelete = isAllowedToDelete && !inUse;
+  const canDelete = isAllowedToDelete && !inUse;
 
-	return (
-		<>
-			<div
-				className={cn(
-					"flex justify-end pr-4 gap-3",
-					group.name === "All" && "pointer-events-none opacity-0",
-				)}
-			>
-				<DropdownMenu modal={false}>
-					<DropdownMenuTrigger
-						asChild
-						onClick={(e) => {
-							e.stopPropagation();
-							e.preventDefault();
-						}}
-					>
-						<Button variant={"secondary"} className={"!px-3"}>
-							<MoreVertical size={16} className={"shrink-0"} />
-						</Button>
-					</DropdownMenuTrigger>
+  return (
+    <>
+      <div
+        className={cn(
+          "flex justify-end pr-4 gap-3",
+          group.name === "All" && "pointer-events-none opacity-0",
+        )}
+      >
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger
+            asChild
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+            }}
+          >
+            <Button
+              variant={"secondary"}
+              className={"!px-3"}
+              data-testid="group-actions"
+            >
+              <MoreVertical size={16} className={"shrink-0"} />
+            </Button>
+          </DropdownMenuTrigger>
 
-					<DropdownMenuContent className="w-auto" align="end">
-						<DropdownMenuItem
-							onClick={() => router.push("/group?id=" + group.id)}
-							disabled={!permission.groups.read}
-						>
-							<div className="flex gap-3 items-center">
-								<FolderIcon size={14} className="shrink-0" />
-								{t("viewDetails")}
-							</div>
-						</DropdownMenuItem>
+          <DropdownMenuContent className="w-auto" align="end">
+            <DropdownMenuItem
+              onClick={() => router.push("/group?id=" + group.id)}
+              disabled={!permission.groups.read}
+            >
+              <div className="flex gap-3 items-center">
+                <FolderIcon size={14} className="shrink-0" />
+                {t("viewDetails")}
+              </div>
+            </DropdownMenuItem>
 
-						{permission?.groups?.update && (
-							<>
-								<DropdownMenuSeparator />
-								<FullTooltip
-									content={
-										<div className={"text-xs max-w-xs"}>
-								{isJWTGroup
-									? t("renameDisabledJWT")
-									: t("renameDisabledIdP")}
-										</div>
-									}
-									interactive={false}
-									disabled={isAllowedToRename}
-									className={"w-full block"}
-								>
-									<DropdownMenuItem
-										onClick={openGroupRenameModal}
-										disabled={!isAllowedToRename}
-									>
-										<div className="flex gap-3 items-center">
-											<Pencil size={14} className="shrink-0" />
-											{t("rename")}
-										</div>
-									</DropdownMenuItem>
-								</FullTooltip>
-							</>
-						)}
-						{permission?.groups?.delete && (
-							<FullTooltip
-								content={
-									<div className={"text-xs max-w-xs"}>
-									{isIntegrationGroup
-										? t("deleteDisabledIdP")
-										: t("deleteDisabledInUse")}
-									</div>
-								}
-								interactive={false}
-								disabled={canDelete}
-								className={"w-full block"}
-							>
-								<DropdownMenuItem
-									onClick={deleteGroup}
-									variant={"danger"}
-									disabled={!canDelete}
-								>
-									<div className="flex gap-3 items-center">
-										<Trash2 size={14} className="shrink-0" />
-										{tCommon("delete")}
-									</div>
-								</DropdownMenuItem>
-							</FullTooltip>
-						)}
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</div>
-		</>
-	);
+            {permission?.groups?.update && (
+              <>
+                <DropdownMenuSeparator />
+                <FullTooltip
+                  content={
+                    <div className={"text-xs max-w-xs"}>
+                      {isJWTGroup
+                        ? t("renameDisabledJWT")
+                        : t("renameDisabledIdP")}
+                    </div>
+                  }
+                  interactive={false}
+                  disabled={isAllowedToRename}
+                  className={"w-full block"}
+                >
+                  <DropdownMenuItem
+                    onClick={openGroupRenameModal}
+                    disabled={!isAllowedToRename}
+                    data-testid="rename-group"
+                  >
+                    <div className="flex gap-3 items-center">
+                      <Pencil size={14} className="shrink-0" />
+                      {t("rename")}
+                    </div>
+                  </DropdownMenuItem>
+                </FullTooltip>
+              </>
+            )}
+            {permission?.groups?.delete && (
+              <FullTooltip
+                content={
+                  <div className={"text-xs max-w-xs"}>
+                    {isIntegrationGroup
+                      ? t("deleteDisabledIdP")
+                      : t("deleteDisabledInUse")}
+                  </div>
+                }
+                interactive={false}
+                disabled={canDelete}
+                className={"w-full block"}
+              >
+                <DropdownMenuItem
+                  onClick={deleteGroup}
+                  variant={"danger"}
+                  disabled={!canDelete}
+                  data-testid="delete-group"
+                >
+                  <div className="flex gap-3 items-center">
+                    <Trash2 size={14} className="shrink-0" />
+                    {tCommon("delete")}
+                  </div>
+                </DropdownMenuItem>
+              </FullTooltip>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
+  );
 }

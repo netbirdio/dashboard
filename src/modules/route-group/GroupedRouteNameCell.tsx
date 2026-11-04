@@ -10,7 +10,7 @@ export default function GroupedRouteNameCell({
   groupedRoute,
 }: Readonly<Props>) {
   return (
-    <div className={"flex gap-6 items-center min-w-[270px] max-w-[270px]"}>
+    <div className={"flex gap-6 items-center min-w-[200px] max-w-[270px]"}>
       <ChevronRightIcon
         size={20}
         className={

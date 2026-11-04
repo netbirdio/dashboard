@@ -24,14 +24,14 @@ import {
   TimerResetIcon,
   Trash2,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { useBypass, useBypassedPeers } from "@/cloud/edr/useBypass";
+import { useDialog } from "@/contexts/DialogProvider";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { useDialog } from "@/contexts/DialogProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { ExitNodeDropdownButton } from "@/modules/exit-node/ExitNodeDropdownButton";
 import { useIntegrations } from "@/modules/integrations/edr/useIntegrations";

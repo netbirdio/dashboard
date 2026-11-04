@@ -34,7 +34,6 @@ export const PlanFeatureAvailability = {
  */
 const OPEN_SOURCE_FEATURES: Array<keyof typeof PlanFeatures> = [
   "POSTURE_CHECKS",
-  "DEVICE_APPROVALS",
 ];
 
 /**

@@ -1,4 +1,3 @@
-import { useTranslations } from "next-intl";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
 import { Input } from "@components/Input";
@@ -9,8 +8,9 @@ import {
   ModalFooter,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import cidr from "ip-cidr";
+import { isValidIP } from "@utils/ip";
 import { trim } from "lodash";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 
 type IPVersion = "v4" | "v6";
@@ -61,7 +61,7 @@ export function PeerEditIPModal({
         description: t("updatePeerIPv6Description"),
         placeholder: t("editPeerIPv6Placeholder"),
         errorMessage: t("editPeerIPv6ErrorMessage"),
-        validate: (ip: string) => cidr.isValidAddress(ip) && ip.includes(":"),
+        validate: (ip: string) => isValidIP(ip) && ip.includes(":"),
       },
     }),
     [t, version],

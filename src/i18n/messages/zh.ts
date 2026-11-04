@@ -172,6 +172,7 @@ export default {
     feedback: "反馈",
   },
   table: {
+    selectedWithCount: "已选择 <Count>{count}</Count> 项",
     search: "搜索...",
     noResults: "无结果",
     noResultsCardTitle: "未找到任何结果",
@@ -252,13 +253,11 @@ export default {
       "您的账户正在等待管理员审批。请在访问仪表板前等待审批。",
     accessGenericDescription:
       "尝试访问仪表板时发生错误。请重试或联系您的管理员。",
-    contactAdminDescription:
-      "如果您认为这是一个错误，请联系您的管理员。",
+    contactAdminDescription: "如果您认为这是一个错误，请联系您的管理员。",
   },
   pageNotFound: {
     title: "请求的页面不存在",
-    description:
-      "您尝试访问的页面无法找到。请验证 URL 或返回仪表板继续浏览。",
+    description: "您尝试访问的页面无法找到。请验证 URL 或返回仪表板继续浏览。",
   },
   peers: {
     title: "节点",
@@ -316,8 +315,7 @@ export default {
     loginExpirationUpdateDescription: "节点 {name} 的会话过期已成功{state}。",
     loginExpirationUpdating: "正在更新会话过期...",
     loginRequired: "需要登录",
-    loginExpiredTooltip:
-      "此节点已离线，由于其登录已过期，需要重新认证。",
+    loginExpiredTooltip: "此节点已离线，由于其登录已过期，需要重新认证。",
     enableSSH: "启用 SSH 访问",
     disableSSH: "禁用 SSH 访问",
     disableSSHConfirmation: "禁用 SSH 访问？",
@@ -488,8 +486,7 @@ export default {
     revokeBypassConfirmDescription:
       "此节点将接受正常的合规验证。如果仍然不合规，它将失去网络访问权限。",
     revokeBypassSuccess: "合规绕过已撤销",
-    revokeBypassSuccessDescription:
-      "节点 {name} 现在接受正常的合规验证。",
+    revokeBypassSuccessDescription: "节点 {name} 现在接受正常的合规验证。",
     revokeBypassLoading: "正在撤销合规绕过...",
     bypassTooltip:
       "绕过 {integrationName} 合规检查并允许此节点连接。当设备恢复合规时，绕过将自动移除。",
@@ -606,7 +603,8 @@ export default {
     sshAccessPlaceholder: "选择 SSH 访问类型...",
 
     // SSH 授权组
-    sshNoSourceGroups: "您尚未添加任何源组。请添加源组以指定哪些用户组可以访问目标机器上的哪些系统用户。",
+    sshNoSourceGroups:
+      "您尚未添加任何源组。请添加源组以指定哪些用户组可以访问目标机器上的哪些系统用户。",
 
     // SSH 用户名选择器
     sshAllLocalUsers: "所有本地用户",
@@ -701,6 +699,12 @@ export default {
     assignedGroups: "已分配的组",
   },
   users: {
+    selectUser: "选择用户…",
+    noUsersToSelect: "没有可供选择的用户。",
+    noUsersMatchingSearch: "没有与搜索条件匹配的用户。",
+    cannotChangeOwnerRole: "只有账户所有者可以更改所有者的角色。",
+    agentNetworkAdmin: "智能体网络管理员",
+    usageViewer: "用量查看者",
     title: "用户",
     name: "名称",
     email: "邮箱",
@@ -781,9 +785,9 @@ export default {
     // UserInviteModal
     userCreatedSuccess: "用户创建成功！",
     inviteLinkCreated: "邀请链接已创建！",
-    passwordCopyWarning:
-      "此密码将不会再次显示，请务必复制并保存到安全位置。",
-    inviteLinkShareInfo: "将此链接分享给用户。用户可以通过此链接设置自己的密码。",
+    passwordCopyWarning: "此密码将不会再次显示，请务必复制并保存到安全位置。",
+    inviteLinkShareInfo:
+      "将此链接分享给用户。用户可以通过此链接设置自己的密码。",
     passwordCopied: "密码已复制到剪贴板！",
     inviteLinkCopied: "邀请链接已复制到剪贴板！",
     expiresOn: "过期时间",
@@ -792,7 +796,8 @@ export default {
     inviteUserTitle: "邀请用户",
     createUserDescription: "创建一个使用邮箱和密码的 NetBird 用户账户。",
     inviteUserDescription2: "邀请用户加入您的网络并设置其权限。",
-    generateInviteLinkDesc: "生成一个邀请链接，用户可以通过此链接设置自己的密码。",
+    generateInviteLinkDesc:
+      "生成一个邀请链接，用户可以通过此链接设置自己的密码。",
     sendInvitation: "发送邀请",
     createInviteLink: "创建邀请链接",
     inviteUserTab: "邀请用户",
@@ -832,7 +837,8 @@ export default {
     userRejectedDesc: "用户已成功拒绝并移除。",
     rejectingUser: "正在拒绝用户...",
     deleteUserTitle: "删除 '{name}'？",
-    deleteUserDesc: "删除此用户将移除其设备并取消仪表板访问权限。此操作无法撤销。",
+    deleteUserDesc:
+      "删除此用户将移除其设备并取消仪表板访问权限。此操作无法撤销。",
     blockUserTitle: "阻止 '{name}'？",
     blockUserDesc: "此操作将立即撤销用户的访问权限并断开其所有活动节点的连接。",
     blockButton: "阻止",
@@ -899,7 +905,8 @@ export default {
     deleteInviteTitle: "删除 '{name}' 的邀请？",
     deleteInviteDesc: "删除此邀请将撤销邀请链接。用户将无法再使用此邀请加入。",
     inviteLinkRegenerated: "邀请链接已重新生成！",
-    inviteLinkRegenShareInfo: "将此链接分享给用户。用户可以通过此链接设置自己的密码。",
+    inviteLinkRegenShareInfo:
+      "将此链接分享给用户。用户可以通过此链接设置自己的密码。",
     inviteActions: "邀请操作",
     regenerateButton: "重新生成",
     expires: "过期时间",
@@ -1234,7 +1241,8 @@ export default {
     udpService: "UDP 服务",
     forwardTrafficDesc: "将流量直接转发到您的后端服务。",
     exposeServicesDesc: "通过 NetBird 的反向代理安全地暴露服务。",
-    terminatedService: "此服务已被 NetBird 团队终止，因为它违反了服务条款。如有问题，请联系",
+    terminatedService:
+      "此服务已被 NetBird 团队终止，因为它违反了服务条款。如有问题，请联系",
     terminated: "已终止",
   },
   dns: {
@@ -1354,8 +1362,10 @@ export default {
     // NameserverGroupTable
     searchNameserverPlaceholder: "按名称、域名或名称服务器搜索...",
     noNameserversGroupTitle: "此组尚未在任何名称服务器中使用",
-    noNameserversGroupDesc: "将此组分配为名称服务器中的分发组，即可在此处查看。",
-    noNameserversGetStartedDesc: "看起来您还没有任何名称服务器。添加一个到您的网络即可开始使用。选择预定义的或添加自定义名称服务器。",
+    noNameserversGroupDesc:
+      "将此组分配为名称服务器中的分发组，即可在此处查看。",
+    noNameserversGetStartedDesc:
+      "看起来您还没有任何名称服务器。添加一个到您的网络即可开始使用。选择预定义的或添加自定义名称服务器。",
     // NameserverNameserversCell
     serverCount: "{count} 个服务器",
     // DNSZonesProvider - Zone notifications
@@ -1386,10 +1396,12 @@ export default {
     askForRecordDesc: "添加 A、AAAA 或 CNAME 记录以控制网络的域名解析。",
     askForRecordCancel: "稍后",
     // DNSZoneModal
-    validDomainErrorZone: "请输入有效域名，例如 internal, company.internal 或 intra.example.com",
+    validDomainErrorZone:
+      "请输入有效域名，例如 internal, company.internal 或 intra.example.com",
     // DNSRecordModal
     validIPv4Error: "请输入有效的 IPv4 地址，例如 192.168.1.1",
-    validIPv6Error: "请输入有效的 IPv6 地址，例如 2001:0db8:85a3::8a2e:0370:7334",
+    validIPv6Error:
+      "请输入有效的 IPv6 地址，例如 2001:0db8:85a3::8a2e:0370:7334",
     validCnameError: "请输入有效域名，例如 example.com 或 server.example.com",
     updateRecordDesc: "更新 '{zone}' 区域的记录",
     addRecordDesc: "向 '{zone}' 区域添加新记录",
@@ -1406,7 +1418,8 @@ export default {
     searchZonePlaceholder: "按域名、IP、内容或组搜索...",
     noZonesGroupTitle: "此组尚未在任何区域中使用",
     noZonesGroupDesc: "将此组分配为区域中的分发组，即可在此处查看。",
-    noZonesGetStartedDesc: "看起来您还没有任何区域。添加一个区域来控制网络的域名解析。",
+    noZonesGetStartedDesc:
+      "看起来您还没有任何区域。添加一个区域来控制网络的域名解析。",
     addZone: "添加区域",
     // DNSZonesActionCell
     zoneActionsAria: "区域操作",
@@ -1416,6 +1429,7 @@ export default {
     contentColumn: "内容",
   },
   networks: {
+    resourceAddNew: "添加新资源",
     title: "网络",
     description: "管理组织的网络和路由",
     pageDescription:
@@ -1514,13 +1528,11 @@ export default {
     networkDeleted: "网络已成功删除。",
     networkDeleting: "正在删除网络...",
     confirmDeleteResourceTitle: "删除资源「{name}」？",
-    confirmDeleteResourceDesc:
-      "确定要删除此资源吗？此操作无法撤销。",
+    confirmDeleteResourceDesc: "确定要删除此资源吗？此操作无法撤销。",
     resourceDeleted: "资源已成功删除。",
     resourceDeleting: "正在删除资源...",
     confirmRemoveRouterTitle: "移除此路由节点？",
-    confirmRemoveRouterDesc:
-      "确定要移除此路由节点吗？",
+    confirmRemoveRouterDesc: "确定要移除此路由节点吗？",
     removeRouter: "移除 {name}",
     routerRemoved: "路由节点已成功删除。",
     routerRemoving: "正在删除路由节点...",
@@ -1529,14 +1541,11 @@ export default {
       "如果没有路由节点，此网络内的资源将无法被任何节点访问。",
     later: "稍后",
     confirmAddResourceTitle: "为「{name}」添加资源？",
-    confirmAddResourceDesc:
-      "添加资源后，节点即可访问您的网络资源。",
-    multiResourceTitle:
-      "此策略被多个资源使用",
+    confirmAddResourceDesc: "添加资源后，节点即可访问您的网络资源。",
+    multiResourceTitle: "此策略被多个资源使用",
     multiResourceDesc:
       "此策略将一个或多个资源组作为目标。{action}此策略也将影响以下资源：",
-    deletePolicyDesc:
-      "确定要删除此策略吗？此操作无法撤销。",
+    deletePolicyDesc: "确定要删除此策略吗？此操作无法撤销。",
     remainingMore: "+ 其余 {count} 个",
 
     // NetworkRangeCell.tsx
@@ -1550,12 +1559,9 @@ export default {
     accessPolicies: "个访问策略",
 
     // NetworkRoutingPeerCell.tsx + network/page.tsx
-    highAvailabilityInactiveText:
-      "此网络的高可用性当前{status}。",
-    highAvailabilityActiveText:
-      "此网络的高可用性{status}。",
-    highAvailabilityHelpActive:
-      "您可以添加更多路由节点来提高此网络的可用性。",
+    highAvailabilityInactiveText: "此网络的高可用性当前{status}。",
+    highAvailabilityActiveText: "此网络的高可用性{status}。",
+    highAvailabilityHelpActive: "您可以添加更多路由节点来提高此网络的可用性。",
     highAvailabilityHelpInactive:
       "请添加更多路由节点或包含路由节点的组，以启用此网络的高可用性。",
     highAvailability: "高可用性",
@@ -1567,8 +1573,7 @@ export default {
     exposed: "已暴露",
     notExposed: "未暴露",
     noAssignedResources: "此组没有已分配的资源",
-    noAssignedResourcesDesc:
-      "将此组分配给网络中的资源，即可在此处查看。",
+    noAssignedResourcesDesc: "将此组分配给网络中的资源，即可在此处查看。",
     noNetworkResources: "此网络没有资源",
     noNetworkResourcesDesc:
       "向此网络添加资源以控制节点可访问的内容。资源可以是单个 IP、子网或域名。",
@@ -1600,7 +1605,7 @@ export default {
     addressDescription: "输入单个 IP 地址、CIDR 块或域名",
     addressPlaceholder: "地址（IP、CIDR 或域名）",
     domainError:
-      "请输入有效域名，例如 service.internal、example.com 或 *.example.com",
+      "请输入有效域名，例如 service.internal、example.com、*.example.com 或 service",
     ipCidrError:
       "请输入有效的 IP 或 CIDR，例如 10.0.0.21、192.168.1.0/24、2001:db8::1 或 2001:db8::/64",
     ipAddressTooltip:
@@ -1608,7 +1613,7 @@ export default {
     cidrBlockTooltip:
       "若要授予对整个子网的访问权限，请使用 CIDR 块。例如 10.0.0.0/24 或 192.168.1.0/24。",
     domainNameTooltip:
-      "DNS 域名，例如 service.internal、example.com 或 *.example.com（匹配所有子域名）。",
+      "DNS 域名，例如 service.internal、example.com、*.example.com 或 service（匹配所有子域名）。",
 
     // ResourceTypeCell.tsx
     singleIP: "单个 IP",
@@ -1622,8 +1627,7 @@ export default {
     peer: "节点",
     searchRoutingPeers: "按节点名称或组名称搜索...",
     noRoutingPeers: "此网络没有路由节点",
-    noRoutingPeersDesc:
-      "向此网络添加路由节点以访问此网络内的资源。",
+    noRoutingPeersDesc: "向此网络添加路由节点以访问此网络内的资源。",
 
     // RoutingPeersActionCell.tsx
     routerEdit: "编辑",
@@ -1636,8 +1640,7 @@ export default {
     masquerade: "Masquerade",
     masqueradeHelp:
       "允许访问您的私有网络，无需在本地路由器或其他设备上配置路由。",
-    masqueradeTooltip:
-      "非 Linux 路由节点需要启用 Masquerade。",
+    masqueradeTooltip: "非 Linux 路由节点需要启用 Masquerade。",
     masqueradeEnabled: "Masquerade 已启用",
     masqueradeDisabled: "Masquerade 已禁用",
     updatingMasquerade: "正在更新 Masquerade...",
@@ -1645,12 +1648,10 @@ export default {
       "组 <important>{groupName}</important> 包含至少一个非 Linux 节点。禁用的 Masquerade 对非 Linux 路由节点无效。",
 
     // NetworkRoutesDeprecationInfo.tsx
-    routesDeprecationInfo:
-      "网络路由将被弃用，并由网络功能替代。",
+    routesDeprecationInfo: "网络路由将被弃用，并由网络功能替代。",
 
     // NetworkModal.tsx
-    modalAccessDescription:
-      "通过添加网络来访问局域网和 VPC 中的内部资源。",
+    modalAccessDescription: "通过添加网络来访问局域网和 VPC 中的内部资源。",
     networkCreated: "网络创建成功。",
     networkCreating: "正在创建网络...",
     networkUpdated: "网络更新成功。",
@@ -1658,22 +1659,17 @@ export default {
 
     // NetworkResourceModal.tsx
     resourceCreated: "资源已创建",
-    resourceCreatedDesc:
-      "资源「{name}」已成功创建。",
+    resourceCreatedDesc: "资源「{name}」已成功创建。",
     resourceCreating: "正在创建资源...",
     resourceUpdated: "资源已更新",
-    resourceUpdatedDesc:
-      "资源「{name}」已成功更新。",
+    resourceUpdatedDesc: "资源「{name}」已成功更新。",
     resourceUpdating: "正在更新资源...",
-    nameAlreadyExists:
-      "此名称的资源已存在，请使用其他名称。",
-    noPoliciesConfirmTitle:
-      "未配置访问控制策略",
+    nameAlreadyExists: "此名称的资源已存在，请使用其他名称。",
+    noPoliciesConfirmTitle: "未配置访问控制策略",
     noPoliciesConfirmDesc:
       "如果没有访问控制策略，此资源将无法被任何节点访问。您也可以稍后创建策略。确定要继续吗？",
     resourceAddNewDesc: '向"{networkName}"添加新资源',
-    resourceGroupsLearnMore:
-      "了解关于<link>资源</link>的更多信息",
+    resourceGroupsLearnMore: "了解关于<link>资源</link>的更多信息",
 
     // NetworkResourceAccessControl.tsx
     editPolicy: "编辑策略",
@@ -1782,19 +1778,16 @@ export default {
     newPostureCheck: "新建态势检查",
     postureCheck: "态势检查",
     addPostureChecks: "添加态势检查（{count, number}）",
-    usePostureChecks:
-      "使用态势检查进一步限制网络中的访问。",
+    usePostureChecks: "使用态势检查进一步限制网络中的访问。",
     removePostureCheck: "移除态势检查",
     confirmDeleteTitle: "删除「{name}」？",
-    confirmDeleteDescription:
-      "确定要删除此态势检查吗？此操作无法撤销。",
+    confirmDeleteDescription: "确定要删除此态势检查吗？此操作无法撤销。",
     assignedToPolicyCannotDelete:
       "此态势检查已分配给策略，无法删除。请先从所有策略中移除该态势检查后再删除。",
     postureCheckDeleted: "态势检查已成功删除",
     deletingPostureCheck: "正在删除态势检查...",
     disableThisCheck: "禁用此检查？",
-    disableCheckConfirm:
-      "确定要禁用此检查吗？该检查的所有设置都将丢失。",
+    disableCheckConfirm: "确定要禁用此检查吗？该检查的所有设置都将丢失。",
     on: "开启",
     off: "关闭",
   },
@@ -1855,19 +1848,16 @@ export default {
     revoke: "撤销",
     openActionsMenu: "打开操作菜单",
     revokeConfirmTitle: "撤销安装密钥「{name}」？",
-    revokeConfirmDescription:
-      "确定要撤销此安装密钥吗？此操作无法撤销。",
+    revokeConfirmDescription: "确定要撤销此安装密钥吗？此操作无法撤销。",
     revokeSuccessDescription: "安装密钥已成功撤销",
     revokeLoading: "正在撤销安装密钥...",
     deleteConfirmTitle: "删除安装密钥「{name}」？",
-    deleteConfirmDescription:
-      "确定要删除此安装密钥吗？此操作无法撤销。",
+    deleteConfirmDescription: "确定要删除此安装密钥吗？此操作无法撤销。",
     deleteSuccessDescription: "安装密钥已成功删除",
     deleteLoading: "正在删除安装密钥...",
     // SetupKeyGroupsCell
     autoAssignedGroups: "自动分配的组",
-    autoAssignedGroupsDescription:
-      "使用此密钥注册的节点将自动分配这些组",
+    autoAssignedGroupsDescription: "使用此密钥注册的节点将自动分配这些组",
     groupsSavedDescription: "安装密钥的组已成功保存",
     groupsSaving: "正在保存安装密钥的组...",
   },
@@ -1924,8 +1914,7 @@ export default {
       "组 <Value>{group}</Value> 已添加到安装密钥 <Value>{setupkey}</Value>",
 
     // Dashboard
-    desc_dashboard_login:
-      "<Value>{username}</Value> 登录到仪表板",
+    desc_dashboard_login: "<Value>{username}</Value> 登录到仪表板",
 
     // Policy
     desc_policy_update: "策略 <Value>{name}</Value> 已更新",
@@ -1996,22 +1985,18 @@ export default {
       "组 <Value>{group}</Value> 已从 NetBird IP 为 <Value>{peer_ip}</Value> 的节点中移除",
     desc_peer_group_add:
       "组 <Value>{group}</Value> 已添加到 NetBird IP 为 <Value>{peer_ip}</Value> 的节点",
-    desc_peer_login_expire:
-      "节点 <Value>{name}</Value> 的登录已过期",
+    desc_peer_login_expire: "节点 <Value>{name}</Value> 的登录已过期",
     desc_peer_login_expire_with_reason:
       "节点 <Value>{name}</Value> 的登录已过期，原因是 <Value>{reason}</Value>",
-    desc_peer_ssh_disable:
-      "节点 <Value>{name}</Value> 的 SSH 服务器已禁用",
-    desc_peer_ssh_enable:
-      "节点 <Value>{name}</Value> 的 SSH 服务器已启用",
+    desc_peer_ssh_disable: "节点 <Value>{name}</Value> 的 SSH 服务器已禁用",
+    desc_peer_ssh_enable: "节点 <Value>{name}</Value> 的 SSH 服务器已启用",
     desc_peer_login_expiration_disable:
       "节点 <Value>{name}</Value> 的登录过期已禁用",
     desc_peer_login_expiration_enable:
       "节点 <Value>{name}</Value> 的登录过期已启用",
     desc_peer_rename:
       "NetBird IP 为 <Value>{ip}</Value> 的节点已重命名为 <Value>{name}</Value>",
-    desc_peer_approve:
-      "NetBird IP 为 <Value>{ip}</Value> 的节点已获批准",
+    desc_peer_approve: "NetBird IP 为 <Value>{ip}</Value> 的节点已获批准",
     desc_peer_ip_update:
       "节点 <Value>{name}</Value> 的 IP 地址已从 <Value>{old_ip}</Value> 更新为 <Value>{ip}</Value>",
     desc_peer_user_add:
@@ -2025,12 +2010,9 @@ export default {
 
     // Account
     desc_account_create: "<Value>{initiator}</Value> 创建了账户",
-    desc_account_setting_peer_login_expiration_update:
-      "全局登录过期已更新",
-    desc_account_setting_peer_login_expiration_enable:
-      "全局登录过期已启用",
-    desc_account_setting_peer_login_expiration_disable:
-      "全局登录过期已禁用",
+    desc_account_setting_peer_login_expiration_update: "全局登录过期已更新",
+    desc_account_setting_peer_login_expiration_enable: "全局登录过期已启用",
+    desc_account_setting_peer_login_expiration_disable: "全局登录过期已禁用",
     desc_account_network_range_update:
       "账户网络范围已从 <Value>{old_network_range}</Value> 更新为 <Value>{new_network_range}</Value>",
 
@@ -2046,14 +2028,11 @@ export default {
       "用户 <Value>{username}</Value> 的访问令牌 <Value>{name}</Value> 已被删除",
 
     // Integration
-    desc_integration_create_platform:
-      "<Value>{platform}</Value> 集成已创建",
+    desc_integration_create_platform: "<Value>{platform}</Value> 集成已创建",
     desc_integration_create: "集成已创建",
-    desc_integration_delete_platform:
-      "<Value>{platform}</Value> 集成已被删除",
+    desc_integration_delete_platform: "<Value>{platform}</Value> 集成已被删除",
     desc_integration_delete: "集成已被删除",
-    desc_integration_update_platform:
-      "<Value>{platform}</Value> 集成已更新",
+    desc_integration_update_platform: "<Value>{platform}</Value> 集成已更新",
     desc_integration_update: "集成已更新",
 
     // DNS
@@ -2063,12 +2042,9 @@ export default {
       "组 <Value>{group}</Value> 已从禁用的 DNS 组设置中移除",
 
     // Posture Checks
-    desc_posture_check_updated:
-      "姿态检查 <Value>{name}</Value> 已更新",
-    desc_posture_check_created:
-      "姿态检查 <Value>{name}</Value> 已创建",
-    desc_posture_check_deleted:
-      "姿态检查 <Value>{name}</Value> 已被删除",
+    desc_posture_check_updated: "姿态检查 <Value>{name}</Value> 已更新",
+    desc_posture_check_created: "姿态检查 <Value>{name}</Value> 已创建",
+    desc_posture_check_deleted: "姿态检查 <Value>{name}</Value> 已被删除",
     desc_transferred_owner_role: "所有者角色已转让",
 
     // EDR / Integrated Validator
@@ -2091,9 +2067,9 @@ export default {
 
     // Resource
     desc_resource_group_add:
-      "组 <Value>{resource_name}</Value> 已添加到资源 <Value>{name}</Value>",
+      "组 <Value>{name}</Value> 已添加到资源 <Value>{resource_name}</Value>",
     desc_resource_group_delete:
-      "组 <Value>{resource_name}</Value> 已从资源 <Value>{name}</Value> 中移除",
+      "组 <Value>{name}</Value> 已从资源 <Value>{resource_name}</Value> 中移除",
 
     // Reverse Proxy (peer expose)
     desc_service_peer_expose:
@@ -2116,12 +2092,9 @@ export default {
       "已从网络 <Value>{network_name}</Value> 中删除路由节点",
     desc_network_router_update:
       "已更新网络 <Value>{network_name}</Value> 的路由节点",
-    desc_network_create:
-      "名为 <Value>{name}</Value> 的网络已创建",
-    desc_network_delete:
-      "名为 <Value>{name}</Value> 的网络已被删除",
-    desc_network_update:
-      "名为 <Value>{name}</Value> 的网络已更新",
+    desc_network_create: "名为 <Value>{name}</Value> 的网络已创建",
+    desc_network_delete: "名为 <Value>{name}</Value> 的网络已被删除",
+    desc_network_update: "名为 <Value>{name}</Value> 的网络已更新",
 
     // Jobs
     desc_peer_job_create:
@@ -2134,12 +2107,9 @@ export default {
       "流量事件限制组 <Value>{group_name}</Value> 已添加",
 
     // Identity Provider
-    desc_identityprovider_create:
-      "身份提供者 <Value>{name}</Value> 已创建",
-    desc_identityprovider_update:
-      "身份提供者 <Value>{name}</Value> 已更新",
-    desc_identityprovider_delete:
-      "身份提供者 <Value>{name}</Value> 已被删除",
+    desc_identityprovider_create: "身份提供者 <Value>{name}</Value> 已创建",
+    desc_identityprovider_update: "身份提供者 <Value>{name}</Value> 已更新",
+    desc_identityprovider_delete: "身份提供者 <Value>{name}</Value> 已被删除",
 
     // Service (proxy cluster)
     desc_service_create:
@@ -2201,7 +2171,8 @@ export default {
     emailPlaceholder: "例如 hello@company.com",
     add: "添加",
     connectNetBirdWithSlack: "将 NetBird 与 Slack 连接",
-    slackDescription: "通过传入 Webhook 直接在您的 Slack 频道中接收 NetBird 通知事件。",
+    slackDescription:
+      "通过传入 Webhook 直接在您的 Slack 频道中接收 NetBird 通知事件。",
     createSlackApp: "创建 Slack 应用",
     open: "打开",
     slackAppManagement: "Slack 应用管理",
@@ -2247,7 +2218,8 @@ export default {
     disconnecting: "正在断开连接",
     deleting: "正在删除",
     disconnectSlack: "断开 Slack 连接",
-    disconnectSlackConfirm: "您确定要断开 Slack 连接吗？您将不再在 Slack 频道中接收通知。",
+    disconnectSlackConfirm:
+      "您确定要断开 Slack 连接吗？您将不再在 Slack 频道中接收通知。",
     deleteWebhookConnection: "删除 Webhook 连接",
     deleteWebhookConfirm: "您确定要删除此 Webhook 连接吗？此操作无法撤消。",
     notConnected: "未连接",
@@ -2288,7 +2260,8 @@ export default {
     type: "类型",
     searchPlaceholder: "按发票编号或日期搜索...",
     noInvoicesTitle: "您没有任何发票",
-    noInvoicesDescription: "发票在每个计费周期结束时创建。一旦可用，您将在此处看到它们。",
+    noInvoicesDescription:
+      "发票在每个计费周期结束时创建。一旦可用，您将在此处看到它们。",
     downloadPDF: "下载为 PDF",
     downloadCSV: "下载为 CSV",
     downloadInvoicePDF: "下载发票 (PDF)",
@@ -2312,10 +2285,12 @@ export default {
     headerName: "名称",
     headerValue: "值",
     headerNamePlaceholder: "例如：Authorization",
-    headerValuePlaceholder: "例如：Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InVURWw0SmJieUU4S00zY3NwcmdUSSJ9",
+    headerValuePlaceholder:
+      "例如：Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InVURWw0SmJieUU4S00zY3NwcmdUSSJ9",
     headerKeyRequired: "提供值时，请求头键是必需的",
     headerNameRequired: "提供值时，请求头名称是必需的",
-    authHeaderConflict: "警告：您已添加 'Authorization' 请求头。这将覆盖上一步中的 {authType} 身份验证。请移除 'Authorization' 请求头。",
+    authHeaderConflict:
+      "警告：您已添加 'Authorization' 请求头。这将覆盖上一步中的 {authType} 身份验证。请移除 'Authorization' 请求头。",
     basicAuth: "基本身份验证",
     bearerToken: "Bearer 令牌",
     noAuthentication: "无身份验证",
@@ -2329,15 +2304,18 @@ export default {
   },
   survey: {
     loveToHear: "我们期待您的反馈",
-    improveHelp: "通过分享您如何发现 NetBird 来帮助我们改进。您的反馈对我们至关重要。",
+    improveHelp:
+      "通过分享您如何发现 NetBird 来帮助我们改进。您的反馈对我们至关重要。",
     howDidYouHear: "您是如何了解到 NetBird 的？",
     selectOption: "请选择一个选项...",
     submitContinue: "提交并继续",
   },
   awsMarketplace: {
     thanksRegistering: "感谢您通过 AWS Marketplace 注册！",
-    activeStripePlan: "您似乎已经有一个活跃的订阅。要使用 AWS 作为账单提供商，请联系我们的支持团队。",
-    flexiblePricing: "通过我们的灵活定价，您只需为 AWS 账户中的活跃用户和活动节点付费。请选择适合您需求的计划。",
+    activeStripePlan:
+      "您似乎已经有一个活跃的订阅。要使用 AWS 作为账单提供商，请联系我们的支持团队。",
+    flexiblePricing:
+      "通过我们的灵活定价，您只需为 AWS 账户中的活跃用户和活动节点付费。请选择适合您需求的计划。",
     changePlanLater: "您随时可以更改计划。",
     getSupport: "获取支持",
     continueDashboard: "继续到仪表板",
@@ -2346,6 +2324,7 @@ export default {
     downgradeTo: "降级到",
   },
   routes: {
+    colActive: "启用",
     // Table columns
     colName: "名称",
     colMetric: "度量值",
@@ -2363,8 +2342,7 @@ export default {
     createDescription: "添加网络路由以访问局域网和 VPC。",
 
     // Create route modal - create policy prompt
-    createPolicyConfirm:
-      "是否要为路由 '{name}' 创建新的访问控制策略？",
+    createPolicyConfirm: "是否要为路由 '{name}' 创建新的访问控制策略？",
     createPolicyDescription:
       "您已为此路由添加了一个或多个访问控制组。这些组允许您通过在访问策略中使用它们来限制对此路由的访问。",
     createPolicyConfirmText: "创建策略",
@@ -2383,26 +2361,20 @@ export default {
     keepRoutesTooltip:
       "负载均衡系统的 DNS 记录经常变化。保留已解析的地址可确保与活跃资源的持续连接不受中断。",
     keepRoutes: "保留路由",
-    keepRoutesHelp:
-      "在 IP 地址更新后保留之前已解析的路由，以维持稳定的连接。",
+    keepRoutesHelp: "在 IP 地址更新后保留之前已解析的路由，以维持稳定的连接。",
 
     // Routing peer section
-    assignSinglePeer:
-      "指定单个节点作为{type}的路由节点",
-    assignPeerGroup:
-      "指定一个节点组作为{type}",
+    assignSinglePeer: "指定单个节点作为{type}的路由节点",
+    assignPeerGroup: "指定一个节点组作为{type}",
     exitNode: "出口节点",
     exitNodes: "出口节点",
     networkRoute: "网络路由",
     routingPeers: "路由节点",
 
     // Distribution groups help
-    routeAllTrafficPeer:
-      "通过此节点为以下组路由所有互联网流量",
-    routeAllTrafficPeers:
-      "通过节点为以下组路由所有互联网流量",
-    advertiseRouteToGroups:
-      "将此路由广播给属于以下组的节点",
+    routeAllTrafficPeer: "通过此节点为以下组路由所有互联网流量",
+    routeAllTrafficPeers: "通过节点为以下组路由所有互联网流量",
+    advertiseRouteToGroups: "将此路由广播给属于以下组的节点",
 
     // Access control groups
     accessControlGroupsOptional: "访问控制组（可选）",
@@ -2412,18 +2384,15 @@ export default {
       "这些组可对网络中的内部服务进行更精细的控制。它们可在访问控制策略中用于限制和控制对此路由的访问。",
 
     // General / Name & Description
-    networkIdentifierHelp:
-      "添加将分配给每个设备的唯一网络标识符。",
+    networkIdentifierHelp: "添加将分配给每个设备的唯一网络标识符。",
     networkIdentifierPlaceholder: "例如：aws-eu-central-1-vpc",
-    descriptionHelp:
-      "写一个简短的描述为此路由添加更多上下文。",
+    descriptionHelp: "写一个简短的描述为此路由添加更多上下文。",
     descriptionPlaceholder:
       "例如：用于访问 AWS VPC 中所有设备（位于法兰克福）的路由。",
 
     // Settings
     enableRoute: "启用路由",
-    enableRouteHelp:
-      "使用此开关启用或禁用路由。",
+    enableRouteHelp: "使用此开关启用或禁用路由。",
     autoApplyRoute: "自动应用路由",
     autoApplyRouteHelp:
       "自动将出口节点应用于您的分发组。这需要 NetBird 客户端 v0.55.0 或更高版本。",
@@ -2447,8 +2416,7 @@ export default {
     routeRemoved: "路由已成功移除",
     deletingRoute: "正在删除路由...",
     deleteDialogTitle: "删除 '{name}'？",
-    deleteDialogDescription:
-      "确定要删除此路由吗？此操作无法撤销。",
+    deleteDialogDescription: "确定要删除此路由吗？此操作无法撤销。",
     deleteDialogConfirm: "删除",
     routeEnabledSuccess: "网络路由已成功启用",
     routeDisabledSuccess: "网络路由已成功禁用",
@@ -2465,10 +2433,8 @@ export default {
     // Add routing peer modal
     addRoutingPeerDescription:
       "添加多个路由节点后，NetBird 可实现此网络的高可用性。",
-    routeSelectorHelp:
-      "您要添加路由的网络名称和 CIDR。",
-    assignSinglePeerRoute:
-      "指定单个节点作为网络路由的路由节点。",
+    routeSelectorHelp: "您要添加路由的网络名称和 CIDR。",
+    assignSinglePeerRoute: "指定单个节点作为网络路由的路由节点。",
     peerAddedToRoute: "节点已成功添加到路由",
 
     // NetworkRoutesTable column headers
@@ -2477,20 +2443,16 @@ export default {
     colHighAvailability: "高可用性",
     filterStatus: "状态",
     searchRoutes: "按网络、范围、名称或组搜索...",
-    groupNoRoutesTitle:
-      "此组尚未在任何网络路由中使用",
-    groupNoRoutesDescription:
-      "创建新路由时分配此组，即可在此处看到它们。",
+    groupNoRoutesTitle: "此组尚未在任何网络路由中使用",
+    groupNoRoutesDescription: "创建新路由时分配此组，即可在此处看到它们。",
     getStartedDescription:
       "看起来您还没有任何路由。添加网络路由以访问局域网和 VPC。",
 
     // High availability cell
     haDisabled: "此路由的高可用性当前已禁用。",
     haEnabled: "此路由的高可用性已启用。",
-    haAddMorePeersTooltip:
-      "添加更多路由节点以启用此网络路由的高可用性。",
-    haIncreasePeersTooltip:
-      "您可以添加更多节点以提高此网络路由的可用性。",
+    haAddMorePeersTooltip: "添加更多路由节点以启用此网络路由的高可用性。",
+    haIncreasePeersTooltip: "您可以添加更多节点以提高此网络路由的可用性。",
     haAddToGroupTooltip:
       "要配置，您必须在此路由的组中添加更多节点。可以在节点菜单中操作。",
     haAddFromPeersTooltip:
@@ -2594,6 +2556,14 @@ export default {
     },
   },
   setupModal: {
+    installWithPackageManager: "通过软件包管理器手动安装",
+    clickConnectMenuBar: "点击菜单栏中 NetBird 图标里的“连接”",
+    managementFirstLaunch:
+      "首次启动时，NetBird 会询问连接位置。选择 <Mark>自托管</Mark>，并输入以下<Mark>管理服务器地址</Mark>",
+    managementSettings:
+      "已经跳过该界面？点击{trayName}中的 NetBird 图标，打开<Mark>设置</Mark>，在<Mark>常规</Mark>中将<Mark>管理服务器</Mark>设为<Mark>自托管</Mark>。",
+    menuBar: "菜单栏",
+    systemTray: "系统托盘",
     generateSetupKey: "生成安装密钥",
     setupKeyHelpTooltip:
       "安装密钥是一次性的预认证令牌，用于注册无人值守的机器到 NetBird。将其传递给 <code>netbird up</code> 的 <code>--setup-key</code> 参数，节点将无需交互式登录即可注册。",
@@ -2603,15 +2573,12 @@ export default {
     timeToAddFirstDevice: "是时候添加您的第一台设备了。",
     installNetBirdWithSetupKey: "使用安装密钥安装 NetBird",
     installNetBird: "安装 NetBird",
-    getStartedWithSetupKey:
-      "首先，安装并使用安装密钥作为参数运行 NetBird。",
-    getStartedWithEmail:
-      "首先，安装 NetBird 并使用您的电子邮件账户登录。",
+    getStartedWithSetupKey: "首先，安装并使用安装密钥作为参数运行 NetBird。",
+    getStartedWithEmail: "首先，安装 NetBird 并使用您的电子邮件账户登录。",
     footerDescription:
       "之后您应该已连接。向您的网络添加更多设备或在管理面板中管理现有设备。如有其他问题，请查看我们的",
     installationGuide: "安装指南",
-    setupKeyOnceMessage:
-      "此安装密钥只能在接下来的 24 小时内使用一次。",
+    setupKeyOnceMessage: "此安装密钥只能在接下来的 24 小时内使用一次。",
     setupKeyExpiredMessage: "过期后，同一密钥将无法再次使用。",
     setupKeyCreated: "安装密钥已创建",
     setupKeyCreatedDescription: "已为此安装生成一次性安装密钥。",
@@ -2630,9 +2597,9 @@ export default {
     installOnMacos: "在 macOS 上安装",
     downloadMacInstaller: "下载并运行 macOS 安装程序",
     managementUrlInstruction:
-      "点击系统托盘中 NetBird 图标的\"设置\"然后\"高级设置\"，并输入以下\"管理 URL\"",
+      '点击系统托盘中 NetBird 图标的"设置"然后"高级设置"，并输入以下"管理 URL"',
     openTerminalAndRun: "打开终端并运行 NetBird",
-    clickConnectTray: "点击系统托盘中 NetBird 图标的\"连接\"",
+    clickConnectTray: '点击系统托盘中 NetBird 图标的"连接"',
     signUpWithEmail: "使用您的电子邮件地址注册",
     installWithTerminal: "通过终端手动安装",
     installWithHomebrew: "通过 HomeBrew 手动安装",
@@ -2652,8 +2619,8 @@ export default {
     installOnAndroid: "在 Android 上安装",
     downloadFromGooglePlay: "从 Google Play 商店下载并安装应用：",
     googlePlayAlt: "从 Google Play 下载 NetBird",
-    changeServer: "点击\"更改服务器\"并输入以下\"服务器\"",
-    clickConnectButton: "点击屏幕中央的\"连接\"按钮",
+    changeServer: '点击"更改服务器"并输入以下"服务器"',
+    clickConnectButton: '点击屏幕中央的"连接"按钮',
     installOnIos: "在 iOS 上安装",
     downloadFromAppStore: "从 App Store 下载并安装应用：",
     appStoreAlt: "从 App Store 下载 NetBird",
@@ -2664,7 +2631,8 @@ export default {
     customers_2: "Customers",
     integrations_3: "Integrations -",
     processing_your_invitation_4: "Processing your invitation...",
-    successfully_joined_as_an_managed_service_provider_5: "Successfully joined as an Managed Service Provider",
+    successfully_joined_as_an_managed_service_provider_5:
+      "Successfully joined as an Managed Service Provider",
     plans_6: "Plans -",
     tenants_7: "Tenants -",
     tenants_8: "Tenants",
@@ -2715,8 +2683,10 @@ export default {
     customer_id__optional_4: "Customer ID (optional)",
     domain_5: "Domain",
     update_6: "Update",
-    select_the_plan_that_best_fits_your_customer_s_nee_7: "Select the plan that best fits your customer's needs.",
-    are_you_sure_you_want_to_grant_access__this_action_8: "Are you sure you want to grant access? This action cannot be undone.",
+    select_the_plan_that_best_fits_your_customer_s_nee_7:
+      "Select the plan that best fits your customer's needs.",
+    are_you_sure_you_want_to_grant_access__this_action_8:
+      "Are you sure you want to grant access? This action cannot be undone.",
     grant_access_to_distributor_9: "Grant access to distributor?",
     request_account_access_10: "Request Account Access",
     successfully_unlinked_11: "Successfully unlinked  ()",
@@ -2725,7 +2695,8 @@ export default {
     unlinking_14: "Unlinking ...",
     subscribing_to_15: "Subscribing to ...",
     subscription_plan_16: "Subscription Plan",
-    successfully_subscribed_to_the__plan_17: "Successfully subscribed to the  plan.",
+    successfully_subscribed_to_the__plan_17:
+      "Successfully subscribed to the  plan.",
     customer_18: "Customer",
     customer_id_19: "Customer ID",
     customer_id_copied_to_clipboard_20: "Customer ID copied to clipboard",
@@ -2736,7 +2707,8 @@ export default {
     reset_multi_factor_authentication_25: "Reset Multi-factor Authentication?",
     txt_record_26: "TXT record",
     add__account_27: "Add  account",
-    enter_the_primary_domain_of_the_tenant_28: "Enter the primary domain of the tenant.",
+    enter_the_primary_domain_of_the_tenant_28:
+      "Enter the primary domain of the tenant.",
     name_29: "Name",
     primary_domain_of_the_tenant_30: "Primary domain of the tenant.",
     update__account_31: "Update  account",
@@ -2778,7 +2750,8 @@ export default {
     time_67: "Time",
     traffic_68: "Traffic",
     access_control_policy_xyz_passed_69: "Access Control Policy XYZ passed",
-    peer_2_accepted_the_connection_request_70: "Peer 2 accepted the connection request",
+    peer_2_accepted_the_connection_request_70:
+      "Peer 2 accepted the connection request",
     posture_check_xyz_passed_71: "Posture Check XYZ passed",
     unknown_72: "Unknown",
     bearer_73: "Bearer",
@@ -2796,38 +2769,48 @@ export default {
     next_locale_11: "NEXT_LOCALE",
     // contexts
     subscription__to_1: "Subscription  to  ()",
-    successfully_subscribed_to_the__plan_2: "Successfully subscribed to the  plan",
+    successfully_subscribed_to_the__plan_2:
+      "Successfully subscribed to the  plan",
     request_failed_with_status_code_3: "Request failed with status code",
     add_user_to_group_4: "Add User to Group",
     add_users_to_group_5: "Add Users to Group",
     delete_6: "Delete ''?",
     peers_were_successfully_added_to_7: "Peers were successfully added to .",
     rename_group_8: "Rename Group",
-    user____was_successfully_added_to_group_9: "User '' was successfully added to group ''.",
-    users_were_successfully_added_to_group_10: "Users were successfully added to group ''.",
+    user____was_successfully_added_to_group_9:
+      "User '' was successfully added to group ''.",
+    users_were_successfully_added_to_group_10:
+      "Users were successfully added to group ''.",
     delete_target_11: "Delete target?",
     reverse_proxy_12: "Reverse proxy",
     target_13: "Target",
     // hooks
     error_reading_localstorage_key_1: "Error reading localStorage key “”:",
     error_setting_localstorage_key_2: "Error setting localStorage key “”:",
-    tried_setting_localstorage_key____even_though_envi_3: "Tried setting localStorage key “” even though environment is not a client",
+    tried_setting_localstorage_key____even_though_envi_3:
+      "Tried setting localStorage key “” even though environment is not a client",
     invalid_time_unit_4: "Invalid time unit:",
     // modules
     delete_1: "Delete ''?",
     trial_ends_in__days_2: "Trial ends in  days",
     select_currency_3: "Select currency...",
-    upgrade_your__plan_to_access_this_feature_4: "Upgrade your  plan to access this feature.",
+    upgrade_your__plan_to_access_this_feature_4:
+      "Upgrade your  plan to access this feature.",
     free_trial_5: "Free Trial",
     what_s_next_6: "What's next?",
-    smart_firewall_translates_natural_language_prompts_7: "Smart Firewall translates natural language prompts into network\n            policies. You can describe your access needs in plain language, and\n            AI will handle the rest. If you're interested in early access,\n            please fill out the form below.",
+    smart_firewall_translates_natural_language_prompts_7:
+      "Smart Firewall translates natural language prompts into network\n            policies. You can describe your access needs in plain language, and\n            AI will handle the rest. If you're interested in early access,\n            please fill out the form below.",
     thank_you_for_signing_up_8: "Thank you for signing up!",
-    hello___i_m_here_to_help_you_configure_your_access_9: "Hello , I'm here to help you configure your access control rules securely and efficiently. How can I assist you today?",
-    we_will_notify_you_by_email_as_soon_as_it_s_availa_10: "We will notify you by email as soon as it's available for your account.",
+    hello___i_m_here_to_help_you_configure_your_access_9:
+      "Hello , I'm here to help you configure your access control rules securely and efficiently. How can I assist you today?",
+    we_will_notify_you_by_email_as_soon_as_it_s_availa_10:
+      "We will notify you by email as soon as it's available for your account.",
     policy__was_successfully_created_11: "Policy  was successfully created.",
     posture_check_failed_to_create_12: "Posture Check failed to create.",
-    it_s_configured_to_allow_connections_13: "It's configured to allow connections",
-    it_s_configured_to_allow_connections_through_14: "It's configured to allow connections through",
+    it_s_configured_to_allow_connections_13:
+      "It's configured to allow connections",
+    it_s_configured_to_allow_connections_through_14:
+      "It's configured to allow connections through",
     address_15: "Address",
     name_16: "Name",
     role_17: "Role",
@@ -2840,11 +2823,14 @@ export default {
     enter_a_strong_password_24: "Enter a strong password",
     password_25: "Password",
     your_name_26: "Your name",
-    crowdstrike_is_a_cloud_native_platform_for_protect_27: "CrowdStrike is a cloud-native platform for protecting endpoints, cloud workloads, identities and data.",
+    crowdstrike_is_a_cloud_native_platform_for_protect_27:
+      "CrowdStrike is a cloud-native platform for protecting endpoints, cloud workloads, identities and data.",
     crowdstrike_was_successfully_28: "CrowdStrike was successfully",
     disable_crowdstrike_29: "Disable CrowdStrike?",
-    crowdstrike_integration_was_successfully_deleted_30: "CrowdStrike Integration was successfully deleted",
-    crowdstrike_integration_was_successfully_updated_31: "CrowdStrike Integration was successfully updated",
+    crowdstrike_integration_was_successfully_deleted_30:
+      "CrowdStrike Integration was successfully deleted",
+    crowdstrike_integration_was_successfully_updated_31:
+      "CrowdStrike Integration was successfully updated",
     delete_integration_32: "Delete integration?",
     client_id_33: "Client ID",
     create_34: "Create",
@@ -2853,14 +2839,18 @@ export default {
     secret_37: "Secret",
     zero_trust_assessment__read_38: "Zero Trust Assessment (Read)",
     score_threshold_39: "Score Threshold",
-    are_you_sure_you_want_to_disable_the_fleetdm_integ_40: "Are you sure you want to disable the FleetDM integration?",
+    are_you_sure_you_want_to_disable_the_fleetdm_integ_40:
+      "Are you sure you want to disable the FleetDM integration?",
     disable_fleetdm_41: "Disable FleetDM?",
     fleetdm_was_successfully_42: "FleetDM was successfully",
-    open_source_device_management_platform_for_macos_43: "Open-source device management platform for macOS, Windows, and Linux with osquery-based compliance policies.",
+    open_source_device_management_platform_for_macos_43:
+      "Open-source device management platform for macOS, Windows, and Linux with osquery-based compliance policies.",
     fleetdm_was_successfully_deleted_44: "FleetDM was successfully deleted",
     fleetdm_was_successfully_updated_45: "FleetDM was successfully updated",
-    navigate_to_your_fleetdm_management_console_46: "Navigate to your FleetDM Management Console.",
-    are_you_sure_you_want_to_disable_the_huntress_inte_47: "Are you sure you want to disable the Huntress integration?",
+    navigate_to_your_fleetdm_management_console_46:
+      "Navigate to your FleetDM Management Console.",
+    are_you_sure_you_want_to_disable_the_huntress_inte_47:
+      "Are you sure you want to disable the Huntress integration?",
     disable_huntress_48: "Disable Huntress?",
     huntress_was_successfully_49: "Huntress was successfully",
     huntress_was_successfully_deleted_50: "Huntress was successfully deleted",
@@ -2871,7 +2861,8 @@ export default {
     enter_your_api_credentials_55: "Enter your API Credentials",
     disable_intune_56: "Disable Intune?",
     intune_was_successfully_57: "Intune was successfully",
-    microsoft_intune_is_a_cloud_based_unified_endpoint_58: "Microsoft Intune is a cloud-based unified endpoint management for your organization.",
+    microsoft_intune_is_a_cloud_based_unified_endpoint_58:
+      "Microsoft Intune is a cloud-based unified endpoint management for your organization.",
     intune_was_successfully_deleted_59: "Intune was successfully deleted",
     intune_was_successfully_updated_60: "Intune was successfully updated",
     api_permissions_61: "API permissions",
@@ -2880,25 +2871,32 @@ export default {
     app_registrations_64: "App Registrations",
     application__client__id_65: "Application (client) ID",
     application_permissions_66: "Application permissions",
-    devicemanagementmanageddevices_read_all_67: "DeviceManagementManagedDevices.Read.All",
+    devicemanagementmanageddevices_read_all_67:
+      "DeviceManagementManagedDevices.Read.All",
     directory__tenant__id_68: "Directory (tenant) ID",
     microsoft_graph_69: "Microsoft Graph",
     register_70: "Register",
     select_permissions_71: "Select permissions",
     value_72: "Value",
-    ai_powered_endpoint_protection_platform_for_real_t_73: "AI-powered endpoint protection platform for real-time threat detection and automated response.",
-    are_you_sure_you_want_to_disable_the_sentinelone_i_74: "Are you sure you want to disable the SentinelOne integration?",
+    ai_powered_endpoint_protection_platform_for_real_t_73:
+      "AI-powered endpoint protection platform for real-time threat detection and automated response.",
+    are_you_sure_you_want_to_disable_the_sentinelone_i_74:
+      "Are you sure you want to disable the SentinelOne integration?",
     disable_sentinelone_75: "Disable SentinelOne?",
     sentinelone_was_successfully_76: "SentinelOne was successfully",
-    sentinelone_was_successfully_deleted_77: "SentinelOne was successfully deleted",
-    sentinelone_was_successfully_updated_78: "SentinelOne was successfully updated",
+    sentinelone_was_successfully_deleted_77:
+      "SentinelOne was successfully deleted",
+    sentinelone_was_successfully_updated_78:
+      "SentinelOne was successfully updated",
     create_service_user_79: "Create Service User",
     create_user_80: "Create User",
-    navigate_to_your_sentinelone_management_console_81: "Navigate to your SentinelOne Management Console.",
+    navigate_to_your_sentinelone_management_console_81:
+      "Navigate to your SentinelOne Management Console.",
     next_82: "Next",
     viewer_83: "Viewer",
     event_streaming_84: "Event Streaming",
-    amazon_data_firehose_was_successfully_disconnected_85: "Amazon Data Firehose was successfully disconnected",
+    amazon_data_firehose_was_successfully_disconnected_85:
+      "Amazon Data Firehose was successfully disconnected",
     disconnect_amazon_data_firehose_86: "Disconnect Amazon Data Firehose?",
     create_firehose_stream_87: "Create Firehose stream",
     create_access_key_88: "Create access key",
@@ -2909,23 +2907,31 @@ export default {
     enter_your_secret_key_93: "Enter your Secret-Key",
     security_credentials_94: "Security Credentials",
     source_95: "Source",
-    you_can_transform_and_convert_the_event_messages_t_96: "You can transform and convert the event messages to fit your needs.",
-    amazon_s3_is_a_scalable_storage_in_the_cloud_97: "Amazon S3 is a scalable storage in the cloud.",
+    you_can_transform_and_convert_the_event_messages_t_96:
+      "You can transform and convert the event messages to fit your needs.",
+    amazon_s3_is_a_scalable_storage_in_the_cloud_97:
+      "Amazon S3 is a scalable storage in the cloud.",
     disconnect_s3_98: "Disconnect S3?",
     create_bucket_99: "Create bucket",
     enter_your_s3_bucket_name_100: "Enter your S3 Bucket name",
-    datadog_is_a_monitoring_service_for_cloud_scale_ap_101: "Datadog is a monitoring service for cloud-scale applications.",
-    datadog_was_successfully_disconnected_102: "Datadog was successfully disconnected",
+    datadog_is_a_monitoring_service_for_cloud_scale_ap_101:
+      "Datadog is a monitoring service for cloud-scale applications.",
+    datadog_was_successfully_disconnected_102:
+      "Datadog was successfully disconnected",
     disconnect_datadog_103: "Disconnect Datadog?",
     create_key_104: "Create Key",
     enter_your_api_key_105: "Enter your API-Key",
-    navigate_to_datadogs_api_keys_page_106: "Navigate to Datadogs API Keys page",
-    when_creating_a_new_datadog_api_key__it_could_take_107: "When creating a new Datadog API key, it could take up to 5 minutes for the key to be available for use.",
+    navigate_to_datadogs_api_keys_page_106:
+      "Navigate to Datadogs API Keys page",
+    when_creating_a_new_datadog_api_key__it_could_take_107:
+      "When creating a new Datadog API key, it could take up to 5 minutes for the key to be available for use.",
     generic_http_integration_108: "Generic HTTP Integration",
-    http_integration_was_successfully_109: "HTTP Integration was successfully .",
+    http_integration_was_successfully_109:
+      "HTTP Integration was successfully .",
     cancel_110: "Cancel",
     delete_generic_http_integration_111: "Delete Generic HTTP Integration?",
-    generic_http_was_successfully_deleted_112: "Generic HTTP was successfully deleted",
+    generic_http_was_successfully_deleted_112:
+      "Generic HTTP was successfully deleted",
     identity_provider_113: "Identity Provider",
     select_your_identity_provider_114: "Select your identity provider...",
     settings___identity_providers_115: "Settings › Identity Providers",
@@ -2933,10 +2939,14 @@ export default {
     all_users_117: "All Users",
     identity_provider_sync_118: "Identity Provider Sync",
     entra_id__api__was_successfully_119: "Entra ID (API) was successfully",
-    entra_id__api__was_successfully_synced_120: "Entra ID (API) was successfully synced",
-    microsoft_entra_id_is_a_cloud_based_identity_and_a_121: "Microsoft Entra ID is a cloud-based identity and access management solution.",
-    entra_id__api__was_successfully_deleted_122: "Entra ID (API) was successfully deleted",
-    entra_id__api__was_successfully_updated_123: "Entra ID (API) was successfully updated",
+    entra_id__api__was_successfully_synced_120:
+      "Entra ID (API) was successfully synced",
+    microsoft_entra_id_is_a_cloud_based_identity_and_a_121:
+      "Microsoft Entra ID is a cloud-based identity and access management solution.",
+    entra_id__api__was_successfully_deleted_122:
+      "Entra ID (API) was successfully deleted",
+    entra_id__api__was_successfully_updated_123:
+      "Entra ID (API) was successfully updated",
     sync_interval_124: "Sync Interval",
     group_read_all_125: "Group.Read.All",
     user_read_all_126: "User.Read.All",
@@ -2949,21 +2959,28 @@ export default {
     enterprise_applications_133: "Enterprise applications",
     finish_setup_134: "Finish Setup",
     get_started_135: "Get started",
-    provision_microsoft_entra_id_groups_136: "Provision Microsoft Entra ID Groups",
-    provision_microsoft_entra_id_users_137: "Provision Microsoft Entra ID Users",
+    provision_microsoft_entra_id_groups_136:
+      "Provision Microsoft Entra ID Groups",
+    provision_microsoft_entra_id_users_137:
+      "Provision Microsoft Entra ID Users",
     provision_user_accounts_138: "Provision User Accounts",
     save_139: "Save",
     source_attribute_140: "Source attribute",
     start_provisioning_141: "Start provisioning",
     test_connection_142: "Test Connection",
     users_and_groups_143: "Users and groups",
-    auth_token_was_successfully_regenerated_144: "Auth token was successfully regenerated",
+    auth_token_was_successfully_regenerated_144:
+      "Auth token was successfully regenerated",
     regenerate_auth_token_145: "Regenerate Auth Token?",
-    a_flexible__innovative_solution_for_people_and_org_146: "A flexible, innovative solution for people and organizations to achieve more.",
+    a_flexible__innovative_solution_for_people_and_org_146:
+      "A flexible, innovative solution for people and organizations to achieve more.",
     google_workspace_was_successfully_147: "Google Workspace was successfully",
-    google_workspace_was_successfully_synced_148: "Google Workspace was successfully synced",
-    google_workspace_was_successfully_deleted_149: "Google Workspace was successfully deleted",
-    google_workspace_was_successfully_updated_150: "Google Workspace was successfully updated",
+    google_workspace_was_successfully_synced_148:
+      "Google Workspace was successfully synced",
+    google_workspace_was_successfully_deleted_149:
+      "Google Workspace was successfully deleted",
+    google_workspace_was_successfully_updated_150:
+      "Google Workspace was successfully updated",
     assign_role_151: "ASSIGN ROLE",
     account_152: "Account",
     add_key_153: "Add key",
@@ -2978,18 +2995,24 @@ export default {
     json_162: "JSON",
     keys_163: "Keys",
     service_account_164: "Service account",
-    jumpcloud_is_a_unified_identity__device__and_acces_165: "Jumpcloud is a unified identity, device, and access management platform.",
+    jumpcloud_is_a_unified_identity__device__and_acces_165:
+      "Jumpcloud is a unified identity, device, and access management platform.",
     jumpcloud_was_successfully_166: "Jumpcloud was successfully",
-    auth_token_for_jumpcloud_was_successfully_regenera_167: "Auth token for Jumpcloud was successfully regenerated",
-    jumpcloud_was_successfully_deleted_168: "Jumpcloud was successfully deleted",
-    jumpcloud_was_successfully_updated_169: "Jumpcloud was successfully updated",
+    auth_token_for_jumpcloud_was_successfully_regenera_167:
+      "Auth token for Jumpcloud was successfully regenerated",
+    jumpcloud_was_successfully_deleted_168:
+      "Jumpcloud was successfully deleted",
+    jumpcloud_was_successfully_updated_169:
+      "Jumpcloud was successfully updated",
     activate_170: "Activate",
     credentials_details_171: "Credentials Details",
     identity_management_172: "Identity Management",
     jumpcloud_was_successfully_set_up_173: "Jumpcloud was successfully set up",
-    okta_is_a_platform_to_provision_and_manage_user_ac_174: "Okta is a platform to provision and manage user accounts in cloud-based applications.",
+    okta_is_a_platform_to_provision_and_manage_user_ac_174:
+      "Okta is a platform to provision and manage user accounts in cloud-based applications.",
     okta_was_successfully_175: "Okta was successfully",
-    auth_token_for_okta_was_successfully_regenerated_176: "Auth token for Okta was successfully regenerated",
+    auth_token_for_okta_was_successfully_regenerated_176:
+      "Auth token for Okta was successfully regenerated",
     okta_was_successfully_deleted_177: "Okta was successfully deleted",
     okta_was_successfully_updated_178: "Okta was successfully updated",
     api_token_179: "API Token",
@@ -3019,12 +3042,14 @@ export default {
     client_secret_203: "Client Secret",
     openid_connect_discovery_204: "OpenID Connect Discovery",
     primary_e_mail_domain_205: "Primary E-Mail Domain",
-    use__as_a_single_sign_on_provider_to_authenticate_206: "Use  as a Single Sign-On provider to authenticate users. Follow the steps below to get started.",
+    use__as_a_single_sign_on_provider_to_authenticate_206:
+      "Use  as a Single Sign-On provider to authenticate users. Follow the steps below to get started.",
     domain_207: "Domain",
     last_check_208: "Last Check",
     delete_integration_209: "Delete Integration?",
     debug_bundle_210: "Debug Bundle",
-    generate_a_debug_bundle_on_this_peer_with_logs_and_211: "Generate a debug bundle on this peer with logs and diagnostics. Useful for troubleshooting without CLI access.",
+    generate_a_debug_bundle_on_this_peer_with_logs_and_211:
+      "Generate a debug bundle on this peer with logs and diagnostics. Useful for troubleshooting without CLI access.",
     completed_212: "Completed",
     completed_at_213: "Completed at",
     created_214: "Created",
@@ -3042,18 +3067,25 @@ export default {
     congratulations_226: "Congratulations, !",
     skipped_onboarding_____step_227: "Skipped Onboarding -  (Step )",
     troubleshooting_228: "Troubleshooting -",
-    allows_access_to_this________issubnet_229: "Allows access to this ${\n				isSubnet ?",
+    allows_access_to_this________issubnet_229:
+      "Allows access to this ${\n				isSubnet ?",
     users_to_230: "Users to",
     set_the_rules__you_re_in_control_231: "Set the rules. You're in control",
-    let_s_put_that_connection_to_the_test_232: "Let's put that connection to the test",
-    nice_work_connecting_your_client_device__now__let_233: "Nice work connecting your client device! Now, let’s have a little fun and test if it can reach your resource.",
-    let_s_get_your_first_device_online_234: "Let's get your first device online",
+    let_s_put_that_connection_to_the_test_232:
+      "Let's put that connection to the test",
+    nice_work_connecting_your_client_device__now__let_233:
+      "Nice work connecting your client device! Now, let’s have a little fun and test if it can reach your resource.",
+    let_s_get_your_first_device_online_234:
+      "Let's get your first device online",
     share_link_235: "Share Link",
-    time_to_bring_in_your_second_device_236: "Time to bring in your second device",
+    time_to_bring_in_your_second_device_236:
+      "Time to bring in your second device",
     allow_ssh_237: "Allow SSH",
     settings_238: "Settings",
-    are_you_sure_you_want_to_delete_these_peers__this_239: "Are you sure you want to delete these peers? This action cannot be undone.",
-    are_you_sure_you_want_to_overwrite_the_existing_gr_240: "Are you sure you want to overwrite the existing groups of your  selected peer(s)? This action cannot be undone.",
+    are_you_sure_you_want_to_delete_these_peers__this_239:
+      "Are you sure you want to delete these peers? This action cannot be undone.",
+    are_you_sure_you_want_to_overwrite_the_existing_gr_240:
+      "Are you sure you want to overwrite the existing groups of your  selected peer(s)? This action cannot be undone.",
     delete_241: "Delete '' ?",
     delete_all_242: "Delete All",
     overwrite_existing_groups_243: "Overwrite existing groups?",
@@ -3067,7 +3099,8 @@ export default {
     certificate_details_251: "Certificate Details",
     connect_to__via_rdp_252: "Connect to  via RDP",
     port_253: "Port",
-    this_peer_is_offline_and_cannot_be_accessed_via_rd_254: "This peer is offline and cannot be accessed via RDP.",
+    this_peer_is_offline_and_cannot_be_accessed_via_rd_254:
+      "This peer is offline and cannot be accessed via RDP.",
     connection_failed____wsa_255: "Connection failed:  (WSA )",
     connection_failed__http_256: "Connection failed: HTTP",
     ironrdp_connection_failed_257: "IronRDP connection failed:",
@@ -3075,16 +3108,19 @@ export default {
     certificate_for__has_changed_259: "Certificate for  has changed!",
     do_you_trust_this_certificate_260: "Do you trust this certificate?",
     issuer_261: "Issuer:",
-    new_certificate_for____requesting_user_acceptance_262: "New certificate for  - requesting user acceptance",
+    new_certificate_for____requesting_user_acceptance_262:
+      "New certificate for  - requesting user acceptance",
     rdp_certificate_verification_263: "RDP Certificate Verification",
     reject_264: "Reject",
     sha_256_265: "SHA-256:",
     serial_266: "Serial:",
     subject_267: "Subject:",
     the_server_268: "The server",
-    rdcleanpath_websocket_handler_not_available_for_pr_269: "RDCleanPath WebSocket handler not available for proxy",
+    rdcleanpath_websocket_handler_not_available_for_pr_269:
+      "RDCleanPath WebSocket handler not available for proxy",
     connect_to__via_ssh_270: "Connect to  via SSH",
-    connecting_via_ssh_is_only_available_when_the_peer_271: "Connecting via SSH is only available when the peer is online.",
+    connecting_via_ssh_is_only_available_when_the_peer_271:
+      "Connecting via SSH is only available when the peer is online.",
     crowdsec_ip_reputation_272: "CrowdSec IP Reputation",
     enforce_273: "Enforce",
     observe_274: "Observe",
@@ -3095,13 +3131,17 @@ export default {
     http_headers_279: "HTTP Headers",
     header_280: "Header",
     header_281: "Header  -",
-    require_specific_http_headers_to_access_this_servi_282: "Require specific HTTP headers to access this service.",
+    require_specific_http_headers_to_access_this_servi_282:
+      "Require specific HTTP headers to access this service.",
     username_283: "Username",
     enter_password_284: "Enter password...",
-    require_a_password_to_access_this_service_285: "Require a password to access this service.",
+    require_a_password_to_access_this_service_285:
+      "Require a password to access this service.",
     pin_code_286: "PIN Code",
-    require_a_numeric_pin_code_to_access_this_service_287: "Require a numeric PIN code to access this service.",
-    require_users_to_authenticate_via_sso_to_access_th_288: "Require users to authenticate via SSO to access this service.",
+    require_a_numeric_pin_code_to_access_this_service_287:
+      "Require a numeric PIN code to access this service.",
+    require_users_to_authenticate_via_sso_to_access_th_288:
+      "Require users to authenticate via SSO to access this service.",
     sso__single_sign_on_289: "SSO (Single Sign-On)",
     account_cluster_290: "Account cluster.",
     shared_cluster_291: "Shared cluster.",
@@ -3128,7 +3168,8 @@ export default {
     enter_an_ip_address_within_312: "Enter an IP address within",
     header__e_g___authorization_313: "Header, e.g., Authorization",
     value__e_g___bearer_eyjhbgci_314: "Value, e.g., Bearer eyJhbGci...",
-    configure_the_target_for_your_reverse_proxy_315: "Configure the target for your reverse proxy.",
+    configure_the_target_for_your_reverse_proxy_315:
+      "Configure the target for your reverse proxy.",
     location__optional_316: "Location (Optional)",
     request_timeout_317: "Request Timeout",
     session_idle_timeout_318: "Session Idle Timeout",
@@ -3142,12 +3183,15 @@ export default {
     resources_326: "Resources ()",
     authentication_327: "Authentication",
     select_interval_328: "Select interval...",
-    client_settings_successfully_updated_329: "Client settings successfully updated.",
+    client_settings_successfully_updated_329:
+      "Client settings successfully updated.",
     lazy_connections_successfully_330: "Lazy Connections successfully .",
     access_control___groups_331: "Access Control › Groups",
     select_provider_type_332: "Select provider type...",
-    dns_wildcard_routing_successfully_333: "DNS Wildcard Routing successfully .",
-    network_settings_successfully_updated_334: "Network settings successfully updated.",
+    dns_wildcard_routing_successfully_333:
+      "DNS Wildcard Routing successfully .",
+    network_settings_successfully_updated_334:
+      "Network settings successfully updated.",
     auto_assigned_groups_335: "Auto-assigned groups",
     unlimited_336: "Unlimited",
   },

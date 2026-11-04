@@ -10,7 +10,7 @@ import { cn } from "@utils/helpers";
 import { isRoutingPeerSupported } from "@utils/version";
 import { sortBy, unionBy } from "lodash";
 import { ArrowUpCircleIcon, ChevronsUpDown, MapPin } from "lucide-react";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { memo, useEffect, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -22,8 +22,10 @@ MapPinIcon.displayName = "MapPinIcon";
 
 interface MultiSelectProps {
   value?: Peer;
-  onChange: React.Dispatch<React.SetStateAction<Peer | undefined>>;
+  onChange: (peer: Peer | undefined) => void;
   excludedPeers?: string[];
+  disabledPeers?: string[];
+  disabledPeerReason?: string;
   disabled?: boolean;
 }
 
@@ -39,9 +41,11 @@ export function PeerSelector({
   onChange,
   value,
   excludedPeers,
+  disabledPeers,
+  disabledPeerReason,
   disabled = false,
 }: MultiSelectProps) {
-  const t = useTranslations('peers');
+  const t = useTranslations("peers");
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -52,14 +56,11 @@ export function PeerSelector({
     { filter: true, debounce: 150 },
   );
 
-  // Update unfiltered items when peers change
   useEffect(() => {
     if (!peers) return;
 
-    // Sort
     let options = sortBy([...peers], "name") as Peer[];
 
-    // Filter out excluded peers
     if (excludedPeers) {
       options = options.filter((peer) => {
         if (!peer.id) return false;
@@ -131,7 +132,7 @@ export function PeerSelector({
                 </div>
               </div>
             ) : (
-              <span>{t('selectPeer')}</span>
+              <span>{t("selectPeer")}</span>
             )}
           </div>
 
@@ -152,21 +153,17 @@ export function PeerSelector({
           <DropdownInput
             value={search}
             onChange={setSearch}
-            placeholder={t('searchPlaceholder')}
+            placeholder={t("searchPlaceholder")}
           />
 
           {unfilteredItems.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
-              <DropdownInfoText>
-                {t('noPeersAvailable')}
-              </DropdownInfoText>
+              <DropdownInfoText>{t("noPeersAvailable")}</DropdownInfoText>
             </div>
           )}
 
           {filteredItems.length == 0 && search != "" && (
-            <DropdownInfoText>
-              {t('noPeersMatching')}
-            </DropdownInfoText>
+            <DropdownInfoText>{t("noPeersMatching")}</DropdownInfoText>
           )}
 
           {filteredItems.length > 0 && (
@@ -178,7 +175,11 @@ export function PeerSelector({
                   item.version,
                   item.os,
                 );
-                if (!isSupported) return;
+                if (
+                  !isSupported ||
+                  (!!item.id && disabledPeers?.includes(item.id))
+                )
+                  return;
                 togglePeer(item);
               }}
               renderItem={(option) => {
@@ -186,17 +187,27 @@ export function PeerSelector({
                   option.version,
                   option.os,
                 );
+                const isDisabled =
+                  isSupported &&
+                  !!option.id &&
+                  !!disabledPeers?.includes(option.id);
                 return (
                   <FullTooltip
-                    disabled={isSupported}
+                    disabled={isSupported && !isDisabled}
                     interactive={false}
                     delayDuration={200}
                     skipDelayDuration={350}
                     className={"w-full flex items-center justify-between"}
                     content={
-                      <div className={"max-w-[240px] text-xs"}>
-                        {t('updateRequired')}
-                      </div>
+                      isDisabled ? (
+                        <div className={"max-w-[240px] text-xs"}>
+                          {disabledPeerReason}
+                        </div>
+                      ) : (
+                        <div className={"max-w-[240px] text-xs"}>
+                          {t("updateRequired")}
+                        </div>
+                      )
                     }
                   >
                     <div
@@ -205,6 +216,7 @@ export function PeerSelector({
                         value && value.id == option.id
                           ? "text-white"
                           : "text-nb-gray-300",
+                        isDisabled && "opacity-40",
                       )}
                     >
                       <PeerOperatingSystemIcon
@@ -236,6 +248,7 @@ export function PeerSelector({
                           ? "text-white"
                           : "text-nb-gray-300",
                         !isSupported && "opacity-50",
+                        isDisabled && "opacity-40",
                       )}
                     >
                       {option.ip}

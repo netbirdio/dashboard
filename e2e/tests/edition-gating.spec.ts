@@ -75,7 +75,7 @@ function collectPageErrors(page: Page): string[] {
 const SELF_HOSTED_CTA = "self-hosted-upgrade-cta";
 const START_TRIAL = "Start 14-Day Free Trial";
 
-test.describe.serial("Edition gating @edition", () => {
+test.describe.serial("Edition gating @edition @test-build", () => {
   test("integrations renders when premium permission modules are absent", async ({
     browser,
   }) => {

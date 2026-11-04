@@ -4,11 +4,11 @@ import Button from "@components/Button";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import {
-	Modal,
-	ModalClose,
-	ModalContent,
-	ModalFooter,
-	ModalTrigger,
+  Modal,
+  ModalClose,
+  ModalContent,
+  ModalFooter,
+  ModalTrigger,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { notify } from "@components/Notification";
@@ -24,121 +24,123 @@ import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
 import { useTranslations } from "next-intl";
 
 type Props = {
-	children: React.ReactNode;
+  children: React.ReactNode;
 };
 
 export default function ServiceUserModal({ children }: Readonly<Props>) {
-	const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(false);
 
-	return (
-		<Modal open={modal} onOpenChange={setModal} key={modal ? 1 : 0}>
-			<ModalTrigger asChild>{children}</ModalTrigger>
-			<ServiceUserModalContent onSuccess={() => setModal(false)} />
-		</Modal>
-	);
+  return (
+    <Modal open={modal} onOpenChange={setModal} key={modal ? 1 : 0}>
+      <ModalTrigger asChild>{children}</ModalTrigger>
+      <ServiceUserModalContent onSuccess={() => setModal(false)} />
+    </Modal>
+  );
 }
 
 type ModalProps = {
-	onSuccess?: () => void;
+  onSuccess?: () => void;
 };
 
 export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
-	const userRequest = useApiCall<User>("/users");
-	const { mutate } = useSWRConfig();
-	const [name, setName] = useState("");
-	const [role, setRole] = useState("user");
+  const userRequest = useApiCall<User>("/users");
+  const { mutate } = useSWRConfig();
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("user");
 
-	const t = useTranslations("serviceUsers");
-	const tCommon = useTranslations("common");
+  const t = useTranslations("serviceUsers");
+  const tCommon = useTranslations("common");
 
-	const create = async () => {
-		notify({
-			title: t("userCreatedNotify"),
-			description: t("userCreatedDesc", { name }),
-			promise: userRequest
-				.post({
-					name,
-					role,
-					auto_groups: [],
-					is_service_user: true,
-				})
-				.then(() => {
-					onSuccess && onSuccess();
-					mutate("/users?service_user=true");
-				}),
-			loadingMessage: t("creatingServiceUserNotify"),
-		});
-	};
+  const create = async () => {
+    notify({
+      title: t("userCreatedNotify"),
+      description: t("userCreatedDesc", { name }),
+      promise: userRequest
+        .post({
+          name,
+          role,
+          auto_groups: [],
+          is_service_user: true,
+        })
+        .then(() => {
+          onSuccess && onSuccess();
+          mutate("/users?service_user=true");
+        }),
+      loadingMessage: t("creatingServiceUserNotify"),
+    });
+  };
 
-	const isDisabled = useMemo(() => {
-		return name.length === 0;
-	}, [name]);
+  const isDisabled = useMemo(() => {
+    return name.length === 0;
+  }, [name]);
 
-	return (
-		<ModalContent maxWidthClass={"max-w-lg"}>
-			<ModalHeader
-				icon={<IconSettings2 />}
-				title={t("createServiceUserTitle")}
-				description={t("serviceUserCreateDesc")}
-				color={"netbird"}
-			/>
+  return (
+    <ModalContent maxWidthClass={"max-w-lg"}>
+      <ModalHeader
+        icon={<IconSettings2 />}
+        title={t("createServiceUserTitle")}
+        description={t("serviceUserCreateDesc")}
+        color={"netbird"}
+      />
 
-			<Separator />
+      <Separator />
 
-			<div className={"px-8 py-6 flex flex-col gap-8"}>
-				<div className={"flex gap-4"}>
-					<div className={"w-full"}>
-						<Input
-							customPrefix={
-								<div className={"flex items-center gap-2"}>
-									<User2 size={16} className={"text-nb-gray-300"} />
-								</div>
-							}
-							placeholder={t("serviceUserNamePlaceholder")}
-							value={name}
-							data-cy={"service-user-name"}
-							onChange={(e) => setName(e.target.value)}
-						/>
-					</div>
-					<div className={"w-[330px]"}>
-						<UserRoleSelector
-							value={role as Role}
-							onChange={setRole}
-							hideOwner={true}
-						/>
-					</div>
-				</div>
-			</div>
+      <div className={"px-8 py-6 flex flex-col gap-8"}>
+        <div className={"flex gap-4"}>
+          <div className={"w-full"}>
+            <Input
+              customPrefix={
+                <div className={"flex items-center gap-2"}>
+                  <User2 size={16} className={"text-nb-gray-300"} />
+                </div>
+              }
+              placeholder={t("serviceUserNamePlaceholder")}
+              value={name}
+              data-cy={"service-user-name"}
+              onChange={(e) => setName(e.target.value)}
+              data-testid={"service-user-name"}
+            />
+          </div>
+          <div className={"w-[330px]"}>
+            <UserRoleSelector
+              value={role as Role}
+              onChange={setRole}
+              hideOwner={true}
+            />
+          </div>
+        </div>
+      </div>
 
-			<ModalFooter className={"items-center"}>
-				<div className={"w-full"}>
-					<Paragraph className={"text-sm mt-auto"}>
-						{t("learnMoreAbout")}
-						<InlineLink
-							href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
-							target={"_blank"}
-						>
-							{t("title")}
-							<ExternalLinkIcon size={12} />
-						</InlineLink>
-					</Paragraph>
-				</div>
-				<div className={"flex gap-3 w-full justify-end"}>
-					<ModalClose asChild={true}>
-						<Button variant={"secondary"}>{tCommon("cancel")}</Button>
-					</ModalClose>
+      <ModalFooter className={"items-center"}>
+        <div className={"w-full"}>
+          <Paragraph className={"text-sm mt-auto"}>
+            {t("learnMoreAbout")}
+            <InlineLink
+              href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
+              target={"_blank"}
+            >
+              {t("title")}
+              <ExternalLinkIcon size={12} />
+            </InlineLink>
+          </Paragraph>
+        </div>
+        <div className={"flex gap-3 w-full justify-end"}>
+          <ModalClose asChild={true}>
+            <Button variant={"secondary"}>{tCommon("cancel")}</Button>
+          </ModalClose>
 
-					<Button
-						variant={"primary"}
-						disabled={isDisabled}
-						onClick={create}
-						data-cy={"create-service-user"}
-					>
-						<PlusCircle size={16} />
-						{t("create")}
-					</Button>
-				</div>
-			</ModalFooter>
-		</ModalContent>
-	);
+          <Button
+            variant={"primary"}
+            disabled={isDisabled}
+            onClick={create}
+            data-cy={"create-service-user"}
+            data-testid={"create-service-user"}
+          >
+            <PlusCircle size={16} />
+            {t("create")}
+          </Button>
+        </div>
+      </ModalFooter>
+    </ModalContent>
+  );
 }

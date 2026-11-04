@@ -304,19 +304,19 @@ export default function DNSZonesTable({
             filters={filterDefs}
             disabled={data?.length == 0}
           />
+          <DataTableRefreshButton
+            isDisabled={data?.length == 0}
+            onClick={() => {
+              mutate("/dns/zones").then();
+              mutate("/groups").then();
+            }}
+          />
           <DataTableResetFilterButton
             table={table}
             onClick={() => {
               table.setPageIndex(0);
               table.resetColumnFilters();
               table.resetGlobalFilter();
-            }}
-          />
-          <DataTableRefreshButton
-            isDisabled={data?.length == 0}
-            onClick={() => {
-              mutate("/dns/zones").then();
-              mutate("/groups").then();
             }}
           />
         </>

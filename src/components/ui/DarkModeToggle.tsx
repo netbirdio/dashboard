@@ -8,9 +8,9 @@ import {
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { useTheme } from "@/contexts/ThemeProvider";
 
 export default function DarkModeToggle() {
   const t = useTranslations("theme");

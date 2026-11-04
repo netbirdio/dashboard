@@ -1,4 +1,3 @@
-import { useTranslations } from "next-intl";
 import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
@@ -7,6 +6,7 @@ import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ReceiptTextIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
@@ -94,7 +94,7 @@ export default function InvoicesTable({
           className={"py-4"}
           title={t("noInvoicesTitle")}
           description={t("noInvoicesDescription")}
-          icon={<ReceiptTextIcon size={20} />}
+          icon={<ReceiptTextIcon size={20} className={"text-nb-gray-300"} />}
         />
       }
       columnVisibility={{

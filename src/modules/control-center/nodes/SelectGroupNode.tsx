@@ -7,10 +7,12 @@ import useFetchApi from "@utils/api";
 import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
-import * as React from "react";
-import { useMemo } from "react";
-import { Group } from "@/interfaces/Group";
 import { useTranslations } from "next-intl";
+import * as React from "react";
+import { Group } from "@/interfaces/Group";
+import { useCanvasUI } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
+import { getGroupCountLabel } from "@/modules/control-center/utils/helpers";
 
 type NodeProps = Node<
   {
@@ -40,19 +42,15 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
   );
 
   const group = groups?.find((g) => g.id === data.currentGroup);
-  const t = useTranslations("groups");
+  const { groupUserCounts } = useCanvasUI();
+  const countLabel = getGroupCountLabel(
+    group,
+    group ? groupUserCounts.get(group.id ?? group.name) : 0,
+  );
 
-  const countLabel = useMemo(() => {
-    const peerCount = group?.peers_count || 0;
-    const resourceCount = group?.resources_count || 0;
-    if (resourceCount === 0) {
-      return t("nPeers", { n: peerCount });
-    }
-    if (peerCount === 0) {
-      return t("nResources", { n: resourceCount });
-    }
-    return `${t("nPeers", { n: peerCount })}, ${t("nResources", { n: resourceCount })}`;
-  }, [group, t]);
+  const [open, setOpen] = React.useState(false);
+  useCloseOnCanvasClick(open, () => setOpen(false));
+  const t = useTranslations("groups");
 
   return (
     <div
@@ -62,11 +60,14 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
     >
       <SelectDropdown
         variant={"secondary"}
+        deferChange
         value={data.currentGroup}
         onChange={data.onChange}
         options={groupOptions}
         showSearch={true}
         searchPlaceholder={t("searchPlaceholder")}
+        open={open}
+        onOpenChange={setOpen}
         popoverWidth={280}
         className={"!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300"}
         size={"xs"}
@@ -76,7 +77,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
           {group && (
             <div
               className={
-                "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-3 pr-5 py-3 font-normal"
+                "flex w-full items-center justify-between text-nb-gray-300 gap-2 text-sm pl-4 pr-5 py-3.5 font-normal"
               }
             >
               <div className={"flex items-center gap-3 font-normal text-sm"}>
@@ -101,7 +102,7 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
                   </div>
                   <div
                     className={
-                      "text-nb-gray-400 whitespace-nowrap text-xs text-left"
+                      "text-nb-gray-400 whitespace-nowrap text-sm text-left"
                     }
                   >
                     {countLabel}

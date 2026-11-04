@@ -9,20 +9,22 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import Paragraph from "@components/Paragraph";
+import { SegmentedTabs } from "@components/SegmentedTabs";
 import Separator from "@components/Separator";
 import Steps from "@components/Steps";
 import { Lightbox } from "@components/ui/Lightbox";
 import { Mark } from "@components/ui/Mark";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle, TerminalSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useState } from "react";
-import sshImage from "@/assets/ssh/ssh-client.png";
-import { SegmentedTabs } from "@components/SegmentedTabs";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import sshImage from "@/assets/ssh/ssh-client.png";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { PeerSSHPolicyModal } from "@/modules/peer/PeerSSHPolicyModal";
-import { useTranslations } from "next-intl";
 
 type Props = {
   open?: boolean;
@@ -40,6 +42,12 @@ export const PeerSSHInstructions = ({
   const t = useTranslations("common");
   const [client, setClient] = useState("cli");
   const [policyModal, setPolicyModal] = useState(false);
+
+  // Enabling the SSH server and root login require root, or an administrator on
+  // Windows, since they decide who may obtain a shell on that machine.
+  const isWindows =
+    !!peer?.os && getOperatingSystem(peer.os) === OperatingSystem.WINDOWS;
+  const prefix = isWindows ? "" : "sudo ";
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
@@ -77,13 +85,19 @@ export const PeerSSHInstructions = ({
               <Steps.Step step={1}>
                 <p className={"font-normal"}>
                   If you are using NetBird via CLI, you can enable SSH by
-                  running
+                  running{" "}
+                  {isWindows
+                    ? "these commands in an elevated prompt"
+                    : "these commands as root"}
+                  . Run the first one only if NetBird is already running. On a
+                  machine where you do not have those rights, an administrator
+                  has to run them.
                 </p>
-                <Code codeToCopy={"netbird down"}>
-                  <Code.Line>{`netbird down # if NetBird is already running`}</Code.Line>
+                <Code codeToCopy={`${prefix}netbird down`}>
+                  <Code.Line>{`${prefix}netbird down`}</Code.Line>
                 </Code>
                 <Code>
-                  <Code.Line>{`netbird up --allow-server-ssh --enable-ssh-root`}</Code.Line>
+                  <Code.Line>{`${prefix}netbird up --allow-server-ssh --enable-ssh-root`}</Code.Line>
                 </Code>
               </Steps.Step>
             ) : (

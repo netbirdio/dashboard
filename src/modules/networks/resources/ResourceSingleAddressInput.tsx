@@ -3,10 +3,10 @@
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
-import { useTranslations } from "next-intl";
 import { validator } from "@utils/helpers";
-import cidr from "ip-cidr";
+import { isValidIP } from "@utils/ip";
 import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useEffect, useMemo } from "react";
 
@@ -54,18 +54,14 @@ export const ResourceSingleAddressInput = ({
 
     // Case 1: If it has characters (potential domain) but is not a CIDR block
     if (hasChars && !isCIDRBlock) {
-      if (
-        !validator.isValidDomain(value) ||
-        !value.includes(".") ||
-        value.endsWith(".")
-      ) {
+      if (!validator.isValidDomain(value) || value.endsWith(".")) {
         return t("domainError");
       }
       return ""; // Valid domain
     }
 
     // Case 2: If it's not a valid domain, check if it's a valid CIDR
-    if (!cidr.isValidAddress(value)) {
+    if (!isValidIP(value)) {
       return t("ipCidrError");
     }
 

@@ -6,12 +6,21 @@ import React from "react";
 type Props = {
   value?: string;
   onChange?: (value: string) => void;
+  // "automatic" activates a tab on focus; use "manual" when onChange drives
+  // side effects that must not fire on hover or focus.
+  activationMode?: "automatic" | "manual";
   children: React.ReactNode;
 };
-function SegmentedTabs({ value, onChange, children }: Props) {
+function SegmentedTabs({
+  value,
+  onChange,
+  activationMode = "automatic",
+  children,
+}: Props) {
   return (
     <TabContext.Provider value={value || ""}>
       <Tabs
+        activationMode={activationMode}
         onValueChange={(value) => onChange && onChange(value)}
         value={value}
       >
@@ -59,11 +68,11 @@ function Trigger({
       disabled={disabled}
       data-testid={dataTestId}
       className={cn(
-        "px-4 py-2 text-sm rounded-md w-full transition-all data-[disabled]:opacity-10",
+        "px-4 py-2 text-sm rounded-md w-full transition-all data-[disabled]:opacity-50",
         value == currentValue
           ? "bg-nb-gray-900"
           : disabled
-          ? ""
+          ? "data-[disabled]:text-nb-gray-400"
           : "text-nb-gray-400 hover:bg-nb-gray-900/50",
         className,
       )}

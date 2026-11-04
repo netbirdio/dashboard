@@ -24,10 +24,14 @@ export const useSSOConnections = () => {
   }, [ssos]);
 
   const genericConnection = useMemo(() => {
-    return ssos?.[0];
+    // Exclude connections derived from user profile
+    return ssos?.find((sso) => sso.id !== "none");
   }, [ssos]);
 
   const entraConnection = useMemo(() => {
+    const entraConnection = ssos?.find((sso) => sso.name === "azure-oauth2");
+    if (entraConnection) return entraConnection;
+
     const sub = oidcUser?.sub;
     const isEntra = sub?.includes("oauth2|azure-oauth2");
     return isEntra
@@ -38,7 +42,7 @@ export const useSSOConnections = () => {
           provider: "azure-oauth2",
         } as SSOConnection)
       : undefined;
-  }, [oidcUser]);
+  }, [ssos, oidcUser]);
 
   return {
     jumpCloudConnection,

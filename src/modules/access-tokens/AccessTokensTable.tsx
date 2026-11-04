@@ -1,4 +1,3 @@
-import { useTranslations } from "next-intl";
 import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
@@ -8,6 +7,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
 import dayjs from "dayjs";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React from "react";
 import UserProvider from "@/contexts/UserProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -114,7 +114,7 @@ export default function AccessTokensTable({ user }: Readonly<Props>) {
               className={"py-3"}
               title={t("noAccessTokens")}
               description={t("noAccessTokensDesc")}
-              icon={<IconApi size={20} className={"fill-nb-gray-300"} />}
+              icon={<IconApi size={20} className={"text-nb-gray-300"} />}
             />
           </div>
         )}

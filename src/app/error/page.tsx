@@ -5,10 +5,11 @@ import Button from "@components/Button";
 import Paragraph from "@components/Paragraph";
 import loadConfig from "@utils/config";
 import { ArrowRightIcon, RefreshCw } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { PendingApproval } from "@/modules/users/PendingApproval";
 
 const config = loadConfig();
 
@@ -61,18 +62,26 @@ export default function ErrorPage() {
     error?.code === 403 &&
     error?.message?.toLowerCase().includes("pending approval");
 
+  // Waiting for an approval is an expected part of signing up, so it gets a
+  // welcoming screen of its own instead of the error treatment.
+  if (isPendingApproval) {
+    return (
+      <PendingApproval
+        error={error}
+        onRefresh={handleRetry}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
   const getTitle = () => {
     if (isBlockedUser) return t("userAccountBlocked");
-    if (isPendingApproval) return t("userApprovalPending");
     return t("accessError");
   };
 
   const getDescription = () => {
     if (isBlockedUser) {
       return t("accessBlockedDescription");
-    }
-    if (isPendingApproval) {
-      return t("pendingApprovalDescription");
     }
     return t("accessGenericDescription");
   };
@@ -101,8 +110,8 @@ export default function ErrorPage() {
         {t("contactAdminDescription")}
       </Paragraph>
 
-      <div className="mt-5 space-y-3">
-        {!isBlockedUser && !isPendingApproval && (
+      <div className="mt-5 [&>*+*]:mt-3">
+        {!isBlockedUser && (
           <Button variant="default-outline" size="sm" onClick={handleRetry}>
             <RefreshCw size={16} className="mr-2" />
             {tCommon("tryAgain")}
@@ -110,7 +119,7 @@ export default function ErrorPage() {
         )}
 
         <Button variant="primary" size="sm" onClick={handleLogout}>
-          {isBlockedUser || isPendingApproval ? tAuth("signOut") : tCommon("logout")}
+          {isBlockedUser ? tAuth("signOut") : tCommon("logout")}
           <ArrowRightIcon size={16} />
         </Button>
       </div>

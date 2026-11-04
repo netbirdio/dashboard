@@ -1,21 +1,22 @@
 "use client";
 
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import FullTooltip from "@components/FullTooltip";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
-import SettingCard from "@components/SettingCard";
 import {
   Modal,
   ModalClose,
   ModalContent,
   ModalFooter,
 } from "@components/modal/Modal";
-import Paragraph from "@components/Paragraph";
 import ModalHeader from "@components/modal/ModalHeader";
+import Paragraph from "@components/Paragraph";
+import SettingCard from "@components/SettingCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import {
   ArrowRight,
@@ -35,13 +36,14 @@ import {
   ShieldCheckIcon,
   Users,
 } from "lucide-react";
-import { Callout } from "@components/Callout";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
@@ -60,30 +62,28 @@ import {
   ReverseProxyTargetType,
   ServiceMode,
 } from "@/interfaces/ReverseProxy";
-import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
-import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
-import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
+import useGroupHelper from "@/modules/groups/useGroupHelper";
 import AuthHeaderModal from "@/modules/reverse-proxy/auth/AuthHeaderModal";
+import AuthNetBirdOnlyModal from "@/modules/reverse-proxy/auth/AuthNetBirdOnlyModal";
+import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
 import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
-import AuthNetBirdOnlyModal from "@/modules/reverse-proxy/auth/AuthNetBirdOnlyModal";
+import { ReverseProxyAccessControlRules } from "@/modules/reverse-proxy/ReverseProxyAccessControlRules";
 import ReverseProxyHTTPTargets from "@/modules/reverse-proxy/ReverseProxyHTTPTargets";
 import ReverseProxyLayer4Content from "@/modules/reverse-proxy/ReverseProxyLayer4Content";
-import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
-import { type Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
-import { useReverseProxyAddress } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
-import {
-  validateSessionIdleTimeout,
-  validateTimeout,
-} from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
-import useGroupHelper from "@/modules/groups/useGroupHelper";
-import { Group } from "@/interfaces/Group";
 import {
   ReverseProxyServiceModeSelector,
   SERVICE_MODES,
 } from "@/modules/reverse-proxy/ReverseProxyServiceModeSelector";
-import { ReverseProxyAccessControlRules } from "@/modules/reverse-proxy/ReverseProxyAccessControlRules";
+import { useReverseProxyAddress } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
+import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
+import { type Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
+import {
+  validateSessionIdleTimeout,
+  validateTimeout,
+} from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
+import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
+import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
 
 type Props = {
   open: boolean;
@@ -287,13 +287,10 @@ export default function ReverseProxyModal({
   // Access groups for NetBird-only services. Distinct from bearerGroups
   // (which gates SSO callers); these groups gate inbound peers on
   // private services and feed the auto-generated private-access policy.
-  const [
-    accessGroups,
-    setAccessGroups,
-    { save: saveAccessGroups },
-  ] = useGroupHelper({
-    initial: reverseProxy?.access_groups ?? [],
-  });
+  const [accessGroups, setAccessGroups, { save: saveAccessGroups }] =
+    useGroupHelper({
+      initial: reverseProxy?.access_groups ?? [],
+    });
 
   // Direct upstream is service-level in the UI; on save it patches the
   // (single) cluster target's options.direct_upstream. Defaults off for
@@ -301,9 +298,8 @@ export default function ReverseProxyModal({
   // effectiveDirectUpstream below since they have no WireGuard endpoint
   // to fall back to.
   const [directUpstream, setDirectUpstream] = useState<boolean>(
-    reverseProxy?.targets?.some(
-      (t) => t.options?.direct_upstream === true,
-    ) ?? false,
+    reverseProxy?.targets?.some((t) => t.options?.direct_upstream === true) ??
+      false,
   );
 
   // Cluster targets are reached over the embedded proxy's host stack —
@@ -311,11 +307,8 @@ export default function ReverseProxyModal({
   // WireGuard tunnel they have no other endpoint for, so we force the
   // toggle on and lock it whenever any target is a cluster.
   const hasClusterTarget = useMemo(
-    () =>
-      targets.some(
-        (t) => t.target_type === ReverseProxyTargetType.CLUSTER,
-      ),
-    [targets],
+    () => targets.some((t) => t.target_type === ReverseProxyTargetType.CLUSTER),
+    [targets, t],
   );
   const effectiveDirectUpstream = hasClusterTarget || directUpstream;
 
@@ -369,8 +362,7 @@ export default function ReverseProxyModal({
   // (auth, access control, advanced) — including reaching the Auth tab
   // to enable bearer auth for a private service.
   const canContinueToSettings = useMemo(() => {
-    const subdomainRequired =
-      selectedDomain?.require_subdomain === true;
+    const subdomainRequired = selectedDomain?.require_subdomain === true;
     const isSubdomainValid =
       baseDomain.length > 0 &&
       !domainAlreadyExists &&
@@ -540,8 +532,7 @@ export default function ReverseProxyModal({
         name: fullDomain,
         domain: fullDomain,
         mode: isL4Mode ? (serviceMode as ServiceMode) : undefined,
-        listen_port:
-          isL4Mode && isListenPortSupported ? listenPort : undefined,
+        listen_port: isL4Mode && isListenPortSupported ? listenPort : undefined,
         targets: submittedTargets,
         enabled: reverseProxy?.enabled ?? true,
         pass_host_header: isL4Mode ? undefined : passHostHeader,
@@ -575,10 +566,7 @@ export default function ReverseProxyModal({
   }, [reverseProxy, serviceMode, t, tCommon]);
 
   const modalDescription = useMemo(
-    () =>
-      isL4Mode
-        ? t("forwardTrafficDesc")
-        : t("exposeServicesDesc"),
+    () => (isL4Mode ? t("forwardTrafficDesc") : t("exposeServicesDesc")),
     [isL4Mode, t],
   );
 
@@ -654,8 +642,8 @@ export default function ReverseProxyModal({
 
               {isPrivate && accessGroups.length === 0 && (
                 <Paragraph className={"!text-yellow-400 !text-xs !mt-0"}>
-                  NetBird-only is on but no access groups are set. Open it
-                  on the Authentication tab and pick at least one group.
+                  NetBird-only is on but no access groups are set. Open it on
+                  the Authentication tab and pick at least one group.
                 </Paragraph>
               )}
 
@@ -825,18 +813,18 @@ export default function ReverseProxyModal({
             <div className={"px-8 flex-col flex gap-6"}>
               {(serviceMode === ServiceMode.TCP ||
                 serviceMode === ServiceMode.TLS) && (
-<FancyToggleSwitch
-					value={proxyProtocol}
-					onChange={setProxyProtocol}
-					data-testid="toggle-preserve-client-ip"
-					label={
-						<>
-							<MapPinned size={15} />
-							{t("preserveClientSourceIp")}
-						</>
-					}
-					helpText={t("preserveClientSourceIpHelp")}
-				/>
+                <FancyToggleSwitch
+                  value={proxyProtocol}
+                  onChange={setProxyProtocol}
+                  data-testid="toggle-preserve-client-ip"
+                  label={
+                    <>
+                      <MapPinned size={15} />
+                      {t("preserveClientSourceIp")}
+                    </>
+                  }
+                  helpText={t("preserveClientSourceIpHelp")}
+                />
               )}
 
               {isL4Mode && (
@@ -873,17 +861,17 @@ export default function ReverseProxyModal({
               {!isL4Mode && (
                 <div className={"flex flex-col gap-4"}>
                   <FancyToggleSwitch
-value={passHostHeader}
-					onChange={setPassHostHeader}
-					data-testid="toggle-pass-host-header"
-					label={
-						<>
-							<GlobeIcon size={15} />
-							{t("passHostHeader")}
-						</>
-					}
-					helpText={t("passHostHeaderHelp")}
-				/>
+                    value={passHostHeader}
+                    onChange={setPassHostHeader}
+                    data-testid="toggle-pass-host-header"
+                    label={
+                      <>
+                        <GlobeIcon size={15} />
+                        {t("passHostHeader")}
+                      </>
+                    }
+                    helpText={t("passHostHeaderHelp")}
+                  />
                   <FancyToggleSwitch
                     value={rewriteRedirects}
                     onChange={setRewriteRedirects}
@@ -1086,10 +1074,12 @@ value={passHostHeader}
           id: reverseProxy?.id || "",
           name: fullDomain,
           domain: fullDomain,
-          proxy_cluster: selectedDomain?.target_cluster || baseDomain || undefined,
+          proxy_cluster:
+            selectedDomain?.target_cluster || baseDomain || undefined,
           targets: targets,
           enabled: reverseProxy?.enabled ?? true,
           mode: serviceMode,
+          private: isPrivate,
         }}
         initialResource={initialResource}
         initialPeer={initialPeer}

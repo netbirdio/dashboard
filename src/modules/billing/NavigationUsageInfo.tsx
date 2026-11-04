@@ -1,9 +1,9 @@
 import Button from "@components/Button";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
+import { useGuardedRouter } from "@utils/navigation-guard";
 import { isNetBirdCloud } from "@utils/netbird";
 import { MonitorSmartphoneIcon, Users2Icon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import * as React from "react";
 import Skeleton from "react-loading-skeleton";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
@@ -49,7 +49,7 @@ const NavigationUsageInfoContent = () => {
     isTrial,
   } = useBilling();
 
-  const router = useRouter();
+  const router = useGuardedRouter();
   const { permission } = usePermissions();
   const { trackEvent } = useAnalytics();
 

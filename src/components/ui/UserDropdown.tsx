@@ -9,21 +9,22 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
+import { Modal } from "@components/modal/Modal";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { UserAvatar } from "@components/ui/UserAvatar";
+import { isMac } from "@hooks/useOperatingSystem";
+import { useGuardedRouter } from "@utils/navigation-guard";
+import { isNetBirdCloud } from "@utils/netbird";
 import { CreditCardIcon, KeyRound, LogOutIcon, User2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useMSP } from "@/cloud/msp/contexts/MSPProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
-import useOSDetection from "@/hooks/useOperatingSystem";
 import { ChangePasswordModalContent } from "@/modules/users/ChangePasswordModal";
-import { isNetBirdCloud } from "@utils/netbird";
-import { Modal } from "@components/modal/Modal";
 
 export default function UserDropdown() {
   const t = useTranslations("userDropdown");
@@ -34,8 +35,7 @@ export default function UserDropdown() {
   const { user } = useApplicationContext();
   const { loggedInUser, logout } = useLoggedInUser();
   const { isRestricted, permission } = usePermissions();
-  const isMac = useOSDetection();
-  const router = useRouter();
+  const router = useGuardedRouter();
 
   useHotkeys("shift+mod+l", () => logout(), []);
 
@@ -120,8 +120,14 @@ export default function UserDropdown() {
               <LogOutIcon size={14} />
               {tCommon("logout")}
             </div>
-            <DropdownMenuShortcut>
-              {isMac ? "⇧⌘L" : "⇧ ⊞ L"}
+            <DropdownMenuShortcut className={"opacity-75"}>
+              {isMac ? (
+                "⇧⌘L"
+              ) : (
+                <span className="flex items-center gap-0.5">
+                  Ctrl<span>+</span>⇧<span>+</span>L
+                </span>
+              )}
             </DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuContent>

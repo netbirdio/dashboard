@@ -2,9 +2,10 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { cn } from "@utils/helpers";
+import { useGuardedRouter } from "@utils/navigation-guard";
 import classNames from "classnames";
 import { ChevronDownIcon, ChevronUpIcon, DotIcon } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import React, { useEffect, useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 
@@ -72,7 +73,7 @@ export default function SidebarItem({
       setOpen(true);
     }
   }, [hasActiveChild]);
-  const router = useRouter();
+  const router = useGuardedRouter();
   const { mobileNavOpen, toggleMobileNav, isNavigationCollapsed } =
     useApplicationContext();
 
@@ -99,7 +100,11 @@ export default function SidebarItem({
   if (!visible) return;
 
   return (
-    <Collapsible.Root open={open} onOpenChange={setOpen} data-nav-item={href || undefined}>
+    <Collapsible.Root
+      open={open}
+      onOpenChange={setOpen}
+      data-nav-item={href || undefined}
+    >
       <Collapsible.Trigger asChild>
         <li className={"px-3 cursor-pointer list-none"}>
           <button

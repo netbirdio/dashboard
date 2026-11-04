@@ -20,6 +20,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { HubspotFormField } from "@/contexts/AnalyticsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { countryOptions } from "@/modules/onboarding/countryOptions";
 import {
   companySizes,
   referralSourceOptions,
@@ -57,6 +58,7 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
   const [personalOrBusiness, setPersonalOrBusiness] = useState("business");
   const isBusiness = personalOrBusiness === "business";
   const [companySize, setCompanySize] = useState<string>("");
+  const [country, setCountry] = useState("");
   const [referralSource, setReferralSource] = useState("");
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [other, setOther] = useState(false);
@@ -106,14 +108,23 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
 
   const canSubmit = useMemo(() => {
     if (!hasIdentity) return false;
-    const base = hasSelectedUseCase && referralSource !== "";
+    const base = hasSelectedUseCase && referralSource !== "" && country !== "";
     return isBusiness ? base && companySize !== "" : base;
-  }, [hasIdentity, hasSelectedUseCase, referralSource, isBusiness, companySize]);
+  }, [
+    hasIdentity,
+    hasSelectedUseCase,
+    referralSource,
+    country,
+    isBusiness,
+    companySize,
+  ]);
 
   const submitForm = () => {
     if (!hasIdentity) return;
     const fields: HubspotFormField[] = [
       { name: "email", value: email },
+      // Company-scoped (0-2) Country/Region, required by the HubSpot form.
+      { objectTypeId: "0-2", name: "country", value: country },
       { name: "is_company", value: isBusiness ? "Business" : "Personal" },
       { name: "use_case", value: getUseCases() },
       { name: "how_did_you_hear_about_us", value: referralSource || "Other" },
@@ -177,6 +188,22 @@ export const AgentNetworkSignupForm = ({ onSubmit }: Props) => {
               </ButtonGroup>
             </div>
           )}
+
+          <div className={"flex w-full flex-col gap-2"}>
+            <Label>
+              Country
+              <RequiredAsterisk />
+            </Label>
+            <SelectDropdown
+              value={country}
+              onChange={setCountry}
+              options={countryOptions}
+              showSearch={true}
+              placeholder={"Select your country..."}
+              searchPlaceholder={"Search country..."}
+              variant={"dropdown"}
+            />
+          </div>
 
           <div className={"flex w-full flex-col gap-2"}>
             <Label>

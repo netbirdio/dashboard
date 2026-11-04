@@ -1,6 +1,6 @@
 import { test, expect } from "../helpers/fixtures";
 import { navigateTo } from "../helpers/auth";
-import { generateRandomName } from "../helpers/utils";
+import { clearScrollLock, generateRandomName } from "../helpers/utils";
 import { deleteGroupsByPrefix, deleteSetupKeysByPrefix } from "../helpers/api";
 
 let setupKeys: string[] = [];
@@ -118,19 +118,42 @@ async function createSetupKey(
   await expect(page.getByText(opts.name)).toBeVisible();
 }
 
-async function revokeSetupKey(
+// openRowActions opens a row's action dropdown. A confirmation dialog closed
+// moments earlier can still leave Radix's scroll-lock artifacts on <body>
+// (`pointer-events: none`, a stale overlay), and those swallow the click even
+// with force — the menu then silently never opens and the item lookup times
+// out. Clear them before clicking.
+async function openRowActions(
   page: import("@playwright/test").Page,
   name: string,
 ) {
-  // Row actions are now behind a dropdown menu.
+  await clearScrollLock(page);
+  // A force-click can open a new action menu without the previous one having
+  // closed (scroll-lock artifacts suppress Radix's outside-click dismissal),
+  // leaving two menus open — the item lookup then hits a strict-mode violation.
+  // Dismiss any open menu and wait for it to be gone before opening the next.
+  if (await page.locator('[role="menu"]').count()) {
+    await page.keyboard.press("Escape");
+    await expect(page.locator('[role="menu"]')).toHaveCount(0);
+  }
   await page
     .locator("tr")
     .filter({ hasText: name })
     .getByTestId("setup-key-actions")
     .click({ force: true });
-  await page
-    .locator('[data-testid="revoke-setup-key"]:not([data-disabled])')
-    .click({ force: true });
+}
+
+async function revokeSetupKey(
+  page: import("@playwright/test").Page,
+  name: string,
+) {
+  // Row actions are now behind a dropdown menu.
+  await openRowActions(page, name);
+  const revokeItem = page.locator(
+    '[data-testid="revoke-setup-key"]:not([data-disabled])',
+  );
+  await expect(revokeItem).toBeVisible();
+  await revokeItem.click({ force: true });
   const responsePromise = page.waitForResponse(
     (resp) => resp.url().includes("/api/setup-keys/") && resp.request().method() === "PUT",
     { timeout: 10_000 },
@@ -151,13 +174,23 @@ async function deleteSetupKey(
   name: string,
 ) {
   // Row actions are now behind a dropdown menu.
-  await page
-    .locator("tr")
-    .filter({ hasText: name })
-    .getByTestId("setup-key-actions")
-    .click({ force: true });
-  await page.getByTestId("delete-setup-key").click({ force: true });
+  await openRowActions(page, name);
+  const deleteItem = page.locator(
+    '[data-testid="delete-setup-key"]:not([data-disabled])',
+  );
+  await expect(deleteItem).toBeVisible();
+  await deleteItem.click({ force: true });
+  // Await the DELETE like revoke awaits its PUT: the handler refetches
+  // /setup-keys afterwards, which re-renders every row — returning before that
+  // settles means the next key's trigger click can land on a replaced node.
+  const responsePromise = page.waitForResponse(
+    (resp) =>
+      resp.url().includes("/api/setup-keys/") &&
+      resp.request().method() === "DELETE",
+    { timeout: 10_000 },
+  );
   await page.getByTestId("confirmation.confirm").click();
+  await responsePromise;
   await expect(page.locator("tr").filter({ hasText: name })).not.toBeVisible();
   await expect(page.getByRole("dialog")).not.toBeVisible();
 }

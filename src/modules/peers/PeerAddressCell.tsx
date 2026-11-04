@@ -10,7 +10,8 @@ import { Peer } from "@/interfaces/Peer";
 import { PeerAddressTooltipContent } from "@/modules/peers/PeerAddressTooltipContent";
 
 type Props = {
-	peer: Peer;
+  peer: Peer;
+  fluid?: boolean;
 };
 
 // shortDnsLabel returns the leading segment of a DNS label
@@ -19,59 +20,61 @@ type Props = {
 // trying to strip a known suffix. The full label still lands on the
 // clipboard via CopyToClipboardText's textToCopy prop.
 function shortDnsLabel(label: string | undefined | null): string {
-	if (!label) return "";
-	const dot = label.indexOf(".");
-	return dot === -1 ? label : label.slice(0, dot);
+  if (!label) return "";
+  const dot = label.indexOf(".");
+  return dot === -1 ? label : label.slice(0, dot);
 }
 
-export default function PeerAddressCell({ peer }: Props) {
-	const t = useTranslations("peers");
-	const shortLabel = shortDnsLabel(peer.dns_label);
-	return (
-		<FullTooltip
-			side={"top"}
-			interactive={true}
-			delayDuration={250}
-			skipDelayDuration={100}
-			contentClassName={"p-0"}
-			content={<PeerAddressTooltipContent peer={peer} />}
-		>
-			<div
-				className={
-					"flex gap-2.5 items-center max-w-[300px] group/cell transition-all hover:bg-nb-gray-800/10 py-2 px-3 rounded-md cursor-default"
-				}
-				onClick={(e) => {
-					e.stopPropagation();
-					e.preventDefault();
-				}}
-			>
-				<div
-					className={cn(
-						"flex items-center justify-center rounded-full h-3 w-3 shrink-0 relative -top-[0.5rem]",
-					)}
-				>
-					{isEmpty(peer.country_code) ? (
-						<GlobeIcon size={16} className={"text-nb-gray-300"} />
-					) : (
-						<RoundedFlag country={peer.country_code} size={12} />
-					)}
-				</div>
-				<div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 font-light truncate">
-					<CopyToClipboardText
-						message={t("dnsLabelCopied")}
-						textToCopy={peer.dns_label}
-					>
-						<span className={"font-normal truncate"}>{shortLabel}</span>
-					</CopyToClipboardText>
-					<CopyToClipboardText message={t("ipCopied")}>
-						<span
-							className={"dark:text-nb-gray-400 font-mono font-thin text-xs"}
-						>
-							{peer.ip}
-						</span>
-					</CopyToClipboardText>
-				</div>
-			</div>
-		</FullTooltip>
-	);
+export default function PeerAddressCell({ peer, fluid = false }: Props) {
+  const t = useTranslations("peers");
+  const shortLabel = shortDnsLabel(peer.dns_label);
+  return (
+    <FullTooltip
+      side={"top"}
+      interactive={true}
+      delayDuration={250}
+      skipDelayDuration={100}
+      contentClassName={"p-0"}
+      className={fluid ? "max-w-full" : undefined}
+      content={<PeerAddressTooltipContent peer={peer} />}
+    >
+      <div
+        className={cn(
+          "flex gap-2.5 items-center group/cell transition-all hover:bg-nb-gray-800/10 py-2 px-3 rounded-md cursor-default",
+          fluid ? "min-w-0" : "max-w-[300px]",
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+      >
+        <div
+          className={cn(
+            "flex items-center justify-center rounded-full h-3 w-3 shrink-0 relative -top-[0.5rem]",
+          )}
+        >
+          {isEmpty(peer.country_code) ? (
+            <GlobeIcon size={16} className={"text-nb-gray-300"} />
+          ) : (
+            <RoundedFlag country={peer.country_code} size={12} />
+          )}
+        </div>
+        <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 font-light truncate">
+          <CopyToClipboardText
+            message={t("dnsLabelCopied")}
+            textToCopy={peer.dns_label}
+          >
+            <span className={"font-normal truncate"}>{shortLabel}</span>
+          </CopyToClipboardText>
+          <CopyToClipboardText message={t("ipCopied")}>
+            <span
+              className={"dark:text-nb-gray-400 font-mono font-thin text-xs"}
+            >
+              {peer.ip}
+            </span>
+          </CopyToClipboardText>
+        </div>
+      </div>
+    </FullTooltip>
+  );
 }

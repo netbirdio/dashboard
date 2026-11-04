@@ -5,12 +5,36 @@ set -e
 # Tag of the management-cloud image to pull. Override via env var to pin the
 # tests to a specific management-cloud build (e.g., a feature branch image).
 MANAGEMENT_IMAGE_TAG="${MANAGEMENT_IMAGE_TAG:-main}"
-echo "Using ghcr.io/netbirdio/management-cloud:${MANAGEMENT_IMAGE_TAG}"
+MANAGEMENT_IMAGE_OVERRIDE="${MANAGEMENT_IMAGE:-}"
+MANAGEMENT_IMAGE="${MANAGEMENT_IMAGE_OVERRIDE:-ghcr.io/netbirdio/management-cloud:${MANAGEMENT_IMAGE_TAG}}"
+echo "Using ${MANAGEMENT_IMAGE}"
 
 # Tag of the reverse-proxy image to pull. Override via env var to pin the
 # tests to a specific reverse-proxy build (e.g., a feature branch image).
 REVERSE_PROXY_IMAGE_TAG="${REVERSE_PROXY_IMAGE_TAG:-main}"
-echo "Using ghcr.io/netbirdio/reverse-proxy:${REVERSE_PROXY_IMAGE_TAG}"
+REVERSE_PROXY_IMAGE_OVERRIDE="${REVERSE_PROXY_IMAGE:-}"
+REVERSE_PROXY_IMAGE="${REVERSE_PROXY_IMAGE_OVERRIDE:-ghcr.io/netbirdio/reverse-proxy:${REVERSE_PROXY_IMAGE_TAG}}"
+echo "Using ${REVERSE_PROXY_IMAGE}"
+
+SIGNAL_IMAGE_TAG="${SIGNAL_IMAGE_TAG:-main}"
+SIGNAL_IMAGE_OVERRIDE="${SIGNAL_IMAGE:-}"
+SIGNAL_IMAGE="${SIGNAL_IMAGE_OVERRIDE:-ghcr.io/netbirdio/signal:${SIGNAL_IMAGE_TAG}}"
+echo "Using ${SIGNAL_IMAGE}"
+
+REVERSE_PROXY_PORT="${REVERSE_PROXY_PORT:-18443}"
+# Focused local tests may not need the geolocation database download. Keep it
+# enabled by default because the full suite tests country selectors.
+MANAGEMENT_DISABLE_GEOLOCATION="${MANAGEMENT_DISABLE_GEOLOCATION:-false}"
+
+prepare_test_image() {
+  local image="$1"
+  local override="$2"
+  # Explicit references support locally built feature images. Tag-based runs
+  # still refresh remote images so mutable tags such as main stay current.
+  if [ -z "$override" ] || ! docker image inspect "$image" > /dev/null 2>&1; then
+    docker pull "$image"
+  fi
+}
 
 handle_request_command_status() {
   PARSED_RESPONSE=$1
@@ -61,7 +85,13 @@ wait_proxy_cluster() {
   SERVICE_NAME=${1:-reverse-proxy}
   echo -n "Waiting for $SERVICE_NAME to register with management "
   set +e
-  local attempts=60
+  # 480s: management downloads its geolocation databases on first boot
+  # (the proxy specs need /locations/countries, so it cannot be disabled
+  # there), and a slow pkgs.netbird.io can stall that well past the old
+  # 120s budget. The proxies skip their download entirely via
+  # NB_PROXY_DISABLE_GEOLOCATION. The loop exits as soon as the sync
+  # lands, so healthy runs pay nothing.
+  local attempts=240
   local i
   for ((i = 1; i <= attempts; i++)); do
     if $DOCKER_COMPOSE_COMMAND logs "$SERVICE_NAME" 2>&1 | grep -q "Initial mapping sync complete"; then
@@ -507,6 +537,7 @@ initEnvironment() {
   NETBIRD_HTTP_PROTOCOL="http"
   TURN_USER="self"
   TURN_PASSWORD=$(openssl rand -base64 32 | sed 's/=//g')
+  RELAY_SECRET=$(openssl rand -hex 32)
   TURN_MIN_PORT=49152
   TURN_MAX_PORT=65535
 
@@ -526,7 +557,7 @@ initEnvironment() {
     echo "Generated files already exist, if you want to reinitialize the environment, please remove them first."
     echo "You can use the following commands:"
     echo "  $DOCKER_COMPOSE_COMMAND down --volumes # to remove all containers and volumes"
-    echo "  rm -f docker-compose.yml Caddyfile zitadel.env dashboard.env machinekey/zitadel-admin-sa.token turnserver.conf management.json proxy.env proxy-no-ports.env && rm -rf proxy-certs proxy-certs-no-ports"
+    echo "  rm -f docker-compose.yml Caddyfile agentgateway-stub.Caddyfile zitadel.env dashboard.env machinekey/zitadel-admin-sa.token turnserver.conf management.json proxy.env proxy-no-ports.env && rm -rf proxy-certs proxy-certs-no-ports"
     echo "Be aware that this will remove all data from the database, and you will have to reconfigure the dashboard."
     exit 1
   fi
@@ -534,6 +565,7 @@ initEnvironment() {
   echo Rendering initial files...
   renderDockerCompose > docker-compose.yml
   renderCaddyfile > Caddyfile
+  renderAgentGatewayStub > agentgateway-stub.Caddyfile
   renderZitadelEnv > zitadel.env
   echo "" > turnserver.conf
   echo "" > management.json
@@ -557,9 +589,10 @@ initEnvironment() {
   echo -e "\nRendering Playwright environment file...\n"
   renderPlaywrightEnv > "../playwright.env.json"
 
-  echo -e "\nPulling latest images...\n"
-  docker pull "ghcr.io/netbirdio/management-cloud:${MANAGEMENT_IMAGE_TAG}"
-  docker pull "ghcr.io/netbirdio/reverse-proxy:${REVERSE_PROXY_IMAGE_TAG}"
+  echo -e "\nPreparing NetBird images...\n"
+  prepare_test_image "$MANAGEMENT_IMAGE" "$MANAGEMENT_IMAGE_OVERRIDE"
+  prepare_test_image "$REVERSE_PROXY_IMAGE" "$REVERSE_PROXY_IMAGE_OVERRIDE"
+  prepare_test_image "$SIGNAL_IMAGE" "$SIGNAL_IMAGE_OVERRIDE"
 
   # Pre-create the proxy cert directories BEFORE starting containers so that
   # docker's bind-mounts (./proxy-certs and ./proxy-certs-no-ports) reuse our
@@ -589,6 +622,8 @@ initEnvironment() {
   echo -e "\nCreating proxy access tokens...\n"
   init_proxy_tokens
 
+  exportGeoDatabases
+
   echo -e "\nStarting reverse proxy services...\n"
   $DOCKER_COMPOSE_COMMAND up -d reverse-proxy reverse-proxy-no-ports
 
@@ -602,6 +637,30 @@ initEnvironment() {
   echo "Login with the following credentials:"
   echo "Username: $ZITADEL_ADMIN_USERNAME" | tee .env
   echo "Password: $ZITADEL_ADMIN_PASSWORD" | tee -a .env
+}
+
+# Saving an Agent Network provider makes management call the upstream and
+# refuses the save unless it answers a model listing, so a provider spec needs
+# a reachable OpenAI-compatible endpoint. agentgateway is self-hosted and has
+# no public one; this stub stands in for it, inside the compose network where
+# management can reach it and without depending on a vendor being up.
+renderAgentGatewayStub() {
+  cat <<'EOF'
+{
+	admin off
+	auto_https off
+}
+
+:8088 {
+	handle /v1/models {
+		header Content-Type application/json
+		respond `{"object":"list","data":[{"id":"agentgateway-e2e-model","object":"model","owned_by":"netbird-e2e"}]}` 200
+	}
+	handle {
+		respond 404
+	}
+}
+EOF
 }
 
 renderCaddyfile() {
@@ -684,6 +743,11 @@ renderManagementJson() {
         ],
         "TimeBasedCredentials": false
     },
+    "Relay": {
+        "Addresses": [],
+        "CredentialsTTL": "24h",
+        "Secret": "$RELAY_SECRET"
+    },
     "Signal": {
         "Proto": "$NETBIRD_HTTP_PROTOCOL",
         "URI": "$NETBIRD_DOMAIN:$NETBIRD_PORT"
@@ -760,7 +824,44 @@ ZITADEL_FIRSTINSTANCE_ORG_MACHINE_PAT_EXPIRATIONDATE=$ZIDATE_TOKEN_EXPIRATION_DA
 EOF
 }
 
+# Copies management's geolocation databases out of its data volume into
+# ./geo-cache so CI can cache them across runs. Management has finished
+# loading them by the time its API serves requests. A no-op when the
+# cache already holds both files, and never fatal: a failed export just
+# means the next run downloads again.
+exportGeoDatabases() {
+  mkdir -p geo-cache
+  if compgen -G "geo-cache/GeoLite2-City_*.mmdb" > /dev/null \
+    && compgen -G "geo-cache/geonames_*.db" > /dev/null; then
+    return
+  fi
+  echo -e "\nExporting geolocation databases for caching...\n"
+  rm -rf geo-dump
+  if $DOCKER_COMPOSE_COMMAND cp management:/var/lib/netbird ./geo-dump; then
+    cp geo-dump/GeoLite2-City_*.mmdb geo-dump/geonames_*.db geo-cache/ 2>/dev/null \
+      || echo "WARN: no geolocation databases found in management data dir"
+    rm -rf geo-dump
+  else
+    echo "WARN: could not copy management data dir; geolocation databases not cached"
+  fi
+}
+
 renderDockerCompose() {
+  # Docker may inject outbound proxy settings. Local test traffic must stay on
+  # the Compose network, including upstream servers running on the test runner.
+  local test_no_proxy="${NO_PROXY:-localhost,127.0.0.1,::1},${NETBIRD_DOMAIN},caddy,management,signal,zitadel,crdb,postgres,agentgateway-stub"
+  # Cached geolocation databases (restored by CI into ./geo-cache) are
+  # mounted into management's data dir so it skips the slow first-boot
+  # download from pkgs.netbird.io. With no cache the mounts are omitted
+  # and management downloads as before.
+  local geo_mounts=""
+  local f
+  for f in geo-cache/GeoLite2-City_*.mmdb geo-cache/geonames_*.db; do
+    [ -f "$f" ] || continue
+    geo_mounts+="
+      - ./${f}:/var/lib/netbird/$(basename "$f")"
+  done
+
   cat <<EOF
 version: "3.4"
 services:
@@ -769,6 +870,9 @@ services:
     image: caddy
     restart: unless-stopped
     networks: [ netbird ]
+    environment:
+      - NO_PROXY=${test_no_proxy}
+      - no_proxy=${test_no_proxy}
     ports:
       - '33443:443'
       - '33080:80'
@@ -776,9 +880,24 @@ services:
     volumes:
       - netbird_caddy_data:/data
       - ./Caddyfile:/etc/caddy/Caddyfile
+  # Stand-in upstream for the Agent Network provider specs: answers the model
+  # listing management probes before it accepts a provider save. Reachable
+  # only from inside the compose network, at http://agentgateway-stub:8088.
+  agentgateway-stub:
+    image: caddy
+    restart: unless-stopped
+    networks: [ netbird ]
+    volumes:
+      - ./agentgateway-stub.Caddyfile:/etc/caddy/Caddyfile
+  # Signal is reached through Caddy by embedded clients in the reverse proxies.
+  signal:
+    image: ${SIGNAL_IMAGE}
+    restart: unless-stopped
+    networks: [netbird]
+    command: ["--port", "10000", "--log-file", "console"]
   # Management
   management:
-    image: ghcr.io/netbirdio/management-cloud:${MANAGEMENT_IMAGE_TAG}
+    image: ${MANAGEMENT_IMAGE}
     restart: unless-stopped
     networks: [netbird]
     environment:
@@ -793,8 +912,11 @@ services:
      - NETBIRD_LICENSE_SERVER_BASE_URL=${NETBIRD_LICENSE_SERVER_BASE_URL}
      - NB_TRAFFIC_FLOW_INTERVAL=20s
      - NB_SINGLE_INSTANCE_MODE=true
+     - NB_DISABLE_GEOLOCATION=${MANAGEMENT_DISABLE_GEOLOCATION}
+     - NO_PROXY=${test_no_proxy}
+     - no_proxy=${test_no_proxy}
     volumes:
-      - netbird_management:/var/lib/netbird
+      - netbird_management:/var/lib/netbird${geo_mounts}
       - ./management.json:/etc/netbird/management.json
     command: [
       "--port", "80",
@@ -840,11 +962,30 @@ services:
       - netbird_zitadel_certs:/crdb-certs:ro
   # Reverse proxy (supports custom listen ports for UDP/TCP)
   reverse-proxy:
-    image: ghcr.io/netbirdio/reverse-proxy:${REVERSE_PROXY_IMAGE_TAG}
+    image: ${REVERSE_PROXY_IMAGE}
     restart: unless-stopped
     networks: [netbird]
+    ports:
+      - '127.0.0.1:${REVERSE_PROXY_PORT}:8443'
     env_file:
       - ./proxy.env
+    environment:
+      - NO_PROXY=${test_no_proxy}
+      - no_proxy=${test_no_proxy}
+      # No spec exercises country-based enforcement, and skipping the
+      # GeoLite2 download removes a startup stall of up to 2 minutes
+      # when pkgs.netbird.io is slow.
+      - NB_PROXY_DISABLE_GEOLOCATION=true
+      # Declare the private capability so this cluster can host the agent
+      # network endpoint. That endpoint is a private service — reachable only
+      # from connected peers — and management refuses to bootstrap it onto a
+      # cluster without a private-capable proxy; the connect-provider wizard
+      # reads the same flag (supports_private) to pick its cluster. Without
+      # it no cluster qualifies and the wizard stops at the provider tab,
+      # which strands every spec that walks through it. The no-ports proxy
+      # below stays centralised, so the pick has to skip past a cluster that
+      # does not qualify.
+      - NB_PROXY_PRIVATE=true
     volumes:
       - ./proxy-certs:/certs:ro
     command: [
@@ -859,13 +1000,19 @@ services:
     ]
     depends_on:
       - management
+      - signal
   # Reverse proxy with custom ports disabled (auto-assigned listen ports only)
   reverse-proxy-no-ports:
-    image: ghcr.io/netbirdio/reverse-proxy:${REVERSE_PROXY_IMAGE_TAG}
+    image: ${REVERSE_PROXY_IMAGE}
     restart: unless-stopped
     networks: [netbird]
     env_file:
       - ./proxy-no-ports.env
+    environment:
+      - NO_PROXY=${test_no_proxy}
+      - no_proxy=${test_no_proxy}
+      # See the primary proxy: no spec needs geo enforcement.
+      - NB_PROXY_DISABLE_GEOLOCATION=true
     volumes:
       # Distinct cert dir so this proxy has a distinct identity from the
       # primary proxy; a shared cert makes both register under the same
@@ -885,6 +1032,7 @@ services:
     ]
     depends_on:
       - management
+      - signal
   # CockroachDB for zitadel
   crdb:
     restart: 'always'
@@ -919,7 +1067,10 @@ renderPlaywrightEnv() {
   cat <<EOF
 {
   "ZITADEL_URL": "$NETBIRD_HTTP_PROTOCOL://$NETBIRD_DOMAIN:$NETBIRD_PORT",
-  "BASE_URL": "http://localhost:1337"
+  "BASE_URL": "http://localhost:1337",
+  "REVERSE_PROXY_URL": "https://127.0.0.1:$REVERSE_PROXY_PORT",
+  "REVERSE_PROXY_CA_CERT": "environment/proxy-certs/tls.crt",
+  "REVERSE_PROXY_UPSTREAM_HOST": "$NETBIRD_DOMAIN"
 }
 EOF
 }

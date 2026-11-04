@@ -34,6 +34,7 @@ export const GROUP_TOOLTIP_TEXT = {
   },
   DELETE: {
     INTEGRATION: "This group is issued by an IdP and cannot be deleted.",
+    ALL: "The 'All' group is required and cannot be deleted.",
   },
   IN_USE: "Remove dependencies to this group to delete it.",
 };

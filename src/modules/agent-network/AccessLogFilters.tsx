@@ -4,6 +4,7 @@ import {
   DatePickerWithRange,
   dateRangePresetLabel,
 } from "@components/DatePickerWithRange";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
   CheckboxListPicker,
   formatCheckboxChip,
@@ -17,7 +18,6 @@ import {
   UserOption,
   UsersPicker,
 } from "@components/table/filters/UsersPicker";
-import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
   TableFilterChips,
   TableFilterDef,
@@ -50,12 +50,24 @@ export function formatDateChip(
   return `${from} – ${to}`;
 }
 
+export type AccessLogFilterId =
+  | "date"
+  | "user"
+  | "group"
+  | "provider"
+  | "model";
+
 // useAccessLogFilters builds the shared Date / User / Group / Provider / Model
 // filter controls (same UX as the Peers views). It returns the raw
 // columnFilters state (so callers can translate it into server-side query
 // params) plus the Filters button and chips for a standalone bar. The Date
 // filter defaults to the last 14 days; resetting returns to that default.
-export function useAccessLogFilters() {
+// Callers whose view is server-scoped to themselves pass include to keep
+// only the filters that still mean something (e.g. just "date").
+export function useAccessLogFilters(options?: {
+  include?: AccessLogFilterId[];
+}) {
+  const include = options?.include;
   const tDateRange = useTranslations("dateRange");
   const { providers } = useAIProviders();
   const { users } = useUsers();
@@ -124,7 +136,7 @@ export function useAccessLogFilters() {
       .map((m) => ({ value: m, label: m }));
   }, [providers]);
 
-  const filterDefs = useMemo<TableFilterDef[]>(
+  const allFilterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "date",
@@ -201,6 +213,16 @@ export function useAccessLogFilters() {
       },
     ],
     [groups, modelOptions, providerOptions, tDateRange, userOptions],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () =>
+      include
+        ? allFilterDefs.filter((d) =>
+            include.includes(d.id as AccessLogFilterId),
+          )
+        : allFilterDefs,
+    [allFilterDefs, include],
   );
 
   const filtersButton = (

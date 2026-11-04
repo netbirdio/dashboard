@@ -19,11 +19,12 @@ import {
   PackageOpenIcon,
   TerminalSquareIcon,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
+  ManagementUrlStep,
   NetBirdUpCommand,
   RoutingPeerSetupKeyInfo,
 } from "@/modules/setup-netbird-modal/SetupModal";
@@ -79,12 +80,7 @@ export default function MacOSTab({
 
           {GRPC_API_ORIGIN && (
             <Steps.Step step={baseMgmtStep}>
-              <p>
-                {t("managementUrlInstruction")}
-              </p>
-              <Code>
-                <Code.Line>{GRPC_API_ORIGIN}</Code.Line>
-              </Code>
+              <ManagementUrlStep trayName={"menu bar"} />
             </Steps.Step>
           )}
 
@@ -109,8 +105,8 @@ export default function MacOSTab({
             <>
               <Steps.Step step={runStep}>
                 <p>
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  {t("clickConnectTray")}
+                  {}
+                  {t("clickConnectMenuBar")}
                 </p>
               </Steps.Step>
               <Steps.Step step={runStep + 1} line={false}>
@@ -137,7 +133,8 @@ export default function MacOSTab({
                 </Steps.Step>
                 <Steps.Step step={2} line={false}>
                   <p>
-                    {t("runNetBird")} {!usingSetupKeyParam && t("andLogInBrowser")}
+                    {t("runNetBird")}{" "}
+                    {!usingSetupKeyParam && t("andLogInBrowser")}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
                   <NetBirdUpCommand
@@ -196,7 +193,8 @@ export default function MacOSTab({
                 </Steps.Step>
                 <Steps.Step step={4} line={false}>
                   <p>
-                    {t("runNetBird")} {!usingSetupKeyParam && t("andLogInBrowser")}
+                    {t("runNetBird")}{" "}
+                    {!usingSetupKeyParam && t("andLogInBrowser")}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
                   <NetBirdUpCommand

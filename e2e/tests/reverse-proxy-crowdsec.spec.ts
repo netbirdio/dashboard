@@ -34,7 +34,7 @@ async function forceCrowdSecSupport(page: import("@playwright/test").Page) {
   });
 }
 
-test.describe.serial("Reverse Proxy - CrowdSec @reverse-proxy", () => {
+test.describe.serial("Reverse Proxy - CrowdSec @reverse-proxy @test-env", () => {
   let network = "";
   let resource = "";
   let subdomain = "";

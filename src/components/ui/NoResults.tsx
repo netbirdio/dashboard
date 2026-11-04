@@ -1,15 +1,16 @@
 import Button from "@components/Button";
 import Paragraph from "@components/Paragraph";
+import SquareIcon from "@components/SquareIcon";
 import { cn } from "@utils/helpers";
 import { FilterX } from "lucide-react";
-import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { useCallback } from "react";
 import Skeleton from "react-loading-skeleton";
-import SquareIcon from "@components/SquareIcon";
 
 type Props = {
   icon?: React.ReactNode;
+  hideIcon?: boolean;
   title?: string;
   description?: string;
   children?: React.ReactNode;
@@ -21,6 +22,7 @@ type Props = {
 
 export default function NoResults({
   icon,
+  hideIcon = false,
   title,
   description,
   children,
@@ -29,13 +31,13 @@ export default function NoResults({
   onResetFilters,
   contentClassName,
 }: Props) {
-  const t = useTranslations('table');
+  const t = useTranslations("table");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const defaultTitle = title || t('noResults');
-  const defaultDescription = description || t('noResultsDescription');
+  const defaultTitle = title || t("noResults");
+  const defaultDescription = description || t("noResultsDescription");
 
   const handleResetClick = useCallback(() => {
     if (onResetFilters) {
@@ -79,16 +81,26 @@ export default function NoResults({
       <div
         className={cn("max-w-md mx-auto relative z-20 py-6", contentClassName)}
       >
-        <div className={"flex items-center justify-center mb-6"}>
-          <SquareIcon
-            icon={icon ? icon : <FilterX size={24} />}
-            color={"gray"}
-            size={"large"}
-          />
-        </div>
+        {!hideIcon && (
+          <div className={"flex items-center justify-center mb-6"}>
+            <SquareIcon
+              icon={
+                icon ? (
+                  icon
+                ) : (
+                  <FilterX size={24} className={"text-nb-gray-200"} />
+                )
+              }
+              color={"gray"}
+              size={"large"}
+            />
+          </div>
+        )}
 
         <div className={"text-center"}>
-          <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{defaultTitle}</h1>
+          <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>
+            {defaultTitle}
+          </h1>
           <Paragraph className={"justify-center my-2 !text-nb-gray-400"}>
             {defaultDescription}
           </Paragraph>
@@ -99,7 +111,7 @@ export default function NoResults({
               className="mt-4"
             >
               <FilterX size={16} />
-              {t('resetFilters')}
+              {t("resetFilters")}
             </Button>
           )}
           {children}

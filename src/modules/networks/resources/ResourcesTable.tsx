@@ -6,6 +6,11 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
+  ENABLED_COLUMN_ID,
+  fadeDisabledRowCells,
+} from "@components/table/disabledRowCells";
+import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
+import {
   formatGroupsChip,
   GroupsPicker,
 } from "@components/table/filters/GroupsPicker";
@@ -20,12 +25,11 @@ import {
   TableFiltersButton,
 } from "@components/table/TableFilters";
 import NoResults from "@components/ui/NoResults";
-import { IconCirclePlus } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
-import { useTranslations } from "next-intl";
-import { ArrowUpRightIcon, Layers3Icon } from "lucide-react";
+import { ArrowUpRightIcon, Layers3Icon, PlusCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -37,8 +41,9 @@ import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { ResourceActionCell } from "@/modules/networks/resources/ResourceActionCell";
-import { ResourceExposeServiceCell } from "@/modules/networks/resources/ResourceExposeServiceCell";
 import ResourceAddressCell from "@/modules/networks/resources/ResourceAddressCell";
+import { ResourceEnabledCell } from "@/modules/networks/resources/ResourceEnabledCell";
+import { ResourceExposeServiceCell } from "@/modules/networks/resources/ResourceExposeServiceCell";
 import { ResourceGroupCell } from "@/modules/networks/resources/ResourceGroupCell";
 import ResourceNameCell from "@/modules/networks/resources/ResourceNameCell";
 import { ResourcePolicyCell } from "@/modules/networks/resources/ResourcePolicyCell";
@@ -110,7 +115,11 @@ export default function ResourcesTable({
         id: "name",
         accessorKey: "name",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("resourceColumn")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>
+              {t("resourceColumn")}
+            </DataTableHeader>
+          );
         },
         cell: ({ row }) => {
           return <ResourceNameCell resource={row.original} />;
@@ -126,15 +135,27 @@ export default function ResourcesTable({
         id: "address",
         accessorKey: "address",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("address")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>{t("address")}</DataTableHeader>
+          );
         },
         cell: ({ row }) => {
           return <ResourceAddressCell resource={row.original} />;
         },
       },
       {
-        id: "enabled",
+        id: ENABLED_COLUMN_ID,
         accessorKey: "enabled",
+        enableSorting: false,
+        meta: { className: ENABLED_COLUMN_CLASS.xl },
+        header: ({ column }) => {
+          return (
+            <DataTableHeader column={column} sorting={false}>
+              {tCommon("active")}
+            </DataTableHeader>
+          );
+        },
+        cell: ({ row }) => <ResourceEnabledCell resource={row.original} />,
       },
       {
         id: "groups",
@@ -143,7 +164,11 @@ export default function ResourcesTable({
           return groups.map((group) => group.name).join(", ");
         },
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{tCommon("groups")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>
+              {tCommon("groups")}
+            </DataTableHeader>
+          );
         },
         cell: ({ row }) => {
           return <ResourceGroupCell resource={row.original} />;
@@ -161,7 +186,11 @@ export default function ResourcesTable({
         id: "policies",
         accessorKey: "id",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("policiesColumn")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>
+              {t("policiesColumn")}
+            </DataTableHeader>
+          );
         },
         cell: ({ row }) => {
           return <ResourcePolicyCell resource={row.original} />;
@@ -182,11 +211,6 @@ export default function ResourcesTable({
         cell: ({ row }) => {
           return <ResourceActionCell resource={row.original} />;
         },
-      },
-      {
-        id: "exposed",
-        accessorFn: (resource) =>
-          resource?.id ? exposedResourceIds.has(resource.id) : false,
       },
     ],
     [t, tCommon, exposedResourceIds],
@@ -295,9 +319,7 @@ export default function ResourcesTable({
         <NoResults
           className={"py-4"}
           title={
-            isGroupPage
-              ? t("noAssignedResources")
-              : t("noNetworkResources")
+            isGroupPage ? t("noAssignedResources") : t("noNetworkResources")
           }
           description={
             isGroupPage
@@ -323,11 +345,10 @@ export default function ResourcesTable({
       columnVisibility={{
         description: false,
         id: false,
-        enabled: false,
         group_names: false,
         exposed: false,
       }}
-      rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
+      cellClassName={fadeDisabledRowCells}
       paginationPaddingClassName={"px-0 pt-8"}
       rightSide={
         !isGroupPage
@@ -339,8 +360,8 @@ export default function ResourcesTable({
                 disabled={!permission.networks.update}
                 data-testid={"add-resource"}
               >
-                <IconCirclePlus size={16} />
-                {t("addResourceBtn")}
+                <PlusCircle size={16} />
+                {tCommon("add")}
               </Button>
             )
           : undefined

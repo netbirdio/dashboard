@@ -26,17 +26,42 @@ export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
   const hasBody = hasPrompt || hasCompletion;
   const denyReason = formatDenyReason(entry.denyReason);
 
+  const cacheRead = entry.cachedInputTokens ?? 0;
+  const cacheWrite = entry.cacheCreationTokens ?? 0;
   const metadata: Record<string, string> = {
-    "plg.llm.provider": entry.providerId,
+    // The vendor label the proxy actually stamped, not the dashboard's
+    // normalised catalog id — this block mirrors the wire metadata, and a
+    // request rejected before it was parsed as an LLM call carries no vendor.
+    "plg.llm.provider": entry.providerVendor ?? entry.providerId,
     "plg.llm.model": entry.model,
     "plg.llm.input_tokens": String(entry.inputTokens),
     "plg.llm.output_tokens": String(entry.outputTokens),
-    "plg.llm.total_tokens": String(entry.inputTokens + entry.outputTokens),
+    "plg.llm.total_tokens": String(
+      entry.inputTokens + entry.outputTokens + cacheRead + cacheWrite,
+    ),
     "plg.llm.cost_usd": entry.costUsd.toFixed(6),
     "plg.llm.stream": entry.stream ? "true" : "false",
     "plg.agentnetwork.policy_name": entry.policyName,
     "plg.agentnetwork.user_groups": (entry.userGroups ?? []).join(", "),
   };
+  if (cacheRead > 0 || cacheWrite > 0) {
+    metadata["plg.llm.cached_input_tokens"] = String(cacheRead);
+    metadata["plg.llm.cache_creation_tokens"] = String(cacheWrite);
+    metadata["plg.cost.usd_cache"] = (entry.cacheCostUsd ?? 0).toFixed(6);
+  }
+  // Per-bucket cost keys mirror the proxy's cost.usd_* metadata. Emitted only
+  // when the server sent the breakdown, so a row from an older management
+  // server shows no misleading zeros.
+  if (entry.inputCostUsd !== undefined || entry.outputCostUsd !== undefined) {
+    metadata["plg.cost.usd_input"] = (entry.inputCostUsd ?? 0).toFixed(6);
+    metadata["plg.cost.usd_cached_input"] = (
+      entry.cachedInputCostUsd ?? 0
+    ).toFixed(6);
+    metadata["plg.cost.usd_cache_creation"] = (
+      entry.cacheCreationCostUsd ?? 0
+    ).toFixed(6);
+    metadata["plg.cost.usd_output"] = (entry.outputCostUsd ?? 0).toFixed(6);
+  }
   if (isDeny) {
     metadata["plg.llm_policy.decision"] = "deny";
     metadata["plg.llm_policy.reason"] = entry.denyReason ?? "unknown";
