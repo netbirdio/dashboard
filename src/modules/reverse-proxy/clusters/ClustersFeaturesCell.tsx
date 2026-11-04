@@ -47,6 +47,15 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
       icon: <ShieldAlert size={14} className={"text-green-500"} />,
     });
   }
+  if (cluster.supports_appsec) {
+    features.push({
+      key: "appsec",
+      label: "AppSec (WAF)",
+      description:
+        "Cluster has a CrowdSec AppSec endpoint configured across all active proxies, so services can inspect HTTP requests for exploits.",
+      icon: <ShieldAlert size={14} className={"text-green-500"} />,
+    });
+  }
   if (cluster.private) {
     features.push({
       key: "private",
@@ -56,8 +65,7 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
           Lets you publish services that are only reachable from peers in your
           NetBird network. Required for{" "}
           <span className={"font-medium text-white"}>NetBird-Only Access</span>{" "}
-          and{" "}
-          <span className={"font-medium text-white"}>Proxy Cluster</span>{" "}
+          and <span className={"font-medium text-white"}>Proxy Cluster</span>{" "}
           target types.
         </>
       ),
