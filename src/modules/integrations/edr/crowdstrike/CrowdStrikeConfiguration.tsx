@@ -36,6 +36,11 @@ import { CrowdStrikeRegionsData } from "@/modules/integrations/edr/crowdstrike/C
 import { CrowdStrikeZtaScoreInput } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeZtaScoreInput";
 import { CrowdStrikeZtaToggle } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeZtaToggle";
 import {
+  DEFAULT_STALE_GRACE,
+  EDRStaleGraceInput,
+  isValidStaleGrace,
+} from "@/modules/integrations/edr/EDRStaleGraceInput";
+import {
   DEFAULT_SYNC_INTERVAL,
   EDRSyncIntervalInput,
   isValidSyncInterval,
@@ -101,6 +106,12 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
   const [syncInterval, setSyncInterval] = useState(
     (config.sync_interval ?? DEFAULT_SYNC_INTERVAL).toString(),
   );
+  const [staleGraceEnabled, setStaleGraceEnabled] = useState(
+    config.stale_grace_minutes > 0,
+  );
+  const [staleGrace, setStaleGrace] = useState(
+    (config.stale_grace_minutes || DEFAULT_STALE_GRACE).toString(),
+  );
 
   const [groups, setGroups, { save: saveGroups }] = useGroupHelper({
     initial: config.groups.map((g) => {
@@ -147,6 +158,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
           secret: secretPlaceholder == secret ? undefined : secret,
           groups: savedGroups.map((group) => group.id) || [],
           sync_interval: Number(syncInterval),
+          stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
           enabled: config.enabled,
         })
         .then(() => {
@@ -165,13 +177,19 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     secret,
     ztaEnabled,
     syncInterval,
+    staleGraceEnabled,
+    staleGrace,
   ]);
 
   const ztaError =
     ztaEnabled && (parseInt(ztaScore) <= 0 || parseInt(ztaScore) > 100)
       ? "Score should be between 1 and 100"
       : undefined;
-  const canSave = hasChanges && !ztaError && isValidSyncInterval(syncInterval);
+  const canSave =
+    hasChanges &&
+    !ztaError &&
+    isValidSyncInterval(syncInterval) &&
+    isValidStaleGrace(staleGraceEnabled, staleGrace);
 
   return (
     <ModalContent
@@ -313,6 +331,13 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
               name={"CrowdStrike"}
               value={syncInterval}
               onChange={setSyncInterval}
+            />
+            <EDRStaleGraceInput
+              name={"CrowdStrike"}
+              enabled={staleGraceEnabled}
+              onEnabledChange={setStaleGraceEnabled}
+              value={staleGrace}
+              onChange={setStaleGrace}
             />
           </div>
         </TabsContent>
