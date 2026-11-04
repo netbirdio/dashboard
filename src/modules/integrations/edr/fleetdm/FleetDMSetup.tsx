@@ -40,6 +40,11 @@ import {
 } from "@/interfaces/EDR";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import {
+  DEFAULT_STALE_GRACE,
+  EDRStaleGraceInput,
+  isValidStaleGrace,
+} from "@/modules/integrations/edr/EDRStaleGraceInput";
+import {
   DEFAULT_SYNC_INTERVAL,
   EDRSyncIntervalInput,
   isValidSyncInterval,
@@ -96,6 +101,8 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
   const [syncInterval, setSyncInterval] = useState(
     DEFAULT_SYNC_INTERVAL.toString(),
   );
+  const [staleGraceEnabled, setStaleGraceEnabled] = useState(false);
+  const [staleGrace, setStaleGrace] = useState(DEFAULT_STALE_GRACE.toString());
 
   const [matchAttributes, dispatchMatchAttributes] = useReducer(
     matchAttributesReducer,
@@ -122,7 +129,9 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
     (step == 1 && (!apiUrlEntered || urlError !== "")) ||
     (step == 2 && !allEntered) ||
     (step == 3 && groups.length == 0) ||
-    (step == 5 && !isValidSyncInterval(syncInterval));
+    (step == 5 &&
+      (!isValidSyncInterval(syncInterval) ||
+        !isValidStaleGrace(staleGraceEnabled, staleGrace)));
 
   const connect = async () => {
     await settingsRequest.put({
@@ -151,6 +160,7 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
           groups: savedGroups.map((group) => group.id) || [],
           last_synced_interval: Number(lastSyncedInterval || 24),
           sync_interval: Number(syncInterval),
+          stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
           match_attributes: matchAttributes,
         })
         .then(() => {
@@ -437,6 +447,14 @@ export function SetupContent({ onSuccess, account }: Readonly<ModalProps>) {
             name={"FleetDM"}
             value={syncInterval}
             onChange={setSyncInterval}
+            className={"mt-6"}
+          />
+          <EDRStaleGraceInput
+            name={"FleetDM"}
+            enabled={staleGraceEnabled}
+            onEnabledChange={setStaleGraceEnabled}
+            value={staleGrace}
+            onChange={setStaleGrace}
             className={"mt-6"}
           />
         </div>

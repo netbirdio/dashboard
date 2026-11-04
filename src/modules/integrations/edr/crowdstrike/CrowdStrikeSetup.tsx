@@ -37,6 +37,11 @@ import {
 import { CrowdStrikeZtaScoreInput } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeZtaScoreInput";
 import { CrowdStrikeZtaToggle } from "@/modules/integrations/edr/crowdstrike/CrowdStrikeZtaToggle";
 import {
+  DEFAULT_STALE_GRACE,
+  EDRStaleGraceInput,
+  isValidStaleGrace,
+} from "@/modules/integrations/edr/EDRStaleGraceInput";
+import {
   DEFAULT_SYNC_INTERVAL,
   EDRSyncIntervalInput,
   isValidSyncInterval,
@@ -111,6 +116,8 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
   const [syncInterval, setSyncInterval] = useState(
     DEFAULT_SYNC_INTERVAL.toString(),
   );
+  const [staleGraceEnabled, setStaleGraceEnabled] = useState(false);
+  const [staleGrace, setStaleGrace] = useState(DEFAULT_STALE_GRACE.toString());
 
   const connect = async () => {
     await settingsRequest.put({
@@ -140,6 +147,7 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
         zta_score_threshold:
           ztaEnabled && score > 0 && score <= 100 ? score : 0,
         sync_interval: Number(syncInterval),
+        stale_grace_minutes: staleGraceEnabled ? Number(staleGrace) : 0,
       }).then(() => {
         mutate("/accounts");
         mutate("/integrations/edr/falcon");
@@ -158,7 +166,10 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
 
   const isDisabled =
     (step == 1 && !secretAndClientIDEntered) ||
-    (step == 2 && (isEmpty(groups) || !isValidSyncInterval(syncInterval)));
+    (step == 2 &&
+      (isEmpty(groups) ||
+        !isValidSyncInterval(syncInterval) ||
+        !isValidStaleGrace(staleGraceEnabled, staleGrace)));
 
   return (
     <ModalContent
@@ -297,6 +308,13 @@ export function SetupContent({ onSuccess, account }: ModalProps) {
               name={"CrowdStrike"}
               value={syncInterval}
               onChange={setSyncInterval}
+            />
+            <EDRStaleGraceInput
+              name={"CrowdStrike"}
+              enabled={staleGraceEnabled}
+              onEnabledChange={setStaleGraceEnabled}
+              value={staleGrace}
+              onChange={setStaleGrace}
             />
           </div>
         </div>
