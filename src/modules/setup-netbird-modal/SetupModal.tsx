@@ -80,6 +80,7 @@ export default function SetupModal({
 }: Readonly<Props>) {
   return (
     <ModalContent
+      flow="peer_setup"
       showClose={showClose}
       className={cn(
         "outline-none focus:outline-none focus-visible:outline-none",

@@ -8,6 +8,7 @@ import { ArrowRightIcon, RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { useMatomoVirtualPage } from "@/cloud/analytics/MatomoProvider";
 import { PendingApproval } from "@/modules/users/PendingApproval";
 
 const config = loadConfig();
@@ -21,6 +22,12 @@ export default function ErrorPage() {
     message: string;
     type: string;
   } | null>(null);
+
+  const isPendingApproval =
+    error?.code === 403 &&
+    error?.message?.toLowerCase().includes("pending approval");
+
+  useMatomoVirtualPage(!!error && !isPendingApproval && "error");
 
   useEffect(() => {
     // Get error details from URL params
@@ -54,9 +61,6 @@ export default function ErrorPage() {
 
   const isBlockedUser =
     error?.code === 403 && error?.message?.toLowerCase().includes("blocked");
-  const isPendingApproval =
-    error?.code === 403 &&
-    error?.message?.toLowerCase().includes("pending approval");
 
   // Waiting for an approval is an expected part of signing up, so it gets a
   // welcoming screen of its own instead of the error treatment.

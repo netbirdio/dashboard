@@ -162,7 +162,7 @@ export function AccessTokenModalContent({
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-lg"}>
+    <ModalContent flow="access_token" maxWidthClass={"max-w-lg"}>
       <ModalHeader
         icon={<IconApi />}
         title={"Create Access Token"}

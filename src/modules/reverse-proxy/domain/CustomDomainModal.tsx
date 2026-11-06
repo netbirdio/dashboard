@@ -88,7 +88,11 @@ export const CustomDomainModal = ({
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent maxWidthClass={"relative max-w-lg"} showClose={true}>
+      <ModalContent
+        flow="custom_domain"
+        maxWidthClass={"relative max-w-lg"}
+        showClose={true}
+      >
         <ModalHeader
           icon={<GlobeIcon size={20} />}
           title={"Add Custom Domain"}

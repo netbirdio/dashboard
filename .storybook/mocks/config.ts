@@ -32,6 +32,8 @@ const config = {
   hubspotSignupFormId: "",
   hubspotOnboardingFormId: "",
   hubspotSurveyFormId: "",
+  matomoUrl: "",
+  matomoSiteId: "",
   analyticsExcludedEmails: "",
   announcement: "",
 };

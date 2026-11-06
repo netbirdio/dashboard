@@ -40,7 +40,7 @@ jobs:
           AUTH_SUPPORTED_SCOPES: openid profile email
           USE_AUTH0: "false"
           NETBIRD_MGMT_API_ENDPOINT: https://api.example.com
-        run: sudo -E bash docker/init_react_envs.sh
+        run: sudo --preserve-env=AUTH_AUTHORITY,AUTH_CLIENT_ID,AUTH_AUDIENCE,AUTH_SUPPORTED_SCOPES,USE_AUTH0,NETBIRD_MGMT_API_ENDPOINT bash docker/init_react_envs.sh
 
       - name: Assert provider APIs are in connect-src
         run: |

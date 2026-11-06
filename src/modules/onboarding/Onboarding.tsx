@@ -12,6 +12,11 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect, useMemo, useReducer, useState } from "react";
 import { useSWRConfig } from "swr";
+import {
+  useMatomoEvent,
+  useMatomoHeatmap,
+  useMatomoStep,
+} from "@/cloud/analytics/MatomoProvider";
 import { HubspotFormField } from "@/contexts/AnalyticsProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
@@ -116,6 +121,8 @@ export const Onboarding = ({
 
   const [onboarding, dispatch] = useReducer(onboardingReducer, initial);
   const { step, intent } = onboarding;
+  useMatomoHeatmap("onboarding", intent, step);
+  useMatomoStep(step - 1, "onboarding", intent, step);
 
   const [resource, setResource] = useState<NetworkResource>();
   const [firstRoutingPeer, setFirstRoutingPeer] = useState<Peer>();
@@ -153,6 +160,20 @@ export const Onboarding = ({
       return step === 3 || step === 4 || step === 5 || step === 6;
     }
   }, [intent, step]);
+
+  const connectedPeers = (
+    intent === Intent.P2P
+      ? [firstDevice, secondDevice]
+      : [firstDevice, firstRoutingPeer]
+  ).filter((peer) => peer?.connected).length;
+
+  useMatomoEvent(
+    showWaitingForDevices && "onboarding",
+    intent,
+    step,
+    "connected",
+    connectedPeers,
+  );
 
   const policy = useMemo(() => {
     if (intent === Intent.P2P) {
