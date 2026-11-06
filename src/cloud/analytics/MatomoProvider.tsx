@@ -402,6 +402,12 @@ const MatomoSession = () => {
     if (excluded) {
       blocked = true;
       queue.length = 0;
+      if (started) {
+        ignoreErrors(() => {
+          if (Array.isArray(window._paq)) window._paq.length = 0;
+          window._paq?.push(["requireConsent"]);
+        });
+      }
       return;
     }
     if (ready || !userId || waitForAccount) return;

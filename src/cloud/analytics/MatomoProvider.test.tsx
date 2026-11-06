@@ -609,6 +609,23 @@ describe("MatomoSession", () => {
     expect(sent()).toEqual([]);
   });
 
+  it("stops Matomo when a screen started it before the user turned out excluded", async () => {
+    environment.config.analyticsExcludedEmails = [user.email];
+    const matomo = await load();
+    const Screen = () => {
+      matomo.useMatomoVirtualPage("login_error");
+      return null;
+    };
+    render(<Screen />);
+    expect(sent()).toContainEqual(["trackPageView"]);
+    session.user = user;
+    session.account = account;
+    render(<matomo.MatomoProvider />);
+    matomo.trackEvent("policy", "modal_opened");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(sent()).toEqual([["requireConsent"]]);
+  });
+
   it("sends nothing in Datadog synthetic runs", async () => {
     window._DATADOG_SYNTHETICS_BROWSER = true;
     try {

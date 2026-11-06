@@ -19,7 +19,10 @@ export const OIDCError = () => {
   const invalidRequest = errorParam === "invalid_request";
   const [title, setTitle] = useState(params.get("error_description"));
   const errorDescription = params.get("error_description");
-  useMatomoVirtualPage("login_error");
+  useMatomoVirtualPage(
+    !(accessDenied && errorDescription === "account linked successfully") &&
+      "login_error",
+  );
   const { logout, login } = useOidc();
 
   useEffect(() => {

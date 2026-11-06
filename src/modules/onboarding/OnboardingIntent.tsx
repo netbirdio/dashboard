@@ -56,7 +56,7 @@ export const OnboardingIntent = ({onSelect, useCases, isBusiness}: Props) => {
         return false;
     }, [useCases]);
 
-    useMatomoEvent(!!useCases && "intent_recommended", isNetworksRecommended && "networks", isP2PRecommended && "p2p");
+    useMatomoEvent(!!useCases && "intent_recommended", isNetworksRecommended && "networks", isP2PRecommended && "p2p", !isNetworksRecommended && !isP2PRecommended && "none");
 
     return (
         <div className={"relative flex flex-col h-full justify-between"}>
