@@ -1,8 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { expect } from "storybook/test";
 import UsagePage from "@/app/(dashboard)/agent-network/usage/page";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { MOCK_ERROR_ACCESS_LOGS } from "@/modules/agent-network/data/mockData";
-import { USER } from "@/storybook/fixtures";
+import { currentUser, USER } from "@/storybook/fixtures";
 import { click, findText, settle } from "@/storybook/platform";
 
 // Access-log rows with error attribution. A file of its own so the other
@@ -106,4 +107,54 @@ export const ProxyErrorExpanded: Story = {
 export const AuthErrorExpanded: Story = {
   parameters: errorLogs,
   play: () => expandRow(/^Authentication$/),
+};
+
+// A member without the account-wide Agent Network grants: the server
+// self-scopes the log to their own requests and leaves error_detail out.
+const noAccess = { create: false, read: false, update: false, delete: false };
+const selfScopedUser = {
+  ...currentUser,
+  role: "user",
+  permissions: {
+    ...currentUser.permissions,
+    modules: {
+      ...currentUser.permissions.modules,
+      "agent_network.providers": noAccess,
+      "agent_network.policies": noAccess,
+      "agent_network.guardrails": noAccess,
+      "agent_network.budgets": noAccess,
+      "agent_network.usage": noAccess,
+      "agent_network.logs": noAccess,
+      "agent_network.settings": noAccess,
+    },
+  },
+};
+const selfScopedRows = errorRows.map((row) => {
+  const { error_detail: _, ...rest } = row as { error_detail?: string };
+  return rest;
+});
+
+export const SelfScopedPolicyBlockExpanded: Story = {
+  parameters: {
+    ...logs,
+    api: {
+      "GET /users/current": selfScopedUser,
+      "GET /agent-network/access-logs": {
+        data: selfScopedRows,
+        page: 1,
+        page_size: 25,
+        total_pages: 1,
+        total_records: selfScopedRows.length,
+      },
+    },
+  },
+  play: async () => {
+    await expandRow(/^Budget limit exceeded$/);
+    // Without the policies grant the name falls back to the id, as plain text.
+    const blockedBy = await findText("Blocked by");
+    const section = blockedBy.parentElement;
+    await expect(section?.textContent).toContain("anpol-contractors");
+    await expect(section?.querySelector("a")).toBeNull();
+    await expect(document.body.textContent).not.toContain("Error detail");
+  },
 };

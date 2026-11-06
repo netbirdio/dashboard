@@ -329,7 +329,9 @@ export default function AgentAccessLogTable({
             Reason
           </DataTableHeader>
         ),
-        cell: ({ row }) => <ReasonCell entry={row.original} />,
+        cell: ({ row }) => (
+          <ReasonCell entry={row.original} selfScoped={selfScoped} />
+        ),
       },
       // Hidden columns backing the Model and Path filters. Filtering is
       // server-side (manualFiltering), so these only need to exist for the
@@ -345,7 +347,7 @@ export default function AgentAccessLogTable({
         enableGlobalFilter: false,
       },
     ],
-    [providerDisplay, principalSearchById],
+    [providerDisplay, principalSearchById, selfScoped],
   );
 
   // Session-grouped columns. Filter ids (timestamp / user / group / provider /
@@ -482,7 +484,7 @@ export default function AgentAccessLogTable({
         cell: ({ row }) => {
           const representative = sessionReasonEntry(row.original.entries);
           return representative ? (
-            <ReasonCell entry={representative} />
+            <ReasonCell entry={representative} selfScoped={selfScoped} />
           ) : (
             <EmptyRow />
           );
@@ -501,7 +503,7 @@ export default function AgentAccessLogTable({
         enableGlobalFilter: false,
       },
     ],
-    [providerDisplay, principalSearchById],
+    [providerDisplay, principalSearchById, selfScoped],
   );
 
   const [sorting, setSorting] = useState<SortingState>([
@@ -747,9 +749,15 @@ export default function AgentAccessLogTable({
       )}
       renderExpandedRow={(row) =>
         grouped ? (
-          <SessionEntriesRow session={row as AIAccessLogSession} />
+          <SessionEntriesRow
+            session={row as AIAccessLogSession}
+            selfScoped={selfScoped}
+          />
         ) : (
-          <AgentAccessLogExpandedRow entry={row as AIAccessLogEntry} />
+          <AgentAccessLogExpandedRow
+            entry={row as AIAccessLogEntry}
+            selfScoped={selfScoped}
+          />
         )
       }
       searchPlaceholder={"Search by user, agent, model, prompt…"}
@@ -848,7 +856,13 @@ function TimeCell({ timestamp }: { timestamp: string }) {
 // requests a clickable reference to the policy that authorised it — linking
 // to the Policies view pre-filtered to that policy. Failed requests with error
 // attribution say who failed them instead, plus what blocked a cap deny.
-function ReasonCell({ entry }: { entry: AIAccessLogEntry }) {
+function ReasonCell({
+  entry,
+  selfScoped,
+}: {
+  entry: AIAccessLogEntry;
+  selfScoped: boolean;
+}) {
   const { policies, budgetRules } = useAIProviders();
 
   const errorReason = formatErrorReason(entry);
@@ -861,7 +875,7 @@ function ReasonCell({ entry }: { entry: AIAccessLogEntry }) {
           maxChars={36}
           className={"text-nb-gray-300"}
         />
-        {blocked && <BlockedByLink target={blocked} />}
+        {blocked && <BlockedByLink target={blocked} plain={selfScoped} />}
       </div>
     );
   }
@@ -1487,7 +1501,13 @@ function SessionRequestsCell({ session }: { session: AIAccessLogSession }) {
 // (AgentAccessLogExpandedRow) — the second level of disclosure. The provider is
 // omitted (constant across a session); the model is shown in full, and the
 // status carries the request duration plus a reason when it failed.
-function SessionEntriesRow({ session }: { session: AIAccessLogSession }) {
+function SessionEntriesRow({
+  session,
+  selfScoped,
+}: {
+  session: AIAccessLogSession;
+  selfScoped: boolean;
+}) {
   const [open, setOpen] = useState<string[]>([]);
   const toggle = (id: string) =>
     setOpen((prev) =>
@@ -1619,7 +1639,10 @@ function SessionEntriesRow({ session }: { session: AIAccessLogSession }) {
               </button>
               {isOpen && (
                 <div className={"border-t border-nb-gray-800/70"}>
-                  <AgentAccessLogExpandedRow entry={entry} />
+                  <AgentAccessLogExpandedRow
+                    entry={entry}
+                    selfScoped={selfScoped}
+                  />
                 </div>
               )}
             </div>

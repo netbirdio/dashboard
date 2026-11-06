@@ -4,6 +4,7 @@ import Badge from "@components/Badge";
 import Code from "@components/Code";
 import FullTooltip from "@components/FullTooltip";
 import { HelpTooltip } from "@components/HelpTooltip";
+import { cn } from "@utils/helpers";
 import { GaugeIcon, ShieldXIcon } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
@@ -18,6 +19,9 @@ import {
 
 type Props = {
   entry: AIAccessLogEntry;
+  // The caller only sees their own requests and can't open the Policies or
+  // Global Limits pages, so "Blocked by" is plain text instead of a link.
+  selfScoped?: boolean;
 };
 
 /**
@@ -27,7 +31,10 @@ type Props = {
  * reason for blocked requests, who failed a failed request, and the
  * per-request metadata.
  */
-export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
+export default function AgentAccessLogExpandedRow({
+  entry,
+  selfScoped = false,
+}: Readonly<Props>) {
   const { policies, budgetRules } = useAIProviders();
   const isDeny = entry.decision === "deny";
   const hasSession = Boolean(entry.sessionId);
@@ -137,7 +144,7 @@ export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
 
       {blocked && (
         <Section heading={"Blocked by"}>
-          <BlockedByLink target={blocked} />
+          <BlockedByLink target={blocked} plain={selfScoped} />
         </Section>
       )}
 
@@ -194,8 +201,31 @@ export default function AgentAccessLogExpandedRow({ entry }: Readonly<Props>) {
 
 // BlockedByLink points at the policy or global limit that blocked a request,
 // styled like ReasonCell's authorising-policy link.
-export function BlockedByLink({ target }: { target: BlockedByTarget }) {
+export function BlockedByLink({
+  target,
+  plain = false,
+}: {
+  target: BlockedByTarget;
+  // Render the name without a link, for callers who can't open the target page.
+  plain?: boolean;
+}) {
   const Icon = target.kind === "policy" ? ShieldXIcon : GaugeIcon;
+  const className =
+    "group/policy inline-flex items-center gap-1.5 text-[0.82rem] text-nb-gray-300 whitespace-nowrap";
+  const content = (
+    <>
+      <Icon
+        size={13}
+        className={cn(
+          "shrink-0 text-nb-gray-500",
+          !plain && "group-hover/policy:text-nb-gray-300",
+        )}
+      />
+      <span className={cn(!plain && "group-hover/policy:underline")}>
+        {target.name}
+      </span>
+    </>
+  );
   return (
     <FullTooltip
       content={
@@ -204,21 +234,17 @@ export function BlockedByLink({ target }: { target: BlockedByTarget }) {
           : "This global limit blocked the request"
       }
     >
-      <Link
-        href={target.href}
-        onClick={(e) => e.stopPropagation()}
-        className={
-          "group/policy inline-flex items-center gap-1.5 text-[0.82rem] text-nb-gray-300 hover:text-nb-gray-100 transition-colors whitespace-nowrap"
-        }
-      >
-        <Icon
-          size={13}
-          className={
-            "shrink-0 text-nb-gray-500 group-hover/policy:text-nb-gray-300"
-          }
-        />
-        <span className={"group-hover/policy:underline"}>{target.name}</span>
-      </Link>
+      {plain ? (
+        <span className={className}>{content}</span>
+      ) : (
+        <Link
+          href={target.href}
+          onClick={(e) => e.stopPropagation()}
+          className={cn(className, "hover:text-nb-gray-100 transition-colors")}
+        >
+          {content}
+        </Link>
+      )}
     </FullTooltip>
   );
 }
