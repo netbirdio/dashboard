@@ -12,6 +12,7 @@ import {
   AIAccessLogErrorSource,
   AIAccessLogSession,
   AIProviderId,
+  ERROR_SOURCE_INFO,
 } from "@/modules/agent-network/data/mockData";
 
 // APIAgentNetworkAccessLog mirrors the api.AgentNetworkAccessLog response shape.
@@ -184,6 +185,16 @@ function normalizeProviderId(vendor: string | undefined): AIProviderId {
     : "custom";
 }
 
+// knownErrorSource drops error sources this dashboard doesn't know yet (a newer
+// proxy can stamp one), so the row falls back to its plain status display.
+function knownErrorSource(
+  source: string | undefined,
+): AIAccessLogErrorSource | undefined {
+  return source && Object.hasOwn(ERROR_SOURCE_INFO, source)
+    ? (source as AIAccessLogErrorSource)
+    : undefined;
+}
+
 // resolveGroupNames maps the entry's group ids to the catalog's current names,
 // falling back to the id when a group has since been deleted.
 function resolveGroupNames(
@@ -243,7 +254,7 @@ export function accessLogFromAgentAPI(
     status: entry.status_code,
     method: entry.method ?? "",
     path: entry.path ?? "",
-    errorSource: entry.error_source,
+    errorSource: knownErrorSource(entry.error_source),
     blockedBy: entry.blocked_by,
     errorDetail: entry.error_detail,
   };

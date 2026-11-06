@@ -6,9 +6,10 @@ import {
   formatErrorReason,
   MOCK_ERROR_ACCESS_LOGS,
   resolveBlockedBy,
+  sessionReasonEntry,
 } from "@/modules/agent-network/data/mockData";
 
-const [policyDeny, limitDeny, providerError, proxyError] =
+const [policyDeny, limitDeny, providerError, proxyError, authError] =
   MOCK_ERROR_ACCESS_LOGS.map((e) => accessLogFromAgentAPI(e, new Map()));
 
 const policies = [
@@ -36,6 +37,27 @@ describe("accessLogFromAgentAPI", () => {
     expect(entry.errorDetail).toBeUndefined();
     expect(formatErrorReason(entry)).toBeUndefined();
   });
+
+  it("drops an unknown error source but keeps the detail", () => {
+    const entry = accessLogFromAgentAPI(
+      {
+        ...MOCK_ERROR_ACCESS_LOGS[3],
+        error_source: "something_new" as never,
+      },
+      new Map(),
+    );
+    expect(entry.errorSource).toBeUndefined();
+    expect(entry.errorDetail).toBe(MOCK_ERROR_ACCESS_LOGS[3].error_detail);
+    expect(formatErrorReason(entry)).toBeUndefined();
+  });
+
+  it("does not take inherited object keys for an error source", () => {
+    const entry = accessLogFromAgentAPI(
+      { ...MOCK_ERROR_ACCESS_LOGS[3], error_source: "toString" as never },
+      new Map(),
+    );
+    expect(entry.errorSource).toBeUndefined();
+  });
 });
 
 describe("formatErrorReason", () => {
@@ -49,9 +71,7 @@ describe("formatErrorReason", () => {
     expect(formatErrorReason({ ...proxyError, errorDetail: undefined })).toBe(
       "Proxy error",
     );
-    expect(formatErrorReason({ ...providerError, errorSource: "auth" })).toBe(
-      "Authentication",
-    );
+    expect(formatErrorReason(authError)).toBe("Authentication");
   });
 
   it("ignores the source on a successful row", () => {
@@ -92,5 +112,22 @@ describe("resolveBlockedBy", () => {
     expect(resolveBlockedBy(providerError, policies, budgetRules)).toBe(
       undefined,
     );
+  });
+});
+
+describe("sessionReasonEntry", () => {
+  const ok = { ...providerError, id: "ok", status: 200 };
+
+  it("prefers a successful allowed request over an earlier failed one", () => {
+    expect(sessionReasonEntry([providerError, ok])).toBe(ok);
+  });
+
+  it("falls back to a failed allowed request over a deny", () => {
+    expect(sessionReasonEntry([policyDeny, providerError])).toBe(providerError);
+  });
+
+  it("falls back to the first entry when every request was denied", () => {
+    expect(sessionReasonEntry([policyDeny, limitDeny])).toBe(policyDeny);
+    expect(sessionReasonEntry([])).toBeUndefined();
   });
 });

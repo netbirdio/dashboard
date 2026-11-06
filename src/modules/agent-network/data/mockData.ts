@@ -342,6 +342,20 @@ export function formatErrorReason(entry: AIAccessLogEntry): string | undefined {
   }
 }
 
+// sessionReasonEntry picks the entry whose reason stands for a session: a
+// successful allowed request (so a session that succeeded shows the policy that
+// authorised it), then any allowed request, then the first one. A deny reason
+// only shows when every request was denied.
+export function sessionReasonEntry(
+  entries: AIAccessLogEntry[],
+): AIAccessLogEntry | undefined {
+  return (
+    entries.find((e) => e.decision === "allow" && e.status < 400) ??
+    entries.find((e) => e.decision === "allow") ??
+    entries[0]
+  );
+}
+
 export type BlockedByTarget = {
   kind: "policy" | "global_limit";
   id: string;
@@ -460,6 +474,22 @@ export const MOCK_ERROR_ACCESS_LOGS: APIAgentNetworkAccessLog[] = [
     error_source: "proxy",
     error_detail:
       "Destination Not Allowed: dial tcp 10.255.255.1:443: direct upstream address is not allowed",
+  },
+  {
+    // Rejected by the proxy's own authentication before it was parsed as an
+    // LLM call, so no provider, model or policy decision is recorded.
+    id: "anlog-err-auth",
+    service_id: "svc-agent-network",
+    timestamp: "2026-10-08T12:03:00Z",
+    status_code: 401,
+    duration_ms: 2,
+    input_tokens: 0,
+    output_tokens: 0,
+    total_tokens: 0,
+    cost_usd: 0,
+    method: "POST",
+    path: "/v1/chat/completions",
+    error_source: "auth",
   },
 ];
 

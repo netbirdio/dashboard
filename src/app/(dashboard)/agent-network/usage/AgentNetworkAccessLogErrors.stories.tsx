@@ -28,7 +28,7 @@ const logs = {
 };
 
 // The failed rows with error attribution (policy, global limit, provider,
-// proxy) next to one successful row.
+// proxy, auth) next to one successful row.
 const errorRows = [
   ...MOCK_ERROR_ACCESS_LOGS.map((e) => ({
     ...e,
@@ -88,6 +88,11 @@ export const PolicyBlockExpanded: Story = {
   play: () => expandRow(/^Budget limit exceeded$/),
 };
 
+export const GlobalLimitBlockExpanded: Story = {
+  parameters: errorLogs,
+  play: () => expandRow(/^Account token limit exceeded$/),
+};
+
 export const ProviderErrorExpanded: Story = {
   parameters: errorLogs,
   play: () => expandRow(/^Provider error \(401\)$/),
@@ -96,4 +101,9 @@ export const ProviderErrorExpanded: Story = {
 export const ProxyErrorExpanded: Story = {
   parameters: errorLogs,
   play: () => expandRow(/^Proxy error: Destination Not Allowed$/),
+};
+
+export const AuthErrorExpanded: Story = {
+  parameters: errorLogs,
+  play: () => expandRow(/^Authentication$/),
 };

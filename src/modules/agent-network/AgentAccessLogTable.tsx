@@ -61,6 +61,7 @@ import {
   formatDenyReason,
   formatErrorReason,
   resolveBlockedBy,
+  sessionReasonEntry,
 } from "@/modules/agent-network/data/mockData";
 import { formatDateChip } from "@/modules/agent-network/AccessLogFilters";
 import {
@@ -476,14 +477,10 @@ export default function AgentAccessLogTable({
             Reason
           </DataTableHeader>
         ),
-        // Same Reason cell as the flat view (deny reason, or the authorising
-        // policy link). Prefer an allowed request so a session that succeeded
-        // shows the authorising policy rather than an incidental deny reason;
-        // only surface a deny reason when every request was denied.
+        // Same Reason cell as the flat view, for the entry sessionReasonEntry
+        // picks to stand for the session.
         cell: ({ row }) => {
-          const entries = row.original.entries;
-          const representative =
-            entries.find((e) => e.decision === "allow") ?? entries[0];
+          const representative = sessionReasonEntry(row.original.entries);
           return representative ? (
             <ReasonCell entry={representative} />
           ) : (
