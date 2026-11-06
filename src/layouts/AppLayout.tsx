@@ -48,7 +48,7 @@ export default function AppLayout({
       <head>
         <GoogleTagManagerHeadScript />
       </head>
-      <body className={cn(inter.className)}>
+      <body className={cn(inter.className)} data-matomo-mask>
         <Suspense fallback={<FullScreenLoading />}>
           <AnalyticsProvider>
             <DialogProvider>
