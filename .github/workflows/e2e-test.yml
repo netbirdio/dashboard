@@ -13,12 +13,12 @@ on:
         description: 'Management Cloud image tag'
         required: true
         type: string
-        default: 'main'
+        default: 'pr-8460'
       reverse-proxy-tag:
         description: 'Reverse Proxy image tag'
         required: true
         type: string
-        default: 'main'
+        default: 'pr-8460'
 
 env:
   REGISTRY: ghcr.io
@@ -75,7 +75,9 @@ jobs:
               | sed -E 's/^[[:space:]]*[Mm]anagement-cloud-tag:[[:space:]]*([A-Za-z0-9._-]+)[[:space:]]*$/\1/' \
               || true)
             if [ -z "$TAG" ]; then
-              TAG="main"
+              # Temporary: pinned to netbirdio/netbird#8460 (agent-network
+              # error attribution) until it merges; revert to main then.
+              TAG="pr-8460"
             fi
           fi
           echo "Using management-cloud tag: $TAG"
@@ -96,7 +98,9 @@ jobs:
               | sed -E 's/^[[:space:]]*[Rr]everse-proxy-tag:[[:space:]]*([A-Za-z0-9._-]+)[[:space:]]*$/\1/' \
               || true)
             if [ -z "$TAG" ]; then
-              TAG="main"
+              # Temporary: pinned to netbirdio/netbird#8460 (agent-network
+              # error attribution) until it merges; revert to main then.
+              TAG="pr-8460"
             fi
           fi
           echo "Using reverse-proxy tag: $TAG"
