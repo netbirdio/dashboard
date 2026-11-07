@@ -15,6 +15,7 @@ import { MSPTransferAccountModal } from "@/cloud/msp/MSPTransferAccountModal";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { ProductSwitcher } from "@/modules/agent-network/ProductSwitcher";
 
 export const headerHeight = 65;
 
@@ -54,7 +55,7 @@ export default function NavbarWithDropdown() {
               </div>
             </Button>
           </div>
-          <div className={"flex gap-4 mr-auto"}>
+          <div className={"flex gap-4 mr-auto items-center"}>
             <button
               onClick={() => router.push("/peers")}
               className={
@@ -64,6 +65,7 @@ export default function NavbarWithDropdown() {
               <NetBirdLogo />
             </button>
             <ToggleCollapsableNavigationButton />
+            <ProductSwitcher />
           </div>
 
           <div className="flex md:order-2 gap-5 items-center">

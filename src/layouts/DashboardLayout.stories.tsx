@@ -1,5 +1,6 @@
 import type { Meta } from "@storybook/nextjs-vite";
 import { fireEvent, screen } from "storybook/test";
+import ProvidersPage from "@/app/(dashboard)/agent-network/providers/page";
 import PeersPage from "@/app/(dashboard)/peers/page";
 import {
   click,
@@ -29,7 +30,7 @@ const helpButton = () =>
     ...document.querySelectorAll<HTMLButtonElement>(
       "button[aria-haspopup=menu]",
     ),
-  ].find((b) => b.closest(".fixed") && b.dataset.testid !== "user-dropdown")!;
+  ].find((b) => b.closest(".fixed") && !b.dataset.testid)!;
 
 export const UserDropdown: Story = {
   play: async () => {
@@ -104,5 +105,34 @@ export const ExpandedNavigationGroup: Story = {
     await click((await text("Access Control")).closest("button")!);
     await text("Posture Checks");
     await click((await text("Network Routing")).closest("button")!);
+  },
+};
+
+/* The product switch next to the logo, open, on a Networking page. */
+export const ProductSwitcher: Story = {
+  play: async () => {
+    await loaded();
+    await click(screen.findByTestId("product-switcher"));
+    await menu();
+  },
+};
+
+/* The Agent Network product: the switch shows it, the sidebar its pages. */
+export const AgentNetworkProduct: Story = {
+  parameters: nav("/agent-network/providers"),
+  render: inLayout(ProvidersPage),
+  play: async () => {
+    await screen.findByTestId("product-switcher");
+    await text("Connect Agent");
+  },
+};
+
+export const AgentNetworkProductSwitcher: Story = {
+  parameters: nav("/agent-network/providers"),
+  render: inLayout(ProvidersPage),
+  play: async () => {
+    await text("Connect Agent");
+    await click(screen.findByTestId("product-switcher"));
+    await menu();
   },
 };

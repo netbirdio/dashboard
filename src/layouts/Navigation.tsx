@@ -22,6 +22,8 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { headerHeight } from "@/layouts/Header";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
+import { hasAgentNetworkGrant as anyAgentNetworkGrant } from "@/modules/agent-network/product";
+import { useProduct } from "@/modules/agent-network/useProduct";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
 import { SmallBadge } from "@components/ui/SmallBadge";
@@ -44,8 +46,11 @@ export default function Navigation({
   // "enabled" already falls back to the caller's agent_network grants when
   // the feature flag can't be resolved (no accounts read — usage_viewer and
   // custom delegated roles), so it is the one surface switch here.
-  const { only: agentNetworkOnly, enabled: agentNetworkSurface } =
-    useAgentNetworkMode();
+  const { enabled: agentNetworkSurface } = useAgentNetworkMode();
+  // The sidebar shows the product the caller is in: Agent Network (always so
+  // on a dashboard focused on it) hides the networking sections, Networking
+  // hides the Agent Network section while the header offers the switch.
+  const { focused: agentNetworkOnly, switchable, product } = useProduct();
   // Caller-scoped: true whenever the caller's own policies grant access to
   // at least one provider, independent of any agent_network permission —
   // this is what lets plain users (limited view included) reach Connect Agent
@@ -53,12 +58,7 @@ export default function Navigation({
   const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
   // Any agent_network grant at all — the delegated roles
   // (agent_network_admin, usage_viewer) each hold a subset of these.
-  const hasAgentNetworkGrant =
-    !!permission?.["agent_network.providers"]?.read ||
-    !!permission?.["agent_network.policies"]?.read ||
-    !!permission?.["agent_network.usage"]?.read ||
-    !!permission?.["agent_network.logs"]?.read ||
-    !!permission?.["agent_network.settings"]?.read;
+  const hasAgentNetworkGrant = anyAgentNetworkGrant(permission);
 
   return (
     <div
@@ -232,7 +232,8 @@ export default function Navigation({
                   // permitted child or the caller's own setup surfaces it.
                   visible={
                     agentNetworkSurface &&
-                    (hasAgentNetworkGrant || mySetupConfigured)
+                    (hasAgentNetworkGrant || mySetupConfigured) &&
+                    (!switchable || product === "agent-network")
                   }
                 >
                   <SidebarItem
@@ -406,7 +407,7 @@ export function SidebarItemGroup({ children }: SidebarItemGroupProps) {
 
 const ActivityNavigationItem = () => {
   const { permission } = usePermissions();
-  const { only: agentNetworkOnly } = useAgentNetworkMode();
+  const { focused: agentNetworkOnly } = useProduct();
 
   return (
     <SidebarItem
