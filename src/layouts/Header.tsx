@@ -16,14 +16,20 @@ import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { ProductSwitcher } from "@/modules/agent-network/ProductSwitcher";
+import { useProduct } from "@/modules/agent-network/useProduct";
 
 export const headerHeight = 65;
 
 export default function NavbarWithDropdown() {
   const router = useGuardedRouter();
-  const { toggleMobileNav } = useApplicationContext();
+  const { toggleMobileNav, isNavigationCollapsed } = useApplicationContext();
   const { bannerHeight } = useAnnouncement();
   const { isRestricted } = usePermissions();
+  const { switchable } = useProduct();
+  // The product switch belongs to the main panel. With the sidebar open, the
+  // logo block spans the sidebar's width and continues its border, so the
+  // switch starts where the page content does.
+  const besideSidebar = switchable && !isNavigationCollapsed;
 
   return (
     <>
@@ -55,17 +61,27 @@ export default function NavbarWithDropdown() {
               </div>
             </Button>
           </div>
-          <div className={"flex gap-4 mr-auto items-center"}>
-            <button
-              onClick={() => router.push("/peers")}
-              className={
-                "cursor-pointer hover:opacity-70 transition-all mr-auto"
-              }
+          <div className={"flex mr-auto items-center self-stretch"}>
+            <div
+              className={cn(
+                "flex gap-4 items-center",
+                besideSidebar &&
+                  "md:w-56 md:shrink-0 md:self-stretch md:-my-3 md:border-r dark:border-zinc-700/40",
+              )}
             >
-              <NetBirdLogo />
-            </button>
-            <ToggleCollapsableNavigationButton />
-            <ProductSwitcher />
+              <button
+                onClick={() => router.push("/peers")}
+                className={
+                  "cursor-pointer hover:opacity-70 transition-all mr-auto"
+                }
+              >
+                <NetBirdLogo />
+              </button>
+              <ToggleCollapsableNavigationButton />
+            </div>
+            <div className={cn("ml-4", besideSidebar && "md:ml-8")}>
+              <ProductSwitcher />
+            </div>
           </div>
 
           <div className="flex md:order-2 gap-5 items-center">
