@@ -27,8 +27,8 @@ export default function NavbarWithDropdown() {
   const { isRestricted } = usePermissions();
   const { switchable } = useProduct();
   // The product switch belongs to the main panel. With the sidebar open, the
-  // logo block spans the sidebar's width and continues its border, so the
-  // switch starts where the page content does.
+  // logo block spans the sidebar's width, so the switch starts where the
+  // page content does.
   const besideSidebar = switchable && !isNavigationCollapsed;
 
   return (
@@ -61,12 +61,11 @@ export default function NavbarWithDropdown() {
               </div>
             </Button>
           </div>
-          <div className={"flex mr-auto items-center self-stretch"}>
+          <div className={"flex mr-auto items-center"}>
             <div
               className={cn(
                 "flex gap-4 items-center",
-                besideSidebar &&
-                  "md:w-56 md:shrink-0 md:self-stretch md:-my-3 md:border-r dark:border-zinc-700/40",
+                besideSidebar && "md:w-56 md:shrink-0",
               )}
             >
               <button
