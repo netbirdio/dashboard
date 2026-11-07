@@ -8,21 +8,39 @@ import {
 
 describe("productForPath", () => {
   it.each([
-    ["/agent-network", "agent-network"],
-    ["/agent-network/", "agent-network"],
-    ["/agent-network/providers", "agent-network"],
-    ["/agent-network/usage", "agent-network"],
-    ["/agent-networks", "networking"],
-    ["/agent-network-foo", "networking"],
-    ["/peers", "networking"],
-    ["/control-center", "networking"],
-    ["/team/users", "networking"],
-    ["/", "networking"],
-    ["", "networking"],
-    [null, "networking"],
-    [undefined, "networking"],
-  ])("%s is %s", (path, product) => {
-    expect(productForPath(path)).toBe(product);
+    // Agent Network pages are Agent Network, whatever the current product.
+    ["/agent-network", undefined, "agent-network"],
+    ["/agent-network/", "networking", "agent-network"],
+    ["/agent-network/providers", "networking", "agent-network"],
+    ["/agent-network/usage", undefined, "agent-network"],
+    // Pages only Networking has are Networking, whatever the current product.
+    ["/networks", "agent-network", "networking"],
+    ["/network", "agent-network", "networking"],
+    ["/network-routes", "agent-network", "networking"],
+    ["/reverse-proxy/services", "agent-network", "networking"],
+    ["/dns/zones", "agent-network", "networking"],
+    ["/events/audit", "agent-network", "networking"],
+    // Pages both products show keep the current product.
+    ["/peers", "agent-network", "agent-network"],
+    ["/peer", "agent-network", "agent-network"],
+    ["/control-center", "agent-network", "agent-network"],
+    ["/access-control", "agent-network", "agent-network"],
+    ["/team/users", "agent-network", "agent-network"],
+    ["/settings", "agent-network", "agent-network"],
+    ["/peers", "networking", "networking"],
+    // ... and are Networking when there is no current product yet.
+    ["/peers", undefined, "networking"],
+    ["/control-center", undefined, "networking"],
+    // Look-alike paths are not the sections they resemble.
+    ["/agent-networks", "networking", "networking"],
+    ["/agent-network-foo", "networking", "networking"],
+    ["/dnssec", "agent-network", "agent-network"],
+    ["/", undefined, "networking"],
+    ["", "agent-network", "agent-network"],
+    [null, undefined, "networking"],
+    [undefined, undefined, "networking"],
+  ] as const)("%s from %s is %s", (path, current, product) => {
+    expect(productForPath(path, current)).toBe(product);
   });
 });
 

@@ -43,7 +43,7 @@ const PRODUCTS: {
  * caller has both, and the product itself follows the route (see product.ts).
  */
 export const ProductSwitcher = () => {
-  const { switchable, product, homes } = useProduct();
+  const { switchable, product, homes, select } = useProduct();
   const router = useGuardedRouter();
   const [open, setOpen] = useState(false);
 
@@ -71,7 +71,9 @@ export const ProductSwitcher = () => {
             key={p.id}
             onClick={() => {
               setOpen(false);
-              if (p.id !== product) router.push(homes[p.id]);
+              if (p.id === product) return;
+              select(p.id);
+              router.push(homes[p.id]);
             }}
           >
             <div className={"flex gap-3 items-center w-full py-1"}>

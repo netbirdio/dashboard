@@ -1,21 +1,41 @@
 /**
  * The dashboard holds two products: Networking (peers, access control,
- * networks, DNS, reverse proxy) and Agent Network. The current product
- * follows the route, so a link, a reload or the back button always lands
- * in the right one and nothing has to be stored.
+ * networks, DNS, reverse proxy) and Agent Network. Agent Network pages and
+ * the pages only Networking has decide the product; the pages both show
+ * (Control Center, Peers, Access Control, Team, Settings and the like) keep
+ * the product the caller is in, so opening Peers from the Agent Network view
+ * stays in Agent Network.
  */
 export type Product = "networking" | "agent-network";
 
 export const AGENT_NETWORK_ROOT = "/agent-network";
 export const NETWORKING_HOME = "/peers";
 
-/** The product a route belongs to. */
-export const productForPath = (path?: string | null): Product => {
-  if (!path) return "networking";
-  return path === AGENT_NETWORK_ROOT ||
-    path.startsWith(`${AGENT_NETWORK_ROOT}/`)
-    ? "agent-network"
-    : "networking";
+/** The sections the Agent Network view hides, so they belong to Networking. */
+export const NETWORKING_ONLY_ROOTS = [
+  "/networks",
+  "/network",
+  "/network-routes",
+  "/reverse-proxy",
+  "/dns",
+  "/events",
+];
+
+const isUnder = (path: string, root: string) =>
+  path === root || path.startsWith(`${root}/`);
+
+/**
+ * The product a route belongs to. A page both products show keeps
+ * `current`, the product the caller is in (Networking when there is none).
+ */
+export const productForPath = (
+  path?: string | null,
+  current?: Product,
+): Product => {
+  if (path && isUnder(path, AGENT_NETWORK_ROOT)) return "agent-network";
+  if (path && NETWORKING_ONLY_ROOTS.some((root) => isUnder(path, root)))
+    return "networking";
+  return current ?? "networking";
 };
 
 type Grant = { read?: boolean } | undefined;

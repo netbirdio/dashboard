@@ -8,6 +8,7 @@ import {
   menu,
   nav,
   resetStorage,
+  role,
   type Story,
   text,
   until,
@@ -134,5 +135,19 @@ export const AgentNetworkProductSwitcher: Story = {
     await text("Connect Agent");
     await click(screen.findByTestId("product-switcher"));
     await menu();
+  },
+};
+
+/* Peers opened from the Agent Network view stays in Agent Network. */
+export const AgentNetworkProductPeers: Story = {
+  // The key of src/modules/agent-network/productStore.ts, written directly so
+  // this file still builds against a baseline without that module.
+  beforeEach: () => {
+    sessionStorage.setItem("netbird-product", "agent-network");
+    return () => sessionStorage.removeItem("netbird-product");
+  },
+  play: async () => {
+    await loaded();
+    await role("button", /Product: Agent Network/);
   },
 };
