@@ -53,7 +53,8 @@ test.describe.serial("Groups @access-control", () => {
 
   test("Should rename the group", async ({ dashboardAsOwner: page }) => {
     await navigateTo(page, "/groups");
-    await expect(page).toHaveURL(/\/groups$/);
+    // With both products enabled, shared pages name theirs: ?product=….
+    await expect(page).toHaveURL(/\/groups(\?product=[a-z-]+)?$/);
 
     const input = page.getByTestId("table-search-input");
     await expect(input).toBeVisible();

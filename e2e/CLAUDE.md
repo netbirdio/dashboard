@@ -231,12 +231,20 @@ await visitByNavigation(page, "Access Control");  // Expand parent
 await visitByNavigation(page, "Policies");         // Click child
 ```
 
-| Parent | Children |
-|--------|----------|
-| Access Control | Policies, Groups, Posture Checks |
-| Team | Users, Service Users |
-| DNS | Nameservers, Zones, DNS Settings |
-| Reverse Proxy | Custom Domains, Services |
+The sidebar shows one product at a time (the header's `product-switcher`
+picks Networking or Agent Network), with the account area at the bottom of
+both. Shared pages (Control Center, Peers, the account area) carry the product
+as `?product=networking|agent-network`; see `src/modules/agent-network/product.ts`.
+
+| Sidebar | Parent | Children |
+|---------|--------|----------|
+| Networking | Access Control | Policies, Posture Checks |
+| Networking | Network Routing | Networks, Routes |
+| Networking | DNS | Nameservers, Zones, DNS Settings |
+| Networking | Reverse Proxy | Services, Custom Domains, Clusters, Access Logs |
+| Agent Network | Insights (preview flag) | Overview, Models, Tasks, Departments |
+| Agent Network | Agents | Connect Agent, Providers, Agent Policies |
+| Account (both) | Team | Users, Service Users, Groups |
 
 ## Test Coverage
 
@@ -250,6 +258,7 @@ await visitByNavigation(page, "Policies");         // Click child
 | Notifications | `settings-notifications-email.spec.ts`, `settings-notifications-slack.spec.ts`, `settings-notifications-webhook.spec.ts` | `@notifications` |
 | Team | `team-users.spec.ts`, `team-service-users.spec.ts`, `team-users-approval-and-billing.spec.ts` | `@team` |
 | Setup Keys | `setup-keys.spec.ts` | `@setup-keys` |
+| Product navigation | `product-navigation.spec.ts`, `agent-network-focused-view.spec.ts` | `@agent-network` |
 | Control Center | `control-center-*.spec.ts` (`-draft`, `-draft-connections`, `-draft-matrix`, `-draft-extras`, `-draft-install`, `-draft-remove`, `-draft-shortcuts`, `-deploy`, `-drilldown`, `-live`, `-peers`) | `@control-center` |
 
 ## Debugging

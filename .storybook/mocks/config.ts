@@ -28,6 +28,7 @@ const config = {
   cloud: cloud ? "true" : "false",
   agentNetworkOnly: "false",
   agentNetworkEnabled: "true",
+  agentNetworkInsightsPreview: "true",
   hubspotPortalId: "",
   hubspotSignupFormId: "",
   hubspotOnboardingFormId: "",

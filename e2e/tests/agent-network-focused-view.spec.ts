@@ -11,6 +11,13 @@
  * edition-gating.spec.ts). "only" mode is asserted through the Networks nav
  * item, which toggles purely on the focused-view flag and does not depend on
  * premium permission modules.
+ *
+ * The dashboard has two products, Networking and Agent Network, with a
+ * sidebar each (see src/modules/agent-network/product.ts). "Available"
+ * means the header offers the product switch; "focused" means the account
+ * is Agent Network only: no switch, the Agent Network sidebar (whose
+ * "Agents" group holds Connect Agent, Providers and Agent Policies) and none
+ * of the Networking sections.
  */
 import { test, expect, type Browser, type Page } from "@playwright/test";
 import { loginToApp, navigateTo } from "../helpers/auth";
@@ -137,15 +144,28 @@ function navItem(page: Page, text: string) {
 }
 
 // navItemContaining matches a sidebar entry by a substring of its label. Some
-// entries (Agent Network, Reverse Proxy) render a "Beta" badge inside the label
-// when the dashboard is not focused, so exact text matching would miss them.
+// entries (Reverse Proxy) render a "Beta" badge inside the label, so exact
+// text matching would miss them.
 function navItemContaining(page: Page, text: string) {
   return page.getByTestId("left-navigation-item").filter({ hasText: text });
 }
 
-// Regular dashboard sections that the focused view hides (gated on
-// !agentNetworkOnly in Navigation.tsx).
-const FOCUS_HIDDEN_NAV = ["Networks", "Reverse Proxy", "DNS", "Activity"];
+// The header's switch between Networking and Agent Network.
+function productSwitch(page: Page) {
+  return page.getByTestId("product-switcher");
+}
+
+// The Agent Network sidebar's group of agent pages.
+const AGENT_NETWORK_NAV = "Agents";
+
+// Networking sections that the Agent Network sidebar doesn't have.
+const FOCUS_HIDDEN_NAV = [
+  "Access Control",
+  "Networks",
+  "Reverse Proxy",
+  "DNS",
+  "Activity",
+];
 // Agent Network view routes that make up the focused surface.
 const AGENT_VIEW_PATHS = [
   "/agent-network/providers",
@@ -162,15 +182,17 @@ test.describe.serial("Agent Network focused view @agent-network @test-build", ()
       agentNetworkOnly: true,
     });
     try {
-      // Peers always renders for an owner and is not part of the focused
-      // split, so it confirms the sidebar rendered before asserting absences.
+      // Peers always renders for an owner and is in both products' sidebars,
+      // so it confirms the sidebar rendered before asserting absences.
       await expect(navItem(page, "Peers")).toBeVisible();
 
-      // The Agent Network section is present and the regular sections are gone.
-      await expect(navItem(page, "Agent Network")).toBeVisible();
+      // The Agent Network sidebar is there, the Networking sections and the
+      // product switch are not.
+      await expect(navItem(page, AGENT_NETWORK_NAV)).toBeVisible();
       for (const label of FOCUS_HIDDEN_NAV) {
         await expect(navItem(page, label)).toHaveCount(0);
       }
+      await expect(productSwitch(page)).toHaveCount(0);
     } finally {
       await close();
     }
@@ -184,11 +206,11 @@ test.describe.serial("Agent Network focused view @agent-network @test-build", ()
     });
     try {
       // Each Agent Network view renders instead of the route guard redirecting
-      // away; the Agent Network section stays in the sidebar throughout.
+      // away; the Agent Network sidebar stays throughout.
       for (const path of AGENT_VIEW_PATHS) {
         await navigateTo(page, path);
         await expect(page).toHaveURL(new RegExp(path.replace(/\//g, "\\/")));
-        await expect(navItem(page, "Agent Network")).toBeVisible();
+        await expect(navItem(page, AGENT_NETWORK_NAV)).toBeVisible();
       }
     } finally {
       await close();
@@ -204,9 +226,11 @@ test.describe.serial("Agent Network focused view @agent-network @test-build", ()
     try {
       // The sidebar rendered (Peers is always present for an owner)...
       await expect(navItem(page, "Peers")).toBeVisible();
-      // ...and the Agent Network section is gone: the explicit opt-out wins
-      // and, without a deployment config flag, the section is not enabled.
-      await expect(navItem(page, "Agent Network")).toHaveCount(0);
+      // ...and Agent Network is gone: the explicit opt-out wins and, without
+      // a deployment config flag, the product is not enabled, so there is
+      // nothing to switch to.
+      await expect(productSwitch(page)).toHaveCount(0);
+      await expect(navItem(page, AGENT_NETWORK_NAV)).toHaveCount(0);
     } finally {
       await close();
     }
@@ -219,11 +243,10 @@ test.describe.serial("Agent Network focused view @agent-network @test-build", ()
       dashboardFeaturesAgentNetwork: true,
     });
     try {
-      // The Agent Network menu is available (the label carries a "Beta" badge
-      // outside focused mode, so match on the label substring)...
-      await expect(navItemContaining(page, "Agent Network")).toBeVisible();
-      // ...but the dashboard is not focused: a regular section that focused
-      // mode hides (Reverse Proxy) is still present.
+      // Agent Network is available through the product switch...
+      await expect(productSwitch(page)).toBeVisible();
+      // ...but the dashboard is not focused: it opens in Networking, whose
+      // sections (Reverse Proxy) focused mode hides.
       await expect(navItemContaining(page, "Reverse Proxy")).toBeVisible();
     } finally {
       await close();
@@ -240,7 +263,7 @@ test.describe.serial("Agent Network focused view @agent-network @test-build", ()
     );
     try {
       // Focused view is applied immediately, before the setting is persisted.
-      await expect(navItem(page, "Agent Network")).toBeVisible();
+      await expect(navItem(page, AGENT_NETWORK_NAV)).toBeVisible();
       await expect(navItem(page, "Networks")).toHaveCount(0);
 
       // The signup source is persisted: focused view plus the Agent Network
@@ -308,22 +331,25 @@ test.describe.serial("Agent Network focused view @agent-network @test-build", ()
     await expect(navItem(page, "Peers")).toBeVisible();
 
     if (expected === "hidden") {
-      await expect(navItemContaining(page, "Agent Network")).toHaveCount(0);
+      await expect(productSwitch(page)).toHaveCount(0);
+      await expect(navItem(page, AGENT_NETWORK_NAV)).toHaveCount(0);
       // The regular dashboard stays intact.
       await expect(navItemContaining(page, "Reverse Proxy")).toBeVisible();
       return;
     }
 
-    await expect(navItemContaining(page, "Agent Network")).toBeVisible();
-
     if (expected === "focused") {
+      await expect(navItem(page, AGENT_NETWORK_NAV)).toBeVisible();
+      await expect(productSwitch(page)).toHaveCount(0);
       for (const label of FOCUS_HIDDEN_NAV) {
         await expect(navItem(page, label)).toHaveCount(0);
       }
       return;
     }
 
-    // available: the menu shows alongside the regular dashboard.
+    // available: the switch offers Agent Network next to the regular
+    // dashboard, which opens in Networking.
+    await expect(productSwitch(page)).toBeVisible();
     await expect(navItemContaining(page, "Reverse Proxy")).toBeVisible();
   }
 

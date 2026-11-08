@@ -92,6 +92,7 @@ export const Small: StoryObj = {
         <Row key={variant} label={variant}>
           <SmallBadge variant={variant} text={variant.toUpperCase()} />
           <SmallBadge variant={variant} size={"md"} text={"MD"} />
+          <SmallBadge variant={variant} size={"xs"} text={"XS"} />
         </Row>
       ))}
       <Row label={"notification count"}>
