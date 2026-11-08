@@ -1,15 +1,26 @@
 "use client";
 
 import { ScrollArea } from "@components/ScrollArea";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import { isNetBirdCloud } from "@utils/netbird";
+import { isAgentNetworkInsightsPreview, isNetBirdCloud } from "@utils/netbird";
+import {
+  ChartColumnIcon,
+  GaugeIcon,
+  LogsIcon,
+  type LucideIcon,
+  SlidersHorizontalIcon,
+} from "lucide-react";
+import * as React from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import ActivityIcon from "@/assets/icons/ActivityIcon";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { DistributorNavigation } from "@/cloud/distributor/DistributorNavigation";
@@ -20,45 +31,30 @@ import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { headerHeight } from "@/layouts/Header";
+import { agentNetworkNavAccess } from "@/modules/agent-network/agentNetworkNavigation";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
-import { hasAgentNetworkGrant as anyAgentNetworkGrant } from "@/modules/agent-network/product";
 import { useProduct } from "@/modules/agent-network/useProduct";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import * as React from "react";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 
 type Props = {
   fullWidth?: boolean;
   hideOnMobile?: boolean;
 };
 
+/**
+ * The sidebar: the current product's pages at the top, the account area,
+ * the same in both products, at the bottom. The header's product switch
+ * decides which product's pages show (see modules/agent-network/product.ts).
+ */
 export default function Navigation({
   fullWidth = false,
   hideOnMobile = false,
 }: Readonly<Props>) {
   const { bannerHeight } = useAnnouncement();
   const { isNavigationCollapsed } = useApplicationContext();
-  const { permission } = usePermissions();
-  // "enabled" already falls back to the caller's agent_network grants when
-  // the feature flag can't be resolved (no accounts read — usage_viewer and
-  // custom delegated roles), so it is the one surface switch here.
-  const { enabled: agentNetworkSurface } = useAgentNetworkMode();
-  // The sidebar shows the product the caller is in: Agent Network (always so
-  // on a dashboard focused on it) hides the networking sections, Networking
-  // hides the Agent Network section while the header offers the switch.
-  const { focused: agentNetworkOnly, switchable, product } = useProduct();
-  // Caller-scoped: true whenever the caller's own policies grant access to
-  // at least one provider, independent of any agent_network permission —
-  // this is what lets plain users (limited view included) reach Connect Agent
-  // and the self-scoped Usage & Logs view.
-  const { configured: mySetupConfigured } = useMyAgentNetworkSetup();
-  // Any agent_network grant at all — the delegated roles
-  // (agent_network_admin, usage_viewer) each hold a subset of these.
-  const hasAgentNetworkGrant = anyAgentNetworkGrant(permission);
+  const { product } = useProduct();
 
   return (
     <div
@@ -96,290 +92,16 @@ export default function Navigation({
                 : "100%",
             }}
           >
-            <div>
-              <SidebarItemGroup>
-                <SidebarItem
-                  icon={<ControlCenterIcon size={16} />}
-                  label="Control Center"
-                  href={"/control-center"}
-                  visible={permission.policies.read}
-                />
-
-                <SidebarItem
-                  icon={<PeerIcon />}
-                  label="Peers"
-                  href={"/peers"}
-                  // Restricted users get the add-your-device view there, so
-                  // the link stays even in the limited (user role) sidebar.
-                  visible={true}
-                />
-
-                <DistributorNavigation />
-                <SidebarItem
-                  icon={<AccessControlIcon />}
-                  label="Access Control"
-                  href={"/access-control"}
-                  collapsible
-                  visible={permission.policies.read}
-                >
-                  <SidebarItem
-                    label="Policies"
-                    href={"/access-control"}
-                    isChild
-                    exactPathMatch={true}
-                    visible={permission.policies.read}
-                  />
-                  <SidebarItem
-                    label="Groups"
-                    isChild
-                    href={"/groups"}
-                    visible={permission.policies.read}
-                  />
-                  <SidebarItem
-                    label="Posture Checks"
-                    isChild
-                    href={"/posture-checks"}
-                    exactPathMatch={true}
-                    visible={permission.policies.read}
-                  />
-                </SidebarItem>
-
-                {!agentNetworkOnly && <NetworkNavigation />}
-
-                <SidebarItem
-                  icon={<ReverseProxyIcon size={16} />}
-                  labelClassName={"pr-0"}
-                  label={
-                    <div className={"flex items-center gap-2"}>
-                      Reverse Proxy
-                      <SmallBadge
-                        text={"Beta"}
-                        variant={"sky"}
-                        className={"text-[8px] leading-none py-[3px] px-[5px]"}
-                        textClassName={"top-0"}
-                      />
-                    </div>
-                  }
-                  href={"/reverse-proxy"}
-                  collapsible
-                  exactPathMatch={false}
-                  visible={permission?.services?.read && !agentNetworkOnly}
-                >
-                  <SidebarItem
-                    label="Services"
-                    isChild
-                    href={"/reverse-proxy/services"}
-                    exactPathMatch={true}
-                    visible={permission?.services?.read}
-                  />
-                  <SidebarItem
-                    label="Custom Domains"
-                    isChild
-                    href={"/reverse-proxy/custom-domains"}
-                    exactPathMatch={true}
-                    visible={permission?.services?.read}
-                  />
-                  <SidebarItem
-                    label="Clusters"
-                    isChild
-                    href={"/reverse-proxy/clusters"}
-                    exactPathMatch={true}
-                    visible={permission?.services?.read}
-                  />
-                  <SidebarItem
-                    label="Access Logs"
-                    isChild
-                    href={"/reverse-proxy/logs"}
-                    exactPathMatch={true}
-                    visible={permission?.services?.read}
-                  />
-                </SidebarItem>
-
-                <SidebarItem
-                  icon={<AgentNetworkIcon size={16} />}
-                  labelClassName={"pr-0"}
-                  label={
-                    <div className={"flex items-center gap-2"}>
-                      Agent Network
-                      {!agentNetworkOnly && (
-                        <SmallBadge
-                          text={"Beta"}
-                          variant={"sky"}
-                          className={
-                            "text-[8px] leading-none py-[3px] px-[5px]"
-                          }
-                          textClassName={"top-0"}
-                        />
-                      )}
-                    </div>
-                  }
-                  href={
-                    permission?.["agent_network.providers"]?.read
-                      ? "/agent-network/providers"
-                      : "/agent-network/connect"
-                  }
-                  collapsible
-                  exactPathMatch={false}
-                  // Parent is visible when at least one child is permitted.
-                  // Each page tracks its agent_network submodule, so delegated
-                  // roles (agent_network_admin, usage_viewer) see exactly the
-                  // pages their grants cover. Connect Agent is caller-scoped
-                  // and needs no permission, so a configured setup alone also
-                  // surfaces the section — that is how plain users reach it.
-                  // The surface switch decides first: a deployment (or
-                  // account) with Agent Network off hides the section from
-                  // everyone, configured caller or not. Within it, one
-                  // permitted child or the caller's own setup surfaces it.
-                  visible={
-                    agentNetworkSurface &&
-                    (hasAgentNetworkGrant || mySetupConfigured) &&
-                    (!switchable || product === "agent-network")
-                  }
-                >
-                  <SidebarItem
-                    label="Connect Agent"
-                    isChild
-                    href={"/agent-network/connect"}
-                    exactPathMatch={true}
-                    // Configured callers get it because it is their own setup;
-                    // anyone administering Agent Network gets it too, even
-                    // before a policy covers them, so the page they point
-                    // their own agent at is never missing from the section
-                    // they manage.
-                    visible={
-                      agentNetworkSurface &&
-                      (mySetupConfigured || hasAgentNetworkGrant)
-                    }
-                  />
-                  <SidebarItem
-                    label="Providers"
-                    isChild
-                    href={"/agent-network/providers"}
-                    exactPathMatch={true}
-                    visible={
-                      agentNetworkSurface &&
-                      permission?.["agent_network.providers"]?.read
-                    }
-                  />
-                  <SidebarItem
-                    label="Policies"
-                    isChild
-                    href={"/agent-network/policies"}
-                    exactPathMatch={true}
-                    visible={
-                      agentNetworkSurface &&
-                      permission?.["agent_network.policies"]?.read
-                    }
-                  />
-                  <SidebarItem
-                    label="Usage & Logs"
-                    isChild
-                    href={"/agent-network/usage"}
-                    exactPathMatch={true}
-                    // A configured self-service caller gets the page too:
-                    // the server scopes usage and logs to them.
-                    visible={
-                      agentNetworkSurface &&
-                      (permission?.["agent_network.usage"]?.read ||
-                        permission?.["agent_network.logs"]?.read ||
-                        mySetupConfigured)
-                    }
-                  />
-                  <SidebarItem
-                    label="Configuration"
-                    isChild
-                    href={"/agent-network/configuration"}
-                    exactPathMatch={true}
-                    visible={
-                      agentNetworkSurface &&
-                      permission?.["agent_network.settings"]?.read
-                    }
-                  />
-                </SidebarItem>
-
-                <SidebarItem
-                  icon={<DNSIcon />}
-                  label="DNS"
-                  href={"/dns"}
-                  collapsible
-                  exactPathMatch={true}
-                  visible={
-                    (permission.dns.read || permission.nameservers.read) &&
-                    !agentNetworkOnly
-                  }
-                >
-                  <SidebarItem
-                    label="Nameservers"
-                    isChild
-                    href={"/dns/nameservers"}
-                    visible={permission.nameservers.read}
-                  />
-                  <SidebarItem
-                    label="Zones"
-                    isChild
-                    href={"/dns/zones"}
-                    visible={permission?.dns?.read}
-                  />
-                  <SidebarItem
-                    label="DNS Settings"
-                    isChild
-                    href={"/dns/settings"}
-                    visible={permission.dns.read}
-                  />
-                </SidebarItem>
-                <SidebarItem
-                  icon={<TeamIcon />}
-                  label="Team"
-                  href={"/team"}
-                  collapsible
-                  visible={permission.users.read}
-                >
-                  <SidebarItem
-                    label="Users"
-                    isChild
-                    href={"/team/users"}
-                    visible={permission.users.read}
-                  />
-                  <SidebarItem
-                    label="Service Users"
-                    isChild
-                    href={"/team/service-users"}
-                    visible={permission.users.read}
-                  />
-                </SidebarItem>
-                <ActivityNavigationItem />
-              </SidebarItemGroup>
-
-              <SidebarItemGroup>
-                <SidebarItem
-                  icon={<SettingsIcon />}
-                  label="Settings"
-                  href={"/settings"}
-                  exactPathMatch={true}
-                  visible={permission.settings.read}
-                />
-                <MSPNavigationItem />
-                <SidebarItem
-                  icon={<IntegrationIcon />}
-                  label="Integrations"
-                  href={"/integrations"}
-                  exactPathMatch={true}
-                  visible={
-                    permission?.edr?.read ||
-                    permission?.idp?.read ||
-                    permission?.event_streaming?.read ||
-                    (!isNetBirdCloud() && (permission?.settings?.read ?? false))
-                  }
-                />
-                <SidebarItem
-                  icon={<DocsIcon />}
-                  href={"https://docs.netbird.io/"}
-                  target={"_blank"}
-                  label="Documentation"
-                  visible={true}
-                />
-              </SidebarItemGroup>
-            </div>
+            <SidebarItemGroup data-product-navigation={product}>
+              {product === "agent-network" ? (
+                <AgentNetworkNavigation />
+              ) : (
+                <NetworkingNavigation />
+              )}
+            </SidebarItemGroup>
+            {/* Pushes the account area to the bottom of the sidebar. */}
+            <div className={"grow"} aria-hidden />
+            <AccountNavigation />
             <NavigationUsageInfo />
             <NavigationVersionInfo />
           </div>
@@ -391,46 +113,389 @@ export default function Navigation({
 
 type SidebarItemGroupProps = {
   children: React.ReactNode;
+  /** A heading over the group; hidden while the sidebar is collapsed. */
+  label?: string;
+  "data-product-navigation"?: string;
+  "data-account-navigation"?: boolean;
 };
 
-export function SidebarItemGroup({ children }: SidebarItemGroupProps) {
+export function SidebarItemGroup({
+  children,
+  label,
+  ...data
+}: SidebarItemGroupProps) {
+  const { isNavigationCollapsed, mobileNavOpen } = useApplicationContext();
   return (
     <div
+      {...data}
       className={
         "mt-4 border-t border-gray-200 pt-4 first:mt-0 first:border-t-0 first:pt-0 dark:border-zinc-700/40 space-y-[3px]"
       }
     >
+      {label && (
+        <div
+          className={cn(
+            "px-6 pb-1.5 text-[.7rem] font-medium uppercase tracking-wider text-gray-500 dark:text-nb-gray-500 transition-opacity",
+            isNavigationCollapsed &&
+              !mobileNavOpen &&
+              "md:opacity-0 md:group-hover/navigation:opacity-100",
+          )}
+        >
+          {label}
+        </div>
+      )}
       {children}
     </div>
   );
 }
 
-const ActivityNavigationItem = () => {
+/**
+ * A lucide icon at the size of the sidebar's own icons. Like them it must
+ * not shrink, or the collapsed sidebar squeezes it out next to its label.
+ */
+const NavIcon = ({ icon: Icon }: { icon: LucideIcon }) => (
+  <Icon size={16} className={"shrink-0"} />
+);
+
+/** The small Beta / Preview badge next to a sidebar label. */
+const SidebarBadge = ({
+  text,
+  variant,
+}: {
+  text: string;
+  variant: "sky" | "yellow";
+}) => (
+  <SmallBadge text={text} variant={variant} size={"xs"} />
+);
+
+/**
+ * Control Center and Peers are in both products, with one URL each: the
+ * link names the product it is opened in, so the page shows the same one.
+ */
+const SharedProductItems = () => {
   const { permission } = usePermissions();
-  const { focused: agentNetworkOnly } = useProduct();
+  const { link } = useProduct();
+  return (
+    <>
+      <SidebarItem
+        icon={<ControlCenterIcon size={16} />}
+        label="Control Center"
+        href={link("/control-center")}
+        visible={permission.policies.read}
+      />
+      <SidebarItem
+        icon={<PeerIcon />}
+        label="Peers"
+        href={link("/peers")}
+        // Restricted users get the add-your-device view there, so the link
+        // stays even in the limited (user role) sidebar.
+        visible={true}
+      />
+      <DistributorNavigation />
+    </>
+  );
+};
+
+const NetworkingNavigation = () => {
+  const { permission } = usePermissions();
 
   return (
-    <SidebarItem
-      icon={<ActivityIcon />}
-      label="Activity"
-      href={"/events"}
-      collapsible
-      visible={permission.events.read && !agentNetworkOnly}
-    >
+    <>
+      <SharedProductItems />
       <SidebarItem
-        label="Audit Events"
-        href={"/events/audit"}
-        isChild
+        icon={<AccessControlIcon />}
+        label="Access Control"
+        href={"/access-control"}
+        collapsible
+        visible={permission.policies.read}
+      >
+        <SidebarItem
+          label="Policies"
+          href={"/access-control"}
+          isChild
+          exactPathMatch={true}
+          visible={permission.policies.read}
+        />
+        <SidebarItem
+          label="Posture Checks"
+          isChild
+          href={"/posture-checks"}
+          exactPathMatch={true}
+          visible={permission.policies.read}
+        />
+      </SidebarItem>
+
+      <NetworkNavigation />
+
+      <SidebarItem
+        icon={<ReverseProxyIcon size={16} />}
+        labelClassName={"pr-0"}
+        label={
+          <div className={"flex items-center gap-2"}>
+            Reverse Proxy
+            <SidebarBadge text={"Beta"} variant={"sky"} />
+          </div>
+        }
+        href={"/reverse-proxy"}
+        collapsible
+        exactPathMatch={false}
+        visible={permission?.services?.read}
+      >
+        <SidebarItem
+          label="Services"
+          isChild
+          href={"/reverse-proxy/services"}
+          exactPathMatch={true}
+          visible={permission?.services?.read}
+        />
+        <SidebarItem
+          label="Custom Domains"
+          isChild
+          href={"/reverse-proxy/custom-domains"}
+          exactPathMatch={true}
+          visible={permission?.services?.read}
+        />
+        <SidebarItem
+          label="Clusters"
+          isChild
+          href={"/reverse-proxy/clusters"}
+          exactPathMatch={true}
+          visible={permission?.services?.read}
+        />
+        <SidebarItem
+          label="Access Logs"
+          isChild
+          href={"/reverse-proxy/logs"}
+          exactPathMatch={true}
+          visible={permission?.services?.read}
+        />
+      </SidebarItem>
+
+      <SidebarItem
+        icon={<DNSIcon />}
+        label="DNS"
+        href={"/dns"}
+        collapsible
         exactPathMatch={true}
-        visible={permission.events.read}
-      />
+        visible={permission.dns.read || permission.nameservers.read}
+      >
+        <SidebarItem
+          label="Nameservers"
+          isChild
+          href={"/dns/nameservers"}
+          visible={permission.nameservers.read}
+        />
+        <SidebarItem
+          label="Zones"
+          isChild
+          href={"/dns/zones"}
+          visible={permission?.dns?.read}
+        />
+        <SidebarItem
+          label="DNS Settings"
+          isChild
+          href={"/dns/settings"}
+          visible={permission.dns.read}
+        />
+      </SidebarItem>
+
+      {/* Traffic events are Networking's activity; Audit Events, which
+          cover the whole account, are in the account area. */}
       <SidebarItem
-        label="Traffic Events"
-        isChild
+        icon={<ActivityIcon />}
+        label="Activity"
         href={"/events/traffic"}
+        visible={permission.events.read}
+      />
+    </>
+  );
+};
+
+const AgentNetworkNavigation = () => {
+  const { permission } = usePermissions();
+  // "enabled" already falls back to the caller's agent_network grants when
+  // the feature flag can't be resolved (no accounts read: usage_viewer and
+  // custom delegated roles), so it is the one surface switch here.
+  const { enabled: surface } = useAgentNetworkMode();
+  const { configured } = useMyAgentNetworkSetup();
+  const access = agentNetworkNavAccess({
+    permission,
+    surface,
+    configured,
+    insightsPreview: isAgentNetworkInsightsPreview(),
+  });
+
+  return (
+    <>
+      <SharedProductItems />
+
+      {/* Placeholders behind the Insights preview flag until the
+          analytics exist. */}
+      <SidebarItem
+        icon={<NavIcon icon={ChartColumnIcon} />}
+        labelClassName={"pr-0"}
+        label={
+          <div className={"flex items-center gap-2"}>
+            Insights
+            <SidebarBadge text={"Preview"} variant={"yellow"} />
+          </div>
+        }
+        href={"/agent-network/insights"}
+        collapsible
+        visible={access.insights}
+      >
+        <SidebarItem
+          label="Overview"
+          isChild
+          href={"/agent-network/insights"}
+          exactPathMatch={true}
+          visible={access.insights}
+        />
+        <SidebarItem
+          label="Models"
+          isChild
+          href={"/agent-network/insights/models"}
+          exactPathMatch={true}
+          visible={access.insights}
+        />
+        <SidebarItem
+          label="Tasks"
+          isChild
+          href={"/agent-network/insights/tasks"}
+          exactPathMatch={true}
+          visible={access.insights}
+        />
+        <SidebarItem
+          label="Departments"
+          isChild
+          href={"/agent-network/insights/departments"}
+          exactPathMatch={true}
+          visible={access.insights}
+        />
+      </SidebarItem>
+
+      <SidebarItem
+        icon={<NavIcon icon={GaugeIcon} />}
+        label="Usage & Logs"
+        href={"/agent-network/usage"}
+        exactPathMatch={true}
+        visible={access.usage}
+      />
+
+      <SidebarItem
+        icon={<AgentNetworkIcon size={16} />}
+        label="Agents"
+        collapsible
+        visible={access.agents}
+      >
+        <SidebarItem
+          label="Connect Agent"
+          isChild
+          href={"/agent-network/connect"}
+          exactPathMatch={true}
+          visible={access.connect}
+        />
+        <SidebarItem
+          label="Providers"
+          isChild
+          href={"/agent-network/providers"}
+          exactPathMatch={true}
+          visible={access.providers}
+        />
+        <SidebarItem
+          label="Agent Policies"
+          isChild
+          href={"/agent-network/policies"}
+          exactPathMatch={true}
+          visible={access.policies}
+        />
+      </SidebarItem>
+
+      <SidebarItem
+        icon={<NavIcon icon={SlidersHorizontalIcon} />}
+        label="Configuration"
+        href={"/agent-network/configuration"}
+        exactPathMatch={true}
+        visible={access.configuration}
+      />
+    </>
+  );
+};
+
+/**
+ * Identity, audit, settings and integrations, the same in both products.
+ * Links keep the product the caller is in, so Team opened from Agent
+ * Network stays in Agent Network.
+ */
+const AccountNavigation = () => {
+  const { permission } = usePermissions();
+  const { link } = useProduct();
+
+  return (
+    <SidebarItemGroup label={"Account"} data-account-navigation>
+      <SidebarItem
+        icon={<TeamIcon />}
+        label="Team"
+        href={"/team"}
+        collapsible
+        visible={permission.users.read || permission.groups.read}
+      >
+        <SidebarItem
+          label="Users"
+          isChild
+          href={link("/team/users")}
+          visible={permission.users.read}
+        />
+        <SidebarItem
+          label="Service Users"
+          isChild
+          href={link("/team/service-users")}
+          visible={permission.users.read}
+        />
+        {/* Both products' policies are written against groups of users
+            and peers, so groups sit with the people, not in one
+            product's access control. */}
+        <SidebarItem
+          label="Groups"
+          isChild
+          href={link("/groups")}
+          visible={permission.groups.read}
+        />
+      </SidebarItem>
+      <SidebarItem
+        icon={<NavIcon icon={LogsIcon} />}
+        label="Audit Events"
+        href={link("/events/audit")}
         exactPathMatch={true}
         visible={permission.events.read}
       />
-    </SidebarItem>
+      <SidebarItem
+        icon={<SettingsIcon />}
+        label="Settings"
+        href={link("/settings")}
+        exactPathMatch={true}
+        visible={permission.settings.read}
+      />
+      <MSPNavigationItem />
+      <SidebarItem
+        icon={<IntegrationIcon />}
+        label="Integrations"
+        href={link("/integrations")}
+        exactPathMatch={true}
+        visible={
+          permission?.edr?.read ||
+          permission?.idp?.read ||
+          permission?.event_streaming?.read ||
+          (!isNetBirdCloud() && (permission?.settings?.read ?? false))
+        }
+      />
+      <SidebarItem
+        icon={<DocsIcon />}
+        href={"https://docs.netbird.io/"}
+        target={"_blank"}
+        label="Documentation"
+        visible={true}
+      />
+    </SidebarItemGroup>
   );
 };

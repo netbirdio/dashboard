@@ -10,7 +10,7 @@ import {
   UsersIcon,
 } from "lucide-react";
 import * as React from "react";
-import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
+import { useProduct } from "@/modules/agent-network/useProduct";
 import { useCloseOnCanvasClick } from "@/modules/control-center/hooks/useCloseOnCanvasClick";
 
 export enum FlowView {
@@ -26,7 +26,11 @@ type Props = {
 };
 
 export const FlowSelector = ({ value, onChange }: Props) => {
-  const { only: agentNetworkOnly } = useAgentNetworkMode();
+  // In Agent Network (and on an Agent Network only dashboard) the canvas is
+  // about devices, users and groups reaching AI providers, so Networks is
+  // not a top-level pivot there.
+  const { product } = useProduct();
+  const agentNetworkOnly = product === "agent-network";
 
   // Controlled so a canvas click closes it: the ReactFlow pane's
   // stopPropagation hides the click from Radix's outside-detection.

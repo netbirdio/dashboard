@@ -1,16 +1,32 @@
 import { cn } from "@utils/helpers";
 import { ChevronRightIcon } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import React, { useContext } from "react";
 
 type Props = {
   children: React.ReactNode;
 };
+
+/**
+ * A crumb the surrounding layout puts in front of every trail, such as the
+ * product a page is in. Pages don't pass it; without a provider there is
+ * none and trails render as they always did.
+ */
+export const BreadcrumbRootContext = React.createContext<ItemProps | null>(
+  null,
+);
+
 function Breadcrumbs({ children }: Props) {
-  return <div className={"flex items-center mb-6 gap-2"}>{children}</div>;
+  const root = useContext(BreadcrumbRootContext);
+  return (
+    <div className={"flex items-center mb-6 gap-2"}>
+      {root && <Item {...root} />}
+      {children}
+    </div>
+  );
 }
 
-type ItemProps = {
+export type ItemProps = {
   href?: string;
   label: string;
   icon?: React.ReactNode;

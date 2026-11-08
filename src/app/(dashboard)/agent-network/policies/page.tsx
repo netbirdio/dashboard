@@ -30,11 +30,13 @@ export default function AgentNetworkPoliciesPage() {
           />
           <Breadcrumbs.Item
             href={"/agent-network/policies"}
-            label={"Policies"}
+            label={"Agent Policies"}
             active={true}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Policies</h1>
+        {/* "Agent Policies", so it never reads as Access Control's Policies,
+            which the Networking sidebar lists. */}
+        <h1 ref={headingRef}>Agent Policies</h1>
         <Paragraph>
           Bind IdP groups to providers: Engineering gets Claude, Finance
           doesn&apos;t. Enforce token limits, budgets, and guardrails.
@@ -42,7 +44,7 @@ export default function AgentNetworkPoliciesPage() {
       </div>
 
       <RestrictedAccess
-        page={"Policies"}
+        page={"Agent Policies"}
         hasAccess={permission?.["agent_network.policies"]?.read}
       >
         <AIProvidersProvider>

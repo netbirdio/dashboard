@@ -8,7 +8,6 @@ import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon, LogsIcon } from "lucide-react";
 import React from "react";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import PageContainer from "@/layouts/PageContainer";
@@ -27,16 +26,14 @@ export default function Activity() {
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
+        {/* Audit events cover the whole account, so the page sits in the
+            account area of both products rather than under Activity. */}
         <Breadcrumbs>
-          <Breadcrumbs.Item
-            label={"Activity"}
-            disabled={true}
-            icon={<ActivityIcon size={13} />}
-          />
           <Breadcrumbs.Item
             href={"/events/audit"}
             label={"Audit Events"}
             icon={<LogsIcon size={18} />}
+            active
           />
         </Breadcrumbs>
         <h1 ref={headingRef}>Audit Events</h1>

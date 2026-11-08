@@ -68,3 +68,70 @@ describe("SidebarItem navigation", () => {
     expect(push).toHaveBeenCalledWith("/peers");
   });
 });
+
+// Pages both products show link with their product, `?product=…`; the item
+// still matches its route, whatever the current URL's query.
+describe("SidebarItem with a query in its href", () => {
+  const isActive = () =>
+    document.querySelector("[data-active]")?.getAttribute("data-active");
+
+  it("is active on its route", () => {
+    render(
+      <SidebarItem
+        href={"/control-center?product=agent-network"}
+        label={"Control Center"}
+        visible={true}
+      />,
+    );
+    expect(isActive()).toBe("true");
+  });
+
+  it("is not active on another route", () => {
+    render(
+      <SidebarItem
+        href={"/peers?product=agent-network"}
+        label={"Peers"}
+        visible={true}
+      />,
+    );
+    expect(isActive()).toBe("false");
+  });
+
+  it("navigates with the query", async () => {
+    render(
+      <SidebarItem
+        href={"/peers?product=agent-network"}
+        label={"Peers"}
+        visible={true}
+      />,
+    );
+    await clickNavItem();
+    expect(push).toHaveBeenCalledWith("/peers?product=agent-network");
+  });
+
+  it("does not navigate to the page it is already on", async () => {
+    render(
+      <SidebarItem
+        href={"/control-center?product=agent-network"}
+        label={"Control Center"}
+        visible={true}
+      />,
+    );
+    await clickNavItem();
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it("opens its group when a child's route is current", () => {
+    render(
+      <SidebarItem label={"Overview"} collapsible visible={true}>
+        <SidebarItem
+          href={"/control-center?product=networking"}
+          label={"Control Center"}
+          isChild
+          visible={true}
+        />
+      </SidebarItem>,
+    );
+    expect(screen.getByText("Control Center")).toBeTruthy();
+  });
+});

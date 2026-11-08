@@ -25,7 +25,7 @@ export default function NavbarWithDropdown() {
   const { toggleMobileNav, isNavigationCollapsed } = useApplicationContext();
   const { bannerHeight } = useAnnouncement();
   const { isRestricted } = usePermissions();
-  const { switchable } = useProduct();
+  const { switchable, product, homes } = useProduct();
   // The product switch belongs to the main panel. With the sidebar open, the
   // logo block spans the sidebar's width, so the switch starts where the
   // page content does.
@@ -55,6 +55,8 @@ export default function NavbarWithDropdown() {
               )}
               variant={"default-outline"}
               onClick={toggleMobileNav}
+              data-testid={"mobile-navigation-toggle"}
+              aria-label={"Open navigation"}
             >
               <div>
                 <MenuIcon size={20} className={"relative"} />
@@ -69,7 +71,8 @@ export default function NavbarWithDropdown() {
               )}
             >
               <button
-                onClick={() => router.push("/peers")}
+                // Home is the current product's start page.
+                onClick={() => router.push(homes[product])}
                 className={
                   "cursor-pointer hover:opacity-70 transition-all mr-auto"
                 }

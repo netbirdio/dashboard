@@ -24,6 +24,9 @@ export type SidebarItemProps = {
   visible: boolean;
 };
 
+/** The path of an href, without its query or hash. */
+const routeOf = (href: string) => href.split(/[?#]/)[0];
+
 export default function SidebarItem({
   icon,
   children,
@@ -38,6 +41,10 @@ export default function SidebarItem({
   visible,
 }: Readonly<SidebarItemProps>) {
   const path = usePathname();
+  // The route an href points at. An href may carry a query, such as the
+  // `?product=` of a page both products show; the item still matches its
+  // route, whatever query the current URL has.
+  const route = routeOf(href);
 
   // Hrefs of nested child items, so a collapsible parent without its
   // own href (e.g. "Network Routing") can still tell when one of its
@@ -48,7 +55,10 @@ export default function SidebarItem({
       if (!React.isValidElement(child)) return;
       const props = child.props as Partial<SidebarItemProps>;
       if (props.href) {
-        routes.push({ href: props.href, exact: !!props.exactPathMatch });
+        routes.push({
+          href: routeOf(props.href),
+          exact: !!props.exactPathMatch,
+        });
       }
     });
     return routes;
@@ -57,13 +67,13 @@ export default function SidebarItem({
   // Check if any child route is active (for collapsible items)
   const hasActiveChild = useMemo(() => {
     if (!collapsible) return false;
-    if (href && (path === href || path.startsWith(href + "/"))) return true;
+    if (route && (path === route || path.startsWith(route + "/"))) return true;
     return childRoutes.some(({ href: childHref, exact }) =>
       exact
         ? path === childHref
         : path === childHref || path.startsWith(childHref + "/"),
     );
-  }, [collapsible, href, path, childRoutes]);
+  }, [collapsible, route, path, childRoutes]);
 
   const [open, setOpen] = React.useState(hasActiveChild);
 
@@ -78,10 +88,10 @@ export default function SidebarItem({
     useApplicationContext();
 
   const handleClick = () => {
-    const preventRedirect = href
+    const preventRedirect = route
       ? exactPathMatch
-        ? path == href
-        : path.includes(href)
+        ? path == route
+        : path.includes(route)
       : false;
     if (collapsible && href) return;
     if (collapsible && mobileNavOpen) return;
@@ -94,8 +104,12 @@ export default function SidebarItem({
 
   const isActive = useMemo(() => {
     if (collapsible) return false;
-    return href ? (exactPathMatch ? path == href : path.includes(href)) : false;
-  }, [path, href, exactPathMatch, collapsible]);
+    return route
+      ? exactPathMatch
+        ? path == route
+        : path.includes(route)
+      : false;
+  }, [path, route, exactPathMatch, collapsible]);
 
   if (!visible) return;
 

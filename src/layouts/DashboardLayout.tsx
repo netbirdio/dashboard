@@ -24,6 +24,8 @@ import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
+import { ProductPageContext } from "@/modules/agent-network/ProductPageContext";
+import { ProductSwitcher } from "@/modules/agent-network/ProductSwitcher";
 import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
 import Header, { headerHeight } from "./Header";
 
@@ -115,6 +117,12 @@ function DashboardPageContent({
               </div>
             </Button>
           </div>
+          {/* The header's switch sits behind the drawer's overlay, so the
+              drawer carries its own: it names the product the sidebar
+              below shows and switches it in place. */}
+          <div className={"px-4 pb-3"}>
+            <ProductSwitcher />
+          </div>
           <Navigation fullWidth />
         </motion.div>
       )}
@@ -176,7 +184,7 @@ function DashboardPageContent({
               }}
             >
               <Navigation hideOnMobile />
-              <React.Fragment key={"page"}>{children}</React.Fragment>
+              <ProductPageContext key={"page"}>{children}</ProductPageContext>
             </div>
           </motion.div>
         </motion.div>

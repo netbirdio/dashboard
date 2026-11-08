@@ -16,6 +16,8 @@ const smallBadgeVariants = cva("", {
       default:
         "text-[0.4rem] relative -top-[.25px] leading-[0] py-[0.39rem] px-1 rounded-[3px]",
       md: "text-[0.55rem] relative -top-[.25px] leading-[0] py-[0.45rem] px-1 rounded-[3px]",
+      // Next to a sidebar or menu label, such as "Beta".
+      xs: "text-[8px] relative -top-[.25px] leading-none py-[3px] px-[5px] rounded-[3px]",
     },
   },
 });
@@ -38,7 +40,15 @@ export const SmallBadge = ({
   return (
     <span className={cn(smallBadgeVariants({ variant, size }), className)}>
       {children}
-      <span className={cn("relative top-[0.4px]", textClassName)}>{text}</span>
+      <span
+        className={cn(
+          "relative",
+          size === "xs" ? "top-0" : "top-[0.4px]",
+          textClassName,
+        )}
+      >
+        {text}
+      </span>
     </span>
   );
 };

@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { useGuardedRouter } from "@utils/navigation-guard";
 import { CheckIcon, ChevronsUpDown } from "lucide-react";
@@ -22,6 +23,8 @@ const PRODUCTS: {
   name: string;
   description: string;
   mark: React.ReactNode;
+  /** Shown next to the name; the sidebar entry used to carry it. */
+  badge?: string;
 }[] = [
   {
     id: "networking",
@@ -34,13 +37,17 @@ const PRODUCTS: {
     name: "Agent Network",
     description: "AI gateway for agents: providers, policies and usage",
     mark: <AgentNetworkIcon size={22} className={"text-netbird shrink-0"} />,
+    badge: "Beta",
   },
 ];
 
 /**
  * Switches between the dashboard's two products, Networking and Agent
  * Network. The header places it over the main panel; it shows only when the
- * caller has both, and the product itself follows the route (see product.ts).
+ * caller has both. Its label is one of the two places the current product
+ * shows, the breadcrumb root (ProductPageContext) the other. The product
+ * itself follows the URL (see product.ts): switching lands on the product's
+ * home, and remembers the product as the user's last one.
  */
 export const ProductSwitcher = () => {
   const { switchable, product, homes, select } = useProduct();
@@ -85,8 +92,15 @@ export const ProductSwitcher = () => {
                 {p.mark}
               </div>
               <div className={"flex flex-col gap-0.5 min-w-0"}>
-                <span className={"text-sm text-nb-gray-100 font-medium"}>
+                <span
+                  className={
+                    "text-sm text-nb-gray-100 font-medium flex items-center gap-2"
+                  }
+                >
                   {p.name}
+                  {p.badge && (
+                    <SmallBadge text={p.badge} variant={"sky"} size={"xs"} />
+                  )}
                 </span>
                 <span className={"text-xs text-nb-gray-400 whitespace-normal"}>
                   {p.description}

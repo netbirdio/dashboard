@@ -26,6 +26,9 @@ interface Config {
   // agentNetworkEnabled: the regular UI plus the Agent Network menu item (Beta).
   agentNetworkOnly: boolean;
   agentNetworkEnabled: boolean;
+  // agentNetworkInsightsPreview: shows the Agent Network Insights pages,
+  // which are placeholders until the analytics exist. Off by default.
+  agentNetworkInsightsPreview: boolean;
   hubspotPortalId?: string;
   hubspotSignupFormId?: string;
   hubspotOnboardingFormId?: string;
@@ -93,6 +96,8 @@ const loadConfig = (): Config => {
     cloud: configJson?.cloud === "true",
     agentNetworkOnly: configJson?.agentNetworkOnly === "true",
     agentNetworkEnabled: configJson?.agentNetworkEnabled === "true",
+    agentNetworkInsightsPreview:
+      configJson?.agentNetworkInsightsPreview === "true",
     hubspotPortalId: configJson?.hubspotPortalId || undefined,
     hubspotSignupFormId: configJson?.hubspotSignupFormId || undefined,
     hubspotOnboardingFormId: configJson?.hubspotOnboardingFormId || undefined,
