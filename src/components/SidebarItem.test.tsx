@@ -135,3 +135,20 @@ describe("SidebarItem with a query in its href", () => {
     expect(screen.getByText("Control Center")).toBeTruthy();
   });
 });
+
+// The distributor sidebar hides items with CSS keyed on data-nav-item, so it
+// carries the route alone, whatever product the link names.
+describe("SidebarItem data-nav-item", () => {
+  it("is the route without the query", () => {
+    render(
+      <SidebarItem
+        href={"/peers?product=agent-network"}
+        label={"Peers"}
+        visible={true}
+      />,
+    );
+    expect(
+      document.querySelector("[data-nav-item]")?.getAttribute("data-nav-item"),
+    ).toBe("/peers");
+  });
+});

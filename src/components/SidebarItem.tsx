@@ -117,7 +117,9 @@ export default function SidebarItem({
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
-      data-nav-item={href || undefined}
+      // The route, without the query: rules that hide items by route (the
+      // distributor sidebar) must not depend on the `?product=` of a link.
+      data-nav-item={route || undefined}
     >
       <Collapsible.Trigger asChild>
         <li className={"px-3 cursor-pointer list-none"}>

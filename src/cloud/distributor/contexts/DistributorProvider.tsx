@@ -16,7 +16,10 @@ const DISTRIBUTOR_HIDDEN_NAV_ITEMS = [
   "/reverse-proxy",
   "/dns",
   "/team",
-  "/events",
+  // Traffic events (Networking's Activity) and Audit Events (the account
+  // area); the distributor sidebar lists its own Audit Events.
+  "/events/traffic",
+  "/events/audit",
   "/tenants",
   "/peers",
 ];
