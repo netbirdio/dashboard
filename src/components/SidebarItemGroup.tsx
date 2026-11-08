@@ -58,7 +58,7 @@ export default function SidebarItemGroup({
   const heading = (
     <div
       className={cn(
-        "flex w-full items-center gap-2 rounded-lg px-3 py-1 text-left",
+        "flex w-full items-center gap-2 rounded-lg px-3 py-0.5 text-left",
         "text-[.7rem] font-medium uppercase tracking-[.08em] transition-colors",
         active
           ? "text-gray-900 dark:text-nb-gray-100"
