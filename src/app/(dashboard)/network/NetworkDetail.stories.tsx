@@ -78,6 +78,10 @@ export const ResourceGroupsPickerOpen: Story = {
     await resourcesReady();
     await clickSelector("[data-testid='add-resource']");
     await findDialog();
+    // The picker is placed against its field, so open it only once the
+    // dialog has finished zooming in; mid-animation it lands a pixel or two
+    // off, and differently on every run.
+    await settleMotion();
     await clickText("Add or select resource group(s)...");
     await waitForPopup();
   },
