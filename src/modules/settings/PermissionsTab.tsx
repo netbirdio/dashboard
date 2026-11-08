@@ -5,6 +5,7 @@ import { notify } from "@components/Notification";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { GaugeIcon, LockIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export default function PermissionsTab({ account }: Props) {
+  const t = useTranslations("settings");
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -54,25 +56,25 @@ export default function PermissionsTab({ account }: Props) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=permissions"}
-            label={"Permissions"}
+            label={t("permissions")}
             icon={<LockIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
-          <h1>Permissions</h1>
+          <h1>{t("permissions")}</h1>
           <Button
             variant={"primary"}
             disabled={!hasChanges || !permission.settings.update}
             onClick={saveChanges}
             data-testid="save-permissions-settings"
           >
-            Save Changes
+            {t("saveChanges")}
           </Button>
         </div>
 
@@ -80,17 +82,15 @@ export default function PermissionsTab({ account }: Props) {
           <FancyToggleSwitch
             value={userViewBlocked}
             onChange={setUserViewBlocked}
-            data-testid="restrict-regular-users"
             label={
               <>
                 <GaugeIcon size={15} />
-                Restrict dashboard for regular users
+                {t("restrictDashboard")}
               </>
             }
-            helpText={
-              "Access to the dashboard will be limited and regular users will not be able to view any peers."
-            }
+            helpText={t("restrictDashboardHelp")}
             disabled={!permission.settings.update}
+            data-testid="restrict-regular-users"
           />
         </div>
       </div>

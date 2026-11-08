@@ -1,6 +1,6 @@
 import { ColumnDef, Table } from "@tanstack/react-table";
-import { act, cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, render } from "@/test-utils";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/test" }));
 

@@ -1,4 +1,8 @@
+"use client";
+
 import Button from "@components/Button";
+import Badge from "@components/Badge";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -9,7 +13,6 @@ import {
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
-import Badge from "@components/Badge";
 import { CirclePlusIcon } from "lucide-react";
 
 type Props = {
@@ -17,6 +20,7 @@ type Props = {
 };
 
 export const ResourceExposeServiceCell = ({ resource }: Props) => {
+  const t = useTranslations("networks");
   const { permission } = usePermissions();
   const { openModal, reverseProxies } = useReverseProxies();
   const { network } = useNetworksContext();
@@ -73,7 +77,7 @@ export const ResourceExposeServiceCell = ({ resource }: Props) => {
         disabled={!permission.services?.create}
       >
         <CirclePlusIcon size={12} />
-        Expose
+        {t("expose")}
       </Button>
     </div>
   );

@@ -4,6 +4,7 @@ import { IconCircleFilled } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { ScaleIcon } from "lucide-react";
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { useDialog } from "@/contexts/DialogProvider";
 
 export const PostureCheckCard = ({
@@ -34,14 +35,15 @@ export const PostureCheckCard = ({
   license?: React.ReactNode;
 }) => {
   const { confirm } = useDialog();
+  const tCommon = useTranslations("common");
+  const tPosture = useTranslations("postureChecks");
 
   const handleReset = async () => {
     const reset = await confirm({
-      title: `Disable this check?`,
-      description:
-        "Are you sure you want to disable this check? All settings of this check will be lost.",
-      confirmText: "Disable",
-      cancelText: "Cancel",
+      title: tPosture("disableThisCheck"),
+      description: tPosture("disableCheckConfirm"),
+      confirmText: tCommon("disable"),
+      cancelText: tCommon("cancel"),
       type: "danger",
     });
     if (reset) onReset?.();
@@ -106,7 +108,7 @@ export const PostureCheckCard = ({
               }}
             >
               <IconCircleFilled size={7} className={"mt-[0.1px]"} />
-              {active ? "On" : "Off"}
+              {active ? tPosture("on") : tPosture("off")}
             </span>
           </div>
         </div>

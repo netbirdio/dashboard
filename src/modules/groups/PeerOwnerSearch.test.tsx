@@ -1,4 +1,6 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Peer } from "@/interfaces/Peer";
 import {
   act,
   cleanup,
@@ -6,9 +8,7 @@ import {
   render,
   renderHook,
   waitFor,
-} from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Peer } from "@/interfaces/Peer";
+} from "@/test-utils";
 
 // Both group peer tables promise "search by owner" through hidden columns that
 // read peer.user, but /peers only carries user_id. Each table is driven with

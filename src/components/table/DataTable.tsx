@@ -41,6 +41,7 @@ import { cn, removeAllSpaces } from "@utils/helpers";
 import dayjs from "dayjs";
 import { isEqual, trim } from "lodash";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -237,12 +238,12 @@ export function DataTable<TData, TValue>({
   columns,
   data,
   children,
-  searchPlaceholder = "Search...",
+  searchPlaceholder,
   columnVisibility = {},
   setColumnVisibility,
   sorting = [],
   setSorting,
-  text = "rows",
+  text,
   onRowClick,
   getStartedCard,
   renderExpandedRow,
@@ -297,11 +298,15 @@ export function DataTable<TData, TValue>({
   initialSearch,
   onSearchClick,
 }: Readonly<DataTableProps<TData, TValue>>) {
+  const t = useTranslations("table");
   const path = usePathname();
   const isInitialRender = useRef(true);
   const [tableElement, setTableElement] = useState<HTMLTableElement | null>(
     null,
   );
+
+  const resolvedSearchPlaceholder = searchPlaceholder || t("search");
+  const resolvedText = text || t("rows");
 
   const [showOverlay, setShowOverlay] = useState(false);
   const overlayTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -527,7 +532,7 @@ export function DataTable<TData, TValue>({
               }
               resetRowSelectionOnSearch && setRowSelection?.({});
             }}
-            placeholder={searchPlaceholder}
+            placeholder={resolvedSearchPlaceholder}
           />
           {children?.(table)}
           {showResetFilterButton && (
@@ -724,7 +729,7 @@ export function DataTable<TData, TValue>({
       <div className={paginationClassName}>
         <DataTablePagination
           table={table}
-          text={text}
+          text={resolvedText}
           paginationPadding={paginationPaddingClassName}
           totalRecords={totalRecords}
         />

@@ -84,3 +84,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Localization in this fork
+
+User-facing strings use `next-intl`. Keep translation keys in
+`src/i18n/messages/en.ts` and `src/i18n/messages/zh.ts` in sync, and preserve
+`LocaleProvider` and the language settings when integrating upstream changes.
+Run `npm run test:i18n` after changing locale detection.

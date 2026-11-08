@@ -9,6 +9,7 @@ import {
 import FullTooltip from "@components/FullTooltip";
 import { cn } from "@utils/helpers";
 import { FolderIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { useGroupContext } from "@/contexts/GroupProvider";
@@ -22,6 +23,8 @@ type Props = {
 };
 
 export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
+  const t = useTranslations("groups");
+  const tCommon = useTranslations("common");
   const { permission } = usePermissions();
   const router = useRouter();
 
@@ -52,7 +55,11 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
               e.preventDefault();
             }}
           >
-            <Button variant={"secondary"} className={"!px-3"} data-testid="group-actions">
+            <Button
+              variant={"secondary"}
+              className={"!px-3"}
+              data-testid="group-actions"
+            >
               <MoreVertical size={16} className={"shrink-0"} />
             </Button>
           </DropdownMenuTrigger>
@@ -64,7 +71,7 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
             >
               <div className="flex gap-3 items-center">
                 <FolderIcon size={14} className="shrink-0" />
-                View Details
+                {t("viewDetails")}
               </div>
             </DropdownMenuItem>
 
@@ -75,8 +82,8 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
                   content={
                     <div className={"text-xs max-w-xs"}>
                       {isJWTGroup
-                        ? GROUP_TOOLTIP_TEXT.RENAME.JWT
-                        : GROUP_TOOLTIP_TEXT.RENAME.INTEGRATION}
+                        ? t("renameDisabledJWT")
+                        : t("renameDisabledIdP")}
                     </div>
                   }
                   interactive={false}
@@ -90,7 +97,7 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
                   >
                     <div className="flex gap-3 items-center">
                       <Pencil size={14} className="shrink-0" />
-                      Rename
+                      {t("rename")}
                     </div>
                   </DropdownMenuItem>
                 </FullTooltip>
@@ -101,8 +108,8 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
                 content={
                   <div className={"text-xs max-w-xs"}>
                     {isIntegrationGroup
-                      ? GROUP_TOOLTIP_TEXT.DELETE.INTEGRATION
-                      : GROUP_TOOLTIP_TEXT.IN_USE}
+                      ? t("deleteDisabledIdP")
+                      : t("deleteDisabledInUse")}
                   </div>
                 }
                 interactive={false}
@@ -117,7 +124,7 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
                 >
                   <div className="flex gap-3 items-center">
                     <Trash2 size={14} className="shrink-0" />
-                    Delete
+                    {tCommon("delete")}
                   </div>
                 </DropdownMenuItem>
               </FullTooltip>

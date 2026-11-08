@@ -4,6 +4,7 @@ import { IconX } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { AnimatePresence, motion } from "framer-motion";
 import { MonitorSmartphoneIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 
 type Props<T> = {
@@ -16,12 +17,15 @@ type Props<T> = {
 
 export function DataTableMultiSelectPopup<T>({
   onCanceled,
-  label = "Peer(s) selected",
+  label,
   selectedItems,
   rightSide,
   icon,
 }: Props<T>) {
+  const t = useTranslations("table");
   const count = selectedItems?.length || 0;
+  const defaultLabel = label ? `${count} ${label}` : t("selected", { count });
+
   return (
     <AnimatePresence>
       {count > 0 && (
@@ -60,16 +64,31 @@ export function DataTableMultiSelectPopup<T>({
                         <MonitorSmartphoneIcon size={16} className={""} />
                       )}
                       <span>
-                        <span className={"font-medium text-white"}>
-                          {count}
-                        </span>{" "}
-                        {label}
+                        {label ? (
+                          <>
+                            <span className="font-medium text-white">
+                              {count}
+                            </span>{" "}
+                            {label}
+                          </>
+                        ) : (
+                          t.rich("selectedWithCount", {
+                            count,
+                            Count: (chunks) => (
+                              <span className="font-medium text-white">
+                                {chunks}
+                              </span>
+                            ),
+                          })
+                        )}
                       </span>
                     </div>
                     <div className={"flex gap-2 items-center"}>
                       {rightSide}
                       <FullTooltip
-                        content={<span className={"text-xs"}>Cancel</span>}
+                        content={
+                          <span className={"text-xs"}>{t("cancel")}</span>
+                        }
                       >
                         <Button
                           onClick={onCanceled}

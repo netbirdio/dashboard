@@ -1,5 +1,6 @@
 import { cn } from "@utils/helpers";
 import { cva, type VariantProps } from "class-variance-authority";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 
 const smallBadgeVariants = cva("", {
@@ -28,17 +29,19 @@ type Props = {
 } & VariantProps<typeof smallBadgeVariants>;
 
 export const SmallBadge = ({
-  text = "NEW",
+  text,
   className,
   textClassName,
   variant = "green",
   children,
   size = "default",
 }: Props) => {
+  const t = useTranslations("common");
+  const resolvedText = text ?? t("new");
   return (
     <span className={cn(smallBadgeVariants({ variant, size }), className)}>
       {children}
-      <span className={cn("relative top-[0.4px]", textClassName)}>{text}</span>
+      <span className={cn("relative top-[0.4px]", textClassName)}>{resolvedText}</span>
     </span>
   );
 };

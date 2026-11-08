@@ -6,6 +6,7 @@ import Paragraph from "@components/Paragraph";
 import loadConfig from "@utils/config";
 import { ArrowRightIcon, RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { PendingApproval } from "@/modules/users/PendingApproval";
@@ -16,6 +17,9 @@ export default function ErrorPage() {
   const { logout, isAuthenticated } = useOidc();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations("errors");
+  const tAuth = useTranslations("auth");
+  const tCommon = useTranslations("common");
   const [error, setError] = useState<{
     code: number;
     message: string;
@@ -71,15 +75,15 @@ export default function ErrorPage() {
   }
 
   const getTitle = () => {
-    if (isBlockedUser) return "User Account Blocked";
-    return "Access Error";
+    if (isBlockedUser) return t("userAccountBlocked");
+    return t("accessError");
   };
 
   const getDescription = () => {
     if (isBlockedUser) {
-      return "Your access has been blocked by the NetBird account administrator, possibly due to new user approval requirements or security policies. Please contact your administrator to regain access.";
+      return t("accessBlockedDescription");
     }
-    return "An error occurred while trying to access the dashboard. Please try again or contact your administrator.";
+    return t("accessGenericDescription");
   };
 
   return (
@@ -103,19 +107,19 @@ export default function ErrorPage() {
       )}
 
       <Paragraph className="text-center mt-2 text-sm">
-        If you believe this is an error, please contact your administrator.
+        {t("contactAdminDescription")}
       </Paragraph>
 
       <div className="mt-5 [&>*+*]:mt-3">
         {!isBlockedUser && (
           <Button variant="default-outline" size="sm" onClick={handleRetry}>
             <RefreshCw size={16} className="mr-2" />
-            Try Again
+            {tCommon("tryAgain")}
           </Button>
         )}
 
         <Button variant="primary" size="sm" onClick={handleLogout}>
-          {isBlockedUser ? "Sign Out" : "Logout"}
+          {isBlockedUser ? tAuth("signOut") : tCommon("logout")}
           <ArrowRightIcon size={16} />
         </Button>
       </div>

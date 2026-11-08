@@ -6,6 +6,7 @@ import {
   Shield,
   UploadCloud,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import Button from "@/components/Button";
@@ -37,6 +38,7 @@ type Props = {
 };
 
 export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
+  const t = useTranslations("common");
   const jobRequest = useApiCall<Workload>(`/peers/${peerID}/jobs`, true);
   const { mutate } = useSWRConfig();
 
@@ -118,7 +120,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
         {/* Log File Count */}
         <div className="flex justify-between gap-6">
           <div className={"max-w-[300px]"}>
-            <Label>Log File Count</Label>
+            <Label>{t("logFileCount")}</Label>
             <HelpText>
               Sets the limit for how many individual log files will be included
               in the debug bundle.
@@ -161,7 +163,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
           {bundleForTimeEnabled && (
             <div className="flex justify-between gap-6 mt-6 mb-3">
               <div className={"max-w-[300px]"}>
-                <Label>Duration</Label>
+                <Label>{t("duration")}</Label>
                 <HelpText>
                   Time period for which logs should be collected before creating
                   the debug bundle.
@@ -211,7 +213,9 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
 
             <Select
               value={anonymizeLevel}
-              onValueChange={(v) => setAnonymizeLevel(v as "default" | "strict")}
+              onValueChange={(v) =>
+                setAnonymizeLevel(v as "default" | "strict")
+              }
             >
               <SelectTrigger className="w-[220px]">
                 <div className="flex items-center gap-3">
@@ -243,7 +247,9 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
             value={uploadUrl}
             onChange={(e) => setUploadUrl(e.target.value)}
             maxWidthClass="w-[220px]"
-            customPrefix={<UploadCloud size={16} className="text-nb-gray-300" />}
+            customPrefix={
+              <UploadCloud size={16} className="text-nb-gray-300" />
+            }
           />
         </div>
       </div>
@@ -251,7 +257,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
       <ModalFooter className="items-center">
         <div className="flex gap-3 w-full justify-end">
           <ModalClose asChild>
-            <Button variant="secondary">Cancel</Button>
+            <Button variant="secondary">{t("cancel")}</Button>
           </ModalClose>
           <Button
             variant="primary"

@@ -1,6 +1,9 @@
+"use client";
+
 import { DomainListBadge } from "@components/ui/DomainListBadge";
 import { IconDirectionSign } from "@tabler/icons-react";
 import { InfoIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { ExitNodeHelpTooltip } from "@/modules/exit-node/ExitNodeHelpTooltip";
 
@@ -9,6 +12,7 @@ type Props = {
   domains?: string[];
 };
 export default function NetworkRangeCell({ network, domains }: Props) {
+  const t = useTranslations("networks");
   const isExitNode = network === "0.0.0.0/0";
   const hasDomains = domains ? domains.length > 0 : false;
 
@@ -18,7 +22,7 @@ export default function NetworkRangeCell({ network, domains }: Props) {
     <ExitNodeHelpTooltip>
       <div className={"flex gap-2 items-center dark:text-nb-gray-300 group"}>
         <IconDirectionSign size={16} className={"text-yellow-400"} />
-        Exit Node{" "}
+        {t("exitNode")}{" "}
         <InfoIcon
           size={14}
           className={

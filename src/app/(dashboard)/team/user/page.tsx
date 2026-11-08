@@ -27,10 +27,10 @@ import {
   User2,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
-import { UserMfaListItem } from "@/cloud/mfa/UserMFAListItem";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
@@ -89,6 +89,7 @@ type Props = {
 };
 
 function UserOverview({ user, initialGroups }: Readonly<Props>) {
+  const t = useTranslations("users");
   const router = useRouter();
   const userRequest = useApiCall<User>("/users");
   const isServiceUser = !!user?.is_service_user;
@@ -131,7 +132,6 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
         )
         .then(() => {
           mutate(`/users?service_user=${isServiceUser}`);
-          mutate(`/integrations/msp/switcher`);
           updateChangesRef([role, selectedGroups]);
         }),
       loadingMessage: "Saving changes...",
@@ -229,6 +229,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                 className={"w-full"}
                 disabled={!hasChanges || !permission.users.update}
                 onClick={save}
+                data-cy={"save-changes"}
                 data-testid={"save-changes"}
               >
                 Save Changes
@@ -251,16 +252,16 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                   onChange={setSelectedGroups}
                   values={selectedGroups}
                   hideAllGroup={true}
-                  data-testid={"user-group-selector"}
+                  dataCy={"user-group-selector"}
                 />
               </div>
             )}
             <div>
-              <Label>User Role</Label>
+              <Label>{t("userRole")}</Label>
               <HelpText>
                 {cannotChangeOwnerRole
-                  ? "Only the account owner can change the owner's role."
-                  : "Set a role for the user to assign access permissions."}
+                  ? t("cannotChangeOwnerRole")
+                  : t("userRoleHelp")}
               </HelpText>
               {/* 320px: enough for the longest role name and for the tab row
                   in the dropdown, without stretching across the column. */}
@@ -303,7 +304,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
               data-testid={"user-tab-access-tokens"}
             >
               <KeyRoundIcon size={16} />
-              Access Tokens
+              {t("accessTokens")}
             </TabsTrigger>
           )}
         </TabsList>
@@ -318,18 +319,17 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
               <div className={"max-w-6xl"}>
                 <div className={"flex justify-between items-center"}>
                   <div>
-                    <h2>Access Tokens</h2>
-                    <Paragraph>
-                      Access tokens give access to NetBird API.
-                    </Paragraph>
+                    <h2>{t("accessTokens")}</h2>
+                    <Paragraph>{t("accessTokensDescription")}</Paragraph>
                   </div>
                   <div className={"inline-flex gap-4 justify-end"}>
                     <div>
                       <CreateAccessTokenModal user={user}>
                         <Button
                           variant={"primary"}
-                          data-testid={"access-token-open-modal"}
+                          data-cy={"access-token-open-modal"}
                           disabled={!permission.pats.create}
+                          data-testid={"access-token-open-modal"}
                         >
                           <IconCirclePlus size={16} />
                           Create Access Token
@@ -390,8 +390,6 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
           }
           value={<UserStatusCell user={user} />}
         />
-
-        {!isServiceUser && user && <UserMfaListItem userId={user.id} />}
 
         {!isServiceUser && (
           <>

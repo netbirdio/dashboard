@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   ShieldXIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { PeerNetworkRangeCheck } from "@/interfaces/PostureCheck";
@@ -32,6 +33,7 @@ export const PostureCheckPeerNetworkRange = ({
   onChange,
   disabled,
 }: Props) => {
+  const t = useTranslations("postureChecks");
   const [open, setOpen] = useState(false);
 
   return (
@@ -40,11 +42,9 @@ export const PostureCheckPeerNetworkRange = ({
       setOpen={setOpen}
       key={open ? 1 : 0}
       icon={<NetworkIcon size={16} />}
-      title={"Peer Network Range"}
+      title={t("peerNetworkRange")}
       modalWidthClass={"max-w-xl"}
-      description={
-        "Restrict access by allowing or blocking peer network ranges."
-      }
+      description={t("peerNetworkRangeHelp")}
       iconClass={"bg-gradient-to-tr from-blue-500 to-blue-400"}
       active={value !== undefined}
       onReset={() => onChange(undefined)}
@@ -67,6 +67,8 @@ interface NetworkRange {
 }
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations("postureChecks");
+  const tCommon = useTranslations("common");
   const [allowOrDeny, setAllowOrDeny] = useState<string>(
     value?.action ? value.action : "allow",
   );
@@ -101,7 +103,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
   const validateNetworkRange = (networkRange: string) => {
     if (networkRange == "") return "";
     const validCIDR = isValidIP(networkRange);
-    if (!validCIDR) return "Please enter a valid CIDR, e.g., 192.168.1.0/24";
+    if (!validCIDR) return t("validCidr");
     return "";
   };
 
@@ -128,20 +130,17 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
       <div className={"flex flex-col px-8 gap-2 pb-6"}>
         <div className={"flex justify-between items-start gap-10 mt-2"}>
           <div>
-            <Label>Allow or Block Ranges</Label>
-            <HelpText className={""}>
-              Choose whether you want to allow or block specific peer network
-              ranges
-            </HelpText>
+            <Label>{t("allowOrBlockRanges")}</Label>
+            <HelpText className={""}>{t("allowOrBlockRangesHelp")}</HelpText>
           </div>
           <RadioGroup value={allowOrDeny} onChange={setAllowOrDeny}>
             <RadioGroupItem value={"allow"} variant={"green"}>
               <ShieldCheck size={16} />
-              Allow
+              {tCommon("allow")}
             </RadioGroupItem>
             <RadioGroupItem value={"deny"} variant={"red"}>
               <ShieldXIcon size={16} />
-              Block
+              {tCommon("block")}
             </RadioGroupItem>
           </RadioGroup>
         </div>
@@ -153,7 +152,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
                   <div className={"w-full"}>
                     <Input
                       customPrefix={<NetworkIcon size={16} />}
-                      placeholder={"e.g., 172.16.0.0/16"}
+                      placeholder={t("cidrPlaceholder")}
                       value={ipRange.value}
                       error={cidrErrors.find((e) => e.id === ipRange.id)?.error}
                       errorTooltip={false}
@@ -185,27 +184,27 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
           disabled={disabled}
         >
           <PlusCircle size={16} />
-          Add Network Range
+          {t("addNetworkRange")}
         </Button>
       </div>
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("learnMoreAbout")}
             <InlineLink
               href={
                 "https://docs.netbird.io/how-to/manage-posture-checks#peer-network-range-check"
               }
               target={"_blank"}
             >
-              Peer Network Range Check
+              {t("peerNetworkRangeCheck")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{tCommon("cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
@@ -223,7 +222,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
             }}
           >
-            Save
+            {tCommon("save")}
           </Button>
         </div>
       </ModalFooter>

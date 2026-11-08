@@ -15,6 +15,7 @@ import { validator } from "@utils/helpers";
 import { isValidCIDR } from "@utils/ip";
 import { isNetBirdCloud } from "@utils/netbird";
 import { ExternalLinkIcon, GlobeIcon, NetworkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
@@ -39,6 +40,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
 }
 
 function NetworkSettingsTabContent({ account }: Readonly<Props>) {
+  const t = useTranslations("settings");
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -67,8 +69,8 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 
   const toggleNetworkDNSSetting = async (toggle: boolean) => {
     notify({
-      title: "Routing Peer DNS Resolution",
-      description: `Routing Peer DNS Resolution successfully ${
+      title: "DNS Wildcard Routing",
+      description: `DNS Wildcard Routing successfully ${
         toggle ? "enabled" : "disabled"
       }.`,
       promise: saveRequest
@@ -83,7 +85,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
           setRoutingPeerDNSSetting(toggle);
           mutate("/accounts");
         }),
-      loadingMessage: "Updating routing peer DNS resolution setting...",
+      loadingMessage: "Updating DNS wildcard setting...",
     });
   };
 
@@ -177,13 +179,13 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
   const networkRangeV6Error = useMemo(() => {
     if (networkRangeV6 == "") return "";
     if (!networkRangeV6.includes(":") || !isValidCIDR(networkRangeV6)) {
-      return "Please enter a valid IPv6 CIDR range, e.g. fd00:1234::/64";
+      return t("ipv6FormatError");
     }
     const prefixLen = parseInt(networkRangeV6.split("/")[1], 10);
     if (prefixLen < 48 || prefixLen > 112) {
-      return "Prefix length must be between /48 and /112";
+      return t("ipv6PrefixLengthError");
     }
-  }, [networkRangeV6]);
+  }, [networkRangeV6, t]);
 
   return (
     <Tabs.Content value={"networks"}>
@@ -191,19 +193,19 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=networks"}
-            label={"Networks"}
+            label={t("networksTab")}
             icon={<NetworkIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between -mt-1"}>
           <div>
-            <h1>Networks</h1>
+            <h1>{t("networksTab")}</h1>
           </div>
           <Button
             variant={"primary"}
@@ -217,7 +219,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
             onClick={saveChanges}
             data-testid="save-network-settings"
           >
-            Save Changes
+            {t("saveChanges")}
           </Button>
         </div>
 
@@ -229,16 +231,15 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
               }
             >
               <div className={"min-w-[330px]"}>
-                <Label>DNS Domain</Label>
-                <HelpText>
-                  Specify a custom peer DNS domain for your network. This should
-                  not point to a valid domain to avoid overriding DNS results.
-                </HelpText>
+                <Label>{t("dnsDomain")}</Label>
+                <HelpText>{t("dnsDomainHelp")}</HelpText>
               </div>
               <div className={"w-full"}>
                 <Input
                   placeholder={
-                    isNetBirdCloud() ? "netbird.cloud" : "netbird.selfhosted"
+                    isNetBirdCloud()
+                      ? t("dnsDomainHostedPlaceholder")
+                      : t("dnsDomainSelfhostedPlaceholder")
                   }
                   errorTooltip={true}
                   errorTooltipPosition={"top"}
@@ -259,15 +260,12 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
               }
             >
               <div className={"min-w-[330px]"}>
-                <Label>Network Range</Label>
-                <HelpText>
-                  Specify a custom IPv4 range for your network in CIDR format.
-                  All peer IPs will be re-allocated when changed.
-                </HelpText>
+                <Label>{t("networkRange")}</Label>
+                <HelpText>{t("networkRangeHelp")}</HelpText>
               </div>
               <div className={"w-full"}>
                 <Input
-                  placeholder={"e.g. 100.64.0.0/16"}
+                  placeholder={t("networkRangePlaceholder")}
                   errorTooltip={true}
                   errorTooltipPosition={"top"}
                   error={networkRangeError}
@@ -287,15 +285,12 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
               }
             >
               <div className={"min-w-[330px]"}>
-                <Label>IPv6 Network Range</Label>
-                <HelpText>
-                  Specify a custom IPv6 range for your network in CIDR format.
-                  All peer IPv6 addresses will be re-allocated when changed.
-                </HelpText>
+                <Label>{t("ipv6NetworkRange")}</Label>
+                <HelpText>{t("ipv6NetworkRangeHelp")}</HelpText>
               </div>
               <div className={"w-full"}>
                 <Input
-                  placeholder={"e.g. fd00:1234:5678::/64"}
+                  placeholder={t("ipv6NetworkRangePlaceholder")}
                   errorTooltip={true}
                   errorTooltipPosition={"top"}
                   error={networkRangeV6Error}
@@ -309,16 +304,12 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
           </div>
 
           <div>
-            <Label>IPv6 Enabled Groups</Label>
-            <HelpText>
-              Peers in the selected groups will receive IPv6 overlay addresses
-              (dual-stack). Remove all groups to disable IPv6. Changes apply on
-              save and will restart affected clients.
-            </HelpText>
+            <Label>{t("ipv6EnabledGroups")}</Label>
+            <HelpText>{t("ipv6EnabledGroupsHelp")}</HelpText>
             <PeerGroupSelector
               values={ipv6EnabledGroups}
               onChange={setIpv6EnabledGroups}
-              placeholder="Select groups to enable IPv6..."
+              placeholder={t("selectIpv6Groups")}
               showResourceCounter={false}
               disabled={!permission.settings.update}
               data-testid="ipv6-enabled-groups-selector"
@@ -330,18 +321,15 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
           <FancyToggleSwitch
             value={routingPeerDNSSetting}
             onChange={toggleNetworkDNSSetting}
-            data-testid="dns-wildcard-routing"
             label={
               <>
                 <GlobeIcon size={15} />
-                Enable Routing Peer DNS Resolution
+                {t("enableDnsWildcardRouting")}
               </>
             }
             helpText={
               <>
-                Resolves DNS for routed domains on the routing peer instead of
-                on the client. Requires NetBird client v0.35 or higher. Changes
-                will only take effect after restarting the clients.{" "}
+                {t("dnsWildcardRoutingHelp")}{" "}
                 <InlineLink
                   href={
                     "https://docs.netbird.io/how-to/accessing-entire-domains-within-networks#enabling-dns-wildcard-routing"
@@ -349,14 +337,14 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
                   target={"_blank"}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Learn more
+                  {t("learnMore")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
             }
             disabled={!permission.settings.update}
+            data-testid="dns-wildcard-routing"
           />
-          {account && <TrafficEventSetting account={account} />}
         </div>
       </div>
     </Tabs.Content>

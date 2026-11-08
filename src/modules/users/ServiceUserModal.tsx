@@ -21,6 +21,7 @@ import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { Role, User } from "@/interfaces/User";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
+import { useTranslations } from "next-intl";
 
 type Props = {
   children: React.ReactNode;
@@ -47,10 +48,13 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
   const [name, setName] = useState("");
   const [role, setRole] = useState("user");
 
+  const t = useTranslations("serviceUsers");
+  const tCommon = useTranslations("common");
+
   const create = async () => {
     notify({
-      title: "Service user created",
-      description: `${name} was successfully created.`,
+      title: t("userCreatedNotify"),
+      description: t("userCreatedDesc", { name }),
       promise: userRequest
         .post({
           name,
@@ -62,7 +66,7 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
           onSuccess && onSuccess();
           mutate("/users?service_user=true");
         }),
-      loadingMessage: "Creating service user...",
+      loadingMessage: t("creatingServiceUserNotify"),
     });
   };
 
@@ -74,10 +78,8 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
     <ModalContent maxWidthClass={"max-w-lg"}>
       <ModalHeader
         icon={<IconSettings2 />}
-        title={"Create Service User"}
-        description={
-          "Service users are non-login users that are not associated with any specific person."
-        }
+        title={t("createServiceUserTitle")}
+        description={t("serviceUserCreateDesc")}
         color={"netbird"}
       />
 
@@ -92,10 +94,11 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
                   <User2 size={16} className={"text-nb-gray-300"} />
                 </div>
               }
-              placeholder={"John Doe"}
+              placeholder={t("serviceUserNamePlaceholder")}
               value={name}
-              data-testid={"service-user-name"}
+              data-cy={"service-user-name"}
               onChange={(e) => setName(e.target.value)}
+              data-testid={"service-user-name"}
             />
           </div>
           <div className={"w-[330px]"}>
@@ -111,29 +114,30 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("learnMoreAbout")}
             <InlineLink
               href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
               target={"_blank"}
             >
-              Service Users
+              {t("title")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{tCommon("cancel")}</Button>
           </ModalClose>
 
           <Button
             variant={"primary"}
             disabled={isDisabled}
             onClick={create}
+            data-cy={"create-service-user"}
             data-testid={"create-service-user"}
           >
             <PlusCircle size={16} />
-            Create Service User
+            {t("create")}
           </Button>
         </div>
       </ModalFooter>

@@ -1,12 +1,6 @@
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen } from "@/test-utils";
 
 type Settings = { endpoint: string; proxyAddress: string };
 

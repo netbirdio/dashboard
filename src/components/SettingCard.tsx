@@ -6,6 +6,7 @@ import { Label } from "@components/Label";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { PlusCircle, SquarePen } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React from "react";
 
 type SettingCardItemProps = {
@@ -25,6 +26,7 @@ function SettingCardItem({
   "data-testid": dataTestId,
   disabled = false,
 }: Readonly<SettingCardItemProps>) {
+  const t = useTranslations("common");
   const handleClick = () => {
     if (disabled) return;
     onClick();
@@ -55,7 +57,7 @@ function SettingCardItem({
           <Label>{label}</Label>
           {enabled && (
             <SmallBadge
-              text="Enabled"
+              text={t("enabled")}
               variant="green"
               size="md"
               className={"-top-[0.25rem]"}
@@ -74,7 +76,7 @@ function SettingCardItem({
             disabled={disabled}
           >
             <SquarePen size={12} />
-            Edit
+            {t("edit")}
           </Button>
         ) : (
           <Button
@@ -85,7 +87,7 @@ function SettingCardItem({
             disabled={disabled}
           >
             <PlusCircle size={12} />
-            Add
+            {t("add")}
           </Button>
         )}
       </div>
