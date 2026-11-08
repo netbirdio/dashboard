@@ -106,6 +106,10 @@ Two placements were tried. The branch has the second.
   Network, and 611 px on an Agent Network page with Insights and Agents open.
   Switching product, or opening a page inside a group, moves it.
 
+On an Insights page the two placements nearly meet: the open group fills most
+of the sidebar, so on a 900 px screen the divider sits at 573 px pinned and
+487 px in flow. The difference shows on short product lists.
+
 With a switcher, pinning keeps the shared part still while the product part
 changes, which is what tells people the bottom is the same everywhere. Going
 back is a two-line change in `Navigation.tsx` (the spacer moves above

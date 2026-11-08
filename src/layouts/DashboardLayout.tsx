@@ -74,7 +74,11 @@ function DashboardPageContent({
     <div className={cn("flex flex-col h-screen", mobileNavOpen && "flex")}>
       {mobileNavOpen && (
         <motion.div
-          className={"h-screen bg-nb-gray-950 w-11/12 max-w-[22rem]"}
+          // A column, so the sidebar below the user row and the product
+          // switch gets exactly the height that is left, and scrolls in it.
+          className={
+            "h-screen bg-nb-gray-950 w-11/12 max-w-[22rem] flex flex-col"
+          }
           layout={true}
           transition={{
             type: "spring",
@@ -123,7 +127,9 @@ function DashboardPageContent({
           <div className={"px-4 pb-3"}>
             <ProductSwitcher />
           </div>
-          <Navigation fullWidth />
+          <div className={"flex-1 min-h-0"}>
+            <Navigation fullWidth />
+          </div>
         </motion.div>
       )}
       <AnimatePresence mode={"wait"}>

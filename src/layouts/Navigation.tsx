@@ -69,10 +69,14 @@ export default function Navigation({
           "md:w-[64px] md:min-w-[64px] md:fixed md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
       )}
       style={{
-        height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
+        // In the mobile drawer the sidebar sits below the drawer's own rows,
+        // so it takes the height the drawer leaves it instead.
+        height: fullWidth
+          ? "100%"
+          : `calc(100vh - ${headerHeight + bannerHeight}px)`,
       }}
     >
-      <div className={cn(fullWidth ? "w-10/12" : "fixed z-0")}>
+      <div className={cn(fullWidth ? "w-10/12 h-full" : "fixed z-0")}>
         <ScrollArea
           style={{
             height: !fullWidth
