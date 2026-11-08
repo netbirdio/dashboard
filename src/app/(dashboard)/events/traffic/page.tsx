@@ -8,7 +8,6 @@ import { usePortalElement } from "@hooks/usePortalElement";
 import dayjs from "dayjs";
 import { ArrowLeftRightIcon, ExternalLinkIcon } from "lucide-react";
 import React, { useMemo } from "react";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 import { useIsFeatureLocked } from "@/cloud/cloud-hooks/useIsFeatureLocked";
 import { TRAFFIC_EVENTS_DOC_LINK } from "@/cloud/traffic-events/TrafficEventSetting";
 import TrafficEventsTable from "@/cloud/traffic-events/TrafficEventsTable";
@@ -41,16 +40,14 @@ export default function NetworkTrafficPage() {
   return (
     <PageContainer>
       <div className="p-default py-6">
+        {/* Traffic Events is its own sidebar entry now, not part of an
+            Activity group, so the trail names it alone. */}
         <Breadcrumbs>
-          <Breadcrumbs.Item
-            label="Activity"
-            disabled
-            icon={<ActivityIcon size={13} />}
-          />
           <Breadcrumbs.Item
             href="/events/traffic"
             label="Traffic Events"
             icon={<ArrowLeftRightIcon size={15} />}
+            active
           />
         </Breadcrumbs>
 

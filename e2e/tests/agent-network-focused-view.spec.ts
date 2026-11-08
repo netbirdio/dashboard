@@ -164,7 +164,7 @@ const FOCUS_HIDDEN_NAV = [
   "Networks",
   "Reverse Proxy",
   "DNS",
-  "Activity",
+  "Traffic Events",
 ];
 // Agent Network view routes that make up the focused surface.
 const AGENT_VIEW_PATHS = [

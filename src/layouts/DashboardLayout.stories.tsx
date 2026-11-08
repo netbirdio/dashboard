@@ -133,7 +133,7 @@ const crumbRoot = async (label: string) => {
 };
 
 /* The Networking sidebar on Peers: Access Control, Network Routing, Reverse
-   Proxy, DNS and Activity, then the account area. */
+   Proxy, DNS and Traffic Events, then the account area. */
 export const NetworkingProduct: Story = {
   parameters: nav("/peers", { product: "networking" }),
   play: async () => {

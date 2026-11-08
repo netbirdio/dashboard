@@ -303,11 +303,11 @@ const NetworkingNavigation = () => {
         />
       </SidebarItem>
 
-      {/* Traffic events are Networking's activity; Audit Events, which
-          cover the whole account, are in the account area. */}
+      {/* Audit Events, which cover the whole account, are in the account
+          area. */}
       <SidebarItem
         icon={<ActivityIcon />}
-        label="Activity"
+        label="Traffic Events"
         href={"/events/traffic"}
         visible={permission.events.read}
       />

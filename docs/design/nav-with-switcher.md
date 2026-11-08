@@ -17,7 +17,7 @@ pages, and an account area right below them is the same in both.
 | Network Routing › Networks, Routes | Usage & Logs |
 | Reverse Proxy › Services, Custom Domains, Clusters, Access Logs | Agents › Connect Agent, Providers, Agent Policies |
 | DNS › Nameservers, Zones, DNS Settings | Configuration |
-| Activity (traffic events) | |
+| Traffic Events | |
 
 **Account area, both products:** Team › Users, Service Users, Groups;
 Audit Events; Settings; Tenants (MSP); Integrations; Documentation.
@@ -49,9 +49,9 @@ In the account area they are one click away in both products, at the same URL
 
 Audit events record changes across the whole account: users, policies,
 providers, settings. They are their own item in the account area, as the
-distributor sidebar already has them. Traffic events stay with Networking, as
-its "Activity" entry, which now opens them directly (the page's breadcrumb
-reads Activity › Traffic Events).
+distributor sidebar already has them. Traffic events stay with Networking. With
+Audit Events gone, the Activity group held only them, so it became a single
+"Traffic Events" entry, and the page's breadcrumb dropped its Activity crumb.
 
 ### The product is a URL parameter, not a route prefix
 
@@ -168,10 +168,8 @@ back is a two-line change in `Navigation.tsx` (the spacer moves above
    example to let peers reach the gateway?
 4. Groups under Team, or their own entry in the account area? Is "Team" still
    the right name once it holds groups of peers and resources?
-5. Networking's "Activity" now opens traffic events only. Rename it "Traffic
-   Events"?
-6. A new user with both products starts in Networking. Should it be Agent
+5. A new user with both products starts in Networking. Should it be Agent
    Network for accounts that signed up through netbird.ai?
-7. Should the distributor and MSP entries move to the account area too?
-8. Which grant should Insights follow once it is real?
-9. The account area: pinned to the bottom, or right below the product's pages?
+6. Should the distributor and MSP entries move to the account area too?
+7. Which grant should Insights follow once it is real?
+8. The account area: pinned to the bottom, or right below the product's pages?

@@ -27,7 +27,7 @@ export default function Activity() {
     <PageContainer>
       <div className={"p-default py-6"}>
         {/* Audit events cover the whole account, so the page sits in the
-            account area of both products rather than under Activity. */}
+            account area of both products. */}
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/events/audit"}
@@ -49,7 +49,7 @@ export default function Activity() {
           </InlineLink>
         </Paragraph>
       </div>
-      <RestrictedAccess page={"Activity"} hasAccess={permission.events.read}>
+      <RestrictedAccess page={"Audit Events"} hasAccess={permission.events.read}>
         <EventStreamingCard />
         <ActivityTable
           events={events}
