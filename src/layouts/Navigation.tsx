@@ -44,8 +44,8 @@ type Props = {
 };
 
 /**
- * The sidebar: the current product's pages at the top, the account area,
- * the same in both products, at the bottom. The header's product switch
+ * The sidebar: the current product's pages, then the account area, the
+ * same in both products, right below them. The header's product switch
  * decides which product's pages show (see modules/agent-network/product.ts).
  */
 export default function Navigation({
@@ -99,9 +99,9 @@ export default function Navigation({
                 <NetworkingNavigation />
               )}
             </SidebarItemGroup>
-            {/* Pushes the account area to the bottom of the sidebar. */}
-            <div className={"grow"} aria-hidden />
             <AccountNavigation />
+            {/* Pushes the usage and version cards to the bottom. */}
+            <div className={"grow"} aria-hidden />
             <NavigationUsageInfo />
             <NavigationVersionInfo />
           </div>

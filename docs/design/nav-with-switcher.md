@@ -7,7 +7,7 @@ sidebar with product sections, no switcher) is built on another branch.
 ## The design
 
 A switch in the header picks the product. The sidebar shows that product's
-pages, and an account area at the bottom is the same in both.
+pages, and an account area right below them is the same in both.
 
 | Networking | Agent Network |
 | --- | --- |
@@ -92,6 +92,25 @@ swap one in.
 The mobile drawer gets its own switch, because the header's sits behind the
 drawer's overlay.
 
+### Where the account area sits
+
+Two placements were tried. The branch has the second.
+
+- **Pinned to the bottom of the sidebar.** The divider above Account sits at
+  the same height in both products and on every page (633 px down a 960 px
+  screen), so switching product only changes the part above it. On a tall
+  screen there is an empty band between the two.
+- **Right below the product's pages.** No empty band, and Team or Settings is
+  closer to the product's own entries. But the area moves with whatever is
+  above it: its divider sits at 360 px in Networking, 322 px in Agent
+  Network, and 611 px on an Agent Network page with Insights and Agents open.
+  Switching product, or opening a page inside a group, moves it.
+
+With a switcher, pinning keeps the shared part still while the product part
+changes, which is what tells people the bottom is the same everywhere. Going
+back is a two-line change in `Navigation.tsx` (the spacer moves above
+`AccountNavigation`).
+
 ### Smaller calls
 
 - Agent Network's Policies is "Agent Policies", in the sidebar and on the page.
@@ -151,3 +170,4 @@ drawer's overlay.
    Network for accounts that signed up through netbird.ai?
 7. Should the distributor and MSP entries move to the account area too?
 8. Which grant should Insights follow once it is real?
+9. The account area: pinned to the bottom, or right below the product's pages?

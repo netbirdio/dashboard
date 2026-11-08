@@ -113,7 +113,7 @@ export const ExpandedNavigationGroup: Story = {
 
 /* ---------------------------------------------------------------------
    Products. Networking and Agent Network each have a sidebar; the header
-   switch picks one, and the account area at the bottom is the same in both.
+   switch picks one, and the account area below it is the same in both.
    A page both products show (Control Center, Peers, the account area) has
    one URL and names its product in it: `?product=agent-network`. */
 

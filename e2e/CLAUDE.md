@@ -232,7 +232,7 @@ await visitByNavigation(page, "Policies");         // Click child
 ```
 
 The sidebar shows one product at a time (the header's `product-switcher`
-picks Networking or Agent Network), with the account area at the bottom of
+picks Networking or Agent Network), with the account area below it in
 both. Shared pages (Control Center, Peers, the account area) carry the product
 as `?product=networking|agent-network`; see `src/modules/agent-network/product.ts`.
 
