@@ -231,12 +231,29 @@ await visitByNavigation(page, "Access Control");  // Expand parent
 await visitByNavigation(page, "Policies");         // Click child
 ```
 
-| Parent | Children |
-|--------|----------|
-| Access Control | Policies, Groups, Posture Checks |
-| Team | Users, Service Users |
-| DNS | Nameservers, Zones, DNS Settings |
-| Reverse Proxy | Custom Domains, Services |
+The sidebar is one list for both products (`src/layouts/Navigation.tsx`):
+Control Center and Peers at the top, the **Networking** and **Agent Network**
+sections, and the **Account** area at the bottom. Section headings have the
+test id `left-navigation-section` (not `left-navigation-item`) and are
+collapsible; their open state is kept in `localStorage` (`netbird-nav-sections`),
+so a spec that closes one on the shared owner page must clear that key again.
+
+| Section | Parent | Children |
+|---------|--------|----------|
+| Networking | Access Control | Policies, Groups, Posture Checks |
+| Networking | Network Routing | Networks, Routes |
+| Networking | Reverse Proxy | Services, Custom Domains, Clusters, Access Logs |
+| Networking | DNS | Nameservers, Zones, DNS Settings |
+| Networking | Traffic Events | — |
+| Agent Network | Insights (placeholders, behind a flag) | Overview, Models, Tasks, Departments |
+| Agent Network | Usage & Logs, Configuration | — |
+| Agent Network | Agents | Connect Agent, Providers, Agent Policies |
+| Account | Team | Users, Service Users, Groups |
+| Account | Audit Events, Settings, Integrations, Documentation | — |
+
+Groups is listed twice (Access Control and Team) and opens one page, so
+`visitByNavigation(page, "Groups")` finds two entries; expand the parent you
+mean first or navigate with `navigateTo(page, "/groups")`.
 
 ## Test Coverage
 

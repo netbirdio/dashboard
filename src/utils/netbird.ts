@@ -128,6 +128,12 @@ export const isAgentNetworkEnabled = () => {
   return config.agentNetworkEnabled || config.agentNetworkOnly;
 };
 
+// isAgentNetworkInsightsEnabled returns true when the deployment opts into the
+// Agent Network Insights pages (NETBIRD_AGENT_NETWORK_INSIGHTS). They are
+// placeholders until the analytics exist, so they stay off by default.
+export const isAgentNetworkInsightsEnabled = () =>
+  isAgentNetworkEnabled() && config.agentNetworkInsights;
+
 export const isAuth0 = () => {
   return config.auth0Auth;
 };

@@ -16,6 +16,7 @@
 //   capture-hover  real pointer hover over [data-capture] (or the first button/link)
 //   capture-focus  keyboard focus on the same element (Tab focus, so :focus-visible applies)
 //   cloud          render with the NetBird Cloud config instead of self-hosted
+//   agent-network-off  render a deployment without Agent Network
 // Open menus, dialogs and other interactive states are separate stories with a
 // `play` function; the shot is taken after the play function has finished.
 // The clock is frozen so relative times ("3 days ago") never change.
@@ -179,7 +180,10 @@ async function openPage() {
 
 async function shoot(page, story) {
   const flavor = story.tags?.includes("cloud") ? "cloud" : "selfhosted";
-  const url = `${base}/iframe.html?id=${story.id}&viewMode=story&globals=theme:${theme};flavor:${flavor}`;
+  const agentNetwork = story.tags?.includes("agent-network-off")
+    ? ";agentNetwork:off"
+    : "";
+  const url = `${base}/iframe.html?id=${story.id}&viewMode=story&globals=theme:${theme};flavor:${flavor}${agentNetwork}`;
   // API calls are mocked in-page, so there is no network to wait for;
   // waitForStory below waits for the render and play function instead.
   await page.goto(url, { waitUntil: "domcontentloaded" });
