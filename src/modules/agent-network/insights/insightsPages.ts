@@ -1,7 +1,8 @@
 /**
  * The planned Agent Network Insights pages. They are navigation placeholders
- * until the analytics exist, and only show where the deployment switches
- * them on (NETBIRD_AGENT_NETWORK_INSIGHTS, see isAgentNetworkInsightsEnabled).
+ * until the analytics exist: on under `npm run dev`, and in a build only where
+ * the deployment switches them on (NETBIRD_AGENT_NETWORK_INSIGHTS, see
+ * isAgentNetworkInsightsEnabled).
  */
 export const INSIGHTS_ROOT = "/agent-network/insights";
 

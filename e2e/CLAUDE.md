@@ -245,7 +245,7 @@ so a spec that closes one on the shared owner page must clear that key again.
 | Networking | Reverse Proxy | Services, Custom Domains, Clusters, Access Logs |
 | Networking | DNS | Nameservers, Zones, DNS Settings |
 | Networking | Traffic Events | — |
-| Agent Network | Insights (placeholders, behind a flag) | Overview, Models, Tasks, Departments |
+| Agent Network | Insights (placeholders: on under `next dev`, the test build included; off in production builds unless `NETBIRD_AGENT_NETWORK_INSIGHTS=true`) | Overview, Models, Tasks, Departments |
 | Agent Network | Usage & Logs, Configuration | — |
 | Agent Network | Agents | Connect Agent, Providers, Agent Policies |
 | Account | Team | Users, Service Users, Groups |

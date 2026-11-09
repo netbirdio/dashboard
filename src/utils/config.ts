@@ -28,7 +28,8 @@ interface Config {
   agentNetworkEnabled: boolean;
   // agentNetworkInsights: shows the Agent Network Insights pages (Overview,
   // Models, Tasks, Departments), which are navigation placeholders for now.
-  // Off unless a deployment opts in (NETBIRD_AGENT_NETWORK_INSIGHTS).
+  // Off in builds unless a deployment opts in (NETBIRD_AGENT_NETWORK_INSIGHTS);
+  // always on under `npm run dev`.
   agentNetworkInsights: boolean;
   hubspotPortalId?: string;
   hubspotSignupFormId?: string;

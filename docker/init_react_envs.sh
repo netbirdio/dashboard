@@ -68,7 +68,8 @@ export NETBIRD_LICENSED=${NETBIRD_LICENSED:-false}
 export NETBIRD_CLOUD=${NETBIRD_CLOUD:-false}
 export NETBIRD_AGENT_NETWORK_ONLY=${NETBIRD_AGENT_NETWORK_ONLY:-false}
 export NETBIRD_AGENT_NETWORK_ENABLED=${NETBIRD_AGENT_NETWORK_ENABLED:-false}
-# Agent Network Insights pages; placeholders until the analytics exist.
+# Agent Network Insights pages; placeholders until the analytics exist, so off
+# unless set here.
 export NETBIRD_AGENT_NETWORK_INSIGHTS=${NETBIRD_AGENT_NETWORK_INSIGHTS:-false}
 export NETBIRD_HUBSPOT_PORTAL_ID=${NETBIRD_HUBSPOT_PORTAL_ID}
 export NETBIRD_HUBSPOT_SIGNUP_FORM_ID=${NETBIRD_HUBSPOT_SIGNUP_FORM_ID}
