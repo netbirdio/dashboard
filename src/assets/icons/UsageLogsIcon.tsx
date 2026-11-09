@@ -12,7 +12,7 @@ export default function UsageLogsIcon(props: IconProps) {
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2Zm1 3.75v1.5h6v-1.5H5Zm0 3.5v1.5h6v-1.5H5Zm0 3.5v1.5h3.5v-1.5H5Z"
+        d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2Zm1 3.25v1.5h6v-1.5H5Zm0 9.25h1.5V9.5H5v3Zm2.75 0h1.5V7h-1.5v5.5Zm2.75 0H12V8.5h-1.5v4Z"
       />
     </svg>
   );

@@ -1,15 +1,15 @@
 /**
  * The sidebar is one list for the whole account (navigation option B):
  *
- * - pages both products use sit at the top: Control Center and Peers;
+ * - what both products work with sits at the top, with no heading: Control
+ *   Center, Peers, Users and Groups;
  * - each product is a collapsible section: Networking and Agent Network;
- * - the account area closes the list: Team, Audit Events, Settings,
- *   Integrations and Documentation.
+ * - the account area closes the list: Settings, Integrations, Service
+ *   Users, Audit Events and Documentation.
  *
- * A page has one URL but may be listed in more than one section (Groups is
- * both Account › Team › Groups and Networking › Access Control › Groups).
- * Every section that lists the current page opens and is highlighted, and
- * every entry for it is active.
+ * Every page has one URL and one entry. The section that lists the current
+ * page opens and is highlighted. Should a page ever be listed in two
+ * sections, both would open and highlight: sectionsForPath returns them all.
  */
 
 export type NavSectionId = "networking" | "agent-network" | "account";
@@ -29,15 +29,14 @@ export const PRODUCT_SECTIONS: readonly NavSectionId[] = [
 /**
  * The route roots each section lists. A root covers itself and everything
  * below it, so "/dns" covers "/dns/zones" but not "/dnssec". Detail pages
- * that live outside their list's root ("/group", "/network") are listed too.
- * Control Center and Peers belong to no section: they serve both products.
+ * that live outside their list's root ("/network") are listed too.
+ * Control Center, Peers, Users ("/team/users", "/team/user") and Groups
+ * ("/groups", "/group") belong to no section: they serve both products.
  */
 export const NAV_SECTION_ROUTES: Record<NavSectionId, readonly string[]> = {
   networking: [
     "/access-control",
     "/posture-checks",
-    "/groups",
-    "/group",
     "/networks",
     "/network",
     "/network-routes",
@@ -47,12 +46,10 @@ export const NAV_SECTION_ROUTES: Record<NavSectionId, readonly string[]> = {
   ],
   "agent-network": ["/agent-network"],
   account: [
-    "/team",
-    "/groups",
-    "/group",
-    "/events/audit",
     "/settings",
     "/integrations",
+    "/team/service-users",
+    "/events/audit",
     "/tenants",
   ],
 };
@@ -110,7 +107,6 @@ export const hasAgentNetworkGrant = (permission?: NavPermissions) =>
 /** The caller can read at least one page of the Networking section. */
 export const hasNetworkingAccess = (permission?: NavPermissions) =>
   can(permission, "policies") ||
-  can(permission, "groups") ||
   can(permission, "networks") ||
   can(permission, "routes") ||
   can(permission, "services") ||

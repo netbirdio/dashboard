@@ -5,7 +5,7 @@ import AgentPoliciesPage from "@/app/(dashboard)/agent-network/policies/page";
 import TrafficEventsPage from "@/app/(dashboard)/events/traffic/page";
 import GroupsPage from "@/app/(dashboard)/groups/page";
 import PeersPage from "@/app/(dashboard)/peers/page";
-import UsersPage from "@/app/(dashboard)/team/users/page";
+import ServiceUsersPage from "@/app/(dashboard)/team/service-users/page";
 import {
   click,
   inLayout,
@@ -17,9 +17,9 @@ import {
 } from "@/storybook/core";
 import { account } from "@/storybook/fixtures";
 
-/* One sidebar for both products (navigation option B): the pages both use
-   at the top, Networking and Agent Network as collapsible sections, and the
-   account area at the bottom. */
+/* One sidebar for both products (navigation option B): what both work with
+   at the top (Control Center, Peers, Users, Groups), Networking and Agent
+   Network as collapsible sections, and the account area at the bottom. */
 const meta: Meta = {
   title: "Pages/Core/Navigation",
   parameters: nav("/peers"),
@@ -97,9 +97,8 @@ export const NetworkingPage: Story = {
   },
 };
 
-/* Groups have one page listed twice, under Networking › Access Control and
-   Account › Team: both entries are active and both sections highlighted. */
-export const PageListedTwice: Story = {
+/* Groups, at the top for both products: no section is highlighted. */
+export const GroupsPageShared: Story = {
   parameters: nav("/groups"),
   render: inLayout(GroupsPage),
   play: async () => {
@@ -119,7 +118,8 @@ export const AgentNetworkPage: Story = {
   },
 };
 
-/* The Insights pages are placeholders, behind NETBIRD_AGENT_NETWORK_INSIGHTS. */
+/* The Insights pages are placeholders: on under npm run dev and here, behind
+   NETBIRD_AGENT_NETWORK_INSIGHTS in production builds. */
 export const InsightsPlaceholder: Story = {
   parameters: nav("/agent-network/insights/overview"),
   render: inLayout(InsightsOverviewPage),
@@ -129,13 +129,13 @@ export const InsightsPlaceholder: Story = {
   },
 };
 
-/* The account area: Team (Users, Service Users, Groups), Audit Events,
-   Settings, Integrations and Documentation. */
+/* The account area: Settings, Integrations, Service Users, Audit Events
+   and Documentation, on the Service Users page. */
 export const AccountArea: Story = {
-  parameters: nav("/team/users"),
-  render: inLayout(UsersPage),
+  parameters: nav("/team/service-users"),
+  render: inLayout(ServiceUsersPage),
   play: async () => {
-    await text("Dana Developer");
+    await text("CI/CD Pipeline");
     await section("Account");
   },
 };

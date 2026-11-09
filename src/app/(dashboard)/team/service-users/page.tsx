@@ -10,7 +10,6 @@ import { IconSettings2 } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
-import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
@@ -32,11 +31,6 @@ export default function ServiceUsers() {
     <PageContainer>
       <div className={"p-default py-6"}>
         <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/team"}
-            label={"Team"}
-            icon={<TeamIcon size={13} />}
-          />
           <Breadcrumbs.Item
             href={"/team/service-users"}
             label={"Service Users"}

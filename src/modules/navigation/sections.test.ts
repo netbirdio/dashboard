@@ -20,6 +20,10 @@ describe("sectionsForPath", () => {
     ["/control-center", []],
     ["/peers", []],
     ["/peer", []],
+    ["/team/users", []],
+    ["/team/user", []],
+    ["/groups", []],
+    ["/group", []],
     // Networking.
     ["/access-control", ["networking"]],
     ["/posture-checks", ["networking"]],
@@ -34,14 +38,11 @@ describe("sectionsForPath", () => {
     ["/agent-network/policies", ["agent-network"]],
     ["/agent-network/insights/models", ["agent-network"]],
     // The account area.
-    ["/team/users", ["account"]],
-    ["/team/service-users", ["account"]],
-    ["/events/audit", ["account"]],
     ["/settings", ["account"]],
     ["/integrations", ["account"]],
-    // Groups have one page listed in two sections.
-    ["/groups", ["networking", "account"]],
-    ["/group", ["networking", "account"]],
+    ["/team/service-users", ["account"]],
+    ["/events/audit", ["account"]],
+    ["/tenants", ["account"]],
     // Look-alike paths are not the sections they resemble.
     ["/dnssec", []],
     ["/agent-networks", []],
@@ -54,11 +55,9 @@ describe("sectionsForPath", () => {
     expect(sectionsForPath(path)).toEqual(sections);
   });
 
-  it("lists Groups in Networking and the account area only", () => {
-    const listing = Object.entries(NAV_SECTION_ROUTES)
-      .filter(([, roots]) => roots.includes("/groups"))
-      .map(([id]) => id);
-    expect(listing).toEqual(["networking", "account"]);
+  it("lists every page in at most one section", () => {
+    const roots = Object.values(NAV_SECTION_ROUTES).flat();
+    expect(new Set(roots).size).toBe(roots.length);
   });
 });
 
@@ -145,6 +144,8 @@ describe("hasNetworkingAccess", () => {
     [{}, false],
     [{ "agent_network.providers": { read: true } }, false],
     [{ users: { read: true }, settings: { read: true } }, false],
+    // Groups sit at the top for both products, not in Networking.
+    [{ groups: { read: true } }, false],
     [{ policies: { read: true } }, true],
     [{ networks: { read: true } }, true],
     [{ routes: { read: true } }, true],

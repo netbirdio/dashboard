@@ -3,10 +3,11 @@ import { navigateTo } from "../helpers/auth";
 import { test } from "../helpers/fixtures";
 
 /**
- * The sidebar is one list for both products: Control Center and Peers at
- * the top, a collapsible section per product (Networking, Agent Network)
- * and the account area at the bottom. Open and closed sections are kept in
- * localStorage per user; the section of the current page opens on its own.
+ * The sidebar is one list for both products: Control Center, Peers, Users
+ * and Groups at the top, a collapsible section per product (Networking,
+ * Agent Network) and the account area at the bottom. Open and closed
+ * sections are kept in localStorage per user; the section of the current
+ * page opens on its own.
  * Agent Network depends on the deployment, so these tests stick to
  * Networking and the account area, which an owner always sees.
  */
@@ -34,8 +35,10 @@ test.describe.serial("Navigation sections @navigation", () => {
     dashboardAsOwner: page,
   }) => {
     await navigateTo(page, "/peers");
-    await expect(navItem(page, "Control Center")).toBeVisible();
-    await expect(navItem(page, "Peers")).toBeVisible();
+    for (const label of ["Control Center", "Peers", "Users", "Groups"]) {
+      await expect(navItem(page, label)).toBeVisible();
+    }
+    await expect(navItem(page, "Service Users")).toBeVisible();
     await expect(section(page, "Networking")).toBeVisible();
     await expect(section(page, "Account")).toBeVisible();
     await expect(navItem(page, "Traffic Events")).toBeVisible();
@@ -79,19 +82,18 @@ test.describe.serial("Navigation sections @navigation", () => {
     );
   });
 
-  test("lists Groups in Networking and the account area, one page", async ({
+  test("keeps Groups at the top, with one entry and no section highlighted", async ({
     dashboardAsOwner: page,
   }) => {
     await navigateTo(page, "/groups");
-    // Access Control › Groups and Team › Groups, both open on /groups.
-    await expect(navItem(page, "Groups")).toHaveCount(2);
+    await expect(navItem(page, "Groups")).toHaveCount(1);
     await expect(section(page, "Networking")).toHaveAttribute(
       "data-active",
-      "true",
+      "false",
     );
     await expect(section(page, "Account")).toHaveAttribute(
       "data-active",
-      "true",
+      "false",
     );
   });
 });

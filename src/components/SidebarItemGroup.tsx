@@ -9,8 +9,9 @@ import { useApplicationContext } from "@/contexts/ApplicationProvider";
 type Props = {
   children: React.ReactNode;
   /**
-   * A heading above the items, such as a product name. Without one the
-   * group is a plain list, set apart from the group before it by a divider.
+   * A heading above the items, such as a product name; the heading and the
+   * space above it set the group apart. Without one the group is a plain
+   * list, set apart from the group before it by a divider.
    */
   label?: React.ReactNode;
   /** Shown next to the heading, e.g. a "Beta" badge. */
@@ -49,11 +50,18 @@ export default function SidebarItemGroup({
     );
   }
 
-  // In the icon-only sidebar there is no room for the heading; the divider
-  // keeps the groups apart until a hover widens the sidebar again.
+  // A group with a heading is set apart by the heading and space alone. The
+  // icon-only sidebar has no room for the heading, so a divider stands in
+  // for it until a hover widens the sidebar again.
   const iconOnly = isNavigationCollapsed && !mobileNavOpen;
   const isOpen = collapsible ? open : true;
   const Chevron = isOpen ? ChevronUpIcon : ChevronDownIcon;
+  const labelledClassName = cn(
+    "first:mt-0 border-t border-transparent",
+    iconOnly
+      ? "mt-4 pt-3 border-gray-200 dark:border-zinc-700/40 group-hover/navigation:border-transparent"
+      : "mt-4",
+  );
 
   const heading = (
     <div
@@ -78,19 +86,32 @@ export default function SidebarItemGroup({
         />
       )}
       {badge}
-      {collapsible && <Chevron size={14} className={"ml-auto shrink-0"} />}
+      {collapsible && (
+        <Chevron
+          size={14}
+          className={cn(
+            "ml-auto shrink-0 transition-opacity",
+            // An open section keeps the heading quiet: its chevron shows on
+            // hover and keyboard focus. A closed one always shows it, as the
+            // cue that items are hidden, and so does the touch-only drawer.
+            isOpen &&
+              !mobileNavOpen &&
+              "opacity-0 group-hover/heading:opacity-100 group-focus-visible/heading:opacity-100",
+          )}
+        />
+      )}
     </div>
   );
 
   return (
-    <div className={groupClassName} data-nav-section={id}>
+    <div className={labelledClassName} data-nav-section={id}>
       <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
         <div className={"px-3"}>
           {collapsible ? (
             <Collapsible.Trigger asChild>
               <button
                 type={"button"}
-                className={"w-full cursor-pointer"}
+                className={"group/heading w-full cursor-pointer"}
                 data-testid={"left-navigation-section"}
                 data-active={active}
               >

@@ -159,8 +159,8 @@ const FOCUS_HIDDEN_NAV = [
   "DNS",
   "Traffic Events",
 ];
-// The account area stays in the focused view.
-const FOCUS_KEPT_NAV = ["Team", "Audit Events", "Settings"];
+// What both products use (top) and the account area stay in the focused view.
+const FOCUS_KEPT_NAV = ["Users", "Groups", "Audit Events", "Settings"];
 // Agent Network view routes that make up the focused surface.
 const AGENT_VIEW_PATHS = [
   "/agent-network/providers",

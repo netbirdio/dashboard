@@ -52,12 +52,12 @@ describe("useNavSections", () => {
     expect(result.current.isActive("networking")).toBe(false);
   });
 
-  it("highlights both sections that list the current page", () => {
+  it("highlights no section on a page both products use", () => {
     route.path = "/groups";
     const { result } = renderHook(() => useNavSections("alice"));
-    expect(result.current.isActive("networking")).toBe(true);
-    expect(result.current.isActive("account")).toBe(true);
+    expect(result.current.isActive("networking")).toBe(false);
     expect(result.current.isActive("agent-network")).toBe(false);
+    expect(result.current.isActive("account")).toBe(false);
   });
 
   it("opens a closed section when a page inside it is opened", () => {

@@ -11,10 +11,12 @@ import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
+import GroupsIcon from "@/assets/icons/GroupsIcon";
 import InsightsIcon from "@/assets/icons/InsightsIcon";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
+import ServiceUsersIcon from "@/assets/icons/ServiceUsersIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import SlidersIcon from "@/assets/icons/SlidersIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
@@ -54,10 +56,10 @@ type Props = {
 };
 
 /**
- * One sidebar for both products: the pages both use (Control Center,
- * Peers) at the top, a collapsible section per product (Networking, Agent
- * Network), and the account area at the bottom. The section rules live in
- * modules/navigation/sections.ts.
+ * One sidebar for both products: what both work with (Control Center,
+ * Peers, Users, Groups) at the top, a collapsible section per product
+ * (Networking, Agent Network), and the account area at the bottom. The
+ * section rules live in modules/navigation/sections.ts.
  */
 export default function Navigation({
   fullWidth = false,
@@ -132,9 +134,11 @@ export default function Navigation({
                 : "100%",
             }}
           >
-            {/* Both products: Control Center maps the connections between
-                  devices, networks and AI providers; Peers are the machines,
-                  devices and agents either product works with. */}
+            {/* What both products work with: Control Center maps the
+                connections between devices, networks and AI providers;
+                Peers are the machines, devices and agents; Users and Groups
+                are who and what every policy, network or agent, is written
+                for. */}
             <SidebarItemGroup>
               <SidebarItem
                 icon={<ControlCenterIcon size={16} />}
@@ -149,6 +153,18 @@ export default function Navigation({
                 // Restricted users get the add-your-device view there, so
                 // the link stays even in the limited (user role) sidebar.
                 visible={true}
+              />
+              <SidebarItem
+                icon={<TeamIcon />}
+                label="Users"
+                href={"/team/users"}
+                visible={permission.users.read}
+              />
+              <SidebarItem
+                icon={<GroupsIcon />}
+                label="Groups"
+                href={"/groups"}
+                visible={permission.policies.read}
               />
               <DistributorNavigation />
             </SidebarItemGroup>
@@ -179,31 +195,6 @@ export default function Navigation({
                 collapsible
                 {...section("agent-network")}
               >
-                <SidebarItem
-                  icon={<InsightsIcon />}
-                  label="Insights"
-                  href={INSIGHTS_ROOT}
-                  collapsible
-                  visible={agentNetworkPages.insights}
-                >
-                  {INSIGHTS_PAGES.map((page) => (
-                    <SidebarItem
-                      key={page.slug}
-                      label={page.label}
-                      isChild
-                      href={insightsHref(page.slug)}
-                      exactPathMatch={true}
-                      visible={agentNetworkPages.insights}
-                    />
-                  ))}
-                </SidebarItem>
-                <SidebarItem
-                  icon={<UsageLogsIcon />}
-                  label="Usage & Logs"
-                  href={"/agent-network/usage"}
-                  exactPathMatch={true}
-                  visible={agentNetworkPages.usage}
-                />
                 <SidebarItem
                   icon={<AgentNetworkIcon size={16} />}
                   label="Agents"
@@ -237,6 +228,31 @@ export default function Navigation({
                   />
                 </SidebarItem>
                 <SidebarItem
+                  icon={<InsightsIcon />}
+                  label="Insights"
+                  href={INSIGHTS_ROOT}
+                  collapsible
+                  visible={agentNetworkPages.insights}
+                >
+                  {INSIGHTS_PAGES.map((page) => (
+                    <SidebarItem
+                      key={page.slug}
+                      label={page.label}
+                      isChild
+                      href={insightsHref(page.slug)}
+                      exactPathMatch={true}
+                      visible={agentNetworkPages.insights}
+                    />
+                  ))}
+                </SidebarItem>
+                <SidebarItem
+                  icon={<UsageLogsIcon />}
+                  label="Usage & Logs"
+                  href={"/agent-network/usage"}
+                  exactPathMatch={true}
+                  visible={agentNetworkPages.usage}
+                />
+                <SidebarItem
                   icon={<SlidersIcon />}
                   label="Configuration"
                   href={"/agent-network/configuration"}
@@ -249,46 +265,9 @@ export default function Navigation({
             {/* Pushes the account area to the bottom while there is room. */}
             <div className={"flex-1"} />
 
-            {/* The account area: who is in the account, what they changed,
-                and how the account is set up. Both products share it. */}
+            {/* The account area: how the account is set up, the identities
+                that automate it, and what changed. Both products share it. */}
             <SidebarItemGroup label={"Account"} {...section("account")}>
-              <SidebarItem
-                icon={<TeamIcon />}
-                label="Team"
-                href={"/team"}
-                collapsible
-                visible={permission.users.read || permission.policies.read}
-              >
-                <SidebarItem
-                  label="Users"
-                  isChild
-                  href={"/team/users"}
-                  visible={permission.users.read}
-                />
-                <SidebarItem
-                  label="Service Users"
-                  isChild
-                  href={"/team/service-users"}
-                  visible={permission.users.read}
-                />
-                {/* Groups have one page and two entries: here, because both
-                      products' policies are built from them, and under
-                      Networking › Access Control, where network policies are
-                      written. On /groups both entries are active. */}
-                <SidebarItem
-                  label="Groups"
-                  isChild
-                  href={"/groups"}
-                  visible={permission.policies.read}
-                />
-              </SidebarItem>
-              <SidebarItem
-                icon={<ActivityIcon />}
-                label="Audit Events"
-                href={"/events/audit"}
-                exactPathMatch={true}
-                visible={permission.events.read}
-              />
               <SidebarItem
                 icon={<SettingsIcon />}
                 label="Settings"
@@ -308,6 +287,22 @@ export default function Navigation({
                   permission?.event_streaming?.read ||
                   (!isNetBirdCloud() && (permission?.settings?.read ?? false))
                 }
+              />
+              {/* Service users are the API and automation identities, so
+                  they sit with the account setup rather than with Users. */}
+              <SidebarItem
+                icon={<ServiceUsersIcon />}
+                label="Service Users"
+                href={"/team/service-users"}
+                exactPathMatch={true}
+                visible={permission.users.read}
+              />
+              <SidebarItem
+                icon={<ActivityIcon />}
+                label="Audit Events"
+                href={"/events/audit"}
+                exactPathMatch={true}
+                visible={permission.events.read}
               />
               <SidebarItem
                 icon={<DocsIcon />}
@@ -342,13 +337,6 @@ const NetworkingItems = () => {
           href={"/access-control"}
           isChild
           exactPathMatch={true}
-          visible={permission.policies.read}
-        />
-        {/* The same page as Account › Team › Groups. */}
-        <SidebarItem
-          label="Groups"
-          isChild
-          href={"/groups"}
           visible={permission.policies.read}
         />
         <SidebarItem

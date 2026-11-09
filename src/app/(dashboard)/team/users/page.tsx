@@ -10,7 +10,6 @@ import useFetchApi from "@utils/api";
 import { isNetBirdCloud } from "@utils/netbird";
 import { ExternalLinkIcon, User2 } from "lucide-react";
 import React, { lazy, Suspense } from "react";
-import TeamIcon from "@/assets/icons/TeamIcon";
 import { AccountMfaCard } from "@/cloud/mfa/AccountMFACard";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -34,11 +33,6 @@ export default function TeamUsers() {
     <PageContainer>
       <div className={"p-default py-6"}>
         <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/team"}
-            label={"Team"}
-            icon={<TeamIcon size={13} />}
-          />
           <Breadcrumbs.Item
             href={"/team/users"}
             label={"Users"}

@@ -232,28 +232,25 @@ await visitByNavigation(page, "Policies");         // Click child
 ```
 
 The sidebar is one list for both products (`src/layouts/Navigation.tsx`):
-Control Center and Peers at the top, the **Networking** and **Agent Network**
-sections, and the **Account** area at the bottom. Section headings have the
-test id `left-navigation-section` (not `left-navigation-item`) and are
-collapsible; their open state is kept in `localStorage` (`netbird-nav-sections`),
-so a spec that closes one on the shared owner page must clear that key again.
+Control Center, Peers, Users and Groups at the top, the **Networking** and
+**Agent Network** sections, and the **Account** area at the bottom. Section
+headings have the test id `left-navigation-section` (not
+`left-navigation-item`) and are collapsible; their open state is kept in
+`localStorage` (`netbird-nav-sections`), so a spec that closes one on the
+shared owner page must clear that key again.
 
 | Section | Parent | Children |
 |---------|--------|----------|
-| Networking | Access Control | Policies, Groups, Posture Checks |
+| (top) | Control Center, Peers, Users, Groups | — |
+| Networking | Access Control | Policies, Posture Checks |
 | Networking | Network Routing | Networks, Routes |
 | Networking | Reverse Proxy | Services, Custom Domains, Clusters, Access Logs |
 | Networking | DNS | Nameservers, Zones, DNS Settings |
 | Networking | Traffic Events | — |
+| Agent Network | Agents | Connect Agent, Providers, Agent Policies |
 | Agent Network | Insights (placeholders: on under `next dev`, the test build included; off in production builds unless `NETBIRD_AGENT_NETWORK_INSIGHTS=true`) | Overview, Models, Tasks, Departments |
 | Agent Network | Usage & Logs, Configuration | — |
-| Agent Network | Agents | Connect Agent, Providers, Agent Policies |
-| Account | Team | Users, Service Users, Groups |
-| Account | Audit Events, Settings, Integrations, Documentation | — |
-
-Groups is listed twice (Access Control and Team) and opens one page, so
-`visitByNavigation(page, "Groups")` finds two entries; expand the parent you
-mean first or navigate with `navigateTo(page, "/groups")`.
+| Account | Settings, Integrations, Service Users, Audit Events, Documentation | — |
 
 ## Test Coverage
 

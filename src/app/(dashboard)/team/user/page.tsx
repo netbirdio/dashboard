@@ -29,7 +29,6 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import TeamIcon from "@/assets/icons/TeamIcon";
 import { UserMfaListItem } from "@/cloud/mfa/UserMFAListItem";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -153,13 +152,6 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
     <PageContainer>
       <div className={"p-default py-6 mb-4"}>
         <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/team"}
-            label={"Team"}
-            disabled={!permission.users.read}
-            icon={<TeamIcon size={13} />}
-          />
-
           {isServiceUser ? (
             <Breadcrumbs.Item
               href={"/team/service-users"}
