@@ -11,6 +11,7 @@ import {
   LockIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
+  RadioTowerIcon,
   ShieldIcon,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -28,6 +29,7 @@ import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
 import SetupKeysTab from "@/modules/settings/SetupKeysTab";
 import GroupsSettings from "@/modules/settings/GroupsSettings";
+import RelaysTab from "@/modules/settings/relays/RelaysTab";
 import MetricsTab from "@/modules/settings/MetricsTab";
 import {
   CloudSettingsTabContent,
@@ -103,6 +105,13 @@ export default function NetBirdSettings() {
                 Networks
               </VerticalTabs.Trigger>
               <VerticalTabs.Trigger
+                value="relays"
+                data-testid="settings-tab-relays"
+              >
+                <RadioTowerIcon size={14} />
+                Relays
+              </VerticalTabs.Trigger>
+              <VerticalTabs.Trigger
                 value="clients"
                 data-testid="settings-tab-clients"
               >
@@ -130,6 +139,7 @@ export default function NetBirdSettings() {
             {account && <PermissionsTab account={account} />}
             {account && <GroupsSettings account={account} />}
             {account && <NetworkSettingsTab account={account} />}
+            {permission.settings.read && <RelaysTab />}
             {account && <ClientSettingsTab account={account} />}
             {account && <MetricsTab account={account} />}
             {account && <DangerZoneTab account={account} />}

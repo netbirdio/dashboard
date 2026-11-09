@@ -17,6 +17,7 @@ const ALL_FEATURES = [
   "EVENT_STREAMING",
   "MSP",
   "TRAFFIC_EVENTS",
+  "CUSTOM_RELAYS",
 ];
 
 export const plans = [

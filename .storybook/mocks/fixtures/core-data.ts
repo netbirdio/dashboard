@@ -1037,3 +1037,63 @@ export const identityProviders = [
     redirect_url: "https://api.storybook.test/oauth2/callback",
   },
 ];
+
+/* Custom relays: one per distribution style (groups, locations, both) plus
+   a disabled one, so every cell variant on the Relays tab renders. */
+export const relays = [
+  {
+    id: "relay-fra",
+    name: "Frankfurt Relay",
+    description: "Hetzner FSN1, owned by Infra",
+    enabled: true,
+    addresses: [
+      "rels://relay-fra-1.acme.io:443",
+      "rels://relay-fra-2.acme.io:443",
+    ],
+    credentials_ttl: 24 * 3600,
+    distribution: {
+      groups: [],
+      locations: [
+        { country_code: "DE" },
+        { country_code: "CH" },
+        { country_code: "FR" },
+      ],
+    },
+    instance_fallback: true,
+  },
+  {
+    id: "relay-office-berlin",
+    name: "Berlin Office",
+    description: "On-prem, data must stay in the office network",
+    enabled: true,
+    addresses: ["rels://relay.berlin.acme.internal:443"],
+    credentials_ttl: 6 * 3600,
+    distribution: {
+      groups: [GROUP.officeBerlin, GROUP.databases],
+      locations: [],
+    },
+    instance_fallback: false,
+  },
+  {
+    id: "relay-nyc",
+    name: "New York Relay",
+    enabled: true,
+    addresses: ["rels://relay-nyc.acme.io:443"],
+    credentials_ttl: 12 * 3600,
+    distribution: {
+      groups: [GROUP.officeNewYork],
+      locations: [{ country_code: "US" }],
+    },
+    instance_fallback: true,
+  },
+  {
+    id: "relay-lab",
+    name: "Lab Relay",
+    description: "Testing a new region",
+    enabled: false,
+    addresses: ["rel://10.20.0.5:8080"],
+    credentials_ttl: 3600,
+    distribution: { groups: [GROUP.developers], locations: [] },
+    instance_fallback: true,
+  },
+];

@@ -50,6 +50,10 @@ export const SetupKeys = shows("setup-keys", "Server provisioning");
 export const Groups = shows("groups", "User Groups");
 export const Permissions = shows("permissions", "Permissions");
 export const Networks = shows("networks", "Networks");
+export const Relays: Story = {
+  parameters: tab("relays"),
+  play: async () => void (await text("Frankfurt Relay")),
+};
 export const Clients = shows("clients", "Clients");
 export const Metrics = shows("metrics", "Metrics");
 export const DangerZone = shows("danger-zone", "Delete NetBird account");
@@ -148,6 +152,54 @@ export const SetupKeysFiltersOpen: Story = {
 export const SetupKeysEmpty: Story = {
   parameters: { ...tab("setup-keys"), api: { "GET /setup-keys": [] } },
   play: async () => void (await text("Setup Keys")),
+};
+
+export const RelaysEmpty: Story = {
+  parameters: { ...tab("relays"), api: { "GET /relays": [] } },
+  play: async () => void (await text("Add your own relay")),
+};
+
+export const RelayCreateModal: Story = {
+  parameters: tab("relays"),
+  play: async () => {
+    await text("Frankfurt Relay");
+    await click(screen.findByTestId("add-relay"));
+    await dialog();
+  },
+};
+
+/* Opens an existing relay on the Distribution tab: groups, countries, the
+   matched-peer count and the fallback switch turned off. */
+export const RelayDistribution: Story = {
+  parameters: tab("relays"),
+  play: async () => {
+    await click(await text("Berlin Office"));
+    await dialog();
+    await click(screen.findByTestId("relay-tab-distribution"));
+    await screen.findByTestId("relay-distribution-summary");
+  },
+};
+
+export const RelayDeploy: Story = {
+  parameters: tab("relays"),
+  play: async () => {
+    await text("Frankfurt Relay");
+    await openRowMenu(
+      (await screen.findAllByTestId("relay-actions"))[0].closest("tr")!,
+    );
+    await click(await text("Deploy Instructions"));
+    await dialog();
+  },
+};
+
+export const RelaysRowActionMenu: Story = {
+  parameters: tab("relays"),
+  play: async () => {
+    await text("Frankfurt Relay");
+    await openRowMenu(
+      (await screen.findAllByTestId("relay-actions"))[0].closest("tr")!,
+    );
+  },
 };
 
 export const DangerZoneConfirm: Story = {

@@ -7,6 +7,7 @@ import {
   invites,
   jobs,
   peers,
+  relays,
   setupKeys,
   tokens,
   trafficEvents,
@@ -68,4 +69,7 @@ export const coreFixtures: Record<string, Handler> = {
   },
 
   "GET /identity-providers": identityProviders,
+
+  "GET /relays": relays,
+  "GET /relays/:id": byId(relays),
 };

@@ -12,6 +12,7 @@ export enum PlanFeatures {
   EVENT_STREAMING = "EVENT_STREAMING",
   MSP = "MSP",
   TRAFFIC_EVENTS = "TRAFFIC_EVENTS",
+  CUSTOM_RELAYS = "CUSTOM_RELAYS",
 }
 
 /**
@@ -26,6 +27,7 @@ export const PlanFeatureAvailability = {
   [PlanFeatures.POSTURE_CHECKS]: PlanTier.BUSINESS,
   [PlanFeatures.EVENT_STREAMING]: PlanTier.BUSINESS,
   [PlanFeatures.TRAFFIC_EVENTS]: PlanTier.BUSINESS,
+  [PlanFeatures.CUSTOM_RELAYS]: PlanTier.BUSINESS,
 };
 
 /**
