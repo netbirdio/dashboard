@@ -377,19 +377,19 @@ export default function NetworkRoutesTable({
               filters={filterDefs}
               disabled={routes?.length == 0}
             />
+            <DataTableRefreshButton
+              isDisabled={routes?.length == 0}
+              onClick={() => {
+                mutate("/routes").then();
+                mutate("/groups").then();
+              }}
+            />
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
                 table.setPageIndex(0);
                 table.resetColumnFilters();
                 table.resetGlobalFilter();
-              }}
-            />
-            <DataTableRefreshButton
-              isDisabled={routes?.length == 0}
-              onClick={() => {
-                mutate("/setup-keys").then();
-                mutate("/groups").then();
               }}
             />
           </>

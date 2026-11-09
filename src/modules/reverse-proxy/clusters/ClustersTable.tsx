@@ -238,18 +238,18 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
               filters={filterDefs}
               disabled={rows.length === 0}
             />
+            <DataTableRefreshButton
+              isDisabled={rows.length === 0}
+              onClick={() => {
+                mutate("/reverse-proxies/clusters").then();
+              }}
+            />
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
                 table.setPageIndex(0);
                 table.resetColumnFilters();
                 table.resetGlobalFilter();
-              }}
-            />
-            <DataTableRefreshButton
-              isDisabled={rows.length === 0}
-              onClick={() => {
-                mutate("/reverse-proxies/clusters").then();
               }}
             />
           </>

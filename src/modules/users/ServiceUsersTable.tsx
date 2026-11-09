@@ -261,19 +261,19 @@ export default function ServiceUsersTable({
             filters={filterDefs}
             disabled={users?.length == 0}
           />
+          <DataTableRefreshButton
+            isDisabled={users?.length == 0}
+            onClick={() => {
+              mutate("/users?service_user=true");
+              mutate("/groups");
+            }}
+          />
           <DataTableResetFilterButton
             table={table}
             onClick={() => {
               table.setPageIndex(0);
               table.resetColumnFilters();
               table.resetGlobalFilter();
-            }}
-          />
-          <DataTableRefreshButton
-            isDisabled={users?.length == 0}
-            onClick={() => {
-              mutate("/users?service_user=true");
-              mutate("/groups");
             }}
           />
         </>
