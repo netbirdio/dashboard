@@ -2,7 +2,7 @@ import { test, expect } from "../helpers/fixtures";
 import { navigateTo } from "../helpers/auth";
 import { deleteNotificationChannelsByType } from "../helpers/api";
 
-test.describe.serial("Settings - Notifications - Webhook @notifications", () => {
+test.describe.serial("Settings - Notifications - Webhook @notifications @cloud", () => {
   test("Should connect a webhook with no authentication", async ({ dashboardAsOwner: page }) => {
     await deleteNotificationChannelsByType(page, "webhook");
     await navigateTo(page, "/settings?tab=notifications");

@@ -194,7 +194,7 @@ export default function ServiceUsersTable({
         <GetStartedTest
           icon={
             <SquareIcon
-              icon={<IconSettings2 size={24} />}
+              icon={<IconSettings2 size={24} className={"text-nb-gray-200"} />}
               color={"gray"}
               size={"large"}
             />
@@ -261,19 +261,19 @@ export default function ServiceUsersTable({
             filters={filterDefs}
             disabled={users?.length == 0}
           />
+          <DataTableRefreshButton
+            isDisabled={users?.length == 0}
+            onClick={() => {
+              mutate("/users?service_user=true");
+              mutate("/groups");
+            }}
+          />
           <DataTableResetFilterButton
             table={table}
             onClick={() => {
               table.setPageIndex(0);
               table.resetColumnFilters();
               table.resetGlobalFilter();
-            }}
-          />
-          <DataTableRefreshButton
-            isDisabled={users?.length == 0}
-            onClick={() => {
-              mutate("/users?service_user=true");
-              mutate("/groups");
             }}
           />
         </>

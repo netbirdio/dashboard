@@ -7,13 +7,19 @@ import {
   AccordionTrigger,
 } from "@components/Accordion";
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
+import { HelpTooltip } from "@components/HelpTooltip";
+import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
+import Paragraph from "@components/Paragraph";
 import { SelectDropdown } from "@components/select/SelectDropdown";
+import Separator from "@components/Separator";
+import { cn } from "@utils/helpers";
 import {
   AlertTriangle,
   ClockFadingIcon,
@@ -22,8 +28,11 @@ import {
   Server,
   ShieldXIcon,
 } from "lucide-react";
-import { Callout } from "@components/Callout";
 import React, { useMemo, useRef, useState } from "react";
+import {
+  defaultPortForProtocol,
+  isResourceTargetType,
+} from "@/contexts/ReverseProxiesProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
@@ -34,25 +43,19 @@ import {
   ReverseProxyTargetType,
   ServiceMode,
   ServiceTargetOptionsPathRewrite,
+  TargetAccessAction,
+  type TargetAccessAction as TargetAccessActionValue,
 } from "@/interfaces/ReverseProxy";
-import {
-  defaultPortForProtocol,
-  isResourceTargetType,
-} from "@/contexts/ReverseProxiesProvider";
-import { cn } from "@utils/helpers";
-import { HelpTooltip } from "@components/HelpTooltip";
-import InlineLink from "@components/InlineLink";
-import Paragraph from "@components/Paragraph";
+import ReverseProxyAddressInput, {
+  CidrHelpText,
+  useReverseProxyAddress,
+} from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
+import ReverseProxyTargetAccessControl from "@/modules/reverse-proxy/targets/ReverseProxyTargetAccessControl";
 import ReverseProxyTargetCustomHeaders from "@/modules/reverse-proxy/targets/ReverseProxyTargetCustomHeaders";
 import ReverseProxyTargetSelector, {
   Target,
 } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
 import { useReverseProxyTargetOptions } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
-import ReverseProxyAddressInput, {
-  CidrHelpText,
-  useReverseProxyAddress,
-} from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
-import Separator from "@components/Separator";
 
 /** Get initial host value based on target, resource, or peer */
 function getInitialHost(
@@ -99,6 +102,8 @@ export default function ReverseProxyTargetModal({
 }: Readonly<Props>) {
   const existingTargets = reverseProxy.targets || [];
   const domain = reverseProxy.domain;
+  const isHTTPService =
+    !reverseProxy.mode || reverseProxy.mode === ServiceMode.HTTP;
 
   const [target, setTarget] = useState<Target | undefined>(() => {
     if (
@@ -140,6 +145,9 @@ export default function ReverseProxyTargetModal({
     currentTarget?.port ?? 0,
   );
   const [targetPath, setTargetPath] = useState(currentTarget?.path ?? "");
+  const [accessAction, setAccessAction] = useState<string>(
+    currentTarget?.access_action ?? TargetAccessAction.INHERIT,
+  );
   const [accessLocal] = useState(currentTarget?.access_local ?? false);
   const [options, setOption, { getTargetOptions, headers, errors }] =
     useReverseProxyTargetOptions(currentTarget?.options);
@@ -248,6 +256,9 @@ export default function ReverseProxyTargetModal({
       port: targetPort,
       path: targetPath || undefined,
       enabled: currentTarget?.enabled ?? true,
+      access_action: isHTTPService
+        ? (accessAction as TargetAccessActionValue)
+        : currentTarget?.access_action,
       access_local: resolvedIsResource ? accessLocal : undefined,
       options: resolvedOpts,
     };
@@ -500,6 +511,14 @@ export default function ReverseProxyTargetModal({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className={"flex flex-col gap-8 pb-6 pt-2"}>
+                    {isHTTPService && (
+                      <ReverseProxyTargetAccessControl
+                        value={accessAction}
+                        onChange={setAccessAction}
+                        privateService={reverseProxy.private === true}
+                      />
+                    )}
+
                     <div className={"flex items-center justify-between"}>
                       <div>
                         <Label>Request Timeout</Label>

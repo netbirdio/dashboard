@@ -9,6 +9,9 @@ type Props = {
   icon?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
+  /** Lets callers mark a callout so tests can assert on the state it
+   * announces rather than on its copy. */
+  "data-testid"?: string;
 } & CalloutVariants;
 
 export const calloutVariants = cva(
@@ -31,9 +34,13 @@ export const Callout = ({
   icon = <InfoIcon size={14} className={"shrink-0 relative top-[3px]"} />,
   className,
   variant = "default",
+  "data-testid": dataTestId,
 }: Props) => {
   return (
-    <div className={cn(calloutVariants({ variant }), className)}>
+    <div
+      className={cn(calloutVariants({ variant }), className)}
+      data-testid={dataTestId}
+    >
       {icon}
       <div>{children}</div>
     </div>

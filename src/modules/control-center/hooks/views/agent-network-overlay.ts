@@ -1,7 +1,10 @@
 import { Edge, Node } from "@xyflow/react";
 import { useMemo } from "react";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
-import type { AgentPolicy, AIProvider } from "@/modules/agent-network/data/mockData";
+import type {
+  AgentPolicy,
+  AIProvider,
+} from "@/modules/agent-network/data/mockData";
 import { addEdge, addNode } from "@/modules/control-center/utils/graph-builder";
 import { NodeType } from "@/modules/control-center/utils/nodes";
 
@@ -19,7 +22,7 @@ export function useAgentNetworkOverlay(): AgentNetworkOverlay {
     providers.forEach((p) => byId.set(p.id, p));
     return byId;
   }, [providers]);
-  return { policies, providerById };
+  return useMemo(() => ({ policies, providerById }), [policies, providerById]);
 }
 
 // Appends `sourceNodeId → agent-policy-<id> → provider-<id>`, mirroring the
@@ -30,6 +33,7 @@ export function addAgentNetworkProviderNodes(
   nodes: Node[],
   edges: Edge[],
   { policies, providerById }: AgentNetworkOverlay,
+  sourceHandle?: string,
 ) {
   if (!groupId || policies.length === 0) return;
 
@@ -48,9 +52,14 @@ export function addAgentNetworkProviderNodes(
         position: { x: 0, y: 0 },
       });
 
+      // Keyed by source and policy, deliberately not by group: a source can
+      // reach one policy through several of its groups, and that is still a
+      // single edge. The source itself has to be in the id because draft draws
+      // one edge per group NODE, which are genuinely separate edges.
       addEdge(edges, {
-        id: `agent-src-${groupId}-${policy.id}`,
+        id: `agent-src-${sourceNodeId}-${policy.id}`,
         source: sourceNodeId,
+        sourceHandle,
         target: policyNodeId,
         type: "smart",
         data: { enabled },

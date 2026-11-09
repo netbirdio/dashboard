@@ -24,6 +24,8 @@ export default function ClustersActionCell({ cluster }: Readonly<Props>) {
   // Shared clusters are operated by NetBird; only account-owned (BYOP)
   // clusters can be deleted from this page. Rendering nothing for
   // shared rows keeps the cell column-aligned without an inert button.
+  // TODO(NET-1722): a NetBird-managed gateway is listed as an account cluster
+  // too; deleting it here would take the account's gateway down.
   if (cluster.type !== ReverseProxyClusterType.ACCOUNT) {
     return <div className={"pr-4"} />;
   }

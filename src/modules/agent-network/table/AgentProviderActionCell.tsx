@@ -7,11 +7,12 @@ import {
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
-import { MoreVertical, Power, Trash2 } from "lucide-react";
+import { MoreVertical, Power, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { useDialog } from "@/contexts/DialogProvider";
-import { AIProvider } from "@/modules/agent-network/data/mockData";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useAIProviders } from "@/modules/agent-network/AIProvidersProvider";
+import { AIProvider } from "@/modules/agent-network/data/mockData";
 
 type Props = {
   provider: AIProvider;
@@ -19,7 +20,13 @@ type Props = {
 
 export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
   const { confirm } = useDialog();
-  const { policies, toggleProvider, deleteProvider } = useAIProviders();
+  const { policies, toggleProvider, deleteProvider, openProviderEdit } =
+    useAIProviders();
+  // Each menu item maps to its own operation grant; read-only viewers
+  // (usage_viewer) get no menu at all instead of actions that can only 403.
+  const { permission } = usePermissions();
+  const canUpdate = !!permission?.["agent_network.providers"]?.update;
+  const canDelete = !!permission?.["agent_network.providers"]?.delete;
 
   const referencingPolicies = policies.filter((p) =>
     p.destinationProviderIds.includes(provider.id),
@@ -39,6 +46,8 @@ export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
     await deleteProvider(provider.id);
   };
 
+  if (!canUpdate && !canDelete) return null;
+
   return (
     <div className={"flex justify-end pr-4"}>
       <DropdownMenu modal={false}>
@@ -54,45 +63,64 @@ export default function AgentProviderActionCell({ provider }: Readonly<Props>) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className={"w-auto"} align={"end"}>
-          <DropdownMenuItem onClick={() => toggleProvider(provider.id)}>
-            <div className={"flex gap-3 items-center"}>
-              <Power size={14} className={"shrink-0"} />
-              {provider.enabled ? "Disable" : "Enable"}
-            </div>
-          </DropdownMenuItem>
-
-          <DropdownMenuSeparator />
-
-          <FullTooltip
-            disabled={!inUse}
-            interactive={false}
-            content={
-              <div className={"text-xs max-w-xs"}>
-                This provider is referenced by{" "}
-                {referencingPolicies.length === 1
-                  ? "1 policy"
-                  : `${referencingPolicies.length} policies`}{" "}
-                and cannot be deleted. Detach it from the policy first.
-              </div>
-            }
-          >
+          {canUpdate && (
             <DropdownMenuItem
+              data-testid={"edit-provider"}
               onClick={(e) => {
-                if (inUse) {
-                  e.preventDefault();
-                  return;
-                }
-                handleDelete();
+                e.stopPropagation();
+                openProviderEdit(provider);
               }}
-              variant={"danger"}
-              disabled={inUse}
             >
               <div className={"flex gap-3 items-center"}>
-                <Trash2 size={14} className={"shrink-0"} />
-                Delete
+                <SquarePenIcon size={14} className={"shrink-0"} />
+                Edit
               </div>
             </DropdownMenuItem>
-          </FullTooltip>
+          )}
+
+          {canUpdate && (
+            <DropdownMenuItem onClick={() => toggleProvider(provider.id)}>
+              <div className={"flex gap-3 items-center"}>
+                <Power size={14} className={"shrink-0"} />
+                {provider.enabled ? "Disable" : "Enable"}
+              </div>
+            </DropdownMenuItem>
+          )}
+
+          {canUpdate && canDelete && <DropdownMenuSeparator />}
+
+          {canDelete && (
+            <FullTooltip
+              disabled={!inUse}
+              interactive={false}
+              content={
+                <div className={"text-xs max-w-xs"}>
+                  This provider is referenced by{" "}
+                  {referencingPolicies.length === 1
+                    ? "1 policy"
+                    : `${referencingPolicies.length} policies`}{" "}
+                  and cannot be deleted. Detach it from the policy first.
+                </div>
+              }
+            >
+              <DropdownMenuItem
+                onClick={(e) => {
+                  if (inUse) {
+                    e.preventDefault();
+                    return;
+                  }
+                  handleDelete();
+                }}
+                variant={"danger"}
+                disabled={inUse}
+              >
+                <div className={"flex gap-3 items-center"}>
+                  <Trash2 size={14} className={"shrink-0"} />
+                  Delete
+                </div>
+              </DropdownMenuItem>
+            </FullTooltip>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

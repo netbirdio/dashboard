@@ -130,7 +130,7 @@ async function closeTooltip(page: Page) {
   await expect(tooltip(page)).toHaveCount(0);
 }
 
-test.describe.serial("Agent Network cache accounting @agent-network", () => {
+test.describe.serial("Agent Network cache accounting @agent-network @test-build", () => {
   test("access-log hover breaks out prompt-cache tokens and cost", async ({
     browser,
   }) => {

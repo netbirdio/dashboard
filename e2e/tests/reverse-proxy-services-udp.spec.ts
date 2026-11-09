@@ -19,7 +19,7 @@ let udpNetwork = "";
 let udpResource = "";
 let udpSubdomain = "";
 
-test.describe.serial("Reverse Proxy - Services (UDP) @reverse-proxy", () => {
+test.describe.serial("Reverse Proxy - Services (UDP) @reverse-proxy @test-env", () => {
   test("Should create a network with a resource", async ({ dashboardAsOwner: page }) => {
     await deleteServicesByPrefix(page, "udp-svc-");
     await deleteNetworksByPrefix(page, "rp-udp-net-");

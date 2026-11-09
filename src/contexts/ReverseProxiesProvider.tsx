@@ -11,7 +11,9 @@ import React, {
   useState,
 } from "react";
 import { useSWRConfig } from "swr";
+import { TerminatedProxiesProvider } from "@/cloud/reverse-proxy/TerminatedProxiesProvider";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
@@ -26,8 +28,6 @@ import {
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyModal from "@/modules/reverse-proxy/ReverseProxyModal";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
-import { TerminatedProxiesProvider } from "@/cloud/reverse-proxy/TerminatedProxiesProvider";
-import { usePermissions } from "@/contexts/PermissionsProvider";
 
 type ReverseProxiesContextValue = {
   reverseProxies: ReverseProxy[] | undefined;
@@ -225,7 +225,10 @@ export default function ReverseProxiesProvider({
 
       if (isEditing) {
         // Update existing target - match by index against the original target
-        const targetIndex = targetModalProxy.targets.indexOf(editingTarget);
+        const targetIndex = findTargetIndex(
+          targetModalProxy.targets,
+          editingTarget,
+        );
         updatedTargets = targetModalProxy.targets.map((t, i) => {
           return i === targetIndex ? target : t;
         });
@@ -334,17 +337,7 @@ export default function ReverseProxiesProvider({
   const handleToggleTarget = useCallback(
     async (proxy: ReverseProxy, target: ReverseProxyTarget) => {
       const newEnabled = !target.enabled;
-      let targetIndex = proxy.targets.indexOf(target);
-      if (targetIndex === -1) {
-        targetIndex = proxy.targets.findIndex(
-          (t) =>
-            t.target_id === target.target_id &&
-            t.target_type === target.target_type &&
-            t.path === target.path &&
-            t.host === target.host &&
-            t.port === target.port,
-        );
-      }
+      const targetIndex = findTargetIndex(proxy.targets, target);
       if (targetIndex === -1) return;
       const updatedTargets = proxy.targets.map((t, i) => {
         return i === targetIndex ? { ...t, enabled: newEnabled } : t;
@@ -415,17 +408,7 @@ export default function ReverseProxiesProvider({
           loadingMessage: "Deleting service...",
         });
       } else {
-        let targetIndex = proxy.targets.indexOf(target);
-        if (targetIndex === -1) {
-          targetIndex = proxy.targets.findIndex(
-            (t) =>
-              t.target_id === target.target_id &&
-              t.target_type === target.target_type &&
-              t.path === target.path &&
-              t.host === target.host &&
-              t.port === target.port,
-          );
-        }
+        const targetIndex = findTargetIndex(proxy.targets, target);
         if (targetIndex === -1) return;
         const updatedTargets = proxy.targets.filter(
           (_, i) => i !== targetIndex,
@@ -635,6 +618,24 @@ export function flattenReverseProxies({
   });
 
   return flattened;
+}
+
+// Targets passed in from flattened views (network and peer pages) are copies,
+// so fall back to matching on the fields that identify a target.
+export function findTargetIndex(
+  targets: ReverseProxyTarget[],
+  target: ReverseProxyTarget,
+): number {
+  const index = targets.indexOf(target);
+  if (index !== -1) return index;
+  return targets.findIndex(
+    (t) =>
+      t.target_id === target.target_id &&
+      t.target_type === target.target_type &&
+      t.path === target.path &&
+      t.host === target.host &&
+      t.port === target.port,
+  );
 }
 
 export function sanitizeTargets(

@@ -25,9 +25,13 @@ const GroupContext = React.createContext(
 );
 
 export default function GroupsProvider({ children }: Props) {
-  const { isRestricted } = usePermissions();
+  const { isRestricted, permission } = usePermissions();
 
-  return isRestricted ? (
+  // Restricted users normally get the inert shell, but roles that are
+  // restricted yet hold the groups read grant (usage_viewer, which needs
+  // group names for the usage filters) still get the real provider — the
+  // content gates its fetch on that same grant.
+  return isRestricted && !permission.groups.read ? (
     <>{children}</>
   ) : (
     <GroupsProviderContent>{children}</GroupsProviderContent>

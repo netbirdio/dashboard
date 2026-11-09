@@ -51,7 +51,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { Group } from "@/interfaces/Group";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
-import { Peer } from "@/interfaces/Peer";
+import { Peer, peerMacAddresses } from "@/interfaces/Peer";
 import PeerActionCell from "@/modules/peers/PeerActionCell";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerGroupCell from "@/modules/peers/PeerGroupCell";
@@ -85,6 +85,7 @@ function peerOsKey(os: string | undefined): string {
 const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "select",
+    meta: { fit: true },
     header: ({ table }) => (
       <div className={"min-w-[20px] max-w-[20px]"}>
         <Checkbox
@@ -114,7 +115,8 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
     sortingFn: "text",
-    cell: ({ row }) => <PeerNameCell peer={row.original} />,
+    meta: { minWidth: 280 },
+    cell: ({ row }) => <PeerNameCell peer={row.original} fluid={true} />,
   },
   {
     id: "approval_required",
@@ -151,7 +153,10 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>Address</DataTableHeader>;
     },
-    cell: ({ row }) => <PeerAddressCell peer={row.original} />,
+    // The cell content brings its own hover padding,
+    // so the cell padding on the left is trimmed to give the columns more room.
+    meta: { minWidth: 300, className: "pl-1" },
+    cell: ({ row }) => <PeerAddressCell peer={row.original} fluid={true} />,
   },
   {
     accessorKey: "group_name_strings",
@@ -219,6 +224,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     accessorKey: "version",
+    meta: { minWidth: 150 },
     header: ({ column }) => {
       return <DataTableHeader column={column}>Version</DataTableHeader>;
     },
@@ -233,6 +239,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     id: "status",
+    meta: { fit: true },
     accessorFn: (peer) => {
       let statusCount = 0;
       if (peer.login_expired) statusCount++;
@@ -251,6 +258,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     id: "actions",
+    meta: { fit: true },
     accessorKey: "id",
     header: "",
     cell: ({ row }) => (
@@ -262,6 +270,10 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "ipv6",
     accessorFn: (row) => row.ipv6,
+  },
+  {
+    id: "mac",
+    accessorFn: (peer) => peerMacAddresses(peer).join(", "),
   },
 ];
 
@@ -492,7 +504,7 @@ export default function PeersTable({
         showResetFilterButton={false}
         columns={PeersTableColumns}
         data={showBrowserPeers ? browserPeers : regularPeers}
-        searchPlaceholder={"Search by name, IP, owner or group..."}
+        searchPlaceholder={"Search by name, IP, MAC, owner or group..."}
         columnVisibility={{
           select: permission.groups.read,
           connected: false,
@@ -509,6 +521,7 @@ export default function PeersTable({
           os: false,
           os_kind: false,
           ipv6: false,
+          mac: false,
         }}
         isLoading={isLoading}
         // Treat a selected kind as an active filter: when peers exist but the
@@ -517,13 +530,9 @@ export default function PeersTable({
         // "Get Started" card. With no peers at all (kind unselected), the card
         // still shows.
         hasServerSideFilters={kind !== undefined && (peers?.length ?? 0) > 0}
-        getStartedCard={
-          <NoPeersGettingStarted showBackground={true} />
-        }
+        getStartedCard={<NoPeersGettingStarted showBackground={true} />}
         rightSide={() => (
-          <>
-            {peers && peers.length > 0 && <AddPeerDropdown />}
-          </>
+          <>{peers && peers.length > 0 && <AddPeerDropdown />}</>
         )}
         aboveTable={(table) => (
           <TableFilterChips table={table} filters={filterDefs} />
@@ -564,16 +573,6 @@ export default function PeersTable({
                 Servers
               </ButtonGroup.Button>
             </ButtonGroup>
-
-            <DataTableResetFilterButton
-              table={table}
-              onClick={() => {
-                table.setPageIndex(0);
-                table.resetColumnFilters();
-                table.resetGlobalFilter();
-                resetSelectedRows();
-              }}
-            />
 
             {pendingApprovalCount > 0 && (
               <FullTooltip
@@ -728,6 +727,16 @@ export default function PeersTable({
                 if (!isUser) mutate("/groups").then();
                 mutate("/users").then();
                 mutate("/peers").then();
+              }}
+            />
+
+            <DataTableResetFilterButton
+              table={table}
+              onClick={() => {
+                table.setPageIndex(0);
+                table.resetColumnFilters();
+                table.resetGlobalFilter();
+                resetSelectedRows();
               }}
             />
           </>

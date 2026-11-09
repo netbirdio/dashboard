@@ -1,5 +1,6 @@
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
@@ -11,7 +12,8 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
-import { Callout } from "@components/Callout";
+import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { useHasChanges } from "@hooks/useHasChanges";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
@@ -22,19 +24,18 @@ import {
   ExternalLinkIcon,
   MonitorSmartphoneIcon,
   RefreshCcw,
+  TagIcon,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
-import { SmallBadge } from "@components/ui/SmallBadge";
-import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
-import { useGroups } from "@/contexts/GroupsProvider";
-import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
 
 type Props = {
   account: Account;
@@ -78,6 +79,10 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 
   const [agentNetworkOnly, setAgentNetworkOnly] = useState(
     account.settings?.agent_network_only ?? false,
+  );
+
+  const [hostnameCollisionRejected, setHostnameCollisionRejected] = useState(
+    account.settings?.peer_hostname_collision_rejected ?? false,
   );
 
   const autoUpdateSetting = account.settings?.auto_update_version;
@@ -171,6 +176,9 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             auto_update_always: autoUpdateAlways,
             peer_expose_enabled: peerExposeEnabled,
             peer_expose_groups: peerExposeGroupIds,
+            lazy_connection_enabled: lazyConnection,
+            agent_network_only: agentNetworkOnly,
+            peer_hostname_collision_rejected: hostnameCollisionRejected,
           },
         })
         .then(() => {
@@ -206,6 +214,28 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           mutate("/accounts");
         }),
       loadingMessage: "Updating Lazy Connections setting...",
+    });
+  };
+
+  const toggleHostnameCollisionRejected = async (toggle: boolean) => {
+    notify({
+      title: "Unique Peer Hostnames",
+      description: `Unique peer hostnames successfully ${
+        toggle ? "enabled" : "disabled"
+      }.`,
+      promise: saveRequest
+        .put({
+          id: account.id,
+          settings: {
+            ...account.settings,
+            peer_hostname_collision_rejected: toggle,
+          },
+        })
+        .then(() => {
+          setHostnameCollisionRejected(toggle);
+          mutate("/accounts");
+        }),
+      loadingMessage: "Updating unique peer hostnames setting...",
     });
   };
 
@@ -247,7 +277,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             active
           />
         </Breadcrumbs>
-        <div className={"flex items-start justify-between"}>
+        <div className={"flex items-start justify-between -mt-1"}>
           <h1>Clients</h1>
           <Button
             variant={"primary"}
@@ -343,7 +373,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           <div>
             <div>
               <Label>
-                <ReverseProxyIcon size={15} className={"fill-nb-gray-300"} />
+                <ReverseProxyIcon size={15} className={"text-nb-gray-300"} />
                 Expose Services from CLI
               </Label>
               <HelpText>
@@ -428,6 +458,29 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                   required. Changes will take effect after restarting the
                   clients.
                 </>
+              }
+              disabled={!permission.settings.update}
+            />
+          </div>
+
+          <div>
+            <Label>
+              <TagIcon size={15} />
+              Unique Peer Hostnames
+            </Label>
+            <HelpText>
+              By default, a peer registering or being renamed with a hostname
+              that is already in use receives an IP-based suffix on its DNS
+              label.
+            </HelpText>
+            <FancyToggleSwitch
+              className={"mt-2"}
+              value={hostnameCollisionRejected}
+              onChange={toggleHostnameCollisionRejected}
+              data-testid="peer-hostname-collision-rejected"
+              label={"Reject Hostname Collisions"}
+              helpText={
+                "When enabled, registering or renaming a peer to a hostname that is already in use fails instead of receiving a suffix. This applies to ephemeral peers as well."
               }
               disabled={!permission.settings.update}
             />

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { Policy } from "@/interfaces/Policy";
+import { Group } from "@/interfaces/Group";
 import {
   CreateGroupChange,
   CreatePolicyChange,
@@ -9,6 +10,7 @@ import {
   UpdateGroupChange,
   UpdatePolicyChange,
   UpdateResourceChange,
+  DraftChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
 import {
   buildBeforeRequest,
@@ -502,5 +504,251 @@ describe("id placeholders in preview", () => {
     const body = buildChangeRequest(change, live)?.body as any;
     // No bound group for user devices, but canvas memberships still ride the key.
     expect(body.auto_groups).toEqual(["grp-live"]);
+  });
+});
+
+describe("agent network and user membership bodies", () => {
+  const providerInput = {
+    providerId: "openai_api",
+    name: "OpenAI",
+    upstreamUrl: "https://api.openai.com",
+    apiKey: "sk-live-secret",
+    models: [],
+  };
+
+  it("never renders a provider's API key, on create or on update", () => {
+    const create = buildChangeRequest({
+      id: "cp",
+      type: "create-provider",
+      clientId: "new-1",
+      name: "OpenAI",
+      input: providerInput,
+    } as never as DraftChange);
+    const update = buildChangeRequest({
+      id: "up",
+      type: "update-provider",
+      providerId: "p1",
+      name: "OpenAI",
+      updates: { apiKey: "sk-live-rotated", name: "OpenAI" },
+    } as never as DraftChange);
+
+    expect(JSON.stringify(create.body)).not.toContain("sk-live-secret");
+    expect(JSON.stringify(update.body)).not.toContain("sk-live-rotated");
+    expect((update.body as { api_key?: string }).api_key).toBe("••••••••");
+    expect((create.body as { provider_id?: string }).provider_id).toBe(
+      "openai_api",
+    );
+  });
+
+  it("renders an agent policy in the wire shape the API takes", () => {
+    const request = buildChangeRequest(
+      {
+        id: "cap",
+        type: "create-agent-policy",
+        clientId: "new-1",
+        name: "Agents → OpenAI",
+        policy: {
+          name: "Agents → OpenAI",
+          description: "",
+          enabled: true,
+          sourceGroups: ["g1"],
+          destinationProviderIds: ["new-p1"],
+          guardrailIds: [],
+          limits: {},
+        },
+      } as never as DraftChange,
+      { groups: [{ id: "g1", name: "Ops" } as Group] },
+    );
+
+    const body = request.body as Record<string, unknown>;
+    expect(body).toMatchObject({ source_groups: ["g1"] });
+    expect(body).not.toHaveProperty("sourceGroups");
+    expect((body.destination_provider_ids as string[])[0]).not.toBe("new-p1");
+  });
+
+  it("shows a membership change as the whole-user PUT it really is", () => {
+    const request = buildChangeRequest(
+      {
+        id: "uug",
+        type: "update-user-groups",
+        userId: "u1",
+        name: "Ada",
+        groupRefs: ["g1", "Ops"],
+        addedGroupNames: ["Ops"],
+        removedGroupNames: [],
+      } as never as DraftChange,
+      {
+        groups: [{ id: "g1", name: "Everyone" } as Group],
+        users: [{ id: "u1", name: "Ada", auto_groups: ["g1"] }],
+      },
+    );
+
+    expect(request.method).toBe("PUT");
+    expect(request.path).toBe("/users/u1");
+    expect(request.body).toMatchObject({ id: "u1", name: "Ada" });
+    const sent = (request.body as { auto_groups: string[] }).auto_groups;
+    expect(sent[0]).toBe("g1");
+    expect(sent[1]).not.toBe("Ops");
+  });
+});
+
+describe("the before side of the new change types", () => {
+  it("diffs a membership change against the user's current groups", () => {
+    const before = buildBeforeRequest(
+      {
+        id: "uug",
+        type: "update-user-groups",
+        userId: "u1",
+        name: "Ada",
+        groupRefs: ["g1", "g2"],
+        addedGroupNames: ["Ops"],
+        removedGroupNames: [],
+      } as never as DraftChange,
+      { users: [{ id: "u1", name: "Ada", auto_groups: ["g1"] }] },
+    );
+
+    expect(before).toMatchObject({ method: "PUT", path: "/users/u1" });
+    expect((before?.body as { auto_groups: string[] }).auto_groups).toEqual([
+      "g1",
+    ]);
+  });
+
+  it("diffs an agent policy against its live record", () => {
+    const before = buildBeforeRequest(
+      {
+        id: "uap",
+        type: "update-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "Agents",
+        policy: { enabled: false },
+      } as never as DraftChange,
+      {
+        agentPolicies: [
+          {
+            id: "ap-1",
+            name: "Agents",
+            description: "",
+            enabled: true,
+            sourceGroups: ["g1"],
+            destinationProviderIds: ["p1"],
+            guardrailIds: [],
+            limits: {},
+          },
+        ],
+      },
+    );
+
+    expect(before?.path).toBe("/agent-network/policies/ap-1");
+    expect(before?.body).toMatchObject({
+      enabled: true,
+      source_groups: ["g1"],
+    });
+  });
+
+  // The deploy PUTs the partial update merged onto the live record, and the code
+  // view is what the user approves, so the "after" side has to show that merge.
+  it("merges a partial provider update onto the live record", () => {
+    const after = buildChangeRequest(
+      {
+        id: "up",
+        type: "update-provider",
+        providerId: "p1",
+        name: "OpenAI",
+        updates: { enabled: false },
+      } as never as DraftChange,
+      {
+        providers: [
+          {
+            id: "p1",
+            providerId: "openai_api",
+            name: "OpenAI",
+            upstreamUrl: "https://api.openai.com",
+            models: [],
+          },
+        ],
+      },
+    );
+
+    expect(after.body).toMatchObject({
+      enabled: false,
+      name: "OpenAI",
+      provider_id: "openai_api",
+      upstream_url: "https://api.openai.com",
+    });
+  });
+
+  it("merges a partial agent-policy update onto the live record", () => {
+    const after = buildChangeRequest(
+      {
+        id: "uap",
+        type: "update-agent-policy",
+        agentPolicyId: "ap-1",
+        name: "Agents",
+        policy: { enabled: false },
+      } as never as DraftChange,
+      {
+        agentPolicies: [
+          {
+            id: "ap-1",
+            name: "Agents",
+            description: "",
+            enabled: true,
+            sourceGroups: ["g1"],
+            destinationProviderIds: ["p1"],
+            guardrailIds: [],
+            limits: {},
+          },
+        ],
+        groups: [{ id: "g1", name: "Ops" } as Group],
+      },
+    );
+
+    expect(after.body).toMatchObject({
+      enabled: false,
+      name: "Agents",
+      source_groups: ["g1"],
+      destination_provider_ids: ["p1"],
+    });
+  });
+
+  it("shows a deleted provider as an all-minus body, redacted", () => {
+    const before = buildBeforeRequest(
+      {
+        id: "dp",
+        type: "delete-provider",
+        providerId: "p1",
+        name: "OpenAI",
+      } as never as DraftChange,
+      {
+        providers: [
+          {
+            id: "p1",
+            providerId: "openai_api",
+            name: "OpenAI",
+            upstreamUrl: "https://api.openai.com",
+            apiKey: "sk-live",
+          },
+        ],
+      },
+    );
+
+    expect(before?.method).toBe("DELETE");
+    expect(JSON.stringify(before?.body)).not.toContain("sk-live");
+    expect(before?.body).toMatchObject({ provider_id: "openai_api" });
+  });
+
+  it("has no before for a create", () => {
+    expect(
+      buildBeforeRequest(
+        {
+          id: "cp",
+          type: "create-provider",
+          clientId: "new-1",
+          name: "OpenAI",
+          input: {},
+        } as never as DraftChange,
+        {},
+      ),
+    ).toBeNull();
   });
 });

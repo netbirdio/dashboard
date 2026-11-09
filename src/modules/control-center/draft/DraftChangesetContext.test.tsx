@@ -123,17 +123,15 @@ describe("group changes", () => {
       sources: [{ name: "G" } as Group],
       destinations: [{ id: "x", name: "X" } as Group],
     });
-    act(() =>
-      result.current.trackCreatePolicy({ clientId: "new-1", policy }),
-    );
+    act(() => result.current.trackCreatePolicy({ clientId: "new-1", policy }));
     act(() => result.current.trackRenameGroup({ from: "G", to: "G2" }));
 
     const change = result.current.changes.find(
       (c) => c.type === "create-policy",
     );
-    expect(
-      (change as { policy: Policy }).policy.rules[0].sources,
-    ).toEqual([{ name: "G2" }]);
+    expect((change as { policy: Policy }).policy.rules[0].sources).toEqual([
+      { name: "G2" },
+    ]);
   });
 
   it("replacePeerIdInGroups renames a placeholder member to the real peer id", () => {
@@ -353,7 +351,9 @@ describe("group changes", () => {
 
 describe("untrackNewGroup cascades like the review panel", () => {
   const seed = (r: ReturnType<typeof setup>["result"]) => {
-    act(() => r.current.trackCreateGroup({ clientId: "group-new-1", name: "G" }));
+    act(() =>
+      r.current.trackCreateGroup({ clientId: "group-new-1", name: "G" }),
+    );
     act(() =>
       r.current.trackCreateResource({
         clientId: "new-r1",
@@ -380,9 +380,9 @@ describe("untrackNewGroup cascades like the review panel", () => {
     seed(result);
     act(() => result.current.untrackNewGroup("G"));
 
-    expect(
-      result.current.changes.some((c) => c.type === "create-group"),
-    ).toBe(false);
+    expect(result.current.changes.some((c) => c.type === "create-group")).toBe(
+      false,
+    );
     expect(result.current.changes).toEqual([
       expect.objectContaining({ type: "create-resource", groupIds: [] }),
     ]);
@@ -404,8 +404,7 @@ describe("untrackNewGroup cascades like the review panel", () => {
       ),
     );
 
-    const shape = (cs: DraftChange[]) =>
-      cs.map(({ id, ...rest }) => rest);
+    const shape = (cs: DraftChange[]) => cs.map(({ id, ...rest }) => rest);
     expect(shape(canvas.result.current.changes)).toEqual(
       shape(panel.result.current.changes),
     );
@@ -457,9 +456,7 @@ describe("policy changes", () => {
         policy,
       }),
     );
-    act(() =>
-      result.current.trackUpdatePolicy({ policyId: "p1", policy }),
-    );
+    act(() => result.current.trackUpdatePolicy({ policyId: "p1", policy }));
     expect(result.current.changes).toHaveLength(1);
     expect(result.current.changes[0]).toMatchObject({
       type: "update-policy",
@@ -553,10 +550,16 @@ describe("policy changes", () => {
   it("emptying a policy twice records one delete", () => {
     const { result } = setup();
     act(() =>
-      result.current.trackUpdatePolicy({ policyId: "p1", policy: makePolicy("p1") }),
+      result.current.trackUpdatePolicy({
+        policyId: "p1",
+        policy: makePolicy("p1"),
+      }),
     );
     act(() =>
-      result.current.trackUpdatePolicy({ policyId: "p1", policy: makePolicy("p1") }),
+      result.current.trackUpdatePolicy({
+        policyId: "p1",
+        policy: makePolicy("p1"),
+      }),
     );
     expect(result.current.changes).toHaveLength(1);
     expect(result.current.changes[0].type).toBe("delete-policy");
@@ -567,7 +570,10 @@ describe("policy changes", () => {
   it("rebuilding an emptied policy drops the delete instead of updating then deleting", () => {
     const { result } = setup();
     act(() =>
-      result.current.trackUpdatePolicy({ policyId: "p1", policy: makePolicy("p1") }),
+      result.current.trackUpdatePolicy({
+        policyId: "p1",
+        policy: makePolicy("p1"),
+      }),
     );
     expect(result.current.changes[0].type).toBe("delete-policy");
 
@@ -585,7 +591,10 @@ describe("policy changes", () => {
   it("deleting an emptied policy outright records ONE delete, not two", () => {
     const { result } = setup();
     act(() =>
-      result.current.trackUpdatePolicy({ policyId: "p1", policy: makePolicy("p1") }),
+      result.current.trackUpdatePolicy({
+        policyId: "p1",
+        policy: makePolicy("p1"),
+      }),
     );
     // The node survives an emptying, so its menu still offers Delete.
     act(() => result.current.trackDeletePolicy({ policyId: "p1", name: "p1" }));
@@ -637,9 +646,7 @@ describe("policy changes", () => {
         policy: makeSidedPolicy("p1"),
       }),
     );
-    act(() =>
-      result.current.trackDeletePolicy({ policyId: "p1", name: "p1" }),
-    );
+    act(() => result.current.trackDeletePolicy({ policyId: "p1", name: "p1" }));
     expect(result.current.changes).toHaveLength(1);
     expect(result.current.changes[0].type).toBe("delete-policy");
   });
@@ -705,8 +712,14 @@ describe("policy changes", () => {
     const stripped = (id: string) =>
       makePolicy(id, { destinations: [{ name: "B" } as Group] });
     act(() => {
-      preRemoval.patchPendingPolicyUpdate({ policyId: "p1", policy: stripped("p1") });
-      preRemoval.patchPendingPolicyUpdate({ policyId: "p2", policy: stripped("p2") });
+      preRemoval.patchPendingPolicyUpdate({
+        policyId: "p1",
+        policy: stripped("p1"),
+      });
+      preRemoval.patchPendingPolicyUpdate({
+        policyId: "p2",
+        policy: stripped("p2"),
+      });
     });
     const updates = result.current.changes.filter(
       (c) => c.type === "update-policy",
@@ -789,7 +802,9 @@ describe("network / resource / router changes", () => {
       peerId: "p1",
     };
     act(() => result.current.trackCreateRouter(router));
-    act(() => result.current.trackCreateRouter({ ...router, clientId: "new-y" }));
+    act(() =>
+      result.current.trackCreateRouter({ ...router, clientId: "new-y" }),
+    );
     expect(result.current.changes).toHaveLength(1);
   });
 
@@ -1163,7 +1178,9 @@ describe("getChangeIssue / hasBlockingIssues", () => {
   });
 
   it("has no issue once the resource has an API network id", () => {
-    expect(getChangeIssue(resourceChange({ networkId: "net-1" }), [])).toBeUndefined();
+    expect(
+      getChangeIssue(resourceChange({ networkId: "net-1" }), []),
+    ).toBeUndefined();
   });
 
   it("has no issue for a draft-network (client id) resource", () => {
@@ -1276,7 +1293,9 @@ describe("sequential group deletions keep every restore tag", () => {
     makePolicy("p1", { sources, destinations: [prod] });
 
   // What deleteGroups records for two deletions performed one after the other.
-  const deleteBoth = (result: { current: ReturnType<typeof useDraftChangeset> }) => {
+  const deleteBoth = (result: {
+    current: ReturnType<typeof useDraftChangeset>;
+  }) => {
     act(() =>
       result.current.trackUpdatePolicy({
         policyId: "p1",
@@ -1298,14 +1317,17 @@ describe("sequential group deletions keep every restore tag", () => {
   };
 
   const policyWrite = (changes: DraftChange[]) =>
-    changes.find((c) => c.type === "update-policy" || c.type === "delete-policy");
+    changes.find(
+      (c) => c.type === "update-policy" || c.type === "delete-policy",
+    );
 
   it("unions the stripped ids and keeps the EARLIEST baseline", () => {
     const { result } = setup();
     deleteBoth(result);
 
     const write = policyWrite(result.current.changes);
-    const tag = write && "groupDeletion" in write ? write.groupDeletion : undefined;
+    const tag =
+      write && "groupDeletion" in write ? write.groupDeletion : undefined;
     expect(tag?.groupIds).toEqual(["g1", "g2"]);
     expect(tag?.basePolicy.rules?.[0].sources).toEqual([ops, dev]);
   });
@@ -1341,7 +1363,8 @@ describe("sequential group deletions keep every restore tag", () => {
     );
 
     const write = policyWrite(result.current.changes);
-    const tag = write && "groupDeletion" in write ? write.groupDeletion : undefined;
+    const tag =
+      write && "groupDeletion" in write ? write.groupDeletion : undefined;
     expect(tag?.groupIds).toEqual(["g1", "g2"]);
     expect(tag?.handEdited).toBe(true);
     // The new baseline is the EDIT with both stripped groups put back, so a
@@ -1395,7 +1418,9 @@ describe("sequential group deletions keep every restore tag", () => {
     expect(
       write?.type === "update-policy" && write.policy.rules?.[0].sources,
     ).toEqual([prod, ops, dev]);
-    expect(write && "groupDeletion" in write && write.groupDeletion).toBeUndefined();
+    expect(
+      write && "groupDeletion" in write && write.groupDeletion,
+    ).toBeUndefined();
   });
 });
 
@@ -1442,7 +1467,8 @@ describe("a hand edit made BEFORE a group deletion", () => {
     const write = result.current.changes.find(
       (c) => c.type === "update-policy",
     );
-    const tag = write && "groupDeletion" in write ? write.groupDeletion : undefined;
+    const tag =
+      write && "groupDeletion" in write ? write.groupDeletion : undefined;
     expect(tag?.groupIds).toEqual(["g1"]);
     expect(tag?.handEdited).toBe(true);
   });
@@ -1559,7 +1585,10 @@ describe("a group deletion that strips a DRAFT policy", () => {
       restored?.type === "create-policy" && restored.policy.rules?.[0].sources,
     ).toEqual([ops]);
     expect(
-      getChangeIssue(restored!, reduceRemoveChange(result.current.changes, target)),
+      getChangeIssue(
+        restored!,
+        reduceRemoveChange(result.current.changes, target),
+      ),
     ).toBeUndefined();
   });
 
@@ -1746,5 +1775,467 @@ describe("clearInstallPeerKey", () => {
     const before = result.current.changes;
     act(() => result.current.clearInstallPeerKey("draft-1"));
     expect(result.current.changes).toBe(before);
+  });
+});
+
+describe("agent network changes", () => {
+  const providerInput = {
+    providerId: "openai_api",
+    name: "OpenAI",
+    upstreamUrl: "https://api.openai.com",
+    apiKey: "sk-test",
+    models: [],
+  } as never;
+
+  const agentPolicy = (over: Record<string, unknown> = {}) =>
+    ({
+      name: "Agents → OpenAI",
+      description: "",
+      enabled: true,
+      sourceGroups: ["g1"],
+      destinationProviderIds: ["p1"],
+      guardrailIds: [],
+      limits: {},
+      ...over,
+    }) as never;
+
+  it("folds an edit of a draft provider into its create", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateProvider({
+        clientId: "new-p",
+        name: "OpenAI",
+        input: providerInput,
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateProvider({
+        providerId: "new-p",
+        name: "OpenAI edited",
+        updates: { name: "OpenAI edited" },
+      }),
+    );
+
+    expect(result.current.changes).toHaveLength(1);
+    const change = result.current.changes[0];
+    expect(change.type).toBe("create-provider");
+    expect((change as { name: string }).name).toBe("OpenAI edited");
+  });
+
+  it("drops the create when a draft provider is removed", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateProvider({
+        clientId: "new-p",
+        name: "OpenAI",
+        input: providerInput,
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteProvider({
+        providerId: "new-p",
+        name: "OpenAI",
+      }),
+    );
+
+    expect(result.current.changes).toEqual([]);
+  });
+
+  it("supersedes a pending update when an existing provider is deleted", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateProvider({
+        providerId: "p-real",
+        name: "OpenAI",
+        updates: { enabled: false },
+        origin: "toggle",
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteProvider({
+        providerId: "p-real",
+        name: "OpenAI",
+      }),
+    );
+
+    expect(result.current.changes.map((c) => c.type)).toEqual([
+      "delete-provider",
+    ]);
+  });
+
+  it("coalesces repeated agent policy edits into one change", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "P",
+        policy: { enabled: false },
+        origin: "toggle",
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "P renamed",
+        policy: { name: "P renamed" },
+      }),
+    );
+
+    expect(result.current.changes).toHaveLength(1);
+    const change = result.current.changes[0];
+    expect(change.type).toBe("update-agent-policy");
+    expect((change as { origin?: string }).origin).toBe("edit");
+    expect((change as { policy: Record<string, unknown> }).policy).toEqual({
+      enabled: false,
+      name: "P renamed",
+    });
+  });
+
+  it("blocks an agent policy that authorizes nothing", () => {
+    const change: DraftChange = {
+      id: "c1",
+      type: "create-agent-policy",
+      clientId: "new-ap",
+      name: "Empty",
+      policy: agentPolicy({ sourceGroups: [], destinationProviderIds: [] }),
+    };
+    expect(getChangeIssue(change, [change])?.label).toBe("Incomplete");
+    expect(hasBlockingIssues([change])).toBe(true);
+  });
+
+  it("blocks an agent policy pointing at a provider being deleted", () => {
+    const del: DraftChange = {
+      id: "c1",
+      type: "delete-provider",
+      providerId: "p1",
+      name: "OpenAI",
+    };
+    const policy: DraftChange = {
+      id: "c2",
+      type: "create-agent-policy",
+      clientId: "new-ap",
+      name: "Agents → OpenAI",
+      policy: agentPolicy(),
+    };
+    expect(getChangeIssue(policy, [del, policy])?.label).toBe(
+      "Provider deleted",
+    );
+  });
+
+  it("blocks an agent policy whose draft provider is gone", () => {
+    const policy: DraftChange = {
+      id: "c1",
+      type: "create-agent-policy",
+      clientId: "new-ap",
+      name: "Agents → OpenAI",
+      policy: agentPolicy({ destinationProviderIds: ["new-missing"] }),
+    };
+    expect(getChangeIssue(policy, [policy])?.label).toBe("Provider missing");
+  });
+
+  it("clears a draft policy that named a removed draft provider", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateProvider({
+        clientId: "new-p",
+        name: "OpenAI",
+        input: providerInput,
+      }),
+    );
+    act(() =>
+      result.current.trackCreateAgentPolicy({
+        clientId: "new-ap",
+        policy: agentPolicy({ destinationProviderIds: ["new-p"] }),
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteProvider({
+        providerId: "new-p",
+        name: "OpenAI",
+      }),
+    );
+
+    expect(result.current.changes).toEqual([]);
+  });
+});
+
+describe("user group membership", () => {
+  const membership = (groupRefs: string[]) => ({
+    userId: "u1",
+    name: "Ada",
+    groupRefs,
+    addedGroupNames: ["Ops"],
+    removedGroupNames: [],
+  });
+
+  it("keeps one entry per user: a second edit supersedes the first", () => {
+    const { result } = setup();
+    act(() => result.current.trackUpdateUserGroups(membership(["g1"])));
+    act(() => result.current.trackUpdateUserGroups(membership(["g1", "g2"])));
+
+    const entries = result.current.changes.filter(
+      (c) => c.type === "update-user-groups",
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ groupRefs: ["g1", "g2"] });
+  });
+
+  it("drops the entry when the refs land back on what the account says", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateUserGroups({
+        ...membership(["g1", "g2"]),
+        baseGroupRefs: ["g1"],
+      }),
+    );
+    expect(result.current.changes).toHaveLength(1);
+    act(() =>
+      result.current.trackUpdateUserGroups({
+        ...membership(["g1"]),
+        removedGroupNames: ["Ops"],
+        baseGroupRefs: ["g1"],
+      }),
+    );
+    expect(result.current.changes).toHaveLength(0);
+  });
+
+  it("accumulates the groups gained and lost across separate edits", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackUpdateUserGroups({
+        ...membership(["g1"]),
+        addedGroupNames: ["Ops"],
+        baseGroupRefs: [],
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateUserGroups({
+        ...membership(["g1", "g2"]),
+        addedGroupNames: ["Agents"],
+        baseGroupRefs: [],
+      }),
+    );
+    const entry = result.current.changes.find(
+      (c) => c.type === "update-user-groups",
+    );
+    expect(entry).toMatchObject({
+      groupRefs: ["g1", "g2"],
+      addedGroupNames: ["Ops", "Agents"],
+    });
+  });
+
+  it("follows a draft group's rename, which its ref is the name of", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateGroup({ clientId: "group-new-1", name: "Ops" }),
+    );
+    act(() => result.current.trackUpdateUserGroups(membership(["Ops"])));
+    act(() => result.current.trackRenameGroup({ from: "Ops", to: "Agents" }));
+
+    const entry = result.current.changes.find(
+      (c) => c.type === "update-user-groups",
+    );
+    expect(entry).toMatchObject({
+      groupRefs: ["Agents"],
+      addedGroupNames: ["Agents"],
+    });
+  });
+});
+
+describe("a draft group rename", () => {
+  it("reaches an agent policy's source refs, which are the group's name", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateGroup({ clientId: "group-new-1", name: "Ops" }),
+    );
+    act(() =>
+      result.current.trackCreateAgentPolicy({
+        clientId: "new-1",
+        policy: {
+          name: "Agents",
+          description: "",
+          enabled: true,
+          sourceGroups: ["Ops"],
+          destinationProviderIds: ["p1"],
+          guardrailIds: [],
+          limits: {},
+        } as never,
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "Live agents",
+        policy: { sourceGroups: ["Ops", "g1"] },
+      }),
+    );
+    act(() => result.current.trackRenameGroup({ from: "Ops", to: "Agents" }));
+
+    expect(
+      result.current.changes.find((c) => c.type === "create-agent-policy"),
+    ).toMatchObject({ policy: { sourceGroups: ["Agents"] } });
+    expect(
+      result.current.changes.find((c) => c.type === "update-agent-policy"),
+    ).toMatchObject({ policy: { sourceGroups: ["Agents", "g1"] } });
+  });
+});
+
+describe("an agent policy emptied by a group deletion", () => {
+  const basePolicy = {
+    id: "new-1",
+    name: "Agents",
+    description: "",
+    enabled: true,
+    sourceGroups: ["g1"],
+    destinationProviderIds: ["p1"],
+    guardrailIds: [],
+    limits: {},
+  } as never;
+
+  const tag = { groupIds: ["g1"], basePolicy };
+
+  it("keeps a DRAFT policy's create, tagged, instead of destroying it", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateAgentPolicy({
+        clientId: "new-1",
+        policy: basePolicy,
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteAgentPolicy({
+        agentPolicyId: "new-1",
+        name: "Agents",
+        groupDeletion: tag,
+      }),
+    );
+
+    const create = result.current.changes.find(
+      (c) => c.type === "create-agent-policy",
+    );
+    expect(create).toMatchObject({
+      policy: { sourceGroups: [] },
+      groupDeletion: { groupIds: ["g1"] },
+    });
+  });
+
+  it("still drops the create when the user empties it themselves", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackCreateAgentPolicy({
+        clientId: "new-1",
+        policy: basePolicy,
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteAgentPolicy({
+        agentPolicyId: "new-1",
+        name: "Agents",
+      }),
+    );
+    expect(result.current.changes).toHaveLength(0);
+  });
+
+  it("ignores a toggle while the deletion stands, keeping the strip", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackDeleteAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "Agents",
+        groupDeletion: { groupIds: ["g1"], basePolicy },
+      }),
+    );
+    act(() =>
+      result.current.trackUpdateAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "Agents",
+        policy: { enabled: false },
+        origin: "toggle",
+      }),
+    );
+
+    const kinds = result.current.changes.map((c) => c.type);
+    expect(kinds).toEqual(["delete-agent-policy"]);
+    expect(
+      result.current.changes[0].type === "delete-agent-policy" &&
+        result.current.changes[0].groupDeletion?.groupIds,
+    ).toEqual(["g1"]);
+  });
+
+  it("queues one deletion per policy, not one per gesture", () => {
+    const { result } = setup();
+    act(() =>
+      result.current.trackDeleteAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "Agents",
+      }),
+    );
+    act(() =>
+      result.current.trackDeleteAgentPolicy({
+        agentPolicyId: "ap-1",
+        name: "Agents",
+      }),
+    );
+    expect(
+      result.current.changes.filter((c) => c.type === "delete-agent-policy"),
+    ).toHaveLength(1);
+  });
+});
+
+describe("a group deletion blocks what still names the group", () => {
+  const withDelete = (extra: unknown) =>
+    [
+      {
+        id: "dg-1",
+        type: "delete-group",
+        groupId: "g1",
+        name: "Ops",
+      },
+      extra,
+    ] as never;
+
+  it("blocks a user membership change that puts someone into it", () => {
+    const issue = getChangeIssue(
+      {
+        id: "uug-1",
+        type: "update-user-groups",
+        userId: "u1",
+        name: "Ada",
+        groupRefs: ["g1"],
+        addedGroupNames: ["Ops"],
+        removedGroupNames: [],
+      } as never,
+      withDelete({
+        id: "uug-1",
+        type: "update-user-groups",
+        userId: "u1",
+        name: "Ada",
+        groupRefs: ["g1"],
+        addedGroupNames: ["Ops"],
+        removedGroupNames: [],
+      }),
+    );
+    expect(issue?.label).toBe("Group deleted");
+    expect(issue?.message).toContain("Ada");
+  });
+
+  it("blocks an agent policy still sourced from it", () => {
+    const change = {
+      id: "cap-1",
+      type: "create-agent-policy",
+      clientId: "new-1",
+      name: "Agents",
+      policy: {
+        name: "Agents",
+        description: "",
+        enabled: true,
+        sourceGroups: ["g1"],
+        destinationProviderIds: ["p1"],
+        guardrailIds: [],
+        limits: {},
+      },
+    } as never;
+    const issue = getChangeIssue(change, withDelete(change));
+    expect(issue?.label).toBe("Group deleted");
   });
 });

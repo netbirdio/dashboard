@@ -6,7 +6,7 @@ import { gotoReverseProxyPage } from "../helpers/reverse-proxy-l4";
 let domain = "";
 const TARGET_CLUSTER = "example.com";
 
-test.describe.serial("Reverse Proxy - Custom Domains @reverse-proxy", () => {
+test.describe.serial("Reverse Proxy - Custom Domains @reverse-proxy @test-env", () => {
   test("Should validate domain input and add a custom domain", async ({
     dashboardAsOwner: page,
   }) => {

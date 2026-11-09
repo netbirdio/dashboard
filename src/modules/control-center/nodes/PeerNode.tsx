@@ -1,3 +1,4 @@
+import Button from "@components/Button";
 import { SmallBadge } from "@components/ui/SmallBadge";
 import TruncatedText from "@components/ui/TruncatedText";
 import { cn } from "@utils/helpers";
@@ -17,15 +18,14 @@ import {
   useDestinationGroup,
   useIsContextMenuTarget,
 } from "@/modules/control-center/contexts/ControlCenterContext";
+import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
+import { AllHandles } from "@/modules/control-center/handles/AllHandles";
+import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
 import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import {
   PLACEHOLDER_BASE_NAMES,
   useAnySourceGroupEnabled,
 } from "@/modules/control-center/utils/helpers";
-import { ConnectHandle } from "@/modules/control-center/handles/ConnectHandle";
-import { AllHandles } from "@/modules/control-center/handles/AllHandles";
-import { useDraftMode } from "@/modules/control-center/draft/DraftModeContext";
-import Button from "@components/Button";
 
 // A not-yet-installed peer dropped from the components sidebar.
 export type PeerPlaceholderKind = "server" | "agent" | "user-device";
@@ -68,9 +68,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
     enabled !== undefined,
   );
   const isEnabled = enabled ?? sourceGroupEnabled;
-  const isTarget = useConnection(
-    (c) => c.inProgress && c.fromNode.id !== id,
-  );
+  const isTarget = useConnection((c) => c.inProgress && c.fromNode.id !== id);
   const { placeholderIp } = useCanvasUI();
   const isContextTarget = useIsContextMenuTarget(id);
   const { selectedPeerPanel } = useDestinationGroup();
@@ -177,7 +175,7 @@ export const PeerNode = ({ data, id }: PeerNodeType) => {
       className={cn(
         // Fixed height matching GroupNode so peers, selects and groups line up.
         // The unnamed `group` lets DeviceCard's icon box light up on hover.
-        "relative rounded-lg transition-all group group/node pr-5 pl-4 h-[64px] flex items-center border",
+        "relative rounded-lg transition-all group group/node pr-5 pl-3 h-[64px] flex items-center border",
         variant === "card" &&
           "bg-nb-gray-940 border-nb-gray-850 hover:bg-nb-gray-930 hover:border-nb-gray-800",
         variant === "default" && "border-transparent",

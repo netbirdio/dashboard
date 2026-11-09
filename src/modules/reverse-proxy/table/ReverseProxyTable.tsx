@@ -212,7 +212,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
           icon={
             <SquareIcon
               icon={
-                <ReverseProxyIcon className={"fill-nb-gray-200"} size={20} />
+                <ReverseProxyIcon className={"text-nb-gray-200"} size={20} />
               }
               color={"gray"}
               size={"large"}
@@ -268,18 +268,18 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
             filters={filterDefs}
             disabled={reverseProxies?.length == 0}
           />
+          <DataTableRefreshButton
+            isDisabled={reverseProxies?.length == 0}
+            onClick={() => {
+              mutate("/reverse-proxies/services").then();
+            }}
+          />
           <DataTableResetFilterButton
             table={table}
             onClick={() => {
               table.setPageIndex(0);
               table.resetColumnFilters();
               table.resetGlobalFilter();
-            }}
-          />
-          <DataTableRefreshButton
-            isDisabled={reverseProxies?.length == 0}
-            onClick={() => {
-              mutate("/reverse-proxies/services").then();
             }}
           />
         </>

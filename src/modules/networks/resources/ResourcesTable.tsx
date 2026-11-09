@@ -4,6 +4,11 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
+  ENABLED_COLUMN_ID,
+  fadeDisabledRowCells,
+} from "@components/table/disabledRowCells";
+import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
+import {
   formatGroupsChip,
   GroupsPicker,
 } from "@components/table/filters/GroupsPicker";
@@ -33,8 +38,9 @@ import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { ResourceActionCell } from "@/modules/networks/resources/ResourceActionCell";
-import { ResourceExposeServiceCell } from "@/modules/networks/resources/ResourceExposeServiceCell";
 import ResourceAddressCell from "@/modules/networks/resources/ResourceAddressCell";
+import { ResourceEnabledCell } from "@/modules/networks/resources/ResourceEnabledCell";
+import { ResourceExposeServiceCell } from "@/modules/networks/resources/ResourceExposeServiceCell";
 import { ResourceGroupCell } from "@/modules/networks/resources/ResourceGroupCell";
 import ResourceNameCell from "@/modules/networks/resources/ResourceNameCell";
 import { ResourcePolicyCell } from "@/modules/networks/resources/ResourcePolicyCell";
@@ -79,8 +85,18 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     },
   },
   {
-    id: "enabled",
+    id: ENABLED_COLUMN_ID,
     accessorKey: "enabled",
+    enableSorting: false,
+    meta: { className: ENABLED_COLUMN_CLASS.xl },
+    header: ({ column }) => {
+      return (
+        <DataTableHeader column={column} sorting={false}>
+          Active
+        </DataTableHeader>
+      );
+    },
+    cell: ({ row }) => <ResourceEnabledCell resource={row.original} />,
   },
   {
     id: "groups",
@@ -321,11 +337,10 @@ export default function ResourcesTable({
       columnVisibility={{
         description: false,
         id: false,
-        enabled: false,
         group_names: false,
         exposed: false,
       }}
-      rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
+      cellClassName={fadeDisabledRowCells}
       paginationPaddingClassName={"px-0 pt-8"}
       rightSide={
         !isGroupPage

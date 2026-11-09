@@ -17,7 +17,10 @@ import {
   UpdateResourceChange,
   UpdateRouterChange,
 } from "@/modules/control-center/draft/DraftChangesetContext";
-import { diffBodies, DiffLine } from "@/modules/control-center/utils/json-line-diff";
+import {
+  diffBodies,
+  DiffLine,
+} from "@/modules/control-center/utils/json-line-diff";
 
 // The request-body shape is shared by the deploy executor and the Review &
 // Deploy code view so the two can never drift. Only the RESOLVERS differ:
@@ -35,6 +38,9 @@ export interface ChangeRequest {
 export interface LiveData {
   policies?: Policy[];
   groups?: Group[];
+  users?: { id?: string; name?: string; auto_groups?: string[] }[];
+  providers?: { id: string; [key: string]: unknown }[];
+  agentPolicies?: { id: string; [key: string]: unknown }[];
   networks?: Network[];
   networkResources?: NetworkResource[];
   // Lets the preview name draft entities when building id placeholders.
@@ -68,9 +74,7 @@ export interface RequestResolvers {
 
 type WireResource = { id: string; type?: NetworkResource["type"] };
 
-export const toIds = (
-  items?: ({ id?: string } | string)[] | null,
-): string[] =>
+export const toIds = (items?: ({ id?: string } | string)[] | null): string[] =>
   (items ?? [])
     .map((i) => (typeof i === "string" ? i : i.id))
     .filter(Boolean) as string[];
@@ -125,7 +129,10 @@ export function policyRequestBody(policy: Policy, r: RequestResolvers) {
 
 // Uninstalled placeholders keep their "draft-" ids (unknown to the API) and
 // draft resources apply membership through their own groups field, so both go.
-export function groupCreateBody(change: CreateGroupChange, r: RequestResolvers) {
+export function groupCreateBody(
+  change: CreateGroupChange,
+  r: RequestResolvers,
+) {
   return {
     name: change.name,
     peers: change.peerIds.filter((id) => !id.startsWith("draft-")),
@@ -139,7 +146,10 @@ export function groupCreateBody(change: CreateGroupChange, r: RequestResolvers) 
 // draft removals. Structural rather than UpdateGroupChange: a create-group RETRY
 // is also a PUT, and it derives its removals instead of carrying them.
 export function mergeGroupMembers(
-  base: { peers?: (GroupPeer | string)[]; resources?: (GroupResource | string)[] },
+  base: {
+    peers?: (GroupPeer | string)[];
+    resources?: (GroupResource | string)[];
+  },
   change: Pick<UpdateGroupChange, "peerIds" | "resourceIds"> &
     Partial<Pick<UpdateGroupChange, "removedPeerIds" | "removedResourceIds">>,
   r: RequestResolvers,
@@ -147,7 +157,9 @@ export function mergeGroupMembers(
   const peers = new Set(toIds(base.peers));
   const resources = new Set(toIds(base.resources));
   change.peerIds.forEach((id) => !id.startsWith("draft-") && peers.add(id));
-  change.resourceIds.forEach((id) => !id.startsWith("new-") && resources.add(id));
+  change.resourceIds.forEach(
+    (id) => !id.startsWith("new-") && resources.add(id),
+  );
   change.removedPeerIds?.forEach((id) => peers.delete(id));
   change.removedResourceIds?.forEach((id) => resources.delete(id));
   const typeById = new Map<string, NetworkResource["type"] | undefined>();
@@ -159,7 +171,8 @@ export function mergeGroupMembers(
   return {
     peers: Array.from(peers),
     resources: Array.from(resources).map(
-      (id) => ({ id, type: typeById.get(id) ?? r.resourceType(id) }) as WireResource,
+      (id) =>
+        ({ id, type: typeById.get(id) ?? r.resourceType(id) }) as WireResource,
     ),
   };
 }
@@ -281,7 +294,9 @@ export function setupKeyCreateBody(
   };
 }
 
-const methodPath = (change: DraftChange): { method: HttpMethod; path: string } => {
+const methodPath = (
+  change: DraftChange,
+): { method: HttpMethod; path: string } => {
   const [method, path] = getChangeApiCall(change).split(" ");
   return { method: method as HttpMethod, path };
 };
@@ -305,7 +320,8 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
   );
   const draftResourceNames = new Map<string, string>();
   live.draftChanges?.forEach((c) => {
-    if (c.type === "create-resource") draftResourceNames.set(c.clientId, c.name);
+    if (c.type === "create-resource")
+      draftResourceNames.set(c.clientId, c.name);
   });
 
   const resolveGroupRef = (ref: string) => {
@@ -335,6 +351,84 @@ export function previewResolvers(live: LiveData = {}): RequestResolvers {
       live.networkResources?.find((res) => res.id === id)?.type,
   };
 }
+
+const toWire = (
+  obj: Record<string, unknown>,
+  map: Record<string, string>,
+): Record<string, unknown> => {
+  const out: Record<string, unknown> = {};
+  Object.entries(map).forEach(([key, wire]) => {
+    if (obj[key] !== undefined) out[wire] = obj[key];
+  });
+  return out;
+};
+
+const PROVIDER_WIRE = {
+  providerId: "provider_id",
+  name: "name",
+  upstreamUrl: "upstream_url",
+  apiKey: "api_key",
+  extraValues: "extra_values",
+  identityHeaderUserId: "identity_header_user_id",
+  identityHeaderGroups: "identity_header_groups",
+  skipTlsVerification: "skip_tls_verification",
+  metadataDisabled: "metadata_disabled",
+  models: "models",
+  enabled: "enabled",
+};
+
+const AGENT_POLICY_WIRE = {
+  name: "name",
+  description: "description",
+  enabled: "enabled",
+  sourceGroups: "source_groups",
+  destinationProviderIds: "destination_provider_ids",
+  guardrailIds: "guardrail_ids",
+  limits: "limits",
+};
+
+const providerBody = (input: Record<string, unknown>) => {
+  const wire = toWire(input, PROVIDER_WIRE);
+  if (wire.api_key) wire.api_key = "••••••••";
+  if (Array.isArray(wire.models)) {
+    wire.models = (wire.models as Record<string, unknown>[]).map((m) => ({
+      id: m.id,
+      input_per_1k: m.inputPer1k,
+      output_per_1k: m.outputPer1k,
+    }));
+  }
+  return wire;
+};
+
+const providerCreateBody = (change: { input: Record<string, unknown> }) =>
+  providerBody(change.input);
+
+const agentPolicyBody = (
+  policy: Record<string, unknown>,
+  r: RequestResolvers,
+) =>
+  toWire(
+    {
+      ...policy,
+      ...(policy.sourceGroups
+        ? {
+            sourceGroups: (policy.sourceGroups as string[]).map(
+              r.groupIdForRef,
+            ),
+          }
+        : {}),
+      ...(policy.destinationProviderIds
+        ? {
+            destinationProviderIds: (
+              policy.destinationProviderIds as string[]
+            ).map((id) =>
+              id.startsWith("new-") ? idPlaceholder("PROVIDER", id) : id,
+            ),
+          }
+        : {}),
+    },
+    AGENT_POLICY_WIRE,
+  );
 
 // Preview must never throw during render, so a live policy with no rule yields
 // no body instead of crashing the modal. Deploy still throws.
@@ -383,10 +477,48 @@ export function buildChangeRequest(
       return { method, path, body: routerCreateBody(change, r) };
     case "update-router":
       return { method, path, body: routerUpdateBody(change, r) };
+    case "create-provider":
+      return { method, path, body: providerCreateBody(change) };
+    // The deploy PUTs the partial update merged onto the live record, so the
+    // code view has to show that same merge — rendering `updates` alone would
+    // read as every other field being cleared.
+    case "update-provider": {
+      const provider = live.providers?.find((p) => p.id === change.providerId);
+      return {
+        method,
+        path,
+        body: providerBody({ ...(provider ?? {}), ...change.updates }),
+      };
+    }
+    case "create-agent-policy":
+      return { method, path, body: agentPolicyBody(change.policy, r) };
+    case "update-agent-policy": {
+      const policy = live.agentPolicies?.find(
+        (p) => p.id === change.agentPolicyId,
+      );
+      return {
+        method,
+        path,
+        body: agentPolicyBody({ ...(policy ?? {}), ...change.policy }, r),
+      };
+    }
+    case "update-user-groups": {
+      const user = live.users?.find((u) => u.id === change.userId);
+      return {
+        method,
+        path,
+        body: {
+          ...(user ?? { id: change.userId, name: change.name }),
+          auto_groups: change.groupRefs.map(r.groupIdForRef),
+        },
+      };
+    }
     case "delete-policy":
     case "delete-group":
     case "delete-resource":
     case "delete-network":
+    case "delete-provider":
+    case "delete-agent-policy":
       return { method, path };
   }
 }
@@ -492,12 +624,41 @@ export function buildBeforeRequest(
           description: network.description ?? "",
           resources: (network.resources ?? []).map((rid) => {
             const res = live.networkResources?.find((r) => r.id === rid);
-            return res
-              ? { name: res.name, address: res.address }
-              : { id: rid };
+            return res ? { name: res.name, address: res.address } : { id: rid };
           }),
           ...(network.routers?.length ? { routers: network.routers } : {}),
         },
+      };
+    }
+    case "update-user-groups": {
+      const user = live.users?.find((u) => u.id === change.userId);
+      if (!user) return null;
+      return {
+        method: "PUT",
+        path: `/users/${change.userId}`,
+        body: { ...user, auto_groups: user.auto_groups ?? [] },
+      };
+    }
+    case "update-provider":
+    case "delete-provider": {
+      const provider = live.providers?.find((p) => p.id === change.providerId);
+      if (!provider) return null;
+      return {
+        method: change.type === "delete-provider" ? "DELETE" : "PUT",
+        path: `/agent-network/providers/${change.providerId}`,
+        body: providerBody(provider),
+      };
+    }
+    case "update-agent-policy":
+    case "delete-agent-policy": {
+      const policy = live.agentPolicies?.find(
+        (p) => p.id === change.agentPolicyId,
+      );
+      if (!policy) return null;
+      return {
+        method: change.type === "delete-agent-policy" ? "DELETE" : "PUT",
+        path: `/agent-network/policies/${change.agentPolicyId}`,
+        body: toWire(policy, AGENT_POLICY_WIRE),
       };
     }
     // Creates and install-peer have no "before".

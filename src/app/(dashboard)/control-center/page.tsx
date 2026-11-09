@@ -75,9 +75,12 @@ export default function ControlCenter() {
           <PoliciesProvider>
             <AIProvidersProvider>
               <PeersProvider>
-                <CanvasStateProvider>
-                  <GroupsProvider>
-                    <DraftChangesetProvider>
+                {/* Above the canvas: `groupUserCounts` overlays the pending
+                    user-membership changes, so the changeset has to resolve
+                    before the canvas state reads it. */}
+                <DraftChangesetProvider>
+                  <CanvasStateProvider>
+                    <GroupsProvider>
                       <DraftHistoryProvider>
                         <ControlCenterPolicyProvider>
                           <PageContainer>
@@ -89,9 +92,9 @@ export default function ControlCenter() {
                           </PageContainer>
                         </ControlCenterPolicyProvider>
                       </DraftHistoryProvider>
-                    </DraftChangesetProvider>
-                  </GroupsProvider>
-                </CanvasStateProvider>
+                    </GroupsProvider>
+                  </CanvasStateProvider>
+                </DraftChangesetProvider>
               </PeersProvider>
             </AIProvidersProvider>
           </PoliciesProvider>
@@ -194,6 +197,8 @@ function ControlCenterCanvas() {
         "resourceNode",
         "destinationResourceNode",
         "networkNode",
+        "providerNode",
+        "agentPolicyNode",
       ]);
       if (!draft.isDraft && !LIVE_MENU_TYPES.has(node.type ?? "")) return;
       event.preventDefault();

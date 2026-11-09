@@ -1,6 +1,6 @@
 "use client";
 
-import { useApiCall } from "@utils/api";
+import { type ErrorResponse, useApiCall } from "@utils/api";
 import { useCallback, useRef, useState } from "react";
 
 // DiscoveredModel is one model the vendor says this credential can reach.
@@ -27,6 +27,8 @@ type DiscoveryResponse = { models: DiscoveredModel[] };
 
 type DiscoveryRequest = {
   catalog_provider_id: string;
+  // Sent alongside provider_id, this overrides the record's stored upstream,
+  // which is how a retyped URL is listed against before it is saved.
   upstream_url?: string;
   // Exactly one of these. api_key is for a provider being typed in and not yet
   // saved; provider_id reuses a saved record's stored credential, which is how
@@ -96,7 +98,13 @@ export function useDiscoveredModels() {
         // 422 is the API saying this provider has no listing endpoint, which
         // is a fact about the catalog entry rather than a failure — the caller
         // keeps the catalog list and says so quietly.
-        const status = (e as { status?: number })?.status;
+        //
+        // useApiCall rejects with ErrorResponse, whose field is `code`; `status`
+        // is only read as a fallback for a raw fetch rejection. Reading `status`
+        // alone left this undefined on every API failure, so a provider with no
+        // listing endpoint was reported as unreachable instead of falling back.
+        const failure = e as Partial<ErrorResponse> & { status?: number };
+        const status = failure?.code ?? failure?.status;
         setState({
           models: [],
           isLoading: false,
@@ -104,8 +112,7 @@ export function useDiscoveredModels() {
           error:
             status === 422
               ? undefined
-              : (e as { message?: string })?.message ??
-                "Could not reach the provider",
+              : failure?.message ?? "Could not reach the provider",
         });
         return [];
       }

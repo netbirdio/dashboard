@@ -1,14 +1,16 @@
 "use client";
 
 import FullTooltip from "@components/FullTooltip";
+import { SmallBadge } from "@components/ui/SmallBadge";
+import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
+import { isNetBirdCloud } from "@utils/netbird";
+import { isNewerVersion } from "@utils/version";
 import { ArrowUpCircle } from "lucide-react";
 import * as React from "react";
 import Skeleton from "react-loading-skeleton";
-import useFetchApi from "@utils/api";
-import { isNetBirdCloud } from "@utils/netbird";
-import { isNewerVersion } from "@utils/version";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { VersionInfo as VersionInfoType } from "@/interfaces/Instance";
 
 function formatVersion(version: string): string {
@@ -18,21 +20,64 @@ function formatVersion(version: string): string {
   return version;
 }
 
+// A pre-release label names the release itself, so it stays in the short form.
+// Anything else after the release names the build and is dropped.
+const PRERELEASE_LABEL = /^(rc|alpha|beta)[\w.]*$/i;
+
+// A goreleaser snapshot is built from an unreleased tree and versioned as the
+// NEXT release ("0.77.1-SNAPSHOT-a1b2c3d" is built after 0.77.0 shipped), so
+// showing the number alone would name a release this build is not. The number
+// still gets shortened — the commit is what overflows — and the badge beside
+// it says which kind of build it came from.
+const SNAPSHOT_SUFFIX = /-snapshot\b/i;
+
+function isSnapshotVersion(version: string): boolean {
+  return SNAPSHOT_SUFFIX.test(version);
+}
+
 // Builds can carry a suffix that overflows the sidebar: semver build metadata
-// ("0.77.0+enterprise.1" on enterprise builds) or a numeric CI build number
-// ("0.76.3-31256681241"). Show the release only and keep the full string for the
-// tooltip. Pre-release labels like "-rc.1" are left intact so they stay visible.
+// ("0.77.0+enterprise.1" on enterprise builds), a numeric CI build number
+// ("0.76.3-31256681241"), or a goreleaser snapshot tag
+// ("0.60.1-SNAPSHOT-a1b2c3d"). Show the release only and keep the full string
+// for the tooltip. A version that is not a release at all ("development",
+// "ci-7470fbdd") has nothing to shorten and passes through as it is.
 function formatShortVersion(version: string): string {
-  return formatVersion(version)
-    .replace(/\+.*$/, "")
-    .replace(/^(v?\d+(?:\.\d+)*)-\d+$/, "$1");
+  const formatted = formatVersion(version).replace(/\+.*$/, "");
+  const release = /^(v?\d+(?:\.\d+)*)(?:-(.+))?$/.exec(formatted);
+  if (!release) return formatted;
+  const [, numbers, suffix] = release;
+  return suffix && PRERELEASE_LABEL.test(suffix)
+    ? `${numbers}-${suffix}`
+    : numbers;
+}
+
+// The right-hand side of a row: the shortened number, plus a marker when the
+// build is not the release that number names.
+function VersionValue({ version }: { version: string }) {
+  return (
+    <span className="flex items-center gap-1.5 min-w-0">
+      <span className="text-nb-gray-300 font-medium truncate">
+        {formatShortVersion(version)}
+      </span>
+      {isSnapshotVersion(version) && (
+        <SmallBadge
+          text={"SNAPSHOT"}
+          variant={"yellow"}
+          size={"md"}
+          className={"shrink-0"}
+        />
+      )}
+    </span>
+  );
 }
 
 export const NavigationVersionInfo = () => {
   const { isNavigationCollapsed, mobileNavOpen } = useApplicationContext();
+  const { permission } = usePermissions();
 
   // Only show for self-hosted, not cloud
   if (isNetBirdCloud()) return null;
+  if (!permission?.settings?.read) return null;
 
   return (
     <div
@@ -96,18 +141,17 @@ const NavigationVersionInfoContent = () => {
                 {formatVersion(versionInfo.management_current_version)}
               </span>
               <span>
-                Latest: {formatVersion(versionInfo.management_available_version)}
+                Latest:{" "}
+                {formatVersion(versionInfo.management_available_version)}
               </span>
             </div>
           }
           side="top"
           className="w-full"
         >
-          <div className="flex items-center justify-between w-full cursor-default">
-            <span>Management</span>
-            <span className="text-nb-gray-300 font-medium">
-              {formatShortVersion(versionInfo.management_current_version)}
-            </span>
+          <div className="flex items-center justify-between w-full cursor-default gap-2">
+            <span className="shrink-0">Management</span>
+            <VersionValue version={versionInfo.management_current_version} />
           </div>
         </FullTooltip>
         <FullTooltip
@@ -122,11 +166,9 @@ const NavigationVersionInfoContent = () => {
           side="top"
           className="w-full"
         >
-          <div className="flex items-center justify-between w-full cursor-default">
-            <span>Dashboard</span>
-            <span className="text-nb-gray-300 font-medium">
-              {formatShortVersion(dashboardVersion)}
-            </span>
+          <div className="flex items-center justify-between w-full cursor-default gap-2">
+            <span className="shrink-0">Dashboard</span>
+            <VersionValue version={dashboardVersion} />
           </div>
         </FullTooltip>
       </div>

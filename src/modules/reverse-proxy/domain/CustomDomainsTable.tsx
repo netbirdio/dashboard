@@ -245,18 +245,18 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
               filters={filterDefs}
               disabled={data?.length == 0}
             />
+            <DataTableRefreshButton
+              isDisabled={data?.length == 0}
+              onClick={() => {
+                mutate("/reverse-proxies/domains").then();
+              }}
+            />
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
                 table.setPageIndex(0);
                 table.resetColumnFilters();
                 table.resetGlobalFilter();
-              }}
-            />
-            <DataTableRefreshButton
-              isDisabled={data?.length == 0}
-              onClick={() => {
-                mutate("/reverse-proxies/domains").then();
               }}
             />
           </>

@@ -1,5 +1,6 @@
 "use client";
 
+import "@/utils/translationGuard";
 import "../app/globals.css";
 import { DisableDarkReader } from "@components/DisableDarkReader";
 import { TooltipProvider } from "@components/Tooltip";

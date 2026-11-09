@@ -93,9 +93,14 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
   const userRequest = useApiCall<User>("/users");
   const isServiceUser = !!user?.is_service_user;
   const { mutate } = useSWRConfig();
-  const { loggedInUser, isOwnerOrAdmin, isUser } = useLoggedInUser();
+  const { loggedInUser, isOwner, isOwnerOrAdmin, isUser } = useLoggedInUser();
   const isLoggedInUser = loggedInUser ? loggedInUser?.id === user.id : false;
   const { permission } = usePermissions();
+
+  // The management API rejects taking the owner role away from a user unless
+  // the caller is an owner themselves ("only owners can remove owner role from
+  // their user"), so don't offer the change to anyone else.
+  const cannotChangeOwnerRole = user.role === Role.Owner && !isOwner;
 
   const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
     useGroupHelper({
@@ -250,20 +255,26 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                 />
               </div>
             )}
-            <div className={"flex items-start"}>
-              <div className={"w-2/3"}>
-                <Label>User Role</Label>
-                <HelpText>
-                  Set a role for the user to assign access permissions.
-                </HelpText>
-              </div>
-              <div className={"w-1/3"}>
+            <div>
+              <Label>User Role</Label>
+              <HelpText>
+                {cannotChangeOwnerRole
+                  ? "Only the account owner can change the owner's role."
+                  : "Set a role for the user to assign access permissions."}
+              </HelpText>
+              {/* 320px: enough for the longest role name and for the tab row
+                  in the dropdown, without stretching across the column. */}
+              <div className={"max-w-[320px]"}>
                 <UserRoleSelector
                   value={role}
                   onChange={setRole}
                   hideOwner={isServiceUser}
                   currentUser={user}
-                  disabled={isLoggedInUser || !permission.users.update}
+                  disabled={
+                    isLoggedInUser ||
+                    !permission.users.update ||
+                    cannotChangeOwnerRole
+                  }
                 />
               </div>
             </div>

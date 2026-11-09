@@ -61,7 +61,10 @@ export default function NetBirdSettings() {
         <VerticalTabs.List>
           {permission.settings.read && (
             <>
-              <VerticalTabs.Trigger value="authentication" data-testid="settings-tab-authentication">
+              <VerticalTabs.Trigger
+                value="authentication"
+                data-testid="settings-tab-authentication"
+              >
                 <ShieldIcon size={14} />
                 Authentication
               </VerticalTabs.Trigger>
@@ -78,19 +81,31 @@ export default function NetBirdSettings() {
                     Identity Providers
                   </VerticalTabs.Trigger>
                 )}
-              <VerticalTabs.Trigger value="groups" data-testid="settings-tab-groups">
+              <VerticalTabs.Trigger
+                value="groups"
+                data-testid="settings-tab-groups"
+              >
                 <FolderGit2Icon size={14} />
                 Groups
               </VerticalTabs.Trigger>
-              <VerticalTabs.Trigger value="permissions" data-testid="settings-tab-permissions">
+              <VerticalTabs.Trigger
+                value="permissions"
+                data-testid="settings-tab-permissions"
+              >
                 <LockIcon size={14} />
                 Permissions
               </VerticalTabs.Trigger>
-              <VerticalTabs.Trigger value="networks" data-testid="settings-tab-networks">
+              <VerticalTabs.Trigger
+                value="networks"
+                data-testid="settings-tab-networks"
+              >
                 <NetworkIcon size={14} />
                 Networks
               </VerticalTabs.Trigger>
-              <VerticalTabs.Trigger value="clients" data-testid="settings-tab-clients">
+              <VerticalTabs.Trigger
+                value="clients"
+                data-testid="settings-tab-clients"
+              >
                 <MonitorSmartphoneIcon size={14} />
                 Clients
               </VerticalTabs.Trigger>

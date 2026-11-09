@@ -113,7 +113,7 @@ const UNBOOTSTRAPPED_SHAPES: {
   },
 ];
 
-test.describe("Agent Network settings wire shapes @agent-network", () => {
+test.describe("Agent Network settings wire shapes @agent-network @test-build", () => {
   for (const shape of UNBOOTSTRAPPED_SHAPES) {
     test(`unbootstrapped account renders the empty state: ${shape.name}`, async ({
       browser,

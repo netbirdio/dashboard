@@ -3,10 +3,10 @@ import {
   useCanvasState,
   useDestinationGroup,
 } from "@/modules/control-center/contexts/ControlCenterContext";
-import { isFocusWorthy } from "@/modules/control-center/utils/helpers";
+import { focusWorthyIds } from "@/modules/control-center/utils/helpers";
 
 // Focus highlight (live and draft): while a node is explicitly focused,
-// everything off its edge path dims to grayscale (`cc-dimmed`, globals.css).
+// everything off its edge path fades back (`cc-dimmed`, globals.css).
 // Selector nodes aren't real entities and can never be focused.
 const SELECTOR_NODE_TYPES = new Set([
   "selectPeerNode",
@@ -19,6 +19,11 @@ export function useGroupFocusDim() {
   const { focusedNodeId, highlightArmed } = useDestinationGroup();
 
   useEffect(() => {
+    // Positions change every drag tick while the dim depends only on the graph
+    // shape, so a drag would rebuild the whole reachability closure per frame
+    // to reach the same answer. Nothing can enter or leave the path mid-drag.
+    if (nodes.some((n) => n.dragging)) return;
+
     const MANAGED = new Set(["cc-dimmed", "cc-unfocusable"]);
     const clear = () => {
       // draggable:true is the focus marker; nothing else sets a per-node
@@ -48,11 +53,11 @@ export function useGroupFocusDim() {
       // ring and pointer skip those nodes.
       if (highlightArmed) {
         setNodes((prev) => {
+          const focusable = focusWorthyIds(prev, edges);
           let changed = false;
           const next = prev.map((n) => {
             const cls =
-              SELECTOR_NODE_TYPES.has(n.type ?? "") ||
-              !isFocusWorthy(n.id, prev, edges)
+              SELECTOR_NODE_TYPES.has(n.type ?? "") || !focusable.has(n.id)
                 ? "cc-unfocusable"
                 : undefined;
             // Built-in draggable:false (live frame rows) survives.
