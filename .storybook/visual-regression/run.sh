@@ -96,13 +96,25 @@ fi
 # Vite refuses to follow a node_modules symlink out of the project, so the
 # baseline gets a copy-on-write clone where the filesystem supports it
 # (APFS, btrfs), refreshed whenever the working tree's dependencies change.
-if ! cmp -s "$REPO/package-lock.json" "$WORKTREE/.regression-lock"; then
-  step "cloning node_modules into the baseline worktree"
+# A change that updates dependencies gets the baseline's own instead, since
+# the baseline may not build with them (Tailwind 3 with Tailwind 4's, say).
+if git -C "$REPO" diff --quiet "$BASE_REF" -- package-lock.json; then
+  LOCK="$REPO/package-lock.json"
+else
+  LOCK="$WORKTREE/package-lock.json"
+fi
+if ! cmp -s "$LOCK" "$WORKTREE/.regression-lock"; then
   rm -rf "$WORKTREE/node_modules"
-  cp -cR "$REPO/node_modules" "$WORKTREE/node_modules" 2>/dev/null ||
-    cp -R --reflink=auto "$REPO/node_modules" "$WORKTREE/node_modules" 2>/dev/null ||
-    cp -R "$REPO/node_modules" "$WORKTREE/node_modules"
-  cp "$REPO/package-lock.json" "$WORKTREE/.regression-lock"
+  if [[ "$LOCK" == "$REPO/package-lock.json" ]]; then
+    step "cloning node_modules into the baseline worktree"
+    cp -cR "$REPO/node_modules" "$WORKTREE/node_modules" 2>/dev/null ||
+      cp -R --reflink=auto "$REPO/node_modules" "$WORKTREE/node_modules" 2>/dev/null ||
+      cp -R "$REPO/node_modules" "$WORKTREE/node_modules"
+  else
+    step "installing the baseline's dependencies"
+    (cd "$WORKTREE" && npm ci --ignore-scripts --no-audit --no-fund >/dev/null)
+  fi
+  cp "$LOCK" "$WORKTREE/.regression-lock"
 fi
 
 # The baseline predates Storybook, so it borrows the config, the story
@@ -192,7 +204,13 @@ diff_shots() {
   # would leave the tail of the first one behind.
   rm -rf "$OUT/diff" "$OUT/reg.json"
   npx reg-cli "$OUT/current" "$OUT/baseline" "$OUT/diff" \
-    -R "$OUT/report.html" -J "$OUT/reg.json" -M 0.1 -T 0.001 >"$OUT/reg.log" 2>&1
+    -R "$OUT/report.html" -J "$OUT/reg.json" -M 0.1 -T 0.001 >"$OUT/reg.log" 2>&1 && return 0
+  # reg-cli also exits non-zero when it finds differences, but then it has
+  # written its result; without one it crashed, and its output says why.
+  [[ -f "$OUT/reg.json" ]] && return 1
+  echo "✗ reg-cli failed without a result:"
+  cat "$OUT/reg.log"
+  exit 1
 }
 
 step "diffing"

@@ -82,8 +82,11 @@ async function createServiceUser(page: Page, name: string, role: string) {
     .getByText(role, { exact: true })
     .click({ force: true });
   await page.getByTestId("create-service-user").click();
-  // Wait for modal to close
   await expect(page.getByTestId("service-user-name")).not.toBeVisible({ timeout: 5_000 });
+  // The first user swaps the empty state for the table, and each holds its own
+  // modal. Opening the next modal before that refetch lands mounts it in the
+  // empty state, which then unmounts it mid-fill.
+  await expect(page.locator("tr").filter({ hasText: name })).toBeVisible();
 }
 
 // openServiceUserList lands on the service users table and waits for it to

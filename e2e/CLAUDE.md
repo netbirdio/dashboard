@@ -23,6 +23,8 @@ Config: `e2e/playwright.config.ts` (baseURL: `http://localhost:1337`). Auth: `e2
 
 - `fullyParallel: false` — tests run sequentially within each spec
 - Workers: 2 in CI, 4 locally
+- The `account-settings` project runs the `settings-*` specs that save account settings on one worker, since each tab PUTs the whole settings object and two at once revert each other. Add a new spec to `ACCOUNT_SETTINGS_SPECS` when it saves account settings.
+- Don't run a real NetBird client from a test: starting and stopping one changes the runner's network, and the browser on the other worker fails its in-flight requests with `ERR_NETWORK_CHANGED`. Mock the registered peer with `routeMockPeer()` (`helpers/mock-peer.ts`) instead.
 - Retries: 1
 - Viewport: 1920x1080
 - Timeouts: action 10s, navigation 15s
@@ -50,7 +52,6 @@ test by what it needs from the environment, and the config skips it on a deploye
 | `@test-build` | `netbird-test-*` localStorage hooks or other `APP_ENV=test` code |
 | `@test-env` | the local docker environment: docker peers, proxy clusters, the second Zitadel user |
 | `@cloud` | a NetBird Cloud management API |
-| `@docker` | a local docker daemon to run a peer (not skipped; set `NETBIRD_E2E_PEER_IMAGE` to test a specific client) |
 | `@enterprise` | an Enterprise dashboard (skipped with `NETBIRD_E2E_EDITION=community`) |
 
 State that only lives in React (the Control Center draft changeset and canvas) is mirrored onto

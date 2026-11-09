@@ -649,18 +649,18 @@ export default function UserInvitesTable({
               filters={filterDefs}
               disabled={invites?.length == 0}
             />
+            <DataTableRefreshButton
+              isDisabled={invites?.length == 0}
+              onClick={() => {
+                mutate("/users/invites");
+              }}
+            />
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
                 table.setPageIndex(0);
                 table.resetColumnFilters();
                 table.resetGlobalFilter();
-              }}
-            />
-            <DataTableRefreshButton
-              isDisabled={invites?.length == 0}
-              onClick={() => {
-                mutate("/users/invites");
               }}
             />
             <Button variant={"secondary"} onClick={onShowUsers}>

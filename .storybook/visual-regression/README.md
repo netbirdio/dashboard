@@ -80,7 +80,7 @@ runs with `actions/cache`.
 | Affected stories | `scripts/affected.mjs` | Walks the module graph from `storybook build --stats-json` from each changed file to the stories that import it. |
 | Capture | `scripts/capture.mjs` | Screenshots each story after render and `play`, with a frozen clock (2026-10-08 12:00 UTC), the `en-US` locale and finished animations. The `capture-hover` / `capture-focus` tags add real hover and keyboard-focus shots of the `[data-capture]` element. Lists API calls that had no fixture. |
 | Summary | `scripts/summarize.mjs` | Turns the diff into `summary.md`, `summary.json` and the crops. |
-| Pipeline | `run.sh` | Worktree and `node_modules` clone for the baseline, copies `.storybook`, `src/storybook` and every `*.stories.tsx` into it, builds, captures, diffs and summarises. |
+| Pipeline | `run.sh` | Worktree for the baseline, with a `node_modules` clone (or its own `npm ci` when the change updates dependencies), copies `.storybook`, `src/storybook` and every `*.stories.tsx` into it, builds, captures, diffs and summarises. |
 
 Every story is built against the baseline too. A story that can't build there,
 because it imports a file or export the branch adds, is left out of the

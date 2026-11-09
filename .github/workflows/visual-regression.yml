@@ -93,6 +93,8 @@ jobs:
               echo "</details>"
             elif [ -f "$OUT/reg.json" ]; then
               echo "No visual differences."
+            elif [ -f "$OUT/reg.log" ]; then
+              echo "The comparison failed; see the job log."
             else
               echo "No stories are affected by the changes."
             fi
@@ -110,6 +112,7 @@ jobs:
           path: |
             .storybook/visual-regression/output/report.html
             .storybook/visual-regression/output/reg.json
+            .storybook/visual-regression/output/reg.log
             .storybook/visual-regression/output/summary.md
             .storybook/visual-regression/output/summary.json
             .storybook/visual-regression/output/crops
