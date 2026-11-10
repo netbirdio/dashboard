@@ -24,7 +24,7 @@ import {
 
 /* One sidebar for both products (navigation option B): what both work with
    at the top (Control Center, Peers, Users, Groups), Networking and Agent
-   Network as collapsible sections, and the account area at the bottom
+   Network as collapsible sections, and the account area after them
    (Settings, Integrations, Audit Events). */
 const meta: Meta = {
   title: "Pages/Core/Navigation",

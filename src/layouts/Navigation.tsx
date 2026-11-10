@@ -59,7 +59,7 @@ type Props = {
 /**
  * One sidebar for both products: what both work with (Control Center,
  * Peers, Users, Groups) at the top, a collapsible section per product
- * (Networking, Agent Network), and the account area at the bottom. The
+ * (Networking, Agent Network), and the account area after them. The
  * section rules live in modules/navigation/sections.ts.
  */
 export default function Navigation({
@@ -266,9 +266,6 @@ export default function Navigation({
               </SidebarItemGroup>
             )}
 
-            {/* Pushes the account area to the bottom while there is room. */}
-            <div className={"flex-1"} />
-
             {/* The account area: how the account is set up and what changed
                 in it. Both products share it. Documentation lives in the
                 header's help menu. */}
@@ -301,6 +298,9 @@ export default function Navigation({
                 visible={permission.events.read}
               />
             </SidebarItemGroup>
+            {/* The account area follows the products like any section; the
+                plan and version cards keep to the bottom, as before. */}
+            <div className={"flex-1"} />
             <NavigationUsageInfo />
             <NavigationVersionInfo />
           </div>
