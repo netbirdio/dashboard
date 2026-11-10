@@ -66,23 +66,49 @@ export const BothProductsCloud: Story = {
 /* NetBird Cloud on the Free plan: the plan card with its usage and Upgrade
    button closes the sidebar, below the account area. Usage stays under the
    Free limits, so no limits dialog covers the page. */
+const freePlanApi = {
+  "GET /integrations/billing/subscription": freeSubscription,
+  "GET /integrations/billing/usage": {
+    active_users: 3,
+    total_users: 3,
+    active_peers: 12,
+    total_peers: 12,
+  },
+};
+
+const freePlanLoaded = async () => {
+  await peersLoaded();
+  await text("Upgrade Plan");
+};
+
 export const BothProductsCloudFreePlan: Story = {
+  tags: ["cloud"],
+  parameters: { api: freePlanApi },
+  play: freePlanLoaded,
+};
+
+/* The Free plan card for an account focused on Agent Network. */
+export const AgentNetworkOnlyCloudFreePlan: Story = {
   tags: ["cloud"],
   parameters: {
     api: {
-      "GET /integrations/billing/subscription": freeSubscription,
-      "GET /integrations/billing/usage": {
-        active_users: 3,
-        total_users: 3,
-        active_peers: 12,
-        total_peers: 12,
-      },
+      ...freePlanApi,
+      "GET /accounts": [
+        {
+          ...account,
+          settings: { ...account.settings, agent_network_only: true },
+        },
+      ],
     },
   },
-  play: async () => {
-    await peersLoaded();
-    await text("Upgrade Plan");
-  },
+  play: freePlanLoaded,
+};
+
+/* The Free plan card on a deployment without Agent Network. */
+export const NetworkingOnlyCloudFreePlan: Story = {
+  tags: ["cloud", "agent-network-off"],
+  parameters: { api: freePlanApi },
+  play: freePlanLoaded,
 };
 
 /* NetBird Cloud during the trial: the trial card in the same place. */
