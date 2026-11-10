@@ -122,3 +122,36 @@ describe("SidebarItem active state", () => {
     ).toBe("false");
   });
 });
+
+describe("SidebarItem parent", () => {
+  it("opens for a page one of its children stands for", () => {
+    render(
+      <SidebarItem label={"Network Routing"} collapsible visible={true}>
+        <SidebarItem
+          label={"Networks"}
+          isChild
+          href={"/networks"}
+          exactPathMatch
+          activeRoutes={["/control-center"]}
+          visible={true}
+        />
+      </SidebarItem>,
+    );
+    expect(screen.queryByText("Networks")).not.toBeNull();
+  });
+
+  it("stays closed on unrelated pages", () => {
+    render(
+      <SidebarItem label={"Network Routing"} collapsible visible={true}>
+        <SidebarItem
+          label={"Networks"}
+          isChild
+          href={"/networks"}
+          exactPathMatch
+          visible={true}
+        />
+      </SidebarItem>,
+    );
+    expect(screen.queryByText("Networks")).toBeNull();
+  });
+});

@@ -7,6 +7,7 @@ import AgentPoliciesPage from "@/app/(dashboard)/agent-network/policies/page";
 import AuditEventsPage from "@/app/(dashboard)/events/audit/page";
 import TrafficEventsPage from "@/app/(dashboard)/events/traffic/page";
 import GroupsPage from "@/app/(dashboard)/groups/page";
+import NetworkDetailPage from "@/app/(dashboard)/network/page";
 import PeersPage from "@/app/(dashboard)/peers/page";
 import ServiceUsersPage from "@/app/(dashboard)/team/service-users/page";
 import {
@@ -20,9 +21,11 @@ import {
 } from "@/storybook/core";
 import {
   account,
+  currentUser,
   distributorInfo,
   freeSubscription,
   mspInfo,
+  NETWORK,
   tenantSwitcher,
   trialSubscription,
 } from "@/storybook/fixtures";
@@ -298,5 +301,66 @@ export const MSPSidebar: Story = {
   play: async () => {
     await section("Account");
     await text("Tenants");
+  },
+};
+
+/* The logged-in user with only the given read grants. */
+const onlyGrants = (role: string, restricted: boolean, granted: string[]) => {
+  const read = { create: false, read: true, update: false, delete: false };
+  const none = { create: false, read: false, update: false, delete: false };
+  const modules = Object.fromEntries(
+    Object.keys(currentUser.permissions.modules).map((module) => [
+      module,
+      granted.includes(module) ? read : none,
+    ]),
+  );
+  return {
+    "GET /users/current": {
+      ...currentUser,
+      role,
+      permissions: { is_restricted: restricted, modules },
+    },
+  };
+};
+
+/* The user role (limited view) with its own agent setup: Peers and the
+   Agent Network pages it can open. No account area, since none of its
+   pages is open to the role. */
+export const UserRole: Story = {
+  parameters: { api: onlyGrants("user", true, ["peers"]) },
+  play: async () => {
+    await section("Agent Network");
+    await text("Usage & Logs");
+  },
+};
+
+/* An Agent Network admin: Peers, Groups (agent policies use them) and the
+   Agent Network section; no Networking, no account area. */
+export const AgentNetworkAdminRole: Story = {
+  parameters: {
+    api: onlyGrants("agent_network_admin", false, [
+      "peers",
+      "groups",
+      "agent_network",
+      "agent_network.providers",
+      "agent_network.policies",
+      "agent_network.usage",
+      "agent_network.logs",
+      "agent_network.settings",
+    ]),
+  },
+  play: async () => {
+    await section("Agent Network");
+    await text("Groups");
+  },
+};
+
+/* A network's own page: Network Routing opens with Networks active. */
+export const NetworkDetail: Story = {
+  parameters: nav("/network", { id: NETWORK.office }),
+  render: inLayout(NetworkDetailPage),
+  play: async () => {
+    await section("Networking");
+    await text("Routes");
   },
 };

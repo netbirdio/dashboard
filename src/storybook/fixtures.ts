@@ -7,6 +7,7 @@ import {
 import { networkResources } from "../../.storybook/mocks/fixtures/network";
 
 export { account } from "../../.storybook/mocks/fixtures/account";
+export { currentUser } from "../../.storybook/mocks/fixtures/users";
 export {
   GROUP,
   NETWORK,

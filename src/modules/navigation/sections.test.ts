@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountPageAccess,
   agentNetworkPageAccess,
   hasAgentNetworkGrant,
   hasNetworkingAccess,
@@ -66,6 +67,7 @@ const input = (overrides: Partial<NavSectionInput> = {}): NavSectionInput => ({
   agentNetworkEnabled: true,
   agentNetworkAccess: true,
   networkingAccess: true,
+  accountAccess: true,
   ...overrides,
 });
 
@@ -102,6 +104,23 @@ describe("section visibility", () => {
       "agent-network",
       "account",
     ]);
+  });
+
+  it("drops the account area for callers who can open none of its pages", () => {
+    expect(visibleSections(input({ accountAccess: false }))).toEqual([
+      "networking",
+      "agent-network",
+    ]);
+    // The user role without an agent setup: only the pages at the top.
+    expect(
+      visibleSections(
+        input({
+          agentNetworkAccess: false,
+          networkingAccess: false,
+          accountAccess: false,
+        }),
+      ),
+    ).toEqual([]);
   });
 
   it("keeps the account area when neither product shows", () => {
@@ -276,5 +295,52 @@ describe("section state", () => {
       alice: { networking: true },
       bob: { networking: false },
     });
+  });
+});
+
+describe("accountPageAccess", () => {
+  it("shows nothing without account grants (user role, Agent Network roles)", () => {
+    expect(accountPageAccess({ permission: {}, cloud: false })).toEqual({
+      settings: false,
+      integrations: false,
+      auditEvents: false,
+    });
+    expect(
+      accountPageAccess({
+        permission: { "agent_network.usage": { read: true } },
+        cloud: true,
+      }),
+    ).toEqual({ settings: false, integrations: false, auditEvents: false });
+  });
+
+  it("lets Settings readers manage integrations on self-hosted only", () => {
+    const permission = { settings: { read: true } };
+    expect(accountPageAccess({ permission, cloud: false }).integrations).toBe(
+      true,
+    );
+    expect(accountPageAccess({ permission, cloud: true }).integrations).toBe(
+      false,
+    );
+  });
+
+  it.each(["edr", "idp", "event_streaming"] as const)(
+    "shows Integrations for %s readers on Cloud",
+    (module) => {
+      expect(
+        accountPageAccess({
+          permission: { [module]: { read: true } },
+          cloud: true,
+        }).integrations,
+      ).toBe(true);
+    },
+  );
+
+  it("shows Audit Events alone to event readers, such as network admins", () => {
+    expect(
+      accountPageAccess({
+        permission: { events: { read: true } },
+        cloud: false,
+      }),
+    ).toEqual({ settings: false, integrations: false, auditEvents: true });
   });
 });

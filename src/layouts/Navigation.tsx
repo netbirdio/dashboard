@@ -39,12 +39,14 @@ import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode
 import { useMyAgentNetworkSetup } from "@/modules/agent-network/useMyAgentNetworkSetup";
 import { NavigationUsageInfo } from "@/modules/billing/NavigationUsageInfo";
 import {
+  accountPageAccess,
   agentNetworkPageAccess,
+  GROUPS_ACTIVE_ROUTES,
   hasNetworkingAccess,
   type NavSectionId,
-  showAgentNetworkSection,
+  PEERS_ACTIVE_ROUTES,
   USERS_ACTIVE_ROUTES,
-  showNetworkingSection,
+  visibleSections,
 } from "@/modules/navigation/sections";
 import { useNavSections } from "@/modules/navigation/useNavSections";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
@@ -66,7 +68,7 @@ export default function Navigation({
 }: Readonly<Props>) {
   const { bannerHeight } = useAnnouncement();
   const { isNavigationCollapsed } = useApplicationContext();
-  const { permission } = usePermissions();
+  const { permission, isRestricted } = usePermissions();
   const { loggedInUser } = useLoggedInUser();
   // "enabled" already falls back to the caller's agent_network grants when
   // the feature flag can't be resolved (no accounts read — usage_viewer and
@@ -83,12 +85,17 @@ export default function Navigation({
     configured: mySetupConfigured,
     insights: isAgentNetworkInsightsEnabled(),
   });
-  const sectionInput = {
+  const accountPages = accountPageAccess({
+    permission,
+    cloud: isNetBirdCloud(),
+  });
+  const shown = visibleSections({
     agentNetworkOnly,
     agentNetworkEnabled,
     agentNetworkAccess: Object.values(agentNetworkPages).some(Boolean),
     networkingAccess: hasNetworkingAccess(permission),
-  };
+    accountAccess: Object.values(accountPages).some(Boolean),
+  });
   const sections = useNavSections(loggedInUser?.id);
   const section = (id: NavSectionId) => ({
     id,
@@ -149,6 +156,7 @@ export default function Navigation({
                 icon={<PeerIcon />}
                 label="Peers"
                 href={"/peers"}
+                activeRoutes={PEERS_ACTIVE_ROUTES}
                 // Restricted users get the add-your-device view there, so
                 // the link stays even in the limited (user role) sidebar.
                 visible={true}
@@ -166,12 +174,17 @@ export default function Navigation({
                 icon={<GroupsIcon />}
                 label="Groups"
                 href={"/groups"}
-                visible={permission.policies.read}
+                activeRoutes={GROUPS_ACTIVE_ROUTES}
+                // The Groups page's own check. Both products' policies are
+                // written against groups, so Agent Network admins need it as
+                // much as network admins; the limited (user role) view keeps
+                // to its own pages.
+                visible={permission.groups.read && !isRestricted}
               />
               <DistributorNavigation />
             </SidebarItemGroup>
 
-            {showNetworkingSection(sectionInput) && (
+            {shown.includes("networking") && (
               <SidebarItemGroup
                 label={"Networking"}
                 collapsible
@@ -181,7 +194,7 @@ export default function Navigation({
               </SidebarItemGroup>
             )}
 
-            {showAgentNetworkSection(sectionInput) && (
+            {shown.includes("agent-network") && (
               <SidebarItemGroup
                 label={"Agent Network"}
                 badge={
@@ -270,35 +283,32 @@ export default function Navigation({
             {/* The account area: how the account is set up and what changed
                 in it. Both products share it. Documentation lives in the
                 header's help menu. */}
-            <SidebarItemGroup label={"Account"} {...section("account")}>
-              <SidebarItem
-                icon={<SettingsIcon />}
-                label="Settings"
-                href={"/settings"}
-                exactPathMatch={true}
-                visible={permission.settings.read}
-              />
-              <MSPNavigationItem />
-              <SidebarItem
-                icon={<IntegrationIcon />}
-                label="Integrations"
-                href={"/integrations"}
-                exactPathMatch={true}
-                visible={
-                  permission?.edr?.read ||
-                  permission?.idp?.read ||
-                  permission?.event_streaming?.read ||
-                  (!isNetBirdCloud() && (permission?.settings?.read ?? false))
-                }
-              />
-              <SidebarItem
-                icon={<ActivityIcon />}
-                label="Audit Events"
-                href={"/events/audit"}
-                exactPathMatch={true}
-                visible={permission.events.read}
-              />
-            </SidebarItemGroup>
+            {shown.includes("account") && (
+              <SidebarItemGroup label={"Account"} {...section("account")}>
+                <SidebarItem
+                  icon={<SettingsIcon />}
+                  label="Settings"
+                  href={"/settings"}
+                  exactPathMatch={true}
+                  visible={accountPages.settings}
+                />
+                <MSPNavigationItem />
+                <SidebarItem
+                  icon={<IntegrationIcon />}
+                  label="Integrations"
+                  href={"/integrations"}
+                  exactPathMatch={true}
+                  visible={accountPages.integrations}
+                />
+                <SidebarItem
+                  icon={<ActivityIcon />}
+                  label="Audit Events"
+                  href={"/events/audit"}
+                  exactPathMatch={true}
+                  visible={accountPages.auditEvents}
+                />
+              </SidebarItemGroup>
+            )}
             <NavigationUsageInfo />
             <NavigationVersionInfo />
           </div>

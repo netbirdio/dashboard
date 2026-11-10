@@ -248,7 +248,7 @@ shared owner page must clear that key again.
 | Networking | DNS | Nameservers, Zones, DNS Settings |
 | Networking | Traffic Events | — |
 | Agent Network | Agents | Connect Agent, Providers, Agent Policies |
-| Agent Network | Insights (placeholders: on under `next dev`, the test build included; off in production builds unless `NETBIRD_AGENT_NETWORK_INSIGHTS=true`) | Overview, Models, Tasks, Departments |
+| Agent Network | Insights (placeholders: on under `next dev`, so with `npm run test:dev`; off in `next build`, so in `test:ci`, unless `NETBIRD_AGENT_NETWORK_INSIGHTS=true`) | Overview, Models, Tasks, Departments |
 | Agent Network | Usage & Logs, Configuration | — |
 | Account | Settings, Integrations, Audit Events | — |
 

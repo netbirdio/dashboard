@@ -21,12 +21,6 @@ export const NAV_SECTIONS: readonly NavSectionId[] = [
   "account",
 ];
 
-/** The product sections; the account area is always there. */
-export const PRODUCT_SECTIONS: readonly NavSectionId[] = [
-  "networking",
-  "agent-network",
-];
-
 /**
  * The route roots each section lists. A root covers itself and everything
  * below it, so "/dns" covers "/dns/zones" but not "/dnssec". Detail pages
@@ -51,13 +45,17 @@ export const NAV_SECTION_ROUTES: Record<NavSectionId, readonly string[]> = {
 };
 
 /**
- * The pages the Users entry stands for besides /team/users: its Service
- * Users tab and a user's own page.
+ * The pages an entry stands for besides its own list page, so it stays
+ * active there (SidebarItem `activeRoutes`): a list's detail page, or a
+ * page reached through tabs on it.
  */
 export const USERS_ACTIVE_ROUTES: readonly string[] = [
   "/team/service-users",
   "/team/user",
 ];
+export const PEERS_ACTIVE_ROUTES: readonly string[] = ["/peer"];
+export const GROUPS_ACTIVE_ROUTES: readonly string[] = ["/group"];
+export const NETWORKS_ACTIVE_ROUTES: readonly string[] = ["/network"];
 
 /** True when `path` is `root` or a page below it. */
 export const isUnder = (path: string | null | undefined, root: string) =>
@@ -84,6 +82,9 @@ export type NavPermissions = Partial<
     | "events"
     | "users"
     | "settings"
+    | "edr"
+    | "idp"
+    | "event_streaming"
     | "agent_network.providers"
     | "agent_network.policies"
     | "agent_network.usage"
@@ -159,6 +160,34 @@ export const agentNetworkPageAccess = ({
   };
 };
 
+export type AccountPageAccess = {
+  settings: boolean;
+  integrations: boolean;
+  auditEvents: boolean;
+};
+
+/**
+ * Which account-area pages the caller sees. Integrations needs one of its
+ * integration grants; self-hosted, Settings readers manage them too.
+ * Tenants (MSPs) is decided by MSPNavigationItem and needs an owner or
+ * admin, who can always read Settings, so it never stands alone here.
+ */
+export const accountPageAccess = ({
+  permission,
+  cloud,
+}: {
+  permission?: NavPermissions;
+  cloud: boolean;
+}): AccountPageAccess => ({
+  settings: can(permission, "settings"),
+  integrations:
+    can(permission, "edr") ||
+    can(permission, "idp") ||
+    can(permission, "event_streaming") ||
+    (!cloud && can(permission, "settings")),
+  auditEvents: can(permission, "events"),
+});
+
 export type NavSectionInput = {
   /** The account or deployment is focused on Agent Network (`agent_network_only`). */
   agentNetworkOnly: boolean;
@@ -168,6 +197,8 @@ export type NavSectionInput = {
   agentNetworkAccess: boolean;
   /** The caller can open at least one Networking page. */
   networkingAccess: boolean;
+  /** The caller can open at least one account-area page. */
+  accountAccess: boolean;
 };
 
 /**
@@ -188,12 +219,21 @@ export const showAgentNetworkSection = ({
   agentNetworkAccess,
 }: NavSectionInput) => agentNetworkEnabled && agentNetworkAccess;
 
-/** The sections the sidebar shows, in order. The account area always stays. */
+/**
+ * The account area serves both products, so the product switches don't
+ * touch it; it is gone only for callers who can open none of its pages
+ * (the user role, delegated Agent Network roles), instead of standing there
+ * as an empty heading.
+ */
+export const showAccountSection = ({ accountAccess }: NavSectionInput) =>
+  accountAccess;
+
+/** The sections the sidebar shows, in order. */
 export const visibleSections = (input: NavSectionInput): NavSectionId[] =>
   NAV_SECTIONS.filter((id) => {
     if (id === "networking") return showNetworkingSection(input);
     if (id === "agent-network") return showAgentNetworkSection(input);
-    return true;
+    return showAccountSection(input);
   });
 
 /** Open (true) or closed (false) per section; a section never toggled is open. */

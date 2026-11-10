@@ -59,6 +59,11 @@ export default function SidebarItem({
       if (props.href) {
         routes.push({ href: props.href, exact: !!props.exactPathMatch });
       }
+      // Pages a child stands for open the parent too, e.g. a network's
+      // detail page opens Network Routing.
+      props.activeRoutes?.forEach((route) =>
+        routes.push({ href: route, exact: false }),
+      );
     });
     return routes;
   }, [children]);

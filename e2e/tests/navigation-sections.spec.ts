@@ -116,4 +116,18 @@ test.describe.serial("Navigation sections @navigation", () => {
     await page.getByTestId("users-tab-users").click();
     await page.waitForURL(/\/team\/users/);
   });
+
+  test("never shows a section heading without entries, for the user role", async ({
+    dashboardAsUser: page,
+  }) => {
+    await navigateTo(page, "/peers");
+    await expect(navItem(page, "Peers")).toBeVisible();
+    const sections = page.locator("[data-navigation] [data-nav-section]");
+    for (const group of await sections.all()) {
+      if (!(await group.isVisible())) continue;
+      await expect(
+        group.getByTestId("left-navigation-item").first(),
+      ).toBeVisible();
+    }
+  });
 });

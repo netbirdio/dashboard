@@ -54,7 +54,12 @@ export default function SidebarItemGroup({
   // icon-only sidebar has no room for the heading, so a divider stands in
   // for it until a hover widens the sidebar again.
   const iconOnly = isNavigationCollapsed && !mobileNavOpen;
-  const isOpen = collapsible ? open : true;
+  // The icon-only heading can't be seen or clicked, so a closed group there
+  // would hide its icons with no way back; every group stays open in that
+  // mode, and its heading is a plain label while a hover widens it. The
+  // remembered state applies again once the sidebar is full width.
+  const canToggle = collapsible && !iconOnly;
+  const isOpen = canToggle ? open : true;
   const Chevron = isOpen ? ChevronUpIcon : ChevronDownIcon;
   const labelledClassName = cn(
     "first:mt-0 border-t border-transparent",
@@ -72,7 +77,7 @@ export default function SidebarItemGroup({
           ? "text-gray-900 dark:text-nb-gray-100"
           : // A step quieter than the items below it.
             "text-gray-500/85 dark:text-nb-gray-400/85",
-        collapsible &&
+        canToggle &&
           !active &&
           "hover:text-gray-700 dark:hover:text-nb-gray-200",
         iconOnly && "opacity-0 group-hover/navigation:opacity-100",
@@ -87,7 +92,7 @@ export default function SidebarItemGroup({
         />
       )}
       {badge}
-      {collapsible && (
+      {canToggle && (
         <Chevron
           size={14}
           className={cn(
@@ -108,7 +113,7 @@ export default function SidebarItemGroup({
     <div className={labelledClassName} data-nav-section={id}>
       <Collapsible.Root open={isOpen} onOpenChange={onOpenChange}>
         <div className={"px-3"}>
-          {collapsible ? (
+          {canToggle ? (
             <Collapsible.Trigger asChild>
               <button
                 type={"button"}
