@@ -99,7 +99,15 @@ function DataTableRowComponent<TData>({
             }}
           >
             <div className={"absolute left-0 top-0 w-full h-full z-0"}></div>
-            <div className={"relative z-[1]"}>
+            <div
+              className={cn(
+                "relative z-[1]",
+                // Reports a min-content width of 0, so the
+                // column can shrink below its text width.
+                cell.column.columnDef.meta?.minWidth &&
+                  "grid grid-cols-[minmax(0,max-content)]",
+              )}
+            >
               {flexRender(cell.column.columnDef.cell, cell.getContext())}
             </div>
           </TableCellComponent>

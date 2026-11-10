@@ -85,6 +85,7 @@ function peerOsKey(os: string | undefined): string {
 const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "select",
+    meta: { fit: true },
     header: ({ table }) => (
       <div className={"min-w-[20px] max-w-[20px]"}>
         <Checkbox
@@ -114,7 +115,8 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
     sortingFn: "text",
-    cell: ({ row }) => <PeerNameCell peer={row.original} />,
+    meta: { minWidth: 280 },
+    cell: ({ row }) => <PeerNameCell peer={row.original} fluid={true} />,
   },
   {
     id: "approval_required",
@@ -151,7 +153,10 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>Address</DataTableHeader>;
     },
-    cell: ({ row }) => <PeerAddressCell peer={row.original} />,
+    // The cell content brings its own hover padding,
+    // so the cell padding on the left is trimmed to give the columns more room.
+    meta: { minWidth: 300, className: "pl-1" },
+    cell: ({ row }) => <PeerAddressCell peer={row.original} fluid={true} />,
   },
   {
     accessorKey: "group_name_strings",
@@ -219,6 +224,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     accessorKey: "version",
+    meta: { minWidth: 150 },
     header: ({ column }) => {
       return <DataTableHeader column={column}>Version</DataTableHeader>;
     },
@@ -234,7 +240,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "status",
     // Only expired or unapproved peers show a status, so most rows leave it empty.
-    meta: { skeleton: false },
+    meta: { skeleton: false, fit: true },
     accessorFn: (peer) => {
       let statusCount = 0;
       if (peer.login_expired) statusCount++;
@@ -253,6 +259,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     id: "actions",
+    meta: { fit: true },
     accessorKey: "id",
     header: "",
     cell: ({ row }) => (
@@ -526,13 +533,9 @@ export default function PeersTable({
         // "Get Started" card. With no peers at all (kind unselected), the card
         // still shows.
         hasServerSideFilters={kind !== undefined && (peers?.length ?? 0) > 0}
-        getStartedCard={
-          <NoPeersGettingStarted showBackground={true} />
-        }
+        getStartedCard={<NoPeersGettingStarted showBackground={true} />}
         rightSide={() => (
-          <>
-            {peers && peers.length > 0 && <AddPeerDropdown />}
-          </>
+          <>{peers && peers.length > 0 && <AddPeerDropdown />}</>
         )}
         aboveTable={(table) => (
           <TableFilterChips table={table} filters={filterDefs} />

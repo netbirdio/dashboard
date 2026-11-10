@@ -1,5 +1,6 @@
 "use client";
 
+import "@/utils/translationGuard";
 import "../app/globals.css";
 import { DisableDarkReader } from "@components/DisableDarkReader";
 import { TooltipProvider } from "@components/Tooltip";
@@ -47,7 +48,7 @@ export default function AppLayout({
       <head>
         <GoogleTagManagerHeadScript />
       </head>
-      <body className={cn(inter.className)}>
+      <body className={cn(inter.className)} data-matomo-mask>
         <Suspense fallback={<FullScreenLoading />}>
           <AnalyticsProvider>
             <DialogProvider>

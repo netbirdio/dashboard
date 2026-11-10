@@ -42,6 +42,17 @@ jobs:
             exit 1
           fi
 
+          # Every stable netbird tag is dispatched here, including a patch on
+          # an older release line. Only the newest release moves the default;
+          # see scripts/wasm-client-version.mjs. A broken tag list fails the
+          # step rather than open a bump.
+          tags=$(git ls-remote --tags --refs https://github.com/netbirdio/netbird.git 'v*' | sed 's#.*refs/tags/##')
+          decision=$(node scripts/wasm-client-version.mjs newest "$TAG" <<<"$tags")
+          if [[ "$decision" != "bump" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           sed -i "s|https://pkgs.netbird.io/wasm/client/v[0-9.]*|https://pkgs.netbird.io/wasm/client/${TAG}|" src/utils/config.ts
 
           branch="bump-netbird-wasm-${TAG#v}"

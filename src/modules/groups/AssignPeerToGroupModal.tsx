@@ -214,6 +214,7 @@ export const AssignGroupToPeerModalContent = ({
 
   return (
     <ModalContent
+      flow={useSave ? "group" : undefined}
       maxWidthClass={"max-w-4xl"}
       className={cn(peers && peers.length > 0 ? "pb-0" : "pb-8")}
       showClose={showClose}

@@ -21,6 +21,7 @@ import {
 } from "@components/table/Table";
 import { useVirtualRows } from "@components/table/useVirtualRows";
 import NoResults from "@components/ui/NoResults";
+import { useEvenColumnWidths } from "@hooks/useEvenColumnWidths";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import {
   Cell,
@@ -70,6 +71,19 @@ declare module "@tanstack/table-core" {
     className?: string;
     /** `false` leaves the column blank in the loading skeleton, e.g. for a column that is mostly empty. */
     skeleton?: false;
+    /**
+     * Keep the column at its content width.
+     * Setting `fit` or `minWidth` on any column spreads the table's spare width
+     * evenly over the other columns, see `useEvenColumnWidths`.
+     */
+    fit?: boolean;
+    /**
+     * Let the column shrink and truncate when the table runs out of room,
+     * down to its content width capped at this many pixels.
+     * The cell must truncate its own content, e.g. `TextWithTooltip fluid`,
+     * or text that does not fit spills into the next column.
+     */
+    minWidth?: number;
   }
 }
 
@@ -368,6 +382,9 @@ export function DataTable<TData, TValue>({
 }: Readonly<DataTableProps<TData, TValue>>) {
   const path = usePathname();
   const isInitialRender = useRef(true);
+  const [tableElement, setTableElement] = useState<HTMLTableElement | null>(
+    null,
+  );
 
   const [showOverlay, setShowOverlay] = useState(false);
   const overlayTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -418,6 +435,13 @@ export function DataTable<TData, TValue>({
 
   const hasInitialData = !!(data && data.length > 0);
 
+  // The pagination prop is undefined while server data is loading,
+  // so fall back to the first page instead of handing updaters undefined.
+  const manualPaginationState: PaginationState = {
+    pageIndex: pagination?.pageIndex ?? 0,
+    pageSize: pagination?.pageSize ?? initialPageSize,
+  };
+
   const table = useReactTable({
     data: hasInitialData ? data : [],
     columns,
@@ -442,12 +466,7 @@ export function DataTable<TData, TValue>({
         : localColumnFilters,
       columnVisibility: columnVisibility,
       globalFilter: manualFiltering ? globalFilter : localGlobalSearch,
-      pagination: manualPagination
-        ? {
-            pageIndex: pagination?.pageIndex ?? 0,
-            pageSize: pagination?.pageSize ?? initialPageSize,
-          }
-        : localPagination,
+      pagination: manualPagination ? manualPaginationState : localPagination,
     },
     initialState: {
       pagination: {
@@ -474,7 +493,7 @@ export function DataTable<TData, TValue>({
           return;
         }
         if (typeof updater === "function") {
-          const newState = updater(pagination!);
+          const newState = updater(manualPaginationState);
           onPaginationChange?.(newState);
         } else {
           onPaginationChange?.(updater);
@@ -599,6 +618,13 @@ export function DataTable<TData, TValue>({
     scrollTableIntoView(rootRef.current);
   }, [pageIndex, pageSize]);
 
+  useEvenColumnWidths(
+    tableElement,
+    table
+      .getVisibleLeafColumns()
+      .some(({ columnDef: { meta } }) => meta?.fit || meta?.minWidth),
+  );
+
   const content = (
     <div ref={rootRef} className={cn("relative table-fixed-scroll", className)}>
       {showSearchAndFilters && (
@@ -654,6 +680,7 @@ export function DataTable<TData, TValue>({
             getStartedCard
           ) : (
             <TableComponent
+              ref={setTableElement}
               className={cn("relative mt-6", tableClassName)}
               minimal={minimal}
             >
@@ -671,6 +698,12 @@ export function DataTable<TData, TValue>({
                               tableHeadClassName,
                               header.column.columnDef.meta?.className,
                             )}
+                            data-fit={
+                              header.column.columnDef.meta?.fit || undefined
+                            }
+                            data-min-width={
+                              header.column.columnDef.meta?.minWidth
+                            }
                           >
                             {header.isPlaceholder
                               ? null

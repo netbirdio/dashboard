@@ -193,3 +193,13 @@ jobs:
           echo '${{ steps.meta.outputs.tags }}' >> $GITHUB_STEP_SUMMARY
           echo '${{ steps.meta_rootless.outputs.tags }}' >> $GITHUB_STEP_SUMMARY
           echo '${{ steps.meta_ubi.outputs.tags }}' >> $GITHUB_STEP_SUMMARY
+
+  redhat_certify:
+    needs: build_n_push
+    # Stable vX.Y.Z tags only; pre-release tags carry a '-'.
+    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-')
+    uses: ./.github/workflows/redhat-certify.yml
+    with:
+      version: ${{ github.ref_name }}
+    secrets:
+      PYXIS_API_TOKEN: ${{ secrets.PYXIS_API_TOKEN }}
