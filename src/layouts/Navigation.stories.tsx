@@ -1,5 +1,7 @@
 import type { Meta } from "@storybook/nextjs-vite";
 import { screen } from "storybook/test";
+import CustomersPage from "@/app/(dashboard)/(cloud)/customers/page";
+import TenantsPage from "@/app/(dashboard)/(cloud)/tenants/page";
 import InsightsOverviewPage from "@/app/(dashboard)/agent-network/insights/overview/page";
 import AgentPoliciesPage from "@/app/(dashboard)/agent-network/policies/page";
 import AuditEventsPage from "@/app/(dashboard)/events/audit/page";
@@ -18,7 +20,10 @@ import {
 } from "@/storybook/core";
 import {
   account,
+  distributorInfo,
   freeSubscription,
+  mspInfo,
+  tenantSwitcher,
   trialSubscription,
 } from "@/storybook/fixtures";
 
@@ -260,5 +265,38 @@ export const MobileDrawer: Story = {
       if (document.querySelectorAll("[data-navigation]").length < 2)
         throw new Error("drawer not open");
     });
+  },
+};
+
+/* A distributor on NetBird Cloud: Customers and Users at the top, then the
+   account area. Neither product section shows. */
+export const DistributorSidebar: Story = {
+  tags: ["cloud"],
+  parameters: {
+    ...nav("/customers"),
+    api: { "GET /integrations/msp/reseller": distributorInfo },
+  },
+  render: inLayout(CustomersPage),
+  play: async () => {
+    await text("Customers");
+    await section("Account");
+  },
+};
+
+/* An MSP on NetBird Cloud: Tenants sits in the account area, after
+   Settings. */
+export const MSPSidebar: Story = {
+  tags: ["cloud"],
+  parameters: {
+    ...nav("/tenants"),
+    api: {
+      "GET /integrations/msp": mspInfo,
+      "GET /integrations/msp/switcher": tenantSwitcher,
+    },
+  },
+  render: inLayout(TenantsPage),
+  play: async () => {
+    await section("Account");
+    await text("Tenants");
   },
 };

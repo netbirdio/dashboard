@@ -43,13 +43,11 @@ import {
   hasNetworkingAccess,
   type NavSectionId,
   showAgentNetworkSection,
+  USERS_ACTIVE_ROUTES,
   showNetworkingSection,
 } from "@/modules/navigation/sections";
 import { useNavSections } from "@/modules/navigation/useNavSections";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
-
-// Service Users (a tab on the Users page) and a user's own page.
-const USERS_ACTIVE_ROUTES = ["/team/service-users", "/team/user"];
 
 type Props = {
   fullWidth?: boolean;

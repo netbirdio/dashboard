@@ -70,7 +70,8 @@ export default function SidebarItemGroup({
         "text-[.7rem] font-medium uppercase tracking-[.08em] transition-colors",
         active
           ? "text-gray-900 dark:text-nb-gray-100"
-          : "text-gray-500 dark:text-nb-gray-400",
+          : // A step quieter than the items below it.
+            "text-gray-500/85 dark:text-nb-gray-400/85",
         collapsible &&
           !active &&
           "hover:text-gray-700 dark:hover:text-nb-gray-200",

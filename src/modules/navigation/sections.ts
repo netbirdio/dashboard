@@ -50,6 +50,15 @@ export const NAV_SECTION_ROUTES: Record<NavSectionId, readonly string[]> = {
   account: ["/settings", "/integrations", "/events/audit", "/tenants"],
 };
 
+/**
+ * The pages the Users entry stands for besides /team/users: its Service
+ * Users tab and a user's own page.
+ */
+export const USERS_ACTIVE_ROUTES: readonly string[] = [
+  "/team/service-users",
+  "/team/user",
+];
+
 /** True when `path` is `root` or a page below it. */
 export const isUnder = (path: string | null | undefined, root: string) =>
   !!path && (path === root || path.startsWith(`${root}/`));

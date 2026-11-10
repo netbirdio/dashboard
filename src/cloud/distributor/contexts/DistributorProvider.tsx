@@ -19,14 +19,14 @@ const DISTRIBUTOR_HIDDEN_NAV_ITEMS = [
   "/team/users",
   "/team/service-users",
   "/groups",
-  "/events/audit",
   "/events/traffic",
   "/tenants",
   "/peers",
 ];
 
-// Sidebar sections whose every entry is hidden above; their headings go too.
-const DISTRIBUTOR_HIDDEN_NAV_SECTIONS = ["networking"];
+// Distributors manage customers, not networks or agents: both product
+// sections go, headings included. The account area stays, Audit Events in it.
+const DISTRIBUTOR_HIDDEN_NAV_SECTIONS = ["networking", "agent-network"];
 
 const DISTRIBUTOR_HIDDEN_SETTINGS_TABS = [
   "networks",
