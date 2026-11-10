@@ -71,7 +71,7 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
   }, [name]);
 
   return (
-    <ModalContent maxWidthClass={"max-w-lg"}>
+    <ModalContent flow="service_user" maxWidthClass={"max-w-lg"}>
       <ModalHeader
         icon={<IconSettings2 />}
         title={"Create Service User"}

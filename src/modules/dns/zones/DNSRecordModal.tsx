@@ -167,7 +167,7 @@ export function DNSRecordModalContent({
     recordValue !== "";
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
+    <ModalContent flow="dns_record" maxWidthClass={"max-w-xl"}>
       <ModalHeader
         title={record ? "Update DNS Record" : "Add DNS Record"}
         description={

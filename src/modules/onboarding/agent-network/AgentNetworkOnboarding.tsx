@@ -9,6 +9,11 @@ import { cn } from "@utils/helpers";
 import * as React from "react";
 import { useEffect, useReducer } from "react";
 import { useSWRConfig } from "swr";
+import {
+  useMatomoEvent,
+  useMatomoHeatmap,
+  useMatomoStep,
+} from "@/cloud/analytics/MatomoProvider";
 import { HubspotFormField } from "@/contexts/AnalyticsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import type { Peer } from "@/interfaces/Peer";
@@ -79,6 +84,8 @@ export const AgentNetworkOnboarding = ({
     back: false,
   });
   const position = steps.indexOf(step);
+  useMatomoHeatmap("agent_onboarding", step);
+  useMatomoStep(position - steps.indexOf(firstStep), "agent_onboarding", step);
 
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const { loggedInUser } = useLoggedInUser();
@@ -87,6 +94,13 @@ export const AgentNetworkOnboarding = ({
     ? ownConnectedDevice(peers, loggedInUser?.id)
     : peers?.find((p) => p.connected) ?? peers?.[0];
   const deviceConnected = !!device;
+
+  useMatomoEvent(
+    step === AGENT_STEP.DEVICE && "agent_onboarding",
+    step,
+    "connected",
+    device?.connected ? 1 : 0,
+  );
 
   // First-run prep: seed a "Users" source group (with the current user in it)
   // so the policy step has something to select, and remove the permissive

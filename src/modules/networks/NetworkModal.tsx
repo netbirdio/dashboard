@@ -99,7 +99,10 @@ export const NetworkModalContent = ({
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
+    <ModalContent
+      flow={useSave ? "network" : undefined}
+      maxWidthClass={"max-w-xl"}
+    >
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-netbird"} />}
         title={network ? "Update Network" : "Add Network"}
