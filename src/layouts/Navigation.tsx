@@ -10,13 +10,11 @@ import ActivityIcon from "@/assets/icons/ActivityIcon";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
-import DocsIcon from "@/assets/icons/DocsIcon";
 import GroupsIcon from "@/assets/icons/GroupsIcon";
 import InsightsIcon from "@/assets/icons/InsightsIcon";
 import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
-import ServiceUsersIcon from "@/assets/icons/ServiceUsersIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import SlidersIcon from "@/assets/icons/SlidersIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
@@ -49,6 +47,9 @@ import {
 } from "@/modules/navigation/sections";
 import { useNavSections } from "@/modules/navigation/useNavSections";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
+
+// Service Users (a tab on the Users page) and a user's own page.
+const USERS_ACTIVE_ROUTES = ["/team/service-users", "/team/user"];
 
 type Props = {
   fullWidth?: boolean;
@@ -158,6 +159,9 @@ export default function Navigation({
                 icon={<TeamIcon />}
                 label="Users"
                 href={"/team/users"}
+                // Service Users is a tab on the Users page, and a user's own
+                // page sits at /team/user; Users stays active on both.
+                activeRoutes={USERS_ACTIVE_ROUTES}
                 visible={permission.users.read}
               />
               <SidebarItem
@@ -265,8 +269,9 @@ export default function Navigation({
             {/* Pushes the account area to the bottom while there is room. */}
             <div className={"flex-1"} />
 
-            {/* The account area: how the account is set up, the identities
-                that automate it, and what changed. Both products share it. */}
+            {/* The account area: how the account is set up and what changed
+                in it. Both products share it. Documentation lives in the
+                header's help menu. */}
             <SidebarItemGroup label={"Account"} {...section("account")}>
               <SidebarItem
                 icon={<SettingsIcon />}
@@ -288,28 +293,12 @@ export default function Navigation({
                   (!isNetBirdCloud() && (permission?.settings?.read ?? false))
                 }
               />
-              {/* Service users are the API and automation identities, so
-                  they sit with the account setup rather than with Users. */}
-              <SidebarItem
-                icon={<ServiceUsersIcon />}
-                label="Service Users"
-                href={"/team/service-users"}
-                exactPathMatch={true}
-                visible={permission.users.read}
-              />
               <SidebarItem
                 icon={<ActivityIcon />}
                 label="Audit Events"
                 href={"/events/audit"}
                 exactPathMatch={true}
                 visible={permission.events.read}
-              />
-              <SidebarItem
-                icon={<DocsIcon />}
-                href={"https://docs.netbird.io/"}
-                target={"_blank"}
-                label="Documentation"
-                visible={true}
               />
             </SidebarItemGroup>
             <NavigationUsageInfo />

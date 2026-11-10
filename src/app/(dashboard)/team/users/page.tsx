@@ -16,6 +16,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 import { IdentityProviderCard } from "@/modules/integrations/idp-sync/IdentityProviderCard";
+import UsersTabs from "@/modules/users/UsersTabs";
 
 const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 
@@ -53,6 +54,7 @@ export default function TeamUsers() {
           </InlineLink>
         </Paragraph>
       </div>
+      <UsersTabs current={"users"} />
       <RestrictedAccess page={"Users"} hasAccess={permission.users.read}>
         <Suspense fallback={<SkeletonTable />}>
           {permission.settings.read && (

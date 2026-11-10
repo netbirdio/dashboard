@@ -21,6 +21,7 @@ describe("sectionsForPath", () => {
     ["/peers", []],
     ["/peer", []],
     ["/team/users", []],
+    ["/team/service-users", []],
     ["/team/user", []],
     ["/groups", []],
     ["/group", []],
@@ -40,7 +41,6 @@ describe("sectionsForPath", () => {
     // The account area.
     ["/settings", ["account"]],
     ["/integrations", ["account"]],
-    ["/team/service-users", ["account"]],
     ["/events/audit", ["account"]],
     ["/tenants", ["account"]],
     // Look-alike paths are not the sections they resemble.

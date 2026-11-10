@@ -4,8 +4,9 @@
  * - what both products work with sits at the top, with no heading: Control
  *   Center, Peers, Users and Groups;
  * - each product is a collapsible section: Networking and Agent Network;
- * - the account area closes the list: Settings, Integrations, Service
- *   Users, Audit Events and Documentation.
+ * - the account area closes the list: Settings, Integrations and Audit
+ *   Events. Service Users is a tab on the Users page, and Documentation
+ *   is in the header's help menu.
  *
  * Every page has one URL and one entry. The section that lists the current
  * page opens and is highlighted. Should a page ever be listed in two
@@ -30,8 +31,9 @@ export const PRODUCT_SECTIONS: readonly NavSectionId[] = [
  * The route roots each section lists. A root covers itself and everything
  * below it, so "/dns" covers "/dns/zones" but not "/dnssec". Detail pages
  * that live outside their list's root ("/network") are listed too.
- * Control Center, Peers, Users ("/team/users", "/team/user") and Groups
- * ("/groups", "/group") belong to no section: they serve both products.
+ * Control Center, Peers, Users ("/team/users", its Service Users tab and
+ * "/team/user") and Groups ("/groups", "/group") belong to no section: they
+ * serve both products.
  */
 export const NAV_SECTION_ROUTES: Record<NavSectionId, readonly string[]> = {
   networking: [
@@ -45,13 +47,7 @@ export const NAV_SECTION_ROUTES: Record<NavSectionId, readonly string[]> = {
     "/events/traffic",
   ],
   "agent-network": ["/agent-network"],
-  account: [
-    "/settings",
-    "/integrations",
-    "/team/service-users",
-    "/events/audit",
-    "/tenants",
-  ],
+  account: ["/settings", "/integrations", "/events/audit", "/tenants"],
 };
 
 /** True when `path` is `root` or a page below it. */

@@ -153,11 +153,18 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
       <div className={"p-default py-6 mb-4"}>
         <Breadcrumbs>
           {isServiceUser ? (
-            <Breadcrumbs.Item
-              href={"/team/service-users"}
-              label={"Service Users"}
-              icon={<IconSettings2 size={17} />}
-            />
+            <>
+              <Breadcrumbs.Item
+                href={"/team/users"}
+                label={"Users"}
+                disabled={!permission.users.read}
+                icon={<User2 size={16} />}
+              />
+              <Breadcrumbs.Item
+                href={"/team/service-users"}
+                label={"Service Users"}
+              />
+            </>
           ) : (
             <Breadcrumbs.Item
               href={"/team/users"}

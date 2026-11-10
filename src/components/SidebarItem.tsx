@@ -21,8 +21,16 @@ export type SidebarItemProps = {
   exactPathMatch?: boolean;
   target?: string;
   labelClassName?: string;
+  /**
+   * Other pages this entry stands for, so it is active there too: pages
+   * reached through tabs on its page, or detail pages outside its route.
+   * Each covers itself and the pages below it.
+   */
+  activeRoutes?: readonly string[];
   visible: boolean;
 };
+
+const NO_ROUTES: readonly string[] = [];
 
 export default function SidebarItem({
   icon,
@@ -35,6 +43,7 @@ export default function SidebarItem({
   exactPathMatch = false,
   target = "_self",
   labelClassName,
+  activeRoutes = NO_ROUTES,
   visible,
 }: Readonly<SidebarItemProps>) {
   const path = usePathname();
@@ -94,8 +103,18 @@ export default function SidebarItem({
 
   const isActive = useMemo(() => {
     if (collapsible) return false;
-    return href ? (exactPathMatch ? path == href : path.includes(href)) : false;
-  }, [path, href, exactPathMatch, collapsible]);
+    const own = href
+      ? exactPathMatch
+        ? path == href
+        : path.includes(href)
+      : false;
+    return (
+      own ||
+      activeRoutes.some(
+        (route) => path === route || path.startsWith(`${route}/`),
+      )
+    );
+  }, [path, href, exactPathMatch, collapsible, activeRoutes]);
 
   if (!visible) return;
 

@@ -241,7 +241,7 @@ shared owner page must clear that key again.
 
 | Section | Parent | Children |
 |---------|--------|----------|
-| (top) | Control Center, Peers, Users, Groups | — |
+| (top) | Control Center, Peers, Users (its page has Users / Service Users tabs: `users-tab-users`, `users-tab-service-users`), Groups | — |
 | Networking | Access Control | Policies, Posture Checks |
 | Networking | Network Routing | Networks, Routes |
 | Networking | Reverse Proxy | Services, Custom Domains, Clusters, Access Logs |
@@ -250,7 +250,9 @@ shared owner page must clear that key again.
 | Agent Network | Agents | Connect Agent, Providers, Agent Policies |
 | Agent Network | Insights (placeholders: on under `next dev`, the test build included; off in production builds unless `NETBIRD_AGENT_NETWORK_INSIGHTS=true`) | Overview, Models, Tasks, Departments |
 | Agent Network | Usage & Logs, Configuration | — |
-| Account | Settings, Integrations, Service Users, Audit Events, Documentation | — |
+| Account | Settings, Integrations, Audit Events | — |
+
+Documentation is in the header's help menu, not the sidebar.
 
 ## Test Coverage
 

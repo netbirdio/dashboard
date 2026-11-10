@@ -2,6 +2,7 @@ import type { Meta } from "@storybook/nextjs-vite";
 import { screen } from "storybook/test";
 import InsightsOverviewPage from "@/app/(dashboard)/agent-network/insights/overview/page";
 import AgentPoliciesPage from "@/app/(dashboard)/agent-network/policies/page";
+import AuditEventsPage from "@/app/(dashboard)/events/audit/page";
 import TrafficEventsPage from "@/app/(dashboard)/events/traffic/page";
 import GroupsPage from "@/app/(dashboard)/groups/page";
 import PeersPage from "@/app/(dashboard)/peers/page";
@@ -23,7 +24,8 @@ import {
 
 /* One sidebar for both products (navigation option B): what both work with
    at the top (Control Center, Peers, Users, Groups), Networking and Agent
-   Network as collapsible sections, and the account area at the bottom. */
+   Network as collapsible sections, and the account area at the bottom
+   (Settings, Integrations, Audit Events). */
 const meta: Meta = {
   title: "Pages/Core/Navigation",
   parameters: nav("/peers"),
@@ -193,9 +195,20 @@ export const InsightsPlaceholder: Story = {
   },
 };
 
-/* The account area: Settings, Integrations, Service Users, Audit Events
-   and Documentation, on the Service Users page. */
+/* The account area: Settings, Integrations and Audit Events, on the Audit
+   Events page. Documentation is in the header's help menu. */
 export const AccountArea: Story = {
+  parameters: nav("/events/audit"),
+  render: inLayout(AuditEventsPage),
+  play: async () => {
+    await text("Dana Developer");
+    await section("Account");
+  },
+};
+
+/* Service Users is a tab on the Users page; Users stays active in the
+   sidebar. */
+export const ServiceUsersTab: Story = {
   parameters: nav("/team/service-users"),
   render: inLayout(ServiceUsersPage),
   play: async () => {

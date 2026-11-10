@@ -38,7 +38,10 @@ test.describe.serial("Navigation sections @navigation", () => {
     for (const label of ["Control Center", "Peers", "Users", "Groups"]) {
       await expect(navItem(page, label)).toBeVisible();
     }
-    await expect(navItem(page, "Service Users")).toBeVisible();
+    // Service Users is a tab on the Users page, and Documentation is in the
+    // header's help menu.
+    await expect(navItem(page, "Service Users")).toHaveCount(0);
+    await expect(navItem(page, "Documentation")).toHaveCount(0);
     await expect(section(page, "Networking")).toBeVisible();
     await expect(section(page, "Account")).toBeVisible();
     await expect(navItem(page, "Traffic Events")).toBeVisible();
@@ -95,5 +98,22 @@ test.describe.serial("Navigation sections @navigation", () => {
       "data-active",
       "false",
     );
+  });
+
+  test("reaches Service Users through the Users tabs, with Users active", async ({
+    dashboardAsOwner: page,
+  }) => {
+    await navigateTo(page, "/team/users");
+    await page.getByTestId("users-tab-service-users").click();
+    await page.waitForURL(/\/team\/service-users/);
+    await expect(
+      page
+        .getByTestId("left-navigation-item")
+        .filter({ has: page.getByText("Users", { exact: true }) })
+        .locator("[data-active]"),
+    ).toHaveAttribute("data-active", "true");
+
+    await page.getByTestId("users-tab-users").click();
+    await page.waitForURL(/\/team\/users/);
   });
 });

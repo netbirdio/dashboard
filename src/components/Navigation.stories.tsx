@@ -169,3 +169,27 @@ export const SidebarGroups: StoryObj = {
       ?.setAttribute("data-capture", "");
   },
 };
+
+/* An entry that stands for related pages too (activeRoutes): on Service
+   Users, a tab of the Users page, the Users entry is active. */
+export const SidebarRelatedPages: StoryObj = {
+  decorators: [withAppProviders],
+  parameters: { nextjs: { navigation: { pathname: "/team/service-users" } } },
+  render: () => (
+    <ul className={"flex flex-col gap-1 w-[260px]"}>
+      <SidebarItem
+        visible
+        href={"/peers"}
+        icon={<MonitorSmartphoneIcon size={16} />}
+        label={"Peers"}
+      />
+      <SidebarItem
+        visible
+        href={"/team/users"}
+        activeRoutes={["/team/service-users", "/team/user"]}
+        icon={<Users size={16} />}
+        label={"Users"}
+      />
+    </ul>
+  ),
+};
