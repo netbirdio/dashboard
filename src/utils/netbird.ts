@@ -128,6 +128,21 @@ export const isAgentNetworkEnabled = () => {
   return config.agentNetworkEnabled || config.agentNetworkOnly;
 };
 
+// insightsEnabled decides whether the Agent Network Insights pages (Overview,
+// Models, Tasks, Departments) show. They are placeholders until the analytics
+// exist: on in local development (`npm run dev`), so the planned navigation
+// can be clicked through, and in any other build only where the deployment
+// opts in (NETBIRD_AGENT_NETWORK_INSIGHTS). Whether Agent Network itself is
+// on is not asked here: its sidebar section and route tree already require
+// it, from the deployment flags or the account settings.
+export const insightsEnabled = (
+  optedIn: boolean,
+  nodeEnv: string | undefined = process.env.NODE_ENV,
+) => optedIn || nodeEnv === "development";
+
+export const isAgentNetworkInsightsEnabled = () =>
+  insightsEnabled(config.agentNetworkInsights);
+
 export const isAuth0 = () => {
   return config.auth0Auth;
 };

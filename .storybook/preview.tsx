@@ -65,7 +65,7 @@ const withTheme = (
 
 const preview: Preview = {
   decorators: [withTheme],
-  initialGlobals: { theme: "dark", flavor: "selfhosted" },
+  initialGlobals: { theme: "dark", flavor: "selfhosted", agentNetwork: "on" },
   globalTypes: {
     theme: {
       description: "Colour theme",
@@ -86,6 +86,18 @@ const preview: Preview = {
         items: [
           { value: "selfhosted", title: "Self-hosted" },
           { value: "cloud", title: "Cloud" },
+        ],
+        dynamicTitle: true,
+      },
+    },
+    // Read once from the URL by mocks/config.ts, like the flavour.
+    agentNetwork: {
+      description: "Agent Network on the deployment",
+      toolbar: {
+        icon: "lightning",
+        items: [
+          { value: "on", title: "Agent Network on" },
+          { value: "off", title: "Agent Network off" },
         ],
         dynamicTitle: true,
       },
