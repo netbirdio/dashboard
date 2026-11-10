@@ -15,7 +15,11 @@ import {
   text,
   until,
 } from "@/storybook/core";
-import { account } from "@/storybook/fixtures";
+import {
+  account,
+  freeSubscription,
+  trialSubscription,
+} from "@/storybook/fixtures";
 
 /* One sidebar for both products (navigation option B): what both work with
    at the top (Control Center, Peers, Users, Groups), Networking and Agent
@@ -57,6 +61,40 @@ export const BothProducts: Story = {
 export const BothProductsCloud: Story = {
   tags: ["cloud"],
   play: BothProducts.play,
+};
+
+/* NetBird Cloud on the Free plan: the plan card with its usage and Upgrade
+   button closes the sidebar, below the account area. Usage stays under the
+   Free limits, so no limits dialog covers the page. */
+export const BothProductsCloudFreePlan: Story = {
+  tags: ["cloud"],
+  parameters: {
+    api: {
+      "GET /integrations/billing/subscription": freeSubscription,
+      "GET /integrations/billing/usage": {
+        active_users: 3,
+        total_users: 3,
+        active_peers: 12,
+        total_peers: 12,
+      },
+    },
+  },
+  play: async () => {
+    await peersLoaded();
+    await text("Upgrade Plan");
+  },
+};
+
+/* NetBird Cloud during the trial: the trial card in the same place. */
+export const BothProductsCloudTrial: Story = {
+  tags: ["cloud"],
+  parameters: {
+    api: { "GET /integrations/billing/subscription": trialSubscription },
+  },
+  play: async () => {
+    await peersLoaded();
+    await section("Account");
+  },
 };
 
 /* An account focused on Agent Network (agent_network_only): no Networking
