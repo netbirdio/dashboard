@@ -20,10 +20,7 @@ const CustomersContext = React.createContext(
   {} as {
     customers?: DistributorCustomer[];
     openCreateCustomerModal: () => void;
-    openEditCustomerModal: (
-      customer: DistributorCustomer,
-      initialTab?: string,
-    ) => void;
+    openEditCustomerModal: (customer: DistributorCustomer, initialTab?: string) => void;
     openAccountExistsModal: (customer: DistributorCustomer) => void;
     unlinkCustomer: (customer: DistributorCustomer) => Promise<void>;
   },

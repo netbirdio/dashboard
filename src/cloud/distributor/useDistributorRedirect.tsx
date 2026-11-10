@@ -33,14 +33,7 @@ const useDistributorRedirect = () => {
     } else if (!isRegularUser) {
       router.replace("/team/users");
     }
-  }, [
-    isDistributor,
-    onPeersArea,
-    router,
-    isOwnerOrAdmin,
-    isRegularUser,
-    isBillingAdmin,
-  ]);
+  }, [isDistributor, onPeersArea, router, isOwnerOrAdmin, isRegularUser, isBillingAdmin]);
 
   // Regular users stay on the Peers area, everyone else redirects
   const isRedirecting = isDistributor && onPeersArea && !isRegularUser;

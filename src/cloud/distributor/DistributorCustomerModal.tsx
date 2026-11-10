@@ -133,7 +133,10 @@ const CustomerModalContent = ({
     });
   };
 
-  const canCreate = domainInputError === "" && name !== "" && domain !== "";
+  const canCreate =
+    domainInputError === "" &&
+    name !== "" &&
+    domain !== "";
 
   const hasChanges =
     name !== (customer?.name || "") ||
@@ -181,7 +184,9 @@ const CustomerModalContent = ({
             <div className={"flex flex-col gap-6"}>
               <div>
                 <Label>Company</Label>
-                <HelpText>Enter the name of your customers company.</HelpText>
+                <HelpText>
+                  Enter the name of your customers company.
+                </HelpText>
                 <Input
                   autoFocus={true}
                   tabIndex={0}
@@ -236,7 +241,9 @@ const CustomerModalContent = ({
             <div className={"flex flex-col gap-6"}>
               <div>
                 <Label>Company</Label>
-                <HelpText>Enter the name of your customers company.</HelpText>
+                <HelpText>
+                  Enter the name of your customers company.
+                </HelpText>
                 <Input
                   autoFocus={true}
                   tabIndex={0}

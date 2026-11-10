@@ -67,7 +67,9 @@ const DistributorSubscriptionModalContent = ({
         color={"netbird"}
       />
       <div className={"px-8 pb-1"}>
-        <div className={"grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 gap-4"}>
+        <div
+          className={"grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-2 gap-4"}
+        >
           {(!plans || isLoading) && (
             <>
               <PlanLoadingSkeleton height={378} />
