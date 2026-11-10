@@ -12,7 +12,8 @@ const TIMEOUT = { timeout: 10_000 };
    stories in one browser context, so a story that changes any of them would
    leak into the next one; clear them before rendering and again when the
    page is left. */
-const TRANSIENT_KEYS = /^netbird-(table-|nav-collapsed|first-run|limits-)/;
+const TRANSIENT_KEYS =
+  /^netbird-(table-|nav-collapsed|nav-sections|first-run|limits-)/;
 
 function clearTransientStorage() {
   try {

@@ -2,9 +2,11 @@
    The cloud flavour can't change after load, because the dashboard reads
    its config once at import time, so it comes from the `flavor` global in
    the iframe URL; the toolbar switch reloads the preview. */
-const cloud = /flavor:cloud/.test(
-  new URLSearchParams(location.search).get("globals") ?? "",
-);
+const globals = new URLSearchParams(location.search).get("globals") ?? "";
+const cloud = /flavor:cloud/.test(globals);
+/* A deployment without Agent Network, read the same way: the
+   `agent-network-off` story tag or the toolbar switch sets it. */
+const agentNetworkOff = /agentNetwork:off/.test(globals);
 
 const config = {
   auth0Auth: "false",
@@ -27,7 +29,7 @@ const config = {
   licensed: cloud ? "true" : "false",
   cloud: cloud ? "true" : "false",
   agentNetworkOnly: "false",
-  agentNetworkEnabled: "true",
+  agentNetworkEnabled: agentNetworkOff ? "false" : "true",
   hubspotPortalId: "",
   hubspotSignupFormId: "",
   hubspotOnboardingFormId: "",

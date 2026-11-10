@@ -1,12 +1,16 @@
 import Breadcrumbs from "@components/Breadcrumbs";
 import SidebarItem from "@components/SidebarItem";
+import SidebarItemGroup from "@components/SidebarItemGroup";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import {
   HomeIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
+  ScrollText,
   Settings,
   ShieldCheck,
+  Sparkles,
   Users,
 } from "lucide-react";
 import { padded, withAppProviders } from "@/storybook/components";
@@ -94,4 +98,98 @@ export const Sidebar: StoryObj = {
       .querySelectorAll("a, button")[1]
       ?.setAttribute("data-capture", "");
   },
+};
+
+/* Sidebar groups: a plain group set apart by a divider, and groups with a
+   heading. A collapsible heading opens and closes its items; the group of
+   the current page ("/agent-network/usage") is highlighted. */
+export const SidebarGroups: StoryObj = {
+  tags: ["capture-hover"],
+  decorators: [withAppProviders],
+  parameters: { nextjs: { navigation: { pathname: "/agent-network/usage" } } },
+  render: () => (
+    <div className={"w-[240px]"}>
+      <SidebarItemGroup>
+        <SidebarItem
+          visible
+          href={"/peers"}
+          icon={<MonitorSmartphoneIcon size={16} />}
+          label={"Peers"}
+        />
+      </SidebarItemGroup>
+      <SidebarItemGroup label={"Networking"} collapsible open={false}>
+        <SidebarItem
+          visible
+          href={"/networks"}
+          icon={<NetworkIcon size={16} />}
+          label={"Networks"}
+        />
+      </SidebarItemGroup>
+      <SidebarItemGroup
+        label={"Agent Network"}
+        badge={
+          <SmallBadge
+            text={"Beta"}
+            variant={"sky"}
+            className={"text-[8px] leading-none py-[3px] px-[5px]"}
+            textClassName={"top-0"}
+          />
+        }
+        collapsible
+        open
+        active
+      >
+        <SidebarItem
+          visible
+          href={"/agent-network/usage"}
+          exactPathMatch
+          icon={<ScrollText size={16} />}
+          label={"Usage & Logs"}
+        />
+        <SidebarItem
+          visible
+          href={"/agent-network/providers"}
+          icon={<Sparkles size={16} />}
+          label={"Providers"}
+        />
+      </SidebarItemGroup>
+      <SidebarItemGroup label={"Account"}>
+        <SidebarItem
+          visible
+          href={"/settings"}
+          icon={<Settings size={16} />}
+          label={"Settings"}
+        />
+      </SidebarItemGroup>
+    </div>
+  ),
+  play: ({ canvasElement }) => {
+    canvasElement
+      .querySelector("[data-testid=left-navigation-section]")
+      ?.setAttribute("data-capture", "");
+  },
+};
+
+/* An entry that stands for related pages too (activeRoutes): on Service
+   Users, a tab of the Users page, the Users entry is active. */
+export const SidebarRelatedPages: StoryObj = {
+  decorators: [withAppProviders],
+  parameters: { nextjs: { navigation: { pathname: "/team/service-users" } } },
+  render: () => (
+    <ul className={"flex flex-col gap-1 w-[260px]"}>
+      <SidebarItem
+        visible
+        href={"/peers"}
+        icon={<MonitorSmartphoneIcon size={16} />}
+        label={"Peers"}
+      />
+      <SidebarItem
+        visible
+        href={"/team/users"}
+        activeRoutes={["/team/service-users", "/team/user"]}
+        icon={<Users size={16} />}
+        label={"Users"}
+      />
+    </ul>
+  ),
 };
