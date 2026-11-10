@@ -4,7 +4,7 @@
  * - what both products work with sits at the top, with no heading: Control
  *   Center, Peers, Users and Groups;
  * - each product is a collapsible section: Networking and Agent Network;
- * - the account area follows them: Settings, Integrations and Audit
+ * - the account area closes the list: Settings, Integrations and Audit
  *   Events. Service Users is a tab on the Users page, and Documentation
  *   is in the header's help menu.
  *

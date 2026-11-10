@@ -233,7 +233,7 @@ await visitByNavigation(page, "Policies");         // Click child
 
 The sidebar is one list for both products (`src/layouts/Navigation.tsx`):
 Control Center, Peers, Users and Groups at the top, the **Networking** and
-**Agent Network** sections, and the **Account** area after them. Section
+**Agent Network** sections, and the **Account** area at the bottom. Section
 headings have the test id `left-navigation-section` (not
 `left-navigation-item`) and are collapsible; their open state is kept in
 `localStorage` (`netbird-nav-sections`), so a spec that closes one on the

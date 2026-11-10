@@ -5,7 +5,7 @@ import { test } from "../helpers/fixtures";
 /**
  * The sidebar is one list for both products: Control Center, Peers, Users
  * and Groups at the top, a collapsible section per product (Networking,
- * Agent Network) and the account area after them. Open and closed
+ * Agent Network) and the account area at the bottom. Open and closed
  * sections are kept in localStorage per user; the section of the current
  * page opens on its own.
  * Agent Network depends on the deployment, so these tests stick to
