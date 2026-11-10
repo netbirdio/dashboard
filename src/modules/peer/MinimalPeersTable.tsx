@@ -3,7 +3,6 @@ import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import NoResults from "@components/ui/NoResults";
 import {
   ColumnDef,
@@ -223,8 +222,6 @@ export default function MinimalPeersTable({
               Offline
             </ButtonGroup.Button>
           </ButtonGroup>
-
-          <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
 
           <DataTableRefreshButton
             isDisabled={peers?.length == 0}

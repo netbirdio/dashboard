@@ -4,7 +4,6 @@ import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState, Table } from "@tanstack/react-table";
 import { HelpCircle, PlusCircle, ReceiptTextIcon } from "lucide-react";
@@ -228,11 +227,6 @@ export default function MSPTenantsTable({
           {(table) => {
             return (
               <>
-                <DataTableRowsPerPage
-                  table={table}
-                  disabled={tenants?.length == 0}
-                />
-
                 <DataTableRefreshButton
                   isDisabled={tenants?.length == 0}
                   onClick={() => {
@@ -262,4 +256,3 @@ const AddTenantButton = () => {
     </Button>
   );
 };
-

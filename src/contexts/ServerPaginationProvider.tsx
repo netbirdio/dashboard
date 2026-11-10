@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_PAGE_SIZE } from "@components/table/pageSizes";
 import useFetchApi from "@utils/api";
 import React, {
   createContext,
@@ -58,7 +59,7 @@ type ProviderProps = {
 
 export default function ServerPaginationProvider({
   url,
-  defaultPageSize = 50,
+  defaultPageSize = DEFAULT_PAGE_SIZE,
   defaultFilters,
   enabled = true,
   children,

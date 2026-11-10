@@ -2,7 +2,6 @@ import Button from "@components/Button";
 import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import { ENABLED_COLUMN_CLASS } from "@components/table/enabledColumnClass";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
@@ -178,14 +177,7 @@ export const GroupResourcesSection = ({
             id: false,
           }}
           paginationPaddingClassName={"px-0 pt-8"}
-        >
-          {(table) => (
-            <DataTableRowsPerPage
-              table={table}
-              disabled={!resources || resources?.length == 0}
-            />
-          )}
-        </DataTable>
+        />
       </GroupDetailsTableContainer>
     </NetworkAccessControlProvider>
   );
