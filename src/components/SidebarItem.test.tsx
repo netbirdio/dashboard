@@ -9,7 +9,13 @@ const push = vi.fn();
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/control-center",
-  useRouter: () => ({ push, replace: vi.fn(), back: vi.fn(), forward: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({
+    push,
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    refresh: vi.fn(),
+  }),
 }));
 vi.mock("@/contexts/ApplicationProvider", () => ({
   useApplicationContext: () => ({
@@ -66,5 +72,86 @@ describe("SidebarItem navigation", () => {
     await act(async () => proceed?.());
 
     expect(push).toHaveBeenCalledWith("/peers");
+  });
+});
+
+// The mocked page is /control-center.
+const isActive = (element: React.ReactElement) => {
+  const { container } = render(element);
+  return container.querySelector("[data-active]")?.getAttribute("data-active");
+};
+
+describe("SidebarItem active state", () => {
+  it("is active on its own page", () => {
+    expect(
+      isActive(
+        <SidebarItem href={"/control-center"} label={"CC"} visible={true} />,
+      ),
+    ).toBe("true");
+  });
+
+  it("is not active on another page", () => {
+    expect(
+      isActive(<SidebarItem href={"/peers"} label={"Peers"} visible={true} />),
+    ).toBe("false");
+  });
+
+  it("is active on a page it stands for", () => {
+    expect(
+      isActive(
+        <SidebarItem
+          href={"/peers"}
+          label={"Peers"}
+          activeRoutes={["/control-center"]}
+          visible={true}
+        />,
+      ),
+    ).toBe("true");
+  });
+
+  it("does not take a look-alike path for a route it stands for", () => {
+    expect(
+      isActive(
+        <SidebarItem
+          href={"/peers"}
+          label={"Peers"}
+          activeRoutes={["/control"]}
+          visible={true}
+        />,
+      ),
+    ).toBe("false");
+  });
+});
+
+describe("SidebarItem parent", () => {
+  it("opens for a page one of its children stands for", () => {
+    render(
+      <SidebarItem label={"Network Routing"} collapsible visible={true}>
+        <SidebarItem
+          label={"Networks"}
+          isChild
+          href={"/networks"}
+          exactPathMatch
+          activeRoutes={["/control-center"]}
+          visible={true}
+        />
+      </SidebarItem>,
+    );
+    expect(screen.queryByText("Networks")).not.toBeNull();
+  });
+
+  it("stays closed on unrelated pages", () => {
+    render(
+      <SidebarItem label={"Network Routing"} collapsible visible={true}>
+        <SidebarItem
+          label={"Networks"}
+          isChild
+          href={"/networks"}
+          exactPathMatch
+          visible={true}
+        />
+      </SidebarItem>,
+    );
+    expect(screen.queryByText("Networks")).toBeNull();
   });
 });
