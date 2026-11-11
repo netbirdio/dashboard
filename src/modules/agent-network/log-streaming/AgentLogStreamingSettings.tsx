@@ -59,7 +59,6 @@ const PLATFORMS: {
 export default function AgentLogStreamingSettings() {
   const isLocked = useIsFeatureLocked("EVENT_STREAMING");
   const { isLoading: licenseLoading } = useIsLicensed();
-  const { permission } = usePermissions();
   // Self-hosted resolves the license with a probe; wait for it rather than
   // flashing the locked state at licensed servers.
   if (licenseLoading) return <CardsSkeleton />;
@@ -74,10 +73,8 @@ export default function AgentLogStreamingSettings() {
         />
       </div>
       <LockedFeatureOverlay feature={"EVENT_STREAMING"} opacity={100}>
-        {/* The overlay blocks interaction; the cards keep their normal look. */}
-        <LogStreamingCards
-          canCreate={!!permission?.["agent_network.settings"]?.create}
-        />
+        {/* Disabled like Event Streaming's cards on an unlicensed server. */}
+        <LogStreamingCards canCreate={false} />
       </LockedFeatureOverlay>
     </>
   );
