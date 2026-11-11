@@ -99,5 +99,7 @@ window.fetch = async (input, init) => {
     console.warn(`[storybook api] unmocked ${method} ${path}`);
   }
   const handler = match?.handler ?? (method === "GET" ? [] : {});
-  return json(answer(handler, path) ?? {});
+  // A handler may return a Response to answer with a status other than 200.
+  const body = answer(handler, path);
+  return body instanceof Response ? body : json(body ?? {});
 };

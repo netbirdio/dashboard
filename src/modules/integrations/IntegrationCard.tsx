@@ -10,7 +10,8 @@ import * as React from "react";
 import { useMemo } from "react";
 
 type Props<T> = {
-  image: StaticImport | string;
+  // A static image, or an element (e.g. an icon) for platforms without a logo.
+  image: StaticImport | string | React.ReactElement;
   name: string;
   description: string;
   url: {
@@ -77,12 +78,16 @@ export function IntegrationCard<T>({
                 "h-12 w-12 flex items-center justify-center rounded-md bg-nb-gray-900/70 p-2 border border-nb-gray-900/70"
               }
             >
-              <Image
-                src={image}
-                alt={name}
-                className={"rounded-[4px]"}
-                priority={true}
-              />
+              {React.isValidElement(image) ? (
+                image
+              ) : (
+                <Image
+                  src={image}
+                  alt={name}
+                  className={"rounded-[4px]"}
+                  priority={true}
+                />
+              )}
             </div>
             <div className={"min-w-0"}>
               <h3 className={"truncate"}>{name}</h3>

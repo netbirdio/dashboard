@@ -7,7 +7,8 @@ import * as React from "react";
 import netBirdLogo from "@/assets/netbird.svg";
 
 type Props = {
-  image: StaticImport | string;
+  // A static image, or an element (e.g. an icon) for platforms without a logo.
+  image: StaticImport | string | React.ReactElement;
   title: string;
   description: string;
 };
@@ -38,7 +39,11 @@ export const IntegrationModalHeader = ({
             "h-12 w-12 flex items-center justify-center rounded-md bg-nb-gray-900/70 p-2 border border-nb-gray-900/70"
           }
         >
-          <Image src={image} alt={""} className={"rounded-[4px]"} />
+          {React.isValidElement(image) ? (
+            image
+          ) : (
+            <Image src={image} alt={""} className={"rounded-[4px]"} />
+          )}
         </div>
       </div>
       <div
