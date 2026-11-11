@@ -107,3 +107,57 @@ export const Clusters: Story = {
     await settle();
   },
 };
+
+export const LogStreaming: Story = {
+  parameters: tab("log-streaming"),
+  play: async () => {
+    await findText("OTLP/gRPC");
+    await settle();
+  },
+};
+
+export const LogStreamingEdit: Story = {
+  parameters: tab("log-streaming"),
+  play: async () => {
+    // The sidebar also has a "Configuration" entry; click the HTTP card's.
+    const buttons = (await findText("standardwebhooks.com"))
+      .closest(".rounded-lg")
+      ?.querySelectorAll("button");
+    await click(buttons?.[buttons.length - 1]);
+    await findText("HTTP Log Streaming Configuration");
+    await settle();
+  },
+};
+
+export const LogStreamingSetupOtlp: Story = {
+  parameters: {
+    ...tab("log-streaming"),
+    api: { "GET /integrations/agent-network/log-streaming": [] },
+  },
+  play: async () => {
+    await clickRole("button", /Connect OTLP\/gRPC/);
+    await dialog();
+    await clickRole("tab", /Options/);
+    await click(await findText("Advanced"));
+    await findText("Max retry interval");
+    await settle();
+  },
+};
+
+// The backend may not be deployed yet; the endpoint then answers 404.
+export const LogStreamingNotDeployed: Story = {
+  parameters: {
+    ...tab("log-streaming"),
+    api: {
+      "GET /integrations/agent-network/log-streaming": () =>
+        new Response(JSON.stringify({ message: "not found", code: 404 }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        }),
+    },
+  },
+  play: async () => {
+    await findText(/not available on this management server/);
+    await settle();
+  },
+};
