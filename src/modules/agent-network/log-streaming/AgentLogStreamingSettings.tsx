@@ -10,7 +10,9 @@ import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import genericHttpImage from "@/assets/integrations/generic-http.png";
+import { useIsFeatureLocked } from "@/cloud/cloud-hooks/useIsFeatureLocked";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useIsLicensed } from "@/hooks/useIsLicensed";
 import {
   LOG_STREAMING_URL,
   LogStreamingIntegration,
@@ -19,6 +21,8 @@ import {
 import LogStreamingModal, {
   PLATFORM_NAMES,
 } from "@/modules/agent-network/log-streaming/LogStreamingModal";
+import { LockedFeatureInfoCard } from "@/modules/billing/locked-feature/LockedFeatureInfoCard";
+import { LockedFeatureOverlay } from "@/modules/billing/locked-feature/LockedFeatureOverlay";
 import { IntegrationCard } from "@/modules/integrations/IntegrationCard";
 
 const PLATFORMS: {
@@ -49,7 +53,37 @@ const PLATFORMS: {
   },
 ];
 
+// Log streaming shares Event Streaming's plan: Business on Cloud, a license
+// on self-hosted. While locked the endpoint isn't called, so an open-source
+// server shows the upsell rather than the not-available notice.
 export default function AgentLogStreamingSettings() {
+  const isLocked = useIsFeatureLocked("EVENT_STREAMING");
+  const { isLoading: licenseLoading } = useIsLicensed();
+  const { permission } = usePermissions();
+  // Self-hosted resolves the license with a probe; wait for it rather than
+  // flashing the locked state at licensed servers.
+  if (licenseLoading) return <CardsSkeleton />;
+  if (!isLocked) return <LogStreamingSettings />;
+  return (
+    <>
+      <div className={"p-default pb-6"}>
+        <LockedFeatureInfoCard
+          featureText={"Log Streaming"}
+          feature={"EVENT_STREAMING"}
+          className={"mt-0"}
+        />
+      </div>
+      <LockedFeatureOverlay feature={"EVENT_STREAMING"} opacity={100}>
+        {/* The overlay blocks interaction; the cards keep their normal look. */}
+        <LogStreamingCards
+          canCreate={!!permission?.["agent_network.settings"]?.create}
+        />
+      </LockedFeatureOverlay>
+    </>
+  );
+}
+
+function LogStreamingSettings() {
   const { permission } = usePermissions();
   const perms = permission?.["agent_network.settings"];
   const { data, error, isLoading } = useFetchApi<LogStreamingIntegration[]>(
@@ -60,16 +94,7 @@ export default function AgentLogStreamingSettings() {
     { shouldRetryOnError: false },
   );
 
-  if (isLoading) {
-    return (
-      <div
-        className={"p-default grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl"}
-      >
-        <SkeletonIntegration />
-        <SkeletonIntegration />
-      </div>
-    );
-  }
+  if (isLoading) return <CardsSkeleton />;
 
   if (error) {
     const notDeployed = (error as ErrorResponse).code === 404;
@@ -86,7 +111,28 @@ export default function AgentLogStreamingSettings() {
     );
   }
 
-  const enabled = data?.find((i) => i.enabled);
+  return (
+    <LogStreamingCards
+      integrations={data}
+      canCreate={!!perms?.create}
+      canUpdate={!!perms?.update}
+      canDelete={!!perms?.delete}
+    />
+  );
+}
+
+function LogStreamingCards({
+  integrations,
+  canCreate,
+  canUpdate = false,
+  canDelete = false,
+}: {
+  integrations?: LogStreamingIntegration[];
+  canCreate: boolean;
+  canUpdate?: boolean;
+  canDelete?: boolean;
+}) {
+  const enabled = integrations?.find((i) => i.enabled);
   return (
     <div
       className={
@@ -97,11 +143,11 @@ export default function AgentLogStreamingSettings() {
         <LogStreamingCard
           key={p.platform}
           {...p}
-          integration={data?.find((i) => i.platform === p.platform)}
+          integration={integrations?.find((i) => i.platform === p.platform)}
           otherEnabled={!!enabled && enabled.platform !== p.platform}
-          canCreate={!!perms?.create}
-          canUpdate={!!perms?.update}
-          canDelete={!!perms?.delete}
+          canCreate={canCreate}
+          canUpdate={canUpdate}
+          canDelete={canDelete}
         />
       ))}
     </div>
@@ -185,5 +231,16 @@ function LogStreamingCard({
         canDelete={canDelete}
       />
     </>
+  );
+}
+
+function CardsSkeleton() {
+  return (
+    <div
+      className={"p-default grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl"}
+    >
+      <SkeletonIntegration />
+      <SkeletonIntegration />
+    </div>
   );
 }

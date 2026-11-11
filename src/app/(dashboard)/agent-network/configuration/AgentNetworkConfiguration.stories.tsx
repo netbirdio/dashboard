@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import ConfigurationPage from "@/app/(dashboard)/agent-network/configuration/page";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import { freeSubscription } from "@/storybook/fixtures";
 import {
   click,
   clickRole,
@@ -158,6 +159,48 @@ export const LogStreamingNotDeployed: Story = {
   },
   play: async () => {
     await findText(/not available on this management server/);
+    await settle();
+  },
+};
+
+// An open-source management server doesn't serve the event-streaming
+// license probe, so log streaming is locked and its endpoint isn't called.
+export const LogStreamingLockedSelfHosted: Story = {
+  parameters: {
+    ...tab("log-streaming"),
+    api: {
+      "GET /integrations/event-streaming": () =>
+        new Response(JSON.stringify({ message: "not found", code: 404 }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        }),
+    },
+  },
+  play: async () => {
+    await findText(/Log Streaming is available/);
+    await settle();
+  },
+};
+
+// On Cloud the lock follows the plan, like Event Streaming.
+export const LogStreamingLockedCloud: Story = {
+  tags: ["cloud"],
+  parameters: {
+    ...tab("log-streaming"),
+    // Usage inside the free plan's limits, so the upsell shows without the
+    // limit-reached dialog over it (as in the Integrations stories).
+    api: {
+      "GET /integrations/billing/subscription": freeSubscription,
+      "GET /integrations/billing/usage": {
+        active_users: 3,
+        total_users: 3,
+        active_peers: 12,
+        total_peers: 15,
+      },
+    },
+  },
+  play: async () => {
+    await findText(/Log Streaming is available/);
     await settle();
   },
 };
