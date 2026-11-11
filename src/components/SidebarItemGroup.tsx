@@ -84,13 +84,6 @@ export default function SidebarItemGroup({
       )}
     >
       <span className={"truncate"}>{label}</span>
-      {active && (
-        <span
-          aria-hidden={true}
-          data-testid={"left-navigation-section-active"}
-          className={"h-1.5 w-1.5 shrink-0 rounded-full bg-netbird"}
-        />
-      )}
       {badge}
       {canToggle && (
         <Chevron
