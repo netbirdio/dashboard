@@ -26,6 +26,7 @@ type Props<T> = {
   disabled?: boolean;
   hideSwitch?: boolean;
   customButton?: React.ReactNode;
+  "data-testid"?: string;
 };
 
 export function IntegrationCard<T>({
@@ -41,6 +42,7 @@ export function IntegrationCard<T>({
   disabled,
   hideSwitch = false,
   customButton,
+  "data-testid": dataTestId,
 }: Props<T>) {
   const IntegrationButton = useMemo(
     () =>
@@ -64,6 +66,7 @@ export function IntegrationCard<T>({
 
   return (
     <div
+      data-testid={dataTestId}
       className={cn(
         " border border-nb-gray-900/50 p-5 rounded-lg transition-all h-full flex flex-col justify-between gap-4",
         switchState ? "bg-nb-gray-930/50" : "bg-nb-gray-930/30",

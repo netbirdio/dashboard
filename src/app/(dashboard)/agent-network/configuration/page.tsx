@@ -85,7 +85,10 @@ export default function AgentNetworkConfigurationPage() {
             <ScrollText size={14} />
             Log Collection
           </VerticalTabs.Trigger>
-          <VerticalTabs.Trigger value={TAB_LOG_STREAMING}>
+          <VerticalTabs.Trigger
+            value={TAB_LOG_STREAMING}
+            data-testid={"agent-network-tab-log-streaming"}
+          >
             <RadioTowerIcon size={14} />
             Log Streaming
           </VerticalTabs.Trigger>

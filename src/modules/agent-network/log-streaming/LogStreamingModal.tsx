@@ -198,12 +198,18 @@ function LogStreamingModalContent({
             <FileCode2Icon size={16} className={iconClass} />
             {isHttp ? "Headers" : "Metadata"}
           </TabsTrigger>
-          <TabsTrigger value={"options"}>
+          <TabsTrigger
+            value={"options"}
+            data-testid={"log-streaming-tab-options"}
+          >
             <SlidersHorizontalIcon size={16} className={iconClass} />
             Options
           </TabsTrigger>
           {editing && canDelete && (
-            <TabsTrigger value={"danger"}>
+            <TabsTrigger
+              value={"danger"}
+              data-testid={"log-streaming-tab-danger"}
+            >
               <AlertOctagon size={16} className={iconClass} />
               Danger Zone
             </TabsTrigger>
@@ -280,6 +286,7 @@ function LogStreamingModalContent({
                 placeholder={"whsec_..."}
                 type={"password"}
                 maxWidthClass={"w-full"}
+                data-testid={"log-streaming-signing-secret"}
                 {...field("signing_secret")}
               />
             </div>
@@ -337,6 +344,7 @@ function LogStreamingModalContent({
             size={"xs"}
             className={"mt-3"}
             onClick={remove}
+            data-testid={"log-streaming-delete"}
           >
             Delete Log Streaming
           </Button>
@@ -349,7 +357,12 @@ function LogStreamingModalContent({
           <ModalClose asChild={true}>
             <Button variant={"secondary"}>Cancel</Button>
           </ModalClose>
-          <Button variant={"primary"} disabled={!canSave} onClick={save}>
+          <Button
+            variant={"primary"}
+            disabled={!canSave}
+            onClick={save}
+            data-testid={"log-streaming-save"}
+          >
             {editing ? "Save Changes" : "Connect"}
           </Button>
         </div>

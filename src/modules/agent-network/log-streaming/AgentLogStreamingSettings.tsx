@@ -204,6 +204,7 @@ function LogStreamingCard({
         url={docs}
         image={image}
         data={integration}
+        data-testid={`log-streaming-card-${platform}`}
         switchState={!!integration?.enabled}
         disabled={disabled}
         onEnabledChange={toggle}
