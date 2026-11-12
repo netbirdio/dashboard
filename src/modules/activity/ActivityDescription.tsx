@@ -702,14 +702,30 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "integrated-validator.host-check.approved")
     return (
       <div className={"inline"}>
-        Peer approved by <Value>{m?.platform}</Value> integration
+        Peer <EDRPeerName name={m?.name} />
+        approved by <Value>{m?.platform}</Value> integration
       </div>
     );
 
   if (event.activity_code == "integrated-validator.host-check.denied")
     return (
       <div className={"inline"}>
-        Peer rejected by <Value>{m?.platform}</Value> integration
+        Peer <EDRPeerName name={m?.name} />
+        rejected by <Value>{m?.platform}</Value> integration
+        {m?.reason && (
+          <>
+            , reason: <Value>{edrRejectReasons[m.reason] ?? m.reason}</Value>
+          </>
+        )}
+      </div>
+    );
+
+  if (event.activity_code == "integrated-validator.peer.stale-grace-started")
+    return (
+      <div className={"inline"}>
+        Peer <EDRPeerName name={m?.name} />
+        keeps access for <Value>{m?.grace_minutes} minutes</Value> while it
+        waits for a <Value>{m?.platform}</Value> check-in
       </div>
     );
 
@@ -1053,6 +1069,20 @@ function Value({
     >
       {children}
     </span>
+  ) : null;
+}
+
+const edrRejectReasons: Record<string, string> = {
+  NOT_FOUND_IN_EDR: "not found in EDR",
+  STALE_CHECK_IN: "no recent EDR check-in",
+  DUPLICATE_MATCH: "duplicate serial number",
+};
+
+function EDRPeerName({ name }: { name?: string }) {
+  return name ? (
+    <>
+      <Value>{name}</Value>{" "}
+    </>
   ) : null;
 }
 
