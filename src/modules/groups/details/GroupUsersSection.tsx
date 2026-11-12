@@ -20,6 +20,7 @@ import UserBlockCell from "@/modules/users/table-cells/UserBlockCell";
 import UserNameCell from "@/modules/users/table-cells/UserNameCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
+import UserInviteModal from "@/modules/users/UserInviteModal";
 import { InviteUserButton } from "@/modules/users/UsersTable";
 
 const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
@@ -122,6 +123,9 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
   const { group, addUsersToGroup, removeUsersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
+  // The invite modal is mounted once, outside the empty state, so the
+  // generated password stays on screen when the first user is added (#742).
+  const [inviteOpen, setInviteOpen] = useState(false);
   const { permission } = usePermissions();
 
   return (
@@ -154,7 +158,10 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
                   <PlusCircle size={16} />
                   Assign Users
                 </Button>
-                <InviteUserButton show={true} groups={[group]} />
+                <InviteUserButton
+                  show={true}
+                  onClick={() => setInviteOpen(true)}
+                />
               </div>
             )}
           </NoResults>
@@ -205,6 +212,11 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
                   addUsersToGroup(newUsers).then();
                 }}
               />
+              <UserInviteModal
+                groups={[group]}
+                open={inviteOpen}
+                onOpenChange={setInviteOpen}
+              />
               {users && users?.length > 0 && permission?.users?.update && (
                 <div
                   className={"flex gap-4 items-center justify-center ml-auto"}
@@ -217,7 +229,10 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
                     <PlusCircle size={16} />
                     Assign Users
                   </Button>
-                  <InviteUserButton show={true} groups={[group]} />
+                  <InviteUserButton
+                    show={true}
+                    onClick={() => setInviteOpen(true)}
+                  />
                 </div>
               )}
             </>
