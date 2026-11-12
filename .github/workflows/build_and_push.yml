@@ -72,6 +72,12 @@ jobs:
             echo "version=development" >> $GITHUB_OUTPUT
           fi
           echo "release=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+          # Only plain vX.Y.Z tags move the latest aliases; prereleases don't.
+          if [[ "${GITHUB_REF}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "stable=true" >> $GITHUB_OUTPUT
+          else
+            echo "stable=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build
         run: npm run build
@@ -100,7 +106,7 @@ jobs:
             type=schedule
             type=ref,event=branch
             type=ref,event=tag
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=raw,value=latest,enable=${{ steps.version.outputs.stable == 'true' }}
             type=ref,event=pr
             type=sha
 
@@ -118,7 +124,7 @@ jobs:
             type=schedule
             type=ref,event=branch
             type=ref,event=tag
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=raw,value=latest,enable=${{ steps.version.outputs.stable == 'true' }}
             type=ref,event=pr
             type=sha
 
@@ -135,7 +141,7 @@ jobs:
             type=schedule,suffix=-ubi
             type=ref,event=branch,suffix=-ubi
             type=ref,event=tag,suffix=-ubi
-            type=raw,value=ubi-latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=raw,value=ubi-latest,enable=${{ steps.version.outputs.stable == 'true' }}
             type=ref,event=pr,suffix=-ubi
             type=sha,suffix=-ubi
 
