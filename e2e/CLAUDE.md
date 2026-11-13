@@ -265,6 +265,7 @@ Documentation is in the header's help menu, not the sidebar.
 | Notifications | `settings-notifications-email.spec.ts`, `settings-notifications-slack.spec.ts`, `settings-notifications-webhook.spec.ts` | `@notifications` |
 | Team | `team-users.spec.ts`, `team-service-users.spec.ts`, `team-users-approval-and-billing.spec.ts` | `@team` |
 | Setup Keys | `setup-keys.spec.ts` | `@setup-keys` |
+| Agent Network | `agent-network-*.spec.ts` (`-log-streaming` sends its test deliveries to the `agentgateway-stub` container as `log-receiver.e2e.test`) | `@agent-network` |
 | Control Center | `control-center-*.spec.ts` (`-draft`, `-draft-connections`, `-draft-matrix`, `-draft-extras`, `-draft-install`, `-draft-remove`, `-draft-shortcuts`, `-deploy`, `-drilldown`, `-live`, `-peers`) | `@control-center` |
 
 ## Debugging

@@ -10,7 +10,8 @@ import * as React from "react";
 import { useMemo } from "react";
 
 type Props<T> = {
-  image: StaticImport | string;
+  // A static image, or an element (e.g. an icon) for platforms without a logo.
+  image: StaticImport | string | React.ReactElement;
   name: string;
   description: string;
   url: {
@@ -23,8 +24,11 @@ type Props<T> = {
   children?: React.ReactNode;
   onSetup?: () => void;
   disabled?: boolean;
+  // Blocks only the enable switch, leaving the rest of the card usable.
+  switchDisabled?: boolean;
   hideSwitch?: boolean;
   customButton?: React.ReactNode;
+  "data-testid"?: string;
 };
 
 export function IntegrationCard<T>({
@@ -38,8 +42,10 @@ export function IntegrationCard<T>({
   children,
   onSetup,
   disabled,
+  switchDisabled,
   hideSwitch = false,
   customButton,
+  "data-testid": dataTestId,
 }: Props<T>) {
   const IntegrationButton = useMemo(
     () =>
@@ -63,6 +69,10 @@ export function IntegrationCard<T>({
 
   return (
     <div
+      data-testid={dataTestId}
+      // Takes the card out of keyboard focus and activation too, which
+      // pointer-events-none alone does not.
+      inert={disabled}
       className={cn(
         " border border-nb-gray-900/50 p-5 rounded-lg transition-all h-full flex flex-col justify-between gap-4",
         switchState ? "bg-nb-gray-930/50" : "bg-nb-gray-930/30",
@@ -77,12 +87,16 @@ export function IntegrationCard<T>({
                 "h-12 w-12 flex items-center justify-center rounded-md bg-nb-gray-900/70 p-2 border border-nb-gray-900/70"
               }
             >
-              <Image
-                src={image}
-                alt={name}
-                className={"rounded-[4px]"}
-                priority={true}
-              />
+              {React.isValidElement(image) ? (
+                image
+              ) : (
+                <Image
+                  src={image}
+                  alt={name}
+                  className={"rounded-[4px]"}
+                  priority={true}
+                />
+              )}
             </div>
             <div className={"min-w-0"}>
               <h3 className={"truncate"}>{name}</h3>
@@ -102,6 +116,7 @@ export function IntegrationCard<T>({
               <ToggleSwitch
                 checked={switchState}
                 onCheckedChange={onEnabledChange}
+                disabled={switchDisabled}
               />
             </div>
           )}

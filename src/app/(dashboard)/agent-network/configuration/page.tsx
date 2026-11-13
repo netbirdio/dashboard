@@ -7,7 +7,13 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { VerticalTabs } from "@components/VerticalTabs";
 import * as Tabs from "@radix-ui/react-tabs";
-import { ExternalLinkIcon, Gauge, ScrollText, ServerIcon } from "lucide-react";
+import {
+  ExternalLinkIcon,
+  Gauge,
+  RadioTowerIcon,
+  ScrollText,
+  ServerIcon,
+} from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { lazy, Suspense, useMemo } from "react";
 import AgentNetworkIcon from "@/assets/icons/AgentNetworkIcon";
@@ -16,10 +22,11 @@ import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { REVERSE_PROXY_CLUSTERS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
-import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 import AgentAccountControlsCard from "@/modules/agent-network/AgentAccountControlsCard";
 import AgentBudgetRulesTable from "@/modules/agent-network/AgentBudgetRulesTable";
 import AIProvidersProvider from "@/modules/agent-network/AIProvidersProvider";
+import AgentLogStreamingSettings from "@/modules/agent-network/log-streaming/AgentLogStreamingSettings";
+import { useAgentNetworkMode } from "@/modules/agent-network/useAgentNetworkMode";
 
 const ClustersTable = lazy(
   () => import("@/modules/reverse-proxy/clusters/ClustersTable"),
@@ -27,6 +34,7 @@ const ClustersTable = lazy(
 
 const TAB_BUDGET_SETTINGS = "budget-settings";
 const TAB_LOG_SETTINGS = "log-settings";
+const TAB_LOG_STREAMING = "log-streaming";
 const TAB_CLUSTERS = "clusters";
 
 // AgentNetworkConfigurationPage holds the configuration surfaces extracted from
@@ -47,7 +55,11 @@ export default function AgentNetworkConfigurationPage() {
   // fall back to the first tab so a matching content pane always renders.
   const canReadClusters = !!permission?.services?.read;
   const selectableTabs = useMemo(() => {
-    const tabs = new Set([TAB_BUDGET_SETTINGS, TAB_LOG_SETTINGS]);
+    const tabs = new Set([
+      TAB_BUDGET_SETTINGS,
+      TAB_LOG_SETTINGS,
+      TAB_LOG_STREAMING,
+    ]);
     if (canReadClusters) tabs.add(TAB_CLUSTERS);
     return tabs;
   }, [canReadClusters]);
@@ -72,6 +84,13 @@ export default function AgentNetworkConfigurationPage() {
           <VerticalTabs.Trigger value={TAB_LOG_SETTINGS}>
             <ScrollText size={14} />
             Log Collection
+          </VerticalTabs.Trigger>
+          <VerticalTabs.Trigger
+            value={TAB_LOG_STREAMING}
+            data-testid={"agent-network-tab-log-streaming"}
+          >
+            <RadioTowerIcon size={14} />
+            Log Streaming
           </VerticalTabs.Trigger>
           {canReadClusters && (
             <VerticalTabs.Trigger value={TAB_CLUSTERS}>
@@ -113,6 +132,20 @@ export default function AgentNetworkConfigurationPage() {
                     <Suspense fallback={<SkeletonTable />}>
                       <AgentAccountControlsCard />
                     </Suspense>
+                  </Tabs.Content>
+
+                  <Tabs.Content value={TAB_LOG_STREAMING} className={"w-full"}>
+                    <ConfigTabHeader
+                      label={"Log Streaming"}
+                      href={"/agent-network/configuration?tab=log-streaming"}
+                    >
+                      Stream every collected access log to your own HTTP
+                      endpoint or OpenTelemetry Collector, in addition to
+                      keeping it in NetBird. One destination can be enabled at a
+                      time, and NetBird sends a test entry when you connect or
+                      enable it.
+                    </ConfigTabHeader>
+                    <AgentLogStreamingSettings />
                   </Tabs.Content>
 
                   {canReadClusters && (
