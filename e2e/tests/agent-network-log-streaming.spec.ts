@@ -184,8 +184,8 @@ test.describe
     await expect(page.getByTestId("log-streaming-signing-secret")).toHaveValue(
       "****",
     );
-    await page.getByRole("button", { name: "Advanced" }).click();
-    await page.getByPlaceholder("100", { exact: true }).fill("50");
+    await page.getByTestId("log-streaming-advanced").click();
+    await page.getByTestId("log-streaming-batch_size").fill("50");
     const updated = waitForCall(page, "PUT");
     await page.getByTestId("log-streaming-save").click();
     // Saved while enabled, so management re-tested the receiver with the
@@ -254,8 +254,8 @@ test.describe
     ).toHaveCount(0);
     // A short timeout keeps the refused delivery from running to the default.
     await page.getByTestId("log-streaming-tab-options").click({ force: true });
-    await page.getByRole("button", { name: "Advanced" }).click();
-    await page.getByPlaceholder("30s").first().fill("3s");
+    await page.getByTestId("log-streaming-advanced").click();
+    await page.getByTestId("log-streaming-timeout").fill("3s");
 
     const rejected = waitForCall(page, "POST");
     await save.click();

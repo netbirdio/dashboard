@@ -190,11 +190,11 @@ function LogStreamingCard({
     });
   };
 
-  // Only one integration can be enabled per account, so the other card is
-  // locked until this one is disabled.
-  const disabled = integration
-    ? (!integration.enabled && otherEnabled) || !canUpdate
-    : otherEnabled || !canCreate;
+  // Only one integration can be enabled per account. While the other one is,
+  // this platform can't be connected or switched on, but an existing
+  // integration stays open for editing and deleting.
+  const disabled = integration ? !canUpdate : otherEnabled || !canCreate;
+  const switchDisabled = !!integration && !integration.enabled && otherEnabled;
 
   return (
     <>
@@ -207,6 +207,7 @@ function LogStreamingCard({
         data-testid={`log-streaming-card-${platform}`}
         switchState={!!integration?.enabled}
         disabled={disabled}
+        switchDisabled={switchDisabled}
         onEnabledChange={toggle}
         onSetup={() => setOpen(true)}
       >

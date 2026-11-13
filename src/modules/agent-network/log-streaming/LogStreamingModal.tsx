@@ -114,6 +114,8 @@ function LogStreamingModalContent({
   const canSave =
     webhook.canSave && (isHttp || (!!values.endpoint && endpointError === ""));
   const [tab, setTab] = useState("general");
+  // A second click while saving would send another create and test delivery.
+  const [saving, setSaving] = useState(false);
 
   const save = () => {
     const config = buildLogStreamingConfig(
@@ -129,6 +131,7 @@ function LogStreamingModalContent({
           `/${integration.id}`,
         )
       : request.post({ platform, config });
+    setSaving(true);
     notify({
       title: name,
       description: editing
@@ -137,10 +140,12 @@ function LogStreamingModalContent({
       loadingMessage: editing
         ? "Updating log streaming..."
         : "Sending a test entry...",
-      promise: promise.then(() => {
-        mutate(LOG_STREAMING_URL);
-        onDone();
-      }),
+      promise: promise
+        .then(() => {
+          mutate(LOG_STREAMING_URL);
+          onDone();
+        })
+        .finally(() => setSaving(false)),
     });
   };
 
@@ -305,7 +310,9 @@ function LogStreamingModalContent({
 
           <Accordion type={"single"} collapsible className={"mt-6"}>
             <AccordionItem value={"advanced"}>
-              <AccordionTrigger>Advanced</AccordionTrigger>
+              <AccordionTrigger data-testid={"log-streaming-advanced"}>
+                Advanced
+              </AccordionTrigger>
               <AccordionContent>
                 <HelpText>
                   Batching and retry limits. Leave a field empty to use the
@@ -318,6 +325,7 @@ function LogStreamingModalContent({
                       <Input
                         placeholder={f.placeholder}
                         maxWidthClass={"w-full"}
+                        data-testid={`log-streaming-${f.key}`}
                         {...field(f.key)}
                       />
                     </div>
@@ -359,7 +367,7 @@ function LogStreamingModalContent({
           </ModalClose>
           <Button
             variant={"primary"}
-            disabled={!canSave}
+            disabled={!canSave || saving}
             onClick={save}
             data-testid={"log-streaming-save"}
           >

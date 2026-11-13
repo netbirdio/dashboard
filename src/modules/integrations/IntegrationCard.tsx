@@ -24,6 +24,8 @@ type Props<T> = {
   children?: React.ReactNode;
   onSetup?: () => void;
   disabled?: boolean;
+  // Blocks only the enable switch, leaving the rest of the card usable.
+  switchDisabled?: boolean;
   hideSwitch?: boolean;
   customButton?: React.ReactNode;
   "data-testid"?: string;
@@ -40,6 +42,7 @@ export function IntegrationCard<T>({
   children,
   onSetup,
   disabled,
+  switchDisabled,
   hideSwitch = false,
   customButton,
   "data-testid": dataTestId,
@@ -67,6 +70,9 @@ export function IntegrationCard<T>({
   return (
     <div
       data-testid={dataTestId}
+      // Takes the card out of keyboard focus and activation too, which
+      // pointer-events-none alone does not.
+      inert={disabled}
       className={cn(
         " border border-nb-gray-900/50 p-5 rounded-lg transition-all h-full flex flex-col justify-between gap-4",
         switchState ? "bg-nb-gray-930/50" : "bg-nb-gray-930/30",
@@ -110,6 +116,7 @@ export function IntegrationCard<T>({
               <ToggleSwitch
                 checked={switchState}
                 onCheckedChange={onEnabledChange}
+                disabled={switchDisabled}
               />
             </div>
           )}
