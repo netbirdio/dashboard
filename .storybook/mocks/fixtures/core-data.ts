@@ -730,6 +730,21 @@ const event = (
 
 export const auditEvents = [
   event(
+    100,
+    "2026-11-13T09:30:00Z",
+    "Dashboard login",
+    "dashboard.login",
+    USER.owner,
+    USER.owner,
+    {
+      username: "Olivia Owner",
+      email: "olivia.owner@netbird.io",
+      location_connection_ip: "203.0.113.24",
+      location_country_code: "DE",
+      location_city_name: "Berlin",
+    },
+  ),
+  event(
     1,
     "2026-10-08T11:40:00Z",
     "Peer added",

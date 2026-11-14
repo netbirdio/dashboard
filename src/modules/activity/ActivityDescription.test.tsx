@@ -106,6 +106,35 @@ describe("ActivityDescription peer connection events", () => {
   });
 });
 
+describe("ActivityDescription dashboard login events", () => {
+  const login = (meta: Record<string, string>): ActivityEvent => ({
+    ...baseEvent,
+    activity: "Dashboard login",
+    activity_code: "dashboard.login",
+    meta: { username: "olivia", ...meta },
+  });
+
+  it("shows where the login came from when its location was recorded", () => {
+    const { container } = render(
+      <ActivityDescription
+        event={login({
+          location_connection_ip: "203.0.113.24",
+          location_country_code: "DE",
+          location_city_name: "Berlin",
+        })}
+      />,
+    );
+    expect(textOf(container)).toBe(
+      "olivia logged in to the dashboard from 203.0.113.24 Germany, Berlin",
+    );
+  });
+
+  it("renders events recorded before locations existed as before", () => {
+    const { container } = render(<ActivityDescription event={login({})} />);
+    expect(textOf(container)).toBe("olivia logged in to the dashboard");
+  });
+});
+
 describe("ActivityDescription resource group events", () => {
   it("names the group and the resource in the right slots when a resource is added to a group", () => {
     const { container } = render(

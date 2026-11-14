@@ -115,6 +115,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         <Value>{m.username}</Value> logged in to the dashboard
+        <PeerConnectionInfo meta={m} />
       </div>
     );
 
