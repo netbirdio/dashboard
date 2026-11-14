@@ -61,10 +61,12 @@ describe("session duration", () => {
     expect(sessionDurationText({ session_duration: seconds })).toBe(text);
   });
 
-  it.each([undefined, "", "abc", "-1", "NaN", "Infinity"])(
+  it.each<string | undefined>([undefined, "", "abc", "-1", "NaN", "Infinity"])(
     "ignores the unusable value %j",
     (value) => {
-      expect(sessionDurationText({ session_duration: value })).toBe("");
+      expect(sessionDurationText({ session_duration: value as string })).toBe(
+        "",
+      );
     },
   );
 

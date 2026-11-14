@@ -100,7 +100,11 @@ describe("peer connection history table", () => {
     const connect = event("2026-11-13T09:00:00Z", "1");
     // A connect carrying a duration must not show it: only disconnects end a session.
     connect.meta = { session_duration: "99" };
-    const disconnect = (id: string, timestamp: string, duration?: string) => ({
+    const disconnect = (
+      id: string,
+      timestamp: string,
+      duration?: string,
+    ): ActivityEvent => ({
       ...event(timestamp, id),
       activity_code: "peer.disconnect",
       activity: "Peer disconnected",
